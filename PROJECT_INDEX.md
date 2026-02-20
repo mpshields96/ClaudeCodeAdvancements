@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-02-20 (Session 2)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-02-20 (Session 3)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -10,6 +10,7 @@
 |------|-------|
 | Project rules + scope boundary | `CLAUDE.md` |
 | Feature backlog + priorities | `ROADMAP.md` |
+| Master roadmap + session prompts | `MASTER_ROADMAP.md` |
 | Current state + next actions | `SESSION_STATE.md` |
 | This file (read first) | `PROJECT_INDEX.md` |
 | GitHub | https://github.com/mpshields96/ClaudeCodeAdvancements |
@@ -26,12 +27,13 @@
 ClaudeCodeAdvancements/
 ├── CLAUDE.md                        # Master rules — scope, rat poison, session workflow
 ├── ROADMAP.md                       # Authoritative feature backlog + sub-tasks
+├── MASTER_ROADMAP.md                # Objective session-by-session plan with prompts
 ├── PROJECT_INDEX.md                 # This file
 ├── SESSION_STATE.md                 # Current state, test counts, next actions
 │
 ├── memory-system/                   # Frontier 1: Persistent cross-session memory
 │   ├── CLAUDE.md                    # Module rules
-│   ├── schema.md                    # APPROVED data schema (MEM-1)
+│   ├── schema.md                    # APPROVED data schema (MEM-1) ✅
 │   ├── hooks/
 │   │   └── capture_hook.py          # PostToolUse + Stop capture (MEM-2) ✅
 │   ├── tests/
@@ -232,3 +234,4 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 |---------|------|-------------|
 | 1 | 2026-02-19 | Research complete, all 5 frontier CLAUDE.md + EVIDENCE.md files, ROADMAP.md, master CLAUDE.md |
 | 2 | 2026-02-20 | Hooks feasibility research, MEM-1 schema, MEM-2 capture hook (37 tests), SPEC-1–5 complete (26 tests) |
+| 3 | 2026-02-20 | GitHub live, CLAUDE.md gotchas added, SESSION_STATE updated, MASTER_ROADMAP.md created |
