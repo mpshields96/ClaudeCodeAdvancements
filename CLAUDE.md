@@ -152,3 +152,38 @@ The target is tools that Matthew can use TODAY in his Claude Code sessions, not 
 - Explain what code does in plain English alongside any code output
 - One function at a time — test before building the next
 - MANDATORY — End EVERY response with a one-line `Advancement tip: ...` — one relevant tool, pattern, or next step. Non-negotiable.
+
+---
+
+## Confirmed Hook Architecture Facts (do not re-research)
+
+Verified against Claude Code docs in Session 2 — treat as settled:
+
+| Fact | Confirmed |
+|------|-----------|
+| Token counts in hook payloads? | NO — use transcript JSONL |
+| Context % in hook payloads? | NO — use transcript JSONL |
+| Stop hook has `last_assistant_message`? | YES — string field |
+| PreToolUse deny format | `hookSpecificOutput.permissionDecision: "deny"` |
+| Top-level `decision: "block"` on PreToolUse | Silently fails — wrong format |
+| Async hooks can return decisions? | NO — fire-and-forget only |
+| Env vars available in hooks? | YES — hooks inherit shell env |
+
+---
+
+## Test Commands (run before any session work)
+
+```bash
+python3 memory-system/tests/test_memory.py   # 37 tests
+python3 spec-system/tests/test_spec.py        # 26 tests
+```
+
+Both must show "OK" before touching any other file.
+
+---
+
+## Known Gotchas
+
+- **Credential regex for Anthropic keys:** Pattern must include hyphens — `sk-[A-Za-z0-9\-]{20,}` not `sk-[A-Za-z0-9]{20,}`. Keys contain `sk-ant-api03-...`.
+- **Memory ID suffix:** 8 hex chars minimum. 3-char suffix produced collisions at 100 rapid-fire creates.
+- **GitHub repo:** `https://github.com/mpshields96/ClaudeCodeAdvancements`
