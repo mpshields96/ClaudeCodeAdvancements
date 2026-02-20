@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.aitooldiscovery.com)",
+      "WebFetch(domain:skywork.ai)",
+      "WebFetch(domain:solveoco.medium.com)",
+      "WebFetch(domain:sankalp.bearblog.dev)",
+      "WebFetch(domain:needle.app)",
+      "WebFetch(domain:paddo.dev)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.oneusefulthing.org)",
+      "WebFetch(domain:redmonk.com)",
+      "WebFetch(domain:www.faros.ai)",
+      "WebFetch(domain:dnyuz.com)",
+      "WebFetch(domain:beyond.addy.ie)",
+      "WebFetch(domain:siliconangle.com)",
+      "WebFetch(domain:mortenvistisen.com)",
+      "WebFetch(domain:claudelog.com)",
+      "Bash(python3:*)",
+      "Bash(git -C /Users/matthewshields/Projects/ClaudeCodeAdvancements status)"
+    ]
+  }
+}
