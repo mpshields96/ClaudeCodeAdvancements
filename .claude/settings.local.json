@@ -17,7 +17,9 @@
       "WebFetch(domain:mortenvistisen.com)",
       "WebFetch(domain:claudelog.com)",
       "Bash(python3:*)",
-      "Bash(git -C /Users/matthewshields/Projects/ClaudeCodeAdvancements status)"
+      "Bash(git -C /Users/matthewshields/Projects/ClaudeCodeAdvancements status)",
+      "Skill(claude-md-management:revise-claude-md)",
+      "Skill(claude-md-management:revise-claude-md:*)"
     ]
   }
 }
