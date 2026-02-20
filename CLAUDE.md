@@ -174,11 +174,12 @@ Verified against Claude Code docs in Session 2 — treat as settled:
 ## Test Commands (run before any session work)
 
 ```bash
-python3 memory-system/tests/test_memory.py   # 37 tests
-python3 spec-system/tests/test_spec.py        # 26 tests
+python3 memory-system/tests/test_memory.py      # 37 tests
+python3 memory-system/tests/test_mcp_server.py  # 29 tests
+python3 spec-system/tests/test_spec.py          # 26 tests
 ```
 
-Both must show "OK" before touching any other file.
+All three must show "OK" (92 total) before touching any other file.
 
 ---
 

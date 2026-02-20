@@ -376,9 +376,9 @@ A session is complete when:
 | 2 | MEM-1, MEM-2, SPEC-1–5 | ✅ |
 | 3 | GitHub, housekeeping, MASTER_ROADMAP | ✅ |
 | 4 | MEM-3: retrieval MCP server | ✅ |
-| 5 | MEM-4: /handoff command | [ ] |
+| 5 | MEM-4: /handoff command + SPEC-6: slash commands | ✅ |
 | 6 | MEM-5: CLI memory viewer | [ ] |
-| 7 | SPEC-6: register slash commands | [ ] |
+| 7 | CTX-1: context meter hook | [ ] |
 | 8 | CTX-1: context meter hook | [ ] |
 | 9 | CTX-2: compaction guard | [ ] |
 | 10 | AG-1: ownership manifest | [ ] |

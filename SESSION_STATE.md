@@ -3,10 +3,29 @@
 
 ---
 
-## Current State (as of Session 4 — 2026-02-20)
+## Current State (as of Session 5 — 2026-02-20)
 
-**Phase:** Active development — memory system now end-to-end (capture + retrieval). GitHub live.
-**Next session starts at:** MEM-4 (/handoff slash command) OR SPEC-6 (register slash commands).
+**Phase:** Active development — memory system end-to-end, spec system fully registered. GitHub live.
+**Next session starts at:** MEM-5 (CLI memory viewer) OR CTX-1 (context meter hook).
+
+---
+
+## What Was Done in Session 5
+
+### MEM-4: /handoff Slash Command (complete)
+- `.claude/commands/handoff.md` — behavior instruction file
+- Generates structured `HANDOFF.md`: current task, decisions, files modified, open questions, resume prompt
+- Resume Prompt section is mandatory — enables fresh session to start without re-reading transcript
+
+### SPEC-6: Slash Command Registration (complete)
+- `.claude/commands/spec-requirements.md` → invokes `/spec:requirements`
+- `.claude/commands/spec-design.md` → invokes `/spec:design`
+- `.claude/commands/spec-tasks.md` → invokes `/spec:tasks`
+- `.claude/commands/spec-implement.md` → invokes `/spec:implement`
+- All four delegate to `spec-system/commands/` source files
+
+### CLAUDE.md updated
+- Test commands now include `test_mcp_server.py` (92 total, was 63)
 
 ---
 
@@ -50,8 +69,8 @@
 
 | Frontier | Module | Status | Tests | Next Action |
 |----------|--------|--------|-------|-------------|
-| 1: Persistent Memory | memory-system/ | MEM-1 ✅ MEM-2 ✅ MEM-3 ✅ MEM-4 [ ] MEM-5 [ ] | 37+29/66 | MEM-4: /handoff slash command |
-| 2: Spec System | spec-system/ | SPEC-1 ✅ SPEC-2 ✅ SPEC-3 ✅ SPEC-4 ✅ SPEC-5 ✅ | 26/26 | Register slash commands in .claude/commands/ |
+| 1: Persistent Memory | memory-system/ | MEM-1 ✅ MEM-2 ✅ MEM-3 ✅ MEM-4 ✅ MEM-5 [ ] | 66/66 | MEM-5: CLI memory viewer |
+| 2: Spec System | spec-system/ | SPEC-1–6 ✅ | 26/26 | CTX-1: context meter hook |
 | 3: Context Monitor | context-monitor/ | Research ✅ Code [ ] | — | CTX-1: context meter hook (transcript-based) |
 | 4: Agent Guard | agent-guard/ | Research ✅ Code [ ] | — | AG-1: ownership manifest command |
 | 5: Usage Dashboard | usage-dashboard/ | Research ✅ Code [ ] | — | USAGE-1: token counter via transcript |
@@ -71,12 +90,11 @@
 
 ## Priority for Session 4
 
-**Start here**: MEM-4 — /handoff slash command
-- `.claude/commands/handoff.md` — behavior instruction file (not Python)
-- Generates `HANDOFF.md` snapshot before /compact or session end
-- Directly addresses context compaction data loss
+**Start here**: MEM-5 — CLI memory viewer
+- `memory-system/cli.py` — list, search, delete memories from terminal
+- OR CTX-1 — context meter hook (transcript-based, higher user impact)
 
-**Then**: SPEC-6 — Register spec-system slash commands in `.claude/commands/`
+**Recommended**: CTX-1 — addresses the #2 community complaint after memory loss
 - `.claude/commands/spec-requirements.md` etc. as project-level command wrappers
 
 ---
@@ -119,12 +137,12 @@
 
 ---
 
-## Session 5 Start Protocol
+## Session 6 Start Protocol
 
-1. Run all three test suites — confirm 92/92
+1. Run all three test suites — confirm 92/92:
    - `python3 memory-system/tests/test_memory.py`
    - `python3 memory-system/tests/test_mcp_server.py`
    - `python3 spec-system/tests/test_spec.py`
 2. Read SESSION_STATE.md (this file)
-3. Read memory-system/CLAUDE.md
-4. State: "Building MEM-4: /handoff slash command" before touching any file
+3. Read context-monitor/CLAUDE.md and context-monitor/research/EVIDENCE.md
+4. State: "Building CTX-1: context meter hook" before touching any file
