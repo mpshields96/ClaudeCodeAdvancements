@@ -375,7 +375,7 @@ A session is complete when:
 | 1 | Foundation + research | ✅ |
 | 2 | MEM-1, MEM-2, SPEC-1–5 | ✅ |
 | 3 | GitHub, housekeeping, MASTER_ROADMAP | ✅ |
-| 4 | MEM-3: retrieval MCP server | [ ] |
+| 4 | MEM-3: retrieval MCP server | ✅ |
 | 5 | MEM-4: /handoff command | [ ] |
 | 6 | MEM-5: CLI memory viewer | [ ] |
 | 7 | SPEC-6: register slash commands | [ ] |

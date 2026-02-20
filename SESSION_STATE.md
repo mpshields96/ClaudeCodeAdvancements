@@ -3,10 +3,33 @@
 
 ---
 
-## Current State (as of Session 3 — 2026-02-20)
+## Current State (as of Session 4 — 2026-02-20)
 
-**Phase:** Active development — two frontiers have live, tested code. GitHub live.
-**Next session starts at:** MEM-3 (retrieval MCP server) — highest priority.
+**Phase:** Active development — memory system now end-to-end (capture + retrieval). GitHub live.
+**Next session starts at:** MEM-4 (/handoff slash command) OR SPEC-6 (register slash commands).
+
+---
+
+## What Was Done in Session 4
+
+### MEM-3: Retrieval MCP Server (complete — 29/29 tests passing)
+- `memory-system/mcp_server.py` — JSON-RPC 2.0 over stdio (correct MCP protocol)
+- Two tools: `load_memories` (HIGH by default, opt-in MEDIUM) + `search_memory` (keyword, tag, type)
+- Sorted: HIGH before MEDIUM, most recent first within each tier
+- `_touch_last_used()` updates recency on every retrieval (atomic save)
+- `memory-system/tests/test_mcp_server.py` — 29 tests across all functions
+
+**Registration** (add to `~/.claude/claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "claude-memory": {
+      "command": "python3",
+      "args": ["/Users/matthewshields/Projects/ClaudeCodeAdvancements/memory-system/mcp_server.py"]
+    }
+  }
+}
+```
 
 ---
 
@@ -27,7 +50,7 @@
 
 | Frontier | Module | Status | Tests | Next Action |
 |----------|--------|--------|-------|-------------|
-| 1: Persistent Memory | memory-system/ | MEM-1 ✅ MEM-2 ✅ MEM-3 [ ] MEM-4 [ ] MEM-5 [ ] | 37/37 | MEM-3: retrieval MCP server |
+| 1: Persistent Memory | memory-system/ | MEM-1 ✅ MEM-2 ✅ MEM-3 ✅ MEM-4 [ ] MEM-5 [ ] | 37+29/66 | MEM-4: /handoff slash command |
 | 2: Spec System | spec-system/ | SPEC-1 ✅ SPEC-2 ✅ SPEC-3 ✅ SPEC-4 ✅ SPEC-5 ✅ | 26/26 | Register slash commands in .claude/commands/ |
 | 3: Context Monitor | context-monitor/ | Research ✅ Code [ ] | — | CTX-1: context meter hook (transcript-based) |
 | 4: Agent Guard | agent-guard/ | Research ✅ Code [ ] | — | AG-1: ownership manifest command |
@@ -39,21 +62,21 @@
 
 | Module | Tests | Status |
 |--------|-------|--------|
-| memory-system | 37 | 37/37 passing |
+| memory-system (capture) | 37 | 37/37 passing |
+| memory-system (mcp_server) | 29 | 29/29 passing |
 | spec-system | 26 | 26/26 passing |
-| **Total** | **63** | **63/63 passing** |
+| **Total** | **92** | **92/92 passing** |
 
 ---
 
 ## Priority for Session 4
 
-**Start here**: MEM-3 — Retrieval MCP server
-- MEM-1 schema + MEM-2 capture are not useful without MEM-3 retrieval
-- Local HTTP server exposing `search_memory` + `load_memories` tools
-- Python stdlib `http.server` + `json` — no external deps
-- After MEM-3, memory system is functional end-to-end (MEM-4/5 are enhancements)
+**Start here**: MEM-4 — /handoff slash command
+- `.claude/commands/handoff.md` — behavior instruction file (not Python)
+- Generates `HANDOFF.md` snapshot before /compact or session end
+- Directly addresses context compaction data loss
 
-**Then**: Register spec-system slash commands in `.claude/commands/`
+**Then**: SPEC-6 — Register spec-system slash commands in `.claude/commands/`
 - `.claude/commands/spec-requirements.md` etc. as project-level command wrappers
 
 ---
@@ -96,10 +119,12 @@
 
 ---
 
-## Session 4 Start Protocol
+## Session 5 Start Protocol
 
-1. Run `python3 memory-system/tests/test_memory.py` — confirm 37/37
-2. Run `python3 spec-system/tests/test_spec.py` — confirm 26/26
-3. Read SESSION_STATE.md (this file) — current state
-4. Read memory-system/CLAUDE.md for MEM-3 constraints
-5. State: "Building MEM-3: retrieval MCP server" before touching any file
+1. Run all three test suites — confirm 92/92
+   - `python3 memory-system/tests/test_memory.py`
+   - `python3 memory-system/tests/test_mcp_server.py`
+   - `python3 spec-system/tests/test_spec.py`
+2. Read SESSION_STATE.md (this file)
+3. Read memory-system/CLAUDE.md
+4. State: "Building MEM-4: /handoff slash command" before touching any file
