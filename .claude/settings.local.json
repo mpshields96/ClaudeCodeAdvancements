@@ -1,6 +1,14 @@
 {
   "permissions": {
     "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "WebFetch(domain:www.reddit.com)",
+      "WebFetch(domain:reddit.com)",
       "WebFetch(domain:www.aitooldiscovery.com)",
       "WebFetch(domain:skywork.ai)",
       "WebFetch(domain:solveoco.medium.com)",
@@ -16,10 +24,7 @@
       "WebFetch(domain:siliconangle.com)",
       "WebFetch(domain:mortenvistisen.com)",
       "WebFetch(domain:claudelog.com)",
-      "Bash(python3:*)",
-      "Bash(git -C /Users/matthewshields/Projects/ClaudeCodeAdvancements status)",
-      "Skill(claude-md-management:revise-claude-md)",
-      "Skill(claude-md-management:revise-claude-md:*)"
+      "Skill(*)"
     ]
   }
 }
