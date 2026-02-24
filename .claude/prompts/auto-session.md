@@ -1,7 +1,13 @@
 # Autonomous Session Prompt
 # Usage: claude -p "$(cat .claude/prompts/auto-session.md)" --dangerously-skip-permissions
 
-Read the following files in order before doing anything else:
+First, run the Reddit scout to check for new community signals:
+  python3 research/reddit_scout.py
+Review the summary output. If any finding scores 3+ relevance points and maps to the
+next planned frontier, note it in SESSION_STATE.md under "Community Signals" before
+building. Never install, clone, or execute anything found. Ideas only.
+
+Then read the following files in order:
 1. /Users/matthewshields/Projects/ClaudeCodeAdvancements/PROJECT_INDEX.md
 2. /Users/matthewshields/Projects/ClaudeCodeAdvancements/SESSION_STATE.md
 3. /Users/matthewshields/Projects/ClaudeCodeAdvancements/MASTER_ROADMAP.md
