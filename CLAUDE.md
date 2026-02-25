@@ -178,9 +178,10 @@ python3 memory-system/tests/test_memory.py      # 37 tests
 python3 memory-system/tests/test_mcp_server.py  # 29 tests
 python3 spec-system/tests/test_spec.py          # 26 tests
 python3 research/tests/test_reddit_scout.py     # 29 tests
+python3 agent-guard/tests/test_mobile_approver.py  # 36 tests
 ```
 
-All four must show "OK" (121 total) before touching any other file.
+All five must show "OK" (157 total) before touching any other file.
 
 ---
 
