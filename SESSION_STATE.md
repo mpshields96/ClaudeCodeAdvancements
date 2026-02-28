@@ -3,10 +3,34 @@
 
 ---
 
-## Current State (as of Session 5 — 2026-02-20)
+## Current State (as of Session 6 — 2026-02-28)
 
-**Phase:** Active development — memory system end-to-end, spec system fully registered. GitHub live.
+**Phase:** Active development — AG-1 mobile approver complete. browse-url global skill added.
 **Next session starts at:** MEM-5 (CLI memory viewer) OR CTX-1 (context meter hook).
+
+---
+
+## What Was Done in Session 6
+
+### AG-1: Mobile Approver iPhone Hook (complete — built in prior context, committed as AG-1)
+- `agent-guard/hooks/mobile_approver.py` — PreToolUse hook using ntfy.sh
+- Sends push notification to iPhone with Allow/Deny action buttons on lock screen
+- Claude waits up to 60s for response; fails open if no network or no topic configured
+- `agent-guard/tests/test_mobile_approver.py` — 36 tests, all passing
+- `agent-guard/MOBILE_SETUP.md` — 5-minute iPhone setup guide
+- Env vars: `MOBILE_APPROVER_TOPIC`, `MOBILE_APPROVER_TIMEOUT`, `MOBILE_APPROVER_DEFAULT`, `MOBILE_APPROVER_DISABLED`
+
+### Reddit Scout (complete — built in prior context)
+- `research/reddit_scout.py` — fetches r/ClaudeAI, r/ClaudeCode, r/vibecoding hot posts
+- Relevance scoring, rat poison filtering, frontier mapping, dated JSON output
+- `research/tests/test_reddit_scout.py` — 29 tests, all passing
+- Integrated into `.claude/prompts/auto-session.md` (runs at start of every autonomous session)
+
+### browse-url Global Skill (complete)
+- `.claude/commands/browse-url.md` — slash command using Playwright MCP
+- Any Claude Code chat can use `/browse-url [URL]` to open and read any URL in Chrome
+- Handles Reddit, GitHub, Streamlit with site-specific extraction guidance
+- For global use: copy to `~/.claude/commands/browse-url.md`
 
 ---
 
@@ -72,7 +96,7 @@
 | 1: Persistent Memory | memory-system/ | MEM-1 ✅ MEM-2 ✅ MEM-3 ✅ MEM-4 ✅ MEM-5 [ ] | 66/66 | MEM-5: CLI memory viewer |
 | 2: Spec System | spec-system/ | SPEC-1–6 ✅ | 26/26 | CTX-1: context meter hook |
 | 3: Context Monitor | context-monitor/ | Research ✅ Code [ ] | — | CTX-1: context meter hook (transcript-based) |
-| 4: Agent Guard | agent-guard/ | Research ✅ Code [ ] | — | AG-1: ownership manifest command |
+| 4: Agent Guard | agent-guard/ | AG-1 ✅ | 36/36 | AG-2: ownership manifest command |
 | 5: Usage Dashboard | usage-dashboard/ | Research ✅ Code [ ] | — | USAGE-1: token counter via transcript |
 
 ---
@@ -84,7 +108,9 @@
 | memory-system (capture) | 37 | 37/37 passing |
 | memory-system (mcp_server) | 29 | 29/29 passing |
 | spec-system | 26 | 26/26 passing |
-| **Total** | **92** | **92/92 passing** |
+| research (reddit_scout) | 29 | 29/29 passing |
+| agent-guard (mobile_approver) | 36 | 36/36 passing |
+| **Total** | **157** | **157/157 passing** |
 
 ---
 
