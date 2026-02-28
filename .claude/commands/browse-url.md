@@ -1,104 +1,130 @@
 # /browse-url — Open and Read Any URL in Chrome
 
-When invoked, navigate to the URL in the user's message, read the page content,
-and return a structured summary. Uses Playwright MCP browser tools.
+Navigate to the URL in the user's message, scroll through the full page, and
+return a structured summary with full content. Uses Playwright MCP browser tools.
 
-Works for Reddit posts, GitHub, Streamlit, and general URLs.
+Works for Reddit posts + comments, GitHub repos/issues/PRs, Streamlit, and general URLs.
 
 ---
 
 ## Steps (follow exactly)
 
-### 1. Parse the URL from the user's message
+### 1. Parse the URL
 
-The URL is the text provided after `/browse-url`. Strip any surrounding whitespace.
+The URL is the text after `/browse-url`. Strip whitespace.
 
-**Reddit special case:** Replace `www.reddit.com` with `old.reddit.com` before navigating.
-Old Reddit uses plain HTML and is far easier to read than the React new site.
+**Reddit:** Replace `www.reddit.com` with `old.reddit.com` before navigating.
+Old Reddit uses plain HTML; new Reddit uses React shadow DOM that blocks extraction.
 
-### 2. Navigate to the URL
+### 2. Navigate and scroll to load all content
 
-```
-mcp__plugin_playwright_playwright__browser_navigate  url=[URL]
-```
+Use `mcp__plugin_playwright_playwright__browser_run_code` with this pattern:
 
-Wait 1 second for page load:
-```
-mcp__plugin_playwright_playwright__browser_wait_for  time=1
-```
-
-### 3. Extract content — use JavaScript evaluation, NOT snapshot
-
-The accessibility snapshot is often too large. Use targeted JavaScript extraction instead:
-
-**Reddit listing page (r/subreddit):**
 ```javascript
-() => {
-  const posts = document.querySelectorAll('.thing .title a.title');
-  return Array.from(posts).slice(0, 15).map(a => a.textContent.trim()).join('\n');
+async (page) => {
+  await page.goto('[URL]');
+  // Scroll to load all content
+  for (let i = 0; i < 5; i++) {
+    await page.evaluate(() => window.scrollBy(0, 2000));
+    await page.waitForTimeout(500);
+  }
+  return 'loaded';
 }
 ```
 
-**Reddit post/comments page:**
+### 3. Extract content with browser_run_code
+
+**Reddit post with comments (most common use case):**
+
 ```javascript
-() => {
-  const title = document.querySelector('.title a')?.textContent || '';
-  const body = document.querySelector('.usertext-body .md')?.innerText || '';
-  const comments = Array.from(document.querySelectorAll('.comment .usertext-body .md'))
-    .slice(0, 8).map(c => c.innerText.trim()).join('\n---\n');
-  return `TITLE: ${title}\n\nPOST BODY:\n${body}\n\nTOP COMMENTS:\n${comments}`;
+async (page) => {
+  return await page.evaluate(() => {
+    const title = document.querySelector('.title a')?.textContent?.trim() || document.title;
+    const body = document.querySelector('.usertext-body .md')?.innerText?.trim() || '';
+    const commentNodes = document.querySelectorAll('.comment');
+    const comments = Array.from(commentNodes).map(node => {
+      const author = node.querySelector('.author')?.textContent?.trim() || '[deleted]';
+      const score = node.querySelector('.score')?.textContent?.trim() || '';
+      const text = node.querySelector('.usertext-body .md')?.innerText?.trim() || '';
+      const depth = (node.className.match(/depth-(\d+)/) || ['','0'])[1];
+      const indent = '  '.repeat(parseInt(depth));
+      return text ? `${indent}[${author}] ${score}\n${indent}${text.replace(/\n/g, '\n' + indent)}` : null;
+    }).filter(Boolean);
+    return { title, body, commentCount: commentNodes.length, comments };
+  });
+}
+```
+
+Returns: title, post body, comment count, and all comments with author/score/nesting.
+
+**Reddit listing page (r/subreddit hot posts):**
+
+```javascript
+async (page) => {
+  return await page.evaluate(() => {
+    const posts = document.querySelectorAll('.thing .title a.title');
+    return Array.from(posts).map(a => a.textContent.trim());
+  });
 }
 ```
 
 **GitHub repo:**
+
 ```javascript
-() => {
-  const readme = document.querySelector('[data-target="readme-toc.content"]')?.innerText ||
-                 document.querySelector('#readme')?.innerText || '';
-  const desc = document.querySelector('.f4.my-3')?.textContent?.trim() || '';
-  return `DESCRIPTION: ${desc}\n\nREADME:\n${readme.slice(0, 3000)}`;
+async (page) => {
+  return await page.evaluate(() => {
+    const desc = document.querySelector('.f4.my-3')?.textContent?.trim() || '';
+    const readme = document.querySelector('[data-target="readme-toc.content"]')?.innerText ||
+                   document.querySelector('#readme article')?.innerText || '';
+    return `DESCRIPTION: ${desc}\n\nREADME:\n${readme.slice(0, 4000)}`;
+  });
 }
 ```
 
 **GitHub issue or PR:**
+
 ```javascript
-() => {
-  const title = document.querySelector('.js-issue-title')?.textContent?.trim() || '';
-  const body = document.querySelector('.comment-body')?.innerText || '';
-  return `TITLE: ${title}\n\nBODY:\n${body}`;
+async (page) => {
+  return await page.evaluate(() => {
+    const title = document.querySelector('.js-issue-title, h1.gh-header-title')?.textContent?.trim() || '';
+    const comments = Array.from(document.querySelectorAll('.comment-body')).map(c => c.innerText.trim());
+    return { title, comments };
+  });
 }
 ```
-
-**Streamlit app:**
-- Use `mcp__plugin_playwright_playwright__browser_take_screenshot` — visual output is most useful
-- Also try: `() => document.body.innerText.slice(0, 3000)`
 
 **Any other URL:**
+
 ```javascript
-() => {
-  const title = document.title;
-  const text = document.body.innerText.slice(0, 4000);
-  return `TITLE: ${title}\n\n${text}`;
+async (page) => {
+  return await page.evaluate(() => ({
+    title: document.title,
+    text: document.body.innerText.slice(0, 5000)
+  }));
 }
 ```
 
-Use `mcp__plugin_playwright_playwright__browser_evaluate` with the function above.
-
-### 4. Return a structured response
+### 4. Return structured response
 
 ```
-URL: [the URL]
-Title: [page title]
+URL: [url]
+Title: [title]
+Comment count: [N] (for Reddit)
 
-Content:
-[extracted text or summary]
+Post body:
+[full post text]
+
+Comments ([N] total):
+[author] [score]
+[comment text]
+
+  [author] [score]  ← indented = reply
+  [reply text]
 ```
 
-For Reddit posts: include title, post body, and top 5-8 comments.
-For GitHub: include description and key README sections.
-For Streamlit: include screenshot description and any text metrics.
+Present all comments — do not truncate unless the user asks for a summary only.
 
-### 5. Close the browser when done
+### 5. Close browser when done
 
 ```
 mcp__plugin_playwright_playwright__browser_close
@@ -108,24 +134,21 @@ mcp__plugin_playwright_playwright__browser_close
 
 ## Troubleshooting
 
-**"Network security" block or CAPTCHA:**
-- Report to user: "This site blocked Playwright. Paste the text manually."
+**CAPTCHA or security block:**
+Report to user: "This site blocked the browser. Try pasting the content manually."
 
-**JavaScript evaluation returns empty string:**
-- Try `() => document.body.innerText.slice(0, 4000)` as a fallback
-- Or take a screenshot for visual inspection
+**Empty extraction on new Reddit (www.reddit.com):**
+Ensure you switched to `old.reddit.com` — new Reddit uses shadow DOM.
 
-**Reddit new site (www.reddit.com) returns sparse content:**
-- Make sure you used `old.reddit.com` — the new site uses shadow DOM that blocks evaluation
+**GitHub returns nothing:**
+Try `document.body.innerText.slice(0, 5000)` as a fallback.
 
 ---
 
-## Making this available globally
-
-This skill lives in the ClaudeCodeAdvancements project. To use `/browse-url` in any
-Claude Code session on this Mac, copy it:
+## Global install (use /browse-url in any Claude Code session)
 
 ```bash
+mkdir -p ~/.claude/commands && \
 cp /Users/matthewshields/Projects/ClaudeCodeAdvancements/.claude/commands/browse-url.md \
    ~/.claude/commands/browse-url.md
 ```
