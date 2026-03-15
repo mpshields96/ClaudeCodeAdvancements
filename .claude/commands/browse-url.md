@@ -1,120 +1,75 @@
 # /browse-url — Open and Read Any URL in Chrome
 
-Navigate to the URL in the user's message, scroll through the full page, and
-return a structured summary with full content. Uses Playwright MCP browser tools.
+Navigate to the URL in the user's message and return the full content.
 
-Works for Reddit posts + comments, GitHub repos/issues/PRs, Streamlit, and general URLs.
+Works for Reddit posts, subreddit listings, GitHub repos/issues/PRs, articles,
+and general URLs.
 
 ---
 
-## Steps (follow exactly)
+## STEP 1 — Detect URL type
 
-### 1. Parse the URL
+Check if the URL contains `reddit.com` or starts with `r/`.
 
-The URL is the text after `/browse-url`. Strip whitespace.
+- **Reddit URL or subreddit** → use Python reader (Step 2A)
+- **Any other URL** → use WebFetch (Step 2B)
 
-**Reddit:** Replace `www.reddit.com` with `old.reddit.com` before navigating.
-Old Reddit uses plain HTML; new Reddit uses React shadow DOM that blocks extraction.
+---
 
-### 2. Navigate and scroll to load all content
+## Step 2A — Reddit (Python JSON API)
 
-Use `mcp__plugin_playwright_playwright__browser_run_code` with this pattern:
-
-```javascript
-async (page) => {
-  await page.goto('[URL]');
-  // Scroll to load all content
-  for (let i = 0; i < 5; i++) {
-    await page.evaluate(() => window.scrollBy(0, 2000));
-    await page.waitForTimeout(500);
-  }
-  return 'loaded';
-}
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/reddit_reader.py "[URL_OR_SUBREDDIT]"
 ```
 
-### 3. Extract content with browser_run_code
+This works for:
+- Full post URLs: `https://www.reddit.com/r/ClaudeAI/comments/abc123/...`
+- Old reddit URLs: `https://old.reddit.com/r/ClaudeAI/comments/abc123/...`
+- Subreddit listings: `r/ClaudeAI` or `r/ClaudeAI top 10`
 
-**Reddit post with comments (most common use case):**
+Returns: full post body + all comments with author/score/nesting, or post listing.
 
-```javascript
-async (page) => {
-  return await page.evaluate(() => {
-    const title = document.querySelector('.title a')?.textContent?.trim() || document.title;
-    const body = document.querySelector('.usertext-body .md')?.innerText?.trim() || '';
-    const commentNodes = document.querySelectorAll('.comment');
-    const comments = Array.from(commentNodes).map(node => {
-      const author = node.querySelector('.author')?.textContent?.trim() || '[deleted]';
-      const score = node.querySelector('.score')?.textContent?.trim() || '';
-      const text = node.querySelector('.usertext-body .md')?.innerText?.trim() || '';
-      const depth = (node.className.match(/depth-(\d+)/) || ['','0'])[1];
-      const indent = '  '.repeat(parseInt(depth));
-      return text ? `${indent}[${author}] ${score}\n${indent}${text.replace(/\n/g, '\n' + indent)}` : null;
-    }).filter(Boolean);
-    return { title, body, commentCount: commentNodes.length, comments };
-  });
-}
+**Why not Chrome for Reddit:**
+Chrome safety restrictions block JavaScript execution on reddit.com tabs.
+The Python JSON API approach has no such restriction and is more reliable.
+
+---
+
+## Step 2B — Non-Reddit URLs (WebFetch)
+
+Use the WebFetch tool directly:
+
+```
+WebFetch url="[URL]" prompt="Return the full text content of this page."
 ```
 
-Returns: title, post body, comment count, and all comments with author/score/nesting.
+WebFetch returns the page content as markdown. Present the content to the user.
 
-**Reddit listing page (r/subreddit hot posts):**
+**For GitHub repos**, ask for:
+- Repository description, README, and main file structure
 
-```javascript
-async (page) => {
-  return await page.evaluate(() => {
-    const posts = document.querySelectorAll('.thing .title a.title');
-    return Array.from(posts).map(a => a.textContent.trim());
-  });
-}
-```
+**For GitHub issues/PRs**, ask for:
+- Issue/PR title, body, and all comments
 
-**GitHub repo:**
+**For articles/docs**, ask for:
+- Full article text
 
-```javascript
-async (page) => {
-  return await page.evaluate(() => {
-    const desc = document.querySelector('.f4.my-3')?.textContent?.trim() || '';
-    const readme = document.querySelector('[data-target="readme-toc.content"]')?.innerText ||
-                   document.querySelector('#readme article')?.innerText || '';
-    return `DESCRIPTION: ${desc}\n\nREADME:\n${readme.slice(0, 4000)}`;
-  });
-}
-```
+---
 
-**GitHub issue or PR:**
+## Step 3 — Return structured response
 
-```javascript
-async (page) => {
-  return await page.evaluate(() => {
-    const title = document.querySelector('.js-issue-title, h1.gh-header-title')?.textContent?.trim() || '';
-    const comments = Array.from(document.querySelectorAll('.comment-body')).map(c => c.innerText.trim());
-    return { title, comments };
-  });
-}
-```
-
-**Any other URL:**
-
-```javascript
-async (page) => {
-  return await page.evaluate(() => ({
-    title: document.title,
-    text: document.body.innerText.slice(0, 5000)
-  }));
-}
-```
-
-### 4. Return structured response
-
+**Reddit post:**
 ```
 URL: [url]
 Title: [title]
-Comment count: [N] (for Reddit)
+Author: u/[author]
+Score: [score] ([upvote%] upvoted)
+Comments: [N] total
 
 Post body:
 [full post text]
 
-Comments ([N] total):
+--- COMMENTS ([N] loaded) ---
 [author] [score]
 [comment text]
 
@@ -122,26 +77,25 @@ Comments ([N] total):
   [reply text]
 ```
 
-Present all comments — do not truncate unless the user asks for a summary only.
-
-### 5. Close browser when done
-
+**Reddit listing:**
 ```
-mcp__plugin_playwright_playwright__browser_close
+r/[subreddit] — HOT — [N] posts
+
+1. [title] [flair]
+   u/[author] | [score] pts | [N] comments
+   [permalink]
 ```
+
+**Other URL:**
+Present whatever WebFetch returns, formatted for readability.
 
 ---
 
-## Troubleshooting
+## Error handling
 
-**CAPTCHA or security block:**
-Report to user: "This site blocked the browser. Try pasting the content manually."
-
-**Empty extraction on new Reddit (www.reddit.com):**
-Ensure you switched to `old.reddit.com` — new Reddit uses shadow DOM.
-
-**GitHub returns nothing:**
-Try `document.body.innerText.slice(0, 5000)` as a fallback.
+**Reddit 403/private subreddit:** Report to user — subreddit may be private or banned.
+**Reddit network error:** Report. No retry loop.
+**WebFetch blocked:** Report the block. Suggest the user paste the content manually.
 
 ---
 

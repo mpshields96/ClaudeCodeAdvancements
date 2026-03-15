@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-02-20 (Session 3)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-15 (Session 9)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -55,15 +55,45 @@ ClaudeCodeAdvancements/
 │   └── research/
 │       └── EVIDENCE.md
 │
-├── context-monitor/                 # Frontier 3: Context health + compaction guard
+├── context-monitor/                 # Frontier 3: Context health + compaction guard — COMPLETE ✅
 │   ├── CLAUDE.md                    # Module rules
+│   ├── statusline.py                # CTX-2: ANSI statusline (reads native context_window.used_percentage)
+│   ├── hooks/
+│   │   ├── meter.py                 # CTX-1: PostToolUse token counter → ~/.claude-context-health.json
+│   │   ├── alert.py                 # CTX-3: PreToolUse warn/block before expensive tools in red/critical
+│   │   ├── auto_handoff.py          # CTX-4: Stop hook — blocks exit at critical, prompts /handoff
+│   │   └── compact_anchor.py        # CTX-5: PostToolUse — writes .claude-compact-anchor.md every N turns
+│   ├── tests/
+│   │   ├── test_meter.py            # 36 tests
+│   │   ├── test_alert.py            # 24 tests
+│   │   ├── test_auto_handoff.py     # 27 tests
+│   │   └── test_compact_anchor.py   # 22 tests
 │   └── research/
-│       └── EVIDENCE.md              # Compaction bug + transcript-parsing approach
+│       └── EVIDENCE.md
 │
 ├── agent-guard/                     # Frontier 4: Multi-agent conflict prevention
 │   ├── CLAUDE.md                    # Module rules
+│   ├── ownership.py                 # AG-2: CLI ownership manifest (git history → conflict detection)
+│   ├── hooks/
+│   │   ├── mobile_approver.py       # AG-1: PreToolUse iPhone push approval via ntfy.sh
+│   │   └── credential_guard.py      # AG-3: PreToolUse credential-extraction guard
+│   ├── tests/
+│   │   ├── test_mobile_approver.py  # 36 tests
+│   │   ├── test_ownership.py        # 27 tests
+│   │   └── test_credential_guard.py # 40 tests
 │   └── research/
 │       └── EVIDENCE.md
+│
+├── reddit-intelligence/             # Community signal research plugin
+│   ├── reddit_reader.py             # Fetches Reddit posts + all comments (no API key needed)
+│   ├── reddit_scout.py              # Daily community signal sweep
+│   ├── commands/
+│   │   ├── ri-scan.md               # /reddit-intel:ri-scan — weekly multi-subreddit scan
+│   │   ├── ri-read.md               # /reddit-intel:ri-read [url] — read specific post
+│   │   └── ri-loop.md               # /reddit-intel:ri-loop — schedule recurring scans
+│   ├── tests/
+│   │   └── test_reddit_reader.py    # 43 tests
+│   └── findings/                    # Output directory for scan results
 │
 └── usage-dashboard/                 # Frontier 5: Token + cost transparency
     ├── CLAUDE.md                    # Module rules
@@ -77,12 +107,23 @@ ClaudeCodeAdvancements/
 
 | Command | What it does |
 |---------|-------------|
-| `python3 memory-system/tests/test_memory.py` | Run memory-system smoke tests (37 tests) |
-| `python3 spec-system/tests/test_spec.py` | Run spec-system smoke tests (26 tests) |
-| `python3 memory-system/hooks/capture_hook.py` | Stdin: hook JSON → stdout: memory JSON (direct test) |
-| `python3 spec-system/hooks/validate.py` | Stdin: hook JSON → stdout: decision JSON (direct test) |
+| `python3 memory-system/tests/test_memory.py` | memory-system smoke tests (37 tests) |
+| `python3 memory-system/tests/test_mcp_server.py` | MCP server tests (29 tests) |
+| `python3 memory-system/tests/test_cli.py` | CLI viewer tests (28 tests) |
+| `python3 spec-system/tests/test_spec.py` | spec-system tests (26 tests) |
+| `python3 research/tests/test_reddit_scout.py` | reddit scout tests (29 tests) |
+| `python3 agent-guard/tests/test_mobile_approver.py` | iPhone hook tests (36 tests) |
+| `python3 agent-guard/tests/test_ownership.py` | ownership manifest tests (27 tests) |
+| `python3 agent-guard/tests/test_credential_guard.py` | credential guard tests (40 tests) |
+| `python3 context-monitor/tests/test_meter.py` | context meter tests (36 tests) |
+| `python3 context-monitor/tests/test_alert.py` | alert hook tests (24 tests) |
+| `python3 context-monitor/tests/test_auto_handoff.py` | auto-handoff tests (27 tests) |
+| `python3 context-monitor/tests/test_compact_anchor.py` | compact anchor tests (22 tests) |
+| `python3 reddit-intelligence/tests/test_reddit_reader.py` | reddit reader tests (43 tests) |
+| `python3 memory-system/cli.py stats` | Show memory stats |
+| `python3 agent-guard/ownership.py` | Show file ownership manifest |
 
-**Session start:** Run both test commands first. If anything fails, fix before touching other files.
+**Total:** 404/404 tests. **Session start:** Run all 13 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -183,11 +224,20 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 
 | Module | File | Tests | Status |
 |--------|------|-------|--------|
-| memory-system | `tests/test_memory.py` | 37 | All passing |
+| memory-system (capture) | `tests/test_memory.py` | 37 | All passing |
+| memory-system (mcp_server) | `tests/test_mcp_server.py` | 29 | All passing |
+| memory-system (cli) | `tests/test_cli.py` | 28 | All passing |
 | spec-system | `tests/test_spec.py` | 26 | All passing |
-| **Total** | | **63** | **63/63** |
-
-**Run before every session:** `python3 memory-system/tests/test_memory.py && python3 spec-system/tests/test_spec.py`
+| research | `tests/test_reddit_scout.py` | 29 | All passing |
+| agent-guard (mobile_approver) | `tests/test_mobile_approver.py` | 36 | All passing |
+| agent-guard (ownership) | `tests/test_ownership.py` | 27 | All passing |
+| agent-guard (credential_guard) | `tests/test_credential_guard.py` | 40 | All passing |
+| context-monitor (meter) | `tests/test_meter.py` | 36 | All passing |
+| context-monitor (alert) | `tests/test_alert.py` | 24 | All passing |
+| context-monitor (auto_handoff) | `tests/test_auto_handoff.py` | 27 | All passing |
+| context-monitor (compact_anchor) | `tests/test_compact_anchor.py` | 22 | All passing |
+| reddit-intelligence | `tests/test_reddit_reader.py` | 43 | All passing |
+| **Total** | | **404** | **404/404** |
 
 ---
 
@@ -195,11 +245,11 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 
 | # | Frontier | Code Status | Tests | Immediate Next |
 |---|----------|-------------|-------|----------------|
-| 1 | memory-system | MEM-1 ✅ MEM-2 ✅ MEM-3 [ ] MEM-4 [ ] MEM-5 [ ] | 37/37 | MEM-3: retrieval MCP server |
-| 2 | spec-system | SPEC-1–5 ✅ | 26/26 | Register in `.claude/commands/` |
-| 3 | context-monitor | Research ✅ Code [ ] | — | CTX-1: transcript-based meter hook |
-| 4 | agent-guard | Research ✅ Code [ ] | — | AG-1: ownership manifest command |
-| 5 | usage-dashboard | Research ✅ Code [ ] | — | USAGE-1: transcript-based token counter |
+| 1 | memory-system | MEM-1–5 ✅ COMPLETE | 94/94 | — |
+| 2 | spec-system | SPEC-1–6 ✅ COMPLETE | 26/26 | — |
+| 3 | context-monitor | CTX-1–5 ✅ COMPLETE | 109/109 | — |
+| 4 | agent-guard | AG-1 ✅ AG-2 ✅ AG-3 ✅ | 103/103 | USAGE-1 next |
+| 5 | usage-dashboard | Research ✅ Code [ ] | — | USAGE-1: token counter (macOS menubar or Streamlit) |
 
 ---
 
@@ -220,8 +270,8 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 
 ## Session Resume Checklist
 
-1. `python3 memory-system/tests/test_memory.py` — confirm 37/37
-2. `python3 spec-system/tests/test_spec.py` — confirm 26/26
+1. **CRITICAL FIRST:** Commit all untracked files from sessions 7+8 (see SESSION_STATE.md)
+2. Run all 13 test suites — confirm 404/404
 3. Read `SESSION_STATE.md` — exact current state and next actions
 4. Read module `CLAUDE.md` for the frontier being worked on
 5. State what you're building before touching any file

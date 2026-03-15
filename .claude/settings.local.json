@@ -1,4 +1,52 @@
 {
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/context-monitor/hooks/meter.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/context-monitor/hooks/compact_anchor.py"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/context-monitor/hooks/alert.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/agent-guard/hooks/credential_guard.py"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/context-monitor/hooks/auto_handoff.py"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(*)",
@@ -24,7 +72,19 @@
       "WebFetch(domain:siliconangle.com)",
       "WebFetch(domain:mortenvistisen.com)",
       "WebFetch(domain:claudelog.com)",
-      "Skill(*)"
+      "Skill(*)",
+      "mcp__plugin_playwright_playwright__browser_run_code",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "mcp__Control_Chrome__open_url",
+      "mcp__Control_Chrome__get_current_tab",
+      "mcp__Control_Chrome__execute_javascript",
+      "mcp__Control_Chrome__list_tabs",
+      "mcp__Control_Chrome__switch_to_tab",
+      "WebFetch(domain:old.reddit.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:agentbets.ai)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:agnost.ai)"
     ]
   }
 }

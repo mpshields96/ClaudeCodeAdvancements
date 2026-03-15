@@ -1,0 +1,13 @@
+{
+  "name": "reddit-intel",
+  "version": "1.0.0",
+  "description": "Weekly Reddit intelligence scanner for Claude Code advancements and prediction market research. Reads posts and comments from r/ClaudeCode, r/ClaudeAI, r/algobetting and others. Read-only, no auth, no data egress.",
+  "author": {
+    "name": "Matthew Shields",
+    "url": "https://github.com/mpshields96/ClaudeCodeAdvancements"
+  },
+  "repository": "https://github.com/mpshields96/ClaudeCodeAdvancements",
+  "license": "MIT",
+  "keywords": ["reddit", "research", "claude-code", "intelligence", "weekly-scan"],
+  "commands": ["./commands/"]
+}

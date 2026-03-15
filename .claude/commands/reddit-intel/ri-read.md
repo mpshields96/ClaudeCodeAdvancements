@@ -1,0 +1,1 @@
+../../../reddit-intelligence/commands/ri-read.md

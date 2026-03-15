@@ -146,12 +146,45 @@ The target is tools that Matthew can use TODAY in his Claude Code sessions, not 
 
 ---
 
+## URL Review — Auto-Trigger (Non-Negotiable)
+
+When the user pastes a Reddit, GitHub, or any URL in this project's chat — with or without a slash command — Claude MUST automatically read and review it using the `/cca-review` workflow.
+
+**How it works:**
+1. Detect any URL in the user's message (reddit.com, github.com, or any http/https link)
+2. For Reddit: run `python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/reddit_reader.py "<URL>"` to get the full post + all comments
+3. For non-Reddit: use WebFetch to read the page
+4. Deliver the full `/cca-review` verdict: frontier mapping, rat poison check, BUILD/ADAPT/REFERENCE/SKIP
+5. If the post contains links to GitHub repos, tools, or other resources — follow and read those too
+
+**The user should be able to say "check this out" and paste a link.** That's it. No slash command required. Claude reads everything, analyzes it against the five frontiers, and delivers a verdict.
+
+If the user explicitly says "just read this" or "don't review" — skip the analysis and just return the content.
+
+Reddit links in comments and nested replies should also be followed if they point to tools, repos, or implementations relevant to the frontiers.
+
+---
+
 ## Communication Style Rules
 
 - No emojis unless explicitly requested
 - Explain what code does in plain English alongside any code output
 - One function at a time — test before building the next
 - MANDATORY — End EVERY response with a one-line `Advancement tip: ...` — one relevant tool, pattern, or next step. Non-negotiable.
+
+---
+
+## Session Commands
+
+| Command | Purpose | When to use |
+|---------|---------|-------------|
+| `/cca-init` | Session startup — reads context, runs tests, shows briefing | Start of every session |
+| `/cca-review` | Review any URL against frontiers — BUILD/SKIP verdict | Evaluating a Reddit post, GitHub repo, or article |
+| `/cca-auto` | Autonomous work — picks next task, executes via gsd:quick | When Matthew says "go" or wants hands-off progress |
+| `/cca-wrap` | Session wrap — self-rate, update docs, prepare handoff | End of every session |
+| `/browse-url` | Read any URL (no analysis, just content) | When you just need to see what's at a URL |
+| `/reddit-intel:ri-scan` | Scan multiple subreddits for frontier-relevant posts | Weekly research sweeps |
+| `/reddit-intel:ri-read` | Read a specific Reddit URL or subreddit listing | Quick Reddit reads |
 
 ---
 
@@ -174,14 +207,16 @@ Verified against Claude Code docs in Session 2 — treat as settled:
 ## Test Commands (run before any session work)
 
 ```bash
-python3 memory-system/tests/test_memory.py      # 37 tests
-python3 memory-system/tests/test_mcp_server.py  # 29 tests
-python3 spec-system/tests/test_spec.py          # 26 tests
-python3 research/tests/test_reddit_scout.py     # 29 tests
+python3 memory-system/tests/test_memory.py         # 37 tests
+python3 memory-system/tests/test_mcp_server.py     # 29 tests
+python3 spec-system/tests/test_spec.py             # 26 tests
+python3 research/tests/test_reddit_scout.py        # 29 tests
 python3 agent-guard/tests/test_mobile_approver.py  # 36 tests
+python3 context-monitor/tests/test_meter.py        # 33 tests
+python3 context-monitor/tests/test_alert.py        # 24 tests
 ```
 
-All five must show "OK" (157 total) before touching any other file.
+All seven must show "OK" (214 total) before touching any other file.
 
 ---
 
