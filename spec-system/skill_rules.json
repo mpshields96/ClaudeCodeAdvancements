@@ -1,0 +1,67 @@
+{
+  "_comment": "Skill auto-activation rules for UserPromptSubmit hook. Each rule triggers an additionalContext injection when matched.",
+  "rules": [
+    {
+      "id": "spec-new-feature",
+      "skill": "/spec:requirements",
+      "description": "New feature work detected — suggest spec-first workflow",
+      "keywords": ["new feature", "build a", "create a", "implement a", "add a new", "design a", "architect"],
+      "intent_patterns": ["(?i)\\b(build|create|implement|design|add)\\b.*\\b(system|module|feature|service|api|component|app|tool|dashboard|hook)\\b"],
+      "exclude_patterns": ["(?i)\\b(fix|bug|patch|hotfix|debug|test|refactor)\\b"],
+      "message": "This looks like new feature work. Consider running /spec:requirements first to define requirements before coding. Spec-first reduces rework by 60-80%.",
+      "priority": 10,
+      "enabled": true
+    },
+    {
+      "id": "spec-design-needed",
+      "skill": "/spec:design",
+      "description": "Architecture question — suggest design phase",
+      "keywords": ["how should I structure", "architecture for", "what pattern", "design pattern", "how to organize"],
+      "intent_patterns": ["(?i)\\b(structur|architect|organiz|design|pattern)\\b.*\\b(code|project|module|system|app)\\b"],
+      "exclude_patterns": [],
+      "message": "This sounds like an architecture question. If you have approved requirements, run /spec:design to generate a design document.",
+      "priority": 8,
+      "enabled": true
+    },
+    {
+      "id": "debug-systematic",
+      "skill": "systematic-debugging",
+      "description": "Bug report — suggest systematic debugging",
+      "keywords": ["bug", "broken", "not working", "error", "crash", "failing", "doesn't work", "wrong output"],
+      "intent_patterns": ["(?i)\\b(bug|broken|crash|fail|error|wrong|unexpected)\\b"],
+      "exclude_patterns": ["(?i)\\b(new feature|build|create|implement)\\b"],
+      "message": "Bug detected. Use systematic debugging: reproduce -> hypothesize -> test -> fix. Don't jump to solutions.",
+      "priority": 7,
+      "enabled": true
+    },
+    {
+      "id": "tdd-reminder",
+      "skill": "test-driven-development",
+      "description": "Implementation task — remind TDD",
+      "keywords": ["write the code", "implement this", "code this up", "start coding", "let's build"],
+      "intent_patterns": ["(?i)\\b(write|code|implement|start|build)\\b.*\\b(code|function|class|method|module)\\b"],
+      "exclude_patterns": ["(?i)\\b(test|spec|design|review|read)\\b"],
+      "message": "Before writing implementation code, write the tests first (TDD). Tests define the contract before the implementation.",
+      "priority": 5,
+      "enabled": true
+    },
+    {
+      "id": "review-url",
+      "skill": "/cca-review",
+      "description": "URL pasted — suggest review",
+      "keywords": [],
+      "intent_patterns": ["https?://[^\\s]+"],
+      "exclude_patterns": ["(?i)\\b(don't review|just read|no review|skip review)\\b"],
+      "message": "URL detected. Running /cca-review to evaluate against the five frontiers.",
+      "priority": 9,
+      "enabled": false,
+      "_note": "Disabled — URL auto-review is already handled by CLAUDE.md rules"
+    }
+  ],
+  "settings": {
+    "max_activations_per_prompt": 2,
+    "cooldown_seconds": 0,
+    "log_activations": true,
+    "disabled": false
+  }
+}
