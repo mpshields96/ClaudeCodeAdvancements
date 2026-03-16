@@ -3,10 +3,53 @@
 
 ---
 
-## Current State (as of Session 16 — 2026-03-15)
+## Current State (as of Session 17 — 2026-03-16)
 
-**Phase:** Implementation session COMPLETE. Committed sessions 10-15 backlog + session 16 work. Built USAGE-1 token counter (44 tests), /arewedone structural checker (50 tests), upgraded /cca-wrap with self-learning Review & Apply phase. Installed claude-devtools, Claude Usage Bar, Claude Island. All 568 tests passing across 17 suites. 7/7 modules pass structural check.
-**Next session starts at:** Run /cca-init. Priority: (1) Launch Claude Island when Kalshi chats idle — test hook safety. (2) Complete Claude Usage Bar OAuth setup. (3) Maestro retry (check for version > v0.2.4). (4) Implement next BUILD: OTel metrics integration for USAGE-1. (5) Push to remote.
+**Phase:** Implementation session COMPLETE. Built 3 new modules: USAGE-2 OTel OTLP receiver (63 tests), SPEC-6 skill auto-activation hook (64 tests), USAGE-3 cost threshold alert hook (39 tests). Pushed 3 commits to remote, OTel env vars configured in ~/.zshrc. Reviewed RunMaestro/Maestro (2500 stars) as mature alternative to its-maestro-baby. All 734 tests passing across 20 suites.
+**Next session starts at:** Run /cca-init. Priority: (1) Start OTel receiver daemon (`python3 usage-dashboard/otel_receiver.py start`) and verify CC metrics flow in. (2) Wire cost_alert.py into settings.local.json as PreToolUse hook. (3) Streamlit UI for usage dashboard (USAGE-5, optional). (4) Kalshi dual-chat automation via RunMaestro (memory: project_kalshi_automation.md). (5) Push to remote.
+
+---
+
+## What Was Done in Session 17 (2026-03-16)
+
+### USAGE-2: OTel OTLP Receiver (NEW — usage-dashboard/otel_receiver.py)
+- Lightweight stdlib-only OTLP HTTP/JSON receiver for Claude Code's native OTel metrics
+- Receives metrics + events on localhost:4318, stores as daily JSONL in `~/.claude-otel-metrics/`
+- Parses `claude_code.token.usage`, `claude_code.cost.usage`, and 6 other CC metric types
+- CLI: `start` (daemon), `status`, `query`, `summary`
+- `usage_counter.py live` subcommand added — imports otel_receiver for real-time view
+- 63 tests, all passing
+
+### SPEC-6: Skill Auto-Activation Hook (NEW — spec-system/hooks/skill_activator.py)
+- UserPromptSubmit hook that analyzes prompts for intent signals
+- Injects skill activation reminders via additionalContext before Claude processes prompt
+- Configurable via `skill_rules.json`: keywords, intent regex, exclude patterns, priority ordering
+- 5 rules: spec-new-feature (priority 10), spec-design-needed (8), debug-systematic (7), tdd-reminder (5), review-url (9, disabled)
+- Max 2 activations per prompt, log_activations to stderr
+- Wired into `.claude/settings.local.json` as UserPromptSubmit hook
+- 64 tests, all passing
+
+### USAGE-3: Cost Threshold Alert Hook (NEW — usage-dashboard/hooks/cost_alert.py)
+- PreToolUse hook that warns/blocks when session cost exceeds thresholds
+- Dual-source: tries OTel receiver data first (real-time), falls back to transcript JSONL
+- Cheap tools (Read/Glob/Grep/TodoWrite) always silently allowed
+- Default thresholds: warn at $5, block at $20 (configurable via env vars)
+- `CLAUDE_COST_BLOCK_ENABLED=1` to enable blocking (warn-only by default)
+- 39 tests, all passing
+
+### OTel Environment Setup
+- `otel_setup.sh` script created for ~/.zshrc configuration
+- OTel env vars configured in Matthew's ~/.zshrc:
+  - `CLAUDE_CODE_ENABLE_TELEMETRY=1`
+  - `OTEL_METRICS_EXPORTER=otlp`, `OTEL_LOGS_EXPORTER=otlp`
+  - `OTEL_EXPORTER_OTLP_PROTOCOL=http/json`
+  - `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`
+
+### Reddit Review
+- RunMaestro/Maestro (2500 stars) — REFERENCE for Frontier 4+5, mature Cue trigger system
+- B2B SaaS Growth Skill — SKIP (off-scope)
+
+### Tests: 734/734 passing (20 suites — 166 new tests)
 
 ---
 
@@ -404,10 +447,10 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 | Frontier | Module | Status | Tests | Next Action |
 |----------|--------|--------|-------|-------------|
 | 1: Persistent Memory | memory-system/ | MEM-1 ✅ MEM-2 ✅ MEM-3 ✅ MEM-4 ✅ MEM-5 ✅ | 94/94 | Frontier complete |
-| 2: Spec System | spec-system/ | SPEC-1–6 ✅ | 26/26 | Frontier complete |
+| 2: Spec System | spec-system/ | SPEC-1–6 ✅ | 90/90 | Frontier complete |
 | 3: Context Monitor | context-monitor/ | CTX-1 ✅ CTX-2 ✅ CTX-3 ✅ CTX-4 ✅ CTX-5 ✅ | 109/109 | Frontier complete |
 | 4: Agent Guard | agent-guard/ | AG-1 ✅ AG-2 ✅ AG-3 ✅ | 103/103 | Frontier nearly complete |
-| 5: Usage Dashboard | usage-dashboard/ | USAGE-1 ✅ /arewedone ✅ | 94/94 | OTel integration, alert hook |
+| 5: Usage Dashboard | usage-dashboard/ | USAGE-1 ✅ USAGE-2 ✅ USAGE-3 ✅ /arewedone ✅ | 196/196 | Wire cost_alert hook, Streamlit UI (optional) |
 
 ---
 
@@ -418,7 +461,8 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 | memory-system (capture) | 37 | 37/37 passing |
 | memory-system (mcp_server) | 29 | 29/29 passing |
 | memory-system (cli) | 28 | 28/28 passing |
-| spec-system | 26 | 26/26 passing |
+| spec-system (spec) | 26 | 26/26 passing |
+| spec-system (skill_activator) | 64 | 64/64 passing |
 | research (reddit_scout) | 29 | 29/29 passing |
 | agent-guard (mobile_approver) | 36 | 36/36 passing |
 | agent-guard (ownership) | 27 | 27/27 passing |
@@ -431,8 +475,10 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 | reddit-intelligence (nuclear_fetcher) | 29 | 29/29 passing |
 | self-learning | 34 | 34/34 passing |
 | usage-dashboard (usage_counter) | 44 | 44/44 passing |
+| usage-dashboard (otel_receiver) | 63 | 63/63 passing |
+| usage-dashboard (cost_alert) | 39 | 39/39 passing |
 | usage-dashboard (arewedone) | 50 | 50/50 passing |
-| **Total** | **568** | **568/568 passing** |
+| **Total** | **734** | **734/734 passing** |
 
 ---
 
@@ -455,17 +501,17 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 
 ## Open Items
 
-### USAGE-1: Token counter dashboard
-- macOS menu bar app UX (or Streamlit)
-- Thinking token visibility (Opus blindsides Pro users)
-- Per-session cost tracking
+### USAGE-5: Streamlit Dashboard (optional)
+- Visual UI for token/cost data (OTel receiver + transcript data)
+- Only worth building if CLI + OTel receiver prove useful in daily use
 
-### ADAPT: UserPromptSubmit skill auto-activation hook
-- Pattern from "Beast" post (r/ClaudeCode/comments/1oivs81)
-- Hook analyzes user prompt for keywords/intent → injects skill activation reminder before Claude processes it
-- Uses skill-rules.json with keywords, intent regex, file path triggers, content triggers
-- Could auto-activate /spec:requirements when new feature work detected
-- Delivery: UserPromptSubmit hook (Python)
+### Wire USAGE-3 cost_alert.py into settings.local.json
+- PreToolUse hook entry needed in settings.local.json
+- Test with live session to verify warn/block behavior
+
+### Kalshi Dual-Chat Automation
+- Automate /polybot-init, /polybot-auto, /polybot-autoresearch startup via RunMaestro/tmux
+- See memory: project_kalshi_automation.md for full requirements
 
 ### REVIEW: Linked repos from Beast post comments
 - `github/spec-kit` — GitHub's own spec-driven dev framework
@@ -619,13 +665,13 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 
 ---
 
-## Session 17 Start Protocol
+## Session 18 Start Protocol
 
 1. Run /cca-init
-2. Run all 17 test suites — confirm 568+ passing
-3. Launch Claude Island (only when Kalshi chats are NOT active — it auto-installs hooks)
-4. Complete Claude Usage Bar OAuth setup (open app, sign in, paste auth code)
-5. Retry Maestro install (check for version > v0.2.4)
-6. Implement next BUILD: OTel metrics integration for usage-dashboard
-7. Push all commits to remote (2 new commits from Session 16)
-8. State what you're building before touching any file
+2. Run all 20 test suites — confirm 734+ passing
+3. Start OTel receiver: `python3 usage-dashboard/otel_receiver.py start` — verify CC metrics flowing
+4. Wire cost_alert.py into settings.local.json as PreToolUse hook
+5. Test cost alert live: make a few tool calls, check warn threshold behavior
+6. Optional: Streamlit UI for usage dashboard (USAGE-5)
+7. Kalshi dual-chat automation via RunMaestro (see memory: project_kalshi_automation.md)
+8. Push to remote

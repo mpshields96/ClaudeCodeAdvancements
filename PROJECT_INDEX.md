@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-15 (Session 16)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-16 (Session 17)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -52,9 +52,12 @@ ClaudeCodeAdvancements/
 │   │   ├── tasks.md                 # /spec:tasks slash command (SPEC-3) ✅
 │   │   └── implement.md             # /spec:implement slash command (SPEC-4) ✅
 │   ├── hooks/
-│   │   └── validate.py              # PreToolUse spec guard (SPEC-5) ✅
+│   │   ├── validate.py              # PreToolUse spec guard (SPEC-5) ✅
+│   │   └── skill_activator.py       # UserPromptSubmit skill auto-activation (SPEC-6) ✅
+│   ├── skill_rules.json             # Configurable skill activation rules
 │   ├── tests/
-│   │   └── test_spec.py             # 26 tests — all passing
+│   │   ├── test_spec.py             # 26 tests — all passing
+│   │   └── test_skill_activator.py  # 64 tests — all passing
 │   └── research/
 │       └── EVIDENCE.md
 │
@@ -109,9 +112,15 @@ ClaudeCodeAdvancements/
 └── usage-dashboard/                 # Frontier 5: Token + cost transparency
     ├── CLAUDE.md                    # Module rules
     ├── usage_counter.py             # USAGE-1: CLI token/cost counter (reads transcript JSONL)
+    ├── otel_receiver.py             # USAGE-2: Lightweight OTLP HTTP/JSON receiver for CC native metrics
+    ├── otel_setup.sh                # OTel env var setup script for ~/.zshrc
     ├── arewedone.py                 # Structural completeness checker (all 7 modules)
+    ├── hooks/
+    │   └── cost_alert.py            # USAGE-3: PreToolUse cost threshold warn/block hook
     ├── tests/
     │   ├── test_usage_counter.py    # 44 tests
+    │   ├── test_otel_receiver.py    # 63 tests
+    │   ├── test_cost_alert.py       # 39 tests
     │   └── test_arewedone.py        # 50 tests
     └── research/
         └── EVIDENCE.md              # Weekly cap problem + transcript approach
@@ -127,6 +136,7 @@ ClaudeCodeAdvancements/
 | `python3 memory-system/tests/test_mcp_server.py` | MCP server tests (29 tests) |
 | `python3 memory-system/tests/test_cli.py` | CLI viewer tests (28 tests) |
 | `python3 spec-system/tests/test_spec.py` | spec-system tests (26 tests) |
+| `python3 spec-system/tests/test_skill_activator.py` | skill activator tests (64 tests) |
 | `python3 research/tests/test_reddit_scout.py` | reddit scout tests (29 tests) |
 | `python3 agent-guard/tests/test_mobile_approver.py` | iPhone hook tests (36 tests) |
 | `python3 agent-guard/tests/test_ownership.py` | ownership manifest tests (27 tests) |
@@ -138,13 +148,15 @@ ClaudeCodeAdvancements/
 | `python3 reddit-intelligence/tests/test_reddit_reader.py` | reddit reader tests (43 tests) |
 | `python3 self-learning/tests/test_self_learning.py` | self-learning tests (34 tests) |
 | `python3 usage-dashboard/tests/test_usage_counter.py` | usage counter tests (44 tests) |
+| `python3 usage-dashboard/tests/test_otel_receiver.py` | OTel receiver tests (63 tests) |
+| `python3 usage-dashboard/tests/test_cost_alert.py` | cost alert tests (39 tests) |
 | `python3 usage-dashboard/tests/test_arewedone.py` | arewedone tests (50 tests) |
 | `python3 memory-system/cli.py stats` | Show memory stats |
 | `python3 agent-guard/ownership.py` | Show file ownership manifest |
 | `python3 usage-dashboard/usage_counter.py sessions` | Show per-session token/cost breakdown |
 | `python3 usage-dashboard/arewedone.py` | Structural completeness check (all 7 modules) |
 
-**Total:** 568/568 tests. **Session start:** Run all 17 suites. If anything fails, fix before touching other files.
+**Total:** 734/734 tests. **Session start:** Run all 20 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -248,7 +260,8 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | memory-system (capture) | `tests/test_memory.py` | 37 | All passing |
 | memory-system (mcp_server) | `tests/test_mcp_server.py` | 29 | All passing |
 | memory-system (cli) | `tests/test_cli.py` | 28 | All passing |
-| spec-system | `tests/test_spec.py` | 26 | All passing |
+| spec-system (spec) | `tests/test_spec.py` | 26 | All passing |
+| spec-system (skill_activator) | `tests/test_skill_activator.py` | 64 | All passing |
 | research | `tests/test_reddit_scout.py` | 29 | All passing |
 | agent-guard (mobile_approver) | `tests/test_mobile_approver.py` | 36 | All passing |
 | agent-guard (ownership) | `tests/test_ownership.py` | 27 | All passing |
@@ -261,8 +274,10 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 29 | All passing |
 | self-learning | `tests/test_self_learning.py` | 34 | All passing |
 | usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
+| usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
+| usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 50 | All passing |
-| **Total** | | **568** | **568/568** |
+| **Total** | | **734** | **734/734** |
 
 ---
 
@@ -271,10 +286,10 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | # | Frontier | Code Status | Tests | Immediate Next |
 |---|----------|-------------|-------|----------------|
 | 1 | memory-system | MEM-1–5 ✅ COMPLETE | 94/94 | — |
-| 2 | spec-system | SPEC-1–6 ✅ COMPLETE | 26/26 | — |
+| 2 | spec-system | SPEC-1–6 ✅ COMPLETE | 90/90 | — |
 | 3 | context-monitor | CTX-1–5 ✅ COMPLETE | 109/109 | — |
 | 4 | agent-guard | AG-1 ✅ AG-2 ✅ AG-3 ✅ | 103/103 | Frontier nearly complete |
-| 5 | usage-dashboard | USAGE-1 ✅ /arewedone ✅ | 94/94 | OTel integration, alert hook |
+| 5 | usage-dashboard | USAGE-1 ✅ USAGE-2 ✅ USAGE-3 ✅ /arewedone ✅ | 196/196 | Streamlit UI (optional) |
 
 ---
 
@@ -330,3 +345,4 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 10-13 | 2026-03-15 | cca-wrap, cca-scout, URL auto-review, tmux workspace, tool installs — 483 tests |
 | 14-15 | 2026-03-15 | Nuclear scan COMPLETE (138 posts), self-learning system, 517 tests |
 | 16 | 2026-03-15 | USAGE-1 counter, /arewedone, cca-wrap self-learning, 3 tool installs — 568 tests |
+| 17 | 2026-03-16 | USAGE-2 OTel receiver, SPEC-6 skill activator, USAGE-3 cost alert — 734 tests |
