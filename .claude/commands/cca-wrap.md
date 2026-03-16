@@ -163,7 +163,31 @@ the project CLAUDE.md. For each qualifying entry:
 
 If no entries qualify: skip silently. Do not fabricate promotions.
 
-### 6d — Check for recurring session-level anti-patterns
+### 6d — Apply strategy changes from detected patterns
+
+If reflect.py detected patterns with suggestions (e.g., threshold adjustments), apply them:
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/self-learning/reflect.py --apply
+```
+
+Review the output. For each applied change:
+- If the change suggests a new project rule (e.g., "always do X before Y"), add it to the
+  appropriate `.claude/rules/` file inside this project
+- If the change is a strategy parameter tweak, it's already written to `strategy.json` by `--apply`
+
+Log any rule file changes:
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/self-learning/journal.py log strategy_update \
+    --session [SESSION_NUMBER] --domain self_learning \
+    --outcome success \
+    --notes "[what was changed and why]"
+```
+
+If no patterns had suggestions: skip silently.
+
+### 6e — Check for recurring session-level anti-patterns
 
 Review the last 3 session entries in CHANGELOG.md. If you see the same type of issue
 appearing in 2+ consecutive sessions (e.g., "forgot to commit", "tests broke from same cause",
@@ -175,6 +199,31 @@ Suggestion: [specific fix — new rule, workflow change, or automation]
 ```
 
 If no recurring patterns: skip silently.
+
+### 6f — Structural health check
+
+If the `/arewedone` command is available, run it as a structural health check:
+
+```
+/arewedone
+```
+
+Record the result as pass, warn, or fail. If not available, skip and record "skipped".
+
+### 6g — Print Session Learning Summary
+
+After all sub-steps above, output this summary block:
+
+```
+SESSION LEARNING:
+- Patterns detected: [N from 6b]
+- Rules updated: [list of .claude/rules/ files changed, or "none"]
+- Strategy changes: [list of strategy.json changes from 6d, or "none"]
+- Learnings escalated: [list of severity promotions from 6c, or "none"]
+- Structural health: [pass/warn/fail/skipped from 6f]
+```
+
+This block is mandatory — always print it, even if all values are "none"/"0".
 
 ---
 
