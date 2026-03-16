@@ -541,6 +541,34 @@ def cmd_project(args: argparse.Namespace) -> None:
     print(format_sessions_table(sessions, title="All Sessions"))
 
 
+def cmd_live(args: argparse.Namespace) -> None:
+    """Show live OTel metrics from the OTLP receiver."""
+    try:
+        from otel_receiver import load_metrics, summarize_metrics, format_summary
+    except ImportError:
+        # Handle running from different working directory
+        otel_dir = Path(__file__).parent
+        sys.path.insert(0, str(otel_dir))
+        try:
+            from otel_receiver import load_metrics, summarize_metrics, format_summary
+        except ImportError:
+            print("Error: otel_receiver.py not found. Ensure it is in the same directory.")
+            sys.exit(1)
+
+    records = load_metrics(hours=args.hours)
+    if not records:
+        print(f"No OTel metrics found in the last {args.hours} hours.")
+        print("")
+        print("To enable OTel metrics:")
+        print("  1. source usage-dashboard/otel_setup.sh")
+        print("  2. python3 usage-dashboard/otel_receiver.py start")
+        print("  3. Restart Claude Code")
+        return
+
+    summary = summarize_metrics(records)
+    print(format_summary(summary))
+
+
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
@@ -585,6 +613,13 @@ def build_parser() -> argparse.ArgumentParser:
         "path", nargs="?", default=os.getcwd(), help="Project path (default: cwd)"
     )
     sp_project.set_defaults(func=cmd_project)
+
+    # live (OTel metrics)
+    sp_live = subparsers.add_parser("live", help="Show live OTel metrics (requires receiver)")
+    sp_live.add_argument(
+        "--hours", type=int, default=24, help="Hours to look back (default: 24)"
+    )
+    sp_live.set_defaults(func=cmd_live)
 
     return parser
 
