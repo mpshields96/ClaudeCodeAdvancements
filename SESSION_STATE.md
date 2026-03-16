@@ -3,10 +3,46 @@
 
 ---
 
-## Current State (as of Session 15 — 2026-03-15)
+## Current State (as of Session 16 — 2026-03-15)
 
-**Phase:** Nuclear scan COMPLETE. All 138 posts from r/ClaudeCode (Top > Year) processed across 2 sessions. Final report at `reddit-intelligence/findings/NUCLEAR_REPORT.md`. 82 entries in FINDINGS_LOG.md. Self-learning system built (Session 14). All 517+ tests passing.
-**Next session starts at:** Run /cca-init. Priority: (1) Commit ALL uncommitted work from sessions 7-15 (CRITICAL — deferred 8+ sessions). (2) Implement top BUILD from nuclear scan: self-learning review in /cca-wrap, USAGE-1 token counter (OTel), /arewedone structural check, install Claude Island. (3) Maestro retry POSTPONED to 2026-03-16.
+**Phase:** Implementation session COMPLETE. Committed sessions 10-15 backlog + session 16 work. Built USAGE-1 token counter (44 tests), /arewedone structural checker (50 tests), upgraded /cca-wrap with self-learning Review & Apply phase. Installed claude-devtools, Claude Usage Bar, Claude Island. All 568 tests passing across 17 suites. 7/7 modules pass structural check.
+**Next session starts at:** Run /cca-init. Priority: (1) Launch Claude Island when Kalshi chats idle — test hook safety. (2) Complete Claude Usage Bar OAuth setup. (3) Maestro retry (check for version > v0.2.4). (4) Implement next BUILD: OTel metrics integration for USAGE-1. (5) Push to remote.
+
+---
+
+## What Was Done in Session 16 (2026-03-15)
+
+### Implementation — Top BUILD Candidates from Nuclear Scan
+
+**Commit backlog cleared:**
+- Committed all sessions 10-15 work in single clean commit (0581d17)
+- 28 files, 5604 insertions — revertable with `git revert 0581d17`
+
+**USAGE-1: Token Counter CLI (NEW — usage-dashboard/usage_counter.py)**
+- Reads Claude Code transcript JSONL for per-session token/cost breakdown
+- Supports sonnet/opus/haiku pricing models
+- Commands: sessions, session <id>, today, week, project [path]
+- Revealed: $516.94 total across 11 CCA sessions
+- 44 tests, all passing
+
+**/arewedone: Structural Completeness Checker (NEW — usage-dashboard/arewedone.py)**
+- Scans all 7 modules for: CLAUDE.md, source files, tests, test pass/fail
+- Detects code stubs (TODO/FIXME/NotImplementedError) excluding test fixtures
+- Reports uncommitted files, doc freshness, syntax errors
+- --quiet mode for CI-style exit code (0=pass, 1=issues)
+- 50 tests, all passing
+- Found and fixed: missing CLAUDE.md in reddit-intelligence/ and self-learning/
+
+**cca-wrap upgraded:**
+- Added "Review & Apply" self-learning phase
+- Runs reflect.py at session end, logs patterns, suggests rule updates
+
+**External tools installed:**
+- claude-devtools v0.4.8 — `brew install --cask` (read-only session log viewer)
+- Claude Usage Bar v0.0.6 — /Applications (needs OAuth setup)
+- Claude Island v1.2 — /Applications (NOT launched — auto-installs hooks, could affect Kalshi chats)
+
+**Tests:** 568/568 passing (17 suites — 94 new tests)
 
 ---
 
@@ -371,7 +407,7 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 | 2: Spec System | spec-system/ | SPEC-1–6 ✅ | 26/26 | Frontier complete |
 | 3: Context Monitor | context-monitor/ | CTX-1 ✅ CTX-2 ✅ CTX-3 ✅ CTX-4 ✅ CTX-5 ✅ | 109/109 | Frontier complete |
 | 4: Agent Guard | agent-guard/ | AG-1 ✅ AG-2 ✅ AG-3 ✅ | 103/103 | Frontier nearly complete |
-| 5: Usage Dashboard | usage-dashboard/ | Research ✅ Code [ ] | — | USAGE-1: token counter |
+| 5: Usage Dashboard | usage-dashboard/ | USAGE-1 ✅ /arewedone ✅ | 94/94 | OTel integration, alert hook |
 
 ---
 
@@ -392,7 +428,11 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 | context-monitor (auto_handoff) | 27 | 27/27 passing |
 | context-monitor (compact_anchor) | 22 | 22/22 passing |
 | reddit-intelligence (reader) | 43 | 43/43 passing |
-| **Total** | **483** | **483/483 passing** |
+| reddit-intelligence (nuclear_fetcher) | 29 | 29/29 passing |
+| self-learning | 34 | 34/34 passing |
+| usage-dashboard (usage_counter) | 44 | 44/44 passing |
+| usage-dashboard (arewedone) | 50 | 50/50 passing |
+| **Total** | **568** | **568/568 passing** |
 
 ---
 
@@ -579,15 +619,13 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 
 ---
 
-## Session 16 Start Protocol
+## Session 17 Start Protocol
 
 1. Run /cca-init
-2. CRITICAL: Commit ALL uncommitted work from sessions 7-15 — deferred 8+ sessions
-3. Run all 15 test suites — confirm 517+ passing
-4. Retry Maestro install (postponed from Session 15 — check for version > v0.2.4)
-5. Implement top BUILD from nuclear scan:
-   - Self-learning review step in /cca-wrap (port Review & Apply phase)
-   - USAGE-1 token counter (OTel integration)
-   - /arewedone structural completeness check
-   - Install Claude Island (ready now, Apache 2.0)
-6. State what you're building before touching any file
+2. Run all 17 test suites — confirm 568+ passing
+3. Launch Claude Island (only when Kalshi chats are NOT active — it auto-installs hooks)
+4. Complete Claude Usage Bar OAuth setup (open app, sign in, paste auth code)
+5. Retry Maestro install (check for version > v0.2.4)
+6. Implement next BUILD: OTel metrics integration for usage-dashboard
+7. Push all commits to remote (2 new commits from Session 16)
+8. State what you're building before touching any file

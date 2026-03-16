@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-15 (Session 10)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-15 (Session 16)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -108,6 +108,11 @@ ClaudeCodeAdvancements/
 │
 └── usage-dashboard/                 # Frontier 5: Token + cost transparency
     ├── CLAUDE.md                    # Module rules
+    ├── usage_counter.py             # USAGE-1: CLI token/cost counter (reads transcript JSONL)
+    ├── arewedone.py                 # Structural completeness checker (all 7 modules)
+    ├── tests/
+    │   ├── test_usage_counter.py    # 44 tests
+    │   └── test_arewedone.py        # 50 tests
     └── research/
         └── EVIDENCE.md              # Weekly cap problem + transcript approach
 ```
@@ -132,10 +137,14 @@ ClaudeCodeAdvancements/
 | `python3 context-monitor/tests/test_compact_anchor.py` | compact anchor tests (22 tests) |
 | `python3 reddit-intelligence/tests/test_reddit_reader.py` | reddit reader tests (43 tests) |
 | `python3 self-learning/tests/test_self_learning.py` | self-learning tests (34 tests) |
+| `python3 usage-dashboard/tests/test_usage_counter.py` | usage counter tests (44 tests) |
+| `python3 usage-dashboard/tests/test_arewedone.py` | arewedone tests (50 tests) |
 | `python3 memory-system/cli.py stats` | Show memory stats |
 | `python3 agent-guard/ownership.py` | Show file ownership manifest |
+| `python3 usage-dashboard/usage_counter.py sessions` | Show per-session token/cost breakdown |
+| `python3 usage-dashboard/arewedone.py` | Structural completeness check (all 7 modules) |
 
-**Total:** 517/517 tests. **Session start:** Run all 15 suites. If anything fails, fix before touching other files.
+**Total:** 568/568 tests. **Session start:** Run all 17 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -248,8 +257,12 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | context-monitor (alert) | `tests/test_alert.py` | 24 | All passing |
 | context-monitor (auto_handoff) | `tests/test_auto_handoff.py` | 27 | All passing |
 | context-monitor (compact_anchor) | `tests/test_compact_anchor.py` | 22 | All passing |
-| reddit-intelligence | `tests/test_reddit_reader.py` | 43 | All passing |
-| **Total** | | **483** | **483/483** |
+| reddit-intelligence (reader) | `tests/test_reddit_reader.py` | 43 | All passing |
+| reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 29 | All passing |
+| self-learning | `tests/test_self_learning.py` | 34 | All passing |
+| usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
+| usage-dashboard (arewedone) | `tests/test_arewedone.py` | 50 | All passing |
+| **Total** | | **568** | **568/568** |
 
 ---
 
@@ -260,8 +273,8 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 1 | memory-system | MEM-1–5 ✅ COMPLETE | 94/94 | — |
 | 2 | spec-system | SPEC-1–6 ✅ COMPLETE | 26/26 | — |
 | 3 | context-monitor | CTX-1–5 ✅ COMPLETE | 109/109 | — |
-| 4 | agent-guard | AG-1 ✅ AG-2 ✅ AG-3 ✅ | 103/103 | USAGE-1 next |
-| 5 | usage-dashboard | Research ✅ Code [ ] | — | USAGE-1: token counter (macOS menubar or Streamlit) |
+| 4 | agent-guard | AG-1 ✅ AG-2 ✅ AG-3 ✅ | 103/103 | Frontier nearly complete |
+| 5 | usage-dashboard | USAGE-1 ✅ /arewedone ✅ | 94/94 | OTel integration, alert hook |
 
 ---
 
@@ -298,7 +311,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 ## Session Resume Checklist
 
 1. Run `/cca-init`
-2. Run all 13 test suites — confirm 483/483
+2. Run all 17 test suites — confirm 568/568
 3. Read `SESSION_STATE.md` — exact current state and next actions
 4. Read module `CLAUDE.md` for the frontier being worked on
 5. State what you're building before touching any file
@@ -312,3 +325,8 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 1 | 2026-02-19 | Research complete, all 5 frontier CLAUDE.md + EVIDENCE.md files, ROADMAP.md, master CLAUDE.md |
 | 2 | 2026-02-20 | Hooks feasibility research, MEM-1 schema, MEM-2 capture hook (37 tests), SPEC-1–5 complete (26 tests) |
 | 3 | 2026-02-20 | GitHub live, CLAUDE.md gotchas added, SESSION_STATE updated, MASTER_ROADMAP.md created |
+| 6 | 2026-03-08 | AG-1 mobile approver (36 tests), browse-url skill, Reddit scout |
+| 7-9 | 2026-03-08 | CTX-1–5, AG-2/3, MEM-5, reddit-intel plugin, session commands — 404 tests |
+| 10-13 | 2026-03-15 | cca-wrap, cca-scout, URL auto-review, tmux workspace, tool installs — 483 tests |
+| 14-15 | 2026-03-15 | Nuclear scan COMPLETE (138 posts), self-learning system, 517 tests |
+| 16 | 2026-03-15 | USAGE-1 counter, /arewedone, cca-wrap self-learning, 3 tool installs — 568 tests |

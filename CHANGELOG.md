@@ -3,6 +3,32 @@
 
 ---
 
+## Session 16 — 2026-03-15
+
+**What changed:**
+- `usage-dashboard/usage_counter.py` — CLI token/cost counter reading transcript JSONL (sonnet/opus/haiku pricing, per-session/daily/weekly views)
+- `usage-dashboard/arewedone.py` — structural completeness checker for all 7 modules (CLAUDE.md, source, tests, stubs, syntax)
+- `.claude/commands/arewedone.md` — /arewedone slash command
+- `.claude/commands/cca-wrap.md` — added Review & Apply self-learning phase
+- `reddit-intelligence/CLAUDE.md` — module rules (was missing)
+- `self-learning/CLAUDE.md` — module rules (was missing)
+- Committed sessions 10-15 backlog (28 files, 5604 insertions)
+- Installed claude-devtools v0.4.8, Claude Usage Bar v0.0.6, Claude Island v1.2
+
+**Why:**
+- USAGE-1 was the highest community demand from nuclear scan (9+ posts, 807pts OTel + 879pts devtools)
+- /arewedone catches structural gaps that silently accumulate (found 2 missing CLAUDE.md files)
+- Self-learning integration in /cca-wrap enables pattern detection at session boundaries
+- 8-session commit backlog was a critical risk to work preservation
+
+**Tests:** 568/568 passing (17 suites, 94 new)
+
+**Lessons:**
+- Test fixtures containing TODO/FIXME must be excluded from stub scanning
+- Claude Island auto-installs hooks — don't launch while other CC sessions are active
+
+---
+
 ## Session 14 — 2026-03-15
 
 **What changed:**

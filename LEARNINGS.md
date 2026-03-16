@@ -81,11 +81,30 @@
 
 ---
 
-### Commit discipline — work must be committed before session close — Severity: 2 — Count: 1
+### Commit discipline — work must be committed before session close — Severity: 2 — Count: 2
 - **Anti-pattern:** Completing and testing multiple features across sessions without committing — leaves 80+ untracked files as recovery liability
 - **Fix:** Commit each task when tests pass. Never close a session with untracked deliverables.
 - **First seen:** 2026-03-15 (Session 9 — sessions 7+8 work never committed)
-- **Last seen:** 2026-03-15
+- **Last seen:** 2026-03-15 (Session 16 — sessions 10-15 backlog finally committed)
 - **Files:** session workflow (applies to all sessions)
+- **Promoted:** 2026-03-15 -> CLAUDE.md Known Gotchas
+
+---
+
+### Test fixture files trigger false positives in code scanners — Severity: 1 — Count: 1
+- **Anti-pattern:** Scanning test files for TODO/FIXME/NotImplementedError — test fixtures intentionally contain these strings as test data
+- **Fix:** Exclude files in `/tests/` directories and `test_*.py` files from stub/TODO scanning
+- **First seen:** 2026-03-15 (Session 16 — arewedone.py reported 10 false positives from test fixtures)
+- **Last seen:** 2026-03-15
+- **Files:** `usage-dashboard/arewedone.py`, any code quality scanner
+
+---
+
+### Claude Island auto-installs hooks on first launch — Severity: 2 — Count: 1
+- **Anti-pattern:** Launching Claude Island while other Claude Code sessions are actively running
+- **Fix:** Only launch Claude Island when all other Claude Code sessions are idle. The app auto-installs hooks into `~/.claude/hooks/` which affects ALL sessions globally.
+- **First seen:** 2026-03-15 (Session 16 — discovered during install research)
+- **Last seen:** 2026-03-15
+- **Files:** Claude Island v1.2 (`/Applications/Claude Island.app`)
 
 ---
