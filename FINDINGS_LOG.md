@@ -81,3 +81,4 @@
 [2026-03-15] [REFERENCE] [Frontier 5: Usage] "0% to 7% by saying thanks" (280pts) — startup tax, CLAUDE.md bloat = higher startup cost, cache expires 5min — https://www.reddit.com/r/ClaudeCode/comments/1q9jzvd/
 [2026-03-15] [REFERENCE] [General] 2400+ hours with Claude (269pts) — experience report, AI-generated writing style — https://www.reddit.com/r/ClaudeCode/comments/1q0cqzz/
 [2026-03-16] [SKIP] [OFF-SCOPE] B2B SaaS Growth Skill (57pts) — domain-specific knowledge skill for GTM/PLG strategy, no CCA frontier relevance — https://www.reddit.com/r/ClaudeAI/comments/1rv506g/
+[2026-03-16] [REFERENCE] [Frontier 4+5: Agent Guard + Usage] RunMaestro/Maestro (2500 stars) — cross-platform multi-agent orchestrator, Cue trigger system (.maestro/cue.yaml), xterm tabs, token tracking. Reference for AG conflict patterns + USAGE demand validation. v0.15.2 stable, v0.16.0-RC. — https://github.com/RunMaestro/Maestro
