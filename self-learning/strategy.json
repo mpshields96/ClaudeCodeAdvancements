@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-15T00:00:00Z",
+  "updated_by": "initial",
+
+  "nuclear_scan": {
+    "min_score_threshold": 30,
+    "batch_size": 15,
+    "context_ceiling_pct": 40,
+    "fast_skip_keywords": ["meme", "humor", "rant", "complaint", "pricing", "first-time", "vent", "appreciation", "outage"],
+    "high_value_keywords": ["hook", "MCP", "LSP", "OTel", "memory", "context", "worktree", "agent", "dashboard", "statusline", "skill"],
+    "frontier_weights": {
+      "memory": 1.0,
+      "spec": 1.0,
+      "context": 1.2,
+      "agent_guard": 0.8,
+      "usage": 1.0
+    },
+    "score_thresholds": {
+      "deep_read_above": 200,
+      "fast_scan_below": 100
+    }
+  },
+
+  "session": {
+    "commit_after_each_task": true,
+    "test_before_docs": true,
+    "max_context_pct_before_wrap": 70
+  },
+
+  "review": {
+    "min_comment_depth": 3,
+    "follow_github_links": true,
+    "verdict_distribution_target": {
+      "build_pct": 5,
+      "adapt_pct": 20,
+      "reference_pct": 25,
+      "skip_pct": 50
+    }
+  },
+
+  "learning": {
+    "min_sample_size": 10,
+    "confidence_decay_days": 90,
+    "auto_adjust_enabled": false,
+    "reflection_on_wrap": true
+  }
+}

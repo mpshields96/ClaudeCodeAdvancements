@@ -6,3 +6,5 @@ __pycache__/
 ~/.claude-memory/
 research/findings/
 .claude/logs/
+.playwright-mcp/
+.claude-compact-anchor.md

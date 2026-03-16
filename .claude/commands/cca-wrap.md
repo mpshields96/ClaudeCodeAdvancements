@@ -122,14 +122,70 @@ If nothing was learned this session: skip this step. Don't fabricate lessons.
 
 ---
 
-## Step 6 — Update PROJECT_INDEX.md
+## Step 6 — Review & Apply (Self-Learning)
+
+This is the self-improvement loop. Claude catches its own patterns and auto-writes rules.
+
+### 6a — Log session outcome to journal
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 self-learning/journal.py log session_outcome \
+    --session [SESSION_NUMBER] --domain general \
+    --outcome [success/partial/failure] \
+    --notes "[one-sentence summary of what was accomplished]" \
+    --learnings '[LIST_OF_LEARNINGS_FROM_STEP_5]'
+```
+
+Use the grade from Step 2: A/B = success, C = partial, D = failure.
+
+### 6b — Run reflection to detect patterns
+
+```bash
+python3 self-learning/reflect.py --brief
+```
+
+If patterns are detected, output them. If any pattern has a suggestion, note it for the user.
+
+### 6c — Auto-escalate learnings to rules
+
+Scan LEARNINGS.md for any entry with **Severity: 3** and **Count: 3+** that does NOT already
+have a corresponding rule file in `.claude/rules/`. For each qualifying entry:
+
+1. Create a rule file at `.claude/rules/[topic].md` with the pattern and fix
+2. Append to the LEARNINGS.md entry: `- **Promoted:** [date] -> .claude/rules/[topic].md`
+
+Scan for any entry with **Severity: 2** and **Count: 2+** that is NOT already referenced in
+the project CLAUDE.md. For each qualifying entry:
+
+1. Add a bullet to the "Known Gotchas" section of CLAUDE.md
+2. Append to the LEARNINGS.md entry: `- **Promoted:** [date] -> CLAUDE.md Known Gotchas`
+
+If no entries qualify: skip silently. Do not fabricate promotions.
+
+### 6d — Check for recurring session-level anti-patterns
+
+Review the last 3 session entries in CHANGELOG.md. If you see the same type of issue
+appearing in 2+ consecutive sessions (e.g., "forgot to commit", "tests broke from same cause",
+"spent time on overhead"), output:
+
+```
+RECURRING ANTI-PATTERN DETECTED: [pattern]
+Suggestion: [specific fix — new rule, workflow change, or automation]
+```
+
+If no recurring patterns: skip silently.
+
+---
+
+## Step 7 — Update PROJECT_INDEX.md
 
 If any new files were created this session, add them to PROJECT_INDEX.md.
 If no new files: skip this step.
 
 ---
 
-## Step 7 — Stage and display diff
+## Step 8 — Stage and display diff
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements && git status && git diff --stat
@@ -140,7 +196,7 @@ let the user decide when to commit (they may want to review first).
 
 ---
 
-## Step 8 — Resume prompt
+## Step 9 — Resume prompt
 
 Output a copy-paste prompt for the next session:
 

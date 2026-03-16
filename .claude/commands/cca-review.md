@@ -99,10 +99,11 @@ IMPLEMENTATION:
 - Dependencies: [none / list them]
 - Duplicates: [none / what it overlaps with]
 
-VERDICT: [BUILD / ADAPT / REFERENCE / SKIP]
+VERDICT: [BUILD / ADAPT / REFERENCE / REFERENCE-PERSONAL / SKIP]
 - BUILD = we should build this or something like it
 - ADAPT = take specific patterns/ideas, not the whole thing
 - REFERENCE = interesting but not actionable now — save for later
+- REFERENCE-PERSONAL = not CCA-frontier but useful to Matthew personally (trading/Kalshi, academic writing, psychiatry, other projects)
 - SKIP = not worth our time
 
 WHY: [1-2 sentences justifying the verdict]

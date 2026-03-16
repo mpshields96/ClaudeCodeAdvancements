@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-15 (Session 9)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-15 (Session 10)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -13,6 +13,9 @@
 | Master roadmap + session prompts | `MASTER_ROADMAP.md` |
 | Current state + next actions | `SESSION_STATE.md` |
 | This file (read first) | `PROJECT_INDEX.md` |
+| Reddit review log (append-only) | `FINDINGS_LOG.md` |
+| Session changelog (append-only) | `CHANGELOG.md` |
+| Severity-tracked learnings | `LEARNINGS.md` |
 | GitHub | https://github.com/mpshields96/ClaudeCodeAdvancements |
 
 **Mission:** Build validated next-generation advancements for Claude Code users. NOT a betting project.
@@ -95,6 +98,14 @@ ClaudeCodeAdvancements/
 │   │   └── test_reddit_reader.py    # 43 tests
 │   └── findings/                    # Output directory for scan results
 │
+├── self-learning/                   # Cross-session self-learning system
+│   ├── journal.py                   # Structured event journal (JSONL), CLI interface
+│   ├── reflect.py                   # Pattern detection, strategy recommendations
+│   ├── strategy.json                # Tunable parameters (nuclear scan, session, review)
+│   ├── journal.jsonl                # Append-only event log (auto-generated)
+│   └── tests/
+│       └── test_self_learning.py    # 34 tests — all passing
+│
 └── usage-dashboard/                 # Frontier 5: Token + cost transparency
     ├── CLAUDE.md                    # Module rules
     └── research/
@@ -120,10 +131,11 @@ ClaudeCodeAdvancements/
 | `python3 context-monitor/tests/test_auto_handoff.py` | auto-handoff tests (27 tests) |
 | `python3 context-monitor/tests/test_compact_anchor.py` | compact anchor tests (22 tests) |
 | `python3 reddit-intelligence/tests/test_reddit_reader.py` | reddit reader tests (43 tests) |
+| `python3 self-learning/tests/test_self_learning.py` | self-learning tests (34 tests) |
 | `python3 memory-system/cli.py stats` | Show memory stats |
 | `python3 agent-guard/ownership.py` | Show file ownership manifest |
 
-**Total:** 404/404 tests. **Session start:** Run all 13 suites. If anything fails, fix before touching other files.
+**Total:** 517/517 tests. **Session start:** Run all 15 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -237,7 +249,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | context-monitor (auto_handoff) | `tests/test_auto_handoff.py` | 27 | All passing |
 | context-monitor (compact_anchor) | `tests/test_compact_anchor.py` | 22 | All passing |
 | reddit-intelligence | `tests/test_reddit_reader.py` | 43 | All passing |
-| **Total** | | **404** | **404/404** |
+| **Total** | | **483** | **483/483** |
 
 ---
 
@@ -268,10 +280,25 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 
 ---
 
+## Session Commands (Global — work from any folder)
+
+| Command | Purpose |
+|---------|---------|
+| `/cca-init` | Session startup — reads context, runs tests, shows briefing |
+| `/cca-review <url>` | Review any URL against frontiers — BUILD/SKIP verdict, logs to FINDINGS_LOG.md |
+| `/cca-auto` | Autonomous work — picks next task, executes via gsd:quick |
+| `/cca-wrap` | Session end — self-grade, update docs, learnings capture, resume prompt |
+| `/cca-scout` | Scan r/ClaudeCode + r/ClaudeAI for high-signal posts, dedupe vs findings log |
+| `/cca-nuclear` | Autonomous deep-dive — batch review top 100-150 posts, resumes across sessions |
+| `/cca-nuclear-wrap` | Nuclear session wrap-up with self-learning journal + reflection |
+| `/browse-url <url>` | Read any URL (no analysis, just content) |
+
+---
+
 ## Session Resume Checklist
 
-1. **CRITICAL FIRST:** Commit all untracked files from sessions 7+8 (see SESSION_STATE.md)
-2. Run all 13 test suites — confirm 404/404
+1. Run `/cca-init`
+2. Run all 13 test suites — confirm 483/483
 3. Read `SESSION_STATE.md` — exact current state and next actions
 4. Read module `CLAUDE.md` for the frontier being worked on
 5. State what you're building before touching any file

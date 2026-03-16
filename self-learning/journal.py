@@ -1,0 +1,316 @@
+#!/usr/bin/env python3
+"""
+journal.py — CCA Self-Learning Journal
+
+Structured append-only event log for tracking session outcomes, review patterns,
+and strategy effectiveness. Adapted from YoYo self-evolving agent pattern.
+
+Storage: self-learning/journal.jsonl (one JSON object per line)
+Strategy: self-learning/strategy.json (tunable parameters)
+
+Usage:
+    # Log a nuclear scan batch
+    python3 self-learning/journal.py log nuclear_batch \
+        --session 1 --domain nuclear_scan \
+        --metrics '{"posts_reviewed": 45, "build": 2, "adapt": 8}' \
+        --learnings '["OTel approach better than transcript parsing", "LSP hidden flag"]'
+
+    # Log a session outcome
+    python3 self-learning/journal.py log session_outcome \
+        --session 14 --domain general \
+        --outcome success \
+        --notes "Nuclear scan batch 1 complete"
+
+    # Show journal stats
+    python3 self-learning/journal.py stats
+
+    # Show recent entries
+    python3 self-learning/journal.py recent [N]
+
+    # Dump full journal
+    python3 self-learning/journal.py dump
+"""
+
+import sys
+import os
+import json
+import argparse
+from datetime import datetime, timezone
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+JOURNAL_PATH = os.path.join(SCRIPT_DIR, "journal.jsonl")
+STRATEGY_PATH = os.path.join(SCRIPT_DIR, "strategy.json")
+
+VALID_EVENT_TYPES = [
+    "nuclear_batch",      # Completed a batch of nuclear post reviews
+    "session_outcome",    # End-of-session summary
+    "review_verdict",     # Individual post review result
+    "strategy_update",    # Strategy config was changed
+    "pattern_detected",   # Reflection detected a pattern
+    "learning_captured",  # New learning added to LEARNINGS.md
+    "build_shipped",      # A BUILD candidate was implemented
+    "error",              # Something went wrong
+]
+
+VALID_DOMAINS = [
+    "nuclear_scan",
+    "memory_system",
+    "spec_system",
+    "context_monitor",
+    "agent_guard",
+    "usage_dashboard",
+    "reddit_intelligence",
+    "self_learning",
+    "general",
+]
+
+VALID_OUTCOMES = ["success", "partial", "failure", "skipped"]
+
+
+def _now_iso():
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _load_journal():
+    """Load all journal entries. Returns list of dicts."""
+    entries = []
+    if not os.path.exists(JOURNAL_PATH):
+        return entries
+    with open(JOURNAL_PATH, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    entries.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    return entries
+
+
+def _append_entry(entry):
+    """Append a single entry to the journal."""
+    with open(JOURNAL_PATH, "a") as f:
+        f.write(json.dumps(entry, separators=(",", ":")) + "\n")
+
+
+def _load_strategy():
+    """Load strategy config."""
+    if not os.path.exists(STRATEGY_PATH):
+        return {}
+    with open(STRATEGY_PATH, "r") as f:
+        return json.load(f)
+
+
+def _save_strategy(strategy):
+    """Save strategy config atomically."""
+    tmp = STRATEGY_PATH + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(strategy, f, indent=2)
+        f.write("\n")
+    os.replace(tmp, STRATEGY_PATH)
+
+
+def log_event(event_type, session_id=None, domain="general", outcome=None,
+              metrics=None, learnings=None, notes=None, strategy_version=None):
+    """Log a structured event to the journal."""
+    if event_type not in VALID_EVENT_TYPES:
+        print(f"Warning: unknown event_type '{event_type}', logging anyway", file=sys.stderr)
+
+    if domain not in VALID_DOMAINS:
+        print(f"Warning: unknown domain '{domain}', logging anyway", file=sys.stderr)
+
+    if outcome and outcome not in VALID_OUTCOMES:
+        print(f"Warning: unknown outcome '{outcome}', logging anyway", file=sys.stderr)
+
+    strategy = _load_strategy()
+    sv = strategy_version or f"v{strategy.get('version', 0)}"
+
+    entry = {
+        "timestamp": _now_iso(),
+        "event_type": event_type,
+        "session_id": session_id,
+        "domain": domain,
+        "outcome": outcome,
+        "metrics": metrics or {},
+        "learnings": learnings or [],
+        "strategy_version": sv,
+        "notes": notes,
+    }
+
+    # Strip None values for compact storage
+    entry = {k: v for k, v in entry.items() if v is not None}
+
+    _append_entry(entry)
+    return entry
+
+
+def get_stats():
+    """Aggregate journal stats."""
+    entries = _load_journal()
+    if not entries:
+        return {"total_entries": 0}
+
+    stats = {
+        "total_entries": len(entries),
+        "by_event_type": {},
+        "by_domain": {},
+        "by_outcome": {},
+        "sessions_logged": set(),
+        "first_entry": entries[0].get("timestamp", "unknown"),
+        "last_entry": entries[-1].get("timestamp", "unknown"),
+        "total_learnings": 0,
+    }
+
+    for e in entries:
+        et = e.get("event_type", "unknown")
+        stats["by_event_type"][et] = stats["by_event_type"].get(et, 0) + 1
+
+        d = e.get("domain", "unknown")
+        stats["by_domain"][d] = stats["by_domain"].get(d, 0) + 1
+
+        o = e.get("outcome")
+        if o:
+            stats["by_outcome"][o] = stats["by_outcome"].get(o, 0) + 1
+
+        sid = e.get("session_id")
+        if sid is not None:
+            stats["sessions_logged"].add(sid)
+
+        stats["total_learnings"] += len(e.get("learnings", []))
+
+    stats["sessions_logged"] = sorted(stats["sessions_logged"])
+    return stats
+
+
+def get_recent(n=10):
+    """Get the N most recent entries."""
+    entries = _load_journal()
+    return entries[-n:]
+
+
+def get_entries_by_domain(domain):
+    """Filter entries by domain."""
+    return [e for e in _load_journal() if e.get("domain") == domain]
+
+
+def get_all_learnings():
+    """Extract all learnings across all entries."""
+    learnings = []
+    for e in _load_journal():
+        for l in e.get("learnings", []):
+            learnings.append({
+                "learning": l,
+                "session": e.get("session_id"),
+                "domain": e.get("domain"),
+                "timestamp": e.get("timestamp"),
+            })
+    return learnings
+
+
+def get_nuclear_metrics():
+    """Aggregate nuclear scan specific metrics."""
+    entries = [e for e in _load_journal() if e.get("event_type") == "nuclear_batch"]
+    if not entries:
+        return None
+
+    total = {
+        "sessions": len(set(e.get("session_id", 0) for e in entries)),
+        "batches": len(entries),
+        "posts_reviewed": 0,
+        "build": 0,
+        "adapt": 0,
+        "reference": 0,
+        "skip": 0,
+        "fast_skip": 0,
+    }
+
+    for e in entries:
+        m = e.get("metrics", {})
+        for key in ["posts_reviewed", "build", "adapt", "reference", "skip", "fast_skip"]:
+            total[key] += m.get(key, 0)
+
+    if total["posts_reviewed"] > 0:
+        total["build_rate"] = round(total["build"] / total["posts_reviewed"], 3)
+        total["adapt_rate"] = round(total["adapt"] / total["posts_reviewed"], 3)
+        total["signal_rate"] = round(
+            (total["build"] + total["adapt"]) / total["posts_reviewed"], 3
+        )
+
+    return total
+
+
+def _cli():
+    parser = argparse.ArgumentParser(description="CCA Self-Learning Journal")
+    sub = parser.add_subparsers(dest="command")
+
+    # log
+    log_p = sub.add_parser("log", help="Log an event")
+    log_p.add_argument("event_type", help="Event type")
+    log_p.add_argument("--session", type=int, help="Session ID")
+    log_p.add_argument("--domain", default="general", help="Domain")
+    log_p.add_argument("--outcome", help="Outcome")
+    log_p.add_argument("--metrics", help="JSON metrics object")
+    log_p.add_argument("--learnings", help="JSON array of learnings")
+    log_p.add_argument("--notes", help="Free text notes")
+
+    # stats
+    sub.add_parser("stats", help="Show journal stats")
+
+    # recent
+    recent_p = sub.add_parser("recent", help="Show recent entries")
+    recent_p.add_argument("n", nargs="?", type=int, default=10, help="Number of entries")
+
+    # dump
+    sub.add_parser("dump", help="Dump full journal")
+
+    # nuclear
+    sub.add_parser("nuclear-stats", help="Nuclear scan metrics")
+
+    # learnings
+    sub.add_parser("learnings", help="All captured learnings")
+
+    args = parser.parse_args()
+
+    if args.command == "log":
+        metrics = json.loads(args.metrics) if args.metrics else None
+        learnings = json.loads(args.learnings) if args.learnings else None
+        entry = log_event(
+            event_type=args.event_type,
+            session_id=args.session,
+            domain=args.domain,
+            outcome=args.outcome,
+            metrics=metrics,
+            learnings=learnings,
+            notes=args.notes,
+        )
+        print(json.dumps(entry, indent=2))
+
+    elif args.command == "stats":
+        stats = get_stats()
+        print(json.dumps(stats, indent=2, default=list))
+
+    elif args.command == "recent":
+        for e in get_recent(args.n):
+            print(json.dumps(e))
+
+    elif args.command == "dump":
+        for e in _load_journal():
+            print(json.dumps(e, indent=2))
+
+    elif args.command == "nuclear-stats":
+        nm = get_nuclear_metrics()
+        if nm:
+            print(json.dumps(nm, indent=2))
+        else:
+            print("No nuclear scan data yet.")
+
+    elif args.command == "learnings":
+        for l in get_all_learnings():
+            print(f"[{l['timestamp']}] [{l['domain']}] {l['learning']}")
+
+    else:
+        parser.print_help()
+
+
+if __name__ == "__main__":
+    _cli()

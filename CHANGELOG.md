@@ -3,6 +3,137 @@
 
 ---
 
+## Session 14 — 2026-03-15
+
+**What changed:**
+- `self-learning/journal.py` — structured event journal (JSONL), CLI interface, nuclear metrics aggregation
+- `self-learning/reflect.py` — pattern detection engine, strategy auto-adjustment, recommendation generator
+- `self-learning/strategy.json` — tunable parameters for nuclear scan, session workflow, review strategy
+- `self-learning/tests/test_self_learning.py` — 34 tests covering journal, stats, reflection, strategy apply
+- `.claude/commands/cca-nuclear-wrap.md` — nuclear wrap command with 13-step self-learning integration
+- `reddit-intelligence/findings/NUCLEAR_REPORT.md` — interim report with self-learning section added
+- `reddit-intelligence/findings/nuclear_progress.json` — 45 post IDs reviewed
+- `FINDINGS_LOG.md` — 22 new entries (nuclear scan batch 1)
+- `SESSION_STATE.md` — session 14 log, nuclear progress, self-learning status
+- `PROJECT_INDEX.md` — self-learning module added
+
+**Why:**
+- Nuclear scan systematically mines r/ClaudeCode for actionable patterns across all 5 frontiers
+- Self-learning system adapted from YoYo pattern — tracks session outcomes, detects recurring patterns, suggests strategy tuning
+- User requested self-learning deployed for CCA/CLI, not just Polybot
+
+**Nuclear scan results (batch 1):**
+- 45/110 posts reviewed | 2 BUILD | 8 ADAPT | 22.2% signal rate
+- Top BUILD: OTel metrics for USAGE-1, claude-devtools for context observability
+- 7 specific learnings captured to journal
+
+**Tests:** 517/517 passing (15 suites)
+
+**Lessons:**
+- Self-learning journal must have SPECIFIC learnings, not vague summaries — "OTel better than transcript parsing" not "reviewed some posts"
+- Posts >500pts have ~3x higher BUILD/ADAPT rate than posts 30-200pts
+
+---
+
+## Session 12 — 2026-03-15
+
+**What changed:**
+- `SESSION_STATE.md` — added MASTER PLAN section (unified workspace + self-learning architecture), session 12 work log, updated open items
+- `FINDINGS_LOG.md` — 5 new entries (Claude Squad, Agent Deck, Codeman, NTM, 15-tool comparison), 27 total entries
+- `CHANGELOG.md` — this entry
+- `~/.local/bin/dev-start` — upgraded to auto-launch Claude in all 3 windows, idempotent re-attach
+- `~/.local/bin/cs-start` — new Claude Squad launcher (backup)
+
+**Why:**
+- User wants all Claude Code sessions (CCA + 2 Kalshi) in one tmux window with zero manual setup
+- Self-learning architecture designed for Polybot to adopt (journal + strategy feedback loop)
+- Maestro (preferred UI) crashed on macOS 15.6 beta — fell back to tmux + dev-start
+
+**Reddit reviews (6 new posts):**
+- YoYo self-evolving agent (ADAPT, 941pts) — journal pattern for self-learning
+- Crucix intelligence center (SKIP) — data dashboard, not agent management
+- Maestro orchestrator (BUILD, 476pts) — built from source, crashed on SDK issue
+- Maestro teaser (REFERENCE, 424pts) — confirms demand
+- Agent Teams walkthrough (ADAPT, 461pts) — sendMessage pattern, Cozempic pruner
+- Personal Claude setup / Adderall (same as Maestro)
+
+**Infrastructure:**
+- Maestro v0.2.4 built (crashed — macOS 15.6 beta _NSUserActivityTypeBrowsingWeb)
+- Claude Squad v1.0.17 installed via brew
+- tmux workspace: 3 windows, Claude auto-launched, 20/20 integration tests passing
+- CShip statusline verified rendering in tmux
+
+**Tests:** 483/483 passing
+
+**Lessons:**
+- Tauri apps built from source may crash on beta macOS due to SDK symbol changes — always have a CLI fallback
+- tmux is more reliable than native desktop apps for multi-session management (no SDK dependencies)
+- Self-learning agent architecture = shared journal + reflection step + minimum sample sizes — adapted from YoYo pattern
+
+---
+
+## Session 11 — 2026-03-15
+
+**What changed:**
+- `FINDINGS_LOG.md` — 9 new entries (4 batch 1 + 5 batch 2), introduced REFERENCE-PERSONAL verdict
+- `LEARNINGS.md` — new Severity 2: file-writing hooks trigger system-reminder context burn (160k tokens/3 rounds)
+- `SESSION_STATE.md` — 7 new open items (UserPromptSubmit hook, linked repos, compact anchor investigation, Recon install, ClaudePrism, trading refs, agtx)
+- `.claude/commands/cca-review.md` — added REFERENCE-PERSONAL verdict option + synced to global
+- Memory: user_profile.md (psychiatry resident, Kalshi/trading, academic writing), feedback_personal_tools.md
+
+**Reddit reviews (9 posts):**
+- Algotrading strategy list (REFERENCE-PERSONAL, 534pts)
+- VEI volatility signal (REFERENCE-PERSONAL, 436pts)
+- "claude on a crusade" meme (REFERENCE — Holy Order + superpowers links)
+- Beast post 6-month tips (ADAPT — skill auto-activation, build checker, context burn warning)
+- ClaudePrism academic workspace (REFERENCE-PERSONAL)
+- code-commentary sports narrator (SKIP)
+- Recon tmux dashboard (BUILD — 530pts, multi-agent visibility)
+- Membase memory layer (REFERENCE — conflict resolution pattern)
+- agtx terminal kanban (REFERENCE — worktree isolation, GSD plugin)
+
+**Infrastructure installed:**
+- tmux 3.6a, Rust 1.94.0, Recon v0.1.0 (tmux-native CC agent dashboard)
+- ~/.tmux.conf with Recon keybindings
+- ~/.local/bin/dev-start (3-window tmux: CCA + 2 Kalshi sessions)
+
+**Key findings:**
+- UserPromptSubmit hook for skill auto-activation is a new pattern CCA doesn't have
+- File-writing hooks (Prettier, compact_anchor) silently burn context via system-reminder diffs
+- Recon solves the multi-chat management problem using tmux + CC's own session JSON files
+
+**Tests:** 483/483 passing (no changes to code)
+
+**Lessons:**
+- Don't dismiss tools outside CCA frontiers — use REFERENCE-PERSONAL for personally useful tools (trading, academic writing)
+- Commit backlog has grown across 3 sessions — must commit first thing next session
+
+---
+
+## Session 10 — 2026-03-15
+
+**What changed:**
+- `.claude/commands/cca-wrap.md` — new session end ritual (self-grade, learnings, resume prompt)
+- `.claude/commands/cca-scout.md` — autonomous subreddit scanner for high-signal posts
+- `CLAUDE.md` — added "URL Review — Auto-Trigger" section + "Session Commands" table
+- `FINDINGS_LOG.md` — 8 new entries from Reddit reviews
+- All 5 /cca-* commands copied to `~/.claude/commands/` for global availability
+- Verified: CShip v1.0.80, RTK v0.29.0, mobile approver hook, claude-code-transcripts
+
+**Why:**
+- User needed effortless Reddit review pipeline — paste URL, get verdict, auto-log
+- Session management commands bring CCA to parity with polybot framework patterns
+- Global commands mean /cca-review and /cca-scout work from any project folder
+
+**Tests:** 483/483 passing (13 suites — no new test files, count increase from existing suites)
+
+**Lessons:**
+- Project-scoped commands (`.claude/commands/`) only work when Claude Code is launched from that folder. Copy to `~/.claude/commands/` for global availability.
+- Reddit JSON API `top` without `t=month` param only returns ~24hr top. Need to add time range support to reddit_reader.py.
+- CCA scope boundary prevents installing tools outside the project folder — batch installs into one non-CCA terminal session.
+
+---
+
 ## Session 9 — 2026-03-15
 
 **What changed:**

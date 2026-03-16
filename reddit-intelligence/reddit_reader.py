@@ -151,9 +151,13 @@ def read_post(subreddit, post_id):
     return "\n".join(lines)
 
 
-def read_subreddit(subreddit, sort="hot", limit=25):
-    """Fetch post listing for a subreddit. Returns formatted string."""
+def read_subreddit(subreddit, sort="hot", limit=25, timeframe=""):
+    """Fetch post listing for a subreddit. Returns formatted string.
+    timeframe: for 'top' sort, one of: hour, day, week, month, year, all
+    """
     url = f"{API_BASE}/r/{subreddit}/{sort}.json?limit={limit}"
+    if sort == "top" and timeframe:
+        url += f"&t={timeframe}"
     data = fetch_json(url)
     posts = data["data"]["children"]
 
@@ -200,7 +204,8 @@ def main():
         else:
             sort = sys.argv[2] if len(sys.argv) > 2 else extra
             limit = int(sys.argv[3]) if len(sys.argv) > 3 else 25
-            print(read_subreddit(sub, sort, limit))
+            timeframe = sys.argv[4] if len(sys.argv) > 4 else ""
+            print(read_subreddit(sub, sort, limit, timeframe))
     except urllib.error.HTTPError as e:
         print(f"HTTP ERROR {e.code}: {e.reason} — r/{sub} may be private or banned", file=sys.stderr)
         sys.exit(1)

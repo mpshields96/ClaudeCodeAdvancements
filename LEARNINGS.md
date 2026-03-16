@@ -42,6 +42,45 @@
 
 ---
 
+### Project-scoped commands invisible outside project folder — Severity: 1 — Count: 1
+- **Anti-pattern:** Creating commands in `.claude/commands/` within a project, expecting them to work from other folders
+- **Fix:** Copy any command that should be global to `~/.claude/commands/`. Project-scoped commands only load when Claude Code is launched from that project directory.
+- **First seen:** 2026-03-15 (Session 10)
+- **Last seen:** 2026-03-15
+- **Files:** any `.claude/commands/*.md`
+
+---
+
+### Reddit JSON API top requires explicit time range — Severity: 1 — Count: 1
+- **Anti-pattern:** Calling `/r/subreddit/top.json` without `t=month` or `t=year` — returns only ~24hr top
+- **Fix:** Append `&t=month` or `&t=year` to the URL for longer time ranges
+- **First seen:** 2026-03-15 (Session 10 — /cca-scout results were too narrow)
+- **Last seen:** 2026-03-15
+- **Files:** `reddit-intelligence/reddit_reader.py`
+
+---
+
+### Tools outside sandbox require batch install in separate session — Severity: 1 — Count: 1
+- **Anti-pattern:** Discovering tools (CShip, RTK, pipx packages) during CCA reviews and context-switching per install
+- **Fix:** Collect all install commands during the session, batch them into one non-CCA terminal session at the end
+- **First seen:** 2026-03-15 (Session 10)
+- **Last seen:** 2026-03-15
+- **Files:** CCA scope boundary rule in CLAUDE.md
+
+---
+
+### File-writing hooks trigger system-reminder context burn — Severity: 2 — Count: 1
+- **Anti-pattern:** PostToolUse or Stop hooks that write/modify files during a Claude Code session. Each file modification triggers a `<system-reminder>` notification showing the diff, which consumes context tokens silently.
+- **Evidence:** Reddit user reported 160k tokens consumed in 3 rounds from a Prettier formatting hook writing files. The system-reminders showing file diffs were the cause, not the hook execution itself.
+- **Fix:** Hooks should avoid writing files during active sessions where possible. If file writes are necessary (e.g., compact_anchor.py), keep files small and writes infrequent. Never use hooks to auto-format or auto-modify source files mid-conversation.
+- **CCA impact:** `compact_anchor.py` (CTX-5) writes `.claude-compact-anchor.md` every 10 turns — review whether this triggers system-reminders and adjust frequency if so.
+- **First seen:** 2026-03-15 (Session 11 — from Beast post review, r/ClaudeCode/comments/1oivs81)
+- **Last seen:** 2026-03-15
+- **Files:** any hook that calls Write/Edit, `context-monitor/hooks/compact_anchor.py`
+- **Source:** https://www.reddit.com/r/ClaudeAI/comments/1oivjvm/comment/nm2cxm7/
+
+---
+
 ### Commit discipline — work must be committed before session close — Severity: 2 — Count: 1
 - **Anti-pattern:** Completing and testing multiple features across sessions without committing — leaves 80+ untracked files as recovery liability
 - **Fix:** Commit each task when tests pass. Never close a session with untracked deliverables.

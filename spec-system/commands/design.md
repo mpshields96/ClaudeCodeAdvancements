@@ -30,7 +30,8 @@ Read the requirements carefully. Then generate `design.md` with these sections:
 ### 1. Architecture Overview
 - What are the major components? (2–6 components for most features)
 - How do they relate to each other? (data flow, dependencies)
-- One-paragraph prose description + a simple ASCII diagram if helpful
+- One-paragraph prose description
+- **REQUIRED: Mermaid architecture diagram** — generate a mermaid code block showing component relationships, data flow, and dependencies. Mermaid renders natively in GitHub, VS Code, and Obsidian (zero dependencies).
 
 ### 2. Key Design Decisions
 For each significant architectural choice, document:
@@ -105,7 +106,7 @@ Status: DRAFT — not yet approved
 
 [One paragraph. What are the components and how do they connect?]
 
-[ASCII diagram if the component relationships benefit from visual representation]
+[REQUIRED: Mermaid diagram showing all major components and data flow]
 
 ---
 

@@ -3,10 +3,10 @@
 
 ---
 
-## Current State (as of Session 9 — 2026-03-15)
+## Current State (as of Session 15 — 2026-03-15)
 
-**Phase:** Wrap-up session. Sessions 7+8 work is complete but uncommitted. Must commit before new code.
-**Next session starts at:** `git add` + commit all untracked files from sessions 7+8, then AG-3 or USAGE-1.
+**Phase:** Nuclear scan COMPLETE. All 138 posts from r/ClaudeCode (Top > Year) processed across 2 sessions. Final report at `reddit-intelligence/findings/NUCLEAR_REPORT.md`. 82 entries in FINDINGS_LOG.md. Self-learning system built (Session 14). All 517+ tests passing.
+**Next session starts at:** Run /cca-init. Priority: (1) Commit ALL uncommitted work from sessions 7-15 (CRITICAL — deferred 8+ sessions). (2) Implement top BUILD from nuclear scan: self-learning review in /cca-wrap, USAGE-1 token counter (OTel), /arewedone structural check, install Claude Island. (3) Maestro retry POSTPONED to 2026-03-16.
 
 ---
 
@@ -39,6 +39,155 @@ git add SESSION_STATE.md
 ```
 
 Then commit with a message covering sessions 7+8 deliverables.
+
+---
+
+## What Was Done in Session 15 (2026-03-15)
+
+### Nuclear Scan Session 2 — COMPLETED
+- Reviewed remaining 65 posts (33 fast-skip + 32 deep-read)
+- Nuclear scan now COMPLETE: all 138 posts processed, 110 unique reviews
+- Final stats: 5 BUILD, 23 ADAPT, 20 REFERENCE, 6 SKIP, 57 FAST-SKIP
+- Special flags: 1 polybot-relevant, 3 maestro-relevant, 9 usage-dashboard
+- NUCLEAR_REPORT.md finalized with ranked BUILD candidates and grouped ADAPT patterns
+- FINDINGS_LOG.md expanded from 54 to 82 entries
+- Top BUILD candidates: (1) claude-devtools 879pts, (2) OTel Metrics 807pts, (3) Self-Improvement Loop 269pts, (4) Claude Island 309pts, (5) Usage Menu Bar 282pts
+
+### Notes
+- Maestro retry POSTPONED to 2026-03-16 (Kalshi bot running in terminal tonight)
+- Uncommitted work from sessions 7-15 still needs committing (CRITICAL)
+
+**Tests:** 517+ passing (15 suites)
+
+---
+
+## What Was Done in Session 14 (2026-03-15)
+
+### Nuclear Scan Batch 1
+- Reviewed 45/110 posts from r/ClaudeCode (Top > Year)
+- 2 BUILD, 8 ADAPT, 9 REFERENCE, 5 SKIP, 21 FAST-SKIP
+- Signal rate: 22.2% (BUILD+ADAPT / reviewed)
+- Top BUILD: OTel metrics integration, claude-devtools desktop app
+- Progress saved to `reddit-intelligence/findings/nuclear_progress.json`
+- Interim report at `reddit-intelligence/findings/NUCLEAR_REPORT.md`
+- 22 new entries in FINDINGS_LOG.md (54 total)
+
+### Self-Learning System (NEW)
+- `self-learning/journal.py` — structured append-only event log (JSONL)
+- `self-learning/reflect.py` — pattern detection + strategy recommendations
+- `self-learning/strategy.json` — tunable parameters (v1)
+- `self-learning/tests/test_self_learning.py` — 34 tests, all passing
+- `.claude/commands/cca-nuclear-wrap.md` — nuclear wrap command with self-learning integration
+- 5 journal entries logged (1 batch, 2 BUILD verdicts, 1 pattern, 1 session outcome)
+- 10 learnings captured
+
+### Key Learnings
+- CC natively emits OTel metrics — USAGE-1 should use this
+- MCP tools consume 70k+ tokens even when unused (#1 context killer)
+- ENABLE_LSP_TOOL hidden flag (50ms vs 30-60s navigation)
+- evolve-yourself pattern: frequency-based skill auto-create at 3x/day
+
+**Tests:** 517/517 passing (15 suites — includes 34 new self-learning tests)
+
+---
+
+## What Was Done in Session 12 (2026-03-15)
+
+### Master Window Project + Research Deep Dive
+
+**Reddit reviews (14 posts this session, 22 total in FINDINGS_LOG):**
+- YoYo self-evolving agent (ADAPT — self-learning journal loop, 941pts)
+- Crucix intelligence center (SKIP — data dashboard, not agent management)
+- Maestro multi-session orchestrator (BUILD — 476pts, grid UI, macOS native)
+- Maestro teaser post (REFERENCE — 424pts, confirms community demand)
+- Agent Teams full walkthrough (ADAPT — sendMessage pattern, Cozempic pruner)
+- Personal Claude setup / Adderall post (same as Maestro — already logged)
+
+**Multi-agent tool research (15 tools evaluated):**
+- Claude Squad, Recon, Agent Deck, Codeman, NTM, claude-tmux, Claude Dashboard,
+  IttyBitty, CCManager, Amux, claude-code-monitor, claude-code-dashboard, TmuxCC,
+  tmux-claude-code, Maestro
+
+**Infrastructure built:**
+- Maestro v0.2.4 built from source (Tauri + Rust, 2m55s compile)
+  - CRASHED: macOS 15.6 beta SDK incompatibility (_NSUserActivityTypeBrowsingWeb symbol)
+  - .dmg saved at /tmp/maestro-build/target/release/bundle/dmg/
+- Claude Squad v1.0.17 installed (brew install claude-squad)
+- tmux 3-session workspace configured and tested (20/20 tests passing):
+  - Window 0: cca (ClaudeCodeAdvancements, normal perms)
+  - Window 1: kalshi-1 (polymarket-bot, --dangerously-skip-permissions)
+  - Window 2: kalshi-2 (polymarket-bot, --dangerously-skip-permissions)
+- `~/.local/bin/dev-start` updated with auto-launch + idempotent re-attach
+- `~/.local/bin/cs-start` created (Claude Squad launcher, backup option)
+
+**Architecture designed:**
+- Self-learning Polybot journal + strategy feedback loop (YoYo pattern adapted for trading)
+- Cross-chat coordination via shared journal file
+- Master plan documented in SESSION_STATE.md for future session persistence
+
+**Tests:** 483/483 passing (no code changes to CCA modules)
+
+---
+
+## What Was Done in Session 11 (2026-03-15)
+
+### Research + Tooling — Reddit Reviews + tmux/Recon Install
+
+**Reddit reviews (9 posts — 2 batches):**
+- Batch 1: algotrading strategy list (REF-PERSONAL), VEI signal (REF-PERSONAL), "crusade" meme (REF), Beast 6-month tips (ADAPT)
+- Batch 2: ClaudePrism academic workspace (REF-PERSONAL), code-commentary (SKIP), Recon tmux dashboard (BUILD), Membase (REF), agtx kanban (REF)
+
+**Key findings captured:**
+- LEARNINGS: file-writing hooks trigger system-reminder context burn (Severity 2)
+- UserPromptSubmit skill auto-activation hook — new buildable pattern from Beast post
+- 3 linked repos to review: github/spec-kit, facetlayer/candle, dimitritholen/raggy
+
+**Infrastructure installed:**
+- tmux 3.6a (brew install tmux)
+- Rust 1.94.0 (brew install rust)
+- Recon v0.1.0 (cargo install, tmux-native CC agent dashboard)
+- ~/.tmux.conf with Recon keybindings (prefix+g dashboard, prefix+i next input)
+- ~/.local/bin/dev-start script (3-window tmux: CCA + 2 Kalshi bot sessions)
+
+**Framework upgrades:**
+- cca-review command: added REFERENCE-PERSONAL verdict (synced to global)
+- Memory: user_profile.md, feedback_personal_tools.md
+- CHANGELOG, FINDINGS_LOG, SESSION_STATE all updated
+
+**Tests:** 483/483 passing (no code changes)
+
+---
+
+## What Was Done in Session 10 (2026-03-15)
+
+### Framework Upgrade — Session Management + Reddit Pipeline
+
+**New commands:**
+- `/cca-wrap` — session end ritual with self-grading, learnings capture, resume prompts
+- `/cca-scout` — autonomous subreddit scanner (filters by score, dedupes vs FINDINGS_LOG)
+
+**CLAUDE.md upgrades:**
+- Added "URL Review — Auto-Trigger" section (any URL pasted auto-triggers /cca-review)
+- Added "Session Commands" reference table (all 7 CCA commands documented)
+
+**Reddit reviews (8 posts):**
+- Defuddle URL reading (ADAPT) — incorporated url_reader.py approach
+- claude-code-best-practice 15k-star repo (REFERENCE) — confirmed CCA already follows most patterns
+- OpenClaw/Public.com autonomous trading (REFERENCE) — flagged for polybot research chat
+- CShip statusline (BUILD) — installed, wired into settings.json
+- Autoresearch + Ouro Loop (ADAPT) — IRON LAWS prompt generated for polybot
+- Session transcript tools (ADAPT) — installed claude-code-transcripts
+- RTK token compression (BUILD) — confirmed already installed and working
+- iOS shipping best practices (REFERENCE) — CLAUDE.md-as-contract pattern validated
+
+**Infrastructure verified:**
+- CShip v1.0.80 — running, statusline configured
+- RTK v0.29.0 — running, hook wired
+- All 5 /cca-* commands copied to ~/.claude/commands/ (global)
+- Mobile approver hook — running
+- claude-code-transcripts — installed via Homebrew
+
+**Tests:** 483/483 passing (13 suites) — up from 404 (test count increase is from existing tests, no new test files)
 
 ---
 
@@ -243,7 +392,7 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 | context-monitor (auto_handoff) | 27 | 27/27 passing |
 | context-monitor (compact_anchor) | 22 | 22/22 passing |
 | reddit-intelligence (reader) | 43 | 43/43 passing |
-| **Total** | **404** | **404/404 passing** |
+| **Total** | **483** | **483/483 passing** |
 
 ---
 
@@ -271,12 +420,174 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 - Thinking token visibility (Opus blindsides Pro users)
 - Per-session cost tracking
 
+### ADAPT: UserPromptSubmit skill auto-activation hook
+- Pattern from "Beast" post (r/ClaudeCode/comments/1oivs81)
+- Hook analyzes user prompt for keywords/intent → injects skill activation reminder before Claude processes it
+- Uses skill-rules.json with keywords, intent regex, file path triggers, content triggers
+- Could auto-activate /spec:requirements when new feature work detected
+- Delivery: UserPromptSubmit hook (Python)
+
+### REVIEW: Linked repos from Beast post comments
+- `github/spec-kit` — GitHub's own spec-driven dev framework
+- `facetlayer/candle` — MCP-based process manager
+- `dimitritholen/raggy` — lightweight per-project RAG for dev docs
+
+### INVESTIGATE: compact_anchor.py system-reminder context burn
+- CTX-5 writes .claude-compact-anchor.md every 10 turns — may trigger system-reminder token drain
+- See LEARNINGS.md entry for details
+- Test: check if anchor writes produce system-reminder diffs in transcript JSONL
+
+### INSTALL: ClaudePrism — scientific writing workspace
+- Repo: github.com/delibae/claude-prism
+- For: academic papers, research writing (psychiatry)
+- Local-first, wraps CC as subprocess, LaTeX + PDF preview
+
+### REFERENCE-PERSONAL: Trading/Kalshi resources
+- r/algotrading strategy list (534pts) — 40+ basic algo strategies
+- VEI volatility expansion signal with Python source (436pts) — fast/slow ATR ratio
+- Both bookmarked in FINDINGS_LOG.md
+
+### INVESTIGATE: Cozempic context pruner
+- Repo: github.com/Ruya-AI/cozempic (pip install cozempic)
+- Prunes duplicate system-reminders and oversized tool outputs that eat context
+- Auto-checkpoints team state before compaction
+- Directly relevant to CTX-5 compact_anchor investigation
+- Found in Agent Teams post comments (r/ClaudeCode/comments/1qz8tyy)
+
 ---
 
-## Session 10 Start Protocol
+## MASTER PLAN: Unified Workspace + Self-Learning Architecture
 
-1. **FIRST ACTION:** Commit all untracked files from sessions 7+8 (see CRITICAL section above)
-2. Run all 13 test suites — confirm 404/404
-3. Read SESSION_STATE.md (this file)
-4. Choose: USAGE-1 (token counter) or additional AG-4 work
-5. State what you're building before touching any file
+**Status:** IN PROGRESS — tmux setup complete, self-learning design ready for Polybot adoption
+
+### Part 1: Master Window (COMPLETE)
+
+**Goal:** All Claude Code sessions in one window. Open Terminal, type `dev-start`, everything launches.
+
+**What was built:**
+- tmux 3-session workspace via `~/.local/bin/dev-start`
+- Window 0: `cca` — ClaudeCodeAdvancements (normal permissions)
+- Window 1: `kalshi-1` — Polymarket/Kalshi main chat (--dangerously-skip-permissions)
+- Window 2: `kalshi-2` — Polymarket/Kalshi research chat (--dangerously-skip-permissions)
+- All sessions auto-launch Claude Code in correct project directories
+- Idempotent: re-running `dev-start` attaches to existing session (no duplicates)
+- CShip statusline renders correctly in tmux
+- Sessions survive Terminal closure (tmux background)
+
+**Keyboard shortcuts:**
+- `Ctrl+b, 0/1/2` — jump to CCA / Kalshi Main / Kalshi Research
+- `Ctrl+b, w` — visual window picker
+- `Ctrl+b, d` — detach (sessions keep running)
+- `Ctrl+b, c` — add a new window
+- `Ctrl+b, &` — kill current window
+
+**Tools evaluated (15 total):**
+- Claude Squad v1.0.17 — INSTALLED (Go TUI, brew install, backup option)
+- Maestro v0.2.4 — BUILT but crashes on macOS 15.6 beta (SDK symbol _NSUserActivityTypeBrowsingWeb missing from CoreServices). Retry when off beta or Maestro updates Tauri config.
+- Recon — previously installed (tmux popup dashboard)
+- Agent Deck, Codeman, NTM, claude-tmux, Claude Dashboard, IttyBitty, CCManager, Amux, claude-code-monitor, claude-code-dashboard, TmuxCC, tmux-claude-code — all evaluated, details in FINDINGS_LOG.md
+
+**Adding/removing sessions:**
+- Add: `Ctrl+b, c` then `cd /path/to/project && claude`
+- Remove: `Ctrl+b, &` to kill current window
+- Or edit `~/.local/bin/dev-start` to change the default template
+
+### Part 2: Self-Learning Polybot Architecture (DESIGNED — needs Polybot adoption)
+
+**Goal:** Kalshi main chat (monitors/bets) and research chat (coding/bugs) learn from outcomes and improve strategy autonomously.
+
+**Architecture (adapted from YoYo self-evolving agent pattern):**
+
+```
+┌─────────────────────┐     writes outcomes     ┌──────────────────────┐
+│   Kalshi Main Chat   │ ──────────────────────> │                      │
+│   (live monitoring)  │                         │   Shared Journal     │
+│   /polybot-auto      │ <────────────────────── │   (structured JSON)  │
+│                      │     reads strategy      │                      │
+└─────────────────────┘                         │   Location: TBD      │
+                                                 │   ~/polybot-journal/ │
+┌─────────────────────┐     reads outcomes       │   or project-local   │
+│  Kalshi Research     │ ──────────────────────> │                      │
+│  (coding/infra/bugs) │                         └──────────────────────┘
+│  /polybot-autoresearch│
+│                      │ ──> updates strategy config based on patterns
+└─────────────────────┘
+```
+
+**Journal schema (proposed):**
+```json
+{
+  "timestamp": "2026-03-15T21:00:00Z",
+  "event_type": "bet_outcome | strategy_update | pattern_detected | error",
+  "market_type": "crypto_15m | weather | sports | custom",
+  "ticker": "KXBTC15M",
+  "side": "yes | no",
+  "price_cents": 95,
+  "result": "win | loss | void",
+  "pnl_cents": 500,
+  "confidence": 0.85,
+  "conditions": "low_liquidity, post_8pm, high_volatility",
+  "strategy_version": "expiry_sniper_v1",
+  "notes": "Lost on low-liquidity market — need min liquidity threshold"
+}
+```
+
+**Self-learning loop (per session start):**
+1. Research chat reads journal at `/polybot-auto` or `/polybot-init`
+2. Aggregates: win rate by market type, time, conditions, strategy version
+3. Detects patterns: "we lose on X conditions" or "strategy Y outperforms Z"
+4. Updates strategy config (thresholds, filters, confidence adjustments)
+5. Main chat reads updated config at next session start
+
+**Key safeguards:**
+- Minimum sample size (N=20) before any strategy change
+- Strategy changes are logged with reason (no silent drift)
+- Backtesting: replay past outcomes through new strategy before deploying
+- Never expose API keys, account balances, or trade history in logs/commits
+
+**What Polybot needs to implement:**
+1. Journal writer in main chat (log every bet outcome)
+2. Journal reader + pattern detector in research chat
+3. Strategy config file that both chats read
+4. Reflection step at session start (read journal, summarize learnings)
+
+**Handoff to Polybot:** Tell either Kalshi chat:
+> "Read SESSION_STATE.md in /Users/matthewshields/Projects/ClaudeCodeAdvancements — section 'MASTER PLAN Part 2: Self-Learning'. Adopt this architecture for the journal + strategy feedback loop."
+
+### Part 3: Cross-Chat Coordination (FUTURE)
+
+**Problem:** CCA and Polybot can't write to each other's folders (scope boundaries).
+**Solution options:**
+1. Shared file at `~/.claude-workspace-state.json` (neutral location)
+2. Agent Teams sendMessage pattern (file-based inbox per agent)
+3. Polybot reads CCA's SESSION_STATE.md (read-only cross-reference)
+
+**Not urgent.** The tmux window switching (Ctrl+b, 0/1/2) makes manual coordination fast enough for now.
+
+### Debugging Issues to Watch
+
+| Issue | Risk | Mitigation |
+|-------|------|------------|
+| Maestro crash on macOS 15.6 beta | Known | Use tmux + dev-start instead. Retry Maestro after macOS stable or SDK update |
+| CShip in tmux | Low (tested, works) | If ANSI breaks, set `TERM=xterm-256color` in tmux.conf |
+| Hooks in tmux sessions | Low (tested, works) | Global hooks fire in all sessions. Project hooks fire per CWD |
+| Duplicate sessions on re-run | None (fixed) | dev-start checks `tmux has-session` before creating |
+| Old Terminal tab sessions | Clean up needed | Close old tabs after wrap commands finish |
+| Context burn from 3 concurrent sessions | Medium | Only actively chat with 1-2 at a time. Idle sessions cost zero tokens |
+| Credential exposure in logs/commits | CRITICAL | AG-3 credential guard active. Never log keys, balances, or trade data to git |
+| Strategy drift in self-learning | Medium | Minimum sample size N=20 before changes. All changes logged with reason |
+
+---
+
+## Session 16 Start Protocol
+
+1. Run /cca-init
+2. CRITICAL: Commit ALL uncommitted work from sessions 7-15 — deferred 8+ sessions
+3. Run all 15 test suites — confirm 517+ passing
+4. Retry Maestro install (postponed from Session 15 — check for version > v0.2.4)
+5. Implement top BUILD from nuclear scan:
+   - Self-learning review step in /cca-wrap (port Review & Apply phase)
+   - USAGE-1 token counter (OTel integration)
+   - /arewedone structural completeness check
+   - Install Claude Island (ready now, Apache 2.0)
+6. State what you're building before touching any file
