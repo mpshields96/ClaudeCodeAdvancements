@@ -3,10 +3,23 @@
 
 ---
 
-## Current State (as of Session 17 — 2026-03-16)
+## Current State (as of Session 18 — 2026-03-16)
 
-**Phase:** Implementation session COMPLETE. Built 3 new modules: USAGE-2 OTel OTLP receiver (63 tests), SPEC-6 skill auto-activation hook (64 tests), USAGE-3 cost threshold alert hook (39 tests). Pushed 3 commits to remote, OTel env vars configured in ~/.zshrc. Reviewed RunMaestro/Maestro (2500 stars) as mature alternative to its-maestro-baby. All 734 tests passing across 20 suites.
-**Next session starts at:** Run /cca-init. Priority: (1) Start OTel receiver daemon (`python3 usage-dashboard/otel_receiver.py start`) and verify CC metrics flow in. (2) Wire cost_alert.py into settings.local.json as PreToolUse hook. (3) Streamlit UI for usage dashboard (USAGE-5, optional). (4) Kalshi dual-chat automation via RunMaestro (memory: project_kalshi_automation.md). (5) Push to remote.
+**Phase:** Wired USAGE-3 cost_alert.py into settings.local.json as PreToolUse hook. Hook is now live — warns at $5, blocks at $20 (opt-in). All 734 tests passing across 21 suites.
+**Next session starts at:** Run /cca-init. Priority: (1) Start OTel receiver daemon (`python3 usage-dashboard/otel_receiver.py start`) and verify CC metrics flow in. (2) Streamlit UI for usage dashboard (USAGE-5, optional). (3) Kalshi dual-chat automation via RunMaestro (memory: project_kalshi_automation.md). (4) Push to remote.
+
+---
+
+## What Was Done in Session 18 (2026-03-16)
+
+### USAGE-3 Hook Wiring
+- Wired `cost_alert.py` into `.claude/settings.local.json` as PreToolUse hook
+- Added alongside existing `alert.py` in the empty-matcher group (fires on all tool calls)
+- Hook self-filters: cheap tools (Read/Glob/Grep/TodoWrite) always silently pass
+- Verified: JSON valid, hook returns `{}` for both cheap and expensive tools (no cost data yet)
+- Once OTel receiver is running, the hook will have live cost data to check thresholds
+
+**Tests:** 734/734 passing (no new tests — wiring change only)
 
 ---
 
@@ -505,9 +518,10 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 - Visual UI for token/cost data (OTel receiver + transcript data)
 - Only worth building if CLI + OTel receiver prove useful in daily use
 
-### Wire USAGE-3 cost_alert.py into settings.local.json
-- PreToolUse hook entry needed in settings.local.json
-- Test with live session to verify warn/block behavior
+### ~~Wire USAGE-3 cost_alert.py into settings.local.json~~ DONE (Session 18)
+- Wired as PreToolUse hook in settings.local.json (empty matcher, all tools)
+- Hook handles cheap/expensive filtering internally
+- Live tested: cheap tools silently pass, expensive tools pass when no cost data
 
 ### Kalshi Dual-Chat Automation
 - Automate /polybot-init, /polybot-auto, /polybot-autoresearch startup via RunMaestro/tmux
@@ -665,13 +679,12 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 
 ---
 
-## Session 18 Start Protocol
+## Session 19 Start Protocol
 
 1. Run /cca-init
-2. Run all 20 test suites — confirm 734+ passing
+2. Run all 21 test suites — confirm 734+ passing
 3. Start OTel receiver: `python3 usage-dashboard/otel_receiver.py start` — verify CC metrics flowing
-4. Wire cost_alert.py into settings.local.json as PreToolUse hook
-5. Test cost alert live: make a few tool calls, check warn threshold behavior
-6. Optional: Streamlit UI for usage dashboard (USAGE-5)
-7. Kalshi dual-chat automation via RunMaestro (see memory: project_kalshi_automation.md)
-8. Push to remote
+4. Test cost alert live with OTel data: make a few tool calls, check warn threshold behavior
+5. Optional: Streamlit UI for usage dashboard (USAGE-5)
+6. Kalshi dual-chat automation via RunMaestro (see memory: project_kalshi_automation.md)
+7. Push to remote
