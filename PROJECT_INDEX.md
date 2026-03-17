@@ -108,10 +108,12 @@ ClaudeCodeAdvancements/
 │   ├── reflect.py                   # Pattern detection, strategy recommendations
 │   ├── strategy.json                # Tunable parameters (nuclear scan, session, review)
 │   ├── journal.jsonl                # Append-only event log (auto-generated)
+│   ├── trace_analyzer.py            # MT-7: Transcript JSONL pattern analyzer (RetryDetector, WasteDetector, etc.)
 │   ├── research/
 │   │   └── TRACE_ANALYSIS_RESEARCH.md  # MT-7: Transcript JSONL schema + 6 pattern detector definitions
 │   └── tests/
-│       └── test_self_learning.py    # 75 tests — all passing
+│       ├── test_self_learning.py    # 75 tests — all passing
+│       └── test_trace_analyzer.py   # 50 tests — all passing
 │
 ├── scripts/                         # Utility scripts (launcher, automation)
 │   └── kalshi-launch.sh             # Terminal.app dual-window Kalshi launcher
@@ -155,6 +157,8 @@ ClaudeCodeAdvancements/
 | `python3 reddit-intelligence/tests/test_reddit_reader.py` | reddit reader tests (43 tests) |
 | `python3 reddit-intelligence/tests/test_nuclear_fetcher.py` | nuclear fetcher tests (44 tests) |
 | `python3 self-learning/tests/test_self_learning.py` | self-learning tests (75 tests) |
+| `python3 self-learning/tests/test_trace_analyzer.py` | trace analyzer tests (50 tests) |
+| `python3 self-learning/trace_analyzer.py <session.jsonl>` | Analyze a session transcript |
 | `python3 usage-dashboard/tests/test_usage_counter.py` | usage counter tests (44 tests) |
 | `python3 usage-dashboard/tests/test_otel_receiver.py` | OTel receiver tests (63 tests) |
 | `python3 usage-dashboard/tests/test_cost_alert.py` | cost alert tests (39 tests) |
@@ -164,7 +168,7 @@ ClaudeCodeAdvancements/
 | `python3 usage-dashboard/usage_counter.py sessions` | Show per-session token/cost breakdown |
 | `python3 usage-dashboard/arewedone.py` | Structural completeness check (all 7 modules) |
 
-**Total:** 800/800 tests. **Session start:** Run all 20 suites. If anything fails, fix before touching other files.
+**Total:** 850/850 tests. **Session start:** Run all 21 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -283,11 +287,12 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | reddit-intelligence (reader) | `tests/test_reddit_reader.py` | 43 | All passing |
 | reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 44 | All passing |
 | self-learning | `tests/test_self_learning.py` | 75 | All passing |
+| self-learning (trace_analyzer) | `tests/test_trace_analyzer.py` | 50 | All passing |
 | usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
-| **Total** | | **800** | **800/800** |
+| **Total** | | **850** | **850/850** |
 
 ---
 
@@ -358,3 +363,5 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 17 | 2026-03-16 | USAGE-2 OTel receiver, SPEC-6 skill activator, USAGE-3 cost alert — 734 tests |
 | 18 | 2026-03-16 | USAGE-3 hook wiring, Kalshi tmux automation, KALSHI_CHEATSHEET — 734 tests |
 | 19 | 2026-03-16 | MASTER_TASKS.md (MT-0–MT-5), nuclear subreddit flexibility, Kalshi Terminal launcher, CCA vs YoYo analysis — 742 tests |
+| 25 | 2026-03-16 | ROADMAP overhaul, MT-7 trace analysis research DONE (6 pattern defs), MT-9–MT-14 created — 800 tests |
+| 26 | 2026-03-16 | MT-7 COMPLETE: trace_analyzer.py (50 tests), validated on 3 real transcripts — 850 tests |
