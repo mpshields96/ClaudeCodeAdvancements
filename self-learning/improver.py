@@ -82,6 +82,67 @@ def classify_risk(target_file=None, target_module="self-learning", modifies_hook
 
 
 # ---------------------------------------------------------------------------
+# QualityGate — geometric mean anti-gaming (sentrux / Nash 1950 pattern)
+# ---------------------------------------------------------------------------
+
+class QualityGate:
+    """Multi-metric quality gate using geometric mean scoring.
+
+    Prevents Goodhart's Law gaming in self-improvement loops: you can't
+    sacrifice one metric to boost another, because a zero (or low value)
+    in any dimension tanks the composite score.
+
+    All metrics are normalized to [0.0, 1.0]. The geometric mean of N
+    metrics is (m1 * m2 * ... * mN) ^ (1/N). Requires at least 2 metrics
+    to prevent single-metric gaming.
+    """
+
+    def __init__(self, threshold=0.5):
+        self.threshold = threshold
+
+    def evaluate(self, metrics):
+        """Evaluate metrics against the quality gate.
+
+        Args:
+            metrics: dict of {metric_name: float} where values are 0.0-1.0
+
+        Returns:
+            dict with: passed, geometric_mean, metrics, threshold, weakest_metric
+        """
+        if len(metrics) < 2:
+            return {
+                "passed": False,
+                "geometric_mean": 0.0,
+                "metrics": dict(metrics),
+                "threshold": self.threshold,
+                "weakest_metric": None,
+                "error": "Quality gate requires at least 2 metrics",
+            }
+
+        # Clamp values to [0.0, 1.0]
+        clamped = {}
+        for k, v in metrics.items():
+            clamped[k] = max(0.0, min(1.0, v))
+
+        # Geometric mean: (product)^(1/n)
+        product = 1.0
+        for v in clamped.values():
+            product *= v
+        geo_mean = product ** (1.0 / len(clamped))
+
+        # Identify weakest metric
+        weakest = min(clamped, key=clamped.get)
+
+        return {
+            "passed": geo_mean >= self.threshold,
+            "geometric_mean": geo_mean,
+            "metrics": clamped,
+            "threshold": self.threshold,
+            "weakest_metric": weakest,
+        }
+
+
+# ---------------------------------------------------------------------------
 # ImprovementProposal
 # ---------------------------------------------------------------------------
 

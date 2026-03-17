@@ -684,5 +684,171 @@ class TestSafetyGuards(unittest.TestCase):
                 self.assertNotIn("CLAUDE.md", p.target_file)
 
 
+class TestQualityGate(unittest.TestCase):
+    """Test geometric mean quality gate for MT-10 self-improvement loop.
+
+    The geometric mean prevents Goodhart's Law gaming: you can't sacrifice
+    one metric to boost another, because a zero in any dimension tanks the
+    composite score. Inspired by Nash bargaining (1950) / sentrux pattern.
+    """
+
+    def test_geometric_mean_basic(self):
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({"a": 0.8, "b": 0.8})
+        self.assertAlmostEqual(result["geometric_mean"], 0.8, places=5)
+
+    def test_geometric_mean_three_metrics(self):
+        gate = improver.QualityGate(threshold=0.5)
+        # (0.5 * 0.5 * 0.5)^(1/3) = 0.5
+        result = gate.evaluate({"a": 0.5, "b": 0.5, "c": 0.5})
+        self.assertAlmostEqual(result["geometric_mean"], 0.5, places=5)
+
+    def test_all_ones_pass(self):
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({"a": 1.0, "b": 1.0, "c": 1.0})
+        self.assertTrue(result["passed"])
+        self.assertAlmostEqual(result["geometric_mean"], 1.0, places=5)
+
+    def test_one_zero_fails(self):
+        """Core anti-gaming property: any zero metric tanks the entire score."""
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({"a": 1.0, "b": 0.0, "c": 1.0})
+        self.assertFalse(result["passed"])
+        self.assertAlmostEqual(result["geometric_mean"], 0.0, places=5)
+
+    def test_anti_gaming_unbalanced(self):
+        """High in one, low in another → geometric mean punishes imbalance."""
+        gate = improver.QualityGate(threshold=0.5)
+        # (0.99 * 0.01)^(1/2) ≈ 0.0995 — well below threshold
+        result = gate.evaluate({"a": 0.99, "b": 0.01})
+        self.assertFalse(result["passed"])
+        self.assertLess(result["geometric_mean"], 0.2)
+
+    def test_balanced_moderate_passes(self):
+        """Balanced moderate scores pass where unbalanced extreme fails."""
+        gate = improver.QualityGate(threshold=0.5)
+        # (0.6 * 0.6)^(1/2) = 0.6 — passes
+        result = gate.evaluate({"a": 0.6, "b": 0.6})
+        self.assertTrue(result["passed"])
+
+    def test_threshold_customizable(self):
+        gate = improver.QualityGate(threshold=0.8)
+        result = gate.evaluate({"a": 0.7, "b": 0.7})
+        self.assertFalse(result["passed"])  # 0.7 < 0.8
+
+    def test_minimum_two_metrics_required(self):
+        """Quality gate needs at least 2 metrics to prevent single-metric gaming."""
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({"a": 1.0})
+        self.assertFalse(result["passed"])
+        self.assertIn("error", result)
+
+    def test_empty_metrics_rejected(self):
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({})
+        self.assertFalse(result["passed"])
+        self.assertIn("error", result)
+
+    def test_negative_values_clamped_to_zero(self):
+        """Negative metric values should be treated as 0."""
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({"a": 0.8, "b": -0.5})
+        self.assertFalse(result["passed"])
+        self.assertAlmostEqual(result["geometric_mean"], 0.0, places=5)
+
+    def test_values_above_one_clamped(self):
+        """Metric values > 1.0 should be clamped to 1.0."""
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({"a": 1.5, "b": 0.8})
+        # (1.0 * 0.8)^(1/2) ≈ 0.894
+        self.assertAlmostEqual(result["geometric_mean"], (1.0 * 0.8) ** 0.5, places=5)
+
+    def test_result_includes_per_metric_scores(self):
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({"test_pass": 0.9, "retry_reduction": 0.7})
+        self.assertIn("metrics", result)
+        self.assertEqual(result["metrics"]["test_pass"], 0.9)
+        self.assertEqual(result["metrics"]["retry_reduction"], 0.7)
+
+    def test_result_includes_threshold(self):
+        gate = improver.QualityGate(threshold=0.6)
+        result = gate.evaluate({"a": 0.8, "b": 0.8})
+        self.assertEqual(result["threshold"], 0.6)
+
+    def test_exactly_at_threshold_passes(self):
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({"a": 0.5, "b": 0.5})
+        self.assertTrue(result["passed"])
+
+    def test_just_below_threshold_fails(self):
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({"a": 0.49, "b": 0.5})
+        self.assertFalse(result["passed"])
+
+    def test_four_metrics_geometric_mean(self):
+        gate = improver.QualityGate(threshold=0.5)
+        # (0.8 * 0.6 * 0.7 * 0.9)^(1/4) ≈ 0.7418
+        expected = (0.8 * 0.6 * 0.7 * 0.9) ** 0.25
+        result = gate.evaluate({"a": 0.8, "b": 0.6, "c": 0.7, "d": 0.9})
+        self.assertAlmostEqual(result["geometric_mean"], expected, places=4)
+        self.assertTrue(result["passed"])
+
+    def test_weakest_metric_identified(self):
+        """Result should identify the weakest metric for targeted improvement."""
+        gate = improver.QualityGate(threshold=0.5)
+        result = gate.evaluate({"test_pass": 0.9, "waste_reduction": 0.3, "efficiency": 0.8})
+        self.assertEqual(result["weakest_metric"], "waste_reduction")
+
+    def test_default_threshold(self):
+        """Default threshold should be 0.5."""
+        gate = improver.QualityGate()
+        self.assertEqual(gate.threshold, 0.5)
+
+
+class TestImproverQualityGateIntegration(unittest.TestCase):
+    """Test QualityGate integration with Improver.record_outcome."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.store_path = os.path.join(self.tmpdir, "improvements.jsonl")
+
+    def test_record_outcome_with_quality_gate(self):
+        """record_outcome can use quality gate for multi-metric evaluation."""
+        imp = improver.Improver(store_path=self.store_path)
+        p = improver.ImprovementProposal(
+            pattern_type="retry_loop", pattern_data={"file": "x.py"},
+            source="trace_analysis", proposed_fix="fix retries",
+            expected_improvement="fewer retries", test_plan="check",
+            risk_level="LOW", target_module="self-learning",
+        )
+        imp.store.append(p)
+        gate = improver.QualityGate(threshold=0.5)
+        metrics = {"test_pass": 0.9, "retry_reduction": 0.8, "efficiency": 0.7}
+        result = gate.evaluate(metrics)
+        imp.record_outcome(p.id, improved=result["passed"],
+                          metric_before=None, metric_after=result["geometric_mean"])
+        loaded = imp.store.load_all()
+        self.assertEqual(loaded[0].status, "validated")
+
+    def test_quality_gate_rejects_unbalanced_improvement(self):
+        """Quality gate prevents accepting improvements that game one metric."""
+        imp = improver.Improver(store_path=self.store_path)
+        p = improver.ImprovementProposal(
+            pattern_type="high_waste", pattern_data={},
+            source="trace_analysis", proposed_fix="fix waste",
+            expected_improvement="less waste", test_plan="check",
+            risk_level="LOW", target_module="self-learning",
+        )
+        imp.store.append(p)
+        gate = improver.QualityGate(threshold=0.5)
+        # Waste improved massively but tests broke
+        metrics = {"test_pass": 0.1, "waste_reduction": 0.99}
+        result = gate.evaluate(metrics)
+        imp.record_outcome(p.id, improved=result["passed"],
+                          metric_before=None, metric_after=result["geometric_mean"])
+        loaded = imp.store.load_all()
+        self.assertEqual(loaded[0].status, "rejected")  # Gate caught the gaming
+
+
 if __name__ == "__main__":
     unittest.main()
