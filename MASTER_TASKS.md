@@ -246,6 +246,7 @@
 **Domains Matthew explicitly approved for autonomous scanning:**
 - Claude Code ecosystem: r/ClaudeCode, r/ClaudeAI, r/vibecoding, r/LocalLLaMA, r/MachineLearning
 - Trading/prediction markets: r/algotrading, r/Kalshi, r/predictit, r/polymarket
+- Investing/stocks (Session 28): r/investing, r/stocks, r/SecurityAnalysis, r/ValueInvesting, r/Bogleheads
 - UI/frontend development: r/webdev, r/reactjs, r/frontend, r/UI_Design
 - Academic research: r/MachineLearning, r/statistics, r/datascience (for reputable papers only)
 - iOS development: r/iOSProgramming, r/SwiftUI, r/apple (for MT-13)
