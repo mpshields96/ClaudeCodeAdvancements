@@ -146,7 +146,13 @@
 5. Validate: Compare quick-scan findings vs full nuclear scan on same sub — must catch same BUILD/ADAPT candidates
 6. Backtest: Re-run against already-scanned subs (r/ClaudeCode 138 posts) — quick-scan should surface the same top-5 BUILD candidates
 
-**Status:** Not started. Infrastructure exists (nuclear_fetcher.py, subreddit_slug(), namespaced reports). Needs profile system + quick-scan mode.
+**Status:** COMPLETE (Session 27). Delivered:
+- `profiles.py`: 10 builtin subreddit profiles (4 domains: claude/trading/dev/research), scan registry with yield tracking, quick-scan triage mode
+- `--profile` and `--quick` flags added to nuclear_fetcher.py
+- 43 tests (all passing)
+- CLI: `python3 profiles.py list|info|stale|history`
+- Backtested against 138-post r/ClaudeCode nuclear queue — validates quick-scan catches top signals while full nuclear finds deeper BUILD candidates
+- Scan registry tracks last-scan timestamps, posts scanned, builds, adapts, and yield score per sub
 
 ---
 

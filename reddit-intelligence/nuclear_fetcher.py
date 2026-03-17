@@ -195,10 +195,33 @@ def main():
                         help="Add NEEDLE/MAYBE/HAY classification to each post")
     parser.add_argument("--summary", action="store_true",
                         help="Print human-readable summary instead of JSON")
+    parser.add_argument("--profile", action="store_true",
+                        help="Use subreddit profile settings (overrides limit, timeframe, min-score)")
+    parser.add_argument("--quick", action="store_true",
+                        help="Quick-scan mode: fetch fewer posts, triage, deep-read top N only")
 
     args = parser.parse_args()
 
     sub = re.sub(r"^/?r/", "", args.subreddit.strip())
+
+    # Apply profile settings if --profile flag is set
+    if args.profile or args.quick:
+        try:
+            from profiles import get_profile, quick_scan_triage, merge_scout_nuclear
+            profile = get_profile(sub)
+            mode = "quick" if args.quick else "full"
+            params = merge_scout_nuclear(sub, mode, profile)
+            # Override CLI defaults with profile settings
+            if args.limit == 150:  # only override if user didn't set explicitly
+                args.limit = params["fetch_limit"]
+            if args.min_score == 0:
+                args.min_score = params["min_score"]
+            if args.timeframe == "year":
+                args.timeframe = params["timeframe"]
+            args.classify = True  # always classify with profiles
+            print(f"Using profile: {params['profile_name']} (mode={mode})", file=sys.stderr)
+        except ImportError:
+            print("WARNING: profiles.py not found, using defaults", file=sys.stderr)
 
     print(f"Fetching top {args.limit} posts from r/{sub} (t={args.timeframe})...", file=sys.stderr)
     posts = fetch_top_posts(sub, args.limit, args.timeframe)
@@ -229,6 +252,27 @@ def main():
         maybes = sum(1 for p in posts if p["triage"] == "MAYBE")
         hay = sum(1 for p in posts if p["triage"] == "HAY")
         print(f"Classification: {needles} NEEDLE, {maybes} MAYBE, {hay} HAY", file=sys.stderr)
+
+    # Quick-scan triage: split into deep-read and skipped
+    if args.quick:
+        try:
+            from profiles import quick_scan_triage
+            deep, skipped = quick_scan_triage(posts)
+            print(f"Quick-scan: {len(deep)} deep-read, {len(skipped)} skipped", file=sys.stderr)
+            if args.summary:
+                print(f"\nr/{sub} — QUICK SCAN — {len(deep)} posts for deep read\n")
+                for i, p in enumerate(deep, 1):
+                    flair_str = f" [{p['flair']}]" if p.get("flair") else ""
+                    print(f"{i:3d}. [{p['score']:4d} pts | {p['num_comments']:3d} comments]{flair_str}")
+                    print(f"     {p['title'][:100]}")
+                    print(f"     {p['permalink']}")
+                    print()
+                if skipped:
+                    print(f"--- {len(skipped)} posts skipped (HAY or lower priority) ---\n")
+                return
+            posts = deep  # For JSON output, only include deep-read posts
+        except ImportError:
+            print("WARNING: profiles.py not found for quick-scan triage", file=sys.stderr)
 
     # Output
     if args.summary:

@@ -95,12 +95,17 @@ ClaudeCodeAdvancements/
 ├── reddit-intelligence/             # Community signal research plugin
 │   ├── reddit_reader.py             # Fetches Reddit posts + all comments (no API key needed)
 │   ├── reddit_scout.py              # Daily community signal sweep
+│   ├── nuclear_fetcher.py           # Batch fetcher + classifier (NEEDLE/MAYBE/HAY)
+│   ├── profiles.py                  # MT-6: Subreddit profiles, scan registry, quick-scan mode
+│   ├── scan_registry.json           # Auto-generated: last-scan timestamps + yield per sub
 │   ├── commands/
 │   │   ├── ri-scan.md               # /reddit-intel:ri-scan — weekly multi-subreddit scan
 │   │   ├── ri-read.md               # /reddit-intel:ri-read [url] — read specific post
 │   │   └── ri-loop.md               # /reddit-intel:ri-loop — schedule recurring scans
 │   ├── tests/
-│   │   └── test_reddit_reader.py    # 43 tests
+│   │   ├── test_reddit_reader.py    # 43 tests
+│   │   ├── test_nuclear_fetcher.py  # 44 tests
+│   │   └── test_profiles.py         # 43 tests
 │   └── findings/                    # Output directory for scan results
 │
 ├── self-learning/                   # Cross-session self-learning system
@@ -156,6 +161,7 @@ ClaudeCodeAdvancements/
 | `python3 context-monitor/tests/test_compact_anchor.py` | compact anchor tests (22 tests) |
 | `python3 reddit-intelligence/tests/test_reddit_reader.py` | reddit reader tests (43 tests) |
 | `python3 reddit-intelligence/tests/test_nuclear_fetcher.py` | nuclear fetcher tests (44 tests) |
+| `python3 reddit-intelligence/tests/test_profiles.py` | profiles + scan registry tests (43 tests) |
 | `python3 self-learning/tests/test_self_learning.py` | self-learning tests (75 tests) |
 | `python3 self-learning/tests/test_trace_analyzer.py` | trace analyzer tests (50 tests) |
 | `python3 self-learning/trace_analyzer.py <session.jsonl>` | Analyze a session transcript |
@@ -168,7 +174,7 @@ ClaudeCodeAdvancements/
 | `python3 usage-dashboard/usage_counter.py sessions` | Show per-session token/cost breakdown |
 | `python3 usage-dashboard/arewedone.py` | Structural completeness check (all 7 modules) |
 
-**Total:** 850/850 tests. **Session start:** Run all 21 suites. If anything fails, fix before touching other files.
+**Total:** 893/893 tests. **Session start:** Run all 22 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -365,3 +371,4 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 19 | 2026-03-16 | MASTER_TASKS.md (MT-0–MT-5), nuclear subreddit flexibility, Kalshi Terminal launcher, CCA vs YoYo analysis — 742 tests |
 | 25 | 2026-03-16 | ROADMAP overhaul, MT-7 trace analysis research DONE (6 pattern defs), MT-9–MT-14 created — 800 tests |
 | 26 | 2026-03-16 | MT-7 COMPLETE: trace_analyzer.py (50 tests), validated on 3 real transcripts — 850 tests |
+| 27 | 2026-03-17 | MT-6 COMPLETE: profiles.py (43 tests), 10 subreddit profiles, scan registry, quick-scan mode — 893 tests |

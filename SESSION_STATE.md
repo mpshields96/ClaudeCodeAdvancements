@@ -3,10 +3,10 @@
 
 ---
 
-## Current State (as of Session 26 — 2026-03-16)
+## Current State (as of Session 27 — 2026-03-17)
 
-**Phase:** Session 26 complete. MT-7 trace_analyzer.py built with TDD — 50 tests, 850 total. Validated against 3 real CCA transcripts. SESSION_STATE.md retry loops confirmed as doc-update pattern. Scores range 15-85 across sessions.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-6: Nuclear at Will — design subreddit profiles + quick-scan mode (prerequisite for MT-9/MT-14). (2) Integrate trace_analyzer into self-learning wrap ritual (reflect.py). (3) MT-10: YoYo self-learning loop design (depends on MT-7). (4) MT-9: Autonomous intelligence — safety guardrail design. (5) MT-13: iOS capability — check Xcode + environment.
+**Phase:** Session 27 in progress. MT-6 Nuclear at Will COMPLETE — profiles.py with 10 builtin subreddit profiles, scan registry, quick-scan triage mode. 43 new tests (893 total). Backtested against existing 138-post nuclear queue. Also reviewed 4 Reddit posts (3 r/ClaudeCode + 1 r/singularity + 1 r/ClaudeAI).
+**Next session starts at:** Run /cca-init. Priority: (1) Integrate trace_analyzer into self-learning wrap ritual (reflect.py). (2) MT-10: YoYo self-learning loop design (depends on MT-7). (3) MT-9: Autonomous intelligence — safety guardrail design (MT-6 prerequisite now DONE). (4) MT-14: Re-scanning (MT-6 prerequisite now DONE). (5) MT-13: iOS capability — check Xcode + environment.
 
 ---
 
