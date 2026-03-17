@@ -51,10 +51,15 @@ Each task in `tasks.md` uses this format:
 ### Task N: [Verb-first name]
 **File(s):** [file path(s) to create or modify]
 **What to build:** [2–4 sentences describing exactly what to implement]
+**Demo:** [One sentence describing the observable outcome in plain English — what the user sees, what changes, what happens. Not code, not an assertion — the human-visible result.]
 **Test:** [One specific assertion that proves this task is done]
 **Commit message:** [Proposed git commit message]
 **Status:** [ ]
 ```
+
+The **Demo** field describes the observable outcome a human would verify by looking at or using the feature.
+Good demos: "User runs `python3 counter.py sessions` and sees a table of per-session token counts."
+Bad demos: "Function returns correct dict." (That's a test, not a demo.)
 
 ---
 
@@ -75,6 +80,7 @@ Progress: 0 / N tasks complete
 ### Task 1: Set up module structure
 **File(s):** `[module-name]/`, `[module-name]/__init__.py`, `[module-name]/tests/`
 **What to build:** Create the directory structure from design.md. Add an empty `__init__.py`. Create an empty test file. Verify `python3 -c "import [module]"` runs without error.
+**Demo:** Module directory exists with expected structure; import succeeds without error.
 **Test:** `python3 -c "from [module] import [main_class]"` exits with code 0.
 **Commit message:** "scaffold [module-name] directory structure"
 **Status:** [ ]
@@ -84,6 +90,7 @@ Progress: 0 / N tasks complete
 ### Task 2: [Next task]
 **File(s):** ...
 **What to build:** ...
+**Demo:** ...
 **Test:** ...
 **Commit message:** ...
 **Status:** [ ]
@@ -97,6 +104,7 @@ Progress: 0 / N tasks complete
 ### Task N: Run full smoke tests
 **File(s):** No new files
 **What to build:** Run `python3 [module-name]/tests/test_[module].py` and verify all tests pass. Fix any failures before marking complete.
+**Demo:** All N tests show "OK" in terminal output.
 **Test:** Test runner exits with code 0. Output shows "OK" with N tests.
 **Commit message:** "all [module-name] smoke tests passing ([N] tests)"
 **Status:** [ ]
