@@ -1,0 +1,471 @@
+#!/usr/bin/env python3
+"""
+autonomous_scanner.py — MT-9 Autonomous Cross-Subreddit Intelligence Pipeline.
+
+Orchestrates profiles.py + nuclear_fetcher.py + content_scanner.py into a
+self-directed scanning pipeline that picks which subreddit to scan, enforces
+safety protections, and produces structured reports.
+
+Components:
+  - ScanPrioritizer: picks which sub to scan (staleness + yield + diversity)
+  - SafetyGate: enforces kill switch, rate limits, content scanning
+  - AutonomousScanner: orchestrates the full pipeline
+  - ScanReport: structured output
+
+Safety (MT-9 non-negotiable):
+  1. No executable downloads
+  2. No credential exposure
+  3. No system modifications
+  4. No financial actions
+  5. No outbound data
+  6. Sandboxed evaluation (read-only analysis)
+  7. Scam detection
+  8. Rate limiting (max 50 posts/scan, min 30s between scans)
+  9. Audit trail (all findings logged)
+
+Kill switch: create ~/.cca-autonomous-pause to instantly pause all scanning.
+
+Usage:
+    python3 autonomous_scanner.py rank                # Show prioritized sub list
+    python3 autonomous_scanner.py status              # Show safety gate status
+    python3 autonomous_scanner.py pick                # Pick next target
+    python3 autonomous_scanner.py pick --domain claude # Pick from specific domain
+
+Stdlib only. No external dependencies.
+"""
+
+import json
+import os
+import sys
+import time
+from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+
+# Add parent dirs to path for imports
+_THIS_DIR = Path(__file__).parent
+_PROJECT_DIR = _THIS_DIR.parent
+sys.path.insert(0, str(_THIS_DIR))
+sys.path.insert(0, str(_PROJECT_DIR / "agent-guard"))
+
+from profiles import BUILTIN_PROFILES, get_profile, ScanRegistry
+from nuclear_fetcher import classify_post, load_findings_urls
+from content_scanner import is_safe_for_deep_read
+
+
+# ── Approved Domains (MT-9 spec) ─────────────────────────────────────────────
+
+APPROVED_DOMAINS = {"claude", "trading", "dev", "research"}
+
+
+# ── ScanReport ────────────────────────────────────────────────────────────────
+
+
+@dataclass
+class ScanReport:
+    """Structured output from an autonomous scan."""
+    subreddit: str
+    slug: str
+    domain: str
+    posts_fetched: int
+    posts_safe: int
+    posts_blocked: int
+    needles: int
+    maybes: int
+    hay: int
+    blocked_reasons: list = field(default_factory=list)
+    timestamp: str = ""
+
+    def __post_init__(self):
+        if not self.timestamp:
+            self.timestamp = datetime.now(timezone.utc).isoformat()
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    def summary(self) -> str:
+        lines = [
+            f"r/{self.subreddit} ({self.domain}) — Autonomous Scan Report",
+            f"  Posts fetched: {self.posts_fetched}",
+            f"  Safe for review: {self.posts_safe}",
+            f"  Blocked (safety): {self.posts_blocked}",
+            f"  Classification: {self.needles} NEEDLE, {self.maybes} MAYBE, {self.hay} HAY",
+        ]
+        if self.blocked_reasons:
+            unique = list(set(self.blocked_reasons))[:5]
+            lines.append(f"  Block reasons: {', '.join(unique)}")
+        return "\n".join(lines)
+
+
+# ── ScanPrioritizer ──────────────────────────────────────────────────────────
+
+
+class ScanPrioritizer:
+    """
+    Picks which subreddit to scan next based on:
+    1. Staleness (days since last scan) — higher = more priority
+    2. Historical yield (BUILD+ADAPT rate) — higher = more priority
+    3. Never-scanned bonus — subs never scanned get max staleness score
+    4. Domain diversity — represented in output for caller filtering
+    """
+
+    # Weights for priority scoring
+    STALENESS_WEIGHT = 2.0    # Staleness is most important
+    YIELD_WEIGHT = 1.0        # Past performance matters
+    NEVER_SCANNED_BONUS = 100  # Never-scanned subs get a big boost
+
+    def __init__(self, registry_path: str = None):
+        if registry_path is None:
+            registry_path = str(_THIS_DIR / "scan_registry.json")
+        self._registry = ScanRegistry(registry_path)
+
+    def rank_all(self) -> list:
+        """
+        Rank all builtin profiles by priority score.
+        Returns list of dicts sorted by priority_score descending.
+        """
+        now = datetime.now(timezone.utc)
+        scans = self._registry.list_scans()
+        ranked = []
+
+        for slug, profile in BUILTIN_PROFILES.items():
+            # Skip domains we're not approved for
+            if profile.domain not in APPROVED_DOMAINS and profile.domain != "unknown":
+                continue
+
+            entry = {
+                "slug": slug,
+                "subreddit": profile.subreddit,
+                "domain": profile.domain,
+                "never_scanned": False,
+                "staleness_days": float("inf"),
+                "yield_score": 0.0,
+                "priority_score": 0.0,
+            }
+
+            if slug not in scans:
+                # Never scanned — highest priority
+                entry["never_scanned"] = True
+                entry["staleness_days"] = float("inf")
+                entry["priority_score"] = self.NEVER_SCANNED_BONUS
+            else:
+                scan_data = scans[slug]
+                last_scan_str = scan_data.get("last_scan", "")
+
+                # Compute staleness
+                try:
+                    last_dt = datetime.fromisoformat(last_scan_str)
+                    if last_dt.tzinfo is None:
+                        last_dt = last_dt.replace(tzinfo=timezone.utc)
+                    staleness = (now - last_dt).total_seconds() / 86400
+                except (ValueError, TypeError):
+                    staleness = float("inf")
+
+                entry["staleness_days"] = round(staleness, 1)
+
+                # Compute yield
+                yield_score = self._registry.yield_score(slug)
+                entry["yield_score"] = round(yield_score, 2)
+
+                # Combined priority
+                entry["priority_score"] = round(
+                    staleness * self.STALENESS_WEIGHT + yield_score * self.YIELD_WEIGHT,
+                    2,
+                )
+
+            ranked.append(entry)
+
+        # Sort by priority_score descending
+        ranked.sort(key=lambda r: r["priority_score"], reverse=True)
+        return ranked
+
+    def pick_next(self, exclude: list = None, domain: str = None) -> dict:
+        """
+        Pick the highest-priority sub to scan next.
+
+        Args:
+            exclude: list of slugs to skip
+            domain: if set, only return subs from this domain
+        """
+        exclude = set(exclude or [])
+        ranked = self.rank_all()
+
+        for entry in ranked:
+            if entry["slug"] in exclude:
+                continue
+            if domain and entry["domain"] != domain:
+                continue
+            return entry
+
+        # Fallback: return the top entry ignoring filters
+        return ranked[0] if ranked else {}
+
+
+# ── SafetyGate ────────────────────────────────────────────────────────────────
+
+
+class SafetyGate:
+    """
+    Enforces MT-9 safety protections:
+    - Kill switch file check
+    - Rate limiting (max posts per scan, max scans per session)
+    - Content safety delegation to content_scanner.py
+    - State persistence
+    """
+
+    def __init__(
+        self,
+        kill_switch_path: str = None,
+        state_path: str = None,
+        max_posts_per_scan: int = 50,
+        max_scans_per_session: int = 10,
+        min_delay_seconds: int = 30,
+    ):
+        self.kill_switch_path = kill_switch_path or os.path.expanduser("~/.cca-autonomous-pause")
+        self.state_path = state_path or str(_THIS_DIR / "autonomous_state.json")
+        self.max_posts_per_scan = max_posts_per_scan
+        self.max_scans_per_session = max_scans_per_session
+        self.min_delay_seconds = min_delay_seconds
+
+        # Session state
+        self.scans_this_session = 0
+        self.subs_scanned = []
+        self.last_scan_time = None
+        self._load_state()
+
+    def _load_state(self):
+        if os.path.exists(self.state_path):
+            try:
+                with open(self.state_path) as f:
+                    state = json.load(f)
+                self.scans_this_session = state.get("scans_this_session", 0)
+                self.subs_scanned = state.get("subs_scanned", [])
+                last = state.get("last_scan_time")
+                if last:
+                    self.last_scan_time = datetime.fromisoformat(last)
+            except (json.JSONDecodeError, OSError, ValueError):
+                pass
+
+    def save_state(self):
+        state = {
+            "scans_this_session": self.scans_this_session,
+            "subs_scanned": self.subs_scanned,
+            "last_scan_time": self.last_scan_time.isoformat() if self.last_scan_time else None,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        tmp = self.state_path + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(state, f, indent=2)
+        os.replace(tmp, self.state_path)
+
+    def can_scan(self) -> tuple:
+        """
+        Check if scanning is currently allowed.
+        Returns (allowed: bool, reason: str).
+        """
+        # Kill switch
+        if os.path.exists(self.kill_switch_path):
+            return False, "Kill switch active — ~/.cca-autonomous-pause exists. Remove to resume."
+
+        # Session scan limit
+        if self.scans_this_session >= self.max_scans_per_session:
+            return False, f"Session scan limit reached ({self.max_scans_per_session}). Start a new session."
+
+        # Rate limiting (delay between scans)
+        if self.last_scan_time and self.min_delay_seconds > 0:
+            elapsed = (datetime.now(timezone.utc) - self.last_scan_time).total_seconds()
+            if elapsed < self.min_delay_seconds:
+                remaining = int(self.min_delay_seconds - elapsed)
+                return False, f"Rate limit — wait {remaining}s before next scan."
+
+        return True, "Scanning allowed."
+
+    def record_scan(self, slug: str):
+        """Record that a scan was performed."""
+        self.scans_this_session += 1
+        if slug not in self.subs_scanned:
+            self.subs_scanned.append(slug)
+        self.last_scan_time = datetime.now(timezone.utc)
+        self.save_state()
+
+    def check_post_safety(self, post: dict) -> tuple:
+        """
+        Check if a post is safe for deep reading.
+        Delegates to content_scanner.is_safe_for_deep_read.
+        Returns (is_safe: bool, reason: str).
+        """
+        return is_safe_for_deep_read(post)
+
+
+# ── AutonomousScanner ─────────────────────────────────────────────────────────
+
+
+class AutonomousScanner:
+    """
+    Orchestrates the autonomous scanning pipeline:
+    1. Pick target sub (via ScanPrioritizer)
+    2. Check safety (via SafetyGate)
+    3. Fetch posts (via nuclear_fetcher infrastructure)
+    4. Filter unsafe posts
+    5. Classify (NEEDLE/MAYBE/HAY)
+    6. Dedup against FINDINGS_LOG.md
+    7. Produce ScanReport
+    """
+
+    def __init__(
+        self,
+        registry_path: str = None,
+        kill_switch_path: str = None,
+        state_path: str = None,
+        findings_path: str = None,
+    ):
+        self.prioritizer = ScanPrioritizer(registry_path=registry_path)
+        self.safety_gate = SafetyGate(
+            kill_switch_path=kill_switch_path,
+            state_path=state_path,
+        )
+        self.findings_path = findings_path or str(_PROJECT_DIR / "FINDINGS_LOG.md")
+
+    def pick_target(self, exclude: list = None, domain: str = None) -> dict:
+        """
+        Pick the next sub to scan. Returns None if blocked by safety gate.
+        """
+        allowed, reason = self.safety_gate.can_scan()
+        if not allowed:
+            return None
+        return self.prioritizer.pick_next(exclude=exclude, domain=domain)
+
+    def filter_posts(self, posts: list) -> tuple:
+        """
+        Filter posts through safety gate.
+        Returns (safe_posts, blocked_posts_with_reasons).
+        """
+        safe = []
+        blocked = []
+        for post in posts:
+            is_safe, reason = self.safety_gate.check_post_safety(post)
+            if is_safe:
+                safe.append(post)
+            else:
+                blocked.append({"post": post, "reason": reason})
+
+        # Enforce max posts per scan
+        if len(safe) > self.safety_gate.max_posts_per_scan:
+            safe = safe[:self.safety_gate.max_posts_per_scan]
+
+        return safe, blocked
+
+    def dedup_posts(self, posts: list) -> list:
+        """Remove posts already in FINDINGS_LOG.md."""
+        known_ids = load_findings_urls(self.findings_path)
+        return [p for p in posts if p["id"] not in known_ids]
+
+    def classify_posts(self, posts: list) -> list:
+        """Add triage classification to each post."""
+        for p in posts:
+            p["triage"] = classify_post(p)
+        return posts
+
+    def build_report(self, subreddit: str, slug: str, domain: str,
+                     fetched: list, safe: list, blocked: list) -> ScanReport:
+        """Build a ScanReport from scan results."""
+        needles = sum(1 for p in safe if p.get("triage") == "NEEDLE")
+        maybes = sum(1 for p in safe if p.get("triage") == "MAYBE")
+        hay = sum(1 for p in safe if p.get("triage") == "HAY")
+        blocked_reasons = [b["reason"] for b in blocked]
+
+        return ScanReport(
+            subreddit=subreddit,
+            slug=slug,
+            domain=domain,
+            posts_fetched=len(fetched),
+            posts_safe=len(safe),
+            posts_blocked=len(blocked),
+            needles=needles,
+            maybes=maybes,
+            hay=hay,
+            blocked_reasons=blocked_reasons,
+        )
+
+
+# ── CLI ───────────────────────────────────────────────────────────────────────
+
+
+def cli_main(args: list = None):
+    """CLI entry point for autonomous scanner."""
+    if args is None:
+        args = sys.argv[1:]
+
+    if not args:
+        print("Usage: python3 autonomous_scanner.py [rank|status|pick]")
+        print("  rank                    Show prioritized sub list")
+        print("  status                  Show safety gate status")
+        print("  pick [--domain <d>]     Pick next target sub")
+        return
+
+    cmd = args[0]
+
+    # Parse optional flags
+    registry_path = None
+    state_path = None
+    kill_switch_path = None
+    domain = None
+    i = 1
+    while i < len(args):
+        if args[i] == "--registry" and i + 1 < len(args):
+            registry_path = args[i + 1]
+            i += 2
+        elif args[i] == "--state" and i + 1 < len(args):
+            state_path = args[i + 1]
+            i += 2
+        elif args[i] == "--kill-switch" and i + 1 < len(args):
+            kill_switch_path = args[i + 1]
+            i += 2
+        elif args[i] == "--domain" and i + 1 < len(args):
+            domain = args[i + 1]
+            i += 2
+        else:
+            i += 1
+
+    if cmd == "rank":
+        p = ScanPrioritizer(registry_path=registry_path)
+        ranked = p.rank_all()
+        print(f"{'Slug':<20} {'Subreddit':<20} {'Domain':<10} {'Stale(d)':<10} {'Yield':<8} {'Score'}")
+        print("-" * 85)
+        for r in ranked:
+            stale = "never" if r["never_scanned"] else f"{r['staleness_days']:.0f}"
+            yld = f"{r['yield_score']:.1f}%" if r['yield_score'] > 0 else "-"
+            print(f"{r['slug']:<20} r/{r['subreddit']:<18} {r['domain']:<10} {stale:<10} {yld:<8} {r['priority_score']:.1f}")
+
+    elif cmd == "status":
+        gate = SafetyGate(kill_switch_path=kill_switch_path, state_path=state_path)
+        allowed, reason = gate.can_scan()
+        print(f"Autonomous scan status: {'ALLOWED' if allowed else 'BLOCKED'}")
+        print(f"  Reason: {reason}")
+        print(f"  Scans this session: {gate.scans_this_session}/{gate.max_scans_per_session}")
+        print(f"  Subs scanned: {', '.join(gate.subs_scanned) if gate.subs_scanned else 'none'}")
+        kill = "ACTIVE" if os.path.exists(gate.kill_switch_path) else "inactive"
+        print(f"  Kill switch: {kill}")
+
+    elif cmd == "pick":
+        scanner = AutonomousScanner(
+            registry_path=registry_path,
+            kill_switch_path=kill_switch_path,
+            state_path=state_path,
+        )
+        target = scanner.pick_target(domain=domain)
+        if target is None:
+            print("Scanning blocked — check status for details.")
+        else:
+            print(f"Next target: r/{target['subreddit']} ({target['domain']})")
+            print(f"  Slug: {target['slug']}")
+            stale = "never scanned" if target["never_scanned"] else f"{target['staleness_days']:.0f} days"
+            print(f"  Staleness: {stale}")
+            print(f"  Priority score: {target['priority_score']:.1f}")
+
+    else:
+        print(f"Unknown command: {cmd}")
+
+
+if __name__ == "__main__":
+    cli_main()
