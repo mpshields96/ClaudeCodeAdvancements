@@ -80,7 +80,21 @@ Any key data structures (classes, dicts, JSON schemas) that the implementation w
 Reference the memory system schema as a model for how to define these.
 No code — just the shape and field definitions.
 
-### 5. External Interfaces
+### 5. Performance Specifications (Required for hot paths)
+If the feature includes any of: request handlers, data processing loops, file I/O in hooks,
+real-time monitoring, or functions called >100 times per session — include performance specs.
+**Skip entirely for one-shot CLI tools, slash commands, or config-only changes.**
+
+For each hot path or performance-sensitive component, specify:
+- **Component**: Which function/module
+- **Call frequency**: How often it runs (per tool call, per session, per minute)
+- **Latency budget**: Maximum acceptable response time (e.g., <50ms for hooks, <500ms for CLI)
+- **Resource constraint**: Memory ceiling, file size limit, or CPU bound
+- **Measurement plan**: How to verify performance (e.g., `time.perf_counter()` in tests, profiling script)
+
+**Anti-pattern:** Do not add performance specs for code that runs once at startup or on user command. Only specify budgets for code that runs in tight loops, on every tool call, or in real-time paths.
+
+### 6. External Interfaces
 What does this feature touch outside its own files?
 - Files it reads/writes (paths)
 - Environment variables it uses
@@ -88,11 +102,11 @@ What does this feature touch outside its own files?
 - Claude Code hooks it registers
 - APIs it calls (if any)
 
-### 6. What This Design Does NOT Include
+### 7. What This Design Does NOT Include
 Explicit exclusions — things that won't be built in this version, even if they seem natural.
 This prevents scope creep during implementation.
 
-### 7. Open Questions
+### 8. Open Questions
 Any design questions that couldn't be resolved from requirements alone. These need answers before implementation starts. If there are none, write "None — ready to implement."
 
 ---
@@ -147,6 +161,18 @@ Status: DRAFT — not yet approved
 
 ### [Structure Name]
 [Field definitions — name, type, purpose. No code syntax required.]
+
+---
+
+## Performance Specifications
+
+[If applicable — skip for one-shot tools / slash commands]
+
+| Component | Call Frequency | Latency Budget | Resource Constraint |
+|-----------|---------------|----------------|---------------------|
+| [function/module] | [per tool call / per session] | [e.g., <50ms] | [e.g., <10MB RSS] |
+
+**Measurement plan:** [How to verify — perf_counter in tests, profiling script, etc.]
 
 ---
 
