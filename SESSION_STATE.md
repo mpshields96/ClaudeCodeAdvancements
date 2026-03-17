@@ -5,8 +5,8 @@
 
 ## Current State (as of Session 30 — 2026-03-17)
 
-**Phase:** Session 30 IN PROGRESS. MT-9 Phase 1 shipped — autonomous_scanner.py with ScanPrioritizer, SafetyGate, AutonomousScanner, ScanReport. 37 new tests. 27 test suites, 1130 total tests, all passing. Chaining to MT-11 GitHub intelligence.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-11 GitHub repo intelligence scanner. (2) MT-9 Phase 2 — wire autonomous scanner into /cca-nuclear --autonomous mode. (3) Scan never-scanned subreddits. (4) Fresh-session anti-contamination guard.
+**Phase:** Session 30 IN PROGRESS. MT-9 Phase 1 + MT-11 Phase 1 shipped. autonomous_scanner.py (37 tests) + github_scanner.py (30 tests). 28 suites, 1160 total tests, all passing. Chaining to next task.
+**Next session starts at:** Run /cca-init. Priority: (1) MT-9 Phase 2 — wire autonomous scanner into /cca-nuclear --autonomous mode. (2) MT-11 Phase 2 — live GitHub API integration. (3) Scan never-scanned subreddits. (4) Fresh-session anti-contamination guard.
 
 ---
 
@@ -14,12 +14,20 @@
 
 ### MT-9 Phase 1: Autonomous Scanner Pipeline (COMPLETE)
 - `reddit-intelligence/autonomous_scanner.py` — Full autonomous scanning orchestrator
-- **ScanPrioritizer**: Ranks all 15 builtin subreddit profiles by staleness (days since last scan) + historical yield (BUILD+ADAPT rate) + never-scanned bonus. Domain diversity in output for caller filtering.
-- **SafetyGate**: Kill switch (~/.cca-autonomous-pause), rate limiting (max 50 posts/scan, max 10 scans/session, 30s between scans), content scanner integration (delegates to content_scanner.is_safe_for_deep_read), state persistence.
-- **AutonomousScanner**: Orchestrates pick_target → filter_posts → dedup_posts → classify_posts → build_report. Integrates profiles.py + nuclear_fetcher.py + content_scanner.py.
-- **ScanReport**: Structured output with to_dict() and summary() for logging.
-- CLI: `rank` (show prioritized queue), `status` (safety gate status), `pick` (next target, with --domain filter).
+- **ScanPrioritizer**: Ranks all 15 builtin subreddit profiles by staleness + yield + never-scanned bonus.
+- **SafetyGate**: Kill switch, rate limiting (50 posts/scan, 10 scans/session, 30s delay), content scanner integration.
+- **AutonomousScanner**: Orchestrates pick → filter → dedup → classify → report.
+- **ScanReport**: Structured output with to_dict() and summary().
 - 37 tests — all passing. All 9 MT-9 safety protections enforced.
+
+### MT-11 Phase 1: GitHub Repository Intelligence Scanner (COMPLETE)
+- `reddit-intelligence/github_scanner.py` — Repo metadata evaluation without cloning
+- **RepoMetadata**: Structured from GitHub API responses (stars, forks, license, topics, activity).
+- **RepoEvaluator**: 0-100 scoring rubric (stars/activity/license/relevance/age). Scam detection + content_scanner safety.
+- **EvaluationResult**: EVALUATE/SKIP/BLOCKED verdicts with component breakdown.
+- **GitHubScanner**: Orchestrates evaluation, JSONL audit log, dedup against prior evaluations.
+- **FRONTIER_KEYWORDS**: 9 frontier domains with keyword lists for relevance scoring.
+- 30 tests — all passing. Safety: no cloning, no installs, GPL flagged, scam blocked.
 
 ---
 

@@ -103,6 +103,7 @@ ClaudeCodeAdvancements/
 │   ├── nuclear_fetcher.py           # Batch fetcher + classifier (NEEDLE/MAYBE/HAY)
 │   ├── profiles.py                  # MT-6: Subreddit profiles, scan registry, quick-scan mode
 │   ├── autonomous_scanner.py        # MT-9: Autonomous scanning pipeline (prioritizer + safety gate)
+│   ├── github_scanner.py            # MT-11: GitHub repo intelligence (evaluator + scoring rubric)
 │   ├── scan_registry.json           # Auto-generated: last-scan timestamps + yield per sub
 │   ├── commands/
 │   │   ├── ri-scan.md               # /reddit-intel:ri-scan — weekly multi-subreddit scan
@@ -112,7 +113,8 @@ ClaudeCodeAdvancements/
 │   │   ├── test_reddit_reader.py    # 43 tests
 │   │   ├── test_nuclear_fetcher.py  # 44 tests
 │   │   ├── test_profiles.py         # 43 tests
-│   │   └── test_autonomous_scanner.py # 37 tests
+│   │   ├── test_autonomous_scanner.py # 37 tests
+│   │   └── test_github_scanner.py   # 30 tests
 │   └── findings/                    # Output directory for scan results
 │
 ├── self-learning/                   # Cross-session self-learning system
@@ -175,6 +177,7 @@ ClaudeCodeAdvancements/
 | `python3 reddit-intelligence/tests/test_nuclear_fetcher.py` | nuclear fetcher tests (44 tests) |
 | `python3 reddit-intelligence/tests/test_profiles.py` | profiles + scan registry tests (43 tests) |
 | `python3 reddit-intelligence/tests/test_autonomous_scanner.py` | autonomous scanner tests (37 tests) |
+| `python3 reddit-intelligence/tests/test_github_scanner.py` | GitHub scanner tests (30 tests) |
 | `python3 self-learning/tests/test_self_learning.py` | self-learning tests (75 tests) |
 | `python3 self-learning/tests/test_trace_analyzer.py` | trace analyzer tests (50 tests) |
 | `python3 self-learning/tests/test_improver.py` | improvement proposals tests (44 tests) |
@@ -191,8 +194,9 @@ ClaudeCodeAdvancements/
 | `python3 reddit-intelligence/autonomous_scanner.py rank` | Show prioritized sub scan queue |
 | `python3 reddit-intelligence/autonomous_scanner.py status` | Show autonomous scan safety status |
 | `python3 reddit-intelligence/autonomous_scanner.py pick` | Pick next target sub for scanning |
+| `python3 reddit-intelligence/github_scanner.py queries` | Show GitHub search queries for CCA frontiers |
 
-**Total:** 1130/1130 tests (27 suites). **Session start:** Run all 27 suites. If anything fails, fix before touching other files.
+**Total:** 1160/1160 tests (28 suites). **Session start:** Run all 28 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -314,6 +318,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 44 | All passing |
 | reddit-intelligence (profiles) | `tests/test_profiles.py` | 43 | All passing |
 | reddit-intelligence (autonomous) | `tests/test_autonomous_scanner.py` | 37 | All passing |
+| reddit-intelligence (github) | `tests/test_github_scanner.py` | 30 | All passing |
 | self-learning | `tests/test_self_learning.py` | 75 | All passing |
 | self-learning (trace_analyzer) | `tests/test_trace_analyzer.py` | 50 | All passing |
 | self-learning (improver) | `tests/test_improver.py` | 44 | All passing |
@@ -321,7 +326,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
-| **Total** | | **1130** | **1130/1130** |
+| **Total** | | **1160** | **1160/1160** |
 
 ---
 
@@ -397,4 +402,4 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 27 | 2026-03-17 | MT-6 COMPLETE: profiles.py (43 tests), 10 subreddit profiles, scan registry, quick-scan mode — 893 tests |
 | 28 | 2026-03-17 | MT-10 core: improver.py (44 tests), AG-5 network_guard.py (53 tests) — 990 tests |
 | 29 | 2026-03-17 | Autocompact awareness (4 hooks), QualityGate, spec enhancements, 28 findings — 1093 tests |
-| 30 | 2026-03-17 | MT-9 Phase 1: autonomous_scanner.py (37 tests) — prioritizer + safety gate + orchestrator |
+| 30 | 2026-03-17 | MT-9 Phase 1 (37 tests) + MT-11 Phase 1 (30 tests) — autonomous + GitHub scanners |
