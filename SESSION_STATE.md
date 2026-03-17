@@ -3,10 +3,41 @@
 
 ---
 
-## Current State (as of Session 21 — 2026-03-16)
+## Current State (as of Session 22 — 2026-03-16)
 
-**Phase:** Session 21 complete. 4 of 6 master-level tasks shipped (MT-0 Phase 1, MT-2, MT-3, MT-4). 783 tests passing across 20 suites.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-0 Phase 2: Deploy trading schema to polymarket-bot (cross-project). (2) MT-1: Check Maestro for macOS stable release. (3) MT-5: Research Claude Pro integration options. (4) Open items from SESSION_STATE (ClaudePrism, Cozempic, linked repos).
+**Phase:** Session 22 complete. Nuclear scan r/ClaudeAI COMPLETE (100 posts, 41 deep-reviewed). 783 tests passing across 20 suites.
+**Next session starts at:** Run /cca-init. Priority: (1) Nuclear scan r/Anthropic (75 posts, Top/Month, min-score 20). (2) Nuclear scan r/algotrading (100 posts, Top/3mo, min-score 50, prediction-market focus). (3) MT-0 Phase 2: Deploy trading schema to polymarket-bot. (4) MT-1: Check Maestro stable. (5) MT-5: Claude Pro bridge research.
+
+---
+
+## What Was Done in Session 22 (2026-03-16)
+
+### Nuclear Scan: r/ClaudeAI — COMPLETE
+- Fetched 100 posts (Top/Month, min-score 30)
+- 59 fast-skipped (memes, news, politics, praise — r/ClaudeAI is ~60% noise vs ~40% for r/ClaudeCode)
+- 41 deep-reviewed in 3 priority tiers: P1 (11 frontier-direct), P2 (11 workflow), P3 (19 reference/skip)
+- Verdicts: 2 BUILD, 1 ADAPT, 24 REFERENCE, 21 SKIP
+- BUILD: 1M context validation (F3), usage bars removed (F5)
+- ADAPT: Anthropic memory import feature (F1 — shallow, web-chat only, validates our approach)
+- Key tools: github/spec-kit (F2), Anamnese MCP (F1), cc-director (F4), ccstatusline-usage (F5)
+- NUCLEAR_REPORT_claudeai.md finalized
+- 28 new FINDINGS_LOG entries
+
+### Reddit Reviews (Session Start)
+- "Biggest productivity gain from Claude Code" (71pts) — REFERENCE, validates F1+F3
+- "Obsidian as persistent brain for Claude" (297pts) — REFERENCE, massive F1 validation
+
+### Committed Session 21 Work
+- 14 files, 799 insertions (MT-0 P1, MT-3, MT-4, Session 22 reviews)
+
+### Learnings for Next Nuclear Scans
+1. r/ClaudeAI ~60% noise — title-based triage saves massive tokens
+2. P1/P2/P3 tiering is effective — frontier-direct posts first
+3. Comments contain better signal than posts (1-3pt comments have best tools)
+4. r/Anthropic: expect more noise (politics, corporate news), use min-score 30+
+5. r/algotrading: filter for prediction markets, skip equities/forex/crypto-specific
+
+**Tests:** 783/783 passing (20 suites — no code changes, scan-only session)
 
 ---
 
