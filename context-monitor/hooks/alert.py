@@ -13,6 +13,12 @@ Expensive tools that trigger alerts in red/critical:
 Fast/cheap tools that are always allowed silently:
   Read, Glob, Grep, TodoWrite — these are fine at any context level.
 
+Autocompact awareness:
+  When the meter (CTX-1) detects CLAUDE_AUTOCOMPACT_PCT_OVERRIDE, the state file
+  includes autocompact_proximity (percentage points until compaction fires).
+  This hook warns when proximity is low (<10 points), even in yellow zone,
+  so the user can /compact proactively rather than losing context to auto-compact.
+
 Environment variables (all optional):
   CLAUDE_CONTEXT_STATE_FILE    - State file path (default: ~/.claude-context-health.json)
   CLAUDE_CONTEXT_ALERT_BLOCK   - Set "1" to block (not just warn) at critical zone
@@ -44,16 +50,24 @@ QUIET_TOOLS = frozenset({
     "LS", "Cat",  # common aliases
 })
 
+DEFAULT_AUTOCOMPACT_PROXIMITY_THRESHOLD = 10  # warn when < 10 pct points from compaction
+
 # Message templates per zone
 WARN_TEMPLATES = {
+    "yellow": (
+        "Context is {pct:.0f}% full. "
+        "Auto-compact fires in ~{autocompact_proximity:.0f} percentage points. "
+        "Consider /compact now to avoid losing CLAUDE.md rules. "
+        "Continuing."
+    ),
     "red": (
         "Context is {pct:.0f}% full (red zone). "
-        "Consider /compact before starting this operation. "
+        "Consider /compact before starting this operation.{autocompact_suffix} "
         "Continuing."
     ),
     "critical": (
         "Context is {pct:.0f}% full (CRITICAL). "
-        "Strong recommendation: run /compact or /handoff before this call. "
+        "Strong recommendation: run /compact or /handoff before this call.{autocompact_suffix} "
         "{block_msg}"
     ),
 }
@@ -70,25 +84,77 @@ def load_state(state_path: Path) -> dict:
         return {}
 
 
-def should_alert(zone: str, tool_name: str) -> bool:
+def should_warn_autocompact(
+    proximity: float | None,
+    threshold: int = DEFAULT_AUTOCOMPACT_PROXIMITY_THRESHOLD,
+) -> bool:
+    """
+    Return True if autocompact is configured and proximity is below threshold.
+
+    proximity: percentage points remaining before auto-compact fires (None = not configured).
+    threshold: warn when proximity < this many percentage points (default: 10).
+    """
+    if proximity is None:
+        return False
+    return proximity < threshold
+
+
+def should_alert(
+    zone: str,
+    tool_name: str,
+    autocompact_proximity: float | None = None,
+) -> bool:
     """
     Return True if we should surface an alert for this tool at this zone.
-    Only alert at red or critical. Never alert for cheap/fast tools.
+
+    Alerts at red or critical for expensive tools. Also alerts in yellow zone
+    when autocompact proximity is low (approaching auto-compaction threshold).
+    Never alerts for cheap/fast tools.
     """
-    if zone not in ("red", "critical"):
-        return False
     if tool_name in QUIET_TOOLS:
         return False
-    return True
+    if zone in ("red", "critical"):
+        return True
+    if zone == "yellow" and should_warn_autocompact(autocompact_proximity):
+        return True
+    return False
 
 
-def build_message(zone: str, pct: float, tool_name: str, blocking: bool) -> str:
-    """Format the alert message."""
+def build_message(
+    zone: str,
+    pct: float,
+    tool_name: str,
+    blocking: bool,
+    autocompact_proximity: float | None = None,
+) -> str:
+    """Format the alert message. Includes autocompact proximity when available."""
     template = WARN_TEMPLATES.get(zone, "")
     if not template:
         return ""
+
     block_msg = "Blocking this call." if blocking else "Continuing."
-    return template.format(pct=pct, tool_name=tool_name, block_msg=block_msg)
+
+    # Yellow zone template needs autocompact_proximity directly
+    if zone == "yellow":
+        if autocompact_proximity is None:
+            return ""
+        return template.format(
+            pct=pct, tool_name=tool_name,
+            autocompact_proximity=autocompact_proximity,
+        )
+
+    # Red/critical: add autocompact suffix if proximity info available
+    if autocompact_proximity is not None:
+        autocompact_suffix = (
+            f" Auto-compact in ~{autocompact_proximity:.0f} points."
+        )
+    else:
+        autocompact_suffix = ""
+
+    return template.format(
+        pct=pct, tool_name=tool_name, block_msg=block_msg,
+        autocompact_suffix=autocompact_suffix,
+    )
 
 
 def _allow_response() -> dict:
@@ -142,12 +208,14 @@ def main() -> None:
     state = load_state(state_path)
     zone = state.get("zone", "unknown")
     pct = float(state.get("pct", 0))
+    autocompact_proximity = state.get("autocompact_proximity")
 
-    if not should_alert(zone, tool_name):
+    if not should_alert(zone, tool_name, autocompact_proximity=autocompact_proximity):
         print(json.dumps(_allow_response()))
         sys.exit(0)
 
-    message = build_message(zone, pct, tool_name, blocking)
+    message = build_message(zone, pct, tool_name, blocking,
+                            autocompact_proximity=autocompact_proximity)
 
     if blocking and zone == "critical":
         print(json.dumps(_block_response(message)))

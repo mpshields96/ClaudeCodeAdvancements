@@ -175,5 +175,124 @@ class TestAlertIntegration(unittest.TestCase):
             os.unlink(str(path))
 
 
+class TestAutocompactAwareness(unittest.TestCase):
+    """Tests for autocompact proximity awareness in alert hook."""
+
+    # --- should_warn_autocompact ---
+
+    def test_warn_when_proximity_below_threshold(self):
+        """Warn when autocompact is < 10 points away."""
+        self.assertTrue(alert.should_warn_autocompact(5.0))
+
+    def test_warn_at_zero_proximity(self):
+        """Warn when already at or past autocompact threshold."""
+        self.assertTrue(alert.should_warn_autocompact(0.0))
+
+    def test_no_warn_when_proximity_comfortable(self):
+        """Don't warn when 15+ points from autocompact."""
+        self.assertFalse(alert.should_warn_autocompact(15.0))
+
+    def test_no_warn_when_proximity_exactly_at_threshold(self):
+        """At exactly 10 points, no warning (threshold is <10)."""
+        self.assertFalse(alert.should_warn_autocompact(10.0))
+
+    def test_no_warn_when_proximity_none(self):
+        """No warning when autocompact is not configured."""
+        self.assertFalse(alert.should_warn_autocompact(None))
+
+    def test_custom_proximity_threshold(self):
+        """Custom proximity threshold overrides default 10."""
+        self.assertTrue(alert.should_warn_autocompact(12.0, threshold=15))
+        self.assertFalse(alert.should_warn_autocompact(12.0, threshold=10))
+
+    # --- build_message with autocompact proximity ---
+
+    def test_red_message_includes_autocompact_proximity(self):
+        """Red zone message should mention autocompact when proximity is set."""
+        msg = alert.build_message("red", 75.0, "Agent", blocking=False,
+                                  autocompact_proximity=5.0)
+        self.assertIn("75%", msg)
+        self.assertIn("auto-compact", msg.lower().replace("autocompact", "auto-compact").replace("auto compact", "auto-compact"))
+
+    def test_critical_message_includes_autocompact_proximity(self):
+        """Critical zone message should mention autocompact proximity."""
+        msg = alert.build_message("critical", 92.0, "Bash", blocking=False,
+                                  autocompact_proximity=2.0)
+        self.assertIn("92%", msg)
+
+    def test_message_without_autocompact_unchanged(self):
+        """When no autocompact info, messages stay the same as before."""
+        msg_without = alert.build_message("red", 75.0, "Agent", blocking=False)
+        msg_none = alert.build_message("red", 75.0, "Agent", blocking=False,
+                                       autocompact_proximity=None)
+        self.assertEqual(msg_without, msg_none)
+
+    # --- yellow zone autocompact warning ---
+
+    def test_yellow_zone_warns_when_autocompact_near(self):
+        """Yellow zone should alert when autocompact is close."""
+        self.assertTrue(alert.should_alert("yellow", "Agent",
+                                           autocompact_proximity=5.0))
+
+    def test_yellow_zone_no_alert_without_autocompact(self):
+        """Yellow zone stays silent without autocompact proximity."""
+        self.assertFalse(alert.should_alert("yellow", "Agent"))
+
+    def test_yellow_zone_no_alert_when_autocompact_far(self):
+        """Yellow zone stays silent when autocompact is far away."""
+        self.assertFalse(alert.should_alert("yellow", "Agent",
+                                            autocompact_proximity=20.0))
+
+    def test_yellow_zone_quiet_tools_still_quiet(self):
+        """Quiet tools stay quiet even with autocompact proximity warning."""
+        self.assertFalse(alert.should_alert("yellow", "Read",
+                                            autocompact_proximity=3.0))
+
+    def test_yellow_autocompact_message(self):
+        """Yellow zone autocompact message format."""
+        msg = alert.build_message("yellow", 55.0, "Agent", blocking=False,
+                                  autocompact_proximity=5.0)
+        self.assertIn("55%", msg)
+        self.assertIn("5", msg)  # proximity value
+
+    # --- Integration: state file with autocompact fields ---
+
+    def test_state_with_autocompact_fields(self):
+        """Alert reads autocompact_proximity from state file."""
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
+            path = Path(f.name)
+        state = {
+            "zone": "yellow", "pct": 58.0, "tokens": 116000,
+            "turns": 50, "window": 200000,
+            "autocompact_pct": 60, "autocompact_proximity": 2.0,
+        }
+        with open(path, "w") as f:
+            json.dump(state, f)
+        try:
+            loaded = alert.load_state(path)
+            proximity = loaded.get("autocompact_proximity")
+            self.assertEqual(proximity, 2.0)
+            zone = loaded["zone"]
+            self.assertTrue(alert.should_alert(zone, "Agent",
+                                               autocompact_proximity=proximity))
+        finally:
+            os.unlink(str(path))
+
+    def test_state_without_autocompact_fields(self):
+        """Old state files without autocompact fields still work."""
+        with tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False) as f:
+            path = Path(f.name)
+        _write_state(path, "red", 75.0)
+        try:
+            loaded = alert.load_state(path)
+            proximity = loaded.get("autocompact_proximity")
+            self.assertIsNone(proximity)
+            # Red zone still alerts without autocompact info
+            self.assertTrue(alert.should_alert("red", "Agent",
+                                               autocompact_proximity=proximity))
+        finally:
+            os.unlink(str(path))
+
+
 if __name__ == "__main__":
     unittest.main()
