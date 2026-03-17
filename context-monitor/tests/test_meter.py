@@ -298,6 +298,199 @@ class TestHealthZone(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+# Adaptive thresholds for large context windows
+# ---------------------------------------------------------------------------
+
+class TestAdaptiveThresholds(unittest.TestCase):
+    """
+    For 1M context windows, quality degrades at 250-500k absolute tokens
+    (community-validated across nuclear scan posts). Percentage thresholds
+    must adapt: yellow at 25%, red at 40%, critical at 60% for 1M windows.
+    For 200k windows, standard thresholds (50/70/85) should be unchanged.
+    """
+
+    def test_200k_window_unchanged(self):
+        """Standard 200k window: thresholds remain at 50/70/85%."""
+        t = meter.adaptive_thresholds(200_000)
+        self.assertEqual(t["yellow"], 50)
+        self.assertEqual(t["red"], 70)
+        self.assertEqual(t["critical"], 85)
+
+    def test_1m_window_tightens_thresholds(self):
+        """1M window: thresholds drop to reflect quality ceiling at 250-500k tokens."""
+        t = meter.adaptive_thresholds(1_000_000)
+        # Yellow should start at 250k/1M = 25%
+        self.assertEqual(t["yellow"], 25)
+        # Red should start at 400k/1M = 40%
+        self.assertEqual(t["red"], 40)
+        # Critical at 600k/1M = 60%
+        self.assertEqual(t["critical"], 60)
+
+    def test_500k_window_intermediate(self):
+        """500k window: thresholds between standard and 1M."""
+        t = meter.adaptive_thresholds(500_000)
+        # Yellow = min(50, 250k/500k*100=50) = 50
+        self.assertEqual(t["yellow"], 50)
+        # Red = min(70, 400k/500k*100=80) = 70
+        self.assertEqual(t["red"], 70)
+        # Critical = min(85, 600k/500k*100=120) = 85
+        self.assertEqual(t["critical"], 85)
+
+    def test_small_window_uses_standard(self):
+        """Windows smaller than quality ceilings use standard percentages."""
+        t = meter.adaptive_thresholds(100_000)
+        self.assertEqual(t["yellow"], 50)
+        self.assertEqual(t["red"], 70)
+        self.assertEqual(t["critical"], 85)
+
+    def test_800k_window(self):
+        """800k window: absolute ceilings start to bite."""
+        t = meter.adaptive_thresholds(800_000)
+        # Yellow = min(50, 250/800*100=31.25) = 31
+        self.assertEqual(t["yellow"], 31)
+        # Red = min(70, 400/800*100=50) = 50
+        self.assertEqual(t["red"], 50)
+        # Critical = min(85, 600/800*100=75) = 75
+        self.assertEqual(t["critical"], 75)
+
+    def test_thresholds_always_have_required_keys(self):
+        """Result always has yellow, red, critical keys."""
+        for window in [100_000, 200_000, 500_000, 800_000, 1_000_000]:
+            t = meter.adaptive_thresholds(window)
+            self.assertIn("yellow", t)
+            self.assertIn("red", t)
+            self.assertIn("critical", t)
+
+    def test_thresholds_maintain_ordering(self):
+        """yellow < red < critical for any valid window."""
+        for window in [100_000, 200_000, 500_000, 800_000, 1_000_000, 2_000_000]:
+            t = meter.adaptive_thresholds(window)
+            self.assertLess(t["yellow"], t["red"],
+                            f"yellow >= red at {window}")
+            self.assertLess(t["red"], t["critical"],
+                            f"red >= critical at {window}")
+
+    def test_zero_window_returns_standard(self):
+        """Zero or negative window returns standard thresholds."""
+        t = meter.adaptive_thresholds(0)
+        self.assertEqual(t["yellow"], 50)
+        self.assertEqual(t["red"], 70)
+        self.assertEqual(t["critical"], 85)
+
+    def test_adaptive_disabled_returns_standard(self):
+        """When adaptive is explicitly disabled, return standard thresholds."""
+        t = meter.adaptive_thresholds(1_000_000, adaptive=False)
+        self.assertEqual(t["yellow"], 50)
+        self.assertEqual(t["red"], 70)
+        self.assertEqual(t["critical"], 85)
+
+
+# ---------------------------------------------------------------------------
+# State file includes thresholds
+# ---------------------------------------------------------------------------
+
+class TestStateFileThresholds(unittest.TestCase):
+    """State file should record which thresholds are active."""
+
+    def test_state_includes_thresholds(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state_path = Path(tmpdir) / "ctx.json"
+            meter.write_state_file(
+                state_path, 30.0, "green", 60000, 5, "s1",
+                window=200000,
+                thresholds={"yellow": 50, "red": 70, "critical": 85},
+            )
+            with open(state_path) as f:
+                data = json.load(f)
+            self.assertIn("thresholds", data)
+            self.assertEqual(data["thresholds"]["yellow"], 50)
+
+    def test_state_thresholds_for_1m_window(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state_path = Path(tmpdir) / "ctx.json"
+            meter.write_state_file(
+                state_path, 25.0, "yellow", 250000, 10, "s1",
+                window=1_000_000,
+                thresholds={"yellow": 25, "red": 40, "critical": 60},
+            )
+            with open(state_path) as f:
+                data = json.load(f)
+            self.assertEqual(data["thresholds"]["yellow"], 25)
+            self.assertEqual(data["window"], 1_000_000)
+
+
+# ---------------------------------------------------------------------------
+# Integration: meter with adaptive thresholds
+# ---------------------------------------------------------------------------
+
+class TestMeterAdaptiveIntegration(unittest.TestCase):
+
+    def test_1m_window_250k_tokens_is_yellow(self):
+        """250k tokens in a 1M window should be yellow (not green)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            transcript_path = tmp / "t.jsonl"
+            _write_transcript(transcript_path, [
+                _make_assistant_turn("x", input_tokens=250000, output_tokens=100),
+            ])
+            state_path = tmp / "ctx.json"
+            result = meter.run_meter("s1", transcript_path, state_path, window=1_000_000)
+            self.assertEqual(result["zone"], "yellow")
+            self.assertAlmostEqual(result["pct"], 25.0)
+
+    def test_1m_window_400k_tokens_is_red(self):
+        """400k tokens in a 1M window should be red."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            transcript_path = tmp / "t.jsonl"
+            _write_transcript(transcript_path, [
+                _make_assistant_turn("x", input_tokens=400000, output_tokens=100),
+            ])
+            state_path = tmp / "ctx.json"
+            result = meter.run_meter("s1", transcript_path, state_path, window=1_000_000)
+            self.assertEqual(result["zone"], "red")
+
+    def test_1m_window_600k_tokens_is_critical(self):
+        """600k tokens in a 1M window should be critical."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            transcript_path = tmp / "t.jsonl"
+            _write_transcript(transcript_path, [
+                _make_assistant_turn("x", input_tokens=600000, output_tokens=100),
+            ])
+            state_path = tmp / "ctx.json"
+            result = meter.run_meter("s1", transcript_path, state_path, window=1_000_000)
+            self.assertEqual(result["zone"], "critical")
+
+    def test_200k_window_80k_still_green(self):
+        """80k tokens in 200k window should still be green (40%)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            transcript_path = tmp / "t.jsonl"
+            _write_transcript(transcript_path, [
+                _make_assistant_turn("x", input_tokens=80000, output_tokens=100),
+            ])
+            state_path = tmp / "ctx.json"
+            result = meter.run_meter("s1", transcript_path, state_path, window=200_000)
+            self.assertEqual(result["zone"], "green")
+
+    def test_state_file_records_thresholds(self):
+        """State file includes thresholds so downstream consumers can read them."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp = Path(tmpdir)
+            transcript_path = tmp / "t.jsonl"
+            _write_transcript(transcript_path, [
+                _make_assistant_turn("x", input_tokens=100000, output_tokens=100),
+            ])
+            state_path = tmp / "ctx.json"
+            meter.run_meter("s1", transcript_path, state_path, window=1_000_000)
+            with open(state_path) as f:
+                data = json.load(f)
+            self.assertIn("thresholds", data)
+            self.assertEqual(data["thresholds"]["yellow"], 25)
+
+
+# ---------------------------------------------------------------------------
 # State file writing
 # ---------------------------------------------------------------------------
 

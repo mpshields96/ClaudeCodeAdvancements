@@ -146,7 +146,7 @@ ClaudeCodeAdvancements/
 | `python3 agent-guard/tests/test_mobile_approver.py` | iPhone hook tests (36 tests) |
 | `python3 agent-guard/tests/test_ownership.py` | ownership manifest tests (27 tests) |
 | `python3 agent-guard/tests/test_credential_guard.py` | credential guard tests (40 tests) |
-| `python3 context-monitor/tests/test_meter.py` | context meter tests (36 tests) |
+| `python3 context-monitor/tests/test_meter.py` | context meter tests (52 tests) |
 | `python3 context-monitor/tests/test_alert.py` | alert hook tests (24 tests) |
 | `python3 context-monitor/tests/test_auto_handoff.py` | auto-handoff tests (27 tests) |
 | `python3 context-monitor/tests/test_compact_anchor.py` | compact anchor tests (22 tests) |
@@ -156,13 +156,13 @@ ClaudeCodeAdvancements/
 | `python3 usage-dashboard/tests/test_usage_counter.py` | usage counter tests (44 tests) |
 | `python3 usage-dashboard/tests/test_otel_receiver.py` | OTel receiver tests (63 tests) |
 | `python3 usage-dashboard/tests/test_cost_alert.py` | cost alert tests (39 tests) |
-| `python3 usage-dashboard/tests/test_arewedone.py` | arewedone tests (50 tests) |
+| `python3 usage-dashboard/tests/test_arewedone.py` | arewedone tests (51 tests) |
 | `python3 memory-system/cli.py stats` | Show memory stats |
 | `python3 agent-guard/ownership.py` | Show file ownership manifest |
 | `python3 usage-dashboard/usage_counter.py sessions` | Show per-session token/cost breakdown |
 | `python3 usage-dashboard/arewedone.py` | Structural completeness check (all 7 modules) |
 
-**Total:** 759/759 tests. **Session start:** Run all 20 suites. If anything fails, fix before touching other files.
+**Total:** 800/800 tests. **Session start:** Run all 20 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -274,7 +274,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | agent-guard (mobile_approver) | `tests/test_mobile_approver.py` | 36 | All passing |
 | agent-guard (ownership) | `tests/test_ownership.py` | 27 | All passing |
 | agent-guard (credential_guard) | `tests/test_credential_guard.py` | 40 | All passing |
-| context-monitor (meter) | `tests/test_meter.py` | 36 | All passing |
+| context-monitor (meter) | `tests/test_meter.py` | 52 | All passing |
 | context-monitor (alert) | `tests/test_alert.py` | 24 | All passing |
 | context-monitor (auto_handoff) | `tests/test_auto_handoff.py` | 27 | All passing |
 | context-monitor (compact_anchor) | `tests/test_compact_anchor.py` | 22 | All passing |
@@ -284,8 +284,8 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
-| usage-dashboard (arewedone) | `tests/test_arewedone.py` | 50 | All passing |
-| **Total** | | **759** | **759/759** |
+| usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
+| **Total** | | **800** | **800/800** |
 
 ---
 

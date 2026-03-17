@@ -37,14 +37,32 @@ RED = "\033[31m"
 BOLD_RED = "\033[1;31m"
 DIM = "\033[2m"
 
+# Absolute token quality ceilings (must match meter.py QUALITY_CEILINGS)
+_QUALITY_CEILINGS = {"yellow": 250_000, "red": 400_000, "critical": 600_000}
+_DEFAULT_THRESHOLDS = {"yellow": 50, "red": 70, "critical": 85}
 
-def _zone(pct: float) -> tuple[str, str, str]:
+
+def _adaptive_thresholds(window: int) -> dict:
+    """Compute zone thresholds that respect absolute quality ceilings.
+
+    For 200k: standard (50/70/85). For 1M: tighter (25/40/60).
+    """
+    if window <= 0:
+        return dict(_DEFAULT_THRESHOLDS)
+    return {
+        zone: min(_DEFAULT_THRESHOLDS[zone], int((_QUALITY_CEILINGS[zone] / window) * 100))
+        for zone in ("yellow", "red", "critical")
+    }
+
+
+def _zone(pct: float, thresholds: dict | None = None) -> tuple[str, str, str]:
     """Return (color_code, label, bar_color) for a context percentage."""
-    if pct >= 85:
+    t = thresholds or _DEFAULT_THRESHOLDS
+    if pct >= t["critical"]:
         return BOLD_RED, "CRIT", BOLD_RED
-    if pct >= 70:
+    if pct >= t["red"]:
         return RED, "HIGH", RED
-    if pct >= 50:
+    if pct >= t["yellow"]:
         return YELLOW, "warn", YELLOW
     return GREEN, "ok  ", GREEN
 
@@ -54,6 +72,13 @@ def _bar(pct: float, width: int = 10) -> str:
     filled = round(pct / 100 * width)
     filled = max(0, min(width, filled))
     return "[" + "=" * filled + " " * (width - filled) + "]"
+
+
+def _format_window(window: int) -> str:
+    """Format window size for display: 200k, 500k, 1M."""
+    if window >= 1_000_000:
+        return f"{window // 1_000_000}M"
+    return f"{window // 1000}k"
 
 
 def main() -> None:
@@ -66,14 +91,17 @@ def main() -> None:
     ctx = data.get("context_window", {})
     pct = ctx.get("used_percentage", 0) or 0
     pct = min(float(pct), 100.0)
+    window = ctx.get("context_window_size", 200_000) or 200_000
 
     cost_usd = data.get("cost", {}).get("total_cost_usd", 0) or 0
     model = data.get("model", {}).get("display_name", "")
 
-    color, label, bar_color = _zone(pct)
+    # Use adaptive thresholds based on actual window size
+    thresholds = _adaptive_thresholds(window)
+    color, label, bar_color = _zone(pct, thresholds)
     bar = _bar(pct)
 
-    # Format: CTX [bar] 45% ok | $0.02 | Model
+    # Format: CTX [bar] 45% ok | $0.02 | Model | 1M
     ctx_part = f"CTX {bar_color}{bar}{RESET} {color}{pct:.0f}% {label}{RESET}"
     cost_part = f"{DIM}${cost_usd:.2f}{RESET}"
     model_part = f"{DIM}{model}{RESET}" if model else ""
@@ -81,6 +109,9 @@ def main() -> None:
     parts = [ctx_part, cost_part]
     if model_part:
         parts.append(model_part)
+    # Show window size when it differs from the standard 200k
+    if window != 200_000:
+        parts.append(f"{DIM}{_format_window(window)}{RESET}")
 
     print("  " + f" {DIM}|{RESET} ".join(parts))
 

@@ -246,12 +246,23 @@ def detect_pass_only_function(source: str) -> List[Tuple[int, str]]:
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             body = node.body
-            # A pass-only function: body is [Pass] or [Expr(Constant(str)), Pass]
+            # Separate docstring from other statements
+            has_docstring = (
+                body
+                and isinstance(body[0], ast.Expr)
+                and isinstance(getattr(body[0], "value", None), ast.Constant)
+                and isinstance(body[0].value.value, str)
+            )
+            # Filter out string constants (docstrings) to get real statements
             stmts = [s for s in body if not isinstance(s, ast.Expr)
-                      or not isinstance(getattr(s, 'value', None), ast.Constant)
+                      or not isinstance(getattr(s, "value", None), ast.Constant)
                       or not isinstance(s.value.value, str)]
             if len(stmts) == 1 and isinstance(stmts[0], ast.Pass):
-                results.append((node.lineno, f"def {node.name}(...): pass"))
+                # If there's a docstring, the pass is intentional (documented
+                # suppression, e.g. overriding log_message to suppress output).
+                # Only flag undocumented pass-only functions as stubs.
+                if not has_docstring:
+                    results.append((node.lineno, f"def {node.name}(...): pass"))
 
     return results
 

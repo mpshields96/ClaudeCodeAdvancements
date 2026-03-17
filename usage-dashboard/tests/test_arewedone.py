@@ -285,11 +285,25 @@ class TestCodeStubDetection(unittest.TestCase):
             proj.cleanup()
 
     def test_pass_with_docstring_not_flagged(self):
-        """A function with docstring + pass should still be flagged."""
+        """A function with docstring + pass is intentional, NOT a stub."""
         proj = MockProject()
         try:
             proj.add_module("stub-mod", py_files={
-                "main.py": 'def documented():\n    """Docs."""\n    pass\n',
+                "main.py": 'def documented():\n    """Suppress output."""\n    pass\n',
+            })
+            stubs = find_code_stubs(find_py_files(proj.root / "stub-mod"))
+            kinds = [s.kind for s in stubs]
+            # Documented pass-only is intentional (e.g. log suppression override)
+            self.assertNotIn("pass-only", kinds)
+        finally:
+            proj.cleanup()
+
+    def test_pass_without_docstring_still_flagged(self):
+        """A function with pass and NO docstring IS a stub."""
+        proj = MockProject()
+        try:
+            proj.add_module("stub-mod", py_files={
+                "main.py": 'def undocumented():\n    pass\n',
             })
             stubs = find_code_stubs(find_py_files(proj.root / "stub-mod"))
             kinds = [s.kind for s in stubs]

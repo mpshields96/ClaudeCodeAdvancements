@@ -17,11 +17,20 @@ Provides real-time context health monitoring and automated protection against co
 
 ## Architecture Rules
 
-**Context Health Thresholds (configurable, sensible defaults):**
-- Green zone: 0–50% — full effectiveness, no action
-- Yellow zone: 50–70% — warn user, suggest /compact before complex tasks
-- Red zone: 70–85% — alert before every tool use, recommend immediate handoff
-- Critical: >85% — auto-trigger handoff document generation
+**Context Health Thresholds (adaptive, configurable):**
+
+Standard thresholds (200k window):
+- Green zone: 0–49% — full effectiveness, no action
+- Yellow zone: 50–69% — warn user, suggest /compact before complex tasks
+- Red zone: 70–84% — alert before every tool use, recommend immediate handoff
+- Critical: >=85% — auto-trigger handoff document generation
+
+Adaptive thresholds for large windows (1M):
+- Quality degrades at 250-500k absolute tokens regardless of window size (community-validated, 1855pts)
+- For 1M: yellow=25%, red=40%, critical=60%
+- Formula: min(standard_pct, quality_ceiling_tokens / window * 100)
+- Quality ceilings: yellow=250k, red=400k, critical=600k tokens
+- Opt out: set CLAUDE_CONTEXT_ADAPTIVE_DISABLED=1 or pass explicit thresholds
 
 **What a Handoff Document Contains:**
 - Current task: what we were building, where we left off

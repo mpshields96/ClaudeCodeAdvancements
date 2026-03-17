@@ -52,10 +52,49 @@ DEFAULT_THRESHOLDS = {
     "critical": 85,
 }
 
+# Absolute token ceilings where quality degrades regardless of window size.
+# Community-validated across 411 Reddit posts (nuclear scan):
+# - Quality starts declining at ~250k tokens
+# - Significant degradation at ~400k tokens
+# - Severe degradation at ~600k tokens
+QUALITY_CEILINGS = {
+    "yellow": 250_000,
+    "red": 400_000,
+    "critical": 600_000,
+}
+
 
 # ---------------------------------------------------------------------------
 # Core logic (pure functions, easily testable)
 # ---------------------------------------------------------------------------
+
+def adaptive_thresholds(window: int, adaptive: bool = True) -> dict:
+    """
+    Compute zone thresholds that respect both percentage-based and absolute
+    token quality ceilings.
+
+    For small windows (<=200k), standard percentages (50/70/85%) apply because
+    the absolute ceilings (250k/400k/600k) exceed the window size.
+
+    For large windows (800k, 1M), the absolute ceilings dominate. At 1M:
+      yellow = min(50%, 250k/1M = 25%) = 25%
+      red    = min(70%, 400k/1M = 40%) = 40%
+      critical = min(85%, 600k/1M = 60%) = 60%
+
+    This ensures quality warnings fire BEFORE degradation starts, regardless
+    of window size.
+    """
+    if not adaptive or window <= 0:
+        return dict(DEFAULT_THRESHOLDS)
+
+    result = {}
+    for zone in ("yellow", "red", "critical"):
+        pct_threshold = DEFAULT_THRESHOLDS[zone]
+        abs_pct = int((QUALITY_CEILINGS[zone] / window) * 100)
+        result[zone] = min(pct_threshold, abs_pct)
+
+    return result
+
 
 def estimate_tokens_from_transcript(transcript_path: Path) -> tuple[int, int]:
     """
@@ -190,6 +229,7 @@ def write_state_file(
     turns: int,
     session_id: str,
     window: int = DEFAULT_WINDOW,
+    thresholds: dict | None = None,
 ) -> None:
     """
     Write context health state to a JSON file.
@@ -201,6 +241,7 @@ def write_state_file(
       tokens     - estimated token count
       turns      - number of conversation turns counted
       window     - configured context window size
+      thresholds - active zone thresholds {yellow, red, critical} (percentages)
       session_id - Claude Code session identifier
       updated_at - ISO timestamp of this write
     """
@@ -211,6 +252,7 @@ def write_state_file(
         "tokens": tokens,
         "turns": turns,
         "window": window,
+        "thresholds": thresholds or DEFAULT_THRESHOLDS,
         "session_id": session_id,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
@@ -237,15 +279,22 @@ def run_meter(
     """
     Core meter logic: read transcript, compute health, write state.
     Returns the state dict (for testing/inspection).
+
+    Uses adaptive thresholds by default: for large windows (>200k),
+    zone boundaries tighten to reflect absolute quality ceilings.
+    Pass explicit thresholds to override adaptive behavior.
     """
     tokens, turns = estimate_tokens_from_transcript(transcript_path)
+
+    # Use adaptive thresholds unless explicitly overridden
+    active_thresholds = thresholds or adaptive_thresholds(window)
 
     if turns == 0 and not transcript_path.exists():
         zone = "unknown"
         pct = 0.0
     else:
         pct = compute_context_percentage(tokens, window)
-        zone = classify_health_zone(pct, thresholds)
+        zone = classify_health_zone(pct, active_thresholds)
 
     write_state_file(
         path=state_path,
@@ -255,6 +304,7 @@ def run_meter(
         turns=turns,
         session_id=session_id,
         window=window,
+        thresholds=active_thresholds,
     )
 
     return {"pct": pct, "zone": zone, "tokens": tokens, "turns": turns}
