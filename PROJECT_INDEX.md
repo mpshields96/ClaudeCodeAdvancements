@@ -84,13 +84,15 @@ ClaudeCodeAdvancements/
 │   ├── ownership.py                 # AG-2: CLI ownership manifest (git history → conflict detection)
 │   ├── hooks/
 │   │   ├── mobile_approver.py       # AG-1: PreToolUse iPhone push approval via ntfy.sh
-│   │   └── credential_guard.py      # AG-3: PreToolUse credential-extraction guard
+│   │   ├── credential_guard.py      # AG-3: PreToolUse credential-extraction guard
+│   │   └── network_guard.py         # AG-5: PreToolUse port/firewall exposure guard
 │   ├── content_scanner.py           # AG-4: Hazmat suit for autonomous scanning (9 threat categories)
 │   ├── tests/
 │   │   ├── test_mobile_approver.py  # 36 tests
 │   │   ├── test_ownership.py        # 27 tests
 │   │   ├── test_credential_guard.py # 40 tests
-│   │   └── test_content_scanner.py  # 50 tests
+│   │   ├── test_content_scanner.py  # 50 tests
+│   │   └── test_network_guard.py    # 53 tests
 │   └── research/
 │       └── EVIDENCE.md
 │
@@ -112,15 +114,18 @@ ClaudeCodeAdvancements/
 │
 ├── self-learning/                   # Cross-session self-learning system
 │   ├── journal.py                   # Structured event journal (JSONL), CLI interface
-│   ├── reflect.py                   # Pattern detection, strategy recommendations
+│   ├── reflect.py                   # Pattern detection, strategy recommendations, proposal generation
+│   ├── improver.py                  # MT-10: YoYo improvement loop — proposals from patterns
 │   ├── strategy.json                # Tunable parameters (nuclear scan, session, review)
 │   ├── journal.jsonl                # Append-only event log (auto-generated)
+│   ├── improvements.jsonl           # MT-10: Improvement proposal log (auto-generated)
 │   ├── trace_analyzer.py            # MT-7: Transcript JSONL pattern analyzer (RetryDetector, WasteDetector, etc.)
 │   ├── research/
 │   │   └── TRACE_ANALYSIS_RESEARCH.md  # MT-7: Transcript JSONL schema + 6 pattern detector definitions
 │   └── tests/
 │       ├── test_self_learning.py    # 75 tests — all passing
-│       └── test_trace_analyzer.py   # 50 tests — all passing
+│       ├── test_trace_analyzer.py   # 50 tests — all passing
+│       └── test_improver.py         # 44 tests — all passing
 │
 ├── scripts/                         # Utility scripts (launcher, automation)
 │   └── kalshi-launch.sh             # Terminal.app dual-window Kalshi launcher
@@ -158,6 +163,7 @@ ClaudeCodeAdvancements/
 | `python3 agent-guard/tests/test_ownership.py` | ownership manifest tests (27 tests) |
 | `python3 agent-guard/tests/test_credential_guard.py` | credential guard tests (40 tests) |
 | `python3 agent-guard/tests/test_content_scanner.py` | content scanner tests (50 tests) |
+| `python3 agent-guard/tests/test_network_guard.py` | network guard tests (53 tests) |
 | `python3 context-monitor/tests/test_meter.py` | context meter tests (52 tests) |
 | `python3 context-monitor/tests/test_alert.py` | alert hook tests (24 tests) |
 | `python3 context-monitor/tests/test_auto_handoff.py` | auto-handoff tests (27 tests) |
@@ -167,7 +173,9 @@ ClaudeCodeAdvancements/
 | `python3 reddit-intelligence/tests/test_profiles.py` | profiles + scan registry tests (43 tests) |
 | `python3 self-learning/tests/test_self_learning.py` | self-learning tests (75 tests) |
 | `python3 self-learning/tests/test_trace_analyzer.py` | trace analyzer tests (50 tests) |
+| `python3 self-learning/tests/test_improver.py` | improvement proposals tests (44 tests) |
 | `python3 self-learning/trace_analyzer.py <session.jsonl>` | Analyze a session transcript |
+| `python3 self-learning/improver.py stats` | Show improvement proposal stats |
 | `python3 usage-dashboard/tests/test_usage_counter.py` | usage counter tests (44 tests) |
 | `python3 usage-dashboard/tests/test_otel_receiver.py` | OTel receiver tests (63 tests) |
 | `python3 usage-dashboard/tests/test_cost_alert.py` | cost alert tests (39 tests) |
@@ -177,7 +185,7 @@ ClaudeCodeAdvancements/
 | `python3 usage-dashboard/usage_counter.py sessions` | Show per-session token/cost breakdown |
 | `python3 usage-dashboard/arewedone.py` | Structural completeness check (all 7 modules) |
 
-**Total:** 893/893 tests. **Session start:** Run all 22 suites. If anything fails, fix before touching other files.
+**Total:** 990/990 tests (25 suites). **Session start:** Run all 25 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -289,19 +297,23 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | agent-guard (mobile_approver) | `tests/test_mobile_approver.py` | 36 | All passing |
 | agent-guard (ownership) | `tests/test_ownership.py` | 27 | All passing |
 | agent-guard (credential_guard) | `tests/test_credential_guard.py` | 40 | All passing |
+| agent-guard (content_scanner) | `tests/test_content_scanner.py` | 50 | All passing |
+| agent-guard (network_guard) | `tests/test_network_guard.py` | 53 | All passing |
 | context-monitor (meter) | `tests/test_meter.py` | 52 | All passing |
 | context-monitor (alert) | `tests/test_alert.py` | 24 | All passing |
 | context-monitor (auto_handoff) | `tests/test_auto_handoff.py` | 27 | All passing |
 | context-monitor (compact_anchor) | `tests/test_compact_anchor.py` | 22 | All passing |
 | reddit-intelligence (reader) | `tests/test_reddit_reader.py` | 43 | All passing |
 | reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 44 | All passing |
+| reddit-intelligence (profiles) | `tests/test_profiles.py` | 43 | All passing |
 | self-learning | `tests/test_self_learning.py` | 75 | All passing |
 | self-learning (trace_analyzer) | `tests/test_trace_analyzer.py` | 50 | All passing |
+| self-learning (improver) | `tests/test_improver.py` | 44 | All passing |
 | usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
-| **Total** | | **850** | **850/850** |
+| **Total** | | **990** | **990/990** |
 
 ---
 
@@ -312,7 +324,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 1 | memory-system | MEM-1–5 ✅ COMPLETE | 94/94 | — |
 | 2 | spec-system | SPEC-1–6 ✅ COMPLETE | 90/90 | — |
 | 3 | context-monitor | CTX-1–5 ✅ COMPLETE | 109/109 | — |
-| 4 | agent-guard | AG-1 ✅ AG-2 ✅ AG-3 ✅ | 103/103 | Frontier nearly complete |
+| 4 | agent-guard | AG-1 ✅ AG-2 ✅ AG-3 ✅ AG-4 ✅ AG-5 ✅ | 206/206 | COMPLETE |
 | 5 | usage-dashboard | USAGE-1 ✅ USAGE-2 ✅ USAGE-3 ✅ /arewedone ✅ | 196/196 | Streamlit UI (optional) |
 
 ---
@@ -375,3 +387,4 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 25 | 2026-03-16 | ROADMAP overhaul, MT-7 trace analysis research DONE (6 pattern defs), MT-9–MT-14 created — 800 tests |
 | 26 | 2026-03-16 | MT-7 COMPLETE: trace_analyzer.py (50 tests), validated on 3 real transcripts — 850 tests |
 | 27 | 2026-03-17 | MT-6 COMPLETE: profiles.py (43 tests), 10 subreddit profiles, scan registry, quick-scan mode — 893 tests |
+| 28 | 2026-03-17 | MT-10 core: improver.py (44 tests), AG-5 network_guard.py (53 tests) — 990 tests |

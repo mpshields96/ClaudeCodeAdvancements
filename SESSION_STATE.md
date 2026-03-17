@@ -3,10 +3,31 @@
 
 ---
 
-## Current State (as of Session 27 — 2026-03-17)
+## Current State (as of Session 28 — 2026-03-17)
 
-**Phase:** Session 27 COMPLETE. Full autonomous scan pipeline proven end-to-end. 16 posts deep-read across 4 subreddits (r/ClaudeCode, r/ClaudeAI, r/algotrading, r/Kalshi). 2 BUILD verdicts (YoYo for MT-10, port exposure for AG), 3 ADAPT, 6 REFERENCE. Content scanner (AG-4) built and validated. Trace analyzer wired into self-learning wrap. 2 POLYBOT food dishes served.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-10: YoYo self-learning loop — adapt proven 4-gate evolution pattern. (2) Agent Guard port/firewall blocking — BUILD from "we got hacked" incident. (3) Spec system verification separation — ADAPT from Playwright test patching finding. (4) Continue autonomous scanning — r/localllama, r/MachineLearning, r/webdev. (5) Performance specs in design.md template. (6) MT-9: Full autonomous pipeline safety (content_scanner is foundation).
+**Phase:** Session 28 IN PROGRESS. MT-10 core delivered (improver.py, 44 tests). AG-5 network guard delivered (53 tests). reflect.py wired to auto-generate improvement proposals. 25 test suites, 990 total tests, all passing.
+**Next session starts at:** Run /cca-init. Priority: (1) Continue autonomous scanning — r/localllama, r/MachineLearning, r/webdev. (2) Spec system verification separation — ADAPT from Playwright test patching finding. (3) Performance specs in design.md template. (4) MT-9: Full autonomous pipeline safety. (5) Update SESSION_STATE + PROJECT_INDEX with new test counts.
+
+---
+
+## What Was Done in Session 28 (2026-03-17)
+
+### MT-10: YoYo Self-Learning Improvement Loop (CORE COMPLETE)
+- `self-learning/improver.py` — Generates structured improvement proposals from patterns
+- ImprovementProposal data structure with lifecycle: proposed -> approved -> building -> validated -> committed/rejected
+- ImprovementStore: JSONL persistence, dedup across sessions, status tracking
+- ProposalGenerator: from_trace_report() + from_reflect_patterns() — maps 8 pattern types to proposals
+- Risk classification: LOW (new utility), MEDIUM (new hook/modify code), HIGH (modify hook/trading)
+- Safety guards: protected files list, max proposals per session, trading always HIGH risk
+- Wired into reflect.py: trace analysis auto-generates proposals, --propose flag for reflect patterns
+- 44 tests — all passing
+
+### AG-5: Network/Port Exposure Guard (COMPLETE)
+- `agent-guard/hooks/network_guard.py` — PreToolUse hook blocking port/firewall exposure
+- Built from "We got hacked" incident (458pts, r/ClaudeCode) — ADB port 5555 exposed on Hetzner VM
+- 20 threat patterns: adb tcpip, ufw disable/allow, iptables flush/accept, docker -p (non-localhost), ngrok/cloudflared, nc/socat listeners, python http.server, ssh -R, /etc/hosts, sshd_config
+- Critical threats block by default; high threats warn. Full blocking via CLAUDE_NET_GUARD_BLOCK=1
+- 53 tests — all passing
 
 ---
 

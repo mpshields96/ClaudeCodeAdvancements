@@ -322,7 +322,11 @@
 6. Backtest: Analyze hypothetical improvements against historical transcripts. Would they have helped?
 7. Graduate: Once validated on CCA, adapt for Kalshi bot (separate deployment, same architecture)
 
-**Status:** Not started. Depends on MT-7 (trace analysis) for the observation layer.
+**Status:** Phase 1 COMPLETE (Session 28). Core improvement loop built:
+- `improver.py`: ImprovementProposal lifecycle, ImprovementStore (JSONL), ProposalGenerator, risk classification, dedup, safety guards
+- Wired into reflect.py: trace analysis auto-generates proposals, --propose flag for reflect patterns
+- 44 tests — all passing
+- Phase 2: Validate against real sessions (run for 5 sessions, measure improvement rate). Phase 3: Graduate to Kalshi bot.
 
 ---
 

@@ -3,6 +3,25 @@
 
 ---
 
+## Session 28 — 2026-03-17
+
+**What changed:**
+- `self-learning/improver.py` — NEW: MT-10 YoYo improvement loop core. ImprovementProposal lifecycle (proposed -> approved -> building -> validated -> committed/rejected), ImprovementStore (JSONL persistence), ProposalGenerator (from_trace_report + from_reflect_patterns), risk classification (LOW/MEDIUM/HIGH), cross-session dedup, safety guards (protected files, max proposals per session, trading always HIGH)
+- `self-learning/tests/test_improver.py` — NEW: 44 tests covering proposals, store, generator, risk classification, safety guards
+- `self-learning/reflect.py` — Wired improver: analyze_current_session() auto-generates proposals, --propose flag, --session flag for tracking
+- `agent-guard/hooks/network_guard.py` — NEW: AG-5 PreToolUse hook blocking port/firewall exposure. 20 threat patterns: adb tcpip, ufw disable/allow, iptables, docker -p, ngrok/cloudflared, nc/socat, python http.server, ssh -R 0.0.0.0, /etc/hosts, sshd_config
+- `agent-guard/tests/test_network_guard.py` — NEW: 53 tests (port exposure, firewall mods, network config, safe commands, hook responses)
+- `SESSION_STATE.md` — Updated to Session 28
+- `PROJECT_INDEX.md` — Updated with new files, test counts (990), session history
+
+**Why:**
+- MT-10 priority 1: YoYo self-learning loop closes the Observe -> Detect -> Hypothesize -> Build -> Validate -> Commit cycle. improver.py is the Hypothesize step.
+- AG-5 from "We got hacked" BUILD verdict (458pts, r/ClaudeCode): Claude exposed ADB port 5555 on Hetzner VM, crypto miner exploited within hours. Community consensus: firewall-first, localhost-bind.
+
+**Tests:** 990/990 passing (25 suites, +97 from improver + network_guard)
+
+---
+
 ## Session 27 — 2026-03-17
 
 **What changed:**
