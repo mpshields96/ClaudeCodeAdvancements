@@ -109,7 +109,7 @@ ClaudeCodeAdvancements/
 │   ├── strategy.json                # Tunable parameters (nuclear scan, session, review)
 │   ├── journal.jsonl                # Append-only event log (auto-generated)
 │   └── tests/
-│       └── test_self_learning.py    # 34 tests — all passing
+│       └── test_self_learning.py    # 51 tests — all passing
 │
 ├── scripts/                         # Utility scripts (launcher, automation)
 │   └── kalshi-launch.sh             # Terminal.app dual-window Kalshi launcher
@@ -152,7 +152,7 @@ ClaudeCodeAdvancements/
 | `python3 context-monitor/tests/test_compact_anchor.py` | compact anchor tests (22 tests) |
 | `python3 reddit-intelligence/tests/test_reddit_reader.py` | reddit reader tests (43 tests) |
 | `python3 reddit-intelligence/tests/test_nuclear_fetcher.py` | nuclear fetcher tests (44 tests) |
-| `python3 self-learning/tests/test_self_learning.py` | self-learning tests (34 tests) |
+| `python3 self-learning/tests/test_self_learning.py` | self-learning tests (51 tests) |
 | `python3 usage-dashboard/tests/test_usage_counter.py` | usage counter tests (44 tests) |
 | `python3 usage-dashboard/tests/test_otel_receiver.py` | OTel receiver tests (63 tests) |
 | `python3 usage-dashboard/tests/test_cost_alert.py` | cost alert tests (39 tests) |
@@ -162,7 +162,7 @@ ClaudeCodeAdvancements/
 | `python3 usage-dashboard/usage_counter.py sessions` | Show per-session token/cost breakdown |
 | `python3 usage-dashboard/arewedone.py` | Structural completeness check (all 7 modules) |
 
-**Total:** 742/742 tests. **Session start:** Run all 20 suites. If anything fails, fix before touching other files.
+**Total:** 759/759 tests. **Session start:** Run all 20 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -278,12 +278,12 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | context-monitor (compact_anchor) | `tests/test_compact_anchor.py` | 22 | All passing |
 | reddit-intelligence (reader) | `tests/test_reddit_reader.py` | 43 | All passing |
 | reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 44 | All passing |
-| self-learning | `tests/test_self_learning.py` | 34 | All passing |
+| self-learning | `tests/test_self_learning.py` | 51 | All passing |
 | usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 50 | All passing |
-| **Total** | | **742** | **742/742** |
+| **Total** | | **759** | **759/759** |
 
 ---
 

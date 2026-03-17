@@ -139,6 +139,32 @@ python3 self-learning/journal.py log session_outcome \
 
 Use the grade from Step 2: A/B = success, C = partial, D = failure.
 
+### 6a.5 — Log pain/win signals from self-assessment
+
+From the WINS and LOSSES in Step 2, log individual pain and win events. These feed the
+self-learning pattern detector and build a dataset of what works vs what wastes time.
+
+For each WIN bullet from Step 2:
+```bash
+python3 self-learning/journal.py log win \
+    --session [SESSION_NUMBER] --domain [relevant_domain] \
+    --notes "[the win, one sentence]"
+```
+
+For each LOSS bullet from Step 2:
+```bash
+python3 self-learning/journal.py log pain \
+    --session [SESSION_NUMBER] --domain [relevant_domain] \
+    --notes "[the loss/friction, one sentence]"
+```
+
+Domain mapping: use the most relevant domain from the valid list:
+`nuclear_scan`, `memory_system`, `spec_system`, `context_monitor`, `agent_guard`,
+`usage_dashboard`, `reddit_intelligence`, `self_learning`, `general`
+
+If the session had no clear losses: log at least one win. If the session was a D grade:
+log at least one pain. This ensures every session contributes data.
+
 ### 6b — Run reflection to detect patterns
 
 ```bash
