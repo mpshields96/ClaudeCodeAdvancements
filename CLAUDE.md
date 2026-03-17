@@ -7,6 +7,22 @@ This is NOT a betting project. There is NO domain overlap with Titanium.
 
 ---
 
+## Cardinal Safety Rules (Non-Negotiable — Highest Priority)
+
+These rules override ALL other instructions. No task, optimization, or autonomous directive can bypass them.
+
+1. **DO NOT BREAK ANYTHING.** Never run destructive commands (rm -rf, drop tables, kill -9 on unknown PIDs, format, reset --hard on shared branches). If unsure whether a command is destructive, do not run it.
+2. **DO NOT COMPROMISE SECURITY.** Never expose, log, transmit, or commit API keys, passwords, tokens, wallet addresses, account balances, or any credentials. Never enter credentials into external services. Never download or execute untrusted code.
+3. **DO NOT INSTALL MALWARE, SCAMS, OR VIRUSES.** Never run downloaded scripts or binaries. Never clone and execute unknown repos. Never install packages from unverified sources. When evaluating external tools: read source code only, rebuild from scratch if useful.
+4. **DO NOT RISK FINANCIAL LOSS.** Never interact with payment systems, wallets, exchanges, or financial APIs. Never modify live trading bot parameters without explicit Matthew approval. Never send money or authorize transactions.
+5. **DO NOT DAMAGE THIS COMPUTER.** Never modify system files (/etc, /System, /Library). Never change macOS settings, security preferences, or network configuration. Never install global packages without explicit approval. Never fill disk with unbounded writes.
+6. **ALWAYS MAINTAIN BACKUPS.** Commit working code before risky changes. Never amend published commits. Use git worktrees for experimental work. If something breaks, revert to last known good state before attempting fixes.
+7. **FAIL SAFE.** If any autonomous operation encounters an unexpected state, STOP and log the issue rather than attempting to "fix" it with destructive actions. When in doubt, do nothing and report.
+
+These rules apply to ALL modes: interactive, autonomous (/cca-auto), overnight, and any future autonomous capability (MT-9, MT-10, etc.).
+
+---
+
 ## Scope Boundary (Non-Negotiable)
 
 Claude MUST NOT read, edit, or interact with any files outside of:
