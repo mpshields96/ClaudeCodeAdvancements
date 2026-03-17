@@ -187,7 +187,11 @@
 6. Backtest: Analyze all available CCA transcripts (Sessions 1-24). Produce a "CCA development efficiency report" that shows patterns over time. If the report reveals nothing useful, the feature isn't ready.
 7. Iterate: Tune pattern thresholds based on backtest results before deploying to Kalshi traces
 
-**Status:** Not started. Research complete (ACE reviewed, pattern understood).
+**Status:** COMPLETE (Session 26). Delivered:
+- `self-learning/trace_analyzer.py`: TranscriptEntry, TranscriptSession, RetryDetector, WasteDetector, EfficiencyCalculator, VelocityCalculator, TraceAnalyzer
+- 50 tests — all passing
+- Validated on 3+ real CCA transcripts (scores 40-70, retry/waste/efficiency detection working)
+- CLI: `python3 self-learning/trace_analyzer.py <session.jsonl>`
 
 ---
 
@@ -323,11 +327,13 @@
 6. Backtest: Analyze hypothetical improvements against historical transcripts. Would they have helped?
 7. Graduate: Once validated on CCA, adapt for Kalshi bot (separate deployment, same architecture)
 
-**Status:** Phase 1 COMPLETE (Session 28). Core improvement loop built:
+**Status:** Phase 1 COMPLETE (Session 28), QualityGate added (Session 29), E2E validated (Session 29).
 - `improver.py`: ImprovementProposal lifecycle, ImprovementStore (JSONL), ProposalGenerator, risk classification, dedup, safety guards
+- `QualityGate`: Geometric mean anti-gaming (Nash 1950 / sentrux pattern). Prevents Goodhart's Law gaming — any zero metric tanks composite score. Configurable threshold, minimum 2 metrics, identifies weakest metric.
 - Wired into reflect.py: trace analysis auto-generates proposals, --propose flag for reflect patterns
-- 44 tests — all passing
-- Phase 2: Validate against real sessions (run for 5 sessions, measure improvement rate). Phase 3: Graduate to Kalshi bot.
+- 64 tests — all passing
+- E2E validation: Pipeline tested on 3 real CCA transcripts (scores 40-70), 6 proposals generated, QualityGate correctly passes balanced improvements and rejects gamed ones
+- Phase 2: Run for 5 sessions, measure improvement rate. Phase 3: Graduate to Kalshi bot.
 
 ---
 
@@ -490,12 +496,13 @@
 2. ~~**MT-2** (mermaid diagrams)~~ COMPLETE
 3. ~~**MT-4** (design vocabulary)~~ COMPLETE
 4. ~~**MT-3** (virtual design team)~~ COMPLETE
+5. ~~**MT-6** (nuclear at will)~~ COMPLETE — profiles.py, 43 tests
+6. ~~**MT-7** (trace analysis)~~ COMPLETE — trace_analyzer.py, 50 tests
 
 **ACTIVE — Highest Impact:**
-5. **MT-7** (trace analysis) — foundation for MT-10, both CCA + Kalshi benefit. Research DONE (Session 25).
-6. **MT-10** (YoYo self-learning loop) — the master pattern; depends on MT-7
-7. **MT-9** (autonomous subreddit intelligence) — force multiplier; depends on MT-6
-8. **MT-6** (nuclear at will) — prerequisite for MT-9 and MT-14
+7. **MT-10** (YoYo self-learning loop) — Phase 1 + QualityGate complete, E2E validated. Phase 2: 5-session validation.
+8. **MT-9** (autonomous subreddit intelligence) — force multiplier; depends on MT-6 (DONE)
+9. **MT-14** (re-scan previously scanned subs) — keep intelligence current
 
 **ACTIVE — High Value:**
 9. **MT-11** (GitHub repo intelligence) — extends MT-9 to code repos
