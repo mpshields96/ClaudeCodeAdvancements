@@ -181,6 +181,15 @@
 
 ---
 
+### Documentation debt compounds silently — Severity: 1 — Count: 1
+- **Anti-pattern:** ROADMAP.md went 24 sessions without an update — still showed all frontiers as "Research phase" when they were all COMPLETE with 800 tests
+- **Fix:** Update docs in the same session as the work they describe. If a frontier is completed, update ROADMAP.md that session, not 24 sessions later.
+- **First seen:** 2026-03-16 (Session 25 — ROADMAP.md finally updated)
+- **Last seen:** 2026-03-16
+- **Files:** ROADMAP.md, any long-lived project documentation
+
+---
+
 ### Building without testing/validation is wasted work — Severity: 3 — Count: 1
 - **Anti-pattern:** Treating "build" as the goal. Shipping code without the full lifecycle: research -> plan -> build -> test -> validate -> debug -> backtest -> iterate. Building is just one step of eight.
 - **Fix:** Every master task and every feature MUST have an explicit lifecycle section with all steps. No task is "done" at the build step. Validation against real data, backtesting against historical data, and debugging found issues are all required before claiming completion. A feature that builds and passes unit tests but has never been validated against real-world data is NOT complete.

@@ -108,8 +108,10 @@ ClaudeCodeAdvancements/
 │   ├── reflect.py                   # Pattern detection, strategy recommendations
 │   ├── strategy.json                # Tunable parameters (nuclear scan, session, review)
 │   ├── journal.jsonl                # Append-only event log (auto-generated)
+│   ├── research/
+│   │   └── TRACE_ANALYSIS_RESEARCH.md  # MT-7: Transcript JSONL schema + 6 pattern detector definitions
 │   └── tests/
-│       └── test_self_learning.py    # 51 tests — all passing
+│       └── test_self_learning.py    # 75 tests — all passing
 │
 ├── scripts/                         # Utility scripts (launcher, automation)
 │   └── kalshi-launch.sh             # Terminal.app dual-window Kalshi launcher

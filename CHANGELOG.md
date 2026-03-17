@@ -3,6 +3,31 @@
 
 ---
 
+## Session 25 — 2026-03-16
+
+**What changed:**
+- `ROADMAP.md` — complete overhaul: was stale since Session 1 (all frontiers showing "Research phase"), now reflects all 5 COMPLETE + 15 MTs with priorities
+- `self-learning/research/TRACE_ANALYSIS_RESEARCH.md` — NEW: MT-7 research output. Full JSONL schema from 5 real transcripts, 6 pattern detector definitions with real-data thresholds
+- `MASTER_TASKS.md` — 6 new master tasks (MT-9 through MT-14): autonomous subreddit intelligence (9 safety protections), YoYo self-learning loop, GitHub repo intelligence, academic paper integration, iOS app development, re-scanning previously scanned subs
+- `CLAUDE.md` — NEW SECTION: 7 Cardinal Safety Rules (non-negotiable, override all other instructions, apply to all modes including overnight autonomy)
+- `SESSION_STATE.md` — session 25 log, overnight 3-chat architecture, next priorities
+- Memory: `feedback_cardinal_safety.md`, `project_overnight_3chat.md`
+
+**Why:**
+- Matthew's vision (Session 25): autonomous self-learning and self-building system that grows CCA and Kalshi bot without human intervention — with ironclad safety
+- Anti-Frankenstein principle: every autonomous discovery must be objectively useful, clean, modular, tested, logged
+- Cardinal safety rules established before overnight autonomy: never break anything, never expose credentials, never install malware, never risk financial loss
+- Overnight architecture: exactly 3 chats (Kalshi main + Kalshi research + ONE CCA)
+
+**Tests:** 800/800 passing (no new tests — research/planning session)
+
+**Lessons:**
+- ROADMAP.md going 24 sessions without update is a documentation debt anti-pattern — update docs same session as the work they describe
+- Trace analysis research is code-ready: 6 pattern detectors with exact JSON field paths, real thresholds from 5 transcripts, recommended class architecture — next session should go straight to TDD
+- Planning-only sessions (no code shipped) should be avoided when research is complete and implementation is ready
+
+---
+
 ## Session 19 — 2026-03-16
 
 **What changed:**
