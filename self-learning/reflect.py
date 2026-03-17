@@ -365,7 +365,7 @@ def apply_suggestions(patterns, strategy):
     return changes
 
 
-def reflect(domain=None, apply=False, brief=False):
+def reflect(domain=None, apply=False, brief=False, propose=False, session_id=None):
     """Run full reflection and output report."""
     entries = _load_journal()
 
@@ -473,10 +473,25 @@ def reflect(domain=None, apply=False, brief=False):
         else:
             print("\nNo strategy changes to apply.")
 
+    # MT-10: Generate improvement proposals from detected patterns
+    if propose and patterns:
+        try:
+            from improver import Improver
+            imp = Improver(auto_approve_low=True)
+            proposals = imp.generate_from_reflect(patterns, session_id=session_id)
+            if proposals:
+                print(f"\n--- Improvement Proposals ({len(proposals)}) ---")
+                for p in proposals:
+                    print(f"  [{p.risk_level}] {p.pattern_type}: {p.proposed_fix[:100]}")
+            else:
+                print("\nNo new improvement proposals (all deduped or already tracked).")
+        except Exception as e:
+            print(f"\n  [improver] Error generating proposals: {e}", file=sys.stderr)
+
     print("\n" + "=" * 60)
 
 
-def analyze_current_session(transcript_path=None):
+def analyze_current_session(transcript_path=None, session_id=None):
     """Run trace_analyzer on the most recent (or specified) session transcript.
 
     Feeds results into the self-learning journal as a trace_analysis event.
@@ -536,6 +551,16 @@ def analyze_current_session(transcript_path=None):
         notes=f"Session {report.get('session_id', 'unknown')}: score {report['score']}/100",
     )
 
+    # MT-10: Generate improvement proposals from trace findings
+    try:
+        from improver import Improver
+        imp = Improver(auto_approve_low=True)
+        proposals = imp.generate_from_trace(report, session_id=session_id)
+        if proposals:
+            report["proposals"] = [p.to_dict() for p in proposals]
+    except Exception:
+        pass  # Improver is optional — don't break trace analysis if it fails
+
     return report
 
 
@@ -546,10 +571,12 @@ def _cli():
     parser.add_argument("--brief", action="store_true", help="One-line summary")
     parser.add_argument("--trace", action="store_true", help="Analyze most recent session transcript")
     parser.add_argument("--trace-path", help="Analyze specific transcript JSONL file")
+    parser.add_argument("--propose", action="store_true", help="Generate improvement proposals from patterns (MT-10)")
+    parser.add_argument("--session", type=int, help="Session ID for proposal tracking")
     args = parser.parse_args()
 
     if args.trace or args.trace_path:
-        report = analyze_current_session(args.trace_path)
+        report = analyze_current_session(args.trace_path, session_id=args.session)
         if report:
             print(f"Trace analysis: score {report['score']}/100 | "
                   f"{report['retries']['total_retries']} retries | "
@@ -562,7 +589,8 @@ def _cli():
             print("No transcript found to analyze.")
         return
 
-    reflect(domain=args.domain, apply=args.apply, brief=args.brief)
+    reflect(domain=args.domain, apply=args.apply, brief=args.brief,
+            propose=args.propose, session_id=args.session)
 
 
 if __name__ == "__main__":
