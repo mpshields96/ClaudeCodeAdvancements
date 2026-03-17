@@ -222,3 +222,12 @@
 
 ---
 
+### Background agent results lost to context compaction — Severity: 1 — Count: 1
+- **Anti-pattern:** Spawning 3-4 background deep-read agents and continuing work, then losing their results when context compacts before they complete
+- **Fix:** Check background agent results within 5 minutes of spawn. If session is long, process agents in batches of 2 rather than 4.
+- **First seen:** 2026-03-17 (Session 28 — 3 deep-read agents lost to compaction)
+- **Last seen:** 2026-03-17
+- **Files:** any workflow using background Agent tool spawns
+
+---
+

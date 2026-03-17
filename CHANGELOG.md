@@ -12,13 +12,21 @@
 - `agent-guard/hooks/network_guard.py` — NEW: AG-5 PreToolUse hook blocking port/firewall exposure. 20 threat patterns: adb tcpip, ufw disable/allow, iptables, docker -p, ngrok/cloudflared, nc/socat, python http.server, ssh -R 0.0.0.0, /etc/hosts, sshd_config
 - `agent-guard/tests/test_network_guard.py` — NEW: 53 tests (port exposure, firewall mods, network config, safe commands, hook responses)
 - `SESSION_STATE.md` — Updated to Session 28
-- `PROJECT_INDEX.md` — Updated with new files, test counts (990), session history
+- `PROJECT_INDEX.md` — Updated with new files, test counts
+- `reddit-intelligence/profiles.py` — Added 5 investing/stocks subreddit profiles (r/investing, r/stocks, r/SecurityAnalysis, r/ValueInvesting, r/Bogleheads) per Matthew's directive
+- `MASTER_TASKS.md` — MT-9 approved domains expanded with investing subs
+- `FINDINGS_LOG.md` — 4 new entries from autonomous scanning (1M context, retry loops, Qwen browser, r/LocalLLaMA triage)
 
 **Why:**
 - MT-10 priority 1: YoYo self-learning loop closes the Observe -> Detect -> Hypothesize -> Build -> Validate -> Commit cycle. improver.py is the Hypothesize step.
 - AG-5 from "We got hacked" BUILD verdict (458pts, r/ClaudeCode): Claude exposed ADB port 5555 on Hetzner VM, crypto miner exploited within hours. Community consensus: firewall-first, localhost-bind.
+- Investing/stocks expansion: Matthew plans to use Claude for low-cost stock investing research long-term.
 
-**Tests:** 990/990 passing (25 suites, +97 from improver + network_guard)
+**Tests:** 1040/1040 passing (25 suites)
+
+**Lessons:**
+- Background agents lost to context compaction — process results within 5 minutes of spawn
+- r/webdev and r/LocalLLaMA confirmed as low-signal for CCA (reinforces existing learning)
 
 ---
 

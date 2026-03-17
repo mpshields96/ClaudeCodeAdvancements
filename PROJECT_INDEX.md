@@ -185,7 +185,7 @@ ClaudeCodeAdvancements/
 | `python3 usage-dashboard/usage_counter.py sessions` | Show per-session token/cost breakdown |
 | `python3 usage-dashboard/arewedone.py` | Structural completeness check (all 7 modules) |
 
-**Total:** 990/990 tests (25 suites). **Session start:** Run all 25 suites. If anything fails, fix before touching other files.
+**Total:** 1040/1040 tests (25 suites). **Session start:** Run all 25 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -313,7 +313,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
-| **Total** | | **990** | **990/990** |
+| **Total** | | **1040** | **1040/1040** |
 
 ---
 
