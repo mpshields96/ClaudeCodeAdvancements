@@ -35,6 +35,7 @@ import sys
 import os
 import json
 import argparse
+from collections import Counter
 from datetime import datetime, timezone
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -50,6 +51,8 @@ VALID_EVENT_TYPES = [
     "learning_captured",  # New learning added to LEARNINGS.md
     "build_shipped",      # A BUILD candidate was implemented
     "error",              # Something went wrong
+    "pain",               # Something went wrong / wasted time / caused frustration
+    "win",                # Something worked well / saved time / produced good results
 ]
 
 VALID_DOMAINS = [
@@ -239,6 +242,34 @@ def get_nuclear_metrics():
     return total
 
 
+def get_pain_win_summary():
+    """Aggregate pain/win signals for pattern analysis.
+
+    Returns dict with:
+    - pain_count, win_count
+    - pain_domains, win_domains (Counter by domain)
+    - pain_entries, win_entries (raw entries for deeper analysis)
+    - ratio: win_count / (pain_count + win_count) if any, else None
+    """
+    entries = _load_journal()
+    pains = [e for e in entries if e.get("event_type") == "pain"]
+    wins = [e for e in entries if e.get("event_type") == "win"]
+
+    pain_domains = Counter(e.get("domain", "unknown") for e in pains)
+    win_domains = Counter(e.get("domain", "unknown") for e in wins)
+
+    total = len(pains) + len(wins)
+    return {
+        "pain_count": len(pains),
+        "win_count": len(wins),
+        "pain_domains": dict(pain_domains),
+        "win_domains": dict(win_domains),
+        "pain_entries": pains,
+        "win_entries": wins,
+        "ratio": round(len(wins) / total, 3) if total > 0 else None,
+    }
+
+
 def _cli():
     parser = argparse.ArgumentParser(description="CCA Self-Learning Journal")
     sub = parser.add_subparsers(dest="command")
@@ -268,6 +299,9 @@ def _cli():
 
     # learnings
     sub.add_parser("learnings", help="All captured learnings")
+
+    # pain-win
+    sub.add_parser("pain-win", help="Pain/win signal summary")
 
     args = parser.parse_args()
 
@@ -307,6 +341,10 @@ def _cli():
     elif args.command == "learnings":
         for l in get_all_learnings():
             print(f"[{l['timestamp']}] [{l['domain']}] {l['learning']}")
+
+    elif args.command == "pain-win":
+        pw = get_pain_win_summary()
+        print(json.dumps({k: v for k, v in pw.items() if k not in ("pain_entries", "win_entries")}, indent=2))
 
     else:
         parser.print_help()

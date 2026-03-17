@@ -42,7 +42,18 @@
   "learning": {
     "min_sample_size": 10,
     "confidence_decay_days": 90,
-    "auto_adjust_enabled": false,
+    "auto_adjust_enabled": true,
     "reflection_on_wrap": true
+  },
+
+  "bounds": {
+    "nuclear_scan.min_score_threshold": {"min": 10, "max": 200, "step": 10},
+    "nuclear_scan.batch_size": {"min": 5, "max": 30, "step": 5},
+    "nuclear_scan.context_ceiling_pct": {"min": 20, "max": 60, "step": 5},
+    "nuclear_scan.score_thresholds.deep_read_above": {"min": 50, "max": 500, "step": 50},
+    "nuclear_scan.score_thresholds.fast_scan_below": {"min": 30, "max": 200, "step": 25},
+    "review.min_comment_depth": {"min": 1, "max": 5, "step": 1},
+    "learning.min_sample_size": {"min": 5, "max": 30, "step": 5},
+    "learning.confidence_decay_days": {"min": 30, "max": 180, "step": 30}
   }
 }

@@ -334,7 +334,11 @@ class TestReflectApply(unittest.TestCase):
             json.dump({
                 "version": 1,
                 "updated_at": "2026-03-15T00:00:00Z",
-                "nuclear_scan": {"min_score_threshold": 30}
+                "nuclear_scan": {"min_score_threshold": 30},
+                "learning": {"auto_adjust_enabled": True},
+                "bounds": {
+                    "nuclear_scan.min_score_threshold": {"min": 10, "max": 200, "step": 10}
+                }
             }, f)
 
     def tearDown(self):
@@ -403,6 +407,177 @@ class TestGetEntriesByDomain(unittest.TestCase):
         journal.log_event("session_outcome", domain="general")
         result = journal.get_entries_by_domain("nonexistent")
         self.assertEqual(len(result), 0)
+
+
+class TestBoundedAutoAdjust(unittest.TestCase):
+    """Test bounded parameter safety rails."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.orig_journal = journal.JOURNAL_PATH
+        self.orig_strategy = journal.STRATEGY_PATH
+        journal.JOURNAL_PATH = os.path.join(self.tmpdir, "journal.jsonl")
+        journal.STRATEGY_PATH = os.path.join(self.tmpdir, "strategy.json")
+        with open(journal.STRATEGY_PATH, "w") as f:
+            json.dump({
+                "version": 1,
+                "updated_at": "2026-03-15T00:00:00Z",
+                "nuclear_scan": {"min_score_threshold": 30},
+                "learning": {"auto_adjust_enabled": True},
+                "bounds": {
+                    "nuclear_scan.min_score_threshold": {"min": 10, "max": 200, "step": 10}
+                }
+            }, f)
+
+    def tearDown(self):
+        journal.JOURNAL_PATH = self.orig_journal
+        journal.STRATEGY_PATH = self.orig_strategy
+        shutil.rmtree(self.tmpdir)
+
+    def test_clamp_within_bounds(self):
+        strategy = journal._load_strategy()
+        result = reflect._clamp_to_bounds("nuclear_scan.min_score_threshold", 50, strategy)
+        self.assertEqual(result, 50)
+
+    def test_clamp_above_max(self):
+        strategy = journal._load_strategy()
+        result = reflect._clamp_to_bounds("nuclear_scan.min_score_threshold", 999, strategy)
+        self.assertEqual(result, 200)
+
+    def test_clamp_below_min(self):
+        strategy = journal._load_strategy()
+        result = reflect._clamp_to_bounds("nuclear_scan.min_score_threshold", 1, strategy)
+        self.assertEqual(result, 10)
+
+    def test_clamp_snaps_to_step(self):
+        strategy = journal._load_strategy()
+        # 47 should snap to 50 (step=10, min=10)
+        result = reflect._clamp_to_bounds("nuclear_scan.min_score_threshold", 47, strategy)
+        self.assertEqual(result, 50)
+
+    def test_clamp_no_bounds_returns_none(self):
+        strategy = journal._load_strategy()
+        result = reflect._clamp_to_bounds("nonexistent.key", 50, strategy)
+        self.assertIsNone(result)
+
+    def test_reject_when_auto_adjust_disabled(self):
+        strategy = journal._load_strategy()
+        strategy["learning"]["auto_adjust_enabled"] = False
+        patterns = [
+            {"type": "test", "severity": "info", "message": "test",
+             "suggestion": {"nuclear_scan.min_score_threshold": 50}}
+        ]
+        changes = reflect.apply_suggestions(patterns, strategy)
+        self.assertEqual(len(changes), 0)
+        # Strategy should NOT be updated
+        loaded = journal._load_strategy()
+        self.assertEqual(loaded["nuclear_scan"]["min_score_threshold"], 30)
+
+    def test_reject_unbounded_parameter(self):
+        strategy = journal._load_strategy()
+        patterns = [
+            {"type": "test", "severity": "info", "message": "test",
+             "suggestion": {"unbounded.param": 999}}
+        ]
+        changes = reflect.apply_suggestions(patterns, strategy)
+        self.assertEqual(len(changes), 0)
+
+    def test_apply_clamped_value(self):
+        strategy = journal._load_strategy()
+        patterns = [
+            {"type": "test", "severity": "info", "message": "test",
+             "suggestion": {"nuclear_scan.min_score_threshold": 999}}
+        ]
+        changes = reflect.apply_suggestions(patterns, strategy)
+        self.assertEqual(len(changes), 1)
+        self.assertIn("clamped", changes[0])
+        loaded = journal._load_strategy()
+        self.assertEqual(loaded["nuclear_scan"]["min_score_threshold"], 200)
+
+
+class TestPainWinSignals(unittest.TestCase):
+    """Test pain/win signal tracking."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.orig_journal = journal.JOURNAL_PATH
+        self.orig_strategy = journal.STRATEGY_PATH
+        journal.JOURNAL_PATH = os.path.join(self.tmpdir, "journal.jsonl")
+        journal.STRATEGY_PATH = os.path.join(self.tmpdir, "strategy.json")
+        with open(journal.STRATEGY_PATH, "w") as f:
+            json.dump({"version": 1, "updated_at": "2026-03-15T00:00:00Z"}, f)
+
+    def tearDown(self):
+        journal.JOURNAL_PATH = self.orig_journal
+        journal.STRATEGY_PATH = self.orig_strategy
+        shutil.rmtree(self.tmpdir)
+
+    def test_pain_event_logs(self):
+        entry = journal.log_event("pain", domain="general", notes="Wasted 30min on wrong approach")
+        self.assertEqual(entry["event_type"], "pain")
+
+    def test_win_event_logs(self):
+        entry = journal.log_event("win", domain="nuclear_scan", notes="Found 3 BUILD candidates in 15min")
+        self.assertEqual(entry["event_type"], "win")
+
+    def test_pain_win_summary_empty(self):
+        pw = journal.get_pain_win_summary()
+        self.assertEqual(pw["pain_count"], 0)
+        self.assertEqual(pw["win_count"], 0)
+        self.assertIsNone(pw["ratio"])
+
+    def test_pain_win_summary_counts(self):
+        journal.log_event("pain", domain="general")
+        journal.log_event("win", domain="general")
+        journal.log_event("win", domain="nuclear_scan")
+        pw = journal.get_pain_win_summary()
+        self.assertEqual(pw["pain_count"], 1)
+        self.assertEqual(pw["win_count"], 2)
+        self.assertAlmostEqual(pw["ratio"], 2 / 3, places=3)
+
+    def test_pain_win_domains(self):
+        journal.log_event("pain", domain="general")
+        journal.log_event("pain", domain="general")
+        journal.log_event("pain", domain="nuclear_scan")
+        pw = journal.get_pain_win_summary()
+        self.assertEqual(pw["pain_domains"]["general"], 2)
+        self.assertEqual(pw["pain_domains"]["nuclear_scan"], 1)
+
+    def test_pain_win_ignores_other_events(self):
+        journal.log_event("session_outcome", domain="general")
+        journal.log_event("pain", domain="general")
+        pw = journal.get_pain_win_summary()
+        self.assertEqual(pw["pain_count"], 1)
+        self.assertEqual(pw["win_count"], 0)
+
+    def test_high_pain_pattern_detected(self):
+        # 8 pains, 2 wins = 20% win ratio — should trigger warning
+        for _ in range(8):
+            journal.log_event("pain", domain="general")
+        for _ in range(2):
+            journal.log_event("win", domain="general")
+        entries = journal._load_journal()
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        pain_patterns = [p for p in patterns if p["type"] == "high_pain_rate"]
+        self.assertEqual(len(pain_patterns), 1)
+
+    def test_high_win_pattern_detected(self):
+        # 1 pain, 9 wins = 90% win ratio
+        journal.log_event("pain", domain="general")
+        for _ in range(9):
+            journal.log_event("win", domain="general")
+        entries = journal._load_journal()
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        win_patterns = [p for p in patterns if p["type"] == "high_win_rate"]
+        self.assertEqual(len(win_patterns), 1)
+
+    def test_no_pattern_below_min_sample(self):
+        journal.log_event("pain", domain="general")
+        journal.log_event("win", domain="general")
+        entries = journal._load_journal()
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        pw_patterns = [p for p in patterns if p["type"] in ("high_pain_rate", "high_win_rate")]
+        self.assertEqual(len(pw_patterns), 0)
 
 
 if __name__ == "__main__":

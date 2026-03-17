@@ -25,7 +25,7 @@ sys.path.insert(0, SCRIPT_DIR)
 from journal import (
     _load_journal, _load_strategy, _save_strategy,
     get_stats, get_nuclear_metrics, get_all_learnings,
-    log_event, VALID_DOMAINS,
+    get_pain_win_summary, log_event, VALID_DOMAINS,
 )
 
 
@@ -122,7 +122,27 @@ def detect_patterns(entries, min_sample=5):
                 "data": {"recent_outcomes": [o.get("outcome") for o in recent_3]},
             })
 
-    # Pattern 5: Strategy version staleness
+    # Pattern 5: Pain/win signal imbalance
+    pw = get_pain_win_summary()
+    if pw["pain_count"] + pw["win_count"] >= min_sample:
+        if pw["ratio"] is not None and pw["ratio"] < 0.3:
+            # More than 70% pain signals — something is systematically wrong
+            top_pain = max(pw["pain_domains"].items(), key=lambda x: x[1])[0] if pw["pain_domains"] else "unknown"
+            patterns.append({
+                "type": "high_pain_rate",
+                "severity": "warning",
+                "message": f"Pain/win ratio is {pw['ratio']:.0%} wins — top pain domain: {top_pain}. Investigate recurring friction.",
+                "data": {"ratio": pw["ratio"], "pain_count": pw["pain_count"], "win_count": pw["win_count"], "top_pain_domain": top_pain},
+            })
+        elif pw["ratio"] is not None and pw["ratio"] > 0.8:
+            patterns.append({
+                "type": "high_win_rate",
+                "severity": "info",
+                "message": f"Pain/win ratio is {pw['ratio']:.0%} wins — current approach is working well.",
+                "data": {"ratio": pw["ratio"], "pain_count": pw["pain_count"], "win_count": pw["win_count"]},
+            })
+
+    # Pattern 6: Strategy version staleness
     strategy = _load_strategy()
     updated = strategy.get("updated_at", "")
     if updated:
@@ -173,9 +193,40 @@ def generate_recommendations(entries, patterns, strategy):
     return recs
 
 
+def _clamp_to_bounds(key, value, strategy):
+    """Enforce bounded parameter safety rails. Returns clamped value or None if unbounded."""
+    bounds = strategy.get("bounds", {})
+    b = bounds.get(key)
+    if not b:
+        return None  # No bounds defined — reject auto-adjust for this key
+    if not isinstance(value, (int, float)):
+        return None
+    lo, hi = b.get("min", float("-inf")), b.get("max", float("inf"))
+    step = b.get("step", 1)
+    clamped = max(lo, min(hi, value))
+    # Snap to nearest step from min
+    if step and step > 0 and lo != float("-inf"):
+        clamped = lo + round((clamped - lo) / step) * step
+        clamped = max(lo, min(hi, clamped))
+    # Preserve int type if original was int
+    if isinstance(value, int):
+        clamped = int(clamped)
+    return clamped
+
+
 def apply_suggestions(patterns, strategy):
-    """Apply pattern-suggested changes to strategy config."""
+    """Apply pattern-suggested changes to strategy config.
+
+    Safety rails:
+    - Only adjusts parameters that have bounds defined in strategy.bounds
+    - Clamps values to [min, max] range and snaps to step increments
+    - Respects learning.auto_adjust_enabled flag
+    - Logs every change with before/after values
+    """
+    auto_enabled = strategy.get("learning", {}).get("auto_adjust_enabled", False)
     changes = []
+    rejected = []
+
     for p in patterns:
         if not p.get("suggestion"):
             continue
@@ -187,8 +238,26 @@ def apply_suggestions(patterns, strategy):
                     current[part] = {}
                 current = current[part]
             old_val = current.get(parts[-1])
-            if old_val != val:
-                current[parts[-1]] = val
+            if old_val == val:
+                continue
+
+            if not auto_enabled:
+                rejected.append(f"{key}: {old_val} -> {val} (auto_adjust disabled)")
+                continue
+
+            clamped = _clamp_to_bounds(key, val, strategy)
+            if clamped is None:
+                rejected.append(f"{key}: {old_val} -> {val} (no bounds defined — rejected)")
+                continue
+
+            if clamped == old_val:
+                rejected.append(f"{key}: {old_val} -> {val} (clamped to {clamped}, no change)")
+                continue
+
+            current[parts[-1]] = clamped
+            if clamped != val:
+                changes.append(f"{key}: {old_val} -> {clamped} (requested {val}, clamped)")
+            else:
                 changes.append(f"{key}: {old_val} -> {val}")
 
     if changes:
@@ -265,6 +334,16 @@ def reflect(domain=None, apply=False, brief=False):
             print(f"Signal rate (BUILD+ADAPT/reviewed): {nm['signal_rate']:.1%}")
         if "build_rate" in nm:
             print(f"BUILD rate: {nm['build_rate']:.1%}")
+
+    # Pain/Win summary
+    pw = get_pain_win_summary()
+    if pw["pain_count"] + pw["win_count"] > 0:
+        print(f"\n--- Pain/Win Signals ---")
+        print(f"Wins: {pw['win_count']} | Pains: {pw['pain_count']} | Ratio: {pw['ratio']:.0%} wins" if pw["ratio"] else "")
+        if pw["pain_domains"]:
+            print(f"Pain by domain: {dict(pw['pain_domains'])}")
+        if pw["win_domains"]:
+            print(f"Win by domain: {dict(pw['win_domains'])}")
 
     # Patterns
     if patterns:
