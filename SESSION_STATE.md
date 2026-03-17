@@ -5,8 +5,29 @@
 
 ## Current State (as of Session 24 — 2026-03-16)
 
-**Phase:** Session 24 in progress. 1M context adaptive thresholds implemented (top BUILD candidate, 1855pts). Infrastructure refinements to arewedone.py, statusline.py, compact_anchor.py. 800 tests passing across 20 suites.
-**Next session starts at:** Run /cca-init. Priority: (1) Review github/spec-kit for F2. (2) MT-0 Phase 2: Deploy trading schema to polymarket-bot (cross-project). (3) MT-1: Check Maestro stable. (4) Eval/benchmark framework design (differentiation strategy). (5) MT-5: Claude Pro bridge research.
+**Phase:** Session 24 complete. 1M adaptive thresholds + infrastructure refinements (first half). 3 Reddit reviews + 3 new master tasks MT-6/7/8 with full lifecycle requirements (second half). 800 tests passing across 20 suites.
+**Next session starts at:** Run /cca-init. Priority: (1) Update ROADMAP.md (stale since Session 1, 5-minute fix). (2) MT-7: Programmatic trace analysis for self-learning — start with research phase (analyze 5+ real transcript JSONL files). (3) MT-6: Nuclear at Will — design subreddit profiles + quick-scan mode. (4) MT-8: iPhone remote control — research phase (scan Reddit for remote control posts). (5) Review github/spec-kit for F2 improvements.
+
+---
+
+## What Was Done in Session 24b — Continuation (2026-03-16)
+
+### Reddit Reviews (3 posts)
+- "Mass building with CC 6 weeks" (57pts, 173 comments) -> REFERENCE. Validates F1 TTL pruning (ultrathink-art: lessons.md contradictions by week 6-8). "apps:20, customers:0" meta-signal.
+- "Recursively self-improve agents via execution traces" (34pts) -> ADAPT. ACE framework (github.com/kayba-ai/agentic-context-engine, 2000+ stars). RLM Reflector pattern: inject traces into sandboxed REPL, write Python to query patterns. 34.3% improvement. Potentially huge for self-learning.
+- "Gave agent search engine across comms" (29pts) -> REFERENCE. traul (github.com/dandaka/traul) — local SQLite+FTS5 for multi-channel comms search.
+
+### New Master Tasks (MT-6, MT-7, MT-8)
+- MT-6: On-Demand Subreddit Scanner ("Nuclear at Will") — profiles + quick-scan mode for arbitrary subs
+- MT-7: Programmatic Trace Analysis for Self-Learning — adapt ACE's RLM Reflector into reflect.py
+- MT-8: iPhone Remote Control Perfection — research + optimize remote control workflow
+- Each MT has explicit 7-step lifecycle: research -> plan -> build -> test -> validate -> backtest -> iterate
+
+### Philosophy Encoded
+- New Severity 3 learning: "Building without testing/validation is wasted work"
+- All MTs now require full lifecycle documentation (not just "build X")
+
+**Tests:** 800/800 passing (20 suites — no new tests, review/planning session)
 
 ---
 

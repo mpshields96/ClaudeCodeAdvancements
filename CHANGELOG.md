@@ -355,3 +355,25 @@
 - All 4 nuclear scans now COMPLETE: 411 total posts scanned across 4 subreddits
 
 ---
+
+## Session 24b (Continuation) — 2026-03-16
+
+**What changed:**
+- FINDINGS_LOG.md — 3 new entries (151 total): mass-building post, ACE trace analysis, traul comms search
+- MASTER_TASKS.md — 3 new master tasks (MT-6, MT-7, MT-8) with full lifecycle requirements
+- LEARNINGS.md — New Severity 3 entry: "Building without testing/validation is wasted work"
+- SESSION_STATE.md — Updated with Session 24b work + revised next priorities
+
+**Why:**
+- Matthew requested reviews of 3 Reddit posts (one flagged as "potentially huge")
+- Matthew directed: expand nuclear scanner, add iPhone remote control task, and ensure all work has full lifecycle (research/plan/build/test/validate/backtest/iterate)
+- Matthew's key directive: "building doesn't mean shit without legitimate framework, testing, and proven ideas and success"
+
+**Tests:** 800/800 passing
+
+**Lessons:**
+- ACE framework's RLM Reflector pattern (programmatic trace querying) is the highest-signal self-learning upgrade found in 411+ posts scanned
+- Every MT now requires explicit lifecycle documentation — not just "build X" but the full validation chain
+- ROADMAP.md still stale (Session 1) — must be updated next session (5-minute fix deferred 23 sessions)
+
+---
