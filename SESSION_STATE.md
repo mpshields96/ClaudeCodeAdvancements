@@ -3,10 +3,23 @@
 
 ---
 
-## Current State (as of Session 29 — 2026-03-17)
+## Current State (as of Session 30 — 2026-03-17)
 
-**Phase:** Session 29 COMPLETE. CLAUDE_AUTOCOMPACT_PCT_OVERRIDE awareness shipped across all 4 context-monitor hooks. MT-10 QualityGate shipped. Spec system enhanced (perf specs, TDD ordering, demo field). 18 new r/ClaudeCode findings. 26 test suites, 1093 total tests, all passing.
-**Next session starts at:** Run /cca-init. Priority: (1) Build something outside context-monitor — module is well-covered now. (2) MT-9 autonomous pipeline or MT-11 GitHub intelligence. (3) Scan never-scanned subreddits (investing/stocks subs all show "Never scanned"). (4) Consider building a fresh-session anti-contamination guard (Desloppify pattern from findings).
+**Phase:** Session 30 IN PROGRESS. MT-9 Phase 1 shipped — autonomous_scanner.py with ScanPrioritizer, SafetyGate, AutonomousScanner, ScanReport. 37 new tests. 27 test suites, 1130 total tests, all passing. Chaining to MT-11 GitHub intelligence.
+**Next session starts at:** Run /cca-init. Priority: (1) MT-11 GitHub repo intelligence scanner. (2) MT-9 Phase 2 — wire autonomous scanner into /cca-nuclear --autonomous mode. (3) Scan never-scanned subreddits. (4) Fresh-session anti-contamination guard.
+
+---
+
+## What Was Done in Session 30 (2026-03-17)
+
+### MT-9 Phase 1: Autonomous Scanner Pipeline (COMPLETE)
+- `reddit-intelligence/autonomous_scanner.py` — Full autonomous scanning orchestrator
+- **ScanPrioritizer**: Ranks all 15 builtin subreddit profiles by staleness (days since last scan) + historical yield (BUILD+ADAPT rate) + never-scanned bonus. Domain diversity in output for caller filtering.
+- **SafetyGate**: Kill switch (~/.cca-autonomous-pause), rate limiting (max 50 posts/scan, max 10 scans/session, 30s between scans), content scanner integration (delegates to content_scanner.is_safe_for_deep_read), state persistence.
+- **AutonomousScanner**: Orchestrates pick_target → filter_posts → dedup_posts → classify_posts → build_report. Integrates profiles.py + nuclear_fetcher.py + content_scanner.py.
+- **ScanReport**: Structured output with to_dict() and summary() for logging.
+- CLI: `rank` (show prioritized queue), `status` (safety gate status), `pick` (next target, with --domain filter).
+- 37 tests — all passing. All 9 MT-9 safety protections enforced.
 
 ---
 
