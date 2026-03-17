@@ -24,7 +24,7 @@ sys.path.insert(0, SCRIPT_DIR)
 
 from journal import (
     _load_journal, _load_strategy, _save_strategy,
-    get_stats, get_nuclear_metrics, get_all_learnings,
+    get_stats, get_nuclear_metrics, get_trading_metrics, get_all_learnings,
     get_pain_win_summary, log_event, VALID_DOMAINS,
 )
 
@@ -140,6 +140,92 @@ def detect_patterns(entries, min_sample=5):
                 "severity": "info",
                 "message": f"Pain/win ratio is {pw['ratio']:.0%} wins — current approach is working well.",
                 "data": {"ratio": pw["ratio"], "pain_count": pw["pain_count"], "win_count": pw["win_count"]},
+            })
+
+    # --- Trading-specific patterns (MT-0) ---
+
+    # Pattern T1: Losing strategy detection
+    bet_outcomes = [e for e in entries if e.get("event_type") == "bet_outcome"]
+    if bet_outcomes:
+        strat_stats = {}  # {strategy_name: {wins, losses, pnl}}
+        for e in bet_outcomes:
+            m = e.get("metrics", {})
+            strat = m.get("strategy_name", "unknown")
+            if strat not in strat_stats:
+                strat_stats[strat] = {"wins": 0, "losses": 0, "pnl": 0, "total": 0}
+            ss = strat_stats[strat]
+            ss["total"] += 1
+            result = m.get("result", "")
+            if result == "win":
+                ss["wins"] += 1
+            elif result == "loss":
+                ss["losses"] += 1
+            ss["pnl"] += m.get("pnl_cents", 0)
+
+        strategy = _load_strategy()
+        win_alert = strategy.get("trading", {}).get("win_rate_alert_below", 0.4)
+        min_bets = strategy.get("trading", {}).get("min_sample_bets", 20)
+
+        for strat, ss in strat_stats.items():
+            decided = ss["wins"] + ss["losses"]
+            if decided >= min_bets:
+                wr = ss["wins"] / decided
+                if wr < win_alert:
+                    patterns.append({
+                        "type": "losing_strategy",
+                        "severity": "warning",
+                        "message": f"Strategy '{strat}' has {wr:.0%} win rate over {decided} bets (PnL: {ss['pnl']}c) — review or retire",
+                        "data": {"strategy": strat, "win_rate": round(wr, 3),
+                                 "bets": decided, "pnl_cents": ss["pnl"]},
+                    })
+
+    # Pattern T2: Research dead ends
+    research_entries = [e for e in entries if e.get("event_type") == "market_research"]
+    if research_entries:
+        path_stats = {}  # {research_path: {total, actionable}}
+        for e in research_entries:
+            m = e.get("metrics", {})
+            path = m.get("research_path", "unknown")
+            if path not in path_stats:
+                path_stats[path] = {"total": 0, "actionable": 0}
+            path_stats[path]["total"] += 1
+            if m.get("actionable"):
+                path_stats[path]["actionable"] += 1
+
+        for path, ps in path_stats.items():
+            if ps["total"] >= min_sample and ps["actionable"] == 0:
+                patterns.append({
+                    "type": "research_dead_end",
+                    "severity": "warning",
+                    "message": f"Research path '{path}' has 0 actionable results in {ps['total']} sessions — prune or pivot",
+                    "data": {"path": path, "sessions": ps["total"]},
+                })
+
+    # Pattern T3: Negative cumulative PnL
+    if len(bet_outcomes) >= min_sample:
+        total_pnl = sum(e.get("metrics", {}).get("pnl_cents", 0) for e in bet_outcomes)
+        if total_pnl < 0:
+            patterns.append({
+                "type": "negative_pnl",
+                "severity": "warning",
+                "message": f"Cumulative PnL is {total_pnl}c over {len(bet_outcomes)} bets — net negative",
+                "data": {"pnl_cents": total_pnl, "total_bets": len(bet_outcomes)},
+            })
+
+    # Pattern T4: Strong edge discovery rate
+    edges_found = [e for e in entries if e.get("event_type") == "edge_discovered"]
+    edges_rejected = [e for e in entries if e.get("event_type") == "edge_rejected"]
+    total_edges = len(edges_found) + len(edges_rejected)
+    if total_edges >= 3 and len(edges_found) > 0:
+        discovery_rate = len(edges_found) / total_edges
+        if discovery_rate > 0.6:
+            patterns.append({
+                "type": "strong_edge_discovery",
+                "severity": "info",
+                "message": f"Edge discovery rate is {discovery_rate:.0%} ({len(edges_found)}/{total_edges}) — research approach is effective",
+                "data": {"rate": round(discovery_rate, 3),
+                         "discovered": len(edges_found),
+                         "rejected": len(edges_rejected)},
             })
 
     # Pattern 6: Strategy version staleness
@@ -334,6 +420,23 @@ def reflect(domain=None, apply=False, brief=False):
             print(f"Signal rate (BUILD+ADAPT/reviewed): {nm['signal_rate']:.1%}")
         if "build_rate" in nm:
             print(f"BUILD rate: {nm['build_rate']:.1%}")
+
+    # Trading metrics
+    tm = get_trading_metrics()
+    if tm and (not domain or domain == "trading"):
+        print(f"\n--- Trading Metrics ---")
+        print(f"Bets: {tm['total_bets']} | Wins: {tm['wins']} | Losses: {tm['losses']} | Voids: {tm['voids']}")
+        if "win_rate" in tm:
+            print(f"Win rate: {tm['win_rate']:.1%} | PnL: {tm['total_pnl_cents']}c")
+        if tm["by_strategy"]:
+            print(f"By strategy:")
+            for s, d in sorted(tm["by_strategy"].items(), key=lambda x: -x[1]["pnl_cents"]):
+                wr = d["wins"] / (d["wins"] + d["losses"]) if (d["wins"] + d["losses"]) > 0 else 0
+                print(f"  {s}: {d['bets']} bets, {wr:.0%} WR, {d['pnl_cents']}c PnL")
+        if tm["research"]["total_sessions"] > 0:
+            r = tm["research"]
+            print(f"Research: {r['total_sessions']} sessions, {r['actionable']} actionable ({r.get('actionable_rate', 0):.0%})")
+            print(f"Edges: {r['edges_discovered']} discovered, {r['edges_rejected']} rejected")
 
     # Pain/Win summary
     pw = get_pain_win_summary()

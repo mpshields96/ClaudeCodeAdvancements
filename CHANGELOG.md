@@ -303,3 +303,27 @@
 - Memory ID suffix: 8 hex chars minimum (3-char caused collisions at 100 rapid-fire creates)
 
 ---
+
+## Session 21 — 2026-03-16
+
+**What changed:**
+- `self-learning/journal.py` — 6 trading event types (bet_placed, bet_outcome, market_research, edge_discovered, edge_rejected, strategy_shift), trading domain, get_trading_metrics(), trading-stats CLI
+- `self-learning/reflect.py` — 4 trading pattern detectors (losing_strategy, research_dead_end, negative_pnl, strong_edge_discovery), trading metrics in report output
+- `self-learning/strategy.json` — trading section (min_sample_bets, min_liquidity, win_rate_alert_below, etc.) + 4 bounded params
+- `self-learning/tests/test_self_learning.py` — 24 new tests (51 -> 75)
+- `spec-system/commands/design-review.md` — NEW: multi-persona design review (4 expert personas)
+- `.claude/commands/spec-design-review.md` — NEW: thin wrapper for /spec:design-review
+- `spec-system/commands/design.md` — Section 1b "Design References" for UI/visual features
+- `MASTER_TASKS.md` — MT-0/MT-2/MT-3/MT-4 status updated to COMPLETE
+
+**Why:**
+- MT-0: Kalshi self-learning integration — build the trading domain schema in CCA as R&D before deploying to polymarket-bot
+- MT-3: Multi-persona design review catches blind spots that single-perspective reviews miss
+- MT-4: Design vocabulary ensures professional-quality UI from the spec phase
+
+**Tests:** 783/783 passing (24 new)
+
+**Lessons:**
+- Edit tool refuses after system-reminder clears file context — read immediately before editing files in spec-system/ or other dirs that trigger CLAUDE.md injection
+
+---

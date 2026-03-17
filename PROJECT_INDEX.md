@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-16 (Session 18)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-16 (Session 21)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -152,7 +152,7 @@ ClaudeCodeAdvancements/
 | `python3 context-monitor/tests/test_compact_anchor.py` | compact anchor tests (22 tests) |
 | `python3 reddit-intelligence/tests/test_reddit_reader.py` | reddit reader tests (43 tests) |
 | `python3 reddit-intelligence/tests/test_nuclear_fetcher.py` | nuclear fetcher tests (44 tests) |
-| `python3 self-learning/tests/test_self_learning.py` | self-learning tests (51 tests) |
+| `python3 self-learning/tests/test_self_learning.py` | self-learning tests (75 tests) |
 | `python3 usage-dashboard/tests/test_usage_counter.py` | usage counter tests (44 tests) |
 | `python3 usage-dashboard/tests/test_otel_receiver.py` | OTel receiver tests (63 tests) |
 | `python3 usage-dashboard/tests/test_cost_alert.py` | cost alert tests (39 tests) |
@@ -218,9 +218,11 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | `design.md` | `/spec:design` | Reads approved requirements → `design.md` (DRAFT) |
 | `tasks.md` | `/spec:tasks` | Reads approved design → `tasks.md` (≤20 tasks, DRAFT) |
 | `implement.md` | `/spec:implement` | One task at a time, test → commit → stop, repeat |
+| `design-review.md` | `/spec:design-review` | 4-persona review panel → APPROVE/REVISE/REDESIGN verdict |
 
 **Approval flow:** User says "approved" → Status: DRAFT → Status: APPROVED → next command unlocks.
 **Anti-pattern:** Never skip to implement without approved requirements + design + tasks.
+**Design vocabulary (Section 1b):** Optional for UI features — reference UIs, aesthetic terms, layout patterns.
 
 ---
 
@@ -278,7 +280,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | context-monitor (compact_anchor) | `tests/test_compact_anchor.py` | 22 | All passing |
 | reddit-intelligence (reader) | `tests/test_reddit_reader.py` | 43 | All passing |
 | reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 44 | All passing |
-| self-learning | `tests/test_self_learning.py` | 51 | All passing |
+| self-learning | `tests/test_self_learning.py` | 75 | All passing |
 | usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |

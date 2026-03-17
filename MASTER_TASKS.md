@@ -32,7 +32,13 @@
 
 **Relationship to CCA:** The self-learning module in CCA is the R&D lab. The Kalshi deployment is the production application. Patterns proven in CCA get promoted to Kalshi. This is R&D-before-production applied to self-learning itself.
 
-**Status:** Architecture designed in CCA. Ready for adaptation to trading domain. Multi-session implementation.
+**Status:** Phase 1 COMPLETE (Session 21). Trading domain schema built in CCA self-learning module:
+- 6 new event types: bet_placed, bet_outcome, market_research, edge_discovered, edge_rejected, strategy_shift
+- `get_trading_metrics()` with PnL tracking, win rate, by-market-type and by-strategy breakdowns, research effectiveness
+- 4 trading pattern detectors: losing_strategy, research_dead_end, negative_pnl, strong_edge_discovery
+- Trading section in strategy.json with bounded auto-adjust params
+- 24 new tests (75 total self-learning)
+- Phase 2: Deploy to polymarket-bot (requires cross-project work)
 
 ---
 
@@ -78,7 +84,7 @@
 - Claude generates the diagram as part of design.md output
 - Already noted in spec-system rules (`spec-system.md`)
 
-**Status:** Ready to implement. Low complexity. Good gsd:quick target.
+**Status:** COMPLETE (Session 19). Mermaid diagram requirement added to spec:design at lines 34 and 109.
 
 ---
 
@@ -94,7 +100,7 @@
 - Consolidated feedback drives revisions before implementation
 - Could be a `/spec:design-review` command
 
-**Status:** Ready to implement. Medium complexity.
+**Status:** COMPLETE (Session 21). `/spec:design-review` command created with 4 expert personas (UX, Security, Performance, Maintainability). Consolidated review with APPROVE/REVISE/REDESIGN verdict.
 
 ---
 
@@ -112,15 +118,15 @@
 - Create a `design-guide.md` template that captures aesthetic preferences
 - When building any UI (USAGE-5 Streamlit, or future launcher), apply these patterns
 
-**Status:** Ready to implement. Enhances MT-2 and MT-3.
+**Status:** COMPLETE (Session 21). Section 1b "Design References" added to spec:design — optional for UI features, includes reference UIs, design vocabulary, layout pattern, color constraints. Asks user once if no preferences specified.
 
 ---
 
 ## Priority Order
 
-1. **MT-0** (Kalshi self-learning integration) — BIGGEST, highest stakes, proven architecture ready to deploy
-2. **MT-2** (mermaid diagrams) — smallest, most immediately useful, already in spec rules
-3. **MT-4** (design vocabulary) — enhances spec:design, low effort
-4. **MT-3** (virtual design team) — medium effort, high value for quality
+1. ~~**MT-0** (Kalshi self-learning integration)~~ Phase 1 COMPLETE — schema + patterns + tests shipped. Phase 2 = deploy to polybot
+2. ~~**MT-2** (mermaid diagrams)~~ COMPLETE
+3. ~~**MT-4** (design vocabulary)~~ COMPLETE
+4. ~~**MT-3** (virtual design team)~~ COMPLETE
 5. **MT-1** (Maestro visual grid) — largest, blocked on macOS SDK, may need custom build
 6. **MT-5** (Claude Pro bridge) — future, needs research on Pro's capabilities

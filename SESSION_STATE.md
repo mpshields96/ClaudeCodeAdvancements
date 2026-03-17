@@ -3,10 +3,66 @@
 
 ---
 
-## Current State (as of Session 19 — 2026-03-16)
+## Current State (as of Session 21 — 2026-03-16)
 
-**Phase:** Session 19 complete. Nuclear subreddit flexibility, Terminal.app Kalshi launcher, frontend-design review, CCA vs YoYo comparative analysis delivered, 6 master-level tasks captured (MT-0 through MT-5). 742 tests passing across 20 suites.
-**Next session starts at:** Run /cca-init. Priority: (1) COMMIT all Session 19 work immediately. (2) MT-0: Begin Kalshi self-learning integration design (adapt journal.py schema for trading domain). (3) MT-2: Mermaid diagrams in spec:design (quick win). (4) Push to remote.
+**Phase:** Session 21 complete. 4 of 6 master-level tasks shipped (MT-0 Phase 1, MT-2, MT-3, MT-4). 783 tests passing across 20 suites.
+**Next session starts at:** Run /cca-init. Priority: (1) MT-0 Phase 2: Deploy trading schema to polymarket-bot (cross-project). (2) MT-1: Check Maestro for macOS stable release. (3) MT-5: Research Claude Pro integration options. (4) Open items from SESSION_STATE (ClaudePrism, Cozempic, linked repos).
+
+---
+
+## What Was Done in Session 21 (2026-03-16)
+
+### MT-0: Trading Domain Schema (Phase 1 COMPLETE)
+- Added 6 trading event types to `self-learning/journal.py`: bet_placed, bet_outcome, market_research, edge_discovered, edge_rejected, strategy_shift
+- Added `trading` domain to VALID_DOMAINS
+- Built `get_trading_metrics()` — aggregates PnL, win rate, by-market-type, by-strategy, research effectiveness
+- Added `trading-stats` CLI subcommand
+- Added 4 trading pattern detectors to `self-learning/reflect.py`: losing_strategy (per-strategy win rate), research_dead_end (0-actionable paths), negative_pnl (cumulative loss), strong_edge_discovery (high discovery rate)
+- Added trading section + 4 bounded params to `self-learning/strategy.json`
+- Added trading metrics display to reflect.py full report
+- 24 new tests in `self-learning/tests/test_self_learning.py` (75 total)
+
+### MT-3: Virtual Design Team (COMPLETE)
+- Created `spec-system/commands/design-review.md` — multi-persona design review
+- 4 expert personas: UX Researcher, Security & Privacy Engineer, Performance & Scalability Architect, Maintainability & Testing Engineer
+- Each reviews design.md independently, consolidated into APPROVE/REVISE/REDESIGN verdict
+- Thin wrapper at `.claude/commands/spec-design-review.md`
+
+### MT-4: Design Vocabulary (COMPLETE)
+- Added Section 1b "Design References" to `spec-system/commands/design.md`
+- Optional for UI/visual features, skipped for backend/hook/library work
+- Covers: reference UIs, design vocabulary, layout patterns, color constraints
+- Auto-asks user once if preferences not specified
+
+### MASTER_TASKS.md Updated
+- MT-0: Status updated to Phase 1 COMPLETE
+- MT-2: Status updated to COMPLETE (Session 19)
+- MT-3: Status updated to COMPLETE
+- MT-4: Status updated to COMPLETE
+- Priority order: 4 of 6 struck through as complete
+
+**Tests:** 783/783 passing (20 suites — 24 new tests)
+
+---
+
+## What Was Done in Session 20 (2026-03-16)
+
+### Self-Learning Improvements (from CCA vs YoYo analysis)
+- Enabled bounded auto_adjust in strategy.json with safety rails
+- Added pain/win signal tracking to journal.py (new event types + get_pain_win_summary())
+- Wired session-end self-learning into all 4 wrap commands (cca-wrap, wrap-up, polybot-wrap, polybot-wrapresearch)
+- 17 new tests (bounded auto-adjust + pain/win signals)
+
+### Reddit Reviews (5 posts)
+- Architecture problem post (REFERENCE), Scryer shared memory MCP (REFERENCE), CLAUDE.md size post (REFERENCE), Clui CC (REFERENCE), 2x usage checker (REFERENCE)
+- All logged to FINDINGS_LOG.md
+
+### Memory Updates
+- Saved 2x token promotion schedule (March 13-28)
+- Saved detachable tabs feedback (ADHD-friendly UI requirement)
+- Saved global self-learning ritual requirement
+
+**Tests:** 759/759 passing (20 suites — 17 new tests)
 
 ---
 
@@ -533,12 +589,12 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 | context-monitor (compact_anchor) | 22 | 22/22 passing |
 | reddit-intelligence (reader) | 43 | 43/43 passing |
 | reddit-intelligence (nuclear_fetcher) | 44 | 44/44 passing |
-| self-learning | 34 | 34/34 passing |
+| self-learning | 75 | 75/75 passing |
 | usage-dashboard (usage_counter) | 44 | 44/44 passing |
 | usage-dashboard (otel_receiver) | 63 | 63/63 passing |
 | usage-dashboard (cost_alert) | 39 | 39/39 passing |
 | usage-dashboard (arewedone) | 50 | 50/50 passing |
-| **Total** | **742** | **742/742 passing** |
+| **Total** | **783** | **783/783 passing** |
 
 ---
 

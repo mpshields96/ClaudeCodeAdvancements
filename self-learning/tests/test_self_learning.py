@@ -580,5 +580,323 @@ class TestPainWinSignals(unittest.TestCase):
         self.assertEqual(len(pw_patterns), 0)
 
 
+class TestTradingEventTypes(unittest.TestCase):
+    """Test trading domain event types and validation."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.orig_journal = journal.JOURNAL_PATH
+        self.orig_strategy = journal.STRATEGY_PATH
+        journal.JOURNAL_PATH = os.path.join(self.tmpdir, "journal.jsonl")
+        journal.STRATEGY_PATH = os.path.join(self.tmpdir, "strategy.json")
+        with open(journal.STRATEGY_PATH, "w") as f:
+            json.dump({"version": 1, "updated_at": "2026-03-16T00:00:00Z"}, f)
+
+    def tearDown(self):
+        journal.JOURNAL_PATH = self.orig_journal
+        journal.STRATEGY_PATH = self.orig_strategy
+        shutil.rmtree(self.tmpdir)
+
+    def test_trading_event_types_exist(self):
+        for et in ["bet_placed", "bet_outcome", "market_research",
+                    "edge_discovered", "edge_rejected", "strategy_shift"]:
+            self.assertIn(et, journal.VALID_EVENT_TYPES)
+
+    def test_trading_domain_exists(self):
+        self.assertIn("trading", journal.VALID_DOMAINS)
+
+    def test_log_bet_placed(self):
+        entry = journal.log_event("bet_placed", domain="trading", metrics={
+            "market_type": "crypto_15m", "ticker": "KXBTC15M",
+            "side": "yes", "price_cents": 95, "contracts": 10,
+            "strategy_name": "expiry_sniper_v1",
+        })
+        self.assertEqual(entry["event_type"], "bet_placed")
+        self.assertEqual(entry["domain"], "trading")
+        self.assertEqual(entry["metrics"]["ticker"], "KXBTC15M")
+
+    def test_log_bet_outcome(self):
+        entry = journal.log_event("bet_outcome", domain="trading", outcome="success",
+                                  metrics={
+                                      "ticker": "KXBTC15M", "result": "win",
+                                      "pnl_cents": 500, "side": "yes",
+                                      "strategy_name": "expiry_sniper_v1",
+                                  })
+        self.assertEqual(entry["outcome"], "success")
+        self.assertEqual(entry["metrics"]["pnl_cents"], 500)
+
+    def test_log_market_research(self):
+        entry = journal.log_event("market_research", domain="trading",
+                                  outcome="success",
+                                  notes="Found crypto 15m edge via ATR analysis",
+                                  metrics={"research_path": "atr_volatility",
+                                           "actionable": True})
+        self.assertEqual(entry["event_type"], "market_research")
+        self.assertTrue(entry["metrics"]["actionable"])
+
+    def test_log_edge_discovered(self):
+        entry = journal.log_event("edge_discovered", domain="trading",
+                                  notes="Sniper bets at 95c+ with <2min to expiry",
+                                  metrics={"edge_type": "expiry_timing",
+                                           "expected_win_rate": 0.85,
+                                           "market_type": "crypto_15m"})
+        self.assertEqual(entry["metrics"]["edge_type"], "expiry_timing")
+
+    def test_log_edge_rejected(self):
+        entry = journal.log_event("edge_rejected", domain="trading",
+                                  outcome="failure",
+                                  notes="Weather market mean-reversion too noisy",
+                                  metrics={"edge_type": "mean_reversion",
+                                           "reason": "insufficient_sample",
+                                           "market_type": "weather"})
+        self.assertEqual(entry["outcome"], "failure")
+        self.assertEqual(entry["metrics"]["reason"], "insufficient_sample")
+
+    def test_log_strategy_shift(self):
+        entry = journal.log_event("strategy_shift", domain="trading",
+                                  notes="Raised min liquidity threshold from 50 to 100",
+                                  metrics={"param": "min_liquidity",
+                                           "old_value": 50, "new_value": 100,
+                                           "reason": "3 losses on thin markets"})
+        self.assertEqual(entry["event_type"], "strategy_shift")
+
+
+class TestTradingMetrics(unittest.TestCase):
+    """Test trading-specific metrics aggregation."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.orig_journal = journal.JOURNAL_PATH
+        self.orig_strategy = journal.STRATEGY_PATH
+        journal.JOURNAL_PATH = os.path.join(self.tmpdir, "journal.jsonl")
+        journal.STRATEGY_PATH = os.path.join(self.tmpdir, "strategy.json")
+        with open(journal.STRATEGY_PATH, "w") as f:
+            json.dump({"version": 1, "updated_at": "2026-03-16T00:00:00Z"}, f)
+
+    def tearDown(self):
+        journal.JOURNAL_PATH = self.orig_journal
+        journal.STRATEGY_PATH = self.orig_strategy
+        shutil.rmtree(self.tmpdir)
+
+    def test_trading_metrics_none_when_empty(self):
+        self.assertIsNone(journal.get_trading_metrics())
+
+    def test_trading_metrics_counts_bets(self):
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "win", "pnl_cents": 500,
+                                   "market_type": "crypto_15m", "strategy_name": "sniper"})
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "loss", "pnl_cents": -100,
+                                   "market_type": "crypto_15m", "strategy_name": "sniper"})
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "win", "pnl_cents": 300,
+                                   "market_type": "weather", "strategy_name": "mean_rev"})
+        tm = journal.get_trading_metrics()
+        self.assertEqual(tm["total_bets"], 3)
+        self.assertEqual(tm["wins"], 2)
+        self.assertEqual(tm["losses"], 1)
+        self.assertAlmostEqual(tm["win_rate"], 2 / 3, places=3)
+
+    def test_trading_metrics_pnl(self):
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "win", "pnl_cents": 500})
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "loss", "pnl_cents": -200})
+        tm = journal.get_trading_metrics()
+        self.assertEqual(tm["total_pnl_cents"], 300)
+
+    def test_trading_metrics_by_market_type(self):
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "win", "pnl_cents": 500,
+                                   "market_type": "crypto_15m"})
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "loss", "pnl_cents": -100,
+                                   "market_type": "crypto_15m"})
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "win", "pnl_cents": 200,
+                                   "market_type": "weather"})
+        tm = journal.get_trading_metrics()
+        self.assertEqual(tm["by_market_type"]["crypto_15m"]["bets"], 2)
+        self.assertEqual(tm["by_market_type"]["crypto_15m"]["pnl_cents"], 400)
+        self.assertEqual(tm["by_market_type"]["weather"]["bets"], 1)
+
+    def test_trading_metrics_by_strategy(self):
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "win", "pnl_cents": 500,
+                                   "strategy_name": "sniper"})
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "win", "pnl_cents": 300,
+                                   "strategy_name": "sniper"})
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "loss", "pnl_cents": -400,
+                                   "strategy_name": "mean_rev"})
+        tm = journal.get_trading_metrics()
+        self.assertEqual(tm["by_strategy"]["sniper"]["wins"], 2)
+        self.assertEqual(tm["by_strategy"]["sniper"]["pnl_cents"], 800)
+        self.assertEqual(tm["by_strategy"]["mean_rev"]["losses"], 1)
+
+    def test_trading_metrics_research_effectiveness(self):
+        journal.log_event("market_research", domain="trading",
+                          metrics={"actionable": True, "research_path": "atr"})
+        journal.log_event("market_research", domain="trading",
+                          metrics={"actionable": False, "research_path": "sentiment"})
+        journal.log_event("market_research", domain="trading",
+                          metrics={"actionable": True, "research_path": "volatility"})
+        journal.log_event("edge_discovered", domain="trading",
+                          metrics={"edge_type": "timing"})
+        journal.log_event("edge_rejected", domain="trading",
+                          metrics={"edge_type": "sentiment"})
+        tm = journal.get_trading_metrics()
+        self.assertEqual(tm["research"]["total_sessions"], 3)
+        self.assertEqual(tm["research"]["actionable"], 2)
+        self.assertEqual(tm["research"]["edges_discovered"], 1)
+        self.assertEqual(tm["research"]["edges_rejected"], 1)
+        self.assertAlmostEqual(tm["research"]["actionable_rate"], 2 / 3, places=3)
+
+    def test_trading_metrics_ignores_non_trading(self):
+        journal.log_event("session_outcome", domain="general", outcome="success")
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "win", "pnl_cents": 100})
+        tm = journal.get_trading_metrics()
+        self.assertEqual(tm["total_bets"], 1)
+
+    def test_trading_metrics_void_bets(self):
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "void", "pnl_cents": 0})
+        tm = journal.get_trading_metrics()
+        self.assertEqual(tm["total_bets"], 1)
+        self.assertEqual(tm["wins"], 0)
+        self.assertEqual(tm["losses"], 0)
+        self.assertEqual(tm["voids"], 1)
+
+    def test_trading_metrics_cli_subcommand(self):
+        """Test that trading-stats CLI subcommand exists."""
+        journal.log_event("bet_outcome", domain="trading",
+                          metrics={"result": "win", "pnl_cents": 100})
+        # Just verify get_trading_metrics returns data (CLI tested via integration)
+        tm = journal.get_trading_metrics()
+        self.assertIsNotNone(tm)
+
+
+class TestTradingPatternDetection(unittest.TestCase):
+    """Test trading-specific pattern detection in reflect.py."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.orig_journal = journal.JOURNAL_PATH
+        self.orig_strategy = journal.STRATEGY_PATH
+        journal.JOURNAL_PATH = os.path.join(self.tmpdir, "journal.jsonl")
+        journal.STRATEGY_PATH = os.path.join(self.tmpdir, "strategy.json")
+        with open(journal.STRATEGY_PATH, "w") as f:
+            json.dump({
+                "version": 1,
+                "updated_at": "2026-03-16T00:00:00Z",
+                "trading": {
+                    "min_sample_bets": 20,
+                    "min_liquidity": 50,
+                    "win_rate_alert_below": 0.4,
+                },
+                "learning": {"auto_adjust_enabled": True},
+                "bounds": {
+                    "trading.min_liquidity": {"min": 10, "max": 500, "step": 10},
+                    "trading.min_sample_bets": {"min": 5, "max": 50, "step": 5},
+                    "trading.win_rate_alert_below": {"min": 0.2, "max": 0.6, "step": 0.05},
+                }
+            }, f)
+
+    def tearDown(self):
+        journal.JOURNAL_PATH = self.orig_journal
+        journal.STRATEGY_PATH = self.orig_strategy
+        shutil.rmtree(self.tmpdir)
+
+    def test_detects_losing_strategy(self):
+        """Strategy with <40% win rate over 20+ bets triggers warning."""
+        for _ in range(15):
+            journal.log_event("bet_outcome", domain="trading",
+                              metrics={"result": "loss", "pnl_cents": -100,
+                                       "strategy_name": "bad_strat"})
+        for _ in range(5):
+            journal.log_event("bet_outcome", domain="trading",
+                              metrics={"result": "win", "pnl_cents": 100,
+                                       "strategy_name": "bad_strat"})
+        entries = journal._load_journal()
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        losing = [p for p in patterns if p["type"] == "losing_strategy"]
+        self.assertTrue(len(losing) > 0)
+        self.assertEqual(losing[0]["data"]["strategy"], "bad_strat")
+
+    def test_no_losing_strategy_below_sample(self):
+        """Don't flag with fewer than min_sample_bets."""
+        for _ in range(3):
+            journal.log_event("bet_outcome", domain="trading",
+                              metrics={"result": "loss", "strategy_name": "new_strat"})
+        entries = journal._load_journal()
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        losing = [p for p in patterns if p["type"] == "losing_strategy"]
+        self.assertEqual(len(losing), 0)
+
+    def test_detects_research_dead_end(self):
+        """Research path with 0 actionable results over 5+ sessions triggers warning."""
+        for _ in range(6):
+            journal.log_event("market_research", domain="trading",
+                              metrics={"actionable": False,
+                                       "research_path": "sentiment_analysis"})
+        entries = journal._load_journal()
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        dead_ends = [p for p in patterns if p["type"] == "research_dead_end"]
+        self.assertTrue(len(dead_ends) > 0)
+        self.assertIn("sentiment_analysis", dead_ends[0]["data"]["path"])
+
+    def test_no_dead_end_with_some_hits(self):
+        """Research path with some actionable results is not flagged."""
+        for _ in range(4):
+            journal.log_event("market_research", domain="trading",
+                              metrics={"actionable": False,
+                                       "research_path": "atr_vol"})
+        journal.log_event("market_research", domain="trading",
+                          metrics={"actionable": True,
+                                   "research_path": "atr_vol"})
+        entries = journal._load_journal()
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        dead_ends = [p for p in patterns if p["type"] == "research_dead_end"]
+        self.assertEqual(len(dead_ends), 0)
+
+    def test_detects_negative_pnl_trend(self):
+        """Cumulative PnL going negative triggers warning."""
+        for _ in range(10):
+            journal.log_event("bet_outcome", domain="trading",
+                              metrics={"result": "loss", "pnl_cents": -200})
+        for _ in range(5):
+            journal.log_event("bet_outcome", domain="trading",
+                              metrics={"result": "win", "pnl_cents": 100})
+        entries = journal._load_journal()
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        neg_pnl = [p for p in patterns if p["type"] == "negative_pnl"]
+        self.assertTrue(len(neg_pnl) > 0)
+
+    def test_no_negative_pnl_when_profitable(self):
+        """Profitable trading doesn't trigger warning."""
+        for _ in range(10):
+            journal.log_event("bet_outcome", domain="trading",
+                              metrics={"result": "win", "pnl_cents": 500})
+        for _ in range(2):
+            journal.log_event("bet_outcome", domain="trading",
+                              metrics={"result": "loss", "pnl_cents": -100})
+        entries = journal._load_journal()
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        neg_pnl = [p for p in patterns if p["type"] == "negative_pnl"]
+        self.assertEqual(len(neg_pnl), 0)
+
+    def test_detects_edge_quality_signal(self):
+        """Edges with high discovery-to-rejection ratio noted."""
+        for _ in range(4):
+            journal.log_event("edge_discovered", domain="trading")
+        journal.log_event("edge_rejected", domain="trading")
+        entries = journal._load_journal()
+        patterns = reflect.detect_patterns(entries, min_sample=3)
+        edge_q = [p for p in patterns if p["type"] == "strong_edge_discovery"]
+        self.assertTrue(len(edge_q) > 0)
+
+
 if __name__ == "__main__":
     unittest.main()

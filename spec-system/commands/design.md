@@ -33,6 +33,19 @@ Read the requirements carefully. Then generate `design.md` with these sections:
 - One-paragraph prose description
 - **REQUIRED: Mermaid architecture diagram** — generate a mermaid code block showing component relationships, data flow, and dependencies. Mermaid renders natively in GitHub, VS Code, and Obsidian (zero dependencies).
 
+### 1b. Design References (Optional — for UI/visual features only)
+If the feature involves any user-facing interface (CLI output formatting, Streamlit dashboard, web UI, terminal TUI), include this section. **Skip entirely for pure backend/hook/library work.**
+
+**Include any that apply:**
+- **Reference UIs:** 2-3 existing tools/dashboards the user wants this to look/feel like
+- **Design vocabulary:** Descriptive aesthetic terms (e.g., "minimal, monospace, dark-mode-first, data-dense")
+- **Layout pattern:** Grid / sidebar+content / tabbed / single-scroll / terminal-style
+- **Color constraints:** Dark mode only? Match existing tool? Specific palette?
+
+**If the user has not specified preferences**, ask once: "This feature has a visual component. Any reference UIs or aesthetic preferences? (Skip if you do not care.)"
+
+**Anti-pattern:** Do not write a design guide for a CLI that just prints text. This section exists only when visual design genuinely matters.
+
 ### 2. Key Design Decisions
 For each significant architectural choice, document:
 - **Decision**: What was chosen

@@ -53,6 +53,13 @@ VALID_EVENT_TYPES = [
     "error",              # Something went wrong
     "pain",               # Something went wrong / wasted time / caused frustration
     "win",                # Something worked well / saved time / produced good results
+    # Trading domain (MT-0)
+    "bet_placed",         # A bet was placed on a market
+    "bet_outcome",        # Bet result: win/loss/void
+    "market_research",    # Research session on a market or edge
+    "edge_discovered",    # A new tradeable edge was found
+    "edge_rejected",      # A research path didn't produce an edge
+    "strategy_shift",     # Trading strategy parameter change
 ]
 
 VALID_DOMAINS = [
@@ -65,6 +72,7 @@ VALID_DOMAINS = [
     "reddit_intelligence",
     "self_learning",
     "general",
+    "trading",            # MT-0: Kalshi/prediction market trading
 ]
 
 VALID_OUTCOMES = ["success", "partial", "failure", "skipped"]
@@ -242,6 +250,96 @@ def get_nuclear_metrics():
     return total
 
 
+def get_trading_metrics():
+    """Aggregate trading-specific metrics from bet outcomes and research sessions.
+
+    Returns dict with:
+    - total_bets, wins, losses, voids, win_rate
+    - total_pnl_cents
+    - by_market_type: {type: {bets, wins, losses, pnl_cents}}
+    - by_strategy: {name: {bets, wins, losses, pnl_cents}}
+    - research: {total_sessions, actionable, actionable_rate, edges_discovered, edges_rejected}
+    """
+    entries = _load_journal()
+    outcomes = [e for e in entries if e.get("event_type") == "bet_outcome"]
+    research = [e for e in entries if e.get("event_type") == "market_research"]
+    edges_found = [e for e in entries if e.get("event_type") == "edge_discovered"]
+    edges_nope = [e for e in entries if e.get("event_type") == "edge_rejected"]
+
+    if not outcomes and not research and not edges_found and not edges_nope:
+        return None
+
+    total = {
+        "total_bets": len(outcomes),
+        "wins": 0,
+        "losses": 0,
+        "voids": 0,
+        "total_pnl_cents": 0,
+        "by_market_type": {},
+        "by_strategy": {},
+        "research": {
+            "total_sessions": len(research),
+            "actionable": 0,
+            "edges_discovered": len(edges_found),
+            "edges_rejected": len(edges_nope),
+        },
+    }
+
+    for e in outcomes:
+        m = e.get("metrics", {})
+        result = m.get("result", "unknown")
+        pnl = m.get("pnl_cents", 0)
+        mtype = m.get("market_type", "unknown")
+        strat = m.get("strategy_name", "unknown")
+
+        if result == "win":
+            total["wins"] += 1
+        elif result == "loss":
+            total["losses"] += 1
+        elif result == "void":
+            total["voids"] += 1
+
+        total["total_pnl_cents"] += pnl
+
+        # By market type
+        if mtype not in total["by_market_type"]:
+            total["by_market_type"][mtype] = {"bets": 0, "wins": 0, "losses": 0, "pnl_cents": 0}
+        mt = total["by_market_type"][mtype]
+        mt["bets"] += 1
+        if result == "win":
+            mt["wins"] += 1
+        elif result == "loss":
+            mt["losses"] += 1
+        mt["pnl_cents"] += pnl
+
+        # By strategy
+        if strat not in total["by_strategy"]:
+            total["by_strategy"][strat] = {"bets": 0, "wins": 0, "losses": 0, "pnl_cents": 0}
+        st = total["by_strategy"][strat]
+        st["bets"] += 1
+        if result == "win":
+            st["wins"] += 1
+        elif result == "loss":
+            st["losses"] += 1
+        st["pnl_cents"] += pnl
+
+    # Win rate (exclude voids)
+    decided = total["wins"] + total["losses"]
+    if decided > 0:
+        total["win_rate"] = round(total["wins"] / decided, 3)
+
+    # Research effectiveness
+    for e in research:
+        if e.get("metrics", {}).get("actionable"):
+            total["research"]["actionable"] += 1
+    if total["research"]["total_sessions"] > 0:
+        total["research"]["actionable_rate"] = round(
+            total["research"]["actionable"] / total["research"]["total_sessions"], 3
+        )
+
+    return total
+
+
 def get_pain_win_summary():
     """Aggregate pain/win signals for pattern analysis.
 
@@ -303,6 +401,9 @@ def _cli():
     # pain-win
     sub.add_parser("pain-win", help="Pain/win signal summary")
 
+    # trading-stats
+    sub.add_parser("trading-stats", help="Trading metrics summary")
+
     args = parser.parse_args()
 
     if args.command == "log":
@@ -345,6 +446,13 @@ def _cli():
     elif args.command == "pain-win":
         pw = get_pain_win_summary()
         print(json.dumps({k: v for k, v in pw.items() if k not in ("pain_entries", "win_entries")}, indent=2))
+
+    elif args.command == "trading-stats":
+        tm = get_trading_metrics()
+        if tm:
+            print(json.dumps(tm, indent=2))
+        else:
+            print("No trading data yet.")
 
     else:
         parser.print_help()

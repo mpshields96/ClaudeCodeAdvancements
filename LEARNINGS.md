@@ -144,3 +144,10 @@
 - **Files:** any bot/daemon needing shared database or venv
 
 ---
+
+### Edit tool context cleared by system-reminder injection — Severity: 1 — Count: 1
+- **Anti-pattern:** Reading a file, then having the Edit tool refuse because system-reminder tags (CLAUDE.md injection) cleared the file from Read context between the read and edit
+- **Fix:** Read the file immediately before editing, or use Bash sed as fallback for files in directories that trigger CLAUDE.md system-reminders
+- **First seen:** 2026-03-16
+- **Last seen:** 2026-03-16
+- **Files:** spec-system/commands/*.md (triggers spec-system/CLAUDE.md injection)
