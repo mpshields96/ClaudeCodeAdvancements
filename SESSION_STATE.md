@@ -661,9 +661,9 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 |----------|--------|--------|-------|-------------|
 | 1: Persistent Memory | memory-system/ | MEM-1 ✅ MEM-2 ✅ MEM-3 ✅ MEM-4 ✅ MEM-5 ✅ | 94/94 | Frontier complete |
 | 2: Spec System | spec-system/ | SPEC-1–6 ✅ | 90/90 | Frontier complete |
-| 3: Context Monitor | context-monitor/ | CTX-1 ✅ CTX-2 ✅ CTX-3 ✅ CTX-4 ✅ CTX-5 ✅ | 109/109 | Frontier complete |
+| 3: Context Monitor | context-monitor/ | CTX-1 ✅ CTX-2 ✅ CTX-3 ✅ CTX-4 ✅ CTX-5 ✅ + 1M adaptive | 125/125 | Frontier complete |
 | 4: Agent Guard | agent-guard/ | AG-1 ✅ AG-2 ✅ AG-3 ✅ | 103/103 | Frontier nearly complete |
-| 5: Usage Dashboard | usage-dashboard/ | USAGE-1 ✅ USAGE-2 ✅ USAGE-3 ✅ /arewedone ✅ | 196/196 | Wire cost_alert hook, Streamlit UI (optional) |
+| 5: Usage Dashboard | usage-dashboard/ | USAGE-1 ✅ USAGE-2 ✅ USAGE-3 ✅ /arewedone ✅ | 197/197 | Streamlit UI (optional) |
 
 ---
 
@@ -680,7 +680,7 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 | agent-guard (mobile_approver) | 36 | 36/36 passing |
 | agent-guard (ownership) | 27 | 27/27 passing |
 | agent-guard (credential_guard) | 40 | 40/40 passing |
-| context-monitor (meter) | 36 | 36/36 passing |
+| context-monitor (meter) | 52 | 52/52 passing |
 | context-monitor (alert) | 24 | 24/24 passing |
 | context-monitor (auto_handoff) | 27 | 27/27 passing |
 | context-monitor (compact_anchor) | 22 | 22/22 passing |
@@ -690,8 +690,8 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 | usage-dashboard (usage_counter) | 44 | 44/44 passing |
 | usage-dashboard (otel_receiver) | 63 | 63/63 passing |
 | usage-dashboard (cost_alert) | 39 | 39/39 passing |
-| usage-dashboard (arewedone) | 50 | 50/50 passing |
-| **Total** | **783** | **783/783 passing** |
+| usage-dashboard (arewedone) | 51 | 51/51 passing |
+| **Total** | **800** | **800/800 passing** |
 
 ---
 

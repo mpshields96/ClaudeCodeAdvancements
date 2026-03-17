@@ -152,6 +152,25 @@
 - **Last seen:** 2026-03-16
 - **Files:** spec-system/commands/*.md (triggers spec-system/CLAUDE.md injection)
 
+### Percentage-based context thresholds break at 1M windows — Severity: 2 — Count: 1
+- **Anti-pattern:** Using fixed percentage thresholds (50/70/85%) for all window sizes. At 1M, yellow fires at 500k tokens — well past quality degradation.
+- **Fix:** Adaptive thresholds: `min(pct_threshold, quality_ceiling / window * 100)`. Quality ceilings: yellow=250k, red=400k, critical=600k. For 200k: unchanged. For 1M: yellow=25%, red=40%, critical=60%.
+- **Evidence:** 1855pts Reddit post + 174 comments. Community consensus: quality degrades at 250-500k regardless of window size.
+- **First seen:** 2026-03-16 (Session 24)
+- **Last seen:** 2026-03-16
+- **Files:** `context-monitor/hooks/meter.py`, `context-monitor/statusline.py`
+
+---
+
+### Documented pass-only functions are not stubs — Severity: 1 — Count: 1
+- **Anti-pattern:** Code scanner flagging `def method(self): """Suppress X."""; pass` as a stub
+- **Fix:** Only flag pass-only functions WITHOUT a docstring. If a docstring is present, the pass is intentional (e.g. overriding log_message to suppress HTTP server output).
+- **First seen:** 2026-03-16 (Session 24 — arewedone.py false positive on otel_receiver.py)
+- **Last seen:** 2026-03-16
+- **Files:** `usage-dashboard/arewedone.py`
+
+---
+
 ### General subreddits are noise for CCA nuclear scans — Severity: 2 — Count: 2
 - **Anti-pattern:** Running full nuclear scans on r/Anthropic, r/algotrading, or other general subs expecting CCA frontier signal
 - **Fix:** Only nuclear scan r/ClaudeCode (and r/ClaudeAI if time allows). For niche subs, use keyword-filtered /cca-scout instead.
