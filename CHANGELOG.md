@@ -402,3 +402,22 @@
 - ROADMAP.md still stale (Session 1) — must be updated next session (5-minute fix deferred 23 sessions)
 
 ---
+## Session 26 — 2026-03-17
+
+**What changed:**
+- `self-learning/trace_analyzer.py` — NEW: MT-7 implementation. 7 classes: TranscriptEntry, TranscriptSession, RetryDetector, WasteDetector, EfficiencyCalculator, VelocityCalculator, TraceAnalyzer. CLI entry point with --json flag.
+- `self-learning/tests/test_trace_analyzer.py` — NEW: 50 tests covering all 7 classes (TDD green-field)
+- `SESSION_STATE.md` — updated to Session 26, next priority queue
+- `PROJECT_INDEX.md` — updated test count to 850/850, new file entries, session history row
+
+**Why:**
+- MT-7 trace analysis research was 100% complete (TRACE_ANALYSIS_RESEARCH.md had full schema + 6 pattern defs). Implementation was the logical next step. Tool validates against real data immediately — 3 transcripts analyzed, scores 15/85/40.
+
+**Tests:** 850/850 passing (21 suites)
+
+**Lessons:**
+- SESSION_STATE.md is the #1 retry-loop offender in real transcript analysis (5-8 consecutive Edits detected). This is expected for doc-update patterns; orientation files should probably be exempted from RetryDetector the same way WasteDetector exempts them.
+- trace_analyzer validates immediately against real data with no schema changes needed — TRACE_ANALYSIS_RESEARCH.md was thorough enough to go straight to code.
+
+---
+

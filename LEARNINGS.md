@@ -10,6 +10,7 @@
 - **First seen:** 2026-02-19
 - **Last seen:** 2026-03-15
 - **Files:** any credential scanning or validation
+- **Promoted:** 2026-03-17 -> `.claude/rules/agent-guard.md` + `~/.claude/rules/learnings.md` (global)
 
 ---
 
@@ -197,3 +198,13 @@
 - **First seen:** 2026-03-16 (Session 24 — Matthew's explicit directive)
 - **Last seen:** 2026-03-16
 - **Files:** MASTER_TASKS.md, all module CLAUDE.md files, all future task definitions
+
+### Orientation files should be exempt from RetryDetector (same as WasteDetector) — Severity: 1 — Count: 1
+- **Anti-pattern:** RetryDetector flags SESSION_STATE.md with 5-8 consecutive Edits — these are intentional doc-update patterns at session wrap, not retry loops
+- **Fix:** Exempt ORIENTATION_FILES (SESSION_STATE.md, CLAUDE.md, CHANGELOG.md, ROADMAP.md) from RetryDetector, or add a "doc-update" exemption similar to WasteDetector's orientation exemption
+- **First seen:** 2026-03-17 (Session 26 — trace_analyzer real-data validation)
+- **Last seen:** 2026-03-17
+- **Files:** `self-learning/trace_analyzer.py` RetryDetector class
+
+---
+
