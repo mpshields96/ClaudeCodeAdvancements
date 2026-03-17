@@ -20,7 +20,7 @@ Reads `tasks.md`, finds the next incomplete task (Status: [ ]), implements it, v
 
 ---
 
-## Execution Protocol
+## Execution Protocol (TDD: Red → Green → Commit)
 
 For each task:
 
@@ -29,27 +29,39 @@ For each task:
 
 Do not write code until after stating this.
 
-### Step 2 — Implement
-Write the code described in the task's "What to build" section. Nothing more. Nothing less.
+### Step 2 — Write the test FIRST (Red phase)
+Write the test(s) specified in the task's "Test" field BEFORE writing any implementation code.
+Run the test. It MUST fail. If it passes before implementation exists, the test is not testing
+anything real — rewrite it to actually exercise the implementation.
+
+**Why this matters:** Without red-first, tests can pass by accident (wrong assertions, testing
+mocks instead of real code, or — worst case — injecting production fixes inside the test itself).
+
+### Step 3 — Implement (Green phase)
+Write the minimum code to make the test pass. Nothing more. Nothing less.
 
 If the task says "add function X", add function X. Do not also refactor function Y while you're there.
 
-### Step 3 — Run the test
+### Step 4 — Run the test again (Verify green)
 Run the specific test from the task's "Test" field. Show the output.
 
-If the test fails: fix the code. Show what changed and why. Run the test again. Only proceed when it passes.
+If the test fails: fix the implementation code (NOT the test). Show what changed and why.
+Run the test again. Only proceed when it passes.
 
-### Step 4 — Commit
+**Critical:** If you need to change the test to make it pass, explain why. Changing both the
+test and implementation simultaneously is a red flag for Goodhart's Law gaming.
+
+### Step 5 — Commit
 Run: `git add [specific files from this task only]`
 Then: `git commit -m "[task's commit message]"`
 
 Never `git add .` — only stage files from this task.
 
-### Step 5 — Mark complete
+### Step 6 — Mark complete
 Update `tasks.md`: change the task's `**Status:** [ ]` → `**Status:** [x]`
 Update the progress counter: `Progress: N / M tasks complete`
 
-### Step 6 — Report and pause
+### Step 7 — Report and pause
 "Task N complete. Committed as [short hash]. [N] of [M] tasks done.
 
 Next task: [Task N+1 name].
