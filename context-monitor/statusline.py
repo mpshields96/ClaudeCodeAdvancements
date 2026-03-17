@@ -27,6 +27,7 @@ Output (one line, ANSI-colored):
   CTX [==========] 92% CRIT | $0.23 | Sonnet    (bold red)
 """
 import json
+import os
 import sys
 
 # ANSI escape codes
@@ -81,6 +82,41 @@ def _format_window(window: int) -> str:
     return f"{window // 1000}k"
 
 
+def _get_autocompact_pct() -> int | None:
+    """Read CLAUDE_AUTOCOMPACT_PCT_OVERRIDE from environment."""
+    raw = os.environ.get("CLAUDE_AUTOCOMPACT_PCT_OVERRIDE", "")
+    if not raw:
+        return None
+    try:
+        return int(raw)
+    except (ValueError, TypeError):
+        return None
+
+
+def _autocompact_proximity(pct: float, autocompact_pct: int | None) -> float | None:
+    """Percentage points remaining before auto-compact fires. None if not configured."""
+    if autocompact_pct is None:
+        return None
+    return max(0.0, round(autocompact_pct - pct, 1))
+
+
+def _format_autocompact_part(proximity: float | None) -> str:
+    """Format autocompact proximity for status line display.
+
+    Shows nothing when comfortable (>15 points away) or not configured.
+    Shows "AC:Xpts" when approaching, "AC:NOW" when at/past threshold.
+    """
+    if proximity is None:
+        return ""
+    if proximity > 15:
+        return ""
+    if proximity <= 0:
+        return f"{BOLD_RED}AC:NOW{RESET}"
+    if proximity <= 5:
+        return f"{RED}AC:{proximity:.0f}pts{RESET}"
+    return f"{YELLOW}AC:{proximity:.0f}pts{RESET}"
+
+
 def main() -> None:
     try:
         raw = sys.stdin.read()
@@ -106,7 +142,14 @@ def main() -> None:
     cost_part = f"{DIM}${cost_usd:.2f}{RESET}"
     model_part = f"{DIM}{model}{RESET}" if model else ""
 
+    # Autocompact proximity
+    ac_pct = _get_autocompact_pct()
+    ac_proximity = _autocompact_proximity(pct, ac_pct)
+    ac_part = _format_autocompact_part(ac_proximity)
+
     parts = [ctx_part, cost_part]
+    if ac_part:
+        parts.append(ac_part)
     if model_part:
         parts.append(model_part)
     # Show window size when it differs from the standard 200k
