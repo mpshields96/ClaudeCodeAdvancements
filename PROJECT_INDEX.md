@@ -85,10 +85,12 @@ ClaudeCodeAdvancements/
 │   ├── hooks/
 │   │   ├── mobile_approver.py       # AG-1: PreToolUse iPhone push approval via ntfy.sh
 │   │   └── credential_guard.py      # AG-3: PreToolUse credential-extraction guard
+│   ├── content_scanner.py           # AG-4: Hazmat suit for autonomous scanning (9 threat categories)
 │   ├── tests/
 │   │   ├── test_mobile_approver.py  # 36 tests
 │   │   ├── test_ownership.py        # 27 tests
-│   │   └── test_credential_guard.py # 40 tests
+│   │   ├── test_credential_guard.py # 40 tests
+│   │   └── test_content_scanner.py  # 50 tests
 │   └── research/
 │       └── EVIDENCE.md
 │
@@ -155,6 +157,7 @@ ClaudeCodeAdvancements/
 | `python3 agent-guard/tests/test_mobile_approver.py` | iPhone hook tests (36 tests) |
 | `python3 agent-guard/tests/test_ownership.py` | ownership manifest tests (27 tests) |
 | `python3 agent-guard/tests/test_credential_guard.py` | credential guard tests (40 tests) |
+| `python3 agent-guard/tests/test_content_scanner.py` | content scanner tests (50 tests) |
 | `python3 context-monitor/tests/test_meter.py` | context meter tests (52 tests) |
 | `python3 context-monitor/tests/test_alert.py` | alert hook tests (24 tests) |
 | `python3 context-monitor/tests/test_auto_handoff.py` | auto-handoff tests (27 tests) |

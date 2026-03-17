@@ -502,3 +502,4 @@
 **FUTURE:**
 14. **MT-1** (Maestro visual grid) — blocked on macOS SDK
 15. **MT-5** (Claude Pro bridge) — needs research
+16. **MT-15** (detachable chat tabs) — Anthropic feature request: drag CC desktop chats into separate windows like Chrome/Arc tabs. Solves the "pauses work when not focused" ADHD-hostile behavior.
