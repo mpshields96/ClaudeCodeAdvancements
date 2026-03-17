@@ -132,11 +132,17 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | MT-2 | Mermaid Architecture Diagrams | COMPLETE | -- |
 | MT-3 | Virtual Design Team Plugin | COMPLETE | -- |
 | MT-4 | Frontend Design Vocabulary | COMPLETE | -- |
-| MT-7 | Programmatic Trace Analysis (ACE Pattern) | NOT STARTED — research phase next | 1 |
-| MT-6 | On-Demand Subreddit Scanner | NOT STARTED — profiles + quick-scan | 2 |
-| MT-8 | iPhone Remote Control Perfection | NOT STARTED — needs research | 3 |
-| MT-1 | Maestro Visual Grid UI | BLOCKED (macOS 15.6 beta SDK) | 4 |
-| MT-5 | Claude Pro <> Claude Code Bridge | Future — needs research | 5 |
+| MT-7 | Programmatic Trace Analysis (ACE Pattern) | Research DONE (Session 25) | 1 |
+| MT-10 | YoYo Self-Learning + Self-Building Loop | NOT STARTED — depends on MT-7 | 2 |
+| MT-9 | Autonomous Cross-Subreddit Intelligence | NOT STARTED — depends on MT-6 | 3 |
+| MT-6 | On-Demand Subreddit Scanner | NOT STARTED — profiles + quick-scan | 4 |
+| MT-11 | Autonomous GitHub Repo Intelligence | NOT STARTED — extends MT-9 | 5 |
+| MT-12 | Academic Research Paper Integration | NOT STARTED — needs API research | 6 |
+| MT-14 | Re-Scan Previously Scanned Subreddits | NOT STARTED — depends on MT-6 | 7 |
+| MT-8 | iPhone Remote Control Perfection | NOT STARTED — needs research | 8 |
+| MT-13 | iOS App Development Capability | NOT STARTED — needs Xcode research | 9 |
+| MT-1 | Maestro Visual Grid UI | BLOCKED (macOS 15.6 beta SDK) | 10 |
+| MT-5 | Claude Pro <> Claude Code Bridge | Future — needs research | 11 |
 
 ---
 
@@ -184,4 +190,4 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | 20-21 | 2026-03-16 | MT-0 Phase 1 (trading domain schema), MT-2/3/4 COMPLETE — 800 tests |
 | 22-23 | 2026-03-16 | Nuclear scans for r/Anthropic + r/algotrading (175 posts) — 800 tests |
 | 24 | 2026-03-16 | 1M context adaptive thresholds, 3 Reddit reviews, MT-6/7/8 created — 800 tests |
-| 25 | 2026-03-16 | ROADMAP.md updated to reflect actual state (was stale since Session 1) |
+| 25 | 2026-03-16 | ROADMAP.md updated, MT-7 research DONE, MT-9 through MT-14 created (autonomous intelligence, YoYo loop, GitHub/academic/iOS, re-scanning) |

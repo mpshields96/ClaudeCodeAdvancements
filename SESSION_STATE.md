@@ -3,10 +3,43 @@
 
 ---
 
-## Current State (as of Session 24 — 2026-03-16)
+## Current State (as of Session 25 — 2026-03-16)
 
-**Phase:** Session 24 complete. 1M adaptive thresholds + infrastructure refinements (first half). 3 Reddit reviews + 3 new master tasks MT-6/7/8 with full lifecycle requirements (second half). 800 tests passing across 20 suites.
-**Next session starts at:** Run /cca-init. Priority: (1) Update ROADMAP.md (stale since Session 1, 5-minute fix). (2) MT-7: Programmatic trace analysis for self-learning — start with research phase (analyze 5+ real transcript JSONL files). (3) MT-6: Nuclear at Will — design subreddit profiles + quick-scan mode. (4) MT-8: iPhone remote control — research phase (scan Reddit for remote control posts). (5) Review github/spec-kit for F2 improvements.
+**Phase:** Session 25 complete. ROADMAP.md fully updated (was stale since Session 1). MT-7 trace analysis research DONE (5 transcripts analyzed, schema + 6 pattern definitions documented). MT-9 through MT-14 created — Matthew's autonomous self-learning vision fully documented. 800 tests passing across 20 suites.
+**Next session starts at:** Run /cca-init. Priority: (1) MT-7: Build trace_analyzer.py with TDD (research is done, pattern definitions ready). (2) MT-6: Nuclear at Will — design subreddit profiles + quick-scan mode (prerequisite for MT-9/MT-14). (3) MT-10: YoYo self-learning loop design (depends on MT-7). (4) MT-9: Autonomous intelligence — safety guardrail design. (5) MT-13: iOS capability — check Xcode + environment.
+
+---
+
+## What Was Done in Session 25 (2026-03-16)
+
+### ROADMAP.md Overhaul
+- Updated from Session 1 state (all frontiers showing "[ ] Research phase") to actual state (all COMPLETE, 800 tests)
+- Integrated master tasks with priorities
+- Updated session history through Session 25
+
+### MT-7 Trace Analysis Research (COMPLETE)
+- Analyzed 5 real CCA transcript JSONL files (322K to 9.2MB)
+- Documented complete JSONL schema: entry types, message formats, tool result shapes, token/usage data location
+- Defined 6 pattern detectors: retry loops, context waste, tool efficiency, session velocity, error-prone tools, compaction frequency
+- Real data findings: 31% of Read calls have no subsequent reference, WebFetch 54% error rate, 38% of entries are filterable noise
+- Output: `self-learning/research/TRACE_ANALYSIS_RESEARCH.md`
+
+### New Master Tasks (MT-9 through MT-14) — Matthew's Autonomous Vision
+- MT-9: Autonomous Cross-Subreddit Intelligence Gathering — Claude scans subs at its own discretion with 9 safety protections
+- MT-10: YoYo Continuous Self-Learning + Self-Building — observe/detect/hypothesize/build/validate/commit loop
+- MT-11: Autonomous GitHub Repository Intelligence — discover, evaluate, learn from repos (read-only analysis, rebuild from scratch)
+- MT-12: Academic Research Paper Integration — Semantic Scholar + arXiv for reputable, reproducible methodologies
+- MT-13: iOS App Development Capability — SwiftUI-first, target: Kalshi mobile dashboard
+- MT-14: Autonomous Re-Scanning of Previously Scanned Subreddits — delta scanning, staleness tracking
+- Anti-Frankenstein principle documented: every autonomous discovery must be objectively useful, clean, modular, tested, logged
+- Full safety protections for autonomous operations: no executables, no credentials, no system mods, sandboxed evaluation, scam detection
+
+### Polybot Overnight Autonomy Guidance
+- Analyzed polybot-auto.md and polybot-autoresearch.md for overnight extension
+- Identified 5 line changes needed (time constraints only, no structural rewrites)
+- Files are in ~/.claude/commands/ (outside CCA scope — changes must be applied from non-CCA session)
+
+**Tests:** 800/800 passing (20 suites — no new tests, research/planning session)
 
 ---
 

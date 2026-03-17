@@ -213,14 +213,286 @@
 
 ---
 
+## MT-9: Autonomous Cross-Subreddit Intelligence Gathering
+
+**Source:** Matthew's directive (Session 25) — "is there any objective utility in allowing you to use /cca-nuclear in autonomous fashion for other subreddits at your whim? or even github repos?"
+**What Matthew wants:** Claude autonomously scans subreddits and GitHub repos — at its own discretion — to discover objectively useful improvements. Not random browsing. Targeted, intelligent, self-directed research that surfaces viable tools, patterns, and approaches, then autonomously recreates the useful ones by building, testing, validating, backtesting, logging, and debugging.
+
+**Why this matters:** Currently all intelligence gathering is Matthew-directed ("scan this sub", "review this URL"). Matthew wants Claude to independently identify high-signal sources, scan them, and act on findings — but with ironclad safety guardrails. This transforms CCA from a tool Matthew operates into a system that grows itself.
+
+**The Frankenstein guardrail (Matthew's exact words):** "I don't want an amalgamated monster like Frankenstein." Every autonomous discovery must be:
+- Objectively useful (traces to a validated pain point or measurable improvement)
+- Clean and modular (one file = one job, no amalgamation)
+- Tested before integration (TDD, validation, backtesting)
+- Logged transparently (what was found, why it was built, what it replaced)
+
+**Safety protections (NON-NEGOTIABLE):**
+1. **No executable downloads** — never run downloaded scripts, binaries, or installers. Read source code only.
+2. **No credential exposure** — never enter API keys, passwords, or tokens into any external service
+3. **No system modifications** — never modify system files, install global packages, or change macOS settings
+4. **No financial actions** — never interact with payment systems, wallets, or financial APIs
+5. **No outbound data** — never send Matthew's code, data, or personal info to external services
+6. **Sandboxed evaluation** — all discovered code is read-only analysis first, then rebuilt from scratch using CCA patterns if warranted
+7. **Scam detection** — skip any repo/post that: has <10 stars, was created <7 days ago, promises unrealistic returns, requires payment, asks for API keys, or has no tests
+8. **Rate limiting** — max 50 posts per scan, max 10 repos per session, minimum 30-second delay between fetches
+9. **Audit trail** — every autonomous discovery logged to FINDINGS_LOG.md with full provenance (source URL, star count, reason for BUILD/SKIP, what was built)
+
+**Domains Matthew explicitly approved for autonomous scanning:**
+- Claude Code ecosystem: r/ClaudeCode, r/ClaudeAI, r/vibecoding, r/LocalLLaMA, r/MachineLearning
+- Trading/prediction markets: r/algotrading, r/Kalshi, r/predictit, r/polymarket
+- UI/frontend development: r/webdev, r/reactjs, r/frontend, r/UI_Design
+- Academic research: r/MachineLearning, r/statistics, r/datascience (for reputable papers only)
+- iOS development: r/iOSProgramming, r/SwiftUI, r/apple (for MT-13)
+- GitHub: trending repos in Python, TypeScript, Rust related to AI agents, trading bots, developer tools
+
+**Technical path:**
+- Extend /cca-nuclear with `--autonomous` flag that enables self-directed scanning
+- Build a subreddit priority queue based on last-scan timestamps and historical yield (BUILD/ADAPT ratio)
+- GitHub scanner: use GitHub trending API + search for repos matching CCA frontier keywords
+- Decision engine: for each discovery, score against (1) frontier relevance, (2) implementation feasibility, (3) test coverage of source, (4) Matthew's stated interests
+- Auto-build pipeline: if score > threshold, clone pattern (NOT code) → write tests → implement → validate → commit with full provenance
+- Kill switch: `~/.cca-autonomous-pause` file instantly pauses all autonomous activity
+
+**What "autonomously recreate" means (critical distinction):**
+- DO NOT fork or copy external code
+- DO analyze what the tool does, why it works, and what pattern it uses
+- DO rebuild the useful pattern from scratch using CCA architecture (one file = one job, tests first, stdlib-first)
+- DO log the provenance: "Inspired by [repo] which does X. Rebuilt as Y because Z."
+
+**Lifecycle (non-negotiable):**
+1. Research: Scan 3+ subreddits autonomously, produce findings report, compare quality to Matthew-directed scans
+2. Plan: Design autonomous decision engine — scoring rubric, safety checks, build/skip threshold
+3. Build: Implement autonomous scanner with all 9 safety protections
+4. Test: Unit tests for safety guardrails (must block malicious repos, scams, credential theft). 40+ tests.
+5. Validate: Run autonomous scan on r/ClaudeCode (already manually scanned) — does it find the same top BUILD candidates?
+6. Backtest: Compare autonomous findings vs Matthew-directed Session 14-15 nuclear scan. Must match or exceed signal quality.
+7. Supervised trial: Run with Matthew monitoring for 3 sessions before full autonomy
+
+**Status:** Not started. Requires MT-6 (nuclear at will profiles) as prerequisite infrastructure.
+
+---
+
+## MT-10: YoYo-Pattern Continuous Self-Learning and Self-Building
+
+**Source:** Matthew's directive (Session 25) — "I want to see you take the yoyo concept and my prompts to continue self-learning and building essentially"
+**What Matthew wants:** The complete YoYo closed-loop pattern applied across CCA and the Kalshi bot: Claude learns from its own execution traces, identifies what works and what doesn't, and autonomously improves itself — building new capabilities, refining existing ones, and pruning what doesn't work. Not a one-time analysis but a continuous, session-over-session growth loop.
+
+**The dual mandate:**
+1. **Kalshi bot: profit and self-sustaining cash flow.** The self-learning system must optimize for net profit. Every learning cycle should make the bot smarter about which bets to take, which markets to enter, which research paths to pursue. The goal is self-sustaining cash flow that pays for Claude Max and beyond.
+2. **CCA: evolve to be useful in any way applicable.** The system should identify where CCA's tools can be improved, extended, or applied to new domains — not just the original 5 frontiers.
+
+**What "self-learning and self-building" means concretely:**
+- **Self-learning (already started):** journal.py + reflect.py + strategy.json track events, detect patterns, recommend adjustments. MT-7 adds trace analysis. This is the observation layer.
+- **Self-building (new):** When the self-learning system identifies a recurring pattern (e.g., "WebFetch fails 54% of the time" or "Edit retries waste 200+ tokens per session"), it doesn't just log it — it autonomously builds a fix, tests it, validates it, and commits it.
+- **The loop:** Observe (traces) → Detect (patterns) → Hypothesize (what fix would help) → Build (implement fix with TDD) → Validate (does the fix actually reduce the pattern?) → Commit (with full provenance) → Observe again
+
+**Anti-Frankenstein principle:** Each self-built improvement must be:
+- A single, focused module (not a patch on an existing file)
+- Tested independently (30+ tests or proportional)
+- Validated against real data (not hypothetical improvement)
+- Reversible (can be disabled without breaking anything)
+- Logged (what pattern triggered it, what was built, what the measured improvement is)
+
+**Technical path:**
+- Extend reflect.py with `auto_improve()` method that generates improvement proposals
+- Each proposal: { pattern_detected, proposed_fix, expected_improvement, test_plan, risk_level }
+- Risk levels: LOW (new utility script), MEDIUM (new hook), HIGH (modifying existing hook) — only LOW auto-executes, MEDIUM/HIGH logged for Matthew review
+- Build pipeline: for LOW-risk proposals, auto-execute: write tests → implement → validate → commit
+- Improvement journal: `self-learning/improvements.jsonl` — every auto-build logged with before/after metrics
+- Guard: max 2 auto-builds per session, each must pass all existing tests before commit
+
+**Applies to:**
+- CCA development efficiency (reduce retry loops, optimize tool usage)
+- Kalshi bot research quality (prune dead-end research, amplify winning patterns)
+- Kalshi bot execution quality (reduce slippage, improve fill rates)
+- Any future domain Matthew applies the system to
+
+**Lifecycle (non-negotiable):**
+1. Research: Document the complete YoYo loop as applied to CCA + Kalshi. Define "improvement" precisely.
+2. Plan: Design auto_improve() API — proposal schema, risk classification, build pipeline, validation criteria
+3. Build: Implement with TDD. Start with LOW-risk only (new utility scripts).
+4. Test: 40+ tests. Must include: safety rails (never auto-modifies production hooks), proposal quality (rejects trivial/impossible improvements), build pipeline (tests pass before commit).
+5. Validate: Run for 5 sessions on CCA. Measure: does session efficiency actually improve? Are the auto-built improvements useful?
+6. Backtest: Analyze hypothetical improvements against historical transcripts. Would they have helped?
+7. Graduate: Once validated on CCA, adapt for Kalshi bot (separate deployment, same architecture)
+
+**Status:** Not started. Depends on MT-7 (trace analysis) for the observation layer.
+
+---
+
+## MT-11: Autonomous GitHub Repository Intelligence
+
+**Source:** Matthew's directive (Session 25) — "or even github repos?"
+**What Matthew wants:** Claude autonomously discovers, evaluates, and learns from GitHub repositories — not by installing them, but by reading their source code, understanding their patterns, and rebuilding useful approaches using CCA architecture.
+
+**Domains of interest (Matthew-specified):**
+- AI agent frameworks and tools (for CCA improvements)
+- Trading bots and market analysis tools (for Kalshi bot improvements)
+- UI/frontend frameworks and design systems (for MT-1, MT-4, any future UI work)
+- Academic research implementations (papers with code, for learning from reputable sources)
+- iOS/SwiftUI projects (for MT-13)
+
+**Safety protections (inherit all 9 from MT-9, plus):**
+10. **No `git clone` into CCA directory** — analysis happens via GitHub API / web scraping only
+11. **No dependency installation** — never run `pip install`, `npm install`, or any package manager for discovered repos
+12. **License check** — skip repos with no license or restrictive licenses (GPL if we'd need to relicense)
+13. **Recency check** — prioritize repos with commits in last 90 days (active maintenance)
+
+**Technical path:**
+- GitHub trending scraper: daily check of trending Python/TypeScript/Rust repos
+- Keyword-targeted search: repos matching CCA frontier terms, trading bot terms, UI framework terms
+- Evaluation rubric: stars (>50), tests (must have test directory), docs (must have README), activity (commits in 90 days)
+- Pattern extraction: read source, identify architecture patterns, document in structured format
+- Rebuild decision: if pattern is applicable to CCA/Kalshi, rebuild from scratch with CCA conventions
+
+**Lifecycle (non-negotiable):**
+1. Research: Manually evaluate 10 GitHub repos from different domains. Define what "useful pattern" means.
+2. Plan: Design evaluation rubric, extraction pipeline, rebuild decision criteria
+3. Build: GitHub scanner + evaluator + pattern extractor
+4. Test: 30+ tests. Must block: malicious repos, no-license repos, abandoned repos, scam repos.
+5. Validate: Run on 20 repos. Compare Claude's evaluation vs Matthew's manual assessment.
+6. Iterate: Tune rubric based on validation results
+
+**Status:** Not started. Partially enabled by MT-9 infrastructure.
+
+---
+
+## MT-12: Academic Research Paper Integration
+
+**Source:** Matthew's directive (Session 25) — "I also appreciate advancements for... academic research papers for learning from reputable sources"
+**What Matthew wants:** Systematic discovery and integration of academic research that is directly applicable to CCA and the Kalshi bot. Not theoretical papers — papers with code, data, and reproducible results that translate to real improvements.
+
+**Matthew's background context:** Matthew is a psychiatry resident with academic writing experience. He values rigor, reproducibility, and evidence-based approaches. He's not interested in hype papers — he wants papers that produce measurable, deployable improvements.
+
+**Domains of interest:**
+- **Prediction markets and forecasting:** calibration, market microstructure, information aggregation, automated trading
+- **AI agent architecture:** self-improvement, tool use optimization, context management, multi-agent coordination
+- **Statistical methods:** Bayesian inference, time series, anomaly detection — applied to trading and agent behavior
+- **Human-AI interaction:** prompt engineering science, UI/UX for AI tools, cognitive load management
+
+**What "integration" means:**
+- Read the paper (via arXiv, Semantic Scholar, or direct PDF)
+- Extract the core methodology — not the narrative, the math/algorithm
+- Evaluate applicability: does this solve a real problem in CCA or Kalshi?
+- If applicable: implement the methodology with TDD, validate against real data, backtest
+- Log the paper, methodology, and results in `self-learning/research/papers.jsonl`
+
+**Safety and quality controls:**
+- Only papers from: arXiv, NIPS/NeurIPS, ICML, ACL, AAAI, IEEE, or journals with impact factor >2
+- Must have: reproducible methodology, at least 10 citations (or <6 months old from top venue)
+- Never cite or use: preprints from unknown authors, papers behind paywalls without institutional access, papers with retraction notices
+
+**Technical path:**
+- Semantic Scholar API for paper discovery (free, no API key for basic search)
+- arXiv API for full paper access (free)
+- Paper evaluation rubric: venue quality, citation count, code availability, methodology clarity
+- Integration pipeline: read → extract → evaluate → implement → validate → log
+- Cross-reference with Kalshi bot dead ends: if a paper's methodology was already tried and failed, skip
+
+**Lifecycle (non-negotiable):**
+1. Research: Manually read 5 papers from different domains. Define what "applicable" means for CCA and Kalshi.
+2. Plan: Design paper discovery pipeline, evaluation rubric, integration workflow
+3. Build: Paper scanner + evaluator + methodology extractor
+4. Test: 25+ tests. Must filter out: low-quality venues, irreproducible methods, already-tried approaches.
+5. Validate: Implement one methodology from a paper. Measure actual improvement on CCA or Kalshi.
+6. Iterate: Refine discovery pipeline based on hit rate (useful papers / total papers scanned)
+
+**Status:** Not started. Needs Semantic Scholar + arXiv API research.
+
+---
+
+## MT-13: iOS App Development Capability
+
+**Source:** Matthew's directive (Session 25) — "ALSO add to the master-level tasks iOS app development"
+**What Matthew wants:** Build the capability to develop iOS apps using Claude Code — SwiftUI-first, targeting Matthew's iPhone. This enables building custom mobile tools for:
+- Kalshi bot monitoring and control (mobile dashboard)
+- CCA session management from phone (extends MT-8 remote control)
+- Personal productivity tools (baby tracker, schedule manager, medical reference)
+- Any future mobile-first idea Matthew has
+
+**Why this is a master task:** iOS development is a distinct skill domain. Claude Code can write Swift/SwiftUI, but the workflow (Xcode project setup, simulator testing, device deployment, App Store submission) requires specific infrastructure and validated patterns. Building this once makes every future iOS project faster.
+
+**Technical path — needs research phase:**
+- Scan r/iOSProgramming, r/SwiftUI, r/apple for "Claude Code" + iOS development posts
+- Research: Can Claude Code create, build, and test Xcode projects from the CLI? (xcodebuild, swift package manager, xctest)
+- Research: SwiftUI previews from CLI? Hot reload options?
+- Research: TestFlight deployment from CLI?
+- Build a starter template: SwiftUI app scaffold with CCA conventions (one file = one view, tests for each view model)
+- First app target: Kalshi bot mobile dashboard (reads from polybot.db via local API, shows P&L, active strategies, recent bets)
+
+**Prerequisites:**
+- Xcode installed and configured (check `xcodebuild -version`)
+- Apple Developer account (check if Matthew has one)
+- iOS simulator setup
+
+**Lifecycle (non-negotiable):**
+1. Research: Scan Reddit + GitHub for Claude Code + iOS development patterns. Document what's possible from CLI.
+2. Plan: Design iOS development workflow for Claude Code (project setup, build, test, deploy)
+3. Build: Create starter template + build scripts. First target: "Hello World" that builds and runs in simulator.
+4. Test: Build pipeline tests (does xcodebuild succeed? do xctest tests run?). 20+ tests for the workflow itself.
+5. Validate: Build a real micro-app (Kalshi dashboard read-only view). Deploy to simulator. Screenshot.
+6. Ship: Deploy to Matthew's iPhone via TestFlight or direct install.
+
+**Status:** Not started. Needs Xcode + environment verification + Reddit/GitHub research.
+
+---
+
+## MT-14: Autonomous Re-Scanning of Previously Scanned Subreddits
+
+**Source:** Matthew's directive (Session 25) — "feel free to return back to previous subreddits with /cca nuclear command for different reviews and introspections"
+**What Matthew wants:** Periodically re-scan previously scanned subreddits (r/ClaudeCode, r/ClaudeAI, r/Anthropic, r/algotrading, r/vibecoding) to catch new posts, evolving discussions, and emerging tools that appeared after the last scan. The community moves fast — a scan from 2 weeks ago is already stale.
+
+**Why this is distinct from MT-6/MT-9:**
+- MT-6 is about making scanning easier (profiles + quick-scan)
+- MT-9 is about scanning NEW subreddits autonomously
+- MT-14 is about REVISITING already-scanned subs with fresh eyes and new context
+
+**The value of re-scanning:**
+- New posts appear daily in active subs (r/ClaudeCode gets 20-50 posts/day)
+- Previously REFERENCE-rated posts may become BUILD-worthy as CCA evolves
+- Comment threads on old posts continue to grow — new insights appear weeks later
+- Matthew's priorities shift — a post that was SKIP last month might be relevant now
+
+**Technical path:**
+- Extend nuclear scanner with `--rescan` mode: only fetch posts newer than last_scan_timestamp
+- Delta scanning: compare new findings against FINDINGS_LOG.md, only surface genuinely new intelligence
+- Re-evaluation: for previously scanned posts with significant new comments (20+), re-read and re-evaluate
+- Staleness tracking: `self-learning/scan_registry.json` with per-sub last_scan timestamps and next_scan_due dates
+- Auto-schedule: if a sub hasn't been scanned in 14 days, flag it for autonomous re-scan
+
+**Lifecycle (non-negotiable):**
+1. Research: Analyze how quickly r/ClaudeCode content changes (new posts per day, comment growth rate)
+2. Plan: Design delta-scan algorithm, staleness thresholds, re-evaluation criteria
+3. Build: Implement --rescan mode + scan registry + staleness tracker
+4. Test: 25+ tests. Must handle: empty delta (no new posts), duplicate detection, re-evaluation logic.
+5. Validate: Re-scan r/ClaudeCode (last scanned Session 14). Do new posts surface new BUILD candidates?
+6. Automate: Wire into MT-9 autonomous pipeline so re-scans happen on a cadence
+
+**Status:** Not started. Depends on MT-6 (profiles) for infrastructure.
+
+---
+
 ## Priority Order
 
-1. ~~**MT-0** (Kalshi self-learning integration)~~ Phase 1 COMPLETE — schema + patterns + tests shipped. Phase 2 = deploy to polybot
+**COMPLETED:**
+1. ~~**MT-0** (Kalshi self-learning integration)~~ Phase 1 COMPLETE — Phase 2 = deploy to polybot
 2. ~~**MT-2** (mermaid diagrams)~~ COMPLETE
 3. ~~**MT-4** (design vocabulary)~~ COMPLETE
 4. ~~**MT-3** (virtual design team)~~ COMPLETE
-5. **MT-7** (trace analysis self-learning) — highest-impact new task, infrastructure exists, both CCA + Kalshi benefit
-6. **MT-6** (nuclear at will) — infrastructure exists, needs profiles + quick-scan mode
-7. **MT-8** (iPhone remote control) — needs research phase first
-8. **MT-1** (Maestro visual grid) — largest, blocked on macOS SDK, may need custom build
-9. **MT-5** (Claude Pro bridge) — future, needs research on Pro's capabilities
+
+**ACTIVE — Highest Impact:**
+5. **MT-7** (trace analysis) — foundation for MT-10, both CCA + Kalshi benefit. Research DONE (Session 25).
+6. **MT-10** (YoYo self-learning loop) — the master pattern; depends on MT-7
+7. **MT-9** (autonomous subreddit intelligence) — force multiplier; depends on MT-6
+8. **MT-6** (nuclear at will) — prerequisite for MT-9 and MT-14
+
+**ACTIVE — High Value:**
+9. **MT-11** (GitHub repo intelligence) — extends MT-9 to code repos
+10. **MT-12** (academic paper integration) — reputable sources for real improvements
+11. **MT-14** (re-scan previously scanned subs) — keep intelligence current
+12. **MT-8** (iPhone remote control) — immediate productivity gain
+13. **MT-13** (iOS app development) — new capability domain
+
+**FUTURE:**
+14. **MT-1** (Maestro visual grid) — blocked on macOS SDK
+15. **MT-5** (Claude Pro bridge) — needs research
