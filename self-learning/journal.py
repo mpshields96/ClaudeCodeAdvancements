@@ -60,6 +60,8 @@ VALID_EVENT_TYPES = [
     "edge_discovered",    # A new tradeable edge was found
     "edge_rejected",      # A research path didn't produce an edge
     "strategy_shift",     # Trading strategy parameter change
+    # Trace analysis (MT-7)
+    "trace_analysis",     # Transcript pattern analysis results
 ]
 
 VALID_DOMAINS = [

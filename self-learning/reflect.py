@@ -18,6 +18,7 @@ import json
 import argparse
 from datetime import datetime, timezone
 from collections import Counter
+from pathlib import Path
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
@@ -475,12 +476,92 @@ def reflect(domain=None, apply=False, brief=False):
     print("\n" + "=" * 60)
 
 
+def analyze_current_session(transcript_path=None):
+    """Run trace_analyzer on the most recent (or specified) session transcript.
+
+    Feeds results into the self-learning journal as a trace_analysis event.
+    Returns the analysis report dict, or None if no transcript found.
+    """
+    from trace_analyzer import TraceAnalyzer
+
+    if not transcript_path:
+        # Find the most recent transcript JSONL
+        projects_dir = Path.home() / ".claude" / "projects"
+        if not projects_dir.exists():
+            return None
+
+        # Find all .jsonl files, sort by modification time
+        transcripts = []
+        for project_dir in projects_dir.iterdir():
+            if project_dir.is_dir():
+                for f in project_dir.glob("*.jsonl"):
+                    transcripts.append(f)
+
+        if not transcripts:
+            return None
+
+        # Most recent by mtime
+        transcripts.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+        transcript_path = str(transcripts[0])
+
+    try:
+        report = TraceAnalyzer(transcript_path).analyze()
+    except Exception as e:
+        print(f"  [trace] Error analyzing transcript: {e}", file=sys.stderr)
+        return None
+
+    # Log to self-learning journal
+    learnings = []
+    for rec in report.get("recommendations", []):
+        learnings.append(rec)
+
+    metrics = {
+        "score": report["score"],
+        "retries": report["retries"]["total_retries"],
+        "waste_rate": round(report["waste"]["waste_rate"], 3),
+        "efficiency_ratio": report["efficiency"]["ratio"],
+        "efficiency_rating": report["efficiency"]["rating"],
+        "velocity_pct": report["velocity"]["velocity_pct"],
+        "commits": report["velocity"]["commits"],
+        "file_creates": report["velocity"]["file_creates"],
+        "total_entries": report["total_entries"],
+    }
+
+    log_event(
+        event_type="trace_analysis",
+        domain="self_learning",
+        outcome="success" if report["score"] >= 50 else "needs_improvement",
+        metrics=metrics,
+        learnings=learnings,
+        notes=f"Session {report.get('session_id', 'unknown')}: score {report['score']}/100",
+    )
+
+    return report
+
+
 def _cli():
     parser = argparse.ArgumentParser(description="CCA Self-Learning Reflection")
     parser.add_argument("--domain", choices=VALID_DOMAINS, help="Filter by domain")
     parser.add_argument("--apply", action="store_true", help="Apply suggested strategy changes")
     parser.add_argument("--brief", action="store_true", help="One-line summary")
+    parser.add_argument("--trace", action="store_true", help="Analyze most recent session transcript")
+    parser.add_argument("--trace-path", help="Analyze specific transcript JSONL file")
     args = parser.parse_args()
+
+    if args.trace or args.trace_path:
+        report = analyze_current_session(args.trace_path)
+        if report:
+            print(f"Trace analysis: score {report['score']}/100 | "
+                  f"{report['retries']['total_retries']} retries | "
+                  f"waste {report['waste']['waste_rate']:.0%} | "
+                  f"velocity {report['velocity']['velocity_pct']:.1f}%")
+            if report["recommendations"]:
+                for rec in report["recommendations"]:
+                    print(f"  - {rec}")
+        else:
+            print("No transcript found to analyze.")
+        return
+
     reflect(domain=args.domain, apply=args.apply, brief=args.brief)
 
 
