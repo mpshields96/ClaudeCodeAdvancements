@@ -128,6 +128,62 @@ BUILTIN_PROFILES = {
         extra_needle_keywords=["swiftui", "xcode", "claude", "ai", "automation"],
         domain="dev",
     ),
+    # Investing/stocks — added per Matthew's directive (Session 28)
+    "investing": SubredditProfile(
+        subreddit="investing",
+        min_score=40,
+        timeframe="month",
+        limit=75,
+        extra_needle_keywords=[
+            "strategy", "portfolio", "etf", "index", "dividend",
+            "factor", "risk", "allocation", "rebalancing", "automation",
+        ],
+        domain="trading",
+    ),
+    "stocks": SubredditProfile(
+        subreddit="stocks",
+        min_score=50,
+        timeframe="month",
+        limit=75,
+        extra_needle_keywords=[
+            "analysis", "screener", "automation", "api", "backtesting",
+            "fundamental", "technical", "quantitative",
+        ],
+        domain="trading",
+    ),
+    "securityanalysis": SubredditProfile(
+        subreddit="SecurityAnalysis",
+        min_score=20,
+        timeframe="month",
+        limit=50,
+        extra_needle_keywords=[
+            "valuation", "dcf", "moat", "margin of safety", "earnings",
+            "10-k", "annual report", "factor", "quant",
+        ],
+        domain="trading",
+    ),
+    "valueinvesting": SubredditProfile(
+        subreddit="ValueInvesting",
+        min_score=30,
+        timeframe="month",
+        limit=50,
+        extra_needle_keywords=[
+            "intrinsic value", "dcf", "margin of safety", "screener",
+            "dividend", "moat", "buffett", "graham",
+        ],
+        domain="trading",
+    ),
+    "bogleheads": SubredditProfile(
+        subreddit="Bogleheads",
+        min_score=30,
+        timeframe="month",
+        limit=50,
+        extra_needle_keywords=[
+            "index fund", "three-fund", "allocation", "rebalancing",
+            "tax-loss harvesting", "automation", "vanguard",
+        ],
+        domain="trading",
+    ),
 }
 
 
