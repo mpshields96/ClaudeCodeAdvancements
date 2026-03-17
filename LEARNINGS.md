@@ -151,3 +151,11 @@
 - **First seen:** 2026-03-16
 - **Last seen:** 2026-03-16
 - **Files:** spec-system/commands/*.md (triggers spec-system/CLAUDE.md injection)
+
+### General subreddits are noise for CCA nuclear scans — Severity: 2 — Count: 2
+- **Anti-pattern:** Running full nuclear scans on r/Anthropic, r/algotrading, or other general subs expecting CCA frontier signal
+- **Fix:** Only nuclear scan r/ClaudeCode (and r/ClaudeAI if time allows). For niche subs, use keyword-filtered /cca-scout instead.
+- **Evidence:** r/Anthropic: 0 BUILD, 0 ADAPT from 75 posts (~85% politics). r/algotrading: 0 BUILD, 0 ADAPT from 98 posts (domain-specific). r/ClaudeCode: 5 BUILD, 23 ADAPT from 138 posts. r/ClaudeAI: 2 BUILD, 1 ADAPT from 100 posts.
+- **First seen:** 2026-03-16 (Session 22, r/ClaudeAI predicted ~60% noise)
+- **Last seen:** 2026-03-16 (Session 23, r/Anthropic ~85% noise, r/algotrading ~93% noise)
+- **Files:** .claude/commands/cca-nuclear.md, SESSION_STATE.md

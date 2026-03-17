@@ -1,0 +1,21 @@
+{
+  "subreddit": "r/algotrading",
+  "total_posts": 98,
+  "reviewed": 98,
+  "session": 1,
+  "completed": true,
+  "stats": {
+    "build": 0,
+    "adapt": 0,
+    "reference": 4,
+    "reference_personal": 3,
+    "skip": 0,
+    "fast_skip": 91
+  },
+  "special_flags": {
+    "polybot_relevant": 3,
+    "maestro_relevant": 0,
+    "rules_relevant": 0,
+    "usage_dashboard": 0
+  }
+}

@@ -327,3 +327,31 @@
 - Edit tool refuses after system-reminder clears file context — read immediately before editing files in spec-system/ or other dirs that trigger CLAUDE.md injection
 
 ---
+
+## Session 23 — 2026-03-16
+
+**What changed:**
+- `reddit-intelligence/findings/nuclear_queue_anthropic.json` — 75 posts fetched and classified
+- `reddit-intelligence/findings/nuclear_progress_anthropic.json` — scan complete
+- `reddit-intelligence/findings/NUCLEAR_REPORT_anthropic.md` — full report: 0 BUILD, 6 REF, 65 FAST-SKIP
+- `reddit-intelligence/findings/nuclear_queue_algotrading.json` — 98 posts fetched and classified
+- `reddit-intelligence/findings/nuclear_progress_algotrading.json` — scan complete
+- `reddit-intelligence/findings/NUCLEAR_REPORT_algotrading.md` — full report: 0 BUILD, 4 REF, 3 REF-PERSONAL
+- `FINDINGS_LOG.md` — 35 new entries (r/Anthropic + r/algotrading)
+- `SESSION_STATE.md` — session 23 log
+
+**Why:**
+- Session 22 resume prompt specified nuclear scans for r/Anthropic and r/algotrading as top priorities
+- r/Anthropic: validate whether general Anthropic sub has CCA-relevant signal (answer: no, ~85% politics noise)
+- r/algotrading: find prediction-market infrastructure for Polybot (found PMXT: free orderbook data)
+
+**Tests:** 783/783 passing (no code changes)
+
+**Lessons:**
+- r/Anthropic is ~85% politics/corporate noise — not worth nuclear scanning for CCA
+- r/algotrading is domain-specific — only prediction-market posts have Polybot relevance
+- r/ClaudeCode remains the ONLY high-signal sub for CCA frontiers
+- Title-based triage (learned Session 22) saved massive tokens — applied successfully to both subs
+- All 4 nuclear scans now COMPLETE: 411 total posts scanned across 4 subreddits
+
+---

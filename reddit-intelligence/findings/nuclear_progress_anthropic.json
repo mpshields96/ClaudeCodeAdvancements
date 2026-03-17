@@ -1,0 +1,20 @@
+{
+  "subreddit": "r/Anthropic",
+  "total_posts": 75,
+  "reviewed": 75,
+  "session": 1,
+  "completed": true,
+  "stats": {
+    "build": 0,
+    "adapt": 0,
+    "reference": 6,
+    "skip": 4,
+    "fast_skip": 65
+  },
+  "special_flags": {
+    "polybot_relevant": 0,
+    "maestro_relevant": 0,
+    "rules_relevant": 0,
+    "usage_dashboard": 1
+  }
+}
