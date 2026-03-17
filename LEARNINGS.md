@@ -206,5 +206,19 @@
 - **Last seen:** 2026-03-17
 - **Files:** `self-learning/trace_analyzer.py` RetryDetector class
 
+### Validate Reddit post URLs before spawning deep-read agents — Severity: 1 — Count: 1
+- **Anti-pattern:** Spawning haiku agents (~45k tokens each) to deep-read Reddit posts without verifying the URL is accessible first
+- **Fix:** Add a quick HEAD request or JSON fetch validation before spawning agents. Nuclear_fetcher post IDs can differ from actual current URLs (especially r/ClaudeAI month-view vs search)
+- **First seen:** 2026-03-17 (Session 27)
+- **Last seen:** 2026-03-17
+- **Files:** reddit-intelligence/nuclear_fetcher.py, any agent-based deep-read workflow
+
+### Phishing regex needs whitelist-first approach — Severity: 1 — Count: 1
+- **Anti-pattern:** Running phishing domain patterns (e.g., `r"anthropic"`) against ALL URLs including legitimate ones like anthropic.com
+- **Fix:** Check URL against `legit_domains` whitelist set BEFORE applying phishing pattern matching. Prevents false positives on official domains.
+- **First seen:** 2026-03-17 (Session 27 — content_scanner backtest caught 2/138 false positives)
+- **Last seen:** 2026-03-17
+- **Files:** `agent-guard/content_scanner.py` scan_url()
+
 ---
 

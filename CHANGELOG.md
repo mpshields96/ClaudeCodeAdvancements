@@ -3,6 +3,34 @@
 
 ---
 
+## Session 27 — 2026-03-17
+
+**What changed:**
+- `agent-guard/content_scanner.py` — NEW: AG-4 hazmat suit for autonomous scanning. 9 threat categories (executable_install, credential_harvest, data_exfiltration, financial_threat, system_damage, prompt_injection, scam_signals, low_quality_repo, malicious_url). 25+ regex patterns, phishing domain detection with whitelist, repo metadata scanning
+- `agent-guard/tests/test_content_scanner.py` — NEW: 50 adversarial tests, zero false positives on 138 real posts
+- `self-learning/reflect.py` — Added `analyze_current_session()` function + `--trace` CLI flag for trace analyzer integration
+- `self-learning/journal.py` — Added `trace_analysis` event type
+- `reddit-intelligence/findings/POLYBOT_DISHES.md` — NEW: 2 trading food dishes for Kalshi bot (Polymarket ghost fill exploit, mean reversion improvements)
+- `FINDINGS_LOG.md` — 15 new entries: 2 BUILD, 3 ADAPT, 6 REFERENCE, 2 REFERENCE-PERSONAL, 1 SKIP, 1 inaccessible
+- `MASTER_TASKS.md` — MT-15 added (detachable chat tabs)
+- `PROJECT_INDEX.md` — Updated with content_scanner.py, test_content_scanner.py entries
+
+**Why:**
+- Matthew's directive: "hazmat suit before nuclear wasteland" — safety-first autonomous scanning
+- Self-learning conquest: autonomously scan high-quality subreddits, filter rat poison, serve trading finds as food dishes to Kalshi bot
+- Pipeline validation: prove profiles -> fetcher -> scanner -> deep-read -> findings works end-to-end before scaling to GitHub/papers
+
+**Tests:** 943/943 passing (+50 from content_scanner)
+
+**Lessons:**
+- Validate post URLs before spawning deep-read agents — failed Reddit reads waste ~45k tokens per agent
+- r/ClaudeAI post IDs from nuclear_fetcher month-view can differ from search results — verify URL before deep-read
+- Phishing regex must use whitelist approach (check legit_domains first) to avoid false positives on anthropic.com
+- Anthropic's memory feature is marketing-first (prompt export) — our local-first structured memory is architecturally ahead
+- YoYo proves self-evolution loops work at $12/4 days — 4-gate safety model is the pattern for MT-10
+
+---
+
 ## Session 25 — 2026-03-16
 
 **What changed:**
