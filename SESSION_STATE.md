@@ -5,8 +5,8 @@
 
 ## Current State (as of Session 30 — 2026-03-17)
 
-**Phase:** Session 30 IN PROGRESS. MT-9 Phase 1 + MT-11 Phase 1 shipped. autonomous_scanner.py (37 tests) + github_scanner.py (30 tests). 28 suites, 1160 total tests, all passing. Chaining to next task.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-9 Phase 2 — wire autonomous scanner into /cca-nuclear --autonomous mode. (2) MT-11 Phase 2 — live GitHub API integration. (3) Scan never-scanned subreddits. (4) Fresh-session anti-contamination guard.
+**Phase:** Session 30 IN PROGRESS. MT-9 Phase 1, MT-11 Phase 1, AG-6 session guard, KALSHI_INTEL bridge all shipped. 29 suites, 1188 total tests, all passing.
+**Next session starts at:** Run /cca-init. Priority: (1) MT-9 Phase 2 — wire autonomous scanner into /cca-nuclear --autonomous. (2) MT-11 Phase 2 — live GitHub API integration. (3) Scan never-scanned subreddits. (4) MT-10 Phase 2 — run improver for 5 sessions.
 
 ---
 
@@ -28,6 +28,19 @@
 - **GitHubScanner**: Orchestrates evaluation, JSONL audit log, dedup against prior evaluations.
 - **FRONTIER_KEYWORDS**: 9 frontier domains with keyword lists for relevance scoring.
 - 30 tests — all passing. Safety: no cloning, no installs, GPL flagged, scam blocked.
+
+### AG-6: Fresh-Session Anti-Contamination Guard (COMPLETE)
+- `agent-guard/hooks/session_guard.py` — PreToolUse slop detection + commit tracking
+- **SlopDetector**: 6 pattern categories — excessive docs (>50% lines), redundant type comments, over-engineered try/except, removed-code comments, backwards-compat shims, emojis in code.
+- **SessionCommitTracker**: Per-session commit counting with configurable threshold. Warns to start fresh session after N commits (context contamination prevention).
+- Inspired by Desloppify (r/ClaudeCode, 98pts).
+- 28 tests — all passing.
+
+### KALSHI_INTEL.md Bridge Artifact
+- Pre-digested trading intelligence from CCA scans for Kalshi bot research chat
+- Self-learning infrastructure docs (journal.py trading schema, QualityGate, trace analyzer)
+- 6 high-priority food dishes (PMXT orderbook data, arb bot, nonce guard, mean reversion)
+- 4 reference dishes + 2 critical warning dishes (LLMs lose money in trading competitions)
 
 ---
 

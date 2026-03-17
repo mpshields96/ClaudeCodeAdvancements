@@ -86,14 +86,16 @@ ClaudeCodeAdvancements/
 │   ├── hooks/
 │   │   ├── mobile_approver.py       # AG-1: PreToolUse iPhone push approval via ntfy.sh
 │   │   ├── credential_guard.py      # AG-3: PreToolUse credential-extraction guard
-│   │   └── network_guard.py         # AG-5: PreToolUse port/firewall exposure guard
+│   │   ├── network_guard.py         # AG-5: PreToolUse port/firewall exposure guard
+│   │   └── session_guard.py        # AG-6: PreToolUse slop detection + commit tracking
 │   ├── content_scanner.py           # AG-4: Hazmat suit for autonomous scanning (9 threat categories)
 │   ├── tests/
 │   │   ├── test_mobile_approver.py  # 36 tests
 │   │   ├── test_ownership.py        # 27 tests
 │   │   ├── test_credential_guard.py # 40 tests
 │   │   ├── test_content_scanner.py  # 50 tests
-│   │   └── test_network_guard.py    # 53 tests
+│   │   ├── test_network_guard.py    # 53 tests
+│   │   └── test_session_guard.py   # 28 tests
 │   └── research/
 │       └── EVIDENCE.md
 │
@@ -169,6 +171,7 @@ ClaudeCodeAdvancements/
 | `python3 agent-guard/tests/test_credential_guard.py` | credential guard tests (40 tests) |
 | `python3 agent-guard/tests/test_content_scanner.py` | content scanner tests (50 tests) |
 | `python3 agent-guard/tests/test_network_guard.py` | network guard tests (53 tests) |
+| `python3 agent-guard/tests/test_session_guard.py` | session guard tests (28 tests) |
 | `python3 context-monitor/tests/test_meter.py` | context meter tests (52 tests) |
 | `python3 context-monitor/tests/test_alert.py` | alert hook tests (24 tests) |
 | `python3 context-monitor/tests/test_auto_handoff.py` | auto-handoff tests (27 tests) |
@@ -196,7 +199,7 @@ ClaudeCodeAdvancements/
 | `python3 reddit-intelligence/autonomous_scanner.py pick` | Pick next target sub for scanning |
 | `python3 reddit-intelligence/github_scanner.py queries` | Show GitHub search queries for CCA frontiers |
 
-**Total:** 1160/1160 tests (28 suites). **Session start:** Run all 28 suites. If anything fails, fix before touching other files.
+**Total:** 1188/1188 tests (29 suites). **Session start:** Run all 29 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -310,6 +313,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | agent-guard (credential_guard) | `tests/test_credential_guard.py` | 40 | All passing |
 | agent-guard (content_scanner) | `tests/test_content_scanner.py` | 50 | All passing |
 | agent-guard (network_guard) | `tests/test_network_guard.py` | 53 | All passing |
+| agent-guard (session_guard) | `tests/test_session_guard.py` | 28 | All passing |
 | context-monitor (meter) | `tests/test_meter.py` | 52 | All passing |
 | context-monitor (alert) | `tests/test_alert.py` | 24 | All passing |
 | context-monitor (auto_handoff) | `tests/test_auto_handoff.py` | 27 | All passing |
@@ -326,7 +330,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
-| **Total** | | **1160** | **1160/1160** |
+| **Total** | | **1188** | **1188/1188** |
 
 ---
 
@@ -337,7 +341,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 1 | memory-system | MEM-1–5 ✅ COMPLETE | 94/94 | — |
 | 2 | spec-system | SPEC-1–6 ✅ COMPLETE | 90/90 | — |
 | 3 | context-monitor | CTX-1–5 ✅ COMPLETE | 109/109 | — |
-| 4 | agent-guard | AG-1 ✅ AG-2 ✅ AG-3 ✅ AG-4 ✅ AG-5 ✅ | 206/206 | COMPLETE |
+| 4 | agent-guard | AG-1–6 ✅ | 234/234 | COMPLETE |
 | 5 | usage-dashboard | USAGE-1 ✅ USAGE-2 ✅ USAGE-3 ✅ /arewedone ✅ | 196/196 | Streamlit UI (optional) |
 
 ---
@@ -402,4 +406,4 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 27 | 2026-03-17 | MT-6 COMPLETE: profiles.py (43 tests), 10 subreddit profiles, scan registry, quick-scan mode — 893 tests |
 | 28 | 2026-03-17 | MT-10 core: improver.py (44 tests), AG-5 network_guard.py (53 tests) — 990 tests |
 | 29 | 2026-03-17 | Autocompact awareness (4 hooks), QualityGate, spec enhancements, 28 findings — 1093 tests |
-| 30 | 2026-03-17 | MT-9 Phase 1 (37 tests) + MT-11 Phase 1 (30 tests) — autonomous + GitHub scanners |
+| 30 | 2026-03-17 | MT-9 (37), MT-11 (30), AG-6 session guard (28), KALSHI_INTEL bridge — 1188 tests |
