@@ -178,3 +178,13 @@
 - **First seen:** 2026-03-16 (Session 22, r/ClaudeAI predicted ~60% noise)
 - **Last seen:** 2026-03-16 (Session 23, r/Anthropic ~85% noise, r/algotrading ~93% noise)
 - **Files:** .claude/commands/cca-nuclear.md, SESSION_STATE.md
+
+---
+
+### Building without testing/validation is wasted work — Severity: 3 — Count: 1
+- **Anti-pattern:** Treating "build" as the goal. Shipping code without the full lifecycle: research -> plan -> build -> test -> validate -> debug -> backtest -> iterate. Building is just one step of eight.
+- **Fix:** Every master task and every feature MUST have an explicit lifecycle section with all steps. No task is "done" at the build step. Validation against real data, backtesting against historical data, and debugging found issues are all required before claiming completion. A feature that builds and passes unit tests but has never been validated against real-world data is NOT complete.
+- **Applies everywhere:** CCA development, Kalshi bot strategies, self-learning improvements, nuclear scan tooling.
+- **First seen:** 2026-03-16 (Session 24 — Matthew's explicit directive)
+- **Last seen:** 2026-03-16
+- **Files:** MASTER_TASKS.md, all module CLAUDE.md files, all future task definitions

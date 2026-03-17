@@ -122,11 +122,105 @@
 
 ---
 
+## MT-6: On-Demand Subreddit Scanner ("Nuclear at Will")
+
+**Source:** Matthew's request (Session 24) + nuclear scan infrastructure already built
+**What:** Expand /cca-nuclear to be a frictionless on-demand scanner for ANY subreddit. Matthew wants to scan:
+- Claude Code ecosystem: r/ClaudeCode, r/ClaudeAI, r/vibecoding, r/LocalLLaMA, r/MachineLearning
+- Trading/prediction markets: r/algotrading, r/Kalshi, r/predictit, r/polymarket, r/sportsbook
+- Any subreddit on a whim — one command, full deep-dive
+
+**Why this matters:** The nuclear scan proved its value (411 posts, 7 BUILD, 24 ADAPT across 4 subs). But currently each scan is a heavyweight operation requiring a dedicated session. Matthew wants lightweight "scan this sub right now" capability with the same rigor.
+
+**Technical path:**
+- /cca-nuclear already accepts arbitrary subreddit argument (Session 19)
+- Upgrade needed: (A) Predefined subreddit profiles with optimized settings (min-score, sort, time range per sub), (B) Quick-scan mode (~25 posts, title-first triage, deep-read top 5-10 only), (C) Persistent sub registry with last-scan timestamps to avoid re-scanning, (D) Cross-sub dedup against FINDINGS_LOG, (E) One-line summary output for quick scans vs full NUCLEAR_REPORT for deep scans
+- Subreddit profiles: r/ClaudeCode (min-score 30, Top/Month), r/algotrading (min-score 50, filter prediction-markets), etc.
+- Quick-scan should complete in 5-10 minutes, not 45-60
+
+**Lifecycle (non-negotiable):**
+1. Research: Scan how power users do multi-sub monitoring (Reddit posts, tools like reddit-scout patterns)
+2. Plan: Design profile schema, quick-scan algorithm, dedup strategy
+3. Build: Implement profile system + quick-scan mode
+4. Test: Unit tests for profiles, quick-scan triage, dedup. Integration test: run quick-scan on r/ClaudeCode, verify output quality matches full nuclear scan
+5. Validate: Compare quick-scan findings vs full nuclear scan on same sub — must catch same BUILD/ADAPT candidates
+6. Backtest: Re-run against already-scanned subs (r/ClaudeCode 138 posts) — quick-scan should surface the same top-5 BUILD candidates
+
+**Status:** Not started. Infrastructure exists (nuclear_fetcher.py, subreddit_slug(), namespaced reports). Needs profile system + quick-scan mode.
+
+---
+
+## MT-7: Programmatic Trace Analysis for Self-Learning (ACE Pattern)
+
+**Source:** https://www.reddit.com/r/ClaudeCode/comments/1rvhqgc/ (ACE framework, 2000+ stars)
+**What:** Adapt ACE's RLM Reflector pattern into CCA's self-learning system. Instead of only learning from structured journal events (bet_placed, strategy_shift, etc.), also learn from raw execution traces by programmatically querying transcript JSONL across sessions.
+
+**Why this is potentially huge:**
+- Current self-learning (reflect.py) only sees what we explicitly log. ACE showed 30% of "successful" runs have hidden retry loops and context waste that structured logging misses entirely.
+- 34.3% improvement on tau2-bench from one cycle of trace analysis.
+- CCA already reads transcript JSONL (meter.py). The infrastructure exists.
+- This closes the gap between "what we chose to log" and "what actually happened."
+
+**Technical path:**
+- DON'T install ACE framework (external dependency). ADAPT the pattern.
+- New module: `self-learning/trace_analyzer.py`
+- Read N most recent transcript JSONL files for current project
+- Detect patterns programmatically: retry loops (same tool called 3+ times on same file), context waste (large Read calls on files not subsequently used), tool call efficiency (Edit attempts that fail and retry), session velocity (tasks completed per 100k tokens)
+- Feed detected patterns into reflect.py as auto-generated journal events
+- Skillbook equivalent: append proven patterns to LEARNINGS.md or strategy.json automatically
+- Minimum sample: analyze 10+ sessions before any strategy recommendation
+
+**Applies to both CCA and Kalshi bot:** CCA traces show development efficiency patterns. Kalshi traces show research quality and bet execution patterns.
+
+**Lifecycle (non-negotiable):**
+1. Research: ACE framework reviewed (DONE). Analyze 5+ CCA transcript JSONL files manually — what patterns exist? What does a retry loop look like in raw data? What does context waste look like?
+2. Plan: Design trace_analyzer.py schema — input format, pattern definitions, output format, integration with reflect.py
+3. Build: Implement trace_analyzer.py with TDD (tests first for each pattern detector)
+4. Test: Unit tests for each pattern detector (retry loops, context waste, tool efficiency). Must have 30+ tests.
+5. Validate: Run analyzer against real CCA transcripts. Do the detected patterns match known session quality? (e.g., Session 24 was efficient — does analyzer confirm? Sessions with known issues — does analyzer detect them?)
+6. Backtest: Analyze all available CCA transcripts (Sessions 1-24). Produce a "CCA development efficiency report" that shows patterns over time. If the report reveals nothing useful, the feature isn't ready.
+7. Iterate: Tune pattern thresholds based on backtest results before deploying to Kalshi traces
+
+**Status:** Not started. Research complete (ACE reviewed, pattern understood).
+
+---
+
+## MT-8: iPhone Remote Control Perfection
+
+**Source:** Matthew's request (Session 24)
+**What:** Perfect Anthropic's remote control feature so Matthew can flawlessly use his iPhone (Claude iOS app) to talk into Claude Code sessions, coordinate chats, and manage CLI terminals as if sitting at his MacBook.
+
+**Why:** Matthew runs 2-3 concurrent Claude Code sessions (CCA + Kalshi main + Kalshi research). Being able to monitor, instruct, and coordinate from his phone while away from his desk is a massive productivity multiplier. Current remote control exists but has friction points.
+
+**Technical path — needs research phase:**
+- Scan r/ClaudeCode + r/ClaudeAI for remote control posts, tips, known issues, workarounds
+- Document current remote control capabilities + limitations
+- Identify all friction points (latency, session switching, terminal output visibility, voice-to-text accuracy)
+- Build/configure optimizations: (A) tmux session naming + mobile-friendly status output, (B) Slash commands optimized for voice input (short names, no special chars), (C) Status summary command that gives phone-friendly output, (D) Quick-switch between CCA and Kalshi sessions from phone
+- Test with actual iPhone → Claude iOS → remote Claude Code workflow
+- Produce a REMOTE_CONTROL_GUIDE.md with setup + workflow
+
+**Lifecycle (non-negotiable):**
+1. Research: Nuclear quick-scan r/ClaudeCode + r/ClaudeAI for "remote control", "iPhone", "mobile", "iOS app" posts. Document all known capabilities, limitations, and community workarounds.
+2. Plan: Map current workflow (tmux sessions, dev-start script, slash commands) against iPhone constraints. Identify every friction point.
+3. Build: Implement optimizations (mobile-friendly status commands, voice-optimized slash names, quick-switch)
+4. Test: Actually use iPhone -> Claude iOS -> remote control for a real work session. Document what works and what breaks.
+5. Validate: Complete a full CCA task (review + log + commit) entirely from iPhone. Time it. Compare to MacBook workflow.
+6. Debug: Fix every friction point found during validation testing
+7. Iterate: Repeat test-validate-debug until workflow is genuinely "flawless" — Matthew's word, Matthew's standard
+
+**Status:** Not started. Needs r/ClaudeCode + r/ClaudeAI research sweep for remote control posts.
+
+---
+
 ## Priority Order
 
 1. ~~**MT-0** (Kalshi self-learning integration)~~ Phase 1 COMPLETE — schema + patterns + tests shipped. Phase 2 = deploy to polybot
 2. ~~**MT-2** (mermaid diagrams)~~ COMPLETE
 3. ~~**MT-4** (design vocabulary)~~ COMPLETE
 4. ~~**MT-3** (virtual design team)~~ COMPLETE
-5. **MT-1** (Maestro visual grid) — largest, blocked on macOS SDK, may need custom build
-6. **MT-5** (Claude Pro bridge) — future, needs research on Pro's capabilities
+5. **MT-7** (trace analysis self-learning) — highest-impact new task, infrastructure exists, both CCA + Kalshi benefit
+6. **MT-6** (nuclear at will) — infrastructure exists, needs profiles + quick-scan mode
+7. **MT-8** (iPhone remote control) — needs research phase first
+8. **MT-1** (Maestro visual grid) — largest, blocked on macOS SDK, may need custom build
+9. **MT-5** (Claude Pro bridge) — future, needs research on Pro's capabilities
