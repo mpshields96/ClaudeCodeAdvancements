@@ -673,5 +673,107 @@ class TestMeterIntegration(unittest.TestCase):
             self.assertEqual(data["tokens"], 0)
 
 
+class TestAutocompactAwareness(unittest.TestCase):
+    """Test CLAUDE_AUTOCOMPACT_PCT_OVERRIDE awareness in context meter.
+
+    When users set CLAUDE_AUTOCOMPACT_PCT_OVERRIDE (e.g., 30 for 30%),
+    it changes when Claude Code fires auto-compaction. The meter should
+    include this in state output so downstream consumers can show
+    proximity to compaction threshold.
+    """
+
+    def test_get_autocompact_threshold_from_env(self):
+        """Should read CLAUDE_AUTOCOMPACT_PCT_OVERRIDE from environment."""
+        with patch.dict(os.environ, {"CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "30"}):
+            self.assertEqual(meter.get_autocompact_pct(), 30)
+
+    def test_get_autocompact_threshold_default(self):
+        """Default autocompact threshold is None (not set = use CC default)."""
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertIsNone(meter.get_autocompact_pct())
+
+    def test_get_autocompact_threshold_invalid(self):
+        """Invalid values should return None."""
+        with patch.dict(os.environ, {"CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "abc"}):
+            self.assertIsNone(meter.get_autocompact_pct())
+
+    def test_get_autocompact_threshold_zero(self):
+        """Zero is valid — means autocompact at 0%."""
+        with patch.dict(os.environ, {"CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "0"}):
+            self.assertEqual(meter.get_autocompact_pct(), 0)
+
+    def test_state_file_includes_autocompact(self):
+        """State file should include autocompact_pct when set."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state_path = Path(tmpdir) / "ctx.json"
+            meter.write_state_file(
+                path=state_path,
+                pct=45.0,
+                zone="green",
+                tokens=90000,
+                turns=20,
+                session_id="s1",
+                window=200000,
+                autocompact_pct=30,
+            )
+            with open(state_path) as f:
+                data = json.load(f)
+            self.assertEqual(data["autocompact_pct"], 30)
+
+    def test_state_file_autocompact_null_when_unset(self):
+        """State file should have null autocompact_pct when not configured."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state_path = Path(tmpdir) / "ctx.json"
+            meter.write_state_file(
+                path=state_path,
+                pct=45.0,
+                zone="green",
+                tokens=90000,
+                turns=20,
+                session_id="s1",
+                window=200000,
+                autocompact_pct=None,
+            )
+            with open(state_path) as f:
+                data = json.load(f)
+            self.assertIsNone(data["autocompact_pct"])
+
+    def test_approaching_autocompact_threshold(self):
+        """compute_autocompact_proximity returns how close to compaction."""
+        # 45% used, autocompact at 50% → 5% away
+        prox = meter.compute_autocompact_proximity(pct=45.0, autocompact_pct=50)
+        self.assertEqual(prox, 5.0)
+
+    def test_past_autocompact_threshold(self):
+        """If already past autocompact, proximity is 0 (compaction imminent/active)."""
+        prox = meter.compute_autocompact_proximity(pct=55.0, autocompact_pct=50)
+        self.assertEqual(prox, 0.0)
+
+    def test_autocompact_proximity_none_when_unset(self):
+        """No proximity when autocompact not configured."""
+        prox = meter.compute_autocompact_proximity(pct=45.0, autocompact_pct=None)
+        self.assertIsNone(prox)
+
+    def test_run_meter_includes_autocompact(self):
+        """run_meter should include autocompact info in state file."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            transcript_path = Path(tmpdir) / "session.jsonl"
+            _write_transcript(transcript_path, [
+                _make_assistant_turn("test", input_tokens=90000),
+            ])
+            state_path = Path(tmpdir) / "ctx.json"
+            meter.run_meter(
+                session_id="s1",
+                transcript_path=transcript_path,
+                state_path=state_path,
+                window=200000,
+                autocompact_pct=30,
+            )
+            with open(state_path) as f:
+                data = json.load(f)
+            self.assertEqual(data["autocompact_pct"], 30)
+            self.assertIn("autocompact_proximity", data)
+
+
 if __name__ == "__main__":
     unittest.main()

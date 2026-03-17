@@ -28,9 +28,10 @@ Usage (PostToolUse hook in .claude/settings.local.json):
 }
 
 Environment variables (all optional):
-  CLAUDE_CONTEXT_WINDOW      - Context window size in tokens (default: 200000)
-  CLAUDE_CONTEXT_STATE_FILE  - State file path (default: ~/.claude-context-health.json)
-  CLAUDE_CONTEXT_DISABLED    - Set to "1" to disable this hook
+  CLAUDE_CONTEXT_WINDOW              - Context window size in tokens (default: 200000)
+  CLAUDE_CONTEXT_STATE_FILE          - State file path (default: ~/.claude-context-health.json)
+  CLAUDE_CONTEXT_DISABLED            - Set to "1" to disable this hook
+  CLAUDE_AUTOCOMPACT_PCT_OVERRIDE    - CC's autocompact threshold (read-only, state output includes proximity)
 """
 import json
 import os
@@ -171,6 +172,34 @@ def estimate_tokens_from_transcript(transcript_path: Path) -> tuple[int, int]:
     return total_chars // 4, turn_count
 
 
+def get_autocompact_pct() -> int | None:
+    """Read CLAUDE_AUTOCOMPACT_PCT_OVERRIDE from environment.
+
+    Returns the percentage as an int (e.g., 30 for 30%), or None if not set
+    or invalid. This env var controls when Claude Code fires auto-compaction.
+    """
+    raw = os.environ.get("CLAUDE_AUTOCOMPACT_PCT_OVERRIDE", "")
+    if not raw:
+        return None
+    try:
+        return int(raw)
+    except (ValueError, TypeError):
+        return None
+
+
+def compute_autocompact_proximity(pct: float, autocompact_pct: int | None) -> float | None:
+    """Compute how close current usage is to the autocompact threshold.
+
+    Returns the percentage points remaining before compaction fires,
+    or 0.0 if already past the threshold. Returns None if autocompact
+    is not configured.
+    """
+    if autocompact_pct is None:
+        return None
+    remaining = autocompact_pct - pct
+    return max(0.0, round(remaining, 1))
+
+
 def compute_context_percentage(tokens: int, window: int) -> float:
     """
     Return context usage as a percentage (0–100), capped at 100.
@@ -230,20 +259,23 @@ def write_state_file(
     session_id: str,
     window: int = DEFAULT_WINDOW,
     thresholds: dict | None = None,
+    autocompact_pct: int | None = None,
 ) -> None:
     """
     Write context health state to a JSON file.
     Creates parent directories if needed. Overwrites existing file atomically.
 
     State schema:
-      pct        - context usage percentage (0–100)
-      zone       - green | yellow | red | critical | unknown
-      tokens     - estimated token count
-      turns      - number of conversation turns counted
-      window     - configured context window size
-      thresholds - active zone thresholds {yellow, red, critical} (percentages)
-      session_id - Claude Code session identifier
-      updated_at - ISO timestamp of this write
+      pct                   - context usage percentage (0–100)
+      zone                  - green | yellow | red | critical | unknown
+      tokens                - estimated token count
+      turns                 - number of conversation turns counted
+      window                - configured context window size
+      thresholds            - active zone thresholds {yellow, red, critical} (percentages)
+      session_id            - Claude Code session identifier
+      autocompact_pct       - CLAUDE_AUTOCOMPACT_PCT_OVERRIDE value (null if not set)
+      autocompact_proximity - percentage points until compaction fires (null if not set)
+      updated_at            - ISO timestamp of this write
     """
     path.parent.mkdir(parents=True, exist_ok=True)
     state = {
@@ -254,6 +286,8 @@ def write_state_file(
         "window": window,
         "thresholds": thresholds or DEFAULT_THRESHOLDS,
         "session_id": session_id,
+        "autocompact_pct": autocompact_pct,
+        "autocompact_proximity": compute_autocompact_proximity(pct, autocompact_pct),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     # Atomic write via temp file
@@ -275,6 +309,7 @@ def run_meter(
     state_path: Path,
     window: int = DEFAULT_WINDOW,
     thresholds: dict | None = None,
+    autocompact_pct: int | None = None,
 ) -> dict:
     """
     Core meter logic: read transcript, compute health, write state.
@@ -283,6 +318,9 @@ def run_meter(
     Uses adaptive thresholds by default: for large windows (>200k),
     zone boundaries tighten to reflect absolute quality ceilings.
     Pass explicit thresholds to override adaptive behavior.
+
+    autocompact_pct: value of CLAUDE_AUTOCOMPACT_PCT_OVERRIDE (or None).
+    When set, the state file includes proximity to compaction threshold.
     """
     tokens, turns = estimate_tokens_from_transcript(transcript_path)
 
@@ -305,6 +343,7 @@ def run_meter(
         session_id=session_id,
         window=window,
         thresholds=active_thresholds,
+        autocompact_pct=autocompact_pct,
     )
 
     return {"pct": pct, "zone": zone, "tokens": tokens, "turns": turns}
@@ -339,12 +378,14 @@ def main() -> None:
     state_path = Path(state_file_str) if state_file_str else DEFAULT_STATE_FILE
 
     window = int(os.environ.get("CLAUDE_CONTEXT_WINDOW", str(DEFAULT_WINDOW)))
+    autocompact = get_autocompact_pct()
 
     run_meter(
         session_id=session_id,
         transcript_path=transcript_path,
         state_path=state_path,
         window=window,
+        autocompact_pct=autocompact,
     )
 
     # PostToolUse hook — output nothing, exit 0 (non-blocking)
