@@ -124,6 +124,14 @@ def build_anchor_content(
             f"red={thresholds.get('red', '?')}% "
             f"critical={thresholds.get('critical', '?')}%"
         )
+    # Autocompact proximity from meter state
+    ac_proximity = state.get("autocompact_proximity")
+    ac_pct = state.get("autocompact_pct")
+    if ac_proximity is not None and ac_pct is not None:
+        if ac_proximity <= 0:
+            lines.append(f"- Auto-compact: **IMMINENT** (threshold={ac_pct}%)")
+        else:
+            lines.append(f"- Auto-compact: {ac_proximity:.0f} points away (threshold={ac_pct}%)")
     lines.extend([
         "",
         "## If you just resumed from compaction",

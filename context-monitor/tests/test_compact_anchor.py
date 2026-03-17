@@ -183,5 +183,32 @@ class TestIntegration(unittest.TestCase):
         self.assertFalse(compact_anchor.should_write(state["turns"], write_every=10))
 
 
+class TestAutocompactInAnchor(unittest.TestCase):
+    """Tests for autocompact proximity display in compact anchor."""
+
+    def test_anchor_includes_autocompact_proximity(self):
+        state = {
+            "zone": "yellow", "pct": 55.0, "tokens": 110000, "window": 200000,
+            "autocompact_pct": 60, "autocompact_proximity": 5.0,
+        }
+        content = compact_anchor.build_anchor_content(state, "Agent", 50, "sess1")
+        self.assertIn("auto-compact", content.lower().replace("autocompact", "auto-compact"))
+        self.assertIn("5", content)
+
+    def test_anchor_without_autocompact_no_crash(self):
+        state = {"zone": "green", "pct": 30.0, "tokens": 60000, "window": 200000}
+        content = compact_anchor.build_anchor_content(state, "Read", 10, "sess1")
+        # Should not contain autocompact line
+        self.assertNotIn("Auto-compact", content)
+
+    def test_anchor_autocompact_zero_proximity(self):
+        state = {
+            "zone": "red", "pct": 72.0, "tokens": 144000, "window": 200000,
+            "autocompact_pct": 70, "autocompact_proximity": 0.0,
+        }
+        content = compact_anchor.build_anchor_content(state, "Bash", 70, "sess1")
+        self.assertIn("IMMINENT", content)
+
+
 if __name__ == "__main__":
     unittest.main()
