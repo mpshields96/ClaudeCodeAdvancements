@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-16 (Session 21)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-17 (Session 29)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -72,10 +72,11 @@ ClaudeCodeAdvancements/
 │   │   ├── auto_handoff.py          # CTX-4: Stop hook — blocks exit at critical, prompts /handoff
 │   │   └── compact_anchor.py        # CTX-5: PostToolUse — writes .claude-compact-anchor.md every N turns
 │   ├── tests/
-│   │   ├── test_meter.py            # 36 tests
-│   │   ├── test_alert.py            # 24 tests
+│   │   ├── test_meter.py            # 62 tests
+│   │   ├── test_alert.py            # 40 tests
 │   │   ├── test_auto_handoff.py     # 27 tests
-│   │   └── test_compact_anchor.py   # 22 tests
+│   │   ├── test_compact_anchor.py   # 25 tests
+│   │   └── test_statusline.py       # 24 tests (NEW Session 29)
 │   └── research/
 │       └── EVIDENCE.md
 │

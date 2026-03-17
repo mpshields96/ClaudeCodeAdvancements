@@ -228,11 +228,12 @@ python3 memory-system/tests/test_mcp_server.py     # 29 tests
 python3 spec-system/tests/test_spec.py             # 26 tests
 python3 research/tests/test_reddit_scout.py        # 29 tests
 python3 agent-guard/tests/test_mobile_approver.py  # 36 tests
-python3 context-monitor/tests/test_meter.py        # 33 tests
-python3 context-monitor/tests/test_alert.py        # 24 tests
+python3 context-monitor/tests/test_meter.py        # 62 tests
+python3 context-monitor/tests/test_alert.py        # 40 tests
+python3 context-monitor/tests/test_statusline.py   # 24 tests
 ```
 
-All seven must show "OK" (214 total) before touching any other file.
+All eight must show "OK" (283 total) before touching any other file.
 
 ---
 

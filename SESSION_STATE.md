@@ -3,10 +3,37 @@
 
 ---
 
-## Current State (as of Session 28 — 2026-03-17)
+## Current State (as of Session 29 — 2026-03-17)
 
-**Phase:** Session 28 COMPLETE. MT-10 core delivered (improver.py, 44 tests). AG-5 network guard delivered (53 tests). reflect.py wired to auto-generate improvement proposals. 5 investing/stocks subreddit profiles added. 25 test suites, 1040 total tests, all passing.
-**Next session starts at:** Run /cca-init. Priority: (1) Matthew has Claude Pro project ideas for new subreddit profiles — wait for his input. (2) Continue autonomous scanning — new investing subs + r/ClaudeCode refresh. (3) Spec system verification separation — ADAPT from Playwright test patching finding. (4) MT-9: Full autonomous pipeline safety. (5) Performance specs in design.md template.
+**Phase:** Session 29 COMPLETE. CLAUDE_AUTOCOMPACT_PCT_OVERRIDE awareness shipped across all 4 context-monitor hooks. MT-10 QualityGate shipped. Spec system enhanced (perf specs, TDD ordering, demo field). 18 new r/ClaudeCode findings. 26 test suites, 1093 total tests, all passing.
+**Next session starts at:** Run /cca-init. Priority: (1) Build something outside context-monitor — module is well-covered now. (2) MT-9 autonomous pipeline or MT-11 GitHub intelligence. (3) Scan never-scanned subreddits (investing/stocks subs all show "Never scanned"). (4) Consider building a fresh-session anti-contamination guard (Desloppify pattern from findings).
+
+---
+
+## What Was Done in Session 29 (2026-03-17)
+
+### CLAUDE_AUTOCOMPACT_PCT_OVERRIDE Awareness (All Context-Monitor Hooks)
+- `context-monitor/hooks/meter.py` — Reads env var, computes proximity, writes to state file. 3 new functions, 10 new tests (62 total).
+- `context-monitor/hooks/alert.py` — Yellow zone warns when approaching auto-compact (<10 points). Red/critical messages include proximity info. 16 new tests (40 total).
+- `context-monitor/statusline.py` — Shows AC:Xpts in status bar when approaching compaction. AC:NOW at threshold. First test suite: 24 tests.
+- `context-monitor/hooks/compact_anchor.py` — Anchor includes autocompact proximity line. IMMINENT at 0 points. 3 new tests (25 total).
+
+### MT-10: QualityGate (Geometric Mean Anti-Gaming)
+- `self-learning/improver.py` — QualityGate class using Nash 1950 geometric mean scoring. Any zero metric tanks composite score. 20 new tests (64 total).
+- E2E validated on 3 real CCA transcripts (scores 40-70, 6 proposals).
+
+### Spec System Enhancements
+- `spec-system/commands/design.md` — Performance Specifications section (call frequency, latency budget, resource constraints)
+- `spec-system/commands/implement.md` — TDD red-green ordering enforced (test FIRST, then implement)
+- `spec-system/commands/tasks.md` — Demo field (plain-English observable outcome per task)
+
+### Reddit Intelligence
+- 18 new r/ClaudeCode findings (1 new finding in FINDINGS_LOG.md this continuation)
+- MASTER_TASKS.md status updates (MT-7 marked COMPLETE, MT-10 updated)
+
+### Test Growth
+- Session start: 25 suites, 1040 tests
+- Session end: 26 suites, 1093 tests (+53 net new, +1 new suite)
 
 ---
 

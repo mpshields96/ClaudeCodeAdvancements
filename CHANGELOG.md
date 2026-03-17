@@ -3,6 +3,34 @@
 
 ---
 
+## Session 29 — 2026-03-17
+
+**What changed:**
+- `context-monitor/hooks/meter.py` — CLAUDE_AUTOCOMPACT_PCT_OVERRIDE awareness: get_autocompact_pct(), compute_autocompact_proximity(), state file now includes autocompact_pct + autocompact_proximity. 10 new tests (62 total).
+- `context-monitor/hooks/alert.py` — Autocompact proximity warnings: yellow zone alerts when approaching auto-compact (<10 points), red/critical messages include proximity. should_warn_autocompact() + updated should_alert/build_message signatures. 16 new tests (40 total).
+- `context-monitor/statusline.py` — AC:Xpts display when approaching compaction. AC:NOW at threshold. _get_autocompact_pct(), _autocompact_proximity(), _format_autocompact_part(). Import os added.
+- `context-monitor/tests/test_statusline.py` — NEW: First test suite for statusline.py. 24 tests covering thresholds, zones, bar, window format, autocompact proximity.
+- `context-monitor/hooks/compact_anchor.py` — Autocompact proximity line in anchor output. IMMINENT at 0 points, "X points away" otherwise. 3 new tests (25 total).
+- `self-learning/improver.py` — QualityGate class: geometric mean anti-gaming (Nash 1950 / sentrux pattern). 20 new tests (64 total).
+- `spec-system/commands/design.md` — Performance Specifications section (call frequency, latency budget, resource constraints)
+- `spec-system/commands/implement.md` — TDD red-green ordering enforced
+- `spec-system/commands/tasks.md` — Demo field (observable outcome per task)
+- `FINDINGS_LOG.md` — 19 new entries (18 r/ClaudeCode + 1 cerebellum repo)
+- `MASTER_TASKS.md` — MT-7 marked COMPLETE, MT-10 updated with QualityGate + E2E validation
+
+**Why:**
+- CLAUDE_AUTOCOMPACT_PCT_OVERRIDE is a new Claude Code env var that changes when auto-compaction fires. Users with 1M context windows need awareness of approaching compaction to /compact proactively (prevents losing CLAUDE.md rules to the compaction bug).
+- QualityGate prevents Goodhart's Law gaming in self-improvement loops — any zero metric tanks the composite score.
+- Spec system enhancements from ADAPT findings: CAS demo statements, performance awareness, TDD ordering.
+
+**Tests:** 1093/1093 passing (26 suites)
+
+**Lessons:**
+- Context-monitor module is now very well-covered (5 test suites, 178 tests). Next session should build outside this module.
+- User feedback: focus on building, not re-scanning same subreddits. Consider diminishing returns.
+
+---
+
 ## Session 28 — 2026-03-17
 
 **What changed:**
