@@ -108,3 +108,39 @@
 - **Files:** Claude Island v1.2 (`/Applications/Claude Island.app`)
 
 ---
+
+### tmux kill-server corrupts socket — Severity: 1 — Count: 1
+- **Anti-pattern:** Running `tmux kill-server` to clean up sessions — can corrupt the socket at `/private/tmp/tmux-501/default`, causing all subsequent tmux commands to fail with "server exited unexpectedly"
+- **Fix:** Use `tmux kill-session -t <name>` to kill specific sessions. If socket is already corrupted: `rm -f /private/tmp/tmux-501/default`
+- **First seen:** 2026-03-16 (Session 18 — dev-start kalshi debugging)
+- **Last seen:** 2026-03-16
+- **Files:** `~/.local/bin/dev-start`, any tmux automation
+
+---
+
+### AppleScript keystroke simulation unreliable for CLI apps — Severity: 1 — Count: 1
+- **Anti-pattern:** Using `osascript` with `keystroke` to type commands into Terminal windows running interactive CLI apps (Claude Code). Requires Accessibility permissions, types into whichever window is focused (not targeted), and `do script` creates new shell processes instead of typing into running apps.
+- **Fix:** Use tmux `send-keys` with exact pane targeting for reliable scripted input to running CLI apps.
+- **First seen:** 2026-03-16 (Session 18 — dev-start kalshi iterations)
+- **Last seen:** 2026-03-16
+- **Files:** `~/.local/bin/dev-start`, any Terminal automation
+
+---
+
+### Self-learning loops plateau at mechanical optimization — Severity: 1 — Count: 1
+- **Anti-pattern:** Expecting self-learning to improve architectural judgment or strategic decisions through log analysis alone
+- **Fix:** Design self-learning for bounded parameter tuning (thresholds, filters, batch sizes) and use it to free the human for judgment calls. Don't chase unbounded self-improvement.
+- **First seen:** 2026-03-16 (Session 19 — CCA vs YoYo analysis, u/inbetweenthebleeps observation)
+- **Last seen:** 2026-03-16
+- **Files:** `self-learning/reflect.py`, `self-learning/strategy.json`, any future Kalshi self-learning integration
+
+---
+
+### Claude Squad worktrees break shared filesystem apps — Severity: 1 — Count: 1
+- **Anti-pattern:** Using Claude Squad for projects that need a shared filesystem (database, venv, config files). Claude Squad creates git worktrees per session, so each chat gets an isolated copy — breaking any app relying on shared state.
+- **Fix:** Use tmux split panes or Terminal tabs instead for apps needing shared filesystem. Claude Squad is good for independent coding tasks, not for shared-state bots.
+- **First seen:** 2026-03-16 (Session 18 — Kalshi bot hook errors in Claude Squad)
+- **Last seen:** 2026-03-16
+- **Files:** any bot/daemon needing shared database or venv
+
+---

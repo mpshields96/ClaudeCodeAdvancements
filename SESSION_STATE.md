@@ -3,10 +3,48 @@
 
 ---
 
-## Current State (as of Session 18 — 2026-03-16)
+## Current State (as of Session 19 — 2026-03-16)
 
-**Phase:** Wired USAGE-3 cost_alert.py into settings.local.json as PreToolUse hook. Hook is now live — warns at $5, blocks at $20 (opt-in). All 734 tests passing across 21 suites.
-**Next session starts at:** Run /cca-init. Priority: (1) Start OTel receiver daemon (`python3 usage-dashboard/otel_receiver.py start`) and verify CC metrics flow in. (2) Streamlit UI for usage dashboard (USAGE-5, optional). (3) Kalshi dual-chat automation via RunMaestro (memory: project_kalshi_automation.md). (4) Push to remote.
+**Phase:** Session 19 complete. Nuclear subreddit flexibility, Terminal.app Kalshi launcher, frontend-design review, CCA vs YoYo comparative analysis delivered, 6 master-level tasks captured (MT-0 through MT-5). 742 tests passing across 20 suites.
+**Next session starts at:** Run /cca-init. Priority: (1) COMMIT all Session 19 work immediately. (2) MT-0: Begin Kalshi self-learning integration design (adapt journal.py schema for trading domain). (3) MT-2: Mermaid diagrams in spec:design (quick win). (4) Push to remote.
+
+---
+
+## What Was Done in Session 19 (2026-03-16)
+
+### CCA vs YoYo Comparative Analysis
+- Thorough honest comparison: what CCA self-learning does well (structured schema, separated concerns, strategy-as-data, sample-size guards) vs where it falls short (no autonomous loop, no codebase-as-memory, no pain/win tracking, no self-awareness, no pruning)
+- Incorporated u/ultrathink_art security insight (treat issue content as read-only data) and u/inbetweenthebleeps plateau observation (self-improvement optimizes mechanics, not architectural judgment)
+- 6 concrete enhancement paths ranked by impact-per-token: (1) flip auto_adjust for bounded params, (2) pain/win signals, (3) session-end self-reflection hook, (4) relevance-weighted pattern detection, (5) artifact feedback, (6) quarterly pruning
+
+### Master-Level Tasks (MASTER_TASKS.md)
+- MT-0: Kalshi bot self-learning integration — BIGGEST task, detailed technical path for adapting journal.py to trading domain with edge fingerprinting, research path tracking, and pain/win signals
+- MT-5: Claude Pro ↔ Claude Code bridge — future task for strategy discussions across interfaces
+- Priority order updated: MT-0 → MT-2 → MT-4 → MT-3 → MT-1 → MT-5
+- Both saved to persistent memory (project_kalshi_self_learning.md, project_claude_pro_bridge.md)
+
+### CCA-Nuclear Subreddit Flexibility
+- `/cca-nuclear` now accepts optional subreddit argument: `/cca-nuclear r/LocalLLaMA`
+- Default remains r/ClaudeCode when no argument given
+- All progress/queue/report files namespaced by subreddit slug (e.g., `nuclear_progress_localllama.json`)
+- Backwards compatible: r/ClaudeCode uses original filenames (no suffix)
+- Added `subreddit_slug()` function to `nuclear_fetcher.py` for filesystem-safe slug conversion
+- 8 new tests for slug function (44 total in test_nuclear_fetcher.py)
+
+### Terminal.app Kalshi Launcher
+- New script: `scripts/kalshi-launch.sh` — opens two separate Terminal.app windows via AppleScript
+- Uses tab references (not window indices) to reliably target each window for subsequent commands
+- Custom window titles: "Kalshi Main" / "Kalshi Research" for visual identification
+- Auto-runs: cd, claude --dangerously-skip-permissions, /polybot-init, auto commands, instructions
+- Install: `cp scripts/kalshi-launch.sh ~/.local/bin/kalshi-launch && chmod +x ~/.local/bin/kalshi-launch`
+
+### Frontend-Design Plugin Review (ADAPT)
+- Thorough /cca-review of r/ClaudeCode post (631pts, 156 comments, all read)
+- Plugin itself is trivial (markdown prompt) — real value in community comment patterns
+- Key patterns: design vocabulary from Midjourney/PromptHero, multi-model pipeline (Gemini design guide -> Claude), screenshot-reference approach, 5-template-then-pick workflow
+- Updated FINDINGS_LOG entry from REFERENCE to ADAPT with full analysis
+
+**Tests:** 742/742 passing (20 suites — 8 new tests)
 
 ---
 
@@ -19,7 +57,16 @@
 - Verified: JSON valid, hook returns `{}` for both cheap and expensive tools (no cost data yet)
 - Once OTel receiver is running, the hook will have live cost data to check thresholds
 
-**Tests:** 734/734 passing (no new tests — wiring change only)
+### Kalshi Dual-Chat Automation
+- Rewrote `~/.local/bin/dev-start` to use tmux split panes for side-by-side Kalshi chats
+- Script creates 2 vertical split panes, each running `claude --dangerously-skip-permissions`
+- Auto-sends `/polybot-init`, `/polybot-auto` (main) and `/polybot-autoresearch` (research) + full instructions
+- Mouse mode enabled for click-to-switch between panes
+- Debugged: AppleScript approach failed (Accessibility permissions, wrong-window targeting), Claude Squad failed (worktree breaks shared filesystem), final solution is tmux `send-keys`
+- Fixed tmux socket corruption (`/private/tmp/tmux-501/default`) caused by `tmux kill-server`
+- Created `KALSHI_CHEATSHEET.md` — daily operations quick reference
+
+**Tests:** 734/734 passing (no new tests — infrastructure/wiring changes only)
 
 ---
 
@@ -485,13 +532,13 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 | context-monitor (auto_handoff) | 27 | 27/27 passing |
 | context-monitor (compact_anchor) | 22 | 22/22 passing |
 | reddit-intelligence (reader) | 43 | 43/43 passing |
-| reddit-intelligence (nuclear_fetcher) | 29 | 29/29 passing |
+| reddit-intelligence (nuclear_fetcher) | 44 | 44/44 passing |
 | self-learning | 34 | 34/34 passing |
 | usage-dashboard (usage_counter) | 44 | 44/44 passing |
 | usage-dashboard (otel_receiver) | 63 | 63/63 passing |
 | usage-dashboard (cost_alert) | 39 | 39/39 passing |
 | usage-dashboard (arewedone) | 50 | 50/50 passing |
-| **Total** | **734** | **734/734 passing** |
+| **Total** | **742** | **742/742 passing** |
 
 ---
 
@@ -679,12 +726,11 @@ Available in this project as `/reddit-intel:ri-scan`, `/reddit-intel:ri-read`, `
 
 ---
 
-## Session 19 Start Protocol
+## Session 20 Start Protocol
 
 1. Run /cca-init
-2. Run all 21 test suites — confirm 734+ passing
-3. Start OTel receiver: `python3 usage-dashboard/otel_receiver.py start` — verify CC metrics flowing
-4. Test cost alert live with OTel data: make a few tool calls, check warn threshold behavior
-5. Optional: Streamlit UI for usage dashboard (USAGE-5)
-6. Kalshi dual-chat automation via RunMaestro (see memory: project_kalshi_automation.md)
-7. Push to remote
+2. COMMIT all Session 19 work immediately (nuclear flexibility, launcher, master tasks, analysis)
+3. Run all 20 test suites — confirm 742+ passing
+4. Begin MT-0 design: adapt journal.py event schema for trading domain (market_research, bet_outcome, edge_discovered)
+5. Quick win: MT-2 mermaid diagrams in spec:design
+6. Push to remote

@@ -169,6 +169,18 @@ def classify_post(post):
     return "MAYBE"
 
 
+def subreddit_slug(subreddit):
+    """Convert subreddit name to filesystem-safe slug for file naming.
+
+    Examples:
+        r/ClaudeCode -> claudecode
+        ClaudeAI -> claudeai
+        r/LocalLLaMA -> localllama
+    """
+    sub = re.sub(r"^/?r/", "", subreddit.strip()).lower()
+    return re.sub(r"[^a-z0-9]", "", sub)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch top Reddit posts for batch review")
     parser.add_argument("subreddit", help="Subreddit (e.g., r/ClaudeCode)")

@@ -3,6 +3,54 @@
 
 ---
 
+## Session 19 — 2026-03-16
+
+**What changed:**
+- `MASTER_TASKS.md` — new file: 6 master-level aspirational tasks (MT-0 through MT-5)
+- `.claude/commands/cca-nuclear.md` — subreddit flexibility: accepts any subreddit as argument, file namespacing by slug
+- `reddit-intelligence/nuclear_fetcher.py` — added `subreddit_slug()` function for filesystem-safe slug conversion
+- `reddit-intelligence/tests/test_nuclear_fetcher.py` — 8 new slug tests (44 total)
+- `scripts/kalshi-launch.sh` — new Terminal.app dual-window Kalshi launcher (replaces tmux approach)
+- `FINDINGS_LOG.md` — frontend-design plugin entry upgraded from REFERENCE to ADAPT with full analysis
+- `SESSION_STATE.md` — session 19 log, master-level tasks, updated priorities
+- `PROJECT_INDEX.md` — added scripts/ directory, updated test counts
+- Memory: `project_kalshi_self_learning.md`, `project_claude_pro_bridge.md`, `feedback_thoroughness.md`
+
+**Why:**
+- MT-0 (Kalshi self-learning integration) is the highest-stakes application of CCA's architecture — user identified research quality as the bottleneck
+- Honest CCA vs YoYo analysis revealed 5 gaps: no autonomous loop, no codebase-as-memory, no pain/win tracking, no self-awareness, no pruning
+- Nuclear subreddit flexibility enables scanning any subreddit with same pipeline (not just r/ClaudeCode)
+- Terminal.app launcher is simpler and more reliable than tmux for dual-chat startup
+
+**Tests:** 742/742 passing (20 suites, 8 new)
+
+**Lessons:**
+- Self-learning plateau is real (u/inbetweenthebleeps): optimizes mechanics not architectural judgment — design around this limitation
+- "Evolution is in the artifact, not the weights" (liyuanhao) — the codebase IS the memory, not just the journal file
+
+---
+
+## Session 18 — 2026-03-16
+
+**What changed:**
+- `.claude/settings.local.json` — wired cost_alert.py as PreToolUse hook (fires on all tool calls, self-filters cheap tools)
+- `~/.local/bin/dev-start` — rewrote as tmux split-pane launcher for Kalshi dual-chat automation (outside CCA scope, with user permission)
+- `KALSHI_CHEATSHEET.md` — daily operations quick reference for Kalshi bot
+
+**Why:**
+- USAGE-3 cost alert hook needed to be live to warn/block on expensive sessions
+- User needed one-command launch for two autonomous Kalshi bot chats with full instruction delivery
+- Iterated through AppleScript (failed: accessibility/targeting), Claude Squad (failed: worktrees break shared filesystem), landed on tmux send-keys
+
+**Tests:** 734/734 passing (20 suites)
+
+**Lessons:**
+- tmux `send-keys` with exact pane targeting is the reliable approach for scripted CLI input — AppleScript keystroke simulation is fragile and window-dependent
+- `tmux kill-server` can corrupt the socket at `/private/tmp/tmux-501/default` — always clean the socket file if tmux refuses to start
+- Claude Code sessions can't visually attach tmux — user must run the script from their own Terminal
+
+---
+
 ## Session 16 — 2026-03-15
 
 **What changed:**

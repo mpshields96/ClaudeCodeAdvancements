@@ -6,6 +6,44 @@ it knows everything — context, plan, open work, Maestro status, self-learning 
 No other commands need to be run first. No questions need to be asked.
 Just type `/cca-nuclear` and walk away.
 
+## Subreddit Targeting
+
+**Default:** `r/ClaudeCode` (when no argument given)
+
+**Custom subreddit:** `/cca-nuclear r/LocalLLaMA` or `/cca-nuclear r/MachineLearning`
+
+When `$ARGUMENTS` is provided and non-empty, use it as the target subreddit instead of r/ClaudeCode.
+All progress files, queue files, and reports are namespaced by subreddit slug:
+- Queue: `nuclear_queue_<slug>.json` (e.g., `nuclear_queue_localllama.json`)
+- Progress: `nuclear_progress_<slug>.json`
+- Report: `NUCLEAR_REPORT_<slug>.md`
+
+For the default r/ClaudeCode, files keep their original names (no suffix) for backwards
+compatibility: `nuclear_queue.json`, `nuclear_progress.json`, `NUCLEAR_REPORT.md`.
+
+**Determine the target subreddit at the start of every run:**
+```
+If "$ARGUMENTS" is non-empty:
+    TARGET_SUB = "$ARGUMENTS"    (e.g., "r/LocalLLaMA")
+    FILE_SUFFIX = "_" + slug     (e.g., "_localllama")
+Else:
+    TARGET_SUB = "r/ClaudeCode"
+    FILE_SUFFIX = ""             (backwards compatible)
+```
+
+To compute the slug programmatically:
+```bash
+python3 -c "
+import re, sys
+sub = re.sub(r'^/?r/', '', '$ARGUMENTS'.strip()) if '$ARGUMENTS'.strip() else ''
+slug = re.sub(r'[^a-z0-9]', '', sub.lower())
+suffix = f'_{slug}' if slug and slug != 'claudecode' else ''
+print(suffix)
+"
+```
+
+Then use `FILE_SUFFIX` throughout all Phase 1-4 file paths below.
+
 ---
 
 ## Token Budget Design
@@ -95,19 +133,21 @@ python3 reddit-intelligence/tests/test_nuclear_fetcher.py 2>&1 | tail -1
 
 ## PHASE 1 — Fetch and Triage (zero Claude tokens)
 
+Use `TARGET_SUB` (determined above) in place of the hardcoded subreddit:
+
 ```bash
 python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/nuclear_fetcher.py \
-    r/ClaudeCode 150 year \
+    TARGET_SUB 150 year \
     --min-score 30 \
     --dedup /Users/matthewshields/Projects/ClaudeCodeAdvancements/FINDINGS_LOG.md \
     --classify \
-    --output /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/findings/nuclear_queue.json
+    --output /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/findings/nuclear_queue{FILE_SUFFIX}.json
 ```
 
 Then print summary:
 ```bash
 python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/nuclear_fetcher.py \
-    r/ClaudeCode 150 year \
+    TARGET_SUB 150 year \
     --min-score 30 \
     --dedup /Users/matthewshields/Projects/ClaudeCodeAdvancements/FINDINGS_LOG.md \
     --classify \
@@ -116,7 +156,7 @@ python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligenc
 
 Report:
 ```
-NUCLEAR SCAN LOADED
+NUCLEAR SCAN: TARGET_SUB
 Posts fetched: [N] | After dedup: [M] | NEEDLE: [X] | MAYBE: [Y] | HAY: [Z]
 Maestro: [new release / still v0.2.4]
 Tests: [pass count]
@@ -128,7 +168,7 @@ Resuming from: [post N / fresh start]
 ## PHASE 2 — Load or Create Progress Tracker
 
 ```bash
-cat /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/findings/nuclear_progress.json 2>/dev/null || echo '{"reviewed": [], "session": 0, "stats": {"build": 0, "adapt": 0, "reference": 0, "skip": 0}}'
+cat /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/findings/nuclear_progress{FILE_SUFFIX}.json 2>/dev/null || echo '{"reviewed": [], "session": 0, "stats": {"build": 0, "adapt": 0, "reference": 0, "skip": 0}}'
 ```
 
 If resuming: skip already-reviewed post IDs. Report how many are left.
@@ -176,7 +216,7 @@ STEAL: [specific pattern, tool, or approach to take]
 1. Append results to FINDINGS_LOG.md:
    `[YYYY-MM-DD] [VERDICT] [Frontier] Description — URL`
 
-2. Update `nuclear_progress.json` with reviewed IDs and stats
+2. Update `nuclear_progress{FILE_SUFFIX}.json` with reviewed IDs and stats
 
 3. Print: `NUCLEAR: [N]/[total] | BUILD:[B] ADAPT:[A] REF:[R] SKIP:[S] | Polybot:[P]`
 
@@ -188,10 +228,10 @@ STEAL: [specific pattern, tool, or approach to take]
 
 ## PHASE 4 — Generate Report
 
-Write to `reddit-intelligence/findings/NUCLEAR_REPORT.md`:
+Write to `reddit-intelligence/findings/NUCLEAR_REPORT{FILE_SUFFIX}.md`:
 
 ```markdown
-# Nuclear Deep-Dive Report: r/ClaudeCode Top Year
+# Nuclear Deep-Dive Report: TARGET_SUB Top Year
 Generated: [date]
 Posts scanned: [N] of [total] | Sessions used: [N]
 
@@ -251,7 +291,7 @@ Posts scanned: [N] of [total] | Sessions used: [N]
 
 ## Resume Protocol
 
-When `nuclear_progress.json` exists:
+When `nuclear_progress{FILE_SUFFIX}.json` exists:
 1. Load progress + queue (skip re-fetch if queue is <24h old)
 2. Report: "Resuming. [M]/[N] reviewed. [B] BUILD, [A] ADAPT found."
 3. Check Maestro for new release

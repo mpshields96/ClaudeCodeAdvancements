@@ -8,7 +8,7 @@ import json
 import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from nuclear_fetcher import classify_post, load_findings_urls
+from nuclear_fetcher import classify_post, load_findings_urls, subreddit_slug
 
 
 class TestClassifyPost(unittest.TestCase):
@@ -219,6 +219,35 @@ class TestClassifyEdgeCases(unittest.TestCase):
         p = self._post(flair=None)
         result = classify_post(p)
         self.assertIn(result, ("NEEDLE", "MAYBE", "HAY"))
+
+
+class TestSubredditSlug(unittest.TestCase):
+    """Test subreddit name to filesystem slug conversion."""
+
+    def test_r_prefix_stripped(self):
+        self.assertEqual(subreddit_slug("r/ClaudeCode"), "claudecode")
+
+    def test_slash_r_prefix_stripped(self):
+        self.assertEqual(subreddit_slug("/r/ClaudeCode"), "claudecode")
+
+    def test_no_prefix(self):
+        self.assertEqual(subreddit_slug("ClaudeAI"), "claudeai")
+
+    def test_lowercase(self):
+        self.assertEqual(subreddit_slug("r/LocalLLaMA"), "localllama")
+
+    def test_underscores_stripped(self):
+        self.assertEqual(subreddit_slug("r/Machine_Learning"), "machinelearning")
+
+    def test_whitespace_stripped(self):
+        self.assertEqual(subreddit_slug("  r/ClaudeCode  "), "claudecode")
+
+    def test_hyphens_stripped(self):
+        self.assertEqual(subreddit_slug("r/vibe-coding"), "vibecoding")
+
+    def test_default_claudecode(self):
+        """The most common case."""
+        self.assertEqual(subreddit_slug("r/ClaudeCode"), "claudecode")
 
 
 if __name__ == "__main__":

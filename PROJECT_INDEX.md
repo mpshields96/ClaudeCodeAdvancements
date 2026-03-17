@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-16 (Session 17)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-16 (Session 18)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -16,6 +16,8 @@
 | Reddit review log (append-only) | `FINDINGS_LOG.md` |
 | Session changelog (append-only) | `CHANGELOG.md` |
 | Severity-tracked learnings | `LEARNINGS.md` |
+| Master-level aspirational tasks | `MASTER_TASKS.md` |
+| Kalshi bot daily operations | `KALSHI_CHEATSHEET.md` |
 | GitHub | https://github.com/mpshields96/ClaudeCodeAdvancements |
 
 **Mission:** Build validated next-generation advancements for Claude Code users. NOT a betting project.
@@ -109,6 +111,9 @@ ClaudeCodeAdvancements/
 │   └── tests/
 │       └── test_self_learning.py    # 34 tests — all passing
 │
+├── scripts/                         # Utility scripts (launcher, automation)
+│   └── kalshi-launch.sh             # Terminal.app dual-window Kalshi launcher
+│
 └── usage-dashboard/                 # Frontier 5: Token + cost transparency
     ├── CLAUDE.md                    # Module rules
     ├── usage_counter.py             # USAGE-1: CLI token/cost counter (reads transcript JSONL)
@@ -146,6 +151,7 @@ ClaudeCodeAdvancements/
 | `python3 context-monitor/tests/test_auto_handoff.py` | auto-handoff tests (27 tests) |
 | `python3 context-monitor/tests/test_compact_anchor.py` | compact anchor tests (22 tests) |
 | `python3 reddit-intelligence/tests/test_reddit_reader.py` | reddit reader tests (43 tests) |
+| `python3 reddit-intelligence/tests/test_nuclear_fetcher.py` | nuclear fetcher tests (44 tests) |
 | `python3 self-learning/tests/test_self_learning.py` | self-learning tests (34 tests) |
 | `python3 usage-dashboard/tests/test_usage_counter.py` | usage counter tests (44 tests) |
 | `python3 usage-dashboard/tests/test_otel_receiver.py` | OTel receiver tests (63 tests) |
@@ -156,7 +162,7 @@ ClaudeCodeAdvancements/
 | `python3 usage-dashboard/usage_counter.py sessions` | Show per-session token/cost breakdown |
 | `python3 usage-dashboard/arewedone.py` | Structural completeness check (all 7 modules) |
 
-**Total:** 734/734 tests. **Session start:** Run all 20 suites. If anything fails, fix before touching other files.
+**Total:** 742/742 tests. **Session start:** Run all 20 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -271,13 +277,13 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | context-monitor (auto_handoff) | `tests/test_auto_handoff.py` | 27 | All passing |
 | context-monitor (compact_anchor) | `tests/test_compact_anchor.py` | 22 | All passing |
 | reddit-intelligence (reader) | `tests/test_reddit_reader.py` | 43 | All passing |
-| reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 29 | All passing |
+| reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 44 | All passing |
 | self-learning | `tests/test_self_learning.py` | 34 | All passing |
 | usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 50 | All passing |
-| **Total** | | **734** | **734/734** |
+| **Total** | | **742** | **742/742** |
 
 ---
 
@@ -326,7 +332,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 ## Session Resume Checklist
 
 1. Run `/cca-init`
-2. Run all 17 test suites — confirm 568/568
+2. Run all 20 test suites — confirm 742/742
 3. Read `SESSION_STATE.md` — exact current state and next actions
 4. Read module `CLAUDE.md` for the frontier being worked on
 5. State what you're building before touching any file
@@ -346,3 +352,5 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 14-15 | 2026-03-15 | Nuclear scan COMPLETE (138 posts), self-learning system, 517 tests |
 | 16 | 2026-03-15 | USAGE-1 counter, /arewedone, cca-wrap self-learning, 3 tool installs — 568 tests |
 | 17 | 2026-03-16 | USAGE-2 OTel receiver, SPEC-6 skill activator, USAGE-3 cost alert — 734 tests |
+| 18 | 2026-03-16 | USAGE-3 hook wiring, Kalshi tmux automation, KALSHI_CHEATSHEET — 734 tests |
+| 19 | 2026-03-16 | MASTER_TASKS.md (MT-0–MT-5), nuclear subreddit flexibility, Kalshi Terminal launcher, CCA vs YoYo analysis — 742 tests |
