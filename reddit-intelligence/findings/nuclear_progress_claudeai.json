@@ -1,0 +1,19 @@
+{
+  "subreddit": "r/ClaudeAI",
+  "timeframe": "month",
+  "posts_fetched": 100,
+  "posts_reviewed": 41,
+  "fast_skipped": 59,
+  "status": "COMPLETE",
+  "session": 22,
+  "date": "2026-03-16",
+  "verdicts": {
+    "BUILD": 2,
+    "ADAPT": 1,
+    "REFERENCE": 24,
+    "SKIP": 21,
+    "FAST_SKIP": 59
+  },
+  "signal_rate": 0.073,
+  "next_subreddits": ["r/Anthropic", "r/algotrading"]
+}
