@@ -58,5 +58,47 @@
     "posts_scanned": 75,
     "builds": 0,
     "adapts": 0
+  },
+  "webdev": {
+    "last_scan": "2026-03-18T22:19:36.950439+00:00",
+    "posts_scanned": 75,
+    "builds": 0,
+    "adapts": 0
+  },
+  "iosprogramming": {
+    "last_scan": "2026-03-18T22:19:39.306893+00:00",
+    "posts_scanned": 47,
+    "builds": 0,
+    "adapts": 0
+  },
+  "machinelearning": {
+    "last_scan": "2026-03-18T22:19:42.019334+00:00",
+    "posts_scanned": 43,
+    "builds": 0,
+    "adapts": 0
+  },
+  "bogleheads": {
+    "last_scan": "2026-03-18T22:19:44.416582+00:00",
+    "posts_scanned": 50,
+    "builds": 0,
+    "adapts": 0
+  },
+  "stocks": {
+    "last_scan": "2026-03-18T22:19:46.889954+00:00",
+    "posts_scanned": 75,
+    "builds": 0,
+    "adapts": 0
+  },
+  "securityanalysis": {
+    "last_scan": "2026-03-18T22:19:47.374431+00:00",
+    "posts_scanned": 2,
+    "builds": 0,
+    "adapts": 0
+  },
+  "valueinvesting": {
+    "last_scan": "2026-03-18T22:19:49.929904+00:00",
+    "posts_scanned": 50,
+    "builds": 0,
+    "adapts": 0
   }
 }
