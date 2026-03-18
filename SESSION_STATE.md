@@ -3,10 +3,10 @@
 
 ---
 
-## Current State (as of Session 42B — 2026-03-18)
+## Current State (as of Session 42 — 2026-03-18)
 
-**Phase:** Session 42B COMPLETE. MT-11 Phase 2 validated (live GitHub API: 30+ repos evaluated across 4 queries, garrytan/gstack scored 72/100, kalshi-ai-trading-bot scored 88/100). MT-12 Phase 2 validated (paper scanner across agents + prediction domains: 40 papers, top find is PredictionMarketBench).
-**Next session starts at:** Session 42C. Recalculated priority scores: (1) MT-8 (iPhone remote, score 10.0 cap, NEVER touched). (2) MT-14 (rescan, 13.0 — but still no stale subs). (3) MT-10 session 2/5 validation. (4) MT-9 deep-read r/ClaudeAI NEEDLEs.
+**Phase:** Session 42 COMPLETE (3 sub-sessions: A, B, C). Six MTs advanced in one chat. Tests: 1552/1552 passing (38 suites). Git: clean after final commit.
+**Next session starts at:** Run /cca-init. Priority per decay: (1) MT-14 (score 13.0 — needs stale subs to test, wait ~2 weeks). (2) MT-8 (score 10.0 cap — nearly solved by native Remote Control, config remaining). (3) MT-13 (score 8.0 cap — iOS dev, never touched). (4) MT-10 session 3/5 validation. (5) MT-9 deep-read r/ClaudeAI NEEDLEs.
 
 ---
 
@@ -43,6 +43,24 @@
 ---
 
 ## What Was Done in Session 42B (2026-03-18)
+
+---
+
+## What Was Done in Session 42C (2026-03-18)
+
+### MT-8: iPhone Remote Control Research (MOSTLY SOLVED)
+- Researched Anthropic's native Remote Control feature (shipped in Claude Code v2.1.51+)
+- Native solution covers 90% of MT-8's scope: `claude remote-control`, QR code, named sessions, auto-reconnect
+- Remaining: configure always-on, update dev-start script with `--name` flags
+- Research doc: `research/MT-8_remote_control_research.md`
+
+### MT-10 Phase 2: Session 2/5 Validation
+- Analyzed 2 more transcripts (scores 75 and 95)
+- Score 95 session had 0 retries — confirms analyzer correctly identifies quality
+- 2 more proposals generated (13 total, 7 approved)
+- Pipeline consistent across 4 different transcripts
+
+---
 
 ### MT-11 Phase 2: Live GitHub API Validated
 - Ran live GitHub search + evaluate pipeline across 4 queries

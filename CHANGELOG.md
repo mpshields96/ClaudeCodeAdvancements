@@ -3,6 +3,24 @@
 
 ---
 
+## Session 42 — 2026-03-18
+
+**What changed:**
+- `MASTER_TASKS.md` — NEW priority decay scoring system (base_value + chats_untouched * aging_rate)
+- MT-10 Phase 2: YoYo self-learning validation sessions 1-2/5 (4 transcripts analyzed, 13 proposals, scores 65-95)
+- MT-9 Phase 3: Supervised autonomous scan trial on r/ClaudeAI (25 posts, 16 NEEDLEs)
+- MT-11 Phase 2: Live GitHub API validated (30+ repos evaluated, 97 total in log)
+- MT-12 Phase 2: Paper scanner across agents + prediction domains (40 papers, 21 logged)
+- MT-8: Research complete — native Remote Control solves 90% of requirements
+- `research/MT-8_remote_control_research.md` (NEW) — Remote Control setup guide
+
+**6 MTs advanced in one session (first time). Decay system working: priorities shifted correctly after each sub-session.**
+
+**Tests:** 1552/1552 passing (38 suites, no changes)
+**Commits:** 4 (init/wrap + 3 sub-session commits)
+
+---
+
 ## Session 41 — 2026-03-18
 
 **What changed:**

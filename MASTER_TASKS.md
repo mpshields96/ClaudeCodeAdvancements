@@ -658,12 +658,12 @@ Phase 2 (Session 31):
 
 | Rank | MT | Task | Base | Last Touched | Chats Ago | Rate | Aging | **Score** | Next Phase |
 |------|----|------|------|-------------|-----------|------|-------|-----------|------------|
-| 1 | MT-10 | YoYo self-learning | 9 | Session 42 | 0 | 1.0 | 0.0 | **9.0** | Phase 2: session 2/5 validation |
+| 1 | MT-10 | YoYo self-learning | 9 | Session 42 | 0 | 1.0 | 0.0 | **9.0** | Phase 2: session 3/5 validation |
 | 2 | MT-9 | Autonomous scanning | 8 | Session 42 | 0 | 1.0 | 0.0 | **8.0** | Phase 3: deep-read r/ClaudeAI NEEDLEs |
 | 3 | MT-11 | GitHub intelligence | 7 | Session 42 | 0 | 1.0 | 0.0 | **7.0** | Phase 2 VALIDATED: live API working, 97 repos logged |
 | 4 | MT-14 | Rescan stale subs | 6 | Session 35 | 7 | 1.0 | 7.0 | **13.0** | Phase 2: live rescan test |
 | 5 | MT-12 | Academic papers | 6 | Session 42 | 0 | 1.0 | 0.0 | **6.0** | Phase 2 VALIDATED: 40 papers scanned, 21 logged |
-| 6 | MT-8 | iPhone remote control | 5 | NEVER | 17+ | 0.5 | 8.5 | **10.0** (cap) | Research phase |
+| 6 | MT-8 | iPhone remote control | 5 | Session 42 | 0 | 0.5 | 0.0 | **5.0** | MOSTLY SOLVED by native Remote Control. Config remaining. |
 | 7 | MT-17 | Design/reports | 6 | Session 41 | 1 | 1.0 | 1.0 | **7.0** | Phase 2: slide templates |
 | 8 | MT-13 | iOS app development | 4 | NEVER | 17+ | 0.5 | 4.0 | **8.0** (cap) | Research phase |
 | 9 | MT-18 | Academic writing | 4 | NEVER | 3+ | 0.5 | 1.5 | **5.5** | Research phase |
