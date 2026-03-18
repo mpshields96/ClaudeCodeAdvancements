@@ -3,10 +3,10 @@
 
 ---
 
-## Current State (as of Session 38 — 2026-03-17)
+## Current State (as of Session 39 — 2026-03-18)
 
-**Phase:** Session 38 COMPLETE. AG-7 path_validator LIVE in hooks. PROJECT_INDEX.md trimmed 72%. REFERENCE.md + /cca-status created. MT-12 paper_scanner.py built + live validated (54 tests). Marathon mode added to /cca-auto. Tests: 1525 (was 1471, +54).
-**Next session starts at:** Run /cca-init. Priority: (1) Deep-read more NEEDLEs (102 unreviewed). (2) Run paper_scanner across all 4 domains, log top papers. (3) Fix PreToolUse:Bash hook error (outside CCA scope). (4) Increase paper_scanner delay to 3s between queries (429 rate limit hit at 1.5s).
+**Phase:** Session 39 COMPLETE. 7 Reddit posts reviewed and logged. MT-17 (UI/Design), MT-18 (Academic Writing), MT-19 (Local LLM Fine-Tuning) created in MASTER_TASKS.md. Paper_scanner delay fixed (1.5s->3s). Paper_scanner run across all 4 domains — 20 papers logged. Tests: 1525/1525 passing. 4 commits.
+**Next session starts at:** Run /cca-init. Priority: (1) Deep-read top-scored papers (80pts agents papers, HALO 75pts). (2) Deep-read NEEDLEs (102 unreviewed). (3) Fix PreToolUse:Bash hook error (outside CCA scope). (4) Begin MT-17 research (design skills, PDF generation libraries).
 
 ---
 

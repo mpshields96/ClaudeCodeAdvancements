@@ -3,6 +3,27 @@
 
 ---
 
+## Session 39 — 2026-03-18
+
+**What changed:**
+- `FINDINGS_LOG.md` — 7 new reviews: YoYo v2 (REFERENCE), Design Studio (ADAPT->MT-17), Traul (REFERENCE), ClaudePrism (BUILD->MT-18), Autoresearch (ADAPT), Unsloth Studio (REFERENCE-PERSONAL->MT-19), reddit-mcp-buddy (REFERENCE)
+- `MASTER_TASKS.md` — Created MT-17 (UI/Design Excellence + Report Generation), MT-18 (Academic Writing Workspace), MT-19 (Local LLM Fine-Tuning). Updated MT-12 status to Phase 1 COMPLETE. Updated priority order.
+- `self-learning/paper_scanner.py` — Delay increased from 1.5s to 3s (429 rate limit fix)
+- `self-learning/research/papers.jsonl` — 20 papers logged from 4-domain scan (agents, prediction, statistics, interaction)
+
+**Why:**
+- Matthew reviewed 7 Reddit posts and wanted findings documented as future tasks
+- Paper_scanner needed rate limit fix (hit 429 at 1.5s in Session 38)
+- 4-domain scan was next priority from Session 38 queue
+
+**Tests:** 1525/1525 passing (no change)
+
+**Lessons:**
+- Design Studio top comment (130pts audit) shows community values honest evaluation — our /cca-review verdicts should be equally rigorous
+- Paper_scanner at 3s delay successfully completed all 4 domains without 429 errors
+
+---
+
 ## Session 38 — 2026-03-17
 
 **What changed:**
