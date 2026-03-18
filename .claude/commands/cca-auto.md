@@ -13,8 +13,34 @@ is running low. The user expects to walk away and come back to real progress.
 - Commit after EVERY task (never accumulate >1 task of uncommitted work)
 - If a task takes >15 tool calls without progress, SKIP it and log why in SESSION_STATE
 - If you hit 3 consecutive errors on the same operation, move to the next task
-- Monitor context: stop at 55% (not 60%) to leave room for /cca-wrap + buffer
 - Do NOT spawn subagents unless absolutely necessary — they burn 100K+ tokens each
+
+## Session Pacer — Objective Pacing (use between EVERY task)
+
+Run the session pacer after completing each task to decide whether to continue:
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/context-monitor/session_pacer.py check
+```
+
+**Decisions:**
+- `CONTINUE` → Pick next task and keep going
+- `WRAP SOON` → Finish current task, then run /cca-wrap
+- `WRAP NOW` → Stop immediately, run /cca-wrap
+
+**Task tracking (run at start/end of each task):**
+```bash
+python3 .../session_pacer.py start "Task name"
+python3 .../session_pacer.py complete "Task name" --commit abc1234
+```
+
+**At session start, reset the pacer:**
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/context-monitor/session_pacer.py reset
+```
+
+The pacer combines context health (from meter.py), elapsed time, task count,
+and compaction events into one objective decision. Trust it over vibes.
 
 ---
 
@@ -124,11 +150,11 @@ Only stop and write the final SESSION_STATE update when:
 - Context window is getting low (>60% used), OR
 - All priority tasks are done
 
-**CRITICAL: RESERVE CONTEXT FOR WRAP.** Stop work at 60% context usage (not 75%).
-The /cca-wrap ritual with self-learning (journal, reflection, Skillbook, Sentinel evolve,
-strategy validation) needs ~15-20% of context budget. If you push to 80%+ before wrapping,
-the wrap will be rushed, truncated, or fail entirely — losing all session learning.
-The rule: **stop building at 60%, run /cca-wrap from 60-80%, leave 20% buffer.**
+**CRITICAL: RESERVE CONTEXT FOR WRAP.** The session pacer handles this objectively.
+Run `python3 .../session_pacer.py check` between tasks. When it says WRAP SOON or WRAP NOW,
+obey it — it reads the actual context health state from meter.py.
+The /cca-wrap ritual needs ~15-20% of context budget (journal, reflection, Skillbook,
+Sentinel evolve, strategy validation). The pacer accounts for this.
 This applies to /cca-nuclear sessions too — stop scanning and run /cca-nuclear-wrap.
 
 When stopping, write the final report:
