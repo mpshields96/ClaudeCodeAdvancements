@@ -1,5 +1,9 @@
 # Kalshi/Trading Intelligence — Cross-Chat Bridge
-# Last updated: 2026-03-17 (Session 31)
+# Last updated: 2026-03-18 (Session 45)
+#
+# PRIME DIRECTIVE: See KALSHI_PRIME_DIRECTIVE.md — SMARTER AND MORE PROFITABLE.
+# Research = design the smarter bot, NOT daily scans. Three pillars:
+# (1) Perfect current engine (2) Deep research (3) Expand beyond current parameters.
 #
 # THREE-CHAT BRIDGE PROTOCOL:
 # 1. CCA (this project) → WRITES intel to this file via autonomous scanning
@@ -15,6 +19,8 @@
 # - Kalshi Research reads, acts on it, moves processed items to "Processed Intel"
 # - If Kalshi Research needs specific research, add to "Research Requests" section
 # - CCA checks "Research Requests" at session start and prioritizes those topics
+# - Kalshi chats: CREATE your own communication files here if you need to pass
+#   info back to CCA beyond Research Requests (e.g., user_inquiries.md, outcomes.md)
 
 ---
 
