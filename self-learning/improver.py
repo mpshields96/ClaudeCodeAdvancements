@@ -524,8 +524,8 @@ MUTATION_STRATEGIES = {
     ],
 }
 
-MAX_MUTATION_DEPTH = 3
-MAX_MUTATIONS_PER_CYCLE = 5
+MAX_MUTATION_DEPTH = 2      # Conservative: shallow mutation chains only (was 3)
+MAX_MUTATIONS_PER_CYCLE = 2  # Conservative: 5-10% effect ceiling (was 5)
 
 
 class SentinelMutator:

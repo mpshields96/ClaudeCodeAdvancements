@@ -135,14 +135,14 @@ class TestMutateFromFailure(unittest.TestCase):
             self.assertNotIn(".env", str(m.target_file or ""))
 
     def test_max_mutation_depth(self):
-        """Mutations of mutations should be capped at depth 3."""
+        """Mutations of mutations should be capped at depth 2."""
         rejected = _make_proposal(
             status="rejected",
             outcome={"improved": False},
-            pattern_data={"file": "test.py", "mutation_of": "imp_1", "mutation_depth": 3},
+            pattern_data={"file": "test.py", "mutation_of": "imp_1", "mutation_depth": 2},
         )
         mutations = self.mutator.mutate_from_failure(rejected)
-        self.assertEqual(len(mutations), 0, "Should not mutate beyond depth 3")
+        self.assertEqual(len(mutations), 0, "Should not mutate beyond depth 2")
 
 
 class TestCrossPollinate(unittest.TestCase):
@@ -329,7 +329,7 @@ class TestSentinelIntegration(unittest.TestCase):
             )
             imp.store.append(r)
         result = imp.evolve()
-        self.assertLessEqual(result["mutations"], 5, "Should cap mutations at 5 per cycle")
+        self.assertLessEqual(result["mutations"], 2, "Should cap mutations at 2 per cycle")
 
 
 class TestMutationStrategies(unittest.TestCase):
