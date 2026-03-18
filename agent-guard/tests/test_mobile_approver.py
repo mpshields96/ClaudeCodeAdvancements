@@ -28,8 +28,9 @@ from mobile_approver import (
 
 
 class TestNeedsApproval(unittest.TestCase):
-    def test_bash_needs_approval(self):
-        self.assertTrue(_needs_approval("Bash"))
+    def test_bash_always_allowed(self):
+        # Bash moved to ALWAYS_ALLOW_TOOLS — safety handled by per-project deny lists
+        self.assertFalse(_needs_approval("Bash"))
 
     def test_write_needs_approval(self):
         self.assertTrue(_needs_approval("Write"))
@@ -206,24 +207,33 @@ class TestMainIntegration(unittest.TestCase):
                 return json.loads(captured.getvalue())
 
     def test_disabled_flag_allows_all(self):
-        hook = {"tool_name": "Bash", "tool_input": {"command": "rm -rf /"}}
+        hook = {"tool_name": "Write", "tool_input": {"file_path": "/tmp/dangerous.py"}}
         result = self._run_main(hook, env={"MOBILE_APPROVER_DISABLED": "1"})
         self.assertEqual(result["hookSpecificOutput"]["permissionDecision"], "allow")
 
     def test_no_topic_configured_allows_all(self):
-        hook = {"tool_name": "Bash", "tool_input": {"command": "echo hi"}}
+        hook = {"tool_name": "Write", "tool_input": {"file_path": "/tmp/test.py"}}
         env = {"MOBILE_APPROVER_TOPIC": ""}
         result = self._run_main(hook, env=env)
         self.assertEqual(result["hookSpecificOutput"]["permissionDecision"], "allow")
 
     def test_read_tool_always_allowed(self):
+        # ALWAYS_ALLOW_TOOLS exit 0 with no stdout (Claude Code interprets as allow).
+        # No JSON output is correct — avoids noisy hook notifications in the UI.
+        import io
+        from unittest.mock import patch
+        import mobile_approver
+
         hook = {"tool_name": "Read", "tool_input": {"file_path": "/etc/passwd"}}
-        result = self._run_main(hook)
-        self.assertEqual(result["hookSpecificOutput"]["permissionDecision"], "allow")
+        stdin_data = json.dumps(hook)
+        with patch("sys.stdin", io.StringIO(stdin_data)):
+            captured = io.StringIO()
+            with patch("sys.stdout", captured):
+                mobile_approver.main()
+            self.assertEqual(captured.getvalue(), "", "Read should produce no stdout output")
 
     def test_ntfy_failure_fails_open(self):
-        from urllib.error import URLError
-        hook = {"tool_name": "Bash", "tool_input": {"command": "echo hi"}}
+        hook = {"tool_name": "Write", "tool_input": {"file_path": "/tmp/test.py"}}
         env = {"MOBILE_APPROVER_TOPIC": "test-topic"}
         with patch("mobile_approver._ntfy_publish", return_value=False):
             result = self._run_main(hook, env=env)
@@ -238,7 +248,7 @@ class TestMainIntegration(unittest.TestCase):
         self.assertEqual(result["hookSpecificOutput"]["permissionDecision"], "allow")
 
     def test_deny_response_from_phone(self):
-        hook = {"tool_name": "Bash", "tool_input": {"command": "rm important.py"}}
+        hook = {"tool_name": "Write", "tool_input": {"file_path": "/tmp/important.py"}}
         env = {"MOBILE_APPROVER_TOPIC": "test-topic", "MOBILE_APPROVER_TIMEOUT": "5"}
         with patch("mobile_approver._ntfy_publish", return_value=True):
             with patch("mobile_approver._ntfy_poll", return_value="deny"):
@@ -254,7 +264,7 @@ class TestMainIntegration(unittest.TestCase):
         self.assertEqual(result["hookSpecificOutput"]["permissionDecision"], "allow")
 
     def test_timeout_deny_default(self):
-        hook = {"tool_name": "Bash", "tool_input": {"command": "echo hi"}}
+        hook = {"tool_name": "Edit", "tool_input": {"file_path": "/tmp/test.py"}}
         env = {
             "MOBILE_APPROVER_TOPIC": "test-topic",
             "MOBILE_APPROVER_DEFAULT": "deny"

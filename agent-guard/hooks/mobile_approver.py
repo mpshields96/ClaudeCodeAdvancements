@@ -35,7 +35,6 @@ NTFY_BASE = "https://ntfy.sh"
 
 # Tools that trigger mobile approval. Read/search ops are always allowed silently.
 APPROVAL_REQUIRED_TOOLS = {
-    "Bash",
     "Write",
     "Edit",
     "NotebookEdit",
@@ -46,6 +45,7 @@ APPROVAL_REQUIRED_TOOLS = {
 ALWAYS_ALLOW_TOOLS = {
     "Read", "Glob", "Grep", "WebFetch", "WebSearch",
     "TodoWrite", "TodoRead", "AskUserQuestion",
+    "Bash",  # safety handled by per-project settings.json deny lists
     "mcp__supabase__list_tables",  # read-only MCP calls
 }
 
@@ -184,9 +184,8 @@ def main():
     tool_name = hook_input.get("tool_name", "")
     tool_input = hook_input.get("tool_input", {})
 
-    # Always allow non-destructive tools
+    # Always allow non-destructive tools — exit 0 with no output (= allow for PreToolUse)
     if not _needs_approval(tool_name):
-        print(json.dumps(_allow_response()))
         return
 
     # Get config
