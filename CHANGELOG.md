@@ -3,6 +3,48 @@
 
 ---
 
+## Session 47 — 2026-03-18
+
+**What changed:**
+- Created `/cca-slides` slash command (`.claude/commands/cca-slides.md`) — one-command slide generation
+- Updated MASTER_TASKS.md priority scores: MT-14 (13.0->6.0), MT-17 (7.0->6.0)
+
+**Why:**
+- /cca-slides mirrors /cca-report pattern for quick presentation generation
+- Priority queue was stale — MT-14 and MT-17 both completed work in S46 but scores weren't updated
+
+**Tests:** 1618/1618 passing (40 suites)
+**Commits:** 1
+
+**Lessons:**
+- Short housekeeping sessions are fine — keeps scores accurate and reduces debt for next session
+
+---
+
+## Session 46 — 2026-03-18
+
+**What changed:**
+- Wired resurfacer into /cca-init (Step 3: surfaces past findings at startup)
+- MT-14 COMPLETE: All 15 subreddits scanned (7 new: r/webdev, r/iOSProgramming, r/MachineLearning, r/Bogleheads, r/stocks, r/SecurityAnalysis, r/ValueInvesting)
+- MT-17 Phase 2 COMPLETE: Slide template + generator (25 tests, 5 slide types)
+- CHANGELOG + LEARNINGS updated for Session 45 (deferred from S45 context limit)
+- Checked cross-chat bridge — no Kalshi reply yet
+- Committed Session 45 journal.jsonl
+
+**Why:**
+- Resurfacer integration prevents knowledge loss during session startup
+- MT-14 completion means all subreddits have baseline scans for delta detection
+- MT-17 slide generator enables professional presentation output
+
+**Tests:** 1618/1618 passing (40 suites, +25 from slide generator)
+**Commits:** 6
+
+**Lessons:**
+- Investing/general subs (r/stocks, r/Bogleheads) are noise for CCA — 98% NEEDLE rate means classifier is too broad
+- Context limits hit at S45 end deferred wrap work — always budget 10% for wrap
+
+---
+
 ## Session 45 — 2026-03-18
 
 **What changed:**

@@ -3,18 +3,14 @@
 
 ---
 
-## Current State (as of Session 46 — 2026-03-18)
+## Current State (as of Session 47 — 2026-03-18)
 
-**Phase:** Session 46 COMPLETE. Tests: 1618/1618 passing (40 suites). Git: clean. 6 commits.
+**Phase:** Session 47 COMPLETE. Tests: 1618/1618 passing (40 suites). Git: clean. 1 commit (housekeeping).
 **What's done this session:**
-1. Wired resurfacer into /cca-init as Step 3 (surfaces relevant past findings at startup)
-2. MT-14 COMPLETE: All 15 subreddit profiles now have at least one scan registered
-3. MT-17 Phase 2 COMPLETE: Slide template + generator (25 tests, 5 slide types)
-4. CHANGELOG + LEARNINGS updated for Session 45 (deferred from context limit)
-5. Checked cross-chat bridge — no Kalshi reply yet (POLYBOT_TO_CCA.md doesn't exist)
-6. Committed Session 45 journal.jsonl
+1. Created /cca-slides slash command (.claude/commands/cca-slides.md)
+2. Updated MASTER_TASKS.md priority scores: MT-14 (13.0->6.0, all subs done), MT-17 (7.0->6.0, Phase 2 complete)
 
-**Next session:** (1) Check cross-chat bridge for Kalshi replies. (2) Create /cca-slides command for one-command slide generation. (3) MT-17 Phase 3: HTML dashboard templates. (4) Update MASTER_TASKS.md scores (MT-14 complete, MT-17 Phase 2 done). (5) Matthew: install Xcode 26.3 for MT-13.
+**Next session:** (1) Check cross-chat bridge for Kalshi replies. (2) MT-17 Phase 3: HTML dashboard templates. (3) Pick a meaty MT for new feature work (MT-7 trace analyzer or MT-9 Phase 3). (4) Matthew: install Xcode 26.3 for MT-13.
 
 ---
 
