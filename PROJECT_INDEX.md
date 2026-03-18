@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-17 (Session 32)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-17 (Session 35)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -108,6 +108,7 @@ ClaudeCodeAdvancements/
 │   ├── profiles.py                  # MT-6: Subreddit profiles, scan registry, quick-scan mode
 │   ├── autonomous_scanner.py        # MT-9: Autonomous scanning pipeline (prioritizer + safety gate)
 │   ├── github_scanner.py            # MT-11: GitHub repo intelligence (evaluator + scoring rubric)
+│   ├── repo_tester.py               # MT-15: Sandboxed repo tester (clone + test + quality score)
 │   ├── scan_registry.json           # Auto-generated: last-scan timestamps + yield per sub
 │   ├── commands/
 │   │   ├── ri-scan.md               # /reddit-intel:ri-scan — weekly multi-subreddit scan
@@ -118,7 +119,8 @@ ClaudeCodeAdvancements/
 │   │   ├── test_nuclear_fetcher.py  # 44 tests
 │   │   ├── test_profiles.py         # 43 tests
 │   │   ├── test_autonomous_scanner.py # 37 tests
-│   │   └── test_github_scanner.py   # 30 tests
+│   │   ├── test_github_scanner.py   # 45 tests
+│   │   └── test_repo_tester.py     # 51 tests
 │   └── findings/                    # Output directory for scan results
 │
 ├── self-learning/                   # Cross-session self-learning system
@@ -128,13 +130,17 @@ ClaudeCodeAdvancements/
 │   ├── strategy.json                # Tunable parameters (nuclear scan, session, review)
 │   ├── journal.jsonl                # Append-only event log (auto-generated)
 │   ├── improvements.jsonl           # MT-10: Improvement proposal log (auto-generated)
+│   ├── SKILLBOOK.md                 # Distilled actionable strategies (YoYo-inspired)
 │   ├── trace_analyzer.py            # MT-7: Transcript JSONL pattern analyzer (RetryDetector, WasteDetector, etc.)
+│   ├── hooks/
+│   │   └── skillbook_inject.py      # UserPromptSubmit hook: injects top strategies into context
 │   ├── research/
 │   │   └── TRACE_ANALYSIS_RESEARCH.md  # MT-7: Transcript JSONL schema + 6 pattern detector definitions
 │   └── tests/
 │       ├── test_self_learning.py    # 75 tests — all passing
 │       ├── test_trace_analyzer.py   # 50 tests — all passing
-│       └── test_improver.py         # 44 tests — all passing
+│       ├── test_improver.py         # 44 tests — all passing
+│       └── test_skillbook_inject.py # 26 tests — all passing
 │
 ├── scripts/                         # Utility scripts (launcher, automation)
 │   └── kalshi-launch.sh             # Terminal.app dual-window Kalshi launcher
@@ -201,8 +207,10 @@ ClaudeCodeAdvancements/
 | `python3 reddit-intelligence/autonomous_scanner.py status` | Show autonomous scan safety status |
 | `python3 reddit-intelligence/autonomous_scanner.py pick` | Pick next target sub for scanning |
 | `python3 reddit-intelligence/github_scanner.py queries` | Show GitHub search queries for CCA frontiers |
+| `python3 reddit-intelligence/repo_tester.py results` | Show repo test result log |
+| `python3 reddit-intelligence/repo_tester.py local <path>` | Test a local directory |
 
-**Total:** 1259/1259 tests (30 suites). **Session start:** Run all 30 suites. If anything fails, fix before touching other files.
+**Total:** 1364/1364 tests (32 suites). **Session start:** Run all 32 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -324,17 +332,19 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | context-monitor (auto_wrap) | `tests/test_auto_wrap.py` | 19 | All passing |
 | reddit-intelligence (reader) | `tests/test_reddit_reader.py` | 43 | All passing |
 | reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 44 | All passing |
-| reddit-intelligence (profiles) | `tests/test_profiles.py` | 43 | All passing |
+| reddit-intelligence (profiles) | `tests/test_profiles.py` | 49 | All passing |
 | reddit-intelligence (autonomous) | `tests/test_autonomous_scanner.py` | 54 | All passing |
 | reddit-intelligence (github) | `tests/test_github_scanner.py` | 45 | All passing |
+| reddit-intelligence (repo_tester) | `tests/test_repo_tester.py` | 51 | All passing |
 | self-learning | `tests/test_self_learning.py` | 75 | All passing |
 | self-learning (trace_analyzer) | `tests/test_trace_analyzer.py` | 50 | All passing |
 | self-learning (improver) | `tests/test_improver.py` | 44 | All passing |
+| self-learning (skillbook_inject) | `tests/test_skillbook_inject.py` | 26 | All passing |
 | usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
-| **Total** | | **1259** | **1259/1259** |
+| **Total** | | **1364** | **1364/1364** |
 
 ---
 
@@ -413,3 +423,5 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 30 | 2026-03-17 | MT-9 (37), MT-11 (30), AG-6 session guard (28), KALSHI_INTEL bridge — 1188 tests |
 | 31 | 2026-03-17 | CTX-6 auto_wrap (19), MT-9 Phase 2 scan pipeline (54), Kalshi research bridge — 1244 tests |
 | 32 | 2026-03-17 | MT-11 Phase 2 GitHub API (45), 4 sub scans (vibecoding/polymarket/investing/LocalLLaMA), KALSHI_INTEL bridge — 1259 tests |
+| 33-34 | 2026-03-17 | Skillbook, APF metric, daily scan, GitHub nuclear, staleness priority — 1281 tests |
+| 35 | 2026-03-17 | MT-15 repo tester (51), needle_ratio_cap (6), Skillbook hook (26), /cca-auto multi-task — 1364 tests |

@@ -282,6 +282,92 @@ class TestQuickScanTriage(unittest.TestCase):
         deep, _ = quick_scan_triage(posts)
         self.assertEqual(len(deep), 10)  # default
 
+    # ── needle_ratio_cap tests ──────────────────────────────────────────────
+
+    def test_needle_ratio_cap_demotes_excess(self):
+        """When NEEDLE ratio exceeds cap, lowest-score NEEDLEs become MAYBE."""
+        # Create 20 posts, all of which are NEEDLEs (titles with MCP keyword)
+        posts = []
+        for i in range(20):
+            posts.append({
+                "id": f"post_{i}",
+                "title": f"Built a custom MCP server for feature {i}",
+                "score": 100 + i,
+                "num_comments": 10,
+                "flair": "",
+                "is_self": True,
+                "selftext_length": 600,
+                "url": f"https://reddit.com/r/test/comments/post_{i}/",
+                "permalink": f"/r/test/comments/post_{i}/",
+                "subreddit": "test",
+            })
+        # With 40% cap on 20 posts, max 8 NEEDLEs allowed
+        deep, skipped = quick_scan_triage(posts, deep_read_count=20, needle_ratio_cap=0.4)
+        # Deep should still get 20 posts (8 NEEDLEs + 12 demoted MAYBEs)
+        # but the demoted ones have lower scores
+        self.assertEqual(len(deep), 20)
+
+    def test_needle_ratio_cap_preserves_highest_score(self):
+        """When capping, the highest-score NEEDLEs should survive."""
+        posts = []
+        for i in range(10):
+            posts.append({
+                "id": f"post_{i}",
+                "title": "MCP server implementation guide",
+                "score": 50 + i * 10,  # scores: 50, 60, 70, ..., 140
+                "num_comments": 10,
+                "flair": "",
+                "is_self": True,
+                "selftext_length": 600,
+                "url": f"https://reddit.com/r/test/comments/post_{i}/",
+                "permalink": f"/r/test/comments/post_{i}/",
+                "subreddit": "test",
+            })
+        # Cap at 30% → max 3 NEEDLEs out of 10 posts
+        deep, skipped = quick_scan_triage(posts, deep_read_count=3, needle_ratio_cap=0.3)
+        # The top 3 by score should be in deep (posts 7, 8, 9 with scores 120, 130, 140)
+        deep_ids = {p["id"] for p in deep}
+        self.assertIn("post_9", deep_ids)  # score 140
+        self.assertIn("post_8", deep_ids)  # score 130
+        self.assertIn("post_7", deep_ids)  # score 120
+
+    def test_needle_ratio_cap_1_means_no_limit(self):
+        """Cap of 1.0 should not demote any NEEDLEs."""
+        posts = []
+        for i in range(10):
+            posts.append({
+                "id": f"post_{i}",
+                "title": "MCP server build guide",
+                "score": 100 + i,
+                "num_comments": 10,
+                "flair": "",
+                "is_self": True,
+                "selftext_length": 600,
+                "url": f"https://reddit.com/r/test/comments/post_{i}/",
+                "permalink": f"/r/test/comments/post_{i}/",
+                "subreddit": "test",
+            })
+        deep, _ = quick_scan_triage(posts, deep_read_count=10, needle_ratio_cap=1.0)
+        self.assertEqual(len(deep), 10)
+
+    def test_needle_ratio_cap_default_profile_has_field(self):
+        """All profiles should have needle_ratio_cap field."""
+        for slug, profile in BUILTIN_PROFILES.items():
+            self.assertTrue(hasattr(profile, "needle_ratio_cap"),
+                            f"Profile {slug} missing needle_ratio_cap")
+            self.assertGreater(profile.needle_ratio_cap, 0)
+            self.assertLessEqual(profile.needle_ratio_cap, 1.0)
+
+    def test_investing_profile_has_tight_cap(self):
+        """r/investing should have a tight needle_ratio_cap (<0.5) per SKILLBOOK S3."""
+        p = BUILTIN_PROFILES["investing"]
+        self.assertLess(p.needle_ratio_cap, 0.5)
+
+    def test_localllama_profile_has_tight_cap(self):
+        """r/LocalLLaMA should have a tight needle_ratio_cap per SKILLBOOK S3."""
+        p = BUILTIN_PROFILES["localllama"]
+        self.assertLess(p.needle_ratio_cap, 0.5)
+
 
 class TestMergeScoutNuclear(unittest.TestCase):
     """Test the merge function that combines scout discovery with nuclear depth."""

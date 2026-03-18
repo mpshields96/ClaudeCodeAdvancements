@@ -2,6 +2,12 @@
 
 Pick the next work item and execute it. No user input needed after invocation.
 
+**DEFAULT SESSION LENGTH: 2-3 sessions worth of tasks.**
+Do NOT stop after completing one task. Keep working through the priority queue until
+you've completed 2-3 meaningful deliverables (new modules, significant features, or
+multi-file improvements). Only stop when you've delivered substantial work OR context
+is running low. The user expects to walk away and come back to real progress.
+
 ---
 
 ## Step 1 — Determine next task
@@ -79,15 +85,32 @@ After completing the task:
 
 ---
 
-## Step 5 — Report
+## Step 5 — Report and loop
 
-Output a brief completion report:
+Output a brief completion report for each task:
 
 ```
 COMPLETED: [what was built]
 Tests: [new count] all passing
 Committed: [commit hash — first 7 chars]
-Next up: [what SESSION_STATE now says is next]
+```
+
+**Then immediately go back to Step 1 and pick the next task.**
+Continue this loop until you've completed 2-3 meaningful deliverables for the session.
+Only stop and write the final SESSION_STATE update when:
+- You've delivered 2-3 substantial tasks, OR
+- Context window is getting low (>75% used), OR
+- All priority tasks are done
+
+When stopping, write the final report:
+```
+SESSION [N] SUMMARY:
+- Task 1: [what]
+- Task 2: [what]
+- Task 3: [what]
+Tests: [total] all passing
+Commits: [count]
+Next up: [what SESSION_STATE says]
 ```
 
 ---
@@ -95,8 +118,10 @@ Next up: [what SESSION_STATE now says is next]
 ## Rules
 
 - Fully autonomous — no user confirmation needed at any step
+- **DEFAULT: Complete 2-3 tasks per session, not just 1**
 - Use gsd:quick (not plan-phase) unless the task clearly meets the expensive-tier threshold
 - Follow TDD: write tests first, then implement
 - Do not skip the pre-work test run
 - If the next task is ambiguous, pick the most impactful one and state why
 - Stay within `/Users/matthewshields/Projects/ClaudeCodeAdvancements/` — no outside file access
+- Commit after each completed task, not just at the end

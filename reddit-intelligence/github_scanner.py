@@ -394,6 +394,25 @@ class GitHubScanner:
             results.append((meta, result))
         return results
 
+    def deep_evaluate(self, meta: RepoMetadata) -> dict:
+        """
+        Deep evaluation: clone repo into sandbox, run tests, score quality.
+
+        Only call this for repos that passed metadata evaluation (verdict=EVALUATE).
+        Returns dict with test results or None on failure.
+        """
+        from repo_tester import RepoTester, clone_repo
+        tester = RepoTester()
+        clone_path = clone_repo(meta.full_name, timeout=30)
+        if clone_path is None:
+            return None
+        try:
+            result = tester.evaluate_local(clone_path, repo_name=meta.full_name)
+            tester.log_result(result)
+            return result.to_dict()
+        finally:
+            tester.cleanup(clone_path)
+
     def scan_all_queries(self, limit_per_query: int = 5) -> list:
         """
         Run all built-in search queries and collect results.
@@ -522,9 +541,10 @@ def cli_main(args: list = None):
 
     elif cmd in ("fetch", "evaluate"):
         if len(args) < 2:
-            print("Usage: python3 github_scanner.py fetch <owner/repo>")
+            print("Usage: python3 github_scanner.py fetch <owner/repo> [--deep]")
             return
         repo_name = args[1]
+        deep_mode = "--deep" in args
         print(f"Fetching {repo_name} from GitHub API...")
         meta = fetch_repo(repo_name)
         if meta is None:
@@ -544,6 +564,17 @@ def cli_main(args: list = None):
             print(f"  Warnings: {'; '.join(result.warnings)}")
         if result.blocked:
             print(f"  BLOCKED: {result.block_reason}")
+
+        # Deep evaluation: clone, test, score
+        if deep_mode and result.verdict == "EVALUATE":
+            print(f"\n  Deep evaluation (clone + test + score)...")
+            deep_result = scanner.deep_evaluate(meta)
+            if deep_result:
+                print(f"  Language: {deep_result.get('language', '?')}  |  Framework: {deep_result.get('test_framework', '?')}")
+                print(f"  Tests: {deep_result.get('tests_found', 0)} found, {deep_result.get('tests_passed', 0)} passed")
+                print(f"  Quality: {deep_result.get('quality_score', 0)}/100  →  {deep_result.get('verdict', '?')}")
+            else:
+                print(f"  Deep evaluation failed (clone or test error)")
 
     elif cmd == "scan":
         rest = args[1:]

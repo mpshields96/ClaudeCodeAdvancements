@@ -531,7 +531,10 @@ Phase 2 (Session 31):
 12. **MT-8** (iPhone remote control) — immediate productivity gain
 13. **MT-13** (iOS app development) — new capability domain
 
+**COMPLETED (MT-15):**
+14. ~~**MT-15** (GitHub repo tester/evaluator)~~ COMPLETE — repo_tester.py, 51 tests, sandboxed testing
+
 **FUTURE:**
-14. **MT-1** (Maestro visual grid) — blocked on macOS SDK
-15. **MT-5** (Claude Pro bridge) — needs research
-16. **MT-15** (detachable chat tabs) — Anthropic feature request: drag CC desktop chats into separate windows like Chrome/Arc tabs. Solves the "pauses work when not focused" ADHD-hostile behavior.
+15. **MT-1** (Maestro visual grid) — blocked on macOS SDK
+16. **MT-5** (Claude Pro bridge) — needs research
+17. **MT-16** (detachable chat tabs) — Anthropic feature request: drag CC desktop chats into separate windows like Chrome/Arc tabs. Solves the "pauses work when not focused" ADHD-hostile behavior.

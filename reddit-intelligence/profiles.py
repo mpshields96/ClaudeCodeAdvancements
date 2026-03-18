@@ -40,6 +40,7 @@ class SubredditProfile:
     limit: int = 100            # Max posts to fetch
     extra_needle_keywords: list = field(default_factory=list)  # Additional NEEDLE keywords
     domain: str = "unknown"     # Category: claude, trading, dev, research
+    needle_ratio_cap: float = 0.6  # Max fraction of posts that can be NEEDLE (0.0-1.0, default 60%)
 
 
 # ── Builtin Profiles ─────────────────────────────────────────────────────────
@@ -76,6 +77,7 @@ BUILTIN_PROFILES = {
         limit=100,
         extra_needle_keywords=["agent", "tool use", "function calling", "coding", "benchmark"],
         domain="research",
+        needle_ratio_cap=0.4,  # Broad keywords saturate — cap at 40%
     ),
     "machinelearning": SubredditProfile(
         subreddit="MachineLearning",
@@ -139,6 +141,7 @@ BUILTIN_PROFILES = {
             "factor", "risk", "allocation", "rebalancing", "automation",
         ],
         domain="trading",
+        needle_ratio_cap=0.35,  # Very broad keywords — cap tightly
     ),
     "stocks": SubredditProfile(
         subreddit="stocks",
@@ -150,6 +153,7 @@ BUILTIN_PROFILES = {
             "fundamental", "technical", "quantitative",
         ],
         domain="trading",
+        needle_ratio_cap=0.35,
     ),
     "securityanalysis": SubredditProfile(
         subreddit="SecurityAnalysis",
@@ -289,13 +293,18 @@ class ScanRegistry:
 # ── Quick-Scan Triage ────────────────────────────────────────────────────────
 
 
-def quick_scan_triage(posts: list, deep_read_count: int = 10) -> tuple:
+def quick_scan_triage(posts: list, deep_read_count: int = 10,
+                      needle_ratio_cap: float = 1.0) -> tuple:
     """
     Quick-scan mode: classify all posts, pick top N for deep reading.
 
     Returns (deep_read_posts, skipped_posts).
-    NEEDLEs are always included. HAY is always excluded.
+    NEEDLEs are always included (up to needle_ratio_cap). HAY is always excluded.
     Remaining slots filled by score descending from MAYBE posts.
+
+    needle_ratio_cap: Max fraction of posts that can be NEEDLE (0.0-1.0).
+        If the NEEDLE ratio exceeds this cap, the lowest-score NEEDLEs are
+        demoted to MAYBE. This prevents broad keywords from saturating results.
     """
     if not posts:
         return [], []
@@ -307,6 +316,18 @@ def quick_scan_triage(posts: list, deep_read_count: int = 10) -> tuple:
     needles = [p for p in posts if p["_triage"] == "NEEDLE"]
     maybes = [p for p in posts if p["_triage"] == "MAYBE"]
     hay = [p for p in posts if p["_triage"] == "HAY"]
+
+    # Apply needle_ratio_cap: if too many NEEDLEs, demote weakest to MAYBE
+    if 0 < needle_ratio_cap < 1.0 and len(posts) > 0:
+        max_needles = max(1, int(len(posts) * needle_ratio_cap))
+        if len(needles) > max_needles:
+            # Sort by score descending — keep top max_needles, demote rest
+            needles.sort(key=lambda p: p.get("score", 0), reverse=True)
+            demoted = needles[max_needles:]
+            needles = needles[:max_needles]
+            for p in demoted:
+                p["_triage"] = "MAYBE"
+            maybes.extend(demoted)
 
     # NEEDLEs always go to deep-read
     deep = list(needles)

@@ -57,11 +57,11 @@
 - Evidence: 5 parallel agents completed 5 reviews in ~90 seconds wall time. Token cost identical to serial but elapsed time 5x faster.
 - Last validated: Session 33
 
-### S3: Classifier needs per-sub keyword tuning — Confidence: 80
-**Directive:** "If a subreddit scan returns >80% NEEDLE, the profile keywords are too generic. Add needle_ratio_cap to profiles.py and tighten keywords for that specific sub."
-- Source: Sessions 32-33
-- Evidence: r/investing (48/50 NEEDLE) and r/LocalLLaMA (50/50 NEEDLE) both saturated. Every post matches because the keywords are too broad for those subs.
-- Last validated: Session 33
+### S3: Classifier needs per-sub keyword tuning — Confidence: 95 (IMPLEMENTED)
+**Directive:** "If a subreddit scan returns >80% NEEDLE, the profile keywords are too generic. Use needle_ratio_cap in profiles.py to cap NEEDLE ratio and tighten keywords."
+- Source: Sessions 32-33, implemented Session 35
+- Evidence: r/investing (48/50 NEEDLE) and r/LocalLLaMA (50/50 NEEDLE) both saturated. Fixed: needle_ratio_cap field added (0.35 for investing, 0.4 for LocalLLaMA), quick_scan_triage demotes lowest-score NEEDLEs when ratio exceeds cap.
+- Last validated: Session 35 (6 tests passing)
 
 ### S4: Memory promotion logic > storage/retrieval — Confidence: 80
 **Directive:** "When building Frontier 1 memory system, prioritize the PROMOTION step (what gets kept vs demoted) over storage engine or retrieval algorithm. Community consensus: this is the hardest unsolved piece."
@@ -118,17 +118,18 @@
 ## Growth Tracking (YoYo-Inspired)
 
 ### CCA Evolution Metrics
-| Metric | Session 14 | Session 23 | Session 33 | Trend |
-|--------|-----------|-----------|-----------|-------|
-| Total findings | 0 | ~90 | 212 | Growing |
-| APF % | 22% | 32% | 32.1% | Plateau — need lever |
-| Test suites | 8 | 20 | 30 | Growing |
-| Total tests | 283 | ~700 | 1259 | Growing |
-| Active strategies | 0 | 0 | 10 | NEW |
-| Modules | 5 | 7 | 9+ | Growing |
+| Metric | Session 14 | Session 23 | Session 33 | Session 35 | Trend |
+|--------|-----------|-----------|-----------|-----------|-------|
+| Total findings | 0 | ~90 | 212 | 212 | Stable |
+| APF % | 22% | 32% | 32.1% | 32.1% | Lever deployed (S3) |
+| Test suites | 8 | 20 | 30 | 32 | Growing |
+| Total tests | 283 | ~700 | 1259 | 1364 | +105 this session |
+| Active strategies | 0 | 0 | 10 | 10 | Stable |
+| Modules | 5 | 7 | 9+ | 10+ | Growing |
 
 ### Next Evolution Targets
-1. **APF to 40%** — Raise min_score_threshold to 50, add needle_ratio_cap
+1. **APF to 40%** — needle_ratio_cap DEPLOYED (S35). Next: raise min_score_threshold to 50
 2. **Strategy count to 20** — Distill more patterns from journal.jsonl backlog
-3. **Auto-inject top strategies** — Hook that reads SKILLBOOK.md and injects S1-S8 into session context
+3. ~~**Auto-inject top strategies**~~ DONE (Session 35) — skillbook_inject.py hook built
 4. **Strategy validation loop** — Each session checks if new evidence confirms or contradicts active strategies
+5. **Wire skillbook_inject into settings.json** — Hook built but not yet wired into Claude Code hooks config

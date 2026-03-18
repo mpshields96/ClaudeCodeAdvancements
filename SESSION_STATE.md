@@ -3,10 +3,36 @@
 
 ---
 
-## Current State (as of Session 34 — 2026-03-17)
+## Current State (as of Session 35 — 2026-03-17)
 
-**Phase:** Session 34 COMPLETE. Daily hot+rising scan built (/cca-nuclear-daily), GitHub nuclear command built (/cca-nuclear-github), Skillbook evolution wired into /cca-wrap, staleness-weighted task priority in /cca-auto, 2 Reddit reviews (Playwright, YoYo 17-days). Tests: 1281 (was 1259). 2 commits.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-15: GitHub nuclear should include repo tester/evaluator — run tests, check build, validate code quality of discovered repos (Matthew's new idea). (2) Auto-inject SKILLBOOK.md into session context via hook. (3) Run /cca-nuclear-daily live to review the 3 NEEDLEs found. (4) Run /cca-nuclear-github scan --all (first real GitHub scan). (5) Fix needle_ratio_cap in profiles.py (APF lever). (6) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread).
+**Phase:** Session 35 COMPLETE. MT-15 repo tester built (51 tests), needle_ratio_cap added to profiles.py (6 new tests), Skillbook auto-inject hook built (26 tests), repo_tester wired into github_scanner --deep flag, /cca-auto updated for 2-3 session default length. Tests: 1364 (was 1281). +83 tests.
+**Next session starts at:** Run /cca-init. Priority: (1) Run /cca-nuclear-daily live to review the 3 NEEDLEs found. (2) Run /cca-nuclear-github scan --all (first real GitHub scan). (3) Wire skillbook_inject.py into Claude Code hooks (settings.json). (4) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread). (5) MT-10 Phase 2: Run for 5 sessions, measure improvement rate. (6) Update SKILLBOOK.md: mark S3 (needle_ratio_cap) as implemented, confidence -> 95.
+
+---
+
+## What Was Done in Session 35 (2026-03-17)
+
+### MT-15: GitHub Repo Tester/Evaluator (NEW)
+- `repo_tester.py`: LanguageDetector (Python/JS/TS/Rust/Go), SandboxRunner (env-stripped, timeout-enforced), RepoTester orchestrator, RepoTestResult with verdict (QUALITY/ACCEPTABLE/LOW_QUALITY)
+- Safety: never clones into CCA dir, strips all API keys/tokens from sandbox env, timeout on all operations, no global installs
+- 51 tests — all passing
+- Wired into github_scanner.py via `deep_evaluate()` method and `--deep` CLI flag
+
+### needle_ratio_cap (SKILLBOOK S3 Implementation)
+- Added `needle_ratio_cap` field to SubredditProfile (default 0.6)
+- r/investing capped at 0.35, r/LocalLLaMA at 0.4, r/stocks at 0.35
+- `quick_scan_triage()` now demotes lowest-score NEEDLEs to MAYBE when ratio exceeds cap
+- 6 new tests for cap behavior — all passing
+
+### Skillbook Auto-Inject Hook
+- `self-learning/hooks/skillbook_inject.py`: UserPromptSubmit hook
+- Reads SKILLBOOK.md, extracts strategies with confidence >= 50, injects as additionalContext
+- Only fires once per session (env flag), only for CCA project
+- 26 tests — all passing
+
+### /cca-auto Multi-Task Default
+- Updated /cca-auto to default to 2-3 sessions worth of tasks
+- Loop-back behavior: complete task -> pick next -> repeat until 2-3 done or context low
 
 ---
 
