@@ -8,11 +8,40 @@ Just type `/cca-nuclear` and walk away.
 
 ## Subreddit Targeting
 
-**Default:** `r/ClaudeCode` (when no argument given)
+**Three modes:**
 
-**Custom subreddit:** `/cca-nuclear r/LocalLLaMA` or `/cca-nuclear r/MachineLearning`
+1. **Default:** `r/ClaudeCode` (when no argument given)
+2. **Custom subreddit:** `/cca-nuclear r/LocalLLaMA` or `/cca-nuclear r/MachineLearning`
+3. **Autonomous mode:** `/cca-nuclear autonomous` — auto-picks the highest-priority subreddit using the autonomous scanner
 
-When `$ARGUMENTS` is provided and non-empty, use it as the target subreddit instead of r/ClaudeCode.
+### Autonomous Mode (`/cca-nuclear autonomous`)
+
+When `$ARGUMENTS` is "autonomous" or "auto":
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/autonomous_scanner.py scan --json
+```
+
+This will:
+1. Auto-pick the highest-priority subreddit (staleness + yield + never-scanned bonus)
+2. Fetch and classify posts
+3. Return JSON with report + NEEDLE/MAYBE/HAY post lists
+
+Parse the JSON output to get `TARGET_SUB` and the post queue. Skip Phase 1 (fetch already done).
+Go directly to Phase 2 (progress tracker) and Phase 3 (review) using the returned post lists.
+
+To scan a specific domain (e.g., trading subs for Kalshi research):
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/autonomous_scanner.py scan --domain trading --json
+```
+
+After reviewing all posts, the autonomous scanner will record the scan in the registry
+so next time it picks a different (staler) subreddit. This creates a rotation:
+each autonomous session scans whichever sub is most overdue.
+
+### Manual Mode (default or custom sub)
+
+When `$ARGUMENTS` is provided and non-empty (and not "autonomous"/"auto"), use it as the target subreddit.
 All progress files, queue files, and reports are namespaced by subreddit slug:
 - Queue: `nuclear_queue_<slug>.json` (e.g., `nuclear_queue_localllama.json`)
 - Progress: `nuclear_progress_<slug>.json`
@@ -23,7 +52,9 @@ compatibility: `nuclear_queue.json`, `nuclear_progress.json`, `NUCLEAR_REPORT.md
 
 **Determine the target subreddit at the start of every run:**
 ```
-If "$ARGUMENTS" is non-empty:
+If "$ARGUMENTS" is "autonomous" or "auto":
+    → Use autonomous scanner (see above)
+Elif "$ARGUMENTS" is non-empty:
     TARGET_SUB = "$ARGUMENTS"    (e.g., "r/LocalLLaMA")
     FILE_SUFFIX = "_" + slug     (e.g., "_localllama")
 Else:
