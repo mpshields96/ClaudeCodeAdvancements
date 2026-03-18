@@ -478,7 +478,8 @@ def search_domain(domain, year_range="2024-", min_citations=None, limit=10):
             all_results.append((paper, evaluation))
 
         # Rate limit: be a good citizen (shared limit across all unauthenticated users)
-        time.sleep(1.5)
+        # Increased from 1.5s to 3s after hitting 429 rate limits in Session 38
+        time.sleep(3.0)
 
     # Sort by score descending
     all_results.sort(key=lambda x: x[1]["score"], reverse=True)
