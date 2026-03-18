@@ -27,7 +27,7 @@ DEFAULT_STORE_PATH = os.path.join(SCRIPT_DIR, "improvements.jsonl")
 
 VALID_RISK_LEVELS = ("LOW", "MEDIUM", "HIGH")
 VALID_STATUSES = ("proposed", "approved", "building", "validated", "committed", "rejected", "superseded")
-VALID_SOURCES = ("trace_analysis", "reflect_pattern", "manual")
+VALID_SOURCES = ("trace_analysis", "reflect_pattern", "manual", "sentinel_mutation", "sentinel_cross_pollination")
 
 # Files that should never be targeted by improvement proposals
 PROTECTED_FILES = {"CLAUDE.md", ".env", ".env.local", "settings.local.json", "credentials.json"}
@@ -481,6 +481,214 @@ class ProposalGenerator:
 
 
 # ---------------------------------------------------------------------------
+# SentinelMutator — adaptive mutation engine (X-Men Sentinel pattern)
+# ---------------------------------------------------------------------------
+
+# Domains that the Sentinel can reason about
+SENTINEL_DOMAINS = (
+    "self-learning", "reddit-intelligence", "context-monitor",
+    "agent-guard", "usage-dashboard", "memory-system", "spec-system",
+)
+
+# Mutation strategies per pattern type — each is an alternative approach
+MUTATION_STRATEGIES = {
+    "retry_loop": [
+        "Cache file state in memory before tool calls to avoid redundant reads",
+        "Split large edits into smaller atomic changes to reduce retry likelihood",
+        "Add file content hash check — skip Edit if content already matches target",
+    ],
+    "high_waste": [
+        "Use Glob to verify file existence before reading — avoid 404-style waste",
+        "Batch related file reads into a single discovery pass",
+        "Track accessed files in session state — skip files already in context",
+    ],
+    "low_efficiency": [
+        "Cache tool results for identical inputs within a sliding window",
+        "Batch sequential Grep calls into one regex with alternation",
+        "Pre-compute file dependency graph to minimize redundant traversals",
+    ],
+    "no_deliverables": [
+        "Set a 15-tool-call checkpoint — if no commit, review progress and plan",
+        "Use TodoWrite at start of task to enforce commit-per-todo discipline",
+        "Break work into smaller increments with explicit success criteria",
+    ],
+    "high_skip_rate": [
+        "Add title-length filter — very short titles are usually low-signal",
+        "Weight score by subreddit baseline — a 50pt post in r/ClaudeCode is noise, in niche subs it's signal",
+        "Use comment_count/score ratio to detect engagement quality",
+    ],
+    "low_build_rate": [
+        "Expand keyword set to catch adjacent terminology (e.g. 'hook' → 'plugin', 'extension', 'middleware')",
+        "Add code-presence detection — posts with GitHub links are more likely BUILD",
+        "Scan nested comments for tool mentions — top-level text may be vague but comments reveal specifics",
+    ],
+}
+
+MAX_MUTATION_DEPTH = 3
+MAX_MUTATIONS_PER_CYCLE = 5
+
+
+class SentinelMutator:
+    """Adaptive mutation engine for the self-learning improvement loop.
+
+    Like the X-Men Sentinels, this system:
+    1. Analyzes failures and generates counter-strategies (mutations)
+    2. Cross-pollinates successful patterns across domains
+    3. Proactively scans for weak spots with no coverage
+    """
+
+    def mutate_from_failure(self, rejected_proposal):
+        """Generate mutated counter-strategies from a rejected proposal.
+
+        Args:
+            rejected_proposal: An ImprovementProposal with status='rejected'
+
+        Returns:
+            List of new ImprovementProposal objects (mutations)
+        """
+        if rejected_proposal.status != "rejected":
+            return []
+
+        # Check mutation depth — don't recurse forever
+        depth = rejected_proposal.pattern_data.get("mutation_depth", 0)
+        if depth >= MAX_MUTATION_DEPTH:
+            return []
+
+        # Protected files block mutations
+        target_file = rejected_proposal.pattern_data.get("file", "")
+        if _is_protected_file(target_file):
+            return []
+
+        # Find alternative strategies for this pattern type
+        base_type = rejected_proposal.pattern_type.replace("_mutation", "")
+        strategies = MUTATION_STRATEGIES.get(base_type, [])
+
+        # Filter out the original fix (we know it didn't work)
+        original_fix = rejected_proposal.proposed_fix
+        alternatives = [s for s in strategies if s != original_fix]
+
+        if not alternatives:
+            # Generic fallback: try the inverse approach
+            alternatives = [f"Inverse approach for {base_type}: instead of preventing, detect and recover"]
+
+        # Pick the first unused alternative
+        mutation = ImprovementProposal(
+            pattern_type=f"{base_type}_mutation",
+            pattern_data={
+                **rejected_proposal.pattern_data,
+                "mutation_of": rejected_proposal.id,
+                "mutation_depth": depth + 1,
+                "original_fix_that_failed": original_fix,
+            },
+            source="sentinel_mutation",
+            proposed_fix=alternatives[0],
+            expected_improvement=rejected_proposal.expected_improvement,
+            test_plan=rejected_proposal.test_plan,
+            risk_level=rejected_proposal.risk_level,  # At least as risky
+            target_module=rejected_proposal.target_module,
+            target_file=rejected_proposal.target_file,
+        )
+        return [mutation]
+
+    def cross_pollinate(self, proposals):
+        """Apply successful patterns from one domain to others.
+
+        Args:
+            proposals: List of ImprovementProposal objects
+
+        Returns:
+            List of new cross-domain ImprovementProposal objects
+        """
+        successful = [
+            p for p in proposals
+            if p.status in ("validated", "committed")
+            and p.target_module != "trading"  # Never cross-pollinate trading
+        ]
+
+        if not successful:
+            return []
+
+        new_proposals = []
+        seen_domains = set()
+
+        for p in successful:
+            # Determine which other domains could benefit
+            source_domain = p.target_module
+            for target_domain in SENTINEL_DOMAINS:
+                if target_domain == source_domain:
+                    continue
+                if target_domain in seen_domains:
+                    continue
+
+                # Adapt the fix for the new domain
+                adapted_fix = f"[Cross-pollinated from {source_domain}] {p.proposed_fix}"
+
+                cross = ImprovementProposal(
+                    pattern_type=p.pattern_type,
+                    pattern_data={
+                        "cross_from": p.id,
+                        "origin_module": source_domain,
+                        "original_fix": p.proposed_fix,
+                    },
+                    source="sentinel_cross_pollination",
+                    proposed_fix=adapted_fix,
+                    expected_improvement=f"Apply proven pattern from {source_domain} to {target_domain}",
+                    test_plan=f"Run same validation as {p.id} but in {target_domain} context",
+                    risk_level="LOW",  # Cross-pollination is exploratory
+                    target_module=target_domain,
+                )
+                new_proposals.append(cross)
+                seen_domains.add(target_domain)
+                break  # One cross per successful proposal
+
+        return new_proposals
+
+    def scan_weaknesses(self, proposals):
+        """Proactively identify domains with no coverage or high failure rates.
+
+        Args:
+            proposals: List of all ImprovementProposal objects
+
+        Returns:
+            List of gap reports: [{"domain": str, "reason": str}, ...]
+        """
+        # Count proposals per domain
+        domain_stats = {}
+        for d in SENTINEL_DOMAINS:
+            domain_stats[d] = {"total": 0, "rejected": 0, "active": 0}
+
+        for p in proposals:
+            module = p.target_module
+            if module not in domain_stats:
+                continue
+            domain_stats[module]["total"] += 1
+            if p.status == "rejected":
+                domain_stats[module]["rejected"] += 1
+            elif p.status in ("proposed", "approved", "building"):
+                domain_stats[module]["active"] += 1
+
+        gaps = []
+        for domain, stats in domain_stats.items():
+            if stats["total"] == 0:
+                gaps.append({
+                    "domain": domain,
+                    "reason": "No improvement proposals exist — unexplored territory",
+                })
+            elif stats["active"] == 0 and stats["rejected"] > 0:
+                gaps.append({
+                    "domain": domain,
+                    "reason": f"All {stats['rejected']} proposals rejected — needs new approach",
+                })
+            elif stats["total"] >= 3 and stats["rejected"] / stats["total"] > 0.66:
+                gaps.append({
+                    "domain": domain,
+                    "reason": f"High rejection rate ({stats['rejected']}/{stats['total']}) — strategies not working",
+                })
+
+        return gaps
+
+
+# ---------------------------------------------------------------------------
 # Improver — orchestrator
 # ---------------------------------------------------------------------------
 
@@ -499,6 +707,7 @@ class Improver:
         self.store = ImprovementStore(store_path)
         self.max_proposals_per_session = max_proposals_per_session
         self.auto_approve_low = auto_approve_low
+        self.sentinel = SentinelMutator()
 
     def _dedup_proposals(self, new_proposals):
         """Remove proposals that duplicate existing active ones."""
@@ -563,6 +772,50 @@ class Improver:
         new_status = "validated" if improved else "rejected"
         self.store.update_status(proposal_id, new_status)
 
+    def evolve(self):
+        """Run the Sentinel adaptation cycle.
+
+        1. Mutate rejected proposals into counter-strategies
+        2. Cross-pollinate successful patterns across domains
+        3. Scan for weak spots with no coverage
+
+        Returns dict with counts: {mutations, cross_pollinations, weakness_gaps}
+        """
+        all_proposals = self.store.load_all()
+
+        # 1. Mutate from failures
+        rejected = [p for p in all_proposals if p.status == "rejected"]
+        mutations = []
+        for r in rejected:
+            new_mutations = self.sentinel.mutate_from_failure(r)
+            mutations.extend(new_mutations)
+            if len(mutations) >= MAX_MUTATIONS_PER_CYCLE:
+                break
+        mutations = mutations[:MAX_MUTATIONS_PER_CYCLE]
+
+        # Dedup against existing proposals
+        mutations = self._dedup_proposals(mutations)
+
+        # 2. Cross-pollinate successes
+        cross = self.sentinel.cross_pollinate(all_proposals)
+        cross = self._dedup_proposals(cross)
+
+        # 3. Scan weaknesses
+        gaps = self.sentinel.scan_weaknesses(all_proposals)
+
+        # Persist new proposals
+        for m in mutations:
+            self.store.append(m)
+        for c in cross:
+            self.store.append(c)
+
+        return {
+            "mutations": len(mutations),
+            "cross_pollinations": len(cross),
+            "weakness_gaps": len(gaps),
+            "gap_details": gaps,
+        }
+
     def get_stats(self):
         """Get improvement system statistics."""
         all_proposals = self.store.load_all()
@@ -611,6 +864,8 @@ def _cli():
     approve_p = sub.add_parser("approve", help="Approve a proposal")
     approve_p.add_argument("proposal_id", help="Proposal ID to approve")
 
+    sub.add_parser("evolve", help="Run Sentinel adaptive mutation cycle")
+
     outcome_p = sub.add_parser("outcome", help="Record an outcome")
     outcome_p.add_argument("proposal_id", help="Proposal ID")
     outcome_p.add_argument("--improved", action="store_true", help="Did it improve?")
@@ -647,6 +902,15 @@ def _cli():
     elif args.command == "approve":
         imp.store.update_status(args.proposal_id, "approved")
         print(f"Approved: {args.proposal_id}")
+
+    elif args.command == "evolve":
+        result = imp.evolve()
+        print(f"Sentinel evolution cycle complete:")
+        print(f"  Mutations: {result['mutations']}")
+        print(f"  Cross-pollinations: {result['cross_pollinations']}")
+        print(f"  Weakness gaps: {result['weakness_gaps']}")
+        for g in result.get("gap_details", []):
+            print(f"    - {g['domain']}: {g['reason']}")
 
     elif args.command == "outcome":
         imp.record_outcome(args.proposal_id, improved=args.improved,
