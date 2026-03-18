@@ -632,36 +632,55 @@ Phase 2 (Session 31):
 
 ---
 
-## Priority Order
+## Priority Scoring System (Decay-Based)
 
-**COMPLETED:**
-1. ~~**MT-0** (Kalshi self-learning integration)~~ Phase 1 COMPLETE — Phase 2 = deploy to polybot
-2. ~~**MT-2** (mermaid diagrams)~~ COMPLETE
-3. ~~**MT-4** (design vocabulary)~~ COMPLETE
-4. ~~**MT-3** (virtual design team)~~ COMPLETE
-5. ~~**MT-6** (nuclear at will)~~ COMPLETE — profiles.py, 43 tests
-6. ~~**MT-7** (trace analysis)~~ COMPLETE — trace_analyzer.py, 50 tests
+**Formula:** `priority = base_value + (chats_since_last_touched * aging_rate)`
 
-**ACTIVE — Highest Impact:**
-7. **MT-10** (YoYo self-learning loop) — Phase 1 + QualityGate complete, E2E validated. Phase 2: 5-session validation.
-8. **MT-9** (autonomous subreddit intelligence) — force multiplier; depends on MT-6 (DONE)
-9. **MT-14** (re-scan previously scanned subs) — keep intelligence current
+- `base_value`: Force-multiplier score (1-10). Does this make Claude smarter/faster for ALL future work?
+- `aging_rate`: 1.0 per chat for partial tasks (Phase 1 done, Phase 2 waiting). 0.5 per chat for not-started tasks.
+- Cap: Priority cannot exceed 2x base_value. Prevents low-value tasks from permanently outranking high-value ones.
+- Update `last_touched_session` whenever ANY work is done on the MT (even research or planning).
+- Current session: 42.
 
-**ACTIVE — High Value:**
-10. **MT-11** (GitHub repo intelligence) — extends MT-9 to code repos
-11. **MT-12** (academic paper integration) — reputable sources for real improvements
-12. **MT-8** (iPhone remote control) — immediate productivity gain
-13. **MT-13** (iOS app development) — new capability domain
+### Completed (no scoring needed)
 
-**COMPLETED (MT-15):**
-14. ~~**MT-15** (GitHub repo tester/evaluator)~~ COMPLETE — repo_tester.py, 51 tests, sandboxed testing
+| MT | Task | Status |
+|----|------|--------|
+| MT-0 | Kalshi self-learning integration | Phase 1 COMPLETE — Phase 2 = deploy to polybot (out of CCA scope) |
+| MT-2 | Mermaid diagrams | COMPLETE |
+| MT-3 | Virtual design team | COMPLETE |
+| MT-4 | Design vocabulary | COMPLETE |
+| MT-6 | Nuclear at will | COMPLETE — profiles.py, 43 tests |
+| MT-7 | Trace analysis | COMPLETE — trace_analyzer.py, 50 tests |
+| MT-15 | GitHub repo tester | COMPLETE — repo_tester.py, 51 tests |
 
-**NEW — Matthew-Prioritized:**
-15. **MT-17** (UI/Design excellence + report generation) — design skills, professional PDF/HTML output
-16. **MT-18** (academic writing workspace) — ClaudePrism-inspired, psychiatry career tool
+### Active Priority Queue (sorted by priority score, descending)
 
-**FUTURE:**
-17. **MT-1** (Maestro visual grid) — blocked on macOS SDK
-18. **MT-5** (Claude Pro bridge) — needs research
-19. **MT-16** (detachable chat tabs) — Anthropic feature request
-20. **MT-19** (local LLM fine-tuning) — Unsloth Studio for domain-specific models (long-term)
+| Rank | MT | Task | Base | Last Touched | Chats Ago | Rate | Aging | **Score** | Next Phase |
+|------|----|------|------|-------------|-----------|------|-------|-----------|------------|
+| 1 | MT-10 | YoYo self-learning | 9 | Session 42 | 0 | 1.0 | 0.0 | **9.0** | Phase 2: session 2/5 validation |
+| 2 | MT-9 | Autonomous scanning | 8 | Session 42 | 0 | 1.0 | 0.0 | **8.0** | Phase 3: deep-read r/ClaudeAI NEEDLEs |
+| 3 | MT-11 | GitHub intelligence | 7 | Session 30 | 12 | 1.0 | 12.0 | **14.0** (cap) | Phase 2: live API |
+| 4 | MT-14 | Rescan stale subs | 6 | Session 35 | 7 | 1.0 | 7.0 | **13.0** | Phase 2: live rescan test |
+| 5 | MT-12 | Academic papers | 6 | Session 38 | 4 | 1.0 | 4.0 | **10.0** | Phase 2: multi-domain run |
+| 6 | MT-8 | iPhone remote control | 5 | NEVER | 17+ | 0.5 | 8.5 | **10.0** (cap) | Research phase |
+| 7 | MT-17 | Design/reports | 6 | Session 41 | 1 | 1.0 | 1.0 | **7.0** | Phase 2: slide templates |
+| 8 | MT-13 | iOS app development | 4 | NEVER | 17+ | 0.5 | 4.0 | **8.0** (cap) | Research phase |
+| 9 | MT-18 | Academic writing | 4 | NEVER | 3+ | 0.5 | 1.5 | **5.5** | Research phase |
+
+### Blocked / External (no scoring — cannot be worked)
+
+| MT | Task | Reason |
+|----|------|--------|
+| MT-1 | Maestro visual grid | Blocked on macOS 15.6 beta SDK |
+| MT-5 | Claude Pro bridge | Needs research on Claude Pro capabilities |
+| MT-16 | Detachable chat tabs | Anthropic feature request (can't build) |
+| MT-19 | Local LLM fine-tuning | Long-term exploration, needs GPU resources |
+
+### Scoring Rules
+
+1. **After working on a task:** Set `last_touched_session` to current session, recalculate all scores.
+2. **New tasks:** Start with base_value only (0 aging). Add to "Active" or "Blocked" as appropriate.
+3. **Matthew's ADHD protocol:** New ideas get logged here with base_value assigned but NOT worked on until they naturally rise in priority.
+4. **Re-rank every session:** Recompute aging at session start. Work top-ranked items first.
+5. **Graduation:** When all phases complete, move to "Completed" table.

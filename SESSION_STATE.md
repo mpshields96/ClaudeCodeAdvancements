@@ -3,10 +3,42 @@
 
 ---
 
-## Current State (as of Session 41 — 2026-03-18)
+## Current State (as of Session 42A — 2026-03-18)
 
-**Phase:** Session 41 COMPLETE. MT-17 Phase 1 COMPLETE — design-skills/ module built with Typst integration. report_generator.py (21 tests), cca-report.typ template, design-guide.md, /cca-report command. First real CCA status report PDF generated (87.8 KB). MT-17 scope expanded per Matthew: PDFs + presentations + graphics + websites. Tests: 1546/1546 passing (38 suites). Typst 0.14.2 installed.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-17 Phase 2: Typst slide/presentation template. (2) Deep-read remaining NEEDLEs (~100 unreviewed). (3) Investigate garrytan/gstack and frank-for-you/franks-original-recipe repos. (4) MT-17 Phase 3: HTML report output option.
+**Phase:** Session 42A COMPLETE. Built MT priority decay scoring system. MT-10 Phase 2 validation session 1/5 (trace analysis on Sessions 40-41, 5 proposals generated, Sentinel found 6 domain gaps). MT-9 Phase 3 supervised trial (r/ClaudeAI autonomous scan: 25 posts, 16 NEEDLEs). Tests: 1552/1552 passing (38 suites).
+**Next session starts at:** Session 42B. Priority per decay scores: (1) MT-11 Phase 2: live GitHub API integration (score 14.0). (2) MT-9: deep-read r/ClaudeAI NEEDLEs. (3) MT-12 Phase 2: multi-domain paper scan.
+
+---
+
+## What Was Done in Session 42A (2026-03-18)
+
+### MT Priority Decay System (NEW)
+- Built decay-based scoring into MASTER_TASKS.md Priority Order section
+- Formula: `priority = base_value + (chats_since_last_touched * aging_rate)`
+- 1pt/chat for partial tasks, 0.5pt/chat for not-started, cap at 2x base
+- 9 active MTs ranked, 7 completed, 4 blocked/external
+- ADHD protocol: new ideas logged but not worked until they rise in priority
+
+### MT-10 Phase 2: YoYo Self-Learning Validation (Session 1/5)
+- Ran trace_analyzer on Sessions 40 and 41 transcripts (both scored 65/100)
+- Generated 5 new improvement proposals (all LOW risk, auto-approved)
+- Ran Sentinel evolution cycle: 0 mutations, 0 cross-pollinations, 6 weakness gaps
+- Key finding: all proposals are retry-loop/efficiency — behavioral patterns, not code bugs
+- Logged validation event to self-learning journal
+
+### MT-9 Phase 3: Supervised Autonomous Scan Trial
+- Autonomous scanner auto-picked r/ClaudeAI (never scanned, highest priority)
+- Fetched 25 posts, 0 blocked by safety, 16 classified as NEEDLE (64% signal)
+- Scan registered in registry with timestamp
+- NEEDLEs need deep-reading in future session for BUILD/ADAPT/SKIP verdicts
+
+### MT-14 Phase 2: Skipped
+- All subreddits scanned today (overnight autonomous scan) — none stale
+- Phase 2 requires stale subs (>14 days). Will validate when subs age naturally.
+
+### Memory Updates
+- Saved 5 new feedback memories: MT decay scoring, ADHD idea capture, advancement tip autonomy, process improvements welcome, chat session capacity
+- Updated MEMORY.md index
 
 ---
 

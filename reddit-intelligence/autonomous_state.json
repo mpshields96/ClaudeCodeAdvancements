@@ -1,5 +1,5 @@
 {
-  "scans_this_session": 8,
+  "scans_this_session": 9,
   "subs_scanned": [
     "algotrading",
     "kalshi",
@@ -7,8 +7,9 @@
     "vibecoding",
     "polymarket",
     "investing",
-    "localllama"
+    "localllama",
+    "claudeai"
   ],
-  "last_scan_time": "2026-03-18T02:11:45.252984+00:00",
-  "updated_at": "2026-03-18T02:11:45.252990+00:00"
+  "last_scan_time": "2026-03-18T16:13:32.565827+00:00",
+  "updated_at": "2026-03-18T16:13:32.565833+00:00"
 }
