@@ -2,11 +2,19 @@
 
 Pick the next work item and execute it. No user input needed after invocation.
 
-**DEFAULT SESSION LENGTH: 2-3 sessions worth of tasks.**
+**DEFAULT SESSION LENGTH: 2-3 sessions worth of tasks (up to 2 hours autonomous).**
 Do NOT stop after completing one task. Keep working through the priority queue until
 you've completed 2-3 meaningful deliverables (new modules, significant features, or
 multi-file improvements). Only stop when you've delivered substantial work OR context
 is running low. The user expects to walk away and come back to real progress.
+
+**MARATHON MODE (2-hour autonomous):** When running for extended periods:
+- Re-read SESSION_STATE.md after EVERY completed task (context compaction may lose it)
+- Commit after EVERY task (never accumulate >1 task of uncommitted work)
+- If a task takes >15 tool calls without progress, SKIP it and log why in SESSION_STATE
+- If you hit 3 consecutive errors on the same operation, move to the next task
+- Monitor context: stop at 55% (not 60%) to leave room for /cca-wrap + buffer
+- Do NOT spawn subagents unless absolutely necessary — they burn 100K+ tokens each
 
 ---
 
