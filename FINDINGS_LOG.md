@@ -202,3 +202,7 @@
 [2026-03-17] REFERENCE-PERSONAL [Trading] Overfitting admission + selection bias — cautionary for Bayesian model work — https://www.reddit.com/r/algotrading/comments/1rbxa35/
 [2026-03-17] REFERENCE-PERSONAL [Trading] YouTube strategy backtesting (brutal results) — methodology for testing popular strategies — https://www.reddit.com/r/algotrading/comments/1r92wxr/
 [2026-03-17] REFERENCE-PERSONAL [Trading] IB Gateway reverse-engineered in Rust — low latency infrastructure — https://www.reddit.com/r/algotrading/comments/1rveu7e/
+
+[2026-03-17] REFERENCE [CCA/All] r/ClaudeCode autonomous scan — 150 fetched, 29 new (after dedup), 14 NEEDLE, 1 MAYBE, 14 HAY
+[2026-03-17] REFERENCE [CCA/All] r/Kalshi autonomous scan — 50 fetched, 50 new, 9 NEEDLE, 20 MAYBE, 21 HAY (mostly sports betting, low CCA signal)
+[2026-03-17] SKIP [Kalshi] "Day 6 of trying to make 30k month" — sports gambling, no technical strategy content — https://www.reddit.com/r/Kalshi/comments/1rn0zhc/
