@@ -3,10 +3,10 @@
 
 ---
 
-## Current State (as of Session 33 — 2026-03-17)
+## Current State (as of Session 34 — 2026-03-17)
 
-**Phase:** Session 33 COMPLETE. Deep-reads, 5 reviews, Skillbook created. APF metric established at 32.1% (target: 40%). 10 active strategies distilled from 33 sessions of learnings. Self-learning system upgraded from journal-only to journal + skillbook (YoYo-inspired).
-**Next session starts at:** Run /cca-init. Read SKILLBOOK.md at session start. Priority: (1) MT-10 Phase 2 — run improver for 5 sessions. (2) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread). (3) Fix needle_ratio_cap in profiles.py (APF lever). (4) Scan remaining subs (r/MachineLearning, r/webdev, r/iOSProgramming, r/stocks, r/SecurityAnalysis, r/ValueInvesting, r/Bogleheads, r/ClaudeAI). (5) MT-11 Phase 3 — run scan --all. (6) Auto-inject SKILLBOOK.md into session context via hook.
+**Phase:** Session 34 COMPLETE. Daily hot+rising scan built (/cca-nuclear-daily), GitHub nuclear command built (/cca-nuclear-github), Skillbook evolution wired into /cca-wrap, staleness-weighted task priority in /cca-auto, 2 Reddit reviews (Playwright, YoYo 17-days). Tests: 1281 (was 1259). 2 commits.
+**Next session starts at:** Run /cca-init. Priority: (1) MT-15: GitHub nuclear should include repo tester/evaluator — run tests, check build, validate code quality of discovered repos (Matthew's new idea). (2) Auto-inject SKILLBOOK.md into session context via hook. (3) Run /cca-nuclear-daily live to review the 3 NEEDLEs found. (4) Run /cca-nuclear-github scan --all (first real GitHub scan). (5) Fix needle_ratio_cap in profiles.py (APF lever). (6) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread).
 
 ---
 
