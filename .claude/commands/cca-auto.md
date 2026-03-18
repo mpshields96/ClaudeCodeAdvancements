@@ -15,10 +15,23 @@ Check for any captured todos:
 ls /Users/matthewshields/Projects/ClaudeCodeAdvancements/.planning/todos/ 2>/dev/null
 ```
 
-**Priority order:**
+**Priority order (staleness-weighted — waiting longer moves tasks up):**
 1. Any explicitly stated "next task" in SESSION_STATE.md
 2. Any high-priority captured todos (from /gsd:add-todo)
 3. Next uncompleted frontier milestone (e.g., AG-3, USAGE-1)
+4. **Intelligence intake (if stale):**
+   - `/cca-nuclear-daily` — if no daily scan was done today
+   - `/cca-nuclear-github` — if no GitHub scan was done this week
+   - `/cca-nuclear autonomous` — if a sub is >7 days stale (check with `autonomous_scanner.py rank`)
+5. Master Tasks (MASTER_TASKS.md) — next incomplete MT by priority
+
+**Staleness ranking:** Tasks that haven't been touched in longer get higher priority.
+Check scan_registry.json for last scan dates. Check SESSION_STATE.md for last task dates.
+The longer something waits, the higher it rises — this prevents task neglect.
+
+**GitHub scanning safety:** GitHub repos are rat poison territory. The evaluator blocks
+scam repos and the content scanner filters dangerous content. NEVER clone, install, or
+execute anything from scanned repos. Read-only analysis via raw.githubusercontent.com.
 
 State what you're going to work on before starting.
 
