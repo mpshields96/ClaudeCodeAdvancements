@@ -1,0 +1,803 @@
+================================================================================
+    CLAUDECODEADVANCEMENTS — COMPREHENSIVE PROJECT STATUS REPORT
+                         Generated: 2026-03-17
+                    Session 39 (Current) | Session 38 (Last)
+================================================================================
+
+
+TABLE OF CONTENTS
+-----------------
+  1. Executive Summary
+  2. Project Metrics at a Glance
+  3. Codebase Statistics
+  4. Frontier Module Deep-Dive (5 Modules)
+  5. Support Module Deep-Dive (3 Modules)
+  6. Live Hook Architecture
+  7. Master-Level Tasks (MT-0 through MT-16)
+  8. Self-Learning System Status
+  9. Reddit Intelligence Status
+  10. Severity-Tracked Learnings
+  11. Git & Commit History
+  12. Full Session History (Sessions 1-38)
+  13. Next Priorities & Open Work
+  14. Known Risks & Blockers
+  15. Architecture Decisions Log
+
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+ClaudeCodeAdvancements (CCA) is a research and development project that builds
+validated tools, hooks, and systems for Claude Code users and AI/LLM-assisted
+development workflows. The project launched on 2026-02-19 and has completed 38
+development sessions across 27 calendar days.
+
+All five original research frontiers are COMPLETE with production-quality code,
+comprehensive test suites, and live hook integrations. The project has expanded
+into master-level tasks (MT-0 through MT-16) covering autonomous intelligence
+gathering, self-learning loops, academic paper integration, and mobile
+development capabilities.
+
+Key achievements:
+  - 1,525 automated tests across 37 test suites (100% passing)
+  - 30,925 lines of Python code (14,801 source + 16,124 test)
+  - 9 live hooks integrated into Claude Code's hook system
+  - 245 Reddit/GitHub findings analyzed and classified
+  - 129 git commits over 27 days
+  - 7/7 modules structurally complete (0 stubs, 0 syntax errors)
+  - Zero external dependencies beyond Python standard library
+
+
+================================================================================
+2. PROJECT METRICS AT A GLANCE
+================================================================================
+
+  Category                  Value
+  -------------------------+---------------------------------------------
+  Total Tests               1,525 (37 suites, ALL PASSING)
+  Total Python Files        76
+  Total Test Files          37
+  Total Markdown Files      44
+  Source LOC (non-test)     14,801
+  Test LOC                  16,124
+  Total LOC                 30,925
+  Test-to-Source Ratio      1.09:1 (more test code than source code)
+  Project Size on Disk      9.4 MB
+  Git Commits               129
+  Project Age               27 days (2026-02-19 to 2026-03-17)
+  Sessions Completed        38
+  Live Hooks                9 (across 4 Claude Code events)
+  Modules Complete          7/7
+  Code Stubs                0
+  Syntax Errors             0
+  Uncommitted Files         0 (clean working tree)
+  Findings Reviewed         245
+  Master Tasks Defined      17 (MT-0 through MT-16)
+  Master Tasks Complete     6
+  Master Tasks In Progress  5
+  Master Tasks Not Started  3
+  Master Tasks Blocked      1
+  Master Tasks Future       2
+
+
+================================================================================
+3. CODEBASE STATISTICS BY MODULE
+================================================================================
+
+  Module               Py Files  Source LOC  Test Files  Tests   Status
+  --------------------+---------+----------+-----------+-------+------------
+  memory-system              6      1,947          3      94   COMPLETE
+  spec-system                4      1,240          2      90   COMPLETE
+  context-monitor           12      3,330          6     197   COMPLETE
+  agent-guard               14      3,922          7     264   COMPLETE
+  usage-dashboard            9      4,758          4     196   COMPLETE
+  reddit-intelligence       13      7,130          6     263   ACTIVE
+  self-learning             16      8,068          8     314   ACTIVE
+  research                   2        530          1      29   ACTIVE
+  --------------------+---------+----------+-----------+-------+------------
+  TOTALS                    76     30,925         37   1,525
+
+
+================================================================================
+4. FRONTIER MODULE DEEP-DIVE
+================================================================================
+
+------------------------------------------------------------------------------
+FRONTIER 1: PERSISTENT CROSS-SESSION MEMORY (memory-system/)
+------------------------------------------------------------------------------
+
+  Status: ALL TASKS COMPLETE (MEM-1 through MEM-5)
+  Tests: 94 passing across 3 test suites
+  LOC: 1,947
+
+  Problem Solved:
+    Every Claude Code session starts from zero. Users lose context, preferences,
+    and decisions across sessions. GitHub Issue #14227 has 100+ upvotes.
+
+  Components Built:
+    MEM-1  Memory Schema Design (schema.md)
+           - Local-first storage at ~/.claude-memory/
+           - 8-char hex suffix for collision-free IDs
+           - Confidence-based TTL: HIGH=365d, MEDIUM=180d, LOW=90d
+
+    MEM-2  Capture Hook (hooks/capture_hook.py)
+           - PostToolUse + Stop hook for memory extraction
+           - Stop hook leverages last_assistant_message field
+           - Credential pattern blocking (Anthropic key regex with hyphens)
+
+    MEM-3  Retrieval MCP Server (mcp_server.py)
+           - MCP protocol for memory queries
+           - Supports search, list, and contextual retrieval
+
+    MEM-4  Compaction-Resistant Handoff (/handoff command)
+           - Survives Claude Code's context compaction
+           - Numbered todo format persists through compression
+
+    MEM-5  Memory Dashboard CLI (cli.py)
+           - Commands: stats, search, list, delete, purge
+           - Per-project filtering with --project flag
+
+  Key Decisions:
+    - Local-first: all data stored on user's machine, no cloud
+    - JSON + SQLite storage (user owns all data)
+    - Stop hook for extraction (confirmed: has last_assistant_message)
+
+------------------------------------------------------------------------------
+FRONTIER 2: SPEC-DRIVEN DEVELOPMENT SYSTEM (spec-system/)
+------------------------------------------------------------------------------
+
+  Status: ALL TASKS COMPLETE (SPEC-1 through SPEC-6) + 3 Enhancements
+  Tests: 90 passing across 2 test suites
+  LOC: 1,240
+
+  Problem Solved:
+    Unstructured prompting produces poor architecture. Developers jump to code
+    without requirements, design, or task breakdown. Results in rework cycles.
+
+  Components Built:
+    SPEC-1  /spec:requirements — Requirements interview scaffold
+    SPEC-2  /spec:design — Architecture design generator
+    SPEC-3  /spec:tasks — Atomic task decomposer
+    SPEC-4  /spec:implement — One-task-at-a-time runner
+    SPEC-5  Spec Validator Hook (hooks/validate.py) — PreToolUse guard
+    SPEC-6  Skill Activator Hook (hooks/skill_activator.py) — Auto-activation
+
+  Enhancements (from Master Tasks):
+    MT-2  Mermaid Architecture Diagrams — auto-generated in /spec:design
+    MT-3  Multi-Persona Design Review (/spec:design-review)
+          4 expert personas: UX, Security, Performance, Maintainability
+          APPROVE/REVISE/REDESIGN verdict system
+    MT-4  Design Vocabulary — reference UIs, design language, color constraints
+
+  Non-Negotiable Sequence:
+    requirements.md -> design.md -> tasks.md -> implement
+    User must APPROVE each document before next is generated.
+    No code during requirements or design phases.
+
+------------------------------------------------------------------------------
+FRONTIER 3: CONTEXT HEALTH MONITOR (context-monitor/)
+------------------------------------------------------------------------------
+
+  Status: ALL TASKS COMPLETE (CTX-1 through CTX-6)
+  Tests: 197 passing across 6 test suites
+  LOC: 3,330
+
+  Problem Solved:
+    Context rot causes silent output degradation. Users don't know when their
+    session is approaching quality limits. Compaction bugs lose instructions.
+
+  Components Built:
+    CTX-1  Context Meter Hook (hooks/meter.py)
+           - PostToolUse token counter
+           - Reads native context_window.used_percentage
+           - Adaptive thresholds for 1M windows (quality ceilings)
+           - CLAUDE_AUTOCOMPACT_PCT_OVERRIDE awareness
+
+    CTX-2  Status Line Display (statusline.py)
+           - ANSI bar: [|||||||   ] 65% YELLOW
+           - Autocompact proximity display (AC:Xpts)
+           - 24 tests
+
+    CTX-3  Threshold Alert (hooks/alert.py)
+           - PreToolUse warn/block at red/critical zones
+           - Silent for cheap tools (Read/Glob/Grep)
+           - Autocompact proximity warnings
+
+    CTX-4  Auto-Handoff (hooks/auto_handoff.py)
+           - Stop hook blocks session exit at critical context
+           - Format: {"decision": "block", "reason": "..."}
+
+    CTX-5  Compact Anchor (hooks/compact_anchor.py)
+           - PostToolUse anchor writes every 10 turns
+           - Preserves critical context through compaction
+
+    CTX-6  Automatic Session Wrap (auto_wrap.py)
+           - Triggers wrap sequence at threshold
+
+  Zone Definitions:
+    Green:    <50% (or <25% at 1M)
+    Yellow:   50-70% (or 25-40% at 1M)
+    Red:      70-85% (or 40-60% at 1M)
+    Critical: >=85% (or >=60% at 1M)
+
+  Key Learning:
+    Fixed percentage thresholds break at 1M windows. Quality degrades at
+    250-500k tokens regardless of window size. Adaptive thresholds use quality
+    ceilings: yellow=250k, red=400k, critical=600k.
+
+------------------------------------------------------------------------------
+FRONTIER 4: MULTI-AGENT CONFLICT GUARD (agent-guard/)
+------------------------------------------------------------------------------
+
+  Status: ALL TASKS COMPLETE (AG-1 through AG-7)
+  Tests: 264 passing across 7 test suites
+  LOC: 3,922
+
+  Problem Solved:
+    Parallel Claude Code agents overwrite each other's files, expose credentials,
+    and make dangerous system changes without user awareness.
+
+  Components Built:
+    AG-1  Mobile Approver (hooks/mobile_approver.py)
+          - iPhone push approval via ntfy.sh
+          - Fails open if no network/topic configured
+
+    AG-2  Ownership Manifest (ownership.py)
+          - File ownership detection via git history
+          - /ag-ownership slash command
+
+    AG-3  Credential Guard (hooks/credential_guard.py)
+          - PreToolUse[Bash] hook for credential extraction
+          - Anthropic key regex: sk-[A-Za-z0-9\-]{20,}
+          - Blocks API key, password, and token exposure
+
+    AG-4  Content Scanner (content_scanner.py)
+          - Autonomous scanning hazmat suit
+          - 9 threat categories: executable_install, credential_harvest,
+            data_exfiltration, financial_threat, system_damage,
+            prompt_injection, scam_signals, low_quality_repo, malicious_url
+          - Phishing domain detection with whitelist-first approach
+          - Zero false positives on 138 real Reddit posts
+
+    AG-5  Network Guard (hooks/network_guard.py)
+          - Port/firewall exposure guard
+          - 20 threat patterns: adb tcpip, ufw disable, iptables, docker -p,
+            ngrok, nc/socat, python http.server, ssh -R, etc.
+
+    AG-6  Session Guard (hooks/session_guard.py)
+          - Slop detection + commit tracking
+
+    AG-7  Path Validator (path_validator.py) [LIVE IN HOOKS]
+          - Dangerous path + command detection
+          - Blocks: system dir writes, path traversal, rm -rf, dd, curl|bash
+          - Allows: in-project writes, Read tool (read-only)
+          - Wired into settings.local.json PreToolUse
+
+------------------------------------------------------------------------------
+FRONTIER 5: USAGE TRANSPARENCY DASHBOARD (usage-dashboard/)
+------------------------------------------------------------------------------
+
+  Status: ALL TASKS COMPLETE (USAGE-1 through USAGE-3 + /arewedone)
+  Tests: 196 passing across 4 test suites
+  LOC: 4,758
+
+  Problem Solved:
+    No real-time token/cost visibility. Users burn through expensive context
+    without knowing. Community demand: 9+ Reddit posts, 1600+ combined upvotes.
+
+  Components Built:
+    USAGE-1  Token Counter CLI (usage_counter.py)
+             - Reads transcript JSONL for token accounting
+             - Sonnet/Opus/Haiku pricing tiers
+             - Per-session, daily, weekly aggregation views
+
+    USAGE-2  OTel Receiver (otel_receiver.py)
+             - OTLP HTTP/JSON receiver
+             - Captures Claude Code's native telemetry
+             - Standalone HTTP server, no external dependencies
+
+    USAGE-3  Cost Alert Hook (hooks/cost_alert.py)
+             - PreToolUse cost threshold warning
+             - Self-filters cheap tools to minimize overhead
+             - Wired into settings.local.json
+
+    /arewedone  Structural Completeness Checker (arewedone.py)
+                - Validates all 7 modules: CLAUDE.md, source, tests, stubs
+                - Doc freshness monitoring
+                - Used for session health checks
+
+
+================================================================================
+5. SUPPORT MODULE DEEP-DIVE
+================================================================================
+
+------------------------------------------------------------------------------
+REDDIT INTELLIGENCE (reddit-intelligence/)
+------------------------------------------------------------------------------
+
+  Tests: 263 passing across 6 test suites
+  LOC: 7,130
+
+  Purpose:
+    Community signal research — discover validated tools, patterns, and pain
+    points from Reddit and GitHub to drive CCA development priorities.
+
+  Components:
+    reddit_reader.py        Fetches Reddit posts + all comments (no API key)
+    autonomous_scanner.py   MT-9: Autonomous scan pipeline with safety gates
+    nuclear_fetcher.py      Batch deep-dive scanner for subreddit analysis
+    github_scanner.py       MT-11: GitHub repo intelligence + evaluation
+    repo_tester.py          MT-15: Sandboxed repo testing + analysis
+    profiles.py             MT-6: 10 subreddit profiles across 4 domains
+
+  Intelligence Gathered:
+    Total Findings:       245 entries in FINDINGS_LOG.md
+    Verdicts:
+      BUILD:              19 (tools/patterns worth implementing)
+      ADAPT:              51 (patterns to adapt for CCA)
+      REFERENCE:          104 (useful references, not actionable)
+      REFERENCE-PERSONAL: 13 (useful to Matthew personally)
+      SKIP:               32 (no value for CCA)
+      Other/Triage:       26
+
+    Signal Rate by Subreddit:
+      r/ClaudeCode:    22.2% BUILD+ADAPT (5 BUILD, 23 ADAPT / 138 posts)
+      r/ClaudeAI:      3.0% BUILD+ADAPT (2 BUILD, 1 ADAPT / 100 posts)
+      r/Anthropic:     0.0% BUILD+ADAPT (0/75 posts — 85% politics noise)
+      r/algotrading:   0.0% BUILD+ADAPT (0/98 posts — domain-specific)
+
+    Subreddits Covered: algotrading, kalshi, claudecode, vibecoding,
+                        polymarket, investing, localllama + more
+
+  Scan Status:
+    Autonomous scanning: ALLOWED
+    Scans this session: 8/10
+    Kill switch: INACTIVE
+
+------------------------------------------------------------------------------
+SELF-LEARNING (self-learning/)
+------------------------------------------------------------------------------
+
+  Tests: 314 passing across 8 test suites
+  LOC: 8,068
+
+  Purpose:
+    Cross-session improvement through structured observation, pattern detection,
+    strategy adjustment, and autonomous proposal generation.
+
+  Components:
+    journal.py              Structured JSONL event journal
+                            - 6 trading event types for Kalshi integration
+                            - CLI: log, stats, trading-stats
+    reflect.py              Pattern detection + strategy recommendations
+                            - 4 trading pattern detectors
+                            - Wired to trace_analyzer and improver
+    trace_analyzer.py       MT-7: Transcript pattern analysis
+                            - RetryDetector, WasteDetector
+                            - EfficiencyCalculator, VelocityCalculator
+                            - Validated on 31 real CCA transcripts
+    improver.py             MT-10: YoYo improvement loop
+                            - ImprovementProposal lifecycle
+                            - ProposalGenerator (from traces + patterns)
+                            - QualityGate: geometric mean anti-gaming
+                            - SentinelMutator: adaptive mutation engine
+    batch_report.py         MT-10: Aggregate trace health CLI
+    validate_strategies.py  Skillbook validation
+    paper_scanner.py        MT-12: Academic paper discovery
+                            - Semantic Scholar + arXiv APIs
+                            - 4 CCA-relevant domains
+                            - Evaluation scoring (0-100)
+    hooks/skillbook_inject  UserPromptSubmit strategy injection
+
+  Self-Learning Metrics:
+    Strategies:    10 total (4 confirmed, 0 contradicted, 6 unchanged)
+    Improvements:  6 proposed (all LOW risk, all from trace_analysis)
+    Papers:        1 logged ("Agent0: Self-Evolving Agents", score 69/100, IMPLEMENT)
+    Trace Health:  31-session aggregate analysis complete (avg score 70)
+
+  Key Insight:
+    PROJECT_INDEX.md was retried in 74% of sessions — the single biggest
+    efficiency drain. Fixed in Session 38 with 72% trim (441->122 lines).
+
+------------------------------------------------------------------------------
+RESEARCH (research/)
+------------------------------------------------------------------------------
+
+  Tests: 29 passing across 1 test suite
+  LOC: 530
+
+  Components:
+    reddit_scout.py   Daily community signal sweep
+    tests/            Test suite for scout functionality
+
+
+================================================================================
+6. LIVE HOOK ARCHITECTURE
+================================================================================
+
+9 hooks are actively integrated into Claude Code via settings.local.json:
+
+  Event              Matcher    Hook File              Purpose
+  -----------------+---------+------------------------+---------------------------
+  PostToolUse        *         meter.py                Token counter
+  PostToolUse        *         compact_anchor.py       Context anchor writes
+  PreToolUse         *         alert.py                Warn/block red/critical
+  PreToolUse         *         cost_alert.py           Cost threshold warning
+  PreToolUse         *         path_validator.py       Dangerous path detection
+  PreToolUse         Bash      credential_guard.py     Credential extraction guard
+  UserPromptSubmit   *         skill_activator.py      Spec auto-activation
+  UserPromptSubmit   *         skillbook_inject.py     Strategy injection
+  Stop               *         auto_handoff.py         Block exit at critical
+
+  Hook Format Reference:
+    PreToolUse deny:  hookSpecificOutput.permissionDecision: "deny"
+    Stop block:       {"decision": "block", "reason": "..."}
+    NOTE: Top-level "decision: block" on PreToolUse SILENTLY FAILS
+
+
+================================================================================
+7. MASTER-LEVEL TASKS (MT-0 through MT-16)
+================================================================================
+
+---------- COMPLETED (6/17) ----------
+
+  MT-2   Mermaid Architecture Diagrams
+         Added to /spec:design. Renders in GitHub, VS Code, Obsidian.
+         Session: 21
+
+  MT-3   Virtual Design Team Plugin
+         /spec:design-review with 4 expert personas (UX, Security, Perf, Maint).
+         APPROVE/REVISE/REDESIGN verdict system.
+         Session: 21
+
+  MT-4   Frontend Design Vocabulary
+         Section 1b "Design References" in /spec:design. Reference UIs, design
+         vocabulary, layout patterns, color constraints.
+         Session: 21
+
+  MT-6   On-Demand Subreddit Scanner ("Nuclear at Will")
+         profiles.py: 10 builtin subreddit profiles (4 domains), scan registry,
+         quick-scan triage mode. --profile and --quick flags.
+         Tests: 43 | Session: 27
+
+  MT-7   Programmatic Trace Analysis (ACE Pattern)
+         trace_analyzer.py: TranscriptEntry, TranscriptSession, RetryDetector,
+         WasteDetector, EfficiencyCalculator, VelocityCalculator, TraceAnalyzer.
+         Validated on 3+ real transcripts (scores 40-70).
+         Tests: 50 | Session: 26
+
+  MT-15  GitHub Repo Tester/Evaluator
+         repo_tester.py: Sandboxed testing + analysis for discovered repos.
+         Tests: 51 | Session: 34
+
+---------- ACTIVE — IN PROGRESS (5/17) ----------
+
+  MT-0   Kalshi Bot Self-Learning Integration [PHASE 1 COMPLETE]
+         The BIGGEST task. Trading domain schema built in CCA self-learning:
+         6 event types (bet_placed, bet_outcome, market_research, etc.),
+         get_trading_metrics() with PnL tracking, 4 trading pattern detectors.
+         PHASE 2: Deploy to polymarket-bot (requires cross-project work).
+         Tests: 24 (within self-learning) | Session: 21
+
+  MT-9   Autonomous Cross-Subreddit Intelligence [PHASE 2 COMPLETE]
+         autonomous_scanner.py: ScanPrioritizer + SafetyGate + orchestrator.
+         All 9 safety protections enforced. Kill switch. End-to-end pipeline
+         (fetch -> filter -> dedup -> classify -> record -> report).
+         PHASE 3: Supervised trial (3 sessions with monitoring).
+         Tests: 54 | Sessions: 30-31
+
+  MT-10  YoYo Self-Learning + Self-Building Loop [PHASE 1 + E2E VALIDATED]
+         improver.py: ImprovementProposal lifecycle, ProposalGenerator,
+         QualityGate (geometric mean anti-gaming, Nash 1950 pattern),
+         SentinelMutator (adaptive mutation, dialed to 5-10%).
+         6 real proposals generated from 3 transcript traces.
+         PHASE 2: 5-session validation run.
+         Tests: 64 | Sessions: 28-29, 36
+
+  MT-11  Autonomous GitHub Repository Intelligence [PHASE 1 COMPLETE]
+         github_scanner.py: RepoMetadata, RepoEvaluator (0-100 scoring),
+         9 frontier keyword domains, JSONL audit log.
+         First live scan: 30 repos evaluated from 4 GitHub queries.
+         PHASE 2: Live API integration at scale.
+         Tests: 30 | Session: 30
+
+  MT-12  Academic Research Paper Integration [PHASE 1 COMPLETE]
+         paper_scanner.py: Semantic Scholar + arXiv APIs, 4 CCA domains
+         (agents, prediction, statistics, interaction), evaluation scoring
+         (citations 25pts + venue 25pts + relevance 20pts + recency 15pts
+         + open access 15pts). JSONL logging.
+         First paper: "Agent0: Self-Evolving Agents" (69/100, IMPLEMENT).
+         NEXT: Run across all 4 domains, log top papers.
+         Tests: 54 | Session: 38
+
+  MT-14  Re-Scanning Previously Scanned Subreddits [PHASE 1 COMPLETE]
+         rescan_sub() method, get_stale_subs() helper, CLI rescan + stale.
+         PHASE 2: Run on real stale sub, validate delta filtering.
+         Tests: 8 | Session: 35
+
+---------- NOT STARTED (3/17) ----------
+
+  MT-8   iPhone Remote Control Perfection
+         Needs Reddit/GitHub research sweep for remote control posts.
+         Goal: flawless iPhone -> Claude iOS -> Claude Code workflow.
+
+  MT-13  iOS App Development Capability
+         Needs Xcode verification + Reddit/GitHub research.
+         First target: Kalshi bot mobile dashboard.
+
+  MT-16  Detachable Chat Tabs
+         Anthropic feature request: drag CC desktop chats into separate
+         windows like Chrome/Arc tabs. Solves ADHD-hostile "pauses on
+         switch" behavior.
+
+---------- BLOCKED (1/17) ----------
+
+  MT-1   Maestro Visual Grid UI
+         Blocked on macOS 15.6 beta SDK crash
+         (_NSUserActivityTypeBrowsingWeb symbol issue in Tauri/React).
+         Built v0.2.4 from source, crashes on launch.
+         Waiting for stable macOS release or Maestro update.
+
+---------- FUTURE (2/17) ----------
+
+  MT-5   Claude Pro <> Claude Code Bridge
+         Needs research on Claude Pro's integration options.
+
+  MT-16  (See NOT STARTED above — categorized as Anthropic feature request)
+
+
+================================================================================
+8. SELF-LEARNING SYSTEM STATUS
+================================================================================
+
+  The self-learning system implements a closed-loop improvement cycle adapted
+  from the YoYo pattern: Observe -> Detect -> Hypothesize -> Build -> Validate.
+
+  STRATEGIES (validate_strategies.py):
+    Total:        10
+    Confirmed:    4  (validated by evidence)
+    Contradicted: 0  (disproven by evidence)
+    Unchanged:    6  (insufficient data)
+
+  IMPROVEMENT PROPOSALS (improver.py):
+    Total:        6
+    Status:       All "proposed" (awaiting 5-session validation)
+    Risk Level:   All LOW (new utility scripts only)
+    Source:       All from trace_analysis
+    Anti-Gaming:  QualityGate active (geometric mean, any zero tanks score)
+
+  SENTINEL ADAPTIVE MUTATION (improver.py SentinelMutator):
+    Mutation Rate: 5-10% (dialed down from initial 20%)
+    Strategies:    mutate_from_failure, cross_pollinate, scan_weaknesses
+    Status:        Active, wired into /cca-wrap ritual
+
+  ACADEMIC PAPERS (paper_scanner.py):
+    Total Logged:  1
+    Verdicts:      1 IMPLEMENT, 0 REFERENCE, 0 SKIP
+    Top Paper:     "Agent0: Self-Evolving Agents" (69/100)
+    Domains:       agents(1), prediction(0), statistics(0), interaction(0)
+    API Note:      Semantic Scholar rate limit aggressive — need 3s between queries
+
+  TRACE ANALYSIS (trace_analyzer.py + batch_report.py):
+    Sessions Analyzed: 31
+    Average Score:     70/100
+    Key Finding:       PROJECT_INDEX.md retried in 74% of sessions (FIXED)
+    Detectors:         RetryDetector, WasteDetector, EfficiencyCalculator,
+                       VelocityCalculator
+
+
+================================================================================
+9. REDDIT INTELLIGENCE STATUS
+================================================================================
+
+  Subreddit Scanning Infrastructure:
+    Autonomous Mode:     ALLOWED
+    Kill Switch:         INACTIVE (~/.cca-autonomous-pause)
+    Scans This Session:  8/10 (limit enforced)
+    Scan Cooldown:       max 3 consecutive scan sessions, then 2 build sessions
+
+  Subreddit Profiles (10 builtin):
+    Claude Domain:    r/ClaudeCode, r/ClaudeAI, r/vibecoding, r/LocalLLaMA
+    Trading Domain:   r/algotrading, r/Kalshi, r/polymarket
+    Investing Domain: r/investing, r/stocks, r/SecurityAnalysis, etc.
+    Dev Domain:       r/webdev, r/reactjs, etc.
+
+  Nuclear Scan Results (411+ posts across 4 subreddits):
+    r/ClaudeCode:   138 posts | 5 BUILD | 23 ADAPT | 22.2% signal
+    r/ClaudeAI:     100 posts | 2 BUILD | 1 ADAPT  | 3.0% signal
+    r/Anthropic:     75 posts | 0 BUILD | 0 ADAPT  | 0% (politics)
+    r/algotrading:   98 posts | 0 BUILD | 0 ADAPT  | 0% (domain-specific)
+
+  GitHub Scanning:
+    Repos Evaluated:  30 (from 4 queries)
+    Stored in:        github_evaluations.jsonl
+    Status:           Phase 1 complete, live API integration pending
+
+  Key Finding:
+    r/ClaudeCode is the ONLY high-signal subreddit for CCA frontiers.
+    General subs (r/Anthropic, r/algotrading) are 85-93% noise.
+
+
+================================================================================
+10. SEVERITY-TRACKED LEARNINGS (LEARNINGS.md)
+================================================================================
+
+  Total Learnings: 22
+
+  SEVERITY 3 (Global — promoted to ~/.claude/rules/):
+    1. Anthropic key regex must include hyphens
+       sk-[A-Za-z0-9\-]{20,} not sk-[A-Za-z0-9]{20,}
+    2. Building without testing/validation is wasted work
+       Full lifecycle required: research -> plan -> build -> test -> validate
+    3. Citation integrity: never cite unverified academic sources
+
+  SEVERITY 2 (Hard Rules):
+    1. PreToolUse deny vs Stop hook block formats differ
+    2. Transcript usage field at entry["message"]["usage"]
+    3. Commit discipline: work must be committed before session close
+    4. File-writing hooks trigger system-reminder context burn
+    5. Claude Island auto-installs hooks globally on first launch
+    6. Percentage-based thresholds break at 1M windows
+    7. General subreddits are noise for CCA nuclear scans
+
+  SEVERITY 1 (Noted):
+    12 additional patterns covering argparse, Reddit API, tmux, AppleScript,
+    phishing regex, background agents, Edit tool context clearing, etc.
+
+
+================================================================================
+11. GIT & COMMIT HISTORY
+================================================================================
+
+  Repository:    https://github.com/mpshields96/ClaudeCodeAdvancements
+  Total Commits: 129
+  Branch:        main
+  Working Tree:  CLEAN (no uncommitted changes)
+  Date Range:    2026-02-19 to 2026-03-17
+
+  Last 10 Commits:
+    a84ed0c  Session 38 wrap: changelog, state, journal, path_validator hook
+    e27f04c  /cca-auto: marathon mode for 2-hour autonomous sessions
+    06a2c30  /cca-status: nuclear-level project overview command
+    a7b3905  MT-12: retry/backoff for 429 rate limit, live API validation
+    bf5536a  Session 38: path_validator live, PROJECT_INDEX 72% trim, MT-12
+    33162e4  Session 37 wrap: changelog, PROJECT_INDEX, journal
+    d60b679  Session 37 state: 1471 tests, AG-7 path_validator complete
+    e8e6d61  AG-7: path_validator.py (30 tests)
+    7538bba  Session 37 state update: trace analysis, scan limit, batch_report
+    3106432  batch_report.py: aggregate trace health across sessions (13 tests)
+
+  Last 5 Sessions Diff (HEAD~5..HEAD):
+    13 files changed, 1,700 insertions(+), 421 deletions(-)
+
+
+================================================================================
+12. FULL SESSION HISTORY
+================================================================================
+
+  Sess  Date        Tests   Deliverable
+  ----+----------+---------+---------------------------------------------------
+   1    2026-02-19    --    Research, 5 frontier scaffolds, ROADMAP, PROJECT_INDEX
+   2    2026-02-20    63    MEM-1 schema, MEM-2 capture hook, SPEC-1-5
+   3    2026-02-20    63    GitHub live, CLAUDE.md gotchas
+   6    2026-03-08   157    AG-1 mobile approver, browse-url, Reddit scout
+   7    2026-03-08   ~300   CTX-1-5, AG-2/3, MEM-5, reddit-intel plugin
+   8    2026-03-08   321    CTX-4/5, MEM-5 CLI, AG-2 ownership
+   9    2026-03-15   404    Wrap-only session, changelog + learnings created
+  10    2026-03-15   483    cca-wrap, cca-scout, URL auto-review, global cmds
+  11    2026-03-15   483    9 Reddit reviews, REFERENCE-PERSONAL verdict, tmux
+  12    2026-03-15   483    Maestro crash, Claude Squad, tmux workspace
+  13    2026-03-15   483    cca-wrap, cca-scout refinements
+  14    2026-03-15   517    Nuclear scan batch 1 (45/110 posts), self-learning
+  15    2026-03-15   517    Nuclear scan COMPLETE (138 posts), 7 BUILD/ADAPT
+  16    2026-03-15   568    USAGE-1 counter, /arewedone, cca-wrap self-learning
+  17    2026-03-16   734    USAGE-2 OTel, SPEC-6 skill activator, USAGE-3 alert
+  18    2026-03-16   734    USAGE-3 hook wiring, Kalshi tmux automation
+  19    2026-03-16   742    MASTER_TASKS.md (MT-0-5), nuclear sub flexibility
+  20    2026-03-16   783    MT-0 Phase 1 (trading domain), session guard fixes
+  21    2026-03-16   800    MT-0 trading schema, MT-2/3/4 COMPLETE, design-review
+  22    2026-03-16   800    Nuclear scans: r/ClaudeAI (100 posts)
+  23    2026-03-16   800    Nuclear scans: r/Anthropic + r/algotrading (175 posts)
+  24    2026-03-16   800    1M adaptive thresholds, MT-6/7/8 created
+  25    2026-03-16   800    ROADMAP update, MT-7 research, MT-9 through MT-14
+  26    2026-03-17   850    MT-7 COMPLETE: trace_analyzer.py (50 tests)
+  27    2026-03-17   943    AG-4 content scanner (50 tests), 15 findings
+  28    2026-03-17  1040    MT-10 Phase 1 improver.py (44 tests), AG-5 network
+  29    2026-03-17  1093    Autocompact awareness, QualityGate, E2E validation
+  30    2026-03-17  1100+   MT-9 Phase 1 autonomous scanner, MT-11 Phase 1
+  31    2026-03-17  1150+   MT-9 Phase 2 execute_scan(), ScanResult
+  32    2026-03-17  1200+   Skillbook, APF hard metric
+  33    2026-03-17  1250+   Daily scan mode, Skillbook evolution
+  34    2026-03-17  1300+   MT-15 repo_tester, GitHub nuclear command
+  35    2026-03-17  1350+   MT-14 Phase 1 rescan, strategy validation
+  36    2026-03-17  1428    Sentinel mutator (26 tests), exit loop fix
+  37    2026-03-17  1471    batch_report (13 tests), AG-7 path_validator (30)
+  38    2026-03-17  1525    MT-12 paper_scanner (54 tests), PROJECT_INDEX trim
+
+  Growth Rate: 1,525 tests in 38 sessions = ~40 tests/session average
+  Peak Day: 2026-03-17 (Sessions 26-38 = 13 sessions, +725 tests)
+
+
+================================================================================
+13. NEXT PRIORITIES & OPEN WORK
+================================================================================
+
+  From SESSION_STATE.md (Session 38 next actions):
+
+  PRIORITY 1: Deep-read 102 unreviewed NEEDLEs
+    102 Reddit posts flagged as NEEDLE (worth deep reading) remain unreviewed
+    from nuclear scans. These are title-triaged as potentially high-value.
+
+  PRIORITY 2: Run paper_scanner across all 4 domains
+    Only 1 paper logged so far. Run Semantic Scholar searches across:
+    agents, prediction markets, statistics, human-AI interaction.
+    Log top papers, identify IMPLEMENT candidates.
+
+  PRIORITY 3: Fix PreToolUse:Bash hook error
+    An error occurs in PreToolUse:Bash hook processing. Diagnosis needed.
+    Note: May be outside CCA scope (in Claude Code core).
+
+  PRIORITY 4: Increase paper_scanner delay to 3s
+    Semantic Scholar shared rate limit is aggressive. 429 errors at 1.5s
+    between queries. Need to increase to 3s minimum.
+
+  ONGOING:
+    - MT-10: Continue 5-session validation of improvement proposals
+    - MT-9: Begin supervised trial (3 sessions with monitoring)
+    - MT-14: Run rescan on a real stale sub to validate delta filtering
+    - MT-11: Scale GitHub scanning with live API integration
+
+
+================================================================================
+14. KNOWN RISKS & BLOCKERS
+================================================================================
+
+  BLOCKERS:
+    1. MT-1 (Maestro) blocked on macOS 15.6 beta SDK crash
+       Workaround: Using tmux + dev-start script instead
+
+  RISKS:
+    1. Semantic Scholar rate limiting (429 at 1.5s delay)
+       Mitigation: Increase to 3s delay, add exponential backoff
+    2. PreToolUse:Bash hook error (undiagnosed)
+       Mitigation: Needs investigation, may be Claude Code core issue
+    3. Context burn from file-writing hooks (compact_anchor.py)
+       Mitigation: Writes every 10 turns, files kept small
+    4. 102 unreviewed NEEDLEs aging (content becomes stale)
+       Mitigation: Prioritize deep-reads in next 2-3 sessions
+
+  TECHNICAL DEBT:
+    1. ROADMAP.md test counts are stale (says 800, actual 1,525)
+    2. Some changelog entries are out of chronological order
+    3. Orientation file exemption needed in RetryDetector
+
+
+================================================================================
+15. ARCHITECTURE DECISIONS LOG
+================================================================================
+
+  Decision                              Rationale
+  ------------------------------------+------------------------------------------
+  Local-first storage                   User owns all data, no cloud dependency
+  JSON + SQLite                         Simple, portable, no server needed
+  Stdlib-first (no pip packages)        Zero dependency management overhead
+  Hook-based delivery                   Native Claude Code integration
+  8-char hex memory IDs                 3-char caused collisions at scale
+  PreToolUse for guards                 Blocks before execution, not after
+  Stop hook for memory capture          Has last_assistant_message field
+  Adaptive context thresholds           Fixed % breaks at 1M windows
+  QualityGate geometric mean            Prevents Goodhart's Law gaming
+  Sentinel at 5-10%                     20% was arbitrary and risky
+  ntfy.sh for mobile push               Free, no app needed, HTTP-only
+  Whitelist-first phishing detection    Prevents false positives on legit domains
+  JSONL for all logging                 Append-only, grep-friendly, no corruption
+  Scan cooldown (3 scan / 2 build)      Forces shipping code, not just scanning
+  Title-triage before deep-read         Saves ~45k tokens per skipped agent
+
+
+================================================================================
+                         END OF REPORT
+               1,525 tests | 30,925 LOC | 38 sessions
+                   All systems operational.
+================================================================================
