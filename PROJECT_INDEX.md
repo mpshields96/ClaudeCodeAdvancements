@@ -33,9 +33,10 @@
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 196 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 263 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel | 314 |
+| Design Skills | `design-skills/` | MT-17 Phase 1 COMPLETE | 21 |
 | Research | `research/` | Reddit scout | 29 |
 
-**Total: 1521 tests (37 suites). All must pass before any work.**
+**Total: 1546 tests (38 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -82,6 +83,11 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `repo_tester.py` — MT-15: Sandboxed repo testing
 - `profiles.py` — MT-6: Subreddit profiles + registry
 
+**design-skills/** — Professional visual output (MT-17)
+- `report_generator.py` — CCA data collector + Typst renderer CLI
+- `design-guide.md` — Visual language (colors, fonts, layout)
+- `templates/cca-report.typ` — Status report Typst template
+
 **self-learning/** — Cross-session improvement
 - `journal.py` — Structured event journal (JSONL)
 - `reflect.py` — Pattern detection + strategy recommendations
@@ -120,4 +126,5 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | `/cca-review <url>` | Review URL against frontiers — BUILD/SKIP verdict |
 | `/cca-scout` | Scan subreddits for high-signal posts |
 | `/cca-nuclear` | Autonomous deep-dive batch review |
+| `/cca-report` | Generate professional PDF status report |
 | `/browse-url <url>` | Read any URL (no analysis) |

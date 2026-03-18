@@ -3,10 +3,38 @@
 
 ---
 
-## Current State (as of Session 40 — 2026-03-18)
+## Current State (as of Session 41 — 2026-03-18)
 
-**Phase:** Session 40 COMPLETE. Deep-read 3 top papers (Deep Research Agents 80pts, HALO 75pts, AutoP2C 75pts). MT-17 research complete: Typst recommended for PDF generation. 3 new findings logged (Playwright CLI 407pts, Reddit MCP 62pts, Naksha v4 25pts). Tests: 1525/1525 passing. 1 commit.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-17 Phase 1: install Typst, create design-skills/ module, first CCA report template. (2) Deep-read remaining NEEDLEs (~100 unreviewed). (3) Fix PreToolUse:Bash hook error (outside CCA scope). (4) Investigate garrytan/gstack and frank-for-you/franks-original-recipe repos from Playwright post comments.
+**Phase:** Session 41 COMPLETE. MT-17 Phase 1 COMPLETE — design-skills/ module built with Typst integration. report_generator.py (21 tests), cca-report.typ template, design-guide.md, /cca-report command. First real CCA status report PDF generated (87.8 KB). MT-17 scope expanded per Matthew: PDFs + presentations + graphics + websites. Tests: 1546/1546 passing (38 suites). Typst 0.14.2 installed.
+**Next session starts at:** Run /cca-init. Priority: (1) MT-17 Phase 2: Typst slide/presentation template. (2) Deep-read remaining NEEDLEs (~100 unreviewed). (3) Investigate garrytan/gstack and frank-for-you/franks-original-recipe repos. (4) MT-17 Phase 3: HTML report output option.
+
+---
+
+## What Was Done in Session 41 (2026-03-18)
+
+### MT-17 Phase 1: Design Skills Module (COMPLETE)
+- Created `design-skills/` module directory with CLAUDE.md, design-guide.md
+- **design-guide.md**: Complete CCA visual language — color palette (8 colors), typography scale (7 levels), layout rules, status indicators, chart guidelines
+- **report_generator.py**: CCADataCollector (parses PROJECT_INDEX, MASTER_TASKS, FINDINGS_LOG, papers.jsonl, SESSION_STATE) + ReportRenderer (Typst subprocess) + CLI
+- **cca-report.typ**: Professional Typst template — title page, 8 metric cards, module status table, master tasks table, next priorities
+- **21 tests** (TDD: tests written first, all passing)
+- **Integration tested**: Full pipeline generates 87.8 KB PDF from real CCA data
+- `/cca-report` slash command created for one-command PDF generation
+- Typst 0.14.2 installed via `brew install typst`
+
+### MT-17 Scope Expansion
+- Per Matthew's directive: MT-17 now covers PDFs + presentations + graphics + websites
+- Updated MASTER_TASKS.md with 5-phase output format roadmap
+- Design guide applies to all output formats (same colors, fonts, spacing)
+
+### Files Created
+- `design-skills/CLAUDE.md` (NEW) — Module rules
+- `design-skills/design-guide.md` (NEW) — CCA visual language
+- `design-skills/report_generator.py` (NEW) — Data collector + Typst renderer + CLI
+- `design-skills/templates/cca-report.typ` (NEW) — Status report Typst template
+- `design-skills/tests/test_report_generator.py` (NEW) — 21 tests
+- `.claude/commands/cca-report.md` (NEW) — Slash command
+- `CCA_STATUS_REPORT_2026-03-18.pdf` (NEW) — First real CCA status report
 
 ---
 
