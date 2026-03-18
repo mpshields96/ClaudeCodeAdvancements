@@ -1043,5 +1043,193 @@ class TestDailyCLI(unittest.TestCase):
             shutil.rmtree(tmpdir, ignore_errors=True)
 
 
+class TestRescanSub(unittest.TestCase):
+    """Tests for MT-14 rescan_sub() — delta rescanning of stale subs."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.registry_path = os.path.join(self.tmpdir, "scan_registry.json")
+        self.state_path = os.path.join(self.tmpdir, "autonomous_state.json")
+        self.kill_switch = os.path.join(self.tmpdir, "kill_switch")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _write_registry(self, data):
+        with open(self.registry_path, "w") as f:
+            json.dump(data, f)
+
+    def test_rescan_import(self):
+        from autonomous_scanner import AutonomousScanner
+        scanner = AutonomousScanner(registry_path=self.registry_path,
+                                    state_path=self.state_path,
+                                    kill_switch_path=self.kill_switch)
+        self.assertTrue(hasattr(scanner, "rescan_sub"))
+
+    def test_rescan_not_stale_returns_none(self):
+        """Should return None if sub was scanned recently."""
+        from autonomous_scanner import AutonomousScanner
+        # Record a recent scan
+        now = datetime.now(timezone.utc)
+        self._write_registry({
+            "claudecode": {
+                "last_scan": now.isoformat(),
+                "posts_scanned": 50,
+                "builds": 2,
+                "adapts": 5,
+            }
+        })
+        scanner = AutonomousScanner(registry_path=self.registry_path,
+                                    state_path=self.state_path,
+                                    kill_switch_path=self.kill_switch)
+        result = scanner.rescan_sub("ClaudeCode", max_age_days=14)
+        self.assertIsNone(result)  # Not stale — scanned just now
+
+    def test_rescan_stale_returns_result(self):
+        """Should return ScanResult for stale subs (with mocked fetch)."""
+        from autonomous_scanner import AutonomousScanner, ScanResult
+        # Record an old scan
+        old = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        self._write_registry({
+            "claudecode": {
+                "last_scan": old,
+                "posts_scanned": 50,
+                "builds": 2,
+                "adapts": 5,
+            }
+        })
+        scanner = AutonomousScanner(registry_path=self.registry_path,
+                                    state_path=self.state_path,
+                                    kill_switch_path=self.kill_switch)
+        # Mock fetch to return some posts
+        now_ts = datetime.now(timezone.utc).timestamp()
+        mock_posts = [
+            {"id": "new1", "title": "New MCP tool", "score": 100,
+             "num_comments": 10, "flair": "", "is_self": True,
+             "selftext_length": 500, "selftext": "test",
+             "created_utc": now_ts,
+             "url": "https://reddit.com/r/ClaudeCode/new1",
+             "permalink": "/r/ClaudeCode/new1", "subreddit": "ClaudeCode"},
+        ]
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.rescan_sub("ClaudeCode", max_age_days=14)
+            self.assertIsNotNone(result)
+            self.assertIsInstance(result, ScanResult)
+
+    def test_rescan_filters_old_posts(self):
+        """Should only include posts newer than last scan."""
+        from autonomous_scanner import AutonomousScanner
+        # Last scan was 7 days ago
+        last_scan = datetime.now(timezone.utc) - timedelta(days=7)
+        self._write_registry({
+            "claudecode": {
+                "last_scan": last_scan.isoformat(),
+                "posts_scanned": 50,
+                "builds": 2,
+                "adapts": 5,
+            }
+        })
+        scanner = AutonomousScanner(registry_path=self.registry_path,
+                                    state_path=self.state_path,
+                                    kill_switch_path=self.kill_switch)
+
+        # Mix of old and new posts
+        now = datetime.now(timezone.utc)
+        old_ts = (now - timedelta(days=10)).timestamp()
+        new_ts = (now - timedelta(days=1)).timestamp()
+        mock_posts = [
+            {"id": "old1", "title": "Old post", "score": 200,
+             "num_comments": 50, "flair": "", "is_self": True,
+             "selftext_length": 500, "selftext": "old",
+             "created_utc": old_ts,
+             "url": "https://reddit.com/r/ClaudeCode/old1",
+             "permalink": "/r/ClaudeCode/old1", "subreddit": "ClaudeCode"},
+            {"id": "new1", "title": "New MCP server post", "score": 100,
+             "num_comments": 10, "flair": "", "is_self": True,
+             "selftext_length": 500, "selftext": "new",
+             "created_utc": new_ts,
+             "url": "https://reddit.com/r/ClaudeCode/new1",
+             "permalink": "/r/ClaudeCode/new1", "subreddit": "ClaudeCode"},
+        ]
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.rescan_sub("ClaudeCode", max_age_days=1)
+            # Should only have the new post
+            self.assertIsNotNone(result)
+            all_posts = result.needles + result.maybes + result.hay
+            post_ids = {p["id"] for p in all_posts}
+            self.assertIn("new1", post_ids)
+            self.assertNotIn("old1", post_ids)
+
+    def test_rescan_no_new_posts(self):
+        """Should handle case where no new posts exist."""
+        from autonomous_scanner import AutonomousScanner
+        old = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        self._write_registry({
+            "claudecode": {"last_scan": old, "posts_scanned": 50, "builds": 0, "adapts": 0}
+        })
+        scanner = AutonomousScanner(registry_path=self.registry_path,
+                                    state_path=self.state_path,
+                                    kill_switch_path=self.kill_switch)
+        # All posts are older than last scan
+        old_ts = (datetime.now(timezone.utc) - timedelta(days=60)).timestamp()
+        mock_posts = [
+            {"id": "old1", "title": "Old post", "score": 200,
+             "num_comments": 50, "flair": "", "is_self": True,
+             "selftext_length": 500, "selftext": "old",
+             "created_utc": old_ts,
+             "url": "https://reddit.com/r/ClaudeCode/old1",
+             "permalink": "/r/ClaudeCode/old1", "subreddit": "ClaudeCode"},
+        ]
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.rescan_sub("ClaudeCode", max_age_days=14)
+            self.assertIsNotNone(result)
+            self.assertEqual(result.report.posts_fetched, 0)
+
+    def test_get_stale_subs(self):
+        """Should return list of stale sub slugs."""
+        from autonomous_scanner import AutonomousScanner
+        old = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        recent = datetime.now(timezone.utc).isoformat()
+        self._write_registry({
+            "claudecode": {"last_scan": old, "posts_scanned": 50, "builds": 2, "adapts": 5},
+            "claudeai": {"last_scan": recent, "posts_scanned": 30, "builds": 1, "adapts": 3},
+        })
+        scanner = AutonomousScanner(registry_path=self.registry_path,
+                                    state_path=self.state_path,
+                                    kill_switch_path=self.kill_switch)
+        stale = scanner.get_stale_subs(max_age_days=14)
+        self.assertIn("claudecode", stale)
+        self.assertNotIn("claudeai", stale)
+
+    def test_rescan_blocked_by_kill_switch(self):
+        """Kill switch should block rescans."""
+        from autonomous_scanner import AutonomousScanner
+        # Create kill switch
+        Path(self.kill_switch).write_text("paused")
+        old = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        self._write_registry({
+            "claudecode": {"last_scan": old, "posts_scanned": 50, "builds": 0, "adapts": 0}
+        })
+        scanner = AutonomousScanner(registry_path=self.registry_path,
+                                    state_path=self.state_path,
+                                    kill_switch_path=self.kill_switch)
+        result = scanner.rescan_sub("ClaudeCode", max_age_days=14)
+        self.assertIsNone(result)
+
+    def test_cli_stale_command(self):
+        """CLI 'stale' command should run without error."""
+        from autonomous_scanner import cli_main
+        import io
+        buf = io.StringIO()
+        with patch("sys.stdout", buf):
+            cli_main(["stale",
+                       "--registry", self.registry_path,
+                       "--state", self.state_path,
+                       "--kill-switch", self.kill_switch])
+        output = buf.getvalue()
+        self.assertIsInstance(output, str)
+
+
 if __name__ == "__main__":
     unittest.main()

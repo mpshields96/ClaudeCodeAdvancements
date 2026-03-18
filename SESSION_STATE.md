@@ -5,8 +5,8 @@
 
 ## Current State (as of Session 35 — 2026-03-17)
 
-**Phase:** Session 35 COMPLETE. MT-15 repo tester built (51 tests), needle_ratio_cap added to profiles.py (6 new tests), Skillbook auto-inject hook built (26 tests), repo_tester wired into github_scanner --deep flag, /cca-auto updated for 2-3 session default length. Tests: 1364 (was 1281). +83 tests.
-**Next session starts at:** Run /cca-init. Priority: (1) Run /cca-nuclear-daily live to review the 3 NEEDLEs found. (2) Run /cca-nuclear-github scan --all (first real GitHub scan). (3) Wire skillbook_inject.py into Claude Code hooks (settings.json). (4) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread). (5) MT-10 Phase 2: Run for 5 sessions, measure improvement rate. (6) Update SKILLBOOK.md: mark S3 (needle_ratio_cap) as implemented, confidence -> 95.
+**Phase:** Session 35 COMPLETE (2 commit batches). Batch 1: MT-15 repo tester (51 tests), needle_ratio_cap (6 tests), Skillbook hook (26 tests), /cca-auto multi-task. Batch 2: Strategy validation loop (30 tests), MT-14 rescan foundation (19 tests), Skillbook hook wired into settings.local.json. Tests: 1402 (was 1281). +121 tests across 2 commits.
+**Next session starts at:** Run /cca-init. Priority: (1) Run /cca-nuclear-daily live to review the 3 NEEDLEs found. (2) Run /cca-nuclear-github scan --all (first real GitHub scan). (3) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread). (4) MT-10 Phase 2: Run for 5 sessions, measure improvement rate. (5) Test rescan_sub() on a real stale subreddit. (6) Wire validate_strategies into /cca-wrap end-of-session ritual.
 
 ---
 
@@ -33,6 +33,22 @@
 ### /cca-auto Multi-Task Default
 - Updated /cca-auto to default to 2-3 sessions worth of tasks
 - Loop-back behavior: complete task -> pick next -> repeat until 2-3 done or context low
+
+### Strategy Validation Loop (validate_strategies.py)
+- `validate_strategies.py`: Reads SKILLBOOK.md + journal.jsonl, validates strategies against evidence
+- Strategy/ValidationResult dataclasses, StrategyValidator with evidence matching (2+ keyword minimum)
+- Confidence bump on CONFIRMED (+2 per positive, max +5), drop on CONTRADICTED (-3 per negative, max -10)
+- CLI: `--brief` (one-line), `--json` (structured), full report
+- 30 tests — all passing
+
+### MT-14 Foundation: Rescan Mode
+- `rescan_sub()` method on AutonomousScanner: delta-scanning for stale subs
+- Only returns posts newer than last scan timestamp
+- `get_stale_subs()` helper, CLI `rescan` and `stale` commands
+- 8 new tests (73 total autonomous scanner tests)
+
+### Skillbook Hook Wired
+- Added skillbook_inject.py to settings.local.json UserPromptSubmit hooks
 
 ---
 

@@ -555,6 +555,113 @@ class AutonomousScanner:
 
         return results
 
+    def rescan_sub(
+        self,
+        subreddit: str,
+        max_age_days: int = 14,
+    ) -> ScanResult:
+        """
+        MT-14: Delta-rescan a previously scanned subreddit.
+
+        Only returns posts newer than the last scan timestamp.
+        Useful for keeping intelligence current without re-reviewing old posts.
+
+        Args:
+            subreddit: subreddit name
+            max_age_days: only rescan if last scan was > max_age_days ago
+
+        Returns ScanResult with only new posts, or None if not stale or blocked.
+        """
+        # Resolve profile
+        profile = get_profile(subreddit)
+        slug = subreddit.lower().replace("/", "").replace("r", "", 1) if subreddit.startswith("r/") else subreddit.lower()
+        slug = slug.replace(" ", "")
+
+        # Check if this sub is actually stale
+        registry = ScanRegistry(self.prioritizer._registry._path)
+        if not registry.is_stale(slug, max_age_days):
+            return None  # Not stale — skip
+
+        # Safety check
+        allowed, reason = self.safety_gate.can_scan()
+        if not allowed:
+            return None
+
+        # Get last scan timestamp
+        scans = registry.list_scans()
+        last_scan_ts = None
+        if slug in scans:
+            last_scan_str = scans[slug].get("last_scan", "")
+            if last_scan_str:
+                try:
+                    last_scan_ts = datetime.fromisoformat(last_scan_str)
+                    if last_scan_ts.tzinfo is None:
+                        last_scan_ts = last_scan_ts.replace(tzinfo=timezone.utc)
+                except (ValueError, TypeError):
+                    last_scan_ts = None
+
+        # Fetch recent posts (use "week" timeframe for delta scanning)
+        fetch_limit = min(profile.limit, 75)
+        posts = fetch_top_posts(subreddit, fetch_limit, "week")
+
+        # Delta filter: only keep posts created after last scan
+        if last_scan_ts:
+            delta_posts = []
+            for p in posts:
+                # Reddit post created_utc is a Unix timestamp
+                created_utc = p.get("created_utc", 0)
+                if created_utc:
+                    try:
+                        post_time = datetime.fromtimestamp(float(created_utc), tz=timezone.utc)
+                        if post_time > last_scan_ts:
+                            delta_posts.append(p)
+                    except (ValueError, TypeError, OSError):
+                        delta_posts.append(p)  # Include if we can't parse
+                else:
+                    delta_posts.append(p)  # Include if no timestamp
+            posts = delta_posts
+
+        if not posts:
+            # No new posts since last scan
+            self.safety_gate.record_scan(slug)
+            return ScanResult(
+                report=ScanReport(
+                    subreddit=subreddit, slug=slug,
+                    domain=profile.domain if hasattr(profile, "domain") else "unknown",
+                    posts_fetched=0, posts_safe=0, posts_blocked=0,
+                    needles=0, maybes=0, hay=0, blocked_reasons=[],
+                ),
+                needles=[], maybes=[], hay=[],
+            )
+
+        # Standard pipeline: filter -> dedup -> classify
+        safe, blocked = self.filter_posts(posts)
+        safe = self.dedup_posts(safe)
+        safe = self.classify_posts(safe)
+
+        needles = [p for p in safe if p.get("triage") == "NEEDLE"]
+        maybes = [p for p in safe if p.get("triage") == "MAYBE"]
+        hay = [p for p in safe if p.get("triage") == "HAY"]
+
+        domain = profile.domain if hasattr(profile, "domain") else "unknown"
+        report = self.build_report(subreddit, slug, domain, posts, safe, blocked)
+
+        # Record
+        self.safety_gate.record_scan(slug)
+        registry.record_scan(slug, posts_scanned=len(posts), builds=0, adapts=0)
+
+        return ScanResult(
+            report=report,
+            needles=needles,
+            maybes=maybes,
+            hay=hay,
+        )
+
+    def get_stale_subs(self, max_age_days: int = 14) -> list:
+        """Return list of stale sub slugs that need rescanning."""
+        registry = ScanRegistry(self.prioritizer._registry._path)
+        return registry.stale_subs(max_age_days)
+
     def build_report(self, subreddit: str, slug: str, domain: str,
                      fetched: list, safe: list, blocked: list) -> ScanReport:
         """Build a ScanReport from scan results."""
@@ -586,7 +693,7 @@ def cli_main(args: list = None):
         args = sys.argv[1:]
 
     if not args:
-        print("Usage: python3 autonomous_scanner.py [rank|status|pick|scan|daily]")
+        print("Usage: python3 autonomous_scanner.py [rank|status|pick|scan|daily|rescan|stale]")
         print("  rank                    Show prioritized sub list")
         print("  status                  Show safety gate status")
         print("  pick [--domain <d>]     Pick next target sub")
@@ -597,6 +704,8 @@ def cli_main(args: list = None):
         print("  daily [--subs s1,s2]    Daily hot+rising scan across key subs")
         print("        [--hot-limit N]   Max hot posts per sub (default 25)")
         print("        [--rising-limit N] Max rising posts per sub (default 10)")
+        print("  rescan [--target <sub>] MT-14: Delta-rescan stale sub (only new posts)")
+        print("  stale                   Show subs due for rescanning")
         return
 
     cmd = args[0]
@@ -779,6 +888,61 @@ def cli_main(args: list = None):
                 for i, p in enumerate(all_needles[:15], 1):
                     print(f"  {i:2d}. [{p['score']:4d}pts] r/{p['subreddit']} — {p['title'][:80]}")
                     print(f"      {p['permalink']}")
+
+    elif cmd == "rescan":
+        scanner = AutonomousScanner(
+            registry_path=registry_path,
+            kill_switch_path=kill_switch_path,
+            state_path=state_path,
+            findings_path=findings_path,
+        )
+
+        if target:
+            sub = target
+        else:
+            # Auto-pick stalest sub
+            stale = scanner.get_stale_subs()
+            if not stale:
+                print("No stale subs to rescan.")
+                return
+            sub = stale[0]
+            # Try to get the display name from profile
+            try:
+                profile = get_profile(sub)
+                sub = profile.subreddit
+            except Exception:
+                pass
+
+        print(f"Rescanning r/{sub} (delta mode — only new posts since last scan)...")
+        result = scanner.rescan_sub(sub)
+        if result is None:
+            print("  Rescan blocked (not stale or safety gate triggered)")
+        elif output_json:
+            print(json.dumps(result.to_dict(), indent=2))
+        else:
+            if result.report.posts_fetched == 0:
+                print(f"  No new posts since last scan.")
+            else:
+                print(result.report.summary())
+                if result.needles:
+                    print(f"\n  NEEDLEs for review:")
+                    for i, p in enumerate(result.needles[:10], 1):
+                        print(f"    {i}. [{p['score']:4d}pts] {p['title'][:80]}")
+
+    elif cmd == "stale":
+        scanner = AutonomousScanner(
+            registry_path=registry_path,
+            kill_switch_path=kill_switch_path,
+            state_path=state_path,
+            findings_path=findings_path,
+        )
+        stale = scanner.get_stale_subs()
+        if stale:
+            print(f"Stale subs (>14 days since last scan):")
+            for s in stale:
+                print(f"  - {s}")
+        else:
+            print("No stale subs.")
 
     else:
         print(f"Unknown command: {cmd}")

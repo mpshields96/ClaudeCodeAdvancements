@@ -131,6 +131,7 @@ ClaudeCodeAdvancements/
 │   ├── journal.jsonl                # Append-only event log (auto-generated)
 │   ├── improvements.jsonl           # MT-10: Improvement proposal log (auto-generated)
 │   ├── SKILLBOOK.md                 # Distilled actionable strategies (YoYo-inspired)
+│   ├── validate_strategies.py        # Strategy validation loop (checks Skillbook against journal evidence)
 │   ├── trace_analyzer.py            # MT-7: Transcript JSONL pattern analyzer (RetryDetector, WasteDetector, etc.)
 │   ├── hooks/
 │   │   └── skillbook_inject.py      # UserPromptSubmit hook: injects top strategies into context
@@ -140,7 +141,8 @@ ClaudeCodeAdvancements/
 │       ├── test_self_learning.py    # 75 tests — all passing
 │       ├── test_trace_analyzer.py   # 50 tests — all passing
 │       ├── test_improver.py         # 44 tests — all passing
-│       └── test_skillbook_inject.py # 26 tests — all passing
+│       ├── test_skillbook_inject.py # 26 tests — all passing
+│       └── test_validate_strategies.py # 30 tests — all passing
 │
 ├── scripts/                         # Utility scripts (launcher, automation)
 │   └── kalshi-launch.sh             # Terminal.app dual-window Kalshi launcher
@@ -209,8 +211,12 @@ ClaudeCodeAdvancements/
 | `python3 reddit-intelligence/github_scanner.py queries` | Show GitHub search queries for CCA frontiers |
 | `python3 reddit-intelligence/repo_tester.py results` | Show repo test result log |
 | `python3 reddit-intelligence/repo_tester.py local <path>` | Test a local directory |
+| `python3 reddit-intelligence/autonomous_scanner.py rescan` | MT-14: Delta-rescan stale sub |
+| `python3 reddit-intelligence/autonomous_scanner.py stale` | Show subs due for rescan |
+| `python3 self-learning/validate_strategies.py` | Validate Skillbook strategies against evidence |
+| `python3 self-learning/validate_strategies.py --brief` | One-line validation summary |
 
-**Total:** 1364/1364 tests (32 suites). **Session start:** Run all 32 suites. If anything fails, fix before touching other files.
+**Total:** 1402/1402 tests (34 suites). **Session start:** Run all 34 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -333,18 +339,19 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | reddit-intelligence (reader) | `tests/test_reddit_reader.py` | 43 | All passing |
 | reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 44 | All passing |
 | reddit-intelligence (profiles) | `tests/test_profiles.py` | 49 | All passing |
-| reddit-intelligence (autonomous) | `tests/test_autonomous_scanner.py` | 54 | All passing |
+| reddit-intelligence (autonomous) | `tests/test_autonomous_scanner.py` | 73 | All passing |
 | reddit-intelligence (github) | `tests/test_github_scanner.py` | 45 | All passing |
 | reddit-intelligence (repo_tester) | `tests/test_repo_tester.py` | 51 | All passing |
 | self-learning | `tests/test_self_learning.py` | 75 | All passing |
 | self-learning (trace_analyzer) | `tests/test_trace_analyzer.py` | 50 | All passing |
 | self-learning (improver) | `tests/test_improver.py` | 44 | All passing |
 | self-learning (skillbook_inject) | `tests/test_skillbook_inject.py` | 26 | All passing |
+| self-learning (validate_strategies) | `tests/test_validate_strategies.py` | 30 | All passing |
 | usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
-| **Total** | | **1364** | **1364/1364** |
+| **Total** | | **1402** | **1402/1402** |
 
 ---
 

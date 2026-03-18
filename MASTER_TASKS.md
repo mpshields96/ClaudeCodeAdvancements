@@ -505,7 +505,12 @@ Phase 2 (Session 31):
 5. Validate: Re-scan r/ClaudeCode (last scanned Session 14). Do new posts surface new BUILD candidates?
 6. Automate: Wire into MT-9 autonomous pipeline so re-scans happen on a cadence
 
-**Status:** Not started. Depends on MT-6 (profiles) for infrastructure.
+**Status:** Phase 1 COMPLETE (Session 35). Delivered:
+- `rescan_sub()` method on AutonomousScanner: delta-scanning with timestamp filtering
+- `get_stale_subs()` helper for identifying overdue subs
+- CLI `rescan` (auto-pick or --target) and `stale` commands
+- 8 new tests (73 total autonomous scanner)
+- Phase 2: Run rescan on a real stale sub, validate delta filtering works. Phase 3: Wire into MT-9 autonomous pipeline.
 
 ---
 
