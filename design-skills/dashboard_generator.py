@@ -483,16 +483,16 @@ def cli_main(args: list = None):
 
 
 def _collect_project_data() -> DashboardData:
-    """Collect real CCA project data. Falls back to demo if files not found."""
+    """Collect real CCA project data from PROJECT_INDEX, MASTER_TASKS, SESSION_STATE."""
+    import re as _re
     project_root = str(Path(__file__).parent.parent)
     data = DashboardData()
 
-    # Try to read PROJECT_INDEX.md for module data
+    # ── Parse PROJECT_INDEX.md for modules ──
     index_path = os.path.join(project_root, "PROJECT_INDEX.md")
     if os.path.exists(index_path):
         with open(index_path) as f:
             content = f.read()
-        # Parse module table
         in_module_table = False
         for line in content.split("\n"):
             line = line.strip()
@@ -520,11 +520,57 @@ def _collect_project_data() -> DashboardData:
             elif in_module_table and not line.startswith("|"):
                 in_module_table = False
 
-    # Calculate total tests
-    total_tests = sum(m.tests for m in data.modules)
+        # Extract total test count from "Total: NNNN tests" line
+        total_match = _re.search(r"\*\*Total:\s*([\d,]+)\s*tests\s*\((\d+)\s*suites\)", content)
+        if total_match:
+            total_tests = int(total_match.group(1).replace(",", ""))
+            total_suites = int(total_match.group(2))
+        else:
+            total_tests = sum(m.tests for m in data.modules)
+            total_suites = len(data.modules)
+    else:
+        total_tests = sum(m.tests for m in data.modules)
+        total_suites = len(data.modules)
+
+    # ── Parse MASTER_TASKS.md priority table ──
+    mt_path = os.path.join(project_root, "MASTER_TASKS.md")
+    if os.path.exists(mt_path):
+        with open(mt_path) as f:
+            mt_content = f.read()
+        # Look for priority table rows: | rank | MT-N | name | base | ... | **score** | status |
+        for line in mt_content.split("\n"):
+            mt_match = _re.match(
+                r"\|\s*\d+\s*\|\s*(MT-\d+)\s*\|\s*([^|]+)\|\s*[\d.]+\s*\|.*\*\*([\d.]+)\*\*\s*\|\s*([^|]+)\|",
+                line,
+            )
+            if mt_match:
+                data.master_tasks.append(MasterTaskRow(
+                    id=mt_match.group(1).strip(),
+                    name=mt_match.group(2).strip(),
+                    score=float(mt_match.group(3)),
+                    status=mt_match.group(4).strip(),
+                ))
+
+    # ── Parse SESSION_STATE.md for session number ──
+    state_path = os.path.join(project_root, "SESSION_STATE.md")
+    if os.path.exists(state_path):
+        with open(state_path) as f:
+            state_content = f.read()
+        session_match = _re.search(r"Session\s+(\d+)", state_content)
+        if session_match:
+            data.session_number = int(session_match.group(1))
+
+    # ── Build metrics ──
+    complete_count = sum(1 for m in data.modules if m.status == "COMPLETE")
     data.metrics = [
-        MetricCard(label="Total Tests", value=str(total_tests), status="success"),
+        MetricCard(label="Total Tests", value=f"{total_tests:,}", status="success"),
+        MetricCard(label="Test Suites", value=str(total_suites), status="info"),
         MetricCard(label="Modules", value=str(len(data.modules)), status="info"),
+        MetricCard(
+            label="Complete",
+            value=f"{complete_count}/{len(data.modules)}",
+            status="success" if complete_count == len(data.modules) else "info",
+        ),
     ]
 
     return data
