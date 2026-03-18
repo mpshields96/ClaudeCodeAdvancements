@@ -3,10 +3,34 @@
 
 ---
 
-## Current State (as of Session 42 — 2026-03-18)
+## Current State (as of Session 43 — 2026-03-18)
 
-**Phase:** Session 42 COMPLETE (3 sub-sessions: A, B, C). Six MTs advanced in one chat. Tests: 1552/1552 passing (38 suites). Git: clean after final commit.
-**Next session starts at:** Run /cca-init. Priority per decay: (1) MT-14 (score 13.0 — needs stale subs to test, wait ~2 weeks). (2) MT-8 (score 10.0 cap — nearly solved by native Remote Control, config remaining). (3) MT-13 (score 8.0 cap — iOS dev, never touched). (4) MT-10 session 3/5 validation. (5) MT-9 deep-read r/ClaudeAI NEEDLEs.
+**Phase:** Session 43 IN PROGRESS (sub-sessions A+B complete, C pending). Tests: 1552/1552 passing (38 suites).
+**Next session starts at:** Continue with MT-10 session 4/5, then MT-13 research. Self-learning note: dedup stabilized, weakness gaps in 5 unexplored domains need proposals.
+
+---
+
+## What Was Done in Session 43A (2026-03-18)
+
+### MT-10 Phase 2: YoYo Self-Learning Validation (Session 3/5)
+- Analyzed 4 new transcripts (scores 75, 65, 60, 85 — avg 71.25)
+- Batch report across 37 total sessions: avg 71.5, median 75, min 15, max 100
+- Score distribution: 16 excellent, 12 good, 7 poor, 2 critical
+- 0 new proposals generated — dedup correctly preventing duplicates, system stabilizing
+- Top retry hotspot: PROJECT_INDEX.md causes retries in 68% of sessions (25/37)
+- SESSION_STATE.md retries in 43% of sessions (16/37)
+- Sentinel evolution: 0 mutations, 0 cross-pollinations, 6 weakness gaps (5 unexplored domains)
+- Avg waste rate: 33.3% across all sessions
+- Key finding: system has catalogued known patterns, needs expansion into non-self-learning domains
+
+### MT-9 Phase 4: Deep-Read r/ClaudeAI NEEDLEs
+- Fetched top 25 r/ClaudeAI posts (week), 19 classified as NEEDLE (76% — classifier too loose for r/ClaudeAI)
+- Manually triaged to 5 frontier-relevant, deep-read 4
+- 2 REFERENCE findings logged, 2 SKIP
+- Recon Tamagotchi (707pts): Rust+Ratatui tmux agent monitor. Top request = context window metric (exactly our F3). Validates MT-1, F3, F4, MT-8
+- 14 Years of Journals (1951pts): Pattern detection as killer feature. Month-by-month > dump-all. Privacy = non-negotiable. Validates F1 local-first approach
+- Vibe coding failures (7460pts): SKIP — meta discussion, no actionable intel
+- Claude interactive (754pts): SKIP — web chat artifacts, not CC
 
 ---
 
