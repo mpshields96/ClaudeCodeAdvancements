@@ -10,7 +10,7 @@
 # Strategies get DEMOTED (confidence down) when contradicted.
 # Strategies at confidence < 20 get ARCHIVED (moved to bottom).
 #
-# Updated: 2026-03-17 (Session 33)
+# Updated: 2026-03-18 (Session 43)
 
 ---
 
@@ -22,9 +22,9 @@
 - REFERENCE + SKIP = noise (useful context but no code ships)
 - **APF = (BUILD + ADAPT) / total findings * 100**
 
-### Current APF: 32.1%
-- BUILD: 19, ADAPT: 49, REFERENCE: 98, REFERENCE-PERSONAL: 13, SKIP: 32, HIGH-VALUE: 1 = 212 total
-- Actionable: 68 / 212 = **32.1%**
+### Current APF: 31.4%
+- BUILD: 19, ADAPT: 51, REFERENCE: 101, REFERENCE-PERSONAL: 14, SKIP: 36, HIGH-VALUE: 1 = 222 total
+- Actionable: 70 / 222 = **31.4%**
 - Target: **40% APF** (raise signal, cut noise)
 - Kalshi equivalent: APF is to CCA what win rate is to the trading bot
 
@@ -102,7 +102,19 @@
 - Source: Session 33 (YoYo review)
 - Evidence: YoYo's approach (recent=full, old=themes). Only one implementation seen. Needs validation against CCA's TTL approach.
 
-### S10: Dedicated role-agents beat general agents for visual output — Confidence: 35
+### S10: CLAUDE.md as router, not monolith — Confidence: 45
+**Directive:** "Keep CLAUDE.md as a lightweight index/router that points to focused skill/rule files. Load only what's needed for the current task. A monolithic CLAUDE.md burns early context where the model is smartest. The 80/20 rule: a good CLAUDE.md is the 80%, everything else is the 20%."
+- Source: Session 43 (harness setups thread, u/diystateofmind + u/bensyverson)
+- Evidence: u/diystateofmind: "I treat agents.md like an index/router instead of the rules file to reduce context — on Pro Max and never hit limits." u/bensyverson: "good CLAUDE.md is the 80/20 — last thing you want is harness sucking up early context where the model is smartest." u/Certain_Housing8987: regex-triggered rules have zero cognitive overhead vs skills (giant switch statement).
+- Last validated: Session 43
+
+### S11: Retrospective at 80% implementation — Confidence: 40
+**Directive:** "At ~80% through a complex implementation, pause and ask: 'knowing what we know now, what would we do differently if we refactored from scratch?' This surfaces architectural mistakes before they're cemented. Can be looped until an evaluator passes. Applies across all projects."
+- Source: Session 43 (harness setups thread, u/reliant-labs "Get-It-Right" loop)
+- Evidence: u/reliant-labs: "the best results I have is typically when 80% through and I ask what we'd do differently." Matches YoYo retrospective pattern. github.com/reliant-labs/get-it-right implements this as an automated loop.
+- Last validated: Session 43
+
+### S12: Dedicated role-agents beat general agents for visual output — Confidence: 35
 **Directive:** "For non-code outputs (diagrams, docs, marketing), use a dedicated agent with a role-specific system prompt rather than asking a general agent. Quality gap is significant."
 - Source: Session 33 (100K lines review — diagram agents)
 - Evidence: Single post. OP's UX + marketing agents produced polished infographics. N=1, needs more evidence.
@@ -120,12 +132,12 @@
 ### CCA Evolution Metrics
 | Metric | Session 14 | Session 23 | Session 33 | Session 35 | Trend |
 |--------|-----------|-----------|-----------|-----------|-------|
-| Total findings | 0 | ~90 | 212 | 212 | Stable |
-| APF % | 22% | 32% | 32.1% | 32.1% | Lever deployed (S3) |
-| Test suites | 8 | 20 | 30 | 32 | Growing |
-| Total tests | 283 | ~700 | 1259 | 1364 | +105 this session |
-| Active strategies | 0 | 0 | 10 | 10 | Stable |
-| Modules | 5 | 7 | 9+ | 10+ | Growing |
+| Total findings | 0 | ~90 | 212 | 222 | +10 S43 |
+| APF % | 22% | 32% | 32.1% | 31.4% | r/ClaudeAI SKIP dilution |
+| Test suites | 8 | 20 | 30 | 38 | +6 since S35 |
+| Total tests | 283 | ~700 | 1259 | 1552 | +188 since S35 |
+| Active strategies | 0 | 0 | 10 | 12 | +S10, S11 this session |
+| Modules | 5 | 7 | 9+ | 10+ | Stable |
 
 ### Next Evolution Targets
 1. **APF to 40%** — needle_ratio_cap DEPLOYED (S35). Next: raise min_score_threshold to 50
