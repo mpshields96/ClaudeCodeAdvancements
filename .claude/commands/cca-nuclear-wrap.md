@@ -316,3 +316,13 @@ Or: Run /cca-nuclear on a different subreddit for fresh signal.
 - Do not push to remote
 - End EVERY response with `Advancement tip: ...`
 - **NEVER expose** API keys, account balances, trade data, or financial info
+
+## CRITICAL: End-of-Wrap Behavior
+
+After outputting the final report/resume prompt, your wrap is COMPLETE.
+
+1. Output one final line: `Nuclear wrap complete. Waiting for instructions.`
+2. **STOP RESPONDING.** Do not output any further text.
+3. Do NOT say "done", "exit", "safe to close", "acknowledged", or any other sign-off.
+4. Do NOT respond to your own completion — there is no further step.
+5. If the user says nothing, say nothing. Wait silently for the next user message.

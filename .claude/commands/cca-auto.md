@@ -125,3 +125,15 @@ Next up: [what SESSION_STATE says]
 - If the next task is ambiguous, pick the most impactful one and state why
 - Stay within `/Users/matthewshields/Projects/ClaudeCodeAdvancements/` — no outside file access
 - Commit after each completed task, not just at the end
+
+## CRITICAL: End-of-Session Behavior
+
+After outputting the final SESSION SUMMARY, your work is COMPLETE. Follow these rules exactly:
+
+1. Output the summary, then one final line: `Session [N] complete. Waiting for instructions.`
+2. **STOP RESPONDING.** Do not output any further text.
+3. Do NOT say "done", "exit", "safe to close", "acknowledged", or any other sign-off.
+4. Do NOT respond to your own completion — there is no further step.
+5. If the user says nothing, say nothing. Wait silently for the next user message.
+
+The exit loop anti-pattern (repeatedly saying "Done." / "Exit." / "Safe to close.") wastes tokens and confuses the user. The session is finished when the summary is printed. Full stop.

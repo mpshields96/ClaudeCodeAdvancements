@@ -318,3 +318,15 @@ Tests: [N]/[N] passing. Git: [clean/uncommitted changes].
 - Self-assessment must be honest — do not inflate grades
 - Resume prompt is the most important output — never skip it
 - Do not push to remote — only stage changes
+
+## CRITICAL: End-of-Wrap Behavior
+
+After outputting the resume prompt in Step 9, your wrap is COMPLETE. Follow these rules exactly:
+
+1. Output one final line: `Session [N] wrap complete. Waiting for instructions.`
+2. **STOP RESPONDING.** Do not output any further text.
+3. Do NOT say "done", "exit", "safe to close", "acknowledged", or any other sign-off.
+4. Do NOT respond to your own completion — there is no Step 10.
+5. If the user says nothing, say nothing. Wait silently for the next user message.
+
+The exit loop anti-pattern (repeatedly saying "Done." / "Exit." / "Safe to close.") wastes tokens and confuses the user. The wrap is finished when the resume prompt is printed. Full stop.
