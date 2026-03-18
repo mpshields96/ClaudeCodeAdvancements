@@ -5,8 +5,8 @@
 
 ## Current State (as of Session 37 — 2026-03-17)
 
-**Phase:** Session 37 COMPLETE. Sentinel dialed to 5-10% (was 20%), MT-11 3 new GitHub repos evaluated (engram 1.5K, hooks-mastery 3.3K, multi-agent-coordination), scan limit in /cca-auto (max 3 consecutive scan sessions), MT-10 31-session trace analysis (avg score 70, PROJECT_INDEX.md 74% retry rate), context budget for wrap (stop at 60%), batch_report.py (13 tests). Tests: 1441 (was 1428, +13 batch_report).
-**Next session starts at:** Run /cca-init. Priority: (1) Build from trace data — reduce PROJECT_INDEX.md retry rate (caching or restructuring). (2) MT-12: Start academic paper research (Semantic Scholar API). (3) Implement safeexec-style path validation in Agent Guard (from BUILD queue). (4) Deep-read more NEEDLEs (102 unreviewed). (5) Fix PreToolUse:Bash hook error (outside CCA scope).
+**Phase:** Session 37 COMPLETE. Sentinel dialed to 5-10%, MT-11 3 GitHub repos evaluated, scan limit enforced, MT-10 31-session trace analysis, context budget for wrap, batch_report.py (13 tests), AG-7 path_validator.py (30 tests). Tests: 1471 (was 1428, +43).
+**Next session starts at:** Run /cca-init. Priority: (1) Reduce PROJECT_INDEX.md retry rate (74% of sessions — split or cache). (2) MT-12: Start academic paper research (Semantic Scholar API). (3) Wire path_validator into actual hooks.json. (4) Deep-read more NEEDLEs (102 unreviewed). (5) Fix PreToolUse:Bash hook error (outside CCA scope).
 
 ---
 
