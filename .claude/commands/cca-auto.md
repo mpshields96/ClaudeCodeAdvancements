@@ -29,12 +29,20 @@ Check for any captured todos:
 ls /Users/matthewshields/Projects/ClaudeCodeAdvancements/.planning/todos/ 2>/dev/null
 ```
 
+**SESSION ALLOCATION RULE (non-negotiable):**
+When running 3 sessions of work (typical /cca-auto marathon), allocate:
+- **1 session** on Kalshi/cross-chat work: bridge-sync, respond to POLYBOT_TO_CCA.md requests,
+  research academic papers for Kalshi, build tools for the bot, update KALSHI_INTEL.md
+- **2 sessions** on master-level CCA tasks: MT-10, MT-14, MT-17, frontier work, scanning
+Always run bridge-sync.sh FIRST to check for incoming Kalshi requests before picking tasks.
+
 **Priority order (with scan limit — build before scanning more):**
 1. Any explicitly stated "next task" in SESSION_STATE.md
-2. Any high-priority captured todos (from /gsd:add-todo)
-3. Next uncompleted frontier milestone (e.g., AG-3, USAGE-1)
-4. Master Tasks (MASTER_TASKS.md) — next incomplete MT by priority
-5. **Intelligence intake (ONLY if scan budget allows):**
+2. **Cross-chat bridge**: Run bridge-sync.sh, check CROSS_CHAT_INBOX.md + POLYBOT_TO_CCA.md for Kalshi requests
+3. Any high-priority captured todos (from /gsd:add-todo)
+4. Next uncompleted frontier milestone (e.g., AG-3, USAGE-1)
+5. Master Tasks (MASTER_TASKS.md) — next incomplete MT by priority
+6. **Intelligence intake (ONLY if scan budget allows):**
    - `/cca-nuclear-daily` — if no daily scan was done today
    - `/cca-nuclear-github` — if no GitHub scan was done this week
    - `/cca-nuclear autonomous` — if a sub is >7 days stale (check with `autonomous_scanner.py rank`)
