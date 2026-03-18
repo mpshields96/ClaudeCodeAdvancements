@@ -51,6 +51,10 @@ TOP_VENUES = {
 }
 
 # Domain search queries — curated for CCA and Kalshi relevance
+# Rate limit retry config
+MAX_RETRIES = 3
+RETRY_BASE_DELAY = 2  # seconds, doubles each retry
+
 DOMAIN_QUERIES = {
     "agents": [
         "AI agent self-improvement tool use",
@@ -77,6 +81,29 @@ DOMAIN_QUERIES = {
         "developer tools AI assistance IDE",
     ],
 }
+
+
+# === HTTP Helpers ===
+
+def _fetch_json(url, timeout=15):
+    """Fetch JSON from URL with retry on 429 rate limit.
+
+    Returns parsed JSON dict/list, or {"error": str} on failure.
+    """
+    for attempt in range(MAX_RETRIES):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "CCA-PaperScanner/1.0"})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < MAX_RETRIES - 1:
+                delay = RETRY_BASE_DELAY * (2 ** attempt)
+                time.sleep(delay)
+                continue
+            return {"error": str(e)}
+        except (urllib.error.URLError, json.JSONDecodeError) as e:
+            return {"error": str(e)}
+    return {"error": "Max retries exceeded"}
 
 
 # === Semantic Scholar Client ===
@@ -108,14 +135,10 @@ def search_semantic_scholar(query, year_range=None, min_citations=None,
         params["fieldsOfStudy"] = fields_of_study
 
     url = f"{SEMANTIC_SCHOLAR_BASE}/paper/search/bulk?{urllib.parse.urlencode(params)}"
-
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "CCA-PaperScanner/1.0"})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            return data.get("data", [])
-    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as e:
-        return [{"error": str(e)}]
+    data = _fetch_json(url)
+    if "error" in data:
+        return [data]
+    return data.get("data", [])
 
 
 def get_paper_details(paper_id):
@@ -128,13 +151,7 @@ def get_paper_details(paper_id):
         Paper dict with all fields, or error dict.
     """
     url = f"{SEMANTIC_SCHOLAR_BASE}/paper/{urllib.parse.quote(paper_id, safe='')}?fields={SS_FIELDS}"
-
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "CCA-PaperScanner/1.0"})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            return json.loads(resp.read().decode("utf-8"))
-    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError) as e:
-        return {"error": str(e)}
+    return _fetch_json(url)
 
 
 # === arXiv Client ===
@@ -460,8 +477,8 @@ def search_domain(domain, year_range="2024-", min_citations=None, limit=10):
             evaluation = evaluate_paper(paper)
             all_results.append((paper, evaluation))
 
-        # Rate limit: be a good citizen
-        time.sleep(0.5)
+        # Rate limit: be a good citizen (shared limit across all unauthenticated users)
+        time.sleep(1.5)
 
     # Sort by score descending
     all_results.sort(key=lambda x: x[1]["score"], reverse=True)

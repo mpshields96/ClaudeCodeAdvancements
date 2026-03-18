@@ -436,6 +436,64 @@ class TestSemanticScholarClient(unittest.TestCase):
 import urllib.error
 
 
+class TestFetchJsonRetry(unittest.TestCase):
+    """Test HTTP fetch with 429 retry logic."""
+
+    @patch("paper_scanner.time")
+    @patch("paper_scanner.urllib.request.urlopen")
+    def test_retry_on_429(self, mock_urlopen, mock_time):
+        mock_time.sleep = MagicMock()
+        # First call: 429, second call: success
+        mock_resp = MagicMock()
+        mock_resp.read.return_value = json.dumps({"title": "Success"}).encode()
+        mock_resp.__enter__ = lambda s: s
+        mock_resp.__exit__ = MagicMock()
+
+        mock_urlopen.side_effect = [
+            urllib.error.HTTPError("http://x", 429, "Rate Limited", {}, None),
+            mock_resp,
+        ]
+
+        result = paper_scanner._fetch_json("http://example.com/api")
+        self.assertEqual(result["title"], "Success")
+        self.assertEqual(mock_urlopen.call_count, 2)
+        mock_time.sleep.assert_called_once()
+
+    @patch("paper_scanner.time")
+    @patch("paper_scanner.urllib.request.urlopen")
+    def test_max_retries_exceeded(self, mock_urlopen, mock_time):
+        mock_time.sleep = MagicMock()
+        mock_urlopen.side_effect = urllib.error.HTTPError(
+            "http://x", 429, "Rate Limited", {}, None)
+
+        result = paper_scanner._fetch_json("http://example.com/api")
+        self.assertIn("error", result)
+        self.assertEqual(mock_urlopen.call_count, 3)  # MAX_RETRIES = 3
+
+    @patch("paper_scanner.urllib.request.urlopen")
+    def test_non_429_error_no_retry(self, mock_urlopen):
+        mock_urlopen.side_effect = urllib.error.HTTPError(
+            "http://x", 500, "Server Error", {}, None)
+
+        result = paper_scanner._fetch_json("http://example.com/api")
+        self.assertIn("error", result)
+        self.assertEqual(mock_urlopen.call_count, 1)  # No retry on 500
+
+    @patch("paper_scanner.time")
+    @patch("paper_scanner.urllib.request.urlopen")
+    def test_exponential_backoff_delays(self, mock_urlopen, mock_time):
+        mock_time.sleep = MagicMock()
+        mock_urlopen.side_effect = urllib.error.HTTPError(
+            "http://x", 429, "Rate Limited", {}, None)
+
+        paper_scanner._fetch_json("http://example.com/api")
+        # Should have slept with exponential delays: 2, 4
+        calls = mock_time.sleep.call_args_list
+        self.assertEqual(len(calls), 2)  # MAX_RETRIES-1 sleeps
+        self.assertEqual(calls[0][0][0], 2)   # RETRY_BASE_DELAY * 2^0
+        self.assertEqual(calls[1][0][0], 4)   # RETRY_BASE_DELAY * 2^1
+
+
 class TestArxivClient(unittest.TestCase):
     """Test arXiv API client with mocked HTTP."""
 
