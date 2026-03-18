@@ -3,6 +3,33 @@
 
 ---
 
+## Session 40 — 2026-03-18
+
+**What changed:**
+- `self-learning/research/MT17_DESIGN_RESEARCH.md` (NEW) — Full PDF library comparison: Typst recommended over WeasyPrint/ReportLab for professional report generation
+- `FINDINGS_LOG.md` — 3 new entries: Playwright CLI (407pts), Reddit MCP (62pts), Naksha v4 (25pts)
+- `generate_report_pdf.py` — Committed from previous session (the "atrocious" PDF generator)
+- `CCA_STATUS_REPORT_2026-03-17.txt` — Committed text report from previous session
+- `SESSION_STATE.md` — Updated with Session 40 summary and next priorities
+
+**Why:**
+- MT-17 research phase needed: Matthew's PDF report was poor quality, Typst solves this with professional typography
+- Paper deep-reads fulfill Session 39's priority #1 (top-scored papers from scanner)
+- r/ClaudeCode weekly scan keeps intelligence current
+
+**Papers deep-read:**
+- Deep Research Agents (80pts, 117 citations) — agent taxonomy, MCP integration patterns
+- HALO (75pts, 11 citations) — MCTS workflow optimization, 14.4% SOTA improvement
+- AutoP2C (75pts, 14 citations) — paper-to-code generation pipeline
+
+**Tests:** 1525/1525 passing (37 suites, no changes)
+
+**Lessons:**
+- Search for arXiv IDs before guessing — Semantic Scholar paper IDs != arXiv IDs
+- Typst is the right tool for CCA: JSON-native, single binary, millisecond compile
+
+---
+
 ## Session 39 — 2026-03-18
 
 **What changed:**

@@ -231,3 +231,12 @@
 
 ---
 
+### Semantic Scholar paper IDs are NOT arXiv IDs — Severity: 1 — Count: 1
+- **Anti-pattern:** Using Semantic Scholar paper hash as arXiv ID (e.g., fetching arxiv.org/abs/dc491963de5b...)
+- **Fix:** Search for the paper title on arXiv first (`WebSearch "paper title" arxiv`), then use the returned arXiv ID
+- **First seen:** 2026-03-18
+- **Last seen:** 2026-03-18
+- **Files:** paper_scanner.py workflow, any paper deep-read task
+
+---
+
