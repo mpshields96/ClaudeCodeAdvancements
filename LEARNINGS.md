@@ -274,6 +274,7 @@
 - **First seen:** 2026-03-17 (MT-10 batch analysis)
 - **Last seen:** 2026-03-18 (Session 43 batch report)
 - **Files:** PROJECT_INDEX.md, SESSION_STATE.md, any structured markdown table
+- **Promoted:** 2026-03-18 -> CLAUDE.md Known Gotchas
 
 ---
 

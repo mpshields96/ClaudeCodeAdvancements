@@ -226,7 +226,7 @@ Verified against Claude Code docs in Session 2 — treat as settled:
 for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done
 ```
 
-All 36 suites must show "OK" (1471 total) before touching any other file.
+All 38 suites must show "OK" (1552 total) before touching any other file.
 See `REFERENCE.md` for the full test-by-test breakdown.
 
 ---
@@ -237,4 +237,5 @@ See `REFERENCE.md` for the full test-by-test breakdown.
 - **Memory ID suffix:** 8 hex chars minimum. 3-char suffix produced collisions at 100 rapid-fire creates.
 - **Commit every task:** Never close a session with uncommitted deliverables. Sessions 7-15 accumulated 80+ untracked files. Commit when tests pass.
 - **Claude Island auto-hooks:** Do NOT launch while other CC sessions are active — it auto-installs global hooks into `~/.claude/hooks/`.
+- **PROJECT_INDEX.md Edit retries:** Always Read PROJECT_INDEX.md (and SESSION_STATE.md) before editing. These structured table files cause Edit failures in 68% of sessions (25/37) when the old_string doesn't exactly match. Read costs ~500 tokens, saves ~2000 in retry loops.
 - **GitHub repo:** `https://github.com/mpshields96/ClaudeCodeAdvancements`

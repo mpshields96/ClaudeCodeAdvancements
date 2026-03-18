@@ -700,3 +700,29 @@
 - PROJECT_INDEX.md retried in 74% of sessions — biggest single efficiency win. Next session should restructure or cache.
 
 ---
+
+## Session 43 — 2026-03-18
+
+**What changed:**
+- `self-learning/journal.jsonl` — MT-10 validation 3/5 event logged (4 transcripts, avg 71.25)
+- `FINDINGS_LOG.md` — 7 new findings: Recon Tamagotchi, 14yr journals, vibe coding, interactive, design skills, harness setups, TraderAlice
+- `design-skills/design-guide.md` — Added Rules Do/Don't, Quality Gates, external design references (typeui.sh)
+- `self-learning/SKILLBOOK.md` — 4 new strategies (S10-S13), APF updated to 31.4%, growth metrics through S43
+- `reddit-intelligence/profiles.py` — r/ClaudeAI needle_ratio_cap=0.4, tightened keywords
+- `LEARNINGS.md` — PROJECT_INDEX.md retry hotspot (severity 2), r/ClaudeAI classifier (severity 1)
+- `SESSION_STATE.md` — Full 5-sub-session documentation
+
+**Why:**
+- MT-10 Phase 2 validation (session 3/5) — measuring self-learning system effectiveness across 37 real sessions
+- MT-9 Phase 4 — deep-reading r/ClaudeAI NEEDLE posts for frontier intelligence
+- Matthew-requested reviews (3 URLs) — design skills, harness setups, trading bot
+- Self-learning expansion — encoding cross-project learnings as actionable strategies
+
+**Tests:** 1552/1552 passing (38 suites, no changes)
+
+**Lessons:**
+- Always Read source files before calling functions — wasted cycles guessing class/method names on improver.py, journal.py
+- r/ClaudeAI classifier at 76% NEEDLE is too loose — fixed with needle_ratio_cap=0.4
+- Cross-project strategies (S10-S13) strengthen the self-learning system beyond CCA-specific patterns
+
+---
