@@ -3,10 +3,45 @@
 
 ---
 
-## Current State (as of Session 43 — 2026-03-18)
+## Current State (as of Session 44 — 2026-03-18)
 
-**Phase:** Session 43 COMPLETE (5 sub-sessions: A, B, C, D, E). Tests: 1552/1552 passing (38 suites). Git: clean after final commit.
-**Next session starts at:** Run /cca-init. Priority per decay: (1) MT-10 session 4/5 validation. (2) MT-13 research (iOS dev, never touched, score 8.0 cap). (3) MT-8 remaining config. Self-learning: 14 active strategies in skillbook, r/ClaudeAI classifier now capped at 40%.
+**Phase:** Session 44 COMPLETE. Tests: 1552/1552 passing (38 suites). Git: clean after final commit.
+**Next session starts at:** Run /cca-init. Priority per decay: (1) MT-10 session 5/5 validation (FINAL). (2) MT-14 rescan stale subs (score 13.0, highest). (3) MT-17 Phase 2 slide templates. Matthew action: install Xcode 26.3 to unblock MT-13.
+
+---
+
+## What Was Done in Session 44 (2026-03-18)
+
+### MT-10 Phase 2: YoYo Self-Learning Validation (Session 4/5)
+- Analyzed 4 new transcripts (scores 90, 75, 90, 65 — avg 80.0, up from 71.5)
+- Batch report across 36 sessions: avg 70.8, median 75, min 15, max 100
+- Distribution: 15 excellent, 12 good, 7 poor, 2 critical
+- 1 new proposal generated (dedup working correctly, system stabilizing)
+- Sentinel evolution: 0 mutations, 0 cross-pollinations, 6 weakness gaps (same unexplored domains)
+- Validation logged to journal. One more session (5/5) to complete Phase 2.
+
+### MT-13: iOS/macOS Dev Research (COMPLETE)
+- Scope expanded: macOS apps added per Matthew's request (design, CCA tools, project enhancements)
+- Key discovery: Xcode 26.3 has native Claude Agent SDK integration (Feb 2026)
+- Mapped ecosystem: SwiftUI Agent Skill (twostraws), iOS Dev Guide (keskinonur), Blitz MCP submission tool, Context macOS app case study (20K LOC, 95% Claude-generated)
+- Scanned r/iOSProgramming, r/SwiftUI, r/macapps — no high-signal AI dev posts
+- BLOCKER: Matthew's machine has no Xcode installed (CLI tools only)
+- Research doc: research/MT-13_ios_dev_research.md
+- 6 findings logged to FINDINGS_LOG.md
+
+### MT-8: Scope Closure
+- Remaining config (always-on toggle, dev-start --name flags) requires files outside CCA scope
+- Marked as SOLVED in priority queue — Anthropic's native Remote Control covers the use case
+
+### r/ClaudeCode Intelligence (3 deep-reads)
+- Reddit MCP Buddy (92pts, 470 stars): Validates reddit research pattern. Top comment: MCP tools should provide natural language, not raw JSON dumps.
+- Claude Code humbles data engineer (105pts): Community consensus matches F2 spec system — can't one-shot, need CLAUDE.md + vertical slices + continuous testing.
+- 1M Context Window debate (12pts, 100% upvoted): Context drift still real even with 1M. GSD user (u/DevMoses) recommends framework and externalized state. Validates F3 context monitor.
+
+### Session Stats
+- 4 commits, 0 regressions
+- 9 findings logged (6 MT-13 + 3 r/ClaudeCode)
+- Tests: 1552/1552 passing throughout
 
 ---
 
