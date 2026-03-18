@@ -178,6 +178,42 @@ Key findings:
 3. Confidence gating: bot should only take bets above a confidence threshold, not every signal
 4. Overnight drift research: gap fades as a Kalshi strategy for SPY contracts
 
+### [2026-03-17] CRITICAL: Kalshi Calibration Paper (2026) — 292M Trades Analyzed
+**Source:** arxiv.org/abs/2602.19520 — "Decomposing Crowd Wisdom: Domain-Specific Calibration Dynamics"
+**Data:** 292 million trades across 327,000 binary contracts on Kalshi AND Polymarket
+**Relevance:** DIRECTLY addresses the Bayesian model the research chat is building
+
+Key findings:
+- Calibration decomposed into 4 components: horizon effect, domain bias, domain-by-horizon interaction, trade-size scale
+- These 4 factors explain 87.3% of calibration variance on Kalshi
+- **PERSISTENT UNDERCONFIDENCE in political markets** — prices cluster toward 50% regardless of true probability
+- Markets don't provide unbiased probability estimates — consumers MUST adjust for predictable biases
+- Bayesian hierarchical model confirmed with 96.3% posterior predictive coverage
+
+**Kalshi application:**
+1. The bot's Bayesian model should incorporate domain-specific calibration adjustments
+2. When market prices cluster near 50%, there's likely an exploitable underconfidence bias
+3. Trade-size affects calibration differently by domain — the bot should factor this in
+4. The paper provides the mathematical framework for exactly what the research chat is building
+
+### [2026-03-17] CRITICAL: Prediction Markets as Bayesian Inverse Problems (2026)
+**Source:** arxiv.org/abs/2601.18815 — "Uncertainty Quantification, Identifiability, and Information Gain"
+**Relevance:** Mathematical framework for extracting signal from Kalshi price-volume histories
+
+Key findings:
+- Formulates prediction markets as Bayesian inverse problem: infer binary outcome Y from price-volume
+- Works in log-odds space (same as logistic regression — natural for the bot's Bayesian model)
+- Models informed traders, uninformed traders, heavy-tailed noise, and adversarial/manipulative flow
+- Provides identifiability criteria: when can you actually extract signal vs when is inference ill-posed?
+- Explicit regime detection: informative-and-stable vs noise-dominated regimes
+- Stability diagnostics: how sensitive are your beliefs to price-volume perturbations?
+
+**Kalshi application:**
+1. The regime detection is directly useful — bot should only bet in "informative and stable" regimes
+2. The log-odds framework aligns with MAP estimation the research chat is building
+3. Trader type decomposition helps the bot understand when prices are driven by informed traders vs noise
+4. The stability diagnostics can serve as a confidence filter (don't bet when inference is unstable)
+
 ### [2026-03-17] Autonomous Scan: r/algotrading Full Results
 **Scan stats:** 100 posts fetched, 46 safe, 12 NEEDLE, 32 MAYBE, 2 HAY
 **Domain:** trading

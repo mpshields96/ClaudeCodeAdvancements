@@ -206,3 +206,6 @@
 [2026-03-17] REFERENCE [CCA/All] r/ClaudeCode autonomous scan — 150 fetched, 29 new (after dedup), 14 NEEDLE, 1 MAYBE, 14 HAY
 [2026-03-17] REFERENCE [CCA/All] r/Kalshi autonomous scan — 50 fetched, 50 new, 9 NEEDLE, 20 MAYBE, 21 HAY (mostly sports betting, low CCA signal)
 [2026-03-17] SKIP [Kalshi] "Day 6 of trying to make 30k month" — sports gambling, no technical strategy content — https://www.reddit.com/r/Kalshi/comments/1rn0zhc/
+
+[2026-03-17] REFERENCE-PERSONAL [Trading/Academic] Kalshi calibration dynamics — 292M trades, domain-specific bias, 87.3% variance explained — https://arxiv.org/abs/2602.19520
+[2026-03-17] REFERENCE-PERSONAL [Trading/Academic] Prediction markets as Bayesian inverse problems — regime detection, log-odds framework — https://arxiv.org/abs/2601.18815
