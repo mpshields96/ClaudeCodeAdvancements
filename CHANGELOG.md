@@ -3,6 +3,33 @@
 
 ---
 
+## Session 41 — 2026-03-18
+
+**What changed:**
+- `design-skills/` (NEW MODULE) — Professional visual output via Typst
+- `design-skills/report_generator.py` (NEW) — CCADataCollector + ReportRenderer + CLI, 21 tests
+- `design-skills/templates/cca-report.typ` (NEW) — Status report Typst template (metric cards, module table, master tasks, priorities)
+- `design-skills/design-guide.md` (NEW) — CCA visual language (8 colors, 7 typography levels, layout rules)
+- `design-skills/CLAUDE.md` (NEW) — Module rules and architecture decisions
+- `.claude/commands/cca-report.md` (NEW) — One-command PDF generation
+- `MASTER_TASKS.md` — MT-17 scope expanded to PDFs + presentations + graphics + websites
+- `PROJECT_INDEX.md` — Added design-skills module, updated test count
+- `SESSION_STATE.md` — Updated with Session 41 work
+
+**Why:**
+- Matthew's CCA status report PDF was "atrocious" — needed professional-quality output
+- MT-17 research (Session 40) selected Typst as the tool — this session built the implementation
+- Matthew directive: design capabilities should cover all visual formats, not just PDFs
+
+**Tests:** 1546/1546 passing (38 suites — +21 new tests, +1 new suite)
+
+**Lessons:**
+- Typst resolves `sys.inputs` paths relative to the template file — use `--root /` with absolute paths
+- Typst compiles in <100ms — fast enough for interactive report generation
+- TDD worked cleanly: 21 tests red -> green in one pass (only 1 integration fix needed)
+
+---
+
 ## Session 40 — 2026-03-18
 
 **What changed:**

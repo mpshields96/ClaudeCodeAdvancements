@@ -240,3 +240,12 @@
 
 ---
 
+### Typst resolves sys.inputs paths relative to template file — Severity: 1 — Count: 1
+- **Anti-pattern:** Passing `/tmp/data.json` via `--input data=/tmp/data.json` — Typst resolves as `<template_dir>/tmp/data.json`
+- **Fix:** Use `--root /` flag with absolute paths: `typst compile --root / --input data=/abs/path template.typ`
+- **First seen:** 2026-03-18
+- **Last seen:** 2026-03-18
+- **Files:** design-skills/report_generator.py, any Typst integration
+
+---
+
