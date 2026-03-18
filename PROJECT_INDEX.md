@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-17 (Session 38)
+# Last updated: 2026-03-18 (Session 45)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -32,11 +32,11 @@
 | Agent Guard | `agent-guard/` | AG-1-7 COMPLETE | 264 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 196 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 263 |
-| Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel | 314 |
+| Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer | 355 |
 | Design Skills | `design-skills/` | MT-17 Phase 1 COMPLETE | 21 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 research | 29 |
 
-**Total: 1552 tests (38 suites). All must pass before any work.**
+**Total: 1593 tests (39 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -97,6 +97,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `validate_strategies.py` — Skillbook validation
 - `paper_scanner.py` — MT-12: Academic paper discovery (Semantic Scholar + arXiv)
 - `hooks/skillbook_inject.py` — UserPromptSubmit strategy injection
+- `resurfacer.py` — MT-10 Phase 3B: Findings re-surfacing (matches FINDINGS_LOG to work context)
 
 ---
 

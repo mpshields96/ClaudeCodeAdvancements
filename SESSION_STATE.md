@@ -3,10 +3,37 @@
 
 ---
 
-## Current State (as of Session 44 — 2026-03-18)
+## Current State (as of Session 45 — 2026-03-18)
 
-**Phase:** Session 44 COMPLETE (2 auto cycles). Tests: 1552/1552 passing (38 suites). Git: clean after final commit.
-**Next session starts at:** Run /cca-init. Priority per decay: (1) MT-10 Phase 3: findings re-surfacing (Matthew directive). (2) MT-14 rescan remaining stale subs (4 never-scanned trading subs). (3) MT-17 Phase 2 slide templates. Matthew action: install Xcode 26.3 to unblock MT-13.
+**Phase:** Session 45 IN PROGRESS. Tests: 1593/1593 passing (39 suites). Git: clean.
+**What's done this session:**
+1. Fixed 3 failing mobile_approver tests (Bash moved to ALWAYS_ALLOW_TOOLS)
+2. MT-10 Phase 3B COMPLETE: `resurfacer.py` — findings re-surfacing module (41 tests). Parses FINDINGS_LOG.md, matches to work context (frontier/module/keywords/MT-task), surfaces relevant past reviews.
+3. Added r/AutoGPT + r/LangChain to scan profile registry
+4. MT-14: First scans of r/AutoGPT (low signal, 39 posts, max 8pts) + r/LangChain (better signal, 75 posts, 3 findings)
+5. Kalshi bridge status: KALSHI_INTEL.md has 15+ unprocessed items, zero consumed. Memory saved.
+
+**Next:** Continue scanning never-scanned subs. Update KALSHI_INTEL.md with any new trading intel. MT-17 Phase 2 slide templates. Matthew: install Xcode 26.3 to unblock MT-13.
+
+---
+
+## What Was Done in Session 45 (2026-03-18)
+
+### MT-10 Phase 3B: Findings Re-surfacing Module (COMPLETE)
+- `self-learning/resurfacer.py` — new module, 41 tests
+- Parses FINDINGS_LOG.md into Finding objects (date, verdict, tags, title, description, URL)
+- Matches findings to context: by frontier number, module name, keywords, MT task
+- Verdict priority sorting (BUILD > ADAPT > REFERENCE > SKIP)
+- CLI: `python3 self-learning/resurfacer.py FINDINGS_LOG.md --module context-monitor`
+- Validated against real data: 216 findings parsed, 44 for context-monitor, 38 for memory-system, 20 for trading
+
+### MT-14: First Scans of r/AutoGPT + r/LangChain
+- r/AutoGPT: 39 posts, very low engagement (max 8pts). Multi-agent coordination post validates agent-guard. Not worth regular scanning.
+- r/LangChain: 75 posts, better signal. 3 findings: Gaussian Splat memory, raw-Python-vs-frameworks consensus, agent coordination.
+- Both registered in scan_registry.json
+
+### Test Fixes
+- Fixed 3 mobile_approver integration tests: Bash moved to ALWAYS_ALLOW_TOOLS but tests still used Bash expecting approval flow. Changed to Write/Edit.
 
 ---
 
