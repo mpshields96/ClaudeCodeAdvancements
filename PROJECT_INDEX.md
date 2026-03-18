@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-18 (Session 46)
+# Last updated: 2026-03-18 (Session 48)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -28,15 +28,15 @@
 |--------|------|--------|-------|
 | Memory System | `memory-system/` | MEM-1-5 COMPLETE | 94 |
 | Spec System | `spec-system/` | SPEC-1-6 COMPLETE | 90 |
-| Context Monitor | `context-monitor/` | CTX-1-6 COMPLETE | 197 |
+| Context Monitor | `context-monitor/` | CTX-1-6 + Session Pacer | 232 |
 | Agent Guard | `agent-guard/` | AG-1-7 COMPLETE | 264 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 196 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 263 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer | 355 |
-| Design Skills | `design-skills/` | MT-17 Phase 2 COMPLETE | 46 |
+| Design Skills | `design-skills/` | MT-17 Phase 3 COMPLETE | 79 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 research | 29 |
 
-**Total: 1618 tests (40 suites). All must pass before any work.**
+**Total: 1686 tests (42 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -60,6 +60,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `hooks/auto_handoff.py` — Stop hook: blocks exit at critical
 - `hooks/compact_anchor.py` — PostToolUse anchor writes
 - `auto_wrap.py` — CTX-6: Automatic session wrap trigger
+- `session_pacer.py` — Session pacing for 2-3h autonomous runs (CONTINUE/WRAP_SOON/WRAP_NOW)
 
 **agent-guard/** — Multi-agent conflict prevention + safety
 - `hooks/mobile_approver.py` — AG-1: iPhone push approval (ntfy.sh)
@@ -89,6 +90,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `design-guide.md` — Visual language (colors, fonts, layout)
 - `templates/cca-report.typ` — Status report Typst template
 - `templates/cca-slides.typ` — Presentation slide Typst template
+- `dashboard_generator.py` — Self-contained HTML dashboard generator
 
 **self-learning/** — Cross-session improvement
 - `journal.py` — Structured event journal (JSONL)
@@ -130,4 +132,5 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | `/cca-scout` | Scan subreddits for high-signal posts |
 | `/cca-nuclear` | Autonomous deep-dive batch review |
 | `/cca-report` | Generate professional PDF status report |
+| `/cca-dashboard` | Generate interactive HTML dashboard |
 | `/browse-url <url>` | Read any URL (no analysis) |

@@ -582,7 +582,9 @@ Matthew's other projects. Same SwiftUI toolchain, same Xcode requirement.
 - `/cca-report` slash command for one-command PDF generation
 - Typst installed (`brew install typst`)
 - First real CCA status report generated (87.8 KB PDF)
-- Phase 2: Presentation/slide templates, broader design output formats
+- Phase 2 COMPLETE (Session 47): `slide_generator.py` + `/cca-slides` command (25 tests)
+- Phase 3 COMPLETE (Session 48): `dashboard_generator.py` + `/cca-dashboard` command — self-contained HTML dashboard with module grid, metric cards, master task table. 33 tests. XSS-safe, responsive.
+- Phase 4: Graphics/charts — SVG/PNG via Python (matplotlib/plotly) with CCA design language
 
 ---
 
@@ -677,7 +679,7 @@ Matthew's other projects. Same SwiftUI toolchain, same Xcode requirement.
 | 4 | MT-14 | Rescan stale subs | 6 | Session 46 | 0 | 1.0 | 0.0 | **6.0** | All 15 subs scanned. Next: tighten classifier for investing subs. |
 | 5 | MT-12 | Academic papers | 6 | Session 42 | 0 | 1.0 | 0.0 | **6.0** | Phase 2 VALIDATED: 40 papers scanned, 21 logged |
 | 6 | MT-8 | iPhone remote control | 5 | Session 44 | 0 | 0.5 | 0.0 | **5.0** | SOLVED by native Remote Control. Config is outside CCA scope. |
-| 7 | MT-17 | Design/reports | 6 | Session 46 | 0 | 1.0 | 0.0 | **6.0** | Phase 2 COMPLETE. Phase 3: HTML dashboard templates. |
+| 7 | MT-17 | Design/reports | 5 | Session 48 | 0 | 1.0 | 0.0 | **5.0** | Phase 3 COMPLETE. Phase 4: charts/graphics. |
 | 8 | MT-13 | iOS/macOS app development | 4 | Session 44 | 0 | 0.5 | 0.0 | **4.0** | Research COMPLETE. Blocked on Xcode install. |
 | 9 | MT-18 | Academic writing | 4 | NEVER | 3+ | 0.5 | 1.5 | **5.5** | Research phase |
 
