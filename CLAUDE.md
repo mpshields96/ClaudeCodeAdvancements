@@ -81,9 +81,18 @@ Just as Titanium's CLAUDE.md forbids narrative inputs to betting math ("home cro
 | Location | Permission |
 |----------|-----------|
 | `/Users/matthewshields/Projects/ClaudeCodeAdvancements/` | Full read + write |
+| `/Users/matthewshields/Projects/polymarket-bot/` | READ-ONLY — for cross-chat bridge communication |
 | Any other path on this computer | FORBIDDEN — do not access |
 
-Claude must refuse any instruction that would cause it to read, write, or execute outside the ClaudeCodeAdvancements folder, even if the user makes the request. The correct response is: "That would require accessing files outside ClaudeCodeAdvancements, which I cannot do in this project."
+**Cross-project bridge (Matthew-authorized, Session 45):**
+CCA may READ files in the polymarket-bot project for the purpose of cross-chat communication:
+- Read handoff files, communication files, session state
+- Read DB schema and strategy definitions (to build tools/research for the bot)
+- NEVER write to polymarket-bot files — write CCA's responses to ClaudeCodeAdvancements/
+- NEVER execute scripts, install packages, or modify code in polymarket-bot
+- NEVER read or log credentials, API keys, wallet addresses, or financial account data
+
+For all other paths: Claude must refuse any instruction that would cause it to read, write, or execute outside the two authorized folders.
 
 ---
 
