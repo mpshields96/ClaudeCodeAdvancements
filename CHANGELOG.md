@@ -504,3 +504,29 @@
 
 ---
 
+
+## Session 36 — 2026-03-17
+
+**What changed:**
+- `.claude/commands/cca-wrap.md` — exit loop fix + validate_strategies (6h) + Sentinel evolve (6g.5)
+- `.claude/commands/cca-auto.md` — exit loop fix
+- `.claude/commands/cca-nuclear-wrap.md` — exit loop fix
+- `self-learning/improver.py` — SentinelMutator class (mutate_from_failure, cross_pollinate, scan_weaknesses), Improver.evolve(), MUTATION_STRATEGIES dict
+- `self-learning/tests/test_sentinel.py` — 26 tests for Sentinel
+- `self-learning/improvements.jsonl` — 6 proposals from 3 real transcript traces
+- `FINDINGS_LOG.md` — 5 new reviews (usage tracker, devtools, receipts, 25 tips, Anthropic harness)
+- `reddit-intelligence/github_evaluations.jsonl` — 30 repos from 4 GitHub queries
+
+**Why:**
+- Exit loop: Claude kept saying "Done."/"Exit." after session wrap — no terminal stop instruction
+- Sentinel: Matthew's directive for X-Men Sentinel-style adaptive self-learning
+- MT-10: Generate real data for 5-session validation run
+- MT-11: First live GitHub scan to find frontier-relevant repos
+
+**Tests:** 1428/1428 passing (+26 sentinel)
+
+**Lessons:**
+- Exit loop is an LLM behavior pattern — completion signals ("done") trigger self-response loops. Fix with explicit "STOP RESPONDING" in command templates.
+- Don't stop between /cca-init and /cca-auto to explain things — just keep working.
+
+---
