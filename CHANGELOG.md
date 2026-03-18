@@ -3,6 +3,32 @@
 
 ---
 
+## Session 45 — 2026-03-18
+
+**What changed:**
+- MT-10 Phase 3B COMPLETE: `self-learning/resurfacer.py` — findings re-surfacing module (41 tests)
+- Cross-chat communication system: `CROSS_CHAT_INBOX.md` shared inbox + `bridge-sync.sh`
+- `CCA_TO_POLYBOT.md` — Universal bet analytics framework (5 verified academic tools: SPRT, Wilson CI, Brier, CUSUM, FLB)
+- `KALSHI_PRIME_DIRECTIVE.md` — permanent three-pillar cross-chat directive
+- `CLAUDE.md` updated: read-only access to polymarket-bot for cross-chat bridge
+- MT-14: Added r/AutoGPT + r/LangChain profiles, first scans (3 findings logged)
+- Fixed 3 failing mobile_approver tests (Bash moved to ALWAYS_ALLOW_TOOLS)
+
+**Why:**
+- Cross-chat bridge enables CCA to serve Kalshi research (Matthew directive: 1/3 sessions on Kalshi)
+- Resurfacer prevents knowledge loss — past reviews resurface when working on matching frontiers
+- KALSHI_PRIME_DIRECTIVE documents the three pillars: perfect engine, deep research, expand beyond
+
+**Tests:** 1593/1593 passing (39 suites, +41 new from resurfacer)
+**Commits:** 8
+
+**Lessons:**
+- Cross-chat communication needs a protocol — unstructured bridge files get ignored
+- Academic citation verification is non-negotiable (caught unverified references in first draft)
+- r/AutoGPT and r/LangChain are moderate-yield for CCA frontiers (agent patterns relevant)
+
+---
+
 ## Session 44 — 2026-03-18
 
 **What changed:**

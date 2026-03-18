@@ -278,6 +278,25 @@
 
 ---
 
+### Cross-chat bridge files need explicit delivery protocol — Severity: 1 — Count: 1
+- **Anti-pattern:** Writing a file to polymarket-bot/ and hoping the other chat reads it
+- **Fix:** Use a shared inbox pattern (CROSS_CHAT_INBOX.md) with explicit request/delivery status. CCA writes CCA_TO_POLYBOT.md, Kalshi chat writes POLYBOT_TO_CCA.md. Check inbox at session start.
+- **First seen:** 2026-03-18 (Session 45 — cross-chat system design)
+- **Last seen:** 2026-03-18
+- **Files:** CROSS_CHAT_INBOX.md, CCA_TO_POLYBOT.md, bridge-sync.sh
+
+---
+
+### Citation integrity — never cite unverified academic sources — Severity: 3 — Count: 1
+- **Anti-pattern:** Writing "Per Author (Year), X is true..." without fetching or verifying the paper
+- **Fix:** Verify via WebFetch (arXiv/DOI/SSRN URL) or WebSearch returning real title+authors+year. If unverified: write "[UNVERIFIED]" or drop entirely. Never present as fact.
+- **First seen:** 2026-03-18 (Session 45 — CCA_TO_POLYBOT.md first draft had unverified citations)
+- **Last seen:** 2026-03-18
+- **Files:** any research output, planning files, cross-chat deliverables
+- **Promoted:** 2026-03-18 -> `~/.claude/rules/learnings.md` (global)
+
+---
+
 ### r/ClaudeAI classifier too loose — 76% NEEDLE rate — Severity: 1 — Count: 1
 - **Anti-pattern:** nuclear_fetcher.classify_post returns NEEDLE for praise posts, memes, and off-topic discussions on r/ClaudeAI
 - **Fix:** Needs r/ClaudeAI-specific keyword tuning in profiles.py, similar to S3 needle_ratio_cap for r/investing
