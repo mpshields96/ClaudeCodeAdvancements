@@ -3,10 +3,36 @@
 
 ---
 
-## Current State (as of Session 39 — 2026-03-18)
+## Current State (as of Session 40 — 2026-03-18)
 
-**Phase:** Session 39 COMPLETE. 7 Reddit posts reviewed and logged. MT-17 (UI/Design), MT-18 (Academic Writing), MT-19 (Local LLM Fine-Tuning) created in MASTER_TASKS.md. Paper_scanner delay fixed (1.5s->3s). Paper_scanner run across all 4 domains — 20 papers logged. Tests: 1525/1525 passing. 4 commits.
-**Next session starts at:** Run /cca-init. Priority: (1) Deep-read top-scored papers (80pts agents papers, HALO 75pts). (2) Deep-read NEEDLEs (102 unreviewed). (3) Fix PreToolUse:Bash hook error (outside CCA scope). (4) Begin MT-17 research (design skills, PDF generation libraries).
+**Phase:** Session 40 COMPLETE. Deep-read 3 top papers (Deep Research Agents 80pts, HALO 75pts, AutoP2C 75pts). MT-17 research complete: Typst recommended for PDF generation. 3 new findings logged (Playwright CLI 407pts, Reddit MCP 62pts, Naksha v4 25pts). Tests: 1525/1525 passing. 1 commit.
+**Next session starts at:** Run /cca-init. Priority: (1) MT-17 Phase 1: install Typst, create design-skills/ module, first CCA report template. (2) Deep-read remaining NEEDLEs (~100 unreviewed). (3) Fix PreToolUse:Bash hook error (outside CCA scope). (4) Investigate garrytan/gstack and frank-for-you/franks-original-recipe repos from Playwright post comments.
+
+---
+
+## What Was Done in Session 40 (2026-03-18)
+
+### Paper Deep-Reads (3 papers from MT-12 scanner results)
+- "Deep Research Agents" (80/100, 117 citations, arXiv 2506.18096) — Agent taxonomy: static vs dynamic workflows, MCP integration patterns. Validates CCA autonomous scanner architecture. Gap identified: sequential execution inefficiency (could parallelize).
+- "HALO" (75/100, 11 citations, arXiv 2505.13516) — 3-level hierarchy (planning→role-design→inference) + MCTS for workflow optimization. 14.4% improvement over SOTA. ADAPT: MCTS task prioritization concept could optimize /cca-auto task ordering.
+- "AutoP2C" (75/100, 14 citations, has code) — LLM-based code repo generation from academic papers. Relevant to MT-12 paper→implementation pipeline.
+
+### MT-17 Research: PDF Generation Libraries
+- Evaluated 5 libraries: Typst, WeasyPrint, ReportLab, fpdf2, pdf-reports
+- **RECOMMENDATION: Typst** — millisecond compilation, single binary, built-in JSON/CSV parsers, professional typography, no Python deps
+- Documented full comparison in `self-learning/research/MT17_DESIGN_RESEARCH.md`
+- Implementation plan: 4 phases (foundation → report types → design excellence → autonomous UI scan)
+
+### Reddit Deep-Reads (3 posts from r/ClaudeCode this week)
+- Playwright CLI tip (407pts) — CLI > MCP for token efficiency. garrytan/gstack (YC CEO skills). frank-for-you/franks-original-recipe (memory with DAG + SQLite). Closed-loop visual testing pattern.
+- Reddit MCP server (62pts) — reddit-mcp-buddy (470 stars). Our reddit_reader.py already serves same purpose. Validates our approach.
+- Naksha/Design Studio v4 (25pts) — 38K lines, 206 files. Massively overengineered. Only novel pattern: Design Manager routing. CCA should stay minimal.
+
+### Files Created/Modified
+- `self-learning/research/MT17_DESIGN_RESEARCH.md` (NEW) — Full library comparison + implementation plan
+- `FINDINGS_LOG.md` — 3 new entries
+- `generate_report_pdf.py` — Committed previous session's report script
+- `CCA_STATUS_REPORT_2026-03-17.txt` — Committed previous session's text report
 
 ---
 
