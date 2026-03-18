@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-17 (Session 35)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-17 (Session 36)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -142,7 +142,8 @@ ClaudeCodeAdvancements/
 │       ├── test_trace_analyzer.py   # 50 tests — all passing
 │       ├── test_improver.py         # 44 tests — all passing
 │       ├── test_skillbook_inject.py # 26 tests — all passing
-│       └── test_validate_strategies.py # 30 tests — all passing
+│       ├── test_validate_strategies.py # 30 tests — all passing
+│       └── test_sentinel.py       # 26 tests — all passing (SentinelMutator)
 │
 ├── scripts/                         # Utility scripts (launcher, automation)
 │   └── kalshi-launch.sh             # Terminal.app dual-window Kalshi launcher
@@ -216,7 +217,7 @@ ClaudeCodeAdvancements/
 | `python3 self-learning/validate_strategies.py` | Validate Skillbook strategies against evidence |
 | `python3 self-learning/validate_strategies.py --brief` | One-line validation summary |
 
-**Total:** 1402/1402 tests (34 suites). **Session start:** Run all 34 suites. If anything fails, fix before touching other files.
+**Total:** 1428/1428 tests (35 suites). **Session start:** Run all 35 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -347,11 +348,12 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | self-learning (improver) | `tests/test_improver.py` | 44 | All passing |
 | self-learning (skillbook_inject) | `tests/test_skillbook_inject.py` | 26 | All passing |
 | self-learning (validate_strategies) | `tests/test_validate_strategies.py` | 30 | All passing |
+| self-learning (sentinel) | `tests/test_sentinel.py` | 26 | All passing |
 | usage-dashboard (counter) | `tests/test_usage_counter.py` | 44 | All passing |
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
-| **Total** | | **1402** | **1402/1402** |
+| **Total** | | **1428** | **1428/1428** |
 
 ---
 
@@ -431,4 +433,5 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 31 | 2026-03-17 | CTX-6 auto_wrap (19), MT-9 Phase 2 scan pipeline (54), Kalshi research bridge — 1244 tests |
 | 32 | 2026-03-17 | MT-11 Phase 2 GitHub API (45), 4 sub scans (vibecoding/polymarket/investing/LocalLLaMA), KALSHI_INTEL bridge — 1259 tests |
 | 33-34 | 2026-03-17 | Skillbook, APF metric, daily scan, GitHub nuclear, staleness priority — 1281 tests |
-| 35 | 2026-03-17 | MT-15 repo tester (51), needle_ratio_cap (6), Skillbook hook (26), /cca-auto multi-task — 1364 tests |
+| 35 | 2026-03-17 | MT-15 repo tester (51), needle_ratio_cap (6), Skillbook hook (26), /cca-auto multi-task — 1402 tests |
+| 36 | 2026-03-17 | Exit loop fix, SentinelMutator (26), validate_strategies wiring, MT-10 trace data — 1428 tests |

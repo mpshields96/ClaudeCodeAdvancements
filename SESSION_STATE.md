@@ -3,10 +3,43 @@
 
 ---
 
-## Current State (as of Session 35 — 2026-03-17)
+## Current State (as of Session 36 — 2026-03-17)
 
-**Phase:** Session 35 COMPLETE (2 commit batches). Batch 1: MT-15 repo tester (51 tests), needle_ratio_cap (6 tests), Skillbook hook (26 tests), /cca-auto multi-task. Batch 2: Strategy validation loop (30 tests), MT-14 rescan foundation (19 tests), Skillbook hook wired into settings.local.json. Tests: 1402 (was 1281). +121 tests across 2 commits.
-**Next session starts at:** Run /cca-init. Priority: (1) Run /cca-nuclear-daily live to review the 3 NEEDLEs found. (2) Run /cca-nuclear-github scan --all (first real GitHub scan). (3) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread). (4) MT-10 Phase 2: Run for 5 sessions, measure improvement rate. (5) Test rescan_sub() on a real stale subreddit. (6) Wire validate_strategies into /cca-wrap end-of-session ritual.
+**Phase:** Session 36 IN PROGRESS. Exit loop fix (3 commands), validate_strategies wired into /cca-wrap, SentinelMutator (26 tests), 3 NEEDLE deep-reads (usage tracker, claude-devtools, receipts), MT-10 trace data generation (3 transcripts → 6 proposals). Tests: 1428 (was 1402, +26 sentinel).
+**Next session starts at:** Run /cca-init. Priority: (1) MT-11 Phase 2: First live GitHub scan. (2) MT-10 Phase 2: Session 2 of 5 — run trace analysis, evolve cycle. (3) Deep-read more r/ClaudeCode NEEDLEs (104 unreviewed). (4) MT-12: Start academic paper research (Semantic Scholar API). (5) Fix PreToolUse:Bash hook error (outside CCA scope — needs separate session).
+
+---
+
+## What Was Done in Session 36 (2026-03-17)
+
+### Exit Loop Fix
+- Added "STOP RESPONDING" directives to `/cca-wrap`, `/cca-auto`, `/cca-nuclear-wrap`
+- Root cause: session-ending commands had no terminal stop instruction, causing Claude to loop "Done."/"Exit." responses
+
+### validate_strategies Wired into /cca-wrap
+- Added Step 6h to wrap ritual: runs `validate_strategies.py --brief` every session
+- Output: 8 confirmed, 0 contradicted, 2 unchanged (10 strategies total)
+
+### SentinelMutator Adaptive Mutation Engine (NEW)
+- `improver.py`: SentinelMutator class with 3 adaptive behaviors:
+  - `mutate_from_failure()`: rejected proposals spawn counter-strategies (capped at depth 3)
+  - `cross_pollinate()`: validated strategies adapted across domains
+  - `scan_weaknesses()`: proactive gap detection for uncovered domains
+- `Improver.evolve()`: orchestrates all 3 Sentinel steps per cycle
+- MUTATION_STRATEGIES dict: domain-specific alternative approaches (6 pattern types, 3 alternatives each)
+- 26 tests — all passing
+- Wired into /cca-wrap as Step 6g.5
+
+### 3 NEEDLE Deep-Reads
+- macOS usage tracker (912pts) → REFERENCE: crowded market, validates our usage_counter.py approach
+- claude-devtools (881pts) → REFERENCE: session log tailing, validates context-monitor approach. Novel: sub-agent tree viz
+- Paper receipts (1737pts) → REFERENCE: creative SessionEnd hook. QR code for session resume = clever idea
+
+### MT-10 Phase 2: Trace Data Generation (Session 1 of 5)
+- Ran trace_analyzer on 3 recent transcripts (sessions 34-36)
+- Scores: 75, 50, 75. Common: retry loops + 27-31% read waste
+- Generated 6 improvement proposals (all LOW risk)
+- Sentinel evolve: 0 mutations, 0 cross-pollinations, 6 weakness gaps identified
 
 ---
 
