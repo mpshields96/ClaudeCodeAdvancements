@@ -349,7 +349,7 @@ Phase 2 (Session 31):
 - 64 tests — all passing
 - E2E validation: Pipeline tested on 3 real CCA transcripts (scores 40-70), 6 proposals generated, QualityGate correctly passes balanced improvements and rejects gamed ones
 - Phase 2 COMPLETE (Sessions 42-44): 5/5 validation sessions, 36 transcripts analyzed. Avg score 70.8/100, median 75, improving trend (65->85->71->80->75). Distribution: 41% excellent, 33% good, 19% poor, 5% critical. 14 proposals generated (7 approved), dedup preventing explosion. QualityGate + Sentinel working correctly.
-- Phase 3: Graduate to Kalshi bot (requires cross-project work).
+- Phase 3: Two tracks: (A) Graduate self-learning to Kalshi bot (requires cross-project work). (B) **Findings re-surfacing** — automatically connect old FINDINGS_LOG entries to current work context (e.g., "in session 15 we reviewed X as REFERENCE for Y, now we're building Y"). Matthew directive (Session 44).
 
 ---
 

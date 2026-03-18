@@ -5,8 +5,8 @@
 
 ## Current State (as of Session 44 — 2026-03-18)
 
-**Phase:** Session 44 COMPLETE. Tests: 1552/1552 passing (38 suites). Git: clean after final commit.
-**Next session starts at:** Run /cca-init. Priority per decay: (1) MT-10 session 5/5 validation (FINAL). (2) MT-14 rescan stale subs (score 13.0, highest). (3) MT-17 Phase 2 slide templates. Matthew action: install Xcode 26.3 to unblock MT-13.
+**Phase:** Session 44 COMPLETE (2 auto cycles). Tests: 1552/1552 passing (38 suites). Git: clean after final commit.
+**Next session starts at:** Run /cca-init. Priority per decay: (1) MT-10 Phase 3: findings re-surfacing (Matthew directive). (2) MT-14 rescan remaining stale subs (4 never-scanned trading subs). (3) MT-17 Phase 2 slide templates. Matthew action: install Xcode 26.3 to unblock MT-13.
 
 ---
 
@@ -38,10 +38,35 @@
 - Claude Code humbles data engineer (105pts): Community consensus matches F2 spec system — can't one-shot, need CLAUDE.md + vertical slices + continuous testing.
 - 1M Context Window debate (12pts, 100% upvoted): Context drift still real even with 1M. GSD user (u/DevMoses) recommends framework and externalized state. Validates F3 context monitor.
 
-### Session Stats
-- 4 commits, 0 regressions
-- 9 findings logged (6 MT-13 + 3 r/ClaudeCode)
+### MT-10 Phase 2: FINAL Validation (Session 5/5) — PHASE COMPLETE
+- Analyzed 4 more transcripts (scores 65, 75, 95, 65 — avg 75.0)
+- FINAL batch across 36 sessions: avg 70.8, median 75, trend improving (65->85->71->80->75)
+- 14 total proposals (7 approved), dedup preventing explosion
+- Phase 2 marked COMPLETE in MASTER_TASKS.md
+- Phase 3 scope expanded: Kalshi graduation + findings re-surfacing (Matthew directive)
+
+### MT-14: First-Time Subreddit Scans
+- r/MachineLearning (15 posts): AIBuildAI validates MT-10 YoYo concept
+- r/webdev (25 posts): AI Copilot mystery dependencies validates AG-4 content scanning
+- r/iOSProgramming + r/SwiftUI scanned earlier for MT-13
+- 3 subs registered in scan registry (4 trading subs still unscanned)
+
+### Additional r/ClaudeCode Intelligence
+- Haiku usage patterns (25pts): Clean hierarchy — Opus orchestrates, Sonnet executes, Haiku validates. Validates F5 model routing.
+
+### Matthew's Questions Answered
+- Q1: Xcode is the only option for native iOS/macOS dev (downloading now)
+- Q2: CCA references old reviews for dedup but lacks auto-resurfacing (logged as MT-10 Phase 3B)
+- Q3: Yes, skills/commands use tiered token budgets (mandatory-skills-workflow.md)
+- Q4: Skills developer not worth it now — current skills stable. Logged for future.
+- Q5: (incomplete — Matthew typed "and 5)" but didn't finish)
+- Q6: CCA lacks systematic Anthropic changelog tracking. Gap logged.
+
+### Session Stats (Full Session 44)
+- 8 commits, 0 regressions
+- 14 findings logged (6 MT-13 + 5 r/ClaudeCode + 2 r/MachineLearning + 1 r/webdev)
 - Tests: 1552/1552 passing throughout
+- MT-10 Phase 2 COMPLETE (milestone achievement)
 
 ---
 
