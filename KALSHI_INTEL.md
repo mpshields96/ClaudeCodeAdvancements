@@ -146,7 +146,45 @@ _CCA: When you see OPEN requests, use `/cca-nuclear autonomous --domain trading`
 
 _CCA appends new findings here. Kalshi Research processes them and moves to "Processed Intel" below._
 
-(No new unprocessed intel at this time — run `/cca-nuclear autonomous --domain trading` to generate)
+### [2026-03-17] Mean Reversion with IBS Filter — Kalshi-Applicable Pattern
+**Source:** r/algotrading (219pts, 99 comments) — https://www.reddit.com/r/algotrading/comments/1rjvxjy/
+**Relevance:** The IBS (Internal Bar Strength) concept — detecting when price closes in bottom 30% of daily range — maps to detecting "oversold" event markets on Kalshi where probability pricing has temporarily dipped below fair value.
+
+Key findings:
+- Entry: `close < 10d high - 2.5 * ATR` AND `IBS < 0.3` (close near daily low = weakness)
+- Exit: `close > yesterday's high` (simple reversion confirmation)
+- 70-75% win rate across SPY/QQQ/AAPL over 20 years, 2.0+ profit factor
+- Only in market 16-25% of the time — capital efficient, fits Kalshi's selective sniper approach
+- Best comment: sentiment filter (enter only when social media is unusually bearish) cut entries 30% but disproportionately removed losers
+- Criticism: Sharpe 0.46, avg loss > avg profit — but 70% win rate compensates
+
+**Kalshi application:** IBS-like indicators for event market contracts. When a YES contract drops to near its session low AND is in a pullback from recent highs, mean reversion probability increases. The "sentiment filter" idea is directly applicable — enter only when sentiment is oversold relative to actual probability.
+
+### [2026-03-17] Pre-Market ML for Intraday Direction Prediction
+**Source:** r/algotrading (199pts, 172 comments) — https://www.reddit.com/r/algotrading/comments/1rrbdx5/
+**Relevance:** Pre-market feature engineering for predicting SPY direction. Kalshi has SPY intraday contracts.
+
+Key findings:
+- Features from 4:00-9:30 AM window only (pre-market volume, price action)
+- Three ML classifiers across different time horizons
+- Validated with Combinatorial Purged Cross-Validation (CPCV) — proper financial ML validation
+- Important insight: "daytime returns on average are basically zero, all real money is made overnight" (academic backing)
+- Confidence threshold gating: hides prediction below certain confidence to avoid anchoring bias
+- Built with Claude/Cursor (vibecoded) — production-quality despite AI-assisted development
+
+**Kalshi application:**
+1. Pre-market features for SPY hourly contracts — the 4:00-9:30 window has genuine signal
+2. CPCV validation method should be adopted for any Kalshi ML models (prevents lookahead bias)
+3. Confidence gating: bot should only take bets above a confidence threshold, not every signal
+4. Overnight drift research: gap fades as a Kalshi strategy for SPY contracts
+
+### [2026-03-17] Autonomous Scan: r/algotrading Full Results
+**Scan stats:** 100 posts fetched, 46 safe, 12 NEEDLE, 32 MAYBE, 2 HAY
+**Domain:** trading
+**Notable other NEEDLEs not yet deep-read:**
+- "I reverse-engineered the IB Gateway and rebuilt it in Rust for low latency" (176pts)
+- "I backtested a 400K views YouTube trading strategy (BRUTAL results)" (403pts) — backtesting methodology
+- "I ADMIT IT. I OVERFIT. I HAVE SELECTION BIAS." (515pts) — overfitting awareness (important for Bayesian model)
 
 ---
 
