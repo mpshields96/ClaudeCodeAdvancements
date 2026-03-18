@@ -46,5 +46,17 @@
     "posts_scanned": 25,
     "builds": 0,
     "adapts": 0
+  },
+  "autogpt": {
+    "last_scan": "2026-03-18T21:44:11.164290+00:00",
+    "posts_scanned": 39,
+    "builds": 0,
+    "adapts": 0
+  },
+  "langchain": {
+    "last_scan": "2026-03-18T21:44:11.165076+00:00",
+    "posts_scanned": 75,
+    "builds": 0,
+    "adapts": 0
   }
 }
