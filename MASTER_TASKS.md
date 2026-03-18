@@ -474,7 +474,19 @@ Phase 2 (Session 31):
 5. Validate: Build a real micro-app (Kalshi dashboard read-only view). Deploy to simulator. Screenshot.
 6. Ship: Deploy to Matthew's iPhone via TestFlight or direct install.
 
-**Status:** Not started. Needs Xcode + environment verification + Reddit/GitHub research.
+**Scope Expansion (Session 44):** Matthew added macOS app development. Native macOS
+apps benefit CCA directly (session monitors, design previews, launcher UIs) and
+Matthew's other projects. Same SwiftUI toolchain, same Xcode requirement.
+
+**Status:** Research COMPLETE (Session 44). Key findings:
+- Xcode 26.3 has native Claude Agent SDK integration (agentic coding in IDE)
+- SwiftUI Agent Skill (twostraws) addresses LLM SwiftUI mistakes — MIT licensed
+- Claude Code iOS Dev Guide (keskinonur) — PRD-driven workflow template
+- Context macOS app shipped 20K LOC, 95% Claude-generated — proves viability
+- Blitz (Apache 2.0) — MCP-based App Store submission automation
+- BLOCKER: Matthew's machine has no Xcode installed (only CLI tools)
+- Research doc: `research/MT-13_ios_dev_research.md`
+- Next: Matthew installs Xcode, then CCA sets up template + skills + XcodeBuildMCP
 
 ---
 
@@ -665,7 +677,7 @@ Phase 2 (Session 31):
 | 5 | MT-12 | Academic papers | 6 | Session 42 | 0 | 1.0 | 0.0 | **6.0** | Phase 2 VALIDATED: 40 papers scanned, 21 logged |
 | 6 | MT-8 | iPhone remote control | 5 | Session 42 | 0 | 0.5 | 0.0 | **5.0** | MOSTLY SOLVED by native Remote Control. Config remaining. |
 | 7 | MT-17 | Design/reports | 6 | Session 41 | 1 | 1.0 | 1.0 | **7.0** | Phase 2: slide templates |
-| 8 | MT-13 | iOS app development | 4 | NEVER | 17+ | 0.5 | 4.0 | **8.0** (cap) | Research phase |
+| 8 | MT-13 | iOS/macOS app development | 4 | Session 44 | 0 | 0.5 | 0.0 | **4.0** | Research COMPLETE. Blocked on Xcode install. |
 | 9 | MT-18 | Academic writing | 4 | NEVER | 3+ | 0.5 | 1.5 | **5.5** | Research phase |
 
 ### Blocked / External (no scoring — cannot be worked)
