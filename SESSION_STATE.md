@@ -3,10 +3,10 @@
 
 ---
 
-## Current State (as of Session 42A — 2026-03-18)
+## Current State (as of Session 42B — 2026-03-18)
 
-**Phase:** Session 42A COMPLETE. Built MT priority decay scoring system. MT-10 Phase 2 validation session 1/5 (trace analysis on Sessions 40-41, 5 proposals generated, Sentinel found 6 domain gaps). MT-9 Phase 3 supervised trial (r/ClaudeAI autonomous scan: 25 posts, 16 NEEDLEs). Tests: 1552/1552 passing (38 suites).
-**Next session starts at:** Session 42B. Priority per decay scores: (1) MT-11 Phase 2: live GitHub API integration (score 14.0). (2) MT-9: deep-read r/ClaudeAI NEEDLEs. (3) MT-12 Phase 2: multi-domain paper scan.
+**Phase:** Session 42B COMPLETE. MT-11 Phase 2 validated (live GitHub API: 30+ repos evaluated across 4 queries, garrytan/gstack scored 72/100, kalshi-ai-trading-bot scored 88/100). MT-12 Phase 2 validated (paper scanner across agents + prediction domains: 40 papers, top find is PredictionMarketBench).
+**Next session starts at:** Session 42C. Recalculated priority scores: (1) MT-8 (iPhone remote, score 10.0 cap, NEVER touched). (2) MT-14 (rescan, 13.0 — but still no stale subs). (3) MT-10 session 2/5 validation. (4) MT-9 deep-read r/ClaudeAI NEEDLEs.
 
 ---
 
@@ -39,6 +39,22 @@
 ### Memory Updates
 - Saved 5 new feedback memories: MT decay scoring, ADHD idea capture, advancement tip autonomy, process improvements welcome, chat session capacity
 - Updated MEMORY.md index
+
+---
+
+## What Was Done in Session 42B (2026-03-18)
+
+### MT-11 Phase 2: Live GitHub API Validated
+- Ran live GitHub search + evaluate pipeline across 4 queries
+- 30+ repos evaluated, 97 total in evaluation log
+- Key finds: garrytan/gstack (23K stars, 72/100), ryanfrigo/kalshi-ai-trading-bot (210 stars, 88/100), agentic-box/memora (322 stars, 88/100 — memory system), modelcontextprotocol/servers (81K stars, 83/100)
+- Pipeline: search → evaluate → dedup → log all working end-to-end
+
+### MT-12 Phase 2: Multi-Domain Paper Scan Validated
+- Ran paper scanner on agents domain (20 papers) and prediction domain (20 papers)
+- 21 total logged to papers.jsonl, 16 scored IMPLEMENT
+- Top finds: "LLM Reasoning to Autonomous AI Agents" (117 citations, score 80), "PredictionMarketBench" (SWE-bench for prediction market backtesting — directly relevant to Kalshi)
+- Average paper score: 67.1/100
 
 ---
 
