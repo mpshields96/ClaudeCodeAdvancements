@@ -3,10 +3,52 @@
 
 ---
 
-## Current State (as of Session 37 — 2026-03-17)
+## Current State (as of Session 38 — 2026-03-17)
 
-**Phase:** Session 37 COMPLETE. Sentinel dialed to 5-10%, MT-11 3 GitHub repos evaluated, scan limit enforced, MT-10 31-session trace analysis, context budget for wrap, batch_report.py (13 tests), AG-7 path_validator.py (30 tests). Tests: 1471 (was 1428, +43).
-**Next session starts at:** Run /cca-init. Priority: (1) Reduce PROJECT_INDEX.md retry rate (74% of sessions — split or cache). (2) MT-12: Start academic paper research (Semantic Scholar API). (3) Wire path_validator into actual hooks.json. (4) Deep-read more NEEDLEs (102 unreviewed). (5) Fix PreToolUse:Bash hook error (outside CCA scope).
+**Phase:** Session 38 IN PROGRESS. AG-7 path_validator wired into live hooks. PROJECT_INDEX.md trimmed 72% (441->122 lines). REFERENCE.md created. MT-12 paper_scanner.py built (50 tests). Tests: 1521 (was 1471, +50).
+**Next:** (1) Run paper_scanner on live Semantic Scholar API (validate against real data). (2) Deep-read more NEEDLEs (102 unreviewed). (3) Fix PreToolUse:Bash hook error (outside CCA scope).
+
+---
+
+## What Was Done in Session 38 (2026-03-17)
+
+### AG-7 path_validator Wired into Live Hooks
+- Added `agent-guard/path_validator.py` to PreToolUse global matcher in `settings.local.json`
+- Verified: blocks /etc writes, curl|bash commands; allows in-project writes; ignores Read tool
+- Fixed SyntaxWarning from invalid escape in docstring (`F:\)` -> `F:\\)`)
+
+### MT-12 paper_scanner.py (NEW)
+- Academic paper discovery and evaluation via Semantic Scholar + arXiv APIs
+- Stdlib only (urllib, json, xml) — no external dependencies
+- 4 CCA-relevant domains: agents, prediction, statistics, interaction
+- Paper evaluation scoring: citations (25pts) + venue quality (25pts) + domain relevance (20pts) + recency (15pts) + open access/code (15pts)
+- JSONL logging to `self-learning/research/papers.jsonl`
+- CLI: `search`, `domain`, `evaluate`, `log`, `stats`
+- 50 tests — all passing
+
+### PROJECT_INDEX.md Retry Rate Fix
+- Trimmed from 441 lines / 28KB to 122 lines / 5.5KB (72% line reduction, 80% byte reduction)
+- Created `REFERENCE.md` for detailed API docs, schemas, test summary, architecture decisions, session history
+- Removed: Entry Points table, Core Module APIs, Memory Schema, Hook Architecture, Test Summary table, Key Architecture Decisions, Session History, Session Resume Checklist
+- Added: Module Map table, Key Files Per Module (compact), Live Hooks table
+- Updated CLAUDE.md test commands section (was listing 8 suites / 283 tests; now 36 suites / 1471)
+
+---
+
+## What Was Done in Session 37 (2026-03-17)
+
+### batch_report.py (MT-10)
+- Aggregate trace health across sessions (score distribution, retry hotspots)
+- 13 tests — all passing
+
+### AG-7 path_validator.py
+- Dangerous path + command detection (traversal, rm -rf, dd, curl|bash)
+- 30 tests — all passing
+- Not yet wired into hooks (done in Session 38)
+
+### Other
+- Sentinel dialed to 5-10%, scan limit enforced
+- 31-session trace analysis (PROJECT_INDEX.md 74% retry rate identified)
 
 ---
 

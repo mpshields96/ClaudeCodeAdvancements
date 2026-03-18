@@ -7,7 +7,7 @@ Catches:
 - Path traversal attacks (../../etc/passwd)
 - Destructive shell commands (rm -rf /, dd, mkfs, chmod on system files)
 - Pipe-to-bash patterns (curl | bash)
-- Drive-wiping commands (rmdir /s /q F:\)
+- Drive-wiping commands (rmdir /s /q F:\\)
 
 Levels:
 - BLOCK: definitely dangerous, deny the operation

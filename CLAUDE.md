@@ -223,17 +223,11 @@ Verified against Claude Code docs in Session 2 — treat as settled:
 ## Test Commands (run before any session work)
 
 ```bash
-python3 memory-system/tests/test_memory.py         # 37 tests
-python3 memory-system/tests/test_mcp_server.py     # 29 tests
-python3 spec-system/tests/test_spec.py             # 26 tests
-python3 research/tests/test_reddit_scout.py        # 29 tests
-python3 agent-guard/tests/test_mobile_approver.py  # 36 tests
-python3 context-monitor/tests/test_meter.py        # 62 tests
-python3 context-monitor/tests/test_alert.py        # 40 tests
-python3 context-monitor/tests/test_statusline.py   # 24 tests
+for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done
 ```
 
-All eight must show "OK" (283 total) before touching any other file.
+All 36 suites must show "OK" (1471 total) before touching any other file.
+See `REFERENCE.md` for the full test-by-test breakdown.
 
 ---
 
