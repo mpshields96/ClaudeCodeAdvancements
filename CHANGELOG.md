@@ -3,6 +3,44 @@
 
 ---
 
+## Session 38 — 2026-03-17
+
+**What changed:**
+- `agent-guard/path_validator.py` — Wired into live PreToolUse hooks (settings.local.json). Blocks system dir writes, destructive commands, path traversal. Fixed SyntaxWarning.
+- `PROJECT_INDEX.md` — Trimmed 72% (441->122 lines, 28KB->5.5KB). Addresses 74% retry rate from trace analysis.
+- `REFERENCE.md` — NEW: detailed API docs, test summary, architecture decisions, session history (moved from PROJECT_INDEX)
+- `self-learning/paper_scanner.py` — NEW: MT-12 academic paper discovery. Semantic Scholar + arXiv APIs, 4 CCA domains, evaluation scoring, JSONL logging, CLI. 54 tests.
+- `self-learning/research/papers.jsonl` — NEW: first paper logged (Agent0, 69/100 IMPLEMENT)
+- `.claude/commands/cca-status.md` — NEW: /cca-status nuclear-level project overview command
+- `.claude/commands/cca-auto.md` — Marathon mode for 2-hour autonomous sessions
+- `CLAUDE.md` — Updated test commands section (was listing 8 suites/283 tests, now 37 suites/1525)
+
+**Why:**
+- path_validator was built in S37 but not wired — now live
+- PROJECT_INDEX was the #1 retry hotspot (74% of sessions) — dramatic trim needed
+- MT-12 academic paper integration was next on the roadmap
+- Matthew requested nuclear overview command and 2-hour autonomous capability
+
+**Tests:** 1525/1525 passing (was 1471, +54)
+
+**Lessons:**
+- Semantic Scholar shared rate limit is aggressive — 429 after rapid queries even with 0.5s delay. Need 1.5-3s between queries.
+- macOS grep doesn't support -P flag — use awk/sed instead for Perl regex patterns
+
+---
+
+## Session 37 — 2026-03-17
+
+**What changed:**
+- `self-learning/batch_report.py` — NEW: Aggregate trace health across sessions (score dist, retry hotspots). 13 tests.
+- `agent-guard/path_validator.py` — NEW: Dangerous path + command detection (traversal, rm -rf, dd, curl|bash). 30 tests.
+- Sentinel dialed to 5-10%, scan limit enforced
+- 31-session trace analysis: identified PROJECT_INDEX.md 74% retry rate
+
+**Tests:** 1471/1471 passing (was 1428, +43)
+
+---
+
 ## Session 29 — 2026-03-17
 
 **What changed:**

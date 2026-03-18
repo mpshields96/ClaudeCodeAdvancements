@@ -26,6 +26,10 @@
           {
             "type": "command",
             "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/usage-dashboard/hooks/cost_alert.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/agent-guard/path_validator.py"
           }
         ]
       },
@@ -46,6 +50,10 @@
           {
             "type": "command",
             "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/spec-system/hooks/skill_activator.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/self-learning/hooks/skillbook_inject.py"
           }
         ]
       }

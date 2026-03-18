@@ -5,8 +5,8 @@
 
 ## Current State (as of Session 38 — 2026-03-17)
 
-**Phase:** Session 38 IN PROGRESS. AG-7 path_validator wired into live hooks. PROJECT_INDEX.md trimmed 72% (441->122 lines). REFERENCE.md created. MT-12 paper_scanner.py built (50 tests). Tests: 1521 (was 1471, +50).
-**Next:** (1) Run paper_scanner on live Semantic Scholar API (validate against real data). (2) Deep-read more NEEDLEs (102 unreviewed). (3) Fix PreToolUse:Bash hook error (outside CCA scope).
+**Phase:** Session 38 COMPLETE. AG-7 path_validator LIVE in hooks. PROJECT_INDEX.md trimmed 72%. REFERENCE.md + /cca-status created. MT-12 paper_scanner.py built + live validated (54 tests). Marathon mode added to /cca-auto. Tests: 1525 (was 1471, +54).
+**Next session starts at:** Run /cca-init. Priority: (1) Deep-read more NEEDLEs (102 unreviewed). (2) Run paper_scanner across all 4 domains, log top papers. (3) Fix PreToolUse:Bash hook error (outside CCA scope). (4) Increase paper_scanner delay to 3s between queries (429 rate limit hit at 1.5s).
 
 ---
 
