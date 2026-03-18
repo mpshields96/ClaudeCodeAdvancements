@@ -3,10 +3,25 @@
 
 ---
 
-## Current State (as of Session 30 — 2026-03-17)
+## Current State (as of Session 31 — 2026-03-17)
 
-**Phase:** Session 30 IN PROGRESS. MT-9 Phase 1, MT-11 Phase 1, AG-6 session guard, KALSHI_INTEL bridge all shipped. 29 suites, 1188 total tests, all passing.
+**Phase:** Session 31 IN PROGRESS. CTX-6 auto_wrap.py committed (recovered from interrupted session). 30 suites, 1227 total tests, all passing.
 **Next session starts at:** Run /cca-init. Priority: (1) MT-9 Phase 2 — wire autonomous scanner into /cca-nuclear --autonomous. (2) MT-11 Phase 2 — live GitHub API integration. (3) Scan never-scanned subreddits. (4) MT-10 Phase 2 — run improver for 5 sessions.
+
+---
+
+## What Was Done in Session 31 (2026-03-17)
+
+### CTX-6: auto_wrap.py — Recovered from Interrupted Session
+- `context-monitor/auto_wrap.py` — Automatic session wrap-up trigger
+- Monitors context health zone, compaction count, and token ceiling
+- CLI interface: check/status/compact/reset
+- 19 tests — all passing
+- Committed + updated all docs
+
+### Housekeeping
+- Committed 10 cross-project self-learning journal entries from Kalshi bot sessions
+- Test count updated: 1188 → 1227 (30 suites)
 
 ---
 
