@@ -32,20 +32,41 @@ def fetch_json(url):
         return json.loads(r.read().decode("utf-8"))
 
 
-def fetch_top_posts(subreddit, limit=150, timeframe="year"):
-    """
-    Paginate through /top?t=<timeframe> collecting post metadata.
-    Returns list of dicts sorted by score descending.
-    """
+def _parse_posts(children, subreddit):
+    """Parse Reddit API children into post dicts."""
+    posts = []
+    for item in children:
+        d = item.get("data", {})
+        posts.append({
+            "id": d.get("id", ""),
+            "title": d.get("title", ""),
+            "author": d.get("author") or "[deleted]",
+            "score": d.get("score", 0),
+            "upvote_ratio": d.get("upvote_ratio", 0),
+            "num_comments": d.get("num_comments", 0),
+            "created_utc": d.get("created_utc", 0),
+            "flair": d.get("link_flair_text") or "",
+            "is_self": d.get("is_self", True),
+            "url": d.get("url", ""),
+            "permalink": f"https://www.reddit.com{d.get('permalink', '')}",
+            "selftext_length": len(d.get("selftext") or ""),
+            "subreddit": d.get("subreddit", subreddit),
+        })
+    return posts
+
+
+def _paginate_listing(url_template, subreddit, limit, sort_by_score=True):
+    """Generic paginated fetch for any Reddit listing endpoint."""
     posts = []
     after = None
     pages = 0
-    max_pages = (limit // PAGE_SIZE) + 2  # Safety cap
+    max_pages = (limit // PAGE_SIZE) + 2
 
     while len(posts) < limit and pages < max_pages:
-        url = f"{API_BASE}/r/{subreddit}/top.json?t={timeframe}&limit={PAGE_SIZE}"
+        url = url_template
         if after:
-            url += f"&after={after}"
+            sep = "&" if "?" in url else "?"
+            url += f"{sep}after={after}"
 
         try:
             data = fetch_json(url)
@@ -57,34 +78,45 @@ def fetch_top_posts(subreddit, limit=150, timeframe="year"):
         if not children:
             break
 
-        for item in children:
-            d = item.get("data", {})
-            posts.append({
-                "id": d.get("id", ""),
-                "title": d.get("title", ""),
-                "author": d.get("author") or "[deleted]",
-                "score": d.get("score", 0),
-                "upvote_ratio": d.get("upvote_ratio", 0),
-                "num_comments": d.get("num_comments", 0),
-                "created_utc": d.get("created_utc", 0),
-                "flair": d.get("link_flair_text") or "",
-                "is_self": d.get("is_self", True),
-                "url": d.get("url", ""),
-                "permalink": f"https://www.reddit.com{d.get('permalink', '')}",
-                "selftext_length": len(d.get("selftext") or ""),
-                "subreddit": d.get("subreddit", subreddit),
-            })
+        posts.extend(_parse_posts(children, subreddit))
 
         after = data.get("data", {}).get("after")
         if not after:
             break
 
         pages += 1
-        time.sleep(1.0)  # Respect rate limits
+        time.sleep(1.0)
 
-    # Sort by score descending, truncate to limit
-    posts.sort(key=lambda p: p["score"], reverse=True)
+    if sort_by_score:
+        posts.sort(key=lambda p: p["score"], reverse=True)
     return posts[:limit]
+
+
+def fetch_top_posts(subreddit, limit=150, timeframe="year"):
+    """
+    Paginate through /top?t=<timeframe> collecting post metadata.
+    Returns list of dicts sorted by score descending.
+    """
+    url = f"{API_BASE}/r/{subreddit}/top.json?t={timeframe}&limit={PAGE_SIZE}"
+    return _paginate_listing(url, subreddit, limit, sort_by_score=True)
+
+
+def fetch_hot_posts(subreddit, limit=50):
+    """
+    Fetch hot posts (Reddit's default sort — trending now).
+    Returns list of dicts sorted by score descending.
+    """
+    url = f"{API_BASE}/r/{subreddit}/hot.json?limit={PAGE_SIZE}"
+    return _paginate_listing(url, subreddit, limit, sort_by_score=True)
+
+
+def fetch_rising_posts(subreddit, limit=25):
+    """
+    Fetch rising posts (newest posts gaining traction).
+    Returns list of dicts in Reddit's rising order (not re-sorted by score).
+    """
+    url = f"{API_BASE}/r/{subreddit}/rising.json?limit={PAGE_SIZE}"
+    return _paginate_listing(url, subreddit, limit, sort_by_score=False)
 
 
 def load_findings_urls(findings_path):
@@ -199,6 +231,10 @@ def main():
                         help="Use subreddit profile settings (overrides limit, timeframe, min-score)")
     parser.add_argument("--quick", action="store_true",
                         help="Quick-scan mode: fetch fewer posts, triage, deep-read top N only")
+    parser.add_argument("--hot", action="store_true",
+                        help="Fetch hot posts (trending now) instead of top")
+    parser.add_argument("--rising", action="store_true",
+                        help="Fetch rising posts (gaining traction) instead of top")
 
     args = parser.parse_args()
 
@@ -223,8 +259,15 @@ def main():
         except ImportError:
             print("WARNING: profiles.py not found, using defaults", file=sys.stderr)
 
-    print(f"Fetching top {args.limit} posts from r/{sub} (t={args.timeframe})...", file=sys.stderr)
-    posts = fetch_top_posts(sub, args.limit, args.timeframe)
+    if args.hot:
+        print(f"Fetching hot {args.limit} posts from r/{sub}...", file=sys.stderr)
+        posts = fetch_hot_posts(sub, args.limit)
+    elif args.rising:
+        print(f"Fetching rising {args.limit} posts from r/{sub}...", file=sys.stderr)
+        posts = fetch_rising_posts(sub, args.limit)
+    else:
+        print(f"Fetching top {args.limit} posts from r/{sub} (t={args.timeframe})...", file=sys.stderr)
+        posts = fetch_top_posts(sub, args.limit, args.timeframe)
     print(f"Fetched {len(posts)} posts", file=sys.stderr)
 
     # Apply min-score filter

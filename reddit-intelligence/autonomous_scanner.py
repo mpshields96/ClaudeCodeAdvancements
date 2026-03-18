@@ -49,7 +49,7 @@ sys.path.insert(0, str(_THIS_DIR))
 sys.path.insert(0, str(_PROJECT_DIR / "agent-guard"))
 
 from profiles import BUILTIN_PROFILES, get_profile, ScanRegistry, merge_scout_nuclear
-from nuclear_fetcher import classify_post, load_findings_urls, fetch_top_posts
+from nuclear_fetcher import classify_post, load_findings_urls, fetch_top_posts, fetch_hot_posts, fetch_rising_posts
 from content_scanner import is_safe_for_deep_read
 
 
@@ -470,6 +470,91 @@ class AutonomousScanner:
             hay=hay,
         )
 
+    def execute_daily_scan(
+        self,
+        subs: list = None,
+        hot_limit: int = 25,
+        rising_limit: int = 10,
+    ) -> list:
+        """
+        Execute a daily hot+rising scan across multiple subreddits.
+
+        Designed for daily use — lightweight, fast, feeds self-learning.
+        Fetches hot + rising posts, dedupes, classifies, returns ScanResults.
+
+        Args:
+            subs: list of subreddit names to scan. Defaults to high-signal subs.
+            hot_limit: max hot posts per sub (default 25)
+            rising_limit: max rising posts per sub (default 10)
+
+        Returns list of ScanResult (one per sub scanned).
+        """
+        if subs is None:
+            # Default to highest-signal subs for daily scanning
+            subs = ["ClaudeCode", "ClaudeAI", "vibecoding"]
+
+        results = []
+
+        for sub in subs:
+            # Safety check each sub
+            allowed, reason = self.safety_gate.can_scan()
+            if not allowed:
+                break
+
+            # Resolve slug and domain
+            slug = sub.lower().replace("/", "").replace("r", "", 1) if sub.startswith("r/") else sub.lower()
+            try:
+                profile = get_profile(sub)
+                scan_domain = profile.domain if hasattr(profile, "domain") else "unknown"
+                slug_clean = slug.replace(" ", "")
+            except Exception:
+                scan_domain = "unknown"
+                slug_clean = slug
+
+            # Fetch hot + rising (zero Claude tokens)
+            hot_posts = fetch_hot_posts(sub, hot_limit)
+            rising_posts = fetch_rising_posts(sub, rising_limit)
+
+            # Merge and deduplicate by post ID
+            seen_ids = set()
+            all_posts = []
+            for p in hot_posts + rising_posts:
+                if p["id"] not in seen_ids:
+                    seen_ids.add(p["id"])
+                    all_posts.append(p)
+
+            # Filter unsafe
+            safe, blocked = self.filter_posts(all_posts)
+
+            # Dedup against FINDINGS_LOG
+            safe = self.dedup_posts(safe)
+
+            # Classify
+            safe = self.classify_posts(safe)
+
+            # Split by triage
+            needles = [p for p in safe if p.get("triage") == "NEEDLE"]
+            maybes = [p for p in safe if p.get("triage") == "MAYBE"]
+            hay = [p for p in safe if p.get("triage") == "HAY"]
+
+            # Build report
+            report = self.build_report(sub, slug_clean, scan_domain, all_posts, safe, blocked)
+
+            # Record scan
+            self.safety_gate.record_scan(slug_clean)
+
+            results.append(ScanResult(
+                report=report,
+                needles=needles,
+                maybes=maybes,
+                hay=hay,
+            ))
+
+            # Brief pause between subs
+            time.sleep(1.0)
+
+        return results
+
     def build_report(self, subreddit: str, slug: str, domain: str,
                      fetched: list, safe: list, blocked: list) -> ScanReport:
         """Build a ScanReport from scan results."""
@@ -501,7 +586,7 @@ def cli_main(args: list = None):
         args = sys.argv[1:]
 
     if not args:
-        print("Usage: python3 autonomous_scanner.py [rank|status|pick|scan]")
+        print("Usage: python3 autonomous_scanner.py [rank|status|pick|scan|daily]")
         print("  rank                    Show prioritized sub list")
         print("  status                  Show safety gate status")
         print("  pick [--domain <d>]     Pick next target sub")
@@ -509,6 +594,9 @@ def cli_main(args: list = None):
         print("       [--json]           Output JSON instead of summary")
         print("       [--limit <N>]      Override fetch limit")
         print("       [--timeframe <t>]  Override timeframe (hour/day/week/month/year)")
+        print("  daily [--subs s1,s2]    Daily hot+rising scan across key subs")
+        print("        [--hot-limit N]   Max hot posts per sub (default 25)")
+        print("        [--rising-limit N] Max rising posts per sub (default 10)")
         return
 
     cmd = args[0]
@@ -523,6 +611,9 @@ def cli_main(args: list = None):
     output_json = False
     fetch_limit = None
     timeframe = None
+    daily_subs = None
+    hot_limit = 25
+    rising_limit = 10
     i = 1
     while i < len(args):
         if args[i] == "--registry" and i + 1 < len(args):
@@ -551,6 +642,15 @@ def cli_main(args: list = None):
             i += 2
         elif args[i] == "--timeframe" and i + 1 < len(args):
             timeframe = args[i + 1]
+            i += 2
+        elif args[i] == "--subs" and i + 1 < len(args):
+            daily_subs = [s.strip() for s in args[i + 1].split(",")]
+            i += 2
+        elif args[i] == "--hot-limit" and i + 1 < len(args):
+            hot_limit = int(args[i + 1])
+            i += 2
+        elif args[i] == "--rising-limit" and i + 1 < len(args):
+            rising_limit = int(args[i + 1])
             i += 2
         else:
             i += 1
@@ -640,6 +740,45 @@ def cli_main(args: list = None):
             print(result.report.summary())
             print(f"\nReady for review: {len(result.needles)} NEEDLE, "
                   f"{len(result.maybes)} MAYBE, {len(result.hay)} HAY")
+
+    elif cmd == "daily":
+        scanner = AutonomousScanner(
+            registry_path=registry_path,
+            kill_switch_path=kill_switch_path,
+            state_path=state_path,
+            findings_path=findings_path,
+        )
+
+        results = scanner.execute_daily_scan(
+            subs=daily_subs,
+            hot_limit=hot_limit,
+            rising_limit=rising_limit,
+        )
+
+        if output_json:
+            print(json.dumps([r.to_dict() for r in results], indent=2))
+        else:
+            total_needles = 0
+            total_new = 0
+            for r in results:
+                print(r.report.summary())
+                total_needles += len(r.needles)
+                total_new += r.report.posts_safe
+                print()
+
+            print(f"DAILY SCAN COMPLETE — {len(results)} subs scanned")
+            print(f"  Total new posts: {total_new}")
+            print(f"  NEEDLEs for review: {total_needles}")
+
+            if total_needles > 0:
+                print(f"\nTop NEEDLEs to review:")
+                all_needles = []
+                for r in results:
+                    all_needles.extend(r.needles)
+                all_needles.sort(key=lambda p: p["score"], reverse=True)
+                for i, p in enumerate(all_needles[:15], 1):
+                    print(f"  {i:2d}. [{p['score']:4d}pts] r/{p['subreddit']} — {p['title'][:80]}")
+                    print(f"      {p['permalink']}")
 
     else:
         print(f"Unknown command: {cmd}")

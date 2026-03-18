@@ -8,7 +8,10 @@ import json
 import tempfile
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from nuclear_fetcher import classify_post, load_findings_urls, subreddit_slug
+from nuclear_fetcher import (
+    classify_post, load_findings_urls, subreddit_slug,
+    _parse_posts, _paginate_listing, fetch_hot_posts, fetch_rising_posts,
+)
 
 
 class TestClassifyPost(unittest.TestCase):
@@ -248,6 +251,84 @@ class TestSubredditSlug(unittest.TestCase):
     def test_default_claudecode(self):
         """The most common case."""
         self.assertEqual(subreddit_slug("r/ClaudeCode"), "claudecode")
+
+
+class TestParsePosts(unittest.TestCase):
+    """Test the _parse_posts helper."""
+
+    def test_parses_standard_children(self):
+        children = [
+            {"data": {
+                "id": "abc", "title": "Test", "author": "user1",
+                "score": 100, "upvote_ratio": 0.9, "num_comments": 10,
+                "created_utc": 1710000000, "link_flair_text": "Discussion",
+                "is_self": True, "url": "https://reddit.com/r/test/abc",
+                "permalink": "/r/test/comments/abc/test/",
+                "selftext": "body text",
+            }},
+        ]
+        result = _parse_posts(children, "test")
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["id"], "abc")
+        self.assertEqual(result[0]["score"], 100)
+        self.assertEqual(result[0]["flair"], "Discussion")
+        self.assertEqual(result[0]["selftext_length"], len("body text"))
+
+    def test_empty_children(self):
+        self.assertEqual(_parse_posts([], "test"), [])
+
+    def test_deleted_author_becomes_deleted(self):
+        children = [{"data": {"id": "x", "title": "t", "author": None,
+                               "score": 1, "upvote_ratio": 0.5, "num_comments": 0,
+                               "created_utc": 0, "is_self": True, "url": "", "permalink": ""}}]
+        result = _parse_posts(children, "test")
+        self.assertEqual(result[0]["author"], "[deleted]")
+
+    def test_missing_flair_becomes_empty_string(self):
+        children = [{"data": {"id": "x", "title": "t", "author": "u",
+                               "score": 1, "upvote_ratio": 0.5, "num_comments": 0,
+                               "created_utc": 0, "is_self": True, "url": "", "permalink": "",
+                               "link_flair_text": None}}]
+        result = _parse_posts(children, "test")
+        self.assertEqual(result[0]["flair"], "")
+
+    def test_permalink_gets_base_url(self):
+        children = [{"data": {"id": "x", "title": "t", "author": "u",
+                               "score": 1, "upvote_ratio": 0.5, "num_comments": 0,
+                               "created_utc": 0, "is_self": True, "url": "",
+                               "permalink": "/r/test/comments/x/title/"}}]
+        result = _parse_posts(children, "test")
+        self.assertTrue(result[0]["permalink"].startswith("https://www.reddit.com"))
+
+
+class TestFetchHotRisingSignatures(unittest.TestCase):
+    """Test that fetch_hot_posts and fetch_rising_posts have correct signatures."""
+
+    def test_fetch_hot_posts_callable(self):
+        self.assertTrue(callable(fetch_hot_posts))
+
+    def test_fetch_rising_posts_callable(self):
+        self.assertTrue(callable(fetch_rising_posts))
+
+    def test_fetch_hot_accepts_limit(self):
+        import inspect
+        sig = inspect.signature(fetch_hot_posts)
+        self.assertIn("limit", sig.parameters)
+
+    def test_fetch_rising_accepts_limit(self):
+        import inspect
+        sig = inspect.signature(fetch_rising_posts)
+        self.assertIn("limit", sig.parameters)
+
+    def test_fetch_hot_default_limit(self):
+        import inspect
+        sig = inspect.signature(fetch_hot_posts)
+        self.assertEqual(sig.parameters["limit"].default, 50)
+
+    def test_fetch_rising_default_limit(self):
+        import inspect
+        sig = inspect.signature(fetch_rising_posts)
+        self.assertEqual(sig.parameters["limit"].default, 25)
 
 
 if __name__ == "__main__":

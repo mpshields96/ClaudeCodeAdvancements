@@ -854,5 +854,194 @@ class TestCLI(unittest.TestCase):
             shutil.rmtree(tmpdir, ignore_errors=True)
 
 
+class TestDailyScan(unittest.TestCase):
+    """Tests for the daily hot+rising scan mode."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.registry_path = os.path.join(self.tmpdir, "scan_registry.json")
+        self.state_path = os.path.join(self.tmpdir, "state.json")
+        self.findings_path = os.path.join(self.tmpdir, "FINDINGS_LOG.md")
+        with open(self.findings_path, "w") as f:
+            f.write("")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _make_scanner(self):
+        from autonomous_scanner import AutonomousScanner
+        scanner = AutonomousScanner(
+            registry_path=self.registry_path,
+            state_path=self.state_path,
+            findings_path=self.findings_path,
+        )
+        # Disable rate limiting for tests
+        scanner.safety_gate.min_delay_seconds = 0
+        return scanner
+
+    def _mock_posts(self, sub, n=5, base_score=100):
+        return [{
+            "id": f"{sub}_{i}",
+            "title": f"Test post {i} from {sub}",
+            "author": "testuser",
+            "score": base_score + i * 10,
+            "upvote_ratio": 0.9,
+            "num_comments": 20 + i,
+            "created_utc": 1710000000 + i,
+            "flair": "Discussion",
+            "is_self": True,
+            "url": f"https://reddit.com/r/{sub}/comments/{sub}_{i}/",
+            "permalink": f"https://www.reddit.com/r/{sub}/comments/{sub}_{i}/test/",
+            "selftext_length": 500,
+            "subreddit": sub,
+        } for i in range(n)]
+
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_rising_posts")
+    def test_daily_scan_returns_list(self, mock_rising, mock_hot):
+        mock_hot.return_value = self._mock_posts("ClaudeCode", 3)
+        mock_rising.return_value = self._mock_posts("ClaudeCode", 2, base_score=50)
+        scanner = self._make_scanner()
+        results = scanner.execute_daily_scan(subs=["ClaudeCode"])
+        self.assertIsInstance(results, list)
+        self.assertEqual(len(results), 1)
+
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_rising_posts")
+    def test_daily_scan_multiple_subs(self, mock_rising, mock_hot):
+        mock_hot.side_effect = [
+            self._mock_posts("ClaudeCode", 3),
+            self._mock_posts("ClaudeAI", 3),
+        ]
+        mock_rising.side_effect = [
+            self._mock_posts("ClaudeCode", 2, base_score=50),
+            self._mock_posts("ClaudeAI", 2, base_score=50),
+        ]
+        scanner = self._make_scanner()
+        results = scanner.execute_daily_scan(subs=["ClaudeCode", "ClaudeAI"])
+        self.assertEqual(len(results), 2)
+
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_rising_posts")
+    def test_daily_scan_deduplicates_hot_rising(self, mock_rising, mock_hot):
+        """Posts appearing in both hot and rising should not be duplicated."""
+        shared_posts = self._mock_posts("ClaudeCode", 3)
+        mock_hot.return_value = shared_posts
+        mock_rising.return_value = shared_posts  # Same posts
+        scanner = self._make_scanner()
+        results = scanner.execute_daily_scan(subs=["ClaudeCode"])
+        # Should be 3 unique posts, not 6
+        total = results[0].report.posts_safe
+        self.assertLessEqual(total, 3)
+
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_rising_posts")
+    def test_daily_scan_result_has_report(self, mock_rising, mock_hot):
+        mock_hot.return_value = self._mock_posts("ClaudeCode", 2)
+        mock_rising.return_value = []
+        scanner = self._make_scanner()
+        results = scanner.execute_daily_scan(subs=["ClaudeCode"])
+        self.assertTrue(hasattr(results[0], "report"))
+        self.assertEqual(results[0].report.subreddit, "ClaudeCode")
+
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_rising_posts")
+    def test_daily_scan_classifies_posts(self, mock_rising, mock_hot):
+        mock_hot.return_value = self._mock_posts("ClaudeCode", 3)
+        mock_rising.return_value = []
+        scanner = self._make_scanner()
+        results = scanner.execute_daily_scan(subs=["ClaudeCode"])
+        # All posts should have triage field
+        for p in results[0].needles + results[0].maybes + results[0].hay:
+            self.assertIn("triage", p)
+
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_rising_posts")
+    def test_daily_scan_uses_custom_limits(self, mock_rising, mock_hot):
+        mock_hot.return_value = []
+        mock_rising.return_value = []
+        scanner = self._make_scanner()
+        scanner.execute_daily_scan(subs=["ClaudeCode"], hot_limit=10, rising_limit=5)
+        mock_hot.assert_called_once_with("ClaudeCode", 10)
+        mock_rising.assert_called_once_with("ClaudeCode", 5)
+
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_rising_posts")
+    def test_daily_scan_default_subs(self, mock_rising, mock_hot):
+        """Default subs should include high-signal subreddits."""
+        mock_hot.return_value = []
+        mock_rising.return_value = []
+        scanner = self._make_scanner()
+        results = scanner.execute_daily_scan()
+        # Should have scanned at least 3 default subs
+        self.assertGreaterEqual(mock_hot.call_count, 3)
+
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_rising_posts")
+    def test_daily_scan_empty_results(self, mock_rising, mock_hot):
+        mock_hot.return_value = []
+        mock_rising.return_value = []
+        scanner = self._make_scanner()
+        results = scanner.execute_daily_scan(subs=["ClaudeCode"])
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].report.posts_fetched, 0)
+
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_rising_posts")
+    def test_daily_scan_dedupes_against_findings(self, mock_rising, mock_hot):
+        """Posts already in FINDINGS_LOG should be excluded."""
+        posts = self._mock_posts("ClaudeCode", 3)
+        # Write one post ID to findings log
+        with open(self.findings_path, "w") as f:
+            f.write(f"https://www.reddit.com/r/ClaudeCode/comments/{posts[0]['id']}/\n")
+        mock_hot.return_value = posts
+        mock_rising.return_value = []
+        scanner = self._make_scanner()
+        results = scanner.execute_daily_scan(subs=["ClaudeCode"])
+        # Should have excluded the one already-reviewed post
+        self.assertLess(results[0].report.posts_safe, 3)
+
+
+class TestDailyCLI(unittest.TestCase):
+    """Tests for the daily CLI command."""
+
+    def test_daily_cli_help_includes_daily(self):
+        from autonomous_scanner import cli_main
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cli_main([])
+        output = f.getvalue()
+        self.assertIn("daily", output)
+
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_rising_posts")
+    def test_daily_cli_json_output(self, mock_rising, mock_hot):
+        mock_hot.return_value = []
+        mock_rising.return_value = []
+        tmpdir = tempfile.mkdtemp()
+        try:
+            from autonomous_scanner import cli_main
+            import io
+            from contextlib import redirect_stdout
+            f = io.StringIO()
+            with redirect_stdout(f):
+                cli_main([
+                    "daily", "--json",
+                    "--registry", os.path.join(tmpdir, "reg.json"),
+                    "--state", os.path.join(tmpdir, "state.json"),
+                    "--findings", os.path.join(tmpdir, "findings.md"),
+                    "--subs", "ClaudeCode",
+                ])
+            output = f.getvalue()
+            parsed = json.loads(output)
+            self.assertIsInstance(parsed, list)
+        finally:
+            import shutil
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+
 if __name__ == "__main__":
     unittest.main()

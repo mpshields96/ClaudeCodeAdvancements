@@ -226,7 +226,28 @@ Suggestion: [specific fix — new rule, workflow change, or automation]
 
 If no recurring patterns: skip silently.
 
-### 6f — Structural health check
+### 6f — Skillbook evolution (YoYo-inspired)
+
+Review the session's findings, learnings, and outcomes against SKILLBOOK.md strategies.
+Read `/Users/matthewshields/Projects/ClaudeCodeAdvancements/self-learning/SKILLBOOK.md`.
+
+For each active strategy (S1-S10+):
+- If this session **validated** the strategy (new evidence confirms it): bump confidence by 5 (max 100)
+- If this session **contradicted** the strategy (evidence against it): drop confidence by 10
+- If a strategy hits confidence < 20: move to Archived section
+
+If this session revealed a NEW pattern not captured by any existing strategy:
+- Add it as an Emerging Strategy (confidence 30-35)
+- Must have source sessions and evidence
+
+Update APF if new findings were logged:
+- Recount: APF = (BUILD + ADAPT) / total findings * 100
+- Update the APF History table with this session's row
+
+This step makes the Skillbook a living document that evolves every session — like YoYo's
+self-restructuring code, but applied to research intelligence strategies.
+
+### 6g — Structural health check
 
 If the `/arewedone` command is available, run it as a structural health check:
 
@@ -236,7 +257,7 @@ If the `/arewedone` command is available, run it as a structural health check:
 
 Record the result as pass, warn, or fail. If not available, skip and record "skipped".
 
-### 6g — Print Session Learning Summary
+### 6h — Print Session Learning Summary
 
 After all sub-steps above, output this summary block:
 
@@ -246,7 +267,9 @@ SESSION LEARNING:
 - Rules updated: [list of .claude/rules/ files changed, or "none"]
 - Strategy changes: [list of strategy.json changes from 6d, or "none"]
 - Learnings escalated: [list of severity promotions from 6c, or "none"]
-- Structural health: [pass/warn/fail/skipped from 6f]
+- Skillbook updates: [strategies promoted/demoted/added, or "none"]
+- APF: [current %] ([up/down/stable] from last session)
+- Structural health: [pass/warn/fail/skipped from 6g]
 ```
 
 This block is mandatory — always print it, even if all values are "none"/"0".
