@@ -1,8 +1,20 @@
-# Kalshi/Trading Intelligence — Food Dishes from CCA
-# Last updated: 2026-03-17 (Session 30)
-# This file is a bridge artifact: CCA scans Reddit/GitHub, serves pre-digested
-# intelligence here for the Kalshi bot research chat to consume.
-# Read-only for Kalshi chats. CCA maintains this file.
+# Kalshi/Trading Intelligence — Cross-Chat Bridge
+# Last updated: 2026-03-17 (Session 31)
+#
+# THREE-CHAT BRIDGE PROTOCOL:
+# 1. CCA (this project) → WRITES intel to this file via autonomous scanning
+# 2. Kalshi Research Chat → READS this file, picks up intel, uses for bot improvement
+# 3. Kalshi Main Chat → READS this file for awareness of new capabilities/findings
+#
+# CCA operates: nuclear scans on trading subs, GitHub repo evaluation, academic research
+# Kalshi Research: uses findings to improve bot, build Bayesian model, self-learning loop
+# Kalshi Main: executes improved strategies, reports outcomes back
+#
+# COMMUNICATION PROTOCOL:
+# - CCA appends new intel to "New Intel (Unprocessed)" section
+# - Kalshi Research reads, acts on it, moves processed items to "Processed Intel"
+# - If Kalshi Research needs specific research, add to "Research Requests" section
+# - CCA checks "Research Requests" at session start and prioritizes those topics
 
 ---
 
@@ -111,4 +123,35 @@ CCA now has autonomous scanning infrastructure (MT-9 + MT-11):
 - `autonomous_scanner.py`: picks which subreddits to scan, enforces safety, produces reports
 - `github_scanner.py`: evaluates GitHub repos by metadata without cloning
 - Trading subreddits in scan queue: r/algotrading, r/Kalshi, r/polymarket, r/investing, r/stocks, r/SecurityAnalysis, r/ValueInvesting, r/Bogleheads
-- Any new trading-relevant findings will be appended here automatically
+- **NEW (Session 31)**: `/cca-nuclear autonomous` mode auto-picks highest-priority sub + `--domain trading` for targeted scans
+- CCA scans run as part of /cca-auto sessions and append findings here
+
+---
+
+## Research Requests (Kalshi → CCA)
+
+_Kalshi Research Chat: add requests here. CCA will prioritize scanning for these topics._
+
+| Priority | Topic | Context | Requested By | Status |
+|----------|-------|---------|-------------|--------|
+| HIGH | Bayesian updating for prediction markets | Research chat building Bayesian model for bet sizing/probability | Kalshi Research | OPEN |
+| HIGH | Sniper bet timing patterns | Statistical analysis of optimal entry timing for high-probability events | Kalshi Research | OPEN |
+| MEDIUM | Market microstructure for event markets | How orderbook depth, spread dynamics differ from traditional markets | Kalshi Research | OPEN |
+
+_CCA: When you see OPEN requests, use `/cca-nuclear autonomous --domain trading` or targeted web searches to find relevant intel. Move to DONE when findings are appended above._
+
+---
+
+## New Intel (Unprocessed)
+
+_CCA appends new findings here. Kalshi Research processes them and moves to "Processed Intel" below._
+
+(No new unprocessed intel at this time — run `/cca-nuclear autonomous --domain trading` to generate)
+
+---
+
+## Processed Intel
+
+_Kalshi Research: move items here after incorporating into bot strategy/code._
+
+(Empty — Kalshi Research has not yet processed any items from this bridge)
