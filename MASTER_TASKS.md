@@ -670,12 +670,12 @@ Phase 2 (Session 31):
 
 ### Blocked / External (no scoring — cannot be worked)
 
-| MT | Task | Reason |
-|----|------|--------|
-| MT-1 | Maestro visual grid | Blocked on macOS 15.6 beta SDK |
-| MT-5 | Claude Pro bridge | Needs research on Claude Pro capabilities |
-| MT-16 | Detachable chat tabs | Anthropic feature request (can't build) |
-| MT-19 | Local LLM fine-tuning | Long-term exploration, needs GPU resources |
+| MT | Task | Reason | Self-Resolution Check (Session 42) |
+|----|------|--------|--------------------------------------|
+| MT-1 | Maestro visual grid | Was blocked on macOS SDK | MOSTLY SELF-RESOLVED: claude-code-ui, claude-code-monitor, claude-code-dashboard, Claudia GUI, Nimbalyst all exist now. Evaluate before building. |
+| MT-5 | Claude Pro bridge | Was needs-research | PARTIALLY SELF-RESOLVED: claude_code_bridge (multi-AI collaboration), Remote Control (cross-device), Chrome extension (browser context). Evaluate existing tools. |
+| MT-16 | Detachable chat tabs | Anthropic feature request | STILL OPEN: Feature requests filed (GitHub #20100, #29136). VS Code has some multi-panel. Third-party Nimbalyst provides workaround. |
+| MT-19 | Local LLM fine-tuning | Long-term exploration | STILL OPEN: Needs GPU resources, not self-resolving. |
 
 ### Scoring Rules
 
@@ -684,3 +684,4 @@ Phase 2 (Session 31):
 3. **Matthew's ADHD protocol:** New ideas get logged here with base_value assigned but NOT worked on until they naturally rise in priority.
 4. **Re-rank every session:** Recompute aging at session start. Work top-ranked items first.
 5. **Graduation:** When all phases complete, move to "Completed" table.
+6. **Self-resolution scan:** Every 5 sessions, check if blocked/aging MTs have been solved by Anthropic or the community. If >50% solved externally, mark "MOSTLY SELF-RESOLVED" and evaluate whether to adopt existing tool or archive the MT.
