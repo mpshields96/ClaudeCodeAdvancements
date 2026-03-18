@@ -5,8 +5,8 @@
 
 ## Current State (as of Session 43 — 2026-03-18)
 
-**Phase:** Session 43 IN PROGRESS (sub-sessions A+B complete, C pending). Tests: 1552/1552 passing (38 suites).
-**Next session starts at:** Continue with MT-10 session 4/5, then MT-13 research. Self-learning note: dedup stabilized, weakness gaps in 5 unexplored domains need proposals.
+**Phase:** Session 43 COMPLETE (5 sub-sessions: A, B, C, D, E). Tests: 1552/1552 passing (38 suites). Git: clean after final commit.
+**Next session starts at:** Run /cca-init. Priority per decay: (1) MT-10 session 4/5 validation. (2) MT-13 research (iOS dev, never touched, score 8.0 cap). (3) MT-8 remaining config. Self-learning: 14 active strategies in skillbook, r/ClaudeAI classifier now capped at 40%.
 
 ---
 
@@ -31,6 +31,40 @@
 - 14 Years of Journals (1951pts): Pattern detection as killer feature. Month-by-month > dump-all. Privacy = non-negotiable. Validates F1 local-first approach
 - Vibe coding failures (7460pts): SKIP — meta discussion, no actionable intel
 - Claude interactive (754pts): SKIP — web chat artifacts, not CC
+
+## What Was Done in Session 43C (2026-03-18)
+
+### 3 CCA Reviews (Matthew-requested)
+- Design skill files / typeui.sh (108pts, r/ClaudeAI): ADAPT for MT-17. 57 pre-built skill files, human-curated design systems. Widens CCA design range.
+- Harness setups thread (9pts, r/ClaudeCode): REFERENCE. Key patterns: modular personas, CLAUDE.md as router, Get-It-Right retrospective loop, regex-triggered rules vs skills.
+- TraderAlice/OpenAlice (47pts, r/OpenClawInstall): REFERENCE-PERSONAL for Kalshi. 4-role trading architecture (research/quant/execution/risk). AGPL-3.0 license.
+
+## What Was Done in Session 43D (2026-03-18)
+
+### Design Guide Enhancement (MT-17)
+- Added Rules Do/Don't, Quality Gates sections to design-guide.md
+- Studied typeui.sh skill file structure (10 sections, concrete tokens, anti-patterns)
+- Added External Design References section pointing to typeui for future style expansion
+
+### Skillbook Strategies (MT-10)
+- S10: CLAUDE.md as router not monolith (confidence 45)
+- S11: Retrospective at 80% implementation (confidence 40)
+- APF updated: 31.4% (222 total findings, 70 actionable)
+- Growth metrics updated through Session 43
+
+## What Was Done in Session 43E (2026-03-18)
+
+### r/ClaudeAI Classifier Fix
+- Added needle_ratio_cap=0.4 to ClaudeAI profile (was 72% NEEDLE, now capped at 40%)
+- Tightened keywords: added hook, mcp, agent, workflow, automation
+
+### Skillbook Strategies (MT-10 continued)
+- S12: Read before Edit on structured docs (confidence 60) — addresses 68% retry hotspot
+- S13: CC generates bloat (confidence 40) — periodic LOC tracking
+
+### LEARNINGS Updates
+- PROJECT_INDEX.md chronic retry hotspot (severity 2, 25/37 sessions)
+- r/ClaudeAI classifier too loose (severity 1)
 
 ---
 
