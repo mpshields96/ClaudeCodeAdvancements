@@ -43,6 +43,9 @@ from pathlib import Path
 DEFAULT_STATE_FILE = Path.home() / ".claude-context-health.json"
 DEFAULT_HANDOFF_PATH = Path("HANDOFF.md")
 DEFAULT_HANDOFF_AGE_MINUTES = 5
+# Breadcrumb file written on first block — prevents infinite re-prompting
+PROMPTED_BREADCRUMB = Path.home() / ".claude-handoff-prompted"
+BREADCRUMB_MAX_AGE_MINUTES = 10
 
 
 # ---------------------------------------------------------------------------
@@ -71,17 +74,43 @@ def handoff_is_fresh(handoff_path: Path, max_age_minutes: float) -> bool:
     return (age_seconds / 60) <= max_age_minutes
 
 
-def should_block(zone: str, handoff_fresh: bool, block_on_red: bool = False) -> bool:
+def already_prompted(breadcrumb_path: Path, max_age_minutes: float) -> bool:
+    """
+    Return True if the Stop hook already prompted Claude this session.
+    Prevents infinite block -> respond -> block loops when Claude responds
+    to the handoff prompt but doesn't write HANDOFF.md (e.g., after /cca-wrap).
+    """
+    if not breadcrumb_path.exists():
+        return False
+    age_seconds = time.time() - breadcrumb_path.stat().st_mtime
+    return (age_seconds / 60) <= max_age_minutes
+
+
+def write_breadcrumb(breadcrumb_path: Path) -> None:
+    """Write breadcrumb file to mark that we've prompted once."""
+    try:
+        breadcrumb_path.write_text(
+            f"prompted_at={datetime.now(timezone.utc).isoformat()}\n"
+        )
+    except OSError:
+        pass  # Best-effort — don't break the hook if write fails
+
+
+def should_block(zone: str, handoff_fresh: bool, block_on_red: bool = False,
+                 was_prompted: bool = False) -> bool:
     """
     Return True if we should block exit and prompt for /handoff.
 
     Rules:
     - Always allow if handoff was just written (anti-loop)
+    - Always allow if we already prompted this session (anti-loop)
     - Block on critical zone
     - Block on red zone only if block_on_red is set
     - Allow on green / yellow / unknown
     """
     if handoff_fresh:
+        return False
+    if was_prompted:
         return False
     if zone == "critical":
         return True
@@ -148,10 +177,13 @@ def main() -> None:
     zone = state.get("zone", "unknown")
     pct = float(state.get("pct", 0))
 
-    # Check anti-loop protection
+    # Check anti-loop protection (two mechanisms)
     fresh = handoff_is_fresh(handoff_path, max_age)
+    was_prompted = already_prompted(PROMPTED_BREADCRUMB, BREADCRUMB_MAX_AGE_MINUTES)
 
-    if should_block(zone, fresh, block_on_red):
+    if should_block(zone, fresh, block_on_red, was_prompted):
+        # Write breadcrumb BEFORE blocking — next fire will see it and allow exit
+        write_breadcrumb(PROMPTED_BREADCRUMB)
         msg = build_block_message(zone, pct)
         print(json.dumps(_block_response(msg)))
         sys.exit(0)

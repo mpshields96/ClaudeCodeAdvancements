@@ -115,6 +115,51 @@ class TestShouldBlock(unittest.TestCase):
     def test_red_fresh_handoff_does_not_block_even_with_flag(self):
         self.assertFalse(auto_handoff.should_block("red", handoff_fresh=True, block_on_red=True))
 
+    def test_does_not_block_when_already_prompted(self):
+        """Anti-loop: if we already prompted once, allow exit."""
+        self.assertFalse(auto_handoff.should_block("critical", handoff_fresh=False, was_prompted=True))
+
+    def test_does_not_block_red_when_already_prompted(self):
+        self.assertFalse(auto_handoff.should_block("red", handoff_fresh=False, block_on_red=True, was_prompted=True))
+
+
+class TestAlreadyPrompted(unittest.TestCase):
+    """Tests for breadcrumb-based anti-loop protection."""
+
+    def test_returns_false_when_no_breadcrumb(self):
+        self.assertFalse(auto_handoff.already_prompted(Path("/tmp/no_such_breadcrumb"), 10))
+
+    def test_returns_true_for_fresh_breadcrumb(self):
+        with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", delete=False) as f:
+            f.write("prompted_at=2026-03-18T00:00:00Z\n")
+            path = Path(f.name)
+        try:
+            self.assertTrue(auto_handoff.already_prompted(path, 10))
+        finally:
+            os.unlink(str(path))
+
+    def test_returns_false_for_old_breadcrumb(self):
+        with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", delete=False) as f:
+            f.write("prompted_at=old\n")
+            path = Path(f.name)
+        try:
+            old_time = time.time() - 900  # 15 minutes ago
+            os.utime(str(path), (old_time, old_time))
+            self.assertFalse(auto_handoff.already_prompted(path, 10))
+        finally:
+            os.unlink(str(path))
+
+    def test_write_breadcrumb_creates_file(self):
+        path = Path(tempfile.mktemp(suffix=".txt"))
+        try:
+            auto_handoff.write_breadcrumb(path)
+            self.assertTrue(path.exists())
+            content = path.read_text()
+            self.assertIn("prompted_at=", content)
+        finally:
+            if path.exists():
+                os.unlink(str(path))
+
 
 class TestShouldWarn(unittest.TestCase):
 
