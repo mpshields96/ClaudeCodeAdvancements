@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-17 (Session 31)
+# Generated: 2026-02-19 (Session 1) | Last updated: 2026-03-17 (Session 32)
 # Read this FIRST each session — ~94% token reduction vs reading all source files
 
 ---
@@ -202,7 +202,7 @@ ClaudeCodeAdvancements/
 | `python3 reddit-intelligence/autonomous_scanner.py pick` | Pick next target sub for scanning |
 | `python3 reddit-intelligence/github_scanner.py queries` | Show GitHub search queries for CCA frontiers |
 
-**Total:** 1244/1244 tests (30 suites). **Session start:** Run all 30 suites. If anything fails, fix before touching other files.
+**Total:** 1259/1259 tests (30 suites). **Session start:** Run all 30 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -326,7 +326,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 44 | All passing |
 | reddit-intelligence (profiles) | `tests/test_profiles.py` | 43 | All passing |
 | reddit-intelligence (autonomous) | `tests/test_autonomous_scanner.py` | 54 | All passing |
-| reddit-intelligence (github) | `tests/test_github_scanner.py` | 30 | All passing |
+| reddit-intelligence (github) | `tests/test_github_scanner.py` | 45 | All passing |
 | self-learning | `tests/test_self_learning.py` | 75 | All passing |
 | self-learning (trace_analyzer) | `tests/test_trace_analyzer.py` | 50 | All passing |
 | self-learning (improver) | `tests/test_improver.py` | 44 | All passing |
@@ -334,7 +334,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
-| **Total** | | **1188** | **1188/1188** |
+| **Total** | | **1259** | **1259/1259** |
 
 ---
 
@@ -412,3 +412,4 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 29 | 2026-03-17 | Autocompact awareness (4 hooks), QualityGate, spec enhancements, 28 findings — 1093 tests |
 | 30 | 2026-03-17 | MT-9 (37), MT-11 (30), AG-6 session guard (28), KALSHI_INTEL bridge — 1188 tests |
 | 31 | 2026-03-17 | CTX-6 auto_wrap (19), MT-9 Phase 2 scan pipeline (54), Kalshi research bridge — 1244 tests |
+| 32 | 2026-03-17 | MT-11 Phase 2 GitHub API (45), 4 sub scans (vibecoding/polymarket/investing/LocalLLaMA), KALSHI_INTEL bridge — 1259 tests |

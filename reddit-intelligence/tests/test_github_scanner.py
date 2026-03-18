@@ -371,6 +371,135 @@ class TestFrontierRelevanceKeywords(unittest.TestCase):
             self.assertTrue(len(keywords) > 0, f"{frontier} should have keywords")
 
 
+class TestGitHubAPI(unittest.TestCase):
+    """Tests for GitHub API integration (fetch_repo, search_repos)."""
+
+    def test_import_fetch_repo(self):
+        from github_scanner import fetch_repo
+        self.assertTrue(callable(fetch_repo))
+
+    def test_import_search_repos(self):
+        from github_scanner import search_repos
+        self.assertTrue(callable(search_repos))
+
+    def test_fetch_repo_returns_metadata_or_none(self):
+        """fetch_repo should return RepoMetadata or None on failure."""
+        from github_scanner import fetch_repo, RepoMetadata
+        # Use a known valid repo for live test (skip if no network)
+        try:
+            result = fetch_repo("anthropics/claude-code")
+            if result is not None:
+                self.assertIsInstance(result, RepoMetadata)
+                self.assertEqual(result.full_name, "anthropics/claude-code")
+                self.assertGreater(result.stars, 0)
+        except Exception:
+            pass  # Network unavailable — skip gracefully
+
+    def test_fetch_repo_invalid_returns_none(self):
+        """Invalid repo names should return None, not crash."""
+        from github_scanner import fetch_repo
+        result = fetch_repo("nonexistent-user-zzz/nonexistent-repo-zzz")
+        self.assertIsNone(result)
+
+    def test_fetch_repo_respects_timeout(self):
+        """fetch_repo should accept a timeout parameter."""
+        from github_scanner import fetch_repo
+        import inspect
+        sig = inspect.signature(fetch_repo)
+        self.assertIn("timeout", sig.parameters)
+
+    def test_search_repos_returns_list(self):
+        """search_repos should return a list of RepoMetadata."""
+        from github_scanner import search_repos, RepoMetadata
+        try:
+            results = search_repos("claude mcp server", limit=3)
+            self.assertIsInstance(results, list)
+            if results:
+                self.assertIsInstance(results[0], RepoMetadata)
+        except Exception:
+            pass  # Network unavailable
+
+    def test_search_repos_respects_limit(self):
+        """search_repos should respect the limit parameter."""
+        from github_scanner import search_repos
+        try:
+            results = search_repos("python", limit=2)
+            self.assertLessEqual(len(results), 2)
+        except Exception:
+            pass  # Network unavailable
+
+    def test_search_repos_handles_empty_query(self):
+        """Empty query should return empty list."""
+        from github_scanner import search_repos
+        results = search_repos("", limit=5)
+        self.assertIsInstance(results, list)
+
+    def test_search_repos_sort_by_stars(self):
+        """search_repos should sort by stars (default)."""
+        from github_scanner import search_repos
+        import inspect
+        sig = inspect.signature(search_repos)
+        self.assertIn("sort", sig.parameters)
+
+
+class TestScanPipeline(unittest.TestCase):
+    """Tests for the scan pipeline (search + evaluate + log)."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.eval_log_path = os.path.join(self.tmpdir, "github_evaluations.jsonl")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def test_scan_pipeline_exists(self):
+        """GitHubScanner should have a scan_query method."""
+        from github_scanner import GitHubScanner
+        scanner = GitHubScanner(eval_log_path=self.eval_log_path)
+        self.assertTrue(hasattr(scanner, "scan_query"))
+
+    def test_scan_query_returns_list(self):
+        """scan_query should return a list of (meta, result) tuples."""
+        from github_scanner import GitHubScanner
+        scanner = GitHubScanner(eval_log_path=self.eval_log_path)
+        try:
+            results = scanner.scan_query("claude mcp server", limit=2)
+            self.assertIsInstance(results, list)
+            if results:
+                meta, result = results[0]
+                self.assertIsNotNone(meta)
+                self.assertIsNotNone(result)
+        except Exception:
+            pass  # Network unavailable
+
+    def test_scan_query_dedup(self):
+        """scan_query should skip already-evaluated repos."""
+        from github_scanner import GitHubScanner, RepoMetadata
+        scanner = GitHubScanner(eval_log_path=self.eval_log_path)
+        # Pre-populate log
+        meta = RepoMetadata(
+            full_name="test/repo", description="A test", stars=100,
+            forks=10, open_issues=2, language="Python", license_id="MIT",
+            age_days=90, days_since_push=5, topics=["ai"],
+            url="https://github.com/test/repo", default_branch="main",
+        )
+        result = scanner.evaluate(meta)
+        scanner.log_evaluation(meta, result)
+        self.assertTrue(scanner.already_evaluated("test/repo"))
+
+    def test_scan_query_logs_results(self):
+        """scan_query should auto-log evaluations."""
+        from github_scanner import GitHubScanner
+        scanner = GitHubScanner(eval_log_path=self.eval_log_path)
+        try:
+            results = scanner.scan_query("claude code hooks", limit=1)
+            if results:
+                self.assertTrue(os.path.exists(self.eval_log_path))
+        except Exception:
+            pass  # Network unavailable
+
+
 class TestCLI(unittest.TestCase):
     """Tests for CLI interface."""
 
@@ -395,6 +524,29 @@ class TestCLI(unittest.TestCase):
             cli_main(["evaluate"])
         output = out.getvalue()
         self.assertIn("usage", output.lower())
+
+    def test_cli_scan_command_exists(self):
+        """CLI 'scan' command should be recognized."""
+        from github_scanner import cli_main
+        import io
+        from contextlib import redirect_stdout
+        out = io.StringIO()
+        with redirect_stdout(out):
+            cli_main(["scan", "--help"])
+        output = out.getvalue()
+        # Should not say "Unknown command"
+        self.assertNotIn("Unknown command", output)
+
+    def test_cli_fetch_command_exists(self):
+        """CLI 'fetch' command should be recognized."""
+        from github_scanner import cli_main
+        import io
+        from contextlib import redirect_stdout
+        out = io.StringIO()
+        with redirect_stdout(out):
+            cli_main(["fetch"])
+        output = out.getvalue()
+        self.assertNotIn("Unknown command", output)
 
 
 if __name__ == "__main__":

@@ -3,10 +3,38 @@
 
 ---
 
-## Current State (as of Session 31 — 2026-03-17)
+## Current State (as of Session 32 — 2026-03-17)
 
-**Phase:** Session 31 COMPLETE. MT-9 Phase 2 DONE (scan pipeline + autonomous mode). KALSHI_INTEL bridge fully operational with 3 academic papers + 5 Reddit findings. 3 autonomous scans executed (r/algotrading, r/Kalshi, r/ClaudeCode). 30 suites, 1244 total tests, all passing.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-11 Phase 2 — live GitHub API integration. (2) Scan never-scanned subs (r/vibecoding, r/LocalLLaMA, r/polymarket, r/investing). (3) MT-10 Phase 2 — run improver for 5 sessions. (4) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread). (5) Check KALSHI_INTEL Research Requests for new asks from research chat.
+**Phase:** Session 32 COMPLETE. MT-11 Phase 2 DONE (live GitHub API integration). 4 never-scanned subs scanned (r/vibecoding, r/polymarket, r/investing, r/LocalLLaMA). KALSHI_INTEL bridge updated with 7 Kalshi-relevant GitHub repos + polymarket scan results. 30 suites, 1259 total tests, all passing.
+**Next session starts at:** Run /cca-init. Priority: (1) MT-10 Phase 2 — run improver for 5 sessions. (2) Deep-read r/ClaudeCode NEEDLEs (14 unread) + r/algotrading NEEDLEs. (3) Scan remaining never-scanned subs (r/MachineLearning, r/webdev, r/iOSProgramming, r/stocks, r/SecurityAnalysis, r/ValueInvesting, r/Bogleheads, r/ClaudeAI). (4) Deep-read vibecoding safety posts for Agent Guard patterns. (5) MT-11 Phase 3 — run scan --all for comprehensive GitHub intel sweep.
+
+---
+
+## What Was Done in Session 32 (2026-03-17)
+
+### MT-11 Phase 2: Live GitHub API Integration (COMPLETE)
+- `github_scanner.py` — Added `fetch_repo()`, `search_repos()`, `scan_query()`, `scan_all_queries()` via urllib (stdlib)
+- New CLI commands: `fetch <owner/repo>` (live API), `scan <query>` (search+evaluate+log), `scan --all`, `scan --json`
+- GitHub API auth: uses GITHUB_TOKEN/GH_TOKEN env vars if available (60 req/hr unauthenticated, 5000 with token)
+- Live-tested: 32 repos evaluated across 4 queries (Claude MCP, Kalshi trading, backtesting, context management)
+- 45 tests (30 → 45) — all passing
+
+### Autonomous Subreddit Scans: 4 Never-Scanned Subs
+- r/vibecoding: 50 fetched, 36 NEEDLE, 12 MAYBE, 2 HAY — mostly memes, key safety posts for Agent Guard
+- r/polymarket: 50 fetched, 4 NEEDLE, 40 MAYBE, 6 HAY — market sentiment, lower technical signal
+- r/investing: 50 fetched, 48 NEEDLE, 1 MAYBE, 1 HAY — very keyword-heavy
+- r/LocalLLaMA: scan initiated (pending completion)
+
+### KALSHI_INTEL Bridge — Session 32 Updates
+- Added 7 Kalshi-relevant GitHub repos (OctagonAI/kalshi-deep-trading-bot, backtesting.py, copy-trading bots, arb bots)
+- Added r/polymarket scan summary
+- MT-11 Phase 2 capability announcement — Kalshi research can now request GitHub repo evaluations
+
+### GitHub Repo Intelligence Highlights
+- `anthropics/claude-code`: 79K stars, no license (!), score 63/100
+- `OctagonAI/kalshi-deep-trading-bot`: Python, 126 stars, score 73/100 — Kalshi-specific
+- `kernc/backtesting.py`: 8K stars, gold standard backtesting — score 71/100
+- `rohitg00/awesome-claude-code-toolkit`: 837 stars — curated Claude Code tools
 
 ---
 

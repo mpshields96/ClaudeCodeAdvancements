@@ -30,6 +30,9 @@ import json
 import os
 import re
 import sys
+import urllib.request
+import urllib.parse
+import urllib.error
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -374,6 +377,122 @@ class GitHubScanner:
                             pass
         return full_name in self._evaluated_cache
 
+    def scan_query(self, query: str, limit: int = 10, sort: str = "stars") -> list:
+        """
+        Search + evaluate + log pipeline.
+
+        Searches GitHub, evaluates each repo, logs results, skips duplicates.
+        Returns list of (RepoMetadata, EvaluationResult) tuples.
+        """
+        repos = search_repos(query, limit=limit, sort=sort)
+        results = []
+        for meta in repos:
+            if self.already_evaluated(meta.full_name):
+                continue
+            result = self.evaluate(meta)
+            self.log_evaluation(meta, result)
+            results.append((meta, result))
+        return results
+
+    def scan_all_queries(self, limit_per_query: int = 5) -> list:
+        """
+        Run all built-in search queries and collect results.
+        Returns list of (RepoMetadata, EvaluationResult) tuples.
+        """
+        all_results = []
+        for query in self.build_search_queries():
+            results = self.scan_query(query, limit=limit_per_query)
+            all_results.extend(results)
+        return all_results
+
+
+# ── GitHub API Integration (Phase 2) ─────────────────────────────────────────
+
+_GITHUB_API = "https://api.github.com"
+_USER_AGENT = "CCA-GitHub-Scanner/1.0 (github.com/mpshields96/ClaudeCodeAdvancements)"
+
+
+def _github_request(url: str, timeout: int = 10) -> dict:
+    """Make a GET request to GitHub API. Returns parsed JSON or None."""
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": _USER_AGENT,
+    }
+    # Use GITHUB_TOKEN if available (avoids 60 req/hr unauthenticated limit)
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, urllib.error.HTTPError, json.JSONDecodeError,
+            OSError, TimeoutError):
+        return None
+
+
+def fetch_repo(full_name: str, timeout: int = 10) -> "RepoMetadata":
+    """
+    Fetch repo metadata from GitHub API.
+
+    Args:
+        full_name: "owner/repo" format
+        timeout: request timeout in seconds
+
+    Returns RepoMetadata or None on failure.
+    """
+    if not full_name or "/" not in full_name:
+        return None
+    url = f"{_GITHUB_API}/repos/{urllib.parse.quote(full_name, safe='/')}"
+    data = _github_request(url, timeout=timeout)
+    if data is None or "full_name" not in data:
+        return None
+    return RepoMetadata.from_api_dict(data)
+
+
+def search_repos(
+    query: str,
+    limit: int = 10,
+    sort: str = "stars",
+    timeout: int = 15,
+) -> list:
+    """
+    Search GitHub repos by query string.
+
+    Args:
+        query: search terms
+        limit: max results (capped at 30 per API page)
+        sort: "stars", "updated", "forks", or "best-match"
+        timeout: request timeout
+
+    Returns list of RepoMetadata (may be empty).
+    """
+    if not query or not query.strip():
+        return []
+
+    params = {
+        "q": query.strip(),
+        "sort": sort if sort != "best-match" else "",
+        "order": "desc",
+        "per_page": min(limit, 30),
+    }
+    # Remove empty params
+    params = {k: v for k, v in params.items() if v}
+    url = f"{_GITHUB_API}/search/repositories?{urllib.parse.urlencode(params)}"
+    data = _github_request(url, timeout=timeout)
+    if data is None or "items" not in data:
+        return []
+
+    results = []
+    for item in data["items"][:limit]:
+        try:
+            meta = RepoMetadata.from_api_dict(item)
+            results.append(meta)
+        except (KeyError, TypeError, ValueError):
+            continue
+    return results
+
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
@@ -384,7 +503,12 @@ def cli_main(args: list = None):
         args = sys.argv[1:]
 
     if not args:
-        print("Usage: python3 github_scanner.py [queries|evaluate <owner/repo>]")
+        print("Usage: python3 github_scanner.py [queries|fetch|evaluate|scan] ...")
+        print("  queries               Show built-in search queries")
+        print("  fetch <owner/repo>    Fetch + evaluate a specific repo (live API)")
+        print("  evaluate <owner/repo> Same as fetch")
+        print("  scan [query]          Search + evaluate repos (live API)")
+        print("  scan --all            Run all built-in queries")
         return
 
     cmd = args[0]
@@ -396,18 +520,87 @@ def cli_main(args: list = None):
         for i, q in enumerate(queries, 1):
             print(f"  {i}. {q}")
 
-    elif cmd == "evaluate":
+    elif cmd in ("fetch", "evaluate"):
         if len(args) < 2:
-            print("Usage: python3 github_scanner.py evaluate <owner/repo>")
+            print("Usage: python3 github_scanner.py fetch <owner/repo>")
             return
         repo_name = args[1]
-        print(f"To evaluate {repo_name}, fetch its metadata via GitHub API")
-        print(f"  URL: https://api.github.com/repos/{repo_name}")
-        print("  Then pass the JSON to RepoMetadata.from_api_dict()")
+        print(f"Fetching {repo_name} from GitHub API...")
+        meta = fetch_repo(repo_name)
+        if meta is None:
+            print(f"  Failed — repo not found or API unavailable.")
+            return
+        scanner = GitHubScanner()
+        result = scanner.evaluate(meta)
+        scanner.log_evaluation(meta, result)
+        print(f"  {meta.full_name}  [{meta.language}]  {meta.stars} stars")
+        print(f"  License: {meta.license_id or 'none'}  |  Last push: {meta.days_since_push:.0f}d ago  |  Age: {meta.age_days:.0f}d")
+        print(f"  Topics: {', '.join(meta.topics[:8]) if meta.topics else 'none'}")
+        print(f"  Score: {result.total}/100  →  {result.verdict}")
+        if result.components:
+            parts = [f"{k}={v}" for k, v in result.components.items()]
+            print(f"  Components: {', '.join(parts)}")
+        if result.warnings:
+            print(f"  Warnings: {'; '.join(result.warnings)}")
+        if result.blocked:
+            print(f"  BLOCKED: {result.block_reason}")
+
+    elif cmd == "scan":
+        rest = args[1:]
+        # Parse flags
+        run_all = "--all" in rest
+        limit = 5
+        json_output = "--json" in rest
+        query_parts = [a for a in rest if not a.startswith("--")]
+
+        if "--help" in rest:
+            print("Usage: python3 github_scanner.py scan [query] [--all] [--json]")
+            print("  scan 'claude mcp'   Search + evaluate repos matching query")
+            print("  scan --all          Run all built-in queries")
+            print("  scan --json         Output as JSON")
+            return
+
+        scanner = GitHubScanner()
+
+        if run_all:
+            print("Running all built-in queries against GitHub API...")
+            results = scanner.scan_all_queries(limit_per_query=limit)
+        elif query_parts:
+            query = " ".join(query_parts)
+            print(f"Searching GitHub for: {query}")
+            results = scanner.scan_query(query, limit=limit * 2)
+        else:
+            print("Usage: python3 github_scanner.py scan [query] or scan --all")
+            return
+
+        if json_output:
+            output = []
+            for meta, result in results:
+                output.append({
+                    "repo": meta.full_name,
+                    "stars": meta.stars,
+                    "language": meta.language,
+                    "score": result.total,
+                    "verdict": result.verdict,
+                    "url": meta.url,
+                })
+            print(json.dumps(output, indent=2))
+        else:
+            if not results:
+                print("No new repos found (all may be already evaluated).")
+                return
+            evaluate_count = sum(1 for _, r in results if r.verdict == "EVALUATE")
+            skip_count = sum(1 for _, r in results if r.verdict == "SKIP")
+            blocked_count = sum(1 for _, r in results if r.verdict == "BLOCKED")
+            print(f"\nFound {len(results)} new repos: {evaluate_count} EVALUATE, {skip_count} SKIP, {blocked_count} BLOCKED\n")
+            for meta, result in sorted(results, key=lambda x: x[1].total, reverse=True):
+                marker = ">>>" if result.verdict == "EVALUATE" else "   "
+                print(f"  {marker} [{result.total:4.0f}] {result.verdict:<8} {meta.full_name} ({meta.stars} stars, {meta.language})")
+            print(f"\nLogged to: {scanner.eval_log_path}")
 
     else:
         print(f"Unknown command: {cmd}")
-        print("Usage: python3 github_scanner.py [queries|evaluate <owner/repo>]")
+        print("Usage: python3 github_scanner.py [queries|fetch|evaluate|scan] ...")
 
 
 if __name__ == "__main__":

@@ -247,6 +247,35 @@ Key findings:
 - "I backtested a 400K views YouTube trading strategy (BRUTAL results)" (403pts) — backtesting methodology
 - "I ADMIT IT. I OVERFIT. I HAVE SELECTION BIAS." (515pts) — overfitting awareness (important for Bayesian model)
 
+### [2026-03-17] Autonomous Scan: r/polymarket Results (Session 32)
+**Scan stats:** 50 posts fetched, 4 NEEDLE, 40 MAYBE, 6 HAY
+**Domain:** trading
+**First scan of r/polymarket.** Mostly discussion/sentiment posts — lower technical signal than r/algotrading but useful for market structure awareness.
+
+### [2026-03-17] GitHub Repo Intelligence: Trading/Prediction Market Repos (Session 32)
+**Source:** MT-11 Phase 2 live GitHub API scans — NEW CAPABILITY
+CCA can now autonomously search GitHub and evaluate repos by quality rubric.
+
+**Kalshi-Relevant Repos Found:**
+
+| Repo | Stars | Score | Notes |
+|------|-------|-------|-------|
+| `OctagonAI/kalshi-deep-trading-bot` | 126 | 73/100 | Python, Kalshi-specific deep trading bot — evaluate architecture |
+| `llgpqul/polymarket-copy-trading-bot` | 836 | 87/100 | TypeScript, copy trading patterns |
+| `haredoggy/Prediction-Markets-Trading-Bot-Toolkits` | 185 | 83/100 | Rust, multi-market toolkit |
+| `Krypto-Hashers-Community/polymarket-kalshi-arbitrage-bot-15min-market` | 184 | 63/100 | TypeScript, 15min arb strategy |
+| `infraform/polymarket-kalshi-arbitrage-bot` | 174 | 63/100 | TypeScript, Kalshi-Polymarket arb |
+| `kernc/backtesting.py` | 8062 | 71/100 | Python, best backtesting framework — evaluate for Kalshi strategy testing |
+| `51bitquant/howtrader` | 889 | 75/100 | Python, quant trading framework |
+
+**Safety note:** All evaluated via API metadata only (no cloning). Some repos may contain private key exfiltration code (content_scanner blocks these). Read source code before adopting any patterns.
+
+**Kalshi application:**
+1. `OctagonAI/kalshi-deep-trading-bot` — most directly relevant, evaluate its architecture patterns
+2. `backtesting.py` — gold standard for strategy backtesting, evaluate for Kalshi strategy validation
+3. Arbitrage bots — study their spread detection logic, timing, and fee handling
+4. CAUTION: security warning from earlier r/algotrading finding about repos containing exfiltration code still applies
+
 ---
 
 ## Processed Intel

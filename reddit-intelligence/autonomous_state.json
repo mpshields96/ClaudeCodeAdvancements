@@ -1,10 +1,14 @@
 {
-  "scans_this_session": 3,
+  "scans_this_session": 7,
   "subs_scanned": [
     "algotrading",
     "kalshi",
-    "claudecode"
+    "claudecode",
+    "vibecoding",
+    "polymarket",
+    "investing",
+    "localllama"
   ],
-  "last_scan_time": "2026-03-18T00:14:24.486437+00:00",
-  "updated_at": "2026-03-18T00:14:24.486441+00:00"
+  "last_scan_time": "2026-03-18T00:31:30.842533+00:00",
+  "updated_at": "2026-03-18T00:31:30.842536+00:00"
 }

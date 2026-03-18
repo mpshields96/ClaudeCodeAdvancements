@@ -211,3 +211,13 @@
 [2026-03-17] REFERENCE-PERSONAL [Trading/Academic] Prediction markets as Bayesian inverse problems — regime detection, log-odds framework — https://arxiv.org/abs/2601.18815
 
 [2026-03-17] REFERENCE-PERSONAL [Trading/Academic] Price convergence near expiration — validates sniper timing approach — https://arxiv.org/abs/2205.08913
+
+[2026-03-17] REFERENCE [CCA/Session 32] r/vibecoding autonomous scan — 50 fetched, 36 NEEDLE, 12 MAYBE, 2 HAY. Mostly memes + success stories. High-signal: "GPT wiped F: drive" + "Codex deleted S3" (validates Agent Guard), "inter-agent chatroom" (multi-agent patterns), "biggest security mistakes" (vibe-coder vuln patterns)
+[2026-03-17] REFERENCE [CCA/Session 32] r/polymarket autonomous scan — 50 fetched, 4 NEEDLE, 40 MAYBE, 6 HAY. Lower technical signal, mostly market sentiment + discussion.
+[2026-03-17] REFERENCE [CCA/Session 32] r/investing autonomous scan — 50 fetched, 48 NEEDLE, 1 MAYBE, 1 HAY. Very keyword-heavy sub (all investing-related), needs manual review to find actionable trading strategies.
+[2026-03-17] [BUILD] [MT-11 Phase 2] GitHub API integration complete — search_repos(), fetch_repo(), scan CLI. Live-tested: 32 repos evaluated across 4 queries (Claude MCP, Kalshi/Polymarket trading, backtesting, context management). 45 tests passing.
+[2026-03-17] REFERENCE-PERSONAL [Trading/GitHub] OctagonAI/kalshi-deep-trading-bot (126 stars, Python) — Kalshi-specific deep trading bot. Evaluate architecture. — https://github.com/OctagonAI/kalshi-deep-trading-bot
+[2026-03-17] REFERENCE-PERSONAL [Trading/GitHub] kernc/backtesting.py (8062 stars, Python) — Gold standard backtesting framework. — https://github.com/kernc/backtesting.py
+[2026-03-17] REFERENCE-PERSONAL [Trading/GitHub] llgpqul/polymarket-copy-trading-bot (836 stars, TypeScript) — Copy trading patterns for prediction markets. — https://github.com/llgpqul/polymarket-copy-trading-bot
+[2026-03-17] REFERENCE [CCA/GitHub] fcakyon/claude-codex-settings (506 stars, Python) — Claude Code settings/config. — https://github.com/fcakyon/claude-codex-settings
+[2026-03-17] REFERENCE [CCA/GitHub] rohitg00/awesome-claude-code-toolkit (837 stars) — Curated Claude Code tools. — https://github.com/rohitg00/awesome-claude-code-toolkit
