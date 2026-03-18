@@ -5,8 +5,8 @@
 
 ## Current State (as of Session 31 — 2026-03-17)
 
-**Phase:** Session 31 IN PROGRESS. MT-9 Phase 2 COMPLETE (scan pipeline + /cca-nuclear autonomous). CTX-6 auto_wrap committed. Kalshi research bridge documented. 30 suites, 1244 total tests, all passing.
-**Next session starts at:** Run /cca-init. Priority: (1) Build KALSHI_INTEL bridge for cross-chat communication. (2) MT-11 Phase 2 — live GitHub API integration. (3) Autonomous trading sub scan via /cca-nuclear autonomous. (4) MT-10 Phase 2 — run improver for 5 sessions.
+**Phase:** Session 31 COMPLETE. MT-9 Phase 2 DONE (scan pipeline + autonomous mode). KALSHI_INTEL bridge fully operational with 3 academic papers + 5 Reddit findings. 3 autonomous scans executed (r/algotrading, r/Kalshi, r/ClaudeCode). 30 suites, 1244 total tests, all passing.
+**Next session starts at:** Run /cca-init. Priority: (1) MT-11 Phase 2 — live GitHub API integration. (2) Scan never-scanned subs (r/vibecoding, r/LocalLLaMA, r/polymarket, r/investing). (3) MT-10 Phase 2 — run improver for 5 sessions. (4) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread). (5) Check KALSHI_INTEL Research Requests for new asks from research chat.
 
 ---
 
@@ -27,11 +27,16 @@
 - CLI interface: check/status/compact/reset
 - 19 tests — all passing
 
-### Kalshi Research Bridge Directive
-- CCA nuclear scanning now actively assists Kalshi research chat
-- Trading/prediction market subs are in approved autonomous scan domains
-- Findings fed via KALSHI_INTEL.md bridge artifact
-- Memory saved: project_kalshi_research_assist.md
+### Kalshi Research Bridge — Fully Operational
+- KALSHI_INTEL.md enhanced with structured 3-chat protocol (CCA → Research → Main)
+- Research Requests section: 2 HIGH resolved, 1 MEDIUM partial
+- Academic papers found:
+  1. Calibration Dynamics (2026): 292M Kalshi/Polymarket trades, domain-specific biases
+  2. Bayesian Inverse Problems (2026): log-odds framework, regime detection
+  3. Price Convergence (Operations Research): validates sniper timing near expiration
+- Trading sub scans: r/algotrading (100 posts, 12 NEEDLEs), r/Kalshi (50 posts, 9 NEEDLEs)
+- r/ClaudeCode scanned (150→29 new after dedup, 14 NEEDLEs)
+- IBS mean reversion strategy + pre-market ML system deep-read and summarized
 
 ### Housekeeping
 - Committed 10 cross-project self-learning journal entries from Kalshi bot sessions
