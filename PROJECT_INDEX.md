@@ -91,13 +91,15 @@ ClaudeCodeAdvancements/
 │   │   ├── network_guard.py         # AG-5: PreToolUse port/firewall exposure guard
 │   │   └── session_guard.py        # AG-6: PreToolUse slop detection + commit tracking
 │   ├── content_scanner.py           # AG-4: Hazmat suit for autonomous scanning (9 threat categories)
+│   ├── path_validator.py            # AG-7: Dangerous path + command detection (traversal, rm -rf, dd, curl|bash)
 │   ├── tests/
 │   │   ├── test_mobile_approver.py  # 36 tests
 │   │   ├── test_ownership.py        # 27 tests
 │   │   ├── test_credential_guard.py # 40 tests
 │   │   ├── test_content_scanner.py  # 50 tests
 │   │   ├── test_network_guard.py    # 53 tests
-│   │   └── test_session_guard.py   # 28 tests
+│   │   ├── test_session_guard.py   # 28 tests
+│   │   └── test_path_validator.py  # 30 tests
 │   └── research/
 │       └── EVIDENCE.md
 │
@@ -133,6 +135,7 @@ ClaudeCodeAdvancements/
 │   ├── SKILLBOOK.md                 # Distilled actionable strategies (YoYo-inspired)
 │   ├── validate_strategies.py        # Strategy validation loop (checks Skillbook against journal evidence)
 │   ├── trace_analyzer.py            # MT-7: Transcript JSONL pattern analyzer (RetryDetector, WasteDetector, etc.)
+│   ├── batch_report.py             # MT-10: Aggregate trace health across sessions (score dist, retry hotspots)
 │   ├── hooks/
 │   │   └── skillbook_inject.py      # UserPromptSubmit hook: injects top strategies into context
 │   ├── research/
@@ -143,7 +146,8 @@ ClaudeCodeAdvancements/
 │       ├── test_improver.py         # 44 tests — all passing
 │       ├── test_skillbook_inject.py # 26 tests — all passing
 │       ├── test_validate_strategies.py # 30 tests — all passing
-│       └── test_sentinel.py       # 26 tests — all passing (SentinelMutator)
+│       ├── test_sentinel.py       # 26 tests — all passing (SentinelMutator)
+│       └── test_batch_report.py  # 13 tests — all passing
 │
 ├── scripts/                         # Utility scripts (launcher, automation)
 │   └── kalshi-launch.sh             # Terminal.app dual-window Kalshi launcher
@@ -217,7 +221,7 @@ ClaudeCodeAdvancements/
 | `python3 self-learning/validate_strategies.py` | Validate Skillbook strategies against evidence |
 | `python3 self-learning/validate_strategies.py --brief` | One-line validation summary |
 
-**Total:** 1428/1428 tests (35 suites). **Session start:** Run all 35 suites. If anything fails, fix before touching other files.
+**Total:** 1471/1471 tests (37 suites). **Session start:** Run all 35 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -353,7 +357,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | usage-dashboard (otel_receiver) | `tests/test_otel_receiver.py` | 63 | All passing |
 | usage-dashboard (cost_alert) | `tests/test_cost_alert.py` | 39 | All passing |
 | usage-dashboard (arewedone) | `tests/test_arewedone.py` | 51 | All passing |
-| **Total** | | **1428** | **1428/1428** |
+| **Total** | | **1471** | **1471/1471** |
 
 ---
 

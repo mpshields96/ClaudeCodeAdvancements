@@ -530,3 +530,31 @@
 - Don't stop between /cca-init and /cca-auto to explain things — just keep working.
 
 ---
+
+## Session 37 — 2026-03-17
+
+**What changed:**
+- `self-learning/improver.py` — Sentinel mutation dialed to 5-10% (MAX_MUTATIONS_PER_CYCLE: 5->2, MAX_MUTATION_DEPTH: 3->2)
+- `self-learning/strategy.json` — scan limit params (max_consecutive_scan_sessions: 3, scan_cooldown_build_sessions: 2)
+- `.claude/commands/cca-auto.md` — scan limit enforcement + context budget for wrap (stop at 60%, not 75%)
+- `self-learning/batch_report.py` — NEW: aggregate trace health CLI (score distribution, retry hotspots, waste stats)
+- `self-learning/tests/test_batch_report.py` — 13 tests
+- `agent-guard/path_validator.py` — NEW: AG-7 dangerous path + command detection (system dirs, traversal, rm -rf, dd, curl|bash)
+- `agent-guard/tests/test_path_validator.py` — 30 tests
+- `FINDINGS_LOG.md` — 3 new GitHub repo evaluations (engram 1.5K, hooks-mastery 3.3K, multi-agent-coordination)
+- MT-10: 31-session aggregate trace analysis (avg score 70, PROJECT_INDEX.md 74% retry rate)
+
+**Why:**
+- Sentinel 20% was arbitrary and risky — Matthew requested conservative 5-10% ceiling
+- Scan limit: too many consecutive scan sessions without building — need to ship code
+- Context budget: wrap self-learning ritual needs 15-20% context, was being squeezed out
+- batch_report validates trace_analyzer on real data and provides ongoing health monitoring
+- path_validator addresses BUILD findings from r/vibecoding (GPT wiped F: drive, Codex deleted S3)
+
+**Tests:** 1471/1471 passing (+43: 13 batch_report, 30 path_validator)
+
+**Lessons:**
+- TraceAnalyzer API: constructor takes path string, not session object. Analyze() returns flat dict (waste/retries/efficiency/velocity), not nested detectors dict.
+- PROJECT_INDEX.md retried in 74% of sessions — biggest single efficiency win. Next session should restructure or cache.
+
+---
