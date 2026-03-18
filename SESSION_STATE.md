@@ -5,8 +5,8 @@
 
 ## Current State (as of Session 33 — 2026-03-17)
 
-**Phase:** Session 33 COMPLETE. Deep-read agents completed for r/vibecoding (4 safety posts — ALL validate Agent Guard) and r/algotrading (6 posts — meta labeling, regime classification, PMXT data for Kalshi). 5 cca-reviews completed (YoYo ADAPT, Unsloth SKIP, agent accuracy REFERENCE, Obsidian+Claude REFERENCE, 100K lines REFERENCE). r/LocalLLaMA scan logged (50 NEEDLE — classifier saturated). All findings committed.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-10 Phase 2 — run improver for 5 sessions. (2) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread). (3) Scan remaining never-scanned subs (r/MachineLearning, r/webdev, r/iOSProgramming, r/stocks, r/SecurityAnalysis, r/ValueInvesting, r/Bogleheads, r/ClaudeAI). (4) MT-11 Phase 3 — run scan --all for comprehensive GitHub intel sweep. (5) Fix needle_ratio_cap in profiles.py — r/investing and r/LocalLLaMA both saturated at 100% NEEDLE.
+**Phase:** Session 33 COMPLETE. Deep-reads, 5 reviews, Skillbook created. APF metric established at 32.1% (target: 40%). 10 active strategies distilled from 33 sessions of learnings. Self-learning system upgraded from journal-only to journal + skillbook (YoYo-inspired).
+**Next session starts at:** Run /cca-init. Read SKILLBOOK.md at session start. Priority: (1) MT-10 Phase 2 — run improver for 5 sessions. (2) Deep-read remaining r/ClaudeCode NEEDLEs (14 unread). (3) Fix needle_ratio_cap in profiles.py (APF lever). (4) Scan remaining subs (r/MachineLearning, r/webdev, r/iOSProgramming, r/stocks, r/SecurityAnalysis, r/ValueInvesting, r/Bogleheads, r/ClaudeAI). (5) MT-11 Phase 3 — run scan --all. (6) Auto-inject SKILLBOOK.md into session context via hook.
 
 ---
 
@@ -22,6 +22,14 @@
 - Agent 34.2% accuracy (REFERENCE) — "Skillbook" pattern: memories as distilled strategies, not raw facts
 - Obsidian+Claude memory (REFERENCE) — Validates Frontier 1 demand, memory promotion logic is hardest unsolved piece
 - 100K lines solo dev (REFERENCE) — Diagram agents (UX + marketing roles) produce polished visuals, "orchestration not prompting"
+
+### Skillbook + APF Hard Metric (NEW)
+- Created `self-learning/SKILLBOOK.md` — distilled strategies, not raw journal entries
+- **APF (Actionable Per Find) = 32.1%** — CCA's ruthless metric (like Kalshi's net profit)
+- 10 active strategies (confidence >= 50), 2 emerging (30-49), 0 archived
+- Top strategies: deep-read BUILD/ADAPT only (S1), parallel agents (S2), per-sub keyword tuning (S3)
+- Growth tracking table: tests 283->1259, findings 0->212, modules 5->9+ across 33 sessions
+- Updated self-learning/CLAUDE.md with Skillbook architecture and APF reporting rule
 
 ### Housekeeping
 - r/LocalLLaMA scan logged: 50 NEEDLE (classifier saturated — all posts match keywords)
