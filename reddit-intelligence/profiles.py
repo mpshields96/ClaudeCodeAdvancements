@@ -189,6 +189,31 @@ BUILTIN_PROFILES = {
         ],
         domain="trading",
     ),
+    # AI agent/framework subs — added per Matthew's directive (Session 45)
+    "autogpt": SubredditProfile(
+        subreddit="AutoGPT",
+        min_score=20,
+        timeframe="month",
+        limit=75,
+        extra_needle_keywords=[
+            "agent", "autonomous", "workflow", "tool use", "memory",
+            "planning", "self-improvement", "loop", "benchmark",
+        ],
+        domain="research",
+        needle_ratio_cap=0.5,
+    ),
+    "langchain": SubredditProfile(
+        subreddit="LangChain",
+        min_score=20,
+        timeframe="month",
+        limit=75,
+        extra_needle_keywords=[
+            "agent", "tool", "chain", "rag", "memory", "graph",
+            "langgraph", "workflow", "orchestration", "benchmark",
+        ],
+        domain="research",
+        needle_ratio_cap=0.5,
+    ),
 }
 
 
