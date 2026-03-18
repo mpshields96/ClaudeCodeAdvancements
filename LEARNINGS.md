@@ -249,3 +249,21 @@
 
 ---
 
+### Self-resolution scan catches wasted effort on solved problems — Severity: 2 — Count: 1
+- **Anti-pattern:** Keeping MTs as "blocked" without checking if the ecosystem has solved them
+- **Fix:** Every 5 sessions, WebSearch each blocked/aging MT to check if Anthropic or community shipped a solution. MT-1 (visual grid), MT-5 (Pro bridge), and MT-8 (remote control) were all mostly solved externally.
+- **First seen:** 2026-03-18
+- **Last seen:** 2026-03-18
+- **Files:** MASTER_TASKS.md scoring rules
+
+---
+
+### Run self-resolution scan at session START not END — Severity: 1 — Count: 1
+- **Anti-pattern:** Running self-resolution scan during wrap, after priorities were already set and work done
+- **Fix:** Add self-resolution scan to /cca-init for blocked MTs every 5 sessions — changes priority queue before work begins
+- **First seen:** 2026-03-18
+- **Last seen:** 2026-03-18
+- **Files:** .claude/commands/cca-init.md
+
+---
+

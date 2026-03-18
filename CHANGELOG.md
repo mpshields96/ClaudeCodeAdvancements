@@ -14,10 +14,21 @@
 - MT-8: Research complete — native Remote Control solves 90% of requirements
 - `research/MT-8_remote_control_research.md` (NEW) — Remote Control setup guide
 
+- Self-resolution scan: MT-1 (visual grid) and MT-5 (Pro bridge) mostly solved by community tools
+- Scoring rule 6 added: self-resolution scan every 5 sessions
+
 **6 MTs advanced in one session (first time). Decay system working: priorities shifted correctly after each sub-session.**
 
+**Why:**
+- Matthew requested working strictly from MT list by priority, with decay-based aging
+- Force-multiplier criterion: work on what makes Claude smarter/faster first
+
 **Tests:** 1552/1552 passing (38 suites, no changes)
-**Commits:** 4 (init/wrap + 3 sub-session commits)
+**Commits:** 5
+
+**Lessons:**
+- Self-resolution scan should run at session START, not end — it changes the priority queue
+- 3-session sub-session model works well for one chat (A/B/C structure)
 
 ---
 

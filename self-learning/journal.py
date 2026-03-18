@@ -191,7 +191,7 @@ def get_stats():
 
         stats["total_learnings"] += len(e.get("learnings", []))
 
-    stats["sessions_logged"] = sorted(stats["sessions_logged"])
+    stats["sessions_logged"] = sorted(stats["sessions_logged"], key=lambda x: str(x))
     return stats
 
 
