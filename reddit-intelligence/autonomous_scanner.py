@@ -48,8 +48,8 @@ _PROJECT_DIR = _THIS_DIR.parent
 sys.path.insert(0, str(_THIS_DIR))
 sys.path.insert(0, str(_PROJECT_DIR / "agent-guard"))
 
-from profiles import BUILTIN_PROFILES, get_profile, ScanRegistry
-from nuclear_fetcher import classify_post, load_findings_urls
+from profiles import BUILTIN_PROFILES, get_profile, ScanRegistry, merge_scout_nuclear
+from nuclear_fetcher import classify_post, load_findings_urls, fetch_top_posts
 from content_scanner import is_safe_for_deep_read
 
 
@@ -95,6 +95,33 @@ class ScanReport:
             unique = list(set(self.blocked_reasons))[:5]
             lines.append(f"  Block reasons: {', '.join(unique)}")
         return "\n".join(lines)
+
+
+# ── ScanResult ───────────────────────────────────────────────────────────────
+
+
+@dataclass
+class ScanResult:
+    """Complete result from execute_scan — report + classified post lists."""
+    report: ScanReport
+    needles: list = field(default_factory=list)
+    maybes: list = field(default_factory=list)
+    hay: list = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "report": self.report.to_dict(),
+            "needles": self.needles,
+            "maybes": self.maybes,
+            "hay": self.hay,
+        }
+
+    def save_json(self, path: str):
+        """Write result to JSON file (atomic)."""
+        tmp = path + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(self.to_dict(), f, indent=2)
+        os.replace(tmp, path)
 
 
 # ── ScanPrioritizer ──────────────────────────────────────────────────────────
@@ -366,6 +393,83 @@ class AutonomousScanner:
             p["triage"] = classify_post(p)
         return posts
 
+    def execute_scan(
+        self,
+        subreddit: str,
+        slug: str,
+        domain: str,
+        fetch_limit: int = None,
+        timeframe: str = None,
+    ) -> ScanResult:
+        """
+        Execute a full autonomous scan on a subreddit.
+
+        1. Check safety gate
+        2. Resolve fetch params from profile (or use custom)
+        3. Fetch posts via nuclear_fetcher
+        4. Filter unsafe
+        5. Dedup against FINDINGS_LOG
+        6. Classify (NEEDLE/MAYBE/HAY)
+        7. Record scan in safety gate + registry
+        8. Build and return ScanResult
+
+        Returns None if blocked by safety gate.
+        """
+        # Safety check
+        allowed, reason = self.safety_gate.can_scan()
+        if not allowed:
+            return None
+
+        # Resolve fetch parameters from profile if not custom
+        if fetch_limit is None or timeframe is None:
+            try:
+                profile = get_profile(subreddit)
+                params = merge_scout_nuclear(subreddit, "full", profile)
+                fetch_limit = fetch_limit or params.get("fetch_limit", 100)
+                timeframe = timeframe or params.get("timeframe", "year")
+            except Exception:
+                fetch_limit = fetch_limit or 100
+                timeframe = timeframe or "year"
+
+        # Fetch posts (zero Claude tokens — pure Reddit API)
+        posts = fetch_top_posts(subreddit, fetch_limit, timeframe)
+
+        # Filter unsafe
+        safe, blocked = self.filter_posts(posts)
+
+        # Dedup against FINDINGS_LOG
+        safe = self.dedup_posts(safe)
+
+        # Classify
+        safe = self.classify_posts(safe)
+
+        # Split by triage
+        needles = [p for p in safe if p.get("triage") == "NEEDLE"]
+        maybes = [p for p in safe if p.get("triage") == "MAYBE"]
+        hay = [p for p in safe if p.get("triage") == "HAY"]
+
+        # Build report
+        report = self.build_report(subreddit, slug, domain, posts, safe, blocked)
+
+        # Record scan
+        self.safety_gate.record_scan(slug)
+
+        # Update scan registry
+        registry = ScanRegistry(self.prioritizer._registry._path)
+        registry.record_scan(
+            slug,
+            posts_scanned=len(posts),
+            builds=0,  # Will be updated after review
+            adapts=0,
+        )
+
+        return ScanResult(
+            report=report,
+            needles=needles,
+            maybes=maybes,
+            hay=hay,
+        )
+
     def build_report(self, subreddit: str, slug: str, domain: str,
                      fetched: list, safe: list, blocked: list) -> ScanReport:
         """Build a ScanReport from scan results."""
@@ -397,10 +501,14 @@ def cli_main(args: list = None):
         args = sys.argv[1:]
 
     if not args:
-        print("Usage: python3 autonomous_scanner.py [rank|status|pick]")
+        print("Usage: python3 autonomous_scanner.py [rank|status|pick|scan]")
         print("  rank                    Show prioritized sub list")
         print("  status                  Show safety gate status")
         print("  pick [--domain <d>]     Pick next target sub")
+        print("  scan [--target <sub>]   Execute full scan on auto-picked or specified sub")
+        print("       [--json]           Output JSON instead of summary")
+        print("       [--limit <N>]      Override fetch limit")
+        print("       [--timeframe <t>]  Override timeframe (hour/day/week/month/year)")
         return
 
     cmd = args[0]
@@ -409,7 +517,12 @@ def cli_main(args: list = None):
     registry_path = None
     state_path = None
     kill_switch_path = None
+    findings_path = None
     domain = None
+    target = None
+    output_json = False
+    fetch_limit = None
+    timeframe = None
     i = 1
     while i < len(args):
         if args[i] == "--registry" and i + 1 < len(args):
@@ -421,8 +534,23 @@ def cli_main(args: list = None):
         elif args[i] == "--kill-switch" and i + 1 < len(args):
             kill_switch_path = args[i + 1]
             i += 2
+        elif args[i] == "--findings" and i + 1 < len(args):
+            findings_path = args[i + 1]
+            i += 2
         elif args[i] == "--domain" and i + 1 < len(args):
             domain = args[i + 1]
+            i += 2
+        elif args[i] == "--target" and i + 1 < len(args):
+            target = args[i + 1]
+            i += 2
+        elif args[i] == "--json":
+            output_json = True
+            i += 1
+        elif args[i] == "--limit" and i + 1 < len(args):
+            fetch_limit = int(args[i + 1])
+            i += 2
+        elif args[i] == "--timeframe" and i + 1 < len(args):
+            timeframe = args[i + 1]
             i += 2
         else:
             i += 1
@@ -453,15 +581,65 @@ def cli_main(args: list = None):
             kill_switch_path=kill_switch_path,
             state_path=state_path,
         )
-        target = scanner.pick_target(domain=domain)
-        if target is None:
+        picked = scanner.pick_target(domain=domain)
+        if picked is None:
             print("Scanning blocked — check status for details.")
         else:
-            print(f"Next target: r/{target['subreddit']} ({target['domain']})")
-            print(f"  Slug: {target['slug']}")
-            stale = "never scanned" if target["never_scanned"] else f"{target['staleness_days']:.0f} days"
+            print(f"Next target: r/{picked['subreddit']} ({picked['domain']})")
+            print(f"  Slug: {picked['slug']}")
+            stale = "never scanned" if picked["never_scanned"] else f"{picked['staleness_days']:.0f} days"
             print(f"  Staleness: {stale}")
-            print(f"  Priority score: {target['priority_score']:.1f}")
+            print(f"  Priority score: {picked['priority_score']:.1f}")
+
+    elif cmd == "scan":
+        import re as _re
+        scanner = AutonomousScanner(
+            registry_path=registry_path,
+            kill_switch_path=kill_switch_path,
+            state_path=state_path,
+            findings_path=findings_path,
+        )
+
+        # Determine target: explicit --target or auto-pick
+        if target:
+            sub = _re.sub(r"^/?r/", "", target.strip())
+            # Resolve slug and domain from profiles
+            try:
+                profile = get_profile(sub)
+                slug = profile.slug if hasattr(profile, "slug") else sub.lower()
+                scan_domain = profile.domain if hasattr(profile, "domain") else "unknown"
+            except Exception:
+                slug = _re.sub(r"[^a-z0-9]", "", sub.lower())
+                scan_domain = "unknown"
+        else:
+            picked = scanner.pick_target(domain=domain)
+            if picked is None:
+                print("Scanning blocked — check status for details.")
+                return
+            sub = picked["subreddit"]
+            slug = picked["slug"]
+            scan_domain = picked["domain"]
+            stale = "never scanned" if picked["never_scanned"] else f"{picked['staleness_days']:.0f} days stale"
+            if not output_json:
+                print(f"Auto-picked: r/{sub} ({scan_domain}) — {stale}")
+
+        # Execute scan
+        result = scanner.execute_scan(
+            sub, slug, scan_domain,
+            fetch_limit=fetch_limit,
+            timeframe=timeframe,
+        )
+
+        if result is None:
+            print("Scan blocked by safety gate.")
+            return
+
+        if output_json:
+            print(json.dumps(result.to_dict(), indent=2))
+        else:
+            print(result.report.summary())
+            print(f"\nReady for review: {len(result.needles)} NEEDLE, "
+                  f"{len(result.maybes)} MAYBE, {len(result.hay)} HAY")
 
     else:
         print(f"Unknown command: {cmd}")

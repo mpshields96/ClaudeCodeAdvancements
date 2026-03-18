@@ -504,6 +504,226 @@ class TestApprovedDomains(unittest.TestCase):
             shutil.rmtree(tmpdir, ignore_errors=True)
 
 
+class TestAutonomousScanExecution(unittest.TestCase):
+    """Tests for full scan execution pipeline (MT-9 Phase 2)."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.registry_path = os.path.join(self.tmpdir, "scan_registry.json")
+        self.kill_switch_path = os.path.join(self.tmpdir, ".cca-autonomous-pause")
+        self.state_path = os.path.join(self.tmpdir, "autonomous_state.json")
+        self.findings_path = os.path.join(self.tmpdir, "FINDINGS_LOG.md")
+        self.output_dir = os.path.join(self.tmpdir, "findings")
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _make_scanner(self):
+        from autonomous_scanner import AutonomousScanner
+        return AutonomousScanner(
+            registry_path=self.registry_path,
+            kill_switch_path=self.kill_switch_path,
+            state_path=self.state_path,
+            findings_path=self.findings_path,
+        )
+
+    def _mock_posts(self, n=10, subreddit="ClaudeCode"):
+        """Generate realistic mock Reddit posts."""
+        return [
+            {
+                "id": f"post_{i}",
+                "title": f"My Claude Code workflow tip #{i}" if i % 3 != 0 else f"Funny meme #{i}",
+                "author": f"user_{i}",
+                "score": 200 - i * 10,
+                "upvote_ratio": 0.95,
+                "num_comments": 30 + i,
+                "created_utc": 1710000000 + i * 3600,
+                "flair": "showcase" if i % 4 == 0 else "",
+                "is_self": True,
+                "url": f"https://reddit.com/r/{subreddit}/comments/post_{i}/",
+                "permalink": f"https://www.reddit.com/r/{subreddit}/comments/post_{i}/title/",
+                "selftext_length": 500 + i * 50,
+                "subreddit": subreddit,
+            }
+            for i in range(n)
+        ]
+
+    def test_execute_scan_returns_scan_result(self):
+        """execute_scan should return a ScanResult with report and classified posts."""
+        from autonomous_scanner import AutonomousScanner, ScanResult
+        scanner = self._make_scanner()
+        mock_posts = self._mock_posts(10)
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        self.assertIsInstance(result, ScanResult)
+        self.assertIsNotNone(result.report)
+        self.assertEqual(result.report.subreddit, "ClaudeCode")
+        self.assertGreater(result.report.posts_fetched, 0)
+
+    def test_execute_scan_classifies_all_posts(self):
+        """All safe posts should have triage classification after scan."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        mock_posts = self._mock_posts(5)
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        for p in result.needles + result.maybes:
+            self.assertIn("triage", p)
+
+    def test_execute_scan_separates_needles_and_maybes(self):
+        """ScanResult should have separate lists for needles and maybes."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        mock_posts = self._mock_posts(10)
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        # Needles should all be NEEDLE, maybes all MAYBE
+        for p in result.needles:
+            self.assertEqual(p["triage"], "NEEDLE")
+        for p in result.maybes:
+            self.assertEqual(p["triage"], "MAYBE")
+
+    def test_execute_scan_records_in_safety_gate(self):
+        """Scan should be recorded in safety gate state."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        mock_posts = self._mock_posts(5)
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        self.assertEqual(scanner.safety_gate.scans_this_session, 1)
+        self.assertIn("claudecode", scanner.safety_gate.subs_scanned)
+
+    def test_execute_scan_blocked_by_kill_switch(self):
+        """If kill switch active, execute_scan should return None."""
+        from autonomous_scanner import AutonomousScanner
+        Path(self.kill_switch_path).touch()
+        scanner = self._make_scanner()
+        result = scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        self.assertIsNone(result)
+
+    def test_execute_scan_dedup_works(self):
+        """Posts already in findings log should be excluded."""
+        from autonomous_scanner import AutonomousScanner
+        with open(self.findings_path, "w") as f:
+            f.write("## Prior\nhttps://www.reddit.com/r/ClaudeCode/comments/post_0/title\n")
+        scanner = self._make_scanner()
+        mock_posts = self._mock_posts(5)
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        all_ids = [p["id"] for p in result.needles + result.maybes + result.hay]
+        self.assertNotIn("post_0", all_ids)
+
+    def test_execute_scan_filters_unsafe(self):
+        """Unsafe posts should be filtered out."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        posts = self._mock_posts(3)
+        posts.append({
+            "id": "evil_post", "title": "pip install super-malware",
+            "author": "hacker", "score": 100, "upvote_ratio": 0.5,
+            "num_comments": 5, "created_utc": 1710000000,
+            "flair": "", "is_self": True,
+            "url": "https://evil.tk/malware",
+            "permalink": "https://www.reddit.com/r/ClaudeCode/comments/evil_post/",
+            "selftext_length": 100, "subreddit": "ClaudeCode",
+        })
+        with patch("autonomous_scanner.fetch_top_posts", return_value=posts):
+            result = scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        all_ids = [p["id"] for p in result.needles + result.maybes + result.hay]
+        self.assertNotIn("evil_post", all_ids)
+        self.assertGreater(result.report.posts_blocked, 0)
+
+    def test_execute_scan_respects_post_limit(self):
+        """Should not return more than max_posts_per_scan safe posts."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        scanner.safety_gate.max_posts_per_scan = 5
+        mock_posts = self._mock_posts(20)
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        total_safe = len(result.needles) + len(result.maybes) + len(result.hay)
+        self.assertLessEqual(total_safe, 5)
+
+    def test_execute_scan_uses_profile_settings(self):
+        """When fetch_limit/timeframe not specified, should use profile defaults."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        mock_posts = self._mock_posts(5)
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts) as mock_fetch:
+            scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        # fetch_top_posts should be called with some limit and timeframe
+        mock_fetch.assert_called_once()
+        args = mock_fetch.call_args
+        self.assertIsInstance(args[0][1], int)  # limit
+        self.assertIsInstance(args[0][2], str)  # timeframe
+
+    def test_scan_result_to_dict(self):
+        """ScanResult.to_dict should be JSON-serializable."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        mock_posts = self._mock_posts(5)
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        d = result.to_dict()
+        json.dumps(d)  # must be serializable
+        self.assertIn("report", d)
+        self.assertIn("needles", d)
+        self.assertIn("maybes", d)
+
+    def test_scan_result_save_json(self):
+        """ScanResult.save_json should write result to file."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        mock_posts = self._mock_posts(5)
+        out_path = os.path.join(self.tmpdir, "scan_result.json")
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        result.save_json(out_path)
+        self.assertTrue(os.path.exists(out_path))
+        with open(out_path) as f:
+            loaded = json.load(f)
+        self.assertIn("report", loaded)
+
+    def test_full_autonomous_flow(self):
+        """End-to-end: pick_target + execute_scan should work together."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        target = scanner.pick_target()
+        self.assertIsNotNone(target)
+        mock_posts = self._mock_posts(8, subreddit=target["subreddit"])
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            result = scanner.execute_scan(
+                target["subreddit"], target["slug"], target["domain"]
+            )
+        self.assertIsNotNone(result)
+        self.assertEqual(result.report.subreddit, target["subreddit"])
+
+    def test_execute_scan_with_custom_limits(self):
+        """Should accept custom fetch_limit and timeframe."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        mock_posts = self._mock_posts(5)
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts) as mock_fetch:
+            scanner.execute_scan("ClaudeCode", "claudecode", "claude",
+                                 fetch_limit=50, timeframe="month")
+        mock_fetch.assert_called_once_with("ClaudeCode", 50, "month")
+
+    def test_execute_scan_records_in_registry(self):
+        """Scan should update scan_registry with results."""
+        from autonomous_scanner import AutonomousScanner
+        scanner = self._make_scanner()
+        mock_posts = self._mock_posts(10)
+        with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+            scanner.execute_scan("ClaudeCode", "claudecode", "claude")
+        # Check registry was updated
+        with open(self.registry_path) as f:
+            registry = json.load(f)
+        self.assertIn("claudecode", registry)
+        self.assertIn("last_scan", registry["claudecode"])
+
+
 class TestCLI(unittest.TestCase):
     """Tests for CLI interface."""
 
@@ -536,6 +756,99 @@ class TestCLI(unittest.TestCase):
                           "--kill-switch", os.path.join(tmpdir, "pause")])
             output = out.getvalue()
             self.assertIn("scan", output.lower())
+        finally:
+            import shutil
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_cli_scan_command(self):
+        """CLI 'scan' command should execute a scan and output results."""
+        from autonomous_scanner import cli_main
+        import io
+        from contextlib import redirect_stdout
+        tmpdir = tempfile.mkdtemp()
+        try:
+            mock_posts = [
+                {"id": f"p{i}", "title": f"Claude workflow tip {i}",
+                 "author": "u", "score": 100, "upvote_ratio": 0.9,
+                 "num_comments": 20, "created_utc": 1710000000,
+                 "flair": "", "is_self": True,
+                 "url": "https://reddit.com/r/ClaudeCode/comments/p0/",
+                 "permalink": "https://www.reddit.com/r/ClaudeCode/comments/p0/t/",
+                 "selftext_length": 500, "subreddit": "ClaudeCode"}
+                for i in range(5)
+            ]
+            out = io.StringIO()
+            with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+                with redirect_stdout(out):
+                    cli_main(["scan",
+                              "--registry", os.path.join(tmpdir, "reg.json"),
+                              "--state", os.path.join(tmpdir, "state.json"),
+                              "--kill-switch", os.path.join(tmpdir, "pause"),
+                              "--findings", os.path.join(tmpdir, "findings.md")])
+            output = out.getvalue()
+            self.assertIn("scan", output.lower())
+        finally:
+            import shutil
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_cli_scan_with_target(self):
+        """CLI 'scan --target r/algotrading' should scan specific sub."""
+        from autonomous_scanner import cli_main
+        import io
+        from contextlib import redirect_stdout
+        tmpdir = tempfile.mkdtemp()
+        try:
+            mock_posts = [
+                {"id": "p0", "title": "Algo trading strategy",
+                 "author": "u", "score": 100, "upvote_ratio": 0.9,
+                 "num_comments": 20, "created_utc": 1710000000,
+                 "flair": "", "is_self": True,
+                 "url": "https://reddit.com/r/algotrading/comments/p0/",
+                 "permalink": "https://www.reddit.com/r/algotrading/comments/p0/t/",
+                 "selftext_length": 500, "subreddit": "algotrading"}
+            ]
+            out = io.StringIO()
+            with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts) as mock_fetch:
+                with redirect_stdout(out):
+                    cli_main(["scan", "--target", "r/algotrading",
+                              "--registry", os.path.join(tmpdir, "reg.json"),
+                              "--state", os.path.join(tmpdir, "state.json"),
+                              "--kill-switch", os.path.join(tmpdir, "pause"),
+                              "--findings", os.path.join(tmpdir, "findings.md")])
+            # Should have been called with "algotrading"
+            mock_fetch.assert_called_once()
+            self.assertEqual(mock_fetch.call_args[0][0], "algotrading")
+        finally:
+            import shutil
+            shutil.rmtree(tmpdir, ignore_errors=True)
+
+    def test_cli_scan_json_output(self):
+        """CLI 'scan --json' should output JSON result."""
+        from autonomous_scanner import cli_main
+        import io
+        from contextlib import redirect_stdout
+        tmpdir = tempfile.mkdtemp()
+        try:
+            mock_posts = [
+                {"id": "p0", "title": "Claude Code hook tutorial",
+                 "author": "u", "score": 100, "upvote_ratio": 0.9,
+                 "num_comments": 20, "created_utc": 1710000000,
+                 "flair": "", "is_self": True,
+                 "url": "https://reddit.com/r/ClaudeCode/comments/p0/",
+                 "permalink": "https://www.reddit.com/r/ClaudeCode/comments/p0/t/",
+                 "selftext_length": 500, "subreddit": "ClaudeCode"}
+            ]
+            out = io.StringIO()
+            with patch("autonomous_scanner.fetch_top_posts", return_value=mock_posts):
+                with redirect_stdout(out):
+                    cli_main(["scan", "--json",
+                              "--registry", os.path.join(tmpdir, "reg.json"),
+                              "--state", os.path.join(tmpdir, "state.json"),
+                              "--kill-switch", os.path.join(tmpdir, "pause"),
+                              "--findings", os.path.join(tmpdir, "findings.md")])
+            output = out.getvalue()
+            parsed = json.loads(output)
+            self.assertIn("report", parsed)
         finally:
             import shutil
             shutil.rmtree(tmpdir, ignore_errors=True)
