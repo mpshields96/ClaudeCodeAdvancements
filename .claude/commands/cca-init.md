@@ -57,6 +57,18 @@ If no findings match or FINDINGS_LOG.md doesn't exist, skip silently.
 
 ---
 
+## Step 3.5 — Reset session pacer
+
+Reset the session pacer so it tracks this session's duration from now:
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/context-monitor/session_pacer.py reset
+```
+
+This ensures /cca-auto's pacing decisions use accurate timing for this session.
+
+---
+
 ## Step 4 — Check git status
 
 ```bash
