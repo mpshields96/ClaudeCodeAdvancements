@@ -276,6 +276,64 @@ CCA can now autonomously search GitHub and evaluate repos by quality rubric.
 3. Arbitrage bots — study their spread detection logic, timing, and fee handling
 4. CAUTION: security warning from earlier r/algotrading finding about repos containing exfiltration code still applies
 
+### [2026-03-17] HIGH-VALUE: Meta Labeling for Kalshi Signal Filtering (Session 32 Deep-Read)
+**Source:** r/algotrading (610pts, 85 comments) — https://www.reddit.com/r/algotrading/comments/1lnm48w/
+**Relevance:** HIGHEST-ROI addition to Kalshi bot. Uses ML to filter existing strategy signals — don't find new edge, amplify what already works.
+
+Key findings:
+- Train binary classifier on features at signal time to predict win/loss
+- Author: win rate +1-3%, drawdown 35% to 23% (massively better risk-adjusted)
+- Live 9 months on ES/NQ, 1.15 profit factor, 2.5 Calmar ratio
+- Uses 6 base models with 20-70 features each, ensemble via Logistic Regression
+- Needs minimum 1000+ trades (5000+ ideal) for the meta model
+- CPCV (Combinatorial Purged Cross-Validation) for non-IID trades
+- Calibrate each model's output with Platt scaling so probabilities are real-world accurate
+- Google Vizier recommended over Optuna for hyperparameter tuning
+
+**Kalshi application:**
+1. Start logging ALL signals with features immediately (even before ML layer)
+2. Label each signal win/loss after resolution
+3. Train ensemble classifier to predict signal quality
+4. Only execute high-confidence signals — aligns perfectly with sniper approach
+5. The "ML amplifies existing edge, doesn't create it" mental model is correct
+
+### [2026-03-17] HIGH-VALUE: Bayesian Regime Classification for Kalshi (Session 32 Deep-Read)
+**Source:** r/algotrading (184pts, 67 comments) — https://www.reddit.com/r/algotrading/comments/1ob5xao/
+**Relevance:** Condition ALL probability estimates on current market regime. Different strategies for different regimes.
+
+Key findings:
+- 5 regime types: strong bull, weak bull, bear, sideways, unpredictable
+- Classified via SP500 moving averages + VIX
+- Bayesian overnight reversal probabilities per regime, validated 10 years
+- Live 3 months: 24% returns, 64.7% WR, Sharpe 3.51, low SP500 correlation (0.172)
+- Day-of-week effect: overnight works best Mon-Wed
+- Comment: use 7-9 regimes for more granularity
+- Regime calculated at 3:50 PM EST — responsive to same-day conditions
+
+**Kalshi application:**
+1. Implement regime detection (bull/bear/sideways/volatile) before any bet
+2. Different confidence thresholds per regime — tighter in volatile, looser in trending
+3. Kalshi overnight + daily markets are the natural home for this
+4. Condition the Bayesian model the research chat is building ON the regime state
+
+### [2026-03-17] HIGH-VALUE: Pre-Market Feature Engineering for SPX Direction (Session 32 Deep-Read)
+**Source:** r/algotrading (196pts, 172 comments) — https://www.reddit.com/r/algotrading/comments/1rrbdx5/
+**Relevance:** Pre-open feature window (4:00-9:30 AM) has genuine signal for daily direction.
+
+Key findings (expanded from earlier entry):
+- 85-94% backtest accuracy but ONLY fires ~30% of days (selective, like sniper)
+- Live commenter: up $34K since Jan 12 with similar system, fully automated
+- Uses IBKR extended hours data, Massive for options chain
+- Academic backing: pre-market price action predicts daily direction
+- Confidence gating: hide prediction below threshold to prevent anchoring bias
+- GEX (Gamma Exposure) + options walls layered in as additional features
+
+**Kalshi application:**
+1. Build pre-market feature extractor for SPX daily/hourly contracts
+2. IBKR or similar data source for 4:00-9:30 AM window
+3. Selective firing aligns perfectly with sniper timing
+4. Gap fade strategy for SPY contracts using overnight drift data
+
 ---
 
 ## Processed Intel
