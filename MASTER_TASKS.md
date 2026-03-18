@@ -348,7 +348,8 @@ Phase 2 (Session 31):
 - Wired into reflect.py: trace analysis auto-generates proposals, --propose flag for reflect patterns
 - 64 tests — all passing
 - E2E validation: Pipeline tested on 3 real CCA transcripts (scores 40-70), 6 proposals generated, QualityGate correctly passes balanced improvements and rejects gamed ones
-- Phase 2: Run for 5 sessions, measure improvement rate. Phase 3: Graduate to Kalshi bot.
+- Phase 2 COMPLETE (Sessions 42-44): 5/5 validation sessions, 36 transcripts analyzed. Avg score 70.8/100, median 75, improving trend (65->85->71->80->75). Distribution: 41% excellent, 33% good, 19% poor, 5% critical. 14 proposals generated (7 approved), dedup preventing explosion. QualityGate + Sentinel working correctly.
+- Phase 3: Graduate to Kalshi bot (requires cross-project work).
 
 ---
 
@@ -670,7 +671,7 @@ Matthew's other projects. Same SwiftUI toolchain, same Xcode requirement.
 
 | Rank | MT | Task | Base | Last Touched | Chats Ago | Rate | Aging | **Score** | Next Phase |
 |------|----|------|------|-------------|-----------|------|-------|-----------|------------|
-| 1 | MT-10 | YoYo self-learning | 9 | Session 42 | 0 | 1.0 | 0.0 | **9.0** | Phase 2: session 3/5 validation |
+| 1 | MT-10 | YoYo self-learning | 9 | Session 44 | 0 | 1.0 | 0.0 | **9.0** | Phase 2 COMPLETE. Phase 3: graduate to Kalshi bot. |
 | 2 | MT-9 | Autonomous scanning | 8 | Session 42 | 0 | 1.0 | 0.0 | **8.0** | Phase 3: deep-read r/ClaudeAI NEEDLEs |
 | 3 | MT-11 | GitHub intelligence | 7 | Session 42 | 0 | 1.0 | 0.0 | **7.0** | Phase 2 VALIDATED: live API working, 97 repos logged |
 | 4 | MT-14 | Rescan stale subs | 6 | Session 35 | 7 | 1.0 | 7.0 | **13.0** | Phase 2: live rescan test |
