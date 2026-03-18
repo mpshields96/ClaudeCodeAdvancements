@@ -105,8 +105,15 @@ Committed: [commit hash — first 7 chars]
 Continue this loop until you've completed 2-3 meaningful deliverables for the session.
 Only stop and write the final SESSION_STATE update when:
 - You've delivered 2-3 substantial tasks, OR
-- Context window is getting low (>75% used), OR
+- Context window is getting low (>60% used), OR
 - All priority tasks are done
+
+**CRITICAL: RESERVE CONTEXT FOR WRAP.** Stop work at 60% context usage (not 75%).
+The /cca-wrap ritual with self-learning (journal, reflection, Skillbook, Sentinel evolve,
+strategy validation) needs ~15-20% of context budget. If you push to 80%+ before wrapping,
+the wrap will be rushed, truncated, or fail entirely — losing all session learning.
+The rule: **stop building at 60%, run /cca-wrap from 60-80%, leave 20% buffer.**
+This applies to /cca-nuclear sessions too — stop scanning and run /cca-nuclear-wrap.
 
 When stopping, write the final report:
 ```
