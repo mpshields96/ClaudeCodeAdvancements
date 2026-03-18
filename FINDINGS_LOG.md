@@ -209,3 +209,5 @@
 
 [2026-03-17] REFERENCE-PERSONAL [Trading/Academic] Kalshi calibration dynamics — 292M trades, domain-specific bias, 87.3% variance explained — https://arxiv.org/abs/2602.19520
 [2026-03-17] REFERENCE-PERSONAL [Trading/Academic] Prediction markets as Bayesian inverse problems — regime detection, log-odds framework — https://arxiv.org/abs/2601.18815
+
+[2026-03-17] REFERENCE-PERSONAL [Trading/Academic] Price convergence near expiration — validates sniper timing approach — https://arxiv.org/abs/2205.08913

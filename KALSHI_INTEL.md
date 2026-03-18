@@ -134,9 +134,9 @@ _Kalshi Research Chat: add requests here. CCA will prioritize scanning for these
 
 | Priority | Topic | Context | Requested By | Status |
 |----------|-------|---------|-------------|--------|
-| HIGH | Bayesian updating for prediction markets | Research chat building Bayesian model for bet sizing/probability | Kalshi Research | OPEN |
-| HIGH | Sniper bet timing patterns | Statistical analysis of optimal entry timing for high-probability events | Kalshi Research | OPEN |
-| MEDIUM | Market microstructure for event markets | How orderbook depth, spread dynamics differ from traditional markets | Kalshi Research | OPEN |
+| HIGH | Bayesian updating for prediction markets | Research chat building Bayesian model for bet sizing/probability | Kalshi Research | FOUND — See calibration paper (292M trades) + Bayesian inverse problems paper above |
+| HIGH | Sniper bet timing patterns | Statistical analysis of optimal entry timing for high-probability events | Kalshi Research | FOUND — See price convergence paper (Operations Research) above |
+| MEDIUM | Market microstructure for event markets | How orderbook depth, spread dynamics differ from traditional markets | Kalshi Research | PARTIAL — Binary tree microstructure paper found, need more event-market specific |
 
 _CCA: When you see OPEN requests, use `/cca-nuclear autonomous --domain trading` or targeted web searches to find relevant intel. Move to DONE when findings are appended above._
 
@@ -213,6 +213,31 @@ Key findings:
 2. The log-odds framework aligns with MAP estimation the research chat is building
 3. Trader type decomposition helps the bot understand when prices are driven by informed traders vs noise
 4. The stability diagnostics can serve as a confidence filter (don't bet when inference is unstable)
+
+### [2026-03-17] Price Convergence Near Expiration — Academic Backing for Sniper Timing
+**Source:** arxiv.org/abs/2205.08913 — "Price Interpretability of Prediction Markets: A Convergence Analysis" (Operations Research)
+**Relevance:** Directly validates the sniper bet strategy — prices become more accurate near expiration
+
+Key findings:
+- Time until expiration NEGATIVELY affects price accuracy as a forecasting tool
+- Near-expiration prices are "reasonably well calibrated" while far-future prices show "significant bias"
+- Favourite/longshot bias direction varies with time horizon
+- Limiting price converges to geometric mean of agent beliefs in exponential utility-based markets
+- Miscalibration can be exploited when trader has relatively low discount rate
+
+**Kalshi application:**
+1. **Validates sniper approach**: Waiting for near-expiration contracts to reach high probability is academically supported
+2. **Calibration improves near expiry** — sniper bets taken in the last hour have better probability-price alignment
+3. **Favourite/longshot bias**: At 90-95c, contracts may still be slightly mispriced relative to true probability — the sniper edge
+4. **Geometric mean convergence**: When all informed traders agree, price converges to truth — sniper bets detect this convergence
+
+### [2026-03-17] Prediction Market Industry Growth — Context for Kalshi
+**Source:** Multiple industry reports (2025-2026)
+- Kalshi: from 3.3% → 66% market share in 2024-2025, now $100B+ annualized volume
+- Nasdaq requesting SEC approval for binary options on Nasdaq-100
+- Cboe launching Mini-SPX prediction contracts Q2 2026
+- ICE investing up to $2B in Polymarket
+- These new entrants will increase liquidity and create new arbitrage opportunities
 
 ### [2026-03-17] Autonomous Scan: r/algotrading Full Results
 **Scan stats:** 100 posts fetched, 46 safe, 12 NEEDLE, 32 MAYBE, 2 HAY
