@@ -21,15 +21,21 @@ Check for any captured todos:
 ls /Users/matthewshields/Projects/ClaudeCodeAdvancements/.planning/todos/ 2>/dev/null
 ```
 
-**Priority order (staleness-weighted — waiting longer moves tasks up):**
+**Priority order (with scan limit — build before scanning more):**
 1. Any explicitly stated "next task" in SESSION_STATE.md
 2. Any high-priority captured todos (from /gsd:add-todo)
 3. Next uncompleted frontier milestone (e.g., AG-3, USAGE-1)
-4. **Intelligence intake (if stale):**
+4. Master Tasks (MASTER_TASKS.md) — next incomplete MT by priority
+5. **Intelligence intake (ONLY if scan budget allows):**
    - `/cca-nuclear-daily` — if no daily scan was done today
    - `/cca-nuclear-github` — if no GitHub scan was done this week
    - `/cca-nuclear autonomous` — if a sub is >7 days stale (check with `autonomous_scanner.py rank`)
-5. Master Tasks (MASTER_TASKS.md) — next incomplete MT by priority
+
+**SCAN LIMIT (non-negotiable):** Check `strategy.json` → `session.max_consecutive_scan_sessions` (default: 3).
+After 3 consecutive scan-heavy sessions, the next 2 sessions MUST be build-focused (writing code,
+implementing features, running tests). Count scan sessions by checking CHANGELOG.md — if the last
+3 entries are primarily scanning/reviewing, skip all scanning tasks and pick build work instead.
+Scanning is research. Building is shipping. We need both, but building takes priority.
 
 **Staleness ranking:** Tasks that haven't been touched in longer get higher priority.
 Check scan_registry.json for last scan dates. Check SESSION_STATE.md for last task dates.

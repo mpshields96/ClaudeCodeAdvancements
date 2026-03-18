@@ -25,7 +25,9 @@
   "session": {
     "commit_after_each_task": true,
     "test_before_docs": true,
-    "max_context_pct_before_wrap": 70
+    "max_context_pct_before_wrap": 70,
+    "max_consecutive_scan_sessions": 3,
+    "scan_cooldown_build_sessions": 2
   },
 
   "review": {
