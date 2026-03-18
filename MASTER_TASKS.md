@@ -279,12 +279,22 @@
 6. Backtest: Compare autonomous findings vs Matthew-directed Session 14-15 nuclear scan. Must match or exceed signal quality.
 7. Supervised trial: Run with Matthew monitoring for 3 sessions before full autonomy
 
-**Status:** Phase 1 COMPLETE (Session 30). Delivered:
+**Status:** Phase 2 COMPLETE (Session 31). Delivered:
+
+Phase 1 (Session 30):
 - `autonomous_scanner.py`: ScanPrioritizer (staleness + yield + diversity scoring), SafetyGate (kill switch + rate limiting + content scanner), AutonomousScanner orchestrator, ScanReport.
 - All 9 safety protections enforced. Kill switch at `~/.cca-autonomous-pause`.
-- 37 tests — all passing.
 - CLI: `rank` (prioritized queue), `status` (safety gate), `pick` (next target with --domain filter).
-- Phase 2: Wire into /cca-nuclear --autonomous mode for end-to-end autonomous scanning.
+
+Phase 2 (Session 31):
+- `execute_scan()`: End-to-end pipeline — fetch → filter → dedup → classify → record → report.
+- `ScanResult` dataclass with to_dict/save_json for structured output.
+- Auto-resolves fetch params from subreddit profiles.
+- Updates scan_registry after each scan for rotation.
+- CLI `scan` command: auto-pick or --target, --json output, --domain, --limit/--timeframe.
+- `/cca-nuclear autonomous` mode: auto-picks highest-priority sub via scanner.
+- 54 tests — all passing.
+- Phase 3: Supervised trial — run with Matthew monitoring for 3 sessions.
 
 ---
 

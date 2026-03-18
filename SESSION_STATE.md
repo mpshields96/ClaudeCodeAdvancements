@@ -5,23 +5,37 @@
 
 ## Current State (as of Session 31 — 2026-03-17)
 
-**Phase:** Session 31 IN PROGRESS. CTX-6 auto_wrap.py committed (recovered from interrupted session). 30 suites, 1227 total tests, all passing.
-**Next session starts at:** Run /cca-init. Priority: (1) MT-9 Phase 2 — wire autonomous scanner into /cca-nuclear --autonomous. (2) MT-11 Phase 2 — live GitHub API integration. (3) Scan never-scanned subreddits. (4) MT-10 Phase 2 — run improver for 5 sessions.
+**Phase:** Session 31 IN PROGRESS. MT-9 Phase 2 COMPLETE (scan pipeline + /cca-nuclear autonomous). CTX-6 auto_wrap committed. Kalshi research bridge documented. 30 suites, 1244 total tests, all passing.
+**Next session starts at:** Run /cca-init. Priority: (1) Build KALSHI_INTEL bridge for cross-chat communication. (2) MT-11 Phase 2 — live GitHub API integration. (3) Autonomous trading sub scan via /cca-nuclear autonomous. (4) MT-10 Phase 2 — run improver for 5 sessions.
 
 ---
 
 ## What Was Done in Session 31 (2026-03-17)
+
+### MT-9 Phase 2: execute_scan Pipeline + /cca-nuclear Autonomous Mode (COMPLETE)
+- `autonomous_scanner.py` — Added `execute_scan()` end-to-end pipeline and `ScanResult` dataclass
+- Full pipeline: fetch → filter → dedup → classify → record → report
+- Auto-resolves fetch params from subreddit profiles
+- Updates scan_registry after each scan for sub rotation
+- CLI `scan` command: auto-pick or `--target`, `--json` output, `--domain`/`--limit`/`--timeframe`
+- `/cca-nuclear autonomous` mode: auto-picks highest-priority sub
+- 54 tests (37 → 54) — all passing
 
 ### CTX-6: auto_wrap.py — Recovered from Interrupted Session
 - `context-monitor/auto_wrap.py` — Automatic session wrap-up trigger
 - Monitors context health zone, compaction count, and token ceiling
 - CLI interface: check/status/compact/reset
 - 19 tests — all passing
-- Committed + updated all docs
+
+### Kalshi Research Bridge Directive
+- CCA nuclear scanning now actively assists Kalshi research chat
+- Trading/prediction market subs are in approved autonomous scan domains
+- Findings fed via KALSHI_INTEL.md bridge artifact
+- Memory saved: project_kalshi_research_assist.md
 
 ### Housekeeping
 - Committed 10 cross-project self-learning journal entries from Kalshi bot sessions
-- Test count updated: 1188 → 1227 (30 suites)
+- Test count updated: 1188 → 1244 (30 suites)
 
 ---
 

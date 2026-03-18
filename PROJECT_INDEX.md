@@ -202,7 +202,7 @@ ClaudeCodeAdvancements/
 | `python3 reddit-intelligence/autonomous_scanner.py pick` | Pick next target sub for scanning |
 | `python3 reddit-intelligence/github_scanner.py queries` | Show GitHub search queries for CCA frontiers |
 
-**Total:** 1227/1227 tests (30 suites). **Session start:** Run all 30 suites. If anything fails, fix before touching other files.
+**Total:** 1244/1244 tests (30 suites). **Session start:** Run all 30 suites. If anything fails, fix before touching other files.
 
 ---
 
@@ -325,7 +325,7 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | reddit-intelligence (reader) | `tests/test_reddit_reader.py` | 43 | All passing |
 | reddit-intelligence (nuclear) | `tests/test_nuclear_fetcher.py` | 44 | All passing |
 | reddit-intelligence (profiles) | `tests/test_profiles.py` | 43 | All passing |
-| reddit-intelligence (autonomous) | `tests/test_autonomous_scanner.py` | 37 | All passing |
+| reddit-intelligence (autonomous) | `tests/test_autonomous_scanner.py` | 54 | All passing |
 | reddit-intelligence (github) | `tests/test_github_scanner.py` | 30 | All passing |
 | self-learning | `tests/test_self_learning.py` | 75 | All passing |
 | self-learning (trace_analyzer) | `tests/test_trace_analyzer.py` | 50 | All passing |
@@ -411,4 +411,4 @@ Slash command Markdown files. Not Python — Claude reads and follows these as b
 | 28 | 2026-03-17 | MT-10 core: improver.py (44 tests), AG-5 network_guard.py (53 tests) — 990 tests |
 | 29 | 2026-03-17 | Autocompact awareness (4 hooks), QualityGate, spec enhancements, 28 findings — 1093 tests |
 | 30 | 2026-03-17 | MT-9 (37), MT-11 (30), AG-6 session guard (28), KALSHI_INTEL bridge — 1188 tests |
-| 31 | 2026-03-17 | CTX-6 auto_wrap.py (19 tests), recovered interrupted session — 1227 tests |
+| 31 | 2026-03-17 | CTX-6 auto_wrap (19), MT-9 Phase 2 scan pipeline (54), Kalshi research bridge — 1244 tests |
