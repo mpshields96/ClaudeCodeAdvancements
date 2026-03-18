@@ -257,7 +257,19 @@ If the `/arewedone` command is available, run it as a structural health check:
 
 Record the result as pass, warn, or fail. If not available, skip and record "skipped".
 
-### 6h — Print Session Learning Summary
+### 6h — Validate Skillbook strategies
+
+Run the strategy validation check against journal evidence:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 self-learning/validate_strategies.py --brief
+```
+
+Record the output. If any strategy shows WEAK or UNVALIDATED status, note it in the
+session learning summary. This ensures every session ends with a strategy health check.
+
+### 6i — Print Session Learning Summary
 
 After all sub-steps above, output this summary block:
 
@@ -270,6 +282,7 @@ SESSION LEARNING:
 - Skillbook updates: [strategies promoted/demoted/added, or "none"]
 - APF: [current %] ([up/down/stable] from last session)
 - Structural health: [pass/warn/fail/skipped from 6g]
+- Strategy health: [output from 6h — or "skipped"]
 ```
 
 This block is mandatory — always print it, even if all values are "none"/"0".
