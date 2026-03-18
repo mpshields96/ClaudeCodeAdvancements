@@ -3,20 +3,47 @@
 
 ---
 
-## Current State (as of Session 45 — 2026-03-18)
+## Current State (as of Session 46 — 2026-03-18)
 
-**Phase:** Session 45 COMPLETE. Tests: 1593/1593 passing (39 suites). Git: clean. 8 commits.
+**Phase:** Session 46 COMPLETE. Tests: 1618/1618 passing (40 suites). Git: clean. 6 commits.
 **What's done this session:**
-1. Fixed 3 failing mobile_approver tests (Bash moved to ALWAYS_ALLOW_TOOLS)
-2. MT-10 Phase 3B COMPLETE: `resurfacer.py` — findings re-surfacing module (41 tests)
-3. Added r/AutoGPT + r/LangChain to scan profile registry
-4. MT-14: First scans of both new subs (3 findings logged)
-5. KALSHI_PRIME_DIRECTIVE.md — permanent three-pillar cross-chat directive
-6. CCA_TO_POLYBOT.md — Universal bet analytics framework (5 verified academic tools: SPRT, Wilson CI, Brier, CUSUM, FLB). All citations verified. Synced to polymarket-bot.
-7. Cross-chat communication system: CROSS_CHAT_INBOX.md shared inbox + bridge-sync.sh
-8. CLAUDE.md updated: read-only access to polymarket-bot for cross-chat bridge
+1. Wired resurfacer into /cca-init as Step 3 (surfaces relevant past findings at startup)
+2. MT-14 COMPLETE: All 15 subreddit profiles now have at least one scan registered
+3. MT-17 Phase 2 COMPLETE: Slide template + generator (25 tests, 5 slide types)
+4. CHANGELOG + LEARNINGS updated for Session 45 (deferred from context limit)
+5. Checked cross-chat bridge — no Kalshi reply yet (POLYBOT_TO_CCA.md doesn't exist)
+6. Committed Session 45 journal.jsonl
 
-**Next session:** (1) Check if Kalshi research read CCA_TO_POLYBOT.md and wrote back. (2) Run bridge-sync.sh to pick up any POLYBOT_TO_CCA.md. (3) Continue MT-14 scanning (7 never-scanned subs remain). (4) MT-17 Phase 2 slide templates. (5) Wire resurfacer into /cca-init. Matthew: install Xcode 26.3 for MT-13.
+**Next session:** (1) Check cross-chat bridge for Kalshi replies. (2) Create /cca-slides command for one-command slide generation. (3) MT-17 Phase 3: HTML dashboard templates. (4) Update MASTER_TASKS.md scores (MT-14 complete, MT-17 Phase 2 done). (5) Matthew: install Xcode 26.3 for MT-13.
+
+---
+
+## What Was Done in Session 46 (2026-03-18)
+
+### Resurfacer Integration into /cca-init
+- Added Step 3 to /cca-init: runs resurfacer.py against FINDINGS_LOG.md
+- Detects current work context (MT task, module, frontier) from SESSION_STATE
+- Surfaces top 3-5 matching findings in session briefing
+- Also modernized Step 2 to use find-based test discovery
+
+### MT-14: Complete All Subreddit Scans (COMPLETE)
+- Quick-scanned all 7 remaining never-scanned subs: r/webdev, r/iOSProgramming, r/MachineLearning, r/Bogleheads, r/stocks, r/SecurityAnalysis, r/ValueInvesting
+- All 15 profiles now registered in scan_registry.json
+- Confirms LEARNINGS severity-2: investing/general subs are noise for CCA (98% NEEDLE on r/stocks = classifier too broad)
+- r/SecurityAnalysis: only 2 posts above min_score (very low activity)
+- 3 findings logged (2 REFERENCE-PERSONAL, 1 batch SKIP)
+
+### MT-17 Phase 2: Slide Templates (COMPLETE)
+- `design-skills/slide_generator.py` — Python CLI for slide deck generation
+- `design-skills/templates/cca-slides.typ` — Native Typst 16:9 slide template
+- 5 slide types: section divider, summary cards, metric cards, bullets, module table
+- Same pipeline as Phase 1: Python collects data -> JSON -> Typst -> PDF
+- 25 tests in test_slide_generator.py
+- Compiled test output: 42K PDF, compiles in milliseconds
+
+### Session 45 Doc Debt
+- CHANGELOG.md: Session 45 entry added
+- LEARNINGS.md: 2 new entries (cross-chat bridge protocol, citation integrity)
 
 ---
 
