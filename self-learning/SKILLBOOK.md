@@ -114,7 +114,19 @@
 - Evidence: u/reliant-labs: "the best results I have is typically when 80% through and I ask what we'd do differently." Matches YoYo retrospective pattern. github.com/reliant-labs/get-it-right implements this as an automated loop.
 - Last validated: Session 43
 
-### S12: Dedicated role-agents beat general agents for visual output — Confidence: 35
+### S12: Read before Edit on structured docs — Confidence: 60
+**Directive:** "Before editing structured files (markdown tables, JSON, YAML, index files), ALWAYS read the current state first. The #1 retry hotspot across 37 CCA sessions is PROJECT_INDEX.md (68% of sessions have retries). Root cause: Edit tool fails when the old_string doesn't exactly match current content. Reading first costs ~500 tokens but saves ~2000 in retry loops. Applies to ALL projects, not just CCA."
+- Source: Session 43 (MT-10 batch report analysis — 37 sessions)
+- Evidence: PROJECT_INDEX.md retries in 25/37 sessions (68%), SESSION_STATE.md retries in 16/37 sessions (43%). Both are structured table files. The pattern: Claude attempts Edit with stale/guessed content, fails, retries 3-11 times. Fix: always Read first.
+- Last validated: Session 43
+
+### S13: CC generates bloat — periodic cleanup needed — Confidence: 40
+**Directive:** "Claude Code accumulates code bloat over extended sessions. Track LOC per module and flag growth >20% between sessions. u/diystateofmind refactored 225K->165K LOC (27% reduction) in 3 days. The self-learning system should track code growth as a health metric."
+- Source: Session 43 (harness setups thread)
+- Evidence: u/diystateofmind: "CC generates a ton of bloat, and then leaves it around like a kid leaves toys." N=1 but matches CCA observation that test files grow faster than production files.
+- Last validated: Session 43
+
+### S14: Dedicated role-agents beat general agents for visual output — Confidence: 35
 **Directive:** "For non-code outputs (diagrams, docs, marketing), use a dedicated agent with a role-specific system prompt rather than asking a general agent. Quality gap is significant."
 - Source: Session 33 (100K lines review — diagram agents)
 - Evidence: Single post. OP's UX + marketing agents produced polished infographics. N=1, needs more evidence.

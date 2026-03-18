@@ -267,3 +267,22 @@
 
 ---
 
+### PROJECT_INDEX.md is chronic Edit retry hotspot — Severity: 2 — Count: 25
+- **Anti-pattern:** Attempting Edit on structured table files without reading current state first
+- **Fix:** Always Read structured files (markdown tables, indexes) before Edit. Cost: ~500 tokens read. Saves: ~2000 tokens in retry loops (3-11 retries per failure)
+- **Data:** 25/37 sessions (68%) have PROJECT_INDEX.md retries. SESSION_STATE.md at 16/37 (43%).
+- **First seen:** 2026-03-17 (MT-10 batch analysis)
+- **Last seen:** 2026-03-18 (Session 43 batch report)
+- **Files:** PROJECT_INDEX.md, SESSION_STATE.md, any structured markdown table
+
+---
+
+### r/ClaudeAI classifier too loose — 76% NEEDLE rate — Severity: 1 — Count: 1
+- **Anti-pattern:** nuclear_fetcher.classify_post returns NEEDLE for praise posts, memes, and off-topic discussions on r/ClaudeAI
+- **Fix:** Needs r/ClaudeAI-specific keyword tuning in profiles.py, similar to S3 needle_ratio_cap for r/investing
+- **First seen:** 2026-03-18 (Session 43, MT-9 Phase 4)
+- **Last seen:** 2026-03-18
+- **Files:** reddit-intelligence/profiles.py, reddit-intelligence/nuclear_fetcher.py
+
+---
+

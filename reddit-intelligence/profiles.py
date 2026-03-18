@@ -59,8 +59,9 @@ BUILTIN_PROFILES = {
         min_score=40,
         timeframe="month",
         limit=100,
-        extra_needle_keywords=["claude code", "api", "prompt engineering", "system prompt"],
+        extra_needle_keywords=["claude code", "hook", "mcp", "slash command", "memory", "context window", "agent", "workflow", "automation"],
         domain="claude",
+        needle_ratio_cap=0.4,  # r/ClaudeAI is ~60% noise (memes, praise, politics) — cap at 40%
     ),
     "vibecoding": SubredditProfile(
         subreddit="vibecoding",
