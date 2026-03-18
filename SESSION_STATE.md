@@ -3,10 +3,10 @@
 
 ---
 
-## Current State (as of Session 36 — 2026-03-17)
+## Current State (as of Session 37 — 2026-03-17)
 
-**Phase:** Session 36 IN PROGRESS. Exit loop fix (3 commands), validate_strategies wired into /cca-wrap, SentinelMutator (26 tests), 3 NEEDLE deep-reads (usage tracker, claude-devtools, receipts), MT-10 trace data generation (3 transcripts → 6 proposals). Tests: 1428 (was 1402, +26 sentinel).
-**Next session starts at:** Run /cca-init. Priority: (1) MT-11 Phase 2: First live GitHub scan. (2) MT-10 Phase 2: Session 2 of 5 — run trace analysis, evolve cycle. (3) Deep-read more r/ClaudeCode NEEDLEs (104 unreviewed). (4) MT-12: Start academic paper research (Semantic Scholar API). (5) Fix PreToolUse:Bash hook error (outside CCA scope — needs separate session).
+**Phase:** Session 37 COMPLETE. Sentinel dialed to 5-10% (was 20%), MT-11 3 new GitHub repos evaluated (engram 1.5K, hooks-mastery 3.3K, multi-agent-coordination), scan limit in /cca-auto (max 3 consecutive scan sessions), MT-10 31-session trace analysis (avg score 70, PROJECT_INDEX.md 74% retry rate), context budget for wrap (stop at 60%), batch_report.py (13 tests). Tests: 1441 (was 1428, +13 batch_report).
+**Next session starts at:** Run /cca-init. Priority: (1) Build from trace data — reduce PROJECT_INDEX.md retry rate (caching or restructuring). (2) MT-12: Start academic paper research (Semantic Scholar API). (3) Implement safeexec-style path validation in Agent Guard (from BUILD queue). (4) Deep-read more NEEDLEs (102 unreviewed). (5) Fix PreToolUse:Bash hook error (outside CCA scope).
 
 ---
 
