@@ -5,15 +5,18 @@
 
 ## Current State (as of Session 45 — 2026-03-18)
 
-**Phase:** Session 45 IN PROGRESS. Tests: 1593/1593 passing (39 suites). Git: clean.
+**Phase:** Session 45 COMPLETE. Tests: 1593/1593 passing (39 suites). Git: clean. 8 commits.
 **What's done this session:**
 1. Fixed 3 failing mobile_approver tests (Bash moved to ALWAYS_ALLOW_TOOLS)
-2. MT-10 Phase 3B COMPLETE: `resurfacer.py` — findings re-surfacing module (41 tests). Parses FINDINGS_LOG.md, matches to work context (frontier/module/keywords/MT-task), surfaces relevant past reviews.
+2. MT-10 Phase 3B COMPLETE: `resurfacer.py` — findings re-surfacing module (41 tests)
 3. Added r/AutoGPT + r/LangChain to scan profile registry
-4. MT-14: First scans of r/AutoGPT (low signal, 39 posts, max 8pts) + r/LangChain (better signal, 75 posts, 3 findings)
-5. Kalshi bridge status: KALSHI_INTEL.md has 15+ unprocessed items, zero consumed. Memory saved.
+4. MT-14: First scans of both new subs (3 findings logged)
+5. KALSHI_PRIME_DIRECTIVE.md — permanent three-pillar cross-chat directive
+6. CCA_TO_POLYBOT.md — Universal bet analytics framework (5 verified academic tools: SPRT, Wilson CI, Brier, CUSUM, FLB). All citations verified. Synced to polymarket-bot.
+7. Cross-chat communication system: CROSS_CHAT_INBOX.md shared inbox + bridge-sync.sh
+8. CLAUDE.md updated: read-only access to polymarket-bot for cross-chat bridge
 
-**Next:** Continue scanning never-scanned subs. Update KALSHI_INTEL.md with any new trading intel. MT-17 Phase 2 slide templates. Matthew: install Xcode 26.3 to unblock MT-13.
+**Next session:** (1) Check if Kalshi research read CCA_TO_POLYBOT.md and wrote back. (2) Run bridge-sync.sh to pick up any POLYBOT_TO_CCA.md. (3) Continue MT-14 scanning (7 never-scanned subs remain). (4) MT-17 Phase 2 slide templates. (5) Wire resurfacer into /cca-init. Matthew: install Xcode 26.3 for MT-13.
 
 ---
 
