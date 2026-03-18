@@ -34,7 +34,7 @@
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 263 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel | 314 |
 | Design Skills | `design-skills/` | MT-17 Phase 1 COMPLETE | 21 |
-| Research | `research/` | Reddit scout | 29 |
+| Research | `research/` | Reddit scout, MT-8/MT-13 research | 29 |
 
 **Total: 1552 tests (38 suites). All must pass before any work.**
 

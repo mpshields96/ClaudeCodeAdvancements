@@ -3,6 +3,48 @@
 
 ---
 
+## Session 44 — 2026-03-18
+
+**What changed:**
+- MT-10 Phase 2 COMPLETE — 5/5 validation sessions across 36 transcripts (avg 70.8, improving trend)
+- MT-10 Phase 3 scope expanded: findings re-surfacing (Matthew directive, Session 44)
+- MT-13 research COMPLETE — `research/MT-13_ios_dev_research.md` (NEW) — full iOS/macOS dev landscape
+- MT-8 scope closed — native Remote Control covers use case, remaining config outside CCA scope
+- MT-14 first-time scans: r/MachineLearning (15 posts), r/webdev (25 posts), r/iOSProgramming (14 posts)
+- 14 findings logged to FINDINGS_LOG.md (iOS ecosystem, r/ClaudeCode intel, r/MachineLearning)
+- `MASTER_TASKS.md` — MT-10 Phase 2 marked complete, MT-13 research complete, MT-8 closed
+
+**Why:**
+- MT-10 Phase 2 validation reaching natural conclusion (5-session protocol)
+- MT-13 hit decay cap (8.0, never touched) — research revealed Xcode 26.3 + Claude Agent SDK
+- Matthew expanded MT-13 scope to include macOS apps for CCA tooling
+
+**Tests:** 1552/1552 passing (38 suites, no changes)
+**Commits:** 9
+
+**Lessons:**
+- Xcode 26.3 solves most of what MT-13 was created for — CCA's role shifts from "build capability" to "configure and template"
+- r/webdev and r/MachineLearning are low-yield for CCA frontiers (mostly meta-discussion and pure research)
+- Answering Matthew's strategic questions inline during /cca-auto is productive — captures directives that would otherwise be lost
+
+---
+
+## Session 43 — 2026-03-18
+
+**What changed:**
+- MT-10 Phase 2: Session 3/5 validation (4 transcripts, avg 71.25)
+- MT-9 Phase 4: Deep-read 4 r/ClaudeAI posts (2 REFERENCE, 2 SKIP)
+- 3 CCA reviews: design skills ADAPT, harness thread REF, TraderAlice REF-PERSONAL
+- Design guide: quality gates + rules added to design-guide.md
+- 4 new skillbook strategies (S10-S13) — CLAUDE.md routing, retrospectives, Read before Edit, bloat tracking
+- r/ClaudeAI classifier cap fixed (needle_ratio_cap=0.4)
+- LEARNINGS.md: PROJECT_INDEX.md retry hotspot (severity 2)
+
+**Tests:** 1552/1552 passing (38 suites)
+**Commits:** 6
+
+---
+
 ## Session 42 — 2026-03-18
 
 **What changed:**
