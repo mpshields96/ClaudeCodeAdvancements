@@ -257,6 +257,18 @@ If the `/arewedone` command is available, run it as a structural health check:
 
 Record the result as pass, warn, or fail. If not available, skip and record "skipped".
 
+### 6g.5 — Sentinel adaptation cycle
+
+Run the adaptive mutation engine to evolve the self-learning system:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 self-learning/improver.py evolve
+```
+
+This generates counter-strategies from failures, cross-pollinates successes, and scans
+for weak spots. Record mutations/gaps count in the session learning summary.
+
 ### 6h — Validate Skillbook strategies
 
 Run the strategy validation check against journal evidence:
@@ -283,6 +295,7 @@ SESSION LEARNING:
 - APF: [current %] ([up/down/stable] from last session)
 - Structural health: [pass/warn/fail/skipped from 6g]
 - Strategy health: [output from 6h — or "skipped"]
+- Sentinel: [mutations/cross-pollinations/gaps from 6g.5 — or "skipped"]
 ```
 
 This block is mandatory — always print it, even if all values are "none"/"0".
