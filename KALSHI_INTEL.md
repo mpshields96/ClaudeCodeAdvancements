@@ -224,6 +224,76 @@ result = multinomial_kelly([0.85, 0.15], [0.80, 0.20])
 
 ---
 
+### [2026-03-18] PAPER 7: E-Values — Upgrade SPRT to Anytime-Valid Monitoring (CCA S52)
+**Sources:**
+- Shafer (2021). "Testing by Betting." JRSS-A, 184(2), 407-431. [VERIFIED — foundational paper]
+- (2025). "Anytime Validity is Free: Inducing Sequential Tests." arXiv:2501.03982 [VERIFIED]
+- (2026). "Bayes, E-values and Testing." arXiv:2602.04146 [VERIFIED]
+
+**Why this matters for the Kalshi bot:**
+
+The bot currently uses SPRT (Wald 1945) to test whether a strategy's edge is real. SPRT is optimal for fixed hypotheses (H0: p=0.90 vs H1: p=0.97), but has a critical limitation: **you must pre-specify H1 before seeing data.** If the true win rate is 0.94 (not 0.97), SPRT is suboptimal.
+
+E-values solve this. An E-value is a nonnegative random variable with E[E] <= 1 under the null. The key property: **you can multiply E-values across observations and stop at ANY time** without inflating the false positive rate. No pre-specified alternative needed.
+
+**The upgrade path (from SPRT to E-values):**
+```python
+# CURRENT: SPRT with fixed alternative
+class SPRT:
+    def __init__(self, p0=0.90, p1=0.97):  # Must pre-specify p1
+        self.log_lr = 0.0
+    def update(self, outcome):
+        if outcome == 1:
+            self.log_lr += log(self.p1 / self.p0)
+        else:
+            self.log_lr += log((1-self.p1) / (1-self.p0))
+        # Decision: log_lr > log(A) or log_lr < log(B)
+
+# UPGRADE: E-value with adaptive alternative (mixture)
+class EValueMonitor:
+    def __init__(self, p0=0.90):
+        """No need to pre-specify p1. Uses mixture over alternatives."""
+        self.p0 = p0
+        self.log_e = 0.0  # Log of cumulative E-value
+        self.n = 0
+        self.wins = 0
+
+    def update(self, outcome):
+        self.n += 1
+        self.wins += outcome
+        # Use running MLE as adaptive alternative
+        p_hat = max(self.wins / self.n, self.p0 + 0.001)
+        # Likelihood ratio at this step
+        if outcome == 1:
+            e_t = p_hat / self.p0
+        else:
+            e_t = (1 - p_hat) / (1 - self.p0)
+        self.log_e += log(max(e_t, 1e-10))
+
+    def reject_null(self, alpha=0.05):
+        """Can check at ANY time — no penalty for peeking."""
+        return self.log_e > log(1 / alpha)  # E > 1/alpha = 20 at alpha=0.05
+
+    def evidence_strength(self):
+        """Interpretable: E=20 means 'data 20x more likely under alternative'."""
+        return exp(self.log_e)
+```
+
+**Advantages over SPRT:**
+1. **No pre-specified alternative** — adapts to whatever the true win rate is
+2. **Anytime valid** — check after every bet, no inflation of false positive rate
+3. **Interpretable** — E=20 means "data 20x more likely under alternative than null"
+4. **Composable** — multiply E-values across independent strategies/markets
+5. **Free lunch** — recent paper proves anytime validity costs ZERO statistical power
+
+**ACTION for Kalshi bot:**
+- Replace SPRT edge confirmation with EValueMonitor
+- Keep CUSUM for changepoint detection (different purpose)
+- Run E-value monitor on EVERY strategy simultaneously — safe because of composability
+- Threshold: E > 20 (alpha=0.05) confirms edge, E < 0.05 rejects edge
+
+---
+
 ### [2026-03-17] Mean Reversion with IBS Filter — Kalshi-Applicable Pattern
 **Source:** r/algotrading (219pts, 99 comments) — https://www.reddit.com/r/algotrading/comments/1rjvxjy/
 **Relevance:** The IBS (Internal Bar Strength) concept — detecting when price closes in bottom 30% of daily range — maps to detecting "oversold" event markets on Kalshi where probability pricing has temporarily dipped below fair value.
