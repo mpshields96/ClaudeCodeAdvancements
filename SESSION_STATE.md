@@ -3,27 +3,40 @@
 
 ---
 
-## Current State (as of Session 54 — 2026-03-19)
+## Current State (as of Session 55 — 2026-03-19)
 
-**Phase:** Session 54 COMPLETE. Tests: 1854/1854 passing (45 suites). Git: 12 commits.
+**Phase:** Session 55 IN PROGRESS. Tests: 1897/1897 passing (46 suites). Git: 1 commit so far.
 **What's done this session:**
-1. **CTX-7: PostCompact hook BUILT** — fires after context compaction, resets state, writes recovery digest, logs to self-learning journal. 28 tests. Wired into settings.local.json (10th live hook).
-2. **Overnight profitability analysis** — wrote comprehensive time-of-day investigation to CCA_TO_POLYBOT.md and KALSHI_INTEL.md. 4 structural hypotheses (liquidity, composition, regime, supervision), 7 academic sources (U-shaped spread, Whelan 2025, Ng/Peng/Tao 2025 cross-platform discovery, Black-Scholes PM, intraday volume ML), time_adjusted_kelly() implementation, meta-labeling temporal features, investigation steps for both Kalshi chats.
-3. **Report generator v2** — data collector: per-MT phase tracking, session highlights, frontier status, priority queue, remaining/gap analysis. Template: table of contents, Five Frontiers page, expanded MT cards with phase progress bars, priority queue visualization.
-4. **Cross-chat coordination** — CROSS_CHAT_INBOX.md updated with overnight profitability inquiry.
-5. **OMEGA memory patterns (Frontier 1)** — per-type TTL (decisions=365d, preferences=730d), content dedup (hash + Jaccard 0.85), contradiction detection (same type + overlapping tags + 55-85% similarity supersedes older). 34 new tests. Schema version 1.1.
-6. **Trigger-table optimization** — skill_rules.json compacted, added Kalshi research detection rule.
-7. **Priority queue refresh** — MASTER_TASKS.md scores updated from S42 to S54 baseline. MT-10/11/14 at cap.
-8. **Claude Code official memory docs deep-read** — KEY: CLAUDE.md survives compaction natively (re-read from disk). Auto-memory MEMORY.md native since v2.1.59. InstructionsLoaded hook exists. claude-mem (4 hooks, SQLite+FTS5+Chroma, 3-layer retrieval) reviewed.
+1. **Overnight detector infrastructure BUILT** — `overnight_detector.py` with Wilson CI significance testing, CUSUM per-window WR drift detection, data tracking completeness audit, SQL templates for Kalshi bot DB, evidence-based recommendation generator. 29 tests.
+2. **Time-stratified trading metrics** — `journal.py:get_time_stratified_trading_metrics()` analyzes bet outcomes by 4 time buckets (overnight/morning/afternoon/evening), computes Wilson CI, overnight vs daytime comparison with statistical significance. 14 new tests.
+3. **Data tracking audit** — found only 33% of optimal fields are logged. Critical missing: hour_utc, is_overnight, minutes_to_expiry. Full gap analysis written to CCA_TO_POLYBOT.md with code snippets for Kalshi bot.
+4. **Prime Directive updated** — new "Objective Signaling, Not Trauma Response" section in KALSHI_PRIME_DIRECTIVE.md. Every strategy change requires statistical evidence.
+5. **Supervision factor identified** — Matthew insight: overnight losses have TWO dimensions — market conditions AND lack of human oversight for 3-4h. Added to analysis + memory.
+6. **Cross-chat updates** — CCA_TO_POLYBOT.md comprehensive gap analysis, CROSS_CHAT_INBOX.md S55 notification, SQL templates ready.
+7. **Academic paper research** — background agent scanning Reddit/GitHub + academic databases for overnight trading, Kelly criterion, prediction market calibration papers.
 
-**Matthew directives (S51-S54, permanent):**
+**Matthew directives (S51-S55, permanent):**
 - ROI = make money. Financial, not philosophical.
 - CCA dual mission: 50% Kalshi financial support + 50% self-improvement
-- Overnight profitability is highest priority after PostCompact (S54 directive)
+- Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
+- Account floating $100-200 — need smarter signals, not more guards
+- Open to not running overnight if objectively correct; wants evidence-based decision
 - Auto-execute advancement tips, no auditor MT, surgical fixes
 - Self-learning for Kalshi = optimize for profit, compounding passive income
 
-**Next:** (1) MT-9 Phase 3: deep-read remaining NEEDLEs from autonomous scans. (2) Kalshi chats investigate time-stratified PnL data (awaiting response). (3) PostCompact hook live testing (will auto-fire on next compaction). (4) Update MASTER_TASKS.md priority scores (last updated S42). (5) Generate updated CCA report PDF with v2 template.
+**Next:** (1) Process academic paper research results. (2) Both Kalshi chats need to add critical data fields + run SQL queries. (3) MT-9 Phase 3: deep-read remaining NEEDLEs. (4) Generate updated CCA report PDF. (5) MT-11 automated GitHub trending scan.
+
+---
+
+## What Was Done in Session 54 (2026-03-19)
+
+1. CTX-7: PostCompact hook built + wired live (28 tests, 10th hook)
+2. Overnight profitability analysis to CCA_TO_POLYBOT.md + KALSHI_INTEL.md (7 academic sources, 4 hypotheses)
+3. Report generator v2 (phase tracking, frontier status, ToC, priority queue)
+4. OMEGA memory patterns (type TTL, hash+Jaccard dedup, contradiction detection, 34 new tests)
+5. Trigger-table optimization for spec-system + Kalshi research detection rule
+6. Priority queue refresh from S42 to S54. Claude Code memory docs deep-read.
+7. Tests: 1854/1854 (45 suites). Git: 12 commits, clean.
 
 ---
 
