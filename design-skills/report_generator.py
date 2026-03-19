@@ -262,7 +262,17 @@ class CCADataCollector:
             status_match = re.search(r"\*\*Status:\*\*\s*(.+?)$", task_body, re.MULTILINE)
             status = status_match.group(1).strip() if status_match else "Unknown"
 
-            # Extract delivered items
+            # Extract phase progress: count completed phases and total phases
+            phase_completes = re.findall(r"Phase (\d+)\s*(?:COMPLETE|complete)", task_body)
+            phases_done = len(phase_completes)
+            # Estimate total phases from lifecycle or phase mentions
+            phase_mentions = re.findall(r"Phase (\d+)", task_body)
+            total_phases = max(int(p) for p in phase_mentions) if phase_mentions else 0
+            if total_phases == 0 and "COMPLETE" in status.upper() and "PHASE" not in status.upper():
+                total_phases = 1
+                phases_done = 1
+
+            # Extract delivered items (from status lines and delivered sections)
             delivered = []
             in_delivered = False
             for line in task_body.split("\n"):
@@ -273,12 +283,30 @@ class CCADataCollector:
                 if in_delivered:
                     if line_s.startswith("- "):
                         item = line_s.lstrip("- ").strip()
-                        # Truncate long items
                         if len(item) > 80:
                             item = item[:77] + "..."
                         delivered.append(item)
                     elif line_s.startswith("**") or (line_s == "" and delivered):
                         in_delivered = False
+
+            # Also extract deliverables from status section bullet points
+            in_status = False
+            for line in task_body.split("\n"):
+                line_s = line.strip()
+                if line_s.startswith("**Status:**"):
+                    in_status = True
+                    continue
+                if in_status:
+                    if line_s.startswith("- `") or line_s.startswith("- Phase"):
+                        item = line_s.lstrip("- ").strip()
+                        # Remove markdown formatting
+                        item = re.sub(r"`([^`]+)`", r"\1", item)
+                        if len(item) > 80:
+                            item = item[:77] + "..."
+                        if item not in delivered:
+                            delivered.append(item)
+                    elif line_s.startswith("---") or (line_s.startswith("**") and "Status" not in line_s):
+                        in_status = False
 
             # Extract next/needs
             needs = ""
@@ -292,13 +320,38 @@ class CCADataCollector:
                 if len(needs) > 120:
                     needs = needs[:117] + "..."
 
+            # Extract what's remaining from lifecycle and phase descriptions
+            remaining = []
+            # Look for future phase descriptions
+            for m in re.finditer(r"Phase (\d+):\s*(.+?)(?:\n|$)", task_body):
+                phase_num = int(m.group(1))
+                if phase_num > phases_done:
+                    desc = m.group(2).strip()
+                    if len(desc) > 80:
+                        desc = desc[:77] + "..."
+                    remaining.append(f"Phase {phase_num}: {desc}")
+            if not remaining and needs:
+                remaining.append(needs)
+
+            # Extract source URL
+            source = ""
+            source_match = re.search(r"\*\*Source:\*\*\s*(https?://\S+)", task_body)
+            if source_match:
+                source = source_match.group(1)
+
+            # Extract test count from status
+            test_count = 0
+            test_match = re.search(r"(\d+)\s*tests?", status)
+            if test_match:
+                test_count = int(test_match.group(1))
+
             # Categorize
             status_upper = status.upper()
             if "COMPLETE" in status_upper and "PHASE" not in status_upper:
                 category = "complete"
             elif "BLOCKED" in status_upper:
                 category = "blocked"
-            elif "NOT STARTED" in status_upper or "FUTURE" in status_upper:
+            elif "NOT STARTED" in status_upper or "FUTURE" in status_upper or "NEVER" in status_upper:
                 category = "not_started"
             else:
                 category = "active"
@@ -308,8 +361,13 @@ class CCADataCollector:
                 "name": task_name,
                 "status": status,
                 "category": category,
-                "delivered": delivered[:5],  # Max 5 items per task
+                "delivered": delivered[:8],
                 "needs": needs,
+                "remaining": remaining[:5],
+                "phases_done": phases_done,
+                "total_phases": total_phases,
+                "source": source,
+                "test_count": test_count,
             }
 
             if category == "complete":
@@ -425,6 +483,136 @@ class CCADataCollector:
 
         return risks
 
+    # ── Session highlights ────────────────────────────────────────────────
+
+    def collect_session_highlights(self):
+        """Extract 'What's done this session' from SESSION_STATE.md."""
+        content = self._read_file("SESSION_STATE.md")
+        highlights = []
+
+        # Find the numbered list under "What's done this session:"
+        in_highlights = False
+        for line in content.split("\n"):
+            line_s = line.strip()
+            if "**What's done this session:**" in line or "What's done this session:" in line:
+                in_highlights = True
+                continue
+            if in_highlights:
+                # Match numbered items like "1. **Something:**" or "1. Something"
+                m = re.match(r"^\d+\.\s+\*?\*?(.+?)(?:\*\*)?$", line_s)
+                if m:
+                    item = m.group(1).strip()
+                    # Clean up markdown bold markers
+                    item = re.sub(r"\*\*", "", item)
+                    # Remove trailing colons
+                    item = item.rstrip(":")
+                    if len(item) > 100:
+                        item = item[:97] + "..."
+                    highlights.append(item)
+                elif line_s.startswith("**") and "done" not in line_s.lower():
+                    break
+                elif line_s.startswith("---"):
+                    break
+
+        return highlights[:10]
+
+    # ── Frontier status ──────────────────────────────────────────────────
+
+    FRONTIER_DEFINITIONS = [
+        {
+            "number": 1,
+            "name": "Persistent Cross-Session Memory",
+            "module": "memory-system/",
+            "impact": "CRITICAL",
+            "description": "Every session starts from zero — this gives Claude a brain that persists.",
+        },
+        {
+            "number": 2,
+            "name": "Spec-Driven Development",
+            "module": "spec-system/",
+            "impact": "HIGH",
+            "description": "Unstructured prompting produces poor architecture. Enforce requirements > design > tasks > implement.",
+        },
+        {
+            "number": 3,
+            "name": "Context Health Monitor",
+            "module": "context-monitor/",
+            "impact": "HIGH",
+            "description": "Context rot causes silent output degradation. Monitor, warn, and auto-handoff.",
+        },
+        {
+            "number": 4,
+            "name": "Multi-Agent Conflict Guard",
+            "module": "agent-guard/",
+            "impact": "HIGH",
+            "description": "Parallel agents overwrite each other. Guard credentials, paths, and system modifications.",
+        },
+        {
+            "number": 5,
+            "name": "Usage Transparency Dashboard",
+            "module": "usage-dashboard/",
+            "impact": "MEDIUM",
+            "description": "No real-time token/cost visibility. Counter, alerts, and structural completeness.",
+        },
+    ]
+
+    def collect_frontier_status(self, modules):
+        """Determine status of each frontier based on module data."""
+        frontiers = []
+        for f_def in self.FRONTIER_DEFINITIONS:
+            mod_data = next((m for m in modules if m["path"] == f_def["module"]), None)
+            status = "COMPLETE"
+            tests = 0
+            loc = 0
+            if mod_data:
+                status = mod_data["status"]
+                tests = mod_data["tests"]
+                loc = mod_data["loc"]
+            frontiers.append({
+                "number": f_def["number"],
+                "name": f_def["name"],
+                "impact": f_def["impact"],
+                "description": f_def["description"],
+                "status": status,
+                "tests": tests,
+                "loc": loc,
+            })
+        return frontiers
+
+    # ── Priority queue ───────────────────────────────────────────────────
+
+    def collect_priority_queue(self):
+        """Parse the priority scoring table from MASTER_TASKS.md."""
+        content = self._read_file("MASTER_TASKS.md")
+        queue = []
+
+        # Find the active priority queue table
+        in_table = False
+        for line in content.split("\n"):
+            if "Active Priority Queue" in line:
+                in_table = True
+                continue
+            if in_table and line.strip().startswith("|") and "Rank" not in line and "---" not in line:
+                cols = [c.strip() for c in line.split("|")[1:-1]]
+                if len(cols) >= 10:
+                    try:
+                        score_str = cols[8].replace("*", "").strip()
+                        score = float(score_str) if score_str else 0
+                        queue.append({
+                            "rank": cols[0].strip(),
+                            "id": cols[1].strip(),
+                            "name": cols[2].strip(),
+                            "base": cols[3].strip(),
+                            "score": score,
+                            "next_phase": cols[9].strip() if len(cols) > 9 else "",
+                        })
+                    except (ValueError, IndexError):
+                        pass
+            elif in_table and line.strip().startswith("###"):
+                break
+
+        return queue
+
     # ── Next priorities ─────────────────────────────────────────────────
 
     def collect_priorities(self):
@@ -505,6 +693,9 @@ class CCADataCollector:
         self_learning = self.collect_self_learning()
         risks = self.collect_risks()
         priorities = self.collect_priorities()
+        session_highlights = self.collect_session_highlights()
+        frontiers = self.collect_frontier_status(modules)
+        priority_queue = self.collect_priority_queue()
 
         # Use authoritative test count from PROJECT_INDEX.md
         index_content = self._read_file("PROJECT_INDEX.md")
@@ -582,6 +773,12 @@ class CCADataCollector:
         blocked_count = sum(1 for t in mt_pending if t["category"] == "blocked")
         not_started_count = sum(1 for t in mt_pending if t["category"] != "blocked")
 
+        # Count total delivered items across all MTs
+        total_delivered = sum(
+            len(t.get("delivered", []))
+            for t in mt_complete + mt_active + mt_pending
+        )
+
         return {
             "title": "ClaudeCodeAdvancements",
             "subtitle": "Comprehensive Project Report",
@@ -610,6 +807,7 @@ class CCADataCollector:
                 "git_commits": git_commits,
                 "project_age_days": max(project_age, 1),
                 "live_hooks": len(self.HOOKS),
+                "total_delivered": total_delivered,
             },
             "modules": modules,
             "master_tasks_complete": mt_complete,
@@ -621,6 +819,9 @@ class CCADataCollector:
             "risks": risks,
             "next_priorities": priorities,
             "architecture_decisions": self.ARCHITECTURE_DECISIONS,
+            "session_highlights": session_highlights,
+            "frontiers": frontiers,
+            "priority_queue": priority_queue,
         }
 
 
