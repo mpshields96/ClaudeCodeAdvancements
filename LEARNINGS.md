@@ -315,3 +315,15 @@
 
 ---
 
+### CCA ROI = Kalshi bot profitability — Severity: 3 — Count: 1
+- **Anti-pattern:** Treating CCA success as "tools built" or "papers found" without connecting to financial outcomes. Building self-learning that doesn't optimize for net profit. Research that doesn't make the bot smarter/more profitable.
+- **Fix:** CCA's ROI is measured by financial impact on Kalshi bot. Every research delivery should include: (1) specific formula/code the bot can implement, (2) expected financial impact (edge size, risk reduction), (3) validation protocol. Self-learning = optimize for profit and compounding passive income. Never accept break-even or losing strategies.
+- **Matthew directive (S51, permanent):** "ROI = make money. Financial, not philosophical."
+- **Three Pillars:** (1) Perfect current engine, (2) Deep research with math validation, (3) Expand beyond current parameters
+- **First seen:** 2026-03-18 (Session 45 — Matthew explicit)
+- **Last seen:** 2026-03-18 (Session 52 — reinforced with 12-paper delivery)
+- **Files:** KALSHI_PRIME_DIRECTIVE.md, self-learning/CLAUDE.md, KALSHI_INTEL.md
+- **Promoted:** 2026-03-18 -> `~/.claude/rules/learnings.md` (global)
+
+---
+
