@@ -3,6 +3,28 @@
 
 ---
 
+## Session 52 — 2026-03-18
+
+**What changed:**
+- `KALSHI_INTEL.md` — 12 NEW verified academic papers with Python implementations (Papers 6-13: multinomial Kelly, E-values, DSR, profit vs info, fractional Kelly, wash trading, CPCV, BOCPD)
+- `CROSS_CHAT_INBOX.md` — Updated notification for 12-paper delivery
+- `LEARNINGS.md` — CCA dual mission (50% Kalshi + 50% self-improvement) codified as severity-3
+- `FINDINGS_LOG.md` — OMEGA memory deep-dive (BUILD), trigger-table pattern, KG token optimization, CC March 2026 changelog
+- `SESSION_STATE.md` — Full session progress + next priorities
+
+**Why:**
+- S51 resume prompt requested nuclear academic paper scan — delivered 12 papers covering Kelly, sequential testing, overfitting, changepoint detection
+- CCA self-improvement side: Frontier 1 reconnaissance found OMEGA (95.4% LongMemEval) with 5 adaptable patterns
+- PostCompact hook identified as immediate build opportunity from CC March 2026 changelog
+
+**Tests:** 1768/1768 passing (44 suites)
+
+**Lessons:**
+- Reddit NEEDLE deep-reads via web search fail — posts are unfindable. Use reddit_reader.py or skip.
+- CCA dual mission must be balanced: this session was ~70% Kalshi / 30% CCA. Next session should flip.
+
+---
+
 ## Session 51 — 2026-03-19
 
 **What changed:**
