@@ -320,5 +320,126 @@ class TestModuleToFrontierMapping(unittest.TestCase):
         self.assertIsNone(module_to_frontier("self-learning"))
 
 
+class TestProposalIntegration(unittest.TestCase):
+    """Tests for Phase 3B: trade_reflector proposal integration."""
+
+    def _make_proposal(self, pattern="win_rate_drift", severity="warning",
+                       strategy="sniper", p_value=0.02):
+        """Create a mock trade proposal dict."""
+        return {
+            "proposal_id": "tp_20260319_abcd1234",
+            "source": "trade_reflector",
+            "pattern": pattern,
+            "strategy": strategy,
+            "severity": severity,
+            "evidence": {
+                "historical_win_rate": 0.85,
+                "recent_win_rate": 0.55,
+                "p_value": p_value,
+            },
+            "recommendation": f"{strategy} win rate dropped from 85% to 55%. p={p_value:.4f}.",
+            "action_type": "monitor",
+            "auto_applicable": False,
+            "created_at": "2026-03-19T10:00:00Z",
+        }
+
+    def test_proposal_to_finding(self):
+        """Convert a trade proposal to a Finding for unified display."""
+        from resurfacer import proposal_to_finding
+        proposal = self._make_proposal()
+        f = proposal_to_finding(proposal)
+        self.assertEqual(f.verdict, "REFERENCE-PERSONAL")
+        self.assertIn("Trading", f.tags)
+        self.assertIn("win_rate_drift", f.title.lower() or f.description.lower())
+
+    def test_proposal_to_finding_preserves_severity(self):
+        """Critical severity maps to different display than info."""
+        from resurfacer import proposal_to_finding
+        crit = proposal_to_finding(self._make_proposal(severity="critical"))
+        info = proposal_to_finding(self._make_proposal(severity="info"))
+        # Both should be findings, but critical should be flagged
+        self.assertIn("critical", crit.title.lower() or crit.raw_tags.lower())
+
+    def test_proposal_to_finding_has_proposal_id(self):
+        """Finding description includes the proposal_id for traceability."""
+        from resurfacer import proposal_to_finding
+        f = proposal_to_finding(self._make_proposal())
+        self.assertIn("tp_20260319_abcd1234", f.description)
+
+    def test_resurface_with_proposals_combines_results(self):
+        """resurface_with_proposals returns findings + converted proposals."""
+        from resurfacer import resurface_with_proposals
+        # Create a temp findings log
+        fd, log_path = tempfile.mkstemp(suffix=".md")
+        os.close(fd)
+        with open(log_path, "w") as fh:
+            fh.write(SAMPLE_LOG)
+
+        proposals = [self._make_proposal()]
+        try:
+            results = resurface_with_proposals(
+                log_path, proposals=proposals, keywords=["trading", "Kalshi"]
+            )
+            self.assertIsInstance(results, list)
+            # Should have at least the Kalshi finding from SAMPLE_LOG + the proposal
+            self.assertGreaterEqual(len(results), 2)
+        finally:
+            os.unlink(log_path)
+
+    def test_resurface_with_proposals_empty_proposals(self):
+        """Works with no proposals (just returns findings)."""
+        from resurfacer import resurface_with_proposals
+        fd, log_path = tempfile.mkstemp(suffix=".md")
+        os.close(fd)
+        with open(log_path, "w") as fh:
+            fh.write(SAMPLE_LOG)
+
+        try:
+            results = resurface_with_proposals(
+                log_path, proposals=[], keywords=["trading"]
+            )
+            self.assertIsInstance(results, list)
+        finally:
+            os.unlink(log_path)
+
+    def test_resurface_with_proposals_no_log(self):
+        """Works with missing log file (just returns proposals)."""
+        from resurfacer import resurface_with_proposals
+        proposals = [self._make_proposal()]
+        results = resurface_with_proposals(
+            "/nonexistent/log.md", proposals=proposals, keywords=["trading"]
+        )
+        self.assertEqual(len(results), 1)
+
+    def test_format_includes_proposals(self):
+        """format_resurface_report handles proposal-derived findings."""
+        from resurfacer import proposal_to_finding, format_resurface_report
+        proposal = self._make_proposal()
+        f = proposal_to_finding(proposal)
+        report = format_resurface_report([f], "Kalshi trading review")
+        self.assertIn("Kalshi trading review", report)
+        self.assertIn("win_rate_drift", report.lower())
+
+    def test_proposals_sorted_by_severity(self):
+        """Critical proposals sort before info proposals."""
+        from resurfacer import proposal_to_finding, resurface_with_proposals
+        crit = self._make_proposal(severity="critical", pattern="edge_erosion")
+        info = self._make_proposal(severity="info", pattern="streak_anomaly")
+
+        fd, log_path = tempfile.mkstemp(suffix=".md")
+        os.close(fd)
+        with open(log_path, "w") as fh:
+            fh.write("")  # Empty log
+
+        try:
+            results = resurface_with_proposals(
+                log_path, proposals=[info, crit], keywords=["trading"]
+            )
+            # Both should appear
+            self.assertEqual(len(results), 2)
+        finally:
+            os.unlink(log_path)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

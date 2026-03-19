@@ -337,6 +337,139 @@ def format_resurface_report(findings: list[Finding], context: str = "") -> str:
     return "\n".join(lines)
 
 
+# ── Trade proposal integration (Phase 3B) ────────────────────────────────────
+
+SEVERITY_PRIORITY = {
+    "critical": 0,
+    "warning": 1,
+    "info": 2,
+}
+
+
+def proposal_to_finding(proposal: dict) -> Finding:
+    """Convert a trade_reflector proposal to a Finding for unified display.
+
+    Maps proposal fields to Finding structure so proposals can be
+    displayed alongside FINDINGS_LOG entries.
+
+    Args:
+        proposal: dict from TradeReflector.generate_proposals()
+
+    Returns:
+        Finding object
+    """
+    severity = proposal.get("severity", "info")
+    pattern = proposal.get("pattern", "unknown")
+    strategy = proposal.get("strategy", "")
+    recommendation = proposal.get("recommendation", "")
+    proposal_id = proposal.get("proposal_id", "unknown")
+    created_at = proposal.get("created_at", "")
+
+    # Extract date from created_at or proposal_id
+    date = ""
+    if created_at and len(created_at) >= 10:
+        date = created_at[:10]
+    elif proposal_id.startswith("tp_") and len(proposal_id) >= 11:
+        raw_date = proposal_id[3:11]
+        date = f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:8]}"
+
+    # Build title with severity marker
+    strategy_str = f" ({strategy})" if strategy else ""
+    title = f"[{severity}] Trade pattern: {pattern}{strategy_str}"
+
+    # Build description with proposal_id for traceability
+    description = f"{recommendation} [ID: {proposal_id}]"
+
+    # Tags
+    tags = ["Trading"]
+    if strategy:
+        tags.append(f"strategy:{strategy}")
+
+    return Finding(
+        date=date,
+        verdict="REFERENCE-PERSONAL",
+        tags=tags,
+        raw_tags=f"Trading/Kalshi — {severity} — {pattern}",
+        title=title,
+        description=description,
+        url="",
+    )
+
+
+def resurface_with_proposals(
+    log_path: str,
+    *,
+    proposals: list[dict] | None = None,
+    frontier: int | None = None,
+    keywords: list[str] | None = None,
+    module: str | None = None,
+    mt_task: str | None = None,
+    include_skip: bool = False,
+    limit: int | None = None,
+) -> list[Finding]:
+    """Load findings + trade proposals and return matched results.
+
+    Combines FINDINGS_LOG matches with trade_reflector proposals,
+    converting proposals to Finding format for unified display.
+
+    Args:
+        log_path: Path to FINDINGS_LOG.md
+        proposals: List of trade_reflector proposal dicts
+        frontier, keywords, module, mt_task, include_skip, limit:
+            Same as resurface()
+
+    Returns:
+        Combined list of matched findings + proposal-findings,
+        sorted by verdict priority then severity.
+    """
+    # Get findings from log
+    findings_results = resurface(
+        log_path,
+        frontier=frontier,
+        keywords=keywords,
+        module=module,
+        mt_task=mt_task,
+        include_skip=include_skip,
+    )
+
+    # Convert proposals to findings and filter by keywords
+    if proposals:
+        proposal_findings = []
+        for p in proposals:
+            pf = proposal_to_finding(p)
+
+            # Apply keyword filter if specified
+            if keywords:
+                searchable = f"{pf.title} {pf.description} {pf.raw_tags}".lower()
+                if any(kw.lower() in searchable for kw in keywords):
+                    proposal_findings.append(pf)
+            else:
+                proposal_findings.append(pf)
+
+        # Sort proposals by severity (critical first)
+        proposal_findings.sort(
+            key=lambda f: SEVERITY_PRIORITY.get(
+                _extract_severity(f.title), 3
+            )
+        )
+
+        findings_results.extend(proposal_findings)
+
+    if limit is not None:
+        findings_results = findings_results[:limit]
+
+    return findings_results
+
+
+def _extract_severity(title: str) -> str:
+    """Extract severity from a proposal-derived finding title."""
+    title_lower = title.lower()
+    for sev in ("critical", "warning", "info"):
+        if sev in title_lower:
+            return sev
+    return "info"
+
+
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
 def main():
