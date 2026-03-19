@@ -389,6 +389,55 @@ Half-Kelly properties:
 
 ---
 
+### [2026-03-18] PAPER 10: Polymarket 25% Wash Trading — Volume Inflation Warning (CCA S52)
+**Source:** Columbia University researchers (2025). Posted on SSRN (not yet peer-reviewed).
+**Covered by:** Fortune (2025-11-07), CoinDesk (2025-11-07)
+**Verified:** YES — Fortune and CoinDesk both independently reported the study
+
+**Key findings:**
+- ~25% of Polymarket's historical volume is wash trading (users buying/selling to themselves)
+- Peaked at nearly 60% of weekly volume in December 2024
+- Traders farm incentives through circular trades without changing net position
+- Prices remained largely reliable — manipulation affects volume metrics, not price accuracy
+
+**Implication for Kalshi bot:**
+1. Kalshi is CFTC-regulated, so wash trading is illegal and likely less prevalent than Polymarket
+2. BUT: the bot should be aware that volume signals on any prediction market may be inflated
+3. Don't use raw volume as a signal for "market conviction" without cross-checking
+4. The Le (2026) calibration study used 292M trades — some fraction may be wash trades, though the calibration conclusions should be robust since they measure outcomes, not just volume
+
+### [2026-03-18] PAPER 11: CPCV — Proper Backtesting for Financial ML (CCA S52)
+**Source:** Lopez de Prado (2018). "Advances in Financial Machine Learning." Wiley. Chapter 12.
+**Verified:** YES — widely cited textbook (3000+ citations), skfolio/mlfinlab implementations exist
+
+**What it is:** Combinatorial Purged Cross-Validation — the correct way to backtest financial ML strategies. Standard k-fold CV is WRONG for time series because it leaks future information.
+
+**Three key mechanisms:**
+1. **Purging** — remove training samples whose label horizon overlaps test period (prevents lookahead bias)
+2. **Embargoing** — remove a buffer of samples after each test period end (prevents autocorrelation leakage)
+3. **Combinatorial splits** — test all C(N,k) combinations of N groups taken k at a time, producing a full distribution of performance metrics
+
+**Why this matters for Kalshi bot:**
+If the bot ever uses ML (meta labeling, regime classification, signal filtering), standard train/test splits will overestimate performance. CPCV is the standard for financial ML validation.
+
+```python
+# Use existing implementation:
+# pip install skfolio (has CombinatorialPurgedCV)
+# or pip install mlfinlab (has CombPurgedKFoldCV)
+
+from skfolio.model_selection import CombinatorialPurgedCV
+cv = CombinatorialPurgedCV(
+    n_folds=10,      # N groups
+    n_test_folds=2,  # k groups per test set
+    purge_threshold=5,  # purge overlapping labels
+    embargo_threshold=0.01  # 1% embargo buffer
+)
+```
+
+**ACTION:** When the meta labeling ML layer is built, use CPCV instead of standard k-fold.
+
+---
+
 ### [2026-03-17] Mean Reversion with IBS Filter — Kalshi-Applicable Pattern
 **Source:** r/algotrading (219pts, 99 comments) — https://www.reddit.com/r/algotrading/comments/1rjvxjy/
 **Relevance:** The IBS (Internal Bar Strength) concept — detecting when price closes in bottom 30% of daily range — maps to detecting "oversold" event markets on Kalshi where probability pricing has temporarily dipped below fair value.
