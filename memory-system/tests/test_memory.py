@@ -254,6 +254,266 @@ class TestMakeId(unittest.TestCase):
         self.assertEqual(len(ids), 100)
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# OMEGA-Pattern Tests (S54: type TTL, dedup, contradiction detection)
+# ═══════════════════════════════════════════════════════════════════════════
+
+class TestContentHash(unittest.TestCase):
+    """Tests for hash-based exact dedup."""
+
+    def test_same_content_same_hash(self):
+        h1 = ch._content_hash("Use SQLite for local storage")
+        h2 = ch._content_hash("Use SQLite for local storage")
+        self.assertEqual(h1, h2)
+
+    def test_different_content_different_hash(self):
+        h1 = ch._content_hash("Use SQLite for local storage")
+        h2 = ch._content_hash("Use PostgreSQL for cloud storage")
+        self.assertNotEqual(h1, h2)
+
+    def test_case_insensitive(self):
+        h1 = ch._content_hash("Always use TDD")
+        h2 = ch._content_hash("always use tdd")
+        self.assertEqual(h1, h2)
+
+    def test_whitespace_normalized(self):
+        h1 = ch._content_hash("Use  stdlib   first")
+        h2 = ch._content_hash("Use stdlib first")
+        self.assertEqual(h1, h2)
+
+    def test_hash_is_16_chars(self):
+        h = ch._content_hash("test content")
+        self.assertEqual(len(h), 16)
+
+
+class TestContentSimilarity(unittest.TestCase):
+    """Tests for Jaccard similarity-based fuzzy dedup."""
+
+    def test_identical_texts(self):
+        sim = ch._content_similarity("hello world test", "hello world test")
+        self.assertEqual(sim, 1.0)
+
+    def test_completely_different(self):
+        sim = ch._content_similarity("alpha beta gamma", "delta epsilon zeta")
+        self.assertEqual(sim, 0.0)
+
+    def test_partial_overlap(self):
+        sim = ch._content_similarity(
+            "Use SQLite for local storage because it is lightweight",
+            "Use SQLite for cloud storage because it is fast"
+        )
+        self.assertGreater(sim, 0.3)
+        self.assertLess(sim, 0.9)
+
+    def test_empty_text(self):
+        sim = ch._content_similarity("", "hello")
+        self.assertEqual(sim, 0.0)
+
+    def test_high_similarity(self):
+        sim = ch._content_similarity(
+            "Always run tests before committing code changes",
+            "Always run tests before committing any code changes"
+        )
+        self.assertGreater(sim, 0.8)
+
+
+class TestWordSet(unittest.TestCase):
+    """Tests for word extraction."""
+
+    def test_removes_stopwords(self):
+        words = ch._word_set("the quick brown fox is a test")
+        self.assertNotIn("the", words)
+        self.assertNotIn("is", words)
+        self.assertIn("quick", words)
+        self.assertIn("brown", words)
+
+    def test_removes_short_words(self):
+        words = ch._word_set("it is at by on")
+        self.assertEqual(len(words), 0)
+
+
+class TestFindDuplicates(unittest.TestCase):
+    """Tests for dedup against existing memories."""
+
+    def test_finds_exact_duplicate(self):
+        existing = [{"content": "Use SQLite for storage", "id": "mem_1"}]
+        dupes = ch.find_duplicates("Use SQLite for storage", existing)
+        self.assertEqual(len(dupes), 1)
+
+    def test_finds_near_duplicate(self):
+        existing = [{"content": "Always run tests before committing code changes", "id": "mem_1"}]
+        dupes = ch.find_duplicates("Always run tests before committing any code changes", existing)
+        self.assertEqual(len(dupes), 1)
+
+    def test_no_duplicate_for_different_content(self):
+        existing = [{"content": "Use SQLite for storage", "id": "mem_1"}]
+        dupes = ch.find_duplicates("Never expose API keys", existing)
+        self.assertEqual(len(dupes), 0)
+
+    def test_empty_existing(self):
+        dupes = ch.find_duplicates("test content", [])
+        self.assertEqual(len(dupes), 0)
+
+
+class TestFindContradictions(unittest.TestCase):
+    """Tests for contradiction detection (OMEGA pattern)."""
+
+    def test_detects_contradiction_same_type_overlapping_tags(self):
+        existing = [{
+            "content": "The default context threshold for yellow zone warning should be set at sixty percent of the total window capacity",
+            "type": "decision",
+            "tags": ["context-monitor", "thresholds"],
+            "id": "mem_old",
+        }]
+        contradictions = ch.find_contradictions(
+            "The default context threshold for yellow zone warning should be set at twenty five percent of the total window capacity",
+            "decision",
+            ["context-monitor", "thresholds"],
+            existing,
+        )
+        self.assertGreater(len(contradictions), 0)
+
+    def test_no_contradiction_different_type(self):
+        existing = [{
+            "content": "Use PostgreSQL for the backend database",
+            "type": "pattern",
+            "tags": ["storage"],
+            "id": "mem_old",
+        }]
+        contradictions = ch.find_contradictions(
+            "Use SQLite for the backend database",
+            "decision",
+            ["storage"],
+            existing,
+        )
+        self.assertEqual(len(contradictions), 0)
+
+    def test_no_contradiction_no_tag_overlap(self):
+        existing = [{
+            "content": "Use PostgreSQL for the backend database",
+            "type": "decision",
+            "tags": ["frontend"],
+            "id": "mem_old",
+        }]
+        contradictions = ch.find_contradictions(
+            "Use SQLite for the backend database",
+            "decision",
+            ["storage"],
+            existing,
+        )
+        self.assertEqual(len(contradictions), 0)
+
+    def test_too_similar_is_duplicate_not_contradiction(self):
+        """Similarity > 85% is a duplicate, not a contradiction."""
+        existing = [{
+            "content": "Always run tests before committing code changes to repo",
+            "type": "preference",
+            "tags": ["testing"],
+            "id": "mem_old",
+        }]
+        contradictions = ch.find_contradictions(
+            "Always run tests before committing code changes to the repo",
+            "preference",
+            ["testing"],
+            existing,
+        )
+        self.assertEqual(len(contradictions), 0)
+
+    def test_empty_existing(self):
+        contradictions = ch.find_contradictions(
+            "test content", "decision", ["general"], []
+        )
+        self.assertEqual(len(contradictions), 0)
+
+
+class TestTypeTTL(unittest.TestCase):
+    """Tests for per-type TTL rules (OMEGA pattern)."""
+
+    def test_decision_high_confidence(self):
+        ttl = ch.get_ttl_days("decision", "HIGH")
+        self.assertEqual(ttl, 730)  # 365 * 2, capped at 730
+
+    def test_decision_medium_confidence(self):
+        ttl = ch.get_ttl_days("decision", "MEDIUM")
+        self.assertEqual(ttl, 365)
+
+    def test_decision_low_confidence(self):
+        ttl = ch.get_ttl_days("decision", "LOW")
+        self.assertEqual(ttl, 182)  # 365 // 2
+
+    def test_pattern_medium(self):
+        ttl = ch.get_ttl_days("pattern", "MEDIUM")
+        self.assertEqual(ttl, 180)
+
+    def test_pattern_low(self):
+        ttl = ch.get_ttl_days("pattern", "LOW")
+        self.assertEqual(ttl, 90)  # 180 // 2
+
+    def test_preference_permanent(self):
+        ttl = ch.get_ttl_days("preference", "MEDIUM")
+        self.assertEqual(ttl, 730)
+
+    def test_error_long_lived(self):
+        ttl = ch.get_ttl_days("error", "MEDIUM")
+        self.assertEqual(ttl, 365)
+
+    def test_unknown_type_default(self):
+        ttl = ch.get_ttl_days("unknown_type", "MEDIUM")
+        self.assertEqual(ttl, 180)
+
+    def test_low_confidence_min_30(self):
+        """Low confidence minimum 30 days even for short-TTL types."""
+        ttl = ch.get_ttl_days("pattern", "LOW")
+        self.assertGreaterEqual(ttl, 30)
+
+
+class TestImportanceScore(unittest.TestCase):
+    """Tests for type-based importance scoring."""
+
+    def test_decision_highest(self):
+        self.assertEqual(ch.get_importance_score("decision"), 2.0)
+
+    def test_error_high(self):
+        self.assertEqual(ch.get_importance_score("error"), 1.8)
+
+    def test_glossary_base(self):
+        self.assertEqual(ch.get_importance_score("glossary"), 1.0)
+
+    def test_unknown_type_default(self):
+        self.assertEqual(ch.get_importance_score("unknown"), 1.0)
+
+
+class TestBuildMemoryOmegaFields(unittest.TestCase):
+    """Tests that _build_memory includes OMEGA fields."""
+
+    def test_has_content_hash(self):
+        mem = ch._build_memory(
+            "Test content", "decision", "test-project",
+            ["general"], "HIGH", "explicit"
+        )
+        self.assertIn("content_hash", mem)
+        self.assertEqual(len(mem["content_hash"]), 16)
+
+    def test_has_ttl_days(self):
+        mem = ch._build_memory(
+            "Test content", "decision", "test-project",
+            ["general"], "HIGH", "explicit"
+        )
+        self.assertIn("ttl_days", mem)
+        self.assertEqual(mem["ttl_days"], 730)
+
+    def test_has_importance(self):
+        mem = ch._build_memory(
+            "Test content", "error", "test-project",
+            ["general"], "MEDIUM", "session-end"
+        )
+        self.assertIn("importance", mem)
+        self.assertEqual(mem["importance"], 1.8)
+
+    def test_schema_version_updated(self):
+        self.assertEqual(ch.SCHEMA_VERSION, "1.1")
+
+
 if __name__ == "__main__":
     # Run with verbose output for a clear pass/fail per test
     loader = unittest.TestLoader()

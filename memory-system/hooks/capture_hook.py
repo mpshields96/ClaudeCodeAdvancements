@@ -29,8 +29,35 @@ from pathlib import Path
 # ── Constants ────────────────────────────────────────────────────────────────
 
 MEMORY_DIR = Path.home() / ".claude-memory"
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
 MAX_CONTENT_CHARS = 500
+
+# ── OMEGA-inspired: Per-type TTL rules (in days) ────────────────────────────
+# Adapted from OMEGA memory system (95.4% LongMemEval):
+# - Decisions and errors are long-lived (architectural knowledge)
+# - Preferences are permanent (user identity)
+# - Patterns decay faster (code conventions change)
+# - Glossary is permanent (definitions rarely change)
+TYPE_TTL_DAYS = {
+    "decision": 365,    # Architectural choices: long-lived
+    "pattern": 180,     # Code patterns: change as codebase evolves
+    "error": 365,       # Error resolutions: permanent value (bugs resurface)
+    "preference": 730,  # User preferences: near-permanent
+    "glossary": 730,    # Definitions: near-permanent
+}
+
+# Importance multiplier per type (for retrieval ranking)
+TYPE_IMPORTANCE = {
+    "decision": 2.0,    # Architectural decisions are highest-value
+    "error": 1.8,       # Error resolutions prevent repeat mistakes
+    "preference": 1.5,  # User preferences shape behavior
+    "pattern": 1.2,     # Patterns are useful but change
+    "glossary": 1.0,    # Glossary is reference material
+}
+
+# Similarity threshold for content dedup (0.0-1.0)
+# Two memories with similarity above this are considered duplicates
+DEDUP_SIMILARITY_THRESHOLD = 0.85
 
 # Credentials filter: if memory content matches any of these, REJECT the write.
 _CREDENTIAL_PATTERNS = [
@@ -122,6 +149,116 @@ def _truncate(text: str, max_chars: int = MAX_CONTENT_CHARS) -> str:
     return text[: max_chars - 1] + "…"
 
 
+# ── OMEGA-inspired: Dedup + Contradiction Detection ─────────────────────────
+
+def _content_hash(content: str) -> str:
+    """Generate a hash of normalized content for exact-match dedup."""
+    import hashlib
+    normalized = content.strip().lower()
+    # Remove extra whitespace
+    normalized = " ".join(normalized.split())
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()[:16]
+
+
+def _word_set(text: str) -> set:
+    """Extract a set of meaningful words from text (for similarity)."""
+    # Strip punctuation and lowercase
+    words = re.findall(r"[a-z0-9]+", text.lower())
+    # Remove very common words
+    stopwords = {"the", "a", "an", "is", "was", "are", "were", "be", "been",
+                 "to", "of", "in", "for", "on", "with", "at", "by", "from",
+                 "and", "or", "not", "that", "this", "it", "its", "we", "i"}
+    return {w for w in words if w not in stopwords and len(w) > 2}
+
+
+def _content_similarity(a: str, b: str) -> float:
+    """
+    Jaccard similarity between word sets of two texts.
+    Returns 0.0 (no overlap) to 1.0 (identical word sets).
+    """
+    set_a = _word_set(a)
+    set_b = _word_set(b)
+    if not set_a or not set_b:
+        return 0.0
+    intersection = set_a & set_b
+    union = set_a | set_b
+    return len(intersection) / len(union)
+
+
+def find_duplicates(new_content: str, existing_memories: list[dict]) -> list[dict]:
+    """
+    Find existing memories that are duplicates of new_content.
+    Uses hash match (exact) and Jaccard similarity (fuzzy).
+    Returns list of duplicate memory entries.
+    """
+    new_hash = _content_hash(new_content)
+    duplicates = []
+
+    for mem in existing_memories:
+        # Check hash (exact match after normalization)
+        if _content_hash(mem.get("content", "")) == new_hash:
+            duplicates.append(mem)
+            continue
+        # Check similarity (fuzzy match)
+        sim = _content_similarity(new_content, mem.get("content", ""))
+        if sim >= DEDUP_SIMILARITY_THRESHOLD:
+            duplicates.append(mem)
+
+    return duplicates
+
+
+def find_contradictions(
+    new_content: str,
+    new_type: str,
+    new_tags: list[str],
+    existing_memories: list[dict],
+) -> list[dict]:
+    """
+    Find existing memories that contradict the new one.
+    A contradiction is a memory of the same type with overlapping tags
+    and moderate similarity (55-85%) — similar topic but different content.
+    OMEGA pattern: newer memory supersedes older.
+    """
+    contradictions = []
+    new_tag_set = set(new_tags)
+
+    for mem in existing_memories:
+        # Must be same type to be a contradiction
+        if mem.get("type") != new_type:
+            continue
+
+        # Must share at least one tag
+        mem_tags = set(mem.get("tags", []))
+        if not (new_tag_set & mem_tags):
+            continue
+
+        # Similarity must be in the "evolution" range (55-85%)
+        # Below 55% = different topic, above 85% = duplicate (not contradiction)
+        sim = _content_similarity(new_content, mem.get("content", ""))
+        if 0.55 <= sim < DEDUP_SIMILARITY_THRESHOLD:
+            contradictions.append(mem)
+
+    return contradictions
+
+
+def get_ttl_days(mem_type: str, confidence: str) -> int:
+    """
+    Get TTL in days based on memory type and confidence.
+    OMEGA pattern: type-based TTL + confidence multiplier.
+    """
+    base_ttl = TYPE_TTL_DAYS.get(mem_type, 180)
+    if confidence == "HIGH":
+        return min(base_ttl * 2, 730)  # Cap at 2 years
+    elif confidence == "LOW":
+        return max(base_ttl // 2, 30)  # Min 30 days
+    return base_ttl
+
+
+def get_importance_score(mem_type: str) -> float:
+    """Get retrieval importance multiplier for a memory type."""
+    return TYPE_IMPORTANCE.get(mem_type, 1.0)
+
+
 def _build_memory(
     content: str,
     mem_type: str,
@@ -149,16 +286,22 @@ def _build_memory(
     if confidence not in valid_confidence:
         confidence = "MEDIUM"
 
+    ttl = get_ttl_days(mem_type, confidence)
+    importance = get_importance_score(mem_type)
+
     return {
         "id": _make_id(),
         "type": mem_type,
         "content": content,
+        "content_hash": _content_hash(content),
         "project": project,
         "tags": tags[:5],  # Max 5 tags
         "created_at": _now(),
         "last_used": _now(),
         "confidence": confidence,
         "source": source,
+        "ttl_days": ttl,
+        "importance": importance,
     }
 
 
@@ -215,14 +358,33 @@ def handle_stop(hook_input: dict) -> dict:
     memory_file = _memory_file(project)
     store = _load_store(memory_file)
 
-    # Deduplicate against existing memories by content similarity
-    existing_contents = {m["content"].lower() for m in store["memories"]}
+    # OMEGA-pattern: hash + similarity dedup, then contradiction detection
     new_memories = []
+    superseded_ids = set()
+
     for mem in all_memories:
-        if mem["content"].lower() not in existing_contents:
-            store["memories"].append(mem)
-            new_memories.append(mem)
-            existing_contents.add(mem["content"].lower())
+        # Check for duplicates (hash + Jaccard similarity)
+        dupes = find_duplicates(mem["content"], store["memories"])
+        if dupes:
+            continue  # Skip duplicate
+
+        # Check for contradictions (same type + overlapping tags + 55-85% sim)
+        contradictions = find_contradictions(
+            mem["content"], mem["type"], mem["tags"], store["memories"]
+        )
+        # Newer supersedes older — mark old ones for removal
+        for old_mem in contradictions:
+            superseded_ids.add(old_mem["id"])
+
+        store["memories"].append(mem)
+        new_memories.append(mem)
+
+    # Remove superseded memories
+    if superseded_ids:
+        store["memories"] = [
+            m for m in store["memories"]
+            if m["id"] not in superseded_ids
+        ]
 
     if new_memories:
         _save_store(store, memory_file)
