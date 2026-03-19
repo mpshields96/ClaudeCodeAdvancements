@@ -287,5 +287,55 @@ class TestBulkImport(unittest.TestCase):
         self.assertEqual(len(self.tracker.deliveries), 2)
 
 
+class TestFindingsLogParser(unittest.TestCase):
+    """Test parsing FINDINGS_LOG.md entries into deliveries."""
+
+    def test_parse_kalshi_finding(self):
+        line = '[2026-03-19] [REFERENCE-PERSONAL] [MT-0 Kalshi] Tsang & Yang (2026) "Anatomy of Polymarket" — First paper documenting intraday seasonality. — https://arxiv.org/abs/2603.03136'
+        result = ro.parse_findings_line(line)
+        self.assertIsNotNone(result)
+        self.assertIn("Tsang", result["title"])
+        self.assertEqual(result["category"], "academic_paper")
+        self.assertIn("kalshi", result["target_chat"])
+
+    def test_parse_reddit_finding(self):
+        line = '[2026-03-19] [REFERENCE-PERSONAL] [MT-0 Kalshi] Time-window filtering (48pts, r/algotrading) — Restricting trading. — https://www.reddit.com/r/algotrading/comments/1rw2scs/'
+        result = ro.parse_findings_line(line)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["category"], "reddit_finding")
+
+    def test_parse_repo_finding(self):
+        line = '[2026-03-19] [REFERENCE-PERSONAL] [MT-0 Kalshi] Polymarket AI Trading Bot (GitHub) — 7 Kelly multipliers. — https://github.com/dylanpersonguy/bot'
+        result = ro.parse_findings_line(line)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["category"], "repo_evaluation")
+
+    def test_skip_non_kalshi_finding(self):
+        line = '[2026-03-19] [REFERENCE] [Frontier 2: Spec System] "Build actual software humbled me" — Community validates.'
+        result = ro.parse_findings_line(line)
+        self.assertIsNone(result)  # Not Kalshi-related
+
+    def test_skip_skip_verdict(self):
+        line = '[2026-03-18] [SKIP] [MT-14 batch scan] r/stocks — noise.'
+        result = ro.parse_findings_line(line)
+        self.assertIsNone(result)
+
+    def test_extract_session_from_date(self):
+        """Should extract date for session estimation."""
+        line = '[2026-03-19] [REFERENCE-PERSONAL] [MT-0 Kalshi] Baker & McHale (2013) — Kelly shrinkage. — DOI:10.1287/deca.2013.0271'
+        result = ro.parse_findings_line(line)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["date"], "2026-03-19")
+
+    def test_parse_findings_file(self):
+        """Parse multiple lines from a findings file."""
+        content = """[2026-03-19] [REFERENCE-PERSONAL] [MT-0 Kalshi] Paper A — desc A. — https://url
+[2026-03-19] [REFERENCE] [Frontier 1: Memory] Non-kalshi finding.
+[2026-03-19] [SKIP] [MT-14] Skipped finding.
+[2026-03-19] [REFERENCE-PERSONAL] [MT-0 Kalshi] Paper B — desc B. — DOI:123"""
+        results = ro.parse_findings_content(content)
+        self.assertEqual(len(results), 2)  # Only Kalshi findings
+
+
 if __name__ == "__main__":
     unittest.main()

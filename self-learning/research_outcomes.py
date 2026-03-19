@@ -290,6 +290,78 @@ class OutcomeTracker:
         return "\n".join(lines)
 
 
+def parse_findings_line(line):
+    """Parse a single FINDINGS_LOG.md line into a delivery dict, or None if not Kalshi-relevant.
+
+    Only extracts lines tagged with [MT-0 Kalshi] or [Kalshi] in the category field.
+    Skips [SKIP] verdicts and non-Kalshi findings.
+    """
+    import re
+
+    line = line.strip()
+    if not line:
+        return None
+
+    # Match: [date] [verdict] [category] title — description. — url
+    match = re.match(
+        r'\[(\d{4}-\d{2}-\d{2})\]\s+'
+        r'\[([^\]]+)\]\s+'
+        r'\[([^\]]+)\]\s+'
+        r'(.+)',
+        line,
+    )
+    if not match:
+        return None
+
+    date, verdict, category_tag, rest = match.groups()
+
+    # Skip non-Kalshi findings
+    if "kalshi" not in category_tag.lower():
+        return None
+
+    # Skip SKIP verdicts
+    if verdict.upper() == "SKIP":
+        return None
+
+    # Extract title (up to first " — " or end)
+    parts = rest.split(" — ", 1)
+    title = parts[0].strip().strip('"')
+    description = parts[1].strip() if len(parts) > 1 else ""
+
+    # Remove trailing URL from description
+    url_match = re.search(r'\s*—?\s*(https?://\S+|DOI:\S+|SSRN:\S+)\s*$', description)
+    if url_match:
+        description = description[:url_match.start()].strip().rstrip("—").strip()
+
+    # Determine category from content
+    if "github" in rest.lower() or "(GitHub)" in rest:
+        cat = "repo_evaluation"
+    elif any(kw in rest.lower() for kw in ["r/algo", "r/kalshi", "r/poly", "pts,"]):
+        cat = "reddit_finding"
+    elif any(kw in rest.lower() for kw in ["paper", "doi:", "arxiv", "ssrn", "journal"]):
+        cat = "academic_paper"
+    else:
+        cat = "signal"
+
+    return {
+        "date": date,
+        "title": title[:100],  # Cap at 100 chars
+        "category": cat,
+        "description": description[:200],
+        "target_chat": "kalshi_research",
+    }
+
+
+def parse_findings_content(content):
+    """Parse multiple FINDINGS_LOG.md lines, returning only Kalshi-relevant deliveries."""
+    results = []
+    for line in content.split("\n"):
+        parsed = parse_findings_line(line)
+        if parsed:
+            results.append(parsed)
+    return results
+
+
 def main():
     parser = argparse.ArgumentParser(description="CCA Research Outcomes Tracker")
     sub = parser.add_subparsers(dest="command")
@@ -321,6 +393,13 @@ def main():
 
     # summary
     sub.add_parser("summary", help="Show summary report")
+
+    # import-findings
+    imp_p = sub.add_parser("import-findings", help="Import Kalshi findings from FINDINGS_LOG.md")
+    imp_p.add_argument("--file", default=os.path.join(
+        os.path.dirname(SCRIPT_DIR), "FINDINGS_LOG.md"))
+    imp_p.add_argument("--session", type=int, default=0,
+                        help="Override session number for all imports")
 
     args = parser.parse_args()
     tracker = OutcomeTracker()
@@ -361,6 +440,27 @@ def main():
 
     elif args.command == "summary":
         print(tracker.summary_report())
+
+    elif args.command == "import-findings":
+        if not os.path.exists(args.file):
+            print(f"File not found: {args.file}")
+            sys.exit(1)
+        with open(args.file) as f:
+            content = f.read()
+        parsed = parse_findings_content(content)
+        items = []
+        for p in parsed:
+            session = args.session if args.session else 0
+            items.append({
+                "session": session,
+                "title": p["title"],
+                "category": p["category"],
+                "description": p["description"],
+                "target_chat": p["target_chat"],
+            })
+        added = tracker.bulk_add(items)
+        tracker.save()
+        print(f"Parsed {len(parsed)} Kalshi findings, added {len(added)} new (deduped)")
 
     else:
         parser.print_help()
