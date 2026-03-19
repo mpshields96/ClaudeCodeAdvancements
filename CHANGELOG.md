@@ -3,6 +3,38 @@
 
 ---
 
+## Session 51 — 2026-03-19
+
+**What changed:**
+- `CROSS_CHAT_INBOX.md` — All 3 Kalshi Research S108 requests marked COMPLETE
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md` — OctagonAI eval, Le (2026) calibration formula, FLB alert, Prime Directive reinforcement
+
+**Why:**
+- Matthew directive: ROI = make money. CCA research must generate profit for Kalshi bot.
+- Le (2026) calibration formula is directly programmable: true_prob = p^b / (p^b + (1-p)^b)
+- Political markets b=1.83 vs crypto b=1.03 → Pillar 3 expansion candidate (5-13x more mispriced)
+- OctagonAI repo: 73/100 code, 25/100 strategy (LLM-as-edge is anti-pattern, don't adopt)
+
+**Tests:** 1768/1768 passing (44 suites)
+
+**Lessons:**
+- PDF extraction needs poppler/PyPDF2 — neither installed. Use WebFetch HTML or browser for papers.
+- Paper scanner domain keywords too broad for "prediction market" — returns soil chemistry papers.
+- Reddit reader designed for single posts, not listing pages — use autonomous scanner for bulk.
+- When Matthew says ROI, he means financial. Don't build iOS dashboards before profit research.
+
+---
+
+## Session 50 — 2026-03-19
+
+- Cross-chat Kalshi bet sizing review (all 5 strategies)
+- Academic research: CUSUM h=5.0, Kelly for pred markets, FLB short-horizon (14 verified citations)
+- Meta labeling 23 features recommendation
+- Parameter changes queue to CCA_TO_POLYBOT.md
+- Added cross-chat inbox check to /cca-init
+
+---
+
 ## Session 49 — 2026-03-18
 - Committed S48 wrap files
 - MT-13 Phase 2 COMPLETE: iOS project generator + Xcode build helper
