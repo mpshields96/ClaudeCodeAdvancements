@@ -3,28 +3,29 @@
 
 ---
 
-## Current State (as of Session 55 — 2026-03-19)
+## Current State (as of Session 56 — 2026-03-19)
 
-**Phase:** Session 55 COMPLETE. Tests: 1900/1900 passing (46 suites). Git: 7 commits.
+**Phase:** Session 56 IN PROGRESS. Tests: 1900/1900 passing (46 suites). Git: 1 commit so far.
 **What's done this session:**
-1. **Overnight detector infrastructure BUILT** — `overnight_detector.py` with Wilson CI significance testing, CUSUM per-window WR drift detection, data tracking completeness audit, SQL templates for Kalshi bot DB, evidence-based recommendation generator. 29 tests.
-2. **Time-stratified trading metrics** — `journal.py:get_time_stratified_trading_metrics()` analyzes bet outcomes by 4 time buckets (overnight/morning/afternoon/evening), computes Wilson CI, overnight vs daytime comparison with statistical significance. 14 new tests.
-3. **Data tracking audit** — found only 33% of optimal fields are logged. Critical missing: hour_utc, is_overnight, minutes_to_expiry. Full gap analysis written to CCA_TO_POLYBOT.md with code snippets for Kalshi bot.
-4. **Prime Directive updated** — new "Objective Signaling, Not Trauma Response" section in KALSHI_PRIME_DIRECTIVE.md. Every strategy change requires statistical evidence.
-5. **Supervision factor identified** — Matthew insight: overnight losses have TWO dimensions — market conditions AND lack of human oversight for 3-4h. Added to analysis + memory.
-6. **Cross-chat updates** — CCA_TO_POLYBOT.md comprehensive gap analysis, CROSS_CHAT_INBOX.md S55 notification, SQL templates ready.
-7. **Academic paper research** — background agent scanning Reddit/GitHub + academic databases for overnight trading, Kelly criterion, prediction market calibration papers.
+1. **4 GitHub repo full source code evaluations** — Polymarket bot (7 Kelly multipliers, drawdown heat system, 15 risk checks, 58/100 quality), Hunter (execution gating, fill verification, 52/100), Kalshi weather bot (fractional Kelly 15%, Brier vaporware, 62/100), Awesome tools (reference directory).
+2. **18 verified academic papers found** — Tsang & Yang (2026) VALIDATES overnight liquidity thinning. Baker-McHale (2013) Kelly shrinkage. Ramdas (2023) E-values. Ng (2025) cross-platform price discovery. Plus 14 more across Kelly, CUSUM, self-learning, calibration.
+3. **5 r/algotrading deep-reads** — time-window filtering (Sharpe "literally doubled"), regime filter approaches (HMM, model confidence), risk management (1.5-2x live multiplier), fill quality (2.3x slippage confirmed), overfitting detection (walk-forward, Deflated Sharpe).
+4. **MT-9 Phase 3: production autonomous scans** — r/Kalshi (50 posts, mostly scams), r/algotrading (30 posts, 6 NEEDLEs), r/polymarket (30 posts, 2 NEEDLEs), r/ClaudeCode (30 posts, 9 NEEDLEs).
+5. **ClaudeWatch discovery** — Electron+React desktop monitoring app for Claude Code sessions. Partial MT-1 resolution (no token/cost tracking).
+6. **Priority queue refreshed for S56** — MT-10 (18.0), MT-11 (14.0), MT-14/MT-9 (12.0 each).
+7. **Cross-chat bridge updated** — KALSHI_INTEL.md, CCA_TO_POLYBOT.md, CROSS_CHAT_INBOX.md all updated with consolidated findings.
 
-**Matthew directives (S51-S55, permanent):**
+**Matthew directives (S51-S56, permanent):**
 - ROI = make money. Financial, not philosophical.
 - CCA dual mission: 50% Kalshi financial support + 50% self-improvement
 - Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
 - Account floating $100-200 — need smarter signals, not more guards
 - Open to not running overnight if objectively correct; wants evidence-based decision
-- Auto-execute advancement tips, no auditor MT, surgical fixes
-- Self-learning for Kalshi = optimize for profit, compounding passive income
+- Self-learning should have mid-session micro-reflection, not just wrap-time (S56 discussion)
+- Kalshi chats not live during VA hospital wifi — will start on hotspot this afternoon
+- VA wifi blocks some external URLs (SSRN, quantvps, Kalshi help) — retry on hotspot
 
-**Next:** (1) Kalshi chats add critical data fields (hour_utc, is_overnight, minutes_to_expiry) + run SQL queries → post results to CROSS_CHAT_INBOX.md. (2) Academic paper agent may have results in output file — check at next session start. (3) Evaluate 4 GitHub repos from Reddit scan (Polymarket bot, weather bot, Hunter, Awesome tools). (4) MT-9 Phase 3: deep-read remaining NEEDLEs. (5) Generate updated CCA report PDF. (6) Retry 5 blocked URLs on hotspot (quantvps, kalshi help, etc.).
+**Next:** (1) Kalshi chats start this afternoon on hotspot — will pick up S55+S56 deliveries. (2) Build mid-session micro-reflection mechanism for self-learning. (3) Generate updated CCA report PDF. (4) MT-17 Phase 5: website templates. (5) Retry blocked URLs on hotspot. (6) Deep-read remaining r/ClaudeCode NEEDLEs (9 from scan).
 
 ---
 
