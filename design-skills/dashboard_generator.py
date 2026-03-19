@@ -27,6 +27,15 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import List, Optional
 
+# Import chart generator (same module)
+try:
+    from chart_generator import (
+        HorizontalBarChart, DonutChart, render_svg, CCA_COLORS as CHART_COLORS,
+    )
+    CHARTS_AVAILABLE = True
+except ImportError:
+    CHARTS_AVAILABLE = False
+
 
 # ── Design tokens from design-guide.md ───────────────────────────────────────
 
@@ -137,6 +146,7 @@ class DashboardRenderer:
     def render(self, data: DashboardData) -> str:
         """Generate complete HTML string."""
         metrics_html = self._render_metrics(data.metrics)
+        charts_html = self._render_charts(data)
         modules_html = self._render_modules(data.modules)
         tasks_html = self._render_master_tasks(data.master_tasks)
 
@@ -158,6 +168,7 @@ class DashboardRenderer:
   </header>
 
   {metrics_html}
+  {charts_html}
   {modules_html}
   {tasks_html}
 
@@ -332,13 +343,85 @@ footer {{
   color: {COLORS['muted']};
 }}
 
+/* Charts row */
+.charts {{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}}
+.chart-card {{
+  background: {COLORS['surface']};
+  border: 1px solid {COLORS['border']};
+  border-radius: 4px;
+  padding: 12px;
+  text-align: center;
+}}
+.chart-card svg {{
+  max-width: 100%;
+  height: auto;
+}}
+
 /* Responsive */
 @media (max-width: 600px) {{
   .metrics {{ grid-template-columns: repeat(2, 1fr); }}
   .modules {{ grid-template-columns: 1fr; }}
+  .charts {{ grid-template-columns: 1fr; }}
   .metric-value {{ font-size: 22px; }}
 }}
 """
+
+    def _render_charts(self, data: DashboardData) -> str:
+        """Render inline SVG charts from module and task data."""
+        if not CHARTS_AVAILABLE or not data.modules:
+            return ""
+
+        charts = []
+
+        # Tests by module (horizontal bar)
+        module_data = sorted(
+            [(m.name, m.tests) for m in data.modules],
+            key=lambda x: x[1], reverse=True,
+        )
+        if module_data:
+            bar_height = max(200, len(module_data) * 32 + 60)
+            bar_chart = HorizontalBarChart(
+                module_data, title="Tests by Module",
+                width=480, height=bar_height,
+                show_values=True,
+            )
+            charts.append(f'<div class="chart-card">{render_svg(bar_chart)}</div>')
+
+        # Task status donut
+        if data.master_tasks:
+            complete = sum(1 for t in data.master_tasks if "COMPLETE" in t.status.upper())
+            in_progress = sum(1 for t in data.master_tasks
+                              if "PROGRESS" in t.status.upper() or "ACTIVE" in t.status.upper())
+            other = len(data.master_tasks) - complete - in_progress
+            donut_data = []
+            if complete:
+                donut_data.append(("Complete", complete, CHART_COLORS["success"]))
+            if in_progress:
+                donut_data.append(("In Progress", in_progress, CHART_COLORS["accent"]))
+            if other:
+                donut_data.append(("Other", other, CHART_COLORS["muted"]))
+            if donut_data:
+                total = len(data.master_tasks)
+                pct = int((complete / total) * 100) if total else 0
+                donut = DonutChart(
+                    donut_data, title="Master Task Status",
+                    width=300, height=280,
+                    center_text=f"{pct}%",
+                )
+                charts.append(f'<div class="chart-card">{render_svg(donut)}</div>')
+
+        if not charts:
+            return ""
+
+        return f"""<h2 class="section-header">Charts</h2>
+<div class="charts">
+{chr(10).join(charts)}
+</div>"""
 
     def _render_metrics(self, metrics: List[MetricCard]) -> str:
         if not metrics:
