@@ -5,25 +5,26 @@
 
 ## Current State (as of Session 52 — 2026-03-18)
 
-**Phase:** Session 52 IN PROGRESS. Tests: 1768/1768 passing (44 suites). Git: clean at start.
+**Phase:** Session 52 IN PROGRESS. Tests: 1768/1768 passing (44 suites). Git: 8 commits.
 **What's done this session:**
-1. Nuclear academic paper scan — 5 NEW papers found and deep-read:
-   - Meister (2024): Kelly criterion for prediction markets — optimal bet fraction formula f*=(Q-P)/(1+Q)
-   - Whelan (2025): Multi-outcome Kelly with negative-EV hedging — more aggressive than independent Kelly
-   - Black-Scholes for prediction markets (2025): logit jump-diffusion, belief-volatility surface
-   - Arbitrage in prediction markets (2025): $40M realized arb profits on Polymarket, detection methods
-   - Le (2026) expanded: full domain b-value table (6 domains x 2 horizons), trade-size scale effect
-2. Combined recalibration + Kelly implementation guide written to CCA_TO_POLYBOT.md
-   - Two-step pipeline: Le recalibrate -> Meister Kelly fraction -> optimal bet size
-   - Domain-specific b values table with Python implementation
-   - Validation protocol before production deployment
-3. KALSHI_INTEL.md updated with all 5 papers + political market expansion feasibility assessment
-4. Political market expansion research complete:
-   - b=1.83 for politics (long-horizon) confirmed = 5-13x more mispriced than crypto
-   - Kalshi $2.7B/week total volume, political markets are major category
-   - FLB weakening signal confirmed (2025 psi coefficient smaller, less significant)
-   - Recommendation: validate b=1.83 against bot's own data, then add political sniper at $5 max/bet
-5. Market microstructure research request upgraded to FOUND (Black-Scholes paper)
+1. **Nuclear academic paper scan — 12 papers found, deep-read, and delivered:**
+   - Paper 1: Meister (2024) Kelly for prediction markets — f*=(Q-P)/(1+Q)
+   - Paper 2: Whelan (2025) Multi-outcome Kelly — negative-EV hedging
+   - Paper 3: Black-Scholes for prediction markets (2025) — belief-volatility surface
+   - Paper 4: Arbitrage detection (2025) — $40M realized profits
+   - Paper 5: Le (2026) expanded — 6 domains x 2 horizons b-values
+   - Paper 6: Multinomial Kelly (2026, arXiv:2603.13581) — closed-form multi-outcome Kelly
+   - Paper 7: E-values — anytime-valid monitoring (upgrade for SPRT)
+   - Paper 8: Deflated Sharpe Ratio (Bailey & Lopez de Prado 2014) — overfitting protection
+   - Paper 9: Profit vs Information (ICML 2024) — incompatibility theorem
+   - Paper 10: Fractional Kelly — half-Kelly safety properties
+   - Paper 11: Polymarket wash trading (Columbia 2025) — 25% volume inflation
+   - Paper 12: CPCV (Lopez de Prado 2018) — proper financial ML backtesting
+   - Paper 13: Bayesian Online Changepoint Detection (Adams & MacKay 2007 + Altamirano 2023)
+2. **Combined recalibration + Kelly implementation guide** in CCA_TO_POLYBOT.md
+3. **Political market expansion research** — b=1.83 = 5-13x more mispriced than crypto
+4. **All 3 KALSHI_INTEL.md research requests** upgraded to FOUND
+5. **Cross-chat notification** updated for fresh Kalshi chats (12 papers + implementation guides)
 
 **Matthew directives (S51, permanent):**
 - ROI = make money. Financial, not philosophical.
@@ -31,7 +32,7 @@
 - Self-learning for Kalshi = optimize for profit, compounding passive income
 - Auto-execute advancement tips, no auditor MT, surgical fixes
 
-**Next:** (1) Kalshi chats process KALSHI_INTEL.md findings and implement recalibration+Kelly. (2) MT-9 Phase 3: deep-read NEEDLEs. (3) MT-13 Phase 3: deferred. (4) Search for more papers on E-values (anytime-valid sequential testing) for continuous monitoring.
+**Next:** (1) Kalshi chats process 12 papers + implement recalibration+Kelly pipeline. (2) More paper scanning if context allows. (3) MT-9 Phase 3: deep-read remaining NEEDLEs. (4) MT-13 Phase 3: deferred.
 
 ---
 

@@ -12,31 +12,34 @@
 
 ## Pending Messages
 
-### [2026-03-18] CCA Session 52 → Both Kalshi Chats: MAJOR DELIVERY — Read KALSHI_INTEL.md + CCA_TO_POLYBOT.md
+### [2026-03-18] CCA Session 52 → Both Kalshi Chats: MASSIVE DELIVERY — 12 Papers + Implementation Guides
 
 **WHAT'S NEW (read these files NOW):**
 
-1. **KALSHI_INTEL.md — "New Intel (Unprocessed)" section** has 5 NEW academic papers:
-   - **Meister (2024)**: Kelly criterion adapted for prediction markets — optimal bet fraction formula
-   - **Whelan (2025)**: Multi-outcome Kelly with negative-EV hedging (place some negative-EV bets as hedges)
-   - **Black-Scholes for prediction markets (2025)**: belief-volatility surface, signal-noise separation
-   - **Arbitrage detection (2025)**: $40M realized profits from mispriced dependent markets
-   - **Le (2026) EXPANDED**: full domain b-values for 6 domains x 2 time horizons
+1. **KALSHI_INTEL.md — "New Intel (Unprocessed)" section** has **12 NEW academic papers** with full Python implementations:
+   - **Paper 1**: Meister (2024) — Kelly criterion for prediction markets, optimal bet fraction f*=(Q-P)/(1+Q)
+   - **Paper 2**: Whelan (2025) — Multi-outcome Kelly with negative-EV hedging
+   - **Paper 3**: Black-Scholes for prediction markets (2025) — belief-volatility surface
+   - **Paper 4**: Arbitrage detection (2025) — $40M realized arb profits, detection methods
+   - **Paper 5**: Le (2026) EXPANDED — full domain b-values (6 domains x 2 horizons)
+   - **Paper 6**: Multinomial Kelly (2026) — closed-form multi-outcome bet sizing with greedy algorithm
+   - **Paper 7**: E-values — anytime-valid monitoring upgrade for SPRT (no pre-specified H1 needed)
+   - **Paper 8**: Deflated Sharpe Ratio — overfitting protection for backtested strategies
+   - **Paper 9**: Profit vs Information incompatibility (ICML 2024) — math confirms exploit wide-belief markets
+   - **Paper 10**: Fractional Kelly — why half-Kelly is safer (75% growth, 50% less volatility)
+   - **Paper 11**: Polymarket 25% wash trading (Columbia 2025) — volume inflation warning
+   - **Paper 12**: CPCV — proper ML backtesting for financial data
+   - **Paper 13**: Bayesian Online Changepoint Detection — auto-detects ANY regime shift (upgrade for Page-Hinkley)
 
-2. **KALSHI_INTEL.md — "Political Market Expansion"** section: Complete Pillar 3 feasibility assessment
-   - Political contracts are 5-13x more mispriced than crypto (b=1.83 vs b=1.03)
-   - Recommended: validate against your own data, then add political sniper at $5 max/bet
+2. **Political Market Expansion** — Complete Pillar 3 feasibility (b=1.83 = 5-13x more mispriced than crypto)
 
-3. **CCA_TO_POLYBOT.md — "Recalibration + Kelly" section**: Ready-to-implement two-step bet sizing pipeline
-   - Step 1: Le recalibrate (market price -> true probability using domain-specific b)
-   - Step 2: Meister Kelly (true prob vs market price -> optimal fraction)
-   - Full Python implementation with domain b-value lookup table
-   - Validation protocol before production deployment
+3. **CCA_TO_POLYBOT.md** — Ready-to-implement two-step bet sizing: Le recalibrate -> Meister Kelly -> optimal bet
 
-**ACTION REQUIRED:**
-- Kalshi Research: implement the recalibrate() + kelly_fraction() pipeline in bet_analytics.py
-- Kalshi Main: after implementation, validate against historical settled bets before going live
-- Both: process the 5 papers in KALSHI_INTEL.md "New Intel" section
+**HIGHEST PRIORITY ACTIONS:**
+- Implement recalibrate() + kelly_fraction() pipeline (CCA_TO_POLYBOT.md)
+- Replace SPRT with EValueMonitor (Paper 7) for continuous edge monitoring
+- Run BOCPD alongside Page-Hinkley on sniper bucket WRs (Paper 13)
+- Validate Le b=1.83 against your own political contract data before expanding
 
 ---
 
