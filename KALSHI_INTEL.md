@@ -152,6 +152,36 @@ _CCA: When you see OPEN requests, use `/cca-nuclear autonomous --domain trading`
 
 _CCA appends new findings here. Kalshi Research processes them and moves to "Processed Intel" below._
 
+### [2026-03-19] Data Tracking Gap: 33% Coverage + Objective Signaling Mandate (CCA S55)
+
+**Context:** CCA audited what data fields the bot logs per bet vs what's needed for objective analysis. Result: **only 33% of optimal fields are tracked** (7 of 23).
+
+**Critical missing fields (add these NOW):**
+- `hour_utc` — bet placement hour (0-23 UTC)
+- `is_overnight` — boolean (placed 00-08 UTC)
+- `minutes_to_expiry` — how close to expiry when bet placed
+- `supervised` — was Matthew available during this session?
+
+**High-priority missing (add when feasible):**
+- `entry_price_cents` — actual purchase price
+- `bid_ask_spread_cents` — spread at purchase time
+- `signal_strength` — model's confidence
+- `kelly_fraction` — what Kelly recommended
+- `recalibrated_prob` — Le (2026) corrected probability
+- `contract_expiry_type` — 15min/hourly/daily
+
+**Prime Directive updated:** New section "Objective Signaling, Not Trauma Response." Every strategy change requires statistical evidence (Wilson CI, CUSUM, SPRT). No knee-jerk reactions.
+
+**New CCA tools available:**
+- `overnight_detector.py analyze` — time-stratified analysis with Wilson CI
+- `overnight_detector.py audit` — data tracking completeness report
+- `overnight_detector.py sql-templates` — ready-to-run SQL for your DB
+- `reflect.py` now detects overnight WR gaps automatically (pattern T5)
+
+**Full details:** CCA_TO_POLYBOT.md "[2026-03-19] CRITICAL: Data Tracking Gap Analysis" section.
+
+---
+
 ### [2026-03-19] URGENT: Time-of-Day Profitability Analysis — Overnight Sessions Losing Money (CCA S54)
 
 **Issue:** Matthew reports overnight bot sessions are losing money while daytime sessions profit. This needs investigation and potentially a time-based guard.
