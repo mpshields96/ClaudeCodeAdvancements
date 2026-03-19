@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-MEM-3: Memory Retrieval MCP Server
+MEM-3: Memory Retrieval MCP Server (v2.0 — FTS5 backend)
 Speaks JSON-RPC 2.0 over stdio — the MCP protocol Claude Code expects.
 Two tools: search_memory, load_memories.
 Python stdlib only. No external dependencies.
+
+Backend: SQLite + FTS5 via memory_store.py (BM25-ranked full-text search).
 
 Registration (add to ~/.claude/claude_desktop_config.json or project MCP config):
 {
@@ -20,83 +22,66 @@ import json
 import sys
 import os
 from pathlib import Path
-from datetime import datetime, timezone
+
+# Import MemoryStore from sibling module
+sys.path.insert(0, str(Path(__file__).parent))
+from memory_store import MemoryStore
 
 
-# ── Storage helpers (mirrors capture_hook.py) ────────────────────────────────
+# ── Storage helpers ──────────────────────────────────────────────────────────
 
-def _memory_dir() -> Path:
-    return Path.home() / ".claude-memory"
+# Singleton store — initialized lazily on first tool call, or injected for tests.
+_global_store: MemoryStore | None = None
+
+
+def _get_store() -> MemoryStore:
+    """Get or create the global MemoryStore singleton."""
+    global _global_store
+    if _global_store is None:
+        _global_store = MemoryStore()  # default: ~/.claude-memory/memories.db
+    return _global_store
 
 
 def _project_slug(cwd: str) -> str:
     return Path(cwd).name.lower().replace(" ", "-").replace("_", "-")
 
 
-def _load_store(project_slug: str) -> dict:
-    store_path = _memory_dir() / f"{project_slug}.json"
-    if not store_path.exists():
-        return {"project": project_slug, "schema_version": "1.0", "memories": []}
-    try:
-        return json.loads(store_path.read_text())
-    except (json.JSONDecodeError, OSError):
-        return {"project": project_slug, "schema_version": "1.0", "memories": []}
+# ── Tool implementations ────────────────────────────────────────────────────
 
-
-def _touch_last_used(store: dict, matched_ids: list[str], project_slug: str) -> None:
-    """Update last_used on surfaced memories and persist."""
-    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    changed = False
-    for mem in store.get("memories", []):
-        if mem.get("id") in matched_ids:
-            mem["last_used"] = now
-            changed = True
-    if changed:
-        store_path = _memory_dir() / f"{project_slug}.json"
-        tmp = store_path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(store, indent=2))
-        tmp.replace(store_path)
-
-
-# ── Tool implementations ──────────────────────────────────────────────────────
-
-def tool_load_memories(args: dict) -> dict:
+def tool_load_memories(args: dict, store: MemoryStore | None = None) -> dict:
     """
     Load memories for a project.
     Returns HIGH confidence memories always; MEDIUM if include_medium=True.
-    Sorted by confidence (HIGH first) then last_used descending.
+    Sorted by confidence (HIGH first) then updated_at descending.
     """
     cwd = args.get("cwd", os.getcwd())
     include_medium = args.get("include_medium", False)
     project_slug = _project_slug(cwd)
+    s = store or _get_store()
 
-    store = _load_store(project_slug)
-    memories = store.get("memories", [])
+    # Get all memories for this project
+    all_mems = s.list_all(project=project_slug, limit=500)
 
     # Filter by confidence
     if include_medium:
-        kept = [m for m in memories if m.get("confidence") in ("HIGH", "MEDIUM")]
+        kept = [m for m in all_mems if m.get("confidence") in ("HIGH", "MEDIUM")]
     else:
-        kept = [m for m in memories if m.get("confidence") == "HIGH"]
+        kept = [m for m in all_mems if m.get("confidence") == "HIGH"]
 
-    # Sort: HIGH before MEDIUM, then last_used descending within each tier
-    from functools import cmp_to_key
-    def cmp(a, b):
-        a_rank = 0 if a.get("confidence") == "HIGH" else 1
-        b_rank = 0 if b.get("confidence") == "HIGH" else 1
-        if a_rank != b_rank:
-            return a_rank - b_rank
-        a_used = a.get("last_used", "")
-        b_used = b.get("last_used", "")
-        if a_used > b_used:
-            return -1
-        if a_used < b_used:
-            return 1
-        return 0
-    kept = sorted(kept, key=cmp_to_key(cmp))
+    # Sort: HIGH before MEDIUM, then updated_at descending within each tier
+    def sort_key(m):
+        conf_rank = 0 if m.get("confidence") == "HIGH" else 1
+        updated = m.get("updated_at", "")
+        return (conf_rank, updated)
 
-    # Update last_used
-    _touch_last_used(store, [m["id"] for m in kept], project_slug)
+    # Sort by conf_rank ascending, then updated descending
+    kept.sort(key=lambda m: (
+        0 if m.get("confidence") == "HIGH" else 1,
+        # Negate updated_at for descending — use reverse string trick
+    ))
+    # Two-pass sort: stable sort on updated_at desc, then conf_rank asc
+    kept.sort(key=lambda m: m.get("updated_at", ""), reverse=True)
+    kept.sort(key=lambda m: 0 if m.get("confidence") == "HIGH" else 1)
 
     return {
         "project": project_slug,
@@ -105,35 +90,20 @@ def tool_load_memories(args: dict) -> dict:
     }
 
 
-def tool_search_memory(args: dict) -> dict:
+def tool_search_memory(args: dict, store: MemoryStore | None = None) -> dict:
     """
-    Search memories by keyword across content and tags.
-    Returns up to 10 results sorted by last_used descending.
+    Search memories by keyword using FTS5 full-text search.
+    Returns up to 10 results ranked by BM25 relevance.
     """
-    query = args.get("query", "").lower().strip()
+    query = args.get("query", "").strip()
     cwd = args.get("cwd", os.getcwd())
     project_slug = _project_slug(cwd)
+    s = store or _get_store()
 
     if not query:
         return {"project": project_slug, "count": 0, "memories": [], "query": query}
 
-    store = _load_store(project_slug)
-    memories = store.get("memories", [])
-
-    results = []
-    for mem in memories:
-        content_match = query in mem.get("content", "").lower()
-        tag_match = any(query in tag.lower() for tag in mem.get("tags", []))
-        type_match = query in mem.get("type", "").lower()
-        if content_match or tag_match or type_match:
-            results.append(mem)
-
-    # Sort by last_used descending
-    results.sort(key=lambda m: m.get("last_used", ""), reverse=True)
-    results = results[:10]
-
-    # Update last_used
-    _touch_last_used(store, [m["id"] for m in results], project_slug)
+    results = s.search(query=query, limit=10, project=project_slug)
 
     return {
         "project": project_slug,
@@ -143,7 +113,7 @@ def tool_search_memory(args: dict) -> dict:
     }
 
 
-# ── MCP protocol (JSON-RPC 2.0 over stdio) ───────────────────────────────────
+# ── MCP protocol (JSON-RPC 2.0 over stdio) ─────────────────────────────────
 
 TOOLS = [
     {
@@ -170,8 +140,8 @@ TOOLS = [
     {
         "name": "search_memory",
         "description": (
-            "Search project memories by keyword. Matches against content, tags, and type. "
-            "Returns up to 10 results sorted by recency. "
+            "Search project memories using full-text search with BM25 relevance ranking. "
+            "Returns up to 10 results. Supports FTS5 syntax (AND, OR, NOT, quoted phrases). "
             "Use this to find specific decisions, errors, or patterns."
         ),
         "inputSchema": {
@@ -179,7 +149,7 @@ TOOLS = [
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "Search keyword (case-insensitive, substring match)."
+                    "description": "Search query. Supports FTS5 operators: AND, OR, NOT, \"quoted phrases\"."
                 },
                 "cwd": {
                     "type": "string",
@@ -192,7 +162,7 @@ TOOLS = [
 ]
 
 
-def handle_request(req: dict) -> dict | None:
+def handle_request(req: dict, store: MemoryStore | None = None) -> dict | None:
     """Route a JSON-RPC request to the correct handler. Returns None for notifications."""
     method = req.get("method", "")
     req_id = req.get("id")
@@ -209,7 +179,7 @@ def handle_request(req: dict) -> dict | None:
         return ok({
             "protocolVersion": "2024-11-05",
             "capabilities": {"tools": {}},
-            "serverInfo": {"name": "claude-memory", "version": "1.0.0"}
+            "serverInfo": {"name": "claude-memory", "version": "2.0.0"}
         })
 
     if method == "notifications/initialized":
@@ -223,9 +193,9 @@ def handle_request(req: dict) -> dict | None:
         tool_args = params.get("arguments", {})
 
         if tool_name == "load_memories":
-            result = tool_load_memories(tool_args)
+            result = tool_load_memories(tool_args, store=store)
         elif tool_name == "search_memory":
-            result = tool_search_memory(tool_args)
+            result = tool_search_memory(tool_args, store=store)
         else:
             return err(-32601, f"Unknown tool: {tool_name}")
 

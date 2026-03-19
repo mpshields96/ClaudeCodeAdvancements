@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tests for MEM-3: mcp_server.py
+Tests for MEM-3: mcp_server.py (FTS5 backend)
 Tests tool logic directly (no subprocess needed).
 Run: python3 memory-system/tests/test_mcp_server.py
 """
@@ -11,7 +11,6 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 # Add parent dirs to path so we can import mcp_server
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -22,31 +21,24 @@ from mcp_server import (
     tool_search_memory,
     handle_request,
     _project_slug,
-    _load_store,
 )
+from memory_store import MemoryStore
 
 
-def make_store(memories: list) -> dict:
-    return {
-        "project": "testproject",
-        "schema_version": "1.0",
-        "memories": memories
-    }
-
-
-def make_memory(id, type="decision", content="test content", confidence="HIGH",
-                tags=None, last_used="2026-02-20T10:00:00Z"):
-    return {
-        "id": id,
-        "type": type,
-        "content": content,
-        "project": "testproject",
-        "tags": tags or ["general"],
-        "created_at": "2026-02-20T09:00:00Z",
-        "last_used": last_used,
-        "confidence": confidence,
-        "source": "explicit"
-    }
+def _make_store_with_memories(memories_data):
+    """Create an in-memory MemoryStore pre-populated with test data."""
+    store = MemoryStore(":memory:")
+    for m in memories_data:
+        store.create_memory(
+            content=m.get("content", "test content"),
+            tags=m.get("tags", ["general"]),
+            confidence=m.get("confidence", "HIGH"),
+            source=m.get("source", "explicit"),
+            context=m.get("context", ""),
+            project=m.get("project", "testproject"),
+            memory_id=m.get("id", None),
+        )
+    return store
 
 
 class TestProjectSlug(unittest.TestCase):
@@ -63,44 +55,19 @@ class TestProjectSlug(unittest.TestCase):
         self.assertEqual(_project_slug("/home/user/myapp"), "myapp")
 
 
-class TestLoadStore(unittest.TestCase):
-    def test_missing_file_returns_empty(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with patch("mcp_server._memory_dir", return_value=Path(tmpdir)):
-                store = _load_store("nonexistent")
-        self.assertEqual(store["memories"], [])
-
-    def test_loads_existing_file(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            store_path = Path(tmpdir) / "testproject.json"
-            store_path.write_text(json.dumps(make_store([make_memory("mem_001")])))
-            with patch("mcp_server._memory_dir", return_value=Path(tmpdir)):
-                store = _load_store("testproject")
-        self.assertEqual(len(store["memories"]), 1)
-
-    def test_corrupt_json_returns_empty(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            store_path = Path(tmpdir) / "testproject.json"
-            store_path.write_text("NOT VALID JSON {{{")
-            with patch("mcp_server._memory_dir", return_value=Path(tmpdir)):
-                store = _load_store("testproject")
-        self.assertEqual(store["memories"], [])
-
-
 class TestToolLoadMemories(unittest.TestCase):
-    def _run(self, memories, include_medium=False):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            cwd = str(Path(tmpdir) / "testproject")
-            store_path = Path(tmpdir) / "testproject.json"
-            store_path.write_text(json.dumps(make_store(memories)))
-            with patch("mcp_server._memory_dir", return_value=Path(tmpdir)):
-                return tool_load_memories({"cwd": cwd, "include_medium": include_medium})
+    def _run(self, memories_data, include_medium=False):
+        store = _make_store_with_memories(memories_data)
+        return tool_load_memories(
+            {"cwd": "/tmp/testproject", "include_medium": include_medium},
+            store=store
+        )
 
     def test_returns_only_high_by_default(self):
         mems = [
-            make_memory("m1", confidence="HIGH"),
-            make_memory("m2", confidence="MEDIUM"),
-            make_memory("m3", confidence="LOW"),
+            {"id": "m1", "confidence": "HIGH", "content": "high mem"},
+            {"id": "m2", "confidence": "MEDIUM", "content": "medium mem"},
+            {"id": "m3", "confidence": "LOW", "content": "low mem"},
         ]
         result = self._run(mems)
         self.assertEqual(result["count"], 1)
@@ -108,9 +75,9 @@ class TestToolLoadMemories(unittest.TestCase):
 
     def test_include_medium_returns_high_and_medium(self):
         mems = [
-            make_memory("m1", confidence="HIGH"),
-            make_memory("m2", confidence="MEDIUM"),
-            make_memory("m3", confidence="LOW"),
+            {"id": "m1", "confidence": "HIGH", "content": "high mem"},
+            {"id": "m2", "confidence": "MEDIUM", "content": "medium mem"},
+            {"id": "m3", "confidence": "LOW", "content": "low mem"},
         ]
         result = self._run(mems, include_medium=True)
         self.assertEqual(result["count"], 2)
@@ -126,8 +93,8 @@ class TestToolLoadMemories(unittest.TestCase):
 
     def test_high_sorted_before_medium(self):
         mems = [
-            make_memory("m_medium", confidence="MEDIUM", last_used="2026-02-20T12:00:00Z"),
-            make_memory("m_high", confidence="HIGH", last_used="2026-02-20T08:00:00Z"),
+            {"id": "m_medium", "confidence": "MEDIUM", "content": "medium mem"},
+            {"id": "m_high", "confidence": "HIGH", "content": "high mem"},
         ]
         result = self._run(mems, include_medium=True)
         self.assertEqual(result["memories"][0]["id"], "m_high")
@@ -136,71 +103,107 @@ class TestToolLoadMemories(unittest.TestCase):
         result = self._run([])
         self.assertEqual(result["project"], "testproject")
 
+    def test_filters_by_project(self):
+        """Only returns memories for the requested project."""
+        store = MemoryStore(":memory:")
+        store.create_memory(content="project A mem", project="testproject", memory_id="m_a")
+        store.create_memory(content="project B mem", project="otherproject", memory_id="m_b")
+        result = tool_load_memories(
+            {"cwd": "/tmp/testproject", "include_medium": True},
+            store=store
+        )
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["memories"][0]["id"], "m_a")
+
 
 class TestToolSearchMemory(unittest.TestCase):
-    def _run(self, memories, query):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            cwd = str(Path(tmpdir) / "testproject")
-            store_path = Path(tmpdir) / "testproject.json"
-            store_path.write_text(json.dumps(make_store(memories)))
-            with patch("mcp_server._memory_dir", return_value=Path(tmpdir)):
-                return tool_search_memory({"query": query, "cwd": cwd})
+    def _run(self, memories_data, query):
+        store = _make_store_with_memories(memories_data)
+        return tool_search_memory(
+            {"query": query, "cwd": "/tmp/testproject"},
+            store=store
+        )
 
     def test_finds_content_match(self):
-        mems = [make_memory("m1", content="Use stdlib for all file operations")]
+        mems = [{"id": "m1", "content": "Use stdlib for all file operations"}]
         result = self._run(mems, "stdlib")
         self.assertEqual(result["count"], 1)
         self.assertEqual(result["memories"][0]["id"], "m1")
 
     def test_finds_tag_match(self):
-        mems = [make_memory("m1", tags=["hooks", "architecture"])]
+        mems = [{"id": "m1", "content": "some content", "tags": ["hooks", "architecture"]}]
         result = self._run(mems, "hooks")
         self.assertEqual(result["count"], 1)
 
-    def test_finds_type_match(self):
-        mems = [make_memory("m1", type="error", content="completely unrelated")]
-        result = self._run(mems, "error")
-        self.assertEqual(result["count"], 1)
-
     def test_case_insensitive(self):
-        mems = [make_memory("m1", content="Use STDLIB for operations")]
+        mems = [{"id": "m1", "content": "Use STDLIB for operations"}]
         result = self._run(mems, "stdlib")
         self.assertEqual(result["count"], 1)
 
     def test_no_match_returns_empty(self):
-        mems = [make_memory("m1", content="nothing relevant here")]
+        mems = [{"id": "m1", "content": "nothing relevant here"}]
         result = self._run(mems, "xyzzy")
         self.assertEqual(result["count"], 0)
 
     def test_empty_query_returns_empty(self):
-        mems = [make_memory("m1")]
+        mems = [{"id": "m1", "content": "test content"}]
         result = self._run(mems, "")
         self.assertEqual(result["count"], 0)
 
     def test_returns_max_10(self):
-        mems = [make_memory(f"m{i}", content="hooks pattern") for i in range(15)]
+        mems = [{"id": f"m{i}", "content": "hooks pattern"} for i in range(15)]
         result = self._run(mems, "hooks")
         self.assertLessEqual(result["count"], 10)
         self.assertLessEqual(len(result["memories"]), 10)
-
-    def test_sorted_by_last_used_descending(self):
-        mems = [
-            make_memory("m_old", content="hooks", last_used="2026-02-18T10:00:00Z"),
-            make_memory("m_new", content="hooks", last_used="2026-02-20T10:00:00Z"),
-        ]
-        result = self._run(mems, "hooks")
-        self.assertEqual(result["memories"][0]["id"], "m_new")
 
     def test_query_echoed_in_result(self):
         result = self._run([], "myquery")
         self.assertEqual(result["query"], "myquery")
 
+    def test_relevance_ranked(self):
+        """FTS5 BM25 should rank a more specific match higher."""
+        mems = [
+            {"id": "m_general", "content": "hooks are a general concept in programming languages"},
+            {"id": "m_specific", "content": "hooks hooks hooks are the core delivery mechanism"},
+        ]
+        result = self._run(mems, "hooks")
+        # m_specific has more hits of "hooks" so should rank higher
+        self.assertEqual(result["count"], 2)
+        self.assertEqual(result["memories"][0]["id"], "m_specific")
+
+    def test_fts5_operators(self):
+        """FTS5 AND/OR/NOT operators should work."""
+        mems = [
+            {"id": "m1", "content": "hooks and architecture patterns"},
+            {"id": "m2", "content": "hooks for credential safety"},
+            {"id": "m3", "content": "architecture patterns only"},
+        ]
+        result = self._run(mems, '"hooks" AND "architecture"')
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["memories"][0]["id"], "m1")
+
+    def test_project_filtering(self):
+        """Search should respect project filter from cwd."""
+        store = MemoryStore(":memory:")
+        store.create_memory(content="hooks in project A", project="testproject", memory_id="m_a")
+        store.create_memory(content="hooks in project B", project="other", memory_id="m_b")
+        result = tool_search_memory(
+            {"query": "hooks", "cwd": "/tmp/testproject"},
+            store=store
+        )
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["memories"][0]["id"], "m_a")
+
 
 class TestHandleRequest(unittest.TestCase):
+    def _make_store(self, memories_data=None):
+        return _make_store_with_memories(memories_data or [])
+
     def test_initialize(self):
         req = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
         resp = handle_request(req)
         self.assertEqual(resp["result"]["serverInfo"]["name"], "claude-memory")
+        self.assertEqual(resp["result"]["serverInfo"]["version"], "2.0.0")
         self.assertIn("protocolVersion", resp["result"])
 
     def test_tools_list(self):
@@ -236,35 +239,29 @@ class TestHandleRequest(unittest.TestCase):
         self.assertEqual(resp["result"], {})
 
     def test_tools_call_load_memories(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            cwd = str(Path(tmpdir) / "testproject")
-            store_path = Path(tmpdir) / "testproject.json"
-            store_path.write_text(json.dumps(make_store([make_memory("m1")])))
-            with patch("mcp_server._memory_dir", return_value=Path(tmpdir)):
-                req = {
-                    "jsonrpc": "2.0", "id": 6,
-                    "method": "tools/call",
-                    "params": {"name": "load_memories", "arguments": {"cwd": cwd}}
-                }
-                resp = handle_request(req)
+        store = _make_store_with_memories([
+            {"id": "m1", "content": "test memory", "confidence": "HIGH"}
+        ])
+        req = {
+            "jsonrpc": "2.0", "id": 6,
+            "method": "tools/call",
+            "params": {"name": "load_memories", "arguments": {"cwd": "/tmp/testproject"}}
+        }
+        resp = handle_request(req, store=store)
         self.assertFalse(resp["result"]["isError"])
         content = json.loads(resp["result"]["content"][0]["text"])
         self.assertEqual(content["count"], 1)
 
     def test_tools_call_search_memory(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            cwd = str(Path(tmpdir) / "testproject")
-            store_path = Path(tmpdir) / "testproject.json"
-            store_path.write_text(json.dumps(make_store([
-                make_memory("m1", content="hooks are important")
-            ])))
-            with patch("mcp_server._memory_dir", return_value=Path(tmpdir)):
-                req = {
-                    "jsonrpc": "2.0", "id": 7,
-                    "method": "tools/call",
-                    "params": {"name": "search_memory", "arguments": {"query": "hooks", "cwd": cwd}}
-                }
-                resp = handle_request(req)
+        store = _make_store_with_memories([
+            {"id": "m1", "content": "hooks are important"}
+        ])
+        req = {
+            "jsonrpc": "2.0", "id": 7,
+            "method": "tools/call",
+            "params": {"name": "search_memory", "arguments": {"query": "hooks", "cwd": "/tmp/testproject"}}
+        }
+        resp = handle_request(req, store=store)
         self.assertFalse(resp["result"]["isError"])
         content = json.loads(resp["result"]["content"][0]["text"])
         self.assertEqual(content["count"], 1)
