@@ -3,15 +3,15 @@
 
 ---
 
-## Current State (as of Session 58 — 2026-03-19)
+## Current State (as of Session 59 — 2026-03-19)
 
-**Phase:** Session 58 COMPLETE. Tests: 1974/1974 passing (49 suites). Git: 3 commits, clean.
+**Phase:** Session 59 COMPLETE. Tests: 2021/2021 passing (50 suites). Git: 3 commits, clean.
 **What's done this session:**
-1. **Batch trace analysis** — All 50 CCA transcripts analyzed. Avg score 72.6/100, median 75. Key finding: PROJECT_INDEX.md Edit retries in 64% of sessions (32/50), avg 4.9 retries per instance. Written to BATCH_ANALYSIS_S58.md.
-2. **edit_guard.py** (28 tests) — New PreToolUse hook warns on Edit of structured table files (PROJECT_INDEX.md, SESSION_STATE.md, MASTER_TASKS.md, ROADMAP.md). Advises Write instead. Wired live in settings.local.json.
-3. **MT-10 Phase 3A design** — Full architecture for trade_reflector.py: reads kalshi_bot.db read-only, detects 5 statistical patterns (win rate drift, time-of-day, streaks, edge erosion, sizing), all with minimum sample sizes + p-value gating. No auto-apply.
+1. **trade_reflector.py built** (47 tests) — MT-10 Phase 3A implementation COMPLETE. Reads kalshi_bot.db read-only, 5 statistical pattern detectors (Wilson CI win rate drift, chi-squared time-of-day bias, Wald-Wolfowitz runs test, rolling window edge erosion, Kelly-optimal sizing). All enforce minimum sample sizes + p-value < 0.10 gating. auto_applicable hardcoded False. Proposal format with tp_YYYYMMDD_hex IDs.
+2. **Reddit r/ClaudeCode scan** (5 findings) — "Claude never gotten dumber" (114pts) validates context-monitor approach, "Zero to Fleet" progression ladder confirms CCA's skill/hook architecture, markdownmaxxing 3-layer scaffold, Okan notifications (ADHD-relevant), Superpowers plugin showcase.
+3. **MT-11 GitHub trending scan** (5 findings) — engram (Go+FTS5 memory system), ClawMem (hybrid RAG memory with 7 hooks), claude-mem (auto-capture), claude-context (5.6K stars code search MCP), awesome-claude-code-toolkit (135 agents, 35 skills, 150+ plugins).
 
-**Matthew directives (S51-S58, permanent):**
+**Matthew directives (S51-S59, permanent):**
 - ROI = make money. Financial, not philosophical.
 - CCA dual mission: 50% Kalshi financial support + 50% self-improvement
 - Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
@@ -21,7 +21,15 @@
 - VA hospital wifi blocks Reddit/SSRN — queue URL-dependent work for hotspot (S57)
 - Hooks must not cause CLI errors — fail silently with valid JSON on all edge cases (S58)
 
-**Next:** (1) Build trade_reflector.py (MT-10 Phase 3A — design ready). (2) Deep-read 7 r/ClaudeCode NEEDLEs (needs hotspot). (3) MT-11: GitHub trending scan (needs network). (4) Retry blocked URLs on hotspot (SSRN, quantvps). (5) Validate trade_reflector against real kalshi_bot.db.
+**Next:** (1) Validate trade_reflector against real kalshi_bot.db (check actual schema). (2) Retry blocked URLs on hotspot (SSRN, quantvps). (3) Study engram + ClawMem architectures for Frontier 1 memory improvements. (4) MT-10 Phase 3B: resurfacer integration with trade proposals. (5) Run full batch trace analysis on S51-S59 transcripts.
+
+---
+
+## What Was Done in Session 58 (2026-03-19)
+
+1. **Batch trace analysis** — All 50 CCA transcripts analyzed. Avg score 72.6/100, median 75. Key finding: PROJECT_INDEX.md Edit retries in 64% of sessions (32/50), avg 4.9 retries per instance. Written to BATCH_ANALYSIS_S58.md.
+2. **edit_guard.py** (28 tests) — New PreToolUse hook warns on Edit of structured table files (PROJECT_INDEX.md, SESSION_STATE.md, MASTER_TASKS.md, ROADMAP.md). Advises Write instead. Wired live in settings.local.json.
+3. **MT-10 Phase 3A design** — Full architecture for trade_reflector.py: reads kalshi_bot.db read-only, detects 5 statistical patterns (win rate drift, time-of-day, streaks, edge erosion, sizing), all with minimum sample sizes + p-value gating. No auto-apply.
 
 ---
 
@@ -61,18 +69,3 @@
 5. Le (2026) calibration paper deep-read — recalibration formula delivered to Kalshi chats
 6. FLB weakening signal from Whelan CEPR VoxEU column — delivered as monitoring alert
 7. Prime Directive reinforcement: ROI = make money, told both Kalshi chats explicitly
-
----
-
-## What Was Done in Session 50 (2026-03-19)
-
-1. Cross-chat Kalshi bet sizing objective review (all 5 strategies assessed)
-2. MT priority audit — identified cross-chat backlog as #1 gap (3 URGENT requests unanswered)
-3. Academic research: CUSUM h=5.0 (Page 1954, Basseville 1993, NIST, Veeravalli 2014 verified)
-4. Academic research: Kelly for prediction markets (Meister 2024), Bayesian posterior convergence
-5. Academic research: FLB short-horizon (Burgi-Deng-Whelan 2026, Snowberg-Wolfers 2010, Whelan 2024)
-6. Meta labeling features recommendation (23 features for future ML, from r/algotrading 610pts post)
-7. Added Step 2.5 to /cca-init: cross-chat inbox check (POLYBOT_TO_CCA.md)
-8. Wrote comprehensive responses to CCA_TO_POLYBOT.md (first responses ever to that outbox)
-9. Updated CROSS_CHAT_INBOX.md with CUSUM delivery status
-10. Answered Matthew: no auditor MT needed (surgical fix), agent timeout mitigation strategy
