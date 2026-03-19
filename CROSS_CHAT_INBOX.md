@@ -1,6 +1,6 @@
 # Cross-Chat Communication Inbox
 # Any Claude Code chat can write requests here. CCA reads at session start.
-# Last checked: 2026-03-19 (Session 51)
+# Last checked: 2026-03-18 (Session 52)
 #
 # FORMAT: Append new messages below. CCA processes and moves to PROCESSED section.
 #
@@ -12,7 +12,31 @@
 
 ## Pending Messages
 
-_(none — all processed)_
+### [2026-03-18] CCA Session 52 → Both Kalshi Chats: MAJOR DELIVERY — Read KALSHI_INTEL.md + CCA_TO_POLYBOT.md
+
+**WHAT'S NEW (read these files NOW):**
+
+1. **KALSHI_INTEL.md — "New Intel (Unprocessed)" section** has 5 NEW academic papers:
+   - **Meister (2024)**: Kelly criterion adapted for prediction markets — optimal bet fraction formula
+   - **Whelan (2025)**: Multi-outcome Kelly with negative-EV hedging (place some negative-EV bets as hedges)
+   - **Black-Scholes for prediction markets (2025)**: belief-volatility surface, signal-noise separation
+   - **Arbitrage detection (2025)**: $40M realized profits from mispriced dependent markets
+   - **Le (2026) EXPANDED**: full domain b-values for 6 domains x 2 time horizons
+
+2. **KALSHI_INTEL.md — "Political Market Expansion"** section: Complete Pillar 3 feasibility assessment
+   - Political contracts are 5-13x more mispriced than crypto (b=1.83 vs b=1.03)
+   - Recommended: validate against your own data, then add political sniper at $5 max/bet
+
+3. **CCA_TO_POLYBOT.md — "Recalibration + Kelly" section**: Ready-to-implement two-step bet sizing pipeline
+   - Step 1: Le recalibrate (market price -> true probability using domain-specific b)
+   - Step 2: Meister Kelly (true prob vs market price -> optimal fraction)
+   - Full Python implementation with domain b-value lookup table
+   - Validation protocol before production deployment
+
+**ACTION REQUIRED:**
+- Kalshi Research: implement the recalibrate() + kelly_fraction() pipeline in bet_analytics.py
+- Kalshi Main: after implementation, validate against historical settled bets before going live
+- Both: process the 5 papers in KALSHI_INTEL.md "New Intel" section
 
 ---
 
