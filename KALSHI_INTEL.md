@@ -152,6 +152,69 @@ _CCA: When you see OPEN requests, use `/cca-nuclear autonomous --domain trading`
 
 _CCA appends new findings here. Kalshi Research processes them and moves to "Processed Intel" below._
 
+### [2026-03-19] URGENT: Time-of-Day Profitability Analysis — Overnight Sessions Losing Money (CCA S54)
+
+**Issue:** Matthew reports overnight bot sessions are losing money while daytime sessions profit. This needs investigation and potentially a time-based guard.
+
+**Academic Evidence — Intraday Microstructure Effects:**
+
+**1. U-Shaped Bid-Ask Spread Pattern (Well-Established)**
+- Bid-ask spreads are WIDEST at market open and close, NARROWEST midday
+- Source: Hua, Kong & Wang (2024). "Intraday Dynamics of NASDAQ Stocks." SSRN:4792199
+- This is one of the most replicated findings in market microstructure
+- Wider spreads = worse execution = lower effective edge
+
+**2. Overnight Liquidity Degradation**
+- Crypto markets show 42% liquidity reduction between peak (11:00 UTC) and off-hours (21:00 UTC) — Source: Amberdata temporal liquidity analysis
+- Kalshi as a prediction market likely has EVEN MORE extreme liquidity variation since:
+  - Most Kalshi users are US-based → activity concentrates in US market hours
+  - Hourly SPX/weather contracts have natural cycles tied to market hours
+  - Overnight orderbooks are thinner with staler prices
+
+**3. Whelan (2025) Kalshi Microstructure**
+- Source: Whelan, K. (2025). "Makers and Takers: The Economics of the Kalshi Prediction Market." UCD WP2025/19
+- Takers (market orders) lose money on average; Makers (limit orders) earn it
+- Low liquidity periods shift the maker-taker balance — fewer makers → wider spreads → more adverse selection for takers
+- If the bot is taking overnight, it's paying wider spreads to thinner counterparty depth
+
+**4. Prediction Market Shock Processing**
+- Source: Political Shocks and Price Discovery in Prediction Markets (2025). arXiv:2603.03152
+- Overnight news events create discontinuous price jumps that models trained on daytime dynamics don't handle well
+- Prediction market short-run behavior must be read through a microstructure lens
+
+**Recommended Actions (prioritized):**
+
+**IMMEDIATE (tonight):**
+1. Query DB: split all bets by hour-of-day (ET). Report WR, PnL, spread, volume per bucket.
+2. If WR drops overnight: the strategy loses edge in thin markets → add time guard
+3. If WR same but PnL drops: execution quality degrades → reduce overnight bet size
+
+**SHORT-TERM (implement if data confirms):**
+```python
+def time_adjusted_kelly(base_fraction: float, hour_et: int) -> float:
+    """Reduce Kelly fraction during low-liquidity hours."""
+    if 0 <= hour_et < 7:      # Overnight: 12AM-7AM ET
+        return base_fraction * 0.25   # Quarter-Kelly overnight
+    elif 7 <= hour_et < 9:     # Pre-market: 7-9AM ET
+        return base_fraction * 0.5    # Half-Kelly
+    elif 16 <= hour_et < 18:   # Post-market: 4-6PM ET
+        return base_fraction * 0.75   # 3/4 Kelly
+    else:                       # Core hours: 9AM-4PM ET
+        return base_fraction          # Full fraction
+```
+
+**OR more aggressive:** overnight = research-only mode (no live betting until 7AM ET)
+
+**META-LABELING FEATURES TO ADD:**
+- `hour_of_day_et` (0-23)
+- `is_core_hours` (boolean: 9AM-4PM ET)
+- `estimated_spread_bucket` (tight/normal/wide based on time)
+- `session_type` (overnight/pre_market/core/post_market)
+
+**What CCA needs back:** Time-stratified PnL data from the DB so we can validate whether the U-shaped spread hypothesis explains the overnight losses, or if it's something else (contract selection, overtrading, etc.).
+
+---
+
 ### [2026-03-18] PAPER 6: Multinomial Kelly — Closed-Form Multi-Outcome Bet Sizing (CCA S52)
 **Source:** (2026). "Single-Event Multinomial Full Kelly via Implicit State Positions." arXiv:2603.13581
 **Verified:** YES — March 2026 paper on arXiv, full formulas extracted
