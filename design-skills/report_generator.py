@@ -434,6 +434,24 @@ class CCADataCollector:
             with open(papers_path) as f:
                 papers = sum(1 for line in f if line.strip())
 
+        # Research outcomes ROI data
+        outcomes_path = os.path.join(self.project_root, "self-learning", "research_outcomes.jsonl")
+        research_roi = {"total": 0, "implemented": 0, "profitable": 0, "profit_cents": 0}
+        if os.path.exists(outcomes_path):
+            with open(outcomes_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    entry = json.loads(line)
+                    research_roi["total"] += 1
+                    if entry.get("status") in ("implemented", "profitable", "unprofitable"):
+                        research_roi["implemented"] += 1
+                    if entry.get("status") == "profitable":
+                        research_roi["profitable"] += 1
+                    if entry.get("profit_impact_cents"):
+                        research_roi["profit_cents"] += entry["profit_impact_cents"]
+
         return {
             "strategies_total": 10,
             "strategies_confirmed": 4,
@@ -442,6 +460,10 @@ class CCADataCollector:
             "avg_score": 70,
             "papers_logged": papers,
             "sentinel_rate": "5-10%",
+            "research_deliveries": research_roi["total"],
+            "research_implemented": research_roi["implemented"],
+            "research_profitable": research_roi["profitable"],
+            "research_profit_cents": research_roi["profit_cents"],
         }
 
     # ── Risks ───────────────────────────────────────────────────────────
