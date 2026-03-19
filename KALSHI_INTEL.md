@@ -294,6 +294,60 @@ class EValueMonitor:
 
 ---
 
+### [2026-03-18] PAPER 8: Deflated Sharpe Ratio — Overfitting Protection (CCA S52)
+**Source:** Bailey & Lopez de Prado (2014). "The Deflated Sharpe Ratio: Correcting for Selection Bias, Backtest Overfitting and Non-Normality." SSRN:2460551 / Journal of Portfolio Management, 40(5), 94-107.
+**Verified:** YES — SSRN URL confirmed, 95+ citations on Google Scholar
+
+**The problem:** When the bot tests multiple strategies/parameters, the best-performing one may just be lucky. If you test 100 parameter combinations, the "best" will look good even if ALL are random.
+
+**The formula:** DSR corrects the observed Sharpe Ratio for:
+1. Number of trials (how many strategies/params you tested)
+2. Non-normal returns (skewness, kurtosis)
+3. Sample length
+
+```python
+from math import log, sqrt, erfc
+from scipy.stats import norm
+
+def deflated_sharpe_ratio(observed_sr: float, n_trials: int,
+                          n_obs: int, skew: float = 0.0,
+                          kurtosis: float = 3.0) -> float:
+    """Is this strategy's Sharpe Ratio statistically significant?
+    Bailey & Lopez de Prado (2014), SSRN:2460551.
+
+    observed_sr: Sharpe ratio of the best strategy found
+    n_trials: number of strategies/parameter combos tested
+    n_obs: number of observations (trades, days, etc.)
+    skew: skewness of returns (0 = normal)
+    kurtosis: kurtosis of returns (3 = normal)
+    Returns: p-value (< 0.05 means SR is real, not luck)
+    """
+    # Expected max SR under null (False Strategy Theorem)
+    # E[max(SR)] ~ sqrt(2 * log(n_trials)) for n_trials strategies
+    expected_max_sr = sqrt(2 * log(n_trials))
+
+    # SR standard error corrected for non-normality
+    sr_se = sqrt((1 - skew * observed_sr +
+                  (kurtosis - 1) / 4 * observed_sr**2) / n_obs)
+
+    # Test: is observed SR significantly above expected max?
+    z = (observed_sr - expected_max_sr) / sr_se
+    p_value = 1 - norm.cdf(z)
+    return p_value
+
+# Example: sniper tested with 5 parameter combos, 722 bets, SR=2.5
+p = deflated_sharpe_ratio(2.5, n_trials=5, n_obs=722)
+# p < 0.05 means the edge is real, not selection bias
+```
+
+**ACTION for Kalshi bot:**
+- Track how many strategy variants were tested (n_trials)
+- After finding a "good" strategy, run DSR to check if it's real
+- If DSR p-value > 0.05: the strategy may be overfit, don't deploy
+- This is especially important for the political market expansion (Pillar 3) — test against DSR before going live
+
+---
+
 ### [2026-03-17] Mean Reversion with IBS Filter — Kalshi-Applicable Pattern
 **Source:** r/algotrading (219pts, 99 comments) — https://www.reddit.com/r/algotrading/comments/1rjvxjy/
 **Relevance:** The IBS (Internal Bar Strength) concept — detecting when price closes in bottom 30% of daily range — maps to detecting "oversold" event markets on Kalshi where probability pricing has temporarily dipped below fair value.
