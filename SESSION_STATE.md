@@ -5,12 +5,14 @@
 
 ## Current State (as of Session 54 — 2026-03-19)
 
-**Phase:** Session 54 IN PROGRESS. Tests: 1796/1796 passing (45 suites). Git: 5 commits so far.
+**Phase:** Session 54 IN PROGRESS. Tests: 1854/1854 passing (45 suites). Git: 8 commits so far.
 **What's done this session:**
 1. **CTX-7: PostCompact hook BUILT** — fires after context compaction, resets state, writes recovery digest, logs to self-learning journal. 28 tests. Wired into settings.local.json (10th live hook).
 2. **Overnight profitability analysis** — wrote comprehensive time-of-day investigation to CCA_TO_POLYBOT.md and KALSHI_INTEL.md. 4 structural hypotheses (liquidity, composition, regime, supervision), 4 academic sources (U-shaped spread pattern, 42% liquidity reduction, Whelan 2025 maker-taker, shock processing), time_adjusted_kelly() implementation, meta-labeling temporal features, investigation steps for both Kalshi chats.
-3. **Report generator v2** — data collector: per-MT phase tracking, session highlights, frontier status, priority queue, remaining/gap analysis. Template: table of contents, Five Frontiers page, expanded MT cards with phase progress bars, priority queue visualization. (Matthew deprioritized finishing this — code committed but PDF generation deferred.)
+3. **Report generator v2** — data collector: per-MT phase tracking, session highlights, frontier status, priority queue, remaining/gap analysis. Template: table of contents, Five Frontiers page, expanded MT cards with phase progress bars, priority queue visualization.
 4. **Cross-chat coordination** — CROSS_CHAT_INBOX.md updated with overnight profitability inquiry flagged as urgent for both Kalshi chats.
+5. **OMEGA memory patterns (Frontier 1)** — per-type TTL (decisions=365d, preferences=730d), content dedup (hash + Jaccard 0.85), contradiction detection (same type + overlapping tags + 55-85% similarity supersedes older). 34 new tests (75 total memory-system). Schema version 1.1.
+6. **Trigger-table optimization** — skill_rules.json compacted, added Kalshi research detection rule. 90 spec-system tests passing.
 
 **Matthew directives (S51-S54, permanent):**
 - ROI = make money. Financial, not philosophical.
@@ -19,7 +21,7 @@
 - Auto-execute advancement tips, no auditor MT, surgical fixes
 - Self-learning for Kalshi = optimize for profit, compounding passive income
 
-**Next:** (1) Adapt OMEGA patterns (type taxonomy, decay, contradiction detection) into memory-system (Frontier 1). (2) Trigger-table optimization for spec-system skill_activator.py. (3) MT-9 Phase 3: deep-read remaining NEEDLEs. (4) Kalshi chats investigate time-stratified PnL data. (5) PostCompact hook live testing (will auto-fire on next compaction).
+**Next:** (1) MT-9 Phase 3: deep-read remaining NEEDLEs from autonomous scans. (2) Kalshi chats investigate time-stratified PnL data (awaiting response). (3) PostCompact hook live testing (will auto-fire on next compaction). (4) Update MASTER_TASKS.md priority scores (last updated S42). (5) Generate updated CCA report PDF with v2 template.
 
 ---
 

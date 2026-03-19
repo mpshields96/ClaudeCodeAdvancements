@@ -26,17 +26,17 @@
 
 | Module | Path | Status | Tests |
 |--------|------|--------|-------|
-| Memory System | `memory-system/` | MEM-1-5 COMPLETE | 94 |
+| Memory System | `memory-system/` | MEM-1-5 + OMEGA patterns | 132 |
 | Spec System | `spec-system/` | SPEC-1-6 COMPLETE | 90 |
-| Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 260 |
+| Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
 | Agent Guard | `agent-guard/` | AG-1-7 COMPLETE | 264 |
-| Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 196 |
-| Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 263 |
-| Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer | 355 |
-| Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 121 |
+| Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 197 |
+| Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
+| Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer | 379 |
+| Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 1796 tests (45 suites). All must pass before any work.**
+**Total: 1854 tests (45 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
