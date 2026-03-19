@@ -616,6 +616,59 @@ def micro_reflect(last_n=10):
     return result
 
 
+# State file for tracking when last auto-reflect ran
+_AUTO_REFLECT_STATE = os.path.join(SCRIPT_DIR, ".auto_reflect_state.json")
+
+
+def auto_reflect_if_due(every_n=10, session_id=None):
+    """Check if auto-reflection is due and run it if so.
+
+    Tracks the journal entry count at last reflection. If N new entries
+    have been logged since then, runs micro_reflect() and logs the result
+    to the journal.
+
+    Returns the micro_reflect result if it ran, None if not due yet.
+    """
+    entries = _load_journal()
+    current_count = len(entries)
+
+    # Load last reflect state
+    last_count = 0
+    if os.path.exists(_AUTO_REFLECT_STATE):
+        try:
+            with open(_AUTO_REFLECT_STATE) as f:
+                state = json.load(f)
+                last_count = state.get("last_entry_count", 0)
+        except (json.JSONDecodeError, OSError):
+            last_count = 0
+
+    if current_count - last_count < every_n:
+        return None  # Not due yet
+
+    # Run micro-reflection
+    result = micro_reflect(last_n=every_n)
+
+    # Log the reflection to journal
+    if result.get("patterns"):
+        log_event(
+            event_type="pattern_detected",
+            session_id=session_id,
+            domain="self_learning",
+            outcome="success" if result["session_health"] == "good" else "needs_improvement",
+            metrics={"entries_checked": result["entries_checked"],
+                     "patterns_found": len(result["patterns"])},
+            notes=f"Auto-reflect: {result['session_health']}. "
+                  + "; ".join(p["message"] for p in result["patterns"][:3]),
+        )
+
+    # Update state
+    with open(_AUTO_REFLECT_STATE, "w") as f:
+        json.dump({"last_entry_count": current_count,
+                    "last_reflect_at": datetime.now(timezone.utc).isoformat()}, f)
+
+    return result
+
+
 def analyze_current_session(transcript_path=None, session_id=None):
     """Run trace_analyzer on the most recent (or specified) session transcript.
 
