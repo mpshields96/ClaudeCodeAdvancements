@@ -211,6 +211,14 @@ def time_adjusted_kelly(base_fraction: float, hour_et: int) -> float:
 - `estimated_spread_bucket` (tight/normal/wide based on time)
 - `session_type` (overnight/pre_market/core/post_market)
 
+**Additional academic references (S54 follow-up):**
+- Ng, Peng, Tao & Zhou (2025). "Price Discovery and Trading in Modern Prediction Markets." SSRN:5331995
+  - First systematic study of cross-platform price discovery (Polymarket, Kalshi, PredictIt, Robinhood)
+  - Polymarket leads Kalshi in price discovery when liquidity is high
+  - Economically meaningful arbitrage opportunities exist between platforms
+- arXiv:2510.15205 (2025). Black-Scholes for prediction markets — spreads and cancellations widen near scheduled news, quotes gap on unexpected announcements (directly relevant to overnight behavior)
+- arXiv:2505.08180 (2025). Intraday volume forecasting with ML — intraday stock volume highly predictable, same pattern likely applies to prediction market liquidity
+
 **What CCA needs back:** Time-stratified PnL data from the DB so we can validate whether the U-shaped spread hypothesis explains the overnight losses, or if it's something else (contract selection, overtrading, etc.).
 
 ---
