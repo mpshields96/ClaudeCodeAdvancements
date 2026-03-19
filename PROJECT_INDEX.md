@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-19 (Session 60)
+# Last updated: 2026-03-19 (Session 61)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -26,7 +26,7 @@
 
 | Module | Path | Status | Tests |
 |--------|------|--------|-------|
-| Memory System | `memory-system/` | MEM-1-5 + OMEGA patterns | 132 |
+| Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store | 212 |
 | Spec System | `spec-system/` | SPEC-1-6 COMPLETE | 90 |
 | Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
 | Agent Guard | `agent-guard/` | AG-1-8 + Edit Guard | 292 |
@@ -36,7 +36,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 2029 tests (50 suites). All must pass before any work.**
+**Total: 2109 tests (51 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -47,6 +47,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 **memory-system/** — Persistent cross-session memory
 - `hooks/capture_hook.py` — PostToolUse + Stop capture
 - `mcp_server.py` — MCP server for memory queries
+- `memory_store.py` — SQLite+FTS5 storage backend (S61, 80 tests)
 - `cli.py` — CLI viewer (`stats`, `search`, `list`)
 - `research/EXTERNAL_COMPARISON.md` — engram/ClawMem/claude-mem architecture analysis (S60)
 

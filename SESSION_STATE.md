@@ -3,15 +3,15 @@
 
 ---
 
-## Current State (as of Session 60 — 2026-03-19)
+## Current State (as of Session 61 — 2026-03-19)
 
-**Phase:** Session 60 IN PROGRESS. Tests: 2029/2029 passing (50 suites). Git: 3 commits.
+**Phase:** Session 61 IN PROGRESS. Tests: 2109/2109 passing (51 suites). Git: 1 commit (d6dffc4).
 **What's done this session:**
-1. **trade_reflector schema validated** against real polybot.db — fixed 5 mismatches (strategy_name->strategy, win/loss->yes/no, hour_utc->derived from timestamp, cost_basis_cents->cost_usd, entry_price_cents->price_cents). 47 tests updated + passing.
-2. **Frontier 1 memory architecture comparison** — Analyzed engram (Go+FTS5), ClawMem (hybrid RAG), claude-mem (auto-capture). Key finding: SQLite FTS5 migration is P0 improvement (stdlib-only, relevance-ranked search). Written to memory-system/research/EXTERNAL_COMPARISON.md.
-3. **MT-10 Phase 3B: resurfacer integration** — Added proposal_to_finding() + resurface_with_proposals() to unify trade proposals with FINDINGS_LOG results. 8 new tests (49 total resurfacer, 2029 total project).
+1. **FTS5 memory store built** (Frontier 1 P0) — memory_store.py (464 LOC, 80 tests). SQLite+FTS5 backend with BM25 relevance search, atomic transactions, WAL mode, TTL cleanup by confidence. Stdlib-only, zero dependencies. Ready for MCP server backend swap.
+2. **Reddit daily scan** — r/ClaudeCode, r/ClaudeAI, r/vibecoding hot posts scanned. r/AskVibecoders investigated (NOT worth adding — low engagement, high cross-posting). Key theme: "harness debt" = CLAUDE.md compliance degrades with context, hooks fire deterministically.
+3. **Batch URL reviews** — 12 links reviewed total (7 from Matthew's saved posts + 5 from second batch). 19 new FINDINGS_LOG entries. Notable: SpeakType voice tool (REFERENCE-PERSONAL, tasked for later), GrapeRoot context graph (REFERENCE, F3+F5), cortex-engine memory (REFERENCE, F1), Desloppify score-driven cleanup (REFERENCE, MT-10).
 
-**Matthew directives (S51-S60, permanent):**
+**Matthew directives (S51-S61, permanent):**
 - ROI = make money. Financial, not philosophical.
 - CCA dual mission: 50% Kalshi financial support + 50% self-improvement
 - Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
@@ -21,7 +21,15 @@
 - VA hospital wifi blocks Reddit/SSRN — queue URL-dependent work for hotspot (S57)
 - Hooks must not cause CLI errors — fail silently with valid JSON on all edge cases (S58)
 
-**Next:** (1) Retry blocked URLs on hotspot (SSRN, quantvps). (2) Frontier 1: FTS5 migration prototype (P0 from EXTERNAL_COMPARISON.md). (3) Run full batch trace analysis on S51-S59 transcripts. (4) Reddit/GitHub intelligence scan (r/ClaudeCode, trending repos).
+**Next:** (1) Swap MCP server JSON backend to MemoryStore (FTS5). (2) Retry blocked URLs on hotspot (SSRN, quantvps). (3) Run batch trace analysis S51-S59. (4) Deep-read Google Conductor (Frontier 2 competitor) + shanraisshan/claude-code-hooks (23-hook reference).
+
+---
+
+## What Was Done in Session 60 (2026-03-19)
+
+1. **trade_reflector schema validated** against real polybot.db — fixed 5 mismatches (strategy_name->strategy, win/loss->yes/no, hour_utc->derived from timestamp, cost_basis_cents->cost_usd, entry_price_cents->price_cents). 47 tests updated + passing.
+2. **Frontier 1 memory architecture comparison** — Analyzed engram (Go+FTS5), ClawMem (hybrid RAG), claude-mem (auto-capture). Key finding: SQLite FTS5 migration is P0 improvement (stdlib-only, relevance-ranked search). Written to memory-system/research/EXTERNAL_COMPARISON.md.
+3. **MT-10 Phase 3B: resurfacer integration** — Added proposal_to_finding() + resurface_with_proposals() to unify trade proposals with FINDINGS_LOG results. 8 new tests (49 total resurfacer, 2029 total project).
 
 ---
 
@@ -38,16 +46,3 @@
 1. **Batch trace analysis** — All 50 CCA transcripts analyzed. Avg score 72.6/100, median 75. Key finding: PROJECT_INDEX.md Edit retries in 64% of sessions (32/50), avg 4.9 retries per instance. Written to BATCH_ANALYSIS_S58.md.
 2. **edit_guard.py** (28 tests) — New PreToolUse hook warns on Edit of structured table files (PROJECT_INDEX.md, SESSION_STATE.md, MASTER_TASKS.md, ROADMAP.md). Advises Write instead. Wired live in settings.local.json.
 3. **MT-10 Phase 3A design** — Full architecture for trade_reflector.py: reads kalshi_bot.db read-only, detects 5 statistical patterns (win rate drift, time-of-day, streaks, edge erosion, sizing), all with minimum sample sizes + p-value gating. No auto-apply.
-
----
-
-## What Was Done in Session 57 (2026-03-19)
-
-1. **S56 wrap docs committed** — Clean git state restored.
-2. **CCA status report PDF generated** (MT-17) — 1909 tests, 40K LOC, 9 modules, 306 findings. Professional Typst render.
-3. **research_outcomes.py built** (MT-0 support, 24 tests) — Tracks CCA deliveries to Kalshi implementation to profit/loss. Closes the critical ROI feedback loop.
-4. **FINDINGS_LOG parser + auto-import** (7 tests) — `parse_findings_line()` extracts Kalshi-relevant findings. 46 total deliveries tracked (27 manual + 19 parsed).
-5. **auto_reflect_if_due()** (6 tests) — Micro-reflect fires autonomously every N journal entries. State persisted in `.auto_reflect_state.json`.
-6. **Cross-chat bridge refreshed** — Top-5 pickup checklist in CROSS_CHAT_INBOX.md. CLI commands documented in CCA_TO_POLYBOT.md and KALSHI_INTEL.md.
-7. **Report generator updated** — Now reads research outcomes ROI data for future reports.
-8. **arewedone structural check** — 7/7 modules complete, 0 stubs, 0 syntax errors.
