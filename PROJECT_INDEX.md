@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-19 (Session 57)
+# Last updated: 2026-03-19 (Session 58)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -29,14 +29,14 @@
 | Memory System | `memory-system/` | MEM-1-5 + OMEGA patterns | 132 |
 | Spec System | `spec-system/` | SPEC-1-6 COMPLETE | 90 |
 | Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
-| Agent Guard | `agent-guard/` | AG-1-7 COMPLETE | 264 |
+| Agent Guard | `agent-guard/` | AG-1-8 + Edit Guard | 292 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 197 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker | 456 |
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 1946 tests (48 suites). All must pass before any work.**
+**Total: 1974 tests (49 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -71,6 +71,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `content_scanner.py` — AG-4: Autonomous scanning hazmat (9 threat categories)
 - `path_validator.py` — AG-7: Dangerous path + command detection (LIVE in hooks)
 - `ownership.py` — AG-2: File ownership manifest
+- `edit_guard.py` — AG-8: Edit retry prevention for structured table files (LIVE in hooks)
 
 **usage-dashboard/** — Token + cost transparency
 - `usage_counter.py` — USAGE-1: CLI token/cost counter
@@ -110,6 +111,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `resurfacer.py` — MT-10 Phase 3B: Findings re-surfacing (matches FINDINGS_LOG to work context)
 - `overnight_detector.py` — Objective time-stratified trading analysis (Wilson CI, CUSUM, SQL templates, audit)
 - `research_outcomes.py` — Research ROI tracker: tracks CCA deliveries → Kalshi implementation → profit/loss
+- `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 
 ---
 
@@ -120,6 +122,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | PreToolUse (all) | `context-monitor/hooks/alert.py` | Warn/block at red/critical |
 | PreToolUse (all) | `usage-dashboard/hooks/cost_alert.py` | Cost threshold |
 | PreToolUse (all) | `agent-guard/path_validator.py` | Dangerous path/command detection |
+| PreToolUse (all) | `agent-guard/edit_guard.py` | Edit retry prevention on structured files |
 | PreToolUse (Bash) | `agent-guard/hooks/credential_guard.py` | Credential extraction guard |
 | PostToolUse (all) | `context-monitor/hooks/meter.py` | Token counter |
 | PostToolUse (all) | `context-monitor/hooks/compact_anchor.py` | Anchor writes |
