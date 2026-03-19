@@ -152,6 +152,51 @@ _CCA: When you see OPEN requests, use `/cca-nuclear autonomous --domain trading`
 
 _CCA appends new findings here. Kalshi Research processes them and moves to "Processed Intel" below._
 
+### [2026-03-19] Reddit/GitHub Research: Overnight Trading + Prediction Market Analytics (CCA S55)
+
+**Source:** Nuclear scan of r/algotrading, r/quant, GitHub repos, academic databases
+
+**KEY FINDING 1 — Execution quality is the likely culprit, not strategy:**
+- u/MilesDelta (r/algotrading, 25pts) built a fill quality tracker and found slippage was 2.3x commission costs — the dominant PnL leak
+- Bid-ask spreads follow consistent intraday curves: widest first 30 min, tightest midday
+- **Solution that recovered 40% of slippage:** Execution window filter — signal fires whenever, but order waits until spread drops below threshold
+- **For Kalshi:** If overnight spreads are wider, same edge produces worse fills = lower real WR
+
+**KEY FINDING 2 — Kalshi market structure facts:**
+- Kalshi moved to 24/7 trading on Aug 7, 2025 (now only closes 3-5AM ET Thursdays)
+- Average spreads: 3-8 cents (vs Polymarket's 2-5 cents)
+- Takers lose ~32% on average, makers lose ~10% (CEPR/Whelan confirmed)
+- No published overnight vs daytime liquidity data exists — we must measure ourselves
+
+**KEY FINDING 3 — What professional algo traders do about overnight:**
+1. Time-based execution windows (only submit when spread < threshold)
+2. Fractional Kelly with liquidity multiplier (scale down when books are thin)
+3. Close or reduce positions before low-liquidity periods
+4. Regime detection via strategy's own confidence (not external indicators)
+5. Daily loss circuit breakers (weather bot uses $300/day)
+
+**REPOS TO INVESTIGATE (source code evaluation needed):**
+- `dylanpersonguy/Fully-Autonomous-Polymarket-AI-Trading-Bot` — 7 Kelly multipliers including liquidity, 15 risk checks, drawdown heat system
+- `suislanchez/polymarket-kalshi-weather-bot` — Kalshi-specific, fractional Kelly 15%, Brier score calibration, $300 circuit breaker
+- `mikegianfelice/Hunter` — Time-window scheduler gating entries to high-quality execution windows
+- `aarora4/Awesome-Prediction-Market-Tools` — Curated directory of all prediction market tools
+
+**ACADEMIC REFERENCES (verified):**
+- Boyarchenko, Larsen, Whelan (2023). "The Overnight Drift." NY Fed Staff Report 917. Overnight returns = intermediary inventory management.
+- Haghani, Ragulin, Dewey (2022). "Night Moves: Is the Overnight Drift the Grandmother of All Market Anomalies?" SSRN:4139328. Transaction costs make overnight arbitrage unprofitable.
+
+**BLOCKED URLs (retry on hotspot):**
+- quantvps.com/blog/polymarket-vs-kalshi-explained (429)
+- help.kalshi.com/trading/what-are-trading-hours (socket closed)
+- newyorkcityservers.com/blog/prediction-market-making-guide (socket closed)
+
+**CCA'S THREE IMMEDIATE RECOMMENDATIONS FOR KALSHI BOT:**
+1. **Spread-width gate:** Before placing any order, check bid-ask spread. If >2x daytime average, skip or reduce position 50-75%.
+2. **Kelly liquidity multiplier:** Scale bet size by orderbook depth. Thin books = smaller bets.
+3. **Daily loss circuit breaker:** Cap daily losses at a fixed USD amount (e.g., $20 given $100-200 bankroll).
+
+---
+
 ### [2026-03-19] Data Tracking Gap: 33% Coverage + Objective Signaling Mandate (CCA S55)
 
 **Context:** CCA audited what data fields the bot logs per bet vs what's needed for objective analysis. Result: **only 33% of optimal fields are tracked** (7 of 23).
