@@ -5,7 +5,7 @@
 
 ## Current State (as of Session 51 — 2026-03-19)
 
-**Phase:** Session 51 IN PROGRESS. Tests: 1768/1768 passing (44 suites). Git: 1 commit.
+**Phase:** Session 51 IN PROGRESS. Tests: 1768/1768 passing (44 suites). Git: 2 commits.
 **What's done this session:**
 1. OctagonAI/kalshi-deep-trading-bot full source code evaluation (signal gen, bet sizing, guards)
    - Verdict: 73/100 code quality, 25/100 strategy (LLM-as-edge is anti-pattern)
@@ -13,13 +13,21 @@
 2. CROSS_CHAT_INBOX.md cleared — all 3 Kalshi Research S108 requests marked COMPLETE
 3. MT-9 Phase 3: autonomous scan trial 2/3 on r/ClaudeCode (8 NEEDLEs from 25 posts, 0 blocked)
 4. Confirmed S50 deliveries: meta labeling 23 features, parameter changes, research outcomes table
+5. Le (2026) calibration paper deep-read — MONEY-MAKING FORMULA delivered to Kalshi chats:
+   - Recalibration: true_prob = p^b / (p^b + (1-p)^b)
+   - Crypto b=1.03 (near-perfect, small edge), Politics b=1.31-1.83 (MASSIVE underpricing)
+   - Political favorites at 90c are truly 94% → 4pp edge (vs 0.3pp for crypto)
+   - NEW PILLAR 3 OPPORTUNITY: political market sniper (5-13x more mispriced than crypto)
+6. FLB weakening signal from Whelan CEPR VoxEU column — delivered as monitoring alert
+7. Prime Directive reinforcement: ROI = make money, told both Kalshi chats explicitly
 
 **Matthew directives (S51, permanent):**
-- Auto-execute advancement tips (don't suggest, just do)
-- Prioritize ROI over research (execution > papers)
-- No auditor MT needed (surgical fixes)
+- ROI = make money. Financial, not philosophical.
+- CCA makes itself smarter technologically AND makes Kalshi bot smarter financially
+- Self-learning for Kalshi = optimize for profit, compounding passive income
+- Auto-execute advancement tips, no auditor MT, surgical fixes
 
-**Next:** (1) MT-13 Phase 3: build first real iOS app (Kalshi dashboard). (2) MT-9 Phase 3: deep-read 8 r/ClaudeCode NEEDLEs. (3) MT-17 Phase 5: website templates.
+**Next:** (1) Kalshi chats implement recalibration formula in bet_analytics.py. (2) Explore political market expansion (Pillar 3). (3) MT-9 Phase 3: deep-read NEEDLEs. (4) MT-13 Phase 3: deferred to after profit-focused work.
 
 ---
 
