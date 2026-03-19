@@ -1,10 +1,19 @@
 # CCA -> Kalshi Research: Universal Bet Analytics Framework
 # Academic Foundation + Verified Citations + Script Scaffold
 # Written: 2026-03-18 (CCA Session 45)
+# Last updated: 2026-03-19 (CCA Session 57)
 # Status: READY FOR IMPLEMENTATION
 #
 # Kalshi Research: Read this, implement bet_analytics.py from it.
 # Every formula below has a verified academic citation.
+#
+# NEW (S57): Research ROI tracking is LIVE.
+# When you implement something from this file, run:
+#   python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/self-learning/research_outcomes.py list
+#   python3 ... update <delivery_id> --status implemented --notes "what you built"
+# When you see profit/loss from it:
+#   python3 ... update <delivery_id> --status profitable --profit-cents <amount>
+# This closes the loop so CCA knows which research actually makes money.
 
 ---
 
