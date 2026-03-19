@@ -329,3 +329,12 @@
 
 ---
 
+### Autonomous scan NEEDLE URLs must be persisted to a file — Severity: 1 — Count: 1
+- **Anti-pattern:** MT-9 scan identified 8 NEEDLEs in S51 but URLs only existed in session context. Next session couldn't find them.
+- **Fix:** autonomous_scanner.py (or the scan wrapper) should write NEEDLE URLs to a persistent file (e.g., `reddit-intelligence/pending_needles.jsonl`) immediately after classification. Fresh scan is a fine fallback but wastes the classification work.
+- **First seen:** 2026-03-19 (Session 59)
+- **Last seen:** 2026-03-19
+- **Files:** reddit-intelligence/autonomous_scanner.py
+
+---
+

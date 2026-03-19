@@ -3,6 +3,28 @@
 
 ---
 
+## Session 59 — 2026-03-19
+
+**What changed:**
+- `self-learning/trade_reflector.py` — NEW: MT-10 Phase 3A Kalshi trade pattern analysis (read-only SQLite, 5 detectors, structured proposals)
+- `self-learning/tests/test_trade_reflector.py` — NEW: 47 tests (init, win rate drift, time-of-day, streaks, edge trend, sizing, proposals, edge cases)
+- `FINDINGS_LOG.md` — 10 new entries: 5 Reddit r/ClaudeCode (context management 114pts, Zero-to-Fleet, markdownmaxxing, Okan, Superpowers), 5 GitHub MT-11 (engram, ClawMem, claude-mem, claude-context, awesome-toolkit)
+- `SESSION_STATE.md` — Updated for S59
+- `PROJECT_INDEX.md` — Added trade_reflector.py, updated test count to 2021/50 suites
+
+**Why:**
+- trade_reflector.py was the #1 priority from S58 — design doc was ready, pure code execution
+- Hotspot available for first time this session — knocked out network-dependent Reddit + GitHub scans
+- 10 findings provide ecosystem awareness for Frontier 1 (memory) and validate CCA's architectural approach
+
+**Tests:** 2021/2021 passing (50 suites)
+
+**Lessons:**
+- S51 NEEDLE URLs not persisted — fresh scan was more productive than hunting lost references
+- trade_reflector needs validation against real kalshi_bot.db schema before declaring production-ready
+
+---
+
 ## Session 57 — 2026-03-19
 
 **What changed:**
