@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-19 (Session 56)
+# Last updated: 2026-03-19 (Session 57)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -32,11 +32,11 @@
 | Agent Guard | `agent-guard/` | AG-1-7 COMPLETE | 264 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 197 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
-| Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect | 432 |
+| Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker | 456 |
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 1909 tests (47 suites). All must pass before any work.**
+**Total: 1933 tests (48 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -109,6 +109,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `hooks/skillbook_inject.py` — UserPromptSubmit strategy injection
 - `resurfacer.py` — MT-10 Phase 3B: Findings re-surfacing (matches FINDINGS_LOG to work context)
 - `overnight_detector.py` — Objective time-stratified trading analysis (Wilson CI, CUSUM, SQL templates, audit)
+- `research_outcomes.py` — Research ROI tracker: tracks CCA deliveries → Kalshi implementation → profit/loss
 
 ---
 
