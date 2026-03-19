@@ -528,6 +528,94 @@ def reflect(domain=None, apply=False, brief=False, propose=False, session_id=Non
     print("\n" + "=" * 60)
 
 
+def micro_reflect(last_n=10):
+    """Lightweight mid-session reflection. Returns quick insights dict.
+
+    Unlike full reflect(), this is designed to be called after completing
+    a deliverable — it's fast, returns data (not prints), and focuses on
+    the most recent entries only.
+
+    Returns dict with: patterns_found, recommendations, session_health.
+    """
+    entries = _load_journal()
+    recent = entries[-last_n:] if len(entries) > last_n else entries
+
+    result = {
+        "entries_checked": len(recent),
+        "patterns": [],
+        "recommendations": [],
+        "session_health": "unknown",
+    }
+
+    if len(recent) < 2:
+        result["session_health"] = "insufficient_data"
+        return result
+
+    # Quick pattern checks on recent entries only
+    # 1. Repeated failures in same domain
+    failures = [e for e in recent if e.get("outcome") in ("failure", "needs_improvement")]
+    if len(failures) >= 3:
+        domains = Counter(e.get("domain", "unknown") for e in failures)
+        top_domain, count = domains.most_common(1)[0]
+        if count >= 2:
+            result["patterns"].append({
+                "type": "repeated_failure",
+                "domain": top_domain,
+                "count": count,
+                "message": f"{count} failures in {top_domain} domain in last {last_n} entries",
+            })
+            result["recommendations"].append(
+                f"Investigate {top_domain} failures — may need approach change"
+            )
+
+    # 2. High success rate (positive signal — keep doing this)
+    successes = [e for e in recent if e.get("outcome") == "success"]
+    if len(successes) >= len(recent) * 0.7 and len(recent) >= 5:
+        result["patterns"].append({
+            "type": "high_success_streak",
+            "count": len(successes),
+            "message": f"{len(successes)}/{len(recent)} recent entries are successes",
+        })
+
+    # 3. Trading-specific: check for negative PnL trend
+    bets = [e for e in recent if e.get("event_type") == "bet_outcome"]
+    if len(bets) >= 5:
+        pnl_values = [e.get("metrics", {}).get("pnl_cents", 0) for e in bets]
+        total_pnl = sum(pnl_values)
+        if total_pnl < 0:
+            result["patterns"].append({
+                "type": "negative_pnl_recent",
+                "total_pnl_cents": total_pnl,
+                "bets": len(bets),
+                "message": f"Recent {len(bets)} bets show negative PnL: {total_pnl}c",
+            })
+            result["recommendations"].append(
+                "Review recent losing bets — check if pattern is structural or variance"
+            )
+
+    # 4. Stale domains (nothing logged for a while)
+    if entries:
+        domains_seen = set(e.get("domain") for e in recent if e.get("domain"))
+        all_domains = set(e.get("domain") for e in entries if e.get("domain"))
+        stale = all_domains - domains_seen - {"unknown", None}
+        if stale and len(stale) <= 3:  # Don't warn about everything
+            result["patterns"].append({
+                "type": "stale_domains",
+                "domains": sorted(stale),
+                "message": f"Domains not active recently: {', '.join(sorted(stale))}",
+            })
+
+    # Overall health
+    if result["patterns"]:
+        has_negative = any(p["type"] in ("repeated_failure", "negative_pnl_recent")
+                          for p in result["patterns"])
+        result["session_health"] = "needs_attention" if has_negative else "good"
+    else:
+        result["session_health"] = "good"
+
+    return result
+
+
 def analyze_current_session(transcript_path=None, session_id=None):
     """Run trace_analyzer on the most recent (or specified) session transcript.
 
@@ -610,7 +698,14 @@ def _cli():
     parser.add_argument("--trace-path", help="Analyze specific transcript JSONL file")
     parser.add_argument("--propose", action="store_true", help="Generate improvement proposals from patterns (MT-10)")
     parser.add_argument("--session", type=int, help="Session ID for proposal tracking")
+    parser.add_argument("--micro", action="store_true", help="Quick mid-session reflection (returns JSON)")
+    parser.add_argument("--last-n", type=int, default=10, help="Entries to check for --micro (default 10)")
     args = parser.parse_args()
+
+    if args.micro:
+        result = micro_reflect(last_n=args.last_n)
+        print(json.dumps(result, indent=2))
+        return
 
     if args.trace or args.trace_path:
         report = analyze_current_session(args.trace_path, session_id=args.session)

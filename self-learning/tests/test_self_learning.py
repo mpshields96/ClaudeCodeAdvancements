@@ -1140,5 +1140,88 @@ class TestTimeStratifiedTradingMetrics(unittest.TestCase):
         self.assertIsNotNone(ts)
 
 
+class TestMicroReflect(unittest.TestCase):
+    """Test mid-session micro-reflection."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.orig_journal = journal.JOURNAL_PATH
+        self.orig_strategy = journal.STRATEGY_PATH
+        journal.JOURNAL_PATH = os.path.join(self.tmpdir, "journal.jsonl")
+        journal.STRATEGY_PATH = os.path.join(self.tmpdir, "strategy.json")
+        with open(journal.STRATEGY_PATH, "w") as f:
+            json.dump({"version": "v1", "params": {}}, f)
+
+    def tearDown(self):
+        journal.JOURNAL_PATH = self.orig_journal
+        journal.STRATEGY_PATH = self.orig_strategy
+        shutil.rmtree(self.tmpdir)
+
+    def test_empty_journal_returns_insufficient_data(self):
+        result = reflect.micro_reflect()
+        self.assertEqual(result["session_health"], "insufficient_data")
+        self.assertEqual(result["entries_checked"], 0)
+
+    def test_single_entry_returns_insufficient(self):
+        journal.log_event("session_start", domain="self_learning")
+        result = reflect.micro_reflect()
+        self.assertEqual(result["session_health"], "insufficient_data")
+
+    def test_good_health_with_successes(self):
+        for i in range(5):
+            journal.log_event("session_work", domain="self_learning", outcome="success")
+        result = reflect.micro_reflect()
+        self.assertEqual(result["session_health"], "good")
+
+    def test_detects_repeated_failures(self):
+        for i in range(4):
+            journal.log_event("session_work", domain="nuclear_scan", outcome="failure")
+        result = reflect.micro_reflect()
+        self.assertEqual(result["session_health"], "needs_attention")
+        failure_patterns = [p for p in result["patterns"] if p["type"] == "repeated_failure"]
+        self.assertTrue(len(failure_patterns) > 0)
+        self.assertEqual(failure_patterns[0]["domain"], "nuclear_scan")
+
+    def test_detects_high_success_streak(self):
+        for i in range(8):
+            journal.log_event("session_work", domain="self_learning", outcome="success")
+        result = reflect.micro_reflect()
+        streak_patterns = [p for p in result["patterns"] if p["type"] == "high_success_streak"]
+        self.assertTrue(len(streak_patterns) > 0)
+
+    def test_detects_negative_pnl(self):
+        for i in range(6):
+            journal.log_event("bet_outcome", domain="trading", outcome="loss",
+                              metrics={"result": "loss", "pnl_cents": -100})
+        result = reflect.micro_reflect()
+        pnl_patterns = [p for p in result["patterns"] if p["type"] == "negative_pnl_recent"]
+        self.assertTrue(len(pnl_patterns) > 0)
+        self.assertEqual(pnl_patterns[0]["total_pnl_cents"], -600)
+
+    def test_last_n_parameter(self):
+        for i in range(20):
+            journal.log_event("session_work", domain="self_learning", outcome="success")
+        result = reflect.micro_reflect(last_n=5)
+        self.assertEqual(result["entries_checked"], 5)
+
+    def test_returns_dict_not_prints(self):
+        journal.log_event("session_work", domain="self_learning", outcome="success")
+        journal.log_event("session_work", domain="self_learning", outcome="success")
+        result = reflect.micro_reflect()
+        self.assertIsInstance(result, dict)
+        self.assertIn("patterns", result)
+        self.assertIn("recommendations", result)
+        self.assertIn("session_health", result)
+
+    def test_mixed_outcomes(self):
+        journal.log_event("session_work", domain="self_learning", outcome="success")
+        journal.log_event("session_work", domain="self_learning", outcome="failure")
+        journal.log_event("session_work", domain="nuclear_scan", outcome="success")
+        journal.log_event("session_work", domain="self_learning", outcome="success")
+        result = reflect.micro_reflect()
+        # No repeated failures (only 1 failure), should be good
+        self.assertEqual(result["session_health"], "good")
+
+
 if __name__ == "__main__":
     unittest.main()
