@@ -3,19 +3,22 @@
 
 ---
 
-## Current State (as of Session 49 — 2026-03-18)
+## Current State (as of Session 50 — 2026-03-19)
 
-**Phase:** Session 49 COMPLETE. Tests: 1768/1768 passing (44 suites). Git: clean. 9 commits.
+**Phase:** Session 50 COMPLETE. Tests: 1768/1768 passing (44 suites). Git: clean. 11 commits.
 **What's done this session:**
-1. Committed S48 wrap files
-2. Verified Xcode 26.3 installed (Build 17C529, iPhone 17 Pro simulators available)
-3. MT-13 Phase 2 COMPLETE: `ios_project_gen.py` — generates complete Xcode projects from CLI (40 tests)
-4. MT-13 Phase 2: `xcode_build.py` — Python xcodebuild wrapper with error parsing (17 tests)
-5. E2E validated: generated KalshiDashboard project builds + tests pass on iOS Simulator
-6. MT-17 Phase 4: `chart_generator.py` — pure SVG chart generation with CCA design language (42 tests)
-7. Integrated SVG charts into dashboard_generator.py (tests-by-module bar + MT status donut)
+1. Cross-chat Kalshi bet sizing objective review (all 5 strategies assessed)
+2. MT priority audit — identified cross-chat backlog as #1 gap (3 URGENT requests unanswered)
+3. Academic research: CUSUM h=5.0 (Page 1954, Basseville 1993, NIST, Veeravalli 2014 verified)
+4. Academic research: Kelly for prediction markets (Meister 2024), Bayesian posterior convergence
+5. Academic research: FLB short-horizon (Burgi-Deng-Whelan 2026, Snowberg-Wolfers 2010, Whelan 2024)
+6. Meta labeling features recommendation (23 features for future ML, from r/algotrading 610pts post)
+7. Added Step 2.5 to /cca-init: cross-chat inbox check (POLYBOT_TO_CCA.md)
+8. Wrote comprehensive responses to CCA_TO_POLYBOT.md (first responses ever to that outbox)
+9. Updated CROSS_CHAT_INBOX.md with CUSUM delivery status
+10. Answered Matthew: no auditor MT needed (surgical fix), agent timeout mitigation strategy
 
-**Next:** (1) MT-13 Phase 3: build first real app. (2) MT-9 Phase 3: supervised autonomous scanning trial. (3) MT-17 Phase 5: website templates.
+**Next:** (1) MT-9 Phase 3: supervised autonomous scanning trial. (2) MT-13 Phase 3: build first real app. (3) MT-17 Phase 5: website templates. (4) OctagonAI repo evaluation for Kalshi chat.
 
 ---
 
