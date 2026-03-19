@@ -215,6 +215,9 @@ OPTIMAL_BET_FIELDS = {
     "ticker": "Contract ticker",
     "session_id": "Which Claude session placed this",
     "session_type": "overnight/daytime — the session classification",
+    # Supervision fields (for supervised vs unsupervised analysis)
+    "supervised": "Boolean: was Matthew available during this session?",
+    "contract_expiry_type": "15min/hourly/daily — affects sniper timing window",
 }
 
 # Fields the current journal.py actually captures

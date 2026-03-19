@@ -898,6 +898,68 @@ class TestTradingPatternDetection(unittest.TestCase):
         self.assertTrue(len(edge_q) > 0)
 
 
+class TestOvernightWRGapPattern(unittest.TestCase):
+    """Test time-based WR gap pattern detection in reflect.py."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.orig_journal = journal.JOURNAL_PATH
+        self.orig_strategy = journal.STRATEGY_PATH
+        journal.JOURNAL_PATH = os.path.join(self.tmpdir, "journal.jsonl")
+        journal.STRATEGY_PATH = os.path.join(self.tmpdir, "strategy.json")
+        with open(journal.STRATEGY_PATH, "w") as f:
+            json.dump({"version": 1, "updated_at": "2026-03-19T00:00:00Z",
+                        "trading": {"min_sample_bets": 20, "win_rate_alert_below": 0.4}}, f)
+
+    def tearDown(self):
+        journal.JOURNAL_PATH = self.orig_journal
+        journal.STRATEGY_PATH = self.orig_strategy
+        shutil.rmtree(self.tmpdir)
+
+    def _make_bet_entry(self, hour, result):
+        return {
+            "timestamp": f"2026-03-19T{hour:02d}:30:00Z",
+            "event_type": "bet_outcome",
+            "metrics": {"result": result, "pnl_cents": 100 if result == "win" else -100,
+                        "strategy_name": "sniper"},
+        }
+
+    def test_detects_overnight_wr_gap(self):
+        # Overnight: 3 wins, 10 losses = 23% WR
+        entries = []
+        for _ in range(3):
+            entries.append(self._make_bet_entry(2, "win"))
+        for _ in range(10):
+            entries.append(self._make_bet_entry(3, "loss"))
+        # Daytime: 12 wins, 1 loss = 92% WR
+        for _ in range(12):
+            entries.append(self._make_bet_entry(15, "win"))
+        entries.append(self._make_bet_entry(16, "loss"))
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        gap = [p for p in patterns if p["type"] == "overnight_wr_gap"]
+        self.assertEqual(len(gap), 1)
+        self.assertGreater(gap[0]["data"]["gap"], 0.1)
+
+    def test_no_gap_when_similar_wr(self):
+        entries = []
+        for _ in range(9):
+            entries.append(self._make_bet_entry(2, "win"))
+        entries.append(self._make_bet_entry(3, "loss"))
+        for _ in range(9):
+            entries.append(self._make_bet_entry(15, "win"))
+        entries.append(self._make_bet_entry(16, "loss"))
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        gap = [p for p in patterns if p["type"] == "overnight_wr_gap"]
+        self.assertEqual(len(gap), 0)
+
+    def test_no_gap_below_min_sample(self):
+        entries = [self._make_bet_entry(2, "loss") for _ in range(3)]
+        entries.extend([self._make_bet_entry(15, "win") for _ in range(3)])
+        patterns = reflect.detect_patterns(entries, min_sample=5)
+        gap = [p for p in patterns if p["type"] == "overnight_wr_gap"]
+        self.assertEqual(len(gap), 0)
+
+
 class TestTimeStratifiedTradingMetrics(unittest.TestCase):
     """Test time-stratified trading analysis — objective overnight detection."""
 

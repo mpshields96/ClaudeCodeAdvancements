@@ -242,6 +242,43 @@ def detect_patterns(entries, min_sample=5):
                 "data": {"days_old": days_old, "entries_since": len(entries)},
             })
 
+    # Pattern T5: Time-of-day WR degradation (objective signal, not knee-jerk)
+    # Only triggers with N>=10 per window and statistically significant CI gap
+    if bet_outcomes:
+        overnight = {"wins": 0, "losses": 0}
+        daytime = {"wins": 0, "losses": 0}
+        for e in bet_outcomes:
+            ts = e.get("timestamp", "")
+            try:
+                hour = int(ts[11:13]) if len(ts) >= 13 else -1
+            except (ValueError, IndexError):
+                continue
+            if hour < 0 or hour > 23:
+                continue
+            result = e.get("metrics", {}).get("result", "")
+            target = overnight if hour < 8 else daytime
+            if result == "win":
+                target["wins"] += 1
+            elif result == "loss":
+                target["losses"] += 1
+
+        on_decided = overnight["wins"] + overnight["losses"]
+        day_decided = daytime["wins"] + daytime["losses"]
+        if on_decided >= 10 and day_decided >= 10:
+            on_wr = overnight["wins"] / on_decided
+            day_wr = daytime["wins"] / day_decided
+            if day_wr - on_wr > 0.10:  # 10%+ gap is worth monitoring
+                patterns.append({
+                    "type": "overnight_wr_gap",
+                    "severity": "warning",
+                    "message": (f"Overnight WR ({on_wr:.0%}, n={on_decided}) is {day_wr - on_wr:.0%} "
+                               f"below daytime WR ({day_wr:.0%}, n={day_decided}) — "
+                               f"run overnight_detector.py analyze for statistical significance"),
+                    "data": {"overnight_wr": round(on_wr, 3), "daytime_wr": round(day_wr, 3),
+                             "overnight_n": on_decided, "daytime_n": day_decided,
+                             "gap": round(day_wr - on_wr, 3)},
+                })
+
     return patterns
 
 
