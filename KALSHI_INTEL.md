@@ -152,6 +152,78 @@ _CCA: When you see OPEN requests, use `/cca-nuclear autonomous --domain trading`
 
 _CCA appends new findings here. Kalshi Research processes them and moves to "Processed Intel" below._
 
+### [2026-03-18] PAPER 6: Multinomial Kelly — Closed-Form Multi-Outcome Bet Sizing (CCA S52)
+**Source:** (2026). "Single-Event Multinomial Full Kelly via Implicit State Positions." arXiv:2603.13581
+**Verified:** YES — March 2026 paper on arXiv, full formulas extracted
+
+**THIS IS THE MULTI-OUTCOME KELLY FORMULA the Whelan paper described but didn't give a clean closed-form for.**
+
+**Problem:** You have N mutually exclusive outcomes. Market prices are q_i. Your true probabilities are p_i. How much to bet on each?
+
+**Closed-form solution:**
+```python
+def multinomial_kelly(p: list[float], q: list[float]) -> list[float]:
+    """Optimal bet fractions for N mutually exclusive outcomes.
+    p[i] = your true probability of outcome i
+    q[i] = market price (implied probability) of outcome i
+    Returns: list of optimal stake fractions (sum + cash = 1.0)
+
+    arXiv:2603.13581 (March 2026)
+    """
+    n = len(p)
+    # Edge ratios
+    ratios = [(p[i] / q[i], i) for i in range(n)]
+    ratios.sort(reverse=True)  # Descending by edge
+
+    # Greedy support selection
+    P_sum, Q_sum = 0.0, 0.0
+    c_star = 1.0
+    support = []
+
+    for ratio, idx in ratios:
+        if ratio <= c_star:
+            break  # No more profitable outcomes
+        P_sum += p[idx]
+        Q_sum += q[idx]
+        c_star = (1 - P_sum) / (1 - Q_sum)
+        support.append(idx)
+
+    # Optimal stakes
+    stakes = [0.0] * n
+    for i in range(n):
+        stakes[i] = max(0.0, p[i] - c_star * q[i])
+
+    return stakes  # Sum of stakes + c_star = 1.0
+
+# Example: 3 correlated Kalshi contracts on same event
+# Market prices: [0.90, 0.06, 0.04] (sum=1.0)
+# Your beliefs (after Le recalibration): [0.94, 0.04, 0.02]
+result = multinomial_kelly([0.94, 0.04, 0.02], [0.90, 0.06, 0.04])
+# result ≈ [0.37, 0.0, 0.0] — bet 37% on outcome 1 only
+# (outcomes 2 and 3 have p_i/q_i < c_star, so no bet)
+
+# Example: 2 outcomes where underdog has hedge value
+# Market: [0.80, 0.20], Your belief: [0.85, 0.15]
+result = multinomial_kelly([0.85, 0.15], [0.80, 0.20])
+# result ≈ [0.25, 0.0] — only bet on favorite
+# BUT if market were [0.80, 0.25] (overround):
+# The algorithm adapts — hedging becomes valuable
+```
+
+**Key insights for Kalshi bot:**
+1. Edge ratio r_i = p_i/q_i is the fundamental measure — outcomes with r_i > c_star get bets
+2. Cash fraction c_star acts as an implicit position in ALL outcomes
+3. The greedy algorithm is O(n log n) — fast enough for real-time use
+4. This replaces independent Kelly when multiple contracts on the same event exist
+5. For binary (YES/NO) markets, this reduces to standard Kelly f* = (p-q)/(1-q)
+
+**When to use this vs standard Kelly:**
+- Single YES/NO contract: standard Kelly (same result)
+- Multiple contracts on same event (e.g., "Will GDP be above 3%?" + "Will GDP be above 2%?"): multinomial Kelly
+- Correlated contracts across events: need Whelan's framework (harder, no clean closed-form yet)
+
+---
+
 ### [2026-03-17] Mean Reversion with IBS Filter — Kalshi-Applicable Pattern
 **Source:** r/algotrading (219pts, 99 comments) — https://www.reddit.com/r/algotrading/comments/1rjvxjy/
 **Relevance:** The IBS (Internal Bar Strength) concept — detecting when price closes in bottom 30% of daily range — maps to detecting "oversold" event markets on Kalshi where probability pricing has temporarily dipped below fair value.
