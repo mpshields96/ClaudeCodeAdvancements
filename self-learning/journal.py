@@ -342,6 +342,161 @@ def get_trading_metrics():
     return total
 
 
+def get_time_stratified_trading_metrics(time_buckets=None):
+    """Analyze trading metrics stratified by time of day.
+
+    Uses existing timestamps on bet_outcome entries to detect overnight
+    vs daytime performance differences. This is objective signal detection,
+    not knee-jerk reaction — requires statistical significance before flagging.
+
+    Args:
+        time_buckets: list of (label, start_hour, end_hour) tuples in UTC.
+            Defaults to 4 natural trading windows (ET-aligned).
+
+    Returns dict with:
+    - by_time_bucket: {label: {bets, wins, losses, pnl_cents, win_rate}}
+    - by_hour: {0-23: {bets, wins, losses, pnl_cents}}
+    - overnight_vs_daytime: {overnight: {...}, daytime: {...}, delta_wr, significant}
+    - worst_hours: list of (hour, win_rate, pnl_cents, n_bets) sorted by PnL
+    """
+    if time_buckets is None:
+        # Default buckets aligned to ET (UTC-4/5):
+        # Overnight:   00-08 UTC = 8PM-4AM ET (low liquidity)
+        # Morning:     08-14 UTC = 4AM-10AM ET (market open)
+        # Afternoon:   14-20 UTC = 10AM-4PM ET (peak activity)
+        # Evening:     20-24 UTC = 4PM-8PM ET (winding down)
+        time_buckets = [
+            ("overnight", 0, 8),
+            ("morning", 8, 14),
+            ("afternoon", 14, 20),
+            ("evening", 20, 24),
+        ]
+
+    entries = _load_journal()
+    outcomes = [e for e in entries if e.get("event_type") == "bet_outcome"]
+
+    if not outcomes:
+        return None
+
+    # Initialize buckets
+    by_bucket = {}
+    for label, _, _ in time_buckets:
+        by_bucket[label] = {"bets": 0, "wins": 0, "losses": 0, "pnl_cents": 0}
+
+    by_hour = {}
+    for h in range(24):
+        by_hour[h] = {"bets": 0, "wins": 0, "losses": 0, "pnl_cents": 0}
+
+    for e in outcomes:
+        ts = e.get("timestamp", "")
+        m = e.get("metrics", {})
+        result = m.get("result", "unknown")
+        pnl = m.get("pnl_cents", 0)
+
+        # Extract hour from ISO timestamp
+        try:
+            hour = int(ts[11:13]) if len(ts) >= 13 else -1
+        except (ValueError, IndexError):
+            continue
+
+        if hour < 0 or hour > 23:
+            continue
+
+        # Update hourly stats
+        by_hour[hour]["bets"] += 1
+        if result == "win":
+            by_hour[hour]["wins"] += 1
+        elif result == "loss":
+            by_hour[hour]["losses"] += 1
+        by_hour[hour]["pnl_cents"] += pnl
+
+        # Update bucket stats
+        for label, start, end in time_buckets:
+            if start <= hour < end:
+                by_bucket[label]["bets"] += 1
+                if result == "win":
+                    by_bucket[label]["wins"] += 1
+                elif result == "loss":
+                    by_bucket[label]["losses"] += 1
+                by_bucket[label]["pnl_cents"] += pnl
+                break
+
+    # Compute win rates per bucket
+    for label in by_bucket:
+        b = by_bucket[label]
+        decided = b["wins"] + b["losses"]
+        b["win_rate"] = round(b["wins"] / decided, 4) if decided > 0 else None
+
+    # Compute win rates per hour
+    for h in by_hour:
+        hd = by_hour[h]
+        decided = hd["wins"] + hd["losses"]
+        hd["win_rate"] = round(hd["wins"] / decided, 4) if decided > 0 else None
+
+    # Overnight vs daytime comparison
+    overnight = {"bets": 0, "wins": 0, "losses": 0, "pnl_cents": 0}
+    daytime = {"bets": 0, "wins": 0, "losses": 0, "pnl_cents": 0}
+    for label, _, _ in time_buckets:
+        b = by_bucket[label]
+        target = overnight if label == "overnight" else daytime
+        target["bets"] += b["bets"]
+        target["wins"] += b["wins"]
+        target["losses"] += b["losses"]
+        target["pnl_cents"] += b["pnl_cents"]
+
+    for group in (overnight, daytime):
+        decided = group["wins"] + group["losses"]
+        group["win_rate"] = round(group["wins"] / decided, 4) if decided > 0 else None
+
+    # Delta and significance check (Wilson CI non-overlap)
+    delta_wr = None
+    significant = False
+    if overnight["win_rate"] is not None and daytime["win_rate"] is not None:
+        delta_wr = round(daytime["win_rate"] - overnight["win_rate"], 4)
+        # Simple significance: both need 10+ decided bets
+        on_decided = overnight["wins"] + overnight["losses"]
+        day_decided = daytime["wins"] + daytime["losses"]
+        if on_decided >= 10 and day_decided >= 10:
+            # Wilson CI check — 95% confidence
+            import math
+            z = 1.96
+
+            def _wilson_ci(n, k):
+                if n == 0:
+                    return (0, 1)
+                p = k / n
+                denom = 1 + z * z / n
+                center = (p + z * z / (2 * n)) / denom
+                margin = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / denom
+                return (max(0, center - margin), min(1, center + margin))
+
+            on_lo, on_hi = _wilson_ci(on_decided, overnight["wins"])
+            day_lo, day_hi = _wilson_ci(day_decided, daytime["wins"])
+            # Significant if CIs don't overlap
+            significant = on_hi < day_lo or day_hi < on_lo
+
+    # Worst hours by PnL
+    worst_hours = []
+    for h in range(24):
+        hd = by_hour[h]
+        if hd["bets"] > 0:
+            worst_hours.append((h, hd["win_rate"], hd["pnl_cents"], hd["bets"]))
+    worst_hours.sort(key=lambda x: x[2])  # Sort by PnL ascending (worst first)
+
+    return {
+        "by_time_bucket": by_bucket,
+        "by_hour": by_hour,
+        "overnight_vs_daytime": {
+            "overnight": overnight,
+            "daytime": daytime,
+            "delta_wr": delta_wr,
+            "significant": significant,
+        },
+        "worst_hours": worst_hours[:5],  # Top 5 worst
+        "total_bets_analyzed": len(outcomes),
+    }
+
+
 def get_pain_win_summary():
     """Aggregate pain/win signals for pattern analysis.
 
@@ -406,6 +561,9 @@ def _cli():
     # trading-stats
     sub.add_parser("trading-stats", help="Trading metrics summary")
 
+    # time-stratified
+    sub.add_parser("time-stats", help="Time-stratified trading metrics")
+
     args = parser.parse_args()
 
     if args.command == "log":
@@ -453,6 +611,13 @@ def _cli():
         tm = get_trading_metrics()
         if tm:
             print(json.dumps(tm, indent=2))
+        else:
+            print("No trading data yet.")
+
+    elif args.command == "time-stats":
+        ts = get_time_stratified_trading_metrics()
+        if ts:
+            print(json.dumps(ts, indent=2, default=str))
         else:
             print("No trading data yet.")
 

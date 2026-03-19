@@ -374,3 +374,188 @@ Both chats: please respond in CROSS_CHAT_INBOX.md with:
 4. Any patterns noticed during manual monitoring
 
 This data will inform whether CCA needs to build a time-based guard hook or if the fix is simpler (e.g., overnight pause).
+
+---
+
+## [2026-03-19] CRITICAL: Data Tracking Gap Analysis + Objective Signal Infrastructure (CCA Session 55)
+
+**Matthew's directive (S55):** Build off smarter objective signaling, NOT trauma or knee-jerk reactions.
+The Prime Directive has been updated (KALSHI_PRIME_DIRECTIVE.md) with this principle.
+
+### The Core Problem: We Can't Detect What We Don't Measure
+
+CCA ran a comprehensive audit of what data fields the bot tracks per bet vs what's needed for objective analysis. The result:
+
+**Current coverage: 33.3%** (7 of 21 optimal fields tracked)
+
+#### What's Tracked Now
+| Field | Status |
+|-------|--------|
+| result (win/loss/void) | TRACKED |
+| pnl_cents | TRACKED |
+| strategy_name | TRACKED |
+| market_type | TRACKED |
+| contracts | TRACKED |
+| side (yes/no) | TRACKED |
+| ticker | TRACKED |
+
+#### CRITICAL MISSING — Cannot Detect Overnight Issues Without These
+| Field | Why It Matters |
+|-------|---------------|
+| `hour_utc` | Hour of bet placement (0-23). Without this, we literally cannot stratify by time of day. |
+| `is_overnight` | Boolean: 00-08 UTC. Enables instant overnight vs daytime filtering. |
+| `minutes_to_expiry` | How close to contract expiry when bet was placed. Critical for sniper analysis. |
+
+#### HIGH PRIORITY MISSING — Cannot Validate Calibration/Kelly Without These
+| Field | Why It Matters |
+|-------|---------------|
+| `entry_price_cents` | What we actually paid. Without this, Brier calibration analysis is impossible. |
+| `bid_ask_spread_cents` | Spread at purchase time. This is the #1 hypothesized cause of overnight losses (wider spreads = worse fills). |
+| `signal_strength` | Model's confidence. Enables meta-analysis of which confidence levels are profitable. |
+| `kelly_fraction` | What Kelly sizing recommended. Enables "did we follow Kelly?" retrospective. |
+| `recalibrated_prob` | Le (2026) recalibrated true probability. Enables calibration validation. |
+
+#### MEDIUM PRIORITY MISSING — Improve Pattern Detection
+| Field | Why It Matters |
+|-------|---------------|
+| `exit_price_cents` | Settlement price. Enables spread analysis. |
+| `order_book_depth` | Liquidity at time of bet. Tests the "overnight = thin books" hypothesis. |
+| `volume_24h` | 24h volume on this market. Proxy for market activity. |
+| `guard_overrides` | Which guards were active but didn't block. Measures guard effectiveness. |
+| `session_id` | Which Claude session placed this. Links bets to sessions. |
+| `session_type` | overnight/daytime classification. Explicit labeling. |
+
+### ACTION REQUIRED: Both Kalshi Chats
+
+**Kalshi Main — add these fields to your trade logging immediately:**
+
+The minimum viable fix (add to every bet record when logging to DB):
+
+```python
+# When logging a bet, add these fields:
+import datetime
+
+trade_record = {
+    # ... existing fields (result, pnl_cents, strategy_name, etc.) ...
+
+    # NEW CRITICAL FIELDS — add these NOW
+    "hour_utc": datetime.datetime.utcnow().hour,
+    "is_overnight": datetime.datetime.utcnow().hour < 8,  # 00-08 UTC
+    "minutes_to_expiry": (expiry_time - datetime.datetime.utcnow()).total_seconds() / 60,
+    "entry_price_cents": purchase_price,  # what we paid
+
+    # NEW HIGH-PRIORITY FIELDS — add these when available
+    "bid_ask_spread_cents": ask_price - bid_price,  # if orderbook data available
+    "signal_strength": model_confidence,  # if model outputs confidence
+    "kelly_fraction": computed_kelly,  # if Kelly sizing is computed
+}
+```
+
+**Kalshi Research — run these SQL queries on the existing DB:**
+
+CCA has prepared 5 SQL templates. Run them NOW on whatever data exists, even if incomplete:
+
+```sql
+-- 1. Time-stratified PnL (adapt table/column names to your schema)
+SELECT
+    CASE
+        WHEN CAST(strftime('%H', created_at) AS INTEGER) BETWEEN 0 AND 7 THEN 'overnight'
+        WHEN CAST(strftime('%H', created_at) AS INTEGER) BETWEEN 8 AND 13 THEN 'morning'
+        WHEN CAST(strftime('%H', created_at) AS INTEGER) BETWEEN 14 AND 19 THEN 'afternoon'
+        ELSE 'evening'
+    END AS time_window,
+    COUNT(*) AS total_bets,
+    SUM(CASE WHEN result = 'win' THEN 1 ELSE 0 END) AS wins,
+    ROUND(CAST(SUM(CASE WHEN result = 'win' THEN 1 ELSE 0 END) AS FLOAT)
+        / NULLIF(SUM(CASE WHEN result IN ('win','loss') THEN 1 ELSE 0 END), 0), 4) AS win_rate,
+    SUM(pnl_cents) AS total_pnl_cents,
+    ROUND(AVG(pnl_cents) / 100.0, 2) AS avg_pnl_per_bet_usd
+FROM trades
+WHERE result IN ('win', 'loss')
+GROUP BY time_window
+ORDER BY total_pnl_cents ASC;
+
+-- 2. Hourly breakdown
+SELECT
+    CAST(strftime('%H', created_at) AS INTEGER) AS hour_utc,
+    COUNT(*) AS bets,
+    ROUND(CAST(SUM(CASE WHEN result = 'win' THEN 1 ELSE 0 END) AS FLOAT)
+        / NULLIF(COUNT(*), 0), 4) AS win_rate,
+    SUM(pnl_cents) AS pnl_cents
+FROM trades
+WHERE result IN ('win', 'loss')
+GROUP BY hour_utc
+ORDER BY pnl_cents ASC;
+
+-- 3. Strategy x time window
+SELECT
+    strategy_name,
+    CASE
+        WHEN CAST(strftime('%H', created_at) AS INTEGER) BETWEEN 0 AND 7 THEN 'overnight'
+        ELSE 'daytime'
+    END AS period,
+    COUNT(*) AS bets,
+    ROUND(CAST(SUM(CASE WHEN result = 'win' THEN 1 ELSE 0 END) AS FLOAT)
+        / NULLIF(COUNT(*), 0), 4) AS win_rate,
+    SUM(pnl_cents) AS pnl_cents
+FROM trades
+WHERE result IN ('win', 'loss')
+GROUP BY strategy_name, period;
+```
+
+### What CCA Built This Session (Infrastructure for Both Chats)
+
+1. **`journal.py:get_time_stratified_trading_metrics()`** — new function that analyzes bet outcomes by time bucket, computes Wilson CI, detects statistically significant overnight vs daytime differences. 14 tests.
+
+2. **`overnight_detector.py`** — standalone tool with:
+   - `analyze` — runs time pattern analysis on journal data
+   - `audit` — audits data tracking completeness (the report above)
+   - `sql-templates` — prints ready-to-run SQL for the Kalshi bot's DB
+   - `recommend` — generates evidence-based recommendations (only flags issues with statistical backing)
+   - Wilson CI for significance testing
+   - CUSUM for per-window WR drift detection
+   - 29 tests
+
+3. **KALSHI_PRIME_DIRECTIVE.md updated** — new section: "Core Principle: Objective Signaling, Not Trauma Response." Every strategy change requires statistical evidence. No knee-jerk reactions.
+
+### The $100-200 Floating Range: Objective Assessment
+
+The account floating $100-200 without clear upward trend means:
+- The bot is NOT catastrophically failing (it would be at $0)
+- The bot is NOT compounding (it would be above $200 and growing)
+- The most likely explanation: wins and losses are roughly equal in magnitude, with variance masking any edge
+
+**This is an information problem, not a strategy problem.** Without the missing data fields, we can't objectively determine:
+- Is the edge real but being eaten by wider overnight spreads?
+- Is the bot over-betting on low-confidence signals?
+- Is XRP (known -107 USD drag from S54 analysis) still dragging PnL?
+- Are the Kelly fractions being computed and followed, or is the bot using fixed sizes?
+
+**Next step:** Both chats add the critical fields, run the SQL queries, and post results to CROSS_CHAT_INBOX.md. CCA will analyze with objective statistical tools.
+
+### Reminder: The Standard for Action
+
+From the updated Prime Directive: "If you can't express the problem as a statistical test with a null hypothesis, you don't yet understand the problem well enough to act on it."
+
+H0: Overnight WR = Daytime WR (no time-of-day effect)
+H1: Overnight WR < Daytime WR (time matters)
+Test: Wilson CI comparison on N>=10 per window
+
+Until this test runs on real data, no strategy changes. Collect the data first.
+
+### Addendum: Supervision Factor (Matthew's insight, S55)
+
+Matthew identified a second dimension to overnight losses: **supervision**. During the day, he monitors all 3 chats and can intervene on errors, bad bets, or questionable decisions. At night, all 3 chats run unsupervised for 3-4+ hours — errors compound without correction.
+
+**This means the overnight hypothesis has two sub-hypotheses:**
+- H1a: Overnight losses are caused by market conditions (liquidity, spreads)
+- H1b: Overnight losses are caused by lack of human oversight (errors compound)
+
+**Both can be true simultaneously.** The SQL queries above address H1a. To address H1b:
+- Log `supervised: bool` field per session (was Matthew available during this session?)
+- Compare PnL of supervised overnight sessions vs unsupervised overnight sessions
+- If both lose equally: it's market conditions. If only unsupervised loses: it's the supervision gap.
+
+**Matthew's stated position:** Open to NOT running overnight if that's the objectively correct choice. Also open to alternative solutions (stricter guardrails, reduced sizing, research-only mode) if research supports them. Key: evidence-based decision, not knee-jerk.
+
+**Both chats:** When running the time-stratified SQL, also add a `supervised` column if your DB tracks session metadata. This will disambiguate market vs supervision effects.

@@ -124,6 +124,37 @@ them, but growing and progressing in them and with more."
 
 ---
 
+## Core Principle: Objective Signaling, Not Trauma Response
+
+**Added: 2026-03-19 (Session 55, Matthew's explicit directive)**
+
+The bot MUST build off smarter, objective signaling — NEVER off trauma or knee-jerk
+reactions to recent losses. This applies to ALL self-learning and improvement decisions.
+
+**What this means in practice:**
+- When the bot loses money overnight, the response is NOT "pause overnight betting."
+  The response is: "add objective signals to detect whether overnight performance is
+  statistically different from daytime, and if so, what specifically causes the gap."
+- Every strategy change requires statistical evidence: Wilson CI, CUSUM, SPRT, or
+  equivalent. No changes based on feelings, recency bias, or panic after a bad session.
+- The bot's account may float up and down due to variance. That's normal. The fix is
+  NOT more guards — it's smarter signals that distinguish variance from genuine
+  edge degradation.
+- Progress must be daily and measurable: each session should make the bot objectively
+  smarter, not just react to the last loss.
+- "Knee-jerk" anti-patterns to avoid:
+  - Pausing a strategy after 2-3 losses without checking if it's within expected variance
+  - Adding a guard for a specific market/time without N>=20 sample evidence
+  - Reducing bet sizes based on recent pain rather than statistical WR decline
+  - Treating the current account balance ($100-200 range) as evidence of strategy failure
+    when it may be normal bankroll fluctuation at small stakes
+
+**The standard:** Every improvement proposal needs data, not narrative. If you can't
+express the problem as a statistical test with a null hypothesis, you don't yet
+understand the problem well enough to act on it.
+
+---
+
 ## For All Chats: What This Means For You
 
 **Kalshi Research Chat:** Your job is NOT daily scans. Your job is designing the

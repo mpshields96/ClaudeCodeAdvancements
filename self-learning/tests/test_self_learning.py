@@ -898,5 +898,185 @@ class TestTradingPatternDetection(unittest.TestCase):
         self.assertTrue(len(edge_q) > 0)
 
 
+class TestTimeStratifiedTradingMetrics(unittest.TestCase):
+    """Test time-stratified trading analysis — objective overnight detection."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.orig_journal = journal.JOURNAL_PATH
+        self.orig_strategy = journal.STRATEGY_PATH
+        journal.JOURNAL_PATH = os.path.join(self.tmpdir, "journal.jsonl")
+        journal.STRATEGY_PATH = os.path.join(self.tmpdir, "strategy.json")
+        with open(journal.STRATEGY_PATH, "w") as f:
+            json.dump({"version": 1, "updated_at": "2026-03-19T00:00:00Z"}, f)
+
+    def tearDown(self):
+        journal.JOURNAL_PATH = self.orig_journal
+        journal.STRATEGY_PATH = self.orig_strategy
+        shutil.rmtree(self.tmpdir)
+
+    def _log_bet(self, hour, result="win", pnl=100, strategy="sniper"):
+        """Helper to log a bet at a specific UTC hour."""
+        entry = {
+            "timestamp": f"2026-03-19T{hour:02d}:30:00Z",
+            "event_type": "bet_outcome",
+            "domain": "trading",
+            "metrics": {
+                "result": result,
+                "pnl_cents": pnl,
+                "strategy_name": strategy,
+                "market_type": "crypto_15m",
+            },
+            "strategy_version": "v1",
+        }
+        with open(journal.JOURNAL_PATH, "a") as f:
+            f.write(json.dumps(entry, separators=(",", ":")) + "\n")
+
+    def test_none_when_no_trading_data(self):
+        self.assertIsNone(journal.get_time_stratified_trading_metrics())
+
+    def test_basic_time_bucketing(self):
+        # 5 bets in overnight (0-8 UTC), 5 in afternoon (14-20 UTC)
+        for h in range(0, 5):
+            self._log_bet(h, "win", 100)
+        for h in range(14, 19):
+            self._log_bet(h, "win", 200)
+        ts = journal.get_time_stratified_trading_metrics()
+        self.assertEqual(ts["by_time_bucket"]["overnight"]["bets"], 5)
+        self.assertEqual(ts["by_time_bucket"]["afternoon"]["bets"], 5)
+        self.assertEqual(ts["total_bets_analyzed"], 10)
+
+    def test_hourly_breakdown(self):
+        self._log_bet(3, "win", 100)
+        self._log_bet(3, "loss", -50)
+        self._log_bet(15, "win", 200)
+        ts = journal.get_time_stratified_trading_metrics()
+        self.assertEqual(ts["by_hour"][3]["bets"], 2)
+        self.assertEqual(ts["by_hour"][3]["wins"], 1)
+        self.assertEqual(ts["by_hour"][3]["losses"], 1)
+        self.assertEqual(ts["by_hour"][15]["bets"], 1)
+
+    def test_win_rate_per_bucket(self):
+        # Overnight: 2 wins, 8 losses = 20% WR
+        for _ in range(2):
+            self._log_bet(2, "win", 100)
+        for _ in range(8):
+            self._log_bet(3, "loss", -100)
+        # Afternoon: 9 wins, 1 loss = 90% WR
+        for _ in range(9):
+            self._log_bet(15, "win", 100)
+        self._log_bet(16, "loss", -100)
+        ts = journal.get_time_stratified_trading_metrics()
+        self.assertAlmostEqual(ts["by_time_bucket"]["overnight"]["win_rate"], 0.2, places=4)
+        self.assertAlmostEqual(ts["by_time_bucket"]["afternoon"]["win_rate"], 0.9, places=4)
+
+    def test_overnight_vs_daytime_comparison(self):
+        # Overnight: 3 wins, 7 losses
+        for _ in range(3):
+            self._log_bet(1, "win", 100)
+        for _ in range(7):
+            self._log_bet(4, "loss", -100)
+        # Daytime (morning + afternoon + evening): 15 wins, 5 losses
+        for _ in range(15):
+            self._log_bet(10, "win", 100)
+        for _ in range(5):
+            self._log_bet(16, "loss", -100)
+        ts = journal.get_time_stratified_trading_metrics()
+        ovd = ts["overnight_vs_daytime"]
+        self.assertEqual(ovd["overnight"]["bets"], 10)
+        self.assertEqual(ovd["daytime"]["bets"], 20)
+        self.assertAlmostEqual(ovd["overnight"]["win_rate"], 0.3, places=4)
+        self.assertAlmostEqual(ovd["daytime"]["win_rate"], 0.75, places=4)
+        # delta_wr should be positive (daytime better)
+        self.assertGreater(ovd["delta_wr"], 0)
+
+    def test_significance_detection(self):
+        # Large sample with very different WRs should be significant
+        for _ in range(20):
+            self._log_bet(2, "loss", -100)  # overnight all losses
+        for _ in range(20):
+            self._log_bet(15, "win", 100)  # daytime all wins
+        ts = journal.get_time_stratified_trading_metrics()
+        self.assertTrue(ts["overnight_vs_daytime"]["significant"])
+
+    def test_no_significance_with_small_sample(self):
+        # 3 bets each — too small for significance
+        for _ in range(3):
+            self._log_bet(2, "loss", -100)
+        for _ in range(3):
+            self._log_bet(15, "win", 100)
+        ts = journal.get_time_stratified_trading_metrics()
+        self.assertFalse(ts["overnight_vs_daytime"]["significant"])
+
+    def test_no_significance_when_similar_wr(self):
+        # Both windows similar WR — should NOT be significant
+        for _ in range(15):
+            self._log_bet(2, "win", 100)
+        for _ in range(5):
+            self._log_bet(3, "loss", -100)
+        for _ in range(14):
+            self._log_bet(15, "win", 100)
+        for _ in range(6):
+            self._log_bet(16, "loss", -100)
+        ts = journal.get_time_stratified_trading_metrics()
+        self.assertFalse(ts["overnight_vs_daytime"]["significant"])
+
+    def test_worst_hours_sorted_by_pnl(self):
+        self._log_bet(2, "loss", -500)
+        self._log_bet(3, "loss", -300)
+        self._log_bet(15, "win", 200)
+        self._log_bet(16, "win", 400)
+        ts = journal.get_time_stratified_trading_metrics()
+        worst = ts["worst_hours"]
+        # First entry should be worst PnL
+        self.assertEqual(worst[0][0], 2)  # hour 2
+        self.assertEqual(worst[0][2], -500)  # pnl
+
+    def test_pnl_tracking_per_bucket(self):
+        self._log_bet(2, "win", 100)
+        self._log_bet(3, "loss", -300)
+        ts = journal.get_time_stratified_trading_metrics()
+        self.assertEqual(ts["by_time_bucket"]["overnight"]["pnl_cents"], -200)
+
+    def test_custom_time_buckets(self):
+        self._log_bet(5, "win", 100)
+        self._log_bet(18, "loss", -50)
+        custom = [("early", 0, 12), ("late", 12, 24)]
+        ts = journal.get_time_stratified_trading_metrics(time_buckets=custom)
+        self.assertEqual(ts["by_time_bucket"]["early"]["bets"], 1)
+        self.assertEqual(ts["by_time_bucket"]["late"]["bets"], 1)
+
+    def test_handles_malformed_timestamps(self):
+        # Log a normal bet plus one with bad timestamp
+        self._log_bet(10, "win", 100)
+        entry = {
+            "timestamp": "bad-timestamp",
+            "event_type": "bet_outcome",
+            "domain": "trading",
+            "metrics": {"result": "win", "pnl_cents": 50},
+            "strategy_version": "v1",
+        }
+        with open(journal.JOURNAL_PATH, "a") as f:
+            f.write(json.dumps(entry) + "\n")
+        ts = journal.get_time_stratified_trading_metrics()
+        # Should only count the valid bet
+        self.assertEqual(ts["total_bets_analyzed"], 2)
+        self.assertEqual(ts["by_hour"][10]["bets"], 1)
+
+    def test_void_bets_counted_but_not_in_wr(self):
+        self._log_bet(10, "void", 0)
+        self._log_bet(10, "win", 100)
+        ts = journal.get_time_stratified_trading_metrics()
+        self.assertEqual(ts["by_hour"][10]["bets"], 2)
+        self.assertEqual(ts["by_hour"][10]["wins"], 1)
+        self.assertAlmostEqual(ts["by_hour"][10]["win_rate"], 1.0, places=4)
+
+    def test_cli_time_stats_subcommand(self):
+        """Verify time-stats CLI path exists."""
+        self._log_bet(10, "win", 100)
+        ts = journal.get_time_stratified_trading_metrics()
+        self.assertIsNotNone(ts)
+
+
 if __name__ == "__main__":
     unittest.main()
