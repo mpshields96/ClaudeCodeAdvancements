@@ -377,6 +377,55 @@ This data will inform whether CCA needs to build a time-based guard hook or if t
 
 ---
 
+## [2026-03-19] MASSIVE DELIVERY: 4 Repo Evaluations + 18 Papers + Reddit Intel (CCA Session 56)
+
+**What CCA did:** Evaluated 4 GitHub trading bot repos (full source code read), found 18 verified academic papers, deep-read 5 high-signal r/algotrading posts. All findings written to KALSHI_INTEL.md.
+
+### Top 6 Actionable Patterns from GitHub Repos (IMPLEMENT THESE)
+
+1. **Drawdown heat system** — 4-level progressive de-risking: Normal (<10%, 1.0x), Warning (10-15%, 0.5x), Critical (15-20%, 0.25x), Kill (>20%, 0.0x + manual reset). Track peak equity high water mark. **Single highest-ROI pattern for preventing overnight ruin.**
+
+2. **Multiplicative Kelly sizing** — `stake = base_kelly * confidence * drawdown * category * liquidity_cap * time_of_day`. Time-of-day is NEW (not in any existing repo). All 4 repos we evaluated lack time-based sizing.
+
+3. **ALL-must-pass risk gate** — Every trade must pass ALL checks. Named violations with diagnostics dict for post-hoc analysis. Minimum checks: kill switch, drawdown auto-kill, min net edge (4%), daily loss cap, max spread (6%), min liquidity, edge direction positive.
+
+4. **Fill verification loop** — After every order: verify fill via API, compute actual slippage, retry with adjusted price if partial. Track fill_success_rate as rolling metric.
+
+5. **Composite entry quality score (0-100)** — Weighted: spread width (25%), depth (20%), time-to-expiry (20%), fill rate (15%), edge (20%). Gate on min 60.
+
+6. **Layered caps** — fraction Kelly 15% + dollar cap ($75-100) + max pending (20) + max per trade (3-5% bankroll). Multiple layers prevent any single cap failure from being catastrophic.
+
+### Top 3 New Academic Papers (HIGHEST VALUE)
+
+1. **Tsang & Yang (2026) "Anatomy of Polymarket" [arXiv:2603.03136]** — FIRST paper documenting intraday seasonality in prediction markets. Participation peaks 09-20 UTC. **VALIDATES overnight liquidity hypothesis.** Bot should concentrate execution during US market hours.
+
+2. **Baker & McHale (2013) "Optimal Betting Under Parameter Uncertainty"** — Kelly shrinkage under estimation uncertainty. Shrunken Kelly > raw Kelly on real data. The bot estimates edge from a model, but that estimate has uncertainty. This provides the principled way to scale bets down based on model confidence.
+
+3. **Ramdas et al. (2023) "Game-Theoretic Statistics and SAVI"** — E-values for anytime-valid continuous monitoring. The mathematically correct way to continuously ask "is my edge still real?" Traditional tests are INVALID under continuous monitoring.
+
+### Reddit r/algotrading Intel (Community-Validated)
+
+- **Time-window filtering was the #1 unexpected improvement** across multiple posts. Sharpe "literally doubled" by restricting to 2-3 windows where strategy works.
+- **PnL-by-hour heatmap** — recommended by multiple experienced traders as the first analysis step.
+- **Regime detection: model confidence as implicit signal** — when predictive confidence collapses, move to cash. No explicit regime definition needed.
+- **1.5-2x live multiplier on backtested max drawdown** — assume live will be worse than backtest.
+- **Fill quality: slippage = 2.3x commission costs** — confirmed with 90-day data, 180 round trips.
+
+### CCA's UPDATED Recommendation for Overnight Issue
+
+With Tsang & Yang (2026) now confirming thin overnight liquidity in prediction markets:
+
+**Phase 1 (NOW):** Add the 3 critical data fields (hour_utc, is_overnight, minutes_to_expiry). Run SQL queries on existing data.
+
+**Phase 2 (AFTER DATA):** If overnight spreads are wider (Tsang confirms this is likely), implement:
+- Time-of-day Kelly multiplier (0.5x overnight, 1.0x peak hours)
+- Spread-width gate (skip if spread > 2x daytime average)
+- Drawdown heat system (auto-kill at 20% drawdown from peak)
+
+**Phase 3 (CONTINUOUS):** Baker-McHale Kelly shrinkage + E-value continuous monitoring.
+
+---
+
 ## [2026-03-19] CRITICAL: Data Tracking Gap Analysis + Objective Signal Infrastructure (CCA Session 55)
 
 **Matthew's directive (S55):** Build off smarter objective signaling, NOT trauma or knee-jerk reactions.

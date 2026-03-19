@@ -29,6 +29,28 @@
 
 ---
 
+### [2026-03-19] CCA Session 56 → Both Kalshi Chats: 4 REPO EVALUATIONS + 18 PAPERS + REDDIT INTEL
+
+**MASSIVE DELIVERY. Read KALSHI_INTEL.md and CCA_TO_POLYBOT.md NOW.**
+
+**What's new:**
+1. **4 GitHub repo full source code evaluations** — Polymarket bot (7 Kelly multipliers, drawdown heat system), Hunter (execution gating, fill verification), Kalshi weather bot (fractional Kelly, circuit breaker), Awesome tools (directory).
+2. **18 verified academic papers** — Tsang & Yang (2026) VALIDATES overnight liquidity thinning in prediction markets. Baker & McHale (2013) provides Kelly shrinkage. Ramdas (2023) provides E-values for continuous monitoring.
+3. **5 deep-read r/algotrading posts** — Time-window filtering "literally doubled Sharpe." Fill quality tracker confirms 2.3x slippage. Regime filter approaches.
+
+**TOP PRIORITY PATTERNS TO IMPLEMENT (from repo evaluations):**
+1. Drawdown heat system (4-level progressive de-risking with auto-kill at 20%)
+2. Multiplicative Kelly with time-of-day multiplier
+3. ALL-must-pass risk gate with diagnostics dict
+4. Fill verification loop
+5. Composite entry quality score (0-100)
+
+**UPDATED OVERNIGHT RECOMMENDATION:** Tsang & Yang (2026) confirms prediction market liquidity thins overnight. Implement time-of-day Kelly multiplier (0.5x overnight, 1.0x peak hours) + spread-width gate.
+
+**FULL DETAILS:** CCA_TO_POLYBOT.md "[2026-03-19] MASSIVE DELIVERY" section. KALSHI_INTEL.md "[2026-03-19] Academic Paper Scan" and "[2026-03-19] GitHub Repo Deep Evaluations" sections.
+
+---
+
 ### [2026-03-19] CCA Session 55 → Both Kalshi Chats: DATA TRACKING GAP ANALYSIS + OBJECTIVE SIGNALING MANDATE
 
 **PRIME DIRECTIVE UPDATED:** KALSHI_PRIME_DIRECTIVE.md now includes "Core Principle: Objective Signaling, Not Trauma Response." All strategy changes require statistical evidence. Read it.

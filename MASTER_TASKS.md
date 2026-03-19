@@ -659,7 +659,7 @@ Phase 2 (Session 49):
 - `aging_rate`: 1.0 per chat for partial tasks (Phase 1 done, Phase 2 waiting). 0.5 per chat for not-started tasks.
 - Cap: Priority cannot exceed 2x base_value. Prevents low-value tasks from permanently outranking high-value ones.
 - Update `last_touched_session` whenever ANY work is done on the MT (even research or planning).
-- Current session: 54.
+- Current session: 56.
 
 ### Completed (no scoring needed)
 
@@ -677,15 +677,15 @@ Phase 2 (Session 49):
 
 | Rank | MT | Task | Base | Last Touched | Chats Ago | Rate | Aging | **Score** | Next Phase |
 |------|----|------|------|-------------|-----------|------|-------|-----------|------------|
-| 1 | MT-10 | YoYo self-learning | 9 | Session 44 | 10 | 1.0 | 10.0 | **18.0** | Phase 3A: Resurfacer done (S46). Phase 3B: graduate to Kalshi bot. Cap: 18.0 |
-| 2 | MT-9 | Autonomous scanning | 8 | Session 52 | 2 | 1.0 | 2.0 | **10.0** | Phase 3: all NEEDLEs reviewed. Next: production autonomous runs. |
-| 3 | MT-11 | GitHub intelligence | 7 | Session 42 | 12 | 1.0 | 12.0 | **14.0** | Phase 2 validated. Phase 3: automated trending scan. Cap: 14.0 |
-| 4 | MT-12 | Academic papers | 6 | Session 52 | 2 | 1.0 | 2.0 | **8.0** | 12 papers delivered S52. Phase 3: domain expansion. |
-| 5 | MT-14 | Rescan stale subs | 6 | Session 46 | 8 | 1.0 | 8.0 | **12.0** | All 15 subs scanned. Tighten investing classifier. Cap: 12.0 |
-| 6 | MT-18 | Academic writing | 4 | NEVER | 12+ | 0.5 | 4.0 | **8.0** | Research phase. Cap: 8.0 |
-| 7 | MT-17 | Design/reports | 5 | Session 54 | 0 | 1.0 | 0.0 | **5.0** | Phase 4 COMPLETE. Phase 5: website templates. Report v2 built S54. |
-| 8 | MT-8 | iPhone remote control | 5 | Session 44 | 10 | 0.5 | 5.0 | **10.0** | SOLVED by native Remote Control. Cap: 10.0. Consider closing. |
-| 9 | MT-13 | iOS/macOS app development | 4 | Session 49 | 5 | 0.5 | 2.5 | **6.5** | Phase 2 COMPLETE. Phase 3: first real app. |
+| 1 | MT-10 | YoYo self-learning | 9 | Session 44 | 12 | 1.0 | 12.0 | **18.0** | Phase 3A: Resurfacer done (S46). Phase 3B: graduate to Kalshi bot. Cap: 18.0 |
+| 2 | MT-11 | GitHub intelligence | 7 | Session 42 | 14 | 1.0 | 14.0 | **14.0** | Phase 2 validated. Phase 3: automated trending scan. Cap: 14.0 |
+| 3 | MT-14 | Rescan stale subs | 6 | Session 46 | 10 | 1.0 | 10.0 | **12.0** | All 15 subs scanned. Tighten investing classifier. Cap: 12.0 |
+| 4 | MT-9 | Autonomous scanning | 8 | Session 52 | 4 | 1.0 | 4.0 | **12.0** | Phase 3: all NEEDLEs reviewed. Next: production autonomous runs. |
+| 5 | MT-8 | iPhone remote control | 5 | Session 44 | 12 | 0.5 | 6.0 | **10.0** | SOLVED by native Remote Control. Cap: 10.0. Consider closing. |
+| 6 | MT-12 | Academic papers | 6 | Session 52 | 4 | 1.0 | 4.0 | **10.0** | 12 papers delivered S52. Phase 3: domain expansion. |
+| 7 | MT-18 | Academic writing | 4 | NEVER | 14+ | 0.5 | 4.0 | **8.0** | Research phase. Cap: 8.0 |
+| 8 | MT-13 | iOS/macOS app development | 4 | Session 49 | 7 | 0.5 | 3.5 | **7.5** | Phase 2 COMPLETE. Phase 3: first real app. |
+| 9 | MT-17 | Design/reports | 5 | Session 54 | 2 | 1.0 | 2.0 | **7.0** | Phase 4 COMPLETE. Phase 5: website templates. Report v2 built S54. |
 
 ### Blocked / External (no scoring — cannot be worked)
 

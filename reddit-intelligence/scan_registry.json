@@ -1,19 +1,19 @@
 {
   "algotrading": {
-    "last_scan": "2026-03-18T00:11:28.646078+00:00",
-    "posts_scanned": 100,
+    "last_scan": "2026-03-19T16:02:51.504100+00:00",
+    "posts_scanned": 30,
     "builds": 0,
     "adapts": 0
   },
   "kalshi": {
-    "last_scan": "2026-03-18T00:13:20.971279+00:00",
+    "last_scan": "2026-03-19T16:01:37.383894+00:00",
     "posts_scanned": 50,
     "builds": 0,
     "adapts": 0
   },
   "claudecode": {
-    "last_scan": "2026-03-19T01:46:14.882312+00:00",
-    "posts_scanned": 25,
+    "last_scan": "2026-03-19T16:08:28.154620+00:00",
+    "posts_scanned": 30,
     "builds": 0,
     "adapts": 0
   },
@@ -24,8 +24,8 @@
     "adapts": 0
   },
   "polymarket": {
-    "last_scan": "2026-03-18T00:27:21.912742+00:00",
-    "posts_scanned": 50,
+    "last_scan": "2026-03-19T16:07:21.019001+00:00",
+    "posts_scanned": 30,
     "builds": 0,
     "adapts": 0
   },

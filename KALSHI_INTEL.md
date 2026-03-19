@@ -1,5 +1,5 @@
 # Kalshi/Trading Intelligence — Cross-Chat Bridge
-# Last updated: 2026-03-18 (Session 52)
+# Last updated: 2026-03-19 (Session 56)
 #
 # PRIME DIRECTIVE: See KALSHI_PRIME_DIRECTIVE.md — SMARTER AND MORE PROFITABLE.
 # Research = design the smarter bot, NOT daily scans. Three pillars:
@@ -151,6 +151,142 @@ _CCA: When you see OPEN requests, use `/cca-nuclear autonomous --domain trading`
 ## New Intel (Unprocessed)
 
 _CCA appends new findings here. Kalshi Research processes them and moves to "Processed Intel" below._
+
+### [2026-03-19] Academic Paper Scan: 18 Verified Papers for Kalshi Bot (CCA S56)
+
+**Source:** Systematic search across arXiv, SSRN, Semantic Scholar, ICML, MDPI, Wiley
+
+**HIGHEST-PRIORITY PAPERS (implement now):**
+
+**1. Tsang & Yang (2026) — "The Anatomy of Polymarket" [arXiv:2603.03136] — VERIFIED**
+- First paper documenting intraday seasonality in prediction markets using complete on-chain data
+- "Participation peaking between approximately 09:00 and 20:00 UTC"
+- Among top-10% traders, concentration during US market hours is even sharper
+- **VALIDATES our overnight liquidity hypothesis.** Prediction market liquidity is structurally thin outside 09-20 UTC.
+
+**2. Baker & McHale (2013) — "Optimal Betting Under Parameter Uncertainty" [DOI:10.1287/deca.2013.0271] — VERIFIED**
+- Kelly criterion ignores uncertainty in probability estimates
+- Derives shrinkage factor reducing bet size proportional to estimation uncertainty
+- Validated on tennis betting data: shrunken Kelly outperforms raw Kelly
+- **CRITICAL:** Bot estimates edge from a model, but that estimate has uncertainty. This provides principled bet-size reduction.
+
+**3. Ramdas et al. (2023) — "Game-Theoretic Statistics and Safe Anytime-Valid Inference" [DOI:10.1214/23-STS894] — VERIFIED**
+- E-values remain valid at ALL stopping times — "accommodating continuous monitoring and optional stopping"
+- Quotable: "A test martingale is the wealth process of a player in a betting game"
+- **DIRECTLY applicable:** Traditional hypothesis tests invalid under continuous monitoring. E-values let the bot continuously ask "is my edge still real?" without inflating false positives.
+
+**4. Ng et al. (2025) — "Price Discovery in Modern Prediction Markets" [SSRN:5331995] — VERIFIED**
+- Polymarket leads Kalshi in price discovery
+- Net order imbalance from large trades predicts subsequent returns
+- **Cross-platform signal:** Monitoring Polymarket prices could provide early signals for Kalshi positions.
+
+**HIGH-VALUE PAPERS:**
+
+**5. Horvath et al. (2024) — "Sequential Monitoring for Explosive Volatility Regimes" [arXiv:2404.17885]**
+- Weighted CUSUM detectors for regime transitions (stationary to explosive volatility)
+- Renyi weights for very early detection
+- **Upgrade for bot's Page-Hinkley implementation.**
+
+**6. Baker-McHale + Carta & Conversano (2020) — Rolling Kelly [DOI:10.3389/fams.2020.577050]**
+- Kelly parameters must be recalculated frequently via rolling windows, not set once
+- 2-year rolling windows outperformed static optimization on European equities
+
+**7. Kakushadze (2016) — "101 Formulaic Alphas" [arXiv:1601.00991]**
+- Canonical feature set for what a trading system should log
+- Prediction market minimum: contract price, volume, spread, time-to-expiry, price velocity, volatility, correlation, order imbalance
+
+**8. Lopez de Prado (2018) — "Advances in Financial Machine Learning" [Wiley]**
+- Triple barrier method (profit-take, stop-loss, time-limit) for trade labeling
+- Meta-labeling: secondary ML model learning bet sizing from trade outcomes
+- **Gold standard for self-improving trading system architecture.**
+
+**SELF-LEARNING PAPERS:**
+
+**9. Zhu et al. (2024) — "Profit vs Prediction" [ICML 2024, arXiv:2406.04062]**
+- Profit maximization and accurate prediction are fundamentally incompatible
+- Heavier-tailed belief distributions yield greater profits
+- Confirms: exploit belief-probability discrepancies (Le calibration paper quantifies these)
+
+**10. Zhang et al. (2019) — "DRL for Trading" [arXiv:1911.10107]**
+- Volatility-scaled reward functions prevent domination by high-vol/low-edge contracts
+
+**11. Ishikawa & Nakata (2021) — "Online Trading in Forex" [arXiv:2106.03035]**
+- Online learning (continuous model updating) essential for non-stationary markets
+- Each trade outcome should incrementally update the model
+
+**All 18 citations verified through web search and/or abstract retrieval. See CCA S56 agent output for complete report with all papers.**
+
+---
+
+### [2026-03-19] GitHub Repo Deep Evaluations: 4 Trading Bot Architectures (CCA S56)
+
+**Source:** Full source code evaluation of 4 repos identified in S55 Reddit scan
+
+**REPO 1: dylanpersonguy/Fully-Autonomous-Polymarket-AI-Trading-Bot** (17 stars, MIT)
+- Quality: 58/100. Clean module separation but monolithic files (302KB dashboard, 68KB engine). SEO-optimized README, no live trading evidence.
+- **7 Kelly multipliers (multiplicative):** `stake = base_kelly * confidence * drawdown * timeline * volatility * regime * category * bankroll`. Capped by liquidity (5% max of orderbook).
+- **Drawdown heat system (HIGH VALUE):** 4 levels — Normal (<10%, 1.0x), Warning (10-15%, 0.5x), Critical (15-20%, 0.25x), Kill (>20%, 0.0x + manual reset required). Track peak equity high water mark.
+- **15 risk checks (ALL-must-pass):** Kill switch, 20% drawdown kill, 4% min net edge, $500 daily loss, 25 max positions, $2k min liquidity, 6% max spread, evidence quality, confidence level, min implied prob, positive edge, market type, resolution source, category exposure (35% cap), timeline endgame.
+- **NO time-of-day guards. NO overnight handling.** This is a gap in their design.
+- **ADOPT:** (1) Drawdown heat system, (2) multiplicative Kelly architecture, (3) ALL-must-pass risk gate with diagnostics dict, (4) calibration feedback loop (forecast, outcome) pairs.
+
+**REPO 2: mikegianfelice/Hunter** (crypto trading bot, 30 analysis modules)
+- Quality: 52/100. Over-engineered with 30 "AI" modules that are heuristic calculators. Time filter exists but is observe-only (never blocks).
+- **Trade gate pattern:** Sequential — daily cap (5), cooldown (30min), quality score (55/100 min). Returns `(allowed, reason, diagnostics_dict)`.
+- **Fill verification + rerouting:** Verifies fill via RPC, retries with 50% size reduction, max 2 retries. Ghost entry prevention.
+- **Entry quality score (0-100):** Weighted composite — liquidity (25%), volume (20%), momentum (20%), RSI (15%), volume spike (10%), holder distribution (10%).
+- **Circuit breaker:** 3 consecutive losses = halt. 15% max drawdown. 5% max daily loss.
+- **ADOPT:** (1) Sequential gate architecture with diagnostics, (2) fill verification loop, (3) composite entry quality score adapted for Kalshi.
+
+**REPO 3: suislanchez/polymarket-kalshi-weather-bot** (48 stars, MIT, Python+React)
+- Quality: 62/100. Dual-strategy (BTC 5-min + weather), FastAPI backend, SQLite, React dashboard.
+- **Fractional Kelly 15%:** Standard formula capped at 5% bankroll, $75/$100 dollar caps, 3% max per trade, 20 max pending.
+- **Brier score: VAPORWARE** — README claims it, code stores (signal, outcome) pairs but never computes Brier score.
+- **$300 circuit breaker:** Daily loss limit in config, checked pre-trade. Good pattern.
+- **ADOPT:** (1) Layered caps pattern (fraction + dollar + max pending), (2) signal-to-settlement schema for building real Brier scoring.
+
+**REPO 4: aarora4/Awesome-Prediction-Market-Tools** (curated directory)
+- 40+ tools catalogued across categories: bots, analytics, dashboards, data, research
+- Notable entries: PMXT (free orderbook data), polymarket-sampler (backtesting), prediction-market-arbitrage-bot
+- No execution quality or overnight tools found in the directory
+- **REFERENCE** — useful as a discovery index for future research
+
+**CONSOLIDATED RECOMMENDATIONS FOR KALSHI BOT (Priority Order):**
+1. **Drawdown heat system** — 4-level progressive de-risking. PREVENTS RUIN during overnight losing streaks. Single highest-ROI pattern.
+2. **Multiplicative Kelly sizing** — `base_kelly * confidence * drawdown * category * liquidity_cap * time_of_day`. Add time-of-day as a NEW multiplier (not in any repo).
+3. **ALL-must-pass risk gate** — Named checks with violation/warning distinction. Full diagnostics dict per decision for post-hoc analysis.
+4. **Fill verification loop** — Verify every order fill, compute actual slippage, retry with adjusted price if partial.
+5. **Composite entry quality score** — 0-100 weighted: spread width (25%), depth (20%), time-to-expiry (20%), fill rate (15%), edge (20%). Gate on min 60.
+6. **Calibration feedback** — Record (forecast, outcome) pairs, compute Brier scores, retrain calibrator after N resolutions.
+
+**CRITICAL GAP IN ALL 4 REPOS:** None implement time-of-day execution quality filtering. This is what CCA identified in S55 and what the Kalshi bot MUST build. We are ahead of the open-source ecosystem on this.
+
+---
+
+### [2026-03-19] r/algotrading Deep Intelligence: Overfitting + Execution Quality (CCA S56)
+
+**Source:** Deep-read of 5 high-signal r/algotrading posts (autonomous scan + manual review)
+
+**KEY FINDING — Walk-forward validation vs single backtest:**
+- Community consensus: single train/test split is insufficient. Use rolling walk-forward windows.
+- If a signal (like "longs outperform shorts") holds across multiple out-of-sample windows spanning different regimes, it's structural.
+- Direction conviction should feed position sizing, not binary on/off. Less certain = smaller bet, not zero bet.
+
+**KEY FINDING — Overfitting detection methods mentioned:**
+- White's Reality Check (St. Louis Fed Working Paper 2011-001)
+- Deflated Sharpe Ratio (already in KALSHI_INTEL.md Paper 8)
+- Probability of Backtest Overfitting (CPCV, already in Paper 12)
+- Walk-forward validation with rolling windows
+
+**KEY FINDING — Parrondo's Paradox:**
+- Two losing strategies can combine into a winning strategy if their correlations are different
+- Implication: don't prune a strategy just because it loses in isolation — check if it provides diversification value to the portfolio
+
+**KEY FINDING — Market regime + strategy separation:**
+- Separate models for long/short (or in Kalshi's case: separate models for different contract types or time windows)
+- Regime-specific strategy activation is better than one-size-fits-all
+
+---
 
 ### [2026-03-19] Reddit/GitHub Research: Overnight Trading + Prediction Market Analytics (CCA S55)
 
