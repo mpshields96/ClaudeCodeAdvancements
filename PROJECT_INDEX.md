@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-18 (Session 48)
+# Last updated: 2026-03-18 (Session 49)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -34,9 +34,9 @@
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 263 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer | 355 |
 | Design Skills | `design-skills/` | MT-17 Phase 3 COMPLETE | 79 |
-| Research | `research/` | Reddit scout, MT-8/MT-13 research | 29 |
+| Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 1686 tests (42 suites). All must pass before any work.**
+**Total: 1726 tests (44 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 

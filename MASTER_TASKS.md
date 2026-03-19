@@ -479,15 +479,18 @@ Phase 2 (Session 31):
 apps benefit CCA directly (session monitors, design previews, launcher UIs) and
 Matthew's other projects. Same SwiftUI toolchain, same Xcode requirement.
 
-**Status:** Research COMPLETE (Session 44). Key findings:
-- Xcode 26.3 has native Claude Agent SDK integration (agentic coding in IDE)
-- SwiftUI Agent Skill (twostraws) addresses LLM SwiftUI mistakes — MIT licensed
-- Claude Code iOS Dev Guide (keskinonur) — PRD-driven workflow template
-- Context macOS app shipped 20K LOC, 95% Claude-generated — proves viability
-- Blitz (Apache 2.0) — MCP-based App Store submission automation
-- BLOCKER: Matthew's machine has no Xcode installed (only CLI tools)
-- Research doc: `research/MT-13_ios_dev_research.md`
-- Next: Matthew installs Xcode, then CCA sets up template + skills + XcodeBuildMCP
+**Status:** Phase 2 COMPLETE (Session 49). Delivered:
+
+Phase 1 (Session 44): Research complete — ecosystem survey, prerequisites identified.
+
+Phase 2 (Session 49):
+- `ios_project_gen.py`: Generates complete Xcode projects from CLI (SwiftUI + test target + CLAUDE.md + .gitignore)
+- `xcode_build.py`: Python xcodebuild wrapper (build, clean, test, scheme/simulator listing, error parsing)
+- Deterministic pbxproj generation (24-char hex UUIDs from seed)
+- E2E validated: generated KalshiDashboard project builds + tests pass on iOS Simulator
+- 57 tests (40 + 17) — all passing
+- Xcode 26.3 installed (Build 17C529), iPhone 17 Pro + iPad Pro simulators available
+- Phase 3: Build first real app (Kalshi mobile dashboard) or install SwiftUI Agent Skill
 
 ---
 

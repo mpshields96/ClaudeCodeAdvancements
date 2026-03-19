@@ -3,6 +3,17 @@
 
 ---
 
+## Session 49 — 2026-03-18
+- Committed S48 wrap files
+- MT-13 Phase 2 COMPLETE: iOS project generator + Xcode build helper
+  - `ios_project_gen.py`: generates complete Xcode projects from CLI (40 tests)
+  - `xcode_build.py`: Python xcodebuild wrapper with error parsing (17 tests)
+  - E2E validated: KalshiDashboard project builds + tests pass on iOS Simulator
+  - Xcode 26.3 confirmed installed (Build 17C529)
+- Tests: 1726/1726 (44 suites)
+
+---
+
 ## Session 48 — 2026-03-18
 
 **What changed:**
