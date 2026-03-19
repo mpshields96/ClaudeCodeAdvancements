@@ -315,15 +315,17 @@
 
 ---
 
-### CCA ROI = Kalshi bot profitability — Severity: 3 — Count: 1
-- **Anti-pattern:** Treating CCA success as "tools built" or "papers found" without connecting to financial outcomes. Building self-learning that doesn't optimize for net profit. Research that doesn't make the bot smarter/more profitable.
-- **Fix:** CCA's ROI is measured by financial impact on Kalshi bot. Every research delivery should include: (1) specific formula/code the bot can implement, (2) expected financial impact (edge size, risk reduction), (3) validation protocol. Self-learning = optimize for profit and compounding passive income. Never accept break-even or losing strategies.
-- **Matthew directive (S51, permanent):** "ROI = make money. Financial, not philosophical."
-- **Three Pillars:** (1) Perfect current engine, (2) Deep research with math validation, (3) Expand beyond current parameters
-- **First seen:** 2026-03-18 (Session 45 — Matthew explicit)
-- **Last seen:** 2026-03-18 (Session 52 — reinforced with 12-paper delivery)
+### CCA dual mission: 50% Kalshi profitability + 50% self-improvement as dev tool — Severity: 3 — Count: 1
+- **Anti-pattern:** Treating CCA as 100% Kalshi-serving. Or treating CCA as 100% dev tooling with no financial connection. Both extremes are wrong.
+- **Fix:** CCA has a 50/50 mission:
+  - **50% Kalshi support:** Research papers, formulas, intelligence scanning that makes the Kalshi bot smarter and more profitable. ROI here = financial profit. Every delivery should include implementable code + expected edge size + validation protocol.
+  - **50% CCA self-improvement:** The five frontiers (memory, spec, context, agent-guard, usage), YoYo self-learning framework, becoming a smarter version of itself as a development tool. Self-learning here means the CCA tool gets better at its own job — better scanning, better analysis, better infrastructure. Personal projects (iOS, academic writing) also served here.
+- **Kalshi bot chats are 100% financial** — there is no 50/50 split for them. They optimize purely for profit.
+- **CCA uses YoYo** as a strong framework for self-improvement while incorporating personal touch and projects.
+- **Matthew directive (S52):** "Self-learning for CCA = 50% financial upgrades for Kalshi, 50% becoming smarter as a dev tool using YoYo framework."
+- **First seen:** 2026-03-18 (Session 45 — Prime Directive established)
+- **Last seen:** 2026-03-18 (Session 52 — Matthew clarified the 50/50 split)
 - **Files:** KALSHI_PRIME_DIRECTIVE.md, self-learning/CLAUDE.md, KALSHI_INTEL.md
-- **Promoted:** 2026-03-18 -> `~/.claude/rules/learnings.md` (global)
 
 ---
 
