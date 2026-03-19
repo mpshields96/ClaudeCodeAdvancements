@@ -36,6 +36,20 @@ If any test fails: report it prominently but continue startup.
 
 ---
 
+## Step 2.5 — Check cross-chat inbox
+
+Read the Kalshi cross-chat inbox for pending requests:
+
+```bash
+cat ~/.claude/cross-chat/POLYBOT_TO_CCA.md 2>/dev/null | grep -c "Status: PENDING"
+```
+
+If there are PENDING requests, include them in the briefing under "CROSS-CHAT INBOX:".
+These should be prioritized during /cca-auto (1/3 session allocation for Kalshi work).
+Also check if CCA_TO_POLYBOT.md has unread responses that need attention.
+
+---
+
 ## Step 3 — Surface relevant findings (resurfacer)
 
 After reading SESSION_STATE.md (Step 1), determine the current work context:
