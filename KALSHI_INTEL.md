@@ -438,6 +438,96 @@ cv = CombinatorialPurgedCV(
 
 ---
 
+### [2026-03-18] PAPER 12: Bayesian Online Changepoint Detection — Upgrade for Page-Hinkley (CCA S52)
+**Source:** Altamirano, Briol & Knoblauch (2023). "Robust and Scalable Bayesian Online Changepoint Detection." arXiv:2302.04759
+**Verified:** YES — on arXiv, 50+ citations
+**Also see:** Adams & MacKay (2007). "Bayesian Online Changepoint Detection." arXiv:0710.3742 [foundational paper, 1000+ citations]
+
+**What it does:** Detects when a time series has changed regime in REAL-TIME. Unlike CUSUM which tests for a pre-specified shift, BOCPD automatically infers:
+- WHETHER a changepoint occurred
+- WHEN it occurred (run-length posterior)
+- WHAT the new parameters are after the change
+
+**Why this upgrades Page-Hinkley:**
+The bot currently uses Page-Hinkley (CUSUM variant) for drift strategy monitoring. Page-Hinkley requires pre-specifying the shift to detect (mu_0=0.97, mu_1=0.90). BOCPD doesn't — it detects ANY changepoint automatically.
+
+**Core algorithm for binary outcomes (wins/losses):**
+```python
+import numpy as np
+
+class BayesianChangepoint:
+    """Bayesian Online Changepoint Detection for binary sequences.
+    Adams & MacKay (2007) + Altamirano et al. (2023) for robustness.
+    """
+    def __init__(self, hazard_rate=1/100, alpha=1, beta=1):
+        """
+        hazard_rate: 1/expected_run_length (1/100 = expect change every ~100 bets)
+        alpha, beta: Beta prior on win rate (1,1 = uniform)
+        """
+        self.hazard = hazard_rate
+        self.alpha0, self.beta0 = alpha, beta
+        # Run-length distribution: P(run_length=r | data)
+        self.run_lengths = np.array([1.0])  # Start with r=0
+        self.alphas = np.array([alpha])
+        self.betas = np.array([beta])
+
+    def update(self, outcome: int) -> dict:
+        """Process one outcome (1=win, 0=loss). Returns changepoint info."""
+        n = len(self.run_lengths)
+
+        # Predictive probability P(outcome | r, params)
+        pred_probs = self.alphas / (self.alphas + self.betas)
+        if outcome == 1:
+            likelihoods = pred_probs
+        else:
+            likelihoods = 1 - pred_probs
+
+        # Growth: existing run continues
+        growth = self.run_lengths * likelihoods * (1 - self.hazard)
+
+        # Changepoint: new run starts
+        cp_prob = np.sum(self.run_lengths * likelihoods * self.hazard)
+
+        # Update run-length distribution
+        new_rl = np.zeros(n + 1)
+        new_rl[0] = cp_prob
+        new_rl[1:] = growth
+        evidence = np.sum(new_rl)
+        new_rl /= evidence  # Normalize
+
+        # Update sufficient statistics
+        new_alphas = np.zeros(n + 1)
+        new_betas = np.zeros(n + 1)
+        new_alphas[0] = self.alpha0
+        new_betas[0] = self.beta0
+        new_alphas[1:] = self.alphas + outcome
+        new_betas[1:] = self.betas + (1 - outcome)
+
+        self.run_lengths = new_rl
+        self.alphas = new_alphas
+        self.betas = new_betas
+
+        # Detect changepoint: high probability on short run lengths
+        cp_detected = new_rl[0] > 0.5  # >50% mass on r=0
+        map_run = np.argmax(new_rl)
+        current_wr = self.alphas[map_run] / (self.alphas[map_run] + self.betas[map_run])
+
+        return {
+            "changepoint_detected": cp_detected,
+            "changepoint_probability": float(new_rl[0]),
+            "most_likely_run_length": int(map_run),
+            "estimated_current_wr": float(current_wr),
+        }
+```
+
+**ACTION for Kalshi bot:**
+1. Run BOCPD alongside Page-Hinkley on sniper bucket-level WRs
+2. BOCPD auto-detects any shift, Page-Hinkley detects the specific 97%->90% shift
+3. If BOCPD fires but Page-Hinkley doesn't: the shift may be smaller than expected (e.g., 97%->94%)
+4. hazard_rate = 1/100 means "expect a regime change every ~100 bets" — tune based on data
+
+---
+
 ### [2026-03-17] Mean Reversion with IBS Filter — Kalshi-Applicable Pattern
 **Source:** r/algotrading (219pts, 99 comments) — https://www.reddit.com/r/algotrading/comments/1rjvxjy/
 **Relevance:** The IBS (Internal Bar Strength) concept — detecting when price closes in bottom 30% of daily range — maps to detecting "oversold" event markets on Kalshi where probability pricing has temporarily dipped below fair value.
