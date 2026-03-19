@@ -10,7 +10,10 @@
   - `xcode_build.py`: Python xcodebuild wrapper with error parsing (17 tests)
   - E2E validated: KalshiDashboard project builds + tests pass on iOS Simulator
   - Xcode 26.3 confirmed installed (Build 17C529)
-- Tests: 1726/1726 (44 suites)
+- MT-17 Phase 4 COMPLETE: SVG chart generator + dashboard integration
+  - `chart_generator.py`: 5 chart types (bar, h-bar, line, sparkline, donut), 42 tests
+  - Integrated inline SVG charts into dashboard_generator.py
+- Tests: 1768/1768 (44 suites)
 
 ---
 

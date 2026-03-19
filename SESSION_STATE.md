@@ -5,15 +5,17 @@
 
 ## Current State (as of Session 49 — 2026-03-18)
 
-**Phase:** Session 49 IN PROGRESS. Tests: 1726/1726 passing (44 suites). Git: clean.
+**Phase:** Session 49 IN PROGRESS. Tests: 1768/1768 passing (44 suites). Git: clean. 6 commits.
 **What's done this session:**
 1. Committed S48 wrap files
 2. Verified Xcode 26.3 installed (Build 17C529, iPhone 17 Pro simulators available)
-3. MT-13 Phase 2: `ios_project_gen.py` — generates complete Xcode projects from CLI (40 tests)
+3. MT-13 Phase 2 COMPLETE: `ios_project_gen.py` — generates complete Xcode projects from CLI (40 tests)
 4. MT-13 Phase 2: `xcode_build.py` — Python xcodebuild wrapper with error parsing (17 tests)
 5. E2E validated: generated KalshiDashboard project builds + tests pass on iOS Simulator
+6. MT-17 Phase 4: `chart_generator.py` — pure SVG chart generation with CCA design language (42 tests)
+7. Integrated SVG charts into dashboard_generator.py (tests-by-module bar + MT status donut)
 
-**Next:** (1) Chain to next meaty build: MT-9 Phase 3 or MT-17 Phase 4. (2) MT-13 Phase 3: build first real app (Kalshi mobile dashboard).
+**Next:** (1) MT-13 Phase 3: build first real app. (2) MT-9 Phase 3: supervised autonomous scanning trial. (3) MT-17 Phase 5: website templates.
 
 ---
 

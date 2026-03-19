@@ -33,10 +33,10 @@
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 196 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 263 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer | 355 |
-| Design Skills | `design-skills/` | MT-17 Phase 3 COMPLETE | 79 |
+| Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 121 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 1726 tests (44 suites). All must pass before any work.**
+**Total: 1768 tests (44 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
