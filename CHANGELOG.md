@@ -3,6 +3,30 @@
 
 ---
 
+## Session 60 — 2026-03-19
+
+**What changed:**
+- `self-learning/trade_reflector.py` — Fixed 5 schema mismatches against real polybot.db (strategy_name->strategy, win/loss->yes/no, hour_utc->derived from timestamp, cost_basis_cents->cost_usd, entry_price_cents->price_cents)
+- `self-learning/tests/test_trade_reflector.py` — Updated all 47 tests to use real DB schema (REAL epoch timestamps, correct column names, non-overlapping date ranges)
+- `memory-system/research/EXTERNAL_COMPARISON.md` — NEW: Architecture comparison of engram, ClawMem, claude-mem. P0: FTS5 migration. P1: recency decay. P2: structured fields.
+- `self-learning/resurfacer.py` — NEW functions: proposal_to_finding(), resurface_with_proposals() for unified findings + trade proposal display
+- `self-learning/tests/test_resurfacer.py` — 8 new tests for proposal integration (49 total)
+- `SESSION_STATE.md` — Updated for S60
+- `PROJECT_INDEX.md` — Updated test count to 2029/50, added EXTERNAL_COMPARISON.md
+
+**Why:**
+- trade_reflector schema validation was #1 priority from S59 — confirmed 5 real mismatches that would cause runtime failures on actual DB
+- Memory architecture research informs Frontier 1 roadmap — FTS5 identified as highest-ROI improvement
+- Resurfacer integration completes MT-10 Phase 3B — trade proposals now surface alongside FINDINGS_LOG entries
+
+**Tests:** 2029/2029 passing (50 suites)
+
+**Lessons:**
+- Test DBs with overlapping timestamp ranges cause ordering-dependent failures — always push second dataset past first's end date
+- macOS grep lacks -P flag — use sed or awk for PCRE-style extraction
+
+---
+
 ## Session 59 — 2026-03-19
 
 **What changed:**

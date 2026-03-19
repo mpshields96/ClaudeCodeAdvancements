@@ -329,6 +329,15 @@
 
 ---
 
+### Test DBs with synthetic trades need non-overlapping timestamps — Severity: 1 — Count: 1
+- **Anti-pattern:** Creating "good" trades from date A and "bad" trades from date A+9 days, expecting ORDER BY created_at to keep them separate. With `timedelta(days=i)` the sets overlap and interleave.
+- **Fix:** Push the second dataset's base_time past the first dataset's end. E.g., 60 trades from March 1 = ends ~May 1, so bad trades should start May 10+.
+- **First seen:** 2026-03-19 (Session 60 — trade_reflector schema fix)
+- **Last seen:** 2026-03-19
+- **Files:** self-learning/tests/test_trade_reflector.py, any test with multiple synthetic trade batches
+
+---
+
 ### Autonomous scan NEEDLE URLs must be persisted to a file — Severity: 1 — Count: 1
 - **Anti-pattern:** MT-9 scan identified 8 NEEDLEs in S51 but URLs only existed in session context. Next session couldn't find them.
 - **Fix:** autonomous_scanner.py (or the scan wrapper) should write NEEDLE URLs to a persistent file (e.g., `reddit-intelligence/pending_needles.jsonl`) immediately after classification. Fresh scan is a fine fallback but wastes the classification work.
