@@ -3,15 +3,15 @@
 
 ---
 
-## Current State (as of Session 59 — 2026-03-19)
+## Current State (as of Session 60 — 2026-03-19)
 
-**Phase:** Session 59 COMPLETE. Tests: 2021/2021 passing (50 suites). Git: 3 commits, clean.
+**Phase:** Session 60 IN PROGRESS. Tests: 2029/2029 passing (50 suites). Git: 3 commits.
 **What's done this session:**
-1. **trade_reflector.py built** (47 tests) — MT-10 Phase 3A implementation COMPLETE. Reads kalshi_bot.db read-only, 5 statistical pattern detectors (Wilson CI win rate drift, chi-squared time-of-day bias, Wald-Wolfowitz runs test, rolling window edge erosion, Kelly-optimal sizing). All enforce minimum sample sizes + p-value < 0.10 gating. auto_applicable hardcoded False. Proposal format with tp_YYYYMMDD_hex IDs.
-2. **Reddit r/ClaudeCode scan** (5 findings) — "Claude never gotten dumber" (114pts) validates context-monitor approach, "Zero to Fleet" progression ladder confirms CCA's skill/hook architecture, markdownmaxxing 3-layer scaffold, Okan notifications (ADHD-relevant), Superpowers plugin showcase.
-3. **MT-11 GitHub trending scan** (5 findings) — engram (Go+FTS5 memory system), ClawMem (hybrid RAG memory with 7 hooks), claude-mem (auto-capture), claude-context (5.6K stars code search MCP), awesome-claude-code-toolkit (135 agents, 35 skills, 150+ plugins).
+1. **trade_reflector schema validated** against real polybot.db — fixed 5 mismatches (strategy_name->strategy, win/loss->yes/no, hour_utc->derived from timestamp, cost_basis_cents->cost_usd, entry_price_cents->price_cents). 47 tests updated + passing.
+2. **Frontier 1 memory architecture comparison** — Analyzed engram (Go+FTS5), ClawMem (hybrid RAG), claude-mem (auto-capture). Key finding: SQLite FTS5 migration is P0 improvement (stdlib-only, relevance-ranked search). Written to memory-system/research/EXTERNAL_COMPARISON.md.
+3. **MT-10 Phase 3B: resurfacer integration** — Added proposal_to_finding() + resurface_with_proposals() to unify trade proposals with FINDINGS_LOG results. 8 new tests (49 total resurfacer, 2029 total project).
 
-**Matthew directives (S51-S59, permanent):**
+**Matthew directives (S51-S60, permanent):**
 - ROI = make money. Financial, not philosophical.
 - CCA dual mission: 50% Kalshi financial support + 50% self-improvement
 - Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
@@ -21,7 +21,15 @@
 - VA hospital wifi blocks Reddit/SSRN — queue URL-dependent work for hotspot (S57)
 - Hooks must not cause CLI errors — fail silently with valid JSON on all edge cases (S58)
 
-**Next:** (1) Validate trade_reflector against real kalshi_bot.db (check actual schema). (2) Retry blocked URLs on hotspot (SSRN, quantvps). (3) Study engram + ClawMem architectures for Frontier 1 memory improvements. (4) MT-10 Phase 3B: resurfacer integration with trade proposals. (5) Run full batch trace analysis on S51-S59 transcripts.
+**Next:** (1) Retry blocked URLs on hotspot (SSRN, quantvps). (2) Frontier 1: FTS5 migration prototype (P0 from EXTERNAL_COMPARISON.md). (3) Run full batch trace analysis on S51-S59 transcripts. (4) Reddit/GitHub intelligence scan (r/ClaudeCode, trending repos).
+
+---
+
+## What Was Done in Session 59 (2026-03-19)
+
+1. **trade_reflector.py built** (47 tests) — MT-10 Phase 3A implementation COMPLETE. Reads kalshi_bot.db read-only, 5 statistical pattern detectors (Wilson CI win rate drift, chi-squared time-of-day bias, Wald-Wolfowitz runs test, rolling window edge erosion, Kelly-optimal sizing). All enforce minimum sample sizes + p-value < 0.10 gating. auto_applicable hardcoded False. Proposal format with tp_YYYYMMDD_hex IDs.
+2. **Reddit r/ClaudeCode scan** (5 findings) — "Claude never gotten dumber" (114pts) validates context-monitor approach, "Zero to Fleet" progression ladder confirms CCA's skill/hook architecture, markdownmaxxing 3-layer scaffold, Okan notifications (ADHD-relevant), Superpowers plugin showcase.
+3. **MT-11 GitHub trending scan** (5 findings) — engram (Go+FTS5 memory system), ClawMem (hybrid RAG memory with 7 hooks), claude-mem (auto-capture), claude-context (5.6K stars code search MCP), awesome-claude-code-toolkit (135 agents, 35 skills, 150+ plugins).
 
 ---
 
@@ -43,29 +51,3 @@
 6. **Cross-chat bridge refreshed** — Top-5 pickup checklist in CROSS_CHAT_INBOX.md. CLI commands documented in CCA_TO_POLYBOT.md and KALSHI_INTEL.md.
 7. **Report generator updated** — Now reads research outcomes ROI data for future reports.
 8. **arewedone structural check** — 7/7 modules complete, 0 stubs, 0 syntax errors.
-
----
-
-## What Was Done in Session 54 (2026-03-19)
-
-1. CTX-7: PostCompact hook built + wired live (28 tests, 10th hook)
-2. Overnight profitability analysis to CCA_TO_POLYBOT.md + KALSHI_INTEL.md (7 academic sources, 4 hypotheses)
-3. Report generator v2 (phase tracking, frontier status, ToC, priority queue)
-4. OMEGA memory patterns (type TTL, hash+Jaccard dedup, contradiction detection, 34 new tests)
-5. Trigger-table optimization for spec-system + Kalshi research detection rule
-6. Priority queue refresh from S42 to S54. Claude Code memory docs deep-read.
-7. Tests: 1854/1854 (45 suites). Git: 12 commits, clean.
-
----
-
-## What Was Done in Session 51 (2026-03-19)
-
-1. OctagonAI/kalshi-deep-trading-bot full source code evaluation (signal gen, bet sizing, guards)
-   - Verdict: 73/100 code quality, 25/100 strategy (LLM-as-edge is anti-pattern)
-   - Written to CCA_TO_POLYBOT.md for Kalshi chats
-2. CROSS_CHAT_INBOX.md cleared — all 3 Kalshi Research S108 requests marked COMPLETE
-3. MT-9 Phase 3: autonomous scan trial 2/3 on r/ClaudeCode (8 NEEDLEs from 25 posts, 0 blocked)
-4. Confirmed S50 deliveries: meta labeling 23 features, parameter changes, research outcomes table
-5. Le (2026) calibration paper deep-read — recalibration formula delivered to Kalshi chats
-6. FLB weakening signal from Whelan CEPR VoxEU column — delivered as monitoring alert
-7. Prime Directive reinforcement: ROI = make money, told both Kalshi chats explicitly

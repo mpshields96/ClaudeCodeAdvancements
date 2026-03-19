@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-19 (Session 59)
+# Last updated: 2026-03-19 (Session 60)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -32,11 +32,11 @@
 | Agent Guard | `agent-guard/` | AG-1-8 + Edit Guard | 292 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 197 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
-| Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 503 |
+| Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 511 |
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 2021 tests (50 suites). All must pass before any work.**
+**Total: 2029 tests (50 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -48,6 +48,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `hooks/capture_hook.py` — PostToolUse + Stop capture
 - `mcp_server.py` — MCP server for memory queries
 - `cli.py` — CLI viewer (`stats`, `search`, `list`)
+- `research/EXTERNAL_COMPARISON.md` — engram/ClawMem/claude-mem architecture analysis (S60)
 
 **spec-system/** — Spec-driven development workflow
 - `commands/` — `/spec:requirements`, `/spec:design`, `/spec:tasks`, `/spec:implement`, `/spec:design-review`
@@ -108,9 +109,9 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `validate_strategies.py` — Skillbook validation
 - `paper_scanner.py` — MT-12: Academic paper discovery (Semantic Scholar + arXiv)
 - `hooks/skillbook_inject.py` — UserPromptSubmit strategy injection
-- `resurfacer.py` — MT-10 Phase 3B: Findings re-surfacing (matches FINDINGS_LOG to work context)
+- `resurfacer.py` — MT-10 Phase 3B: Findings re-surfacing + trade proposal integration
 - `overnight_detector.py` — Objective time-stratified trading analysis (Wilson CI, CUSUM, SQL templates, audit)
-- `research_outcomes.py` — Research ROI tracker: tracks CCA deliveries → Kalshi implementation → profit/loss
+- `research_outcomes.py` — Research ROI tracker: tracks CCA deliveries -> Kalshi implementation -> profit/loss
 - `trade_reflector.py` — MT-10 Phase 3A: Kalshi trade pattern analysis (read-only DB, 5 detectors, proposals)
 - `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 
