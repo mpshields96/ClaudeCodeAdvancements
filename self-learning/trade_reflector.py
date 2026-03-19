@@ -20,6 +20,13 @@ Patterns detected:
 4. Edge erosion — Rolling window edge_pct trend
 5. Sizing inefficiency — Actual vs. Kelly-optimal comparison
 
+Schema mapping (polybot.db actual -> trade_reflector internal):
+- strategy (not strategy_name)
+- result: 'yes'='win', 'no'='loss' (not 'win'/'loss')
+- timestamp: REAL epoch (hour derived via strftime, no hour_utc column)
+- price_cents: entry price in cents (not entry_price_cents)
+- cost_usd: cost in dollars (not cost_basis_cents)
+
 Usage:
     from trade_reflector import TradeReflector
     with TradeReflector("/path/to/kalshi_bot.db") as tr:
@@ -48,6 +55,11 @@ P_VALUE_THRESHOLD = 0.10
 
 VALID_SEVERITIES = {"info", "warning", "critical"}
 VALID_ACTIONS = {"monitor", "parameter_adjust", "strategy_pause", "investigation"}
+
+# DB result value mapping: polybot.db uses 'yes'/'no', we map to 'win'/'loss' internally
+RESULT_WIN = "yes"
+RESULT_LOSS = "no"
+RESULT_VALUES = (RESULT_WIN, RESULT_LOSS)
 
 
 def _wilson_ci(n, k, z=1.96):
@@ -198,14 +210,14 @@ class TradeReflector:
         """Count trades, optionally filtered by strategy.
 
         Args:
-            strategy: if provided, only count trades with this strategy_name
+            strategy: if provided, only count trades with this strategy
 
         Returns:
             int count
         """
         if strategy:
             row = self._conn.execute(
-                "SELECT COUNT(*) FROM trades WHERE strategy_name = ?",
+                "SELECT COUNT(*) FROM trades WHERE strategy = ?",
                 (strategy,)).fetchone()
         else:
             row = self._conn.execute("SELECT COUNT(*) FROM trades").fetchone()
@@ -214,7 +226,7 @@ class TradeReflector:
     def _get_strategies(self):
         """Get list of distinct strategy names."""
         rows = self._conn.execute(
-            "SELECT DISTINCT strategy_name FROM trades WHERE strategy_name IS NOT NULL"
+            "SELECT DISTINCT strategy FROM trades WHERE strategy IS NOT NULL"
         ).fetchall()
         return [r[0] for r in rows]
 
@@ -228,7 +240,7 @@ class TradeReflector:
 
         Returns:
             If strategy specified: dict with drift analysis, or None if insufficient data.
-            If strategy is None: dict of {strategy_name: drift_result}
+            If strategy is None: dict of {strategy: drift_result}
         """
         if strategy is None:
             strategies = self._get_strategies()
@@ -241,11 +253,11 @@ class TradeReflector:
                     results[s] = None
             return results
 
-        # Get all win/loss trades for this strategy, ordered by created_at
+        # Get all settled trades for this strategy, ordered by created_at
         rows = self._conn.execute(
-            "SELECT result FROM trades WHERE strategy_name = ? AND result IN ('win', 'loss') "
+            "SELECT result FROM trades WHERE strategy = ? AND result IN (?, ?) "
             "ORDER BY created_at ASC",
-            (strategy,)
+            (strategy, RESULT_WIN, RESULT_LOSS)
         ).fetchall()
 
         total = len(rows)
@@ -260,8 +272,8 @@ class TradeReflector:
         if len(historical) < 5 or len(recent) < 5:
             return None
 
-        hist_wins = sum(1 for r in historical if r[0] == "win")
-        recent_wins = sum(1 for r in recent if r[0] == "win")
+        hist_wins = sum(1 for r in historical if r[0] == RESULT_WIN)
+        recent_wins = sum(1 for r in recent if r[0] == RESULT_WIN)
 
         hist_wr = hist_wins / len(historical)
         recent_wr = recent_wins / len(recent)
@@ -287,18 +299,20 @@ class TradeReflector:
     def time_of_day_analysis(self):
         """Group trades by hour, identify statistically significant biases.
 
-        Requires hour_utc column. Uses chi-squared test.
+        Derives hour from timestamp (REAL epoch) via strftime. Uses chi-squared test.
 
         Returns:
             dict with by_hour stats and chi-squared test, or None if
-            insufficient data or missing column.
+            insufficient data or missing timestamp column.
         """
-        if "hour_utc" not in self._columns:
+        if "timestamp" not in self._columns:
             return None
 
         rows = self._conn.execute(
-            "SELECT hour_utc, result FROM trades WHERE result IN ('win', 'loss') "
-            "AND hour_utc IS NOT NULL"
+            "SELECT CAST(strftime('%H', timestamp, 'unixepoch') AS INTEGER) as hour_utc, "
+            "result FROM trades WHERE result IN (?, ?) "
+            "AND timestamp IS NOT NULL",
+            RESULT_VALUES
         ).fetchall()
 
         if len(rows) < MIN_TIME_OF_DAY:
@@ -360,8 +374,9 @@ class TradeReflector:
             dict with runs test results, or None if insufficient data.
         """
         rows = self._conn.execute(
-            "SELECT result FROM trades WHERE result IN ('win', 'loss') "
-            "ORDER BY created_at ASC"
+            "SELECT result FROM trades WHERE result IN (?, ?) "
+            "ORDER BY created_at ASC",
+            RESULT_VALUES
         ).fetchall()
 
         results = [r[0] for r in rows]
@@ -369,11 +384,10 @@ class TradeReflector:
             return None
 
         n = len(results)
-        n1 = sum(1 for r in results if r == "win")   # wins
+        n1 = sum(1 for r in results if r == RESULT_WIN)   # wins
         n2 = n - n1                                     # losses
 
         if n1 == 0 or n2 == 0:
-            # All same result — can't compute runs test
             return {
                 "total_trades": n,
                 "wins": n1,
@@ -415,13 +429,13 @@ class TradeReflector:
             if results[i] == results[i - 1]:
                 current_streak += 1
             else:
-                if results[i - 1] == "win":
+                if results[i - 1] == RESULT_WIN:
                     longest_win = max(longest_win, current_streak)
                 else:
                     longest_loss = max(longest_loss, current_streak)
                 current_streak = 1
         # Don't forget the last streak
-        if results[-1] == "win":
+        if results[-1] == RESULT_WIN:
             longest_win = max(longest_win, current_streak)
         else:
             longest_loss = max(longest_loss, current_streak)
@@ -493,35 +507,37 @@ class TradeReflector:
     def sizing_efficiency(self):
         """Compare actual sizing vs. Kelly-optimal.
 
-        Requires cost_basis_cents and entry_price_cents columns, plus
-        enough win/loss data to estimate true win probability.
+        Uses price_cents (entry price) and cost_usd (cost in dollars).
+        Converts cost_usd to cents internally for calculations.
 
         Returns:
             dict with sizing analysis, or None if insufficient data or
             missing columns.
         """
-        required = {"cost_basis_cents", "entry_price_cents"}
+        required = {"price_cents", "cost_usd"}
         if not required.issubset(set(self._columns)):
             return None
 
         rows = self._conn.execute(
-            "SELECT result, cost_basis_cents, entry_price_cents FROM trades "
-            "WHERE result IN ('win', 'loss') "
-            "AND cost_basis_cents IS NOT NULL AND entry_price_cents IS NOT NULL"
+            "SELECT result, cost_usd, price_cents FROM trades "
+            "WHERE result IN (?, ?) "
+            "AND cost_usd IS NOT NULL AND price_cents IS NOT NULL",
+            RESULT_VALUES
         ).fetchall()
 
         if len(rows) < MIN_SIZING:
             return None
 
-        wins = sum(1 for r in rows if r[0] == "win")
+        wins = sum(1 for r in rows if r[0] == RESULT_WIN)
         n = len(rows)
         win_prob = wins / n
 
         # Kelly fraction: f* = (bp - q) / b
         # For binary contracts: b = (100 - avg_entry_price) / avg_entry_price
-        # where entry_price is in cents (0-100 range)
+        # price_cents is already in 0-100 range
         avg_entry = sum(r[2] for r in rows) / n
-        avg_cost = sum(r[1] for r in rows) / n
+        # Convert cost_usd to cents for consistency
+        avg_cost = sum(r[1] * 100 for r in rows) / n
 
         if avg_entry <= 0 or avg_entry >= 100:
             return None

@@ -2,8 +2,14 @@
 """
 Tests for trade_reflector.py — MT-10 Phase 3A: Kalshi trade pattern analysis.
 
-TDD: These tests define the expected behavior BEFORE implementation.
-Target: 40+ tests covering all 5 statistical detectors + proposal generation.
+Schema matches real polybot.db:
+- strategy (not strategy_name)
+- result: 'yes' (win) / 'no' (loss)
+- timestamp: REAL epoch
+- price_cents: entry price 1-99
+- cost_usd: cost in dollars
+- edge_pct: REAL
+- created_at: REAL epoch
 """
 
 import json
@@ -17,20 +23,19 @@ import unittest
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch
 
-# Add parent to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-def _create_test_db(trades=None, include_edge=True, include_hour=True,
-                    include_cost=True, include_entry_price=True):
-    """Create a temporary SQLite DB with a trades table.
+def _create_test_db(trades=None, include_edge=True, include_timestamp=True,
+                    include_cost=True, include_price=True):
+    """Create a temporary SQLite DB matching real polybot.db schema.
 
     Args:
         trades: list of dicts with trade data. If None, creates empty DB.
         include_edge: whether to include edge_pct column
-        include_hour: whether to include hour_utc column
-        include_cost: whether to include cost_basis_cents column
-        include_entry_price: whether to include entry_price_cents column
+        include_timestamp: whether to include timestamp column
+        include_cost: whether to include cost_usd column
+        include_price: whether to include price_cents column
 
     Returns:
         path to temp DB file
@@ -42,22 +47,23 @@ def _create_test_db(trades=None, include_edge=True, include_hour=True,
     cols = [
         "id INTEGER PRIMARY KEY AUTOINCREMENT",
         "ticker TEXT",
-        "strategy_name TEXT",
+        "strategy TEXT",
+        "side TEXT",
+        "action TEXT",
+        "count INTEGER",
         "result TEXT",
         "pnl_cents INTEGER",
-        "market_type TEXT",
-        "contracts INTEGER",
-        "side TEXT",
-        "created_at TEXT",
+        "is_paper INTEGER DEFAULT 1",
+        "created_at REAL",
     ]
+    if include_timestamp:
+        cols.append("timestamp REAL")
     if include_edge:
         cols.append("edge_pct REAL")
-    if include_hour:
-        cols.append("hour_utc INTEGER")
     if include_cost:
-        cols.append("cost_basis_cents INTEGER")
-    if include_entry_price:
-        cols.append("entry_price_cents INTEGER")
+        cols.append("cost_usd REAL")
+    if include_price:
+        cols.append("price_cents INTEGER")
 
     conn.execute(f"CREATE TABLE trades ({', '.join(cols)})")
 
@@ -74,22 +80,22 @@ def _create_test_db(trades=None, include_edge=True, include_hour=True,
     return path
 
 
-def _make_trades(n, win_rate=0.85, strategy="expiry_sniper", market_type="binary",
-                 base_edge=0.15, edge_drift=0.0, base_time=None, hour_range=(8, 22),
-                 cost_range=(200, 1000), entry_price_range=(60, 95)):
-    """Generate n synthetic trades with controllable parameters.
+def _make_trades(n, win_rate=0.85, strategy="expiry_sniper",
+                 base_edge=0.15, edge_drift=0.0, base_time=None,
+                 hour_range=(8, 22), cost_range=(2.0, 10.0),
+                 price_range=(60, 95)):
+    """Generate n synthetic trades matching real polybot.db schema.
 
     Args:
         n: number of trades
-        win_rate: probability of each trade being a win
+        win_rate: probability of each trade being a win (result='yes')
         strategy: strategy name
-        market_type: market type
         base_edge: starting edge_pct value
         edge_drift: per-trade drift to edge (negative = erosion)
-        base_time: starting datetime (default: now - n hours)
-        hour_range: (min_hour, max_hour) for hour_utc
-        cost_range: (min, max) for cost_basis_cents
-        entry_price_range: (min, max) for entry_price_cents
+        base_time: starting datetime (default: 2026-03-01 10:00 UTC)
+        hour_range: (min_hour, max_hour) for trade hour (sets timestamp accordingly)
+        cost_range: (min, max) for cost_usd in dollars
+        price_range: (min, max) for price_cents (1-99 range)
 
     Returns:
         list of trade dicts
@@ -98,31 +104,35 @@ def _make_trades(n, win_rate=0.85, strategy="expiry_sniper", market_type="binary
         base_time = datetime(2026, 3, 1, 10, 0, 0, tzinfo=timezone.utc)
 
     trades = []
-    rng = random.Random(42)  # deterministic
+    rng = random.Random(42)
 
     for i in range(n):
         is_win = rng.random() < win_rate
-        result = "win" if is_win else "loss"
+        result = "yes" if is_win else "no"
         pnl = rng.randint(50, 500) if is_win else -rng.randint(100, 800)
         edge = base_edge + (edge_drift * i)
         hour = rng.randint(*hour_range)
-        cost = rng.randint(*cost_range)
-        entry = rng.randint(*entry_price_range)
-        ts = base_time + timedelta(hours=i)
+        cost = round(rng.uniform(*cost_range), 2)
+        price = rng.randint(*price_range)
+
+        # Set timestamp with the random hour
+        ts_dt = base_time.replace(hour=min(hour, 23)) + timedelta(days=i)
+        ts_epoch = ts_dt.timestamp()
 
         trades.append({
-            "ticker": f"MARKET-{rng.randint(1000, 9999)}",
-            "strategy_name": strategy,
+            "ticker": f"KXBTC15M-{rng.randint(1000, 9999)}",
+            "strategy": strategy,
+            "side": rng.choice(["yes", "no"]),
+            "action": "buy",
+            "count": rng.randint(1, 10),
             "result": result,
             "pnl_cents": pnl,
-            "market_type": market_type,
-            "contracts": rng.randint(1, 10),
-            "side": rng.choice(["yes", "no"]),
-            "created_at": ts.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "is_paper": 1,
+            "created_at": ts_epoch,
+            "timestamp": ts_epoch,
             "edge_pct": round(edge, 4),
-            "hour_utc": hour,
-            "cost_basis_cents": cost,
-            "entry_price_cents": entry,
+            "cost_usd": cost,
+            "price_cents": price,
         })
 
     return trades
@@ -143,7 +153,6 @@ class TestTradeReflectorInit(unittest.TestCase):
         try:
             tr = TradeReflector(db_path)
             self.assertIsNotNone(tr)
-            # Verify read-only: writing should fail
             with self.assertRaises(Exception):
                 tr._conn.execute("INSERT INTO trades (ticker) VALUES ('test')")
         finally:
@@ -197,30 +206,32 @@ class TestTradeReflectorInit(unittest.TestCase):
         """TradeReflector detects which columns exist."""
         from trade_reflector import TradeReflector
         trades = _make_trades(5)
-        db_path = _create_test_db(trades, include_edge=True, include_hour=True)
+        db_path = _create_test_db(trades, include_edge=True)
         try:
             tr = TradeReflector(db_path)
             cols = tr.available_columns()
             self.assertIn("result", cols)
-            self.assertIn("strategy_name", cols)
+            self.assertIn("strategy", cols)
             self.assertIn("edge_pct", cols)
-            self.assertIn("hour_utc", cols)
+            self.assertIn("timestamp", cols)
+            self.assertIn("price_cents", cols)
+            self.assertIn("cost_usd", cols)
         finally:
             os.unlink(db_path)
 
     def test_available_columns_missing_optional(self):
         """TradeReflector handles DBs missing optional columns."""
         from trade_reflector import TradeReflector
-        trades = [{"ticker": "T", "strategy_name": "s", "result": "win",
-                    "pnl_cents": 100, "market_type": "binary", "contracts": 1,
-                    "side": "yes", "created_at": "2026-03-01T10:00:00Z"}]
-        db_path = _create_test_db(trades, include_edge=False, include_hour=False,
-                                   include_cost=False, include_entry_price=False)
+        trades = [{"ticker": "T", "strategy": "s", "result": "yes",
+                   "pnl_cents": 100, "side": "yes", "action": "buy",
+                   "count": 1, "created_at": 1709290800.0}]
+        db_path = _create_test_db(trades, include_edge=False, include_timestamp=False,
+                                  include_cost=False, include_price=False)
         try:
             tr = TradeReflector(db_path)
             cols = tr.available_columns()
             self.assertNotIn("edge_pct", cols)
-            self.assertNotIn("hour_utc", cols)
+            self.assertNotIn("timestamp", cols)
         finally:
             os.unlink(db_path)
 
@@ -231,7 +242,6 @@ class TestTradeReflectorInit(unittest.TestCase):
         try:
             tr = TradeReflector(db_path)
             tr.close()
-            # After close, operations should fail
             with self.assertRaises(Exception):
                 tr.trade_count()
         finally:
@@ -244,10 +254,9 @@ class TestWinRateDrift(unittest.TestCase):
     def test_drift_detected_when_recent_drops(self):
         """Detects significant win rate drift when recent trades underperform."""
         from trade_reflector import TradeReflector
-        # 60 historical trades at 90% win rate, then 25 recent at 60%
         good = _make_trades(60, win_rate=0.92, strategy="sniper")
         bad = _make_trades(25, win_rate=0.55, strategy="sniper",
-                           base_time=datetime(2026, 3, 10, tzinfo=timezone.utc))
+                           base_time=datetime(2026, 5, 10, tzinfo=timezone.utc))
         db_path = _create_test_db(good + bad)
         try:
             tr = TradeReflector(db_path)
@@ -257,7 +266,6 @@ class TestWinRateDrift(unittest.TestCase):
             self.assertIn("recent_win_rate", result)
             self.assertIn("wilson_ci_lower", result)
             self.assertIn("significant", result)
-            # Recent WR should be much lower
             self.assertLess(result["recent_win_rate"], result["historical_win_rate"])
         finally:
             os.unlink(db_path)
@@ -294,7 +302,7 @@ class TestWinRateDrift(unittest.TestCase):
         db_path = _create_test_db(trades)
         try:
             tr = TradeReflector(db_path)
-            result = tr.win_rate_drift()  # No strategy filter
+            result = tr.win_rate_drift()
             self.assertIsInstance(result, dict)
             self.assertIn("sniper", result)
             self.assertIn("value", result)
@@ -306,7 +314,7 @@ class TestWinRateDrift(unittest.TestCase):
         from trade_reflector import TradeReflector
         good = _make_trades(50, win_rate=0.90, strategy="s")
         bad = _make_trades(25, win_rate=0.50, strategy="s",
-                           base_time=datetime(2026, 3, 10, tzinfo=timezone.utc))
+                           base_time=datetime(2026, 5, 10, tzinfo=timezone.utc))
         db_path = _create_test_db(good + bad)
         try:
             tr = TradeReflector(db_path)
@@ -325,10 +333,9 @@ class TestTimeOfDayAnalysis(unittest.TestCase):
     def test_detects_time_bias(self):
         """Detects bias when overnight trades consistently lose."""
         from trade_reflector import TradeReflector
-        # Daytime trades: 85% WR, Overnight: 40% WR
         day_trades = _make_trades(40, win_rate=0.85, hour_range=(10, 20), strategy="s")
         night_trades = _make_trades(20, win_rate=0.35, hour_range=(0, 7), strategy="s",
-                                     base_time=datetime(2026, 3, 5, tzinfo=timezone.utc))
+                                    base_time=datetime(2026, 3, 5, tzinfo=timezone.utc))
         db_path = _create_test_db(day_trades + night_trades)
         try:
             tr = TradeReflector(db_path)
@@ -352,14 +359,15 @@ class TestTimeOfDayAnalysis(unittest.TestCase):
         finally:
             os.unlink(db_path)
 
-    def test_no_hour_column_returns_none(self):
-        """Returns None when hour_utc column doesn't exist."""
+    def test_no_timestamp_column_returns_none(self):
+        """Returns None when timestamp column doesn't exist."""
         from trade_reflector import TradeReflector
-        trades = [{"ticker": "T", "strategy_name": "s", "result": "win",
-                    "pnl_cents": 100, "market_type": "binary", "contracts": 1,
-                    "side": "yes", "created_at": "2026-03-01T10:00:00Z"}] * 60
-        db_path = _create_test_db(trades, include_hour=False, include_edge=False,
-                                   include_cost=False, include_entry_price=False)
+        trades = [{"ticker": "T", "strategy": "s", "result": "yes",
+                   "pnl_cents": 100, "side": "yes", "action": "buy",
+                   "count": 1, "created_at": 1709290800.0 + i * 3600}
+                  for i in range(60)]
+        db_path = _create_test_db(trades, include_timestamp=False, include_edge=False,
+                                  include_cost=False, include_price=False)
         try:
             tr = TradeReflector(db_path)
             result = tr.time_of_day_analysis()
@@ -376,7 +384,6 @@ class TestTimeOfDayAnalysis(unittest.TestCase):
             tr = TradeReflector(db_path)
             result = tr.time_of_day_analysis()
             self.assertIsNotNone(result)
-            # by_hour should be a dict of hour -> stats
             for hour, stats in result["by_hour"].items():
                 self.assertIn("wins", stats)
                 self.assertIn("losses", stats)
@@ -391,10 +398,9 @@ class TestStreakAnalysis(unittest.TestCase):
     def test_detects_non_random_streaks(self):
         """Detects non-random clustering when wins/losses are grouped."""
         from trade_reflector import TradeReflector
-        # 15 wins then 15 losses — clearly non-random
         wins = _make_trades(15, win_rate=1.0, strategy="s")
         losses = _make_trades(15, win_rate=0.0, strategy="s",
-                               base_time=datetime(2026, 3, 5, tzinfo=timezone.utc))
+                              base_time=datetime(2026, 4, 5, tzinfo=timezone.utc))
         db_path = _create_test_db(wins + losses)
         try:
             tr = TradeReflector(db_path)
@@ -403,7 +409,6 @@ class TestStreakAnalysis(unittest.TestCase):
             self.assertIn("runs_count", result)
             self.assertIn("expected_runs", result)
             self.assertIn("p_value", result)
-            # With 15W then 15L, runs should be very low (2)
             self.assertLessEqual(result["runs_count"], 5)
         finally:
             os.unlink(db_path)
@@ -417,8 +422,6 @@ class TestStreakAnalysis(unittest.TestCase):
             tr = TradeReflector(db_path)
             result = tr.streak_analysis()
             self.assertIsNotNone(result)
-            # p_value should not be extremely low for random data
-            # (with seed 42 this should be non-significant at 0.05)
         finally:
             os.unlink(db_path)
 
@@ -450,24 +453,24 @@ class TestStreakAnalysis(unittest.TestCase):
         finally:
             os.unlink(db_path)
 
-    def test_excludes_voids(self):
-        """Void trades are excluded from streak analysis."""
+    def test_excludes_unsettled(self):
+        """Unsettled trades (result=NULL) are excluded from streak analysis."""
         from trade_reflector import TradeReflector
         trades = _make_trades(20)
-        # Add some voids
+        # Add some unsettled trades
         for i in range(5):
+            ts = datetime(2026, 3, 15, 10 + i, tzinfo=timezone.utc).timestamp()
             trades.append({
-                "ticker": "VOID", "strategy_name": "s", "result": "void",
-                "pnl_cents": 0, "market_type": "binary", "contracts": 1,
-                "side": "yes", "created_at": f"2026-03-15T{10+i:02d}:00:00Z",
-                "edge_pct": 0.1, "hour_utc": 10 + i, "cost_basis_cents": 500,
-                "entry_price_cents": 70,
+                "ticker": "UNSETTLED", "strategy": "s", "result": None,
+                "pnl_cents": None, "side": "yes", "action": "buy",
+                "count": 1, "created_at": ts, "timestamp": ts,
+                "edge_pct": 0.1, "cost_usd": 5.0, "price_cents": 70,
             })
         db_path = _create_test_db(trades)
         try:
             tr = TradeReflector(db_path)
             result = tr.streak_analysis()
-            # Should only count win/loss, not voids
+            # Should only count yes/no results, not NULLs
             self.assertEqual(result["total_trades"], 20)
         finally:
             os.unlink(db_path)
@@ -479,7 +482,6 @@ class TestEdgeTrend(unittest.TestCase):
     def test_detects_declining_edge(self):
         """Detects declining edge when edge_pct trends downward."""
         from trade_reflector import TradeReflector
-        # edge_drift=-0.003 over 40 trades = 0.15 -> 0.03
         trades = _make_trades(40, base_edge=0.15, edge_drift=-0.003)
         db_path = _create_test_db(trades)
         try:
@@ -521,11 +523,13 @@ class TestEdgeTrend(unittest.TestCase):
     def test_no_edge_column_returns_none(self):
         """Returns None when edge_pct column doesn't exist."""
         from trade_reflector import TradeReflector
-        trades = [{"ticker": "T", "strategy_name": "s", "result": "win",
-                    "pnl_cents": 100, "market_type": "binary", "contracts": 1,
-                    "side": "yes", "created_at": "2026-03-01T10:00:00Z",
-                    "hour_utc": 10, "cost_basis_cents": 500,
-                    "entry_price_cents": 70}] * 35
+        ts_base = datetime(2026, 3, 1, 10, tzinfo=timezone.utc).timestamp()
+        trades = [{"ticker": "T", "strategy": "s", "result": "yes",
+                   "pnl_cents": 100, "side": "yes", "action": "buy",
+                   "count": 1, "created_at": ts_base + i * 3600,
+                   "timestamp": ts_base + i * 3600,
+                   "cost_usd": 5.0, "price_cents": 70}
+                  for i in range(35)]
         db_path = _create_test_db(trades, include_edge=False)
         try:
             tr = TradeReflector(db_path)
@@ -555,9 +559,8 @@ class TestSizingEfficiency(unittest.TestCase):
     def test_detects_oversizing(self):
         """Detects when actual sizing exceeds Kelly-optimal."""
         from trade_reflector import TradeReflector
-        # Create trades where cost is much higher than Kelly would suggest
-        trades = _make_trades(30, win_rate=0.60, cost_range=(800, 1200),
-                              entry_price_range=(50, 60))
+        trades = _make_trades(30, win_rate=0.60, cost_range=(8.0, 12.0),
+                              price_range=(50, 60))
         db_path = _create_test_db(trades)
         try:
             tr = TradeReflector(db_path)
@@ -582,13 +585,16 @@ class TestSizingEfficiency(unittest.TestCase):
             os.unlink(db_path)
 
     def test_no_cost_column_returns_none(self):
-        """Returns None when cost column doesn't exist."""
+        """Returns None when cost/price columns don't exist."""
         from trade_reflector import TradeReflector
-        trades = [{"ticker": "T", "strategy_name": "s", "result": "win",
-                    "pnl_cents": 100, "market_type": "binary", "contracts": 1,
-                    "side": "yes", "created_at": "2026-03-01T10:00:00Z",
-                    "edge_pct": 0.1, "hour_utc": 10}] * 25
-        db_path = _create_test_db(trades, include_cost=False, include_entry_price=False)
+        ts_base = datetime(2026, 3, 1, 10, tzinfo=timezone.utc).timestamp()
+        trades = [{"ticker": "T", "strategy": "s", "result": "yes",
+                   "pnl_cents": 100, "side": "yes", "action": "buy",
+                   "count": 1, "created_at": ts_base + i * 3600,
+                   "timestamp": ts_base + i * 3600,
+                   "edge_pct": 0.1}
+                  for i in range(25)]
+        db_path = _create_test_db(trades, include_cost=False, include_price=False)
         try:
             tr = TradeReflector(db_path)
             result = tr.sizing_efficiency()
@@ -644,15 +650,16 @@ class TestAnalyze(unittest.TestCase):
     def test_analyze_skips_detectors_missing_columns(self):
         """Analyze skips detectors when required columns are missing."""
         from trade_reflector import TradeReflector
-        trades = [{"ticker": "T", "strategy_name": "s", "result": "win",
-                    "pnl_cents": 100, "market_type": "binary", "contracts": 1,
-                    "side": "yes", "created_at": "2026-03-01T10:00:00Z"}] * 60
-        db_path = _create_test_db(trades, include_edge=False, include_hour=False,
-                                   include_cost=False, include_entry_price=False)
+        ts_base = datetime(2026, 3, 1, 10, tzinfo=timezone.utc).timestamp()
+        trades = [{"ticker": "T", "strategy": "s", "result": "yes",
+                   "pnl_cents": 100, "side": "yes", "action": "buy",
+                   "count": 1, "created_at": ts_base + i * 3600}
+                  for i in range(60)]
+        db_path = _create_test_db(trades, include_edge=False, include_timestamp=False,
+                                  include_cost=False, include_price=False)
         try:
             tr = TradeReflector(db_path)
             report = tr.analyze()
-            # Should still have sections, but with None or "skipped"
             self.assertIsNone(report["edge_trend"])
             self.assertIsNone(report["time_of_day"])
             self.assertIsNone(report["sizing"])
@@ -668,13 +675,12 @@ class TestGenerateProposals(unittest.TestCase):
         from trade_reflector import TradeReflector
         good = _make_trades(60, win_rate=0.92, strategy="sniper")
         bad = _make_trades(25, win_rate=0.45, strategy="sniper",
-                           base_time=datetime(2026, 3, 10, tzinfo=timezone.utc))
+                           base_time=datetime(2026, 5, 10, tzinfo=timezone.utc))
         db_path = _create_test_db(good + bad)
         try:
             tr = TradeReflector(db_path)
             proposals = tr.generate_proposals()
             self.assertIsInstance(proposals, list)
-            # Should have at least one proposal for the drift
             drift_proposals = [p for p in proposals if p["pattern"] == "win_rate_drift"]
             self.assertGreater(len(drift_proposals), 0)
         finally:
@@ -685,7 +691,7 @@ class TestGenerateProposals(unittest.TestCase):
         from trade_reflector import TradeReflector
         good = _make_trades(50, win_rate=0.90, strategy="s")
         bad = _make_trades(25, win_rate=0.40, strategy="s",
-                           base_time=datetime(2026, 3, 10, tzinfo=timezone.utc))
+                           base_time=datetime(2026, 5, 10, tzinfo=timezone.utc))
         db_path = _create_test_db(good + bad)
         try:
             tr = TradeReflector(db_path)
@@ -707,7 +713,7 @@ class TestGenerateProposals(unittest.TestCase):
         from trade_reflector import TradeReflector
         good = _make_trades(50, win_rate=0.90, strategy="s")
         bad = _make_trades(25, win_rate=0.40, strategy="s",
-                           base_time=datetime(2026, 3, 10, tzinfo=timezone.utc))
+                           base_time=datetime(2026, 5, 10, tzinfo=timezone.utc))
         db_path = _create_test_db(good + bad)
         try:
             tr = TradeReflector(db_path)
@@ -724,7 +730,7 @@ class TestGenerateProposals(unittest.TestCase):
         import re
         good = _make_trades(50, win_rate=0.90, strategy="s")
         bad = _make_trades(25, win_rate=0.40, strategy="s",
-                           base_time=datetime(2026, 3, 10, tzinfo=timezone.utc))
+                           base_time=datetime(2026, 5, 10, tzinfo=timezone.utc))
         db_path = _create_test_db(good + bad)
         try:
             tr = TradeReflector(db_path)
@@ -743,7 +749,6 @@ class TestGenerateProposals(unittest.TestCase):
             tr = TradeReflector(db_path)
             proposals = tr.generate_proposals()
             self.assertIsInstance(proposals, list)
-            # Healthy trades should produce zero or minimal proposals
         finally:
             os.unlink(db_path)
 
@@ -764,7 +769,7 @@ class TestGenerateProposals(unittest.TestCase):
         from trade_reflector import TradeReflector
         good = _make_trades(50, win_rate=0.92, strategy="s")
         bad = _make_trades(25, win_rate=0.40, strategy="s",
-                           base_time=datetime(2026, 3, 10, tzinfo=timezone.utc))
+                           base_time=datetime(2026, 5, 10, tzinfo=timezone.utc))
         db_path = _create_test_db(good + bad)
         try:
             tr = TradeReflector(db_path)
@@ -780,7 +785,7 @@ class TestGenerateProposals(unittest.TestCase):
         from trade_reflector import TradeReflector
         good = _make_trades(50, win_rate=0.92, strategy="s")
         bad = _make_trades(25, win_rate=0.40, strategy="s",
-                           base_time=datetime(2026, 3, 10, tzinfo=timezone.utc))
+                           base_time=datetime(2026, 5, 10, tzinfo=timezone.utc))
         db_path = _create_test_db(good + bad)
         try:
             tr = TradeReflector(db_path)
