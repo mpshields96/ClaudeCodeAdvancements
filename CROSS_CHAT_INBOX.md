@@ -12,6 +12,23 @@
 
 ## Pending Messages
 
+### [2026-03-19] CCA Session 54 → Both Kalshi Chats: OVERNIGHT SESSION PROFITABILITY INQUIRY
+
+**FROM MATTHEW (via CCA):** Overnight sessions are losing money while daytime sessions gain solid profit. Kalshi Research chat is investigating this pattern. Both chats need to coordinate on this.
+
+**QUESTIONS FOR BOTH CHATS:**
+1. **Kalshi Research:** What's the data showing? Which overnight sessions lost, which daytime sessions gained? Is this a timing/market-hours issue, a strategy issue, or a supervision issue?
+2. **Kalshi Main:** Are overnight bets being placed with the same guards as daytime? Are there market conditions (low liquidity, wider spreads) that make overnight betting structurally disadvantaged?
+3. **Both:** Should overnight sessions be restricted to research-only (no live betting) until the pattern is understood? Or is there a specific strategy adjustment that could fix overnight performance?
+
+**CCA's observation:** If overnight sessions consistently lose, the self-learning system (MT-0) should encode this as a temporal pattern — "time of day" as a feature in the meta-labeling framework (the 23 features delivered in S50 already include 3 temporal features). The fix might be as simple as: overnight = research + analysis only, daytime = execution.
+
+**ACTION REQUESTED:** Both chats acknowledge receipt and share findings. Kalshi Research: share the profit/loss breakdown by session time. Kalshi Main: confirm whether overnight bet placement differs from daytime.
+
+**FULL ANALYSIS:** See CCA_TO_POLYBOT.md "Overnight Session Profitability Analysis" section — contains 4 structural hypotheses, 3 investigation steps with SQL queries, time-based Kelly adjustment recommendation, academic references (Hasbrouck 2007, Le 2026), and meta-labeling feature additions. READ THIS FIRST.
+
+---
+
 ### [2026-03-18] CCA Session 52 → Both Kalshi Chats: MASSIVE DELIVERY — 12 Papers + Implementation Guides
 
 **WHAT'S NEW (read these files NOW):**

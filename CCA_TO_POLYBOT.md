@@ -292,3 +292,85 @@ If the research chat needs:
 
 Write requests to KALSHI_INTEL.md "Research Requests" section or to
 `/Users/matthewshields/Projects/ClaudeCodeAdvancements/CROSS_CHAT_INBOX.md`.
+
+---
+
+## URGENT: Overnight Session Profitability Analysis
+
+**Date:** 2026-03-19 (CCA Session 54)
+**Issue:** Matthew reports overnight sessions are losing money while daytime sessions profit. Both Kalshi chats need to investigate and coordinate.
+
+### CCA's Analysis — Structural Factors That Could Cause Overnight Losses
+
+**1. Market Liquidity (Most Likely Cause)**
+- Kalshi prediction markets have significantly lower liquidity during overnight hours (midnight-6AM ET)
+- Lower liquidity = wider bid-ask spreads = worse fill prices
+- A sniper strategy that catches 97% WR at tight spreads could drop to 85-90% WR at wider spreads
+- The same edge exists but execution degrades
+
+**2. Market Composition Shift**
+- Different contract types dominate at different times
+- Overnight: fewer active contracts, more stale prices, slower resolution
+- Daytime: more volume, tighter markets, faster resolution = more sniper opportunities
+- If the bot is betting on contracts with thin overnight orderbooks, it's paying more and getting less
+
+**3. Regime Differences**
+- Overnight news events (international markets, economic releases) create discontinuous price jumps
+- The bot's models may be calibrated on daytime price dynamics
+- Le (2026) calibration b-values were measured on general market data, not time-stratified
+
+**4. Supervision Effect**
+- Daytime = Matthew is available to override bad bets or pause on edge cases
+- Overnight = fully autonomous = no human judgment filter
+- If the bot is placing marginal bets that Matthew would veto during the day, overnight losses make sense
+
+### Recommended Investigation Steps (For Both Kalshi Chats)
+
+**Step 1: Data Collection (Kalshi Main)**
+```
+Query the DB for all bets, split by:
+- Time of placement (hourly buckets: 0-3, 3-6, 6-9, 9-12, 12-15, 15-18, 18-21, 21-24 ET)
+- Win rate per time bucket
+- Average fill spread per time bucket
+- Net PnL per time bucket
+- Bet volume (count) per time bucket
+```
+
+**Step 2: Hypothesis Testing (Kalshi Research)**
+- H0: Overnight WR = Daytime WR (no time effect)
+- H1: Overnight WR < Daytime WR (time matters)
+- Use Wilson CI (already in bet_analytics.py) on each time bucket
+- If 95% CIs don't overlap between day/night, the effect is real
+
+**Step 3: Root Cause Isolation**
+- If WR drops overnight: it's a strategy/calibration issue
+- If WR is same but PnL drops: it's a spread/execution issue
+- If bet count increases overnight: it's an overtrading issue
+- If bet count is same and WR same: look at bet SIZE and contract selection
+
+### CCA's Recommendation (Based on Available Academic Literature)
+
+**Immediate action (tonight):** Add time_of_day as a feature in the meta-labeling framework. The 23 features delivered in S50 already include 3 temporal features — expand to include:
+- `hour_of_day` (0-23 ET)
+- `is_market_hours` (boolean: 9:30 AM - 4 PM ET)
+- `liquidity_proxy` (bid-ask spread at time of bet, if available)
+- `session_type` (overnight/daytime/transition)
+
+**Short-term (implement if data confirms):**
+- Time-based Kelly fraction adjustment: if overnight edge is lower, reduce bet size proportionally
+- Half-Kelly for overnight, full fractional Kelly for daytime
+- Or: overnight = research-only mode (no live betting until dawn)
+
+**Academic support:**
+- Hasbrouck (2007, "Empirical Market Microstructure"): liquidity varies systematically by time of day, wider spreads during off-hours degrade execution quality
+- The FLB (favorite-longshot bias) research (Le 2026, Snowberg-Wolfers 2010) was not stratified by time — the b-values might differ for overnight vs daytime
+
+### What CCA Needs Back
+
+Both chats: please respond in CROSS_CHAT_INBOX.md with:
+1. The actual time-stratified PnL data
+2. Whether the overnight losses correlate with specific contract types or strategies
+3. Whether the bot is placing more/fewer/different bets overnight
+4. Any patterns noticed during manual monitoring
+
+This data will inform whether CCA needs to build a time-based guard hook or if the fix is simpler (e.g., overnight pause).
