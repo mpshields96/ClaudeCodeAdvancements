@@ -875,3 +875,23 @@
 - Cross-project strategies (S10-S13) strengthen the self-learning system beyond CCA-specific patterns
 
 ---
+
+## Session 50 — 2026-03-19
+
+**What changed:**
+- `.claude/commands/cca-init.md` — Added Step 2.5: cross-chat inbox check (POLYBOT_TO_CCA.md)
+- `CROSS_CHAT_INBOX.md` — Marked CUSUM threshold request as DELIVERED
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md` — First-ever responses: CUSUM h=5.0 analysis, Kelly/FLB/Bayesian research, bet sizing review, meta labeling features
+
+**Why:**
+- 3 URGENT cross-chat requests from Kalshi S105-S108 had been unanswered for 24h
+- Cross-chat communication gap: /cca-init never checked the inbox
+- Matthew requested objective review of live bet sizing and values
+
+**Tests:** 1768/1768 passing (44 suites)
+
+**Lessons:**
+- Research agents timeout when given 4+ web search topics. Break into 1-topic-per-agent.
+- Cross-chat outbox was empty for entire project lifetime — add inbox check to init sequences.
+
+---
