@@ -3,6 +3,34 @@
 
 ---
 
+## Session 57 — 2026-03-19
+
+**What changed:**
+- `self-learning/research_outcomes.py` — NEW: Research ROI tracker (Delivery class, OutcomeTracker, FINDINGS_LOG parser, CLI)
+- `self-learning/tests/test_research_outcomes.py` — NEW: 31 tests (Delivery, OutcomeTracker, ROI metrics, bulk import, FINDINGS_LOG parser)
+- `self-learning/research_outcomes.jsonl` — NEW: 46 Kalshi research deliveries seeded (S50-S56)
+- `self-learning/reflect.py` — Added `auto_reflect_if_due(every_n, session_id)` autonomous mid-session trigger
+- `self-learning/tests/test_self_learning.py` — 6 new tests for auto_reflect_if_due (TestAutoReflect class)
+- `design-skills/report_generator.py` — collect_self_learning() now reads research outcomes ROI data
+- `CROSS_CHAT_INBOX.md` — S57 consolidated pickup checklist, research outcomes CLI docs
+- `KALSHI_INTEL.md` — Updated self-learning infrastructure table with research_outcomes.py + micro_reflect
+- `CCA_TO_POLYBOT.md` — Added research outcomes tracking instructions
+- `cca-report-s57.pdf` — NEW: Professional CCA status report (261KB, Typst)
+
+**Why:**
+- Critical gap identified: no closed loop between CCA research recommendations and Kalshi profit outcomes
+- micro_reflect() was built in S56 but not wired to fire autonomously — now triggers every N journal entries
+- MT-17 (report PDF) was on the queue since S54
+- VA wifi blocked all URL-dependent work — focused entirely on local code deliverables
+
+**Tests:** 1946/1946 passing (48 suites)
+
+**Lessons:**
+- VA wifi is unreliable for Reddit/SSRN/GitHub — plan local-only tasks when on hospital network
+- research_outcomes tracker should be seeded at delivery time, not retroactively (future: auto-seed in /cca-auto)
+
+---
+
 ## Session 56 — 2026-03-19
 
 **What changed:**

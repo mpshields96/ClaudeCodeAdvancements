@@ -15,6 +15,12 @@
 # When you see profit/loss from it:
 #   python3 ... update <id> --status profitable --profit-cents 500
 # Run 'python3 .../research_outcomes.py pending' to see what's waiting.
+#
+# HOTSPOT PRIORITY SWITCH (S57 — Matthew directive):
+# When Matthew says "hotspot is on" — ALL chats should reprioritize to
+# network-dependent tasks: deep-reading Reddit NEEDLEs, SSRN paper fetches,
+# GitHub trending scans, any URL-dependent work. VA hospital wifi blocks these.
+# On wifi: focus on local code work, analysis, self-learning, documentation.
 
 ---
 
