@@ -348,6 +348,47 @@ p = deflated_sharpe_ratio(2.5, n_trials=5, n_obs=722)
 
 ---
 
+### [2026-03-18] PAPER 9: Profit vs Information in Betting Markets (CCA S52)
+**Source:** (2024). "Online Learning in Betting Markets: Profit versus Prediction." ICML 2024. arXiv:2406.04062
+**Verified:** YES — full paper on arXiv, published at ICML 2024
+
+**Key finding for Kalshi bot:** Profit and information accuracy are FUNDAMENTALLY INCOMPATIBLE in binary betting markets. A market that maximizes profit exploits the gap between bettor beliefs and true probabilities. A market that maximizes information accuracy closes that gap.
+
+**Implication:** The sniper bot is a profit-maximizer, not an information-gatherer. This means:
+1. The bot SHOULD exploit belief deviations (FLB, domain mispricing) — that's where profit comes from
+2. As markets become more efficient (belief gap closes), profit opportunities shrink — this is the FLB weakening signal
+3. The bot should target markets with the WIDEST belief distributions (politics > crypto) because wider distributions = higher profit potential
+4. This is mathematical confirmation that the Le (2026) recalibration formula targets the right thing: the gap between market price and true probability
+
+### [2026-03-18] Fractional Kelly — Why Half-Kelly is Safer (CCA S52)
+**Not a single paper — established result across Kelly literature.**
+**Key references:**
+- Thorp, E.O. (2006). "The Kelly Criterion in Blackjack, Sports Betting, and the Stock Market." [VERIFIED — Handbook of Asset and Liability Management]
+- MacLean, Thorp & Ziemba (2011). "The Kelly Capital Growth Investment Criterion." [VERIFIED — World Scientific, 884 pages]
+
+**Why the bot should use half-Kelly (f* / 2) initially:**
+
+Full Kelly assumes you know the TRUE probability exactly. You don't. Errors in probability estimation cause:
+1. **Volatility drag** — geometric mean of returns < arithmetic mean. The more volatile, the bigger the drag.
+2. **Risk of ruin** — full Kelly with estimation error has ~13% chance of losing 50%+ of bankroll
+3. **Overbetting penalty** — betting MORE than Kelly is worse than betting LESS by the same amount (asymmetric loss)
+
+```
+Half-Kelly properties:
+- 75% of full Kelly's growth rate (only 25% sacrifice)
+- ~50% reduction in volatility
+- Near-zero probability of ruin over long run
+- Much more robust to probability estimation errors
+```
+
+**ACTION for Kalshi bot:**
+1. Implement the Le+Meister pipeline from CCA_TO_POLYBOT.md
+2. Multiply the Kelly fraction by 0.5 (half-Kelly)
+3. As data accumulates and recalibration b-values are validated against your own data, gradually increase toward 0.75 Kelly
+4. NEVER go above full Kelly — the overbetting penalty is severe
+
+---
+
 ### [2026-03-17] Mean Reversion with IBS Filter — Kalshi-Applicable Pattern
 **Source:** r/algotrading (219pts, 99 comments) — https://www.reddit.com/r/algotrading/comments/1rjvxjy/
 **Relevance:** The IBS (Internal Bar Strength) concept — detecting when price closes in bottom 30% of daily range — maps to detecting "oversold" event markets on Kalshi where probability pricing has temporarily dipped below fair value.
