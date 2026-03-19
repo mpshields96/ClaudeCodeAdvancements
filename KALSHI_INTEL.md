@@ -40,6 +40,8 @@ All code lives in `/Users/matthewshields/Projects/ClaudeCodeAdvancements/self-le
 | QualityGate | `improver.py` | Geometric mean scoring (Nash 1950). Any zero metric tanks composite score. Prevents Goodhart's Law gaming. |
 | Improvement Proposals | `improver.py` | Auto-generates improvement proposals from trace patterns. Risk classification: LOW/MEDIUM/HIGH. |
 | Strategy Tuning | `strategy.json` | Bounded parameter tuning with safety rails. Min sample N=20 before auto-adjustment. |
+| **Research ROI Tracker** | `research_outcomes.py` | **NEW (S57)** Tracks which CCA deliveries get implemented and whether they produce profit. Closes the research-to-profit feedback loop. |
+| Mid-Session Reflection | `reflect.py` → `micro_reflect()` | **NEW (S56)** Lightweight mid-session pattern detection — catches failure streaks before wrap |
 
 ### How to Adopt
 
