@@ -68,6 +68,17 @@
           }
         ]
       }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/context-monitor/hooks/post_compact.py"
+          }
+        ]
+      }
     ]
   },
   "permissions": {

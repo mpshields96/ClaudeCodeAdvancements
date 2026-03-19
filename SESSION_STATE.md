@@ -3,40 +3,23 @@
 
 ---
 
-## Current State (as of Session 52 — 2026-03-18)
+## Current State (as of Session 54 — 2026-03-19)
 
-**Phase:** Session 52 COMPLETE. Tests: 1768/1768 passing (44 suites). Git: 15 commits.
+**Phase:** Session 54 IN PROGRESS. Tests: 1796/1796 passing (45 suites). Git: 5 commits so far.
 **What's done this session:**
-1. **Nuclear academic paper scan — 12 papers found, deep-read, and delivered:**
-   - Paper 1: Meister (2024) Kelly for prediction markets — f*=(Q-P)/(1+Q)
-   - Paper 2: Whelan (2025) Multi-outcome Kelly — negative-EV hedging
-   - Paper 3: Black-Scholes for prediction markets (2025) — belief-volatility surface
-   - Paper 4: Arbitrage detection (2025) — $40M realized profits
-   - Paper 5: Le (2026) expanded — 6 domains x 2 horizons b-values
-   - Paper 6: Multinomial Kelly (2026, arXiv:2603.13581) — closed-form multi-outcome Kelly
-   - Paper 7: E-values — anytime-valid monitoring (upgrade for SPRT)
-   - Paper 8: Deflated Sharpe Ratio (Bailey & Lopez de Prado 2014) — overfitting protection
-   - Paper 9: Profit vs Information (ICML 2024) — incompatibility theorem
-   - Paper 10: Fractional Kelly — half-Kelly safety properties
-   - Paper 11: Polymarket wash trading (Columbia 2025) — 25% volume inflation
-   - Paper 12: CPCV (Lopez de Prado 2018) — proper financial ML backtesting
-   - Paper 13: Bayesian Online Changepoint Detection (Adams & MacKay 2007 + Altamirano 2023)
-2. **Combined recalibration + Kelly implementation guide** in CCA_TO_POLYBOT.md
-3. **Political market expansion research** — b=1.83 = 5-13x more mispriced than crypto
-4. **All 3 KALSHI_INTEL.md research requests** upgraded to FOUND
-5. **Cross-chat notification** updated for fresh Kalshi chats (12 papers + implementation guides)
-6. **CCA dual mission** clarified by Matthew: 50% Kalshi financial + 50% CCA self-improvement (YoYo, frontiers, personal projects). Updated LEARNINGS.md + memory.
-7. **Frontier 1 reconnaissance**: GitHub #27298 layered memory feature request reviewed — 4 community implementations found (mnemon, OMEGA with 95.4% LongMemEval, cogmemai-mcp, claude-memory). 81% token reduction via slim index + on-demand topic files.
-8. **Structural completeness**: /arewedone shows 7/7 modules complete, 0 stubs, 0 errors
+1. **CTX-7: PostCompact hook BUILT** — fires after context compaction, resets state, writes recovery digest, logs to self-learning journal. 28 tests. Wired into settings.local.json (10th live hook).
+2. **Overnight profitability analysis** — wrote comprehensive time-of-day investigation to CCA_TO_POLYBOT.md and KALSHI_INTEL.md. 4 structural hypotheses (liquidity, composition, regime, supervision), 4 academic sources (U-shaped spread pattern, 42% liquidity reduction, Whelan 2025 maker-taker, shock processing), time_adjusted_kelly() implementation, meta-labeling temporal features, investigation steps for both Kalshi chats.
+3. **Report generator v2** — data collector: per-MT phase tracking, session highlights, frontier status, priority queue, remaining/gap analysis. Template: table of contents, Five Frontiers page, expanded MT cards with phase progress bars, priority queue visualization. (Matthew deprioritized finishing this — code committed but PDF generation deferred.)
+4. **Cross-chat coordination** — CROSS_CHAT_INBOX.md updated with overnight profitability inquiry flagged as urgent for both Kalshi chats.
 
-**Matthew directives (S51+S52, permanent):**
+**Matthew directives (S51-S54, permanent):**
 - ROI = make money. Financial, not philosophical.
-- CCA makes itself smarter technologically AND makes Kalshi bot smarter financially
-- Self-learning for Kalshi = optimize for profit, compounding passive income
+- CCA dual mission: 50% Kalshi financial support + 50% self-improvement
+- Overnight profitability is highest priority after PostCompact (S54 directive)
 - Auto-execute advancement tips, no auditor MT, surgical fixes
-- CCA dual mission: 50% Kalshi financial support + 50% self-improvement as dev tool (YoYo, frontiers, personal projects)
+- Self-learning for Kalshi = optimize for profit, compounding passive income
 
-**Next:** (1) BUILD: PostCompact hook for context-monitor (new CC feature, immediate value). (2) Kalshi chats process 12 papers + implement recalibration+Kelly pipeline. (3) Frontier 1: Adapt OMEGA patterns (type taxonomy, decay, contradiction detection) into memory-system. (4) Trigger-table optimization for spec-system skill_activator.py. (5) MT-9 Phase 3: deep-read remaining NEEDLEs.
+**Next:** (1) Adapt OMEGA patterns (type taxonomy, decay, contradiction detection) into memory-system (Frontier 1). (2) Trigger-table optimization for spec-system skill_activator.py. (3) MT-9 Phase 3: deep-read remaining NEEDLEs. (4) Kalshi chats investigate time-stratified PnL data. (5) PostCompact hook live testing (will auto-fire on next compaction).
 
 ---
 

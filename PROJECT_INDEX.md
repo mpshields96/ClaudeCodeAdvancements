@@ -28,7 +28,7 @@
 |--------|------|--------|-------|
 | Memory System | `memory-system/` | MEM-1-5 COMPLETE | 94 |
 | Spec System | `spec-system/` | SPEC-1-6 COMPLETE | 90 |
-| Context Monitor | `context-monitor/` | CTX-1-6 + Session Pacer | 232 |
+| Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 260 |
 | Agent Guard | `agent-guard/` | AG-1-7 COMPLETE | 264 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 196 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 263 |
@@ -36,7 +36,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 121 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 1768 tests (44 suites). All must pass before any work.**
+**Total: 1796 tests (45 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -59,6 +59,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `hooks/alert.py` — PreToolUse warn/block at red/critical
 - `hooks/auto_handoff.py` — Stop hook: blocks exit at critical
 - `hooks/compact_anchor.py` — PostToolUse anchor writes
+- `hooks/post_compact.py` — CTX-7: PostCompact recovery + journal logging
 - `auto_wrap.py` — CTX-6: Automatic session wrap trigger
 - `session_pacer.py` — Session pacing for 2-3h autonomous runs (CONTINUE/WRAP_SOON/WRAP_NOW)
 
@@ -123,6 +124,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | UserPromptSubmit | `spec-system/hooks/skill_activator.py` | Skill auto-activation |
 | UserPromptSubmit | `self-learning/hooks/skillbook_inject.py` | Strategy injection |
 | Stop | `context-monitor/hooks/auto_handoff.py` | Block exit at critical |
+| PostCompact | `context-monitor/hooks/post_compact.py` | Recovery + journal logging |
 
 ---
 
