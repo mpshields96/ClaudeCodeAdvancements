@@ -36,7 +36,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 1897 tests (46 suites). All must pass before any work.**
+**Total: 1900 tests (46 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
