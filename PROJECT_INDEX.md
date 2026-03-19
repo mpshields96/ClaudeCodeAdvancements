@@ -91,6 +91,11 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `templates/cca-report.typ` — Status report Typst template
 - `templates/cca-slides.typ` — Presentation slide Typst template
 - `dashboard_generator.py` — Self-contained HTML dashboard generator
+- `chart_generator.py` — SVG chart generation (bar, line, sparkline, donut)
+
+**research/** — R&D and tools
+- `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)
+- `xcode_build.py` — MT-13: Python xcodebuild wrapper
 
 **self-learning/** — Cross-session improvement
 - `journal.py` — Structured event journal (JSONL)
