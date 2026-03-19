@@ -297,6 +297,15 @@
 
 ---
 
+### Inline doc updates eliminate wrap overhead — Severity: 1 — Count: 1
+- **Anti-pattern:** Deferring all doc updates (SESSION_STATE, CHANGELOG, PROJECT_INDEX) to wrap step, creating a large batch update at end of session when context may be tight
+- **Fix:** Update docs inline after each task commit. Wrap step then only needs to verify + minor additions. Session 48 had all docs current before wrap started — wrap was a 2-minute verification instead of a 15-minute rewrite.
+- **First seen:** 2026-03-18 (Session 48)
+- **Last seen:** 2026-03-18
+- **Files:** SESSION_STATE.md, CHANGELOG.md, PROJECT_INDEX.md
+
+---
+
 ### r/ClaudeAI classifier too loose — 76% NEEDLE rate — Severity: 1 — Count: 1
 - **Anti-pattern:** nuclear_fetcher.classify_post returns NEEDLE for praise posts, memes, and off-topic discussions on r/ClaudeAI
 - **Fix:** Needs r/ClaudeAI-specific keyword tuning in profiles.py, similar to S3 needle_ratio_cap for r/investing

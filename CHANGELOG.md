@@ -20,7 +20,7 @@
 - Live data parsing means `/cca-dashboard` shows real project state, not demo data
 
 **Tests:** 1686/1686 passing (42 suites) — +68 tests (+2 suites)
-**Commits:** 7
+**Commits:** 8
 
 **Lessons:**
 - Session pacer + auto_wrap.py = objective pacing stack; no more guessing "am I at 60%?"
