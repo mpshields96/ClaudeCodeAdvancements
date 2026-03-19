@@ -3,23 +3,27 @@
 
 ---
 
-## Current State (as of Session 51 — 2026-03-19)
+## Current State (as of Session 52 — 2026-03-18)
 
-**Phase:** Session 51 COMPLETE. Tests: 1768/1768 passing (44 suites). Git: 3 commits.
+**Phase:** Session 52 IN PROGRESS. Tests: 1768/1768 passing (44 suites). Git: clean at start.
 **What's done this session:**
-1. OctagonAI/kalshi-deep-trading-bot full source code evaluation (signal gen, bet sizing, guards)
-   - Verdict: 73/100 code quality, 25/100 strategy (LLM-as-edge is anti-pattern)
-   - Written to CCA_TO_POLYBOT.md for Kalshi chats
-2. CROSS_CHAT_INBOX.md cleared — all 3 Kalshi Research S108 requests marked COMPLETE
-3. MT-9 Phase 3: autonomous scan trial 2/3 on r/ClaudeCode (8 NEEDLEs from 25 posts, 0 blocked)
-4. Confirmed S50 deliveries: meta labeling 23 features, parameter changes, research outcomes table
-5. Le (2026) calibration paper deep-read — MONEY-MAKING FORMULA delivered to Kalshi chats:
-   - Recalibration: true_prob = p^b / (p^b + (1-p)^b)
-   - Crypto b=1.03 (near-perfect, small edge), Politics b=1.31-1.83 (MASSIVE underpricing)
-   - Political favorites at 90c are truly 94% → 4pp edge (vs 0.3pp for crypto)
-   - NEW PILLAR 3 OPPORTUNITY: political market sniper (5-13x more mispriced than crypto)
-6. FLB weakening signal from Whelan CEPR VoxEU column — delivered as monitoring alert
-7. Prime Directive reinforcement: ROI = make money, told both Kalshi chats explicitly
+1. Nuclear academic paper scan — 5 NEW papers found and deep-read:
+   - Meister (2024): Kelly criterion for prediction markets — optimal bet fraction formula f*=(Q-P)/(1+Q)
+   - Whelan (2025): Multi-outcome Kelly with negative-EV hedging — more aggressive than independent Kelly
+   - Black-Scholes for prediction markets (2025): logit jump-diffusion, belief-volatility surface
+   - Arbitrage in prediction markets (2025): $40M realized arb profits on Polymarket, detection methods
+   - Le (2026) expanded: full domain b-value table (6 domains x 2 horizons), trade-size scale effect
+2. Combined recalibration + Kelly implementation guide written to CCA_TO_POLYBOT.md
+   - Two-step pipeline: Le recalibrate -> Meister Kelly fraction -> optimal bet size
+   - Domain-specific b values table with Python implementation
+   - Validation protocol before production deployment
+3. KALSHI_INTEL.md updated with all 5 papers + political market expansion feasibility assessment
+4. Political market expansion research complete:
+   - b=1.83 for politics (long-horizon) confirmed = 5-13x more mispriced than crypto
+   - Kalshi $2.7B/week total volume, political markets are major category
+   - FLB weakening signal confirmed (2025 psi coefficient smaller, less significant)
+   - Recommendation: validate b=1.83 against bot's own data, then add political sniper at $5 max/bet
+5. Market microstructure research request upgraded to FOUND (Black-Scholes paper)
 
 **Matthew directives (S51, permanent):**
 - ROI = make money. Financial, not philosophical.
@@ -27,7 +31,21 @@
 - Self-learning for Kalshi = optimize for profit, compounding passive income
 - Auto-execute advancement tips, no auditor MT, surgical fixes
 
-**Next:** (1) Kalshi chats implement recalibration formula in bet_analytics.py. (2) Explore political market expansion (Pillar 3). (3) MT-9 Phase 3: deep-read NEEDLEs. (4) MT-13 Phase 3: deferred to after profit-focused work.
+**Next:** (1) Kalshi chats process KALSHI_INTEL.md findings and implement recalibration+Kelly. (2) MT-9 Phase 3: deep-read NEEDLEs. (3) MT-13 Phase 3: deferred. (4) Search for more papers on E-values (anytime-valid sequential testing) for continuous monitoring.
+
+---
+
+## What Was Done in Session 51 (2026-03-19)
+
+1. OctagonAI/kalshi-deep-trading-bot full source code evaluation (signal gen, bet sizing, guards)
+   - Verdict: 73/100 code quality, 25/100 strategy (LLM-as-edge is anti-pattern)
+   - Written to CCA_TO_POLYBOT.md for Kalshi chats
+2. CROSS_CHAT_INBOX.md cleared — all 3 Kalshi Research S108 requests marked COMPLETE
+3. MT-9 Phase 3: autonomous scan trial 2/3 on r/ClaudeCode (8 NEEDLEs from 25 posts, 0 blocked)
+4. Confirmed S50 deliveries: meta labeling 23 features, parameter changes, research outcomes table
+5. Le (2026) calibration paper deep-read — recalibration formula delivered to Kalshi chats
+6. FLB weakening signal from Whelan CEPR VoxEU column — delivered as monitoring alert
+7. Prime Directive reinforcement: ROI = make money, told both Kalshi chats explicitly
 
 ---
 

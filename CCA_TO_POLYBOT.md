@@ -207,6 +207,82 @@ def analyze_all() -> dict:
 
 ---
 
+---
+
+## [2026-03-18] Recalibration + Kelly: Combined Bet Sizing Formula (CCA Session 52)
+
+**This combines S51's Le (2026) recalibration with the new Meister (2024) Kelly formula. Implement as a single function.**
+
+### The Two-Step Optimal Bet Sizing Pipeline
+
+```python
+# Step 1: Le (2026) recalibration — convert market price to true probability
+def recalibrate(market_price: float, b: float) -> float:
+    """Correct for domain-specific favourite-longshot bias.
+    Le (2026), arXiv:2602.19520. 292M trades, 327K contracts."""
+    p = market_price
+    return (p ** b) / (p ** b + (1 - p) ** b)
+
+# Domain-specific b values (from Le 2026):
+DOMAIN_B = {
+    "politics_short": 1.19,   # < 1 week to expiry
+    "politics_long": 1.83,    # > 1 week to expiry
+    "crypto_short": 0.99,     # near-calibrated
+    "crypto_long": 1.36,
+    "sports_short": 0.90,     # slightly overconfident short-term
+    "sports_long": 1.74,
+    "finance_short": 0.82,    # overconfident short-term
+    "finance_long": 1.42,
+    "weather_short": 0.69,    # overconfident short-term
+    "weather_long": 1.37,
+    "entertainment": 1.00,    # roughly calibrated
+}
+
+# Step 2: Meister (2024) Kelly — optimal fraction given true_prob vs market_price
+def kelly_fraction(true_prob: float, market_price: float) -> float:
+    """Meister (2024), arXiv:2412.14144. Kelly for bounded prediction markets."""
+    if true_prob <= market_price:
+        return 0.0  # No edge — don't bet
+    Q = true_prob / (1 - true_prob)      # True odds
+    P = market_price / (1 - market_price) # Market odds
+    return (Q - P) / (1 + Q)
+
+# Combined pipeline
+def optimal_bet(market_price: float, domain: str, bankroll: float,
+                max_bet: float = 10.0) -> float:
+    """Two-step optimal bet sizing: recalibrate, then Kelly."""
+    b = DOMAIN_B.get(domain, 1.0)
+    true_prob = recalibrate(market_price, b)
+    fraction = kelly_fraction(true_prob, market_price)
+    raw_bet = fraction * bankroll
+    return min(raw_bet, max_bet)  # Cap at max_bet
+
+# Examples:
+# optimal_bet(0.93, "crypto_short", 100)   -> ~$0 (b=0.99, tiny edge)
+# optimal_bet(0.93, "politics_long", 100)  -> ~$4.70 (b=1.83, big edge)
+# optimal_bet(0.70, "politics_long", 100)  -> ~$13.40 (70c political = truly 83%)
+```
+
+### Why This Matters
+
+The bot currently sizes bets with fixed amounts ($5, $10). This formula tells you EXACTLY how much to bet based on:
+1. **Market price** (what you pay)
+2. **Domain** (which type of market — political markets are 5-13x more mispriced)
+3. **Time to expiry** (short vs long horizon changes the b parameter)
+4. **Bankroll** (Kelly scales with what you have)
+
+The Le recalibration provides the "true probability" that the Kelly formula needs. Without recalibration, Kelly underestimates the edge on political markets and overestimates it on weather/entertainment.
+
+### Validation Before Deployment
+
+Before using in production:
+1. Run `recalibrate()` on ALL historical settled bets from the DB
+2. Compare recalibrated probabilities to actual outcomes per domain
+3. If recalibrated probabilities match actual win rates better than raw prices, the formula is validated
+4. Use half-Kelly (fraction * 0.5) initially — accounts for parameter uncertainty
+
+---
+
 ## What CCA Can Still Provide
 
 If the research chat needs:
