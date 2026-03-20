@@ -348,5 +348,44 @@ class TestConvenienceFunction(unittest.TestCase):
             os.unlink(tmpfile.name)
 
 
+class TestGitContextIntegration(unittest.TestCase):
+    """Test git history integration in reviews."""
+
+    def test_review_includes_git_metrics(self):
+        """Review of a real CCA file should include git metrics."""
+        cca_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        result = review_file(
+            os.path.join(cca_root, "agent-guard", "senior_review.py"),
+            project_root=cca_root,
+        )
+        self.assertIn("git_commits", result["metrics"])
+        self.assertIn("git_high_churn", result["metrics"])
+        self.assertGreater(result["metrics"]["git_commits"], 0)
+
+    def test_review_has_last_changed_suggestion(self):
+        """Review should include a suggestion with last commit info."""
+        cca_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        result = review_file(
+            os.path.join(cca_root, "agent-guard", "senior_review.py"),
+            project_root=cca_root,
+        )
+        last_changed = [s for s in result["suggestions"] if "Last changed" in s]
+        self.assertGreater(len(last_changed), 0)
+
+    def test_non_git_file_has_zero_git_commits(self):
+        """A temp file outside git should have 0 git commits."""
+        import tempfile
+        tmpdir = tempfile.mkdtemp()
+        try:
+            path = os.path.join(tmpdir, "test.py")
+            with open(path, "w") as f:
+                f.write('"""Module."""\ndef foo():\n    return 42\n')
+            result = review_file(path, project_root=tmpdir)
+            self.assertEqual(result["metrics"].get("git_commits", 0), 0)
+        finally:
+            import shutil
+            shutil.rmtree(tmpdir)
+
+
 if __name__ == "__main__":
     unittest.main()

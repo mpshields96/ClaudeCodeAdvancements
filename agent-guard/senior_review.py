@@ -32,6 +32,7 @@ from effort_scorer import EffortScorer
 from coherence_checker import CoherenceChecker, ImportDependencyCheck
 from fp_filter import FPFilter
 from adr_reader import ADRReader
+from git_context import GitContext
 
 # Code file extensions we perform deep analysis on
 _CODE_EXTENSIONS = {
@@ -218,6 +219,27 @@ class SeniorReview:
             except Exception:
                 pass  # ADR check is advisory, never blocks
 
+        # 7. Git history context
+        git_history = None
+        git_churn = False
+        git_commit_count = 0
+        if self.project_root and os.path.isdir(self.project_root):
+            try:
+                git = GitContext(self.project_root)
+                if git.is_git_repo:
+                    # Get relative path for git commands
+                    abs_path = os.path.abspath(file_path)
+                    abs_root = os.path.abspath(self.project_root)
+                    if abs_path.startswith(abs_root):
+                        rel_path = os.path.relpath(abs_path, abs_root)
+                    else:
+                        rel_path = file_path
+                    git_history = git.file_history(rel_path, max_commits=5)
+                    git_commit_count = git_history.total_commits
+                    git_churn = git.is_high_churn(rel_path)
+            except Exception:
+                pass  # Git context is advisory, never blocks
+
         # Build metrics dict
         metrics = {
             "loc": loc,
@@ -233,6 +255,8 @@ class SeniorReview:
             "blast_files": blast_radius.get("files", []),
             "fp_confidence": fp_confidence,
             "relevant_adrs": len(relevant_adrs),
+            "git_commits": git_commit_count,
+            "git_high_churn": git_churn,
         }
 
         # Generate concerns from analysis
@@ -310,6 +334,19 @@ class SeniorReview:
             concerns.append(
                 f"Review effort: {effort_result.label} ({effort_result.score}/5). "
                 f"{effort_result.complexity} complexity markers suggest high cognitive load."
+            )
+
+        # Git history concerns
+        if git_churn:
+            concerns.append(
+                f"High churn file ({git_commit_count} commits). Frequently changed files "
+                f"are higher risk — extra care with testing and review."
+            )
+        if git_history and git_history.commits:
+            last_commit = git_history.commits[0]
+            suggestions.append(
+                f"Last changed {last_commit.date} by {last_commit.author}: "
+                f"{last_commit.summary}"
             )
 
         # Generate suggestions based on dimension scores
