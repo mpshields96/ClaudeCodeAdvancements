@@ -20,6 +20,7 @@ from coherence_checker import (
     CoherenceChecker,
     ModuleStructureCheck,
     PatternConsistencyCheck,
+    ImportDependencyCheck,
     CoherenceReport,
     check_coherence,
 )
@@ -124,6 +125,76 @@ class TestPatternConsistencyCheck(unittest.TestCase):
         ])
         naming_issues = [i for i in issues if "naming" in i.lower() or "camel" in i.lower()]
         self.assertTrue(len(naming_issues) > 0)
+
+
+class TestImportDependencyCheck(unittest.TestCase):
+    """Test import dependency graph building."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def _write_file(self, name, content):
+        path = os.path.join(self.tmpdir, name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(content)
+        return path
+
+    def test_detects_local_imports(self):
+        self._write_file("core.py", '"""Core."""\n\ndef process():\n    pass\n')
+        self._write_file("handler.py", 'from core import process\n\ndef handle():\n    process()\n')
+        checker = ImportDependencyCheck()
+        graph = checker.build_graph([
+            os.path.join(self.tmpdir, "core.py"),
+            os.path.join(self.tmpdir, "handler.py"),
+        ])
+        # handler depends on core
+        self.assertIn("core", graph.get("handler.py", {}).get("imports", []))
+
+    def test_finds_dependents(self):
+        self._write_file("utils.py", '"""Utils."""\n\ndef helper():\n    pass\n')
+        self._write_file("a.py", 'from utils import helper\n')
+        self._write_file("b.py", 'import utils\n')
+        checker = ImportDependencyCheck()
+        files = [
+            os.path.join(self.tmpdir, "utils.py"),
+            os.path.join(self.tmpdir, "a.py"),
+            os.path.join(self.tmpdir, "b.py"),
+        ]
+        graph = checker.build_graph(files)
+        dependents = checker.find_dependents("utils", graph)
+        self.assertIn("a.py", dependents)
+        self.assertIn("b.py", dependents)
+
+    def test_no_deps_returns_empty(self):
+        self._write_file("standalone.py", '"""Solo."""\n\nx = 1\n')
+        checker = ImportDependencyCheck()
+        graph = checker.build_graph([os.path.join(self.tmpdir, "standalone.py")])
+        self.assertEqual(graph["standalone.py"]["imports"], [])
+
+    def test_stdlib_imports_excluded(self):
+        self._write_file("mod.py", 'import os\nimport sys\nimport json\n\nx = 1\n')
+        checker = ImportDependencyCheck()
+        graph = checker.build_graph([os.path.join(self.tmpdir, "mod.py")])
+        # os, sys, json are stdlib — should not appear as local imports
+        self.assertEqual(graph["mod.py"]["imports"], [])
+
+    def test_blast_radius_output(self):
+        self._write_file("base.py", '"""Base."""\n')
+        self._write_file("child1.py", 'from base import something\n')
+        self._write_file("child2.py", 'import base\n')
+        checker = ImportDependencyCheck()
+        files = [
+            os.path.join(self.tmpdir, f) for f in ["base.py", "child1.py", "child2.py"]
+        ]
+        graph = checker.build_graph(files)
+        blast = checker.blast_radius("base", graph)
+        self.assertEqual(blast["direct_dependents"], 2)
+        self.assertIn("child1.py", blast["files"])
+        self.assertIn("child2.py", blast["files"])
 
 
 class TestCoherenceReport(unittest.TestCase):

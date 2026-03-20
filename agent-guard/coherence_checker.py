@@ -162,6 +162,124 @@ class PatternConsistencyCheck:
         return issues
 
 
+# Common stdlib module names — not exhaustive, but covers the vast majority
+_STDLIB_MODULES = {
+    "abc", "argparse", "ast", "asyncio", "base64", "bisect", "builtins",
+    "calendar", "cgi", "cmd", "codecs", "collections", "colorsys",
+    "configparser", "contextlib", "copy", "csv", "ctypes", "curses",
+    "dataclasses", "datetime", "decimal", "difflib", "dis", "email",
+    "enum", "errno", "faulthandler", "fileinput", "fnmatch", "fractions",
+    "ftplib", "functools", "gc", "getpass", "gettext", "glob", "gzip",
+    "hashlib", "heapq", "hmac", "html", "http", "imaplib", "importlib",
+    "inspect", "io", "ipaddress", "itertools", "json", "keyword",
+    "linecache", "locale", "logging", "lzma", "math", "mimetypes",
+    "multiprocessing", "operator", "os", "pathlib", "pdb", "pickle",
+    "platform", "pprint", "profile", "pstats", "py_compile",
+    "queue", "random", "re", "readline", "reprlib", "resource",
+    "runpy", "sched", "secrets", "select", "shelve", "shlex", "shutil",
+    "signal", "site", "smtplib", "socket", "sqlite3", "ssl", "stat",
+    "statistics", "string", "struct", "subprocess", "sys", "sysconfig",
+    "syslog", "tempfile", "test", "textwrap", "threading", "time",
+    "timeit", "token", "tokenize", "trace", "traceback", "tracemalloc",
+    "turtle", "types", "typing", "unicodedata", "unittest", "urllib",
+    "uuid", "venv", "warnings", "weakref", "webbrowser", "xml",
+    "xmlrpc", "zipfile", "zipimport", "zlib",
+}
+
+# Import patterns (allow leading whitespace for imports inside try/except/if blocks)
+_IMPORT_PATTERN = re.compile(r"^\s*import\s+(\S+)", re.MULTILINE)
+_FROM_IMPORT_PATTERN = re.compile(r"^\s*from\s+(\S+)\s+import", re.MULTILINE)
+
+
+class ImportDependencyCheck:
+    """Builds import dependency graph and computes blast radius."""
+
+    def build_graph(self, file_paths: list) -> dict:
+        """Build a dependency graph from Python files.
+
+        Args:
+            file_paths: List of .py file paths.
+
+        Returns:
+            Dict mapping basename -> {"path": str, "imports": [module_names]}.
+            Only local (non-stdlib) imports are included.
+        """
+        # Collect known local module names from file basenames
+        local_modules = set()
+        for fp in file_paths:
+            basename = os.path.basename(fp)
+            if basename.endswith(".py"):
+                local_modules.add(basename[:-3])  # strip .py
+
+        graph = {}
+        for fp in file_paths:
+            basename = os.path.basename(fp)
+            if not basename.endswith(".py"):
+                continue
+
+            try:
+                with open(fp, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+            except (OSError, IOError):
+                continue
+
+            # Extract all imports
+            imports = set()
+            for match in _IMPORT_PATTERN.findall(content):
+                mod_name = match.split(".")[0]
+                if mod_name not in _STDLIB_MODULES and mod_name in local_modules:
+                    imports.add(mod_name)
+
+            for match in _FROM_IMPORT_PATTERN.findall(content):
+                mod_name = match.split(".")[0]
+                if mod_name not in _STDLIB_MODULES and mod_name in local_modules:
+                    imports.add(mod_name)
+
+            # Don't count self-imports
+            self_name = basename[:-3]
+            imports.discard(self_name)
+
+            graph[basename] = {
+                "path": fp,
+                "imports": sorted(imports),
+            }
+
+        return graph
+
+    def find_dependents(self, module_name: str, graph: dict) -> list:
+        """Find all files that import a given module.
+
+        Args:
+            module_name: Module name (without .py extension).
+            graph: Dependency graph from build_graph().
+
+        Returns:
+            List of file basenames that depend on this module.
+        """
+        dependents = []
+        for basename, data in graph.items():
+            if module_name in data.get("imports", []):
+                dependents.append(basename)
+        return sorted(dependents)
+
+    def blast_radius(self, module_name: str, graph: dict) -> dict:
+        """Compute blast radius for changing a module.
+
+        Args:
+            module_name: Module name (without .py).
+            graph: Dependency graph.
+
+        Returns:
+            Dict with direct_dependents count and list of affected files.
+        """
+        dependents = self.find_dependents(module_name, graph)
+        return {
+            "module": module_name,
+            "direct_dependents": len(dependents),
+            "files": dependents,
+        }
+
+
 class CoherenceChecker:
     """Orchestrates all coherence checks across a project."""
 
