@@ -3,6 +3,33 @@
 
 ---
 
+## Session 70 — 2026-03-20
+
+**What changed (Desktop chat — 3 parallel chats this session):**
+- `usage-dashboard/doc_drift_checker.py` — NEW: Automated doc accuracy verification (30 tests). AST-counts tests per module, compares to PROJECT_INDEX + ROADMAP claims.
+- `queue_injector.py` — NEW: UserPromptSubmit cross-chat context injection hook (19 tests).
+- `queue_hook.py` — NEW: Unified PostToolUse + UserPromptSubmit queue check hook (22 tests). Replaces queue_injector with faster dual-event design. 30s throttle on PostToolUse.
+- `cca_hivemind.py` — NEW: Multi-chat orchestrator (22 tests). Session detection, queue directives, AppleScript Terminal injection, dynamic window discovery, safety guards.
+- `tests/test_queue_injector.py`, `tests/test_queue_hook.py`, `tests/test_hivemind.py`, `usage-dashboard/tests/test_doc_drift.py` — NEW test suites.
+- `.github/workflows/tests.yml` — FIXED: doc_drift_checker wired correctly (was using nonexistent --exit-code flag).
+- `PROJECT_INDEX.md` — UPDATED: test counts, new file listings, hook table.
+- `ROADMAP.md` — UPDATED: test counts synced to reality, S69-S70 session entries added.
+
+**Why:**
+- Senior dev gap #4 (doc drift prevention) — ROADMAP was 43 sessions stale before S68 manual fix. Now automated.
+- Cross-chat communication gap — Kalshi chats never saw CCA findings because no notification mechanism existed.
+- Hivemind infrastructure — Matthew wants 3 chats working in coordinated unison on single projects.
+
+**Tests:** 2563/2563 passing (63 suites)
+
+**Lessons:**
+- Doc drift checker should run at every /cca-wrap, not just in CI
+- AppleScript Terminal injection works but needs accessibility permissions enabled first
+- Window indices are ephemeral — must re-discover before each ping
+- 3 parallel chats are viable on Max 5 if all stay in inline mode (no agent spawns)
+
+---
+
 ## Session 67 — 2026-03-19
 
 **What changed:**
