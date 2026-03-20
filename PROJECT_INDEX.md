@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-20 (Session 72)
+# Last updated: 2026-03-20 (Session 74)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -33,7 +33,7 @@
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker + hook_profiler | 259 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 526 |
-| Design Skills | `design-skills/` | MT-17 Phase 5 COMPLETE (website_generator) | 163 |
+| Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
 **Total: 2980 tests (73 suites). All must pass before any work.**
@@ -108,6 +108,8 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `templates/cca-slides.typ` — Presentation slide Typst template
 - `dashboard_generator.py` — Self-contained HTML dashboard generator
 - `chart_generator.py` — SVG chart generation (bar, line, sparkline, donut)
+- `website_generator.py` — Landing page + docs page HTML generator (665 LOC)
+- `daily_snapshot.py` — Daily project metric snapshots with diff support (474 LOC, 50 tests)
 
 **root/** — Loop hardening + coordination
 - `resume_generator.py` — cca-loop hardening: auto-generate SESSION_RESUME.md from SESSION_STATE when stale (17 tests)

@@ -445,3 +445,17 @@
 - **First seen:** 2026-03-20
 - **Last seen:** 2026-03-20
 - **Files:** tests/test_loop_health.py (converted), any future test file
+
+### Built-but-not-wired modules — Severity: 1 — Count: 1
+- **Anti-pattern:** Building a monitoring/tracking module (loop_health.record_session) but never calling it from the lifecycle it's supposed to track (cca-loop). Result: health dashboard shows "No data" despite the module being complete and tested.
+- **Fix:** When building a tracking/monitoring module, the LAST step before commit must be verifying the call site exists. Check: "Where does this get called in production?" If nowhere — it's not done.
+- **First seen:** 2026-03-20
+- **Last seen:** 2026-03-20
+- **Files:** loop_health.py (record_session), ~/.local/bin/cca-loop
+
+### Shared skills need role-awareness for hivemind — Severity: 1 — Count: 1
+- **Anti-pattern:** /cca-wrap, /cca-init, /cca-auto all assume single-chat mode. In hivemind, workers running these update shared docs (SESSION_STATE, PROJECT_INDEX) causing file conflicts.
+- **Fix:** Add hivemind mode check to every shared skill. Workers (CCA_CHAT_ID=cli1/cli2) skip shared doc updates and send summaries via cca_comm.py instead.
+- **First seen:** 2026-03-20
+- **Last seen:** 2026-03-20
+- **Files:** ~/.claude/commands/cca-wrap.md, cca-init.md, cca-auto.md

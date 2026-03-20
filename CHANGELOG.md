@@ -3,6 +3,31 @@
 
 ---
 
+## Session 74 (Desktop cli3) — 2026-03-20
+
+**What changed:**
+- Goal #1 COMPLETE: cca-loop production-ready for daytime supervised use
+- `cca-loop` wired `loop_health.record_session()` — health tracking was built but never called
+- `/cca-init`, `/cca-auto`, `/cca-wrap` all made hivemind-aware (workers skip shared doc updates)
+- `cca_internal_queue.py` upgraded: 2 -> 4 chat IDs (desktop, cli1, cli2, terminal)
+- `cca_hivemind.py` rewritten: stable window IDs for AppleScript injection
+- `cca_comm.py` (NEW, 18 tests) — 9-command communication wrapper for hivemind
+- `daily_snapshot.py` (NEW, 50 tests) — point-in-time project metric captures with diff
+- Full tool authorization directive saved to memory
+
+**Why:**
+- Matthew's directive: ship cca-loop as production-ready tonight
+- Concurrent /cca-wrap was a safety gap for hivemind (workers would corrupt shared docs)
+- Health recording was wired but never called — cca-loop history showed empty data
+
+**Tests:** 3030/3030 passing (75 suites)
+
+**Lessons:**
+- When building for hivemind, every shared skill (/cca-wrap, /cca-init, /cca-auto) needs role-awareness
+- Health tracking modules are useless if never called from the lifecycle they track
+
+---
+
 ## Session 72 — 2026-03-20
 
 **What changed (3-chat hivemind sprint — MT-20 Senior Dev Agent MVP):**
