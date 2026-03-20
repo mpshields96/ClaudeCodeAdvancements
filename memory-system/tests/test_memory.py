@@ -556,6 +556,133 @@ class TestTypeTTL(unittest.TestCase):
         self.assertGreaterEqual(ttl, 30)
 
 
+class TestUserPromptSubmitHandler(unittest.TestCase):
+    """Tests for UserPromptSubmit real-time memory capture."""
+
+    def _make_input(self, prompt, cwd="/Users/matt/Projects/TestProject"):
+        return {
+            "hook_event_name": "UserPromptSubmit",
+            "prompt": prompt,
+            "cwd": cwd,
+        }
+
+    def test_remember_that_captures_memory(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input("Remember that we always use TDD before writing any production code")
+        result = ch.handle_user_prompt_submit(inp, store=store)
+        self.assertIn("additionalContext", result)
+        self.assertIn("Saved", result["additionalContext"])
+        memories = store.list_all()
+        self.assertTrue(len(memories) > 0)
+        self.assertEqual(memories[0]["confidence"], "HIGH")
+        store.close()
+
+    def test_always_use_captures_memory(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input("always use stdlib-first approach for all new modules")
+        result = ch.handle_user_prompt_submit(inp, store=store)
+        self.assertIn("additionalContext", result)
+        memories = store.list_all()
+        self.assertTrue(len(memories) > 0)
+        store.close()
+
+    def test_never_do_captures_memory(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input("never modify files outside the project directory")
+        result = ch.handle_user_prompt_submit(inp, store=store)
+        self.assertIn("additionalContext", result)
+        memories = store.list_all()
+        self.assertTrue(len(memories) > 0)
+        store.close()
+
+    def test_rule_colon_captures_memory(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input("rule: all hooks must fail silently with valid JSON")
+        result = ch.handle_user_prompt_submit(inp, store=store)
+        self.assertIn("additionalContext", result)
+        store.close()
+
+    def test_non_negotiable_captures_memory(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input("non-negotiable: commit working code before risky changes")
+        result = ch.handle_user_prompt_submit(inp, store=store)
+        self.assertIn("additionalContext", result)
+        store.close()
+
+    def test_normal_prompt_no_capture(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input("Can you help me fix this bug in the parser?")
+        result = ch.handle_user_prompt_submit(inp, store=store)
+        self.assertEqual(result, {})
+        self.assertEqual(store.count(), 0)
+        store.close()
+
+    def test_short_prompt_no_capture(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input("ok")
+        result = ch.handle_user_prompt_submit(inp, store=store)
+        self.assertEqual(result, {})
+        store.close()
+
+    def test_credential_in_memory_blocked(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input("remember that the API key is sk-ant-api03-secretkey12345678901234")
+        result = ch.handle_user_prompt_submit(inp, store=store)
+        self.assertEqual(store.count(), 0)
+        store.close()
+
+    def test_dedup_against_existing(self):
+        store = MemoryStore(":memory:")
+        store.create_memory(
+            content="we always use TDD before writing any production code",
+            tags=["type:preference", "testing"],
+            confidence="HIGH",
+            source="explicit",
+            project="testproject",
+        )
+        inp = self._make_input("Remember that we always use TDD before writing any production code")
+        result = ch.handle_user_prompt_submit(inp, store=store)
+        # Should dedup — no new memory written
+        self.assertEqual(store.count(), 1)
+        store.close()
+
+    def test_source_is_realtime(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input("remember that hooks must never crash the CLI process")
+        ch.handle_user_prompt_submit(inp, store=store)
+        memories = store.list_all()
+        self.assertTrue(len(memories) > 0)
+        self.assertEqual(memories[0]["source"], "realtime")
+        store.close()
+
+    def test_project_slug_used(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input(
+            "remember that this project uses FTS5 for search",
+            cwd="/Users/matt/Projects/ClaudeCodeAdvancements"
+        )
+        ch.handle_user_prompt_submit(inp, store=store)
+        memories = store.list_all(project="claudecodeadvancements")
+        self.assertEqual(len(memories), 1)
+        store.close()
+
+    def test_empty_prompt_no_crash(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_input("")
+        result = ch.handle_user_prompt_submit(inp, store=store)
+        self.assertEqual(result, {})
+        store.close()
+
+    def test_cap_at_3_per_prompt(self):
+        store = MemoryStore(":memory:")
+        # Craft a prompt with many remember-that triggers
+        lines = [f"remember that rule number {i} is very important for the project" for i in range(10)]
+        inp = self._make_input(". ".join(lines))
+        ch.handle_user_prompt_submit(inp, store=store)
+        self.assertLessEqual(store.count(), 3)
+        store.close()
+
+
 class TestSchemaVersion(unittest.TestCase):
     def test_schema_version_is_2_0(self):
         self.assertEqual(ch.SCHEMA_VERSION, "2.0")

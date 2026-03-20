@@ -234,6 +234,144 @@ def handle_post_tool_use(hook_input: dict) -> dict:
     return {}
 
 
+# ── UserPromptSubmit Handler ──────────────────────────────────────────────────
+
+def handle_user_prompt_submit(hook_input: dict, store: MemoryStore | None = None) -> dict:
+    """
+    Real-time memory capture from user prompts.
+    Detects 'remember that', 'always use', 'never do', 'rule:', 'non-negotiable:'
+    and writes to FTS5 MemoryStore immediately — available within the same session.
+
+    Args:
+        hook_input: Hook event payload with 'prompt' and 'cwd' fields.
+        store: Optional MemoryStore instance (for testing). If None, opens default.
+    """
+    prompt = hook_input.get("prompt", "")
+    cwd = hook_input.get("cwd", "")
+    project = _project_slug(cwd)
+
+    if not prompt or len(prompt) < 15:
+        return {}
+
+    # Extract explicit memory candidates from the prompt
+    candidates = _extract_from_prompt(prompt, project)
+    if not candidates:
+        return {}
+
+    # Open store (default or injected for tests)
+    own_store = store is None
+    if own_store:
+        try:
+            store = MemoryStore()
+        except Exception:
+            return {}  # Fail silently
+
+    try:
+        existing = store.list_all(project=project, limit=500)
+        new_count = 0
+
+        for candidate in candidates:
+            content = candidate["content"]
+            mem_type = candidate["type"]
+            tags = candidate["tags"]
+
+            # Dedup against existing
+            dupes = find_duplicates(content, existing)
+            if dupes:
+                continue
+
+            # Write to FTS5 store
+            ttl = get_ttl_days(mem_type, candidate["confidence"])
+            created = store.create_memory(
+                content=content,
+                tags=tags,
+                confidence=candidate["confidence"],
+                source=candidate["source"],
+                context=f"type:{mem_type}",
+                project=project,
+                ttl_days=ttl,
+            )
+            existing.append(created)
+            new_count += 1
+
+        if new_count > 0:
+            return {
+                "additionalContext": (
+                    f"[memory-system] Saved {new_count} real-time "
+                    f"{'memory' if new_count == 1 else 'memories'} "
+                    f"from user prompt."
+                )
+            }
+
+    except Exception:
+        pass  # Fail silently — hooks must never crash the CLI
+    finally:
+        if own_store and store is not None:
+            store.close()
+
+    return {}
+
+
+def _extract_from_prompt(prompt: str, project: str) -> list[dict]:
+    """
+    Parse a user prompt for explicit memory instructions.
+    Same patterns as transcript parsing but operates on raw prompt text.
+    Returns list of candidate dicts. Capped at 3 per prompt (speed).
+    """
+    explicit_patterns = [
+        re.compile(r"remember (that |this |):?\s*(.{15,200})", re.IGNORECASE),
+        re.compile(r"always (use|do|prefer|run|start|check)\s+(.{10,150})", re.IGNORECASE),
+        re.compile(r"never (use|do|touch|modify)\s+(.{10,150})", re.IGNORECASE),
+        re.compile(r"rule:\s*(.{10,200})", re.IGNORECASE),
+        re.compile(r"non-negotiable:\s*(.{10,200})", re.IGNORECASE),
+    ]
+
+    memories = []
+    used_spans = []  # Track character ranges already captured
+
+    for pattern in explicit_patterns:
+        for match in pattern.finditer(prompt):
+            # Skip if this match overlaps with an already-captured span
+            start, end = match.start(), match.end()
+            if any(s <= start < e or s < end <= e for s, e in used_spans):
+                continue
+
+            captured = match.group(match.lastindex).strip()
+            # Trim at sentence boundary if present
+            dot_pos = captured.find(".")
+            if dot_pos > 15:
+                captured = captured[:dot_pos]
+
+            if _contains_credentials(captured):
+                continue
+
+            validated = _validate_memory_params(captured, "preference", "HIGH")
+            if not validated:
+                continue
+            content, mem_type, confidence = validated
+
+            # Skip if too similar to something already captured
+            if any(_content_similarity(content, m["content"]) >= 0.6
+                   for m in memories):
+                continue
+
+            used_spans.append((start, end))
+            tags = _build_tags(mem_type, _infer_tags(content))
+            memories.append({
+                "content": content,
+                "type": mem_type,
+                "tags": tags,
+                "confidence": confidence,
+                "source": "realtime",
+                "project": project,
+            })
+
+            if len(memories) >= 3:
+                return memories
+
+    return memories
+
+
 # ── Stop Hook Handler ─────────────────────────────────────────────────────────
 
 def handle_stop(hook_input: dict, store: MemoryStore | None = None) -> dict:
@@ -509,6 +647,8 @@ def main() -> None:
 
     if event == "PostToolUse":
         result = handle_post_tool_use(hook_input)
+    elif event == "UserPromptSubmit":
+        result = handle_user_prompt_submit(hook_input)
     elif event == "Stop":
         result = handle_stop(hook_input)
     else:
