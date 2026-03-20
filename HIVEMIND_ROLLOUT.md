@@ -34,8 +34,10 @@ Proven = multiple sessions of successful, non-buggy coordinated output.
 | hivemind_session_validator.py | 170 | 17 | Desktop-side cycle validation + Phase 1 gate tracking |
 | hivemind_metrics.py | 149 | 20 | Phase 1 validation metrics persistence (built by cli1 worker) |
 | test_hivemind_deep.py | ~600 | 117 | Deep coverage: shutdown, collisions, stress, edge cases |
+| chat_detector.py | ~200 | 31 | Duplicate session detection, pre-launch checks, terminal close (S91) |
+| crash_recovery.py | ~180 | 15 | Orphaned scope detection + auto-release after worker crash (S91) |
 
-**Total: ~2,834 LOC, 336 tests, all passing.**
+**Total: ~3,214 LOC, 382 tests, all passing.**
 
 ### What's Been Proven
 
@@ -48,10 +50,10 @@ Proven = multiple sessions of successful, non-buggy coordinated output.
 ### What Has NOT Been Proven
 
 1. ~~**Sustained 2-chat operation** — S72 was a single sprint.~~ **S90: First validated live test PASS. Queue-based task cycle proven.**
-2. **Error recovery** — What happens when a CLI chat crashes mid-scope-claim?
+2. ~~**Error recovery** — What happens when a CLI chat crashes mid-scope-claim?~~ **S91: crash_recovery.py built — orphaned scope detection + auto-release. Needs live test.**
 3. ~~**Queue reliability under real load** — Only ~20 messages have ever gone through.~~ **S89-90: 117 deep tests + live queue cycle proven.**
 4. ~~**AppleScript injection reliability**~~ **S90: launch_worker.sh opens Terminal tab, worker starts autonomously.**
-5. **Worker productivity** — Overhead ratio not yet measured across multiple sessions.
+5. ~~**Worker productivity** — Overhead ratio not yet measured across multiple sessions.~~ **S91: Worker multi-task loop + keep-busy fallback. Needs live test.**
 
 ---
 
