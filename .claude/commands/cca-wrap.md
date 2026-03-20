@@ -165,6 +165,34 @@ Domain mapping: use the most relevant domain from the valid list:
 If the session had no clear losses: log at least one win. If the session was a D grade:
 log at least one pain. This ensures every session contributes data.
 
+### 6a.6 — Persist wrap assessment
+
+Log the self-assessment from Step 2 to the wrap tracker for cross-session trend analysis:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 wrap_tracker.py log [SESSION_NUMBER] [GRADE] \
+    --wins [WIN_BULLET_1] [WIN_BULLET_2] ... \
+    --losses [LOSS_BULLET_1] ... \
+    --tests [TOTAL_TEST_COUNT]
+```
+
+This creates a persistent record of session quality trends. Use the grade and
+win/loss bullets from Step 2 verbatim. The test count should be the total from Step 1.
+
+### 6a.7 — Extract and persist advancement tips
+
+Scan the conversation for any "Advancement tip:" lines output during this session.
+For each tip found, log it:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 tip_tracker.py add "[TIP_TEXT]" --source cca-desktop --session S[SESSION_NUMBER]
+```
+
+If no tips were generated this session (unlikely — every response should end with one),
+skip silently. This ensures all tips persist across sessions rather than being lost.
+
 ### 6b — Run reflection to detect patterns
 
 ```bash

@@ -50,6 +50,21 @@ Also check if CCA_TO_POLYBOT.md has unread responses that need attention.
 
 ---
 
+## Step 2.7 — Check wrap trend and pending tips
+
+Show session quality trend and any pending advancement tips:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 wrap_tracker.py trend 2>/dev/null
+python3 tip_tracker.py pending 2>/dev/null | head -10
+```
+
+If wrap trend shows "declining", flag it prominently in the briefing.
+If there are pending tips, include the top 3 under "PENDING TIPS:" in the briefing.
+
+---
+
 ## Step 3 — Surface relevant findings (resurfacer)
 
 After reading SESSION_STATE.md (Step 1), determine the current work context:
