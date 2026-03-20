@@ -5,13 +5,13 @@
 
 ## Current State (as of Session 78 — 2026-03-20)
 
-**Phase:** Session 78 IN PROGRESS. Tests: 74 suites passing. Git: clean after Phase 9 foundation commit.
+**Phase:** Session 78 COMPLETE. Tests: 74 suites passing. Git: clean (7 commits this session).
 
 **What was done this session (S78):**
-- **MT-20 Phase 7 COMPLETE** — `/senior-review` on-demand code review skill. Built `senior_review.py` engine (orchestrates SATD + quality scorer + effort scorer into APPROVE/CONDITIONAL/RETHINK verdicts) + `/senior-review` slash command. 16 new tests.
-- **MT-20 Phase 9 FOUNDATION** — `coherence_checker.py` built. Module structure check (tests dir, CLAUDE.md per module) + cross-file pattern consistency (docstring presence, naming convention uniformity). Auto-discovers modules. 13 new tests. Integrated into senior_review.py.
-- **End-to-end validation** — Ran `/senior-review` against 3 real CCA files. Engine works correctly. Known refinement needed: SATD false positives in detector files (fp_filter integration for future session).
-- **Memory documented** — S78 slow-build directive saved. Senior dev gap memory updated (Phases 6-7 done, Phase 9 started).
+- **MT-20 Phase 7 COMPLETE** — `/senior-review` on-demand code review skill. `senior_review.py` engine orchestrates SATD + quality + effort into APPROVE/CONDITIONAL/RETHINK verdicts. Slash command with qualitative review guidance. 16 new tests.
+- **MT-20 Phase 9 IN PROGRESS** — `coherence_checker.py` with 3 check layers: (1) module structure (tests/, CLAUDE.md), (2) cross-file pattern consistency (docstrings, naming), (3) import dependency graph + blast radius. 18 tests. Integrated into senior_review.py — reviews now show which files depend on the reviewed module.
+- **End-to-end validated** — Ran against 3 real CCA files. satd_detector correctly shows 4 dependents. Known refinement: SATD false positives in detector source (fp_filter integration for future session).
+- **Memory documented** — S78 slow-build directive, senior dev gap updates (Phase 6-7 done, 9 started).
 
 **Matthew directives (S51-S78, permanent):**
 - All S51-S77 directives still active
@@ -21,10 +21,11 @@
 - S78: One-time budget allowance for meatier skills if objectively helpful.
 
 **Next (prioritized):**
-1. MT-20 Phase 9 completion: Add dependency graph analysis and cross-file import reasoning to coherence checker
-2. MT-20: Wire fp_filter into senior_review.py to reduce false positives (SATD markers in detector source code)
-3. MT-20 Phase 8: Interactive CLI chat mode (depends on hivemind Phase 2 validation)
-4. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker)
+1. MT-20 Phase 9 completion: Add CLAUDE.md rule extraction + compliance checking to coherence checker (reads project rules, flags code that violates them)
+2. MT-20: Wire fp_filter into senior_review.py to reduce false positives (SATD markers in detector source code are self-referential, not real debt)
+3. MT-20: Integrate ADR reader into review flow (adr_reader.py exists but isn't wired in)
+4. MT-20 Phase 8: Interactive CLI chat mode (depends on hivemind Phase 2 validation)
+5. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker)
 
 ---
 
