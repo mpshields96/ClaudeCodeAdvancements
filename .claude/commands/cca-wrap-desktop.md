@@ -36,6 +36,26 @@ python3 cca_comm.py shutdown cli2
 This sends CRITICAL SHUTDOWN signals. Workers will run /cca-wrap-worker and exit.
 Workers that are already stopped will simply have unread shutdown messages (harmless).
 
+### Step 2.5 — Validate hivemind session (if workers were active)
+
+If any worker was active this session, validate the hivemind cycle:
+
+```bash
+python3 -c "
+import hivemind_session_validator as hsv
+result = hsv.validate_session('cli1')
+print(f'Hivemind validation: {result[\"verdict\"]}')
+print(f'  Task assigned: {result[\"task_assigned\"]}')
+print(f'  Task completed: {result[\"task_completed\"]}')
+print(f'  Conflicts: {result[\"conflicts\"]}')
+print(f'  Scope released: {result[\"scope_released\"]}')
+hsv.record_session(SESSION_NUMBER, result)  # Replace SESSION_NUMBER
+print(hsv.format_for_init())
+"
+```
+
+Record the verdict in SESSION_STATE.md under the session summary.
+
 ---
 
 ## Step 3 — Self-assessment (be brutally honest)
