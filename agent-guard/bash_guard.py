@@ -121,6 +121,13 @@ EVASION_PATTERNS = [
     (r"\bbash\s+-c\b", "bash -c: subshell execution"),
     (r"\bsh\s+-c\b", "sh -c: subshell execution"),
     (r"\bzsh\s+-c\b", "zsh -c: subshell execution"),
+    # Script interpreter inline code execution (bypass vector per r/ClaudeCode community reports)
+    (r"\bpython3?\s+-c\b", "python -c: inline code execution (evasion vector)"),
+    (r"\bperl\s+-e\b", "perl -e: inline code execution (evasion vector)"),
+    (r"\bruby\s+-e\b", "ruby -e: inline code execution (evasion vector)"),
+    (r"\bnode\s+-e\b", "node -e: inline code execution (evasion vector)"),
+    (r"\bpwsh\s+-c\b", "pwsh -c: PowerShell inline execution (evasion vector)"),
+    (r"\bpowershell\s+-c\b", "powershell -c: PowerShell inline execution (evasion vector)"),
 ]
 
 # === Warned commands (WARN, not BLOCK) ===
@@ -267,7 +274,7 @@ class BashGuard:
         return None
 
     def _check_move_copy(self, command: str) -> dict | None:
-        """Check for mv/cp commands that move files outside the project."""
+        """Check for mv/cp commands that move/copy files outside the project."""
         # mv <source> <dest> — check if dest is outside project
         mv_match = re.search(r"\bmv\s+\S+\s+(\S+)", command)
         if mv_match:
@@ -276,6 +283,18 @@ class BashGuard:
                 return {
                     "level": "BLOCK",
                     "reason": f"mv destination outside project: {dest}",
+                    "category": "destructive",
+                }
+
+        # cp [-flags] <source> <dest> — check if dest is outside project
+        # Handles cp, cp -r, cp -a, etc. by skipping flag arguments
+        cp_match = re.search(r"\bcp\s+(?:-[a-zA-Z]+\s+)*\S+\s+(\S+)", command)
+        if cp_match:
+            dest = cp_match.group(1).strip("'\"")
+            if self._is_outside_project(dest):
+                return {
+                    "level": "BLOCK",
+                    "reason": f"cp destination outside project: {dest}",
                     "category": "destructive",
                 }
 

