@@ -118,6 +118,23 @@ Run reflection:
 python3 self-learning/reflect.py --brief
 ```
 
+### Step 7.5 — Persist wrap assessment + tips
+
+Log the session grade and wins/losses for trend tracking:
+
+```bash
+python3 wrap_tracker.py log [SESSION_NUMBER] [GRADE] \
+    --wins [WIN_BULLET_1] [WIN_BULLET_2] ... \
+    --losses [LOSS_BULLET_1] ... \
+    --tests [TOTAL_TEST_COUNT]
+```
+
+Extract any advancement tips from this session and persist them:
+
+```bash
+python3 tip_tracker.py add "[TIP_TEXT]" --source cca-desktop --session S[SESSION_NUMBER]
+```
+
 ---
 
 ## Step 8 — Update PROJECT_INDEX.md
