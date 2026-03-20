@@ -11,6 +11,10 @@
           {
             "type": "command",
             "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/context-monitor/hooks/compact_anchor.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/agent-guard/senior_dev_hook.py"
           }
         ]
       }
