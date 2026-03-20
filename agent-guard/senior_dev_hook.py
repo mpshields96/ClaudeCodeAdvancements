@@ -229,36 +229,65 @@ class SeniorDevHook:
 def _humanize_finding(finding) -> str:
     """Convert a SeniorDevFinding into natural language advice.
 
-    Goal: read like a code review comment from a colleague, not a linter report.
+    Goal: lead with actionable advice, support with specifics. Read like a
+    code review comment from a colleague, not a linter report.
     """
     src = finding.source
     msg = finding.message
 
     if src == "satd":
-        # Extract marker type and line from message format "Line N: TYPE — text"
+        # Parse "Line N: TYPE — text" to extract components
+        line_ref, _, detail = _parse_satd_message(msg)
+
         if "HACK" in msg.upper():
-            return f"{msg}. HACK markers indicate fragile code — resolve before committing if the fix is straightforward."
+            return f"Fragile code at {line_ref} — {detail}. Resolve before committing if the fix is straightforward."
         elif "FIXME" in msg.upper():
-            return f"{msg}. FIXME indicates known broken behavior — this should be addressed before shipping."
+            return f"Known broken behavior at {line_ref} — {detail}. This should be addressed before shipping."
         elif "WORKAROUND" in msg.upper():
-            return f"{msg}. Workarounds accumulate technical debt — consider a proper fix or create a tracked issue."
+            return f"Workaround at {line_ref} — {detail}. Consider a proper fix or create a tracked issue to avoid debt buildup."
         elif "DEBT" in msg.upper():
-            return f"{msg}. Acknowledged technical debt — track it so it doesn't get forgotten."
+            return f"Acknowledged technical debt at {line_ref} — {detail}. Track it so it doesn't get forgotten."
         elif "TODO" in msg.upper():
-            return f"{msg}. Consider finishing this now or creating a tracked issue so it doesn't get lost."
+            return f"Unfinished work at {line_ref} — {detail}. Finish now or create a tracked issue so it doesn't get lost."
         elif "XXX" in msg.upper():
-            return f"{msg}. XXX markers flag areas needing attention — review before committing."
+            return f"Flagged for attention at {line_ref} — {detail}. Review before committing."
         else:
             return msg
 
     elif src == "effort":
-        return f"{msg}. Large or complex changes are harder to review correctly — consider breaking into smaller, focused commits."
+        return f"This is a large change — consider breaking into smaller, focused commits. ({msg})"
 
     elif src == "quality":
-        return f"{msg}. Files scoring below C often have maintainability issues — review the weak dimensions."
+        return f"Code quality needs attention — review maintainability and readability. ({msg})"
 
     else:
         return msg
+
+
+def _parse_satd_message(msg: str) -> tuple:
+    """Parse SATD message format 'Line N: TYPE — text' into (line_ref, marker_type, detail).
+
+    Returns:
+        Tuple of (line_ref, marker_type, detail). Falls back gracefully on unexpected format.
+    """
+    # Expected: "Line 45: FIXME — database connection not closed"
+    if " — " in msg:
+        prefix, detail = msg.split(" — ", 1)
+    else:
+        prefix = msg
+        detail = msg
+
+    # Extract line reference
+    if prefix.startswith("Line "):
+        # "Line 45: FIXME" -> line_ref="line 45", marker_type="FIXME"
+        parts = prefix.split(": ", 1)
+        line_ref = parts[0].lower()  # "line 45"
+        marker_type = parts[1] if len(parts) > 1 else ""
+    else:
+        line_ref = "this location"
+        marker_type = ""
+
+    return line_ref, marker_type, detail
 
 
 def _get_extension(file_path: str) -> str:

@@ -142,13 +142,13 @@ class TestFormatContext(unittest.TestCase):
         findings = [SeniorDevFinding(source="satd", severity="HIGH", message="Line 5: HACK — quick fix")]
         context = self.hook.format_context(findings)
         self.assertIn("[Senior Dev Review]", context)
-        self.assertIn("HACK", context)
-        self.assertIn("fragile code", context)
+        self.assertIn("Fragile code", context)
+        self.assertIn("quick fix", context)
 
     def test_natural_language_for_fixme(self):
         findings = [SeniorDevFinding(source="satd", severity="HIGH", message="Line 10: FIXME — broken")]
         context = self.hook.format_context(findings)
-        self.assertIn("known broken behavior", context)
+        self.assertIn("Known broken behavior", context)
 
     def test_natural_language_for_todo(self):
         findings = [SeniorDevFinding(source="satd", severity="MEDIUM", message="Line 3: TODO — later")]
@@ -171,9 +171,10 @@ class TestFormatContext(unittest.TestCase):
             SeniorDevFinding(source="satd", severity="HIGH", message="Line 5: HACK — bad"),
         ]
         context = self.hook.format_context(findings)
-        hack_pos = context.index("HACK")
-        todo_pos = context.index("TODO")
-        self.assertLess(hack_pos, todo_pos)
+        # HIGH (Fragile code) should appear before MEDIUM (Unfinished work)
+        fragile_pos = context.index("Fragile")
+        unfinished_pos = context.index("Unfinished")
+        self.assertLess(fragile_pos, unfinished_pos)
 
     def test_context_length_bounded(self):
         findings = [
@@ -194,7 +195,7 @@ class TestFormatContext(unittest.TestCase):
             for i in range(50)
         ]
         context = self.hook.format_context(findings)
-        self.assertIn("CRITICAL HACK BUG", context)
+        self.assertIn("Fragile code", context)  # HIGH findings preserved after truncation
 
 
 class TestHumanizeFinding(unittest.TestCase):
@@ -203,13 +204,13 @@ class TestHumanizeFinding(unittest.TestCase):
     def test_hack_gives_fragile_advice(self):
         f = SeniorDevFinding(source="satd", severity="HIGH", message="Line 5: HACK — temp fix")
         result = _humanize_finding(f)
-        self.assertIn("fragile code", result)
-        self.assertIn("resolve before committing", result)
+        self.assertIn("Fragile code", result)
+        self.assertIn("Resolve before committing", result)
 
     def test_fixme_gives_broken_advice(self):
         f = SeniorDevFinding(source="satd", severity="HIGH", message="Line 10: FIXME — broken")
         result = _humanize_finding(f)
-        self.assertIn("known broken behavior", result)
+        self.assertIn("Known broken behavior", result)
         self.assertIn("shipping", result)
 
     def test_todo_gives_tracking_advice(self):
@@ -220,7 +221,7 @@ class TestHumanizeFinding(unittest.TestCase):
     def test_workaround_gives_debt_advice(self):
         f = SeniorDevFinding(source="satd", severity="HIGH", message="Line 7: WORKAROUND — bypass")
         result = _humanize_finding(f)
-        self.assertIn("technical debt", result)
+        self.assertIn("debt buildup", result)
 
     def test_effort_gives_size_advice(self):
         f = SeniorDevFinding(source="effort", severity="INFO", message="Effort: 4/5 (Complex)")
@@ -241,6 +242,34 @@ class TestHumanizeFinding(unittest.TestCase):
         f = SeniorDevFinding(source="satd", severity="HIGH", message="Line 42: HACK — specific detail here")
         result = _humanize_finding(f)
         self.assertIn("specific detail here", result)
+
+
+class TestParseSATDMessage(unittest.TestCase):
+    """Test _parse_satd_message helper for SATD message parsing."""
+
+    def test_standard_format(self):
+        from senior_dev_hook import _parse_satd_message
+        line_ref, marker, detail = _parse_satd_message("Line 45: FIXME — database leak")
+        self.assertEqual(line_ref, "line 45")
+        self.assertEqual(marker, "FIXME")
+        self.assertEqual(detail, "database leak")
+
+    def test_no_dash_separator(self):
+        from senior_dev_hook import _parse_satd_message
+        line_ref, marker, detail = _parse_satd_message("Line 10: TODO")
+        self.assertEqual(line_ref, "line 10")
+        self.assertEqual(detail, "Line 10: TODO")
+
+    def test_no_line_prefix(self):
+        from senior_dev_hook import _parse_satd_message
+        line_ref, marker, detail = _parse_satd_message("HACK — quick fix")
+        self.assertEqual(line_ref, "this location")
+        self.assertEqual(detail, "quick fix")
+
+    def test_empty_message(self):
+        from senior_dev_hook import _parse_satd_message
+        line_ref, marker, detail = _parse_satd_message("")
+        self.assertEqual(line_ref, "this location")
 
 
 class TestHookOutput(unittest.TestCase):
