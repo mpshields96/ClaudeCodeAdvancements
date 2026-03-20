@@ -140,6 +140,7 @@ Same as Phase 1, plus:
 |---------|------|--------|-----------|---------|-------|
 | S91 #1 | 2026-03-20 | cli1 | Multi-file (3 imports, 22 tests) | PASS | phase2_validator.py: imports crash_recovery + chat_detector + cca_internal_queue. Worker built tests first, committed clean. |
 | S91 #2 | 2026-03-20 | cli1 | Multi-task + code review | PASS | Worker auto-picked up second task from inbox (multi-task loop working). Delivered substantive code review with 3 findings. |
+| S92 #1 | 2026-03-20 | (sim) | Crash recovery live test | PASS | Solo-session simulation: cli1 scope_claim written, no cli1 process running. `crash_recovery.py status` detected orphan. `crash_recovery.py run` auto-released scope + flagged uncommitted changes. Post-recovery: 0 active scopes, clean state. |
 
 **Phase 2 infrastructure built this session:**
 - `chat_detector.py` (31 tests) — duplicate detection + pre-launch checks
@@ -151,7 +152,7 @@ Same as Phase 1, plus:
 ALL of the following must be true:
 - [x] Phase 1 gate fully passed (S90: 3/3 PASS, Matthew confirmation pending)
 - [ ] 3+ sessions of hardened 2-chat operation without failures (1/3 — S91 #1-#2 PASS)
-- [ ] At least 1 successful crash recovery test
+- [x] At least 1 successful crash recovery test (S92: simulated cli1 crash, auto-released)
 - [x] Worker handles multi-file tasks without conflicts (S91 #1: 3-import task PASS)
 - [ ] Matthew confirms: "ready for a second worker"
 
