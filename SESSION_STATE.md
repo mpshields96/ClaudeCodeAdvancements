@@ -3,19 +3,18 @@
 
 ---
 
-## Current State (as of Session 81 — 2026-03-20)
+## Current State (as of Session 82 — 2026-03-20)
 
-**Phase:** Session 81 COMPLETE. Tests: 80 suites, 3221 total passing. Git: 6 commits this session.
+**Phase:** Session 82 IN PROGRESS. Tests: 80 suites, 3246 total passing. Git: 4 commits this session.
 
-**What was done this session (S81):**
-- **MT-20 ALL 10 GAPS CLOSED** — `build_intent_check_prompt()` and `build_tradeoff_prompt()` in `senior_chat.py` close the last 2 gap items (intent verification, trade-off judgment). 18 new unit tests.
-- **MT-20 E2E test suite (NEW)** — `agent-guard/tests/test_senior_chat_e2e.py`: 10 tests covering real Anthropic API calls (simple Q&A, conversation history, system prompt shaping, intent check, tradeoff analysis). All skip gracefully without ANTHROPIC_API_KEY. Uses Haiku for cost.
-- **MT-21 Hivemind Phase 1 prep** — `hivemind_preflight()` in `cca_internal_queue.py`: combines queue health + stale scope auto-release + unread check + scope warnings. 9 new tests. `.claude/rules/hivemind-worker.md`: worker persona instructions.
-- **Doc updates** — SENIOR_DEV_GAP_ANALYSIS.md: all 10 items CLOSED. MASTER_TASKS.md: MT-20 status updated. PROJECT_INDEX.md: test counts fixed (doc drift).
-- **S80 wrap docs committed** — Previous session's uncommitted wrap files committed first.
+**What was done this session (S82):**
+- **ROADMAP.md doc drift fix** — Test counts updated (+399 uncounted: agent-guard 633→864, design-skills 163→213, added root tests row 305). Added MT-20/MT-21 to MT table. Session history S72-S82.
+- **Reddit intelligence scan** — 7 new findings from r/ClaudeCode hot. Key: community independently using file-based inter-agent communication (validates MT-21), Claude bypasses bash guards via script interpreters (validates AG-9 gap).
+- **AG-9 gap closure: cp + script interpreter evasion** — cp destination outside project now blocked (was only mv). python3 -c, perl -e, ruby -e, node -e, pwsh -c blocked as evasion vectors. +17 tests.
+- **AG-9 gap closure: dd/tee overwrite vectors** — dd of= and tee to outside-project paths now blocked. +8 tests.
 
-**Matthew directives (S51-S81, permanent):**
-- All S51-S80 directives still active
+**Matthew directives (S51-S82, permanent):**
+- All S51-S81 directives still active
 
 **Next (prioritized):**
 1. MT-20 E2E validation: Set ANTHROPIC_API_KEY and run `python3 agent-guard/tests/test_senior_chat_e2e.py -v` (~$0.01 with Haiku)
