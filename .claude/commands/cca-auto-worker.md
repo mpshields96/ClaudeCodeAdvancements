@@ -42,7 +42,9 @@ cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
 python3 cca_comm.py inbox
 ```
 
-Read your assigned task. If no task is assigned, message desktop:
+Read your assigned task. Check for these special messages:
+- **SHUTDOWN** message: If any message contains "SHUTDOWN", immediately run `/cca-wrap-worker` and exit. Do not start any new work.
+- **No task assigned**: Message desktop and wait:
 ```bash
 python3 cca_comm.py say desktop "Worker ready — no task assigned. Awaiting instructions."
 ```

@@ -106,13 +106,18 @@ def cmd_say(args):
 
 
 def cmd_task(args):
-    """Assign a task to another chat."""
+    """Assign a task to another chat. Auto-clears target's inbox first to prevent stale task confusion."""
     if len(args) < 2:
         print("Usage: task <target> <task_description>")
         return
     target = args[0]
     task = " ".join(args[1:])
     me = detect_chat_id()
+    # Clear stale messages from target's inbox before assigning new task
+    stale = ciq.get_unread(target, _qpath())
+    if stale:
+        ciq.acknowledge_all(target, _qpath())
+        print(f"Cleared {len(stale)} stale message(s) from {ciq.VALID_CHATS[target]} inbox.")
     ciq.send_message(me, target, task, priority="high", category="handoff", path=_qpath())
     print(f"Task assigned to {ciq.VALID_CHATS[target]}: {task}")
 
@@ -209,6 +214,18 @@ def cmd_broadcast(args):
     print(f"Broadcast to {count} chats: {message}")
 
 
+def cmd_shutdown(args):
+    """Send shutdown signal to a worker chat. Worker should run /cca-wrap-worker and exit."""
+    if not args:
+        print("Usage: shutdown <target>  (e.g., shutdown cli1)")
+        return
+    target = args[0]
+    me = detect_chat_id()
+    ciq.send_message(me, target, "SHUTDOWN: Run /cca-wrap-worker and exit.",
+                    priority="critical", category="handoff", path=_qpath())
+    print(f"Shutdown signal sent to {ciq.VALID_CHATS.get(target, target)}.")
+
+
 COMMANDS = {
     "inbox": cmd_inbox,
     "say": cmd_say,
@@ -220,6 +237,7 @@ COMMANDS = {
     "status": cmd_status,
     "broadcast": cmd_broadcast,
     "assign": cmd_task,  # Alias: "assign" = "task" (used in /cca-auto-desktop docs)
+    "shutdown": cmd_shutdown,
 }
 
 

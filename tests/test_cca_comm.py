@@ -111,6 +111,29 @@ class TestTask(unittest.TestCase):
         self.assertEqual(msgs[0]["category"], "handoff")
         self.assertEqual(msgs[0]["priority"], "high")
 
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_task_clears_stale_messages(self):
+        """New task assignment should clear old unread messages from target's inbox."""
+        # Send an old task
+        ciq.send_message("desktop", "cli1", "old task", priority="high",
+                        category="handoff", path=self.path)
+        # Verify old task exists
+        unread = ciq.get_unread("cli1", self.path)
+        self.assertEqual(len(unread), 1)
+        # Assign new task — should clear old one first
+        cca_comm.cmd_task(["cli1", "new", "task"])
+        unread = ciq.get_unread("cli1", self.path)
+        self.assertEqual(len(unread), 1)
+        self.assertIn("new task", unread[0]["subject"])
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_task_no_stale_messages_still_works(self):
+        """Task assignment works fine when target has empty inbox."""
+        cca_comm.cmd_task(["cli1", "fresh", "task"])
+        unread = ciq.get_unread("cli1", self.path)
+        self.assertEqual(len(unread), 1)
+        self.assertIn("fresh task", unread[0]["subject"])
+
 
 class TestClaim(unittest.TestCase):
     def setUp(self):
@@ -264,7 +287,7 @@ class TestStatus(unittest.TestCase):
 
 class TestCommands(unittest.TestCase):
     def test_all_commands_registered(self):
-        expected = {"inbox", "say", "task", "claim", "release", "done", "ack", "status", "broadcast", "assign"}
+        expected = {"inbox", "say", "task", "claim", "release", "done", "ack", "status", "broadcast", "assign", "shutdown"}
         self.assertEqual(set(cca_comm.COMMANDS.keys()), expected)
 
     def test_all_commands_callable(self):
