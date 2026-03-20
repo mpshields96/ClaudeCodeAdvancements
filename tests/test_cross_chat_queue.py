@@ -313,11 +313,11 @@ class TestLoadSaveQueue(unittest.TestCase):
 
 class TestMakeId(unittest.TestCase):
     def test_id_starts_with_msg(self):
-        id1 = ccq._make_id("cca", "test")
+        id1 = ccq._make_id("cca", "km", "test")
         self.assertTrue(id1.startswith("msg_"))
 
     def test_ids_are_unique(self):
-        ids = {ccq._make_id("cca", f"test_{i}") for i in range(10)}
+        ids = {ccq._make_id("cca", "km", f"test_{i}") for i in range(10)}
         self.assertEqual(len(ids), 10)
 
 

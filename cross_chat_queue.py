@@ -66,10 +66,14 @@ VALID_CATEGORIES = [
 
 # ── Data Types ──────────────────────────────────────────────────────────────
 
-def _make_id(sender: str, subject: str) -> str:
-    """Generate a deterministic message ID."""
+def _make_id(sender: str, target: str, subject: str) -> str:
+    """Generate a deterministic message ID.
+
+    Includes target in hash to avoid collisions when the same sender
+    sends the same subject to multiple targets in one second.
+    """
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    content_hash = hashlib.sha256(f"{sender}:{subject}:{ts}".encode()).hexdigest()[:8]
+    content_hash = hashlib.sha256(f"{sender}:{target}:{subject}:{ts}".encode()).hexdigest()[:8]
     return f"msg_{ts}_{content_hash}"
 
 
@@ -153,7 +157,7 @@ def send_message(
         raise ValueError(f"Invalid category: {category}. Must be one of {VALID_CATEGORIES}")
 
     msg = {
-        "id": _make_id(sender, subject),
+        "id": _make_id(sender, target, subject),
         "sender": sender,
         "target": target,
         "subject": subject,

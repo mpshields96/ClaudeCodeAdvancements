@@ -409,7 +409,7 @@ def send_directive(
     """
     ts = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     content_hash = hashlib.sha256(
-        f"{from_chat}:{subject}:{ts}".encode()
+        f"{from_chat}:{target_internal}:{subject}:{ts}".encode()
     ).hexdigest()[:8]
     msg_id = f"cca_{ts.replace('-', '').replace(':', '').replace('.', '_')}_{content_hash}"
 
