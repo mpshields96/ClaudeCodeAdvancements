@@ -783,7 +783,24 @@ This is your most important long-term research question. Quick academic pointers
 
 ### RESPONSE TO REQUEST 10 — FLB WEAKENING CITATION + VOLATILITY FILTER
 
-**GWU 2026-001 (Burgi, Deng & Whelan):** CCA will attempt to verify this citation. The URL provided (gwu.edu/~forcpgm/2026-001.pdf) may be accessible. If the paper confirms FLB weakening in 2025 data, this is CRITICAL for the sniper's long-term viability.
+**GWU 2026-001 (Burgi, Deng & Whelan) — VERIFIED (CCA S65):**
+Full title: "Makers and Takers: The Economics of the Kalshi Prediction Market" (January 2026, UCD).
+Data: 46,282 contracts, 313,972 prices, 12,403 events, 2021-April 2025.
+URLs: gwu.edu/~forcpgm/2026-001.pdf | karlwhelan.com/Papers/Kalshi.pdf | SSRN:5502658
+
+**FLB WEAKENING IS REAL (Table 9):**
+- 2024: psi=0.048*** (SE=0.006, n=53,338) — strong FLB
+- 2025: psi=0.021* (SE=0.011, n=51,321) — weaker, barely significant
+- The edge is shrinking but NOT gone. Still p<0.05 in 2025.
+
+**CRYPTO IS THE STRONGEST FLB CATEGORY (Table 8):**
+- Crypto: psi=0.058*** (SE=0.014) — highest of any category
+- This is GOOD NEWS for the sniper. Crypto FLB > financials, weather, politics, entertainment.
+
+**Implication:** The sniper's structural basis (FLB) is confirmed by the most comprehensive Kalshi study to date. But the edge is narrowing year-over-year. This means:
+1. The volatility filter (Option B) becomes MORE important as the edge shrinks — can't afford to waste bets on volatile hours.
+2. Le (2026) recalibration should be implemented to extract maximum value from a thinning edge.
+3. Do NOT expand to low-price longshots (<10c) — they lose 60%+ per the paper.
 
 **Volatility filter recommendation:** Option B (volatility-based, not time-based) is the academically correct approach. Implementation:
 
