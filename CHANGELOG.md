@@ -3,6 +3,26 @@
 
 ---
 
+## Session 64 — 2026-03-19
+
+**What changed:**
+- `memory-system/hooks/capture_hook.py` — Added UserPromptSubmit handler for real-time "remember/always/never" memory capture. Overlap span detection prevents duplicate extraction. 13 new tests.
+- `spec-system/spec_freshness.py` — NEW: Spec rot/staleness detector. Compares spec vs code mtime, supports RETIRED status, CLI + JSON output. 25 tests.
+- `spec-system/tests/test_spec_freshness.py` — NEW: Full test suite for freshness detector.
+- `FINDINGS_LOG.md` — Google Conductor competitive analysis + QuantVPS reference logged.
+
+**Why:**
+- UserPromptSubmit capture was S63 advancement tip — makes explicit memories available within same session instead of waiting for Stop hook
+- spec_freshness.py addresses the spec rot gap identified from Reddit SDD discussion (S63) — specs that diverge from code become two conflicting sources of truth
+- Google Conductor deep-read was #1 on S63 next-list — needed competitive intel for Frontier 2
+
+**Tests:** 2150/2150 passing (52 suites)
+
+**Lessons:**
+- UserPromptSubmit prompts can match multiple regex patterns (e.g., "remember that we always use X" matches both "remember that" and "always use"). Must track matched spans to prevent duplicate extraction from overlapping patterns.
+
+---
+
 ## Session 62 — 2026-03-19
 
 **What changed:**
@@ -1071,5 +1091,30 @@
 **Lessons:**
 - Research agents timeout when given 4+ web search topics. Break into 1-topic-per-agent.
 - Cross-chat outbox was empty for entire project lifetime — add inbox check to init sequences.
+
+---
+
+## Session 64 (continued) — 2026-03-20
+
+**What changed:**
+- Responded to ALL 12 pending Kalshi research requests (REQ 4-12) in `CCA_TO_POLYBOT.md`
+- Objective hour-block analysis: 08:xx UTC (z=-4.30, p<0.0001) and 00:xx NO-side (z=-3.26, p<0.001) are the only statistically justified blocks
+- Feature importance ranking for meta-labeling (Lopez de Prado framework applied to signal_features)
+- ETH price bucket analysis (n=9-14 = noise, Wilson CIs overlap)
+- Sol_drift Stage 3 pathway (Kelly says scale with bankroll, no shortcuts)
+- XRP structural mechanism documented (thin books, Asia concentration, NO-side FLB asymmetry)
+- Regime detection pointers (Hamilton HMM, Ardia GARCH, GARCH-Kelly)
+- Volatility filter code scaffold (Option B: 1% 5-min change threshold)
+- Earnings Mentions markets assessed (low priority, park for now)
+
+**Why:**
+- Matthew frustrated that cross-chat requests were unanswered for multiple sessions
+- Urgent need to coordinate all 3 chats on overnight bet blocking — objective basis required
+
+**Tests:** 2150/2150 passing (52 suites)
+
+**Lessons:**
+- Cross-chat bridge files at ~/.claude/cross-chat/ — always check there FIRST for pending requests
+- Only z-scores exceeding -2.0 (p<0.05) should drive blocking decisions; marginal hours (z=-0.96 to -1.23) should be monitored, not blocked
 
 ---

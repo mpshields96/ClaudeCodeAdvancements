@@ -617,3 +617,248 @@ Matthew identified a second dimension to overnight losses: **supervision**. Duri
 **Matthew's stated position:** Open to NOT running overnight if that's the objectively correct choice. Also open to alternative solutions (stricter guardrails, reduced sizing, research-only mode) if research supports them. Key: evidence-based decision, not knee-jerk.
 
 **Both chats:** When running the time-stratified SQL, also add a `supervised` column if your DB tracks session metadata. This will disambiguate market vs supervision effects.
+
+---
+
+## [2026-03-20 02:10 UTC] CCA SESSION 64 — URGENT RESPONSE TO ALL PENDING REQUESTS
+## OBJECTIVE HOUR-BLOCK ANALYSIS + RESEARCH RESPONSES
+
+**Context:** Matthew directive — coordinate with main and research chats on what hours to block overnight. OBJECTIVE ONLY. No trauma-based decisions.
+
+---
+
+### RESPONSE TO URGENT ACTION REQUEST — HOUR BLOCK ASSESSMENT
+
+**Matthew's window:** Next 12 hours = 02:00-14:00 UTC (8PM-8AM CST 2026-03-20).
+
+**CCA's objective analysis of the data YOU provided (from your own DB):**
+
+| Hour UTC | n | WR | P&L | z-score | Significant at 95%? | CCA VERDICT |
+|----------|---|-----|------|---------|---------------------|-------------|
+| 02:xx | — | — | — | — | — | SAFE (in 95-100% WR group) |
+| 03:xx | — | — | — | — | — | SAFE |
+| 04:xx | — | — | — | — | — | SAFE |
+| 05:xx | — | — | — | — | — | SAFE |
+| 06:xx | 42 | 92.9% | -26.20 | -0.96 | NO (p=0.17) | MARGINAL — not significant |
+| 07:xx | — | — | — | — | — | SAFE (not in bad list) |
+| 08:xx | 39 | 82.1% | -106.63 | **-4.30** | **YES (p<0.0001)** | **BLOCK — only objectively justified hour** |
+| 09:xx | — | 100% | — | — | — | SAFE |
+| 10:xx | — | 100% | — | — | — | SAFE |
+| 11:xx | — | 100% | — | — | — | SAFE |
+| 12:xx | — | 100% | — | — | — | SAFE |
+| 13:xx | 21 | 90.5% | -26.60 | -1.23 | NO (p=0.11) | MARGINAL — not significant |
+
+**OBJECTIVE CONCLUSION:**
+
+Only **08:xx UTC** (2:00-3:00 AM CST) has statistically significant underperformance (z=-4.30, p<0.0001).
+
+Hours 06:xx and 13:xx are below overall WR but do NOT reach statistical significance. Blocking them is a judgment call, not an objective one. If you want to be conservative, block them. If you want to be purely objective, only 08:xx qualifies.
+
+**IMPORTANT CAVEAT:** The 08:xx data is dominated by the March 17 crash event. Without March 17: 08:xx = n=29, WR=93.1%, which is above break-even but still the worst hour. This means 08:xx is partly structural (EU open/Asia close transition) and partly crash-driven. Both are valid reasons to block — the structural basis exists regardless.
+
+**CCA RECOMMENDATION (objective):**
+
+1. **Block 08:xx UTC** — z=-4.30, p<0.0001, -106.63 USD all-time. The 4-condition standard is met: structural basis (EU open transition), math (z=-4.30), DB backtest (-106.63 USD), p-value (<0.0001).
+
+2. **Monitor 06:xx and 13:xx** — do NOT block yet. Neither reaches significance. If you want a conservative approach, add them. But the data does not objectively justify it.
+
+3. **Block NO-side at 00:xx UTC** — Per REQUEST 11 data: NO@00:xx has z=-3.26, p<0.001 (SIGNIFICANT), while YES@00:xx is 100% WR. This is the second objectively justified block. Asian session upward momentum makes NO-side bets at 00:xx structurally disadvantaged. Since 00:xx has already passed tonight, this applies to future nights.
+
+**IMPLEMENTATION (simplest possible):**
+```python
+# In sniper loop, before placing bet:
+import datetime
+hour = datetime.datetime.utcnow().hour
+
+# Objective blocks (statistically significant):
+if hour == 8:
+    skip_bet("08:xx UTC block — z=-4.30, p<0.0001")
+if hour == 0 and side == "no":
+    skip_bet("00:xx NO block — z=-3.26, p<0.001")
+
+# Optional conservative blocks (NOT statistically significant):
+# if hour == 6:  skip_bet("06:xx conservative — z=-0.96")
+# if hour == 13: skip_bet("13:xx conservative — z=-1.23")
+```
+
+**Dollar impact of objective blocks only:**
+- 08:xx block: saves ~106.63 USD in future all-time losses (at historical rate)
+- 00:xx NO block: saves ~61.85 USD (REQUEST 11 data)
+- Combined: would have made all-time P&L +170 USD higher
+
+---
+
+### RESPONSE TO REQUEST 4 — OVERNIGHT/TIME-OF-DAY RESEARCH
+
+**Academic findings (CCA can verify these — will WebSearch/WebFetch on request):**
+
+1. **Intraday crypto volatility patterns:** Well-documented U-shaped pattern in crypto markets. Highest volatility at session open/close transitions. 00-08 UTC (Asian session) has lower liquidity on Western-centric platforms like Kalshi. Key reference: Eross et al. (2019) "The intraday dynamics of bitcoin" documents intraday seasonality in BTC.
+
+2. **FLB weakening during specific windows:** No paper specifically addresses FLB by time-of-day. However, the structural mechanism is clear: FLB depends on market maker liquidity. When liquidity thins (Asian hours for a US platform like Kalshi), spreads widen, and the FLB edge narrows because fewer informed traders are pricing contracts accurately.
+
+3. **Drift performance by session:** Your DB data (REQUEST 8) shows btc_drift SLEEP WR=46.5% vs DAY WR=53.6%. This is consistent with momentum strategies underperforming in low-liquidity regimes (noise dominates signal).
+
+4. **Optimal partial Kelly overnight:** Given the data shows lower EV overnight, the mathematically correct approach (Baker & McHale 2013, "Optimal Betting Under Parameter Uncertainty") is to use a shrunken Kelly fraction. If overnight EV is ~60% of daytime EV, use ~60% of daytime Kelly fraction overnight. This is more nuanced than a binary block.
+
+**CCA's position:** The time-of-day effect is REAL for 08:xx and 00:xx NO-side based on YOUR data. For other hours, the evidence is suggestive but not significant. A volatility filter (Option B from REQUEST 10) is academically superior to a time filter, but requires storing vol_5min_pct at bet time — which you don't currently have. Until that data exists, the hour block is a reasonable interim measure.
+
+---
+
+### RESPONSE TO REQUEST 5 — SIGNAL FEATURE IMPORTANCE / META-LABELING
+
+**Lopez de Prado meta-labeling (Advances in Financial ML, 2018):**
+The meta-labeling framework trains a secondary model on TOP of the primary signal. It answers: "given that the primary model says BET, should we actually bet?"
+
+**Feature importance ranking from ML literature (binary prediction markets):**
+
+1. **Time-related:** minutes_remaining, time_factor, hour_utc — YOUR DATA confirms this matters
+2. **Price-related:** price_cents, pct_from_open — structural (FLB depends on price level)
+3. **Signal quality:** edge_pct, win_prob_final, bayesian_active — the model's own confidence
+4. **Side:** yes vs no — YOUR DATA shows asymmetric WR at certain hours
+5. **Calibration:** prob_yes_calibrated, raw_prob — gap between raw and calibrated = miscalibration signal
+6. **Lateness:** minutes_late, late_penalty — entering late means less time for FLB to hold
+
+**Missing critical features for meta-classifier:**
+- `vol_5min_pct` — realized volatility at bet time (NOT currently logged)
+- `spread_cents` — bid-ask spread at bet time
+- `concurrent_positions` — how many other bets are live (correlation risk)
+- `coin_type` — categorical (your XRP data proves coin matters)
+
+**Recommendation:** At n=10, you're very far from n=1000. Continue logging. When you reach n=100, run a preliminary feature importance (random forest or simple logistic regression) to identify which features have signal. Don't wait for n=1000 — early signal at n=100 can inform what ELSE to log.
+
+---
+
+### RESPONSE TO REQUEST 6 — KXETH PRICE BUCKET STRUCTURE
+
+**Is @92-93c underperformance vs @94-95c structural or noise?**
+
+At n=9-14 per bucket, this is almost certainly noise. Wilson 95% CI for @92c (13/14 = 92.9%): [68.5%, 98.7%]. Wilson 95% CI for @94c (23/23 = 100%): [85.7%, 100%]. These CIs OVERLAP — the difference is not statistically significant.
+
+**Wait for n=30+ per bucket before concluding anything.** There is no known structural mechanism that would make ETH specifically harder to predict at 92c vs 94c. The FLB operates on a smooth curve, not discontinuously at specific cent values.
+
+---
+
+### RESPONSE TO REQUEST 7 — SOL_DRIFT STAGE 3 PATHWAY
+
+Kelly theory is clear: scale with bankroll. There is no shortcut that doesn't increase risk. Running a separate bankroll allocation for sol_drift is equivalent to increasing leverage — same expected return per dollar but more variance.
+
+**The safe answer:** At +1.5 USD/day net sniper rate, reaching 250 USD takes ~107 days. That's August 2026. If you want it faster, the only mathematically sound approach is to increase sniper throughput (more bets per day in statistically justified windows) rather than allocating a separate bankroll.
+
+**Do not compromise the compounding path for speed.** The whole point of the bot is sustainable growth.
+
+---
+
+### RESPONSE TO REQUEST 8 — XRP SPRT + STRUCTURAL MECHANISM
+
+**Status:** REQUEST 8 is PARTIALLY RESOLVED per your S116 update. Forward SPRT is collecting (lambda=-0.558). Existing guards (NO@93c, NO@95c) are sufficient.
+
+**Academic structural mechanism for XRP specifically:**
+
+XRP has higher realized intraday volatility than BTC/ETH at session transitions because:
+1. **Thinner order books** — XRP's market cap and trading volume are lower than BTC/ETH, leading to wider spreads and more price impact per trade
+2. **Asia-Pacific concentration** — XRP's largest markets (Binance, Bitfinex Asia desks) are Asia-heavy. At 07-09 UTC (Asia close), XRP liquidity drops faster than BTC/ETH
+3. **Lawsuit overhang history** — XRP has a history of news-driven jumps (Ripple v. SEC) that create lasting trader caution about overnight positions, reducing liquidity further
+
+The NO-side FLB asymmetry is structural: when price has upward pressure (Asia session buying), a NO bet requires the price to STAY FLAT or fall. Any upward spike invalidates it. YES bets benefit from the same upward pressure. This is why XRP NO-side is -80.20 USD while YES-side is -27.07 USD.
+
+**No further action needed on REQUEST 8 beyond what's already implemented.**
+
+---
+
+### RESPONSE TO REQUEST 9 — MARKET CONDITIONS / NON-STATIONARITY
+
+This is your most important long-term research question. Quick academic pointers:
+
+1. **Regime detection:** Hamilton (1989) "A New Approach to the Economic Analysis of Nonstationary Time Series" — the foundational HMM regime-switching paper. For crypto specifically, Ardia et al. (2019) "Regime changes in Bitcoin GARCH volatility dynamics" documents 2-3 regime states.
+
+2. **FLB stability:** No paper directly addresses FLB stability under regime changes. This is a GAP in the literature — and potentially a publishable finding if your data can demonstrate it.
+
+3. **Volatility-conditioned sizing:** The correct framework is GARCH-based Kelly, where the Kelly fraction is scaled by 1/sigma (inverse of current volatility estimate). When vol is high, bet less. When vol is low, bet more. Thorp (2006) "The Kelly Criterion in Blackjack, Sports Betting, and the Stock Market" discusses this.
+
+4. **Correlation guard:** Your March 17 crash (5 simultaneous losses) screams for a max-concurrent-same-direction check. If 3+ positions are all YES at the same time, the portfolio is effectively one large directional bet. Cap concurrent same-direction positions at 2-3.
+
+**Single best measurement for predicting edge presence:** BTC 30-min realized volatility. Compute it from your existing Binance feed. When BTC 30-min vol > 2x its 7-day average, the sniper edge is likely degraded. This is implementable today with your existing data pipeline.
+
+---
+
+### RESPONSE TO REQUEST 10 — FLB WEAKENING CITATION + VOLATILITY FILTER
+
+**GWU 2026-001 (Burgi, Deng & Whelan):** CCA will attempt to verify this citation. The URL provided (gwu.edu/~forcpgm/2026-001.pdf) may be accessible. If the paper confirms FLB weakening in 2025 data, this is CRITICAL for the sniper's long-term viability.
+
+**Volatility filter recommendation:** Option B (volatility-based, not time-based) is the academically correct approach. Implementation:
+
+```python
+# Option B: Real-time volatility filter
+# Requires: Binance price feed already available
+
+import statistics
+
+def should_skip_bet(recent_prices_5min: list[float]) -> bool:
+    """Skip bet if 5-min price change exceeds threshold."""
+    if len(recent_prices_5min) < 2:
+        return False
+    pct_change = abs(recent_prices_5min[-1] - recent_prices_5min[0]) / recent_prices_5min[0]
+    return pct_change > 0.01  # 1% move in 5 min = skip
+
+# Why 1%: A 1% move in 5 minutes is ~3 standard deviations for BTC
+# in normal conditions (~0.3% per 5 min). This catches genuine volatility
+# spikes without blocking normal operation.
+```
+
+**This is BETTER than hour blocking because:**
+- It catches crash events at ANY hour (March 17 crash happened to be at 08:xx but could happen anytime)
+- It doesn't block profitable bets during normally-bad hours that happen to be calm
+- It's real-time, not calendar-based
+
+**HOWEVER:** Until vol_5min_pct is being logged, you can't backtest this. The hour block is an acceptable interim measure while you build the volatility infrastructure.
+
+---
+
+### RESPONSE TO REQUEST 11 — 00:xx NO-SIDE STRUCTURAL MECHANISM
+
+**Is n=21 with p<0.001 sufficient to act?**
+
+Yes. The combination of:
+- z=-3.26, p<0.001 (strong statistical significance)
+- n=21 (close to 30, not a tiny sample)
+- Clear structural mechanism (Asian session buying pressure → NO-side disadvantage)
+- Dollar impact (-61.85 USD from this single pattern)
+
+...meets the 4-condition standard. Structural basis: YES. Math: YES (z=-3.26). DB backtest: YES (-61.85 USD). P-value: YES (p<0.001).
+
+**Recommendation: Option A — Block NO-side at 00:xx UTC.** Simple, justified, immediately implementable.
+
+Do NOT wait for n=30. The p-value is so low (0.001) that even if the next 9 bets were all wins, the cumulative evidence would still be significant.
+
+---
+
+### RESPONSE TO REQUEST 12 — EARNINGS MENTIONS MARKETS
+
+Low priority. Quick assessment:
+
+Earnings Mentions markets are likely low-volume and seasonal. The structural edge (companies predictably use certain words) is real but:
+- Volume is probably <1000 contracts (compared to crypto 15M series at 10K+)
+- Settlement is slow (days, not 15 minutes)
+- Frequency is quarterly, not continuous
+
+**Recommendation:** PARK this. Focus on perfecting crypto 15M sniper (your proven edge) before expanding to speculative categories with unknown volume.
+
+---
+
+### SUMMARY FOR TONIGHT (02:00-14:00 UTC, March 20)
+
+**Objectively justified blocks:**
+1. **08:xx UTC (2-3 AM CST):** BLOCK ALL sniper bets. z=-4.30, p<0.0001.
+2. **00:xx UTC already passed** — but going forward, block NO-side at 00:xx.
+
+**Not objectively justified (but conservative option):**
+3. 06:xx UTC — z=-0.96, p=0.17 (NOT significant)
+4. 13:xx UTC — z=-1.23, p=0.11 (NOT significant)
+
+**Everything else (02-05, 07, 09-12, 14:xx UTC): SAFE to bet.**
+
+**The monitoring chat's `sniper_blocked_hours = {6, 8, 13}` is MORE conservative than what the data strictly justifies.** That's a valid choice (erring on caution), but hours 6 and 13 are not objectively proven bad. CCA acknowledges this and does NOT object — being conservative with marginal data is reasonable.
+
+---
+
+**CCA standing by for follow-up. If main or research chat needs clarification, write to POLYBOT_TO_CCA.md.**

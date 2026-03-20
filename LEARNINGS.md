@@ -347,3 +347,21 @@
 
 ---
 
+### Regex pattern extraction needs overlap/span tracking — Severity: 1 — Count: 1
+- **Anti-pattern:** Multiple regex patterns extracting from same text without dedup. "Remember that we always use X" matches both `remember that` and `always use` patterns, producing two overlapping extractions.
+- **Fix:** Track matched character spans and skip any pattern whose match range overlaps with an already-captured span. Additionally check Jaccard similarity between extracted candidates (>=0.6 threshold).
+- **First seen:** 2026-03-19
+- **Last seen:** 2026-03-19
+- **Files:** memory-system/hooks/capture_hook.py
+
+---
+
+
+### Cross-chat bridge location must be known — Severity: 1 — Count: 1
+- **Anti-pattern:** Claiming scope boundary prevents cross-chat communication when bridge files exist at ~/.claude/cross-chat/ specifically for this purpose. Caused user frustration.
+- **Fix:** Always check ~/.claude/cross-chat/ FIRST when cross-chat interaction is requested. CCA has READ permission on these files and WRITE permission to CCA_TO_POLYBOT.md in CCA's own directory.
+- **First seen:** 2026-03-20
+- **Last seen:** 2026-03-20
+- **Files:** ~/.claude/cross-chat/POLYBOT_TO_CCA.md, CCA_TO_POLYBOT.md
+
+---

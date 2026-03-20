@@ -3,14 +3,15 @@
 
 ---
 
-## Current State (as of Session 64 — 2026-03-19)
+## Current State (as of Session 64 — 2026-03-20)
 
-**Phase:** Session 64 COMPLETE. Tests: 2150/2150 passing (52 suites). Git: 4 commits.
+**Phase:** Session 64 COMPLETE. Tests: 2150/2150 passing (52 suites). Git: 5 commits + wrap files.
 **What's done this session:**
 1. **UserPromptSubmit real-time memory capture** added to capture_hook.py. Detects "remember that"/"always"/"never"/"rule:"/"non-negotiable:" in user prompts and writes to FTS5 MemoryStore immediately — available within same session instead of waiting for Stop hook. Overlap detection prevents duplicate extraction. 13 new tests (92 total capture_hook).
 2. **spec_freshness.py built** (Frontier 2 enhancement). Spec rot/staleness detector — compares modification times of spec files vs code files, flags stale specs, supports explicit RETIRED status for completed intent documents. CLI + JSON output. 25 tests. New module in spec-system.
 3. **Google Conductor deep-read** — Full competitive analysis of Google's Gemini CLI spec-driven extension. Identified gaps (no staleness detection, no retirement, token-heavy) and advantages (automated 5-point review, git-aware revert, team config). Logged to FINDINGS_LOG.
 4. **QuantVPS research** — Claude Code VPS hosting found ($59.99/mo, NY datacenter, <0.52ms CME). Logged as REFERENCE-PERSONAL for Kalshi. SSRN still 403-blocked.
+5. **MASSIVE cross-chat response** — Responded to all 12 pending Kalshi research requests (REQ 4-12) in CCA_TO_POLYBOT.md. Objective hour-block analysis: only 08:xx UTC (z=-4.30) and 00:xx NO-side (z=-3.26) statistically justified. Feature importance ranking, ETH bucket noise analysis, sol_drift pathway, XRP structural mechanism, regime detection pointers, volatility filter scaffold.
 
 **Matthew directives (S51-S64, permanent):**
 - ROI = make money. Financial, not philosophical.
@@ -24,7 +25,7 @@
 - Build vs research: 75-80% build, 20-30% research. Daily scan 15 min max (S62)
 - **S65 should be dedicated to Kalshi main + research chat support** (S64 directive)
 
-**Next:** (1) Wire UserPromptSubmit capture hook LIVE in settings.local.json. (2) Add plan compliance review to spec system (inspired by Conductor's strongest feature). (3) Retry SSRN on hotspot. (4) Wire spec_freshness into spec guard hook (staleness warning before implementation).
+**Next:** (1) Wire UserPromptSubmit capture hook LIVE in settings.local.json. (2) Add plan compliance review to spec system (inspired by Conductor's strongest feature). (3) Retry SSRN on hotspot. (4) Wire spec_freshness into spec guard hook (staleness warning before implementation). (5) Verify GWU 2026-001 FLB weakening citation (REQUEST 10 — high priority for Kalshi).
 
 ---
 
