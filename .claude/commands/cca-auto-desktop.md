@@ -110,7 +110,15 @@ If a worker reported completion:
 1. Acknowledge: `python3 cca_comm.py ack`
 2. Review their commit: `git log --oneline -3`
 3. Run tests to verify no regressions
-4. Optionally assign their next task: `python3 cca_comm.py task cli1 "next task"`
+4. **Front-load 2-3 tasks** to keep worker busy (workers now multi-task):
+```bash
+python3 cca_comm.py task cli1 "primary: [next task]"
+python3 cca_comm.py say cli1 "also: [follow-up task if time permits]"
+```
+
+**Worker utilization note:** Workers now loop on their inbox and do keep-busy analysis
+when idle. Front-loading multiple tasks prevents worker idle time. The worker will
+complete them in order and check inbox between each.
 
 If no worker messages, continue to next task.
 

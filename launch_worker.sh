@@ -3,12 +3,17 @@
 #
 # Usage (from Desktop coordinator chat):
 #   bash launch_worker.sh [task_description]
+#   bash launch_worker.sh "primary task" && python3 cca_comm.py say cli1 "also: second task"
 #
 # What it does:
-#   1. Assigns a task to cli1 via cca_comm.py (if task_description provided)
-#   2. Opens a new Terminal.app tab
-#   3. Sets CCA_CHAT_ID=cli1 in that tab
-#   4. Starts claude with /cca-worker in the CCA project directory
+#   1. Pre-launch duplicate check (abort if same worker already running)
+#   2. Assigns a task to cli1 via cca_comm.py (if task_description provided)
+#   3. Opens a new Terminal.app tab
+#   4. Sets CCA_CHAT_ID=cli1 in that tab
+#   5. Starts claude with /cca-worker in the CCA project directory
+#
+# Multi-task: Worker loops on inbox after each task. Front-load 2-3 tasks
+# via cca_comm.py after launch for maximum worker utilization.
 #
 # The worker will:
 #   - Run /cca-init (detects CCA_CHAT_ID=cli1, shows worker role)

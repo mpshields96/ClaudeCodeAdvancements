@@ -101,18 +101,43 @@ Then run `/cca-wrap-worker` to do a lightweight wrap.
 
 ---
 
-## Step 6 — Check for more work (MANDATORY CHAIN)
+## Step 6 — Multi-task loop (MANDATORY — never stop after one task)
 
-After reporting completion, you MUST check inbox again immediately:
-```bash
-python3 cca_comm.py inbox
+After reporting completion, loop back for more work:
+
+```
+REPEAT:
+  1. Check inbox: python3 cca_comm.py inbox
+  2. If SHUTDOWN message: run /cca-wrap-worker and exit
+  3. If new task: go back to Step 2 (claim, execute, commit, report)
+  4. If inbox empty: wait 30 seconds, check again
+  5. If still empty: run autonomous keep-busy work (Step 7)
+  6. After keep-busy: check inbox again (desktop may have queued work)
+  7. If inbox empty after keep-busy: run /cca-wrap-worker and exit
 ```
 
-If there's another task: go back to Step 2. Do NOT stop. Do NOT ask for input.
-If inbox is empty: wait 30 seconds, check ONE more time. If still empty, then you're done.
-
 IMPORTANT: Do NOT end your session after completing one task. The desktop coordinator
-may assign follow-up work while you're still running. Always check twice before stopping.
+may assign follow-up work while you're still running. Maximize your session's output.
+
+---
+
+## Step 7 — Keep-busy fallback (when inbox is empty)
+
+If no tasks are queued, do useful autonomous work instead of sitting idle:
+
+**Priority order (do whichever is most relevant):**
+1. **Review recent commits** — `git log --oneline -10` and review code quality of recent changes
+2. **Run /senior-review on changed files** — find recent modified files and review them
+3. **Scan for TODOs** — `grep -rn "TODO\|FIXME\|HACK\|XXX" --include="*.py" . | head -20`
+4. **Run test coverage analysis** — identify modules with low test count relative to LOC
+5. **Report findings** — send useful findings to desktop via `python3 cca_comm.py say desktop "findings..."`
+
+**Keep-busy rules:**
+- Do NOT create new files or modify existing code — read-only analysis
+- Do NOT pick tasks from SESSION_STATE or ROADMAP (desktop owns task selection)
+- Do NOT update shared docs
+- Keep-busy is analysis + reporting only, not implementation
+- After completing one keep-busy task, check inbox again before doing another
 
 ---
 
