@@ -129,6 +129,8 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `wrap_tracker.py` — Session wrap assessment persistence with trend analysis (23 tests, S89)
 - `hivemind_session_validator.py` — Desktop-side hivemind cycle validation + Phase 1 gate tracking (17 tests, S90)
 - `hivemind_metrics.py` — Phase 1 validation metrics persistence (20 tests, S90, built by cli1 worker)
+- `hivemind_dashboard.py` — Combined Phase 1 status reporter (16 tests, S90, built by cli1 worker)
+- `overhead_timer.py` — Coordination overhead measurement for Phase 1 metrics (13 tests, S90)
 
 **research/** — R&D and tools
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)
