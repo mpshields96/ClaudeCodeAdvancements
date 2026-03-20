@@ -75,7 +75,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 4 — Multi-Agent Conflict Guard -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (AG-1 through AG-9 + Edit Guard + Bash Guard). 378 tests passing.
+**Status:** ALL TASKS COMPLETE (AG-1 through AG-9 + Edit Guard + Bash Guard + SATD Detector). 422 tests passing.
 
 **Module:** `agent-guard/`
 
@@ -90,6 +90,7 @@ This roadmap is grounded in:
 | AG-7 | Path Validator (`path_validator.py`) | COMPLETE — LIVE in hooks |
 | AG-8 | Edit Guard (`edit_guard.py`) | COMPLETE — LIVE in hooks |
 | AG-9 | Bash Guard (`bash_guard.py`) | COMPLETE — LIVE in hooks |
+| MT-20P1 | SATD Detector (`satd_detector.py`) | COMPLETE — PostToolUse hook |
 
 **Key decisions:** ntfy.sh for iPhone push approval. Git history for ownership detection. Credential regex includes hyphens. Bash guard blocks network egress, package installs, process kills, system mods, evasion techniques.
 
@@ -181,13 +182,13 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | memory-system | 228 |
 | spec-system | 158 |
 | context-monitor | 266 |
-| agent-guard | 378 |
+| agent-guard | 422 |
 | usage-dashboard | 259 |
 | reddit-intelligence | 316 |
 | self-learning | 526 |
 | design-skills | 163 |
 | research | 86 |
-| **Total** | **2563** |
+| **Total** | **2607** |
 
 ---
 
@@ -226,3 +227,4 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | 68 | 2026-03-19 | plan_compliance wired into validate.py PreToolUse hook, ROADMAP updated to S68 |
 | 69 | 2026-03-19 | CI/CD GitHub Actions, hook chain integration test, cca_internal_queue, bash_guard global fix |
 | 70 | 2026-03-20 | doc_drift_checker.py, queue_injector.py, doc drift fixes, 3-chat parallel workflow |
+| 71 | 2026-03-20 | MT-20 Phase 1: satd_detector.py (44 tests), MT-17 Phase 5 website_generator.py (39 tests) |

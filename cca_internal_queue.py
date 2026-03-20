@@ -458,7 +458,7 @@ def _cli_unread(args):
     print(f"Unread messages for {VALID_CHATS[args.target]} ({len(unread)}):\n")
     for msg in sorted(unread, key=lambda m: VALID_PRIORITIES.index(m.get("priority", "low"))):
         print(f"  [{msg['priority'].upper()}] [{msg['category']}] {msg['subject']}")
-        print(f"    ID: {msg['id']} | From: {VALID_CHATS[msg['sender']]} | {msg['created_at']}")
+        print(f"    ID: {msg['id']} | From: {VALID_CHATS.get(msg['sender'], msg['sender'])} | {msg['created_at']}")
         if msg.get("body"):
             body_preview = msg["body"][:120]
             if len(msg["body"]) > 120:
