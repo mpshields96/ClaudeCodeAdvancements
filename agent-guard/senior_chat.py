@@ -32,6 +32,7 @@ if _MODULE_DIR not in sys.path:
     sys.path.insert(0, _MODULE_DIR)
 
 from senior_review import review_file
+from git_context import GitContext
 
 
 @dataclass
@@ -40,6 +41,7 @@ class ReviewContext:
     file_path: str
     content: str
     review_result: dict
+    git_summary: str = ""
 
 
 def build_review_context(file_path: str, project_root: str = "") -> ReviewContext:
@@ -64,10 +66,24 @@ def build_review_context(file_path: str, project_root: str = "") -> ReviewContex
     # Run the full review
     result = review_file(file_path, project_root=project_root)
 
+    # Get git context
+    git_summary = ""
+    if project_root and os.path.isdir(project_root):
+        try:
+            git = GitContext(project_root)
+            if git.is_git_repo:
+                abs_path = os.path.abspath(file_path)
+                abs_root = os.path.abspath(project_root)
+                rel_path = os.path.relpath(abs_path, abs_root) if abs_path.startswith(abs_root) else file_path
+                git_summary = git.format_for_review(rel_path)
+        except Exception:
+            pass
+
     return ReviewContext(
         file_path=file_path,
         content=content,
         review_result=result,
+        git_summary=git_summary,
     )
 
 
@@ -251,6 +267,12 @@ def build_system_prompt(ctx: ReviewContext) -> str:
         if parts:
             lines.append(f"Metrics: {', '.join(parts)}")
             lines.append("")
+
+    # Git history context
+    if ctx.git_summary:
+        lines.append("Git history:")
+        lines.append(ctx.git_summary)
+        lines.append("")
 
     # Include file content (truncated for very large files)
     content = ctx.content

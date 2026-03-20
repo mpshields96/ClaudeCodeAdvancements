@@ -252,6 +252,27 @@ class TestBuildSystemPrompt(unittest.TestCase):
         self.assertIn("truncated", prompt.lower())
         self.assertLess(len(prompt), 15000)
 
+    def test_includes_git_summary(self):
+        ctx = ReviewContext(
+            file_path="mod.py",
+            content="x = 1\n",
+            review_result={"verdict": "approve", "concerns": [], "suggestions": [], "metrics": {}},
+            git_summary="Git history (5 total commits):\n  2026-03-20 Alice: Fix bug",
+        )
+        prompt = build_system_prompt(ctx)
+        self.assertIn("Git history", prompt)
+        self.assertIn("Alice", prompt)
+
+    def test_no_git_summary_when_empty(self):
+        ctx = ReviewContext(
+            file_path="mod.py",
+            content="x = 1\n",
+            review_result={"verdict": "approve", "concerns": [], "suggestions": [], "metrics": {}},
+            git_summary="",
+        )
+        prompt = build_system_prompt(ctx)
+        self.assertNotIn("Git history", prompt)
+
 
 class TestLLMClient(unittest.TestCase):
     """Test LLMClient — Anthropic API wrapper with conversation history."""
