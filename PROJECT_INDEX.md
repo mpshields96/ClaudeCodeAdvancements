@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-20 (Session 74)
+# Last updated: 2026-03-20 (Session 77)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -16,6 +16,8 @@
 | Reddit review log (append-only) | `FINDINGS_LOG.md` |
 | Severity-tracked learnings | `LEARNINGS.md` |
 | Master-level aspirational tasks | `MASTER_TASKS.md` |
+| Senior Dev gap analysis (MT-20) | `SENIOR_DEV_GAP_ANALYSIS.md` |
+| Hivemind phased rollout (MT-21) | `HIVEMIND_ROLLOUT.md` |
 
 **Mission:** Build validated advancements for Claude Code users. NOT a betting project.
 **Scope:** Read + write `/Users/matthewshields/Projects/ClaudeCodeAdvancements/` ONLY.

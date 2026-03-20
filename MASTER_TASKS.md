@@ -679,14 +679,65 @@ Phase 2 (Session 49):
 - Filters output via quality gate (non-negotiable per RovoDev findings)
 - Stdlib only + optional LLM API call for false positive filtering
 
-**Status:** MVP COMPLETE (S71-S72). All 5 modules built, tested, integrated:
-- Phase 1: satd_detector.py (44 tests) — S71
-- Phase 2: effort_scorer.py (42 tests) — S71
-- Phase 3: senior_dev_hook.py (48 tests) + code_quality_scorer.py (38 tests) — S72
-- Phase 4: fp_filter.py (40 tests) + review_classifier.py (43 tests) — S72
-- Hook wired LIVE in settings.local.json (PostToolUse on Write/Edit)
-- Total: 255 new tests across 6 modules. All 2846 project tests passing.
-- **Next:** Full Vision items (ADR reader, tech debt tracker, architectural coherence checker).
+**Status:** Infrastructure COMPLETE. Intelligence layer NOT STARTED.
+
+Built (S71-S74): 8 modules, ~1,700 LOC, ~318 tests, all passing:
+- satd_detector.py (42 tests), effort_scorer.py (42 tests), code_quality_scorer.py (38 tests)
+- fp_filter.py (40 tests), review_classifier.py (43 tests), tech_debt_tracker.py (27 tests)
+- adr_reader.py (38 tests), senior_dev_hook.py (48 tests) — PostToolUse orchestrator LIVE in hooks
+
+**S77 Gap Analysis (SENIOR_DEV_GAP_ANALYSIS.md):**
+The existing modules are STATIC METRIC CALCULATORS — they count patterns and score numbers.
+They do NOT do design review, architectural coherence, intent verification, interactive
+communication, context-aware review, or any function a real senior developer performs.
+The current "Senior Dev" is a linter with a good name.
+
+**Remaining phases (properly scoped):**
+- Phase 6: Improve hook output — natural language advice instead of metric dumps (1 session)
+- Phase 7: On-demand `/senior-review` skill — structured review with design fit, concerns,
+  suggestions, approval verdict (1-2 sessions)
+- Phase 8: Interactive CLI chat mode — dedicated CLI chat running as senior dev colleague,
+  communicating via hivemind queue (2-3 sessions, depends on HIVEMIND Phase 2 passing)
+- Phase 9: Architectural Coherence Checker — cross-file pattern detection, dependency analysis,
+  system health scoring (2-3 sessions)
+
+**Dependencies:** Phase 8 requires HIVEMIND_ROLLOUT.md Phase 2 gate to pass first.
+See SENIOR_DEV_GAP_ANALYSIS.md for full details.
+- **Next:** Phase 6 (hook output quality improvement).
+
+---
+
+## MT-21: Hivemind Multi-Chat Coordination
+
+**Source:** Sessions 72-74 (initial build), Session 77 (gap analysis + phased rollout plan).
+**What Matthew wants:** Desktop CCA chat coordinates 1 CLI chat (Phase 1), then 2 CLI chats (Phase 2+), to multiply development throughput while maintaining quality. NOT a 3-chat sprint from day one — prove 2-chat works over multiple sessions before scaling.
+
+**What's built (S72-S74):**
+- cca_hivemind.py (625 LOC, 22 tests) — process detection, AppleScript injection, safety
+- cca_internal_queue.py (584 LOC, 69 tests) — JSONL queue, scope tracking, conflict detection
+- cca_comm.py (249 LOC, 18 tests) — CLI wrappers for queue operations
+- loop_health.py (251 LOC, 54 tests) — session health grading
+- queue_injector.py (~150 LOC, 19 tests) — UserPromptSubmit hook
+- /cca-init, /cca-auto, /cca-wrap made hivemind-aware (S74)
+
+**What's NOT proven:**
+- Sustained 2-chat operation (only tested once in S72)
+- Error recovery (crash mid-scope-claim)
+- Queue reliability under real load
+- Worker productivity vs. overhead
+
+**Phased rollout (HIVEMIND_ROLLOUT.md):**
+- Phase 1: Validated 2-chat (Desktop + 1 CLI), 3-5 sessions, must pass all gates
+- Phase 2: Hardened 2-chat with complex tasks, 3-5 sessions
+- Phase 3: 3-chat operation (Desktop + 2 CLI), only after Phase 2 gate passes
+
+**Relationship to MT-20:** Hivemind provides the transport + coordination layer.
+Senior Dev (MT-20 Phase 8) provides the intelligence + review layer. They converge:
+a proven hivemind + a proven senior dev skill = a CLI chat acting as your senior
+developer colleague.
+
+**Status:** Infrastructure COMPLETE. Phase 1 validation NOT STARTED.
+- **Next:** Phase 1 prep — queue health check, scope timeout, worker CLAUDE.md.
 
 ---
 
@@ -698,7 +749,7 @@ Phase 2 (Session 49):
 - `aging_rate`: 1.0 per chat for partial tasks (Phase 1 done, Phase 2 waiting). 0.5 per chat for not-started tasks.
 - Cap: Priority cannot exceed 2x base_value. Prevents low-value tasks from permanently outranking high-value ones.
 - Update `last_touched_session` whenever ANY work is done on the MT (even research or planning).
-- Current session: 56.
+- Current session: 77.
 
 ### Completed (no scoring needed)
 
@@ -725,6 +776,8 @@ Phase 2 (Session 49):
 | 7 | MT-18 | Academic writing | 4 | NEVER | 14+ | 0.5 | 4.0 | **8.0** | Research phase. Cap: 8.0 |
 | 8 | MT-13 | iOS/macOS app development | 4 | Session 49 | 7 | 0.5 | 3.5 | **7.5** | Phase 2 COMPLETE. Phase 3: first real app. |
 | 9 | MT-17 | Design/reports | 5 | Session 54 | 2 | 1.0 | 2.0 | **7.0** | Phase 4 COMPLETE. Phase 5: website templates. Report v2 built S54. |
+| 10 | MT-20 | Senior Dev Agent | 8 | Session 77 | 0 | 1.0 | 0.0 | **8.0** | Infrastructure complete. Phase 6: hook output quality. See SENIOR_DEV_GAP_ANALYSIS.md |
+| 11 | MT-21 | Hivemind coordination | 8 | Session 77 | 0 | 1.0 | 0.0 | **8.0** | Infrastructure complete. Phase 1 validation: prove 2-chat. See HIVEMIND_ROLLOUT.md |
 
 ### Blocked / External (no scoring — cannot be worked)
 
