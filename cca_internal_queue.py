@@ -281,7 +281,11 @@ def get_active_scopes(path: str = DEFAULT_QUEUE_PATH) -> list[dict]:
     # A claim is released if there's a release from the same sender
     # with a created_at after the claim's created_at
     active = []
+    seen = set()  # Deduplicate broadcast claims: (sender, subject)
     for claim in claims:
+        key = (claim.get("sender", ""), claim.get("subject", ""))
+        if key in seen:
+            continue
         released = any(
             r.get("sender") == claim.get("sender")
             and r.get("created_at", "") > claim.get("created_at", "")
@@ -289,6 +293,7 @@ def get_active_scopes(path: str = DEFAULT_QUEUE_PATH) -> list[dict]:
             for r in releases
         )
         if not released:
+            seen.add(key)
             active.append(claim)
 
     return active
