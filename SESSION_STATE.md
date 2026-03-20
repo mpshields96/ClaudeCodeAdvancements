@@ -3,24 +3,28 @@
 
 ---
 
-## Current State (as of Session 77 — 2026-03-20)
+## Current State (as of Session 78 — 2026-03-20)
 
-**Phase:** Session 77 IN PROGRESS. Tests: 2980/2980 passing (75 suites). Git: clean after S76 commit.
+**Phase:** Session 78 IN PROGRESS. Tests: 74 suites passing. Git: clean after Phase 9 foundation commit.
 
-**What was done this session (S77):**
-- **S76 uncommitted files committed** (report gen, changelog, state docs, journal)
-- **SENIOR_DEV_GAP_ANALYSIS.md written** — comprehensive audit of MT-20: 8 modules (318 tests) are static linters, not the senior dev experience Matthew wants. Phases 6-9 defined: hook output quality -> on-demand skill -> interactive CLI mode -> architectural coherence
-- **HIVEMIND_ROLLOUT.md written** — phased plan: prove 2-chat (3-5 sessions) -> hardened 2-chat (3-5 sessions) -> 3-chat (only after Phase 2 gate passes). Validation gates with measurable metrics at each phase.
-- **MASTER_TASKS.md updated** — MT-20 status rewritten (infrastructure complete, intelligence NOT STARTED), MT-21 created for Hivemind with proper scoping, priority queue updated with both, session counter updated to 77
-- **Memory entries saved** — 3 new entries for future CCA chats: senior dev gap, hivemind rollout, slow validation feedback
+**What was done this session (S78):**
+- **MT-20 Phase 7 COMPLETE** — `/senior-review` on-demand code review skill. Built `senior_review.py` engine (orchestrates SATD + quality scorer + effort scorer into APPROVE/CONDITIONAL/RETHINK verdicts) + `/senior-review` slash command. 16 new tests.
+- **MT-20 Phase 9 FOUNDATION** — `coherence_checker.py` built. Module structure check (tests dir, CLAUDE.md per module) + cross-file pattern consistency (docstring presence, naming convention uniformity). Auto-discovers modules. 13 new tests. Integrated into senior_review.py.
+- **End-to-end validation** — Ran `/senior-review` against 3 real CCA files. Engine works correctly. Known refinement needed: SATD false positives in detector files (fp_filter integration for future session).
+- **Memory documented** — S78 slow-build directive saved. Senior dev gap memory updated (Phases 6-7 done, Phase 9 started).
 
-**Matthew directives (S51-S77, permanent):**
-- All S51-S76 directives still active
-- S77: For ambitious features (hivemind, senior dev), slow incremental validation. Prove 2-chat before 3-chat. Multi-session work is fine — quality over speed.
-- S77: Senior dev tool must feel like having an actual senior developer colleague, not a linter/metrics dashboard
-- S77: One-time budget allowance for meatier skills (5-15% of token limit) if objectively helpful
+**Matthew directives (S51-S78, permanent):**
+- All S51-S77 directives still active
+- S78: MT-20 + MT-21 must be built slowly over 5-6+ CCA chats. No deadline. Blueprint -> test -> code -> validate. Quality over speed. 24-48h real time is fine.
+- S78: Senior dev tool must feel like an actual Anthropic senior developer colleague — wisdom, authority, experience. Not a metrics dashboard.
+- S78: Prove 2-chat (desktop + 1 CLI) over 3-5 sessions before attempting 3-chat hivemind.
+- S78: One-time budget allowance for meatier skills if objectively helpful.
 
-**Next:** (1) MT-20 Phase 6: Rewrite senior_dev_hook format_context() to produce natural language advice. (2) Hivemind Phase 1 prep: queue health check, scope timeout, worker CLAUDE.md. (3) First real 2-chat validation session.
+**Next (prioritized):**
+1. MT-20 Phase 9 completion: Add dependency graph analysis and cross-file import reasoning to coherence checker
+2. MT-20: Wire fp_filter into senior_review.py to reduce false positives (SATD markers in detector source code)
+3. MT-20 Phase 8: Interactive CLI chat mode (depends on hivemind Phase 2 validation)
+4. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker)
 
 ---
 
