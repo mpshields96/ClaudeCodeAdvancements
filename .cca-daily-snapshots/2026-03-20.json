@@ -1,0 +1,404 @@
+{
+  "date": "2026-03-20",
+  "captured_at": "2026-03-20T14:53:38.431935",
+  "tests": {
+    "suites": [
+      {
+        "file": "research/tests/test_ios_project_gen.py",
+        "count": 40
+      },
+      {
+        "file": "research/tests/test_reddit_scout.py",
+        "count": 29
+      },
+      {
+        "file": "research/tests/test_xcode_build.py",
+        "count": 17
+      },
+      {
+        "file": "memory-system/tests/test_cli.py",
+        "count": 28
+      },
+      {
+        "file": "memory-system/tests/test_mcp_server.py",
+        "count": 28
+      },
+      {
+        "file": "memory-system/tests/test_memory.py",
+        "count": 92
+      },
+      {
+        "file": "memory-system/tests/test_memory_store.py",
+        "count": 80
+      },
+      {
+        "file": "tests/test_cca_comm.py",
+        "count": 18
+      },
+      {
+        "file": "tests/test_cca_internal_queue.py",
+        "count": 87
+      },
+      {
+        "file": "tests/test_cross_chat_queue.py",
+        "count": 44
+      },
+      {
+        "file": "tests/test_hivemind.py",
+        "count": 22
+      },
+      {
+        "file": "tests/test_hook_chain_integration.py",
+        "count": 22
+      },
+      {
+        "file": "tests/test_loop_health.py",
+        "count": 54
+      },
+      {
+        "file": "tests/test_queue_hook.py",
+        "count": 22
+      },
+      {
+        "file": "tests/test_queue_injector.py",
+        "count": 19
+      },
+      {
+        "file": "tests/test_resume_generator.py",
+        "count": 17
+      },
+      {
+        "file": "context-monitor/tests/test_alert.py",
+        "count": 40
+      },
+      {
+        "file": "context-monitor/tests/test_auto_handoff.py",
+        "count": 33
+      },
+      {
+        "file": "context-monitor/tests/test_auto_wrap.py",
+        "count": 19
+      },
+      {
+        "file": "context-monitor/tests/test_compact_anchor.py",
+        "count": 25
+      },
+      {
+        "file": "context-monitor/tests/test_meter.py",
+        "count": 62
+      },
+      {
+        "file": "context-monitor/tests/test_post_compact.py",
+        "count": 28
+      },
+      {
+        "file": "context-monitor/tests/test_session_pacer.py",
+        "count": 35
+      },
+      {
+        "file": "context-monitor/tests/test_statusline.py",
+        "count": 24
+      },
+      {
+        "file": "self-learning/tests/test_batch_report.py",
+        "count": 13
+      },
+      {
+        "file": "self-learning/tests/test_improver.py",
+        "count": 64
+      },
+      {
+        "file": "self-learning/tests/test_overnight_detector.py",
+        "count": 29
+      },
+      {
+        "file": "self-learning/tests/test_paper_scanner.py",
+        "count": 54
+      },
+      {
+        "file": "self-learning/tests/test_research_outcomes.py",
+        "count": 31
+      },
+      {
+        "file": "self-learning/tests/test_resurfacer.py",
+        "count": 49
+      },
+      {
+        "file": "self-learning/tests/test_self_learning.py",
+        "count": 107
+      },
+      {
+        "file": "self-learning/tests/test_sentinel.py",
+        "count": 26
+      },
+      {
+        "file": "self-learning/tests/test_skillbook_inject.py",
+        "count": 26
+      },
+      {
+        "file": "self-learning/tests/test_trace_analyzer.py",
+        "count": 50
+      },
+      {
+        "file": "self-learning/tests/test_trade_reflector.py",
+        "count": 47
+      },
+      {
+        "file": "self-learning/tests/test_validate_strategies.py",
+        "count": 30
+      },
+      {
+        "file": "design-skills/tests/test_chart_generator.py",
+        "count": 42
+      },
+      {
+        "file": "design-skills/tests/test_daily_snapshot.py",
+        "count": 50
+      },
+      {
+        "file": "design-skills/tests/test_dashboard_generator.py",
+        "count": 33
+      },
+      {
+        "file": "design-skills/tests/test_report_generator.py",
+        "count": 24
+      },
+      {
+        "file": "design-skills/tests/test_slide_generator.py",
+        "count": 25
+      },
+      {
+        "file": "design-skills/tests/test_website_generator.py",
+        "count": 39
+      },
+      {
+        "file": "reddit-intelligence/tests/test_autonomous_scanner.py",
+        "count": 101
+      },
+      {
+        "file": "reddit-intelligence/tests/test_github_scanner.py",
+        "count": 62
+      },
+      {
+        "file": "reddit-intelligence/tests/test_nuclear_fetcher.py",
+        "count": 55
+      },
+      {
+        "file": "reddit-intelligence/tests/test_profiles.py",
+        "count": 49
+      },
+      {
+        "file": "reddit-intelligence/tests/test_reddit_reader.py",
+        "count": 43
+      },
+      {
+        "file": "reddit-intelligence/tests/test_repo_tester.py",
+        "count": 51
+      },
+      {
+        "file": "spec-system/tests/test_plan_compliance.py",
+        "count": 38
+      },
+      {
+        "file": "spec-system/tests/test_skill_activator.py",
+        "count": 64
+      },
+      {
+        "file": "spec-system/tests/test_spec.py",
+        "count": 31
+      },
+      {
+        "file": "spec-system/tests/test_spec_freshness.py",
+        "count": 25
+      },
+      {
+        "file": "agent-guard/tests/test_adr_reader.py",
+        "count": 31
+      },
+      {
+        "file": "agent-guard/tests/test_bash_guard.py",
+        "count": 111
+      },
+      {
+        "file": "agent-guard/tests/test_code_quality_scorer.py",
+        "count": 38
+      },
+      {
+        "file": "agent-guard/tests/test_coherence_checker.py",
+        "count": 39
+      },
+      {
+        "file": "agent-guard/tests/test_content_scanner.py",
+        "count": 50
+      },
+      {
+        "file": "agent-guard/tests/test_credential_guard.py",
+        "count": 40
+      },
+      {
+        "file": "agent-guard/tests/test_edit_guard.py",
+        "count": 28
+      },
+      {
+        "file": "agent-guard/tests/test_effort_scorer.py",
+        "count": 42
+      },
+      {
+        "file": "agent-guard/tests/test_fp_filter.py",
+        "count": 40
+      },
+      {
+        "file": "agent-guard/tests/test_git_context.py",
+        "count": 26
+      },
+      {
+        "file": "agent-guard/tests/test_mobile_approver.py",
+        "count": 36
+      },
+      {
+        "file": "agent-guard/tests/test_network_guard.py",
+        "count": 53
+      },
+      {
+        "file": "agent-guard/tests/test_ownership.py",
+        "count": 27
+      },
+      {
+        "file": "agent-guard/tests/test_path_validator.py",
+        "count": 30
+      },
+      {
+        "file": "agent-guard/tests/test_review_classifier.py",
+        "count": 43
+      },
+      {
+        "file": "agent-guard/tests/test_satd_detector.py",
+        "count": 44
+      },
+      {
+        "file": "agent-guard/tests/test_senior_chat.py",
+        "count": 56
+      },
+      {
+        "file": "agent-guard/tests/test_senior_chat_e2e.py",
+        "count": 10
+      },
+      {
+        "file": "agent-guard/tests/test_senior_dev_hook.py",
+        "count": 64
+      },
+      {
+        "file": "agent-guard/tests/test_senior_review.py",
+        "count": 26
+      },
+      {
+        "file": "agent-guard/tests/test_session_guard.py",
+        "count": 28
+      },
+      {
+        "file": "agent-guard/tests/test_tech_debt_tracker.py",
+        "count": 27
+      },
+      {
+        "file": "usage-dashboard/tests/test_arewedone.py",
+        "count": 51
+      },
+      {
+        "file": "usage-dashboard/tests/test_cost_alert.py",
+        "count": 39
+      },
+      {
+        "file": "usage-dashboard/tests/test_doc_drift.py",
+        "count": 32
+      },
+      {
+        "file": "usage-dashboard/tests/test_hook_profiler.py",
+        "count": 32
+      },
+      {
+        "file": "usage-dashboard/tests/test_otel_receiver.py",
+        "count": 63
+      },
+      {
+        "file": "usage-dashboard/tests/test_usage_counter.py",
+        "count": 44
+      }
+    ],
+    "total_tests": 3293,
+    "total_suites": 80
+  },
+  "modules": {
+    "Memory System": {
+      "path": "memory-system",
+      "loc": 1758,
+      "py_files": 4,
+      "tests": 228
+    },
+    "Spec System": {
+      "path": "spec-system",
+      "loc": 1186,
+      "py_files": 4,
+      "tests": 158
+    },
+    "Context Monitor": {
+      "path": "context-monitor",
+      "loc": 2197,
+      "py_files": 8,
+      "tests": 266
+    },
+    "Agent Guard": {
+      "path": "agent-guard",
+      "loc": 6144,
+      "py_files": 21,
+      "tests": 889
+    },
+    "Usage Dashboard": {
+      "path": "usage-dashboard",
+      "loc": 3025,
+      "py_files": 7,
+      "tests": 261
+    },
+    "Reddit Intelligence": {
+      "path": "reddit-intelligence",
+      "loc": 3928,
+      "py_files": 7,
+      "tests": 361
+    },
+    "Self-Learning": {
+      "path": "self-learning",
+      "loc": 6426,
+      "py_files": 12,
+      "tests": 526
+    },
+    "Design Skills": {
+      "path": "design-skills",
+      "loc": 4038,
+      "py_files": 8,
+      "tests": 213
+    },
+    "Research": {
+      "path": "research",
+      "loc": 1397,
+      "py_files": 3,
+      "tests": 86
+    },
+    "Root": {
+      "path": "./",
+      "loc": 3428,
+      "py_files": 9,
+      "tests": 305
+    }
+  },
+  "git": {
+    "commits_today": 72,
+    "last_commit_hash": "dda3a1e0",
+    "last_commit_msg": "S84: Update session resume for next session"
+  },
+  "totals": {
+    "loc": 33527,
+    "py_files": 83,
+    "tests": 3293,
+    "suites": 80,
+    "session_number": 84
+  }
+}

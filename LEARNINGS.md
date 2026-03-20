@@ -480,3 +480,10 @@
 - **First seen:** 2026-03-20 (Session 84)
 - **Last seen:** 2026-03-20
 - **Files:** reddit-intelligence/tests/test_autonomous_scanner.py
+
+### Message ID hashes must include ALL distinguishing fields — Severity: 2 — Count: 1
+- **Anti-pattern:** `_make_id(sender, subject)` hashing only sender + subject + timestamp. Broadcast messages to 3 targets in the same second produce identical IDs, causing `acknowledge(msg_id)` to only ack the first match.
+- **Fix:** Include ALL distinguishing fields in the hash: `_make_id(sender, target, subject)` with `sha256(sender:target:subject:timestamp)`. Apply to all queue files consistently.
+- **First seen:** 2026-03-20 (Session 89 — found via deep testing)
+- **Last seen:** 2026-03-20
+- **Files:** cca_internal_queue.py, cca_hivemind.py, cross_chat_queue.py

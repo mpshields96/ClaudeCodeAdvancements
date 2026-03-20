@@ -3,6 +3,32 @@
 
 ---
 
+## Session 89 — 2026-03-20
+
+**What changed:**
+- **test_hivemind_deep.py** — 117 deep tests (31 classes) covering shutdown, error paths, scope dedup, cross-CLI conflicts, stress, queue injection safety, message ID uniqueness, and more.
+- **_make_id collision bug** — Real bug found and fixed in `cca_internal_queue.py`, `cca_hivemind.py`, `cross_chat_queue.py`. Broadcast messages to 3 targets in same second produced identical IDs. Fixed by adding target to hash.
+- **tip_tracker.py** — Advancement tip persistence (26 tests). Extracts, stores, filters tips from session responses. CLI interface + `format_for_init`.
+- **wrap_tracker.py** — Session wrap assessment persistence (23 tests). Logs grade/wins/losses/test counts. Trend analysis (improving/declining/stable). `format_for_init` for session briefing.
+- **Command wiring** — Both trackers wired into `/cca-wrap` (Steps 6a.6, 6a.7), `/cca-wrap-desktop` (Step 7.5), and `/cca-init` (Step 2.7).
+- **wrap_assessments.jsonl** — Seeded with S82-S86 historical data from CHANGELOG for bootstrapping trends.
+- **Queue cleanup** — Stale S86 shutdown signals cleared, hivemind preflight verified "ready".
+
+**Why:**
+- Matthew S86: "Test the hell out of hivemind functions" — deep testing found a real production bug
+- Matthew S86 explicit: "Build advancement tip tracker" — tips now persist across all chats
+- S86 priority #3: "Persist wrap assessments to file" — quality trends now trackable
+- Tracker wiring ensures every future session auto-captures tips and grades
+
+**Tests:** 3498/3498 passing (85 suites, +166 new this session)
+
+**Lessons:**
+- `_make_id` must include all distinguishing fields (sender + target + subject + timestamp). Omitting target caused ID collisions on broadcast messages — `acknowledge(msg_id)` would only ack the first match.
+- macOS grep doesn't support `-P` (PCRE). Use `grep -o` with `awk` for extraction.
+- Backfilling historical data into new tracking systems is important for bootstrapping — trend analysis needs 2+ data points to start computing.
+
+---
+
 ## Session 86 — 2026-03-20
 
 **What changed:**
