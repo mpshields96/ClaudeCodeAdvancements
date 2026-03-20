@@ -1464,5 +1464,337 @@ class TestGitHubTrendingIntegration(unittest.TestCase):
         self.assertIsInstance(parsed, dict)
 
 
+class TestRescanStaleAutonomous(unittest.TestCase):
+    """Tests for execute_rescan_stale() — MT-14 Phase 3: auto-rescan all stale subs."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.registry_path = os.path.join(self.tmpdir, "scan_registry.json")
+        self.state_path = os.path.join(self.tmpdir, "state.json")
+        self.kill_switch = os.path.join(self.tmpdir, "kill_switch")
+        self.findings_path = os.path.join(self.tmpdir, "FINDINGS_LOG.md")
+        # Write empty findings
+        with open(self.findings_path, "w") as f:
+            f.write("# Findings\n")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _make_scanner(self):
+        from autonomous_scanner import AutonomousScanner
+        return AutonomousScanner(
+            registry_path=self.registry_path,
+            kill_switch_path=self.kill_switch,
+            state_path=self.state_path,
+            findings_path=self.findings_path,
+        )
+
+    def _write_registry(self, data):
+        with open(self.registry_path, "w") as f:
+            json.dump(data, f)
+
+    def _make_stale_registry(self, slugs, days_ago=20):
+        """Create registry with stale entries."""
+        data = {}
+        old_ts = (datetime.now(timezone.utc) - timedelta(days=days_ago)).isoformat()
+        for slug in slugs:
+            data[slug] = {
+                "last_scan": old_ts,
+                "posts_scanned": 50,
+                "builds": 2,
+                "adapts": 3,
+            }
+        self._write_registry(data)
+
+    def test_execute_rescan_stale_exists(self):
+        """Method should exist on AutonomousScanner."""
+        scanner = self._make_scanner()
+        self.assertTrue(hasattr(scanner, "execute_rescan_stale"))
+        self.assertTrue(callable(scanner.execute_rescan_stale))
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_execute_rescan_stale_returns_list(self, mock_fetch):
+        """Should return a list of ScanResults."""
+        mock_fetch.return_value = []
+        self._make_stale_registry(["claudecode"])
+        scanner = self._make_scanner()
+        results = scanner.execute_rescan_stale()
+        self.assertIsInstance(results, list)
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_execute_rescan_stale_rescans_all_stale(self, mock_fetch):
+        """Should rescan every stale sub, not just the first."""
+        mock_fetch.return_value = [
+            {"id": "new1", "title": "New post", "score": 50,
+             "subreddit": "ClaudeCode", "permalink": "/r/ClaudeCode/new1",
+             "url": "https://reddit.com/r/ClaudeCode/new1",
+             "created_utc": (datetime.now(timezone.utc) - timedelta(days=1)).timestamp(),
+             "num_comments": 5, "author": "test", "is_self": True, "selftext": "test"},
+        ]
+        self._make_stale_registry(["claudecode", "claudeai"], days_ago=20)
+        scanner = self._make_scanner()
+        scanner.safety_gate.min_delay_seconds = 0  # Disable rate limit for test
+        results = scanner.execute_rescan_stale(max_age_days=14)
+        # Should have rescanned both stale subs
+        self.assertEqual(len(results), 2)
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_execute_rescan_stale_skips_fresh_subs(self, mock_fetch):
+        """Fresh subs (recently scanned) should not be rescanned."""
+        mock_fetch.return_value = []
+        # One stale, one fresh
+        now = datetime.now(timezone.utc)
+        old_ts = (now - timedelta(days=20)).isoformat()
+        fresh_ts = (now - timedelta(days=2)).isoformat()
+        self._write_registry({
+            "claudecode": {"last_scan": old_ts, "posts_scanned": 50, "builds": 2, "adapts": 3},
+            "claudeai": {"last_scan": fresh_ts, "posts_scanned": 30, "builds": 1, "adapts": 1},
+        })
+        scanner = self._make_scanner()
+        results = scanner.execute_rescan_stale(max_age_days=14)
+        # Only claudecode is stale
+        self.assertEqual(len(results), 1)
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_execute_rescan_stale_respects_kill_switch(self, mock_fetch):
+        """Kill switch should stop all rescanning."""
+        mock_fetch.return_value = []
+        self._make_stale_registry(["claudecode"])
+        # Activate kill switch
+        with open(self.kill_switch, "w") as f:
+            f.write("paused")
+        scanner = self._make_scanner()
+        results = scanner.execute_rescan_stale()
+        self.assertEqual(len(results), 0)
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_execute_rescan_stale_respects_session_limit(self, mock_fetch):
+        """Should stop when session scan limit is hit."""
+        mock_fetch.return_value = []
+        self._make_stale_registry(["claudecode", "claudeai", "vibecoding"], days_ago=20)
+        scanner = self._make_scanner()
+        # Set very low limit
+        scanner.safety_gate.max_scans_per_session = 1
+        results = scanner.execute_rescan_stale(max_age_days=14)
+        # Should only scan 1 (limit hit after first)
+        self.assertLessEqual(len(results), 1)
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_execute_rescan_stale_returns_scan_results(self, mock_fetch):
+        """Each result should be a ScanResult with report."""
+        from autonomous_scanner import ScanResult
+        mock_fetch.return_value = []
+        self._make_stale_registry(["claudecode"], days_ago=20)
+        scanner = self._make_scanner()
+        results = scanner.execute_rescan_stale(max_age_days=14)
+        for r in results:
+            self.assertIsInstance(r, ScanResult)
+            self.assertIsNotNone(r.report)
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_execute_rescan_stale_empty_when_no_stale(self, mock_fetch):
+        """No stale subs should return empty list."""
+        mock_fetch.return_value = []
+        # All subs freshly scanned
+        fresh_ts = datetime.now(timezone.utc).isoformat()
+        self._write_registry({
+            "claudecode": {"last_scan": fresh_ts, "posts_scanned": 50, "builds": 2, "adapts": 3},
+        })
+        scanner = self._make_scanner()
+        results = scanner.execute_rescan_stale(max_age_days=14)
+        self.assertEqual(len(results), 0)
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_execute_rescan_stale_default_max_age(self, mock_fetch):
+        """Default max_age_days should be 14."""
+        mock_fetch.return_value = []
+        # 13 days old — should NOT be stale at default 14
+        ts_13d = (datetime.now(timezone.utc) - timedelta(days=13)).isoformat()
+        self._write_registry({
+            "claudecode": {"last_scan": ts_13d, "posts_scanned": 50, "builds": 2, "adapts": 3},
+        })
+        scanner = self._make_scanner()
+        results = scanner.execute_rescan_stale()
+        self.assertEqual(len(results), 0)
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_execute_rescan_stale_custom_max_age(self, mock_fetch):
+        """Custom max_age_days should be respected."""
+        mock_fetch.return_value = [
+            {"id": "new1", "title": "Post", "score": 50,
+             "subreddit": "ClaudeCode", "permalink": "/r/ClaudeCode/new1",
+             "url": "https://reddit.com/r/ClaudeCode/new1",
+             "created_utc": (datetime.now(timezone.utc) - timedelta(hours=1)).timestamp(),
+             "num_comments": 5, "author": "test", "is_self": True, "selftext": "test"},
+        ]
+        # 8 days old — stale at 7d threshold, not at 14d
+        ts_8d = (datetime.now(timezone.utc) - timedelta(days=8)).isoformat()
+        self._write_registry({
+            "claudecode": {"last_scan": ts_8d, "posts_scanned": 50, "builds": 2, "adapts": 3},
+        })
+        scanner = self._make_scanner()
+        results = scanner.execute_rescan_stale(max_age_days=7)
+        self.assertEqual(len(results), 1)
+
+
+class TestRescanAllCLI(unittest.TestCase):
+    """Tests for 'rescan-all' CLI command — MT-14 Phase 3."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.registry_path = os.path.join(self.tmpdir, "scan_registry.json")
+        self.state_path = os.path.join(self.tmpdir, "state.json")
+        self.kill_switch = os.path.join(self.tmpdir, "kill_switch")
+        self.findings_path = os.path.join(self.tmpdir, "FINDINGS_LOG.md")
+        with open(self.findings_path, "w") as f:
+            f.write("# Findings\n")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def test_cli_help_includes_rescan_all(self):
+        """CLI help should list rescan-all command."""
+        from autonomous_scanner import cli_main
+        import io
+        buf = io.StringIO()
+        with patch("sys.stdout", buf):
+            cli_main([])
+        output = buf.getvalue()
+        self.assertIn("rescan-all", output)
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_cli_rescan_all_runs(self, mock_fetch):
+        """rescan-all command should execute without error."""
+        mock_fetch.return_value = []
+        from autonomous_scanner import cli_main
+        import io
+        buf = io.StringIO()
+        # Write stale registry
+        old_ts = (datetime.now(timezone.utc) - timedelta(days=20)).isoformat()
+        with open(self.registry_path, "w") as f:
+            json.dump({"claudecode": {"last_scan": old_ts, "posts_scanned": 50, "builds": 2, "adapts": 3}}, f)
+        with patch("sys.stdout", buf):
+            cli_main(["rescan-all",
+                       "--registry", self.registry_path,
+                       "--state", self.state_path,
+                       "--kill-switch", self.kill_switch,
+                       "--findings", self.findings_path])
+        output = buf.getvalue()
+        self.assertIn("RESCAN", output.upper())
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_cli_rescan_all_json(self, mock_fetch):
+        """rescan-all --json should produce valid JSON output."""
+        mock_fetch.return_value = []
+        from autonomous_scanner import cli_main
+        import io
+        buf = io.StringIO()
+        old_ts = (datetime.now(timezone.utc) - timedelta(days=20)).isoformat()
+        with open(self.registry_path, "w") as f:
+            json.dump({"claudecode": {"last_scan": old_ts, "posts_scanned": 50, "builds": 2, "adapts": 3}}, f)
+        with patch("sys.stdout", buf):
+            cli_main(["rescan-all",
+                       "--json",
+                       "--registry", self.registry_path,
+                       "--state", self.state_path,
+                       "--kill-switch", self.kill_switch,
+                       "--findings", self.findings_path])
+        output = buf.getvalue()
+        parsed = json.loads(output)
+        self.assertIsInstance(parsed, list)
+
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_cli_rescan_all_no_stale(self, mock_fetch):
+        """rescan-all with no stale subs should report nothing to rescan."""
+        mock_fetch.return_value = []
+        from autonomous_scanner import cli_main
+        import io
+        buf = io.StringIO()
+        fresh_ts = datetime.now(timezone.utc).isoformat()
+        with open(self.registry_path, "w") as f:
+            json.dump({"claudecode": {"last_scan": fresh_ts, "posts_scanned": 50, "builds": 2, "adapts": 3}}, f)
+        with patch("sys.stdout", buf):
+            cli_main(["rescan-all",
+                       "--registry", self.registry_path,
+                       "--state", self.state_path,
+                       "--kill-switch", self.kill_switch,
+                       "--findings", self.findings_path])
+        output = buf.getvalue()
+        self.assertIn("no stale", output.lower())
+
+
+class TestDailyScanWithRescan(unittest.TestCase):
+    """Tests for daily scan --include-rescan flag — MT-14 Phase 3 integration."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.registry_path = os.path.join(self.tmpdir, "scan_registry.json")
+        self.state_path = os.path.join(self.tmpdir, "state.json")
+        self.kill_switch = os.path.join(self.tmpdir, "kill_switch")
+        self.findings_path = os.path.join(self.tmpdir, "FINDINGS_LOG.md")
+        with open(self.findings_path, "w") as f:
+            f.write("# Findings\n")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _make_scanner(self):
+        from autonomous_scanner import AutonomousScanner
+        return AutonomousScanner(
+            registry_path=self.registry_path,
+            kill_switch_path=self.kill_switch,
+            state_path=self.state_path,
+            findings_path=self.findings_path,
+        )
+
+    @patch("autonomous_scanner.fetch_rising_posts")
+    @patch("autonomous_scanner.fetch_hot_posts")
+    @patch("autonomous_scanner.fetch_top_posts")
+    def test_daily_scan_with_rescan_flag(self, mock_top, mock_hot, mock_rising):
+        """execute_daily_scan(include_rescan=True) should also rescan stale subs."""
+        mock_hot.return_value = [
+            {"id": "h1", "title": "Hot post", "score": 100, "subreddit": "ClaudeCode",
+             "permalink": "/r/ClaudeCode/h1", "url": "https://reddit.com/r/ClaudeCode/h1",
+             "created_utc": datetime.now(timezone.utc).timestamp(),
+             "num_comments": 10, "author": "user1", "is_self": True, "selftext": "hot"},
+        ]
+        mock_rising.return_value = []
+        mock_top.return_value = [
+            {"id": "new1", "title": "New post", "score": 50, "subreddit": "vibecoding",
+             "permalink": "/r/vibecoding/new1", "url": "https://reddit.com/r/vibecoding/new1",
+             "created_utc": (datetime.now(timezone.utc) - timedelta(hours=1)).timestamp(),
+             "num_comments": 5, "author": "test", "is_self": True, "selftext": "new"},
+        ]
+        # Make vibecoding stale in registry
+        old_ts = (datetime.now(timezone.utc) - timedelta(days=20)).isoformat()
+        with open(self.registry_path, "w") as f:
+            json.dump({"vibecoding": {"last_scan": old_ts, "posts_scanned": 50, "builds": 1, "adapts": 2}}, f)
+
+        scanner = self._make_scanner()
+        results = scanner.execute_daily_scan(subs=["ClaudeCode"], include_rescan=True)
+        # Should have more results than just the 1 daily sub
+        self.assertGreaterEqual(len(results), 1)
+
+    @patch("autonomous_scanner.fetch_rising_posts")
+    @patch("autonomous_scanner.fetch_hot_posts")
+    def test_daily_scan_without_rescan_flag(self, mock_hot, mock_rising):
+        """execute_daily_scan without include_rescan should not rescan."""
+        mock_hot.return_value = []
+        mock_rising.return_value = []
+        # Make a stale sub in registry
+        old_ts = (datetime.now(timezone.utc) - timedelta(days=20)).isoformat()
+        with open(self.registry_path, "w") as f:
+            json.dump({"vibecoding": {"last_scan": old_ts, "posts_scanned": 50, "builds": 1, "adapts": 2}}, f)
+
+        scanner = self._make_scanner()
+        # Default: include_rescan=False
+        results = scanner.execute_daily_scan(subs=["ClaudeCode"])
+        # Should only have 1 result (ClaudeCode daily scan, no rescan)
+        self.assertEqual(len(results), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

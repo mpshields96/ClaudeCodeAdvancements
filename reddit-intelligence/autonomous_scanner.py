@@ -513,6 +513,7 @@ class AutonomousScanner:
         subs: list = None,
         hot_limit: int = 25,
         rising_limit: int = 10,
+        include_rescan: bool = False,
     ) -> list:
         """
         Execute a daily hot+rising scan across multiple subreddits.
@@ -590,6 +591,11 @@ class AutonomousScanner:
 
             # Brief pause between subs
             time.sleep(1.0)
+
+        # MT-14 Phase 3: optionally rescan stale subs as part of daily scan
+        if include_rescan:
+            rescan_results = self.execute_rescan_stale()
+            results.extend(rescan_results)
 
         return results
 
@@ -700,6 +706,49 @@ class AutonomousScanner:
         registry = ScanRegistry(self.prioritizer._registry._path)
         return registry.stale_subs(max_age_days)
 
+    def execute_rescan_stale(
+        self,
+        max_age_days: int = 14,
+    ) -> list:
+        """
+        MT-14 Phase 3: Auto-rescan all stale subreddits.
+
+        Iterates all subs in the registry that haven't been scanned in
+        max_age_days, runs rescan_sub() on each, and returns a list of
+        ScanResults.
+
+        Respects safety gate (kill switch, session limits, rate limits).
+
+        Args:
+            max_age_days: threshold for staleness (default 14 days)
+
+        Returns list of ScanResult (one per stale sub rescanned).
+        """
+        stale_slugs = self.get_stale_subs(max_age_days=max_age_days)
+        results = []
+
+        for slug in stale_slugs:
+            # Safety gate check before each rescan
+            allowed, reason = self.safety_gate.can_scan()
+            if not allowed:
+                break
+
+            # Resolve subreddit name from profile
+            try:
+                profile = get_profile(slug)
+                sub_name = profile.subreddit
+            except Exception:
+                sub_name = slug
+
+            result = self.rescan_sub(sub_name, max_age_days=max_age_days)
+            if result is not None:
+                results.append(result)
+
+            # Brief pause between rescans
+            time.sleep(0.5)
+
+        return results
+
     def execute_github_trending(
         self,
         language: str = None,
@@ -792,7 +841,7 @@ def cli_main(args: list = None):
         args = sys.argv[1:]
 
     if not args:
-        print("Usage: python3 autonomous_scanner.py [rank|status|pick|scan|daily|rescan|stale|github-trending]")
+        print("Usage: python3 autonomous_scanner.py [rank|status|pick|scan|daily|rescan|rescan-all|stale|github-trending]")
         print("  rank                    Show prioritized sub list")
         print("  status                  Show safety gate status")
         print("  pick [--domain <d>]     Pick next target sub")
@@ -804,6 +853,9 @@ def cli_main(args: list = None):
         print("        [--hot-limit N]   Max hot posts per sub (default 25)")
         print("        [--rising-limit N] Max rising posts per sub (default 10)")
         print("  rescan [--target <sub>] MT-14: Delta-rescan stale sub (only new posts)")
+        print("  rescan-all              MT-14 Phase 3: Auto-rescan ALL stale subs")
+        print("        [--max-age <N>]   Staleness threshold in days (default 14)")
+        print("        [--json]          Output JSON")
         print("  stale                   Show subs due for rescanning")
         print("  github-trending         MT-11: Scan GitHub for trending repos")
         print("        [--language <l>]  Scan single language (default: all CCA languages)")
@@ -828,9 +880,13 @@ def cli_main(args: list = None):
     rising_limit = 10
     language = None
     days = 7
+    max_age = 14
     i = 1
     while i < len(args):
-        if args[i] == "--language" and i + 1 < len(args):
+        if args[i] == "--max-age" and i + 1 < len(args):
+            max_age = int(args[i + 1])
+            i += 2
+        elif args[i] == "--language" and i + 1 < len(args):
             language = args[i + 1]
             i += 2
         elif args[i] == "--days" and i + 1 < len(args):
@@ -1039,6 +1095,30 @@ def cli_main(args: list = None):
                     print(f"\n  NEEDLEs for review:")
                     for i, p in enumerate(result.needles[:10], 1):
                         print(f"    {i}. [{p['score']:4d}pts] {p['title'][:80]}")
+
+    elif cmd == "rescan-all":
+        scanner = AutonomousScanner(
+            registry_path=registry_path,
+            kill_switch_path=kill_switch_path,
+            state_path=state_path,
+            findings_path=findings_path,
+        )
+        results = scanner.execute_rescan_stale(max_age_days=max_age)
+        if output_json:
+            print(json.dumps([r.to_dict() for r in results], indent=2))
+        elif not results:
+            print(f"No stale subs to rescan (threshold: {max_age} days).")
+        else:
+            total_new = 0
+            total_needles = 0
+            for r in results:
+                print(r.report.summary())
+                total_new += r.report.posts_safe
+                total_needles += len(r.needles)
+                print()
+            print(f"RESCAN-ALL COMPLETE — {len(results)} stale subs rescanned")
+            print(f"  Total new posts: {total_new}")
+            print(f"  NEEDLEs for review: {total_needles}")
 
     elif cmd == "stale":
         scanner = AutonomousScanner(
