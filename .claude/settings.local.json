@@ -15,6 +15,10 @@
           {
             "type": "command",
             "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/agent-guard/senior_dev_hook.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/queue_hook.py"
           }
         ]
       }
@@ -74,6 +78,10 @@
           {
             "type": "command",
             "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/memory-system/hooks/capture_hook.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/queue_hook.py"
           }
         ]
       }
