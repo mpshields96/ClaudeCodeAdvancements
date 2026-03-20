@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-19 (Session 64)
+# Last updated: 2026-03-19 (Session 68)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -26,17 +26,17 @@
 
 | Module | Path | Status | Tests |
 |--------|------|--------|-------|
-| Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit | 229 |
-| Spec System | `spec-system/` | SPEC-1-6 + spec_freshness.py + plan_compliance | 153 |
+| Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit | 228 |
+| Spec System | `spec-system/` | SPEC-1-6 + spec_freshness + plan_compliance (wired into validate.py) | 158 |
 | Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
 | Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard | 378 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 197 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
-| Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 511 |
+| Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 526 |
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 2236 tests (54 suites). All must pass before any work.**
+**Total: 2279 tests (54 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -129,6 +129,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | PreToolUse (all) | `usage-dashboard/hooks/cost_alert.py` | Cost threshold |
 | PreToolUse (all) | `agent-guard/path_validator.py` | Dangerous path/command detection |
 | PreToolUse (all) | `agent-guard/edit_guard.py` | Edit retry prevention on structured files |
+| PreToolUse (all) | `spec-system/hooks/validate.py` | Spec guard + plan compliance + freshness |
 | PreToolUse (Bash) | `agent-guard/hooks/credential_guard.py` | Credential extraction guard |
 | PreToolUse (Bash) | `agent-guard/bash_guard.py` | Bash command safety (network, packages, processes, system) |
 | PostToolUse (all) | `context-monitor/hooks/meter.py` | Token counter |
