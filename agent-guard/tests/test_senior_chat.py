@@ -7,13 +7,16 @@ Tests cover:
 - Response generation (structured output from review context)
 - CLI argument parsing
 - Non-interactive mode (single question, no REPL)
+- LLMClient: API integration, conversation history, error handling
 """
 
+import json
 import os
 import sys
 import tempfile
 import shutil
 import unittest
+from unittest.mock import patch, MagicMock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from senior_chat import (
@@ -22,6 +25,8 @@ from senior_chat import (
     format_initial_review,
     format_followup_prompt,
     parse_args,
+    LLMClient,
+    build_system_prompt,
 )
 
 
@@ -193,6 +198,206 @@ class TestParseArgs(unittest.TestCase):
     def test_no_question_means_interactive(self):
         args = parse_args(["test.py"])
         self.assertIsNone(args.question)
+
+
+class TestBuildSystemPrompt(unittest.TestCase):
+    """Test system prompt generation from review context."""
+
+    def test_includes_verdict(self):
+        ctx = ReviewContext(
+            file_path="mod.py",
+            content="x = 1\n",
+            review_result={
+                "verdict": "conditional",
+                "concerns": ["High complexity"],
+                "suggestions": ["Simplify"],
+                "metrics": {"loc": 100, "quality_score": 55.0},
+            },
+        )
+        prompt = build_system_prompt(ctx)
+        self.assertIn("conditional", prompt.lower())
+        self.assertIn("mod.py", prompt)
+
+    def test_includes_file_content(self):
+        ctx = ReviewContext(
+            file_path="mod.py",
+            content="def foo():\n    return 42\n",
+            review_result={"verdict": "approve", "concerns": [], "suggestions": [], "metrics": {}},
+        )
+        prompt = build_system_prompt(ctx)
+        self.assertIn("def foo", prompt)
+
+    def test_includes_concerns_and_suggestions(self):
+        ctx = ReviewContext(
+            file_path="mod.py",
+            content="x = 1\n",
+            review_result={
+                "verdict": "rethink",
+                "concerns": ["No error handling", "God class"],
+                "suggestions": ["Split into modules"],
+                "metrics": {"loc": 800},
+            },
+        )
+        prompt = build_system_prompt(ctx)
+        self.assertIn("No error handling", prompt)
+        self.assertIn("Split into modules", prompt)
+
+    def test_truncates_large_files(self):
+        ctx = ReviewContext(
+            file_path="big.py",
+            content="x = 1\n" * 5000,
+            review_result={"verdict": "approve", "concerns": [], "suggestions": [], "metrics": {}},
+        )
+        prompt = build_system_prompt(ctx)
+        self.assertIn("truncated", prompt.lower())
+        self.assertLess(len(prompt), 15000)
+
+
+class TestLLMClient(unittest.TestCase):
+    """Test LLMClient — Anthropic API wrapper with conversation history."""
+
+    def test_init_no_api_key_raises(self):
+        """LLMClient should raise ValueError if no API key is available."""
+        with patch.dict(os.environ, {}, clear=True):
+            # Remove ANTHROPIC_API_KEY if present
+            env = os.environ.copy()
+            env.pop("ANTHROPIC_API_KEY", None)
+            with patch.dict(os.environ, env, clear=True):
+                with self.assertRaises(ValueError):
+                    LLMClient(api_key=None)
+
+    def test_init_with_explicit_api_key(self):
+        client = LLMClient(api_key="sk-ant-test-key-123")
+        self.assertEqual(client.api_key, "sk-ant-test-key-123")
+
+    def test_init_with_env_api_key(self):
+        with patch.dict(os.environ, {"ANTHROPIC_API_KEY": "sk-ant-env-key-456"}):
+            client = LLMClient()
+            self.assertEqual(client.api_key, "sk-ant-env-key-456")
+
+    def test_default_model(self):
+        client = LLMClient(api_key="sk-ant-test-key-123")
+        self.assertEqual(client.model, "claude-sonnet-4-20250514")
+
+    def test_custom_model(self):
+        client = LLMClient(api_key="sk-ant-test-key-123", model="claude-haiku-4-5-20251001")
+        self.assertEqual(client.model, "claude-haiku-4-5-20251001")
+
+    def test_conversation_history_starts_empty(self):
+        client = LLMClient(api_key="sk-ant-test-key-123")
+        self.assertEqual(client.history, [])
+
+    def test_ask_appends_to_history(self):
+        """After a successful ask(), both user and assistant messages are in history."""
+        client = LLMClient(api_key="sk-ant-test-key-123")
+
+        mock_response = {
+            "content": [{"type": "text", "text": "The function returns 42."}],
+            "usage": {"input_tokens": 100, "output_tokens": 20},
+        }
+        with patch.object(client, "_call_api", return_value=mock_response):
+            result = client.ask("What does foo do?", system="You are a senior dev.")
+            self.assertEqual(result, "The function returns 42.")
+            self.assertEqual(len(client.history), 2)
+            self.assertEqual(client.history[0]["role"], "user")
+            self.assertEqual(client.history[1]["role"], "assistant")
+
+    def test_ask_tracks_token_usage(self):
+        client = LLMClient(api_key="sk-ant-test-key-123")
+        mock_response = {
+            "content": [{"type": "text", "text": "Answer."}],
+            "usage": {"input_tokens": 150, "output_tokens": 30},
+        }
+        with patch.object(client, "_call_api", return_value=mock_response):
+            client.ask("Question?", system="System.")
+            self.assertEqual(client.total_input_tokens, 150)
+            self.assertEqual(client.total_output_tokens, 30)
+
+    def test_ask_accumulates_tokens(self):
+        client = LLMClient(api_key="sk-ant-test-key-123")
+        mock_resp1 = {
+            "content": [{"type": "text", "text": "A1."}],
+            "usage": {"input_tokens": 100, "output_tokens": 20},
+        }
+        mock_resp2 = {
+            "content": [{"type": "text", "text": "A2."}],
+            "usage": {"input_tokens": 200, "output_tokens": 40},
+        }
+        with patch.object(client, "_call_api", side_effect=[mock_resp1, mock_resp2]):
+            client.ask("Q1", system="S")
+            client.ask("Q2", system="S")
+            self.assertEqual(client.total_input_tokens, 300)
+            self.assertEqual(client.total_output_tokens, 60)
+
+    def test_ask_handles_api_error(self):
+        client = LLMClient(api_key="sk-ant-test-key-123")
+        with patch.object(client, "_call_api", side_effect=Exception("Connection failed")):
+            result = client.ask("Question?", system="System.")
+            self.assertIn("Error", result)
+            # History should NOT have the failed exchange
+            self.assertEqual(len(client.history), 0)
+
+    def test_reset_clears_history(self):
+        client = LLMClient(api_key="sk-ant-test-key-123")
+        client.history = [{"role": "user", "content": "test"}]
+        client.total_input_tokens = 500
+        client.reset()
+        self.assertEqual(client.history, [])
+        self.assertEqual(client.total_input_tokens, 0)
+        self.assertEqual(client.total_output_tokens, 0)
+
+    def test_call_api_builds_correct_request(self):
+        """Verify _call_api sends properly formatted request to Anthropic."""
+        client = LLMClient(api_key="sk-ant-test-key-123", model="claude-sonnet-4-20250514")
+
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.read.return_value = json.dumps({
+            "content": [{"type": "text", "text": "response"}],
+            "usage": {"input_tokens": 50, "output_tokens": 10},
+        }).encode()
+        mock_resp.__enter__ = lambda s: s
+        mock_resp.__exit__ = MagicMock(return_value=False)
+
+        messages = [{"role": "user", "content": "Hello"}]
+        with patch("urllib.request.urlopen", return_value=mock_resp) as mock_urlopen:
+            result = client._call_api(messages, system="You are helpful.")
+            # Verify the request was made
+            call_args = mock_urlopen.call_args
+            req = call_args[0][0]
+            self.assertEqual(req.get_header("X-api-key"), "sk-ant-test-key-123")
+            self.assertIn("anthropic-version", {k.lower(): v for k, v in req.header_items()})
+            body = json.loads(req.data)
+            self.assertEqual(body["model"], "claude-sonnet-4-20250514")
+            self.assertEqual(body["system"], "You are helpful.")
+
+    def test_max_tokens_default(self):
+        client = LLMClient(api_key="sk-ant-test-key-123")
+        self.assertEqual(client.max_tokens, 4096)
+
+    def test_max_tokens_custom(self):
+        client = LLMClient(api_key="sk-ant-test-key-123", max_tokens=2048)
+        self.assertEqual(client.max_tokens, 2048)
+
+
+class TestParseArgsLLM(unittest.TestCase):
+    """Test CLI args for LLM features."""
+
+    def test_model_flag(self):
+        args = parse_args(["test.py", "--model", "claude-haiku-4-5-20251001"])
+        self.assertEqual(args.model, "claude-haiku-4-5-20251001")
+
+    def test_model_default(self):
+        args = parse_args(["test.py"])
+        self.assertEqual(args.model, "claude-sonnet-4-20250514")
+
+    def test_no_llm_flag(self):
+        args = parse_args(["test.py", "--no-llm"])
+        self.assertTrue(args.no_llm)
+
+    def test_no_llm_default_false(self):
+        args = parse_args(["test.py"])
+        self.assertFalse(args.no_llm)
 
 
 if __name__ == "__main__":
