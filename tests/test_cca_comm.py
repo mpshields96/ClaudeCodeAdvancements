@@ -285,9 +285,163 @@ class TestStatus(unittest.TestCase):
         self.assertIn("CLI 1", f.getvalue())
 
 
+class TestContext(unittest.TestCase):
+    """Tests for the context command — gives workers context about desktop's recent work."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp.close()
+        self.path = self.tmp.name
+        self._orig = ciq.DEFAULT_QUEUE_PATH
+        ciq.DEFAULT_QUEUE_PATH = self.path
+
+    def tearDown(self):
+        ciq.DEFAULT_QUEUE_PATH = self._orig
+        os.unlink(self.path)
+
+    @patch("cca_comm._get_recent_commits")
+    def test_context_shows_recent_commits(self, mock_commits):
+        mock_commits.return_value = [
+            {"hash": "abc1234", "message": "S91: Build crash_recovery.py"},
+            {"hash": "def5678", "message": "S91: Fix doc drift"},
+        ]
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_context([])
+        output = f.getvalue()
+        self.assertIn("RECENT COMMITS", output)
+        self.assertIn("abc1234", output)
+        self.assertIn("crash_recovery", output)
+
+    @patch("cca_comm._get_recent_commits")
+    def test_context_shows_active_scopes(self, mock_commits):
+        mock_commits.return_value = []
+        ciq.send_message("desktop", "cli1", "agent-guard/", category="scope_claim",
+                        priority="high", path=self.path)
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_context([])
+        output = f.getvalue()
+        self.assertIn("ACTIVE SCOPES", output)
+        self.assertIn("agent-guard/", output)
+
+    @patch("cca_comm._get_recent_commits")
+    def test_context_shows_queue_stats(self, mock_commits):
+        mock_commits.return_value = []
+        # Send several messages to create queue activity
+        for i in range(5):
+            ciq.send_message("desktop", "cli1", f"msg {i}", path=self.path)
+        ciq.send_message("cli1", "desktop", "reply", path=self.path)
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_context([])
+        output = f.getvalue()
+        self.assertIn("QUEUE STATS", output)
+        self.assertIn("6", output)  # total messages
+
+    @patch("cca_comm._get_recent_commits")
+    def test_context_with_no_activity(self, mock_commits):
+        mock_commits.return_value = []
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_context([])
+        output = f.getvalue()
+        self.assertIn("No active scope claims", output)
+
+    @patch("cca_comm._get_recent_commits")
+    def test_context_custom_commit_count(self, mock_commits):
+        mock_commits.return_value = [
+            {"hash": "abc1234", "message": "commit 1"},
+        ]
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_context(["3"])
+        # Should pass n=3 to _get_recent_commits
+        mock_commits.assert_called_once_with(3)
+
+    def test_get_recent_commits_returns_list(self):
+        """_get_recent_commits should return a list of dicts with hash and message."""
+        result = cca_comm._get_recent_commits(5)
+        self.assertIsInstance(result, list)
+        if result:  # May be empty in test env
+            self.assertIn("hash", result[0])
+            self.assertIn("message", result[0])
+
+    def test_get_recent_commits_default_count(self):
+        """Default should return up to 10 commits."""
+        result = cca_comm._get_recent_commits()
+        self.assertIsInstance(result, list)
+        self.assertLessEqual(len(result), 10)
+
+    @patch("cca_comm._get_recent_commits")
+    def test_context_shows_crash_status(self, mock_commits):
+        mock_commits.return_value = []
+        # Simulate a crashed worker (scope claim from cli1, no process)
+        ciq.send_message("cli1", "desktop", "test-module", category="scope_claim",
+                        priority="high", path=self.path)
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            with patch("cca_comm._get_crashed_workers") as mock_crashed:
+                mock_crashed.return_value = [{"chat_id": "cli1", "scope": "test-module"}]
+                cca_comm.cmd_context([])
+        output = f.getvalue()
+        self.assertIn("CRASHED WORKERS", output)
+        self.assertIn("cli1", output)
+
+
+class TestQueueThroughput(unittest.TestCase):
+    """Tests for queue throughput measurement."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp.close()
+        self.path = self.tmp.name
+        self._orig = ciq.DEFAULT_QUEUE_PATH
+        ciq.DEFAULT_QUEUE_PATH = self.path
+
+    def tearDown(self):
+        ciq.DEFAULT_QUEUE_PATH = self._orig
+        os.unlink(self.path)
+
+    def test_count_queue_messages_empty(self):
+        stats = cca_comm.get_queue_stats(self.path)
+        self.assertEqual(stats["total_messages"], 0)
+        self.assertEqual(stats["by_category"], {})
+
+    def test_count_queue_messages_with_data(self):
+        ciq.send_message("desktop", "cli1", "task 1", category="handoff", path=self.path)
+        ciq.send_message("cli1", "desktop", "done", category="handoff", path=self.path)
+        ciq.send_message("desktop", "cli1", "scope", category="scope_claim", path=self.path)
+        stats = cca_comm.get_queue_stats(self.path)
+        self.assertEqual(stats["total_messages"], 3)
+        self.assertEqual(stats["by_category"]["handoff"], 2)
+        self.assertEqual(stats["by_category"]["scope_claim"], 1)
+
+    def test_queue_stats_by_sender(self):
+        ciq.send_message("desktop", "cli1", "a", path=self.path)
+        ciq.send_message("desktop", "cli1", "b", path=self.path)
+        ciq.send_message("cli1", "desktop", "c", path=self.path)
+        stats = cca_comm.get_queue_stats(self.path)
+        self.assertEqual(stats["by_sender"]["desktop"], 2)
+        self.assertEqual(stats["by_sender"]["cli1"], 1)
+
+
 class TestCommands(unittest.TestCase):
     def test_all_commands_registered(self):
-        expected = {"inbox", "say", "task", "claim", "release", "done", "ack", "status", "broadcast", "assign", "shutdown"}
+        expected = {"inbox", "say", "task", "claim", "release", "done", "ack", "status",
+                    "broadcast", "assign", "shutdown", "context"}
         self.assertEqual(set(cca_comm.COMMANDS.keys()), expected)
 
     def test_all_commands_callable(self):

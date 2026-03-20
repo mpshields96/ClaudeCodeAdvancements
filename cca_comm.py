@@ -24,6 +24,7 @@ Stdlib only. No external dependencies.
 """
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -226,6 +227,113 @@ def cmd_shutdown(args):
     print(f"Shutdown signal sent to {ciq.VALID_CHATS.get(target, target)}.")
 
 
+def _get_recent_commits(n: int = 10) -> list[dict]:
+    """Get recent git commits as list of {hash, message} dicts."""
+    try:
+        result = subprocess.run(
+            ["git", "log", f"--oneline", f"-{n}"],
+            capture_output=True, text=True, timeout=5,
+            cwd=SCRIPT_DIR,
+        )
+        commits = []
+        for line in result.stdout.strip().splitlines():
+            if not line.strip():
+                continue
+            parts = line.split(" ", 1)
+            commits.append({
+                "hash": parts[0],
+                "message": parts[1] if len(parts) > 1 else "",
+            })
+        return commits
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return []
+
+
+def _get_crashed_workers() -> list[dict]:
+    """Detect crashed workers via crash_recovery module."""
+    try:
+        import crash_recovery
+        scopes = ciq.get_active_scopes(_qpath())
+        return crash_recovery.detect_crashed_workers(scopes)
+    except ImportError:
+        return []
+
+
+def get_queue_stats(queue_path: str = None) -> dict:
+    """Get queue throughput statistics.
+
+    Returns dict with: total_messages, by_category, by_sender
+    """
+    if queue_path is None:
+        queue_path = _qpath()
+    msgs = ciq._load_queue(queue_path)
+    by_category = {}
+    by_sender = {}
+    for msg in msgs:
+        cat = msg.get("category", "unknown")
+        by_category[cat] = by_category.get(cat, 0) + 1
+        sender = msg.get("sender", "unknown")
+        by_sender[sender] = by_sender.get(sender, 0) + 1
+    return {
+        "total_messages": len(msgs),
+        "by_category": by_category,
+        "by_sender": by_sender,
+    }
+
+
+def cmd_context(args):
+    """Show worker context: recent commits, active scopes, queue stats, crash status.
+
+    Usage: context [n]  — where n is number of recent commits to show (default 10)
+    """
+    n = int(args[0]) if args else 10
+
+    # Recent commits
+    commits = _get_recent_commits(n)
+    if commits:
+        print(f"RECENT COMMITS ({len(commits)}):")
+        for c in commits:
+            print(f"  {c['hash']} {c['message']}")
+    else:
+        print("RECENT COMMITS: none found")
+
+    print()
+
+    # Active scopes
+    scopes = ciq.get_active_scopes(_qpath())
+    if scopes:
+        print(f"ACTIVE SCOPES ({len(scopes)}):")
+        for s in scopes:
+            sender = ciq.VALID_CHATS.get(s.get("sender", ""), s.get("sender", ""))
+            print(f"  {sender}: {s['subject']}")
+    else:
+        print("No active scope claims.")
+
+    print()
+
+    # Queue stats
+    stats = get_queue_stats()
+    print(f"QUEUE STATS: {stats['total_messages']} total messages")
+    if stats["by_category"]:
+        parts = [f"{cat}={count}" for cat, count in sorted(stats["by_category"].items())]
+        print(f"  Categories: {', '.join(parts)}")
+    if stats["by_sender"]:
+        parts = [f"{s}={count}" for s, count in sorted(stats["by_sender"].items())]
+        print(f"  Senders: {', '.join(parts)}")
+
+    print()
+
+    # Crash detection
+    crashed = _get_crashed_workers()
+    if crashed:
+        print(f"CRASHED WORKERS ({len(crashed)}):")
+        for c in crashed:
+            print(f"  {c['chat_id']}: scope '{c.get('scope', 'unknown')}'")
+        print("  Run: python3 crash_recovery.py run")
+    else:
+        print("No crashed workers detected.")
+
+
 COMMANDS = {
     "inbox": cmd_inbox,
     "say": cmd_say,
@@ -238,6 +346,7 @@ COMMANDS = {
     "broadcast": cmd_broadcast,
     "assign": cmd_task,  # Alias: "assign" = "task" (used in /cca-auto-desktop docs)
     "shutdown": cmd_shutdown,
+    "context": cmd_context,
 }
 
 
@@ -255,6 +364,7 @@ def main():
         print("  ack [chat_id]           Acknowledge all messages")
         print("  status                  Show all queues + scopes")
         print("  broadcast <msg>         Send to all other chats")
+        print("  context [n]             Show recent commits, scopes, queue stats")
         print()
         print("Set CCA_CHAT_ID env var to identify yourself (desktop/cli1/cli2)")
         print(f"Current: {detect_chat_id()}")
