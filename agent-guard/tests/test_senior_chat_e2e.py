@@ -44,6 +44,7 @@ class TestLLMClientE2E(unittest.TestCase):
         response = self.client.ask("What is 2 + 2? Reply with just the number.")
         self.assertIsInstance(response, str)
         self.assertGreater(len(response), 0)
+        self.assertNotIn("Error calling API", response, f"API error: {response}")
         self.assertIn("4", response)
 
     def test_token_usage_tracked(self):
@@ -155,6 +156,7 @@ def do_everything(data, mode, flag, extra, opts, callback, retry, verbose):
             system=system,
         )
         self.assertIsInstance(response, str)
+        self.assertNotIn("Error calling API", response, f"API error: {response}")
         self.assertGreater(len(response), 10)
 
     def test_followup_prompt_format(self):
@@ -166,6 +168,7 @@ def do_everything(data, mode, flag, extra, opts, callback, retry, verbose):
         # The prompt should be a valid string the LLM can answer
         response = self.client.ask(prompt)
         self.assertIsInstance(response, str)
+        self.assertNotIn("Error calling API", response, f"API error: {response}")
         self.assertGreater(len(response), 5)
 
 
@@ -239,6 +242,7 @@ ConfigFactory.register("prod", ProdConfig)
         )
         response = self.client.ask(prompt)
         self.assertIsInstance(response, str)
+        self.assertNotIn("Error calling API", response, f"API error: {response}")
         self.assertGreater(len(response), 20)
 
 
