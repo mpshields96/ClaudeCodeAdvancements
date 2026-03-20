@@ -1392,6 +1392,184 @@ class TestAcknowledgeEdgeCases(QueueTestCase):
         self.assertEqual(count, 0)
 
 
+# ============================================================================
+# 28. Stale Scope Expiry + Dedup Interaction
+# ============================================================================
+
+class TestStaleExpiryWithDedup(QueueTestCase):
+    """Test expire_stale_scopes interacts correctly with broadcast dedup."""
+
+    def test_expire_broadcast_claim(self):
+        """A broadcast scope claim (3 messages) should expire as one scope."""
+        old_time = (datetime.now(timezone.utc) - timedelta(minutes=45)).isoformat()
+        # Simulate broadcast claim: same sender, same subject, 3 targets
+        for target in ["cli1", "cli2", "terminal"]:
+            msg = {
+                "id": f"cca_old_{target}",
+                "sender": "desktop",
+                "target": target,
+                "subject": "stale-scope",
+                "body": "",
+                "priority": "medium",
+                "category": "scope_claim",
+                "status": "unread",
+                "created_at": old_time,
+                "files": ["stale/"],
+            }
+            with open(self.path, "a") as f:
+                f.write(json.dumps(msg) + "\n")
+
+        # Dedup should show 1 active scope
+        scopes = ciq.get_active_scopes(self.path)
+        self.assertEqual(len(scopes), 1)
+
+        # Expire should release it
+        expired = ciq.expire_stale_scopes(timeout_minutes=30, path=self.path)
+        self.assertEqual(len(expired), 1)
+
+        # Should be gone
+        scopes = ciq.get_active_scopes(self.path)
+        self.assertEqual(len(scopes), 0)
+
+    def test_expire_one_of_two_scopes(self):
+        """Only stale scope expires, fresh one remains."""
+        old_time = (datetime.now(timezone.utc) - timedelta(minutes=45)).isoformat()
+        # Old scope
+        msg_old = {
+            "id": "cca_old_scope",
+            "sender": "cli1",
+            "target": "desktop",
+            "subject": "old-work",
+            "body": "",
+            "priority": "medium",
+            "category": "scope_claim",
+            "status": "unread",
+            "created_at": old_time,
+            "files": [],
+        }
+        with open(self.path, "a") as f:
+            f.write(json.dumps(msg_old) + "\n")
+
+        # Fresh scope
+        ciq.send_message("cli2", "desktop", "fresh-work",
+                        category="scope_claim", path=self.path)
+
+        expired = ciq.expire_stale_scopes(timeout_minutes=30, path=self.path)
+        self.assertEqual(len(expired), 1)
+        self.assertEqual(expired[0]["subject"], "old-work")
+
+        # Fresh one remains
+        scopes = ciq.get_active_scopes(self.path)
+        self.assertEqual(len(scopes), 1)
+        self.assertEqual(scopes[0]["subject"], "fresh-work")
+
+
+# ============================================================================
+# 29. Preflight with Auto-Expire and Active Workers
+# ============================================================================
+
+class TestPreflightWithWorkers(QueueTestCase):
+    """Test hivemind_preflight in realistic multi-worker scenarios."""
+
+    def test_preflight_expires_stale_and_shows_fresh(self):
+        """Preflight should auto-expire old scopes but keep fresh ones."""
+        old_time = (datetime.now(timezone.utc) - timedelta(minutes=60)).isoformat()
+        msg_old = {
+            "id": "cca_old",
+            "sender": "cli1",
+            "target": "desktop",
+            "subject": "abandoned-work",
+            "body": "",
+            "priority": "medium",
+            "category": "scope_claim",
+            "status": "unread",
+            "created_at": old_time,
+            "files": [],
+        }
+        with open(self.path, "a") as f:
+            f.write(json.dumps(msg_old) + "\n")
+
+        # Fresh scope from cli2
+        ciq.send_message("cli2", "desktop", "active-work",
+                        category="scope_claim", path=self.path)
+
+        result = ciq.hivemind_preflight(chat_id="desktop", auto_expire=True, path=self.path)
+        self.assertEqual(len(result["expired_scopes"]), 1)
+        self.assertEqual(result["active_scopes"], 1)  # only fresh one remains
+
+    def test_preflight_for_worker_with_task(self):
+        """Worker preflight should show action_needed when task is waiting."""
+        ciq.send_message("desktop", "cli1", "Build feature X",
+                        category="handoff", priority="high", path=self.path)
+
+        result = ciq.hivemind_preflight(chat_id="cli1", auto_expire=False, path=self.path)
+        self.assertEqual(result["status"], "action_needed")
+        self.assertEqual(result["unread_count"], 1)
+
+
+# ============================================================================
+# 30. list_messages Filter Combinations
+# ============================================================================
+
+class TestListMessagesFilters(QueueTestCase):
+    """Test list_messages with combined filters."""
+
+    def test_filter_target_and_status(self):
+        msg1 = ciq.send_message("desktop", "cli1", "A", path=self.path)
+        ciq.send_message("desktop", "cli1", "B", path=self.path)
+        ciq.send_message("desktop", "cli2", "C", path=self.path)
+        ciq.acknowledge(msg1["id"], self.path)
+
+        # cli1 unread only
+        result = ciq.list_messages(target="cli1", status="unread", path=self.path)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["subject"], "B")
+
+    def test_filter_target_and_category(self):
+        ciq.send_message("desktop", "cli1", "Task", category="handoff", path=self.path)
+        ciq.send_message("desktop", "cli1", "FYI", category="fyi", path=self.path)
+
+        result = ciq.list_messages(target="cli1", category="handoff", path=self.path)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["subject"], "Task")
+
+    def test_filter_all_three(self):
+        ciq.send_message("desktop", "cli1", "Match", category="handoff", path=self.path)
+        msg2 = ciq.send_message("desktop", "cli1", "Read", category="handoff", path=self.path)
+        ciq.acknowledge(msg2["id"], self.path)
+        ciq.send_message("desktop", "cli1", "FYI", category="fyi", path=self.path)
+
+        result = ciq.list_messages(target="cli1", status="unread", category="handoff", path=self.path)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["subject"], "Match")
+
+
+# ============================================================================
+# 31. format_unread_context — Multiple Senders
+# ============================================================================
+
+class TestFormatUnreadMultipleSenders(QueueTestCase):
+    """Test format_unread_context when messages come from multiple senders."""
+
+    def test_multiple_senders_shown(self):
+        ciq.send_message("cli1", "desktop", "From cli1", path=self.path)
+        ciq.send_message("cli2", "desktop", "From cli2", path=self.path)
+        ctx = ciq.format_unread_context("desktop", self.path)
+        self.assertIn("2 unread", ctx)
+        # Should mention both senders
+        self.assertIn("CLI 1", ctx)
+        self.assertIn("CLI 2", ctx)
+
+    def test_priority_ordering_across_senders(self):
+        """Top message should be the highest priority regardless of sender."""
+        ciq.send_message("cli2", "desktop", "Low from cli2",
+                        priority="low", path=self.path)
+        ciq.send_message("cli1", "desktop", "Critical from cli1",
+                        priority="critical", path=self.path)
+        ctx = ciq.format_unread_context("desktop", self.path)
+        self.assertIn("Critical from cli1", ctx)
+
+
 if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = loader.loadTestsFromModule(sys.modules[__name__])
