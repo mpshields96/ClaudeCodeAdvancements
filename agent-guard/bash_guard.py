@@ -219,6 +219,16 @@ class BashGuard:
         if move_result:
             return move_result
 
+        # dd of= to outside project
+        dd_result = self._check_dd(full_command)
+        if dd_result:
+            return dd_result
+
+        # tee to outside project
+        tee_result = self._check_tee(full_command)
+        if tee_result:
+            return tee_result
+
         # --- WARN checks ---
         for pattern, desc in WARNED_PATTERNS:
             if re.search(pattern, full_command):
@@ -298,6 +308,33 @@ class BashGuard:
                     "category": "destructive",
                 }
 
+        return None
+
+    def _check_dd(self, command: str) -> dict | None:
+        """Check for dd commands writing outside the project via of= parameter."""
+        dd_match = re.search(r"\bdd\b.*\bof=(\S+)", command)
+        if dd_match:
+            dest = dd_match.group(1).strip("'\"")
+            if self._is_outside_project(dest):
+                return {
+                    "level": "BLOCK",
+                    "reason": f"dd output file outside project: {dest}",
+                    "category": "destructive",
+                }
+        return None
+
+    def _check_tee(self, command: str) -> dict | None:
+        """Check for tee commands writing outside the project."""
+        # tee [-a] <path> — the path is the last non-flag argument
+        tee_match = re.search(r"\btee\s+(?:-[a-zA-Z]+\s+)*(\S+)", command)
+        if tee_match:
+            dest = tee_match.group(1).strip("'\"")
+            if self._is_outside_project(dest):
+                return {
+                    "level": "BLOCK",
+                    "reason": f"tee output outside project: {dest}",
+                    "category": "destructive",
+                }
         return None
 
     def _is_outside_project(self, path: str) -> bool:

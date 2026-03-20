@@ -531,6 +531,51 @@ class TestScriptInterpreterEvasion(unittest.TestCase):
         self.assertEqual(result["level"], "PASS")
 
 
+class TestDdTeeEvasion(unittest.TestCase):
+    """Block dd/tee overwrite vectors to outside-project paths."""
+
+    def setUp(self):
+        self.guard = BashGuard(
+            project_root="/Users/matthewshields/Projects/ClaudeCodeAdvancements"
+        )
+
+    def test_block_dd_to_system(self):
+        result = self.guard.check("dd if=/dev/zero of=/etc/passwd")
+        self.assertEqual(result["level"], "BLOCK")
+        self.assertEqual(result["category"], "destructive")
+
+    def test_block_dd_to_home(self):
+        result = self.guard.check("dd if=payload.bin of=~/important_file")
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_allow_dd_within_project(self):
+        result = self.guard.check("dd if=/dev/urandom of=test_data.bin bs=1024 count=10")
+        self.assertEqual(result["level"], "PASS")
+
+    def test_block_tee_to_system(self):
+        result = self.guard.check('echo "malware" | tee /etc/hosts')
+        self.assertEqual(result["level"], "BLOCK")
+        self.assertEqual(result["category"], "destructive")
+
+    def test_block_tee_to_home(self):
+        result = self.guard.check("echo 'alias bad=evil' | tee ~/.zshrc")
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_block_tee_a_append(self):
+        result = self.guard.check("echo 'backdoor' | tee -a /etc/crontab")
+        self.assertEqual(result["level"], "BLOCK")
+
+    def test_allow_tee_within_project(self):
+        result = self.guard.check("echo 'log entry' | tee output.log")
+        self.assertEqual(result["level"], "PASS")
+
+    def test_allow_tee_within_project_absolute(self):
+        result = self.guard.check(
+            "echo 'ok' | tee /Users/matthewshields/Projects/ClaudeCodeAdvancements/log.txt"
+        )
+        self.assertEqual(result["level"], "PASS")
+
+
 class TestHookIntegration(unittest.TestCase):
     """Test the PreToolUse hook JSON format."""
 
