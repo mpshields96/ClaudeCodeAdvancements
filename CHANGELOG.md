@@ -3,6 +3,32 @@
 
 ---
 
+## Session 91 — 2026-03-20
+
+**What changed:**
+- **chat_detector.py** (202 LOC, 31 tests) — Duplicate Claude Code session detection, pre-launch safety, terminal close via AppleScript
+- **crash_recovery.py** (180 LOC, 15 tests) — Orphaned scope detection + auto-release after worker crash
+- **phase2_validator.py** (300 LOC, 22 tests) — Multi-module integration validator (built by cli1 worker, imports 3 modules)
+- Multi-task worker loop in /cca-auto-worker with keep-busy fallback (review commits, scan TODOs when idle)
+- Desktop front-loads 2-3 tasks to worker (/cca-auto-desktop Step 5.5)
+- Terminal close on worker wrap (/cca-wrap-worker Step 6)
+- Stale worker detection on desktop wrap (/cca-wrap-desktop Step 9.5)
+- Duplicate check in launch_worker.sh (Step 0) and /cca-init (Step 4.5)
+- ROADMAP.md doc drift fix (self-learning 526→560, TOTAL 3293→3614)
+- Phase 2 live tests #1 and #2 logged in HIVEMIND_ROLLOUT
+
+**Why:**
+- Phase 1 confirmed complete by Matthew — moved to Phase 2 (hardened 2-chat with crash recovery + multi-task)
+- Matthew explicit: close terminal windows on wrap, monitor duplicates, workers should multi-task not sit idle
+
+**Tests:** 3636/3636 passing (92 suites). 68 new tests this session.
+
+**Lessons:**
+- crash_recovery sender must use crashed worker's chat_id, not "system" or "desktop" (cca_internal_queue validates sender)
+- macOS grep doesn't support -P flag — use Python or awk for regex counting
+
+---
+
 ## Session 90 — 2026-03-20
 
 **What changed:**
