@@ -31,6 +31,7 @@ from code_quality_scorer import CodeQualityScorer
 from effort_scorer import EffortScorer
 from coherence_checker import CoherenceChecker, ImportDependencyCheck
 from fp_filter import FPFilter
+from adr_reader import ADRReader
 
 # Code file extensions we perform deep analysis on
 _CODE_EXTENSIONS = {
@@ -97,6 +98,7 @@ class SeniorReview:
         self._quality = CodeQualityScorer()
         self._effort = EffortScorer()
         self._fp_filter = FPFilter()
+        self._adr_reader = ADRReader()
 
     def review(self, file_path: str, content: Optional[str] = None) -> ReviewResult:
         """Review a file and produce structured feedback.
@@ -204,6 +206,18 @@ class SeniorReview:
             except Exception:
                 pass  # Blast radius is advisory
 
+        # 6. ADR relevance — surface architectural decisions related to this file
+        relevant_adrs = []
+        if self.project_root and os.path.isdir(self.project_root):
+            try:
+                adrs = self._adr_reader.discover(self.project_root)
+                if adrs:
+                    relevant_adrs = self._adr_reader.find_relevant(
+                        adrs, file_path, content
+                    )
+            except Exception:
+                pass  # ADR check is advisory, never blocks
+
         # Build metrics dict
         metrics = {
             "loc": loc,
@@ -218,9 +232,24 @@ class SeniorReview:
             "blast_radius": blast_radius.get("direct_dependents", 0),
             "blast_files": blast_radius.get("files", []),
             "fp_confidence": fp_confidence,
+            "relevant_adrs": len(relevant_adrs),
         }
 
         # Generate concerns from analysis
+        # ADR concerns (architectural decisions)
+        for adr in relevant_adrs:
+            if adr.status == "deprecated":
+                short = adr.summary[:80] + "..." if len(adr.summary) > 80 else adr.summary
+                concerns.append(
+                    f"Deprecated ADR: '{adr.title}' — {short}. "
+                    f"This file may be using a deprecated pattern."
+                )
+            elif adr.status == "accepted":
+                short = adr.summary[:80] + "..." if len(adr.summary) > 80 else adr.summary
+                suggestions.append(
+                    f"Related ADR: '{adr.title}' — {short}"
+                )
+
         # Coherence concerns (project-level patterns)
         if coherence_issues:
             # Only surface issues relevant to the file being reviewed

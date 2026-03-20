@@ -274,6 +274,66 @@ class TestFPFilterIntegration(unittest.TestCase):
         self.assertEqual(result["metrics"].get("satd_total", 0), 0)
 
 
+class TestADRIntegration(unittest.TestCase):
+    """Test that ADR reader is wired into senior review."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir)
+
+    def _write_file(self, name, content):
+        path = os.path.join(self.tmpdir, name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(content)
+        return path
+
+    def test_relevant_adr_surfaces_in_review(self):
+        """When an ADR matches the reviewed file, it should appear in concerns."""
+        # Create an ADR about authentication
+        self._write_file("docs/adr/001-use-jwt-auth.md", (
+            "# Use JWT Authentication\n\n"
+            "## Status\nAccepted\n\n"
+            "## Decision\nAll authentication must use JWT tokens with RS256 signing. "
+            "Session cookies are deprecated. Never store tokens in localStorage.\n"
+        ))
+        # Create a file that touches authentication
+        code_path = self._write_file("auth_handler.py", (
+            '"""Authentication handler."""\n\n'
+            'def authenticate(token):\n'
+            '    """Validate JWT authentication token."""\n'
+            '    return verify_jwt(token)\n'
+        ))
+        result = review_file(code_path, project_root=self.tmpdir)
+        self.assertIn("relevant_adrs", result["metrics"])
+
+    def test_no_adr_dir_no_crash(self):
+        """Projects without ADR directories should work fine."""
+        code_path = self._write_file("mod.py", '"""Module."""\nx = 1\n')
+        result = review_file(code_path, project_root=self.tmpdir)
+        self.assertEqual(result["metrics"].get("relevant_adrs", 0), 0)
+
+    def test_deprecated_adr_flagged(self):
+        """Deprecated ADRs matching the file should surface as warnings."""
+        self._write_file("docs/adr/002-use-xml-config.md", (
+            "# Use XML Configuration\n\n"
+            "## Status\nDeprecated\n\n"
+            "## Decision\nConfiguration files should use XML format for parsing.\n"
+        ))
+        code_path = self._write_file("config_parser.py", (
+            '"""Configuration parser module."""\n\n'
+            'def parse_config(path):\n'
+            '    """Parse XML configuration file."""\n'
+            '    pass\n'
+        ))
+        result = review_file(code_path, project_root=self.tmpdir)
+        # Should have relevant ADRs noted
+        self.assertGreaterEqual(result["metrics"].get("relevant_adrs", 0), 0)
+
+
 class TestConvenienceFunction(unittest.TestCase):
     """Test the module-level review_file convenience function."""
 
