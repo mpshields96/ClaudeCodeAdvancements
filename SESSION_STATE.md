@@ -3,26 +3,26 @@
 
 ---
 
-## Current State (as of Session 85 — 2026-03-20)
+## Current State (as of Session 86 — 2026-03-20)
 
-**Phase:** Session 85 COMPLETE. Tests: 80 suites, 3293 total passing. Git: 4 commits. Self-grade: B+.
+**Phase:** Session 86 IN PROGRESS. Tests: 81 suites, 3296 total passing. Git: 3 commits (S86) + 1 worker commit (S87).
 
-**What was done this session (S85):**
-- **Dual-CCA command system built** — 6 new commands adopting Kalshi dual-chat pattern: `/cca-desktop`, `/cca-worker`, `/cca-auto-desktop`, `/cca-auto-worker`, `/cca-wrap-desktop`, `/cca-wrap-worker`. Each role has hardcoded behavior (no env var detection). Original `/cca-auto` + `/cca-wrap` preserved for solo sessions.
-- **Master command reference** — `~/.claude/COMMANDS.md` created and wired into global CLAUDE.md via `@COMMANDS.md`. Covers all projects (CCA, Kalshi, GSD, SuperClaude) with session configuration table. Loads in every Claude Code session.
-- **Fixed daily_snapshot test counter** — `_count_test_methods()` switched from string matching to AST-based parsing. Was reporting 3308 (false positives from `def test_` inside string literals), now correctly reports 3293.
-- **Reddit daily scan** — 2 new findings: Epstein archive context drift (Frontier 3), satellite tracker spec workflow (Frontier 2).
-- **Paper scanner Phase 2** — 4 new papers evaluated and logged (25 total). Rate-limited on 5th.
+**What was done this session (S86):**
+- **Hivemind Phase 1 validation PASSED** — First successful dual-chat test. Desktop assigned task to cli1 worker, worker claimed scope, built code (3 tests), committed, reported done, released scope. Zero coordination failures, zero merge conflicts, zero regressions.
+- **launch_worker.sh** — One-command launcher script: opens new Terminal tab with CCA_CHAT_ID=cli1, starts `claude /cca-worker`. Usage: `bash launch_worker.sh "task description"`
+- **Scope dedup fix** — `get_active_scopes()` was counting broadcast claims 3x (one per target). Fixed with (sender, subject) deduplication.
+- **Assign alias** — `cca_comm.py assign` now works as alias for `task` (matches /cca-auto-desktop docs).
+- **Worker commit (S87)** — cli1 worker autonomously built `tests/test_hivemind_validation.py` (3 tests, detect_chat_id env var verification).
 
-**Matthew directives (S51-S85, permanent):**
-- All S51-S84 directives still active
-- S85: Build dual-CCA commands mirroring Kalshi main/research pattern
+**Matthew directives (S51-S86, permanent):**
+- All S51-S85 directives still active
+- S86: Automate dual-chat process, verify it works without error
 
 **Next (prioritized):**
-1. Hivemind Phase 1: First real 2-chat validation — run `/cca-desktop` + `/cca-worker` in parallel
+1. Hivemind Phase 1: Continue validation — run 2-4 more dual-chat sessions with progressively harder tasks
 2. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
 3. MT-9 Phase 3: Supervised trial of autonomous scanning
-4. MT-12 Phase 2: Continue paper scanner across remaining domains (rate-limited this session)
+4. MT-12 Phase 2: Continue paper scanner across remaining domains
 5. Reddit intelligence: follow up on trending repos from MT-11 scan
 
 ---

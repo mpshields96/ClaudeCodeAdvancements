@@ -38,7 +38,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 3293 tests (80 suites). All must pass before any work.**
+**Total: 3296 tests (81 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -123,6 +123,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `cca_comm.py` — Structured cca-loop session communication (scope claim, wrap summary, task assignment)
 - `loop_health.py` — Per-session health tracking for cca-loop (grade, test counts, regression detection, 54 tests)
 - `queue_injector.py` — Cross-chat queue context injection hook (19 tests)
+- `launch_worker.sh` — One-command dual-chat launcher: opens Terminal tab with CCA_CHAT_ID, starts worker
 
 **research/** — R&D and tools
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)
