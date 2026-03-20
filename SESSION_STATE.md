@@ -3,33 +3,27 @@
 
 ---
 
-## Current State (as of Session 70 — 2026-03-20)
+## Current State (as of Session 72 — 2026-03-20)
 
-**Phase:** Session 70 COMPLETE. Tests: 2563/2563 passing (63 suites). Git: clean. THREE chats ran in parallel.
+**Phase:** Session 72 IN PROGRESS. Tests: 2763/2763 passing (67 suites). Git: clean. THREE chats running (hivemind sprint).
 **What's done this session (3 parallel chats):**
 
-**Desktop chat (this chat):**
-1. **doc_drift_checker.py built** (30 tests) — Automated doc accuracy verification. AST-counts tests across all modules, compares to PROJECT_INDEX + ROADMAP claims. Found 120+ undercounted tests, all fixed. Wired into CI.
-2. **queue_injector.py built** (19 tests) — UserPromptSubmit cross-chat context injection hook.
-3. **queue_hook.py built** (22 tests) — Unified PostToolUse + UserPromptSubmit hook. Checks both cross-chat and internal queues. 30s throttle on PostToolUse, instant on user input. <5ms latency.
-4. **cca_hivemind.py built** (22 tests) — Multi-chat orchestrator. Detects active Claude sessions, sends directives via queue, AppleScript Terminal injection, dynamic window discovery. Commands: status/send/inject/assign/ping/discover/windows.
-5. **Live hivemind demo** — Pinged both CLI chats from Desktop via AppleScript. Communication loop is LIVE.
-6. **Senior dev agent idea logged** with full /cca-nuclear research requirements.
-7. **Doc drift fixed** — PROJECT_INDEX + ROADMAP synced to reality, zero drift.
-8. **CI workflow fixed** — doc_drift_checker wired correctly (was using --exit-code which doesn't exist).
+**Desktop chat (this chat — hivemind coordinator):**
+1. **senior_dev_hook.py built** (48 tests) — PostToolUse orchestrator that runs SATD detector + effort scorer + code quality scorer on every Write/Edit. Graceful degradation when submodules not yet available. Wired into settings.local.json.
+2. **code_quality_scorer.py built** (38 tests) — Aggregate quality scoring (0-100, A-F grade) across 5 dimensions: debt density, complexity, size risk, documentation ratio, naming quality. Based on Google eng-practices + Atlassian research.
+3. **Hivemind coordination** — Pinged CLI chats with task assignments, self-learning directives.
+4. **Self-learning journal entries** — Logged build outcomes + hivemind coordination learnings.
+5. **PROJECT_INDEX.md updated** — Test counts synced, new modules documented, hooks table updated.
 
-**CLI chat 1 (cca-loop focus):**
-- bash_guard project-root-aware fix for global hook use
-- CI/CD GitHub Actions (.github/workflows/tests.yml)
-- Hook chain integration test (394 LOC, 22 tests)
-- cca_internal_queue.py (Desktop/Terminal coordination, 509 LOC)
+**CLI chat 1 (effort_scorer — DELIVERED S71):**
+- effort_scorer.py (42 tests) — PR effort scoring (1-5 scale, Atlassian/Cisco research thresholds)
+- Committed as S71: MT-20 Phase 2
 
-**CLI chat 2 (senior dev research):**
-- SENIOR_DEV_AGENT_RESEARCH.md (677 lines) — nuclear-level research with 11 verified papers, 5 tools, industry standards
-- satd_detector.py — SATD (Self-Admitted Technical Debt) detection
-- MVP defined: SATD detector + effort scorer + FP filter + CRScore output classifier
+**CLI chat 2 (fp_filter + review_classifier — IN PROGRESS):**
+- Assigned: fp_filter.py (false positive filter) + review_classifier.py (CRScore classification)
+- Status: building (no ping back yet)
 
-**Matthew directives (S51-S70, permanent):**
+**Matthew directives (S51-S72, permanent):**
 - ROI = make money. Financial, not philosophical.
 - CCA dual mission: 50% Kalshi financial support + 50% self-improvement
 - Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
@@ -45,8 +39,9 @@
 - Senior Dev Agent is a new master-level task — read SENIOR_DEV_AGENT_RESEARCH.md before planning (S70)
 - 3-chat hivemind workflow: use cca_hivemind.py to coordinate, focus all chats on ONE project (S70)
 - Hivemind approach: divide tasks OR hyperfocus all chats on one project for speed (S70 Matthew directive)
+- Self-learning/improvement must be employed by ALL chats, not just Desktop (S72 Matthew directive)
 
-**Next:** (1) HIVEMIND 3-CHAT SPRINT: Either cca-loop hardening OR senior dev agent MVP — pick whichever completes faster and delivers higher quality. Use cca_hivemind.py to coordinate all 3 chats. (2) Wire queue_hook.py as live PostToolUse + UserPromptSubmit hook in settings.local.json. (3) Add window registry (.cca-window-registry.json) so discover can label which window is which. (4) SSRN retry on hotspot.
+**Next:** (1) CLI Chat 2 delivers fp_filter.py + review_classifier.py — integrate into senior_dev_hook. (2) Wire queue_hook.py as live PostToolUse + UserPromptSubmit hook. (3) Add /cca-review code quality extension. (4) SSRN retry on hotspot.
 
 ---
 
