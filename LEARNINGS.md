@@ -417,3 +417,24 @@
 - **Files:** agent-guard/review_classifier.py
 
 ---
+
+### Hivemind: check git status before building — Severity: 1 — Count: 1
+- **Anti-pattern:** In a 3-chat hivemind sprint, starting to build a module without first checking if another chat already built and committed it.
+- **Fix:** Run `git status` and `ls <module>/*.py` at the start of each task. If the file exists and tests pass, mark it done and move to next task.
+- **First seen:** 2026-03-20 (S72 — fp_filter.py and tech_debt_tracker.py were already committed by Desktop chat before cli2 checked)
+- **Last seen:** 2026-03-20
+- **Files:** All agent-guard/ builds during hivemind sprints
+
+### Regex keyword ordering matters for classifiers — Severity: 1 — Count: 1
+- **Anti-pattern:** In a keyword-based classifier with ordered rules, placing generic keywords (fix, error) in a high-priority category causes false matches against lower-priority categories.
+- **Fix:** Use strong/unambiguous indicators only in high-priority categories. Generic words like "fix" and "error" appear in style and testing contexts. Test every category against real examples before finalizing.
+- **First seen:** 2026-03-20 (S72 — review_classifier.py had 5 failures because "fix" matched bugfix before style/logging)
+- **Last seen:** 2026-03-20
+- **Files:** agent-guard/review_classifier.py, any future keyword-based classifiers
+
+### Check git log before building in loop-adjacent sessions — Severity: 1 — Count: 1
+- **Anti-pattern:** Starting a context-resumed session without checking `git log -10` — the cca-loop may have committed files you're about to build, causing duplicate work and confusion.
+- **Fix:** Run `git log --oneline -10` immediately after context recovery to see what was built during the gap. Then check `git ls-files --others` for untracked test files the loop pre-wrote.
+- **First seen:** 2026-03-20 (S73 — satd_detector.py and senior_dev_hook.py were already committed by the loop; took time to discover)
+- **Last seen:** 2026-03-20
+- **Files:** All sessions resumed after context compression

@@ -1254,3 +1254,46 @@ CLI chat 2:
 - Multiple background agents (7 parallel) can efficiently cover a large research space; synthesizing their outputs in a single sequential pass produces a coherent document without redundancy
 
 ---
+
+## Session 72 Addendum — 2026-03-20 (cli2 post-wrap work)
+
+**What changed:**
+- `agent-guard/adr_reader.py` — NEW: ADR Reader (31 tests). Discovers Architectural Decision Records, parses MADR/Nygard/inline formats, surfaces relevant accepted/deprecated decisions via PostToolUse hook. Extends MT-20 Full Vision.
+- `agent-guard/tests/test_adr_reader.py` — NEW: 31 tests covering discovery, parsing, relevance, hook I/O.
+- `SESSION_STATE.md` — UPDATED: cli2 delivery complete, test count to 2897 (72 suites).
+- `SESSION_RESUME.md` — UPDATED: ADR reader noted for next session.
+
+**Why:**
+- MT-20 Full Vision explicitly listed ADR Reader as next phase after MVP. Building it extends value of the senior dev agent from reactive (catch markers) to proactive (recall architectural decisions).
+
+**Tests:** 2897/2897 passing (72 suites)
+
+**Lessons:**
+- In hivemind mode, check git status BEFORE building new modules — parallel chats may have already committed the file you're about to build. Avoids both redundant work and merge confusion.
+- When another chat commits a file you were about to build, verify it's complete and test-covered before moving on, don't just skip it.
+
+---
+## Session 73 — 2026-03-20
+
+**What changed:**
+- `agent-guard/satd_detector.py` (44 tests) — SATD marker detection PostToolUse hook (TODO/FIXME/HACK/WORKAROUND/DEBT/XXX/NOTE with severity)
+- `agent-guard/effort_scorer.py` (42 tests) — PR effort scoring 1-5 scale (Atlassian/Cisco LOC thresholds + complexity markers)
+- `agent-guard/fp_filter.py` (40 tests) — False positive filter: test file / vendored file detection, confidence scoring
+- `agent-guard/review_classifier.py` (43 tests) — CRScore-style category classifier (6 categories, NAACL 2025 priority scores)
+- `agent-guard/tech_debt_tracker.py` (27 tests) — SATD trend tracker: scan, persist snapshots JSONL, hotspot detection with trends
+- `resume_generator.py` (17 tests) — Auto-generate fresh SESSION_RESUME.md from SESSION_STATE.md when stale
+- `cca-loop` script: `get_resume_prompt()` calls resume_generator.py if SESSION_RESUME.md is >6h stale
+- Fixed: `cca_internal_queue.py` KeyError for unknown senders (hivemind) via `.get()` instead of direct dict lookup
+- Fixed: effort_scorer subprocess test bug — relative script path vs absolute cwd mismatch
+
+**Why:**
+- MT-20 Senior Dev Agent MVP: research-backed hook chain to surface code quality issues before they ship
+- cca-loop hardening: stale resume prompt was a root cause of degraded loop sessions (S67 content surviving into S69)
+
+**Tests:** 2897/2897 passing (72 suites)
+
+**Lessons:**
+- Read `git log --oneline -10` at session start when resuming after a context limit — loop may have already built files you're about to build. Saves time and avoids duplicate commits.
+- For subprocess tests: use `os.path.join(os.path.dirname(os.path.abspath(__file__)), "script.py")` for the script path, not a relative string, to avoid cwd-relative resolution errors.
+
+---

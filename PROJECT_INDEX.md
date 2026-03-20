@@ -83,6 +83,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `fp_filter.py` — MT-20 Phase 4: False positive filter (test files, vendored, low-confidence)
 - `review_classifier.py` — MT-20 Phase 4: CRScore-style review category classification (6 categories)
 - `tech_debt_tracker.py` — MT-20 Phase 5: SATD trend analysis over time
+- `adr_reader.py` — MT-20 Full Vision: ADR discovery + relevance matching (MADR/Nygard/inline, PostToolUse hook)
 
 **usage-dashboard/** — Token + cost transparency
 - `usage_counter.py` — USAGE-1: CLI token/cost counter

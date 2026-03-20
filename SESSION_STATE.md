@@ -3,9 +3,20 @@
 
 ---
 
-## Current State (as of Session 72 — 2026-03-20)
+## Current State (as of Session 73 — 2026-03-20)
 
-**Phase:** Session 72 COMPLETE. Tests: 2849/2849 passing (70 suites). Git: committed. MT-20 Senior Dev Agent MVP COMPLETE.
+**Phase:** Session 73 WRAP. Tests: 2897/2897 passing (72 suites). Git: clean.
+
+**What was done this session (CLI Chat 2 / S71-S72 wrap):**
+- **satd_detector.py** (44 tests) — MT-20 Phase 1: SATD marker detection PostToolUse hook
+- **effort_scorer.py** (42 tests) — MT-20 Phase 2: PR effort scoring 1-5 scale
+- **fp_filter.py** (40 tests) — MT-20 Phase 3: false positive filter for SATD findings
+- **review_classifier.py** (43 tests) — MT-20 Phase 4: CRScore-style category classifier
+- **tech_debt_tracker.py** (27 tests) — MT-20 Full Vision: SATD trend tracker with hotspot detection
+- **resume_generator.py** (17 tests) — cca-loop hardening: auto-regenerate stale SESSION_RESUME.md
+- cca-loop script updated: get_resume_prompt() auto-calls resume_generator if >6h stale
+- Fixed queue KeyError for hivemind sender (VALID_CHATS now uses .get())
+- Fixed effort_scorer subprocess test bug (absolute path for script)
 
 **What was done this session (3-chat hivemind sprint):**
 
@@ -23,6 +34,7 @@
 - **fp_filter.py** (40 tests) — False positive filter (test files, vendored, low-confidence). Committed S72.
 - **review_classifier.py** (43 tests) — CRScore-style category classification (6 categories). Committed S72.
 - **tech_debt_tracker.py** (27 tests) — SATD trend analysis over time. Committed S72.
+- **adr_reader.py** (31 tests) — ADR discovery + relevance matching (MADR/Nygard/inline). Committed S72.
 
 **Hivemind wrap protocol established (S72):**
 - Desktop owns ALL shared doc updates (SESSION_STATE, CHANGELOG, LEARNINGS, PROJECT_INDEX)
@@ -49,7 +61,7 @@
 - Hivemind wrap: Desktop coordinator owns all doc updates; CLI chats commit + queue summary only (S72)
 - CLI<->Desktop bidirectional communication needs improvement for loop project (S72 Matthew directive)
 
-**Next:** (1) Loop project — harden cca-loop for production use. (2) Improve hivemind bidirectional communication (CLI chats need clear commands to message Desktop/each other). (3) Wire queue_hook into Kalshi bot settings.local.json. (4) SSRN retry on hotspot.
+**Next:** (1) MT-20 Full Vision: Architectural Coherence Checker (verify code patterns match module conventions). (2) Improve hivemind bidirectional communication. (3) Wire queue_hook into Kalshi bot settings.local.json. (4) SSRN retry on hotspot.
 
 ---
 
