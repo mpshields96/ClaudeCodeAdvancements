@@ -1,6 +1,6 @@
 # ClaudeCodeAdvancements — Master Roadmap
 # Created: 2026-02-19 (Session 1)
-# Last updated: 2026-03-19 (Session 68)
+# Last updated: 2026-03-20 (Session 82)
 # This is the authoritative feature backlog. Update status as items complete.
 
 ---
@@ -75,7 +75,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 4 — Multi-Agent Conflict Guard -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (AG-1 through AG-9 + Edit Guard + Bash Guard + SATD Detector). 422 tests passing.
+**Status:** ALL TASKS COMPLETE (AG-1 through AG-9 + Edit Guard + Bash Guard + MT-20 Senior Dev Agent: 13 modules). 864 tests passing.
 
 **Module:** `agent-guard/`
 
@@ -137,11 +137,13 @@ This roadmap is grounded in:
 - `trade_reflector.py` — MT-10 Phase 3A: Kalshi trade pattern analysis (5 detectors)
 - Trading domain schema (MT-0 Phase 1): bet_placed, bet_outcome, market_research, edge_discovered, edge_rejected, strategy_shift
 
-### Design Skills (163 tests)
+### Design Skills (213 tests)
 - `report_generator.py` — CCA data collector + Typst renderer CLI
 - `slide_generator.py` — Presentation slide generator (16:9 PDF)
 - `dashboard_generator.py` — Self-contained HTML dashboard generator
 - `chart_generator.py` — SVG chart generation (bar, line, sparkline, donut)
+- `website_generator.py` — Landing page + docs page HTML generator
+- `daily_snapshot.py` — Daily project metric snapshots with diff support
 
 ### Research (86 tests)
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)
@@ -168,9 +170,11 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | MT-13 | iOS App Development Capability | Phase 2 COMPLETE — ios_project_gen.py + xcode_build.py | -- |
 | MT-14 | Re-Scan Previously Scanned Subreddits | COMPLETE — built into autonomous_scanner | -- |
 | MT-15 | Sandboxed Repo Testing | COMPLETE — repo_tester.py | -- |
-| MT-17 | Professional Design Skills | COMPLETE — report/slide/dashboard/chart generators | -- |
-| MT-8 | iPhone Remote Control Perfection | NOT STARTED — needs research | 1 |
-| MT-1 | Maestro Visual Grid UI | BLOCKED (macOS 15.6 beta SDK) | 2 |
+| MT-17 | Professional Design Skills | COMPLETE — report/slide/dashboard/chart/website/snapshot | -- |
+| MT-20 | Senior Developer Agent | ALL 10 GAPS CLOSED — 13 modules, ~890 tests. E2E needs API key | -- |
+| MT-21 | Hivemind Multi-Chat Coordination | Infrastructure COMPLETE. Phase 1 validation NOT STARTED | -- |
+| MT-8 | iPhone Remote Control Perfection | Mostly self-resolved by native Remote Control | 1 |
+| MT-1 | Maestro Visual Grid UI | MOSTLY SELF-RESOLVED — evaluate existing tools | 2 |
 | MT-5 | Claude Pro <> Claude Code Bridge | Future — needs research | 3 |
 
 ---
@@ -182,13 +186,14 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | memory-system | 228 |
 | spec-system | 158 |
 | context-monitor | 266 |
-| agent-guard | 633 |
+| agent-guard | 864 |
 | usage-dashboard | 259 |
 | reddit-intelligence | 316 |
 | self-learning | 526 |
-| design-skills | 163 |
+| design-skills | 213 |
 | research | 86 |
-| **Total** | **2822** |
+| root (integration + coordination) | 305 |
+| **Total** | **3221** |
 
 ---
 
@@ -228,3 +233,8 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | 69 | 2026-03-19 | CI/CD GitHub Actions, hook chain integration test, cca_internal_queue, bash_guard global fix |
 | 70 | 2026-03-20 | doc_drift_checker.py, queue_injector.py, doc drift fixes, 3-chat parallel workflow |
 | 71 | 2026-03-20 | MT-20 Phase 1: satd_detector.py (44 tests), MT-17 Phase 5 website_generator.py (39 tests) |
+| 72-74 | 2026-03-20 | MT-21 Hivemind infrastructure (cca_hivemind, cca_internal_queue, cca_comm, loop_health), 3-chat sprint |
+| 75-77 | 2026-03-20 | MT-20 Phases 2-5 (effort_scorer, code_quality_scorer, fp_filter, senior_dev_hook), gap analysis |
+| 78-79 | 2026-03-20 | MT-20 Phases 6-9 (coherence_checker, senior_review, senior_chat, git_context) |
+| 80-81 | 2026-03-20 | MT-20 all 10 gaps closed (intent verification, trade-off judgment), E2E test suite, Hivemind Phase 1 prep |
+| 82 | 2026-03-20 | ROADMAP doc drift fix (+399 tests uncounted), reddit intelligence scan |
