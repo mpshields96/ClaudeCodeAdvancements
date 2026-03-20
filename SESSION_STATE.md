@@ -5,7 +5,7 @@
 
 ## Current State (as of Session 83 — 2026-03-20)
 
-**Phase:** Session 83 IN PROGRESS. Tests: 80 suites, 3280 total passing (+32). Git: 1 commit so far.
+**Phase:** Session 83 IN PROGRESS. Tests: 80 suites, 3265 total passing (+17). Git: 2 commits so far.
 
 **What was done this session (S83):**
 - **MT-11 Phase 2: Trending repo discovery** — `fetch_trending()`, `_build_trending_query()`, `TrendingScanner` class with per-language scanning + trending history JSONL log. CLI `trending` command with --language, --days, --all, --json flags. +32 tests (62 total github_scanner, up from 30).

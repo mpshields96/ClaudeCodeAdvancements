@@ -188,12 +188,12 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | context-monitor | 266 |
 | agent-guard | 889 |
 | usage-dashboard | 261 |
-| reddit-intelligence | 316 |
+| reddit-intelligence | 333 |
 | self-learning | 526 |
 | design-skills | 213 |
 | research | 86 |
 | root (integration + coordination) | 305 |
-| **Total** | **3248** |
+| **Total** | **3265** |
 
 ---
 
