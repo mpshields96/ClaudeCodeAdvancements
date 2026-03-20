@@ -23,6 +23,7 @@ from senior_dev_hook import (
     SeniorDevHook,
     SeniorDevFinding,
     _get_extension,
+    _humanize_finding,
     SKIP_EXTENSIONS,
     MAX_CONTEXT_LENGTH,
     EFFORT_THRESHOLD,
@@ -123,7 +124,7 @@ class TestAnalyze(unittest.TestCase):
 
 
 class TestFormatContext(unittest.TestCase):
-    """Test findings formatting into additionalContext string."""
+    """Test findings formatting into natural language advice."""
 
     def setUp(self):
         self.hook = SeniorDevHook()
@@ -131,28 +132,50 @@ class TestFormatContext(unittest.TestCase):
     def test_empty_findings_empty_string(self):
         self.assertEqual(self.hook.format_context([]), "")
 
-    def test_single_finding_formatted(self):
-        findings = [SeniorDevFinding(source="satd", severity="HIGH", message="Line 5: HACK")]
+    def test_low_only_findings_filtered_out(self):
+        """LOW-only findings (NOTE markers) should be filtered as noise."""
+        findings = [SeniorDevFinding(source="satd", severity="LOW", message="Line 5: NOTE")]
         context = self.hook.format_context(findings)
-        self.assertIn("[Senior Dev]", context)
-        self.assertIn("HACK", context)
-        self.assertIn("[HIGH]", context)
+        self.assertEqual(context, "")
 
-    def test_findings_sorted_by_severity(self):
+    def test_single_high_finding_formatted(self):
+        findings = [SeniorDevFinding(source="satd", severity="HIGH", message="Line 5: HACK — quick fix")]
+        context = self.hook.format_context(findings)
+        self.assertIn("[Senior Dev Review]", context)
+        self.assertIn("HACK", context)
+        self.assertIn("fragile code", context)
+
+    def test_natural_language_for_fixme(self):
+        findings = [SeniorDevFinding(source="satd", severity="HIGH", message="Line 10: FIXME — broken")]
+        context = self.hook.format_context(findings)
+        self.assertIn("known broken behavior", context)
+
+    def test_natural_language_for_todo(self):
+        findings = [SeniorDevFinding(source="satd", severity="MEDIUM", message="Line 3: TODO — later")]
+        context = self.hook.format_context(findings)
+        self.assertIn("tracked issue", context)
+
+    def test_natural_language_for_effort(self):
+        findings = [SeniorDevFinding(source="effort", severity="INFO", message="Effort: 4/5 (Complex)")]
+        context = self.hook.format_context(findings)
+        self.assertIn("breaking into smaller", context)
+
+    def test_natural_language_for_quality(self):
+        findings = [SeniorDevFinding(source="quality", severity="MEDIUM", message="Quality: D (58/100)")]
+        context = self.hook.format_context(findings)
+        self.assertIn("maintainability", context)
+
+    def test_findings_sorted_high_before_medium(self):
         findings = [
-            SeniorDevFinding(source="satd", severity="LOW", message="NOTE"),
-            SeniorDevFinding(source="satd", severity="HIGH", message="HACK"),
-            SeniorDevFinding(source="satd", severity="MEDIUM", message="TODO"),
+            SeniorDevFinding(source="satd", severity="MEDIUM", message="Line 1: TODO — fix"),
+            SeniorDevFinding(source="satd", severity="HIGH", message="Line 5: HACK — bad"),
         ]
         context = self.hook.format_context(findings)
-        high_pos = context.index("HIGH")
-        medium_pos = context.index("MEDIUM")
-        low_pos = context.index("LOW")
-        self.assertLess(high_pos, medium_pos)
-        self.assertLess(medium_pos, low_pos)
+        hack_pos = context.index("HACK")
+        todo_pos = context.index("TODO")
+        self.assertLess(hack_pos, todo_pos)
 
     def test_context_length_bounded(self):
-        # Generate many findings to trigger truncation
         findings = [
             SeniorDevFinding(
                 source="satd", severity="HIGH",
@@ -165,18 +188,59 @@ class TestFormatContext(unittest.TestCase):
 
     def test_truncation_preserves_high_findings(self):
         findings = [
-            SeniorDevFinding(source="satd", severity="HIGH", message="CRITICAL BUG"),
+            SeniorDevFinding(source="satd", severity="HIGH", message="CRITICAL HACK BUG"),
         ] + [
-            SeniorDevFinding(source="satd", severity="LOW", message=f"minor {i}" * 20)
+            SeniorDevFinding(source="satd", severity="MEDIUM", message=f"TODO minor {i}" * 20)
             for i in range(50)
         ]
         context = self.hook.format_context(findings)
-        self.assertIn("CRITICAL BUG", context)
+        self.assertIn("CRITICAL HACK BUG", context)
 
-    def test_source_label_included(self):
-        findings = [SeniorDevFinding(source="effort", severity="INFO", message="Effort: 4/5")]
-        context = self.hook.format_context(findings)
-        self.assertIn("(effort)", context)
+
+class TestHumanizeFinding(unittest.TestCase):
+    """Test _humanize_finding converts findings to natural language."""
+
+    def test_hack_gives_fragile_advice(self):
+        f = SeniorDevFinding(source="satd", severity="HIGH", message="Line 5: HACK — temp fix")
+        result = _humanize_finding(f)
+        self.assertIn("fragile code", result)
+        self.assertIn("resolve before committing", result)
+
+    def test_fixme_gives_broken_advice(self):
+        f = SeniorDevFinding(source="satd", severity="HIGH", message="Line 10: FIXME — broken")
+        result = _humanize_finding(f)
+        self.assertIn("known broken behavior", result)
+        self.assertIn("shipping", result)
+
+    def test_todo_gives_tracking_advice(self):
+        f = SeniorDevFinding(source="satd", severity="MEDIUM", message="Line 3: TODO — later")
+        result = _humanize_finding(f)
+        self.assertIn("tracked issue", result)
+
+    def test_workaround_gives_debt_advice(self):
+        f = SeniorDevFinding(source="satd", severity="HIGH", message="Line 7: WORKAROUND — bypass")
+        result = _humanize_finding(f)
+        self.assertIn("technical debt", result)
+
+    def test_effort_gives_size_advice(self):
+        f = SeniorDevFinding(source="effort", severity="INFO", message="Effort: 4/5 (Complex)")
+        result = _humanize_finding(f)
+        self.assertIn("smaller", result)
+
+    def test_quality_gives_maintainability_advice(self):
+        f = SeniorDevFinding(source="quality", severity="MEDIUM", message="Quality: D (58/100)")
+        result = _humanize_finding(f)
+        self.assertIn("maintainability", result)
+
+    def test_unknown_source_returns_message(self):
+        f = SeniorDevFinding(source="unknown", severity="INFO", message="something")
+        result = _humanize_finding(f)
+        self.assertEqual(result, "something")
+
+    def test_preserves_original_message_content(self):
+        f = SeniorDevFinding(source="satd", severity="HIGH", message="Line 42: HACK — specific detail here")
+        result = _humanize_finding(f)
+        self.assertIn("specific detail here", result)
 
 
 class TestHookOutput(unittest.TestCase):
@@ -259,7 +323,7 @@ class TestHookOutput(unittest.TestCase):
         payload = {"tool_name": "Write", "tool_input": {"content": "x=1", "file_path": "f.py"}}
         self.assertIsInstance(self.hook.hook_output(payload), dict)
 
-    def test_context_mentions_senior_dev(self):
+    def test_context_mentions_senior_dev_review(self):
         payload = {
             "tool_name": "Write",
             "tool_input": {
@@ -269,7 +333,7 @@ class TestHookOutput(unittest.TestCase):
         }
         output = self.hook.hook_output(payload)
         if "additionalContext" in output:
-            self.assertIn("[Senior Dev]", output["additionalContext"])
+            self.assertIn("[Senior Dev Review]", output["additionalContext"])
 
 
 class TestGetExtension(unittest.TestCase):

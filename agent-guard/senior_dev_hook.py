@@ -154,31 +154,39 @@ class SeniorDevHook:
         return findings
 
     def format_context(self, findings: list) -> str:
-        """Format findings into a concise additionalContext string."""
+        """Format findings as natural language advice, not metric dumps.
+
+        Output should read like a code review comment from a trusted colleague:
+        actionable, specific, and conversational. Not scores or severity labels.
+        """
         if not findings:
             return ""
 
-        # Sort by severity: HIGH > MEDIUM > LOW > INFO
-        severity_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2, "INFO": 3}
-        sorted_findings = sorted(findings, key=lambda f: severity_order.get(f.severity, 4))
+        # Filter out noise: skip LOW-only findings (NOTE markers are too common)
+        significant = [f for f in findings if f.severity != "LOW"]
+        if not significant:
+            return ""
 
-        lines = ["[Senior Dev] Code quality findings:"]
+        # Sort by severity: HIGH > MEDIUM > INFO
+        severity_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2, "INFO": 3}
+        sorted_findings = sorted(significant, key=lambda f: severity_order.get(f.severity, 4))
+
+        lines = ["[Senior Dev Review]"]
         for f in sorted_findings:
-            lines.append(f"  [{f.severity}] ({f.source}) {f.message}")
+            lines.append(f"- {_humanize_finding(f)}")
 
         context = "\n".join(lines)
 
-        # Truncate if too long
+        # Truncate if too long — preserve HIGH findings
         if len(context) > MAX_CONTEXT_LENGTH:
-            # Keep HIGH findings, truncate the rest
             high_findings = [f for f in sorted_findings if f.severity == "HIGH"]
             other_count = len(sorted_findings) - len(high_findings)
 
-            trunc_lines = ["[Senior Dev] Code quality findings (truncated):"]
+            trunc_lines = ["[Senior Dev Review]"]
             for f in high_findings:
-                trunc_lines.append(f"  [{f.severity}] ({f.source}) {f.message}")
+                trunc_lines.append(f"- {_humanize_finding(f)}")
             if other_count > 0:
-                trunc_lines.append(f"  ... and {other_count} lower-severity findings")
+                trunc_lines.append(f"- Plus {other_count} additional items worth reviewing.")
 
             context = "\n".join(trunc_lines)
             if len(context) > MAX_CONTEXT_LENGTH:
@@ -216,6 +224,41 @@ class SeniorDevHook:
             return {}
 
         return {"additionalContext": context}
+
+
+def _humanize_finding(finding) -> str:
+    """Convert a SeniorDevFinding into natural language advice.
+
+    Goal: read like a code review comment from a colleague, not a linter report.
+    """
+    src = finding.source
+    msg = finding.message
+
+    if src == "satd":
+        # Extract marker type and line from message format "Line N: TYPE — text"
+        if "HACK" in msg.upper():
+            return f"{msg}. HACK markers indicate fragile code — resolve before committing if the fix is straightforward."
+        elif "FIXME" in msg.upper():
+            return f"{msg}. FIXME indicates known broken behavior — this should be addressed before shipping."
+        elif "WORKAROUND" in msg.upper():
+            return f"{msg}. Workarounds accumulate technical debt — consider a proper fix or create a tracked issue."
+        elif "DEBT" in msg.upper():
+            return f"{msg}. Acknowledged technical debt — track it so it doesn't get forgotten."
+        elif "TODO" in msg.upper():
+            return f"{msg}. Consider finishing this now or creating a tracked issue so it doesn't get lost."
+        elif "XXX" in msg.upper():
+            return f"{msg}. XXX markers flag areas needing attention — review before committing."
+        else:
+            return msg
+
+    elif src == "effort":
+        return f"{msg}. Large or complex changes are harder to review correctly — consider breaking into smaller, focused commits."
+
+    elif src == "quality":
+        return f"{msg}. Files scoring below C often have maintainability issues — review the weak dimensions."
+
+    else:
+        return msg
 
 
 def _get_extension(file_path: str) -> str:
