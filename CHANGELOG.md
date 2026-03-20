@@ -3,6 +3,27 @@
 
 ---
 
+## Session 78 — 2026-03-20
+
+**What changed:**
+- agent-guard/senior_review.py (NEW) — On-demand senior developer review engine. Orchestrates SATD + quality + effort + coherence into APPROVE/CONDITIONAL/RETHINK verdicts with blast radius analysis. 16 tests.
+- agent-guard/coherence_checker.py (NEW) — Architectural coherence checker. Module structure checks, cross-file pattern consistency (docstrings, naming), import dependency graph with blast radius. 18 tests.
+- .claude/commands/senior-review.md (NEW) — `/senior-review` slash command for on-demand code review.
+- agent-guard/senior_review.py — Integrated coherence checker + blast radius into review output.
+- Memory: feedback_slow_build_mt20_mt21.md (NEW) — S78 slow-build directive for MT-20/MT-21.
+
+**Why:**
+- MT-20 Phases 7+9: Building the intelligence layer on top of existing metric infrastructure. Phase 7 (on-demand skill) complete. Phase 9 (coherence checker) foundation laid with import graph.
+- Matthew S78 directive: Slow build over 5-6+ chats. Blueprint -> test -> code -> validate. No rushing.
+
+**Tests:** 3085/3085 passing (77 suites). 34 new tests this session.
+
+**Lessons:**
+- SATD detector source code contains HACK/FIXME/WORKAROUND as part of its regex patterns — self-referential false positives. fp_filter integration needed in senior_review.py.
+- Import regex must allow leading whitespace to catch imports inside try/except blocks.
+
+---
+
 ## Session 77 — 2026-03-20
 
 **What changed:**

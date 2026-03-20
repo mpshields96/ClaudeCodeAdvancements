@@ -459,3 +459,10 @@
 - **First seen:** 2026-03-20
 - **Last seen:** 2026-03-20
 - **Files:** ~/.claude/commands/cca-wrap.md, cca-init.md, cca-auto.md
+
+### Import regex must allow leading whitespace — Severity: 1 — Count: 1
+- **Anti-pattern:** `^import X` or `^from X import` misses imports inside try/except blocks (indented)
+- **Fix:** Use `^\s*import` and `^\s*from` with MULTILINE flag to catch imports at any indentation level
+- **First seen:** 2026-03-20 (Session 78 — coherence_checker missed code_quality_scorer's import of satd_detector)
+- **Last seen:** 2026-03-20
+- **Files:** agent-guard/coherence_checker.py ImportDependencyCheck
