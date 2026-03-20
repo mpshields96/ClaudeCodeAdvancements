@@ -5,23 +5,29 @@
 
 ## Current State (as of Session 72 — 2026-03-20)
 
-**Phase:** Session 72 IN PROGRESS. Tests: 2763/2763 passing (67 suites). Git: clean. THREE chats running (hivemind sprint).
-**What's done this session (3 parallel chats):**
+**Phase:** Session 72 COMPLETE. Tests: 2849/2849 passing (70 suites). Git: committed. MT-20 Senior Dev Agent MVP COMPLETE.
 
-**Desktop chat (this chat — hivemind coordinator):**
-1. **senior_dev_hook.py built** (48 tests) — PostToolUse orchestrator that runs SATD detector + effort scorer + code quality scorer on every Write/Edit. Graceful degradation when submodules not yet available. Wired into settings.local.json.
-2. **code_quality_scorer.py built** (38 tests) — Aggregate quality scoring (0-100, A-F grade) across 5 dimensions: debt density, complexity, size risk, documentation ratio, naming quality. Based on Google eng-practices + Atlassian research.
-3. **Hivemind coordination** — Pinged CLI chats with task assignments, self-learning directives.
-4. **Self-learning journal entries** — Logged build outcomes + hivemind coordination learnings.
-5. **PROJECT_INDEX.md updated** — Test counts synced, new modules documented, hooks table updated.
+**What was done this session (3-chat hivemind sprint):**
 
-**CLI chat 1 (effort_scorer — DELIVERED S71):**
-- effort_scorer.py (42 tests) — PR effort scoring (1-5 scale, Atlassian/Cisco research thresholds)
-- Committed as S71: MT-20 Phase 2
+**Desktop chat (coordinator):**
+1. **senior_dev_hook.py** (48 tests) — PostToolUse orchestrator: runs SATD + effort + quality on Write/Edit. Graceful degradation. Wired into settings.local.json.
+2. **code_quality_scorer.py** (38 tests) — 5-dimension quality scoring (0-100, A-F). debt_density, complexity, size, documentation, naming.
+3. **Hook chain integration tests updated** — Added senior_dev_hook + queue_hook to canary test (17 hooks).
+4. **Doc drift repair** — Synced PROJECT_INDEX + ROADMAP test counts to AST-verified actuals.
+5. **Hivemind coordination** — Task assignments, self-learning directives, wrap coordination.
 
-**CLI chat 2 (fp_filter + review_classifier — IN PROGRESS):**
-- Assigned: fp_filter.py (false positive filter) + review_classifier.py (CRScore classification)
-- Status: building (no ping back yet)
+**CLI chat 1:**
+- **effort_scorer.py** (42 tests) — PR effort scoring 1-5 scale (Atlassian/Cisco thresholds). Committed S71.
+
+**CLI chat 2:**
+- **fp_filter.py** (40 tests) — False positive filter (test files, vendored, low-confidence). Committed S72.
+- **review_classifier.py** (43 tests) — CRScore-style category classification (6 categories). Committed S72.
+- **tech_debt_tracker.py** (27 tests) — SATD trend analysis over time. Committed S72.
+
+**Hivemind wrap protocol established (S72):**
+- Desktop owns ALL shared doc updates (SESSION_STATE, CHANGELOG, LEARNINGS, PROJECT_INDEX)
+- CLI chats: run tests, commit code, send wrap summary via cca_internal_queue.py
+- Prevents merge conflicts and duplicate/inconsistent entries
 
 **Matthew directives (S51-S72, permanent):**
 - ROI = make money. Financial, not philosophical.
@@ -40,8 +46,10 @@
 - 3-chat hivemind workflow: use cca_hivemind.py to coordinate, focus all chats on ONE project (S70)
 - Hivemind approach: divide tasks OR hyperfocus all chats on one project for speed (S70 Matthew directive)
 - Self-learning/improvement must be employed by ALL chats, not just Desktop (S72 Matthew directive)
+- Hivemind wrap: Desktop coordinator owns all doc updates; CLI chats commit + queue summary only (S72)
+- CLI<->Desktop bidirectional communication needs improvement for loop project (S72 Matthew directive)
 
-**Next:** (1) CLI Chat 2 delivers fp_filter.py + review_classifier.py — integrate into senior_dev_hook. (2) Wire queue_hook.py as live PostToolUse + UserPromptSubmit hook. (3) Add /cca-review code quality extension. (4) SSRN retry on hotspot.
+**Next:** (1) Loop project — harden cca-loop for production use. (2) Improve hivemind bidirectional communication (CLI chats need clear commands to message Desktop/each other). (3) Wire queue_hook into Kalshi bot settings.local.json. (4) SSRN retry on hotspot.
 
 ---
 
