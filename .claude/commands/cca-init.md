@@ -110,6 +110,17 @@ Note any uncommitted changes or work-in-progress from a previous session.
 
 ---
 
+## Step 4.5 — Check for duplicate chat sessions
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/chat_detector.py status
+```
+
+If duplicates are detected, include a WARNING line in the briefing.
+Stale processes (no chat ID) should also be flagged.
+
+---
+
 ## Step 5 — Display session briefing
 
 Output a concise briefing in this exact format:

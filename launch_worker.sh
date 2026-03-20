@@ -22,6 +22,16 @@ CCA_DIR="/Users/matthewshields/Projects/ClaudeCodeAdvancements"
 WORKER_ID="${CCA_WORKER_ID:-cli1}"
 TASK_DESC="${1:-}"
 
+# Step 0: Pre-launch duplicate check — abort if same worker already running
+CHECK_RESULT=$(python3 "$CCA_DIR/chat_detector.py" check "$WORKER_ID" 2>&1)
+if echo "$CHECK_RESULT" | grep -q "^BLOCKED"; then
+    echo "ABORT: $CHECK_RESULT"
+    echo "Kill the existing $WORKER_ID process first, or use a different worker ID."
+    exit 1
+fi
+# Show warnings (e.g. stale processes) but continue
+echo "$CHECK_RESULT" | grep "WARNING" || true
+
 # Step 1: If a task description was provided, assign it via queue
 if [ -n "$TASK_DESC" ]; then
     echo "Assigning task to $WORKER_ID: $TASK_DESC"

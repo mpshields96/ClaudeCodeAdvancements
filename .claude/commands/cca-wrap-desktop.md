@@ -173,6 +173,18 @@ Show what will be committed. Do NOT commit automatically.
 
 ---
 
+## Step 9.5 — Check for stale worker sessions
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/chat_detector.py status
+```
+
+If any worker sessions are still running after desktop wrap, flag them:
+- Send shutdown signal: `python3 cca_comm.py shutdown cli1` (or cli2)
+- Note in resume prompt that stale workers may need manual cleanup
+
+---
+
 ## Step 10 — Resume prompt
 
 Output AND write to `SESSION_RESUME.md`:

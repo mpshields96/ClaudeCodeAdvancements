@@ -67,9 +67,23 @@ Reported to desktop via cca_comm.py
 
 ---
 
+## Step 6 — Close terminal tab
+
+After all wrap steps are complete, close this Terminal tab to prevent stale sessions:
+
+```bash
+osascript -e 'tell application "Terminal" to close (first window whose frontmost is true)'
+```
+
+This prevents duplicate chat windows from accumulating between sessions.
+Only exception: if Matthew explicitly said to keep this CLI chat open.
+
+---
+
 ## Rules
 
 - Do NOT update SESSION_STATE, PROJECT_INDEX, CHANGELOG, LEARNINGS, SESSION_RESUME
 - Only commit files within your claimed scope
 - Report completion to desktop coordinator via cca_comm.py
 - If tests fail, fix them before committing
+- ALWAYS close your terminal tab on wrap (Step 6) unless explicitly told otherwise
