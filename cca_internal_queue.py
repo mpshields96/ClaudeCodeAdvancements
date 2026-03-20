@@ -51,7 +51,7 @@ import hashlib
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -411,6 +411,136 @@ def format_unread_context(target: str, path: str = DEFAULT_QUEUE_PATH) -> str:
         parts.append(f"Active scope claims: {'; '.join(scope_subjects)}.")
 
     return " ".join(parts)
+
+
+def queue_health(path: str = DEFAULT_QUEUE_PATH) -> dict:
+    """
+    Diagnostic health check for the queue. Used by /cca-init to verify
+    queue state before starting work.
+
+    Returns dict with: status, total_messages, unread_count, active_scopes,
+    stale_scopes, corrupt_lines.
+    """
+    result = {
+        "status": "healthy",
+        "total_messages": 0,
+        "unread_count": 0,
+        "active_scopes": 0,
+        "stale_scopes": 0,
+        "corrupt_lines": 0,
+    }
+
+    if not os.path.exists(path):
+        return result
+
+    # Count total messages and corrupt lines
+    corrupt = 0
+    messages = []
+    try:
+        with open(path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    msg = json.loads(line)
+                    messages.append(msg)
+                except json.JSONDecodeError:
+                    corrupt += 1
+    except OSError:
+        result["status"] = "error"
+        return result
+
+    result["total_messages"] = len(messages)
+    result["corrupt_lines"] = corrupt
+    result["unread_count"] = sum(1 for m in messages if m.get("status") == "unread")
+
+    # Count active and stale scopes
+    active = get_active_scopes(path)
+    result["active_scopes"] = len(active)
+
+    now = datetime.now(timezone.utc)
+    stale_count = 0
+    for scope in active:
+        created = scope.get("created_at", "")
+        if created:
+            try:
+                scope_time = datetime.fromisoformat(created)
+                if (now - scope_time) > timedelta(minutes=30):
+                    stale_count += 1
+            except (ValueError, TypeError):
+                pass
+    result["stale_scopes"] = stale_count
+
+    # Determine overall status
+    if corrupt > 0:
+        result["status"] = "warning"
+    elif stale_count > 0:
+        result["status"] = "warning"
+
+    return result
+
+
+def format_queue_health(health: dict) -> str:
+    """Format queue health dict as a one-line status string for /cca-init."""
+    status = health.get("status", "unknown")
+    total = health.get("total_messages", 0)
+    unread = health.get("unread_count", 0)
+    scopes = health.get("active_scopes", 0)
+    stale = health.get("stale_scopes", 0)
+    corrupt = health.get("corrupt_lines", 0)
+
+    parts = [f"Queue: {status}"]
+    parts.append(f"{total} msgs ({unread} unread)")
+    if scopes > 0:
+        parts.append(f"{scopes} active scopes")
+    if stale > 0:
+        parts.append(f"{stale} stale")
+    if corrupt > 0:
+        parts.append(f"{corrupt} corrupt lines")
+    return " | ".join(parts)
+
+
+def expire_stale_scopes(
+    timeout_minutes: int = 30,
+    path: str = DEFAULT_QUEUE_PATH,
+) -> list[dict]:
+    """
+    Auto-release scope claims older than timeout_minutes.
+
+    For each expired scope, writes a scope_release message to the queue.
+    Returns list of expired scope claims.
+    """
+    active = get_active_scopes(path)
+    if not active:
+        return []
+
+    now = datetime.now(timezone.utc)
+    expired = []
+
+    for scope in active:
+        created = scope.get("created_at", "")
+        if not created:
+            continue
+        try:
+            scope_time = datetime.fromisoformat(created)
+        except (ValueError, TypeError):
+            continue
+
+        if (now - scope_time) > timedelta(minutes=timeout_minutes):
+            expired.append(scope)
+            # Write a scope_release to clear it
+            send_message(
+                sender=scope.get("sender", "system"),
+                target=scope.get("target", "desktop"),
+                subject=scope.get("subject", "unknown scope"),
+                body=f"Auto-expired after {timeout_minutes}m inactivity. Original claim: {scope.get('id', 'unknown')}",
+                category="scope_release",
+                files=scope.get("files", []),
+                path=path,
+            )
+
+    return expired
 
 
 def format_scope_warning(path: str = DEFAULT_QUEUE_PATH) -> str:

@@ -580,6 +580,131 @@ class TestHivemindMultiChat(unittest.TestCase):
         self.assertIn("Build timeout", ctx)
 
 
+class TestQueueHealth(unittest.TestCase):
+    """Tests for queue_health() — diagnostic function for /cca-init."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp.close()
+        self.path = self.tmp.name
+
+    def tearDown(self):
+        os.unlink(self.path)
+
+    def test_empty_queue_healthy(self):
+        health = ciq.queue_health(self.path)
+        self.assertEqual(health["status"], "healthy")
+        self.assertEqual(health["total_messages"], 0)
+        self.assertEqual(health["unread_count"], 0)
+        self.assertEqual(health["active_scopes"], 0)
+        self.assertEqual(health["stale_scopes"], 0)
+
+    def test_healthy_with_messages(self):
+        ciq.send_message("desktop", "cli1", "Task A", path=self.path)
+        health = ciq.queue_health(self.path)
+        self.assertEqual(health["status"], "healthy")
+        self.assertEqual(health["total_messages"], 1)
+        self.assertEqual(health["unread_count"], 1)
+
+    def test_missing_file_healthy(self):
+        """Non-existent queue file should report healthy (empty queue)."""
+        health = ciq.queue_health("/tmp/nonexistent_queue_test_12345.jsonl")
+        self.assertEqual(health["status"], "healthy")
+        self.assertEqual(health["total_messages"], 0)
+
+    def test_corrupt_lines_detected(self):
+        with open(self.path, "w") as f:
+            f.write("not valid json\n")
+            f.write('{"id": "abc", "sender": "desktop"}\n')
+        health = ciq.queue_health(self.path)
+        self.assertEqual(health["corrupt_lines"], 1)
+        self.assertEqual(health["status"], "warning")
+
+    def test_active_scope_counted(self):
+        ciq.send_message("cli1", "desktop", "Working on X",
+                        category="scope_claim", path=self.path)
+        health = ciq.queue_health(self.path)
+        self.assertEqual(health["active_scopes"], 1)
+
+    def test_health_format_string(self):
+        health = ciq.queue_health(self.path)
+        formatted = ciq.format_queue_health(health)
+        self.assertIn("Queue:", formatted)
+        self.assertIn("healthy", formatted)
+
+
+class TestExpireStaleScopes(unittest.TestCase):
+    """Tests for expire_stale_scopes() — auto-release after timeout."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp.close()
+        self.path = self.tmp.name
+
+    def tearDown(self):
+        os.unlink(self.path)
+
+    def test_fresh_scope_not_expired(self):
+        ciq.send_message("cli1", "desktop", "Working on X",
+                        category="scope_claim", path=self.path)
+        expired = ciq.expire_stale_scopes(timeout_minutes=30, path=self.path)
+        self.assertEqual(len(expired), 0)
+        # Scope should still be active
+        scopes = ciq.get_active_scopes(self.path)
+        self.assertEqual(len(scopes), 1)
+
+    def test_old_scope_expired(self):
+        # Manually write an old scope claim
+        from datetime import datetime, timezone, timedelta
+        old_time = (datetime.now(timezone.utc) - timedelta(minutes=60)).isoformat()
+        msg = {
+            "id": "test_old_scope",
+            "sender": "cli1",
+            "target": "desktop",
+            "subject": "Old work",
+            "body": "",
+            "priority": "medium",
+            "category": "scope_claim",
+            "status": "unread",
+            "created_at": old_time,
+            "files": ["old_file.py"],
+        }
+        with open(self.path, "a") as f:
+            f.write(json.dumps(msg) + "\n")
+
+        expired = ciq.expire_stale_scopes(timeout_minutes=30, path=self.path)
+        self.assertEqual(len(expired), 1)
+        self.assertEqual(expired[0]["subject"], "Old work")
+        # Scope should no longer be active
+        scopes = ciq.get_active_scopes(self.path)
+        self.assertEqual(len(scopes), 0)
+
+    def test_expire_writes_release_message(self):
+        from datetime import datetime, timezone, timedelta
+        old_time = (datetime.now(timezone.utc) - timedelta(minutes=60)).isoformat()
+        msg = {
+            "id": "test_expire_release",
+            "sender": "cli1",
+            "target": "desktop",
+            "subject": "Expired scope",
+            "body": "",
+            "priority": "medium",
+            "category": "scope_claim",
+            "status": "unread",
+            "created_at": old_time,
+            "files": [],
+        }
+        with open(self.path, "a") as f:
+            f.write(json.dumps(msg) + "\n")
+
+        ciq.expire_stale_scopes(timeout_minutes=30, path=self.path)
+        # Should have a scope_release message now
+        messages = ciq._load_queue(self.path)
+        releases = [m for m in messages if m.get("category") == "scope_release"]
+        self.assertEqual(len(releases), 1)
+        self.assertIn("auto-expired", releases[0].get("body", "").lower())
+
+
 if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = loader.loadTestsFromModule(sys.modules[__name__])
