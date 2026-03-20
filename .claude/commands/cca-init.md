@@ -50,18 +50,20 @@ Also check if CCA_TO_POLYBOT.md has unread responses that need attention.
 
 ---
 
-## Step 2.7 — Check wrap trend and pending tips
+## Step 2.7 — Check wrap trend, pending tips, and hivemind status
 
-Show session quality trend and any pending advancement tips:
+Show session quality trend, pending advancement tips, and hivemind Phase 1 status:
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
 python3 wrap_tracker.py trend 2>/dev/null
 python3 tip_tracker.py pending 2>/dev/null | head -10
+python3 -c "import hivemind_session_validator as hsv; print(hsv.format_for_init())" 2>/dev/null
 ```
 
 If wrap trend shows "declining", flag it prominently in the briefing.
 If there are pending tips, include the top 3 under "PENDING TIPS:" in the briefing.
+Include hivemind status line in the briefing (shows Phase 1 gate progress).
 
 ---
 
