@@ -33,12 +33,13 @@ python3 -c "
 import json, sys
 sys.path.insert(0, 'agent-guard')
 from senior_review import review_file
-result = review_file('TARGET_FILE_PATH')
+result = review_file('TARGET_FILE_PATH', project_root='.')
 print(json.dumps(result, indent=2))
 "
 ```
 
 Replace `TARGET_FILE_PATH` with the resolved file path from Step 1.
+Note: `project_root='.'` enables coherence checks, blast radius, CLAUDE.md rule compliance, and ADR discovery.
 
 ---
 
@@ -66,7 +67,10 @@ Verdict: [APPROVE / CONDITIONAL / RETHINK]
 
 Metrics:
   LOC: [n]  |  Quality: [grade] ([score]/100)  |  Effort: [label] ([n]/5)
-  SATD: [n] markers ([n] HIGH)
+  SATD: [n] markers ([n] HIGH)  |  Blast radius: [n] dependents
+  FP confidence: [n]  |  Relevant ADRs: [n]  |  Coherence issues: [n]
+
+[If blast_radius >= 3, note which files depend on this module]
 
 [If CONDITIONAL or RETHINK — list concerns as bullet points]
 
@@ -74,7 +78,7 @@ Concerns:
 - [concern 1]
 - [concern 2]
 
-[If any suggestions from quality dimensions]
+[If any suggestions from quality dimensions or ADRs]
 
 Suggestions:
 - [suggestion 1]
