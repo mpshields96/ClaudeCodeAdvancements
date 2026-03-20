@@ -738,8 +738,17 @@ Senior Dev (MT-20 Phase 8) provides the intelligence + review layer. They conver
 a proven hivemind + a proven senior dev skill = a CLI chat acting as your senior
 developer colleague.
 
-**Status:** Infrastructure COMPLETE. Phase 1 validation NOT STARTED.
-- **Next:** Phase 1 prep — queue health check, scope timeout, worker CLAUDE.md.
+**Status:** Infrastructure COMPLETE. Phase 1 validation IN PROGRESS (S86).
+- S86: 2 of 3-5 validation tests passed (trivial + real task). Zero coordination failures.
+- Built launch_worker.sh (one-command launcher), fixed scope dedup, added assign alias, fixed task chaining.
+- **Next:** 1-3 more validation tests, then Phase 1 gate assessment.
+
+**Matthew's Extended Vision (S86 directive, documented in memory):**
+- Phase 3 (NEW): Automated loop — CCA auto-starts worker, no manual intervention
+- Phase 4 (NEW): Cross-project — CCA also launches Kalshi bot chats (main + research)
+- Phase 5 (NEW): One-command full workspace (all 4 chats)
+- Design requirement: User can chime in to ANY chat at any time, hivemind still coordinates
+- Ultimate goal: CCA + Kalshi bot operate as unified system, financial profitability self-sustains subscription
 
 ---
 

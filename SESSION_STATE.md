@@ -5,14 +5,18 @@
 
 ## Current State (as of Session 86 — 2026-03-20)
 
-**Phase:** Session 86 IN PROGRESS. Tests: 81 suites, 3296 total passing. Git: 3 commits (S86) + 1 worker commit (S87).
+**Phase:** Session 86 IN PROGRESS. Tests: 82 suites, 3330 total passing. Git: 5 commits (S86) + 2 worker commits (S87, S88).
 
 **What was done this session (S86):**
-- **Hivemind Phase 1 validation PASSED** — First successful dual-chat test. Desktop assigned task to cli1 worker, worker claimed scope, built code (3 tests), committed, reported done, released scope. Zero coordination failures, zero merge conflicts, zero regressions.
-- **launch_worker.sh** — One-command launcher script: opens new Terminal tab with CCA_CHAT_ID=cli1, starts `claude /cca-worker`. Usage: `bash launch_worker.sh "task description"`
-- **Scope dedup fix** — `get_active_scopes()` was counting broadcast claims 3x (one per target). Fixed with (sender, subject) deduplication.
-- **Assign alias** — `cca_comm.py assign` now works as alias for `task` (matches /cca-auto-desktop docs).
-- **Worker commit (S87)** — cli1 worker autonomously built `tests/test_hivemind_validation.py` (3 tests, detect_chat_id env var verification).
+- **Hivemind Phase 1: 2 of 3-5 validation tests PASSED** — Both trivial and real tasks succeeded with zero coordination failures.
+  - Test 1 (trivial): Worker built 3 env var detection tests. Clean scope claim/release cycle.
+  - Test 2 (real): Worker built `self-learning/tests/test_journal.py` (34 tests, 411 LOC covering full journal.py API). Exceeded target of 15-20 tests.
+- **launch_worker.sh** — One-command launcher: opens Terminal tab with CCA_CHAT_ID=cli1, starts `claude /cca-worker`
+- **Scope dedup fix** — `get_active_scopes()` counted broadcast claims 3x. Fixed with (sender, subject) dedup.
+- **Assign alias** — `cca_comm.py assign` = alias for `task` (matches docs)
+- **Worker task chaining fix** — Workers now check inbox twice (with 30s wait) before stopping
+- **Strategic vision documented** — Matthew's full hivemind vision (5 phases), financial sustainability goal ($250/mo self-sustaining), long-term investment vision. All written to memory.
+- **Worker commits**: S87 (test_hivemind_validation.py, 3 tests), S88 (test_journal.py, 34 tests)
 
 **Matthew directives (S51-S86, permanent):**
 - All S51-S85 directives still active
