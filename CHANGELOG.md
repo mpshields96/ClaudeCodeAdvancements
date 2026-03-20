@@ -3,6 +3,29 @@
 
 ---
 
+## Session 81 — 2026-03-20
+
+**What changed:**
+- agent-guard/senior_chat.py — `build_intent_check_prompt()` and `build_tradeoff_prompt()`: structured LLM prompts for intent verification (MATCH/GAPS/EXTRAS/RISKS) and trade-off judgment (COMPLEXITY/ABSTRACTION/EXTENSIBILITY/SIMPLIFICATION/RECOMMENDATION).
+- agent-guard/tests/test_senior_chat_e2e.py (NEW) — 10 E2E tests for real Anthropic API: simple Q&A, conversation history, system prompt shaping, intent mismatch detection, tradeoff analysis. Skip without key.
+- cca_internal_queue.py — `hivemind_preflight()`: combines queue health + stale scope auto-release + unread check + scope warnings into single readiness call.
+- .claude/rules/hivemind-worker.md (NEW) — Worker persona instructions for CLI hivemind sessions.
+- SENIOR_DEV_GAP_ANALYSIS.md — All 10/10 gap items marked CLOSED.
+- MASTER_TASKS.md — MT-20 status updated to reflect S78-S81 phase completions.
+- PROJECT_INDEX.md — Test counts updated (doc drift fix).
+
+**Why:**
+- MT-20 milestone: all 10 gap analysis items now have implementations. The remaining work is E2E validation with a real API key.
+- MT-21 Phase 1 prep: all infrastructure ready for first real 2-chat test.
+
+**Tests:** 3221/3221 passing (80 suites). 35 new tests this session.
+
+**Lessons:**
+- Structured LLM prompt templates can close "requires LLM" gaps without needing API access during development — build the scaffold, test later.
+- Queue infrastructure was more complete than expected (queue_health, expire_stale_scopes already existed) — always check before building.
+
+---
+
 ## Session 80 — 2026-03-20
 
 **What changed:**

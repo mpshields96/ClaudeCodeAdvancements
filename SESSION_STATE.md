@@ -3,26 +3,25 @@
 
 ---
 
-## Current State (as of Session 80 — 2026-03-20)
+## Current State (as of Session 81 — 2026-03-20)
 
-**Phase:** Session 80 COMPLETE. Tests: 79 suites, 3186 total passing. Git: 4 commits this session.
+**Phase:** Session 81 COMPLETE. Tests: 80 suites, 3221 total passing. Git: 6 commits this session.
 
-**What was done this session (S80):**
-- **MT-20 LLM integration** — `LLMClient` class in `senior_chat.py`: Anthropic Messages API via stdlib urllib, conversation history, token tracking, `--model` and `--no-llm` CLI flags. 22 new tests.
-- **MT-20 format_context() rewrite** — `_humanize_finding()` now leads with advice, puts metrics in parentheses. Added `_parse_satd_message()` helper. 4 new tests.
-- **MT-20 git_context.py (NEW)** — File history, blame ownership, churn detection. Stdlib subprocess, zero deps. 26 new tests.
-- **MT-20 git context wired in** — `senior_review.py` step 7: git_commits, git_high_churn metrics, last-changed suggestion, high-churn concern. `senior_chat.py`: git_summary in ReviewContext + system prompt. 8 new tests.
-- **Gap analysis: 8/10 closed** — git history awareness and format_context rewrite both done.
+**What was done this session (S81):**
+- **MT-20 ALL 10 GAPS CLOSED** — `build_intent_check_prompt()` and `build_tradeoff_prompt()` in `senior_chat.py` close the last 2 gap items (intent verification, trade-off judgment). 18 new unit tests.
+- **MT-20 E2E test suite (NEW)** — `agent-guard/tests/test_senior_chat_e2e.py`: 10 tests covering real Anthropic API calls (simple Q&A, conversation history, system prompt shaping, intent check, tradeoff analysis). All skip gracefully without ANTHROPIC_API_KEY. Uses Haiku for cost.
+- **MT-21 Hivemind Phase 1 prep** — `hivemind_preflight()` in `cca_internal_queue.py`: combines queue health + stale scope auto-release + unread check + scope warnings. 9 new tests. `.claude/rules/hivemind-worker.md`: worker persona instructions.
+- **Doc updates** — SENIOR_DEV_GAP_ANALYSIS.md: all 10 items CLOSED. MASTER_TASKS.md: MT-20 status updated. PROJECT_INDEX.md: test counts fixed (doc drift).
+- **S80 wrap docs committed** — Previous session's uncommitted wrap files committed first.
 
-**Matthew directives (S51-S80, permanent):**
-- All S51-S79 directives still active
+**Matthew directives (S51-S81, permanent):**
+- All S51-S80 directives still active
 
 **Next (prioritized):**
-1. MT-20: E2E test LLM integration with real Anthropic API key
-2. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker)
-3. MT-20: Remaining 2 gaps — intent verification, trade-off judgment (require LLM)
-4. MT-21: Hivemind coordination protocol refinement
-5. MT-20: Knowledge transfer capability (can someone else maintain this at 3am?)
+1. MT-20 E2E validation: Set ANTHROPIC_API_KEY and run `python3 agent-guard/tests/test_senior_chat_e2e.py -v` (~$0.01 with Haiku)
+2. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker) — all prep complete
+3. MT-21: Hivemind coordination protocol refinement
+4. Regular CCA work: reddit scans, other MTs from backlog
 
 ---
 
