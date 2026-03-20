@@ -248,6 +248,7 @@
     ("Architecture Decisions", "Key technical decisions and their rationale"),
     ("Risks & Blockers", "Known issues, mitigations, and technical debt"),
     ("Next Priorities", "Upcoming work items ranked by impact"),
+    ("Honest Assessment", "Objective gaps, limitations, and areas falling short"),
   )
 
   for (i, (title, desc)) in toc-items.enumerate() {
@@ -984,6 +985,42 @@
     )
   ]
   v(2mm)
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HONEST ASSESSMENT
+// ═══════════════════════════════════════════════════════════════════════════
+
+#if data.keys().contains("criticisms") and data.criticisms.len() > 0 {
+  section-header("Honest Assessment")
+
+  text(size: 9pt, fill: mid)[
+    Objective gaps, limitations, and areas where the project falls short of its stated goals. Included for accountability.
+  ]
+  v(3mm)
+
+  for criticism in data.criticisms {
+    let severity-color = if criticism.severity == "blocker" { red } else if criticism.severity == "gap" { orange } else if criticism.severity == "limitation" { purple } else if criticism.severity == "debt" { indigo } else { mid }
+
+    box(
+      width: 100%,
+      stroke: (left: 3pt + severity-color, rest: 0.5pt + faint),
+      radius: (right: 4pt),
+      inset: 10pt,
+      fill: white,
+    )[
+      #grid(
+        columns: (1fr, auto),
+        text(size: 9.5pt, weight: "semibold", fill: black)[#criticism.title],
+        status-badge(upper(criticism.severity), severity-color),
+      )
+      #v(1.5mm)
+      #text(size: 8.5pt, fill: mid)[#criticism.detail]
+    ]
+    v(3mm)
+  }
+
+  pagebreak()
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

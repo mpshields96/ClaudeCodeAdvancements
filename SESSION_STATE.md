@@ -3,41 +3,25 @@
 
 ---
 
-## Current State (as of Session 74 — 2026-03-20)
+## Current State (as of Session 76 — 2026-03-20)
 
-**Phase:** Session 74 WRAP (Desktop cli3). Tests: 3030/3030 passing (75 suites). Git: uncommitted wrap files.
+**Phase:** Session 76 COMPLETE. Tests: 2980/2980 passing (75 suites). Git: uncommitted report files.
 
-**What was done this session (S74 Desktop cli3 — LOOP PROJECT COMPLETE):**
-- **Goal #1 SHIPPED: cca-loop production-ready** — all 7 hardening items complete:
-  - (a) Per-session timeout: `SESSION_TIMEOUT_MINS` env var, `wait_for_claude_exit()` with /cca-wrap + grace period
-  - (b) ntfy.sh alerts: `notify_error()` POSTs to `CCA_LOOP_NTFY_TOPIC` on timeout/error
-  - (c) Hivemind mode: `cmd_hivemind()` — 3 tmux panes, role-based prompts (coordinator/worker1/worker2)
-  - (d) Session dedup: `check_live_cca_sessions()` — ps + lsof fallback, excludes own panes
-  - (e) Health monitoring: `loop_health.record_session()` wired into cca-loop lifecycle (was built but never called)
-  - (f) Graceful stop: `graceful_wrap_pane()` sends /cca-wrap before killing
-  - (g) Bidirectional communication: `cca_comm.py` (9 commands, 18 tests)
-- **Hivemind-safe CCA commands:** /cca-init, /cca-auto, /cca-wrap all now role-aware (workers skip shared doc updates)
-- **cca_internal_queue.py** upgraded from 2 to 4 chats (desktop, cli1, cli2, terminal) — 69 tests
-- **cca_hivemind.py** rewritten: stable window IDs for AppleScript injection, `inject_into_terminal_window()` — 22 tests
-- **daily_snapshot.py** (474 LOC, 50 tests) — point-in-time project metric captures with diff support
-- **Matthew directive saved:** Full authorization to use ALL CCA tools/skills proactively. Cardinal Safety Rules only constraint.
+**What was done this session (S76):**
+- **CCA Status Report 2026-03-20 generated** (276KB, 18 pages) — full project overview with live data
+- **report_generator.py HOOKS updated** from 9 to 18 — was stale since S52, now matches actual settings.local.json
+- **Agent Guard module components expanded** from 7 to 17 in report data (Senior Dev MVP modules: SATD, effort, quality, FP filter, review classifier, tech debt, ADR reader, edit guard, bash guard, senior dev orchestrator)
+- **Self-Learning + Design Skills components updated** in report data (overnight detector, ROI tracker, trade reflector, website generator, daily snapshots)
+- **`collect_criticisms()` method added** to report_generator.py — dynamically generates objective criticisms
+- **"Honest Assessment" section added** to Typst template — severity-coded badges (GAP/LIMITATION/NUANCE/BLOCKER/DEBT)
+- **TOC updated** to include Honest Assessment as section 11
+- **test_hooks_defined assertion fixed** (9 -> 18)
 
-**What was done this session (S74 cli1 — earlier):**
-- cca-loop timeout, ntfy alerts, lsof dedup hardening
-- test_loop_health.py pytest->unittest conversion (54 tests)
+**Matthew directives (S51-S76, permanent):**
+- All S51-S74 directives still active
+- S76: Report should be objective — include criticisms of subpar/unfinished/untested work
 
-**What was done this session (S74 earlier hivemind sprint):**
-- senior_dev_hook.py (48 tests), code_quality_scorer.py (38 tests)
-- satd_detector.py (44), effort_scorer.py (42), fp_filter.py (40), review_classifier.py (43), tech_debt_tracker.py (27)
-- resume_generator.py (17 tests), adr_reader.py (31 tests)
-- Hook chain integration tests, doc drift repair
-
-**Matthew directives (S51-S74, permanent):**
-- All S51-S72 directives still active (see previous session state)
-- NEW S74: Full tool/skill authorization — use everything proactively, Cardinal Safety Rules are the only hard limit
-- NEW S74: CCA designed to become smarter/more capable (YoYo-style) and help Kalshi bot become more profitable
-
-**Next:** (1) Goal #2: Push design-skills module — complete slide renderer (Typst call), website renderer (HTML output). (2) Goal #3: Integrate daily_snapshot diff into report_generator.py and dashboard_generator.py. (3) MT-20: Architectural Coherence Checker.
+**Next:** (1) Fix frontier status detection — all 5 show "Active" instead of "Complete" because PROJECT_INDEX status text lacks literal "COMPLETE". (2) Goal #2: complete slide renderer + website renderer. (3) MT-20: Architectural Coherence Checker.
 
 ---
 

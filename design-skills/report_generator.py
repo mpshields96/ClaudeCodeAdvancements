@@ -87,7 +87,7 @@ class CCADataCollector:
         {
             "name": "Agent Guard",
             "path": "agent-guard/",
-            "description": "Multi-agent safety and conflict prevention. Guards credentials, network ports, dangerous paths, and system modifications.",
+            "description": "Multi-agent safety, conflict prevention, and Senior Dev code review. Guards credentials, network ports, dangerous paths, and provides automated quality scoring on every write.",
             "components": [
                 "Mobile approver (ntfy.sh push)",
                 "Credential extraction guard",
@@ -96,6 +96,16 @@ class CCADataCollector:
                 "Path validator (LIVE in hooks)",
                 "Session guard (slop detection)",
                 "File ownership manifest",
+                "Edit retry guard (LIVE in hooks)",
+                "Bash command safety guard (LIVE in hooks)",
+                "SATD detector (TODO/FIXME/HACK markers)",
+                "PR effort scorer (1-5 scale)",
+                "Code quality scorer (0-100, A-F)",
+                "False positive filter",
+                "Review classifier (6 categories)",
+                "Tech debt tracker (trend analysis)",
+                "ADR reader (architecture decision discovery)",
+                "Senior Dev orchestrator hook (LIVE)",
             ],
         },
         {
@@ -124,7 +134,7 @@ class CCADataCollector:
         {
             "name": "Self-Learning",
             "path": "self-learning/",
-            "description": "Cross-session improvement through structured observation, pattern detection, and autonomous proposal generation.",
+            "description": "Cross-session improvement through structured observation, pattern detection, autonomous proposals, and research ROI tracking.",
             "components": [
                 "JSONL event journal",
                 "Pattern reflector + strategy engine",
@@ -133,18 +143,23 @@ class CCADataCollector:
                 "Sentinel adaptive mutation",
                 "Academic paper scanner",
                 "Findings resurfacer",
-                "Skillbook injection hook",
+                "Skillbook injection hook (LIVE)",
+                "Overnight detector (time-stratified analysis)",
+                "Research outcomes ROI tracker",
+                "Trade reflector (5 pattern detectors)",
             ],
         },
         {
             "name": "Design Skills",
             "path": "design-skills/",
-            "description": "Professional visual output. Typst-based PDF reports, presentation slides, HTML dashboards, and SVG chart generation.",
+            "description": "Professional visual output. Typst-based PDF reports, slides, HTML dashboards, SVG charts, website generation, and daily project snapshots.",
             "components": [
                 "Report generator (Typst pipeline)",
                 "Slide generator (16:9 PDF)",
                 "Dashboard generator (HTML)",
                 "Chart generator (SVG)",
+                "Website generator (landing + docs)",
+                "Daily snapshot engine (metric diffs)",
                 "Design guide + visual language",
             ],
         },
@@ -386,13 +401,22 @@ class CCADataCollector:
     HOOKS = [
         {"event": "PostToolUse", "matcher": "*", "file": "meter.py", "purpose": "Token counter"},
         {"event": "PostToolUse", "matcher": "*", "file": "compact_anchor.py", "purpose": "Context anchor writes"},
+        {"event": "PostToolUse", "matcher": "*", "file": "senior_dev_hook.py", "purpose": "SATD + effort + quality scoring"},
+        {"event": "PostToolUse", "matcher": "*", "file": "queue_hook.py", "purpose": "Cross-chat queue context"},
         {"event": "PreToolUse", "matcher": "*", "file": "alert.py", "purpose": "Warn/block at red/critical"},
         {"event": "PreToolUse", "matcher": "*", "file": "cost_alert.py", "purpose": "Cost threshold warning"},
         {"event": "PreToolUse", "matcher": "*", "file": "path_validator.py", "purpose": "Dangerous path detection"},
+        {"event": "PreToolUse", "matcher": "*", "file": "edit_guard.py", "purpose": "Edit retry prevention"},
+        {"event": "PreToolUse", "matcher": "*", "file": "validate.py", "purpose": "Spec guard + plan compliance"},
         {"event": "PreToolUse", "matcher": "Bash", "file": "credential_guard.py", "purpose": "Credential extraction guard"},
+        {"event": "PreToolUse", "matcher": "Bash", "file": "bash_guard.py", "purpose": "Command safety (network, packages, system)"},
         {"event": "UserPromptSubmit", "matcher": "*", "file": "skill_activator.py", "purpose": "Spec auto-activation"},
         {"event": "UserPromptSubmit", "matcher": "*", "file": "skillbook_inject.py", "purpose": "Strategy injection"},
+        {"event": "UserPromptSubmit", "matcher": "*", "file": "capture_hook.py", "purpose": "Real-time memory capture"},
+        {"event": "UserPromptSubmit", "matcher": "*", "file": "queue_hook.py", "purpose": "Cross-chat queue injection"},
         {"event": "Stop", "matcher": "*", "file": "auto_handoff.py", "purpose": "Block exit at critical"},
+        {"event": "Stop", "matcher": "*", "file": "capture_hook.py", "purpose": "Session-end memory capture"},
+        {"event": "PostCompact", "matcher": "*", "file": "post_compact.py", "purpose": "Recovery + journal logging"},
     ]
 
     # ── Intelligence data ───────────────────────────────────────────────
@@ -695,6 +719,77 @@ class CCADataCollector:
 
     # ── Architecture decisions ──────────────────────────────────────────
 
+    # ── Honest assessment ──────────────────────────────────────────────
+
+    def collect_criticisms(self, modules, mt_complete, mt_active, mt_pending):
+        """Collect objective criticisms and gaps in the project."""
+        criticisms = []
+
+        # 1. MTs stuck at Phase 1 — many started but not advanced
+        stuck_phase1 = []
+        for task in mt_active:
+            if task.get("phases_done", 0) <= 1 and task.get("total_phases", 0) > 1:
+                stuck_phase1.append(task["id"])
+        if stuck_phase1:
+            criticisms.append({
+                "title": f"{len(stuck_phase1)} master tasks stalled at Phase 1",
+                "severity": "gap",
+                "detail": f"{', '.join(stuck_phase1)} — started but no subsequent phases shipped. Risk of scope sprawl without depth.",
+            })
+
+        # 2. No external users
+        criticisms.append({
+            "title": "Single-developer project with no external users",
+            "severity": "limitation",
+            "detail": "All tooling built for one developer. No community testing, no feedback loop from other Claude Code users. Limits validation of 'community-demanded' features.",
+        })
+
+        # 3. Test depth vs breadth
+        total_tests = sum(m["tests"] for m in modules)
+        total_files = sum(m["files"] for m in modules)
+        if total_files > 0:
+            tests_per_file = total_tests / total_files
+            if tests_per_file > 30:
+                criticisms.append({
+                    "title": f"High test count ({total_tests:,}) may overstate coverage",
+                    "severity": "nuance",
+                    "detail": f"Average {tests_per_file:.0f} tests per source file. Many test trivial properties (dict keys, return types). Integration test coverage across modules is limited to 1 suite.",
+                })
+
+        # 4. Blocked items
+        blocked = [t for t in mt_pending if t.get("category") == "blocked"]
+        if blocked:
+            criticisms.append({
+                "title": f"{len(blocked)} task(s) blocked with no resolution timeline",
+                "severity": "blocker",
+                "detail": "; ".join(f"{t['id']}: {t['name']}" for t in blocked),
+            })
+
+        # 5. Self-learning metrics hardcoded
+        criticisms.append({
+            "title": "Self-learning metrics partially hardcoded",
+            "severity": "debt",
+            "detail": "Strategy count, proposal count, and avg score are hardcoded in the data collector rather than dynamically parsed from journal/strategy files.",
+        })
+
+        # 6. Kalshi integration gap
+        criticisms.append({
+            "title": "Kalshi bot integration remains read-only",
+            "severity": "gap",
+            "detail": "CCA scans for research and surfaces findings, but no closed-loop feedback exists: no tracking of which CCA recommendations led to profitable Kalshi trades.",
+        })
+
+        # 7. CI/CD
+        ci_path = os.path.join(self.project_root, ".github", "workflows", "tests.yml")
+        if os.path.exists(ci_path):
+            criticisms.append({
+                "title": "CI/CD pipeline exists but unverified",
+                "severity": "nuance",
+                "detail": "GitHub Actions workflow defined but no evidence of runs in git history. All testing is local-only.",
+            })
+
+        return criticisms
+
     ARCHITECTURE_DECISIONS = [
         {"decision": "Local-first storage", "rationale": "User owns all data, no cloud dependency"},
         {"decision": "Stdlib-first (no pip)", "rationale": "Zero dependency management overhead"},
@@ -828,6 +923,8 @@ class CCADataCollector:
             for t in mt_complete + mt_active + mt_pending
         )
 
+        criticisms = self.collect_criticisms(modules, mt_complete, mt_active, mt_pending)
+
         return {
             "title": "ClaudeCodeAdvancements",
             "subtitle": "Comprehensive Project Report",
@@ -872,6 +969,7 @@ class CCADataCollector:
             "frontiers": frontiers,
             "priority_queue": priority_queue,
             "daily_diff": self.collect_daily_diff(),
+            "criticisms": criticisms,
         }
 
 

@@ -57,9 +57,9 @@ class TestDataCollector(unittest.TestCase):
             self.assertGreater(len(mod["components"]), 0)
 
     def test_hooks_defined(self):
-        """All 9 hooks are defined."""
+        """All 18 hooks are defined."""
         from report_generator import CCADataCollector
-        self.assertEqual(len(CCADataCollector.HOOKS), 9)
+        self.assertEqual(len(CCADataCollector.HOOKS), 18)
 
     def test_hooks_have_required_fields(self):
         """Each hook has event, matcher, file, purpose."""

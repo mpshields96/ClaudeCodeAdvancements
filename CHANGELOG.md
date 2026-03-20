@@ -3,6 +3,27 @@
 
 ---
 
+## Session 76 — 2026-03-20
+
+**What changed:**
+- Generated CCA Status Report 2026-03-20 (276KB, 18 pages) via Typst pipeline
+- Updated `design-skills/report_generator.py`: HOOKS 9->18, Agent Guard components 7->17, Self-Learning/Design Skills components expanded
+- Added `collect_criticisms()` method to report_generator.py — 7 dynamic criticisms
+- Added "Honest Assessment" section to `design-skills/templates/cca-report.typ` with severity-coded badges
+- Updated TOC in Typst template to include Honest Assessment
+- Fixed `test_hooks_defined` assertion in test_report_generator.py (9->18)
+
+**Why:**
+- Matthew requested fresh report with today's data + objective criticisms of project progress
+- HOOKS list was stale since S52, significantly underreporting live infrastructure
+
+**Tests:** 2980/2980 passing (75 suites)
+
+**Lessons:**
+- Hardcoded data in report generators drifts silently — the HOOKS list was wrong for 24 sessions
+
+---
+
 ## Session 74 (Desktop cli3) — 2026-03-20
 
 **What changed:**
