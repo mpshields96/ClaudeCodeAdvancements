@@ -182,13 +182,13 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | memory-system | 228 |
 | spec-system | 158 |
 | context-monitor | 266 |
-| agent-guard | 422 |
+| agent-guard | 633 |
 | usage-dashboard | 259 |
 | reddit-intelligence | 316 |
 | self-learning | 526 |
 | design-skills | 163 |
 | research | 86 |
-| **Total** | **2607** |
+| **Total** | **2822** |
 
 ---
 
