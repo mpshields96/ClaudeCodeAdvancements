@@ -172,12 +172,12 @@ class TestWindowDiscovery(unittest.TestCase):
         # Should always have some output
         self.assertTrue(len(result) > 0)
 
-    def test_discover_warns_about_ephemeral_indices(self):
+    def test_discover_shows_stable_ids(self):
         from cca_hivemind import discover_windows
         result = discover_windows()
-        # If windows found, should warn about ephemeral indices
-        if "Window" in result:
-            self.assertIn("ephemeral", result.lower())
+        # If windows found, should mention stable IDs
+        if "ID=" in result:
+            self.assertIn("stable", result.lower())
 
     def test_parse_activity_from_title(self):
         """Test that activity hint is extracted from window title."""

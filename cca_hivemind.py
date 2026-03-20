@@ -184,29 +184,130 @@ def build_injection_text(
 def generate_terminal_injection_script(
     text: str,
     window_index: int = 1,
+    window_id: Optional[int] = None,
 ) -> str:
     """Generate AppleScript to type text into a Terminal.app window.
 
     Uses keystroke simulation — the text appears as if typed by the user.
-    Window index 1 = frontmost, 2 = second, etc.
+
+    IMPORTANT: System Events keystroke always targets the frontmost window.
+    This script brings the target window to front by ID (stable) or index
+    (unstable), waits for focus, then sends keystrokes.
+
+    Known limitation: If called from Desktop Claude Code app, the Desktop app
+    may reclaim focus before keystrokes fire. For reliable multi-window
+    injection, use inject_into_terminal_window() which adds extra delays
+    and focus verification.
     """
     # Escape for AppleScript string
     escaped = text.replace("\\", "\\\\").replace('"', '\\"')
     # Replace newlines with return keystrokes
     escaped = escaped.replace("\n", "\\n")
 
+    if window_id:
+        focus_cmd = f'set frontmost of (first window whose id is {window_id}) to true'
+    else:
+        focus_cmd = f'set index of window {window_index} to 1'
+
     return f'''tell application "Terminal"
+    {focus_cmd}
     activate
-    set targetWindow to window {window_index}
-    do script "" in targetWindow
-    delay 0.1
-    tell application "System Events"
-        tell process "Terminal"
-            keystroke "{escaped}"
-            keystroke return
-        end tell
+    delay 1.0
+end tell
+delay 0.5
+tell application "System Events"
+    tell process "Terminal"
+        keystroke "{escaped}"
+        delay 0.2
+        keystroke return
     end tell
 end tell'''
+
+
+def get_terminal_window_ids() -> List[dict]:
+    """Get Terminal.app window IDs (stable across reordering).
+
+    Returns list of dicts with id, index, title, is_claude.
+    Window IDs persist for the lifetime of the window — use these
+    for targeting instead of indices which shift constantly.
+    """
+    script = '''tell application "Terminal"
+    set windowInfo to ""
+    repeat with i from 1 to count of windows
+        set w to window i
+        set windowInfo to windowInfo & (id of w) & "|" & i & "|" & name of w & linefeed
+    end repeat
+    return windowInfo
+end tell'''
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True, text=True, timeout=5
+        )
+        windows = []
+        for line in result.stdout.strip().splitlines():
+            parts = line.split("|", 2)
+            if len(parts) == 3:
+                windows.append({
+                    "id": int(parts[0]),
+                    "index": int(parts[1]),
+                    "title": parts[2],
+                    "is_claude": "claude" in parts[2].lower(),
+                })
+        return windows
+    except (subprocess.TimeoutExpired, OSError, ValueError):
+        return []
+
+
+def inject_into_terminal_window(
+    text: str,
+    window_id: int,
+    delay_before: float = 1.5,
+) -> bool:
+    """Inject text into a specific Terminal.app window by ID.
+
+    This is the RELIABLE injection method. Uses window ID (stable)
+    instead of index (shifts on reorder). Adds sufficient delays
+    for focus switching even when called from another app.
+
+    Returns True if injection succeeded.
+    """
+    if not validate_injection_text(text):
+        return False
+
+    escaped = text.replace("\\", "\\\\").replace('"', '\\"')
+    escaped = escaped.replace("\n", "\\n")
+
+    script = f'''
+tell application "Terminal"
+    set targetWin to (first window whose id is {window_id})
+    set frontmost of targetWin to true
+    activate
+end tell
+delay {delay_before}
+tell application "System Events"
+    -- Verify Terminal is frontmost before typing
+    set frontApp to name of first application process whose frontmost is true
+    if frontApp is "Terminal" then
+        tell process "Terminal"
+            keystroke "{escaped}"
+            delay 0.2
+            keystroke return
+        end tell
+        return "ok"
+    else
+        return "focus_lost"
+    end if
+end tell
+'''
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True, text=True, timeout=15
+        )
+        return "ok" in result.stdout
+    except (subprocess.TimeoutExpired, OSError):
+        return False
 
 
 def list_terminal_windows() -> List[dict]:
@@ -256,28 +357,38 @@ end tell'''
 def discover_windows() -> str:
     """Discover and describe all Terminal.app windows.
 
-    Returns a formatted report. Window indices are EPHEMERAL —
-    they change as windows are opened, closed, or reordered.
-    Always re-discover before targeting a window.
+    Returns a formatted report with stable window IDs.
+    Window IDs persist for the window's lifetime — use these for targeting.
+    Window indices shift constantly and should NOT be used for injection.
     """
-    windows = list_terminal_windows()
-    if not windows:
+    # Get stable IDs
+    id_windows = get_terminal_window_ids()
+    # Get activity hints from title parsing
+    title_windows = list_terminal_windows()
+
+    if not id_windows and not title_windows:
         return "No Terminal windows found (may need accessibility permissions)."
 
-    lines = ["TERMINAL WINDOWS (indices are ephemeral — re-discover before each ping):"]
+    # Merge: use IDs from id_windows, activity from title_windows
+    activity_map = {}
+    for tw in title_windows:
+        activity_map[tw["window_index"]] = tw.get("activity", "unknown")
+
+    lines = ["TERMINAL WINDOWS (use window ID for targeting — IDs are stable):"]
     claude_count = 0
-    for w in windows:
+    for w in id_windows:
         marker = "*" if w["is_claude"] else " "
+        activity = activity_map.get(w["index"], "unknown")
         lines.append(
-            f"  {marker} Window {w['window_index']}: "
-            f"activity={w['activity']}"
+            f"  {marker} ID={w['id']} (idx={w['index']}): "
+            f"activity={activity}"
         )
         if w["is_claude"]:
             claude_count += 1
 
     lines.append(f"\n{claude_count} Claude session(s) detected in Terminal.")
-    lines.append("Use 'hivemind ping <target> <window#>' to message a specific window.")
-    lines.append("IMPORTANT: Re-run 'discover' before each ping — window order shifts.")
+    lines.append("Use 'hivemind ping <target> <window_id>' to message a specific window.")
+    lines.append("Window IDs are STABLE — no need to re-discover between pings.")
     return "\n".join(lines)
 
 
@@ -461,29 +572,23 @@ def main():
 
     elif cmd == "ping":
         if len(sys.argv) < 4:
-            print("Usage: ping <target> <window_index>")
-            print("  Sends queue message + pokes Terminal window with 'check queue'")
+            print("Usage: ping <target> <window_id>")
+            print("  Sends queue message + injects 'check queue' into Terminal window")
+            print("  Use 'discover' to find window IDs (stable, unlike indices)")
             sys.exit(1)
         target = sys.argv[2]
-        window = int(sys.argv[3])
+        win_id = int(sys.argv[3])
         message = " ".join(sys.argv[4:]) if len(sys.argv) > 4 else "New hivemind directive — check your queue"
         # Step 1: Send via queue
         msg = send_directive(target, subject=message, from_chat="hivemind", priority="high")
         print(f"Queued: {msg['id']}")
-        # Step 2: Poke the terminal window
+        # Step 2: Inject into the terminal window by ID (reliable)
         ping_text = f"[HIVEMIND PING] Check queue: python3 cca_internal_queue.py unread --for {target}"
-        if not validate_injection_text(ping_text):
-            print("BLOCKED: ping text failed validation")
-            sys.exit(1)
-        script = generate_terminal_injection_script(ping_text, window)
-        try:
-            subprocess.run(
-                ["osascript", "-e", script],
-                timeout=5, capture_output=True
-            )
-            print(f"Pinged Terminal window {window}")
-        except (subprocess.TimeoutExpired, OSError) as e:
-            print(f"Ping failed (queue message still sent): {e}")
+        ok = inject_into_terminal_window(ping_text, win_id)
+        if ok:
+            print(f"Injected into Terminal window ID {win_id}")
+        else:
+            print(f"Injection failed (queue message still sent). Window ID {win_id} may not exist or focus was lost.")
 
     elif cmd == "discover":
         print(discover_windows())

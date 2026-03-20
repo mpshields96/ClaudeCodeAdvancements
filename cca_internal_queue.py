@@ -61,6 +61,8 @@ DEFAULT_QUEUE_PATH = os.path.join(SCRIPT_DIR, "cca_internal_queue.jsonl")
 VALID_CHATS = {
     "desktop": "CCA Desktop",
     "terminal": "CCA Terminal",
+    "cli1": "CCA CLI 1",
+    "cli2": "CCA CLI 2",
 }
 
 VALID_PRIORITIES = ["critical", "high", "medium", "low"]

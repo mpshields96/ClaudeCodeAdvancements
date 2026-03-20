@@ -483,10 +483,12 @@ class TestMakeId(unittest.TestCase):
 
 
 class TestValidConstants(unittest.TestCase):
-    def test_valid_chats_has_two(self):
-        self.assertEqual(len(ciq.VALID_CHATS), 2)
+    def test_valid_chats_has_four(self):
+        self.assertEqual(len(ciq.VALID_CHATS), 4)
         self.assertIn("desktop", ciq.VALID_CHATS)
         self.assertIn("terminal", ciq.VALID_CHATS)
+        self.assertIn("cli1", ciq.VALID_CHATS)
+        self.assertIn("cli2", ciq.VALID_CHATS)
 
     def test_valid_priorities(self):
         self.assertEqual(ciq.VALID_PRIORITIES, ["critical", "high", "medium", "low"])
@@ -499,6 +501,83 @@ class TestValidConstants(unittest.TestCase):
         self.assertIn("status_update", ciq.VALID_CATEGORIES)
         self.assertIn("question", ciq.VALID_CATEGORIES)
         self.assertIn("fyi", ciq.VALID_CATEGORIES)
+
+
+class TestHivemindMultiChat(unittest.TestCase):
+    """Tests for 3-chat hivemind support (desktop, cli1, cli2)."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp.close()
+        self.path = self.tmp.name
+
+    def tearDown(self):
+        os.unlink(self.path)
+
+    def test_desktop_to_cli1(self):
+        msg = ciq.send_message("desktop", "cli1", "Build timeout feature", path=self.path)
+        self.assertEqual(msg["sender"], "desktop")
+        self.assertEqual(msg["target"], "cli1")
+
+    def test_desktop_to_cli2(self):
+        msg = ciq.send_message("desktop", "cli2", "Build health monitoring", path=self.path)
+        self.assertEqual(msg["target"], "cli2")
+
+    def test_cli1_to_desktop(self):
+        msg = ciq.send_message("cli1", "desktop", "WRAP: timeout done", path=self.path)
+        self.assertEqual(msg["sender"], "cli1")
+
+    def test_cli2_to_desktop(self):
+        msg = ciq.send_message("cli2", "desktop", "WRAP: health monitoring done", path=self.path)
+        self.assertEqual(msg["sender"], "cli2")
+
+    def test_cli1_to_cli2(self):
+        msg = ciq.send_message("cli1", "cli2", "Need shared util", path=self.path)
+        self.assertEqual(msg["sender"], "cli1")
+        self.assertEqual(msg["target"], "cli2")
+
+    def test_unread_per_cli(self):
+        ciq.send_message("desktop", "cli1", "Task A", path=self.path)
+        ciq.send_message("desktop", "cli2", "Task B", path=self.path)
+        ciq.send_message("desktop", "cli1", "Task C", path=self.path)
+        self.assertEqual(len(ciq.get_unread("cli1", self.path)), 2)
+        self.assertEqual(len(ciq.get_unread("cli2", self.path)), 1)
+
+    def test_scope_claim_cli1(self):
+        ciq.send_message("cli1", "desktop", "cca-loop timeout",
+                        category="scope_claim", files=["cca-loop"], path=self.path)
+        scopes = ciq.get_active_scopes(self.path)
+        self.assertEqual(len(scopes), 1)
+        self.assertEqual(scopes[0]["sender"], "cli1")
+
+    def test_scope_conflict_between_clis(self):
+        ciq.send_message("cli1", "desktop", "Working on cca-loop",
+                        category="scope_claim", files=["cca-loop"], path=self.path)
+        conflicts = ciq.check_scope_conflict("cli2", ["cca-loop"], self.path)
+        self.assertEqual(len(conflicts), 1)
+
+    def test_ack_all_cli1(self):
+        ciq.send_message("desktop", "cli1", "Task A", path=self.path)
+        ciq.send_message("desktop", "cli1", "Task B", path=self.path)
+        count = ciq.acknowledge_all("cli1", self.path)
+        self.assertEqual(count, 2)
+        self.assertEqual(len(ciq.get_unread("cli1", self.path)), 0)
+
+    def test_summary_includes_all_chats(self):
+        ciq.send_message("desktop", "cli1", "A", path=self.path)
+        ciq.send_message("desktop", "cli2", "B", path=self.path)
+        ciq.send_message("cli1", "desktop", "C", path=self.path)
+        summary = ciq.get_unread_summary(self.path)
+        self.assertIn("cli1", summary)
+        self.assertIn("cli2", summary)
+        self.assertIn("desktop", summary)
+
+    def test_format_unread_context_cli1(self):
+        ciq.send_message("desktop", "cli1", "Build timeout",
+                        priority="high", category="handoff", path=self.path)
+        ctx = ciq.format_unread_context("cli1", self.path)
+        self.assertIn("1 unread", ctx)
+        self.assertIn("Build timeout", ctx)
 
 
 if __name__ == "__main__":
