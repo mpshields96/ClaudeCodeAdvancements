@@ -3,6 +3,26 @@
 
 ---
 
+## Session 80 — 2026-03-20
+
+**What changed:**
+- agent-guard/senior_chat.py — LLMClient class: Anthropic Messages API (stdlib urllib), conversation history, token tracking, `--model`/`--no-llm` flags, `build_system_prompt()`, git_summary in ReviewContext.
+- agent-guard/senior_dev_hook.py — `_humanize_finding()` rewrite: advice-first output, `_parse_satd_message()` helper.
+- agent-guard/git_context.py (NEW) — Git history awareness: file_history, blame_summary, commit_count, is_high_churn, format_for_review.
+- agent-guard/senior_review.py — Step 7: git context integration (git_commits, git_high_churn metrics, last-changed suggestion, high-churn concern).
+- agent-guard/tests/test_git_context.py (NEW) — 26 tests.
+
+**Why:**
+- MT-20 gap closure: LLM API wiring (#1 priority from S79), format_context rewrite (natural language over metric dumps), git history awareness (context-aware review). 8/10 gap analysis items now closed.
+
+**Tests:** 3186/3186 passing (79 suites). 60 new tests this session.
+
+**Lessons:**
+- macOS grep doesn't support -P (Perl regex). Use python for test counting on Mac.
+- `_parse_satd_message()` helper makes humanization testable independently of finding generation.
+
+---
+
 ## Session 78 — 2026-03-20
 
 **What changed:**

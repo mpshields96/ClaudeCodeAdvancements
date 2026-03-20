@@ -3,29 +3,26 @@
 
 ---
 
-## Current State (as of Session 79 — 2026-03-20)
+## Current State (as of Session 80 — 2026-03-20)
 
-**Phase:** Session 79 COMPLETE. Tests: 78 suites, 3126 total passing. Git: 9 commits this session.
+**Phase:** Session 80 COMPLETE. Tests: 79 suites, 3186 total passing. Git: 4 commits this session.
 
-**What was done this session (S79):**
-- **MT-20 Phase 9 COMPLETE** — CLAUDE.md rule extraction + compliance checking. `RuleExtractor` parses CLAUDE.md files (module + project root) to extract structured rules (stdlib-only, forbidden, general). `RuleComplianceCheck` validates code against those rules. 21 new coherence tests (39 total).
-- **MT-20 fp_filter wired into senior_review.py** — Vendored files get early-exit approve with zero SATD. Test file non-HIGH findings filtered out. `fp_confidence` metric added. 4 new tests.
-- **MT-20 ADR reader wired into senior_review.py** — Accepted ADRs surface as suggestions, deprecated as concerns. `relevant_adrs` count in metrics. 3 new tests.
-- **MT-20 Phase 8 COMPLETE (foundation)** — `senior_chat.py`: interactive CLI REPL + single-question mode. Runs full 7-submodule review, formats terminal output, generates LLM follow-up prompts. 16 new tests. LLM API wiring deferred.
-- **E2E validated** — Ran pipeline against 5 real CCA files. Blast radius, fp_filter, rule compliance all working. Verified test file fp=0.6, vendored fp=0.0.
-- **Gap analysis updated** — 7 of 10 gaps from S77 audit now closed (coherence, blast radius, patterns, ADR, CLI chat, rule compliance, cross-file reasoning partial).
-- **All S78 priority items + Phase 8 + root CLAUDE.md compliance done in one session.**
+**What was done this session (S80):**
+- **MT-20 LLM integration** — `LLMClient` class in `senior_chat.py`: Anthropic Messages API via stdlib urllib, conversation history, token tracking, `--model` and `--no-llm` CLI flags. 22 new tests.
+- **MT-20 format_context() rewrite** — `_humanize_finding()` now leads with advice, puts metrics in parentheses. Added `_parse_satd_message()` helper. 4 new tests.
+- **MT-20 git_context.py (NEW)** — File history, blame ownership, churn detection. Stdlib subprocess, zero deps. 26 new tests.
+- **MT-20 git context wired in** — `senior_review.py` step 7: git_commits, git_high_churn metrics, last-changed suggestion, high-churn concern. `senior_chat.py`: git_summary in ReviewContext + system prompt. 8 new tests.
+- **Gap analysis: 8/10 closed** — git history awareness and format_context rewrite both done.
 
-**Matthew directives (S51-S79, permanent):**
-- All S51-S78 directives still active
-- S79: Matthew authorized testing/running the senior dev CLI chat for build purposes. Be extra careful, don't break anything.
+**Matthew directives (S51-S80, permanent):**
+- All S51-S79 directives still active
 
 **Next (prioritized):**
-1. MT-20: Wire LLM (Anthropic API) into senior_chat.py for real follow-up conversations
+1. MT-20: E2E test LLM integration with real Anthropic API key
 2. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker)
-3. MT-20: senior_dev_hook.py format_context() rewrite — natural language advice, not metric dumps
-4. MT-20: Git history awareness in reviews (who changed this, when, why)
-5. MT-21: Hivemind coordination protocol refinement
+3. MT-20: Remaining 2 gaps — intent verification, trade-off judgment (require LLM)
+4. MT-21: Hivemind coordination protocol refinement
+5. MT-20: Knowledge transfer capability (can someone else maintain this at 3am?)
 
 ---
 
