@@ -852,6 +852,7 @@ def cli_main(args: list = None):
         print("  daily [--subs s1,s2]    Daily hot+rising scan across key subs")
         print("        [--hot-limit N]   Max hot posts per sub (default 25)")
         print("        [--rising-limit N] Max rising posts per sub (default 10)")
+        print("        [--include-rescan] Also rescan stale subs (MT-14 Phase 3)")
         print("  rescan [--target <sub>] MT-14: Delta-rescan stale sub (only new posts)")
         print("  rescan-all              MT-14 Phase 3: Auto-rescan ALL stale subs")
         print("        [--max-age <N>]   Staleness threshold in days (default 14)")
@@ -881,9 +882,13 @@ def cli_main(args: list = None):
     language = None
     days = 7
     max_age = 14
+    include_rescan = False
     i = 1
     while i < len(args):
-        if args[i] == "--max-age" and i + 1 < len(args):
+        if args[i] == "--include-rescan":
+            include_rescan = True
+            i += 1
+        elif args[i] == "--max-age" and i + 1 < len(args):
             max_age = int(args[i + 1])
             i += 2
         elif args[i] == "--language" and i + 1 < len(args):
@@ -1029,6 +1034,7 @@ def cli_main(args: list = None):
             subs=daily_subs,
             hot_limit=hot_limit,
             rising_limit=rising_limit,
+            include_rescan=include_rescan,
         )
 
         if output_json:

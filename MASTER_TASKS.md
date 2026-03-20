@@ -540,7 +540,7 @@ Phase 2 (Session 49):
 - `get_stale_subs()` helper for identifying overdue subs
 - CLI `rescan` (auto-pick or --target) and `stale` commands
 - 8 new tests (73 total autonomous scanner)
-- Phase 2: Run rescan on a real stale sub, validate delta filtering works. Phase 3: Wire into MT-9 autonomous pipeline.
+- Phase 2: Run rescan on a real stale sub, validate delta filtering works. Phase 3 COMPLETE (Session 84): `execute_rescan_stale()` method, `rescan-all` CLI command with --max-age/--json, `--include-rescan` flag on daily command. 16 new tests (101 total autonomous_scanner).
 
 ---
 
@@ -772,7 +772,7 @@ developer colleague.
 | 1 | MT-10 | YoYo self-learning | 9 | Session 44 | 38 | 1.0 | cap | **18.0** | Phase 3B: graduate to Kalshi bot (cross-project). Cap: 18.0 |
 | 2 | MT-9 | Autonomous scanning | 8 | Session 52 | 30 | 1.0 | cap | **16.0** | Production autonomous runs. Cap: 16.0 |
 | 3 | MT-11 | GitHub intelligence | 7 | Session 83 | 0 | -- | -- | **DONE** | Phase 3 COMPLETE: trending wired into autonomous pipeline (S83). |
-| 4 | MT-14 | Rescan stale subs | 6 | Session 83 | 0 | 1.0 | 0 | **6.0** | Phase 2 validated (stale gate works). Phase 3: wire into MT-9. |
+| 4 | MT-14 | Rescan stale subs | 6 | Session 84 | 0 | -- | -- | **DONE** | Phase 3 COMPLETE: execute_rescan_stale + rescan-all CLI + daily --include-rescan (S84). |
 | 5 | MT-12 | Academic papers | 6 | Session 52 | 30 | 1.0 | cap | **12.0** | Phase 3: domain expansion. Cap: 12.0 |
 | 6 | MT-8 | iPhone remote control | 5 | Session 44 | 38 | 0.5 | cap | **10.0** | SOLVED by native Remote Control + ServerCC/Moshi apps. Cap: 10.0. Consider closing. |
 | 7 | MT-17 | Design/reports | 5 | Session 71 | 11 | 1.0 | cap | **10.0** | Phase 5 DONE (website_generator). Phase 6: daily snapshots. Cap: 10.0 |
