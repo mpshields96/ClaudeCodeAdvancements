@@ -27,6 +27,8 @@ from senior_chat import (
     parse_args,
     LLMClient,
     build_system_prompt,
+    build_intent_check_prompt,
+    build_tradeoff_prompt,
 )
 
 
@@ -419,6 +421,131 @@ class TestParseArgsLLM(unittest.TestCase):
     def test_no_llm_default_false(self):
         args = parse_args(["test.py"])
         self.assertFalse(args.no_llm)
+
+
+class TestBuildIntentCheckPrompt(unittest.TestCase):
+    """Test intent verification prompt generation."""
+
+    def _make_ctx(self, content="def foo():\n    return 42\n", verdict="approve",
+                  concerns=None, git_summary=""):
+        return ReviewContext(
+            file_path="mod.py",
+            content=content,
+            review_result={
+                "verdict": verdict,
+                "concerns": concerns or [],
+                "suggestions": [],
+                "metrics": {"loc": len(content.splitlines())},
+            },
+            git_summary=git_summary,
+        )
+
+    def test_includes_stated_intent(self):
+        ctx = self._make_ctx()
+        prompt = build_intent_check_prompt(ctx, "Add a function that returns 42")
+        self.assertIn("Add a function that returns 42", prompt)
+
+    def test_includes_file_content(self):
+        ctx = self._make_ctx(content="class Foo:\n    pass\n")
+        prompt = build_intent_check_prompt(ctx, "Create Foo class")
+        self.assertIn("class Foo", prompt)
+
+    def test_includes_review_concerns(self):
+        ctx = self._make_ctx(concerns=["High complexity", "No tests"])
+        prompt = build_intent_check_prompt(ctx, "Refactor module")
+        self.assertIn("High complexity", prompt)
+
+    def test_includes_git_summary(self):
+        ctx = self._make_ctx(git_summary="5 commits, last by Alice")
+        prompt = build_intent_check_prompt(ctx, "Bug fix")
+        self.assertIn("Alice", prompt)
+
+    def test_asks_match_question(self):
+        ctx = self._make_ctx()
+        prompt = build_intent_check_prompt(ctx, "anything")
+        self.assertIn("MATCH", prompt)
+        self.assertIn("GAPS", prompt)
+        self.assertIn("RISKS", prompt)
+
+    def test_truncates_large_content(self):
+        ctx = self._make_ctx(content="x = 1\n" * 5000)
+        prompt = build_intent_check_prompt(ctx, "test")
+        self.assertIn("truncated", prompt.lower())
+
+    def test_intent_verification_header(self):
+        ctx = self._make_ctx()
+        prompt = build_intent_check_prompt(ctx, "anything")
+        self.assertIn("INTENT VERIFICATION", prompt)
+
+
+class TestBuildTradeoffPrompt(unittest.TestCase):
+    """Test trade-off judgment prompt generation."""
+
+    def _make_ctx(self, content="def foo():\n    return 42\n", verdict="approve",
+                  concerns=None, metrics=None, git_summary=""):
+        return ReviewContext(
+            file_path="mod.py",
+            content=content,
+            review_result={
+                "verdict": verdict,
+                "concerns": concerns or [],
+                "suggestions": [],
+                "metrics": metrics or {"loc": 10, "quality_score": 80,
+                                        "effort_score": 2, "blast_radius": 1},
+            },
+            git_summary=git_summary,
+        )
+
+    def test_includes_metrics(self):
+        ctx = self._make_ctx(metrics={"loc": 200, "quality_score": 65,
+                                       "effort_score": 3, "blast_radius": 5})
+        prompt = build_tradeoff_prompt(ctx)
+        self.assertIn("200 LOC", prompt)
+        self.assertIn("quality 65", prompt)
+
+    def test_includes_decision_context(self):
+        ctx = self._make_ctx()
+        prompt = build_tradeoff_prompt(ctx, decision_context="Early prototype, solo dev")
+        self.assertIn("Early prototype", prompt)
+
+    def test_includes_file_content(self):
+        ctx = self._make_ctx(content="class BigClass:\n    pass\n")
+        prompt = build_tradeoff_prompt(ctx)
+        self.assertIn("class BigClass", prompt)
+
+    def test_includes_concerns(self):
+        ctx = self._make_ctx(concerns=["Over-engineered abstractions"])
+        prompt = build_tradeoff_prompt(ctx)
+        self.assertIn("Over-engineered", prompt)
+
+    def test_includes_git_summary(self):
+        ctx = self._make_ctx(git_summary="Churn: 15 commits in 3 days")
+        prompt = build_tradeoff_prompt(ctx)
+        self.assertIn("Churn", prompt)
+
+    def test_asks_tradeoff_questions(self):
+        ctx = self._make_ctx()
+        prompt = build_tradeoff_prompt(ctx)
+        self.assertIn("COMPLEXITY", prompt)
+        self.assertIn("ABSTRACTION", prompt)
+        self.assertIn("EXTENSIBILITY", prompt)
+        self.assertIn("SIMPLIFICATION", prompt)
+        self.assertIn("RECOMMENDATION", prompt)
+
+    def test_prefers_simplicity_instruction(self):
+        ctx = self._make_ctx()
+        prompt = build_tradeoff_prompt(ctx)
+        self.assertIn("Prefer simplicity", prompt)
+
+    def test_truncates_large_content(self):
+        ctx = self._make_ctx(content="x = 1\n" * 5000)
+        prompt = build_tradeoff_prompt(ctx)
+        self.assertIn("truncated", prompt.lower())
+
+    def test_no_context_still_works(self):
+        ctx = self._make_ctx()
+        prompt = build_tradeoff_prompt(ctx)
+        self.assertNotIn("Project context", prompt)
 
 
 if __name__ == "__main__":

@@ -287,6 +287,140 @@ def build_system_prompt(ctx: ReviewContext) -> str:
     return "\n".join(lines)
 
 
+def build_intent_check_prompt(ctx: ReviewContext, stated_intent: str) -> str:
+    """Build a prompt that verifies code matches its stated intent.
+
+    This addresses the MT-20 "intent verification" gap: does the code actually
+    do what the developer said it should do?
+
+    Args:
+        ctx: ReviewContext with file content and review data.
+        stated_intent: What the developer says this code is supposed to do
+            (commit message, PR description, task description, etc.).
+
+    Returns:
+        Structured prompt for LLM intent verification.
+    """
+    r = ctx.review_result
+    concerns = r.get("concerns", [])
+    metrics = r.get("metrics", {})
+
+    content = ctx.content
+    if len(content) > 8000:
+        content = content[:8000] + "\n... [truncated at 8000 chars]"
+
+    lines = [
+        "You are a senior developer performing INTENT VERIFICATION.",
+        "The developer has stated what this code is supposed to do. Your job is to",
+        "verify whether the code actually achieves that stated intent.",
+        "",
+        f"File: {ctx.file_path}",
+        f"Stated intent: {stated_intent}",
+        "",
+    ]
+
+    if ctx.git_summary:
+        lines.append("Git history:")
+        lines.append(ctx.git_summary)
+        lines.append("")
+
+    if concerns:
+        lines.append("Existing review concerns:")
+        for c in concerns:
+            lines.append(f"  - {c}")
+        lines.append("")
+
+    lines.extend([
+        "File content:",
+        "```",
+        content,
+        "```",
+        "",
+        "Answer these questions:",
+        "1. MATCH: Does the code achieve the stated intent? (YES / PARTIALLY / NO)",
+        "2. GAPS: What parts of the stated intent are NOT implemented?",
+        "3. EXTRAS: Does the code do anything NOT mentioned in the intent?",
+        "4. RISKS: Could the implementation cause unintended side effects?",
+        "",
+        "Be specific. Cite line numbers. If the code matches perfectly, say so briefly.",
+    ])
+
+    return "\n".join(lines)
+
+
+def build_tradeoff_prompt(ctx: ReviewContext, decision_context: str = "") -> str:
+    """Build a prompt for trade-off judgment on a piece of code.
+
+    This addresses the MT-20 "trade-off judgment" gap: should this code be
+    simpler or more extensible? Is it over/under-engineered for its context?
+
+    Args:
+        ctx: ReviewContext with file content and review data.
+        decision_context: Optional context about the project stage, team size,
+            performance requirements, etc.
+
+    Returns:
+        Structured prompt for LLM trade-off analysis.
+    """
+    r = ctx.review_result
+    concerns = r.get("concerns", [])
+    metrics = r.get("metrics", {})
+
+    content = ctx.content
+    if len(content) > 8000:
+        content = content[:8000] + "\n... [truncated at 8000 chars]"
+
+    loc = metrics.get("loc", 0)
+    quality = metrics.get("quality_score", 0)
+    effort = metrics.get("effort_score", 0)
+    blast = metrics.get("blast_radius", 0)
+
+    lines = [
+        "You are a senior developer evaluating DESIGN TRADE-OFFS.",
+        "Assess whether this code strikes the right balance between simplicity",
+        "and extensibility for its context.",
+        "",
+        f"File: {ctx.file_path}",
+        f"Metrics: {loc} LOC, quality {quality}/100, effort {effort}/5, blast radius {blast}",
+        "",
+    ]
+
+    if decision_context:
+        lines.append(f"Project context: {decision_context}")
+        lines.append("")
+
+    if ctx.git_summary:
+        lines.append("Git history:")
+        lines.append(ctx.git_summary)
+        lines.append("")
+
+    if concerns:
+        lines.append("Existing review concerns:")
+        for c in concerns:
+            lines.append(f"  - {c}")
+        lines.append("")
+
+    lines.extend([
+        "File content:",
+        "```",
+        content,
+        "```",
+        "",
+        "Evaluate these trade-offs:",
+        "1. COMPLEXITY: Is this code appropriately complex for what it does?",
+        "   (over-engineered / right-sized / under-engineered)",
+        "2. ABSTRACTION: Are there premature abstractions or missing ones?",
+        "3. EXTENSIBILITY: If requirements change, what breaks? What adapts easily?",
+        "4. SIMPLIFICATION: Could this be meaningfully simplified without losing value?",
+        "5. RECOMMENDATION: One specific, actionable suggestion for the best trade-off.",
+        "",
+        "Prefer simplicity. Three similar functions beat a premature abstraction.",
+        "Only recommend more structure if the code will clearly need it.",
+    ])
+
+    return "\n".join(lines)
+
+
 _ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 _ANTHROPIC_VERSION = "2023-06-01"
 _DEFAULT_MODEL = "claude-sonnet-4-20250514"

@@ -23,6 +23,8 @@ from senior_chat import (
     build_review_context,
     build_system_prompt,
     format_followup_prompt,
+    build_intent_check_prompt,
+    build_tradeoff_prompt,
 )
 
 _HAS_KEY = bool(os.environ.get("ANTHROPIC_API_KEY"))
@@ -165,6 +167,79 @@ def do_everything(data, mode, flag, extra, opts, callback, retry, verbose):
         response = self.client.ask(prompt)
         self.assertIsInstance(response, str)
         self.assertGreater(len(response), 5)
+
+
+@unittest.skipUnless(_HAS_KEY, _SKIP_MSG)
+class TestIntentAndTradeoffE2E(unittest.TestCase):
+    """E2E: Intent verification and trade-off judgment with real LLM."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.client = LLMClient(model=_E2E_MODEL, max_tokens=512)
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def _write_file(self, name, content):
+        path = os.path.join(self.tmpdir, name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(content)
+        return path
+
+    def test_intent_check_detects_mismatch(self):
+        """LLM should detect when code doesn't match stated intent."""
+        code = 'def multiply(a, b):\n    return a * b\n'
+        path = self._write_file("math_ops.py", code)
+        ctx = build_review_context(path, project_root=self.tmpdir)
+        prompt = build_intent_check_prompt(ctx, "Add a function that divides two numbers")
+        response = self.client.ask(prompt)
+        self.assertIsInstance(response, str)
+        # LLM should notice: code multiplies, intent says divide
+        lower = response.lower()
+        self.assertTrue(
+            "no" in lower or "not" in lower or "multipl" in lower or "mismatch" in lower
+            or "divid" in lower,
+            f"Expected mismatch detection, got: {response[:200]}"
+        )
+
+    def test_tradeoff_analysis_produces_recommendation(self):
+        """LLM should provide a trade-off recommendation."""
+        code = '''"""Config manager with factory pattern."""
+class ConfigFactory:
+    _registry = {}
+
+    @classmethod
+    def register(cls, name, config_cls):
+        cls._registry[name] = config_cls
+
+    @classmethod
+    def create(cls, name, **kwargs):
+        if name not in cls._registry:
+            raise KeyError(f"Unknown config: {name}")
+        return cls._registry[name](**kwargs)
+
+class BaseConfig:
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
+class DevConfig(BaseConfig):
+    pass
+
+class ProdConfig(BaseConfig):
+    pass
+
+ConfigFactory.register("dev", DevConfig)
+ConfigFactory.register("prod", ProdConfig)
+'''
+        path = self._write_file("config.py", code)
+        ctx = build_review_context(path, project_root=self.tmpdir)
+        prompt = build_tradeoff_prompt(
+            ctx, decision_context="Solo project, 2 config variants total"
+        )
+        response = self.client.ask(prompt)
+        self.assertIsInstance(response, str)
+        self.assertGreater(len(response), 20)
 
 
 @unittest.skipUnless(_HAS_KEY, _SKIP_MSG)
