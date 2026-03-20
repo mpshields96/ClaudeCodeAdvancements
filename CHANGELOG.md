@@ -3,6 +3,23 @@
 
 ---
 
+## Session 84 — 2026-03-20
+
+**What changed:**
+- **MT-14 Phase 3 COMPLETE** — `execute_rescan_stale()` method, `rescan-all` CLI command (--max-age/--json), `--include-rescan` flag on daily command. All wired into autonomous pipeline.
+- **Reddit daily scan** — 1 new finding logged: cross-model review workflow (REFERENCE for MT-20 + Frontier 2).
+- **Doc drift fix** — Test counts corrected 3277->3293 across PROJECT_INDEX + ROADMAP.
+
+**Why:**
+- MT-14 Phase 3 completes the rescan lifecycle: stale subs are now auto-rescanned during autonomous runs, reducing manual intervention.
+
+**Tests:** 3293/3293 passing (80 suites, +16 new)
+
+**Lessons:**
+- Mock data for nuclear_fetcher tests must include `is_self` and `selftext` fields (classify_post requires them).
+
+---
+
 ## Session 83 — 2026-03-20
 
 **What changed:**

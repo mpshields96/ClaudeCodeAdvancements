@@ -3,28 +3,24 @@
 
 ---
 
-## Current State (as of Session 83 — 2026-03-20)
+## Current State (as of Session 84 — 2026-03-20)
 
-**Phase:** Session 83 COMPLETE. Tests: 80 suites, 3277 total passing (+29). Git: 9 commits. Self-grade: A-.
+**Phase:** Session 84 COMPLETE. Tests: 80 suites, 3293 total passing (+16). Git: 3 commits. Self-grade: B+.
 
-**What was done this session (S83):**
-- **MT-11 Phase 2 COMPLETE: Trending repo discovery** — `fetch_trending()`, `_build_trending_query()`, `TrendingScanner` class with per-language scanning + trending history JSONL log. CLI `trending` command with --language, --days, --all, --json flags. +32 tests (62 total github_scanner). Live validation: Python + TypeScript 14d scan found 19 EVALUATE repos.
-- **Reddit intelligence scan** — r/ClaudeCode hot 25 posts reviewed. 1 new finding: firejail sandbox wrapper (REFERENCE for AG). Most posts already logged from S82.
-- **MT-20 E2E VALIDATED** — Matthew added $5 API credits + created new API key. 10/10 E2E tests pass (claude-haiku-4-5-20251001). MT-20 Senior Dev Agent is now COMPLETE. Also fixed false-pass bug in E2E tests (error strings matching content assertions).
-- **MT-14 validation** — Rescan infrastructure confirmed working: `rescan_sub()`, `get_stale_subs()`, stale gate correctly rejects premature rescans (14-day threshold). No code needed.
-- **MT-12 validation** — Paper scanner confirmed working: 21 papers logged, dedup functional, all 4 domains searchable.
-- **Doc drift fix** — Corrected reddit-intelligence test count (claimed 348, actual 333). Zero drift confirmed.
-- **MASTER_TASKS priority recalculated** — MT-11 reset to 7.0 (touched S83), MT-14 reset to 6.0 (touched S83).
-- **MT-11 Phase 3 COMPLETE: Trending wired into autonomous pipeline** — `execute_github_trending()` on AutonomousScanner, `GitHubTrendingReport` dataclass, CLI `github-trending` command with --language/--days/--json. Safety gate integration. +12 tests (85 total autonomous_scanner, 345 total reddit-intelligence).
+**What was done this session (S84):**
+- **MT-14 Phase 3 COMPLETE: Wire rescan into autonomous pipeline** — `execute_rescan_stale()` method on AutonomousScanner (auto-rescans all stale subs), `rescan-all` CLI command with --max-age/--json, `--include-rescan` flag on daily command. +16 tests (101 total autonomous_scanner, 361 total reddit-intelligence). MT-14 marked DONE.
+- **Reddit daily scan** — r/ClaudeCode hot 15 posts scanned. 1 new finding: cross-model review workflow (REFERENCE for MT-20 + Frontier 2).
+- **Doc drift fix** — Corrected test counts 3277->3293 across PROJECT_INDEX.md and ROADMAP.md. Zero drift confirmed.
 
-**Matthew directives (S51-S83, permanent):**
-- All S51-S82 directives still active
+**Matthew directives (S51-S84, permanent):**
+- All S51-S83 directives still active
 
 **Next (prioritized):**
 1. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker) — BLOCKED on Matthew
 2. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
 3. MT-9 Phase 3: Supervised trial of autonomous scanning
-4. Reddit intelligence: scan for new posts, follow up on trending repos
+4. MT-12 Phase 2: Run paper scanner across all 4 domains
+5. Reddit intelligence: scan for new posts, follow up on trending repos
 
 ---
 

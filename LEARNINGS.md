@@ -473,3 +473,10 @@
 - **First seen:** 2026-03-20 (Session 79 — initial fp_filter integration had wrong order)
 - **Last seen:** 2026-03-20
 - **Files:** agent-guard/senior_review.py
+
+### Mock post data must include all classify_post required fields — Severity: 1 — Count: 1
+- **Anti-pattern:** Creating mock Reddit posts for autonomous_scanner tests with only basic fields (id, title, score, etc.) — missing `is_self` and `selftext` that `classify_post()` requires.
+- **Fix:** Always include `is_self` and `selftext` in mock post dicts when tests will pass through `classify_posts()` -> `classify_post()`.
+- **First seen:** 2026-03-20 (Session 84)
+- **Last seen:** 2026-03-20
+- **Files:** reddit-intelligence/tests/test_autonomous_scanner.py
