@@ -179,5 +179,48 @@ class TestFormatReport(unittest.TestCase):
         self.assertIn("READY", result)
 
 
+class TestOverheadTimerIntegration(unittest.TestCase):
+    """phase1_report() and format_report() integrate with overhead_timer."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.sessions_path = os.path.join(self.tmpdir, "hivemind_sessions.jsonl")
+        self.metrics_path = os.path.join(self.tmpdir, "hivemind_metrics.jsonl")
+        self.overhead_path = os.path.join(self.tmpdir, "overhead_log.jsonl")
+
+    def _write_overhead(self, entries):
+        with open(self.overhead_path, "w") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+
+    def test_overhead_ratio_key_present_in_report(self):
+        from hivemind_dashboard import phase1_report
+        report = phase1_report(self.sessions_path, self.metrics_path, self.overhead_path)
+        self.assertIn("overhead_ratio", report)
+
+    def test_overhead_ratio_zero_when_no_log(self):
+        from hivemind_dashboard import phase1_report
+        report = phase1_report(self.sessions_path, self.metrics_path, self.overhead_path)
+        self.assertEqual(report["overhead_ratio"], 0.0)
+
+    def test_overhead_ratio_averaged_from_log(self):
+        from hivemind_dashboard import phase1_report
+        self._write_overhead([
+            {"session": 89, "ratio": 0.10},
+            {"session": 90, "ratio": 0.20},
+        ])
+        report = phase1_report(self.sessions_path, self.metrics_path, self.overhead_path)
+        self.assertAlmostEqual(report["overhead_ratio"], 0.15, places=5)
+
+    def test_format_report_shows_overhead_from_timer(self):
+        from hivemind_dashboard import format_report
+        self._write_overhead([
+            {"session": 90, "ratio": 0.08},
+        ])
+        result = format_report(self.sessions_path, self.metrics_path, self.overhead_path)
+        # Should show overhead ratio in some form
+        self.assertIn("8.0", result)
+
+
 if __name__ == "__main__":
     unittest.main()

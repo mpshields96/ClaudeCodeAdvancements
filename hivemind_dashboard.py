@@ -4,12 +4,13 @@ hivemind_dashboard.py — Combined Phase 1 hivemind status reporter.
 Reads from:
   - hivemind_sessions.jsonl  (session validator data via hivemind_session_validator)
   - hivemind_metrics.jsonl   (metrics tracker data via HivemindMetrics)
+  - overhead_log.jsonl       (overhead timer data via overhead_timer.avg_overhead)
 
 API:
-    phase1_report(sessions_path, metrics_path) -> dict
-        All Phase 1 gate metrics combined from both sources.
+    phase1_report(sessions_path, metrics_path, overhead_path) -> dict
+        All Phase 1 gate metrics combined from all three sources.
 
-    format_report(sessions_path, metrics_path) -> str
+    format_report(sessions_path, metrics_path, overhead_path) -> str
         Multi-line human-readable Phase 1 status report.
 
 Stdlib only. No external dependencies.
@@ -19,15 +20,18 @@ import os
 
 import hivemind_session_validator as hsv
 from hivemind_metrics import HivemindMetrics
+import overhead_timer as ot
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_SESSIONS_PATH = os.path.join(SCRIPT_DIR, "hivemind_sessions.jsonl")
 DEFAULT_METRICS_PATH = os.path.expanduser("~/.claude/projects/hivemind_metrics.jsonl")
+DEFAULT_OVERHEAD_PATH = os.path.join(SCRIPT_DIR, "overhead_log.jsonl")
 
 
 def phase1_report(
     sessions_path: str = DEFAULT_SESSIONS_PATH,
     metrics_path: str = DEFAULT_METRICS_PATH,
+    overhead_path: str = DEFAULT_OVERHEAD_PATH,
 ) -> dict:
     """Return combined Phase 1 gate metrics dict.
 
@@ -42,9 +46,12 @@ def phase1_report(
         coordination_failures     int   — total across all metric sessions
         task_completion_rate      float — avg task_completions per metric session
         worker_regressions        int   — total across all metric sessions
-        avg_overhead_ratio        float — mean overhead ratio
+        avg_overhead_ratio        float — mean overhead ratio (from HivemindMetrics)
         failure_rate              float — coordination_failures / metric_sessions
         regression_rate           float — regressions / task_completions
+
+    Keys from overhead_timer:
+        overhead_ratio            float — avg overhead ratio from overhead_log.jsonl
     """
     # --- session validator side ---
     gate = hsv.check_phase1_gate(path=sessions_path)
@@ -60,6 +67,9 @@ def phase1_report(
         total_completions / n_metric if n_metric > 0 else 0.0
     )
 
+    # --- overhead timer side ---
+    overhead_ratio = ot.avg_overhead(path=overhead_path)
+
     return {
         # from session validator
         "consecutive_passes": gate["consecutive_passes"],
@@ -74,15 +84,18 @@ def phase1_report(
         "avg_overhead_ratio": stats["avg_overhead_ratio"],
         "failure_rate": stats["failure_rate"],
         "regression_rate": stats["regression_rate"],
+        # from overhead_timer
+        "overhead_ratio": overhead_ratio,
     }
 
 
 def format_report(
     sessions_path: str = DEFAULT_SESSIONS_PATH,
     metrics_path: str = DEFAULT_METRICS_PATH,
+    overhead_path: str = DEFAULT_OVERHEAD_PATH,
 ) -> str:
     """Return a multi-line formatted Phase 1 status report."""
-    r = phase1_report(sessions_path, metrics_path)
+    r = phase1_report(sessions_path, metrics_path, overhead_path)
 
     gate_status = "READY" if r["gate_ready"] else (
         f"{3 - r['consecutive_passes']} more consecutive PASS needed"
@@ -102,5 +115,8 @@ def format_report(
         f"Avg overhead ratio     : {r['avg_overhead_ratio'] * 100:.1f}%",
         f"Failure rate           : {r['failure_rate']:.3f}",
         f"Regression rate        : {r['regression_rate']:.3f}",
+        "",
+        "── Overhead Timer ──────────────────────────────────────",
+        f"Overhead ratio (timer) : {r['overhead_ratio'] * 100:.1f}%  (target: <15%)",
     ]
     return "\n".join(lines)
