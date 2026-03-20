@@ -164,6 +164,38 @@ def _build_warning(spec_status: dict, file_path: str, mode: str) -> str:
     return " ".join(warning_parts)
 
 
+# ── Plan Compliance Integration ──────────────────────────────────────────────
+
+def _check_plan_compliance(cwd: str, file_path: str) -> str:
+    """
+    Check if the file being written matches the active task in tasks.md.
+    Returns a warning string for scope creep / future task drift, empty if compliant.
+    """
+    try:
+        from plan_compliance import compliance_report, ComplianceStatus
+    except ImportError:
+        return ""
+
+    try:
+        # Find tasks.md
+        tasks_path = _find_spec_file(cwd, "tasks.md")
+        if not tasks_path:
+            return ""
+
+        tasks_md = tasks_path.read_text(encoding="utf-8")
+        result = compliance_report(file_path, tasks_md)
+
+        # Only warn on drift — compliant, no_spec, not_approved, no_active_task are silent
+        if result.status == ComplianceStatus.FUTURE_TASK:
+            return result.message
+        if result.status == ComplianceStatus.SCOPE_CREEP:
+            return result.message
+    except Exception:
+        pass  # Compliance check is non-blocking; never crash the hook
+
+    return ""
+
+
 # ── Freshness Integration ────────────────────────────────────────────────────
 
 def _check_freshness_context(cwd: str) -> str:
@@ -232,15 +264,21 @@ def main() -> None:
     status = _spec_status(cwd)
 
     # If tasks are approved, we're in implementation mode.
-    # Check spec freshness: warn if code files are newer than tasks.md.
+    # Check plan compliance (scope creep) and spec freshness.
     if status["tasks_approved"]:
+        warnings = []
+        compliance_ctx = _check_plan_compliance(cwd, file_path)
+        if compliance_ctx:
+            warnings.append(compliance_ctx)
         freshness_ctx = _check_freshness_context(cwd)
         if freshness_ctx:
+            warnings.append(freshness_ctx)
+        if warnings:
             result = {
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",
                     "permissionDecision": "allow",
-                    "additionalContext": freshness_ctx,
+                    "additionalContext": " | ".join(warnings),
                 }
             }
             print(json.dumps(result))

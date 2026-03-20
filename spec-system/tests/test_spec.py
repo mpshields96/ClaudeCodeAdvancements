@@ -220,6 +220,74 @@ class TestMainWarnMode(unittest.TestCase):
             self.assertEqual(result, {})
 
 
+class TestPlanComplianceIntegration(unittest.TestCase):
+    """Tests for _check_plan_compliance wired into validate.py."""
+
+    def test_compliant_file_returns_empty(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tasks_md = (
+                "Status: APPROVED\n\n"
+                "## Task 1 — Build store [IN PROGRESS]\n"
+                "- [ ] Create memory_store.py\n"
+            )
+            (Path(tmpdir) / "tasks.md").write_text(tasks_md)
+            result = v._check_plan_compliance(tmpdir, f"{tmpdir}/memory_store.py")
+            self.assertEqual(result, "")
+
+    def test_scope_creep_returns_warning(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tasks_md = (
+                "Status: APPROVED\n\n"
+                "## Task 1 — Build store [IN PROGRESS]\n"
+                "- [ ] Create memory_store.py\n"
+            )
+            (Path(tmpdir) / "tasks.md").write_text(tasks_md)
+            result = v._check_plan_compliance(tmpdir, f"{tmpdir}/unplanned_file.py")
+            self.assertIn("plan-compliance", result)
+            self.assertIn("scope creep", result.lower())
+
+    def test_future_task_returns_warning(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tasks_md = (
+                "Status: APPROVED\n\n"
+                "## Task 1 — Build store [IN PROGRESS]\n"
+                "- [ ] Create memory_store.py\n\n"
+                "## Task 2 — Build API\n"
+                "- [ ] Create api_server.py\n"
+            )
+            (Path(tmpdir) / "tasks.md").write_text(tasks_md)
+            result = v._check_plan_compliance(tmpdir, f"{tmpdir}/api_server.py")
+            self.assertIn("plan-compliance", result)
+            self.assertIn("future task", result.lower())
+
+    def test_no_tasks_md_returns_empty(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = v._check_plan_compliance(tmpdir, f"{tmpdir}/anything.py")
+            self.assertEqual(result, "")
+
+    def test_combined_compliance_and_freshness_in_main(self):
+        """When tasks approved + scope creep, main() returns compliance warning."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tasks_md = (
+                "Status: APPROVED\n\n"
+                "## Task 1 — Build store [IN PROGRESS]\n"
+                "- [ ] Create memory_store.py\n"
+            )
+            for fname in ["requirements.md", "design.md"]:
+                (Path(tmpdir) / fname).write_text("Status: APPROVED\n")
+            (Path(tmpdir) / "tasks.md").write_text(tasks_md)
+
+            hook_input = {
+                "hook_event_name": "PreToolUse",
+                "tool_name": "Write",
+                "tool_input": {"file_path": f"{tmpdir}/unplanned.py"},
+                "cwd": tmpdir,
+            }
+            result = TestMainWarnMode()._run_main(hook_input)
+            ctx = result.get("hookSpecificOutput", {}).get("additionalContext", "")
+            self.assertIn("plan-compliance", ctx)
+
+
 import os
 if __name__ == "__main__":
     loader = unittest.TestLoader()
