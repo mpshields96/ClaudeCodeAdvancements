@@ -1,6 +1,6 @@
 # ClaudeCodeAdvancements — Master Roadmap
 # Created: 2026-02-19 (Session 1)
-# Last updated: 2026-03-16 (Session 25)
+# Last updated: 2026-03-19 (Session 68)
 # This is the authoritative feature backlog. Update status as items complete.
 
 ---
@@ -20,7 +20,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 1 — Persistent Cross-Session Memory -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (MEM-1 through MEM-5). 94 tests passing.
+**Status:** ALL TASKS COMPLETE (MEM-1 through MEM-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit). 229 tests passing.
 
 **Module:** `memory-system/`
 
@@ -38,7 +38,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 2 — Spec-Driven Development System -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (SPEC-1 through SPEC-6). 90 tests passing.
+**Status:** ALL TASKS COMPLETE (SPEC-1 through SPEC-6 + spec_freshness + plan_compliance). 153 tests passing.
 
 **Module:** `spec-system/`
 
@@ -57,7 +57,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 3 — Context Health Monitor -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (CTX-1 through CTX-5). 125 tests passing.
+**Status:** ALL TASKS COMPLETE (CTX-1 through CTX-7 + Session Pacer). 266 tests passing.
 
 **Module:** `context-monitor/`
 
@@ -75,7 +75,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 4 — Multi-Agent Conflict Guard -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (AG-1 through AG-3). 103 tests passing.
+**Status:** ALL TASKS COMPLETE (AG-1 through AG-9 + Edit Guard + Bash Guard). 378 tests passing.
 
 **Module:** `agent-guard/`
 
@@ -84,14 +84,20 @@ This roadmap is grounded in:
 | AG-1 | Mobile Approver (`hooks/mobile_approver.py`) | COMPLETE |
 | AG-2 | Ownership Manifest (`ownership.py`) | COMPLETE |
 | AG-3 | Credential Guard (`hooks/credential_guard.py`) | COMPLETE |
+| AG-4 | Content Scanner (`content_scanner.py`) | COMPLETE |
+| AG-5 | Network Guard (`hooks/network_guard.py`) | COMPLETE |
+| AG-6 | Session Guard (`hooks/session_guard.py`) | COMPLETE |
+| AG-7 | Path Validator (`path_validator.py`) | COMPLETE — LIVE in hooks |
+| AG-8 | Edit Guard (`edit_guard.py`) | COMPLETE — LIVE in hooks |
+| AG-9 | Bash Guard (`bash_guard.py`) | COMPLETE — LIVE in hooks |
 
-**Key decisions:** ntfy.sh for iPhone push approval. Git history for ownership detection. Credential regex includes hyphens.
+**Key decisions:** ntfy.sh for iPhone push approval. Git history for ownership detection. Credential regex includes hyphens. Bash guard blocks network egress, package installs, process kills, system mods, evasion techniques.
 
 ---
 
 ## FRONTIER 5 — Usage Transparency Dashboard -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (USAGE-1 through USAGE-3 + /arewedone). 196 tests passing.
+**Status:** ALL TASKS COMPLETE (USAGE-1 through USAGE-3 + /arewedone). 197 tests passing.
 
 **Module:** `usage-dashboard/`
 
@@ -108,17 +114,37 @@ This roadmap is grounded in:
 
 ## SUPPORTING MODULES -- COMPLETE
 
-### Reddit Intelligence Plugin (43 tests)
+### Reddit Intelligence Plugin (316 tests)
 - `reddit_reader.py` — fetches Reddit posts + all comments (no API key)
-- `reddit_scout.py` — daily community signal sweep
-- `nuclear_fetcher.py` — batch deep-dive scanner (411+ posts scanned)
+- `autonomous_scanner.py` — MT-9: full scan pipeline (prioritizer + safety)
+- `github_scanner.py` — MT-11: GitHub repo intelligence
+- `repo_tester.py` — MT-15: Sandboxed repo testing
+- `profiles.py` — MT-6: Subreddit profiles + registry
 - Commands: `/ri-scan`, `/ri-read`, `/ri-loop`
 
-### Self-Learning System (75 tests)
+### Self-Learning System (511 tests)
 - `journal.py` — structured JSONL event journal
 - `reflect.py` — pattern detection + strategy recommendations
-- `strategy.json` — tunable parameters with bounded auto-adjust
+- `improver.py` — MT-10: YoYo self-building improvement loop
+- `trace_analyzer.py` — MT-7: Transcript pattern analyzer
+- `batch_report.py` — MT-10: Aggregate trace health
+- `validate_strategies.py` — Skillbook validation
+- `paper_scanner.py` — MT-12: Academic paper discovery (Semantic Scholar + arXiv)
+- `resurfacer.py` — MT-10 Phase 3B: Findings re-surfacing + trade proposals
+- `overnight_detector.py` — Time-stratified trading analysis (Wilson CI, CUSUM)
+- `research_outcomes.py` — Research ROI tracker
+- `trade_reflector.py` — MT-10 Phase 3A: Kalshi trade pattern analysis (5 detectors)
 - Trading domain schema (MT-0 Phase 1): bet_placed, bet_outcome, market_research, edge_discovered, edge_rejected, strategy_shift
+
+### Design Skills (124 tests)
+- `report_generator.py` — CCA data collector + Typst renderer CLI
+- `slide_generator.py` — Presentation slide generator (16:9 PDF)
+- `dashboard_generator.py` — Self-contained HTML dashboard generator
+- `chart_generator.py` — SVG chart generation (bar, line, sparkline, donut)
+
+### Research (86 tests)
+- `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)
+- `xcode_build.py` — MT-13: Python xcodebuild wrapper
 
 ---
 
@@ -128,21 +154,23 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 
 | ID | Task | Status | Priority |
 |----|------|--------|----------|
-| MT-0 | Kalshi Bot Self-Learning Integration | Phase 1 COMPLETE (CCA schema). Phase 2 = deploy to polybot | -- |
+| MT-0 | Kalshi Bot Self-Learning Integration | Phase 1 COMPLETE. trade_reflector + research_outcomes built | -- |
 | MT-2 | Mermaid Architecture Diagrams | COMPLETE | -- |
 | MT-3 | Virtual Design Team Plugin | COMPLETE | -- |
 | MT-4 | Frontend Design Vocabulary | COMPLETE | -- |
-| MT-7 | Programmatic Trace Analysis (ACE Pattern) | Research DONE (Session 25) | 1 |
-| MT-10 | YoYo Self-Learning + Self-Building Loop | NOT STARTED — depends on MT-7 | 2 |
-| MT-9 | Autonomous Cross-Subreddit Intelligence | NOT STARTED — depends on MT-6 | 3 |
-| MT-6 | On-Demand Subreddit Scanner | NOT STARTED — profiles + quick-scan | 4 |
-| MT-11 | Autonomous GitHub Repo Intelligence | NOT STARTED — extends MT-9 | 5 |
-| MT-12 | Academic Research Paper Integration | NOT STARTED — needs API research | 6 |
-| MT-14 | Re-Scan Previously Scanned Subreddits | NOT STARTED — depends on MT-6 | 7 |
-| MT-8 | iPhone Remote Control Perfection | NOT STARTED — needs research | 8 |
-| MT-13 | iOS App Development Capability | NOT STARTED — needs Xcode research | 9 |
-| MT-1 | Maestro Visual Grid UI | BLOCKED (macOS 15.6 beta SDK) | 10 |
-| MT-5 | Claude Pro <> Claude Code Bridge | Future — needs research | 11 |
+| MT-6 | On-Demand Subreddit Scanner | COMPLETE — profiles.py + registry | -- |
+| MT-7 | Programmatic Trace Analysis | COMPLETE — trace_analyzer.py + batch_report.py | -- |
+| MT-9 | Autonomous Cross-Subreddit Intelligence | COMPLETE — autonomous_scanner.py | -- |
+| MT-10 | YoYo Self-Learning + Self-Building Loop | COMPLETE — improver.py + resurfacer.py + overnight_detector | -- |
+| MT-11 | Autonomous GitHub Repo Intelligence | COMPLETE — github_scanner.py | -- |
+| MT-12 | Academic Research Paper Integration | COMPLETE — paper_scanner.py (Semantic Scholar + arXiv) | -- |
+| MT-13 | iOS App Development Capability | Phase 2 COMPLETE — ios_project_gen.py + xcode_build.py | -- |
+| MT-14 | Re-Scan Previously Scanned Subreddits | COMPLETE — built into autonomous_scanner | -- |
+| MT-15 | Sandboxed Repo Testing | COMPLETE — repo_tester.py | -- |
+| MT-17 | Professional Design Skills | COMPLETE — report/slide/dashboard/chart generators | -- |
+| MT-8 | iPhone Remote Control Perfection | NOT STARTED — needs research | 1 |
+| MT-1 | Maestro Visual Grid UI | BLOCKED (macOS 15.6 beta SDK) | 2 |
+| MT-5 | Claude Pro <> Claude Code Bridge | Future — needs research | 3 |
 
 ---
 
@@ -150,16 +178,16 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 
 | Module | Tests |
 |--------|-------|
-| memory-system | 94 |
-| spec-system | 90 |
-| context-monitor | 125 |
-| agent-guard | 103 |
-| usage-dashboard | 196 |
-| reddit-intelligence | 87 |
-| self-learning | 75 |
-| research (reddit_scout) | 29 |
-| arewedone | 1 (in usage-dashboard count) |
-| **Total** | **800** |
+| memory-system | 229 |
+| spec-system | 153 |
+| context-monitor | 266 |
+| agent-guard | 378 |
+| usage-dashboard | 197 |
+| reddit-intelligence | 316 |
+| self-learning | 511 |
+| design-skills | 124 |
+| research | 86 |
+| **Total** | **2260** |
 
 ---
 
@@ -190,4 +218,9 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | 20-21 | 2026-03-16 | MT-0 Phase 1 (trading domain schema), MT-2/3/4 COMPLETE — 800 tests |
 | 22-23 | 2026-03-16 | Nuclear scans for r/Anthropic + r/algotrading (175 posts) — 800 tests |
 | 24 | 2026-03-16 | 1M context adaptive thresholds, 3 Reddit reviews, MT-6/7/8 created — 800 tests |
-| 25 | 2026-03-16 | ROADMAP.md updated, MT-7 research DONE, MT-9 through MT-14 created (autonomous intelligence, YoYo loop, GitHub/academic/iOS, re-scanning) |
+| 25 | 2026-03-16 | ROADMAP.md updated, MT-7 research DONE, MT-9 through MT-14 created |
+| 26-50 | 2026-03-16-18 | MT-6/7/9/10/11/12/13/14/15/17 built, self-learning expanded, design-skills module |
+| 51-60 | 2026-03-18-19 | Trade reflector, research outcomes tracker, FTS5 memory store, overnight detector |
+| 61-65 | 2026-03-19 | FTS5 memory store, cca-loop autonomous system, KALSHI_ACTION_ITEMS bridge |
+| 66-67 | 2026-03-19 | plan_compliance.py, bash_guard.py (AG-9), UserPromptSubmit capture hook |
+| 68 | 2026-03-19 | plan_compliance wired into validate.py PreToolUse hook, ROADMAP updated to S68 |
