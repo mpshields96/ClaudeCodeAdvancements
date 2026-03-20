@@ -771,7 +771,7 @@ developer colleague.
 |------|----|------|------|-------------|-----------|------|-------|-----------|------------|
 | 1 | MT-10 | YoYo self-learning | 9 | Session 44 | 38 | 1.0 | cap | **18.0** | Phase 3B: graduate to Kalshi bot (cross-project). Cap: 18.0 |
 | 2 | MT-9 | Autonomous scanning | 8 | Session 52 | 30 | 1.0 | cap | **16.0** | Production autonomous runs. Cap: 16.0 |
-| 3 | MT-11 | GitHub intelligence | 7 | Session 83 | 0 | 1.0 | 0 | **7.0** | Phase 2 DONE (trending). Phase 3: wire into autonomous pipeline. |
+| 3 | MT-11 | GitHub intelligence | 7 | Session 83 | 0 | -- | -- | **DONE** | Phase 3 COMPLETE: trending wired into autonomous pipeline (S83). |
 | 4 | MT-14 | Rescan stale subs | 6 | Session 83 | 0 | 1.0 | 0 | **6.0** | Phase 2 validated (stale gate works). Phase 3: wire into MT-9. |
 | 5 | MT-12 | Academic papers | 6 | Session 52 | 30 | 1.0 | cap | **12.0** | Phase 3: domain expansion. Cap: 12.0 |
 | 6 | MT-8 | iPhone remote control | 5 | Session 44 | 38 | 0.5 | cap | **10.0** | SOLVED by native Remote Control + ServerCC/Moshi apps. Cap: 10.0. Consider closing. |

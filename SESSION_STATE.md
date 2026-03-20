@@ -5,7 +5,7 @@
 
 ## Current State (as of Session 83 — 2026-03-20)
 
-**Phase:** Session 83 IN PROGRESS. Tests: 80 suites, 3265 total passing (+17). Git: 5 commits so far.
+**Phase:** Session 83 IN PROGRESS. Tests: 80 suites, 3277 total passing (+29). Git: 7 commits so far.
 
 **What was done this session (S83):**
 - **MT-11 Phase 2 COMPLETE: Trending repo discovery** — `fetch_trending()`, `_build_trending_query()`, `TrendingScanner` class with per-language scanning + trending history JSONL log. CLI `trending` command with --language, --days, --all, --json flags. +32 tests (62 total github_scanner). Live validation: Python + TypeScript 14d scan found 19 EVALUATE repos.
@@ -15,16 +15,16 @@
 - **MT-12 validation** — Paper scanner confirmed working: 21 papers logged, dedup functional, all 4 domains searchable.
 - **Doc drift fix** — Corrected reddit-intelligence test count (claimed 348, actual 333). Zero drift confirmed.
 - **MASTER_TASKS priority recalculated** — MT-11 reset to 7.0 (touched S83), MT-14 reset to 6.0 (touched S83).
+- **MT-11 Phase 3 COMPLETE: Trending wired into autonomous pipeline** — `execute_github_trending()` on AutonomousScanner, `GitHubTrendingReport` dataclass, CLI `github-trending` command with --language/--days/--json. Safety gate integration. +12 tests (85 total autonomous_scanner, 345 total reddit-intelligence).
 
 **Matthew directives (S51-S83, permanent):**
 - All S51-S82 directives still active
 
 **Next (prioritized):**
 1. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker) — BLOCKED on Matthew
-2. MT-11 Phase 3: Wire trending into MT-9 autonomous pipeline
-3. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
-4. MT-9 Phase 3: Supervised trial of autonomous scanning
-5. Reddit intelligence: scan for new posts, follow up on trending repos
+2. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
+3. MT-9 Phase 3: Supervised trial of autonomous scanning
+4. Reddit intelligence: scan for new posts, follow up on trending repos
 
 ---
 

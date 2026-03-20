@@ -115,7 +115,7 @@ This roadmap is grounded in:
 
 ## SUPPORTING MODULES -- COMPLETE
 
-### Reddit Intelligence Plugin (316 tests)
+### Reddit Intelligence Plugin (345 tests)
 - `reddit_reader.py` — fetches Reddit posts + all comments (no API key)
 - `autonomous_scanner.py` — MT-9: full scan pipeline (prioritizer + safety)
 - `github_scanner.py` — MT-11: GitHub repo intelligence
@@ -188,12 +188,12 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | context-monitor | 266 |
 | agent-guard | 889 |
 | usage-dashboard | 261 |
-| reddit-intelligence | 333 |
+| reddit-intelligence | 345 |
 | self-learning | 526 |
 | design-skills | 213 |
 | research | 86 |
 | root (integration + coordination) | 305 |
-| **Total** | **3265** |
+| **Total** | **3277** |
 
 ---
 
