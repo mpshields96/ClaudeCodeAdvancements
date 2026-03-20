@@ -39,14 +39,39 @@ def _read_file(relative_path: str) -> str:
 
 
 def _count_test_methods(filepath: str) -> int:
-    """Count test methods in a Python test file."""
-    count = 0
-    if os.path.exists(filepath):
+    """Count test methods in a Python test file using AST.
+
+    Uses Python's AST parser to accurately count test methods,
+    avoiding false positives from def test_ inside strings or
+    deeply nested fixtures.
+    """
+    if not os.path.exists(filepath):
+        return 0
+    try:
+        import ast
+        with open(filepath) as f:
+            tree = ast.parse(f.read(), filename=filepath)
+        count = 0
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                for item in node.body:
+                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and item.name.startswith("test_"):
+                        count += 1
+            elif isinstance(node, ast.Module):
+                for item in node.body:
+                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and item.name.startswith("test_"):
+                        count += 1
+        return count
+    except SyntaxError:
+        # Fallback: count def test_ at method indentation (4-8 spaces)
+        count = 0
         with open(filepath) as f:
             for line in f:
-                if line.strip().startswith("def test_"):
+                stripped = line.lstrip()
+                indent = len(line) - len(stripped)
+                if stripped.startswith("def test_") and 4 <= indent <= 8:
                     count += 1
-    return count
+        return count
 
 
 def _count_python_loc(dirpath: str) -> int:
