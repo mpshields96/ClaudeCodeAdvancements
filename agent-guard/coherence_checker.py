@@ -280,6 +280,173 @@ class ImportDependencyCheck:
         }
 
 
+# Section headings that contain rules
+_RULE_SECTION_PATTERNS = [
+    re.compile(r"^##\s+.*(?:non-negotiable|rules|constraints|architecture)\s*(?:rules)?", re.IGNORECASE),
+]
+
+# Patterns for stdlib-only rules
+_STDLIB_RULE_PATTERN = re.compile(
+    r"(?:zero\s+dependenc|no\s+external|stdlib.only|standard\s+library\s+only|no\s+(?:third.party|3rd.party))",
+    re.IGNORECASE,
+)
+
+# Patterns for "never/no" forbidden action rules
+_FORBIDDEN_PATTERN = re.compile(
+    r"(?:^|\*\*)\s*(?:never|no\s+blocking|do\s+not|must\s+not)\b",
+    re.IGNORECASE,
+)
+
+# Extract allowed exceptions from stdlib rule text (e.g., "stdlib + anthropic + fnmatch")
+_ALLOWED_EXCEPTION_PATTERN = re.compile(r"\+\s*(\w+)", re.IGNORECASE)
+
+
+class RuleExtractor:
+    """Extracts structured rules from CLAUDE.md content."""
+
+    def extract(self, content: str) -> list:
+        """Parse CLAUDE.md content and return list of rule dicts.
+
+        Each rule dict has:
+            - text: str — the raw rule text
+            - type: str — "stdlib_only", "forbidden", or "general"
+            - allowed: list[str] — for stdlib_only rules, explicitly allowed packages
+
+        Args:
+            content: Full text of a CLAUDE.md file.
+
+        Returns:
+            List of rule dicts.
+        """
+        if not content or not content.strip():
+            return []
+
+        rules = []
+        lines = content.splitlines()
+        in_rule_section = False
+
+        for line in lines:
+            stripped = line.strip()
+
+            # Check if this line is a rule section heading
+            if stripped.startswith("##"):
+                in_rule_section = any(p.match(stripped) for p in _RULE_SECTION_PATTERNS)
+                continue
+
+            # Only extract from rule sections
+            if not in_rule_section:
+                continue
+
+            # Skip empty lines and non-list items
+            if not stripped or not stripped.startswith("-"):
+                continue
+
+            # Clean up the rule text (strip leading "- ", bold markers)
+            rule_text = stripped.lstrip("- ").strip()
+            rule_text = rule_text.replace("**", "")
+
+            if not rule_text:
+                continue
+
+            # Classify rule type
+            rule_type = "general"
+            allowed = []
+
+            if _STDLIB_RULE_PATTERN.search(rule_text):
+                rule_type = "stdlib_only"
+                # Extract allowed exceptions (e.g., "+ anthropic", "+ fnmatch")
+                allowed = _ALLOWED_EXCEPTION_PATTERN.findall(rule_text)
+                # Also check for "beyond Python stdlib + X" pattern
+                allowed = [a.lower() for a in allowed if a.lower() not in ("python", "stdlib")]
+            elif _FORBIDDEN_PATTERN.search(rule_text):
+                rule_type = "forbidden"
+
+            rule = {"text": rule_text, "type": rule_type}
+            if allowed:
+                rule["allowed"] = allowed
+            rules.append(rule)
+
+        return rules
+
+
+class RuleComplianceCheck:
+    """Checks code files against extracted CLAUDE.md rules."""
+
+    def check(self, file_path: str, rules: list, local_modules: set = None) -> list:
+        """Check a code file against a list of rules.
+
+        Args:
+            file_path: Path to the code file.
+            rules: List of rule dicts from RuleExtractor.
+            local_modules: Set of known local module names (excluded from import checks).
+
+        Returns:
+            List of issue strings.
+        """
+        if not rules:
+            return []
+
+        # Only check Python files for import rules
+        if not file_path.endswith(".py"):
+            return []
+
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+        except (OSError, IOError):
+            return []
+
+        issues = []
+        basename = os.path.basename(file_path)
+        local_mods = local_modules or set()
+
+        for rule in rules:
+            if rule["type"] == "stdlib_only":
+                rule_issues = self._check_stdlib_only(
+                    basename, content, rule, local_mods
+                )
+                issues.extend(rule_issues)
+
+        return issues
+
+    def _check_stdlib_only(self, basename: str, content: str, rule: dict, local_modules: set) -> list:
+        """Check that a file only imports stdlib + allowed + local modules."""
+        issues = []
+        allowed = set(rule.get("allowed", []))
+
+        # Extract all imports
+        for match in _IMPORT_PATTERN.findall(content):
+            mod_name = match.split(".")[0]
+            if self._is_external(mod_name, allowed, local_modules):
+                issues.append(
+                    f"{basename}: imports '{mod_name}' — violates rule: {rule['text']}"
+                )
+
+        for match in _FROM_IMPORT_PATTERN.findall(content):
+            mod_name = match.split(".")[0]
+            if self._is_external(mod_name, allowed, local_modules):
+                issues.append(
+                    f"{basename}: imports '{mod_name}' — violates rule: {rule['text']}"
+                )
+
+        return issues
+
+    def _is_external(self, mod_name: str, allowed: set, local_modules: set) -> bool:
+        """Return True if module is external (not stdlib, not allowed, not local)."""
+        if not mod_name:
+            return False
+        if mod_name in _STDLIB_MODULES:
+            return False
+        if mod_name.lower() in allowed:
+            return False
+        if mod_name in local_modules:
+            return False
+        # Relative imports (starting with .)
+        if mod_name.startswith("."):
+            return False
+        return True
+
+
 class CoherenceChecker:
     """Orchestrates all coherence checks across a project."""
 
@@ -287,6 +454,8 @@ class CoherenceChecker:
         self.project_root = project_root or os.getcwd()
         self._structure = ModuleStructureCheck()
         self._patterns = PatternConsistencyCheck()
+        self._rule_extractor = RuleExtractor()
+        self._rule_compliance = RuleComplianceCheck()
 
     def check(self, modules: Optional[list] = None) -> CoherenceReport:
         """Run all coherence checks.
@@ -322,9 +491,45 @@ class CoherenceChecker:
         pattern_issues = self._patterns.check(py_files)
         all_issues.extend(pattern_issues)
 
+        # 4. CLAUDE.md rule compliance check
+        rule_issues = []
+        # Collect local module names for import exclusion
+        local_modules = set()
+        for fp in py_files:
+            bn = os.path.basename(fp)
+            if bn.endswith(".py"):
+                local_modules.add(bn[:-3])
+
+        for mod_name in modules:
+            mod_path = os.path.join(self.project_root, mod_name)
+            claude_md_path = os.path.join(mod_path, "CLAUDE.md")
+            if not os.path.isfile(claude_md_path):
+                continue
+            try:
+                with open(claude_md_path, "r", encoding="utf-8", errors="replace") as f:
+                    claude_content = f.read()
+            except (OSError, IOError):
+                continue
+
+            rules = self._rule_extractor.extract(claude_content)
+            if not rules:
+                continue
+
+            # Check each .py file in this module against its rules
+            for fp in py_files:
+                if not fp.startswith(mod_path):
+                    continue
+                file_rule_issues = self._rule_compliance.check(
+                    fp, rules, local_modules=local_modules
+                )
+                rule_issues.extend(file_rule_issues)
+
+        all_issues.extend(rule_issues)
+
         # Calculate score: start at 100, deduct per issue
-        # Structure issues are more severe (5 pts each), pattern issues 3 pts each
-        deduction = (len(structure_issues) * 5) + (len(pattern_issues) * 3)
+        # Structure issues are more severe (5 pts each), pattern issues 3 pts,
+        # rule violations 4 pts (more severe than patterns, less than structure)
+        deduction = (len(structure_issues) * 5) + (len(pattern_issues) * 3) + (len(rule_issues) * 4)
         score = max(0.0, min(100.0, 100.0 - deduction))
 
         return CoherenceReport(

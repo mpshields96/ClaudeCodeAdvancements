@@ -21,6 +21,8 @@ from coherence_checker import (
     ModuleStructureCheck,
     PatternConsistencyCheck,
     ImportDependencyCheck,
+    RuleExtractor,
+    RuleComplianceCheck,
     CoherenceReport,
     check_coherence,
 )
@@ -297,6 +299,203 @@ class TestConvenienceFunction(unittest.TestCase):
         self.assertIsInstance(result, dict)
         self.assertIn("score", result)
         self.assertIn("issues", result)
+
+
+class TestRuleExtractor(unittest.TestCase):
+    """Test CLAUDE.md rule extraction."""
+
+    def test_extracts_rules_from_non_negotiable_section(self):
+        content = """# Module Rules
+
+## Non-Negotiable Rules
+- **No blocking in WARN mode** — never prevent work when name is unset
+- **Lock files must be released on session end** — Stop hook releases all locks
+- **Zero dependencies beyond Python stdlib** — must work without installing anything
+"""
+        extractor = RuleExtractor()
+        rules = extractor.extract(content)
+        self.assertTrue(len(rules) >= 3)
+
+    def test_extracts_stdlib_only_rule(self):
+        content = """# Rules
+## Non-Negotiable Rules
+- **Zero dependencies beyond Python stdlib + fnmatch** — must work without installing anything
+"""
+        extractor = RuleExtractor()
+        rules = extractor.extract(content)
+        stdlib_rules = [r for r in rules if r["type"] == "stdlib_only"]
+        self.assertEqual(len(stdlib_rules), 1)
+
+    def test_extracts_generic_rules(self):
+        content = """# Module Rules
+## Architecture Rules
+- Ownership is per-session by default
+- Agent name is set as an environment variable
+"""
+        extractor = RuleExtractor()
+        rules = extractor.extract(content)
+        self.assertTrue(len(rules) >= 2)
+
+    def test_empty_content_returns_empty(self):
+        extractor = RuleExtractor()
+        rules = extractor.extract("")
+        self.assertEqual(rules, [])
+
+    def test_no_rules_section_returns_empty(self):
+        content = "# Just a title\n\nSome text without rules.\n"
+        extractor = RuleExtractor()
+        rules = extractor.extract("")
+        self.assertEqual(rules, [])
+
+    def test_extracts_never_patterns(self):
+        content = """# Rules
+## Non-Negotiable Rules
+- **Never log API keys** — security risk
+- Never modify system files
+"""
+        extractor = RuleExtractor()
+        rules = extractor.extract(content)
+        never_rules = [r for r in rules if r["type"] == "forbidden"]
+        self.assertTrue(len(never_rules) >= 1)
+
+    def test_rule_has_text_field(self):
+        content = """# Rules
+## Non-Negotiable Rules
+- **No blocking** — never block anything
+"""
+        extractor = RuleExtractor()
+        rules = extractor.extract(content)
+        self.assertTrue(all("text" in r for r in rules))
+
+    def test_extracts_from_multiple_rule_sections(self):
+        content = """# Module
+## Non-Negotiable Rules
+- Rule A from non-negotiable
+
+## Architecture Rules
+- Rule B from architecture
+"""
+        extractor = RuleExtractor()
+        rules = extractor.extract(content)
+        self.assertTrue(len(rules) >= 2)
+
+
+class TestRuleComplianceCheck(unittest.TestCase):
+    """Test code compliance against extracted CLAUDE.md rules."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def _write_file(self, name, content):
+        path = os.path.join(self.tmpdir, name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(content)
+        return path
+
+    def test_stdlib_only_violation_detected(self):
+        """Code importing external packages violates stdlib-only rule."""
+        rules = [{"type": "stdlib_only", "text": "Zero dependencies beyond Python stdlib"}]
+        code_path = self._write_file("mod.py", "import requests\nimport os\n\ndef fetch():\n    pass\n")
+        checker = RuleComplianceCheck()
+        issues = checker.check(code_path, rules)
+        self.assertTrue(any("requests" in i for i in issues))
+
+    def test_stdlib_imports_pass(self):
+        """Code using only stdlib should not trigger violations."""
+        rules = [{"type": "stdlib_only", "text": "Zero dependencies beyond Python stdlib"}]
+        code_path = self._write_file("mod.py", "import os\nimport json\nimport sys\n")
+        checker = RuleComplianceCheck()
+        issues = checker.check(code_path, rules)
+        self.assertEqual(len(issues), 0)
+
+    def test_local_imports_pass_stdlib_rule(self):
+        """Local project imports should not trigger stdlib-only violations."""
+        rules = [{"type": "stdlib_only", "text": "Zero dependencies beyond Python stdlib"}]
+        code_path = self._write_file("mod.py", "from satd_detector import SATDDetector\nimport os\n")
+        checker = RuleComplianceCheck()
+        issues = checker.check(code_path, rules, local_modules={"satd_detector"})
+        self.assertEqual(len(issues), 0)
+
+    def test_no_rules_no_issues(self):
+        """No rules means no compliance issues."""
+        code_path = self._write_file("mod.py", "import requests\n")
+        checker = RuleComplianceCheck()
+        issues = checker.check(code_path, [])
+        self.assertEqual(len(issues), 0)
+
+    def test_file_not_found_no_crash(self):
+        """Missing file should not crash."""
+        rules = [{"type": "stdlib_only", "text": "stdlib only"}]
+        checker = RuleComplianceCheck()
+        issues = checker.check("/nonexistent/file.py", rules)
+        self.assertEqual(len(issues), 0)
+
+    def test_non_python_file_skipped(self):
+        """Non-Python files should be skipped for import checks."""
+        rules = [{"type": "stdlib_only", "text": "stdlib only"}]
+        code_path = self._write_file("readme.md", "import requests\n")
+        checker = RuleComplianceCheck()
+        issues = checker.check(code_path, rules)
+        self.assertEqual(len(issues), 0)
+
+    def test_multiple_external_imports_all_flagged(self):
+        """Multiple external imports should each be flagged."""
+        rules = [{"type": "stdlib_only", "text": "stdlib only"}]
+        code_path = self._write_file("mod.py", "import requests\nimport flask\nimport pandas\n")
+        checker = RuleComplianceCheck()
+        issues = checker.check(code_path, rules)
+        self.assertTrue(len(issues) >= 3)
+
+    def test_allowed_exceptions_in_stdlib_rule(self):
+        """Packages explicitly mentioned in the rule text should be allowed."""
+        rules = [{"type": "stdlib_only", "text": "Zero dependencies beyond Python stdlib + anthropic", "allowed": ["anthropic"]}]
+        code_path = self._write_file("mod.py", "import anthropic\nimport os\n")
+        checker = RuleComplianceCheck()
+        issues = checker.check(code_path, rules)
+        self.assertEqual(len(issues), 0)
+
+
+class TestCoherenceCheckerWithRules(unittest.TestCase):
+    """Test that CoherenceChecker integrates rule compliance."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def test_rule_violations_appear_in_report(self):
+        """Rule violations from CLAUDE.md should appear in the coherence report."""
+        # Create a module with a CLAUDE.md containing stdlib-only rule
+        mod_dir = os.path.join(self.tmpdir, "my-mod")
+        os.makedirs(os.path.join(mod_dir, "tests"), exist_ok=True)
+        with open(os.path.join(mod_dir, "CLAUDE.md"), "w") as f:
+            f.write("# Rules\n## Non-Negotiable Rules\n- **Zero dependencies beyond Python stdlib** — no external packages\n")
+        with open(os.path.join(mod_dir, "bad.py"), "w") as f:
+            f.write('"""Bad module."""\nimport requests\n\ndef fetch():\n    pass\n')
+
+        checker = CoherenceChecker(project_root=self.tmpdir)
+        report = checker.check(modules=["my-mod"])
+        rule_issues = [i for i in report.issues if "rule" in i.lower() or "stdlib" in i.lower() or "requests" in i.lower()]
+        self.assertTrue(len(rule_issues) > 0)
+
+    def test_compliant_code_no_rule_violations(self):
+        """Code that follows CLAUDE.md rules should produce no rule violations."""
+        mod_dir = os.path.join(self.tmpdir, "good-mod")
+        os.makedirs(os.path.join(mod_dir, "tests"), exist_ok=True)
+        with open(os.path.join(mod_dir, "CLAUDE.md"), "w") as f:
+            f.write("# Rules\n## Non-Negotiable Rules\n- **Zero dependencies beyond Python stdlib** — no external packages\n")
+        with open(os.path.join(mod_dir, "good.py"), "w") as f:
+            f.write('"""Good module."""\nimport os\nimport json\n\ndef run():\n    pass\n')
+
+        checker = CoherenceChecker(project_root=self.tmpdir)
+        report = checker.check(modules=["good-mod"])
+        rule_issues = [i for i in report.issues if "rule" in i.lower() or "stdlib" in i.lower()]
+        self.assertEqual(len(rule_issues), 0)
 
 
 if __name__ == "__main__":
