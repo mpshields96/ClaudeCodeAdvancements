@@ -3,30 +3,26 @@
 
 ---
 
-## Current State (as of Session 90 — 2026-03-20)
+## Current State (as of Session 91 — 2026-03-20)
 
-**Phase:** Session 90 COMPLETE. Tests: 89 suites, 3568 total passing. Git: 14+ commits (S90). Self-grade: A.
+**Phase:** Session 91 IN PROGRESS. Tests: 91 suites, 3614+ total passing. Git: 4 commits so far (S91).
 
-**What was done this session (S90):**
-- **PHASE 1 GATE: READY** — 3/3 consecutive hivemind PASS. Dual-chat system validated.
-- **Live hivemind test 1** — Assigned `hivemind_metrics.py` to cli1 worker via queue. Worker picked up, built (149 LOC, 20 tests), committed, reported back. Full cycle PASS.
-- **Live hivemind test 2** — Assigned integration task (`hivemind_dashboard.py`). Worker imported 2 existing modules, fixed import path issue. 16 tests. PASS.
-- **Live hivemind test 3** — Assigned code modification task (integrate overhead_timer into dashboard). Worker modified existing code, added 4 tests to existing file, debugged function signatures. PASS.
-- **hivemind_session_validator.py** — Desktop-side cycle validation + Phase 1 gate tracking (17 tests, TDD)
-- **overhead_timer.py** — Coordination overhead measurement for Phase 1 metrics (13 tests, TDD)
-- **Command wiring** — Session validator wired into /cca-init (Step 2.7) and /cca-wrap-desktop (Step 2.5). Worker inbox check added to /cca-auto-desktop (Step 5.5).
-- **HIVEMIND_ROLLOUT.md updated** — Phase 1 validation log with 3 test results, 4/5 gate criteria met, infrastructure table updated (336 tests, 2834 LOC).
-- **Worker deliverables** — cli1 built `hivemind_metrics.py` (20 tests) + `hivemind_dashboard.py` (20 tests) + overhead integration (4 new tests)
+**What was done this session (S91):**
+- **chat_detector.py** — Duplicate Claude Code session detection (31 tests, TDD). Finds running CCA processes, identifies duplicates by chat_id, pre-launch safety checks, terminal close capability.
+- **Wired into hivemind workflow** — launch_worker.sh pre-launch duplicate check, /cca-init Step 4.5 duplicate+crash detection, /cca-wrap-worker Step 6 terminal close, /cca-wrap-desktop Step 9.5 stale worker detection.
+- **crash_recovery.py** — Phase 2 crash recovery infrastructure (15 tests, TDD). Detects orphaned scopes (scope_claim without running worker process), auto-releases with crash-recovery marker, reports uncommitted changes.
+- **Multi-task worker loop** — Upgraded /cca-auto-worker with keep-busy fallback (review commits, scan TODOs when idle). Desktop coordinator front-loads 2-3 tasks. Workers never sit idle.
+- **Matthew feedback captured** — Close terminal windows on wrap, monitor duplicates, worker multi-tasking.
 
-**Matthew directives (S51-S90, permanent):**
-- All S51-S89 directives still active
-- S90: Full autonomy authorized. Push toward dual-chat completion. Automate and test the hivemind.
+**Matthew directives (S51-S91, permanent):**
+- All S51-S90 directives still active
+- S91: Close CLI windows on wrap. Monitor duplicate chats. Workers should multi-task, not sit idle.
 
 **Next (prioritized):**
 1. Matthew confirmation: "this is better than solo" (last Phase 1 gate criterion)
-2. Phase 2 preparation: harder tasks, multi-file changes, deliberate crash recovery test
-3. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
-4. MT-9 Phase 3: Supervised trial of autonomous scanning
+2. Phase 2 live test: deliberate worker crash mid-scope-claim, verify clean recovery
+3. Phase 2 live test: multi-file task assignment to worker
+4. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
 5. GitHub push blocked: PAT needs `workflow` scope — Matthew must update token
 
 ---

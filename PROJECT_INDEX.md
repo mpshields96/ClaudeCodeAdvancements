@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-20 (Session 89)
+# Last updated: 2026-03-20 (Session 91)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 3518+ tests (87 suites). All must pass before any work.**
+**Total: 3614+ tests (91 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -131,6 +131,8 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `hivemind_metrics.py` — Phase 1 validation metrics persistence (20 tests, S90, built by cli1 worker)
 - `hivemind_dashboard.py` — Combined Phase 1 status reporter (16 tests, S90, built by cli1 worker)
 - `overhead_timer.py` — Coordination overhead measurement for Phase 1 metrics (13 tests, S90)
+- `chat_detector.py` — Duplicate Claude Code session detection + pre-launch safety (31 tests, S91)
+- `crash_recovery.py` — Worker crash detection + orphaned scope auto-release (15 tests, S91)
 
 **research/** — R&D and tools
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)
@@ -166,6 +168,8 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | `tests/test_hivemind_deep.py` | Deep hivemind coverage: 117 tests across 31 classes (S89) |
 | `tests/test_hivemind_session_validator.py` | Desktop-side hivemind cycle validation (17 tests, S90) |
 | `tests/test_hivemind_metrics.py` | Phase 1 metrics persistence (20 tests, S90, cli1 worker) |
+| `tests/test_chat_detector.py` | Duplicate session detection + pre-launch checks (31 tests, S91) |
+| `tests/test_crash_recovery.py` | Worker crash detection + scope recovery (15 tests, S91) |
 
 CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against Python 3.10 + 3.12.
 
