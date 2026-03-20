@@ -98,6 +98,24 @@ After completing each task:
 
 ---
 
+## Step 5.5 — Check worker inbox (between tasks)
+
+After completing each task, check if workers have reported back:
+
+```bash
+python3 cca_comm.py inbox
+```
+
+If a worker reported completion:
+1. Acknowledge: `python3 cca_comm.py ack`
+2. Review their commit: `git log --oneline -3`
+3. Run tests to verify no regressions
+4. Optionally assign their next task: `python3 cca_comm.py task cli1 "next task"`
+
+If no worker messages, continue to next task.
+
+---
+
 ## Step 6 — Chain to next task
 
 DO NOT STOP after one task. Pick the next and keep going.
