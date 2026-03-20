@@ -221,17 +221,20 @@ Total: 6-9 sessions across multiple CCA chats. No rush.
 
 | Senior Developer Function | Status | Next Step |
 |--------------------------|--------|-----------|
-| Intent verification | GAP | Requires LLM reasoning, not just static analysis |
-| Context-aware review (full) | PARTIAL | Needs git history awareness, not just CLAUDE.md rules |
-| Trade-off judgment | GAP | Requires LLM integration in senior_chat |
-| Knowledge transfer check | GAP | "Can someone else maintain this?" requires semantic analysis |
-| senior_chat LLM wiring | FOUNDATION | Prompt generation ready, needs Anthropic API call |
+| Intent verification | CLOSED | build_intent_check_prompt() — structured LLM prompt (S81) |
+| Context-aware review (full) | CLOSED | git_context.py: file history, blame, churn detection (S80) |
+| Trade-off judgment | CLOSED | build_tradeoff_prompt() — structured LLM prompt (S81) |
+| Knowledge transfer check | CLOSED (via LLM) | Trade-off prompt includes maintainability assessment |
+| senior_chat LLM wiring | CLOSED | LLMClient with Anthropic API, conversation history (S80) |
+
+**All 10 gap analysis items now have implementations.** Remaining work is E2E
+validation with a real API key to prove the LLM-dependent features work in practice.
 
 ### Module Count
 
-senior_review.py now orchestrates 7 submodules: SATD, quality, effort, coherence (with rule compliance), blast radius, fp_filter, ADR reader. Plus senior_chat.py for interactive mode. Total: ~2,500 LOC, ~812 tests.
+senior_review.py orchestrates 7 submodules: SATD, quality, effort, coherence (with rule compliance), blast radius, fp_filter, ADR reader. senior_chat.py provides interactive mode with LLMClient, intent verification, and trade-off judgment. git_context.py provides history awareness. Total: ~3,000 LOC, ~890 tests.
 
 ---
 
 *Written: Session 77, 2026-03-20*
-*Updated: Session 79, 2026-03-20 — S78+S79 progress*
+*Updated: Session 81, 2026-03-20 — All 10 gaps closed (S78-S81)*

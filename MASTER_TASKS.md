@@ -679,31 +679,23 @@ Phase 2 (Session 49):
 - Filters output via quality gate (non-negotiable per RovoDev findings)
 - Stdlib only + optional LLM API call for false positive filtering
 
-**Status:** Infrastructure COMPLETE. Intelligence layer NOT STARTED.
+**Status:** ALL 10 GAP ITEMS CLOSED (S78-S81). E2E validation with real API key pending.
 
-Built (S71-S74): 8 modules, ~1,700 LOC, ~318 tests, all passing:
-- satd_detector.py (42 tests), effort_scorer.py (42 tests), code_quality_scorer.py (38 tests)
-- fp_filter.py (40 tests), review_classifier.py (43 tests), tech_debt_tracker.py (27 tests)
-- adr_reader.py (38 tests), senior_dev_hook.py (48 tests) — PostToolUse orchestrator LIVE in hooks
+Built (S71-S81): 13 modules, ~3,000 LOC, ~890 tests, all passing:
+- Infrastructure (S71-S74): satd_detector, effort_scorer, code_quality_scorer, fp_filter,
+  review_classifier, tech_debt_tracker, adr_reader, senior_dev_hook — PostToolUse LIVE in hooks
+- Intelligence layer (S78-S81): coherence_checker, senior_review, senior_chat (with LLMClient,
+  intent verification, trade-off judgment), git_context — /senior-review skill LIVE
 
-**S77 Gap Analysis (SENIOR_DEV_GAP_ANALYSIS.md):**
-The existing modules are STATIC METRIC CALCULATORS — they count patterns and score numbers.
-They do NOT do design review, architectural coherence, intent verification, interactive
-communication, context-aware review, or any function a real senior developer performs.
-The current "Senior Dev" is a linter with a good name.
+**Phases completed:**
+- Phase 6: Hook output rewrite — natural language advice (S78) DONE
+- Phase 7: /senior-review skill — APPROVE/CONDITIONAL/RETHINK verdicts (S78) DONE
+- Phase 8: Interactive CLI chat — REPL + LLMClient + Anthropic API (S79-S80) DONE
+- Phase 9: Architectural coherence — module structure, patterns, imports, rules (S78-S79) DONE
+- Gap closure: Intent verification + trade-off judgment prompts (S81) DONE
+- E2E test suite: 10 tests covering real API calls, skip without key (S81) DONE
 
-**Remaining phases (properly scoped):**
-- Phase 6: Improve hook output — natural language advice instead of metric dumps (1 session)
-- Phase 7: On-demand `/senior-review` skill — structured review with design fit, concerns,
-  suggestions, approval verdict (1-2 sessions)
-- Phase 8: Interactive CLI chat mode — dedicated CLI chat running as senior dev colleague,
-  communicating via hivemind queue (2-3 sessions, depends on HIVEMIND Phase 2 passing)
-- Phase 9: Architectural Coherence Checker — cross-file pattern detection, dependency analysis,
-  system health scoring (2-3 sessions)
-
-**Dependencies:** Phase 8 requires HIVEMIND_ROLLOUT.md Phase 2 gate to pass first.
-See SENIOR_DEV_GAP_ANALYSIS.md for full details.
-- **Next:** Phase 6 (hook output quality improvement).
+**Next:** E2E validate with real API key. Then converge with MT-21 Hivemind Phase 1.
 
 ---
 
