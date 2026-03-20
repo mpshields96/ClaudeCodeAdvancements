@@ -21,6 +21,11 @@ import os
 import sys
 from pathlib import Path
 
+# ── Import spec_freshness from parent directory ───────────────────────────────
+_SPEC_DIR = Path(__file__).resolve().parent.parent
+if str(_SPEC_DIR) not in sys.path:
+    sys.path.insert(0, str(_SPEC_DIR))
+
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
@@ -159,6 +164,47 @@ def _build_warning(spec_status: dict, file_path: str, mode: str) -> str:
     return " ".join(warning_parts)
 
 
+# ── Freshness Integration ────────────────────────────────────────────────────
+
+def _check_freshness_context(cwd: str) -> str:
+    """
+    Check if spec files are stale relative to code files.
+    Returns a warning string if stale, empty string if fresh or unavailable.
+    Only checks the immediate module directory (not the full project tree).
+    """
+    try:
+        from spec_freshness import check_freshness, find_code_files, find_spec_files, is_retired
+    except ImportError:
+        return ""
+
+    try:
+        spec_files = find_spec_files(cwd)
+        if not spec_files:
+            return ""
+
+        code_files = find_code_files(cwd)
+        stale_specs = []
+
+        for spec_path in spec_files:
+            if is_retired(spec_path):
+                continue
+            result = check_freshness(spec_path, code_files)
+            if result["status"] == "STALE":
+                stale_specs.append(
+                    f"{spec_path.name} ({result['newer_code_files']} code file(s) newer)"
+                )
+
+        if stale_specs:
+            return (
+                f"[spec-freshness] Stale spec detected: {', '.join(stale_specs)}. "
+                f"Consider updating specs or marking them 'Status: RETIRED' if implementation is complete."
+            )
+    except Exception:
+        pass  # Freshness check is non-blocking; never crash the hook
+
+    return ""
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
@@ -185,8 +231,19 @@ def main() -> None:
 
     status = _spec_status(cwd)
 
-    # If tasks are approved, we're in implementation mode — no warning needed
+    # If tasks are approved, we're in implementation mode.
+    # Check spec freshness: warn if code files are newer than tasks.md.
     if status["tasks_approved"]:
+        freshness_ctx = _check_freshness_context(cwd)
+        if freshness_ctx:
+            result = {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "allow",
+                    "additionalContext": freshness_ctx,
+                }
+            }
+            print(json.dumps(result))
         sys.exit(0)
 
     mode = os.environ.get("SPEC_GUARD_MODE", "warn").lower()
