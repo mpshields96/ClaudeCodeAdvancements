@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 3498 tests (85 suites). All must pass before any work.**
+**Total: 3518+ tests (87 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -127,6 +127,8 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `launch_worker.sh` — One-command dual-chat launcher: opens Terminal tab with CCA_CHAT_ID, starts worker
 - `tip_tracker.py` — Advancement tip persistence across all chats (26 tests, S89)
 - `wrap_tracker.py` — Session wrap assessment persistence with trend analysis (23 tests, S89)
+- `hivemind_session_validator.py` — Desktop-side hivemind cycle validation + Phase 1 gate tracking (17 tests, S90)
+- `hivemind_metrics.py` — Phase 1 validation metrics persistence (20 tests, S90, built by cli1 worker)
 
 **research/** — R&D and tools
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)
@@ -160,6 +162,8 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | `tests/test_cross_chat_queue.py` | Bidirectional cross-chat JSONL message queue (44 tests) |
 | `tests/test_cca_internal_queue.py` | Desktop/Terminal coordination queue (41 tests) |
 | `tests/test_hivemind_deep.py` | Deep hivemind coverage: 117 tests across 31 classes (S89) |
+| `tests/test_hivemind_session_validator.py` | Desktop-side hivemind cycle validation (17 tests, S90) |
+| `tests/test_hivemind_metrics.py` | Phase 1 metrics persistence (20 tests, S90, cli1 worker) |
 
 CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against Python 3.10 + 3.12.
 
