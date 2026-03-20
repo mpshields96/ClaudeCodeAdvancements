@@ -5,23 +5,26 @@
 
 ## Current State (as of Session 79 — 2026-03-20)
 
-**Phase:** Session 79 IN PROGRESS. Tests: 77 suites, 3110 total passing. Git: 3 commits this session.
+**Phase:** Session 79 COMPLETE. Tests: 78 suites, 3126 total passing. Git: 9 commits this session.
 
 **What was done this session (S79):**
-- **MT-20 Phase 9 COMPLETE** — CLAUDE.md rule extraction + compliance checking added to coherence_checker.py. `RuleExtractor` parses CLAUDE.md files to extract structured rules (stdlib-only, forbidden, general). `RuleComplianceCheck` validates code against those rules (e.g., flags external imports when module says "stdlib only"). 18 new tests (36 total in coherence checker suite).
-- **MT-20 fp_filter wired into senior_review.py** — Vendored files get early-exit approve with zero SATD. Test file non-HIGH findings filtered out. Prevents self-referential SATD false positives. `fp_confidence` metric added. 4 new tests.
-- **MT-20 ADR reader wired into senior_review.py** — ADRReader.discover() + find_relevant() run during reviews. Accepted ADRs surface as suggestions, deprecated ADRs as concerns. `relevant_adrs` count in metrics. 3 new tests.
-- **All 3 S78 priority items completed in one session** — senior_review.py now orchestrates 7 submodules: SATD, quality, effort, coherence, blast radius, fp_filter, ADR reader.
+- **MT-20 Phase 9 COMPLETE** — CLAUDE.md rule extraction + compliance checking. `RuleExtractor` parses CLAUDE.md files (module + project root) to extract structured rules (stdlib-only, forbidden, general). `RuleComplianceCheck` validates code against those rules. 21 new coherence tests (39 total).
+- **MT-20 fp_filter wired into senior_review.py** — Vendored files get early-exit approve with zero SATD. Test file non-HIGH findings filtered out. `fp_confidence` metric added. 4 new tests.
+- **MT-20 ADR reader wired into senior_review.py** — Accepted ADRs surface as suggestions, deprecated as concerns. `relevant_adrs` count in metrics. 3 new tests.
+- **MT-20 Phase 8 COMPLETE (foundation)** — `senior_chat.py`: interactive CLI REPL + single-question mode. Runs full 7-submodule review, formats terminal output, generates LLM follow-up prompts. 16 new tests. LLM API wiring deferred.
+- **E2E validated** — Ran pipeline against 5 real CCA files. Blast radius, fp_filter, rule compliance all working. Verified test file fp=0.6, vendored fp=0.0.
+- **Gap analysis updated** — 7 of 10 gaps from S77 audit now closed (coherence, blast radius, patterns, ADR, CLI chat, rule compliance, cross-file reasoning partial).
+- **All S78 priority items + Phase 8 + root CLAUDE.md compliance done in one session.**
 
 **Matthew directives (S51-S79, permanent):**
 - All S51-S78 directives still active
 - S79: Matthew authorized testing/running the senior dev CLI chat for build purposes. Be extra careful, don't break anything.
 
 **Next (prioritized):**
-1. MT-20 Phase 8: Interactive CLI chat mode (senior dev as conversational agent)
+1. MT-20: Wire LLM (Anthropic API) into senior_chat.py for real follow-up conversations
 2. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker)
-3. MT-20: End-to-end validation of full review pipeline against real CCA files (test all 7 submodules working together)
-4. MT-20: Rule compliance for project-root CLAUDE.md (not just module-level)
+3. MT-20: senior_dev_hook.py format_context() rewrite — natural language advice, not metric dumps
+4. MT-20: Git history awareness in reviews (who changed this, when, why)
 5. MT-21: Hivemind coordination protocol refinement
 
 ---
