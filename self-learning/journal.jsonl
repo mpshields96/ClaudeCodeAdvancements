@@ -156,3 +156,9 @@
 {"type":"compaction","timestamp":"2026-03-20T02:18:42.709270+00:00","session_id":"test-session-001","trigger":"unknown","pre_zone":"unknown","pre_pct":0.0,"pre_turns":0,"compact_summary_len":35,"compaction_count":1}
 {"type":"compaction","timestamp":"2026-03-20T02:18:42.729336+00:00","session_id":"test-session-001","trigger":"unknown","pre_zone":"green","pre_pct":0,"pre_turns":0,"compact_summary_len":35,"compaction_count":2}
 {"type":"compaction","timestamp":"2026-03-20T02:18:42.749230+00:00","session_id":"test-session-001","trigger":"unknown","pre_zone":"green","pre_pct":0,"pre_turns":0,"compact_summary_len":35,"compaction_count":3}
+{"type":"compaction","timestamp":"2026-03-20T02:36:15.326974+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"type":"compaction","timestamp":"2026-03-20T02:36:15.346728+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"type":"compaction","timestamp":"2026-03-20T02:37:18.231473+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"type":"compaction","timestamp":"2026-03-20T02:37:18.251971+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"type":"compaction","timestamp":"2026-03-20T02:38:24.495996+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"type":"compaction","timestamp":"2026-03-20T02:38:24.516828+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
