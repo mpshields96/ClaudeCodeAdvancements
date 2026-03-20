@@ -137,7 +137,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | `tests/test_cross_chat_queue.py` | Bidirectional cross-chat JSONL message queue (44 tests) |
 | `tests/test_cca_internal_queue.py` | Desktop/Terminal coordination queue (41 tests) |
 
-CI/CD: `.github/workflows/tests.yml` — runs all 60 suites on push/PR against Python 3.10 + 3.12.
+CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against Python 3.10 + 3.12.
 
 ---
 
