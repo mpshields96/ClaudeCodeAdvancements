@@ -43,6 +43,10 @@
           {
             "type": "command",
             "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/agent-guard/hooks/credential_guard.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/agent-guard/bash_guard.py"
           }
         ]
       }
@@ -58,6 +62,10 @@
           {
             "type": "command",
             "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/self-learning/hooks/skillbook_inject.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/memory-system/hooks/capture_hook.py"
           }
         ]
       }

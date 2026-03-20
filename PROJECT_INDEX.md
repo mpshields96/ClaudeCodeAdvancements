@@ -27,16 +27,16 @@
 | Module | Path | Status | Tests |
 |--------|------|--------|-------|
 | Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit | 229 |
-| Spec System | `spec-system/` | SPEC-1-6 + spec_freshness.py | 115 |
+| Spec System | `spec-system/` | SPEC-1-6 + spec_freshness.py + plan_compliance | 153 |
 | Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
-| Agent Guard | `agent-guard/` | AG-1-8 + Edit Guard | 292 |
+| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard | 378 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 197 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 511 |
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 2150 tests (52 suites). All must pass before any work.**
+**Total: 2236 tests (54 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -75,6 +75,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `path_validator.py` — AG-7: Dangerous path + command detection (LIVE in hooks)
 - `ownership.py` — AG-2: File ownership manifest
 - `edit_guard.py` — AG-8: Edit retry prevention for structured table files (LIVE in hooks)
+- `bash_guard.py` — AG-9: Bash command safety guard (network, packages, processes, system, redirects, evasion) (LIVE in hooks)
 
 **usage-dashboard/** — Token + cost transparency
 - `usage_counter.py` — USAGE-1: CLI token/cost counter
@@ -129,11 +130,14 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | PreToolUse (all) | `agent-guard/path_validator.py` | Dangerous path/command detection |
 | PreToolUse (all) | `agent-guard/edit_guard.py` | Edit retry prevention on structured files |
 | PreToolUse (Bash) | `agent-guard/hooks/credential_guard.py` | Credential extraction guard |
+| PreToolUse (Bash) | `agent-guard/bash_guard.py` | Bash command safety (network, packages, processes, system) |
 | PostToolUse (all) | `context-monitor/hooks/meter.py` | Token counter |
 | PostToolUse (all) | `context-monitor/hooks/compact_anchor.py` | Anchor writes |
 | UserPromptSubmit | `spec-system/hooks/skill_activator.py` | Skill auto-activation |
 | UserPromptSubmit | `self-learning/hooks/skillbook_inject.py` | Strategy injection |
+| UserPromptSubmit | `memory-system/hooks/capture_hook.py` | Real-time memory capture |
 | Stop | `context-monitor/hooks/auto_handoff.py` | Block exit at critical |
+| Stop | `memory-system/hooks/capture_hook.py` | Session-end memory capture |
 | PostCompact | `context-monitor/hooks/post_compact.py` | Recovery + journal logging |
 
 ---

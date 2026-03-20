@@ -3,6 +3,54 @@
 
 ---
 
+## Session 67 — 2026-03-19
+
+**What changed:**
+- `KALSHI_ACTION_ITEMS.md` — NEW: Concise TL;DR bridge file for Kalshi main + research chats (top 3 items each)
+- `CCA_TO_POLYBOT.md` — UPDATED: REQUEST 10 response with verified GWU 2026-001 FLB data (psi coefficients)
+- `~/.local/bin/cca-loop` — NEW: Autonomous CCA session loop (tmux-based, interactive, start/stop/attach)
+- `~/Desktop/CCA Loop Start.command` + `CCA Loop Stop.command` — NEW: Desktop launchers
+- `SESSION_RESUME.md` — NEW: Machine-readable handoff file for loop continuity
+- `~/.claude/commands/cca-wrap.md` — UPDATED: Step 9 writes SESSION_RESUME.md
+- `.claude/settings.local.json` — UPDATED: Added capture_hook.py to UserPromptSubmit + bash_guard.py to PreToolUse Bash
+- `agent-guard/bash_guard.py` — NEW: AG-9 Bash command safety guard (86 tests). Blocks network, packages, processes, system mods, redirects, evasion
+- `agent-guard/tests/test_bash_guard.py` — NEW: 86 tests for bash_guard
+
+**Why:**
+- Kalshi cross-chat communication was one-way megadumps — ACTION_ITEMS.md fixes that
+- GWU citation needed verification before Kalshi bot could use FLB weakening data
+- Autonomous loop system enables supervised daytime session looping (MT-1 adjacent)
+- UserPromptSubmit capture enables real-time memory capture (not just session-end)
+- Bash guard closes the #1 safety gap for autonomous/unattended sessions
+
+**Tests:** 2236/2236 passing (54 suites, +86 new)
+
+**Lessons:**
+- Overnight autonomy is not safe with current trust model (regex hooks + --dangerously-skip-permissions)
+- Daytime supervised loops are the right middle ground
+- Start Kalshi support first each session to respect the 1/3 allocation
+
+---
+
+## Session 66 — 2026-03-19
+
+**What changed:**
+- `spec-system/plan_compliance.py` — NEW: Plan compliance reviewer (SPEC-6). 38 tests. Parses tasks.md, detects scope creep/future-task drift. ComplianceStatus: COMPLIANT/SCOPE_CREEP/FUTURE_TASK/NO_SPEC/NOT_APPROVED/NO_ACTIVE_TASK.
+- `spec-system/tests/test_plan_compliance.py` — NEW: Full TDD test suite for compliance reviewer.
+- `spec-system/hooks/validate.py` — Added spec_freshness integration: _check_freshness_context() detects stale specs when tasks are approved. Staleness warning injected as additionalContext (non-blocking).
+- `self-learning/journal.jsonl` — S65 session entries committed.
+
+**Why:**
+- plan_compliance.py addresses implementation drift problem — after tasks.md is approved, code silently strays outside planned scope. Conductor's automated 5-point review was identified as the strongest competitor feature (S64 Google Conductor research).
+- spec_freshness → validate.py wiring closes the feedback loop: staleness is now surfaced at implementation time, not just via standalone CLI.
+
+**Tests:** 2188/2188 passing (53 suites, +38 from plan_compliance)
+
+**Lessons:**
+- settings.local.json edits require user permission approval even with Write(*) in permissions — plan for this by flagging at session start rather than burning a task slot.
+
+---
+
 ## Session 64 — 2026-03-19
 
 **What changed:**

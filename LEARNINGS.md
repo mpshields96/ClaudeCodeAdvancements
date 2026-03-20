@@ -365,3 +365,21 @@
 - **Files:** ~/.claude/cross-chat/POLYBOT_TO_CCA.md, CCA_TO_POLYBOT.md
 
 ---
+
+### Kalshi support first, not last — Severity: 1 — Count: 1
+- **Anti-pattern:** Spending entire session on CCA infrastructure then running out of context before doing Kalshi cross-chat work. The 1/3 Kalshi allocation gets squeezed when it's scheduled last.
+- **Fix:** Start each session by checking Kalshi cross-chat requests FIRST (5-10 min), then proceed to CCA master tasks. Front-loading ensures the allocation is honored even if the session runs long.
+- **First seen:** 2026-03-19
+- **Last seen:** 2026-03-19
+- **Files:** SESSION_STATE.md, KALSHI_ACTION_ITEMS.md
+
+---
+
+### Regex-based safety hooks are not trustworthy for unattended operation — Severity: 1 — Count: 1
+- **Anti-pattern:** Assuming Python hooks parsing Bash commands with regex provide production-grade safety for overnight autonomous sessions. Regex can be bypassed by creative command construction.
+- **Fix:** Regex hooks are useful for daytime supervised sessions (catch obvious mistakes). For true unattended safety, need OS-level sandboxing (Docker/VM with read-only mounts, network firewall rules). Don't let hook coverage create false confidence.
+- **First seen:** 2026-03-19
+- **Last seen:** 2026-03-19
+- **Files:** agent-guard/bash_guard.py, memory: project_autonomous_loop.md
+
+---
