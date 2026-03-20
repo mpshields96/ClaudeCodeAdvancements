@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-20 (Session 80)
+# Last updated: 2026-03-20 (Session 81)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -31,14 +31,14 @@
 | Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit | 228 |
 | Spec System | `spec-system/` | SPEC-1-6 + spec_freshness + plan_compliance (wired into validate.py) | 158 |
 | Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
-| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM) | 872 |
+| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 864 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker + hook_profiler | 259 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 526 |
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 3186 tests (79 suites). All must pass before any work.**
+**Total: 3221 tests (80 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
