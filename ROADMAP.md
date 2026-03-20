@@ -192,8 +192,8 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | self-learning | 560 |
 | design-skills | 213 |
 | research | 86 |
-| root (integration + coordination) | 305 |
-| **Total** | **3614** |
+| root (integration + coordination) | 614 |
+| **Total** | **3636** |
 
 ---
 
