@@ -5,10 +5,11 @@
 
 ## Current State (as of Session 85 — 2026-03-20)
 
-**Phase:** Session 85 COMPLETE. Tests: 80 suites, 3293 total passing. Git: 3 commits. Self-grade: B+.
+**Phase:** Session 85 COMPLETE. Tests: 80 suites, 3293 total passing. Git: 4 commits. Self-grade: B+.
 
 **What was done this session (S85):**
 - **Dual-CCA command system built** — 6 new commands adopting Kalshi dual-chat pattern: `/cca-desktop`, `/cca-worker`, `/cca-auto-desktop`, `/cca-auto-worker`, `/cca-wrap-desktop`, `/cca-wrap-worker`. Each role has hardcoded behavior (no env var detection). Original `/cca-auto` + `/cca-wrap` preserved for solo sessions.
+- **Master command reference** — `~/.claude/COMMANDS.md` created and wired into global CLAUDE.md via `@COMMANDS.md`. Covers all projects (CCA, Kalshi, GSD, SuperClaude) with session configuration table. Loads in every Claude Code session.
 - **Fixed daily_snapshot test counter** — `_count_test_methods()` switched from string matching to AST-based parsing. Was reporting 3308 (false positives from `def test_` inside string literals), now correctly reports 3293.
 - **Reddit daily scan** — 2 new findings: Epstein archive context drift (Frontier 3), satellite tracker spec workflow (Frontier 2).
 - **Paper scanner Phase 2** — 4 new papers evaluated and logged (25 total). Rate-limited on 5th.
