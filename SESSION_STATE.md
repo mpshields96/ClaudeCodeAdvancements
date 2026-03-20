@@ -3,29 +3,26 @@
 
 ---
 
-## Current State (as of Session 78 — 2026-03-20)
+## Current State (as of Session 79 — 2026-03-20)
 
-**Phase:** Session 78 COMPLETE. Tests: 74 suites passing. Git: clean (7 commits this session).
+**Phase:** Session 79 IN PROGRESS. Tests: 77 suites, 3110 total passing. Git: 3 commits this session.
 
-**What was done this session (S78):**
-- **MT-20 Phase 7 COMPLETE** — `/senior-review` on-demand code review skill. `senior_review.py` engine orchestrates SATD + quality + effort into APPROVE/CONDITIONAL/RETHINK verdicts. Slash command with qualitative review guidance. 16 new tests.
-- **MT-20 Phase 9 IN PROGRESS** — `coherence_checker.py` with 3 check layers: (1) module structure (tests/, CLAUDE.md), (2) cross-file pattern consistency (docstrings, naming), (3) import dependency graph + blast radius. 18 tests. Integrated into senior_review.py — reviews now show which files depend on the reviewed module.
-- **End-to-end validated** — Ran against 3 real CCA files. satd_detector correctly shows 4 dependents. Known refinement: SATD false positives in detector source (fp_filter integration for future session).
-- **Memory documented** — S78 slow-build directive, senior dev gap updates (Phase 6-7 done, 9 started).
+**What was done this session (S79):**
+- **MT-20 Phase 9 COMPLETE** — CLAUDE.md rule extraction + compliance checking added to coherence_checker.py. `RuleExtractor` parses CLAUDE.md files to extract structured rules (stdlib-only, forbidden, general). `RuleComplianceCheck` validates code against those rules (e.g., flags external imports when module says "stdlib only"). 18 new tests (36 total in coherence checker suite).
+- **MT-20 fp_filter wired into senior_review.py** — Vendored files get early-exit approve with zero SATD. Test file non-HIGH findings filtered out. Prevents self-referential SATD false positives. `fp_confidence` metric added. 4 new tests.
+- **MT-20 ADR reader wired into senior_review.py** — ADRReader.discover() + find_relevant() run during reviews. Accepted ADRs surface as suggestions, deprecated ADRs as concerns. `relevant_adrs` count in metrics. 3 new tests.
+- **All 3 S78 priority items completed in one session** — senior_review.py now orchestrates 7 submodules: SATD, quality, effort, coherence, blast radius, fp_filter, ADR reader.
 
-**Matthew directives (S51-S78, permanent):**
-- All S51-S77 directives still active
-- S78: MT-20 + MT-21 must be built slowly over 5-6+ CCA chats. No deadline. Blueprint -> test -> code -> validate. Quality over speed. 24-48h real time is fine.
-- S78: Senior dev tool must feel like an actual Anthropic senior developer colleague — wisdom, authority, experience. Not a metrics dashboard.
-- S78: Prove 2-chat (desktop + 1 CLI) over 3-5 sessions before attempting 3-chat hivemind.
-- S78: One-time budget allowance for meatier skills if objectively helpful.
+**Matthew directives (S51-S79, permanent):**
+- All S51-S78 directives still active
+- S79: Matthew authorized testing/running the senior dev CLI chat for build purposes. Be extra careful, don't break anything.
 
 **Next (prioritized):**
-1. MT-20 Phase 9 completion: Add CLAUDE.md rule extraction + compliance checking to coherence checker (reads project rules, flags code that violates them)
-2. MT-20: Wire fp_filter into senior_review.py to reduce false positives (SATD markers in detector source code are self-referential, not real debt)
-3. MT-20: Integrate ADR reader into review flow (adr_reader.py exists but isn't wired in)
-4. MT-20 Phase 8: Interactive CLI chat mode (depends on hivemind Phase 2 validation)
-5. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker)
+1. MT-20 Phase 8: Interactive CLI chat mode (senior dev as conversational agent)
+2. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker)
+3. MT-20: End-to-end validation of full review pipeline against real CCA files (test all 7 submodules working together)
+4. MT-20: Rule compliance for project-root CLAUDE.md (not just module-level)
+5. MT-21: Hivemind coordination protocol refinement
 
 ---
 
