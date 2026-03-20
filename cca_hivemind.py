@@ -209,6 +209,78 @@ def generate_terminal_injection_script(
 end tell'''
 
 
+def list_terminal_windows() -> List[dict]:
+    """List Terminal.app windows with index, title, and activity hints.
+
+    Returns list of dicts with window_index, title, activity_hint.
+    Activity hints are parsed from the window title (e.g. "Python", "caffeinate").
+    """
+    script = '''tell application "Terminal"
+    set windowInfo to ""
+    repeat with i from 1 to count of windows
+        set w to window i
+        set windowInfo to windowInfo & i & "|" & name of w & linefeed
+    end repeat
+    return windowInfo
+end tell'''
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True, text=True, timeout=5
+        )
+        windows = []
+        for line in result.stdout.strip().splitlines():
+            parts = line.split("|", 1)
+            if len(parts) == 2:
+                idx = int(parts[0])
+                title = parts[1]
+                # Extract activity hint from title
+                # Title format: "user — ⠂ Claude Code — <activity> ◂ claude ..."
+                activity = "unknown"
+                if "Claude Code" in title:
+                    # Parse between "Claude Code — " and " ◂"
+                    m = re.search(r'Claude Code\s*[—-]\s*(.+?)\s*◂', title)
+                    if m:
+                        activity = m.group(1).strip()
+                windows.append({
+                    "window_index": idx,
+                    "title": title,
+                    "activity": activity,
+                    "is_claude": "claude" in title.lower(),
+                })
+        return windows
+    except (subprocess.TimeoutExpired, OSError):
+        return []
+
+
+def discover_windows() -> str:
+    """Discover and describe all Terminal.app windows.
+
+    Returns a formatted report. Window indices are EPHEMERAL —
+    they change as windows are opened, closed, or reordered.
+    Always re-discover before targeting a window.
+    """
+    windows = list_terminal_windows()
+    if not windows:
+        return "No Terminal windows found (may need accessibility permissions)."
+
+    lines = ["TERMINAL WINDOWS (indices are ephemeral — re-discover before each ping):"]
+    claude_count = 0
+    for w in windows:
+        marker = "*" if w["is_claude"] else " "
+        lines.append(
+            f"  {marker} Window {w['window_index']}: "
+            f"activity={w['activity']}"
+        )
+        if w["is_claude"]:
+            claude_count += 1
+
+    lines.append(f"\n{claude_count} Claude session(s) detected in Terminal.")
+    lines.append("Use 'hivemind ping <target> <window#>' to message a specific window.")
+    lines.append("IMPORTANT: Re-run 'discover' before each ping — window order shifts.")
+    return "\n".join(lines)
+
+
 # --- Queue Integration ---
 
 def send_directive(
@@ -339,6 +411,7 @@ def main():
         print("  assign <target> <task>    Queue a task assignment")
         print("  ping <target> <window#>   Queue message + poke Terminal window")
         print("  windows                   List Terminal.app windows for targeting")
+        print("  discover                  Identify Claude windows with activity hints")
         sys.exit(1)
 
     cmd = sys.argv[1]
@@ -411,6 +484,9 @@ def main():
             print(f"Pinged Terminal window {window}")
         except (subprocess.TimeoutExpired, OSError) as e:
             print(f"Ping failed (queue message still sent): {e}")
+
+    elif cmd == "discover":
+        print(discover_windows())
 
     elif cmd == "windows":
         # List Terminal.app windows

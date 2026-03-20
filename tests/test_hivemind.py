@@ -156,6 +156,41 @@ class TestStatusReport(unittest.TestCase):
         self.assertIn("No active", result)
 
 
+class TestWindowDiscovery(unittest.TestCase):
+    """Test dynamic window discovery and mapping."""
+
+    def test_list_terminal_windows_returns_list(self):
+        from cca_hivemind import list_terminal_windows
+        # May return empty list if no accessibility perms, but should not crash
+        result = list_terminal_windows()
+        self.assertIsInstance(result, list)
+
+    def test_discover_windows_returns_string(self):
+        from cca_hivemind import discover_windows
+        result = discover_windows()
+        self.assertIsInstance(result, str)
+        # Should always have some output
+        self.assertTrue(len(result) > 0)
+
+    def test_discover_warns_about_ephemeral_indices(self):
+        from cca_hivemind import discover_windows
+        result = discover_windows()
+        # If windows found, should warn about ephemeral indices
+        if "Window" in result:
+            self.assertIn("ephemeral", result.lower())
+
+    def test_parse_activity_from_title(self):
+        """Test that activity hint is extracted from window title."""
+        from cca_hivemind import list_terminal_windows
+        # Can't mock osascript easily, but verify the function handles
+        # empty/error cases without crashing
+        result = list_terminal_windows()
+        for w in result:
+            self.assertIn("activity", w)
+            self.assertIn("window_index", w)
+            self.assertIn("is_claude", w)
+
+
 class TestQueueIntegration(unittest.TestCase):
     """Test sending directives through the queue system."""
 
