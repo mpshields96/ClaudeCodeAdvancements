@@ -30,13 +30,13 @@
 | Spec System | `spec-system/` | SPEC-1-6 + spec_freshness + plan_compliance (wired into validate.py) | 158 |
 | Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
 | Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook) | 378 |
-| Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 197 |
+| Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker + hook_profiler | 259 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 526 |
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 2345 tests (56 suites). All must pass before any work.**
+**Total: 2465 tests (59 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -82,6 +82,8 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `otel_receiver.py` — USAGE-2: OTLP HTTP/JSON receiver
 - `hooks/cost_alert.py` — USAGE-3: PreToolUse cost threshold
 - `arewedone.py` — Structural completeness checker
+- `doc_drift_checker.py` — Doc accuracy verifier (test counts, file paths vs reality)
+- `hook_profiler.py` — Hook chain latency diagnostic
 
 **reddit-intelligence/** — Community signal research
 - `reddit_reader.py` — Fetches posts + all comments

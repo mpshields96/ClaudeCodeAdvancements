@@ -20,7 +20,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 1 — Persistent Cross-Session Memory -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (MEM-1 through MEM-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit). 229 tests passing.
+**Status:** ALL TASKS COMPLETE (MEM-1 through MEM-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit). 228 tests passing.
 
 **Module:** `memory-system/`
 
@@ -38,7 +38,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 2 — Spec-Driven Development System -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (SPEC-1 through SPEC-6 + spec_freshness + plan_compliance). 153 tests passing.
+**Status:** ALL TASKS COMPLETE (SPEC-1 through SPEC-6 + spec_freshness + plan_compliance). 158 tests passing.
 
 **Module:** `spec-system/`
 
@@ -97,7 +97,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 5 — Usage Transparency Dashboard -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (USAGE-1 through USAGE-3 + /arewedone). 197 tests passing.
+**Status:** ALL TASKS COMPLETE (USAGE-1 through USAGE-3 + /arewedone + doc_drift_checker + hook_profiler). 259 tests passing.
 
 **Module:** `usage-dashboard/`
 
@@ -122,7 +122,7 @@ This roadmap is grounded in:
 - `profiles.py` — MT-6: Subreddit profiles + registry
 - Commands: `/ri-scan`, `/ri-read`, `/ri-loop`
 
-### Self-Learning System (511 tests)
+### Self-Learning System (526 tests)
 - `journal.py` — structured JSONL event journal
 - `reflect.py` — pattern detection + strategy recommendations
 - `improver.py` — MT-10: YoYo self-building improvement loop
@@ -178,16 +178,16 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 
 | Module | Tests |
 |--------|-------|
-| memory-system | 229 |
-| spec-system | 153 |
+| memory-system | 228 |
+| spec-system | 158 |
 | context-monitor | 266 |
 | agent-guard | 378 |
-| usage-dashboard | 197 |
+| usage-dashboard | 259 |
 | reddit-intelligence | 316 |
-| self-learning | 511 |
+| self-learning | 526 |
 | design-skills | 124 |
 | research | 86 |
-| **Total** | **2260** |
+| **Total** | **2465** |
 
 ---
 
