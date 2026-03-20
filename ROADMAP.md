@@ -1,6 +1,6 @@
 # ClaudeCodeAdvancements — Master Roadmap
 # Created: 2026-02-19 (Session 1)
-# Last updated: 2026-03-20 (Session 82)
+# Last updated: 2026-03-20 (Session 91)
 # This is the authoritative feature backlog. Update status as items complete.
 
 ---
@@ -189,11 +189,11 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | agent-guard | 889 |
 | usage-dashboard | 261 |
 | reddit-intelligence | 361 |
-| self-learning | 526 |
+| self-learning | 560 |
 | design-skills | 213 |
 | research | 86 |
 | root (integration + coordination) | 305 |
-| **Total** | **3293** |
+| **Total** | **3614** |
 
 ---
 
