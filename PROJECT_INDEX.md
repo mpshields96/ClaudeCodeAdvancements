@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-19 (Session 63)
+# Last updated: 2026-03-19 (Session 64)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -26,8 +26,8 @@
 
 | Module | Path | Status | Tests |
 |--------|------|--------|-------|
-| Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 | 216 |
-| Spec System | `spec-system/` | SPEC-1-6 COMPLETE | 90 |
+| Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit | 229 |
+| Spec System | `spec-system/` | SPEC-1-6 + spec_freshness.py | 115 |
 | Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
 | Agent Guard | `agent-guard/` | AG-1-8 + Edit Guard | 292 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 COMPLETE | 197 |
@@ -36,7 +36,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 2112 tests (51 suites). All must pass before any work.**
+**Total: 2150 tests (52 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -55,6 +55,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `commands/` — `/spec:requirements`, `/spec:design`, `/spec:tasks`, `/spec:implement`, `/spec:design-review`
 - `hooks/validate.py` — PreToolUse spec guard (warn/block)
 - `hooks/skill_activator.py` — UserPromptSubmit auto-activation
+- `spec_freshness.py` — Spec rot/staleness detector (FRESH/STALE/RETIRED)
 
 **context-monitor/** — Context health + compaction guard
 - `hooks/meter.py` — PostToolUse token counter

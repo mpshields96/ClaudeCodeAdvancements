@@ -3,21 +3,16 @@
 
 ---
 
-## Current State (as of Session 63 — 2026-03-19)
+## Current State (as of Session 64 — 2026-03-19)
 
-**Phase:** Session 63 COMPLETE. Tests: 2112/2112 passing (51 suites). Git: 4 commits.
+**Phase:** Session 64 COMPLETE. Tests: 2150/2150 passing (52 suites). Git: 4 commits.
 **What's done this session:**
-1. **capture_hook.py v2.0 — FTS5 backend upgrade** (MEM-2). Replaced JSON file storage with MemoryStore. Stop hook writes via create_memory() with BM25 dedup. Memory type encoded as tag prefix (type:decision). 79 tests (+4 net new).
-2. **Capture hook wired LIVE** in settings.local.json as Stop hook. Verified end-to-end: message -> extraction -> FTS5 write -> correct tags/type/confidence. Frontier 1 memory pipeline now fully live (write + read + management).
-3. **Reddit daily scan** — 4 findings logged. Key: spec-driven development discussion (49 comments, validates phased SDD, identifies spec rot gap), claude-worktrace auto-capture (parallel F1 implementation, uses API calls vs our free local extraction), shanraisshan meta-repo (7 CC frameworks documented).
+1. **UserPromptSubmit real-time memory capture** added to capture_hook.py. Detects "remember that"/"always"/"never"/"rule:"/"non-negotiable:" in user prompts and writes to FTS5 MemoryStore immediately — available within same session instead of waiting for Stop hook. Overlap detection prevents duplicate extraction. 13 new tests (92 total capture_hook).
+2. **spec_freshness.py built** (Frontier 2 enhancement). Spec rot/staleness detector — compares modification times of spec files vs code files, flags stale specs, supports explicit RETIRED status for completed intent documents. CLI + JSON output. 25 tests. New module in spec-system.
+3. **Google Conductor deep-read** — Full competitive analysis of Google's Gemini CLI spec-driven extension. Identified gaps (no staleness detection, no retirement, token-heavy) and advantages (automated 5-point review, git-aware revert, team config). Logged to FINDINGS_LOG.
+4. **QuantVPS research** — Claude Code VPS hosting found ($59.99/mo, NY datacenter, <0.52ms CME). Logged as REFERENCE-PERSONAL for Kalshi. SSRN still 403-blocked.
 
-**MILESTONE: Frontier 1 Memory System is FULLY LIVE.**
-- Write path: Stop hook -> keyword extraction -> dedup -> FTS5 MemoryStore
-- Read path: MCP server -> FTS5 BM25 search -> tool results
-- Management: CLI tool (stats/search/list)
-- Zero external dependencies, zero API cost per session.
-
-**Matthew directives (S51-S63, permanent):**
+**Matthew directives (S51-S64, permanent):**
 - ROI = make money. Financial, not philosophical.
 - CCA dual mission: 50% Kalshi financial support + 50% self-improvement
 - Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
@@ -27,8 +22,9 @@
 - VA hospital wifi blocks Reddit/SSRN — queue URL-dependent work for hotspot (S57)
 - Hooks must not cause CLI errors — fail silently with valid JSON on all edge cases (S58)
 - Build vs research: 75-80% build, 20-30% research. Daily scan 15 min max (S62)
+- **S65 should be dedicated to Kalshi main + research chat support** (S64 directive)
 
-**Next:** (1) Deep-read Google Conductor (Frontier 2 competitor). (2) Retry blocked URLs on hotspot (SSRN, quantvps). (3) Build research-outcomes tracker (close Kalshi ROI loop). (4) Investigate spec rot mitigation (identified from Reddit discussion — specs diverge from code, become harmful).
+**Next:** (1) Wire UserPromptSubmit capture hook LIVE in settings.local.json. (2) Add plan compliance review to spec system (inspired by Conductor's strongest feature). (3) Retry SSRN on hotspot. (4) Wire spec_freshness into spec guard hook (staleness warning before implementation).
 
 ---
 
