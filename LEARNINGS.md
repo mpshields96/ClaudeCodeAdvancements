@@ -466,3 +466,10 @@
 - **First seen:** 2026-03-20 (Session 78 — coherence_checker missed code_quality_scorer's import of satd_detector)
 - **Last seen:** 2026-03-20
 - **Files:** agent-guard/coherence_checker.py ImportDependencyCheck
+
+### fp_filter must run BEFORE counting, not after — Severity: 1 — Count: 1
+- **Anti-pattern:** Running SATD detection, counting results, then filtering. Metrics show pre-filter counts (inflated for test/vendored files).
+- **Fix:** Filter SATD findings BEFORE computing satd_total and satd_high metrics. Vendored files should show satd_total=0, not satd_total=3.
+- **First seen:** 2026-03-20 (Session 79 — initial fp_filter integration had wrong order)
+- **Last seen:** 2026-03-20
+- **Files:** agent-guard/senior_review.py

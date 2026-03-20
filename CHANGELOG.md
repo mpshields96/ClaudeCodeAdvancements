@@ -1406,3 +1406,25 @@ CLI chat 2:
 - lsof-based process detection catches GUI/Electron apps that ps-argv misses
 
 ---
+
+## Session 79 — 2026-03-20
+
+**What changed:**
+- `agent-guard/coherence_checker.py` — Added `RuleExtractor` (parses CLAUDE.md rule sections) + `RuleComplianceCheck` (validates code against rules, e.g., stdlib-only import checking). Project-root CLAUDE.md rules now apply to all modules.
+- `agent-guard/senior_review.py` — Wired `FPFilter` (vendored=skip, test=reduced), `ADRReader` (discover + relevance matching), added `fp_confidence` and `relevant_adrs` to metrics. Now orchestrates 7 submodules.
+- `agent-guard/senior_chat.py` — NEW: Interactive CLI chat mode (Phase 8). ReviewContext builder, terminal-formatted output, LLM prompt generator, argparse CLI with REPL + single-question modes.
+- `.claude/commands/senior-review.md` — Enhanced output template with blast radius, fp_confidence, ADRs, coherence issues.
+- `SENIOR_DEV_GAP_ANALYSIS.md` — Updated: 7/10 gaps closed in S78-S79, remaining gaps require LLM integration.
+
+**Why:**
+- Completing all 3 S78 priority items (Phase 9 completion, fp_filter wiring, ADR wiring)
+- Building Phase 8 (interactive CLI chat) — Matthew's vision of senior dev as conversational colleague
+- Closing the gap between "linter with a name" and actual senior developer experience
+
+**Tests:** 3129/3129 passing (78 suites, 44 new tests this session)
+
+**Lessons:**
+- fp_filter integration order matters: must run BEFORE SATD counting, not after, to get correct totals
+- Project-root CLAUDE.md rules serve as a "global policy" layer that module rules can't override
+
+---
