@@ -95,12 +95,17 @@ SYSTEM_PATTERNS = [
 ]
 
 # === Destructive outside-project commands (BLOCK) ===
-# These only block when targeting paths OUTSIDE the project
+# Static patterns that are always dangerous regardless of project.
+# Project-aware rm -rf check is done dynamically in BashGuard.check() using self._project_root.
 DESTRUCTIVE_PATTERNS = [
-    (r"\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|-rf|-fr)\s+/(?!Users/matthewshields/Projects/ClaudeCodeAdvancements)", "rm -rf outside project"),
     (r"\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|-rf|-fr)\s+(~|\$HOME|\.\.\/\.\.)", "rm -rf home or parent escape"),
     (r"\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|-rf|-fr)\s+/$", "rm -rf root"),
 ]
+
+# Pattern used for dynamic rm -rf outside-project check in BashGuard.check()
+_RM_RF_ABSOLUTE = re.compile(
+    r"\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|-rf|-fr)\s+(/[^\s;|&'\"]*)"
+)
 
 # === Financial API domains (BLOCK) ===
 FINANCIAL_DOMAINS = [
@@ -176,10 +181,21 @@ class BashGuard:
             if re.search(pattern, full_command):
                 return {"level": "BLOCK", "reason": desc, "category": "system"}
 
-        # Destructive commands outside project
+        # Destructive commands outside project (static: root, home, parent escape)
         for pattern, desc in DESTRUCTIVE_PATTERNS:
             if re.search(pattern, full_command):
                 return {"level": "BLOCK", "reason": desc, "category": "destructive"}
+
+        # Dynamic: rm -rf on absolute path outside the project root
+        rm_rf_match = _RM_RF_ABSOLUTE.search(full_command)
+        if rm_rf_match:
+            target = rm_rf_match.group(2).strip("'\"")
+            if self._is_outside_project(target):
+                return {
+                    "level": "BLOCK",
+                    "reason": f"rm -rf outside project: {target}",
+                    "category": "destructive",
+                }
 
         # Evasion patterns
         for pattern, desc in EVASION_PATTERNS:
@@ -317,10 +333,10 @@ def main():
     if not command:
         sys.exit(0)
 
-    project_root = os.environ.get(
-        "CCA_PROJECT_ROOT",
+    # Use CCA_PROJECT_ROOT env var if set, else cwd (so behavior is correct in any project).
+    # CCA path is the last-resort fallback for backward compatibility.
+    project_root = os.environ.get("CCA_PROJECT_ROOT") or os.getcwd() or \
         "/Users/matthewshields/Projects/ClaudeCodeAdvancements"
-    )
 
     guard = BashGuard(project_root=project_root)
     output = guard.hook_output(command)
