@@ -114,10 +114,12 @@ Note any uncommitted changes or work-in-progress from a previous session.
 
 ```bash
 python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/chat_detector.py status
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/crash_recovery.py status
 ```
 
 If duplicates are detected, include a WARNING line in the briefing.
 Stale processes (no chat ID) should also be flagged.
+If crashed workers are detected, run `python3 crash_recovery.py run` to auto-recover orphaned scopes.
 
 ---
 
