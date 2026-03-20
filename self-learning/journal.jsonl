@@ -172,3 +172,5 @@
 {"type":"compaction","timestamp":"2026-03-20T03:53:52.475044+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
 {"type":"compaction","timestamp":"2026-03-20T03:54:47.052599+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
 {"type":"compaction","timestamp":"2026-03-20T03:54:47.074902+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"type":"compaction","timestamp":"2026-03-20T03:58:38.862112+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"type":"compaction","timestamp":"2026-03-20T03:58:38.884634+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}

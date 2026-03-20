@@ -45,3 +45,8 @@ jobs:
             exit 1
           fi
           echo "All test suites passed."
+
+      - name: Check doc drift (PROJECT_INDEX + ROADMAP accuracy)
+        run: |
+          python3 usage-dashboard/doc_drift_checker.py --exit-code
+          echo "Doc drift check passed."

@@ -3,18 +3,19 @@
 
 ---
 
-## Current State (as of Session 68 — 2026-03-19)
+## Current State (as of Session 69 — 2026-03-19)
 
-**Phase:** Session 68 COMPLETE. Tests: 2323/2323 passing (55 suites). Git: clean (6 commits this session).
-**What's done this session:**
-1. **S67 files committed** — bash_guard.py (AG-9), UserPromptSubmit capture hook, session docs all committed.
-2. **plan_compliance.py wired into validate.py** — Integrated as additional check in PreToolUse tasks_approved branch. Scope creep + future-task drift detection. 5 new tests.
-3. **ROADMAP.md updated to S68** — Was 43 sessions stale (S25). All MT statuses corrected, test counts updated (800 -> 2323), AG-4-9 added to Frontier 4 table.
-4. **validate.py WIRED AS LIVE HOOK** — Was built in SPEC-5 but never in settings.local.json. Now fires on every Write/Edit. Spec guard + plan compliance + freshness. Confirmed working (spec-guard warnings visible).
-5. **hook_profiler.py built** (32 tests) — Hook chain latency diagnostic. All 15 hooks 16-24ms. PreToolUse chain 128ms total. usage-dashboard module.
-6. **cross_chat_queue.py built** (44 tests) — Bidirectional JSONL message queue for Kalshi chats. Send/unread/ack/list/summary. Seeded with 6 existing action items. Solves the "zero items picked up" discovery problem.
+**Phase:** Session 69 COMPLETE. Tests: 2465/2465 passing (59 suites). Git: clean.
+**What's done this session (S69 + cca-loop iterations):**
+1. **bash_guard.py made globally safe** — Removed hardcoded CCA path from DESTRUCTIVE_PATTERNS, dynamic rm-rf check using os.getcwd(). Now project-root-aware for use in any project context.
+2. **bash_guard + credential_guard wired into GLOBAL ~/.claude/settings.json** — All Claude sessions on this machine are now protected, including cca-loop sessions. Senior dev gap closed.
+3. **SESSION_RESUME.md corrected** — Was stale at S67; updated to current state for loop handoffs.
+4. **CI/CD added (.github/workflows/tests.yml)** — GitHub Actions for all 59 suites on push/PR, Python 3.10 + 3.12. Senior dev gap #1 closed.
+5. **Hook chain integration test built** (22 tests) — tests/test_hook_chain_integration.py covers all 15 hooks across 6 event types: existence, JSON validity, empty stdin, latency budget, cross-hook interference. Senior dev gap #2 closed.
+6. **cca_internal_queue.py built** — Desktop/Terminal coordination queue for cross-session message passing (see tests/test_cca_internal_queue.py).
+7. **doc_drift_checker.py built** (30 tests, usage-dashboard/) — Automated doc accuracy verification. Detects when PROJECT_INDEX.md/ROADMAP.md test counts, file paths drift from reality. Senior dev gap #3 closed. First run corrected 6 stale counts across ROADMAP.md and PROJECT_INDEX.md.
 
-**Matthew directives (S51-S68, permanent):**
+**Matthew directives (S51-S69, permanent):**
 - ROI = make money. Financial, not philosophical.
 - CCA dual mission: 50% Kalshi financial support + 50% self-improvement
 - Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
@@ -29,7 +30,7 @@
 - Optimal setup: cca-loop + manual chat (not 2 manual CCA chats) for ADHD workflow (S68)
 - Senior dev gaps noted as motivation: CI/CD, hook chain integration tests, session ID normalization (S68)
 
-**Next:** (1) CI/CD — GitHub Actions for test suite on push (senior dev gap #1). (2) Hook chain integration test (senior dev gap #2). (3) Wire cross_chat_queue context into Kalshi chat startup. (4) Retry SSRN on hotspot. (5) Continue CCA self-improvement tasks.
+**Next:** (1) Wire doc_drift_checker into CI/CD as a check (--exit-code flag). (2) Wire cross_chat_queue context into Kalshi chat startup. (3) MT-17 Phase 5: Website templates. (4) Continue CCA self-improvement tasks (MT-14 Phase 2+3, MT-8 research). (5) SSRN retry on hotspot.
 
 ---
 
