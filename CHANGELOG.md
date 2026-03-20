@@ -3,6 +3,30 @@
 
 ---
 
+## Session 62 — 2026-03-19
+
+**What changed:**
+- `memory-system/memory_store.py` — NEW: SQLite+FTS5 storage backend (464 LOC, 80 tests). BM25 relevance search, atomic transactions, WAL mode, TTL cleanup.
+- `memory-system/mcp_server.py` — REWRITTEN: v2.0.0. Swapped JSON file backend to MemoryStore (FTS5). O(n) substring -> BM25-ranked search. Project filtering via SQL.
+- `memory-system/tests/test_mcp_server.py` — REWRITTEN: 28 tests for FTS5 backend (was 29 for JSON).
+- `FINDINGS_LOG.md` — 27 new entries (daily scan + algotrading + batch reviews + Channels + TokToken)
+- `self-learning/BATCH_ANALYSIS_S62.md` — NEW: Trace analysis of 10 most recent sessions. Avg 73.0/100.
+
+**Why:**
+- FTS5 migration was P0 from EXTERNAL_COMPARISON.md (S60) — the single highest-ROI improvement for Frontier 1
+- MCP server swap completes the read side of the FTS5 migration
+- Reddit reviews were Matthew-driven (saved posts during the day)
+- Batch trace analysis tracks whether edit_guard.py (S58) is reducing retries (it is: 64%->40%)
+
+**Tests:** 2108/2108 passing (51 suites)
+
+**Lessons:**
+- Build vs research ratio should be 75-80% build / 20-30% research. Daily scan 15 min max.
+- APF is 32.1% — 68% of findings are REFERENCE/SKIP. Research has diminishing returns per session.
+- macOS grep lacks -P flag — use Python re module for PCRE extraction in bash scripts.
+
+---
+
 ## Session 60 — 2026-03-19
 
 **What changed:**
