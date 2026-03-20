@@ -134,12 +134,25 @@ Same as Phase 1, plus:
 | Recovery success | 100% | Clean state after deliberate crash |
 | Queue throughput | 50+ msgs/session | Message count in queue file |
 
+### Phase 2 Validation Log
+
+| Session | Date | Worker | Task Type | Verdict | Notes |
+|---------|------|--------|-----------|---------|-------|
+| S91 #1 | 2026-03-20 | cli1 | Multi-file (3 imports, 22 tests) | PASS | phase2_validator.py: imports crash_recovery + chat_detector + cca_internal_queue. Worker built tests first, committed clean. |
+| S91 #2 | 2026-03-20 | cli1 | Multi-task + code review | PASS | Worker auto-picked up second task from inbox (multi-task loop working). Delivered substantive code review with 3 findings. |
+
+**Phase 2 infrastructure built this session:**
+- `chat_detector.py` (31 tests) — duplicate detection + pre-launch checks
+- `crash_recovery.py` (15 tests) — orphaned scope detection + auto-release
+- Multi-task worker loop with keep-busy fallback
+- Terminal close on wrap + stale worker detection
+
 ### Gate to Phase 3
 ALL of the following must be true:
-- [ ] Phase 1 gate fully passed
-- [ ] 3+ sessions of hardened 2-chat operation without failures
+- [x] Phase 1 gate fully passed (S90: 3/3 PASS, Matthew confirmation pending)
+- [ ] 3+ sessions of hardened 2-chat operation without failures (1/3 — S91 #1-#2 PASS)
 - [ ] At least 1 successful crash recovery test
-- [ ] Worker handles multi-file tasks without conflicts
+- [x] Worker handles multi-file tasks without conflicts (S91 #1: 3-import task PASS)
 - [ ] Matthew confirms: "ready for a second worker"
 
 ---
