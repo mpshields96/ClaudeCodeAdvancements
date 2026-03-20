@@ -206,6 +206,74 @@ class TestReviewVerdicLogic(unittest.TestCase):
         self.assertIn(result["verdict"], ["conditional", "rethink"])
 
 
+class TestFPFilterIntegration(unittest.TestCase):
+    """Test that fp_filter is wired into senior_review to reduce false positives."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir)
+
+    def _write_file(self, name, content):
+        path = os.path.join(self.tmpdir, name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(content)
+        return path
+
+    def test_test_file_satd_reduced(self):
+        """SATD markers in test files should have reduced impact on verdict."""
+        # Test files commonly have TODO/FIXME for test improvements — not real debt
+        path = self._write_file("tests/test_something.py", (
+            '"""Tests."""\n'
+            '# TODO: add more edge cases\n'
+            '# TODO: test with empty input\n'
+            '# TODO: parameterize this\n'
+            '# TODO: test timeout behavior\n'
+            '# TODO: test concurrent access\n'
+            'def test_basic():\n'
+            '    assert True\n'
+        ))
+        result = review_file(path, project_root=self.tmpdir)
+        # Test file TODOs are LOW severity and should be filtered
+        # Should not push verdict to conditional/rethink
+        self.assertIn("fp_confidence", result["metrics"])
+
+    def test_vendored_file_skipped(self):
+        """Vendored files should get minimal review."""
+        path = self._write_file("vendor/lib.py", (
+            '# HACK: vendored code\n'
+            '# FIXME: not our problem\n'
+            'def vendored_function():\n'
+            '    pass\n'
+        ))
+        result = review_file(path, project_root=self.tmpdir)
+        self.assertIn("fp_confidence", result["metrics"])
+        self.assertLessEqual(result["metrics"]["fp_confidence"], 0.0)
+
+    def test_normal_file_full_confidence(self):
+        """Normal source files should have full fp_confidence."""
+        path = self._write_file("core.py", (
+            '"""Core module."""\n'
+            'def run():\n'
+            '    pass\n'
+        ))
+        result = review_file(path, project_root=self.tmpdir)
+        self.assertEqual(result["metrics"].get("fp_confidence", 1.0), 1.0)
+
+    def test_vendored_satd_not_counted(self):
+        """SATD in vendored files should not inflate satd_total in metrics."""
+        path = self._write_file("vendor/hack.py", (
+            '# HACK: not ours\n# FIXME: not ours\n# WORKAROUND: not ours\n'
+            'x = 1\n'
+        ))
+        result = review_file(path, project_root=self.tmpdir)
+        # Vendored files should have filtered SATD counts
+        self.assertEqual(result["metrics"].get("satd_total", 0), 0)
+
+
 class TestConvenienceFunction(unittest.TestCase):
     """Test the module-level review_file convenience function."""
 

@@ -30,6 +30,7 @@ from satd_detector import SATDDetector, SATDLevel
 from code_quality_scorer import CodeQualityScorer
 from effort_scorer import EffortScorer
 from coherence_checker import CoherenceChecker, ImportDependencyCheck
+from fp_filter import FPFilter
 
 # Code file extensions we perform deep analysis on
 _CODE_EXTENSIONS = {
@@ -95,6 +96,7 @@ class SeniorReview:
         self._satd = SATDDetector()
         self._quality = CodeQualityScorer()
         self._effort = EffortScorer()
+        self._fp_filter = FPFilter()
 
     def review(self, file_path: str, content: Optional[str] = None) -> ReviewResult:
         """Review a file and produce structured feedback.
@@ -145,12 +147,30 @@ class SeniorReview:
         concerns = []
         suggestions = []
 
+        # 0. FP confidence — determines how much we trust findings from this file
+        fp_confidence = self._fp_filter.confidence(file_path)
+
+        # Vendored files get minimal review — skip deep analysis
+        if self._fp_filter.should_skip(file_path):
+            loc = len([l for l in content.splitlines() if l.strip()])
+            return ReviewResult(
+                file_path=file_path,
+                verdict="approve",
+                metrics={"loc": loc, "type": "vendored", "fp_confidence": 0.0,
+                         "satd_total": 0, "satd_high": 0},
+            )
+
         # 1. Quality score
         quality_report = self._quality.score(content, file_path=file_path)
         loc = quality_report.loc
 
-        # 2. SATD markers
-        satd_markers = self._satd.scan_file_content(content, file_path=file_path)
+        # 2. SATD markers (filtered by fp_filter)
+        raw_satd_markers = self._satd.scan_file_content(content, file_path=file_path)
+        # Convert to dicts for fp_filter, then back
+        satd_dicts = [{"severity": m.level.name, "line": m.line, "text": m.text, "marker": m}
+                      for m in raw_satd_markers]
+        filtered_dicts = self._fp_filter.filter_findings(satd_dicts, file_path)
+        satd_markers = [d["marker"] for d in filtered_dicts]
         high_satd = [m for m in satd_markers if m.level == SATDLevel.HIGH]
 
         # 3. Effort score
@@ -197,6 +217,7 @@ class SeniorReview:
             "coherence_issues": len(coherence_issues),
             "blast_radius": blast_radius.get("direct_dependents", 0),
             "blast_files": blast_radius.get("files", []),
+            "fp_confidence": fp_confidence,
         }
 
         # Generate concerns from analysis
