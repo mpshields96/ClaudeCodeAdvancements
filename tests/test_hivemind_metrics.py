@@ -183,6 +183,54 @@ class TestFormatForInit(unittest.TestCase):
         self.assertIn("2 failure", line)
 
 
+class TestQueueThroughput(unittest.TestCase):
+    """Tests for Phase 2 queue throughput tracking."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp.close()
+        self.metrics = HivemindMetrics(path=self.tmp.name)
+
+    def tearDown(self):
+        os.unlink(self.tmp.name)
+
+    def test_record_session_with_throughput(self):
+        self.metrics.record_session("S92", 1, 0, 2, 0, 0.08, queue_throughput=67)
+        with open(self.tmp.name) as f:
+            entry = json.loads(f.readline())
+        self.assertEqual(entry["queue_throughput"], 67)
+
+    def test_record_session_without_throughput_defaults_none(self):
+        self.metrics.record_session("S92", 1, 0, 2, 0, 0.08)
+        with open(self.tmp.name) as f:
+            entry = json.loads(f.readline())
+        self.assertIsNone(entry.get("queue_throughput"))
+
+    def test_get_stats_includes_throughput(self):
+        self.metrics.record_session("S91", 1, 0, 2, 0, 0.08, queue_throughput=45)
+        self.metrics.record_session("S92", 1, 0, 3, 0, 0.07, queue_throughput=67)
+        stats = self.metrics.get_stats()
+        self.assertEqual(stats["avg_queue_throughput"], 56.0)
+        self.assertEqual(stats["max_queue_throughput"], 67)
+        self.assertTrue(stats["phase2_throughput_met"])  # 67 >= 50
+
+    def test_get_stats_throughput_not_met(self):
+        self.metrics.record_session("S91", 1, 0, 2, 0, 0.08, queue_throughput=20)
+        stats = self.metrics.get_stats()
+        self.assertFalse(stats["phase2_throughput_met"])
+
+    def test_get_stats_no_throughput_data(self):
+        self.metrics.record_session("S90", 1, 0, 2, 0, 0.08)
+        stats = self.metrics.get_stats()
+        self.assertEqual(stats["avg_queue_throughput"], 0.0)
+        self.assertFalse(stats["phase2_throughput_met"])
+
+    def test_format_for_init_includes_throughput(self):
+        self.metrics.record_session("S91", 1, 0, 2, 0, 0.08, queue_throughput=67)
+        line = self.metrics.format_for_init()
+        self.assertIn("67", line)
+
+
 class TestDefaultPath(unittest.TestCase):
     def test_default_path_is_jsonl(self):
         m = HivemindMetrics()

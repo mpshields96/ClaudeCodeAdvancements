@@ -38,6 +38,7 @@ class HivemindMetrics:
         task_completions: int,
         worker_regressions: int,
         overhead_ratio: float,
+        queue_throughput: Optional[int] = None,
     ) -> None:
         """Append one session record to the JSONL file."""
         entry = {
@@ -48,6 +49,7 @@ class HivemindMetrics:
             "task_completions": task_completions,
             "worker_regressions": worker_regressions,
             "overhead_ratio": overhead_ratio,
+            "queue_throughput": queue_throughput,
         }
         os.makedirs(os.path.dirname(self.path) or ".", exist_ok=True)
         with open(self.path, "a", encoding="utf-8") as fh:
@@ -83,6 +85,9 @@ class HivemindMetrics:
             avg_overhead_ratio      float
             failure_rate            float  (failures / sessions, 0.0 if no sessions)
             regression_rate         float  (regressions / task_completions, 0.0 if none)
+            avg_queue_throughput    float  (Phase 2: avg msgs/session, 0.0 if no data)
+            max_queue_throughput    int    (Phase 2: highest msgs in a single session)
+            phase2_throughput_met   bool   (Phase 2: any session >= 50 msgs)
             last_session            dict | None
         """
         records = self._load()
@@ -96,6 +101,9 @@ class HivemindMetrics:
                 "avg_overhead_ratio": 0.0,
                 "failure_rate": 0.0,
                 "regression_rate": 0.0,
+                "avg_queue_throughput": 0.0,
+                "max_queue_throughput": 0,
+                "phase2_throughput_met": False,
                 "last_session": None,
             }
 
@@ -116,6 +124,17 @@ class HivemindMetrics:
             else 0.0
         )
 
+        # Queue throughput (Phase 2 metric)
+        throughputs = [
+            r["queue_throughput"] for r in records
+            if r.get("queue_throughput") is not None
+        ]
+        avg_queue_throughput = (
+            sum(throughputs) / len(throughputs) if throughputs else 0.0
+        )
+        max_queue_throughput = max(throughputs) if throughputs else 0
+        phase2_throughput_met = max_queue_throughput >= 50
+
         return {
             "total_sessions": total_sessions,
             "total_task_completions": total_task_completions,
@@ -124,6 +143,9 @@ class HivemindMetrics:
             "avg_overhead_ratio": avg_overhead_ratio,
             "failure_rate": failure_rate,
             "regression_rate": regression_rate,
+            "avg_queue_throughput": avg_queue_throughput,
+            "max_queue_throughput": max_queue_throughput,
+            "phase2_throughput_met": phase2_throughput_met,
             "last_session": records[-1],
         }
 
@@ -138,12 +160,17 @@ class HivemindMetrics:
         tasks = stats["total_task_completions"]
         failures = stats["total_coordination_failures"]
         overhead_pct = stats["avg_overhead_ratio"] * 100
+        max_throughput = stats["max_queue_throughput"]
 
         session_word = "session" if n == 1 else "sessions"
         task_word = "task" if tasks == 1 else "tasks"
         failure_word = "failure" if failures == 1 else "failures"
 
-        return (
+        base = (
             f"Hivemind: {n} {session_word}, {tasks} {task_word}, "
             f"{failures} {failure_word}, overhead {overhead_pct:.1f}%"
         )
+        if max_throughput > 0:
+            met = "MET" if stats["phase2_throughput_met"] else "NOT MET"
+            base += f", queue peak {max_throughput} msgs ({met})"
+        return base
