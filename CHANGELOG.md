@@ -3,6 +3,33 @@
 
 ---
 
+## Session 86 — 2026-03-20
+
+**What changed:**
+- **Hivemind Phase 1 validation: 2/3-5 tests passed** — First real dual-chat tests. Desktop assigned tasks, workers (cli1) claimed scope, built code, committed, reported back. Zero coordination failures.
+- **launch_worker.sh** — One-command dual-chat launcher (opens Terminal tab with CCA_CHAT_ID, starts `claude /cca-worker`)
+- **cca_internal_queue.py** — Fixed scope dedup (broadcast claims counted 3x), added (sender, subject) deduplication
+- **cca_comm.py** — Added `assign` alias for `task`, stale task auto-clearing on new assignment, `shutdown` command for clean worker termination
+- **cca-auto-worker.md** — Workers check inbox twice before stopping (task chaining), SHUTDOWN message detection
+- **cca-wrap.md + cca-wrap-desktop.md** — Auto-shutdown workers on Desktop wrap (prevents lingering CLI chats)
+- **Worker commits (S87, S88)** — cli1 autonomously built `tests/test_hivemind_validation.py` (3 tests) and `self-learning/tests/test_journal.py` (34 tests, 411 LOC)
+- **Strategic vision documented** — Matthew's 5-phase hivemind vision, $250/mo financial sustainability goal, advancement tip tracker need. All in memory system.
+
+**Why:**
+- Hivemind Phase 1 is the critical path to proving 2-chat > 1-chat for productivity
+- Stale task bug (test #3) revealed a real design gap — fixed same session
+- Worker shutdown mechanism prevents resource waste (Matthew's explicit request)
+
+**Tests:** 3332/3332 passing (82 suites, +2 from workers)
+
+**Lessons:**
+- Broadcast messages (scope claims) create N-1 queue entries — deduplicate by (sender, subject)
+- Workers need stale inbox clearing before new task assignment
+- Workers don't auto-chain to new tasks after completing one — added double-check with wait
+- grep -P doesn't work on macOS — use `grep -o` with `sed` instead
+
+---
+
 ## Session 85 — 2026-03-20
 
 **What changed:**

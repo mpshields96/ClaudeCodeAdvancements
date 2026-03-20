@@ -5,27 +5,33 @@
 
 ## Current State (as of Session 86 — 2026-03-20)
 
-**Phase:** Session 86 IN PROGRESS. Tests: 82 suites, 3330 total passing. Git: 5 commits (S86) + 2 worker commits (S87, S88).
+**Phase:** Session 86 COMPLETE. Tests: 82 suites, 3332 total passing. Git: 7 commits (S86) + 2 worker commits (S87, S88). Self-grade: A-.
 
 **What was done this session (S86):**
 - **Hivemind Phase 1: 2 of 3-5 validation tests PASSED** — Both trivial and real tasks succeeded with zero coordination failures.
   - Test 1 (trivial): Worker built 3 env var detection tests. Clean scope claim/release cycle.
-  - Test 2 (real): Worker built `self-learning/tests/test_journal.py` (34 tests, 411 LOC covering full journal.py API). Exceeded target of 15-20 tests.
+  - Test 2 (real): Worker built `self-learning/tests/test_journal.py` (34 tests, 411 LOC covering full journal.py API). Exceeded target.
+  - Test 3 (informative failure): Stale task in inbox confused new worker. Led to stale task auto-clearing fix.
 - **launch_worker.sh** — One-command launcher: opens Terminal tab with CCA_CHAT_ID=cli1, starts `claude /cca-worker`
 - **Scope dedup fix** — `get_active_scopes()` counted broadcast claims 3x. Fixed with (sender, subject) dedup.
-- **Assign alias** — `cca_comm.py assign` = alias for `task` (matches docs)
+- **Stale task fix** — `cmd_task` now auto-clears target inbox before new assignment. Workers no longer pick up completed tasks.
+- **Shutdown command** — `python3 cca_comm.py shutdown cli1` sends CRITICAL shutdown signal. Workers check for SHUTDOWN and exit cleanly.
+- **Assign alias** — `cca_comm.py assign` = alias for `task`
 - **Worker task chaining fix** — Workers now check inbox twice (with 30s wait) before stopping
-- **Strategic vision documented** — Matthew's full hivemind vision (5 phases), financial sustainability goal ($250/mo self-sustaining), long-term investment vision. All written to memory.
+- **Strategic vision documented** — Matthew's full 5-phase hivemind vision, $250/mo sustainability goal, long-term investment vision. Written to memory + PROJECT_INDEX + MASTER_TASKS.
 - **Worker commits**: S87 (test_hivemind_validation.py, 3 tests), S88 (test_journal.py, 34 tests)
 
 **Matthew directives (S51-S86, permanent):**
 - All S51-S85 directives still active
-- S86: Automate dual-chat process, verify it works without error
+- S86: Automate dual-chat, don't rush hivemind (spread over several chats), build advancement tip tracker, persist wrap assessments, ensure worker shutdown mechanism
+- S86 STRATEGIC: Kalshi bot must self-sustain $250/mo within 2-3 weeks. All CCA work serves this.
 
 **Next (prioritized):**
-1. Hivemind Phase 1: Continue validation — run 2-4 more dual-chat sessions with progressively harder tasks
-2. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
-3. MT-9 Phase 3: Supervised trial of autonomous scanning
+1. Hivemind Phase 1: 1-3 more validation tests with harder tasks (test #3 needs retry with stale fix)
+2. Build advancement tip tracker (Matthew explicit S86 request — persistence for tips across all chats)
+3. Persist wrap assessments to file (currently only in conversation output)
+4. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
+5. MT-9 Phase 3: Supervised trial of autonomous scanning
 4. MT-12 Phase 2: Continue paper scanner across remaining domains
 5. Reddit intelligence: follow up on trending repos from MT-11 scan
 

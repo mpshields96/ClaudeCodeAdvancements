@@ -19,13 +19,22 @@ All must pass before updating docs. Count total tests.
 
 ---
 
-## Step 2 — Check worker inbox
+## Step 2 — Check worker inbox + shutdown workers
 
 ```bash
 python3 cca_comm.py inbox
 ```
 
 Incorporate any worker completion summaries into the session record.
+
+Then **shut down all active workers** so they don't linger:
+```bash
+python3 cca_comm.py shutdown cli1
+python3 cca_comm.py shutdown cli2
+```
+
+This sends CRITICAL SHUTDOWN signals. Workers will run /cca-wrap-worker and exit.
+Workers that are already stopped will simply have unread shutdown messages (harmless).
 
 ---
 
