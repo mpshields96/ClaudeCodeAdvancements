@@ -136,7 +136,7 @@ This roadmap is grounded in:
 - `trade_reflector.py` — MT-10 Phase 3A: Kalshi trade pattern analysis (5 detectors)
 - Trading domain schema (MT-0 Phase 1): bet_placed, bet_outcome, market_research, edge_discovered, edge_rejected, strategy_shift
 
-### Design Skills (124 tests)
+### Design Skills (163 tests)
 - `report_generator.py` — CCA data collector + Typst renderer CLI
 - `slide_generator.py` — Presentation slide generator (16:9 PDF)
 - `dashboard_generator.py` — Self-contained HTML dashboard generator
@@ -185,9 +185,9 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | usage-dashboard | 259 |
 | reddit-intelligence | 316 |
 | self-learning | 526 |
-| design-skills | 124 |
+| design-skills | 163 |
 | research | 86 |
-| **Total** | **2484** |
+| **Total** | **2563** |
 
 ---
 
