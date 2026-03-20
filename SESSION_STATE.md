@@ -3,24 +3,26 @@
 
 ---
 
-## Current State (as of Session 84 — 2026-03-20)
+## Current State (as of Session 85 — 2026-03-20)
 
-**Phase:** Session 84 COMPLETE. Tests: 80 suites, 3293 total passing (+16). Git: 3 commits. Self-grade: B+.
+**Phase:** Session 85 COMPLETE. Tests: 80 suites, 3293 total passing. Git: 3 commits. Self-grade: B+.
 
-**What was done this session (S84):**
-- **MT-14 Phase 3 COMPLETE: Wire rescan into autonomous pipeline** — `execute_rescan_stale()` method on AutonomousScanner (auto-rescans all stale subs), `rescan-all` CLI command with --max-age/--json, `--include-rescan` flag on daily command. +16 tests (101 total autonomous_scanner, 361 total reddit-intelligence). MT-14 marked DONE.
-- **Reddit daily scan** — r/ClaudeCode hot 15 posts scanned. 1 new finding: cross-model review workflow (REFERENCE for MT-20 + Frontier 2).
-- **Doc drift fix** — Corrected test counts 3277->3293 across PROJECT_INDEX.md and ROADMAP.md. Zero drift confirmed.
+**What was done this session (S85):**
+- **Dual-CCA command system built** — 6 new commands adopting Kalshi dual-chat pattern: `/cca-desktop`, `/cca-worker`, `/cca-auto-desktop`, `/cca-auto-worker`, `/cca-wrap-desktop`, `/cca-wrap-worker`. Each role has hardcoded behavior (no env var detection). Original `/cca-auto` + `/cca-wrap` preserved for solo sessions.
+- **Fixed daily_snapshot test counter** — `_count_test_methods()` switched from string matching to AST-based parsing. Was reporting 3308 (false positives from `def test_` inside string literals), now correctly reports 3293.
+- **Reddit daily scan** — 2 new findings: Epstein archive context drift (Frontier 3), satellite tracker spec workflow (Frontier 2).
+- **Paper scanner Phase 2** — 4 new papers evaluated and logged (25 total). Rate-limited on 5th.
 
-**Matthew directives (S51-S84, permanent):**
-- All S51-S83 directives still active
+**Matthew directives (S51-S85, permanent):**
+- All S51-S84 directives still active
+- S85: Build dual-CCA commands mirroring Kalshi main/research pattern
 
 **Next (prioritized):**
-1. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker) — BLOCKED on Matthew
+1. Hivemind Phase 1: First real 2-chat validation — run `/cca-desktop` + `/cca-worker` in parallel
 2. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
 3. MT-9 Phase 3: Supervised trial of autonomous scanning
-4. MT-12 Phase 2: Run paper scanner across all 4 domains
-5. Reddit intelligence: scan for new posts, follow up on trending repos
+4. MT-12 Phase 2: Continue paper scanner across remaining domains (rate-limited this session)
+5. Reddit intelligence: follow up on trending repos from MT-11 scan
 
 ---
 

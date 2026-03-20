@@ -3,6 +3,26 @@
 
 ---
 
+## Session 85 — 2026-03-20
+
+**What changed:**
+- **Dual-CCA command system** — 6 new slash commands (`cca-desktop`, `cca-worker`, `cca-auto-desktop`, `cca-auto-worker`, `cca-wrap-desktop`, `cca-wrap-worker`) mirroring the proven Kalshi main/research pattern. Desktop coordinates + owns shared docs; worker receives tasks + commits code.
+- **daily_snapshot.py fix** — `_count_test_methods()` switched to AST parsing. Previous string matching counted `def test_` inside triple-quoted strings as real tests (3308 false vs 3293 actual).
+- **Reddit daily scan** — 2 new FINDINGS_LOG entries (Epstein archive context drift, satellite tracker).
+- **Paper scanner** — 4 new papers evaluated (25 total): Darwin Godel Machine, SEW, Code Graph Model, Trae Agent.
+
+**Why:**
+- Dual-CCA commands are the missing piece for MT-21 Hivemind Phase 1 validation. The Kalshi dual-chat works well because each chat has dedicated commands — CCA now has the same.
+- Snapshot counter fix prevents future false doc drift alerts.
+
+**Tests:** 3293/3293 passing (80 suites)
+
+**Lessons:**
+- `def test_` string matching is unreliable for counting tests — test files contain mock test content as string literals. AST parsing is the correct approach.
+- The Kalshi dual-chat pattern works because of dedicated commands per role, not env var detection. Hardcoded behavior per command is cleaner than conditional logic in shared commands.
+
+---
+
 ## Session 84 — 2026-03-20
 
 **What changed:**
