@@ -3,6 +3,50 @@
 
 ---
 
+## Session 72 — 2026-03-20
+
+**What changed (3-chat hivemind sprint — MT-20 Senior Dev Agent MVP):**
+
+Desktop chat (coordinator):
+- `agent-guard/senior_dev_hook.py` — NEW: PostToolUse orchestrator (48 tests). Runs SATD + effort + quality on Write/Edit. Graceful degradation for optional submodules.
+- `agent-guard/code_quality_scorer.py` — NEW: 5-dimension quality scoring 0-100 (38 tests). debt_density, complexity, size, documentation, naming.
+- `tests/test_hook_chain_integration.py` — UPDATED: Added senior_dev_hook + queue_hook to canary (17 hooks).
+- `.claude/settings.local.json` — UPDATED: senior_dev_hook wired as PostToolUse, queue_hook wired as PostToolUse + UserPromptSubmit.
+- `PROJECT_INDEX.md`, `ROADMAP.md`, `MASTER_TASKS.md` — UPDATED: test counts, module entries, MT-20 status.
+
+CLI chat 1:
+- `agent-guard/effort_scorer.py` — NEW: PR effort scoring 1-5 scale (42 tests). Atlassian/Cisco thresholds.
+
+CLI chat 2:
+- `agent-guard/fp_filter.py` — NEW: False positive filter (40 tests). Test file, vendored, low-confidence filtering.
+- `agent-guard/review_classifier.py` — NEW: CRScore-style category classification (43 tests). 6 categories with weighted scores.
+- `agent-guard/tech_debt_tracker.py` — NEW: SATD trend analysis over time (27 tests).
+
+**Why:**
+- MT-20 (Senior Dev Agent MVP) — all 6 modules complete: SATD detector, effort scorer, FP filter, review classifier, code quality scorer, hook orchestrator
+- First successful 3-chat hivemind sprint — validated file ownership + queue coordination model
+- Established hivemind wrap protocol: Desktop coordinator owns all doc updates, CLI chats commit + queue
+
+**Tests:** 2849/2849 passing (70 suites)
+
+**Lessons:**
+- Hivemind wrap protocol is critical — 3 chats editing SESSION_STATE simultaneously causes merge conflicts
+- Desktop coordinator must own all shared doc updates; CLI chats commit code + send queue summaries
+- CLI<->Desktop bidirectional communication needs improvement (CLI chats lack easy send-to-desktop commands)
+- regex pattern ordering matters — review_classifier had 5 test failures because "fix" matched before style/logging patterns
+
+---
+
+## Session 71 — 2026-03-20
+
+**What changed (CLI chat 1):**
+- `agent-guard/satd_detector.py` — COMPLETED: SATD marker detection PostToolUse hook (44 tests)
+- `agent-guard/effort_scorer.py` — NEW: PR effort scoring 1-5 scale (42 tests)
+
+**Tests:** 2649/2649 passing (65 suites)
+
+---
+
 ## Session 70 — 2026-03-20
 
 **What changed (Desktop chat — 3 parallel chats this session):**

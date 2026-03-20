@@ -29,14 +29,14 @@
 | Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit | 228 |
 | Spec System | `spec-system/` | SPEC-1-6 + spec_freshness + plan_compliance (wired into validate.py) | 158 |
 | Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
-| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook) + MT-20 Senior Dev MVP (6 modules: SATD+Effort+FPFilter+Classifier+CodeQuality+Hook) | 676 |
+| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook) + MT-20 Senior Dev MVP (7 modules + ADR Reader) | 707 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker + hook_profiler | 259 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 526 |
 | Design Skills | `design-skills/` | MT-17 Phase 5 COMPLETE (website_generator) | 163 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 2849 tests (70 suites). All must pass before any work.**
+**Total: 2880 tests (71 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -80,6 +80,9 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `effort_scorer.py` — MT-20 Phase 2: PR effort scoring (1-5 scale, Atlassian/Cisco research)
 - `senior_dev_hook.py` — MT-20 Phase 3: PostToolUse orchestrator (runs SATD + effort + quality on Write/Edit) (LIVE in hooks)
 - `code_quality_scorer.py` — MT-20 Phase 3: Aggregate quality scoring (0-100, A-F, 5 dimensions)
+- `fp_filter.py` — MT-20 Phase 4: False positive filter (test files, vendored, low-confidence)
+- `review_classifier.py` — MT-20 Phase 4: CRScore-style review category classification (6 categories)
+- `tech_debt_tracker.py` — MT-20 Phase 5: SATD trend analysis over time
 
 **usage-dashboard/** — Token + cost transparency
 - `usage_counter.py` — USAGE-1: CLI token/cost counter

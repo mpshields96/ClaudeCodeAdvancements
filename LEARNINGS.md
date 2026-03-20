@@ -399,3 +399,21 @@
 - **Files:** self-learning/paper_scanner.py
 
 ---
+
+### Hivemind wrap: only coordinator should edit shared docs — Severity: 2 — Count: 1
+- **Anti-pattern:** Multiple hivemind chats independently editing SESSION_STATE.md, CHANGELOG.md, PROJECT_INDEX.md — causes merge conflicts, duplicate entries, and inconsistent state
+- **Fix:** Desktop coordinator owns ALL shared doc updates. CLI chats: run tests, commit code, send wrap summary via `cca_internal_queue.py send --from terminal --to desktop --subject "WRAP: ..."`. Desktop aggregates into one coherent wrap.
+- **First seen:** 2026-03-20 (Session 72 — first hivemind wrap)
+- **Last seen:** 2026-03-20
+- **Files:** SESSION_STATE.md, CHANGELOG.md, LEARNINGS.md, PROJECT_INDEX.md, cca_internal_queue.py
+
+---
+
+### Regex pattern ordering matters in classifiers — Severity: 1 — Count: 1
+- **Anti-pattern:** review_classifier.py had "fix" in bugfix pattern matching before style/logging patterns, causing "fix style" to classify as bugfix instead of style
+- **Fix:** Order regex patterns from most specific to least specific. Remove overly broad terms like bare "fix" from patterns; use strong signals only (crash, null, exception, error).
+- **First seen:** 2026-03-20 (Session 72 — review_classifier 5 test failures)
+- **Last seen:** 2026-03-20
+- **Files:** agent-guard/review_classifier.py
+
+---
