@@ -44,11 +44,14 @@ HOOK_CHAINS = {
     "PostToolUse_all": [
         ("context-monitor/hooks/meter.py", "context meter"),
         ("context-monitor/hooks/compact_anchor.py", "compact anchor"),
+        ("agent-guard/senior_dev_hook.py", "senior dev hook"),
+        ("queue_hook.py", "queue hook (post)"),
     ],
     "UserPromptSubmit": [
         ("spec-system/hooks/skill_activator.py", "skill activator"),
         ("self-learning/hooks/skillbook_inject.py", "skillbook inject"),
         ("memory-system/hooks/capture_hook.py", "memory capture"),
+        ("queue_hook.py", "queue hook (prompt)"),
     ],
     "Stop": [
         ("context-monitor/hooks/auto_handoff.py", "auto handoff"),
