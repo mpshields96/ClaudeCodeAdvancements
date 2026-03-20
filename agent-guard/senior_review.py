@@ -29,7 +29,7 @@ if _MODULE_DIR not in sys.path:
 from satd_detector import SATDDetector, SATDLevel
 from code_quality_scorer import CodeQualityScorer
 from effort_scorer import EffortScorer
-from coherence_checker import CoherenceChecker
+from coherence_checker import CoherenceChecker, ImportDependencyCheck
 
 # Code file extensions we perform deep analysis on
 _CODE_EXTENSIONS = {
@@ -158,6 +158,7 @@ class SeniorReview:
 
         # 4. Coherence check (if project_root is set)
         coherence_issues = []
+        blast_radius = {}
         if self.project_root and os.path.isdir(self.project_root):
             try:
                 coherence = CoherenceChecker(project_root=self.project_root)
@@ -165,6 +166,23 @@ class SeniorReview:
                 coherence_issues = report.issues
             except Exception:
                 pass  # Coherence check is advisory, never blocks
+
+            # 5. Blast radius — what depends on this file?
+            try:
+                dep_checker = ImportDependencyCheck()
+                # Find sibling .py files in same directory
+                file_dir = os.path.dirname(os.path.abspath(file_path))
+                sibling_files = [
+                    os.path.join(file_dir, f)
+                    for f in os.listdir(file_dir)
+                    if f.endswith(".py") and not f.startswith("__")
+                ]
+                if sibling_files:
+                    graph = dep_checker.build_graph(sibling_files)
+                    module_name = os.path.basename(file_path).replace(".py", "")
+                    blast_radius = dep_checker.blast_radius(module_name, graph)
+            except Exception:
+                pass  # Blast radius is advisory
 
         # Build metrics dict
         metrics = {
@@ -177,6 +195,8 @@ class SeniorReview:
             "satd_high": len(high_satd),
             "complexity": effort_result.complexity,
             "coherence_issues": len(coherence_issues),
+            "blast_radius": blast_radius.get("direct_dependents", 0),
+            "blast_files": blast_radius.get("files", []),
         }
 
         # Generate concerns from analysis
@@ -187,6 +207,15 @@ class SeniorReview:
             relevant = [i for i in coherence_issues if file_basename in i]
             for issue in relevant:
                 concerns.append(f"Coherence: {issue}")
+
+        # Blast radius concern
+        br_count = blast_radius.get("direct_dependents", 0)
+        if br_count >= 3:
+            br_files = ", ".join(blast_radius.get("files", [])[:5])
+            concerns.append(
+                f"High blast radius: {br_count} files depend on this module ({br_files}). "
+                f"Changes here ripple outward — test dependents after modifying."
+            )
 
         # Size concerns
         if loc > _LOC_VERY_LARGE_FILE:
