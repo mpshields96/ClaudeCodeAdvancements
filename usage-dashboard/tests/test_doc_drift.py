@@ -448,5 +448,60 @@ class TestTopLevelTestPaths(unittest.TestCase):
             self.assertEqual(result, 3)
 
 
+class TestRootModuleFilePaths(unittest.TestCase):
+    """Test that 'root' module files are checked at project root, not root/ subdir."""
+
+    def test_root_module_files_found_at_project_root(self):
+        """Files documented under **root/** should be checked at project root."""
+        from doc_drift_checker import run_drift_check
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            # Create PROJECT_INDEX.md with a root module section
+            (root / "PROJECT_INDEX.md").write_text(textwrap.dedent("""\
+                ## Module Map
+
+                | Module | Path | Status | Tests |
+                |--------|------|--------|-------|
+
+                **Total: 0 tests (0 suites). All must pass.**
+
+                **root/** \u2014 Root-level coordination
+                - `resume_generator.py` \u2014 auto-generate resume
+                - `cca_comm.py` \u2014 communication helper
+            """))
+            (root / "ROADMAP.md").write_text("")
+            # Create the files at project root (NOT in root/ subdir)
+            (root / "resume_generator.py").write_text("x = 1\n")
+            (root / "cca_comm.py").write_text("x = 1\n")
+
+            report = run_drift_check(root, [])
+            # Should NOT report these as missing
+            missing_names = [os.path.basename(m) for m in report.missing_files]
+            self.assertNotIn("resume_generator.py", missing_names)
+            self.assertNotIn("cca_comm.py", missing_names)
+
+    def test_root_module_missing_file_detected(self):
+        """Files documented under root/ that don't exist should still be reported."""
+        from doc_drift_checker import run_drift_check
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            (root / "PROJECT_INDEX.md").write_text(textwrap.dedent("""\
+                ## Module Map
+
+                | Module | Path | Status | Tests |
+                |--------|------|--------|-------|
+
+                **Total: 0 tests (0 suites). All must pass.**
+
+                **root/** \u2014 Root-level coordination
+                - `actually_missing.py` \u2014 does not exist
+            """))
+            (root / "ROADMAP.md").write_text("")
+
+            report = run_drift_check(root, [])
+            missing_names = [os.path.basename(m) for m in report.missing_files]
+            self.assertIn("actually_missing.py", missing_names)
+
+
 if __name__ == "__main__":
     unittest.main()

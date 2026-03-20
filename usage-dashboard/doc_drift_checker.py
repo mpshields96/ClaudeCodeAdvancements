@@ -415,7 +415,11 @@ def run_drift_check(
     # Check file paths from PROJECT_INDEX
     module_files = extract_module_files(pi_content)
     for mod_name, files in module_files.items():
-        mod_dir = project_root / mod_name
+        # "root" module means files live at project root, not in root/ subdir
+        if mod_name == "root":
+            mod_dir = project_root
+        else:
+            mod_dir = project_root / mod_name
         _, missing = check_paths_exist(files, mod_dir)
         for m in missing:
             report.missing_files.append(f"{mod_name}/{m}")
