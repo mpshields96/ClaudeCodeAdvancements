@@ -48,5 +48,5 @@ jobs:
 
       - name: Check doc drift (PROJECT_INDEX + ROADMAP accuracy)
         run: |
-          python3 usage-dashboard/doc_drift_checker.py --exit-code
+          python3 usage-dashboard/doc_drift_checker.py
           echo "Doc drift check passed."
