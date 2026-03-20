@@ -477,11 +477,11 @@ class TestLoadSaveQueue(unittest.TestCase):
 
 class TestMakeId(unittest.TestCase):
     def test_id_starts_with_cca(self):
-        id1 = ciq._make_id("desktop", "test")
+        id1 = ciq._make_id("desktop", "cli1", "test")
         self.assertTrue(id1.startswith("cca_"))
 
     def test_ids_are_unique(self):
-        ids = {ciq._make_id("desktop", f"test_{i}") for i in range(10)}
+        ids = {ciq._make_id("desktop", "cli1", f"test_{i}") for i in range(10)}
         self.assertEqual(len(ids), 10)
 
 
