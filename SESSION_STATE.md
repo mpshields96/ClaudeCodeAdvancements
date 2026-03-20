@@ -5,21 +5,22 @@
 
 ## Current State (as of Session 82 — 2026-03-20)
 
-**Phase:** Session 82 IN PROGRESS. Tests: 80 suites, 3248 total passing. Git: 6 commits this session.
+**Phase:** Session 82 COMPLETE. Tests: 80 suites, 3248 total passing. Git: 7 commits. Self-grade: B+ (strong security + doc quality work, but top 2 priorities blocked on Matthew).
 
 **What was done this session (S82):**
 - **ROADMAP.md doc drift fix** — Test counts updated (+399 uncounted: agent-guard 633→864, design-skills 163→213, added root tests row 305). Added MT-20/MT-21 to MT table. Session history S72-S82.
-- **Reddit intelligence scan** — 7 new findings from r/ClaudeCode hot. Key: community independently using file-based inter-agent communication (validates MT-21), Claude bypasses bash guards via script interpreters (validates AG-9 gap).
+- **Reddit intelligence scan** — 7 new findings from r/ClaudeCode hot + /new. Key: community independently using file-based inter-agent communication (validates MT-21), Claude bypasses bash guards via script interpreters (validates AG-9 gap).
 - **AG-9 gap closure: cp + script interpreter evasion** — cp destination outside project now blocked (was only mv). python3 -c, perl -e, ruby -e, node -e, pwsh -c blocked as evasion vectors. +17 tests.
 - **AG-9 gap closure: dd/tee overwrite vectors** — dd of= and tee to outside-project paths now blocked. +8 tests.
 - **doc_drift_checker root module false positive fix** — Root-level files no longer reported as missing. +2 tests. Zero drift achieved.
+- **MASTER_TASKS priority scores recalculated** — S77→S82 decay applied. MT-10 (18.0) leads.
 
 **Matthew directives (S51-S82, permanent):**
 - All S51-S81 directives still active
 
 **Next (prioritized):**
-1. MT-20 E2E validation: Set ANTHROPIC_API_KEY and run `python3 agent-guard/tests/test_senior_chat_e2e.py -v` (~$0.01 with Haiku)
-2. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker) — all prep complete
+1. MT-20 E2E validation: Set ANTHROPIC_API_KEY and run `python3 agent-guard/tests/test_senior_chat_e2e.py -v` (~$0.01 with Haiku) — BLOCKED on Matthew
+2. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker) — BLOCKED on Matthew
 3. MT-21: Hivemind coordination protocol refinement
 4. Regular CCA work: reddit scans, other MTs from backlog
 

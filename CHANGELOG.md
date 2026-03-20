@@ -3,6 +3,30 @@
 
 ---
 
+## Session 82 — 2026-03-20
+
+**What changed:**
+- ROADMAP.md — Fixed massive doc drift: agent-guard 633→889, design-skills 163→213, added root tests row (305), total corrected to 3248. Added MT-20/MT-21 to MT table. Session history S72-S82.
+- agent-guard/bash_guard.py — cp destination outside project now blocked (was only mv). Script interpreter evasion vectors blocked: python3 -c, perl -e, ruby -e, node -e, pwsh -c. dd of= and tee to outside-project paths blocked.
+- agent-guard/tests/test_bash_guard.py — +25 tests (TestCopyOutsideProject, TestScriptInterpreterEvasion, TestDdTeeEvasion). 86→111 tests.
+- usage-dashboard/doc_drift_checker.py — Root module false positive fix: "root/" files now resolved against project root, not root/ subdir.
+- usage-dashboard/tests/test_doc_drift.py — +2 tests (TestRootModuleFilePaths). 30→32 tests.
+- FINDINGS_LOG.md — 7 new entries from r/ClaudeCode hot scan.
+- MASTER_TASKS.md — Priority scores recalculated S77→S82.
+
+**Why:**
+- Reddit intelligence revealed real AG-9 evasion vectors (script interpreters, cp, dd, tee) — fixed immediately.
+- Doc drift had grown to +399 uncounted tests over 14 sessions — now zero drift.
+- Priority decay recalculation keeps task ordering accurate.
+
+**Tests:** 3248/3248 passing (80 suites). 27 new tests this session.
+
+**Lessons:**
+- Reddit scans that find security gaps are highest-ROI autonomous work — immediate fix cycle.
+- Doc drift compounds silently — the 399-test gap accumulated over S68-S82 without detection.
+
+---
+
 ## Session 81 — 2026-03-20
 
 **What changed:**
