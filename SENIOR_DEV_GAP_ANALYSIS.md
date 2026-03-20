@@ -194,5 +194,44 @@ Total: 6-9 sessions across multiple CCA chats. No rush.
 
 ---
 
+## Progress Update (S78-S79, 2026-03-20)
+
+### Gaps Closed
+
+| Gap from Table | Status | How Closed |
+|----------------|--------|------------|
+| Architectural coherence | CLOSED | coherence_checker.py: module structure, pattern consistency, import dependency graph |
+| Blast radius assessment | CLOSED | ImportDependencyCheck.blast_radius() wired into senior_review |
+| Pattern enforcement | CLOSED | RuleExtractor + RuleComplianceCheck: reads CLAUDE.md rules, flags violations |
+| Cross-file reasoning | PARTIALLY CLOSED | Import dependency graph shows what depends on what; blast radius in reviews |
+| Interactive communication | CLOSED (foundation) | senior_chat.py: CLI REPL with review context + LLM prompt generation |
+| ADR integration | CLOSED | adr_reader wired into senior_review — surfaces accepted/deprecated ADRs |
+| Context-aware review | PARTIALLY CLOSED | Project-root + module CLAUDE.md rules extracted and checked |
+
+### Phases Completed
+
+| Phase | Status | Session |
+|-------|--------|---------|
+| Phase 6 (hook output rewrite) | DONE | S78 |
+| Phase 7 (/senior-review skill) | DONE | S78 |
+| Phase 8 (interactive CLI chat) | DONE (foundation) | S79 |
+| Phase 9 (architectural coherence) | DONE | S78-S79 |
+
+### What's Still Missing
+
+| Senior Developer Function | Status | Next Step |
+|--------------------------|--------|-----------|
+| Intent verification | GAP | Requires LLM reasoning, not just static analysis |
+| Context-aware review (full) | PARTIAL | Needs git history awareness, not just CLAUDE.md rules |
+| Trade-off judgment | GAP | Requires LLM integration in senior_chat |
+| Knowledge transfer check | GAP | "Can someone else maintain this?" requires semantic analysis |
+| senior_chat LLM wiring | FOUNDATION | Prompt generation ready, needs Anthropic API call |
+
+### Module Count
+
+senior_review.py now orchestrates 7 submodules: SATD, quality, effort, coherence (with rule compliance), blast radius, fp_filter, ADR reader. Plus senior_chat.py for interactive mode. Total: ~2,500 LOC, ~812 tests.
+
+---
+
 *Written: Session 77, 2026-03-20*
-*Author: CCA S77 (fresh eyes, objective audit)*
+*Updated: Session 79, 2026-03-20 — S78+S79 progress*
