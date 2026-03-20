@@ -1297,3 +1297,23 @@ CLI chat 2:
 - For subprocess tests: use `os.path.join(os.path.dirname(os.path.abspath(__file__)), "script.py")` for the script path, not a relative string, to avoid cwd-relative resolution errors.
 
 ---
+## Session 74 (cli1) — 2026-03-20
+
+**What changed:**
+- `~/.local/bin/cca-loop`: Added `CCA_LOOP_SESSION_TIMEOUT` (default 90min) — `wait_for_claude_exit()` tracks elapsed, sends `/cca-wrap` at limit, 60s grace, returns code 3
+- `~/.local/bin/cca-loop`: Added `notify_error()` — POSTs to ntfy.sh `cca-loop-alerts` on timeout (curl only, no new deps)
+- `~/.local/bin/cca-loop`: Hardened `check_live_cca_sessions()` with `lsof +D CCA_DIR` to detect Desktop Claude Code app sessions that don't appear in ps argv
+- `tests/test_loop_health.py`: Converted from pytest to stdlib unittest (54 tests, project convention)
+
+**Why:**
+- cca-loop sessions running indefinitely if Claude got stuck; needed automatic timeout + alert
+- Desktop Claude Code app wasn't detected by ps-based dedup, allowing duplicate sessions
+- test_loop_health.py used pytest which is not installed; caused test suite failure
+
+**Tests:** 2980/2980 passing (73 suites)
+
+**Lessons:**
+- Always write tests with `unittest` — pytest is not installed in this project environment
+- lsof-based process detection catches GUI/Electron apps that ps-argv misses
+
+---

@@ -36,7 +36,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 COMPLETE (website_generator) | 163 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 2897 tests (72 suites). All must pass before any work.**
+**Total: 2980 tests (73 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -111,7 +111,9 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 
 **root/** — Loop hardening + coordination
 - `resume_generator.py` — cca-loop hardening: auto-generate SESSION_RESUME.md from SESSION_STATE when stale (17 tests)
-- `cca_internal_queue.py` — Desktop/Terminal coordination queue (41 tests)
+- `cca_internal_queue.py` — Desktop/Terminal coordination queue (69 tests)
+- `cca_comm.py` — Structured cca-loop session communication (scope claim, wrap summary, task assignment)
+- `loop_health.py` — Per-session health tracking for cca-loop (grade, test counts, regression detection, 54 tests)
 - `queue_injector.py` — Cross-chat queue context injection hook (19 tests)
 
 **research/** — R&D and tools

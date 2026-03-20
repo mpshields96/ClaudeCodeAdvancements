@@ -438,3 +438,10 @@
 - **First seen:** 2026-03-20 (S73 — satd_detector.py and senior_dev_hook.py were already committed by the loop; took time to discover)
 - **Last seen:** 2026-03-20
 - **Files:** All sessions resumed after context compression
+
+### pytest not installed — use stdlib unittest — Severity: 2 — Count: 1
+- **Anti-pattern:** Writing tests with `import pytest` and `@pytest.fixture` — pytest is not installed in this environment
+- **Fix:** Always use `import unittest` and `unittest.TestCase`. Use `tempfile.mkdtemp()` + `setUp`/`tearDown` instead of `tmp_path` fixtures.
+- **First seen:** 2026-03-20
+- **Last seen:** 2026-03-20
+- **Files:** tests/test_loop_health.py (converted), any future test file

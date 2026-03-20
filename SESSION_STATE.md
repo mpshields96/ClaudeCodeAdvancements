@@ -3,9 +3,17 @@
 
 ---
 
-## Current State (as of Session 73 — 2026-03-20)
+## Current State (as of Session 74 — 2026-03-20)
 
-**Phase:** Session 73 WRAP. Tests: 2897/2897 passing (72 suites). Git: clean.
+**Phase:** Session 74 WRAP (cli1). Tests: 2980/2980 passing (73 suites). Git: clean.
+
+**What was done this session (S74 cli1):**
+- **~/.local/bin/cca-loop** — 3 hardening features:
+  - (a) `CCA_LOOP_SESSION_TIMEOUT` env var (default 90min): timeout in `wait_for_claude_exit()`, sends `/cca-wrap`, 60s grace period, returns code 3
+  - (b) `notify_error()`: POSTs to ntfy.sh `cca-loop-alerts` on timeout (curl, zero deps)
+  - (c) `check_live_cca_sessions()` lsof-based dedup: catches Desktop Claude Code app sessions missing from ps argv
+- **tests/test_loop_health.py** — Converted from pytest (not installed) to stdlib unittest (54 tests)
+- **Committed:** 59455f3 — loop_health.py, cca_comm.py, and associated tests also staged from Desktop S73
 
 **What was done this session (CLI Chat 2 / S71-S72 wrap):**
 - **satd_detector.py** (44 tests) — MT-20 Phase 1: SATD marker detection PostToolUse hook
