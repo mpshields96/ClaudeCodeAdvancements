@@ -741,7 +741,7 @@ developer colleague.
 - `aging_rate`: 1.0 per chat for partial tasks (Phase 1 done, Phase 2 waiting). 0.5 per chat for not-started tasks.
 - Cap: Priority cannot exceed 2x base_value. Prevents low-value tasks from permanently outranking high-value ones.
 - Update `last_touched_session` whenever ANY work is done on the MT (even research or planning).
-- Current session: 77.
+- Current session: 82.
 
 ### Completed (no scoring needed)
 
@@ -759,17 +759,17 @@ developer colleague.
 
 | Rank | MT | Task | Base | Last Touched | Chats Ago | Rate | Aging | **Score** | Next Phase |
 |------|----|------|------|-------------|-----------|------|-------|-----------|------------|
-| 1 | MT-10 | YoYo self-learning | 9 | Session 44 | 12 | 1.0 | 12.0 | **18.0** | Phase 3A: Resurfacer done (S46). Phase 3B: graduate to Kalshi bot. Cap: 18.0 |
-| 2 | MT-11 | GitHub intelligence | 7 | Session 42 | 14 | 1.0 | 14.0 | **14.0** | Phase 2 validated. Phase 3: automated trending scan. Cap: 14.0 |
-| 3 | MT-14 | Rescan stale subs | 6 | Session 46 | 10 | 1.0 | 10.0 | **12.0** | All 15 subs scanned. Tighten investing classifier. Cap: 12.0 |
-| 4 | MT-9 | Autonomous scanning | 8 | Session 52 | 4 | 1.0 | 4.0 | **12.0** | Phase 3: all NEEDLEs reviewed. Next: production autonomous runs. |
-| 5 | MT-8 | iPhone remote control | 5 | Session 44 | 12 | 0.5 | 6.0 | **10.0** | SOLVED by native Remote Control. Cap: 10.0. Consider closing. |
-| 6 | MT-12 | Academic papers | 6 | Session 52 | 4 | 1.0 | 4.0 | **10.0** | 12 papers delivered S52. Phase 3: domain expansion. |
-| 7 | MT-18 | Academic writing | 4 | NEVER | 14+ | 0.5 | 4.0 | **8.0** | Research phase. Cap: 8.0 |
-| 8 | MT-13 | iOS/macOS app development | 4 | Session 49 | 7 | 0.5 | 3.5 | **7.5** | Phase 2 COMPLETE. Phase 3: first real app. |
-| 9 | MT-17 | Design/reports | 5 | Session 54 | 2 | 1.0 | 2.0 | **7.0** | Phase 4 COMPLETE. Phase 5: website templates. Report v2 built S54. |
-| 10 | MT-20 | Senior Dev Agent | 8 | Session 77 | 0 | 1.0 | 0.0 | **8.0** | Infrastructure complete. Phase 6: hook output quality. See SENIOR_DEV_GAP_ANALYSIS.md |
-| 11 | MT-21 | Hivemind coordination | 8 | Session 77 | 0 | 1.0 | 0.0 | **8.0** | Infrastructure complete. Phase 1 validation: prove 2-chat. See HIVEMIND_ROLLOUT.md |
+| 1 | MT-10 | YoYo self-learning | 9 | Session 44 | 38 | 1.0 | cap | **18.0** | Phase 3B: graduate to Kalshi bot (cross-project). Cap: 18.0 |
+| 2 | MT-9 | Autonomous scanning | 8 | Session 52 | 30 | 1.0 | cap | **16.0** | Production autonomous runs. Cap: 16.0 |
+| 3 | MT-11 | GitHub intelligence | 7 | Session 42 | 40 | 1.0 | cap | **14.0** | Phase 3: automated trending scan. Cap: 14.0 |
+| 4 | MT-14 | Rescan stale subs | 6 | Session 46 | 36 | 1.0 | cap | **12.0** | Tighten investing classifier. Cap: 12.0 |
+| 5 | MT-12 | Academic papers | 6 | Session 52 | 30 | 1.0 | cap | **12.0** | Phase 3: domain expansion. Cap: 12.0 |
+| 6 | MT-8 | iPhone remote control | 5 | Session 44 | 38 | 0.5 | cap | **10.0** | SOLVED by native Remote Control + ServerCC/Moshi apps. Cap: 10.0. Consider closing. |
+| 7 | MT-17 | Design/reports | 5 | Session 71 | 11 | 1.0 | cap | **10.0** | Phase 5 DONE (website_generator). Phase 6: daily snapshots. Cap: 10.0 |
+| 8 | MT-21 | Hivemind coordination | 8 | Session 81 | 1 | 1.0 | 1.0 | **9.0** | Phase 1 validation: prove 2-chat (needs Matthew). |
+| 9 | MT-20 | Senior Dev Agent | 8 | Session 81 | 1 | 1.0 | 1.0 | **9.0** | ALL 10 GAPS CLOSED. E2E validation needs API key. |
+| 10 | MT-18 | Academic writing | 4 | NEVER | 82+ | 0.5 | cap | **8.0** | Research phase. Cap: 8.0 |
+| 11 | MT-13 | iOS/macOS app development | 4 | Session 49 | 33 | 0.5 | cap | **8.0** | Phase 3: first real app. Cap: 8.0 |
 
 ### Blocked / External (no scoring — cannot be worked)
 
