@@ -513,6 +513,114 @@ def search_repos(
     return results
 
 
+# ── Trending Discovery (Phase 2) ─────────────────────────────────────────────
+
+
+def _build_trending_query(
+    language: str = None,
+    days: int = 7,
+    min_stars: int = 10,
+) -> str:
+    """
+    Build a GitHub search query to approximate 'trending' repos.
+
+    Uses created:>YYYY-MM-DD + stars:>N + sort by stars to find
+    recently created repos gaining traction.
+    """
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
+    parts = [f"created:>{cutoff}", f"stars:>{min_stars}"]
+    if language:
+        parts.append(f"language:{language}")
+    return " ".join(parts)
+
+
+def fetch_trending(
+    language: str = None,
+    days: int = 7,
+    limit: int = 10,
+    min_stars: int = 10,
+    timeout: int = 15,
+) -> list:
+    """
+    Fetch trending repos — recently created repos with high star counts.
+
+    Uses GitHub search API with date filters to approximate trending.
+    Returns list of RepoMetadata (may be empty on network failure).
+    """
+    query = _build_trending_query(language=language, days=days, min_stars=min_stars)
+    return search_repos(query, limit=limit, sort="stars", timeout=timeout)
+
+
+class TrendingScanner:
+    """
+    Scheduled trending repo analysis — scans for new repos across
+    CCA-relevant languages and evaluates them.
+    """
+
+    CCA_LANGUAGES = ["python", "typescript", "rust", "swift", "go"]
+
+    def __init__(self, eval_log_path: str = None, trending_log_path: str = None):
+        self.scanner = GitHubScanner(eval_log_path=eval_log_path)
+        self.trending_log_path = trending_log_path or str(
+            _THIS_DIR / "trending_history.jsonl"
+        )
+
+    def get_cca_languages(self) -> list:
+        """Return CCA-relevant programming languages."""
+        return list(self.CCA_LANGUAGES)
+
+    def scan_trending(
+        self,
+        language: str = None,
+        days: int = 7,
+        limit: int = 10,
+    ) -> list:
+        """
+        Fetch trending repos and evaluate + log them.
+
+        Returns list of (RepoMetadata, EvaluationResult) tuples.
+        """
+        repos = fetch_trending(language=language, days=days, limit=limit)
+        results = []
+        for meta in repos:
+            if self.scanner.already_evaluated(meta.full_name):
+                continue
+            result = self.scanner.evaluate(meta)
+            self.scanner.log_evaluation(meta, result)
+            results.append((meta, result))
+        return results
+
+    def scan_all_trending(self, days: int = 7, limit_per_lang: int = 5) -> list:
+        """
+        Scan trending repos across all CCA-relevant languages.
+
+        Returns list of (RepoMetadata, EvaluationResult) tuples.
+        """
+        all_results = []
+        for lang in self.CCA_LANGUAGES:
+            results = self.scan_trending(language=lang, days=days, limit=limit_per_lang)
+            all_results.extend(results)
+        return all_results
+
+    def log_trending_scan(
+        self,
+        language: str,
+        days: int,
+        repos_found: int,
+        evaluate_count: int,
+    ):
+        """Log trending scan metadata for tracking."""
+        entry = {
+            "language": language,
+            "days": days,
+            "repos_found": repos_found,
+            "evaluate_count": evaluate_count,
+            "scanned_at": datetime.now(timezone.utc).isoformat(),
+        }
+        with open(self.trending_log_path, "a") as f:
+            f.write(json.dumps(entry) + "\n")
+
+
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 
@@ -522,12 +630,13 @@ def cli_main(args: list = None):
         args = sys.argv[1:]
 
     if not args:
-        print("Usage: python3 github_scanner.py [queries|fetch|evaluate|scan] ...")
+        print("Usage: python3 github_scanner.py [queries|fetch|evaluate|scan|trending] ...")
         print("  queries               Show built-in search queries")
         print("  fetch <owner/repo>    Fetch + evaluate a specific repo (live API)")
         print("  evaluate <owner/repo> Same as fetch")
         print("  scan [query]          Search + evaluate repos (live API)")
         print("  scan --all            Run all built-in queries")
+        print("  trending              Discover trending repos by language + recency")
         return
 
     cmd = args[0]
@@ -629,9 +738,71 @@ def cli_main(args: list = None):
                 print(f"  {marker} [{result.total:4.0f}] {result.verdict:<8} {meta.full_name} ({meta.stars} stars, {meta.language})")
             print(f"\nLogged to: {scanner.eval_log_path}")
 
+    elif cmd == "trending":
+        rest = args[1:]
+
+        if "--help" in rest:
+            print("Usage: python3 github_scanner.py trending [--language LANG] [--days N] [--all] [--json]")
+            print("  trending                   Trending Python repos (last 7 days)")
+            print("  trending --language rust   Trending Rust repos")
+            print("  trending --days 14         Trending repos from last 14 days")
+            print("  trending --all             Scan all CCA-relevant languages")
+            print("  trending --json            Output as JSON")
+            return
+
+        # Parse flags
+        json_output = "--json" in rest
+        run_all = "--all" in rest
+        language = "python"
+        days = 7
+        limit = 10
+
+        for i, a in enumerate(rest):
+            if a == "--language" and i + 1 < len(rest):
+                language = rest[i + 1]
+            elif a == "--days" and i + 1 < len(rest):
+                try:
+                    days = int(rest[i + 1])
+                except ValueError:
+                    pass
+
+        ts = TrendingScanner(eval_log_path=str(_THIS_DIR / "github_evaluations.jsonl"))
+
+        if run_all:
+            print(f"Scanning trending repos across all CCA languages (last {days} days)...")
+            results = ts.scan_all_trending(days=days, limit_per_lang=5)
+        else:
+            print(f"Scanning trending {language} repos (last {days} days)...")
+            results = ts.scan_trending(language=language, days=days, limit=limit)
+
+        if json_output:
+            output = []
+            for meta, result in results:
+                output.append({
+                    "repo": meta.full_name,
+                    "stars": meta.stars,
+                    "language": meta.language,
+                    "score": result.total,
+                    "verdict": result.verdict,
+                    "url": meta.url,
+                    "age_days": meta.age_days,
+                })
+            print(json.dumps(output, indent=2))
+        else:
+            if not results:
+                print("No new trending repos found (all may be already evaluated).")
+                return
+            evaluate_count = sum(1 for _, r in results if r.verdict == "EVALUATE")
+            skip_count = sum(1 for _, r in results if r.verdict == "SKIP")
+            blocked_count = sum(1 for _, r in results if r.verdict == "BLOCKED")
+            print(f"\nFound {len(results)} trending repos: {evaluate_count} EVALUATE, {skip_count} SKIP, {blocked_count} BLOCKED\n")
+            for meta, result in sorted(results, key=lambda x: x[1].total, reverse=True):
+                marker = ">>>" if result.verdict == "EVALUATE" else "   "
+                print(f"  {marker} [{result.total:4.0f}] {result.verdict:<8} {meta.full_name} ({meta.stars} stars, {meta.age_days:.0f}d old, {meta.language})")
+
     else:
         print(f"Unknown command: {cmd}")
-        print("Usage: python3 github_scanner.py [queries|fetch|evaluate|scan] ...")
+        print("Usage: python3 github_scanner.py [queries|fetch|evaluate|scan|trending] ...")
 
 
 if __name__ == "__main__":

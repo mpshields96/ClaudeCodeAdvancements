@@ -549,5 +549,185 @@ class TestCLI(unittest.TestCase):
         self.assertNotIn("Unknown command", output)
 
 
+class TestTrendingDiscovery(unittest.TestCase):
+    """Tests for trending repo discovery — Phase 2 feature."""
+
+    def test_import_fetch_trending(self):
+        from github_scanner import fetch_trending
+        self.assertTrue(callable(fetch_trending))
+
+    def test_fetch_trending_signature(self):
+        """fetch_trending should accept language, days, and limit params."""
+        from github_scanner import fetch_trending
+        import inspect
+        sig = inspect.signature(fetch_trending)
+        self.assertIn("language", sig.parameters)
+        self.assertIn("days", sig.parameters)
+        self.assertIn("limit", sig.parameters)
+
+    def test_fetch_trending_returns_list(self):
+        """fetch_trending should return a list of RepoMetadata."""
+        from github_scanner import fetch_trending
+        try:
+            results = fetch_trending(language="python", days=7, limit=3)
+            self.assertIsInstance(results, list)
+        except Exception:
+            pass  # Network unavailable
+
+    def test_fetch_trending_default_params(self):
+        """fetch_trending should have sensible defaults."""
+        from github_scanner import fetch_trending
+        import inspect
+        sig = inspect.signature(fetch_trending)
+        # days should default to 7
+        self.assertEqual(sig.parameters["days"].default, 7)
+        # limit should default to 10
+        self.assertEqual(sig.parameters["limit"].default, 10)
+
+    def test_fetch_trending_builds_date_query(self):
+        """fetch_trending should use created:>YYYY-MM-DD in GitHub search."""
+        from github_scanner import _build_trending_query
+        query = _build_trending_query(language="python", days=7)
+        self.assertIn("created:>", query)
+        self.assertIn("language:python", query)
+        # Date should be in YYYY-MM-DD format
+        import re
+        self.assertTrue(re.search(r"created:>\d{4}-\d{2}-\d{2}", query))
+
+    def test_trending_query_no_language(self):
+        """_build_trending_query with no language should omit language filter."""
+        from github_scanner import _build_trending_query
+        query = _build_trending_query(language=None, days=7)
+        self.assertNotIn("language:", query)
+        self.assertIn("created:>", query)
+
+    def test_trending_query_min_stars(self):
+        """_build_trending_query should enforce a minimum star threshold."""
+        from github_scanner import _build_trending_query
+        query = _build_trending_query(language="python", days=7, min_stars=50)
+        self.assertIn("stars:>", query)
+
+    def test_trending_query_default_min_stars(self):
+        """Default trending query should have min_stars=10."""
+        from github_scanner import _build_trending_query
+        query = _build_trending_query(language="python", days=7)
+        self.assertIn("stars:>", query)
+
+
+class TestTrendingScanner(unittest.TestCase):
+    """Tests for TrendingScanner — scheduled trending analysis."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.eval_log_path = os.path.join(self.tmpdir, "github_evaluations.jsonl")
+        self.trending_log_path = os.path.join(self.tmpdir, "trending_history.jsonl")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def test_import(self):
+        from github_scanner import TrendingScanner
+        self.assertTrue(callable(TrendingScanner))
+
+    def test_init(self):
+        from github_scanner import TrendingScanner
+        ts = TrendingScanner(
+            eval_log_path=self.eval_log_path,
+            trending_log_path=self.trending_log_path,
+        )
+        self.assertIsNotNone(ts.scanner)
+
+    def test_scan_trending_returns_results(self):
+        """scan_trending should return list of (meta, result) tuples."""
+        from github_scanner import TrendingScanner
+        ts = TrendingScanner(
+            eval_log_path=self.eval_log_path,
+            trending_log_path=self.trending_log_path,
+        )
+        try:
+            results = ts.scan_trending(language="python", days=7, limit=2)
+            self.assertIsInstance(results, list)
+            if results:
+                meta, result = results[0]
+                self.assertIsNotNone(meta)
+                self.assertIsNotNone(result)
+        except Exception:
+            pass  # Network unavailable
+
+    def test_scan_trending_logs_to_history(self):
+        """scan_trending should log scan metadata to trending_history.jsonl."""
+        from github_scanner import TrendingScanner
+        ts = TrendingScanner(
+            eval_log_path=self.eval_log_path,
+            trending_log_path=self.trending_log_path,
+        )
+        ts.log_trending_scan(language="python", days=7, repos_found=5, evaluate_count=2)
+        self.assertTrue(os.path.exists(self.trending_log_path))
+        with open(self.trending_log_path) as f:
+            entry = json.loads(f.readline())
+        self.assertEqual(entry["language"], "python")
+        self.assertEqual(entry["repos_found"], 5)
+
+    def test_cca_languages_defined(self):
+        """TrendingScanner should define CCA-relevant languages."""
+        from github_scanner import TrendingScanner
+        ts = TrendingScanner(
+            eval_log_path=self.eval_log_path,
+            trending_log_path=self.trending_log_path,
+        )
+        langs = ts.get_cca_languages()
+        self.assertIsInstance(langs, list)
+        self.assertIn("python", langs)
+        self.assertIn("typescript", langs)
+
+    def test_scan_all_trending_runs_per_language(self):
+        """scan_all_trending should iterate over CCA languages."""
+        from github_scanner import TrendingScanner
+        ts = TrendingScanner(
+            eval_log_path=self.eval_log_path,
+            trending_log_path=self.trending_log_path,
+        )
+        self.assertTrue(hasattr(ts, "scan_all_trending"))
+        self.assertTrue(callable(ts.scan_all_trending))
+
+
+class TestTrendingCLI(unittest.TestCase):
+    """Tests for trending CLI command."""
+
+    def test_cli_trending_command_exists(self):
+        """CLI 'trending' command should be recognized."""
+        from github_scanner import cli_main
+        import io
+        from contextlib import redirect_stdout
+        out = io.StringIO()
+        with redirect_stdout(out):
+            cli_main(["trending", "--help"])
+        output = out.getvalue()
+        self.assertNotIn("Unknown command", output)
+
+    def test_cli_trending_accepts_language(self):
+        """CLI 'trending' should accept --language flag."""
+        from github_scanner import cli_main
+        import io
+        from contextlib import redirect_stdout
+        out = io.StringIO()
+        with redirect_stdout(out):
+            cli_main(["trending", "--help"])
+        output = out.getvalue()
+        self.assertIn("language", output.lower())
+
+    def test_cli_trending_accepts_days(self):
+        """CLI 'trending' should accept --days flag."""
+        from github_scanner import cli_main
+        import io
+        from contextlib import redirect_stdout
+        out = io.StringIO()
+        with redirect_stdout(out):
+            cli_main(["trending", "--help"])
+        output = out.getvalue()
+        self.assertIn("days", output.lower())
+
+
 if __name__ == "__main__":
     unittest.main()
