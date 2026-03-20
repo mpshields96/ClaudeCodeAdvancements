@@ -651,6 +651,38 @@ Phase 2 (Session 49):
 
 ---
 
+## MT-20: Senior Developer Agent
+
+**Source:** Session 70 nuclear research (self-learning/research/SENIOR_DEV_AGENT_RESEARCH.md) — 11 academic papers, 9 verified.
+**Evidence base:** RovoDev (Atlassian, ICSE 2026): 38.7% comment action rate, 30.8% PR cycle time reduction. SWE-agent (NeurIPS 2024, 806 citations): ACI design > model capability. Tencent hybrid: 76% FP rate reduced to 2-6% with LLM+static hybrid. LLM QA survey (arXiv:2511.10271): maintainability is the most needed, least addressed quality dimension.
+
+**What to build:** A senior developer review agent that catches what AI misses — SATD markers, effort signals, consistency violations, and architectural drift — delivered via PostToolUse hook and on-demand skill. NOT a replacement for human review. A quality-gate layer that surfaces the highest-value issues before they ship.
+
+**Core insight from research:** AI catches ~46-48% of production bugs at best. The gap is exactly the senior developer's value: intent mismatches, architectural coherence, business logic errors. A Senior Dev Agent must filter its own output (quality gate is non-negotiable for developer trust).
+
+**MVP (2-3 sessions):**
+1. **SATD Detector** — Scan Write/Edit targets for TODO/FIXME/HACK/WORKAROUND/DEBT/XXX markers. Delivered as PostToolUse hook. Output: additionalContext with type, line, severity.
+2. **Effort Scorer** — Estimate review complexity (1-5 scale) based on diff size, file count, cyclomatic complexity proxy. Helps prioritize review attention.
+3. **False Positive Filter** — Wrap static analysis output through a confidence classifier to surface only high-value findings. Reduces noise before developer sees it.
+4. **CRScore-Style Classifier** — Classify review output by type (bugfix/refactor/test/doc). Surface only bugfix + correctness first. Validated taxonomy from arXiv:2409.19801 (0.54 Spearman correlation).
+
+**Full Vision (multi-session):**
+- ADR Reader + Gap Detector: reads Architecture Decision Records, flags new patterns with no ADR backing
+- Tech Debt Tracker: trends SATD markers over time, identifies hotspot modules
+- Architectural Coherence Checker: verifies new code patterns match existing module patterns
+- Blast-Radius Estimator: static dependency graph for change impact estimation
+- Session Memory Integration: links findings to memory_store.py for cross-session learning
+
+**Architecture:**
+- Delivered as `agent-guard/satd_detector.py` (PostToolUse hook, extends AG module concept)
+- Delivered as `/cca-review-pr` skill for on-demand review
+- Filters output via quality gate (non-negotiable per RovoDev findings)
+- Stdlib only + optional LLM API call for false positive filtering
+
+**Status:** Phase 1 in progress (S69). SATD Detector being built (TDD). Research complete: self-learning/research/SENIOR_DEV_AGENT_RESEARCH.md. DO NOT BUILD beyond SATD Detector without PLAN.md for Phase 2+.
+
+---
+
 ## Priority Scoring System (Decay-Based)
 
 **Formula:** `priority = base_value + (chats_since_last_touched * aging_rate)`
