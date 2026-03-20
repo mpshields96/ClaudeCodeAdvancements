@@ -264,7 +264,7 @@ class TestStatus(unittest.TestCase):
 
 class TestCommands(unittest.TestCase):
     def test_all_commands_registered(self):
-        expected = {"inbox", "say", "task", "claim", "release", "done", "ack", "status", "broadcast"}
+        expected = {"inbox", "say", "task", "claim", "release", "done", "ack", "status", "broadcast", "assign"}
         self.assertEqual(set(cca_comm.COMMANDS.keys()), expected)
 
     def test_all_commands_callable(self):

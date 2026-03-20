@@ -219,6 +219,7 @@ COMMANDS = {
     "ack": cmd_ack,
     "status": cmd_status,
     "broadcast": cmd_broadcast,
+    "assign": cmd_task,  # Alias: "assign" = "task" (used in /cca-auto-desktop docs)
 }
 
 
