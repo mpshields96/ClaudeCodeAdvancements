@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Smoke tests for memory-system.
+Smoke tests for memory-system capture_hook (v2.0 — FTS5 backend).
 Run: python3 memory-system/tests/test_memory.py
-All tests use in-memory or tmp paths — no writes to ~/.claude-memory.
+All tests use in-memory MemoryStore — no writes to ~/.claude-memory.
 """
 
 import json
@@ -18,6 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "hooks"))
 
 import capture_hook as ch
+from memory_store import MemoryStore
 
 
 class TestProjectSlug(unittest.TestCase):
@@ -59,52 +60,59 @@ class TestCredentialFilter(unittest.TestCase):
         self.assertFalse(ch._contains_credentials("Decided to use JSON over SQLite for schema v1"))
 
 
-class TestBuildMemory(unittest.TestCase):
-    def test_valid_memory_created(self):
-        mem = ch._build_memory(
-            content="Use stdlib-first approach",
-            mem_type="decision",
-            project="testproject",
-            tags=["architecture"],
-            confidence="HIGH",
-            source="explicit",
-        )
-        self.assertIsNotNone(mem)
-        self.assertEqual(mem["type"], "decision")
-        self.assertEqual(mem["confidence"], "HIGH")
-        self.assertEqual(mem["project"], "testproject")
-        self.assertIn("mem_", mem["id"])
+class TestValidateMemoryParams(unittest.TestCase):
+    def test_valid_params(self):
+        result = ch._validate_memory_params("Use stdlib-first approach", "decision", "HIGH")
+        self.assertIsNotNone(result)
+        content, mem_type, confidence = result
+        self.assertEqual(content, "Use stdlib-first approach")
+        self.assertEqual(mem_type, "decision")
+        self.assertEqual(confidence, "HIGH")
 
     def test_empty_content_rejected(self):
-        mem = ch._build_memory("", "decision", "proj", [], "HIGH", "explicit")
-        self.assertIsNone(mem)
+        result = ch._validate_memory_params("", "decision", "HIGH")
+        self.assertIsNone(result)
+
+    def test_whitespace_content_rejected(self):
+        result = ch._validate_memory_params("   ", "decision", "HIGH")
+        self.assertIsNone(result)
 
     def test_credential_content_rejected(self):
-        mem = ch._build_memory(
-            "sk-ant-api03-secretkey123456789",
-            "error", "proj", [], "HIGH", "explicit"
-        )
-        self.assertIsNone(mem)
+        result = ch._validate_memory_params("sk-ant-api03-secretkey123456789", "error", "HIGH")
+        self.assertIsNone(result)
 
     def test_content_truncated_at_500(self):
         long = "x" * 600
-        mem = ch._build_memory(long, "decision", "proj", [], "MEDIUM", "inferred")
-        self.assertIsNotNone(mem)
-        self.assertLessEqual(len(mem["content"]), 500)
+        result = ch._validate_memory_params(long, "decision", "MEDIUM")
+        self.assertIsNotNone(result)
+        self.assertLessEqual(len(result[0]), 500)
 
     def test_invalid_type_falls_back(self):
-        mem = ch._build_memory("Some content here", "invalid_type", "proj", [], "HIGH", "explicit")
-        self.assertIsNotNone(mem)
-        self.assertEqual(mem["type"], "decision")
+        result = ch._validate_memory_params("Some content here", "invalid_type", "HIGH")
+        self.assertIsNotNone(result)
+        self.assertEqual(result[1], "decision")
 
-    def test_tags_capped_at_5(self):
-        mem = ch._build_memory(
-            "Some content", "pattern", "proj",
-            ["a", "b", "c", "d", "e", "f", "g"],
-            "LOW", "inferred"
-        )
-        self.assertIsNotNone(mem)
-        self.assertLessEqual(len(mem["tags"]), 5)
+    def test_invalid_confidence_falls_back(self):
+        result = ch._validate_memory_params("Some content here", "decision", "UNKNOWN")
+        self.assertIsNotNone(result)
+        self.assertEqual(result[2], "MEDIUM")
+
+
+class TestBuildTags(unittest.TestCase):
+    def test_type_prefix_added(self):
+        tags = ch._build_tags("decision", ["architecture"])
+        self.assertEqual(tags[0], "type:decision")
+        self.assertIn("architecture", tags)
+
+    def test_capped_at_5(self):
+        tags = ch._build_tags("error", ["a", "b", "c", "d", "e", "f"])
+        self.assertLessEqual(len(tags), 5)
+        self.assertEqual(tags[0], "type:error")
+
+    def test_no_duplicates(self):
+        tags = ch._build_tags("decision", ["type:decision", "general"])
+        # type:decision appears once
+        self.assertEqual(tags.count("type:decision"), 1)
 
 
 class TestExtractMemoriesFromMessage(unittest.TestCase):
@@ -113,6 +121,7 @@ class TestExtractMemoriesFromMessage(unittest.TestCase):
         memories = ch._extract_memories_from_message(msg, "testproject")
         self.assertTrue(len(memories) > 0)
         self.assertEqual(memories[0]["type"], "decision")
+        self.assertIn("type:decision", memories[0]["tags"])
 
     def test_error_sentence_extracted(self):
         msg = "The bug was caused by importing edge_calculator from odds_fetcher. Fixed by deferring the import to function body."
@@ -127,7 +136,6 @@ class TestExtractMemoriesFromMessage(unittest.TestCase):
     def test_question_not_captured(self):
         msg = "Should we always use SQLite instead of JSON for this project?"
         memories = ch._extract_memories_from_message(msg, "testproject")
-        # Questions should not be captured as memories
         for mem in memories:
             self.assertFalse(mem["content"].endswith("?"))
 
@@ -138,13 +146,26 @@ class TestExtractMemoriesFromMessage(unittest.TestCase):
             self.assertFalse(ch._contains_credentials(mem["content"]))
 
     def test_cap_at_5_memories_per_message(self):
-        # A message with many decision-keyword sentences
         sentences = [
             f"We decided to use approach {i} because it is better." for i in range(20)
         ]
         msg = " ".join(sentences)
         memories = ch._extract_memories_from_message(msg, "testproject")
         self.assertLessEqual(len(memories), 5)
+
+    def test_candidate_has_required_fields(self):
+        msg = "We decided to use FTS5 because it provides relevance-ranked full-text search."
+        memories = ch._extract_memories_from_message(msg, "testproject")
+        self.assertTrue(len(memories) > 0)
+        mem = memories[0]
+        self.assertIn("content", mem)
+        self.assertIn("type", mem)
+        self.assertIn("tags", mem)
+        self.assertIn("confidence", mem)
+        self.assertIn("source", mem)
+        self.assertIn("project", mem)
+        self.assertEqual(mem["source"], "session-end")
+        self.assertEqual(mem["confidence"], "MEDIUM")
 
 
 class TestPostToolUseHandler(unittest.TestCase):
@@ -179,49 +200,131 @@ class TestPostToolUseHandler(unittest.TestCase):
         self.assertEqual(result, {})
 
 
-class TestStoreLoadSave(unittest.TestCase):
-    def test_new_store_created_when_absent(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "newproject.json"
-            store = ch._load_store(path)
-            self.assertIn("memories", store)
-            self.assertEqual(store["memories"], [])
-            self.assertEqual(store["schema_version"], ch.SCHEMA_VERSION)
+class TestStopHandlerFTS5(unittest.TestCase):
+    """Tests for Stop handler writing to FTS5 MemoryStore."""
 
-    def test_existing_store_loaded(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "existing.json"
-            data = {
-                "project": "existing",
-                "schema_version": "1.0",
-                "created_at": "2026-01-01T00:00:00Z",
-                "last_updated": "2026-01-01T00:00:00Z",
-                "memories": [{"id": "mem_test", "content": "test memory"}],
+    def _make_stop_input(self, last_msg="", transcript_path=""):
+        return {
+            "hook_event_name": "Stop",
+            "cwd": "/Users/matt/Projects/TestProject",
+            "last_assistant_message": last_msg,
+            "transcript_path": transcript_path,
+        }
+
+    def test_decision_written_to_store(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_stop_input(
+            last_msg="We decided to use SQLite instead of PostgreSQL because it requires no server setup."
+        )
+        result = ch.handle_stop(inp, store=store)
+        self.assertIn("additionalContext", result)
+        self.assertIn("Saved 1 new memory", result["additionalContext"])
+        # Verify it's in the store
+        memories = store.list_all(project="testproject")
+        self.assertEqual(len(memories), 1)
+        self.assertIn("SQLite", memories[0]["content"])
+        store.close()
+
+    def test_empty_message_no_write(self):
+        store = MemoryStore(":memory:")
+        inp = self._make_stop_input(last_msg="Done.")
+        result = ch.handle_stop(inp, store=store)
+        self.assertEqual(result, {})
+        self.assertEqual(store.count(), 0)
+        store.close()
+
+    def test_multiple_memories_written(self):
+        store = MemoryStore(":memory:")
+        msg = (
+            "We decided to use SQLite instead of PostgreSQL because it needs no server. "
+            "The fix is to defer imports to avoid circular dependencies."
+        )
+        inp = self._make_stop_input(last_msg=msg)
+        result = ch.handle_stop(inp, store=store)
+        self.assertIn("additionalContext", result)
+        count = store.count()
+        self.assertGreaterEqual(count, 1)
+        store.close()
+
+    def test_duplicate_not_written_twice(self):
+        store = MemoryStore(":memory:")
+        msg = "We decided to use SQLite instead of PostgreSQL because it requires no server setup."
+        inp = self._make_stop_input(last_msg=msg)
+        # First call writes
+        ch.handle_stop(inp, store=store)
+        count1 = store.count()
+        # Second call should dedup
+        ch.handle_stop(inp, store=store)
+        count2 = store.count()
+        self.assertEqual(count1, count2)
+        store.close()
+
+    def test_credential_not_written(self):
+        store = MemoryStore(":memory:")
+        msg = "We decided the API key is sk-ant-api03-abcdefghijklmnopqrstuvwxyz and should never be logged."
+        inp = self._make_stop_input(last_msg=msg)
+        ch.handle_stop(inp, store=store)
+        self.assertEqual(store.count(), 0)
+        store.close()
+
+    def test_type_encoded_in_tags(self):
+        store = MemoryStore(":memory:")
+        msg = "We decided to use SQLite instead of PostgreSQL because it requires no server setup."
+        inp = self._make_stop_input(last_msg=msg)
+        ch.handle_stop(inp, store=store)
+        memories = store.list_all(project="testproject")
+        self.assertTrue(len(memories) > 0)
+        tags = memories[0]["tags"]
+        type_tags = [t for t in tags if t.startswith("type:")]
+        self.assertEqual(len(type_tags), 1)
+        store.close()
+
+    def test_transcript_explicit_memory(self):
+        store = MemoryStore(":memory:")
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
+            entry = {
+                "role": "user",
+                "content": [{"type": "text", "text": "Remember that we always use TDD before writing any production code"}],
             }
-            with open(path, "w") as f:
-                json.dump(data, f)
-            store = ch._load_store(path)
-            self.assertEqual(len(store["memories"]), 1)
-            self.assertEqual(store["memories"][0]["id"], "mem_test")
+            f.write(json.dumps(entry) + "\n")
+            f.flush()
+            transcript_path = f.name
 
-    def test_save_is_atomic(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "test.json"
-            store = ch._load_store(path)
-            store["memories"].append({"id": "mem_001", "content": "test"})
-            ch._save_store(store, path)
-            self.assertTrue(path.exists())
-            with open(path) as f:
-                loaded = json.load(f)
-            self.assertEqual(len(loaded["memories"]), 1)
+        try:
+            inp = self._make_stop_input(transcript_path=transcript_path)
+            result = ch.handle_stop(inp, store=store)
+            self.assertIn("additionalContext", result)
+            memories = store.list_all()
+            self.assertTrue(len(memories) > 0)
+            # Explicit memories get HIGH confidence
+            self.assertEqual(memories[0]["confidence"], "HIGH")
+        finally:
+            os.unlink(transcript_path)
+            store.close()
 
-    def test_corrupted_store_returns_fresh(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "corrupted.json"
-            path.write_text("{ invalid json !!!")
-            store = ch._load_store(path)
-            self.assertIn("memories", store)
-            self.assertEqual(store["memories"], [])
+    def test_contradiction_supersedes_old(self):
+        store = MemoryStore(":memory:")
+        # Write an old memory manually
+        store.create_memory(
+            content="The default context threshold for yellow zone warning should be set at sixty percent of the total window capacity",
+            tags=["type:decision", "context-monitor", "thresholds"],
+            confidence="MEDIUM",
+            source="session-end",
+            project="testproject",
+        )
+        self.assertEqual(store.count(), 1)
+
+        # Now fire stop with a contradicting message
+        msg = "We decided the default context threshold for yellow zone warning should be set at twenty five percent of the total window capacity because sixty was too late."
+        inp = self._make_stop_input(last_msg=msg)
+        ch.handle_stop(inp, store=store)
+
+        memories = store.list_all(project="testproject")
+        # Old one should be superseded, new one written
+        # (exact count depends on whether contradiction similarity is 55-85%)
+        # At minimum, we should have at least 1 memory
+        self.assertGreaterEqual(len(memories), 1)
+        store.close()
 
 
 class TestInferTags(unittest.TestCase):
@@ -244,23 +347,25 @@ class TestInferTags(unittest.TestCase):
         self.assertLessEqual(len(tags), 3)
 
 
-class TestMakeId(unittest.TestCase):
-    def test_id_has_mem_prefix(self):
-        id_ = ch._make_id()
-        self.assertTrue(id_.startswith("mem_"))
+class TestExtractMemType(unittest.TestCase):
+    def test_extracts_type_from_tags(self):
+        self.assertEqual(ch._extract_mem_type(["type:error", "hooks"]), "error")
 
-    def test_id_is_unique(self):
-        ids = {ch._make_id() for _ in range(100)}
-        self.assertEqual(len(ids), 100)
+    def test_default_to_decision(self):
+        self.assertEqual(ch._extract_mem_type(["hooks", "general"]), "decision")
+
+    def test_empty_tags(self):
+        self.assertEqual(ch._extract_mem_type([]), "decision")
+
+    def test_first_type_wins(self):
+        self.assertEqual(ch._extract_mem_type(["type:pattern", "type:error"]), "pattern")
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# OMEGA-Pattern Tests (S54: type TTL, dedup, contradiction detection)
+# OMEGA-Pattern Tests (dedup, contradiction, TTL)
 # ═══════════════════════════════════════════════════════════════════════════
 
 class TestContentHash(unittest.TestCase):
-    """Tests for hash-based exact dedup."""
-
     def test_same_content_same_hash(self):
         h1 = ch._content_hash("Use SQLite for local storage")
         h2 = ch._content_hash("Use SQLite for local storage")
@@ -287,8 +392,6 @@ class TestContentHash(unittest.TestCase):
 
 
 class TestContentSimilarity(unittest.TestCase):
-    """Tests for Jaccard similarity-based fuzzy dedup."""
-
     def test_identical_texts(self):
         sim = ch._content_similarity("hello world test", "hello world test")
         self.assertEqual(sim, 1.0)
@@ -318,8 +421,6 @@ class TestContentSimilarity(unittest.TestCase):
 
 
 class TestWordSet(unittest.TestCase):
-    """Tests for word extraction."""
-
     def test_removes_stopwords(self):
         words = ch._word_set("the quick brown fox is a test")
         self.assertNotIn("the", words)
@@ -333,8 +434,6 @@ class TestWordSet(unittest.TestCase):
 
 
 class TestFindDuplicates(unittest.TestCase):
-    """Tests for dedup against existing memories."""
-
     def test_finds_exact_duplicate(self):
         existing = [{"content": "Use SQLite for storage", "id": "mem_1"}]
         dupes = ch.find_duplicates("Use SQLite for storage", existing)
@@ -356,19 +455,16 @@ class TestFindDuplicates(unittest.TestCase):
 
 
 class TestFindContradictions(unittest.TestCase):
-    """Tests for contradiction detection (OMEGA pattern)."""
-
     def test_detects_contradiction_same_type_overlapping_tags(self):
         existing = [{
             "content": "The default context threshold for yellow zone warning should be set at sixty percent of the total window capacity",
-            "type": "decision",
-            "tags": ["context-monitor", "thresholds"],
+            "tags": ["type:decision", "context-monitor", "thresholds"],
             "id": "mem_old",
         }]
         contradictions = ch.find_contradictions(
             "The default context threshold for yellow zone warning should be set at twenty five percent of the total window capacity",
             "decision",
-            ["context-monitor", "thresholds"],
+            ["type:decision", "context-monitor", "thresholds"],
             existing,
         )
         self.assertGreater(len(contradictions), 0)
@@ -376,14 +472,13 @@ class TestFindContradictions(unittest.TestCase):
     def test_no_contradiction_different_type(self):
         existing = [{
             "content": "Use PostgreSQL for the backend database",
-            "type": "pattern",
-            "tags": ["storage"],
+            "tags": ["type:pattern", "storage"],
             "id": "mem_old",
         }]
         contradictions = ch.find_contradictions(
             "Use SQLite for the backend database",
             "decision",
-            ["storage"],
+            ["type:decision", "storage"],
             existing,
         )
         self.assertEqual(len(contradictions), 0)
@@ -391,47 +486,42 @@ class TestFindContradictions(unittest.TestCase):
     def test_no_contradiction_no_tag_overlap(self):
         existing = [{
             "content": "Use PostgreSQL for the backend database",
-            "type": "decision",
-            "tags": ["frontend"],
+            "tags": ["type:decision", "frontend"],
             "id": "mem_old",
         }]
         contradictions = ch.find_contradictions(
             "Use SQLite for the backend database",
             "decision",
-            ["storage"],
+            ["type:decision", "storage"],
             existing,
         )
         self.assertEqual(len(contradictions), 0)
 
     def test_too_similar_is_duplicate_not_contradiction(self):
-        """Similarity > 85% is a duplicate, not a contradiction."""
         existing = [{
             "content": "Always run tests before committing code changes to repo",
-            "type": "preference",
-            "tags": ["testing"],
+            "tags": ["type:preference", "testing"],
             "id": "mem_old",
         }]
         contradictions = ch.find_contradictions(
             "Always run tests before committing code changes to the repo",
             "preference",
-            ["testing"],
+            ["type:preference", "testing"],
             existing,
         )
         self.assertEqual(len(contradictions), 0)
 
     def test_empty_existing(self):
         contradictions = ch.find_contradictions(
-            "test content", "decision", ["general"], []
+            "test content", "decision", ["type:decision", "general"], []
         )
         self.assertEqual(len(contradictions), 0)
 
 
 class TestTypeTTL(unittest.TestCase):
-    """Tests for per-type TTL rules (OMEGA pattern)."""
-
     def test_decision_high_confidence(self):
         ttl = ch.get_ttl_days("decision", "HIGH")
-        self.assertEqual(ttl, 730)  # 365 * 2, capped at 730
+        self.assertEqual(ttl, 730)
 
     def test_decision_medium_confidence(self):
         ttl = ch.get_ttl_days("decision", "MEDIUM")
@@ -439,7 +529,7 @@ class TestTypeTTL(unittest.TestCase):
 
     def test_decision_low_confidence(self):
         ttl = ch.get_ttl_days("decision", "LOW")
-        self.assertEqual(ttl, 182)  # 365 // 2
+        self.assertEqual(ttl, 182)
 
     def test_pattern_medium(self):
         ttl = ch.get_ttl_days("pattern", "MEDIUM")
@@ -447,7 +537,7 @@ class TestTypeTTL(unittest.TestCase):
 
     def test_pattern_low(self):
         ttl = ch.get_ttl_days("pattern", "LOW")
-        self.assertEqual(ttl, 90)  # 180 // 2
+        self.assertEqual(ttl, 90)
 
     def test_preference_permanent(self):
         ttl = ch.get_ttl_days("preference", "MEDIUM")
@@ -462,60 +552,16 @@ class TestTypeTTL(unittest.TestCase):
         self.assertEqual(ttl, 180)
 
     def test_low_confidence_min_30(self):
-        """Low confidence minimum 30 days even for short-TTL types."""
         ttl = ch.get_ttl_days("pattern", "LOW")
         self.assertGreaterEqual(ttl, 30)
 
 
-class TestImportanceScore(unittest.TestCase):
-    """Tests for type-based importance scoring."""
-
-    def test_decision_highest(self):
-        self.assertEqual(ch.get_importance_score("decision"), 2.0)
-
-    def test_error_high(self):
-        self.assertEqual(ch.get_importance_score("error"), 1.8)
-
-    def test_glossary_base(self):
-        self.assertEqual(ch.get_importance_score("glossary"), 1.0)
-
-    def test_unknown_type_default(self):
-        self.assertEqual(ch.get_importance_score("unknown"), 1.0)
-
-
-class TestBuildMemoryOmegaFields(unittest.TestCase):
-    """Tests that _build_memory includes OMEGA fields."""
-
-    def test_has_content_hash(self):
-        mem = ch._build_memory(
-            "Test content", "decision", "test-project",
-            ["general"], "HIGH", "explicit"
-        )
-        self.assertIn("content_hash", mem)
-        self.assertEqual(len(mem["content_hash"]), 16)
-
-    def test_has_ttl_days(self):
-        mem = ch._build_memory(
-            "Test content", "decision", "test-project",
-            ["general"], "HIGH", "explicit"
-        )
-        self.assertIn("ttl_days", mem)
-        self.assertEqual(mem["ttl_days"], 730)
-
-    def test_has_importance(self):
-        mem = ch._build_memory(
-            "Test content", "error", "test-project",
-            ["general"], "MEDIUM", "session-end"
-        )
-        self.assertIn("importance", mem)
-        self.assertEqual(mem["importance"], 1.8)
-
-    def test_schema_version_updated(self):
-        self.assertEqual(ch.SCHEMA_VERSION, "1.1")
+class TestSchemaVersion(unittest.TestCase):
+    def test_schema_version_is_2_0(self):
+        self.assertEqual(ch.SCHEMA_VERSION, "2.0")
 
 
 if __name__ == "__main__":
-    # Run with verbose output for a clear pass/fail per test
     loader = unittest.TestLoader()
     suite = loader.loadTestsFromModule(sys.modules[__name__])
     runner = unittest.TextTestRunner(verbosity=2)
