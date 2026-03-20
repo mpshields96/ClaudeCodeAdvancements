@@ -1,0 +1,47 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run all test suites
+        run: |
+          PASS=0
+          FAIL=0
+          FAILED_FILES=""
+          for f in $(find . -name "test_*.py" -type f | sort); do
+            echo "=== $f ==="
+            if python3 "$f" 2>&1 | tail -5; then
+              PASS=$((PASS + 1))
+            else
+              FAIL=$((FAIL + 1))
+              FAILED_FILES="$FAILED_FILES $f"
+            fi
+            echo ""
+          done
+          echo "================================"
+          echo "Suites passed: $PASS"
+          echo "Suites failed: $FAIL"
+          if [ $FAIL -gt 0 ]; then
+            echo "FAILED: $FAILED_FILES"
+            exit 1
+          fi
+          echo "All test suites passed."
