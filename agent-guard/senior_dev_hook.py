@@ -54,6 +54,12 @@ try:
 except ImportError:
     pass
 
+try:
+    from code_quality_scorer import CodeQualityScorer as _QualityScorer
+    _quality_available = True
+except ImportError:
+    _quality_available = False
+
 
 # Max combined additionalContext length
 MAX_CONTEXT_LENGTH = 2000
@@ -81,6 +87,7 @@ class SeniorDevHook:
         self._effort = EffortScorer() if _effort_available else None
         self._fp_filter = FPFilter() if _fp_filter_available else None
         self._classifier = ReviewClassifier() if _review_classifier_available else None
+        self._quality = _QualityScorer() if _quality_available else None
 
     @property
     def available_modules(self) -> list:
@@ -94,6 +101,8 @@ class SeniorDevHook:
             modules.append("fp_filter")
         if self._classifier:
             modules.append("review_classifier")
+        if self._quality:
+            modules.append("code_quality_scorer")
         return modules
 
     def analyze(self, content: str, file_path: str = "") -> list:
@@ -127,6 +136,19 @@ class SeniorDevHook:
                     source="effort",
                     severity="INFO",
                     message=f"Effort: {score.score}/5 ({score.label}) — {score.loc} LOC, {score.complexity} complexity markers",
+                ))
+
+        # 3. Code Quality Score (only for substantial files)
+        if self._quality and len(content.splitlines()) >= 20:
+            report = self._quality.score(content, file_path=file_path)
+            if report.overall_score < 70:
+                severity = "HIGH" if report.overall_score < 50 else "MEDIUM"
+                low_dims = [d for d in report.dimensions if d.score < 60]
+                dim_summary = ", ".join(f"{d.name}={d.score:.0f}" for d in low_dims[:3])
+                findings.append(SeniorDevFinding(
+                    source="quality",
+                    severity=severity,
+                    message=f"Quality: {report.grade} ({report.overall_score:.0f}/100) — weak: {dim_summary}" if dim_summary else f"Quality: {report.grade} ({report.overall_score:.0f}/100)",
                 ))
 
         return findings
