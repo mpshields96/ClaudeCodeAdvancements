@@ -99,14 +99,18 @@ Then run `/cca-wrap-worker` to do a lightweight wrap.
 
 ---
 
-## Step 6 — Check for more work
+## Step 6 — Check for more work (MANDATORY CHAIN)
 
-After reporting, check inbox again:
+After reporting completion, you MUST check inbox again immediately:
 ```bash
 python3 cca_comm.py inbox
 ```
 
-If there's another task, go back to Step 2. If not, you're done.
+If there's another task: go back to Step 2. Do NOT stop. Do NOT ask for input.
+If inbox is empty: wait 30 seconds, check ONE more time. If still empty, then you're done.
+
+IMPORTANT: Do NOT end your session after completing one task. The desktop coordinator
+may assign follow-up work while you're still running. Always check twice before stopping.
 
 ---
 
