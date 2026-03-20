@@ -526,10 +526,29 @@ class CoherenceChecker:
 
         all_issues.extend(rule_issues)
 
+        # 5. Project-root CLAUDE.md rule compliance (applies to ALL files)
+        root_rule_issues = []
+        root_claude_md = os.path.join(self.project_root, "CLAUDE.md")
+        if os.path.isfile(root_claude_md):
+            try:
+                with open(root_claude_md, "r", encoding="utf-8", errors="replace") as f:
+                    root_content = f.read()
+                root_rules = self._rule_extractor.extract(root_content)
+                if root_rules:
+                    for fp in py_files:
+                        file_issues = self._rule_compliance.check(
+                            fp, root_rules, local_modules=local_modules
+                        )
+                        root_rule_issues.extend(file_issues)
+            except (OSError, IOError):
+                pass
+
+        all_issues.extend(root_rule_issues)
+
         # Calculate score: start at 100, deduct per issue
         # Structure issues are more severe (5 pts each), pattern issues 3 pts,
         # rule violations 4 pts (more severe than patterns, less than structure)
-        deduction = (len(structure_issues) * 5) + (len(pattern_issues) * 3) + (len(rule_issues) * 4)
+        deduction = (len(structure_issues) * 5) + (len(pattern_issues) * 3) + (len(rule_issues) * 4) + (len(root_rule_issues) * 4)
         score = max(0.0, min(100.0, 100.0 - deduction))
 
         return CoherenceReport(

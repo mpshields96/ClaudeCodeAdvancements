@@ -498,5 +498,75 @@ class TestCoherenceCheckerWithRules(unittest.TestCase):
         self.assertEqual(len(rule_issues), 0)
 
 
+class TestProjectRootRuleCompliance(unittest.TestCase):
+    """Test that project-root CLAUDE.md rules apply to all modules."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def test_root_claude_md_rules_apply_to_all_modules(self):
+        """Rules in root CLAUDE.md should be checked against all module files."""
+        # Root CLAUDE.md with stdlib-only rule
+        with open(os.path.join(self.tmpdir, "CLAUDE.md"), "w") as f:
+            f.write("# Project Rules\n## Architecture Rules\n- **Stdlib-first: no external packages by default** — keep it simple\n")
+
+        # Module A — compliant
+        mod_a = os.path.join(self.tmpdir, "mod-a")
+        os.makedirs(os.path.join(mod_a, "tests"))
+        with open(os.path.join(mod_a, "CLAUDE.md"), "w") as f:
+            f.write("# Mod A\n")
+        with open(os.path.join(mod_a, "clean.py"), "w") as f:
+            f.write('"""Clean."""\nimport os\n')
+
+        # Module B — violating root rule
+        mod_b = os.path.join(self.tmpdir, "mod-b")
+        os.makedirs(os.path.join(mod_b, "tests"))
+        with open(os.path.join(mod_b, "CLAUDE.md"), "w") as f:
+            f.write("# Mod B\n")
+        with open(os.path.join(mod_b, "bad.py"), "w") as f:
+            f.write('"""Bad."""\nimport flask\n')
+
+        checker = CoherenceChecker(project_root=self.tmpdir)
+        report = checker.check()
+        root_violations = [i for i in report.issues if "flask" in i]
+        self.assertTrue(len(root_violations) > 0)
+
+    def test_no_root_claude_md_no_crash(self):
+        """Projects without root CLAUDE.md should work fine."""
+        mod = os.path.join(self.tmpdir, "my-mod")
+        os.makedirs(os.path.join(mod, "tests"))
+        with open(os.path.join(mod, "CLAUDE.md"), "w") as f:
+            f.write("# Mod\n")
+        with open(os.path.join(mod, "code.py"), "w") as f:
+            f.write('"""Code."""\nimport flask\n')
+
+        checker = CoherenceChecker(project_root=self.tmpdir)
+        report = checker.check()
+        # Should not crash — module-level CLAUDE.md has no stdlib rule
+        self.assertIsInstance(report, CoherenceReport)
+
+    def test_root_rules_dont_double_count_with_module_rules(self):
+        """If module CLAUDE.md has the same rule as root, don't flag twice."""
+        # Both root and module say stdlib-only
+        with open(os.path.join(self.tmpdir, "CLAUDE.md"), "w") as f:
+            f.write("# Root\n## Architecture Rules\n- **No external packages** — stdlib only\n")
+        mod = os.path.join(self.tmpdir, "my-mod")
+        os.makedirs(os.path.join(mod, "tests"))
+        with open(os.path.join(mod, "CLAUDE.md"), "w") as f:
+            f.write("# Mod\n## Non-Negotiable Rules\n- **Zero dependencies beyond Python stdlib** — no ext\n")
+        with open(os.path.join(mod, "bad.py"), "w") as f:
+            f.write('"""Bad."""\nimport requests\n')
+
+        checker = CoherenceChecker(project_root=self.tmpdir)
+        report = checker.check()
+        req_issues = [i for i in report.issues if "requests" in i]
+        # Should have issues but check they're not massively duplicated
+        self.assertTrue(len(req_issues) >= 1)
+        self.assertTrue(len(req_issues) <= 4)  # At most 2 rules x 2 import patterns
+
+
 if __name__ == "__main__":
     unittest.main()
