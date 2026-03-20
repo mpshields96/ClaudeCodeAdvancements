@@ -6,10 +6,13 @@ Run: python3 tests/test_cca_internal_queue.py
 
 import json
 import os
+import shutil
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 import cca_internal_queue as ciq
@@ -703,6 +706,111 @@ class TestExpireStaleScopes(unittest.TestCase):
         releases = [m for m in messages if m.get("category") == "scope_release"]
         self.assertEqual(len(releases), 1)
         self.assertIn("auto-expired", releases[0].get("body", "").lower())
+
+
+class TestHivemindPreflight(unittest.TestCase):
+    """Tests for hivemind_preflight() — session readiness check."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.path = os.path.join(self.tmpdir, "queue.jsonl")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def test_empty_queue_ready(self):
+        result = ciq.hivemind_preflight(chat_id="desktop", path=self.path)
+        self.assertEqual(result["status"], "ready")
+        self.assertEqual(result["unread_count"], 0)
+        self.assertEqual(result["active_scopes"], 0)
+        self.assertIn("Hivemind: ready", result["summary"])
+
+    def test_no_queue_file_ready(self):
+        result = ciq.hivemind_preflight(chat_id="cli1", path="/tmp/nonexistent_preflight_test.jsonl")
+        self.assertEqual(result["status"], "ready")
+
+    def test_unread_messages_action_needed(self):
+        ciq.send_message("desktop", "cli1", "Build feature X",
+                         category="handoff", path=self.path)
+        result = ciq.hivemind_preflight(chat_id="cli1", path=self.path)
+        self.assertEqual(result["status"], "action_needed")
+        self.assertEqual(result["unread_count"], 1)
+        self.assertIn("1 unread", result["summary"])
+
+    def test_active_scopes_shown(self):
+        ciq.send_message("cli1", "desktop", "agent-guard/",
+                         category="scope_claim", path=self.path)
+        result = ciq.hivemind_preflight(chat_id="desktop", path=self.path)
+        self.assertEqual(result["active_scopes"], 1)
+        self.assertIn("1 active scopes", result["summary"])
+
+    def test_stale_scopes_auto_released(self):
+        old_time = (datetime.now(timezone.utc) - timedelta(minutes=45)).isoformat()
+        msg = {
+            "id": "cca_test_stale",
+            "sender": "cli1",
+            "target": "desktop",
+            "subject": "old-scope",
+            "body": "",
+            "priority": "medium",
+            "category": "scope_claim",
+            "status": "unread",
+            "created_at": old_time,
+            "files": [],
+        }
+        with open(self.path, "a") as f:
+            f.write(json.dumps(msg) + "\n")
+
+        result = ciq.hivemind_preflight(chat_id="desktop", auto_expire=True, path=self.path)
+        self.assertEqual(len(result["expired_scopes"]), 1)
+        self.assertIn("auto-released", result["summary"])
+
+    def test_no_auto_expire_when_disabled(self):
+        old_time = (datetime.now(timezone.utc) - timedelta(minutes=45)).isoformat()
+        msg = {
+            "id": "cca_test_no_expire",
+            "sender": "cli1",
+            "target": "desktop",
+            "subject": "keep-scope",
+            "body": "",
+            "priority": "medium",
+            "category": "scope_claim",
+            "status": "unread",
+            "created_at": old_time,
+            "files": [],
+        }
+        with open(self.path, "a") as f:
+            f.write(json.dumps(msg) + "\n")
+
+        result = ciq.hivemind_preflight(chat_id="desktop", auto_expire=False, path=self.path)
+        self.assertEqual(result["expired_scopes"], [])
+
+    def test_corrupt_queue_warning(self):
+        with open(self.path, "w") as f:
+            f.write("not json\n")
+            f.write(json.dumps({
+                "id": "ok", "sender": "desktop", "target": "cli1",
+                "subject": "test", "body": "", "priority": "medium",
+                "category": "fyi", "status": "unread",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }) + "\n")
+
+        result = ciq.hivemind_preflight(chat_id="cli1", path=self.path)
+        self.assertEqual(result["status"], "warning")
+        self.assertIn("corrupt", result["summary"])
+
+    def test_chat_id_from_env(self):
+        with patch.dict(os.environ, {"CCA_CHAT_ID": "cli2"}):
+            result = ciq.hivemind_preflight(chat_id="", path=self.path)
+            self.assertEqual(result["chat_id"], "cli2")
+
+    def test_chat_id_defaults_to_desktop(self):
+        with patch.dict(os.environ, {}, clear=True):
+            env = os.environ.copy()
+            env.pop("CCA_CHAT_ID", None)
+            with patch.dict(os.environ, env, clear=True):
+                result = ciq.hivemind_preflight(chat_id="", path=self.path)
+                self.assertEqual(result["chat_id"], "desktop")
 
 
 if __name__ == "__main__":

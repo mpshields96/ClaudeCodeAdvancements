@@ -564,6 +564,83 @@ def format_scope_warning(path: str = DEFAULT_QUEUE_PATH) -> str:
     return " ".join(parts)
 
 
+def hivemind_preflight(
+    chat_id: str = "",
+    auto_expire: bool = True,
+    path: str = DEFAULT_QUEUE_PATH,
+) -> dict:
+    """
+    Hivemind readiness check for /cca-init. Combines:
+    1. Queue health check (corrupt lines, total messages)
+    2. Stale scope auto-release (if auto_expire=True)
+    3. Unread message count for this chat
+    4. Active scope warnings
+
+    Args:
+        chat_id: This chat's ID (desktop, cli1, cli2). If empty, reads CCA_CHAT_ID.
+        auto_expire: Whether to auto-release stale scopes (>30 min).
+        path: Queue file path.
+
+    Returns:
+        Dict with: status, health, expired_scopes, unread_count, active_scopes,
+        scope_warning, summary (one-line human-readable string).
+    """
+    if not chat_id:
+        chat_id = os.environ.get("CCA_CHAT_ID", "desktop")
+
+    result = {
+        "status": "ready",
+        "chat_id": chat_id,
+        "health": {},
+        "expired_scopes": [],
+        "unread_count": 0,
+        "active_scopes": 0,
+        "scope_warning": "",
+        "summary": "",
+    }
+
+    # Step 1: Queue health
+    health = queue_health(path)
+    result["health"] = health
+
+    # Step 2: Auto-expire stale scopes
+    if auto_expire:
+        expired = expire_stale_scopes(timeout_minutes=30, path=path)
+        result["expired_scopes"] = expired
+
+    # Step 3: Unread messages for this chat
+    if chat_id in VALID_CHATS:
+        unread = get_unread(chat_id, path)
+        result["unread_count"] = len(unread)
+
+    # Step 4: Active scope warnings
+    active = get_active_scopes(path)
+    result["active_scopes"] = len(active)
+    result["scope_warning"] = format_scope_warning(path)
+
+    # Determine status
+    if health.get("status") == "error":
+        result["status"] = "error"
+    elif health.get("corrupt_lines", 0) > 0:
+        result["status"] = "warning"
+    elif result["unread_count"] > 0:
+        result["status"] = "action_needed"
+
+    # Build summary line
+    parts = [f"Hivemind: {result['status']}"]
+    if result["unread_count"] > 0:
+        parts.append(f"{result['unread_count']} unread")
+    if result["active_scopes"] > 0:
+        parts.append(f"{result['active_scopes']} active scopes")
+    if result["expired_scopes"]:
+        parts.append(f"{len(result['expired_scopes'])} stale scopes auto-released")
+    if health.get("corrupt_lines", 0) > 0:
+        parts.append(f"{health['corrupt_lines']} corrupt queue lines")
+    result["summary"] = " | ".join(parts)
+
+    return result
+
+
 # ── CLI ────────────────────────────────────────────────────────────────────
 
 def _cli_send(args):
