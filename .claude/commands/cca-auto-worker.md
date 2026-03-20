@@ -35,14 +35,19 @@ Fully autonomous — no user input needed.
 
 ---
 
-## Step 1 — Get your task
+## Step 1 — Get context and task
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 cca_comm.py context 5
 python3 cca_comm.py inbox
 ```
 
-Read your assigned task. Check for these special messages:
+Review context first (recent commits, active scopes, crash status), then read your assigned task.
+This tells you what desktop has been working on — critical for Phase 2 tasks that require
+reading desktop's recent work before starting.
+
+Check for these special messages:
 - **SHUTDOWN** message: If any message contains "SHUTDOWN", immediately run `/cca-wrap-worker` and exit. Do not start any new work.
 - **No task assigned**: Message desktop and wait:
 ```bash

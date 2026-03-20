@@ -54,6 +54,20 @@ print(hsv.format_for_init())
 "
 ```
 
+Also measure queue throughput (Phase 2 metric — target 50+ msgs/session):
+
+```bash
+python3 -c "
+import cca_comm
+stats = cca_comm.get_queue_stats()
+print(f'Queue throughput: {stats[\"total_messages\"]} messages')
+print(f'  By sender: {stats[\"by_sender\"]}')
+print(f'  By category: {stats[\"by_category\"]}')
+met = 'MET' if stats['total_messages'] >= 50 else 'NOT MET'
+print(f'  Phase 2 target (50+): {met}')
+"
+```
+
 Record the verdict in SESSION_STATE.md under the session summary.
 
 ---
