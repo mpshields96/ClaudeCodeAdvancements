@@ -1231,5 +1231,238 @@ class TestRescanSub(unittest.TestCase):
         self.assertIsInstance(output, str)
 
 
+class TestGitHubTrendingIntegration(unittest.TestCase):
+    """Tests for GitHub trending integration into autonomous pipeline (MT-11 Phase 3)."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.registry_path = os.path.join(self.tmpdir, "scan_registry.json")
+        self.state_path = os.path.join(self.tmpdir, "auto_state.json")
+        self.kill_switch = os.path.join(self.tmpdir, "kill_switch")
+        self.eval_log_path = os.path.join(self.tmpdir, "eval_log.jsonl")
+        self.trending_log_path = os.path.join(self.tmpdir, "trending_history.jsonl")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _make_scanner(self):
+        from autonomous_scanner import AutonomousScanner
+        return AutonomousScanner(
+            registry_path=self.registry_path,
+            kill_switch_path=self.kill_switch,
+            state_path=self.state_path,
+        )
+
+    def _make_mock_repo_meta(self, name="owner/repo", stars=50, language="python"):
+        """Create a mock RepoMetadata-like object."""
+        from github_scanner import RepoMetadata
+        return RepoMetadata(
+            full_name=name,
+            description=f"A {language} repo for testing",
+            stars=stars,
+            forks=5,
+            open_issues=2,
+            language=language or "python",
+            license_id="MIT",
+            age_days=5.0,
+            days_since_push=1.0,
+            topics=["claude", "agent"],
+            url=f"https://github.com/{name}",
+            default_branch="main",
+        )
+
+    def _make_mock_eval_result(self, verdict="EVALUATE", score=75):
+        """Create a mock EvaluationResult-like object."""
+        from github_scanner import EvaluationResult
+        return EvaluationResult(
+            total=score,
+            components={"quality": 40, "relevance": 35},
+            warnings=[],
+            blocked=False,
+            block_reason="",
+            verdict=verdict,
+        )
+
+    def test_execute_github_trending_method_exists(self):
+        """AutonomousScanner should have execute_github_trending method."""
+        scanner = self._make_scanner()
+        self.assertTrue(hasattr(scanner, "execute_github_trending"))
+        self.assertTrue(callable(scanner.execute_github_trending))
+
+    @patch("autonomous_scanner.TrendingScanner")
+    def test_execute_github_trending_returns_report(self, mock_ts_cls):
+        """execute_github_trending should return a GitHubTrendingReport."""
+        from autonomous_scanner import GitHubTrendingReport
+        mock_ts = MagicMock()
+        mock_meta = self._make_mock_repo_meta()
+        mock_eval = self._make_mock_eval_result()
+        mock_ts.scan_all_trending.return_value = [(mock_meta, mock_eval)]
+        mock_ts.get_cca_languages.return_value = ["python"]
+        mock_ts_cls.return_value = mock_ts
+
+        scanner = self._make_scanner()
+        report = scanner.execute_github_trending(days=7, limit_per_lang=5)
+        self.assertIsInstance(report, GitHubTrendingReport)
+
+    @patch("autonomous_scanner.TrendingScanner")
+    def test_execute_github_trending_report_fields(self, mock_ts_cls):
+        """Report should have repos_found, evaluate_count, languages_scanned."""
+        from autonomous_scanner import GitHubTrendingReport
+        mock_ts = MagicMock()
+        mock_meta = self._make_mock_repo_meta()
+        mock_eval = self._make_mock_eval_result()
+        mock_ts.scan_all_trending.return_value = [(mock_meta, mock_eval)]
+        mock_ts.scan_trending.return_value = [(mock_meta, mock_eval)]
+        mock_ts.get_cca_languages.return_value = ["python", "typescript"]
+        mock_ts_cls.return_value = mock_ts
+
+        scanner = self._make_scanner()
+        report = scanner.execute_github_trending(days=14, limit_per_lang=3)
+        self.assertIsNotNone(report)
+        self.assertGreaterEqual(report.repos_found, 0)
+        self.assertGreaterEqual(report.evaluate_count, 0)
+        self.assertIsInstance(report.languages_scanned, list)
+        self.assertIsInstance(report.results, list)
+
+    @patch("autonomous_scanner.TrendingScanner")
+    def test_execute_github_trending_respects_safety_gate(self, mock_ts_cls):
+        """Should return None when kill switch is active."""
+        # Create kill switch
+        with open(self.kill_switch, "w") as f:
+            f.write("paused")
+
+        scanner = self._make_scanner()
+        report = scanner.execute_github_trending()
+        self.assertIsNone(report)
+        mock_ts_cls.assert_not_called()
+
+    @patch("autonomous_scanner.TrendingScanner")
+    def test_execute_github_trending_records_scan(self, mock_ts_cls):
+        """Should record scan in safety gate after success."""
+        mock_ts = MagicMock()
+        mock_ts.scan_all_trending.return_value = []
+        mock_ts.get_cca_languages.return_value = ["python"]
+        mock_ts_cls.return_value = mock_ts
+
+        scanner = self._make_scanner()
+        scanner.execute_github_trending()
+        # Safety gate should have recorded this
+        self.assertEqual(scanner.safety_gate.scans_this_session, 1)
+
+    @patch("autonomous_scanner.TrendingScanner")
+    def test_execute_github_trending_single_language(self, mock_ts_cls):
+        """Should support scanning a single language."""
+        mock_ts = MagicMock()
+        mock_meta = self._make_mock_repo_meta(language="rust")
+        mock_eval = self._make_mock_eval_result()
+        mock_ts.scan_trending.return_value = [(mock_meta, mock_eval)]
+        mock_ts_cls.return_value = mock_ts
+
+        scanner = self._make_scanner()
+        report = scanner.execute_github_trending(language="rust", days=7, limit_per_lang=10)
+        mock_ts.scan_trending.assert_called_once_with(language="rust", days=7, limit=10)
+
+    @patch("autonomous_scanner.TrendingScanner")
+    def test_execute_github_trending_filters_evaluate_only(self, mock_ts_cls):
+        """Report evaluate_count should only count EVALUATE verdicts."""
+        mock_ts = MagicMock()
+        meta1 = self._make_mock_repo_meta("owner/good", stars=100)
+        eval1 = self._make_mock_eval_result("EVALUATE", 80)
+        meta2 = self._make_mock_repo_meta("owner/skip", stars=5)
+        eval2 = self._make_mock_eval_result("SKIP", 20)
+        mock_ts.scan_all_trending.return_value = [(meta1, eval1), (meta2, eval2)]
+        mock_ts.get_cca_languages.return_value = ["python"]
+        mock_ts_cls.return_value = mock_ts
+
+        scanner = self._make_scanner()
+        report = scanner.execute_github_trending()
+        self.assertEqual(report.repos_found, 2)
+        self.assertEqual(report.evaluate_count, 1)
+
+    def test_github_trending_report_to_dict(self):
+        """GitHubTrendingReport should be serializable."""
+        from autonomous_scanner import GitHubTrendingReport
+        report = GitHubTrendingReport(
+            repos_found=5,
+            evaluate_count=3,
+            languages_scanned=["python", "rust"],
+            results=[],
+            days=7,
+        )
+        d = report.to_dict()
+        self.assertEqual(d["repos_found"], 5)
+        self.assertEqual(d["evaluate_count"], 3)
+        self.assertEqual(d["days"], 7)
+
+    def test_github_trending_report_summary(self):
+        """GitHubTrendingReport.summary() should produce readable text."""
+        from autonomous_scanner import GitHubTrendingReport
+        report = GitHubTrendingReport(
+            repos_found=10,
+            evaluate_count=4,
+            languages_scanned=["python", "typescript"],
+            results=[],
+            days=14,
+        )
+        text = report.summary()
+        self.assertIn("10", text)
+        self.assertIn("4", text)
+        self.assertIn("EVALUATE", text)
+
+    def test_cli_github_trending_command(self):
+        """CLI 'github-trending' command should exist and run."""
+        from autonomous_scanner import cli_main
+        import io
+        buf = io.StringIO()
+        with patch("sys.stdout", buf), \
+             patch("autonomous_scanner.TrendingScanner") as mock_ts_cls:
+            mock_ts = MagicMock()
+            mock_ts.scan_all_trending.return_value = []
+            mock_ts.get_cca_languages.return_value = ["python"]
+            mock_ts_cls.return_value = mock_ts
+            cli_main(["github-trending",
+                       "--state", self.state_path,
+                       "--kill-switch", self.kill_switch])
+        output = buf.getvalue()
+        self.assertIsInstance(output, str)
+
+    def test_cli_github_trending_with_language(self):
+        """CLI 'github-trending --language rust' should filter to one language."""
+        from autonomous_scanner import cli_main
+        import io
+        buf = io.StringIO()
+        with patch("sys.stdout", buf), \
+             patch("autonomous_scanner.TrendingScanner") as mock_ts_cls:
+            mock_ts = MagicMock()
+            mock_ts.scan_trending.return_value = []
+            mock_ts_cls.return_value = mock_ts
+            cli_main(["github-trending",
+                       "--language", "rust",
+                       "--state", self.state_path,
+                       "--kill-switch", self.kill_switch])
+        output = buf.getvalue()
+        self.assertIsInstance(output, str)
+
+    def test_cli_github_trending_json_output(self):
+        """CLI 'github-trending --json' should produce valid JSON."""
+        from autonomous_scanner import cli_main
+        import io
+        buf = io.StringIO()
+        with patch("sys.stdout", buf), \
+             patch("autonomous_scanner.TrendingScanner") as mock_ts_cls:
+            mock_ts = MagicMock()
+            mock_ts.scan_all_trending.return_value = []
+            mock_ts.get_cca_languages.return_value = ["python"]
+            mock_ts_cls.return_value = mock_ts
+            cli_main(["github-trending",
+                       "--json",
+                       "--state", self.state_path,
+                       "--kill-switch", self.kill_switch])
+        output = buf.getvalue()
+        parsed = json.loads(output)
+        self.assertIsInstance(parsed, dict)
+
+
 if __name__ == "__main__":
     unittest.main()

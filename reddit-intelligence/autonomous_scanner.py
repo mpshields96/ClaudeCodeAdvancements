@@ -51,6 +51,7 @@ sys.path.insert(0, str(_PROJECT_DIR / "agent-guard"))
 from profiles import BUILTIN_PROFILES, get_profile, ScanRegistry, merge_scout_nuclear
 from nuclear_fetcher import classify_post, load_findings_urls, fetch_top_posts, fetch_hot_posts, fetch_rising_posts
 from content_scanner import is_safe_for_deep_read
+from github_scanner import TrendingScanner
 
 
 # ── Approved Domains (MT-9 spec) ─────────────────────────────────────────────
@@ -122,6 +123,43 @@ class ScanResult:
         with open(tmp, "w") as f:
             json.dump(self.to_dict(), f, indent=2)
         os.replace(tmp, path)
+
+
+# ── GitHubTrendingReport ──────────────────────────────────────────────────────
+
+
+@dataclass
+class GitHubTrendingReport:
+    """Structured output from a GitHub trending scan."""
+    repos_found: int
+    evaluate_count: int
+    languages_scanned: list
+    results: list  # list of (RepoMetadata, EvaluationResult) serialized dicts
+    days: int = 7
+    timestamp: str = ""
+
+    def __post_init__(self):
+        if not self.timestamp:
+            self.timestamp = datetime.now(timezone.utc).isoformat()
+
+    def to_dict(self) -> dict:
+        return {
+            "repos_found": self.repos_found,
+            "evaluate_count": self.evaluate_count,
+            "languages_scanned": self.languages_scanned,
+            "results": self.results,
+            "days": self.days,
+            "timestamp": self.timestamp,
+        }
+
+    def summary(self) -> str:
+        lines = [
+            f"GitHub Trending Scan — {self.days}d window",
+            f"  Repos found: {self.repos_found}",
+            f"  EVALUATE verdicts: {self.evaluate_count}",
+            f"  Languages: {', '.join(self.languages_scanned)}",
+        ]
+        return "\n".join(lines)
 
 
 # ── ScanPrioritizer ──────────────────────────────────────────────────────────
@@ -662,6 +700,67 @@ class AutonomousScanner:
         registry = ScanRegistry(self.prioritizer._registry._path)
         return registry.stale_subs(max_age_days)
 
+    def execute_github_trending(
+        self,
+        language: str = None,
+        days: int = 7,
+        limit_per_lang: int = 5,
+        eval_log_path: str = None,
+        trending_log_path: str = None,
+    ) -> "GitHubTrendingReport":
+        """
+        MT-11 Phase 3: Execute GitHub trending scan through autonomous pipeline.
+
+        Wraps TrendingScanner with safety gate checks and scan recording.
+        If language is specified, scans only that language. Otherwise scans all
+        CCA-relevant languages.
+
+        Returns GitHubTrendingReport, or None if blocked by safety gate.
+        """
+        # Safety check
+        allowed, reason = self.safety_gate.can_scan()
+        if not allowed:
+            return None
+
+        ts = TrendingScanner(
+            eval_log_path=eval_log_path,
+            trending_log_path=trending_log_path,
+        )
+
+        if language:
+            # Single language scan
+            results = ts.scan_trending(language=language, days=days, limit=limit_per_lang)
+            languages_scanned = [language]
+        else:
+            # All CCA languages
+            results = ts.scan_all_trending(days=days, limit_per_lang=limit_per_lang)
+            languages_scanned = ts.get_cca_languages()
+
+        repos_found = len(results)
+        evaluate_count = sum(1 for _, ev in results if ev.verdict == "EVALUATE")
+
+        # Serialize results for report
+        serialized = []
+        for meta, ev in results:
+            serialized.append({
+                "repo": meta.full_name,
+                "stars": meta.stars,
+                "language": meta.language,
+                "verdict": ev.verdict,
+                "score": ev.total,
+            })
+
+        # Record scan in safety gate
+        self.safety_gate.record_scan("github-trending")
+
+        return GitHubTrendingReport(
+            repos_found=repos_found,
+            evaluate_count=evaluate_count,
+            languages_scanned=languages_scanned,
+            results=serialized,
+            days=days,
+        )
+
     def build_report(self, subreddit: str, slug: str, domain: str,
                      fetched: list, safe: list, blocked: list) -> ScanReport:
         """Build a ScanReport from scan results."""
@@ -693,7 +792,7 @@ def cli_main(args: list = None):
         args = sys.argv[1:]
 
     if not args:
-        print("Usage: python3 autonomous_scanner.py [rank|status|pick|scan|daily|rescan|stale]")
+        print("Usage: python3 autonomous_scanner.py [rank|status|pick|scan|daily|rescan|stale|github-trending]")
         print("  rank                    Show prioritized sub list")
         print("  status                  Show safety gate status")
         print("  pick [--domain <d>]     Pick next target sub")
@@ -706,6 +805,10 @@ def cli_main(args: list = None):
         print("        [--rising-limit N] Max rising posts per sub (default 10)")
         print("  rescan [--target <sub>] MT-14: Delta-rescan stale sub (only new posts)")
         print("  stale                   Show subs due for rescanning")
+        print("  github-trending         MT-11: Scan GitHub for trending repos")
+        print("        [--language <l>]  Scan single language (default: all CCA languages)")
+        print("        [--days <N>]      Lookback window (default 7)")
+        print("        [--json]          Output JSON")
         return
 
     cmd = args[0]
@@ -723,9 +826,17 @@ def cli_main(args: list = None):
     daily_subs = None
     hot_limit = 25
     rising_limit = 10
+    language = None
+    days = 7
     i = 1
     while i < len(args):
-        if args[i] == "--registry" and i + 1 < len(args):
+        if args[i] == "--language" and i + 1 < len(args):
+            language = args[i + 1]
+            i += 2
+        elif args[i] == "--days" and i + 1 < len(args):
+            days = int(args[i + 1])
+            i += 2
+        elif args[i] == "--registry" and i + 1 < len(args):
             registry_path = args[i + 1]
             i += 2
         elif args[i] == "--state" and i + 1 < len(args):
@@ -943,6 +1054,33 @@ def cli_main(args: list = None):
                 print(f"  - {s}")
         else:
             print("No stale subs.")
+
+    elif cmd == "github-trending":
+        scanner = AutonomousScanner(
+            registry_path=registry_path,
+            kill_switch_path=kill_switch_path,
+            state_path=state_path,
+            findings_path=findings_path,
+        )
+
+        report = scanner.execute_github_trending(
+            language=language,
+            days=days,
+            limit_per_lang=fetch_limit or 5,
+        )
+
+        if report is None:
+            print("GitHub trending scan blocked by safety gate.")
+        elif output_json:
+            print(json.dumps(report.to_dict(), indent=2))
+        else:
+            print(report.summary())
+            if report.results:
+                evaluate_repos = [r for r in report.results if r["verdict"] == "EVALUATE"]
+                if evaluate_repos:
+                    print(f"\n  EVALUATE repos:")
+                    for r in evaluate_repos:
+                        print(f"    - {r['repo']} ({r['language']}, {r['stars']} stars, score {r['score']})")
 
     else:
         print(f"Unknown command: {cmd}")
