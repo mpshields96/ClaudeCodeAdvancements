@@ -679,7 +679,14 @@ Phase 2 (Session 49):
 - Filters output via quality gate (non-negotiable per RovoDev findings)
 - Stdlib only + optional LLM API call for false positive filtering
 
-**Status:** Phase 1 in progress (S69). SATD Detector being built (TDD). Research complete: self-learning/research/SENIOR_DEV_AGENT_RESEARCH.md. DO NOT BUILD beyond SATD Detector without PLAN.md for Phase 2+.
+**Status:** MVP COMPLETE (S71-S72). All 5 modules built, tested, integrated:
+- Phase 1: satd_detector.py (44 tests) — S71
+- Phase 2: effort_scorer.py (42 tests) — S71
+- Phase 3: senior_dev_hook.py (48 tests) + code_quality_scorer.py (38 tests) — S72
+- Phase 4: fp_filter.py (40 tests) + review_classifier.py (43 tests) — S72
+- Hook wired LIVE in settings.local.json (PostToolUse on Write/Edit)
+- Total: 255 new tests across 6 modules. All 2846 project tests passing.
+- **Next:** Full Vision items (ADR reader, tech debt tracker, architectural coherence checker).
 
 ---
 
