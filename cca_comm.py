@@ -36,6 +36,11 @@ import cca_internal_queue as ciq
 ALL_CHAT_IDS = ["desktop", "cli1", "cli2", "terminal"]
 
 
+def _qpath() -> str:
+    """Get the queue path. Resolves at call time so tests can override DEFAULT_QUEUE_PATH."""
+    return ciq.DEFAULT_QUEUE_PATH
+
+
 def detect_chat_id() -> str:
     """Auto-detect which chat we are based on env var or context."""
     env_id = os.environ.get("CCA_CHAT_ID", "").strip()
@@ -53,7 +58,7 @@ def cmd_inbox(args):
     if target not in ciq.VALID_CHATS:
         print(f"Unknown chat: {target}. Valid: {list(ciq.VALID_CHATS.keys())}")
         return
-    unread = ciq.get_unread(target)
+    unread = ciq.get_unread(target, _qpath())
     if not unread:
         print(f"No unread messages for {ciq.VALID_CHATS[target]}.")
         return
@@ -77,7 +82,7 @@ def cmd_say(args):
     target = args[0]
     message = " ".join(args[1:])
     me = detect_chat_id()
-    msg = ciq.send_message(me, target, message, category="fyi")
+    ciq.send_message(me, target, message, category="fyi", path=_qpath())
     print(f"Sent to {ciq.VALID_CHATS[target]}: {message}")
 
 
@@ -89,7 +94,7 @@ def cmd_task(args):
     target = args[0]
     task = " ".join(args[1:])
     me = detect_chat_id()
-    msg = ciq.send_message(me, target, task, priority="high", category="handoff")
+    ciq.send_message(me, target, task, priority="high", category="handoff", path=_qpath())
     print(f"Task assigned to {ciq.VALID_CHATS[target]}: {task}")
 
 
@@ -101,11 +106,10 @@ def cmd_claim(args):
     scope = args[0]
     files = args[1].split(",") if len(args) > 1 else None
     me = detect_chat_id()
-    # Send to all other chats
     for target in ciq.VALID_CHATS:
         if target != me:
             ciq.send_message(me, target, scope, category="scope_claim",
-                           priority="high", files=files or [])
+                           priority="high", files=files or [], path=_qpath())
     print(f"Scope claimed: {scope}")
 
 
@@ -118,7 +122,7 @@ def cmd_release(args):
     me = detect_chat_id()
     for target in ciq.VALID_CHATS:
         if target != me:
-            ciq.send_message(me, target, scope, category="scope_release")
+            ciq.send_message(me, target, scope, category="scope_release", path=_qpath())
     print(f"Scope released: {scope}")
 
 
@@ -132,21 +136,22 @@ def cmd_done(args):
     if me == "desktop":
         print("You ARE desktop. Use /cca-wrap instead.")
         return
-    ciq.send_message(me, "desktop", f"WRAP: {summary}", category="handoff", priority="high")
+    ciq.send_message(me, "desktop", f"WRAP: {summary}", category="handoff",
+                    priority="high", path=_qpath())
     print(f"Wrap summary sent to Desktop: {summary}")
 
 
 def cmd_ack(args):
     """Acknowledge all messages."""
     me = args[0] if args else detect_chat_id()
-    count = ciq.acknowledge_all(me)
+    count = ciq.acknowledge_all(me, _qpath())
     print(f"Acknowledged {count} messages for {ciq.VALID_CHATS.get(me, me)}.")
 
 
 def cmd_status(args):
     """Show full hivemind status."""
-    summary = ciq.get_unread_summary()
-    scopes = ciq.get_active_scopes()
+    summary = ciq.get_unread_summary(_qpath())
+    scopes = ciq.get_active_scopes(_qpath())
 
     if summary:
         print("UNREAD MESSAGES:")
@@ -180,7 +185,7 @@ def cmd_broadcast(args):
     count = 0
     for target in ciq.VALID_CHATS:
         if target != me:
-            ciq.send_message(me, target, message, category="fyi")
+            ciq.send_message(me, target, message, category="fyi", path=_qpath())
             count += 1
     print(f"Broadcast to {count} chats: {message}")
 
