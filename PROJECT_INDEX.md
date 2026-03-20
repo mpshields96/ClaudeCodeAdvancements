@@ -29,7 +29,7 @@
 | Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit | 228 |
 | Spec System | `spec-system/` | SPEC-1-6 + spec_freshness + plan_compliance (wired into validate.py) | 158 |
 | Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
-| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook) + MT-20 Senior Dev MVP (5 modules) | 633 |
+| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook) + MT-20 Senior Dev MVP (6 modules: SATD+Effort+FPFilter+Classifier+CodeQuality+Hook) | 676 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker + hook_profiler | 259 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 526 |
