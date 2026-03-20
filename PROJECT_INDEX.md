@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-20 (Session 84)
+# Last updated: 2026-03-20 (Session 89)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 3332 tests (82 suites). All must pass before any work.**
+**Total: 3498 tests (85 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -125,6 +125,8 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `loop_health.py` — Per-session health tracking for cca-loop (grade, test counts, regression detection, 54 tests)
 - `queue_injector.py` — Cross-chat queue context injection hook (19 tests)
 - `launch_worker.sh` — One-command dual-chat launcher: opens Terminal tab with CCA_CHAT_ID, starts worker
+- `tip_tracker.py` — Advancement tip persistence across all chats (26 tests, S89)
+- `wrap_tracker.py` — Session wrap assessment persistence with trend analysis (23 tests, S89)
 
 **research/** — R&D and tools
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)
@@ -157,6 +159,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | `tests/test_queue_injector.py` | Cross-chat queue context injection hook (19 tests) |
 | `tests/test_cross_chat_queue.py` | Bidirectional cross-chat JSONL message queue (44 tests) |
 | `tests/test_cca_internal_queue.py` | Desktop/Terminal coordination queue (41 tests) |
+| `tests/test_hivemind_deep.py` | Deep hivemind coverage: 117 tests across 31 classes (S89) |
 
 CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against Python 3.10 + 3.12.
 
