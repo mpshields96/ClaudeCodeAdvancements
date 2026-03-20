@@ -150,6 +150,55 @@ class SlideGenerator:
             os.unlink(data_path)
 
 
+def collect_slides_from_project(collector, session=None):
+    """Build slide deck from real CCA project data."""
+    # Import the report data collector for real metrics
+    sys.path.insert(0, os.path.dirname(__file__))
+    from report_generator import CCADataCollector
+
+    data_collector = CCADataCollector(project_root=collector.project_root)
+    report_data = data_collector.collect_from_project(session=session)
+
+    s = report_data["summary"]
+    modules = report_data["modules"]
+    intelligence = report_data["intelligence"]
+
+    slides = [
+        collector.build_section_slide(
+            f"Session {report_data['session']}" if report_data.get("session") else "Project Overview"
+        ),
+        collector.build_summary_slide(
+            s["total_tests"], s["passing_tests"], s["test_suites"],
+            s["total_modules"], s["total_findings"],
+        ),
+        collector.build_metric_slide("Key Metrics", [
+            {"label": "Tests", "value": f"{s['total_tests']:,}", "sublabel": f"{s['test_suites']} suites, all passing"},
+            {"label": "LOC", "value": f"{s['total_loc']:,}", "sublabel": f"{s['source_files']} source + {s['test_files']} test files"},
+            {"label": "Commits", "value": str(s["git_commits"]), "sublabel": f"{s['project_age_days']} days"},
+        ]),
+        collector.build_bullet_slide("Five Frontiers", [
+            f"{f['name']} — {f['description']}" for f in report_data.get("frontiers", [])
+        ] or [
+            "Memory System — persistent cross-session memory",
+            "Spec System — requirements-first development",
+            "Context Monitor — health tracking + auto-handoff",
+            "Agent Guard — multi-agent safety + conflict prevention",
+            "Usage Dashboard — token/cost transparency",
+        ]),
+        collector.build_module_slide([
+            {"name": m["name"], "status": m["status"], "tests": m["tests"]}
+            for m in modules
+        ]),
+        collector.build_metric_slide("Intelligence", [
+            {"label": "Findings", "value": str(intelligence["findings_total"]), "sublabel": f"{intelligence['build']} BUILD, {intelligence['adapt']} ADAPT"},
+            {"label": "Subreddits", "value": str(intelligence["subreddits_scanned"]), "sublabel": "actively monitored"},
+            {"label": "Repos", "value": str(intelligence["github_repos_evaluated"]), "sublabel": "evaluated"},
+        ]),
+    ]
+
+    return report_data["session"] or session, slides
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate CCA presentation slides")
     sub = parser.add_subparsers(dest="command")
@@ -159,6 +208,7 @@ def main():
     gen.add_argument("--title", default="ClaudeCodeAdvancements", help="Deck title")
     gen.add_argument("--subtitle", default="Project Update", help="Deck subtitle")
     gen.add_argument("--session", type=int, help="Session number")
+    gen.add_argument("--demo", action="store_true", help="Use hardcoded demo data")
 
     sub.add_parser("templates", help="List available templates")
 
@@ -172,29 +222,28 @@ def main():
 
     if args.command == "generate":
         collector = SlideDataCollector()
-        metadata = collector.collect_metadata(
-            title=args.title,
-            subtitle=args.subtitle,
-            session=args.session,
-        )
 
-        # Build a default overview deck
-        slides = [
-            collector.build_section_slide(f"Session {args.session}" if args.session else "Project Overview"),
-            collector.build_summary_slide(1593, 1593, 39, 9, 283),
-            collector.build_metric_slide("Key Metrics", [
-                {"label": "Tests", "value": "1593", "sublabel": "39 suites, all passing"},
-                {"label": "Modules", "value": "9", "sublabel": "5 frontiers complete"},
-                {"label": "Findings", "value": "283", "sublabel": "32% APF"},
-            ]),
-            collector.build_bullet_slide("Five Frontiers", [
-                "Memory System — persistent cross-session memory",
-                "Spec System — requirements-first development",
-                "Context Monitor — health tracking + auto-handoff",
-                "Agent Guard — multi-agent safety + conflict prevention",
-                "Usage Dashboard — token/cost transparency",
-            ]),
-        ]
+        if args.demo:
+            # Hardcoded demo data for testing without project files
+            metadata = collector.collect_metadata(
+                title=args.title, subtitle=args.subtitle, session=args.session,
+            )
+            slides = [
+                collector.build_section_slide(f"Session {args.session}" if args.session else "Project Overview"),
+                collector.build_summary_slide(1593, 1593, 39, 9, 283),
+                collector.build_metric_slide("Key Metrics", [
+                    {"label": "Tests", "value": "1593", "sublabel": "39 suites, all passing"},
+                    {"label": "Modules", "value": "9", "sublabel": "5 frontiers complete"},
+                    {"label": "Findings", "value": "283", "sublabel": "32% APF"},
+                ]),
+            ]
+        else:
+            # Collect real project data
+            real_session, slides = collect_slides_from_project(collector, session=args.session)
+            metadata = collector.collect_metadata(
+                title=args.title, subtitle=args.subtitle,
+                session=args.session or real_session,
+            )
 
         deck = collector.assemble_deck(metadata, slides)
         generator = SlideGenerator()

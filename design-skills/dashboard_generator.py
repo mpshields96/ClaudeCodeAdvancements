@@ -120,6 +120,7 @@ class DashboardData:
     master_tasks: List[MasterTaskRow] = field(default_factory=list)
     metrics: List[MetricCard] = field(default_factory=list)
     session_number: int = 0
+    daily_diff: Optional[dict] = None
 
     def to_dict(self) -> dict:
         return {
@@ -129,6 +130,7 @@ class DashboardData:
             "modules": [m.to_dict() for m in self.modules],
             "master_tasks": [t.to_dict() for t in self.master_tasks],
             "metrics": [m.to_dict() for m in self.metrics],
+            "daily_diff": self.daily_diff,
         }
 
 
@@ -146,6 +148,7 @@ class DashboardRenderer:
     def render(self, data: DashboardData) -> str:
         """Generate complete HTML string."""
         metrics_html = self._render_metrics(data.metrics)
+        daily_diff_html = self._render_daily_diff(data.daily_diff)
         charts_html = self._render_charts(data)
         modules_html = self._render_modules(data.modules)
         tasks_html = self._render_master_tasks(data.master_tasks)
@@ -168,6 +171,7 @@ class DashboardRenderer:
   </header>
 
   {metrics_html}
+  {daily_diff_html}
   {charts_html}
   {modules_html}
   {tasks_html}
@@ -362,6 +366,62 @@ footer {{
   height: auto;
 }}
 
+/* Daily diff */
+.daily-diff {{
+  background: {COLORS['surface']};
+  border: 1px solid {COLORS['border']};
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 32px;
+}}
+.diff-header {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}}
+.diff-title {{
+  font-size: 14px;
+  font-weight: 700;
+  color: {COLORS['primary']};
+}}
+.diff-range {{
+  font-size: 11px;
+  color: {COLORS['muted']};
+}}
+.diff-totals {{
+  display: flex;
+  gap: 24px;
+  margin-bottom: 12px;
+}}
+.diff-stat {{
+  text-align: center;
+}}
+.diff-delta {{
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}}
+.diff-delta.positive {{ color: {COLORS['success']}; }}
+.diff-delta.negative {{ color: {COLORS['highlight']}; }}
+.diff-delta.zero {{ color: {COLORS['muted']}; }}
+.diff-label {{
+  font-size: 11px;
+  color: {COLORS['muted']};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}}
+.diff-modules {{
+  font-size: 12px;
+  color: {COLORS['primary']};
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid {COLORS['border']};
+}}
+.diff-modules span {{
+  color: {COLORS['muted']};
+}}
+
 /* Responsive */
 @media (max-width: 600px) {{
   .metrics {{ grid-template-columns: repeat(2, 1fr); }}
@@ -421,6 +481,63 @@ footer {{
         return f"""<h2 class="section-header">Charts</h2>
 <div class="charts">
 {chr(10).join(charts)}
+</div>"""
+
+    def _render_daily_diff(self, diff: Optional[dict]) -> str:
+        """Render daily snapshot diff as a compact summary card."""
+        if not diff:
+            return ""
+
+        dr = diff.get("date_range", {})
+        td = diff.get("totals_delta", {})
+
+        # Build delta items
+        delta_items = []
+        for key, label in [("tests", "Tests"), ("suites", "Suites"), ("loc", "LOC"), ("py_files", "Files")]:
+            d = td.get(key, {})
+            delta = d.get("delta", 0)
+            if delta != 0:
+                sign = "+" if delta > 0 else ""
+                css_class = "positive" if delta > 0 else "negative"
+                delta_items.append(
+                    f'<div class="diff-stat">'
+                    f'<div class="diff-delta {css_class}">{sign}{delta}</div>'
+                    f'<div class="diff-label">{_e(label)}</div></div>'
+                )
+
+        if not delta_items:
+            delta_items.append(
+                '<div class="diff-stat">'
+                '<div class="diff-delta zero">0</div>'
+                '<div class="diff-label">No changes</div></div>'
+            )
+
+        totals_html = "\n".join(delta_items)
+
+        # Module-level changes
+        module_lines = []
+        for md in diff.get("module_deltas", []):
+            parts = []
+            if md.get("tests_delta", 0) != 0:
+                sign = "+" if md["tests_delta"] > 0 else ""
+                parts.append(f"{sign}{md['tests_delta']} tests")
+            if md.get("loc_delta", 0) != 0:
+                sign = "+" if md["loc_delta"] > 0 else ""
+                parts.append(f"{sign}{md['loc_delta']} LOC")
+            if parts:
+                module_lines.append(f"<strong>{_e(md['name'])}</strong>: <span>{_e(', '.join(parts))}</span>")
+
+        modules_html = ""
+        if module_lines:
+            modules_html = f'<div class="diff-modules">{" &middot; ".join(module_lines)}</div>'
+
+        return f"""<div class="daily-diff">
+  <div class="diff-header">
+    <span class="diff-title">Daily Changes</span>
+    <span class="diff-range">{_e(dr.get('from', '?'))} &rarr; {_e(dr.get('to', '?'))}</span>
+  </div>
+  <div class="diff-totals">{totals_html}</div>
+  {modules_html}
 </div>"""
 
     def _render_metrics(self, metrics: List[MetricCard]) -> str:
@@ -642,6 +759,19 @@ def _collect_project_data() -> DashboardData:
         session_match = _re.search(r"Session\s+(\d+)", state_content)
         if session_match:
             data.session_number = int(session_match.group(1))
+
+    # ── Daily diff ──
+    try:
+        sys.path.insert(0, os.path.join(project_root, "design-skills"))
+        import daily_snapshot as ds
+        snapshots = ds.list_snapshots(ds.SNAPSHOT_DIR)
+        if len(snapshots) >= 2:
+            new_snap = ds.load_snapshot(snapshots[0], ds.SNAPSHOT_DIR)
+            old_snap = ds.load_snapshot(snapshots[1], ds.SNAPSHOT_DIR)
+            if new_snap and old_snap:
+                data.daily_diff = ds.diff_snapshots(old_snap, new_snap)
+    except Exception:
+        pass
 
     # ── Build metrics ──
     complete_count = sum(1 for m in data.modules if m.status == "COMPLETE")

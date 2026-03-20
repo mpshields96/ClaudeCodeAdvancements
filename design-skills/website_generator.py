@@ -630,15 +630,101 @@ def _demo_landing_page() -> LandingPage:
     )
 
 
+def _collect_landing_page() -> LandingPage:
+    """Build a LandingPage from real CCA project data."""
+    import re
+    project_root = str(Path(__file__).parent.parent)
+
+    # Read PROJECT_INDEX.md for module data
+    index_path = os.path.join(project_root, "PROJECT_INDEX.md")
+    index_content = ""
+    if os.path.exists(index_path):
+        with open(index_path) as f:
+            index_content = f.read()
+
+    # Parse module table
+    features = []
+    module_icons = {
+        "Memory System": "🧠", "Spec System": "📋", "Context Monitor": "📊",
+        "Agent Guard": "🛡️", "Usage Dashboard": "💡", "Reddit Intelligence": "🔍",
+        "Self-Learning": "🔄", "Design Skills": "🎨", "Research": "🔬",
+    }
+    module_descriptions = {
+        "Memory System": "Persistent cross-session memory with FTS5 search and MCP server.",
+        "Spec System": "Spec-driven development: requirements, design, tasks, implement.",
+        "Context Monitor": "Real-time context health monitoring and auto-handoff.",
+        "Agent Guard": "Multi-agent conflict prevention, credential guard, bash safety.",
+        "Usage Dashboard": "Token and cost transparency with doc drift detection.",
+        "Reddit Intelligence": "Community signal research from Reddit and GitHub.",
+        "Self-Learning": "Cross-session improvement via trace analysis and reflection.",
+        "Design Skills": "Professional PDF reports, HTML dashboards, SVG charts.",
+        "Research": "R&D tools including iOS project generation.",
+    }
+
+    in_table = False
+    for line in index_content.split("\n"):
+        stripped = line.strip()
+        if "| Module " in stripped or "| Module|" in stripped:
+            in_table = True
+            continue
+        if in_table and stripped.startswith("|---"):
+            continue
+        if in_table and stripped.startswith("|"):
+            parts = [p.strip() for p in stripped.split("|")]
+            parts = [p for p in parts if p]
+            if len(parts) >= 1:
+                name = parts[0]
+                desc = module_descriptions.get(name, "")
+                icon = module_icons.get(name, "")
+                if name and desc:
+                    features.append(FeatureCard(name, desc, icon))
+        elif in_table and not stripped.startswith("|"):
+            in_table = False
+
+    # Extract totals
+    total_match = re.search(r"\*\*Total:\s*([\d,]+)\s*tests\s*\((\d+)\s*suites\)", index_content)
+    total_tests = total_match.group(1).replace(",", "") if total_match else "0"
+    total_suites = total_match.group(2) if total_match else "0"
+
+    # Session number from SESSION_STATE.md
+    state_path = os.path.join(project_root, "SESSION_STATE.md")
+    session = "0"
+    if os.path.exists(state_path):
+        with open(state_path) as f:
+            state_content = f.read()
+        session_match = re.search(r"Session (\d+)", state_content)
+        if session_match:
+            session = session_match.group(1)
+
+    return LandingPage(
+        title="ClaudeCodeAdvancements",
+        tagline="Research, design, and build the next significant advancements for Claude Code users.",
+        hero_cta_text="View on GitHub",
+        hero_cta_url="https://github.com/mpshields96/ClaudeCodeAdvancements",
+        features=features or [FeatureCard("CCA", "Project data not found.")],
+        metrics=[
+            MetricCard("Tests", total_tests),
+            MetricCard("Suites", total_suites),
+            MetricCard("Modules", str(len(features))),
+            MetricCard("Sessions", session),
+        ],
+        nav_links=[
+            NavLink("Home", "/", active=True),
+            NavLink("GitHub", "https://github.com/mpshields96/ClaudeCodeAdvancements"),
+        ],
+    )
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Generate CCA website pages")
     parser.add_argument("--type", choices=["landing", "docs"], default="landing")
     parser.add_argument("--output", default="-", help="Output file (- for stdout)")
+    parser.add_argument("--demo", action="store_true", help="Use hardcoded demo data")
     args = parser.parse_args()
 
     if args.type == "landing":
-        page = _demo_landing_page()
+        page = _demo_landing_page() if args.demo else _collect_landing_page()
         html_out = render_landing_page(page)
     else:
         page = DocsPage(

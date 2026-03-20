@@ -635,6 +635,33 @@ class CCADataCollector:
 
         return queue
 
+    # ── Daily diff ────────────────────────────────────────────────────
+
+    def collect_daily_diff(self):
+        """Collect daily snapshot diff if snapshots exist.
+
+        Returns a dict with date_range, totals_delta, module_deltas,
+        new_suites, removed_suites — or None if insufficient data.
+        """
+        try:
+            sys.path.insert(0, os.path.dirname(__file__))
+            import daily_snapshot as ds
+
+            snapshots = ds.list_snapshots(ds.SNAPSHOT_DIR)
+            if len(snapshots) < 2:
+                return None
+
+            newest = snapshots[0]
+            previous = snapshots[1]
+            new_snap = ds.load_snapshot(newest, ds.SNAPSHOT_DIR)
+            old_snap = ds.load_snapshot(previous, ds.SNAPSHOT_DIR)
+            if not new_snap or not old_snap:
+                return None
+
+            return ds.diff_snapshots(old_snap, new_snap)
+        except Exception:
+            return None
+
     # ── Next priorities ─────────────────────────────────────────────────
 
     def collect_priorities(self):
@@ -844,6 +871,7 @@ class CCADataCollector:
             "session_highlights": session_highlights,
             "frontiers": frontiers,
             "priority_queue": priority_queue,
+            "daily_diff": self.collect_daily_diff(),
         }
 
 

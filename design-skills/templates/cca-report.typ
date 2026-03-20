@@ -289,6 +289,83 @@
   ]
 }
 
+// Daily changes (if snapshot diff available)
+#if data.keys().contains("daily_diff") and data.daily_diff != none {
+  v(6mm)
+  text(size: 7.5pt, fill: light, weight: "semibold", tracking: 1.5pt)[DAILY CHANGES]
+  v(1mm)
+  text(size: 7pt, fill: mid)[#data.daily_diff.date_range.from #sym.arrow.r #data.daily_diff.date_range.to]
+  v(2mm)
+
+  // Totals delta row
+  {
+    let deltas = data.daily_diff.totals_delta
+    let items = ()
+    for (key, label) in (("tests", "Tests"), ("suites", "Suites"), ("loc", "LOC"), ("py_files", "Files")) {
+      if deltas.keys().contains(key) and deltas.at(key).delta != 0 {
+        let d = deltas.at(key)
+        let sign = if d.delta > 0 { "+" } else { "" }
+        let color = if d.delta > 0 { green } else if d.delta < 0 { red } else { mid }
+        items.push((label, sign + str(d.delta), color))
+      }
+    }
+
+    if items.len() > 0 {
+      box(fill: wash, radius: 6pt, inset: 10pt, width: 100%)[
+        #grid(
+          columns: items.map(_ => 1fr),
+          column-gutter: 8pt,
+          ..items.map(((label, delta, color)) => {
+            align(center)[
+              #text(size: 16pt, weight: "bold", fill: color)[#delta]
+              #v(1mm)
+              #text(size: 7pt, fill: light)[#label]
+            ]
+          })
+        )
+      ]
+    } else {
+      box(fill: wash, radius: 6pt, inset: 10pt, width: 100%)[
+        #text(size: 8pt, fill: mid)[No measurable changes between snapshots.]
+      ]
+    }
+  }
+
+  // Module-level changes
+  if data.daily_diff.keys().contains("module_deltas") and data.daily_diff.module_deltas.len() > 0 {
+    v(2mm)
+    for md in data.daily_diff.module_deltas {
+      let parts = ()
+      if md.tests_delta != 0 {
+        let sign = if md.tests_delta > 0 { "+" } else { "" }
+        parts.push(sign + str(md.tests_delta) + " tests")
+      }
+      if md.loc_delta != 0 {
+        let sign = if md.loc_delta > 0 { "+" } else { "" }
+        parts.push(sign + str(md.loc_delta) + " LOC")
+      }
+      if parts.len() > 0 {
+        grid(
+          columns: (auto, 1fr),
+          column-gutter: 6pt,
+          text(size: 7.5pt, weight: "semibold", fill: dark)[#md.name],
+          text(size: 7.5pt, fill: mid)[#parts.join(", ")],
+        )
+        v(1pt)
+      }
+    }
+  }
+
+  // New test suites
+  if data.daily_diff.keys().contains("new_suites") and data.daily_diff.new_suites.len() > 0 {
+    v(2mm)
+    for ns in data.daily_diff.new_suites {
+      text(size: 7.5pt, fill: green)[+ #text(font: "Menlo", size: 7pt)[#ns.file] #text(fill: mid)[(#ns.count tests)]]
+      linebreak()
+    }
+  }
+}
+
 #pagebreak()
 
 // ═══════════════════════════════════════════════════════════════════════════

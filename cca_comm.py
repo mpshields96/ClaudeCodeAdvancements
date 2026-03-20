@@ -42,13 +42,32 @@ def _qpath() -> str:
 
 
 def detect_chat_id() -> str:
-    """Auto-detect which chat we are based on env var or context."""
+    """Auto-detect which chat we are based on env var or context.
+
+    Detection order:
+    1. CCA_CHAT_ID env var (explicit, always wins)
+    2. TMUX_PANE env var (in tmux = terminal worker)
+    3. TERM_PROGRAM env var (Terminal.app / iTerm2 = terminal)
+    4. Fallback: "desktop" with stderr warning
+    """
     env_id = os.environ.get("CCA_CHAT_ID", "").strip()
     if env_id and env_id in ciq.VALID_CHATS:
         return env_id
-    # Default: if running in Terminal.app, likely cli1/cli2
-    # If running in Desktop Claude Code, likely desktop
-    # Can't reliably distinguish — default to desktop
+
+    # Heuristic: if we're in tmux or a terminal emulator, we're likely a CLI worker
+    tmux_pane = os.environ.get("TMUX_PANE", "")
+    term_program = os.environ.get("TERM_PROGRAM", "")
+
+    if tmux_pane or term_program in ("Apple_Terminal", "iTerm.app", "iTerm2"):
+        # We're in a terminal but don't know which CLI worker
+        print(
+            "WARNING: CCA_CHAT_ID not set. Cannot determine if you are cli1 or cli2.\n"
+            "  Set it with: export CCA_CHAT_ID=cli1  (or cli2)\n"
+            "  Or specify target: python3 cca_comm.py inbox cli1\n",
+            file=sys.stderr,
+        )
+        return "desktop"  # Still default, but user is warned
+
     return "desktop"
 
 
