@@ -689,7 +689,7 @@ Phase 2 (Session 49):
 - Filters output via quality gate (non-negotiable per RovoDev findings)
 - Stdlib only + optional LLM API call for false positive filtering
 
-**Status:** ALL 10 GAP ITEMS CLOSED (S78-S81). E2E validation with real API key pending.
+**Status:** COMPLETE (S71-S83). All 10 gaps closed + E2E validated 10/10 with real API (claude-haiku-4-5-20251001, S83).
 
 Built (S71-S81): 13 modules, ~3,000 LOC, ~890 tests, all passing:
 - Infrastructure (S71-S74): satd_detector, effort_scorer, code_quality_scorer, fp_filter,
@@ -705,7 +705,7 @@ Built (S71-S81): 13 modules, ~3,000 LOC, ~890 tests, all passing:
 - Gap closure: Intent verification + trade-off judgment prompts (S81) DONE
 - E2E test suite: 10 tests covering real API calls, skip without key (S81) DONE
 
-**Next:** E2E validate with real API key. Then converge with MT-21 Hivemind Phase 1.
+**Next:** DONE. MT-20 is feature-complete. Converge with MT-21 Hivemind Phase 1.
 
 ---
 
@@ -777,7 +777,7 @@ developer colleague.
 | 6 | MT-8 | iPhone remote control | 5 | Session 44 | 38 | 0.5 | cap | **10.0** | SOLVED by native Remote Control + ServerCC/Moshi apps. Cap: 10.0. Consider closing. |
 | 7 | MT-17 | Design/reports | 5 | Session 71 | 11 | 1.0 | cap | **10.0** | Phase 5 DONE (website_generator). Phase 6: daily snapshots. Cap: 10.0 |
 | 8 | MT-21 | Hivemind coordination | 8 | Session 81 | 1 | 1.0 | 1.0 | **9.0** | Phase 1 validation: prove 2-chat (needs Matthew). |
-| 9 | MT-20 | Senior Dev Agent | 8 | Session 81 | 1 | 1.0 | 1.0 | **9.0** | ALL 10 GAPS CLOSED. E2E validation needs API key. |
+| 9 | MT-20 | Senior Dev Agent | 8 | Session 83 | 0 | -- | -- | **DONE** | COMPLETE: 13 modules, ~890 tests, E2E 10/10 validated (S83). |
 | 10 | MT-18 | Academic writing | 4 | NEVER | 82+ | 0.5 | cap | **8.0** | Research phase. Cap: 8.0 |
 | 11 | MT-13 | iOS/macOS app development | 4 | Session 49 | 33 | 0.5 | cap | **8.0** | Phase 3: first real app. Cap: 8.0 |
 

@@ -5,12 +5,12 @@
 
 ## Current State (as of Session 83 — 2026-03-20)
 
-**Phase:** Session 83 IN PROGRESS. Tests: 80 suites, 3265 total passing (+17). Git: 3 commits so far.
+**Phase:** Session 83 IN PROGRESS. Tests: 80 suites, 3265 total passing (+17). Git: 5 commits so far.
 
 **What was done this session (S83):**
 - **MT-11 Phase 2 COMPLETE: Trending repo discovery** — `fetch_trending()`, `_build_trending_query()`, `TrendingScanner` class with per-language scanning + trending history JSONL log. CLI `trending` command with --language, --days, --all, --json flags. +32 tests (62 total github_scanner). Live validation: Python + TypeScript 14d scan found 19 EVALUATE repos.
 - **Reddit intelligence scan** — r/ClaudeCode hot 25 posts reviewed. 1 new finding: firejail sandbox wrapper (REFERENCE for AG). Most posts already logged from S82.
-- **MT-20 E2E diagnosis** — API key provided by Matthew, but Anthropic account has zero credit balance. 5/10 E2E tests pass (code is correct), 5 fail on billing 400. BLOCKED on adding ~$5 API credits at console.anthropic.com/settings/plans.
+- **MT-20 E2E VALIDATED** — Matthew added $5 API credits + created new API key. 10/10 E2E tests pass (claude-haiku-4-5-20251001). MT-20 Senior Dev Agent is now COMPLETE. Also fixed false-pass bug in E2E tests (error strings matching content assertions).
 - **MT-14 validation** — Rescan infrastructure confirmed working: `rescan_sub()`, `get_stale_subs()`, stale gate correctly rejects premature rescans (14-day threshold). No code needed.
 - **MT-12 validation** — Paper scanner confirmed working: 21 papers logged, dedup functional, all 4 domains searchable.
 - **Doc drift fix** — Corrected reddit-intelligence test count (claimed 348, actual 333). Zero drift confirmed.
@@ -20,11 +20,11 @@
 - All S51-S82 directives still active
 
 **Next (prioritized):**
-1. MT-20 E2E validation: Add API credits at console.anthropic.com/settings/plans, then re-run test — BLOCKED on billing
-2. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker) — BLOCKED on Matthew
-3. MT-11 Phase 3: Wire trending into MT-9 autonomous pipeline
-4. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
-5. MT-9 Phase 3: Supervised trial of autonomous scanning
+1. Hivemind Phase 1: First real 2-chat validation session (desktop + 1 CLI worker) — BLOCKED on Matthew
+2. MT-11 Phase 3: Wire trending into MT-9 autonomous pipeline
+3. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
+4. MT-9 Phase 3: Supervised trial of autonomous scanning
+5. Reddit intelligence: scan for new posts, follow up on trending repos
 
 ---
 

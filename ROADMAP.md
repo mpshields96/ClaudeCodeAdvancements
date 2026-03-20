@@ -171,7 +171,7 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | MT-14 | Re-Scan Previously Scanned Subreddits | COMPLETE — built into autonomous_scanner | -- |
 | MT-15 | Sandboxed Repo Testing | COMPLETE — repo_tester.py | -- |
 | MT-17 | Professional Design Skills | COMPLETE — report/slide/dashboard/chart/website/snapshot | -- |
-| MT-20 | Senior Developer Agent | ALL 10 GAPS CLOSED — 13 modules, ~890 tests. E2E needs API key | -- |
+| MT-20 | Senior Developer Agent | COMPLETE — 13 modules, ~890 tests, E2E 10/10 validated (S83) | -- |
 | MT-21 | Hivemind Multi-Chat Coordination | Infrastructure COMPLETE. Phase 1 validation NOT STARTED | -- |
 | MT-8 | iPhone Remote Control Perfection | Mostly self-resolved by native Remote Control | 1 |
 | MT-1 | Maestro Visual Grid UI | MOSTLY SELF-RESOLVED — evaluate existing tools | 2 |
