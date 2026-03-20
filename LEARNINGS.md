@@ -383,3 +383,19 @@
 - **Files:** agent-guard/bash_guard.py, memory: project_autonomous_loop.md
 
 ---
+
+### paper_scanner.py evaluate() always 404s — Severity: 1 — Count: 1
+- **Anti-pattern:** Calling `python3 self-learning/paper_scanner.py evaluate <semanticscholar_url>` to get paper details
+- **Fix:** Use WebFetch on the arXiv URL directly (e.g., `https://arxiv.org/abs/XXXX.XXXXX`). The evaluate command hits a Semantic Scholar endpoint that returns 404 for all tested papers.
+- **First seen:** 2026-03-19 (Session 70)
+- **Files:** self-learning/paper_scanner.py, any academic research session
+
+---
+
+### paper_scanner.py search() low-signal for SE topics — Severity: 1 — Count: 1
+- **Anti-pattern:** Relying solely on `paper_scanner.py search` for software engineering research topics (code review, technical debt, SWE agents). Returns tangential results.
+- **Fix:** Use paper_scanner.py for its designed domains (prediction/agents/statistics/interaction). For SE topics, supplement with direct WebSearch targeting arXiv + specific conference proceedings (ICSE, FSE, ISSTA, NeurIPS, TOSEM). Fetch high-citation papers directly via WebFetch.
+- **First seen:** 2026-03-19 (Session 70)
+- **Files:** self-learning/paper_scanner.py
+
+---

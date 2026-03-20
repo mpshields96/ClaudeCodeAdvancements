@@ -33,10 +33,10 @@
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker + hook_profiler | 259 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11,14,15 | 316 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 526 |
-| Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
+| Design Skills | `design-skills/` | MT-17 Phase 5 COMPLETE (website_generator) | 163 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 2484 tests (60 suites). All must pass before any work.**
+**Total: 2563 tests (63 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 

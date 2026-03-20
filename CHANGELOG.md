@@ -1166,3 +1166,20 @@
 - Only z-scores exceeding -2.0 (p<0.05) should drive blocking decisions; marginal hours (z=-0.96 to -1.23) should be monitored, not blocked
 
 ---
+
+## Session 70 — 2026-03-19
+
+**What changed:**
+- `self-learning/research/SENIOR_DEV_AGENT_RESEARCH.md` — NEW: Nuclear-level research for the Senior Developer Agent master task (677 lines, 11 verified papers, 5 open-source tools, industry standards synthesis, MVP architecture defined)
+
+**Why:**
+- Matthew requested a research-only session to ground the Senior Dev Agent in real engineering practices before any PLAN.md or implementation. Research must precede planning for a master-level task.
+
+**Tests:** 2563/2563 passing (62 suites — 3 new suites from other chats visible this session)
+
+**Lessons:**
+- paper_scanner.py evaluate() 404s on all Semantic Scholar URLs — use WebFetch on arXiv directly instead
+- paper_scanner.py search() returns low-signal results for SE topics — always supplement with direct WebSearch + WebFetch on high-citation papers; the scanner is better suited for prediction/agent/statistics domains
+- Multiple background agents (7 parallel) can efficiently cover a large research space; synthesizing their outputs in a single sequential pass produces a coherent document without redundancy
+
+---

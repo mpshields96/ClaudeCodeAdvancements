@@ -3,17 +3,30 @@
 
 ---
 
-## Current State (as of Session 69 — 2026-03-19)
+## Current State (as of Session 70 — 2026-03-19)
 
-**Phase:** Session 69 COMPLETE. Tests: 2465/2465 passing (59 suites). Git: clean.
-**What's done this session (S69 + cca-loop iterations):**
-1. **bash_guard.py made globally safe** — Removed hardcoded CCA path from DESTRUCTIVE_PATTERNS, dynamic rm-rf check using os.getcwd(). Now project-root-aware for use in any project context.
-2. **bash_guard + credential_guard wired into GLOBAL ~/.claude/settings.json** — All Claude sessions on this machine are now protected, including cca-loop sessions. Senior dev gap closed.
-3. **SESSION_RESUME.md corrected** — Was stale at S67; updated to current state for loop handoffs.
-4. **CI/CD added (.github/workflows/tests.yml)** — GitHub Actions for all 59 suites on push/PR, Python 3.10 + 3.12. Senior dev gap #1 closed.
-5. **Hook chain integration test built** (22 tests) — tests/test_hook_chain_integration.py covers all 15 hooks across 6 event types: existence, JSON validity, empty stdin, latency budget, cross-hook interference. Senior dev gap #2 closed.
-6. **cca_internal_queue.py built** — Desktop/Terminal coordination queue for cross-session message passing (see tests/test_cca_internal_queue.py).
-7. **doc_drift_checker.py built** (30 tests, usage-dashboard/) — Automated doc accuracy verification. Detects when PROJECT_INDEX.md/ROADMAP.md test counts, file paths drift from reality. Senior dev gap #3 closed. First run corrected 6 stale counts across ROADMAP.md and PROJECT_INDEX.md.
+**Phase:** Session 70 COMPLETE. Tests: 2563/2563 passing (62 suites). Git: clean (research committed).
+**What's done this session:**
+1. **SENIOR_DEV_AGENT_RESEARCH.md written** (self-learning/research/) — Nuclear-level research for the Senior Developer Agent master task. 677 lines. 11 verified academic papers (RovoDev, SWE-agent, Agentless, AutoCodeRover, CRScore, SATD repayment, LLM QA, FP reduction, code review curation, ChatGPT review, LLM SE challenges). 5 open-source tools (PR-Agent, CodeRabbit, RepoAudit, AsyncReview, ADR tools). Industry standards from Google, Stripe, Atlassian. Full synthesis: automatable vs human functions, architecture options, MVP feature set, CCA infrastructure dependencies.
+2. **Key research findings:** AI catches ~46-48% of production bugs; Tencent hybrid LLM+static reduces 76% FP rate to 2-6%; Atlassian RovoDev in production: 30.8% cycle time reduction, 38.7% comment action rate; maintainability is the most needed / least addressed dimension in LLM code tools.
+3. **MVP defined:** SATD detector + effort scorer + false positive filter + CRScore-style output classifier. Buildable in 2 sessions. Dependencies on existing CCA hook chain documented.
+
+**Matthew directives (S51-S70, permanent):**
+- ROI = make money. Financial, not philosophical.
+- CCA dual mission: 50% Kalshi financial support + 50% self-improvement
+- Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
+- Account floating $100-200 — need smarter signals, not more guards
+- Open to not running overnight if objectively correct; wants evidence-based decision
+- Self-learning should have mid-session micro-reflection, not just wrap-time (S56 — BUILT, S57 — WIRED)
+- VA hospital wifi blocks Reddit/SSRN — queue URL-dependent work for hotspot (S57)
+- Hooks must not cause CLI errors — fail silently with valid JSON on all edge cases (S58)
+- Build vs research: 75-80% build, 20-30% research. Daily scan 15 min max (S62)
+- Don't neglect Kalshi chats — start with cross-chat support first each session (S67)
+- cca-loop approved for daytime supervised use only, no overnight (S67)
+- Optimal setup: cca-loop + manual chat (not 2 manual CCA chats) for ADHD workflow (S68)
+- Senior Dev Agent is a new master-level task — read SENIOR_DEV_AGENT_RESEARCH.md before planning (S70)
+
+**Next:** (1) Review SENIOR_DEV_AGENT_RESEARCH.md → add to MASTER_TASKS.md → plan MVP (SATD detector + effort scorer + FP filter). (2) Wire doc_drift_checker into CI/CD as a check. (3) Wire cross_chat_queue context into Kalshi chat startup. (4) MT-17 Phase 5: Website templates. (5) SSRN retry on hotspot.
 
 **Matthew directives (S51-S69, permanent):**
 - ROI = make money. Financial, not philosophical.
