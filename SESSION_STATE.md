@@ -3,18 +3,21 @@
 
 ---
 
-## Current State (as of Session 62 — 2026-03-19)
+## Current State (as of Session 63 — 2026-03-19)
 
-**Phase:** Session 62 COMPLETE. Tests: 2108/2108 passing (51 suites). Git: 5 commits.
+**Phase:** Session 63 COMPLETE. Tests: 2112/2112 passing (51 suites). Git: 4 commits.
 **What's done this session:**
-1. **FTS5 memory store built** (Frontier 1 P0) — memory_store.py (464 LOC, 80 tests). SQLite+FTS5 backend with BM25 relevance search, atomic transactions, WAL mode, TTL cleanup by confidence.
-2. **MCP server swapped to FTS5 backend** — mcp_server.py v2.0.0 (28 tests rewritten). O(n) substring search replaced with BM25-ranked FTS5. Same tool interface. Project filtering via MemoryStore queries.
-3. **Reddit daily scan** — r/ClaudeCode, r/ClaudeAI, r/vibecoding. r/AskVibecoders investigated (NOT worth adding). Key theme: "harness debt" (CLAUDE.md compliance degrades with context, hooks fire deterministically).
-4. **27 findings logged** — 19 from daily scan + batch reviews, 6 algotrading (REFERENCE-PERSONAL), 2 additional reviews (Channels + TokToken).
-5. **Batch trace analysis S62** — 10 most recent sessions analyzed. Avg 73.0/100 (flat vs S58). PROJECT_INDEX retry rate down 64%->40%. Read waste up 35%->46%.
-6. **Strategic framework delivered** — Build vs research ratio analysis for Matthew. Recommendation: 75-80% build, 20-30% research. Daily scan 15 min max. Nuclear weekly.
+1. **capture_hook.py v2.0 — FTS5 backend upgrade** (MEM-2). Replaced JSON file storage with MemoryStore. Stop hook writes via create_memory() with BM25 dedup. Memory type encoded as tag prefix (type:decision). 79 tests (+4 net new).
+2. **Capture hook wired LIVE** in settings.local.json as Stop hook. Verified end-to-end: message -> extraction -> FTS5 write -> correct tags/type/confidence. Frontier 1 memory pipeline now fully live (write + read + management).
+3. **Reddit daily scan** — 4 findings logged. Key: spec-driven development discussion (49 comments, validates phased SDD, identifies spec rot gap), claude-worktrace auto-capture (parallel F1 implementation, uses API calls vs our free local extraction), shanraisshan meta-repo (7 CC frameworks documented).
 
-**Matthew directives (S51-S62, permanent):**
+**MILESTONE: Frontier 1 Memory System is FULLY LIVE.**
+- Write path: Stop hook -> keyword extraction -> dedup -> FTS5 MemoryStore
+- Read path: MCP server -> FTS5 BM25 search -> tool results
+- Management: CLI tool (stats/search/list)
+- Zero external dependencies, zero API cost per session.
+
+**Matthew directives (S51-S63, permanent):**
 - ROI = make money. Financial, not philosophical.
 - CCA dual mission: 50% Kalshi financial support + 50% self-improvement
 - Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
@@ -25,7 +28,7 @@
 - Hooks must not cause CLI errors — fail silently with valid JSON on all edge cases (S58)
 - Build vs research: 75-80% build, 20-30% research. Daily scan 15 min max (S62)
 
-**Next:** (1) Build capture_hook.py (MEM-2) — write side for FTS5 MemoryStore. (2) Deep-read Google Conductor (Frontier 2 competitor) + shanraisshan/claude-code-hooks (23-hook reference). (3) Retry blocked URLs on hotspot (SSRN, quantvps). (4) Build research-outcomes tracker (close the loop on Kalshi research ROI).
+**Next:** (1) Deep-read Google Conductor (Frontier 2 competitor). (2) Retry blocked URLs on hotspot (SSRN, quantvps). (3) Build research-outcomes tracker (close Kalshi ROI loop). (4) Investigate spec rot mitigation (identified from Reddit discussion — specs diverge from code, become harmful).
 
 ---
 
