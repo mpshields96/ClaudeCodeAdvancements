@@ -29,6 +29,7 @@ if _MODULE_DIR not in sys.path:
 from satd_detector import SATDDetector, SATDLevel
 from code_quality_scorer import CodeQualityScorer
 from effort_scorer import EffortScorer
+from coherence_checker import CoherenceChecker
 
 # Code file extensions we perform deep analysis on
 _CODE_EXTENSIONS = {
@@ -155,6 +156,16 @@ class SeniorReview:
         # 3. Effort score
         effort_result = self._effort.score_content(content, file_path=file_path)
 
+        # 4. Coherence check (if project_root is set)
+        coherence_issues = []
+        if self.project_root and os.path.isdir(self.project_root):
+            try:
+                coherence = CoherenceChecker(project_root=self.project_root)
+                report = coherence.check()
+                coherence_issues = report.issues
+            except Exception:
+                pass  # Coherence check is advisory, never blocks
+
         # Build metrics dict
         metrics = {
             "loc": loc,
@@ -165,9 +176,18 @@ class SeniorReview:
             "satd_total": len(satd_markers),
             "satd_high": len(high_satd),
             "complexity": effort_result.complexity,
+            "coherence_issues": len(coherence_issues),
         }
 
         # Generate concerns from analysis
+        # Coherence concerns (project-level patterns)
+        if coherence_issues:
+            # Only surface issues relevant to the file being reviewed
+            file_basename = os.path.basename(file_path)
+            relevant = [i for i in coherence_issues if file_basename in i]
+            for issue in relevant:
+                concerns.append(f"Coherence: {issue}")
+
         # Size concerns
         if loc > _LOC_VERY_LARGE_FILE:
             concerns.append(
