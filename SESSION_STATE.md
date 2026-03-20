@@ -3,18 +3,18 @@
 
 ---
 
-## Current State (as of Session 67 — 2026-03-19)
+## Current State (as of Session 68 — 2026-03-19)
 
-**Phase:** Session 67 COMPLETE. Tests: 2236/2236 passing (54 suites). Git: uncommitted S65+S67 work.
+**Phase:** Session 68 COMPLETE. Tests: 2323/2323 passing (55 suites). Git: clean (6 commits this session).
 **What's done this session:**
-1. **KALSHI_ACTION_ITEMS.md created** — Concise TL;DR bridge file for Kalshi chats. Top 3 items each for main + research. Replaces 800-line megadump approach.
-2. **GWU 2026-001 FLB citation VERIFIED** — Burgi, Deng & Whelan "Makers and Takers" confirmed from PDF. FLB weakening: psi=0.048*** (2024) -> psi=0.021* (2025). Crypto strongest: psi=0.058***. CCA_TO_POLYBOT.md updated.
-3. **cca-loop built** — tmux-based autonomous CCA session loop (`~/.local/bin/cca-loop`). Start/stop/attach/status/once commands. Desktop launchers on ~/Desktop. Dedup guard excludes Kalshi chats. SESSION_RESUME.md handoff for continuity. cca-wrap Step 9 updated to write resume file.
-4. **UserPromptSubmit capture hook WIRED LIVE** — capture_hook.py added to UserPromptSubmit hooks array. Real-time "remember/always/never" detection now fires on user input, not just session end.
-5. **AG-9 bash_guard.py built** (86 tests) — Comprehensive Bash command safety guard. Blocks: network egress (except git), package installs, process kills, system modification, output redirects outside project, financial APIs, evasion techniques (eval, bash -c, subshells). LIVE in PreToolUse hooks.
-6. **Overnight autonomy assessed** — Honest "not yet" verdict. Daytime supervised loops approved. Safety gaps documented. Decision saved to memory.
+1. **S67 files committed** — bash_guard.py (AG-9), UserPromptSubmit capture hook, session docs all committed.
+2. **plan_compliance.py wired into validate.py** — Integrated as additional check in PreToolUse tasks_approved branch. Scope creep + future-task drift detection. 5 new tests.
+3. **ROADMAP.md updated to S68** — Was 43 sessions stale (S25). All MT statuses corrected, test counts updated (800 -> 2323), AG-4-9 added to Frontier 4 table.
+4. **validate.py WIRED AS LIVE HOOK** — Was built in SPEC-5 but never in settings.local.json. Now fires on every Write/Edit. Spec guard + plan compliance + freshness. Confirmed working (spec-guard warnings visible).
+5. **hook_profiler.py built** (32 tests) — Hook chain latency diagnostic. All 15 hooks 16-24ms. PreToolUse chain 128ms total. usage-dashboard module.
+6. **cross_chat_queue.py built** (44 tests) — Bidirectional JSONL message queue for Kalshi chats. Send/unread/ack/list/summary. Seeded with 6 existing action items. Solves the "zero items picked up" discovery problem.
 
-**Matthew directives (S51-S67, permanent):**
+**Matthew directives (S51-S68, permanent):**
 - ROI = make money. Financial, not philosophical.
 - CCA dual mission: 50% Kalshi financial support + 50% self-improvement
 - Build off objective signaling, NOT trauma/knee-jerk reactions (S55 directive)
@@ -26,8 +26,10 @@
 - Build vs research: 75-80% build, 20-30% research. Daily scan 15 min max (S62)
 - Don't neglect Kalshi chats — start with cross-chat support first each session (S67)
 - cca-loop approved for daytime supervised use only, no overnight (S67)
+- Optimal setup: cca-loop + manual chat (not 2 manual CCA chats) for ADHD workflow (S68)
+- Senior dev gaps noted as motivation: CI/CD, hook chain integration tests, session ID normalization (S68)
 
-**Next:** (1) Check Kalshi cross-chat requests FIRST. (2) plan_compliance.py — integrate as PreToolUse hook for live scope-creep detection. (3) Retry SSRN on hotspot. (4) Explore loop technology for Kalshi chat automation (MT-1 adjacent). (5) Continue master-level tasks per 2/3 CCA allocation.
+**Next:** (1) CI/CD — GitHub Actions for test suite on push (senior dev gap #1). (2) Hook chain integration test (senior dev gap #2). (3) Wire cross_chat_queue context into Kalshi chat startup. (4) Retry SSRN on hotspot. (5) Continue CCA self-improvement tasks.
 
 ---
 
