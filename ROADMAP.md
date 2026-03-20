@@ -187,7 +187,7 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | self-learning | 526 |
 | design-skills | 124 |
 | research | 86 |
-| **Total** | **2465** |
+| **Total** | **2484** |
 
 ---
 
@@ -224,3 +224,5 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | 61-65 | 2026-03-19 | FTS5 memory store, cca-loop autonomous system, KALSHI_ACTION_ITEMS bridge |
 | 66-67 | 2026-03-19 | plan_compliance.py, bash_guard.py (AG-9), UserPromptSubmit capture hook |
 | 68 | 2026-03-19 | plan_compliance wired into validate.py PreToolUse hook, ROADMAP updated to S68 |
+| 69 | 2026-03-19 | CI/CD GitHub Actions, hook chain integration test, cca_internal_queue, bash_guard global fix |
+| 70 | 2026-03-20 | doc_drift_checker.py, queue_injector.py, doc drift fixes, 3-chat parallel workflow |

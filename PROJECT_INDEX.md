@@ -36,7 +36,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 4 COMPLETE | 124 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 2465 tests (59 suites). All must pass before any work.**
+**Total: 2484 tests (60 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -128,8 +128,11 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | File | Purpose |
 |------|---------|
 | `tests/test_hook_chain_integration.py` | End-to-end hook chain: all 15 hooks, valid JSON, latency budget, cross-hook interference (22 tests) |
+| `tests/test_queue_injector.py` | Cross-chat queue context injection hook (19 tests) |
+| `tests/test_cross_chat_queue.py` | Bidirectional cross-chat JSONL message queue (44 tests) |
+| `tests/test_cca_internal_queue.py` | Desktop/Terminal coordination queue (41 tests) |
 
-CI/CD: `.github/workflows/tests.yml` — runs all 56 suites on push/PR against Python 3.10 + 3.12.
+CI/CD: `.github/workflows/tests.yml` — runs all 60 suites on push/PR against Python 3.10 + 3.12.
 
 ---
 
@@ -149,6 +152,7 @@ CI/CD: `.github/workflows/tests.yml` — runs all 56 suites on push/PR against P
 | UserPromptSubmit | `spec-system/hooks/skill_activator.py` | Skill auto-activation |
 | UserPromptSubmit | `self-learning/hooks/skillbook_inject.py` | Strategy injection |
 | UserPromptSubmit | `memory-system/hooks/capture_hook.py` | Real-time memory capture |
+| UserPromptSubmit | `queue_injector.py` | Cross-chat queue context injection (wire in Kalshi chats) |
 | Stop | `context-monitor/hooks/auto_handoff.py` | Block exit at critical |
 | Stop | `memory-system/hooks/capture_hook.py` | Session-end memory capture |
 | PostCompact | `context-monitor/hooks/post_compact.py` | Recovery + journal logging |
