@@ -398,3 +398,37 @@ class OvernightWrGapDetector(PatternDetector):
                              "gap": round(day_wr - on_wr, 3)},
                 }]
         return []
+
+
+# === Cross-Domain Transfer Detector ===
+
+@register_detector(
+    name="principle_transfer",
+    domain=["general", "trading", "nuclear_scan"],
+    description="Identifies high-scoring principles that could transfer to other domains",
+    min_sample=1,
+)
+class PrincipleTransferDetector(PatternDetector):
+    """Surfaces cross-domain principle transfer opportunities during reflect."""
+
+    def detect(self, entries, strategy=None):
+        patterns = []
+        try:
+            from principle_transfer import PrincipleTransfer
+            pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+            results = pt.scan_all_domains()
+            for target_domain, candidates in results.items():
+                for c in candidates[:2]:  # Top 2 per domain
+                    patterns.append({
+                        "type": "principle_transfer_opportunity",
+                        "severity": "info",
+                        "message": (
+                            f"Transfer opportunity: '{c.principle_text[:50]}...' "
+                            f"from {c.source_domain} -> {target_domain} "
+                            f"(score={c.transfer_score:.2f})"
+                        ),
+                        "data": c.to_dict(),
+                    })
+        except Exception:
+            pass  # Don't break reflect if transfer engine has issues
+        return patterns

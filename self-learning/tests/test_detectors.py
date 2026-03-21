@@ -300,19 +300,19 @@ class TestStaleStrategyDetector(DetectorTestBase):
 
 class TestRegistryIntegration(DetectorTestBase):
 
-    def test_all_11_detectors_registered(self):
-        """All 11 built-in detectors are registered."""
-        self.assertEqual(len(self.registry.get_all_detectors()), 11)
+    def test_all_12_detectors_registered(self):
+        """All 12 built-in detectors are registered."""
+        self.assertEqual(len(self.registry.get_all_detectors()), 12)
 
     def test_general_detectors_count(self):
-        """6 general-domain detectors."""
+        """7 general-domain detectors (6 original + principle_transfer)."""
         gen = self.registry.get_detectors(domain="general")
-        self.assertEqual(len(gen), 6)
+        self.assertEqual(len(gen), 7)
 
     def test_trading_detectors_count(self):
-        """5 trading-domain detectors."""
+        """6 trading-domain detectors (5 original + principle_transfer)."""
         trade = self.registry.get_detectors(domain="trading")
-        self.assertEqual(len(trade), 5)
+        self.assertEqual(len(trade), 6)
 
     def test_domain_filter_isolates(self):
         """Domain filtering only returns matching detectors."""
@@ -330,11 +330,12 @@ class TestRegistryIntegration(DetectorTestBase):
     def test_list_detectors_metadata(self):
         """list_detectors returns correct metadata for all."""
         info = self.registry.list_detectors()
-        self.assertEqual(len(info), 11)
+        self.assertEqual(len(info), 12)
         names = {d["name"] for d in info}
         self.assertIn("verdict_drift", names)
         self.assertIn("losing_strategy", names)
         self.assertIn("overnight_wr_gap", names)
+        self.assertIn("principle_transfer", names)
 
 
 if __name__ == "__main__":
