@@ -81,7 +81,7 @@ def load_trials(
                 rec = TrialRecord.from_dict(data)
                 if mt_id is None or rec.mt_id == mt_id:
                     records.append(rec)
-            except (json.JSONDecodeError, TypeError):
+            except (json.JSONDecodeError, TypeError, ValueError):
                 continue
     return records
 
