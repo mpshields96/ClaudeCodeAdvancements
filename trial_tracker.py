@@ -21,6 +21,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional
 
+from session_id import normalize as normalize_session_id
+
 CCA_DIR = Path.home() / "Projects/ClaudeCodeAdvancements"
 TRIAL_FILE = CCA_DIR / ".cca-trial-results.jsonl"
 
@@ -45,6 +47,8 @@ class TrialRecord:
             raise ValueError("mt_id cannot be empty")
         if not self.session_id:
             raise ValueError("session_id cannot be empty")
+        # Normalize session_id to canonical "S{number}" format
+        self.session_id = normalize_session_id(self.session_id)
         if not self.timestamp:
             self.timestamp = datetime.now(timezone.utc).isoformat()
 

@@ -29,6 +29,8 @@ import os
 import sys
 from datetime import datetime, timezone
 
+from session_id import normalize as normalize_session_id, extract_number
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PATH = os.path.join(SCRIPT_DIR, "wrap_assessments.jsonl")
 
@@ -83,8 +85,12 @@ def log_assessment(
     if grade not in VALID_GRADES:
         raise ValueError(f"Invalid grade: {grade}. Must be one of {VALID_GRADES}")
 
+    # Normalize session ID to canonical format (stores int for backward compat)
+    session = extract_number(session)
+
     entry = {
         "session": session,
+        "session_id": normalize_session_id(session),
         "grade": grade,
         "wins": wins,
         "losses": losses,
@@ -105,8 +111,13 @@ def log_assessment(
 # ── Queries ──────────────────────────────────────────────────────────────────
 
 def get_by_session(session_id, path=DEFAULT_PATH):
+    # Support lookup by any format (int, "S99", "99")
+    try:
+        lookup_num = extract_number(session_id)
+    except (ValueError, TypeError):
+        lookup_num = session_id
     for entry in load_assessments(path):
-        if entry.get("session") == session_id:
+        if entry.get("session") == lookup_num:
             return entry
     return None
 
@@ -175,14 +186,14 @@ def format_for_init(path=DEFAULT_PATH, n=5):
     recent = entries[-n:]
     lines = [f"Last {len(recent)} sessions:"]
     for e in recent:
-        s = e.get("session", "?")
+        sid = e.get("session_id", f"S{e.get('session', '?')}")
         g = e.get("grade", "?")
         tc = e.get("test_count", "?")
         wins_preview = e.get("wins", [])[:2]
         wins_str = ", ".join(wins_preview)
         if len(e.get("wins", [])) > 2:
             wins_str += "..."
-        lines.append(f"  S{s}: {g} | {tc} tests | {wins_str}")
+        lines.append(f"  {sid}: {g} | {tc} tests | {wins_str}")
 
     return "\n".join(lines)
 
@@ -235,7 +246,8 @@ def main():
         n = int(sys.argv[2]) if len(sys.argv) > 2 else 5
         entries = load_assessments()
         for e in entries[-n:]:
-            print(f"S{e.get('session', '?')}: {e.get('grade', '?')} | "
+            sid = e.get("session_id", f"S{e.get('session', '?')}")
+            print(f"{sid}: {e.get('grade', '?')} | "
                   f"{e.get('test_count', '?')} tests | "
                   f"Wins: {', '.join(e.get('wins', []))}")
 

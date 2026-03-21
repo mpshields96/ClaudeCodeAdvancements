@@ -162,7 +162,7 @@ class TestRecordSession(unittest.TestCase):
 
     def test_records_correct_fields(self):
         h = record_session("s42", 5400, health_file=self.health_file, state_path=self.state_file)
-        self.assertEqual(h.session_id, "s42")
+        self.assertEqual(h.session_id, "S42")
         self.assertEqual(h.duration_secs, 5400)
         self.assertEqual(h.grade, "A")
         self.assertEqual(h.test_pass, 2897)
@@ -224,7 +224,7 @@ class TestLoadHistory(unittest.TestCase):
             record_session(f"s{i}", 100, health_file=self.health_file, state_path=self.state_file)
         result = load_history(n=3, health_file=self.health_file)
         self.assertEqual(len(result), 3)
-        self.assertEqual(result[-1].session_id, "s9")
+        self.assertEqual(result[-1].session_id, "S9")
 
     def test_returns_session_health_objects(self):
         record_session("s1", 100, health_file=self.health_file, state_path=self.state_file)

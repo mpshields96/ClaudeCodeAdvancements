@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from session_id import normalize as normalize_session_id
+
 CCA_DIR = Path.home() / "Projects/ClaudeCodeAdvancements"
 HEALTH_FILE = CCA_DIR / ".cca-loop-health.jsonl"
 SESSION_STATE_FILE = CCA_DIR / "SESSION_STATE.md"
@@ -56,6 +58,7 @@ def parse_session_state(state_path: Path = SESSION_STATE_FILE) -> dict:
     m = re.search(r"Session\s+(\d+)", text)
     if m:
         result["session_num"] = int(m.group(1))
+        result["session_id"] = normalize_session_id(m.group(1))
 
     # Derive grade from pass rate
     total = result.get("test_total", 0)
@@ -87,6 +90,9 @@ def record_session(
 ) -> SessionHealth:
     """Record a completed session's health metrics."""
     state = parse_session_state(state_path)
+
+    # Normalize session_id to canonical "S{number}" format
+    session_id = normalize_session_id(session_id)
 
     health = SessionHealth(
         session_id=session_id,

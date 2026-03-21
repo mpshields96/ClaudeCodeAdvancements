@@ -26,6 +26,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from session_id import normalize as normalize_session_id
+
 PROJECT_ROOT = Path(__file__).resolve().parent
 SESSION_STATE_PATH = PROJECT_ROOT / "SESSION_STATE.md"
 
@@ -40,11 +42,13 @@ def parse_session_state(content: str) -> dict:
     m = re.search(r"Session\s+(\d+)\s*(?:—|-)\s*(\d{4}-\d{2}-\d{2})", content)
     if m:
         result["session_num"] = int(m.group(1))
+        result["session_id"] = normalize_session_id(m.group(1))
         result["session_date"] = m.group(2)
     else:
         m = re.search(r"Session\s+(\d+)", content)
         if m:
             result["session_num"] = int(m.group(1))
+            result["session_id"] = normalize_session_id(m.group(1))
 
     # Test counts — handle both formats:
     #   "Tests: ~109 suites, ~4373 total passing"
@@ -161,6 +165,7 @@ def build_summary(smoke: dict, priority: dict, state: dict) -> dict:
     summary = {
         "ready": ready,
         "last_session": state.get("session_num"),
+        "last_session_id": state.get("session_id", "S?"),
         "top_pick": priority.get("top_pick", "unknown"),
         "smoke_status": f"{smoke.get('suites_passed', 0)}/{smoke.get('suites_total', 0)} {'PASS' if smoke.get('passed') else 'FAIL'}",
         "blockers": blockers,
@@ -181,7 +186,7 @@ def format_summary(summary: dict) -> str:
     lines = []
     status = "READY" if summary["ready"] else "BLOCKED"
     lines.append(f"Slim Init: {status}")
-    lines.append(f"  Last session: S{summary.get('last_session', '?')}")
+    lines.append(f"  Last session: {summary.get('last_session_id', 'S?')}")
     lines.append(f"  Smoke: {summary.get('smoke_status', '?')}")
     lines.append(f"  Top pick: {summary.get('top_pick', '?')}")
 
