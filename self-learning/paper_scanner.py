@@ -80,6 +80,24 @@ DOMAIN_QUERIES = {
         "LLM output quality measurement",
         "developer tools AI assistance IDE",
     ],
+    "code_review": [
+        "automated code review LLM static analysis",
+        "pull request review machine learning defect detection",
+        "code smell detection automated software quality",
+        "LLM-based code review developer assistance",
+    ],
+    "trading_systems": [
+        "algorithmic trading reinforcement learning strategy",
+        "Kelly criterion position sizing portfolio optimization",
+        "market microstructure order book high frequency trading",
+        "quantitative trading signal generation backtesting",
+    ],
+    "context_management": [
+        "LLM context window optimization long context",
+        "retrieval-augmented generation RAG knowledge base",
+        "context compression summarization large language model",
+        "long document understanding context extension LLM",
+    ],
 }
 
 
@@ -322,6 +340,14 @@ def evaluate_paper(paper):
                        "sequential decision", "bandit", "probability calibration"],
         "interaction": ["prompt engineering", "human-ai", "cognitive load",
                         "developer tool", "ide", "llm evaluation"],
+        "code_review": ["code review", "automated review", "pull request",
+                        "static analysis", "llm-based review", "code smell"],
+        "trading_systems": ["algorithmic trading", "kelly criterion",
+                            "market microstructure", "trading strategy",
+                            "high frequency", "quantitative trading"],
+        "context_management": ["context window", "retrieval-augmented", "rag",
+                               "long context", "context compression",
+                               "context extension"],
     }
 
     domain_hits = {}

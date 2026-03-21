@@ -324,11 +324,119 @@ class TestDomainQueries(unittest.TestCase):
             self.assertIn(domain, paper_scanner.DOMAIN_QUERIES)
             self.assertTrue(len(paper_scanner.DOMAIN_QUERIES[domain]) > 0)
 
+    def test_new_domains_exist(self):
+        """Phase 3: code_review, trading_systems, context_management must be present."""
+        for domain in ["code_review", "trading_systems", "context_management"]:
+            self.assertIn(domain, paper_scanner.DOMAIN_QUERIES,
+                          f"Missing domain: {domain}")
+            self.assertGreaterEqual(len(paper_scanner.DOMAIN_QUERIES[domain]), 3,
+                                    f"Domain {domain} needs at least 3 queries")
+
     def test_domain_queries_are_strings(self):
         for domain, queries in paper_scanner.DOMAIN_QUERIES.items():
             for q in queries:
                 self.assertIsInstance(q, str)
                 self.assertTrue(len(q) > 5, f"Query too short in domain {domain}: {q}")
+
+
+class TestNewDomainEvaluation(unittest.TestCase):
+    """Test evaluate_paper correctly scores papers in the 3 new domains."""
+
+    def test_domain_match_code_review(self):
+        paper = {
+            "citationCount": 20, "venue": "ICSE", "publicationDate": "2025-01-01",
+            "abstract": "We present an LLM-based automated code review system that analyzes pull requests."
+        }
+        result = paper_scanner.evaluate_paper(paper)
+        self.assertIn("code_review", result["domain_hits"],
+                      f"Expected code_review hit, got: {result['domain_hits']}")
+
+    def test_domain_match_trading_systems(self):
+        paper = {
+            "citationCount": 30, "venue": "ICAIF", "publicationDate": "2025-01-01",
+            "abstract": "We study Kelly criterion and market microstructure for algorithmic trading strategy optimization."
+        }
+        result = paper_scanner.evaluate_paper(paper)
+        self.assertIn("trading_systems", result["domain_hits"],
+                      f"Expected trading_systems hit, got: {result['domain_hits']}")
+
+    def test_domain_match_context_management(self):
+        paper = {
+            "citationCount": 40, "venue": "ACL", "publicationDate": "2025-01-01",
+            "abstract": "We propose a retrieval-augmented generation approach for context window optimization in long-context LLMs."
+        }
+        result = paper_scanner.evaluate_paper(paper)
+        self.assertIn("context_management", result["domain_hits"],
+                      f"Expected context_management hit, got: {result['domain_hits']}")
+
+    def test_code_review_keywords_trigger(self):
+        """Each code_review keyword should trigger a domain hit."""
+        code_review_abstracts = [
+            "automated code review using static analysis tools",
+            "LLM-based pull request review system",
+            "code smell detection and review automation",
+        ]
+        for abstract in code_review_abstracts:
+            paper = {"citationCount": 10, "venue": "", "publicationDate": "2025-01-01",
+                     "abstract": abstract}
+            result = paper_scanner.evaluate_paper(paper)
+            self.assertIn("code_review", result["domain_hits"],
+                          f"Abstract '{abstract}' should match code_review")
+
+    def test_trading_systems_keywords_trigger(self):
+        """Each trading_systems keyword should trigger a domain hit."""
+        trading_abstracts = [
+            "algorithmic trading using reinforcement learning",
+            "Kelly criterion for position sizing in financial markets",
+            "market microstructure and order book analysis",
+        ]
+        for abstract in trading_abstracts:
+            paper = {"citationCount": 10, "venue": "", "publicationDate": "2025-01-01",
+                     "abstract": abstract}
+            result = paper_scanner.evaluate_paper(paper)
+            self.assertIn("trading_systems", result["domain_hits"],
+                          f"Abstract '{abstract}' should match trading_systems")
+
+    def test_context_management_keywords_trigger(self):
+        """Each context_management keyword should trigger a domain hit."""
+        context_abstracts = [
+            "context window extension for large language models",
+            "retrieval-augmented generation for long documents",
+            "RAG systems for improved factual accuracy",
+        ]
+        for abstract in context_abstracts:
+            paper = {"citationCount": 10, "venue": "", "publicationDate": "2025-01-01",
+                     "abstract": abstract}
+            result = paper_scanner.evaluate_paper(paper)
+            self.assertIn("context_management", result["domain_hits"],
+                          f"Abstract '{abstract}' should match context_management")
+
+    def test_new_domains_searchable(self):
+        """search_domain should return empty list (not crash) for new domains."""
+        import unittest.mock as mock
+        with mock.patch("paper_scanner.search_semantic_scholar") as mock_ss, \
+             mock.patch("paper_scanner.time") as mock_time:
+            mock_ss.return_value = []
+            mock_time.sleep = mock.MagicMock()
+            for domain in ["code_review", "trading_systems", "context_management"]:
+                result = paper_scanner.search_domain(domain)
+                self.assertIsInstance(result, list,
+                                      f"search_domain({domain}) must return a list")
+
+    def test_new_domain_score_contributes(self):
+        """A strong match in a new domain should increase the paper score."""
+        paper_no_domain = {
+            "citationCount": 10, "venue": "", "publicationDate": "2025-01-01",
+            "abstract": "An unrelated study about materials science."
+        }
+        paper_code_review = {
+            "citationCount": 10, "venue": "", "publicationDate": "2025-01-01",
+            "abstract": "automated code review pull request LLM-based review analysis."
+        }
+        score_no_domain = paper_scanner.evaluate_paper(paper_no_domain)["score"]
+        score_code_review = paper_scanner.evaluate_paper(paper_code_review)["score"]
+        self.assertGreater(score_code_review, score_no_domain,
+                           "Code review domain match should raise the score")
 
 
 class TestSearchDomain(unittest.TestCase):
