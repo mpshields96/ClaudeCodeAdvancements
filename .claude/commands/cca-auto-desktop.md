@@ -66,6 +66,22 @@ If workers reported completed work, note it for inclusion in docs.
 
 ---
 
+## Step 1.5 — Daily intelligence scan (once per session, if not done today)
+
+Check if a daily nuclear scan has been run today. If not, run one:
+
+```bash
+# Check last scan date
+python3 -c "import json; d=json.load(open('reddit-intelligence/scan_registry.json')); print(d.get('claudecode',{}).get('last_scan','never'))"
+```
+
+If last scan is not today: run `/cca-nuclear-daily` (lightweight, ~5 minutes). This feeds
+the self-learning system with fresh signals daily and keeps FINDINGS_LOG current.
+
+If last scan IS today: skip — already done.
+
+---
+
 ## Step 2 — Determine next task
 
 Read SESSION_STATE.md for current state. Pick the first incomplete task from the priorities.
