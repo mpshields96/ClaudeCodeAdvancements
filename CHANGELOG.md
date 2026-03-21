@@ -3,6 +3,27 @@
 
 ---
 
+## Session 109 — 2026-03-21
+
+**What changed:**
+- `self-learning/calibration_bias.py`: MT-26 Tier 1 — FLB mispricing zone detection, calibration curves, bias-adjusted probability (43 tests)
+- `self-learning/cross_platform_signal.py`: MT-26 Tier 1 — Kalshi/Polymarket divergence detector, lag analysis (30 tests)
+- `self-learning/dynamic_kelly.py`: MT-26 Tier 2 — Bayesian belief updating in logit space, time-decay Kelly, fractional multiplier (32 tests)
+- `self-learning/principle_transfer.py`: MT-28 Phase 3 — Cross-domain principle transfer with affinity scoring (34 tests)
+- `self-learning/detectors.py`: Added PrincipleTransferDetector as 12th registered detector
+- `.gitignore`: Added runtime state files (.cca-init-benchmarks.jsonl, .cca-stagnation-log.jsonl, .cca-trial-results.jsonl)
+
+**Why:**
+- MT-26 financial intelligence engine: all 3 Tier 1 items now complete (regime detection + calibration bias + cross-platform signals). First Tier 2 item (dynamic Kelly) also done. These modules give the Kalshi bot regime-aware, calibration-corrected, cross-platform-informed bet sizing.
+- MT-28 self-learning v2: Phase 3 completes the principle registry architecture. Principles that work in one domain now surface as transfer opportunities in related domains.
+
+**Tests:** 6443/6443 passing (160 suites, up from 6304/156)
+
+**Lessons:**
+- Session daemon (tmux-based auto-spawn) is the #1 unlockable force multiplier — all coordination infrastructure is built, just needs the final "glue" watcher
+
+---
+
 ## Session 108 — 2026-03-21
 
 **What changed:**
