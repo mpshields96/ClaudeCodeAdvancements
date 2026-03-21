@@ -3,6 +3,30 @@
 
 ---
 
+## Session 92 — 2026-03-20
+
+**What changed:**
+- **Phase 2 crash recovery live test: PASS** — Simulated cli1 crash, crash_recovery.py auto-released orphaned scope
+- **cca_comm.py `context` command** (13 new tests) — Workers see desktop's recent commits, active scopes, queue stats, crash status
+- **hivemind_metrics.py queue throughput** (6 new tests) — Phase 2 50+ msgs/session metric tracking
+- **tests/test_phase2_e2e.py** (7 tests) — E2E integration test for full Phase 2 lifecycle, crash recovery, multi-task
+- **loop_health.py timezone fix** — get_summary() now uses UTC date to match UTC timestamps
+- **Workflow wiring** — Worker init runs context, desktop wrap measures throughput
+- **HIVEMIND_ROLLOUT.md** — Crash gate checked, suggested tasks for remaining sessions
+
+**Why:**
+- Phase 2 crash recovery gate criterion needed live proof
+- Workers need visibility into desktop's recent work for Phase 2 tasks
+- Need automated measurement of 50+ msgs/session target
+
+**Tests:** 3660/3660 passing (93 suites)
+
+**Lessons:**
+- Timezone flake: always use UTC consistently when timestamps cross module boundaries
+- macOS grep doesn't support -P flag (use python or other tools for Perl regex)
+
+---
+
 ## Session 91 — 2026-03-20
 
 **What changed:**

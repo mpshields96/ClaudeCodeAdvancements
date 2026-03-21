@@ -3,28 +3,27 @@
 
 ---
 
-## Current State (as of Session 91 — 2026-03-20)
+## Current State (as of Session 92 — 2026-03-20)
 
-**Phase:** Session 91 COMPLETE. Tests: 92 suites, 3636 total passing. Git: 10 commits (9 desktop + 1 worker). Grade: A.
+**Phase:** Session 92 COMPLETE. Tests: 93 suites, 3660 total passing. Git: 8 commits. Grade: A.
 
-**What was done this session (S91):**
-- **chat_detector.py** — Duplicate Claude Code session detection (202 LOC, 31 tests, TDD). Pre-launch safety, terminal close capability.
-- **crash_recovery.py** — Phase 2 crash recovery (180 LOC, 15 tests, TDD). Orphaned scope detection + auto-release.
-- **phase2_validator.py** — Multi-module integration validator (300 LOC, 22 tests). Built by cli1 worker. Imports crash_recovery + chat_detector + cca_internal_queue.
-- **Wired into hivemind workflow** — launch_worker.sh duplicate check, /cca-init crash detection, /cca-wrap-worker terminal close, /cca-wrap-desktop stale worker detection.
-- **Multi-task worker loop** — Upgraded /cca-auto-worker with keep-busy fallback. Desktop front-loads 2-3 tasks.
-- **Phase 2 live test #1: PASS** — Worker (cli1) completed multi-file task then auto-picked up code review task (multi-task loop proven).
-- **Phase 2 live test #2: PASS** — Worker delivered substantive code review (6 commits, 3 findings, ship-ready verdict).
-- **Doc drift fix** — ROADMAP.md test counts updated (caught by doc_drift_checker).
-- **HIVEMIND_ROLLOUT updated** — Phase 2 validation log: 2 tests passed, 1/3 sessions complete.
+**What was done this session (S92):**
+- **Phase 2 crash recovery live test: PASS** — Simulated cli1 crash (scope_claim with no process). crash_recovery.py detected orphan, auto-released scope, flagged uncommitted changes. Clean state confirmed. Phase 2 crash gate criterion MET.
+- **cca_comm.py `context` command** — Workers see desktop's recent commits, active scopes, queue stats, crash status before starting work. 13 new tests (31 total in test_cca_comm.py).
+- **hivemind_metrics.py queue throughput** — record_session() accepts queue_throughput param. get_stats() returns avg/max/phase2_met. format_for_init() shows peak. 6 new tests (26 total).
+- **Phase 2 E2E integration test** — tests/test_phase2_e2e.py: 7 tests, 3 scenarios (full lifecycle, crash recovery, multi-task). Proves all plumbing works end-to-end.
+- **Timezone flake fix** — loop_health.py get_summary() used local date but timestamps are UTC. Fixed to use UTC consistently.
+- **Workflow wiring** — Worker init runs `context` before inbox. Desktop wrap measures queue throughput.
+- **HIVEMIND_ROLLOUT.md** — Crash test logged, gate checked, suggested Phase 2 tasks added.
+- **Doc drift fix** — ROADMAP.md + PROJECT_INDEX.md test counts updated (3660/93).
 
-**Matthew directives (S51-S91, permanent):**
-- All S51-S90 directives still active
-- S91: Close CLI windows on wrap. Monitor duplicate chats. Workers should multi-task, not sit idle. Phase 1 confirmed complete — hit Phase 2.
+**Matthew directives (S51-S92, permanent):**
+- All S51-S91 directives still active
+- S92: Phase 2 is the goal — focus on completing it. Phase 3 (3-chat) comes later, only after sustained dual-chat success. Don't rush to Phase 3.
 
 **Next (prioritized):**
-1. Phase 2 live test: deliberate worker crash mid-scope-claim, verify clean recovery (0/1 needed)
-2. Phase 2 live test: more multi-file tasks across 2 more sessions (1/3 done)
+1. Phase 2 dual-chat session: run /cca-desktop + /cca-worker for hardened 2-chat (2 more sessions needed, 1/3 done)
+2. Phase 2 gate: Matthew subjective confirmation ("ready for a second worker")
 3. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
 4. GitHub push blocked: PAT needs `workflow` scope — Matthew must update token
 
