@@ -527,6 +527,44 @@ class LLMClient:
         with urllib.request.urlopen(req, timeout=120) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
+    def ask_with_confidence(
+        self, question: str, source: str = "senior_dev", system: str = ""
+    ) -> tuple[str, float | None]:
+        """Send a question and extract confidence from the response.
+
+        Appends a confidence request to the question, then extracts the
+        verbal confidence from the response using ConfTuner methodology.
+
+        Args:
+            question: The user's question.
+            source: Source identifier for calibration tracking.
+            system: System prompt.
+
+        Returns:
+            Tuple of (response_text, confidence_score).
+            confidence_score is None if not extractable or on error.
+        """
+        # Import here to avoid circular dependency at module load
+        _sl_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "self-learning")
+        if _sl_dir not in sys.path:
+            sys.path.insert(0, _sl_dir)
+        from confidence_calibrator import extract_confidence
+
+        augmented = (
+            question.rstrip()
+            + "\n\nAfter your analysis, state your confidence level as a percentage "
+            "(e.g., 'Confidence: 85%')."
+        )
+
+        text = self.ask(augmented, system=system)
+
+        # Extract confidence from response
+        if text.startswith("Error"):
+            return text, None
+
+        confidence = extract_confidence(text)
+        return text, confidence
+
     def reset(self):
         """Clear conversation history and token counters."""
         self.history = []

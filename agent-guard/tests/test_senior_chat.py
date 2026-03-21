@@ -548,5 +548,66 @@ class TestBuildTradeoffPrompt(unittest.TestCase):
         self.assertNotIn("Project context", prompt)
 
 
+class TestAskWithConfidence(unittest.TestCase):
+    """Test LLMClient.ask_with_confidence() — ConfTuner integration."""
+
+    def _make_client(self):
+        return LLMClient(api_key="sk-ant-test-fake-key-for-testing")
+
+    @patch("senior_chat.LLMClient._call_api")
+    def test_returns_text_and_confidence(self, mock_api):
+        mock_api.return_value = {
+            "content": [{"type": "text", "text": "There is a bug in the loop. Confidence: 85%"}],
+            "usage": {"input_tokens": 100, "output_tokens": 50},
+        }
+        client = self._make_client()
+        text, conf = client.ask_with_confidence("Is there a bug?", source="senior_dev")
+        self.assertIn("bug", text)
+        self.assertIsNotNone(conf)
+        self.assertAlmostEqual(conf, 0.85, places=2)
+
+    @patch("senior_chat.LLMClient._call_api")
+    def test_no_confidence_in_response(self, mock_api):
+        mock_api.return_value = {
+            "content": [{"type": "text", "text": "The code looks fine."}],
+            "usage": {"input_tokens": 100, "output_tokens": 30},
+        }
+        client = self._make_client()
+        text, conf = client.ask_with_confidence("Review this", source="test")
+        self.assertEqual(text, "The code looks fine.")
+        self.assertIsNone(conf)
+
+    @patch("senior_chat.LLMClient._call_api")
+    def test_confidence_prompt_appended(self, mock_api):
+        mock_api.return_value = {
+            "content": [{"type": "text", "text": "Result. Confidence: 70%"}],
+            "usage": {"input_tokens": 100, "output_tokens": 30},
+        }
+        client = self._make_client()
+        client.ask_with_confidence("Check this code", source="test")
+        # Verify the question was augmented with confidence request
+        call_messages = mock_api.call_args[0][0]
+        last_user_msg = [m for m in call_messages if m["role"] == "user"][-1]
+        self.assertIn("confidence", last_user_msg["content"].lower())
+
+    @patch("senior_chat.LLMClient._call_api")
+    def test_history_maintained(self, mock_api):
+        mock_api.return_value = {
+            "content": [{"type": "text", "text": "Analysis. Confidence: 90%"}],
+            "usage": {"input_tokens": 100, "output_tokens": 30},
+        }
+        client = self._make_client()
+        client.ask_with_confidence("Question 1", source="test")
+        self.assertEqual(len(client.history), 2)  # user + assistant
+
+    @patch("senior_chat.LLMClient._call_api")
+    def test_api_error_returns_none_confidence(self, mock_api):
+        mock_api.side_effect = Exception("Network error")
+        client = self._make_client()
+        text, conf = client.ask_with_confidence("Test", source="test")
+        self.assertIn("Error", text)
+        self.assertIsNone(conf)
+
+
 if __name__ == "__main__":
     unittest.main()
