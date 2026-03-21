@@ -51,6 +51,7 @@ import hashlib
 import json
 import os
 import sys
+import tempfile
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -115,10 +116,25 @@ def _load_queue(path: str = DEFAULT_QUEUE_PATH) -> list[dict]:
 
 
 def _save_queue(messages: list[dict], path: str = DEFAULT_QUEUE_PATH) -> None:
-    """Rewrite the entire queue (used for updates like ack)."""
-    with open(path, "w", encoding="utf-8") as f:
-        for msg in messages:
-            f.write(json.dumps(msg, separators=(",", ":")) + "\n")
+    """Rewrite the entire queue atomically (used for updates like ack).
+
+    Uses temp file + os.replace() to prevent corruption from concurrent
+    access or crashes mid-write. os.replace() is atomic on POSIX.
+    """
+    dir_path = os.path.dirname(path) or "."
+    fd, tmp_path = tempfile.mkstemp(dir=dir_path, suffix=".tmp", prefix=".cca_queue_")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            for msg in messages:
+                f.write(json.dumps(msg, separators=(",", ":")) + "\n")
+        os.replace(tmp_path, path)
+    except BaseException:
+        # Clean up temp file on any failure
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
 
 def _append_message(message: dict, path: str = DEFAULT_QUEUE_PATH) -> None:

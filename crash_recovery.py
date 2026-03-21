@@ -166,21 +166,48 @@ def generate_recovery_report(crashed: list, released: list, git_status: str) -> 
     }
 
 
+def expire_stale_scopes(queue_path: str = DEFAULT_QUEUE_PATH, timeout_minutes: int = 30) -> list:
+    """Expire scope claims older than timeout_minutes, even if worker is still running.
+
+    This catches hung workers — process alive but stuck/unresponsive.
+    Delegates to ciq.expire_stale_scopes() which writes scope_release messages.
+
+    Returns list of expired scope claims.
+    """
+    return ciq.expire_stale_scopes(timeout_minutes=timeout_minutes, path=queue_path)
+
+
 def run_recovery(queue_path: str = DEFAULT_QUEUE_PATH) -> dict:
     """Run the full recovery pipeline.
 
-    1. Get active scopes from queue
-    2. Detect crashed workers (scope without process)
-    3. Release orphaned scopes
-    4. Check git status for uncommitted work
-    5. Generate and return report
+    1. Expire stale scopes (hung workers — process alive but scope too old)
+    2. Get active scopes from queue
+    3. Detect crashed workers (scope without process)
+    4. Release orphaned scopes
+    5. Check git status for uncommitted work
+    6. Generate and return report
     """
+    # Step 1: Expire stale scopes first (catches hung workers)
+    stale_expired = expire_stale_scopes(queue_path)
+
+    # Step 2-4: Detect and release crashed worker scopes
     active_scopes = _get_active_scopes(queue_path)
     crashed = detect_crashed_workers(active_scopes)
     released = release_orphaned_scopes(crashed, queue_path)
     git_status = _get_git_status()
 
-    return generate_recovery_report(crashed, released, git_status)
+    report = generate_recovery_report(crashed, released, git_status)
+    # Include stale scope info in report
+    if stale_expired:
+        report["stale_expired"] = len(stale_expired)
+        report["actions"].insert(0, f"Expired {len(stale_expired)} stale scope(s) (>30m old)")
+        if report["status"] == "clean":
+            report["status"] = "recovered"
+            report["summary"] = f"Expired {len(stale_expired)} stale scope(s)."
+    else:
+        report["stale_expired"] = 0
+
+    return report
 
 
 def cli_main(args: list = None):

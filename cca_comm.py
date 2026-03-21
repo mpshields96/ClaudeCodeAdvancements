@@ -123,14 +123,53 @@ def cmd_task(args):
     print(f"Task assigned to {ciq.VALID_CHATS[target]}: {task}")
 
 
+def _check_claim_conflicts(sender: str, scope: str, files: list, queue_path: str) -> list:
+    """Check if a scope claim would conflict with existing active scopes.
+
+    Checks both file-level conflicts (via check_scope_conflict) and
+    subject-level overlap (same scope string already claimed by another chat).
+
+    Returns list of conflicting scope claims (empty = safe to proceed).
+    """
+    conflicts = []
+
+    # File-level conflict check
+    if files:
+        conflicts = ciq.check_scope_conflict(sender, files, queue_path)
+
+    # Subject-level overlap: check if another chat already owns this scope
+    active = ciq.get_active_scopes(queue_path)
+    for claim in active:
+        if claim.get("sender") == sender:
+            continue
+        claim_subject = claim.get("subject", "").lower()
+        if scope.lower() == claim_subject or scope.lower() in claim_subject or claim_subject in scope.lower():
+            # Avoid duplicate entries if already found via file check
+            if claim not in conflicts:
+                conflicts.append(claim)
+
+    return conflicts
+
+
 def cmd_claim(args):
-    """Claim scope on a file or module."""
+    """Claim scope on a file or module. Checks for conflicts first."""
     if not args:
         print("Usage: claim <scope_description> [file1,file2,...]")
         return
     scope = args[0]
     files = args[1].split(",") if len(args) > 1 else None
     me = detect_chat_id()
+
+    # Check for scope conflicts before claiming
+    conflicts = _check_claim_conflicts(me, scope, files or [], _qpath())
+    if conflicts:
+        print(f"SCOPE CONFLICT DETECTED — cannot claim '{scope}':")
+        for c in conflicts:
+            owner = ciq.VALID_CHATS.get(c.get("sender", ""), c.get("sender", ""))
+            print(f"  {owner} already owns: {c.get('subject', 'unknown')}")
+        print("Resolve the conflict before claiming. Claim NOT sent.")
+        return
+
     for target in ciq.VALID_CHATS:
         if target != me:
             ciq.send_message(me, target, scope, category="scope_claim",
