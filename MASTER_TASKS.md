@@ -461,7 +461,8 @@ Phase 2 (Session 83):
 - Phase 3 (S100): paper_digest.py built, expanded prediction/statistics queries (+8 queries, +12 keywords), bridge wiring
 - Phase 4 (S101): Expanded scans across prediction, statistics, trading_systems, context_management. Papers: 25 -> 1242. Domain coverage balanced. 63 Kalshi-relevant papers (score>=55), top 10 sent to bridge.
 - Phase 5 (S102): Implemented confidence calibrator from ConfTuner (Li et al., 2025). Verbal confidence extraction (%, fraction, decimal, labels, verbal), prediction logging with outcome tracking, ECE calibration metrics, per-source bias detection, confidence adjustment. 29 tests. `self-learning/confidence_calibrator.py`.
-- Phase 6 next: Refine discovery pipeline based on hit rate (useful papers / total papers scanned). Wire confidence calibrator into senior dev + paper scoring.
+- Phase 6 (S102): Built hit_rate_tracker.py (32 tests). Computes APF from FINDINGS_LOG.md. Current APF=22.7% (target 40%). Frontier 2 (44.2%) and 4 (45.8%) exceed target. CLI: report/apf/by-frontier/trend/json. Wired confidence_calibrator into senior_chat LLMClient.ask_with_confidence().
+- COMPLETE. All 6 phases done. Iterate: improve APF by targeting high-noise categories ("Other" at 9.7%).
 
 ---
 
