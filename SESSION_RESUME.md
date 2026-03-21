@@ -1,11 +1,13 @@
-Run /cca-init. Last session was S107 on 2026-03-21.
+Run /cca-init. Last session was S108 on 2026-03-21.
 
-S107 completed gameplan Phases 1-3 (auth fix, bridge audit, safety checklist). Orchestration redesigned with COORD->WORK loop. peak_hours.py built. 13 principle integration tests. Doc drift fixed. 13 commits total. Grade A.
+Solo CCA session: MT-28 Phase 2 COMPLETE (pattern plugin registry — 42 new tests), MT-26 Phase 1 started (regime_detector.py — 21 tests), launch scripts fixed (AppleScript -> open -a Terminal).
 
-CRITICAL NEXT STEP: Matthew must verify the auth fix works — launch a test terminal chat and confirm it uses Max subscription, not API credits. Run: `bash launch_worker.sh "test auth"` and check if it says "Max" not "API".
+BEFORE NEXT KALSHI LAUNCH: Matthew must run `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc` to fix API billing issue. See FIX_API_AUTH.md.
 
-Also needed before Phase 4: (1) sync bridge file: `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md`, (2) wire queue hook per KALSHI_QUEUE_SETUP.md.
+Also still needed: bridge sync `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md` (48.8K vs 9.2K stale).
 
-After Phase 4 dry run, Phase 5 is go-live with 3-chat. Then back to MT code: MT-28 Phase 2 (pattern registry) or MT-26 Phase 1 (financial intel).
+Next MT work: MT-26 Phase 1 continued (calibration bias exploiter — Tier 1 item #2), or MT-28 Phase 3 (cross-domain principle transfer).
 
-Tests: 6167/6167 passing (153 suites). Git: clean after wrap commit.
+Resume 3-chat system ONLY when Matthew gives explicit clear signal. Use 2-chat (desktop + Kalshi main) until then.
+
+Tests: 6304/6304 passing (156 suites). Git: 4 commits this session.
