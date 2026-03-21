@@ -3,33 +3,20 @@
 
 ---
 
-## Current State (as of Session 99 — 2026-03-22)
+## Current State (as of Session 100 — 2026-03-21)
 
-**Phase:** Session 99 COMPLETE. Slim Init Trial #1 (Desktop + cli1 worker). Tests: ~113 suites, ~4469 total passing. Git: 6 desktop commits. Hivemind: 8th consecutive PASS. MT-22 GATE PASSED (3/3).
+**Phase:** Session 100 IN PROGRESS. Desktop + cli1 worker. Priority picker housekeeping + MT-12 Phase 3 complete.
 
-**What was done this session (S99):**
-- **SLIM INIT TRIAL #1** — init complete in ~4 minutes (vs 12-15min baseline). Zero quality issues.
-- **MT-22 GATE PASSED** — 3/3 supervised trials complete. Autonomous 1-hour loop approved.
-- **trial_tracker.py** built — 32 tests. Records MT validation gate results. MT-22 seeded with historical data.
-- **slim_init.py** built — 20 tests. Codified slim startup: SESSION_STATE parse + smoke + priority pick.
-- **stagnation_resolver.py** built — 25 tests. Classifies MT stagnation severity, recommends archive/reduce/schedule. MT-18 (CRITICAL) and MT-13 (SEVERE) both recommended for archive.
-- **init_benchmarker.py** built — 19 tests. Compares slim vs full init metrics. Baseline seeded (S95-S98).
-- **priority_picker integration** — stagnation resolver wired in, fixed completion_pct double-multiply bug.
-- **Worker (cli1)**: test_priority_picker_extended.py (53 tests) queued; 2 more tasks assigned.
-
-**Slim Init Trial #1 Metrics:**
-- Time from chat start to first commit: ~4 minutes
-- Total desktop commits: 6
-- Total new tests (desktop): 96 (32+20+25+19)
-- Quality issues: 0
-- Missing context from skipping full init: None detected
+**What was done this session (S100):**
+- **phase3_coordinator.py — 3 bugs fixed**: concurrent save_state tmp race (PID-unique), load_state type blindness (isinstance check), dir/ vs dir/ scope conflict detection
+- **Priority picker housekeeping**: MT-22 GRADUATED (3/3 gate), MT-21 Phase 3 SHELVED (2-chat sufficient), MT-18/MT-13 ARCHIVED (stagnating 49-100 sessions), MT-20 updated to 9/9 phases done
+- **MT-12 Phase 3 COMPLETE**: paper_digest.py (35 tests, 260 LOC) — Kalshi/CCA paper digest generator with cross-chat bridge integration. Expanded prediction/statistics domain queries (+8 queries, +12 keywords). `send` CLI command for bridge delivery.
+- **Worker (cli1)**: test_phase3_validator_extended, test_phase3_preflight_extended, test_crash_recovery_extended queued
 
 **Next (prioritized):**
-1. Run Slim Init Trial #2 in fresh chat — confirm Trial #1 results aren't a fluke
-2. After both trials: run `python3 init_benchmarker.py verdict` to decide if slim init becomes default
-3. MT-21 (hivemind Phase 3 = 3-chat) — next highest priority after MT-22 graduation
-4. MT-12 (academic papers Phase 3) — full domain scan
-5. MT-18/MT-13 — present archive recommendations to Matthew for confirmation
+1. MT-12 Phase 4: Run expanded scans, validate prediction coverage improvement
+2. MT-20 remaining: Session ID normalization (Gap 3), E2E LLM validation
+3. Continue test coverage improvements for low-density modules
 
 **What was done this session (S98):**
 - **priority_picker.py built** — 55 tests. Improved MT priority formula: completion bonus, ROI estimate, stagnation penalty. CLI interface for autonomous task selection. Wired into /cca-auto-desktop Step 2.

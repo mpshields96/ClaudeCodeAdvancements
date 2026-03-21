@@ -149,6 +149,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `batch_report.py` — MT-10: Aggregate trace health
 - `validate_strategies.py` — Skillbook validation
 - `paper_scanner.py` — MT-12: Academic paper discovery (Semantic Scholar + arXiv)
+- `paper_digest.py` — MT-12 Phase 3: Kalshi/CCA paper digest generator with bridge integration (35 tests)
 - `hooks/skillbook_inject.py` — UserPromptSubmit strategy injection
 - `resurfacer.py` — MT-10 Phase 3B: Findings re-surfacing + trade proposal integration
 - `overnight_detector.py` — Objective time-stratified trading analysis (Wilson CI, CUSUM, SQL templates, audit)
