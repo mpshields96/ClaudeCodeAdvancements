@@ -89,13 +89,18 @@ def _read_trades(db_path: str) -> list[dict]:
         cursor = conn.execute("PRAGMA table_info(trades)")
         columns = {row[1] for row in cursor.fetchall()}
 
-        # Current Kalshi schema: pnl_cents, ticker, count
+        # Current Kalshi schema: pnl_cents, ticker, count, is_paper
         if "pnl_cents" in columns:
-            rows = conn.execute(
+            has_is_paper = "is_paper" in columns
+            select_cols = (
                 "SELECT strategy, result, timestamp, price_cents, cost_usd, "
-                "pnl_cents, ticker, edge_pct, count "
-                "FROM trades ORDER BY timestamp"
-            ).fetchall()
+                "pnl_cents, ticker, edge_pct, count"
+            )
+            if has_is_paper:
+                select_cols += ", is_paper"
+            select_cols += " FROM trades ORDER BY timestamp"
+
+            rows = conn.execute(select_cols).fetchall()
             trades = []
             for r in rows:
                 d = dict(r)
@@ -104,6 +109,7 @@ def _read_trades(db_path: str) -> list[dict]:
                 d["pnl_usd"] = pnl_cents / 100.0
                 d["market_id"] = d.pop("ticker", "unknown")
                 d["contracts"] = d.pop("count", 1)
+                d["is_paper"] = bool(d.get("is_paper", 0))
                 trades.append(d)
             return trades
         else:
@@ -178,10 +184,18 @@ def run_analysis(db_path: str) -> dict:
     trades = _read_trades(db_path)
     n = len(trades)
 
+    # Separate paper vs live trades
+    live_trades = [t for t in trades if not t.get("is_paper", False)]
+    paper_trades = [t for t in trades if t.get("is_paper", False)]
+    n_live = len(live_trades)
+    n_paper = len(paper_trades)
+
     if n == 0:
         return {
             "db_path": db_path,
             "trade_count": 0,
+            "live_count": 0,
+            "paper_count": 0,
             "settled_count": 0,
             "win_rate": 0.0,
             "pnl_usd": 0.0,
@@ -191,31 +205,49 @@ def run_analysis(db_path: str) -> dict:
             "analyzed_at": datetime.now(timezone.utc).isoformat(),
         }
 
-    settled = [t for t in trades if t.get("result") is not None]
+    # Use live trades for headline metrics (paper trades are for testing)
+    active_trades = live_trades if n_live > 0 else trades
+    settled = [t for t in active_trades if t.get("result") is not None]
     n_settled = len(settled)
     wins = sum(1 for t in settled if t.get("result") == "yes")
     win_rate = round(wins / n_settled, 4) if n_settled > 0 else 0.0
 
-    total_pnl = sum(t.get("pnl_usd", 0) or 0 for t in trades)
+    total_pnl = sum(t.get("pnl_usd", 0) or 0 for t in active_trades)
 
-    breakdown = _compute_strategy_breakdown(trades)
+    breakdown = _compute_strategy_breakdown(active_trades)
     proposals = _run_trade_reflector(db_path)
 
+    # Strategy health scoring
+    try:
+        from strategy_health_scorer import score_strategies, format_health_report
+        health_verdicts = score_strategies(trades, live_only=(n_live > 0))
+        health_summary = {v.strategy: v.verdict for v in health_verdicts}
+    except ImportError:
+        health_verdicts = []
+        health_summary = {}
+
     # Build summary
+    trade_type = "live" if n_live > 0 else "all"
     top_strat = max(breakdown.items(), key=lambda x: x[1]["pnl_usd"])[0] if breakdown else "none"
     summary = (
-        f"{n} trades ({n_settled} settled), {win_rate:.0%} win rate, ${total_pnl:.2f} PnL. "
+        f"{len(active_trades)} {trade_type} trades ({n_settled} settled), "
+        f"{win_rate:.0%} win rate, ${total_pnl:.2f} PnL. "
         f"Top strategy: {top_strat}. {len(proposals)} proposals."
     )
+    if n_paper > 0 and n_live > 0:
+        summary += f" ({n_paper} paper trades excluded.)"
 
     return {
         "db_path": db_path,
         "trade_count": n,
+        "live_count": n_live,
+        "paper_count": n_paper,
         "settled_count": n_settled,
         "win_rate": win_rate,
         "pnl_usd": round(total_pnl, 2),
         "proposals": proposals,
         "strategy_breakdown": breakdown,
+        "strategy_health": health_summary,
         "summary": summary,
         "analyzed_at": datetime.now(timezone.utc).isoformat(),
     }
