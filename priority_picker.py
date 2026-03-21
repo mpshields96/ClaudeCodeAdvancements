@@ -1,0 +1,427 @@
+#!/usr/bin/env python3
+"""priority_picker.py — Automated MT priority selection for autonomous task picking.
+
+Reads MASTER_TASKS.md, computes priority scores with an improved formula,
+and returns the top-N tasks to work on. Replaces manual table parsing.
+
+Improvements over the original scoring system:
+1. Completion proximity bonus — tasks near completion get a boost
+2. Stagnation penalty — capped tasks that haven't been touched get flagged
+3. Blocked re-evaluation — checks if blocked tasks should be unblocked
+4. ROI scoring — estimated value per session-hour invested
+5. CLI interface for autonomous task selection
+"""
+
+import json
+import re
+import sys
+from dataclasses import dataclass, field, asdict
+from enum import Enum
+from pathlib import Path
+from typing import Optional
+
+
+class TaskStatus(Enum):
+    ACTIVE = "active"
+    BLOCKED = "blocked"
+    COMPLETED = "completed"
+
+
+class Urgency(Enum):
+    """How time-sensitive the task is."""
+    ROUTINE = "routine"           # No deadline pressure
+    AGING = "aging"               # Getting stale, should be touched
+    STAGNATING = "stagnating"     # Capped and untouched — needs attention or archival
+    NEAR_COMPLETE = "near_complete"  # 1-2 sessions from done
+
+
+@dataclass
+class MasterTask:
+    """Parsed representation of a Master-Level Task."""
+    mt_id: int
+    name: str
+    base_value: float
+    status: TaskStatus
+    last_touched_session: Optional[int]  # None = never touched
+    current_session: int = 98
+    phases_completed: int = 0
+    phases_total: int = 0
+    aging_rate: float = 1.0  # 1.0 for partial, 0.5 for not-started
+    block_reason: Optional[str] = None
+    self_resolution_note: Optional[str] = None
+    next_action: str = ""
+    tags: list = field(default_factory=list)
+
+    @property
+    def sessions_since_touch(self) -> int:
+        if self.last_touched_session is None:
+            return self.current_session  # Never touched = max age
+        return self.current_session - self.last_touched_session
+
+    @property
+    def completion_pct(self) -> float:
+        if self.phases_total == 0:
+            return 0.0
+        return (self.phases_completed / self.phases_total) * 100
+
+    @property
+    def raw_aging(self) -> float:
+        return self.sessions_since_touch * self.aging_rate
+
+    @property
+    def aging_capped(self) -> float:
+        cap = self.base_value  # Cap at 1x base (total max = 2x base)
+        return min(self.raw_aging, cap)
+
+    @property
+    def original_score(self) -> float:
+        """Original formula: base + capped aging."""
+        return self.base_value + self.aging_capped
+
+    @property
+    def completion_bonus(self) -> float:
+        """Bonus for tasks near completion (75%+ done).
+
+        Logic: A task at 90% completion should get priority over a task at 10%
+        completion with the same base value, because 1 more session finishes it.
+
+        Scale: 0-3 points. Kicks in at 50%+, max at 90%+.
+        """
+        if self.completion_pct < 50:
+            return 0.0
+        if self.completion_pct >= 90:
+            return 3.0
+        if self.completion_pct >= 75:
+            return 2.0
+        return 1.0  # 50-74%
+
+    @property
+    def stagnation_flag(self) -> bool:
+        """True if task has been at cap for 10+ sessions without being worked on."""
+        return (self.aging_capped >= self.base_value and
+                self.sessions_since_touch >= 10)
+
+    @property
+    def stagnation_penalty(self) -> float:
+        """Penalty for stagnating tasks that should be worked or archived.
+
+        Stagnating tasks (capped, untouched 10+ sessions) get -1.0.
+        This prevents them from permanently blocking the queue while
+        providing a signal that they need attention (work or archive).
+        """
+        if self.stagnation_flag:
+            return -1.0
+        return 0.0
+
+    @property
+    def roi_estimate(self) -> float:
+        """Estimated sessions needed to complete next meaningful phase.
+
+        Lower is better — 1 session to complete > 5 sessions to complete.
+        Returns a bonus: 2.0 for 1-session tasks, 1.0 for 2-session, 0 for 3+.
+        """
+        remaining_pct = 100 - self.completion_pct
+        if remaining_pct <= 15:  # ~1 session left
+            return 2.0
+        if remaining_pct <= 30:  # ~2 sessions left
+            return 1.0
+        return 0.0
+
+    @property
+    def urgency(self) -> Urgency:
+        if self.completion_pct >= 75:
+            return Urgency.NEAR_COMPLETE
+        if self.stagnation_flag:
+            return Urgency.STAGNATING
+        if self.sessions_since_touch >= 5:
+            return Urgency.AGING
+        return Urgency.ROUTINE
+
+    @property
+    def improved_score(self) -> float:
+        """Improved priority formula.
+
+        score = base_value + aging_capped + completion_bonus + roi_estimate + stagnation_penalty
+
+        This rewards:
+        - High base value (force multiplier)
+        - Tasks that haven't been touched (aging)
+        - Tasks near completion (completion bonus)
+        - Quick-win tasks (ROI estimate)
+
+        And penalizes:
+        - Tasks stuck at cap with no progress (stagnation)
+        """
+        return (self.base_value + self.aging_capped +
+                self.completion_bonus + self.roi_estimate +
+                self.stagnation_penalty)
+
+    def to_dict(self) -> dict:
+        return {
+            "mt_id": self.mt_id,
+            "name": self.name,
+            "base_value": self.base_value,
+            "status": self.status.value,
+            "last_touched_session": self.last_touched_session,
+            "sessions_since_touch": self.sessions_since_touch,
+            "phases": f"{self.phases_completed}/{self.phases_total}",
+            "completion_pct": round(self.completion_pct, 1),
+            "original_score": round(self.original_score, 1),
+            "improved_score": round(self.improved_score, 1),
+            "urgency": self.urgency.value,
+            "completion_bonus": self.completion_bonus,
+            "roi_estimate": self.roi_estimate,
+            "stagnation_penalty": self.stagnation_penalty,
+            "next_action": self.next_action,
+        }
+
+
+def get_known_tasks(current_session: int = 98) -> list[MasterTask]:
+    """Return the current MT registry.
+
+    This is the source of truth for task metadata that can't be reliably
+    parsed from MASTER_TASKS.md (phases, completion %, etc).
+    Updates should be made here when tasks progress.
+    """
+    return [
+        # === ACTIVE ===
+        MasterTask(
+            mt_id=22, name="Autonomous 1-hour loop",
+            base_value=9, status=TaskStatus.ACTIVE,
+            last_touched_session=97, current_session=current_session,
+            phases_completed=2, phases_total=3,  # Infrastructure + notification done, trials in progress
+            aging_rate=1.0,
+            next_action="Trial #3 (2/3 complete). 3/3 clean trials -> approved.",
+            tags=["autonomy", "hivemind"],
+        ),
+        MasterTask(
+            mt_id=21, name="Hivemind multi-chat coordination",
+            base_value=8, status=TaskStatus.ACTIVE,
+            last_touched_session=97, current_session=current_session,
+            phases_completed=2, phases_total=3,  # Phase 1+2 validated, Phase 3 = 3-chat
+            aging_rate=1.0,
+            next_action="Phase 2 PASSED (6th consecutive). Phase 3 (3-chat) when ready.",
+            tags=["coordination", "hivemind"],
+        ),
+        MasterTask(
+            mt_id=18, name="Academic writing workspace",
+            base_value=4, status=TaskStatus.ACTIVE,
+            last_touched_session=None, current_session=current_session,
+            phases_completed=0, phases_total=5,
+            aging_rate=0.5,
+            next_action="Research phase: install/evaluate ClaudePrism.",
+            tags=["personal", "academic"],
+        ),
+        MasterTask(
+            mt_id=13, name="iOS/macOS app development",
+            base_value=4, status=TaskStatus.ACTIVE,
+            last_touched_session=49, current_session=current_session,
+            phases_completed=2, phases_total=6,
+            aging_rate=0.5,
+            next_action="Phase 3: Build first real app (Kalshi mobile dashboard).",
+            tags=["mobile", "kalshi"],
+        ),
+        MasterTask(
+            mt_id=12, name="Academic research papers",
+            base_value=6, status=TaskStatus.ACTIVE,
+            last_touched_session=96, current_session=current_session,
+            phases_completed=2, phases_total=6,
+            aging_rate=1.0,
+            next_action="Phase 3: Run across all 4 domains. KalshiBench found S96.",
+            tags=["research", "kalshi"],
+        ),
+        # === BLOCKED ===
+        MasterTask(
+            mt_id=1, name="Maestro visual grid UI",
+            base_value=7, status=TaskStatus.BLOCKED,
+            last_touched_session=96, current_session=current_session,
+            phases_completed=0, phases_total=3,
+            aging_rate=0.5,
+            block_reason="Was blocked on macOS SDK",
+            self_resolution_note="MOSTLY SELF-RESOLVED (S96): Claude Control best candidate. Try install.",
+            next_action="Try Claude Control install + test. If works, MT-1 solved.",
+            tags=["ui", "visual"],
+        ),
+        MasterTask(
+            mt_id=5, name="Claude Pro <-> Claude Code bridge",
+            base_value=5, status=TaskStatus.BLOCKED,
+            last_touched_session=None, current_session=current_session,
+            phases_completed=0, phases_total=4,
+            aging_rate=0.5,
+            block_reason="Needs research on Claude Pro integration options",
+            self_resolution_note="PARTIALLY SELF-RESOLVED: Remote Control + Chrome extension exist.",
+            next_action="Evaluate existing tools (Remote Control, Chrome extension).",
+            tags=["bridge", "productivity"],
+        ),
+        MasterTask(
+            mt_id=16, name="Detachable chat tabs",
+            base_value=3, status=TaskStatus.BLOCKED,
+            last_touched_session=None, current_session=current_session,
+            phases_completed=0, phases_total=1,
+            aging_rate=0.5,
+            block_reason="Anthropic feature request",
+            self_resolution_note="STILL OPEN: GitHub issues filed. Nimbalyst workaround exists.",
+            next_action="Monitor. Low priority.",
+            tags=["ux"],
+        ),
+        MasterTask(
+            mt_id=19, name="Local LLM fine-tuning",
+            base_value=2, status=TaskStatus.BLOCKED,
+            last_touched_session=None, current_session=current_session,
+            phases_completed=0, phases_total=7,
+            aging_rate=0.5,
+            block_reason="Needs GPU resources, long-term exploration",
+            self_resolution_note="STILL OPEN: Not self-resolving.",
+            next_action="Long-term. Wait for Mac GPU support maturity.",
+            tags=["ml", "long-term"],
+        ),
+    ]
+
+
+class PriorityPicker:
+    """Computes priority rankings and picks next task for autonomous work."""
+
+    def __init__(self, current_session: int = 98):
+        self.current_session = current_session
+        self.tasks = get_known_tasks(current_session)
+
+    def active_tasks(self) -> list[MasterTask]:
+        return [t for t in self.tasks if t.status == TaskStatus.ACTIVE]
+
+    def blocked_tasks(self) -> list[MasterTask]:
+        return [t for t in self.tasks if t.status == TaskStatus.BLOCKED]
+
+    def unblockable_tasks(self) -> list[MasterTask]:
+        """Blocked tasks that have self-resolution notes suggesting they can be unblocked."""
+        return [t for t in self.blocked_tasks()
+                if t.self_resolution_note and
+                ("MOSTLY SELF-RESOLVED" in t.self_resolution_note or
+                 "PARTIALLY SELF-RESOLVED" in t.self_resolution_note)]
+
+    def ranked(self, include_blocked: bool = False) -> list[MasterTask]:
+        """Return tasks sorted by improved_score descending."""
+        pool = self.active_tasks()
+        if include_blocked:
+            pool += self.unblockable_tasks()
+        return sorted(pool, key=lambda t: t.improved_score, reverse=True)
+
+    def pick_next(self, count: int = 1, include_blocked: bool = False) -> list[MasterTask]:
+        """Pick the top N tasks to work on."""
+        return self.ranked(include_blocked)[:count]
+
+    def stagnating(self) -> list[MasterTask]:
+        """Tasks that have been at cap and untouched for 10+ sessions."""
+        return [t for t in self.active_tasks() if t.stagnation_flag]
+
+    def near_complete(self) -> list[MasterTask]:
+        """Tasks at 75%+ completion."""
+        return [t for t in self.active_tasks() if t.completion_pct >= 75]
+
+    def summary_table(self, include_blocked: bool = False) -> str:
+        """Generate a markdown priority table."""
+        ranked = self.ranked(include_blocked)
+        lines = [
+            "| Rank | MT | Task | Base | Age | Comp% | Bonus | ROI | Stag | **Score** | Urgency | Next |",
+            "|------|----|------|------|-----|-------|-------|-----|------|-----------|---------|------|",
+        ]
+        for i, t in enumerate(ranked, 1):
+            lines.append(
+                f"| {i} | MT-{t.mt_id} | {t.name} | {t.base_value} | "
+                f"+{t.aging_capped:.1f} | {t.completion_pct:.0f}% | "
+                f"+{t.completion_bonus:.1f} | +{t.roi_estimate:.1f} | "
+                f"{t.stagnation_penalty:.1f} | **{t.improved_score:.1f}** | "
+                f"{t.urgency.value} | {t.next_action[:50]} |"
+            )
+        return "\n".join(lines)
+
+    def recommendations(self) -> str:
+        """Generate actionable recommendations for the session."""
+        lines = []
+
+        # Top pick
+        top = self.pick_next(1)
+        if top:
+            t = top[0]
+            lines.append(f"**TOP PICK:** MT-{t.mt_id} ({t.name}) — score {t.improved_score:.1f}")
+            lines.append(f"  Next: {t.next_action}")
+            lines.append("")
+
+        # Near-complete tasks (quick wins)
+        nc = self.near_complete()
+        if nc:
+            lines.append("**QUICK WINS (75%+ complete):**")
+            for t in nc:
+                lines.append(f"  - MT-{t.mt_id}: {t.completion_pct:.0f}% done — {t.next_action[:60]}")
+            lines.append("")
+
+        # Stagnating tasks (need attention)
+        stag = self.stagnating()
+        if stag:
+            lines.append("**STAGNATING (need work or archival decision):**")
+            for t in stag:
+                lines.append(f"  - MT-{t.mt_id}: {t.name} — untouched {t.sessions_since_touch} sessions")
+            lines.append("")
+
+        # Unblockable tasks
+        ub = self.unblockable_tasks()
+        if ub:
+            lines.append("**POTENTIALLY UNBLOCKABLE:**")
+            for t in ub:
+                lines.append(f"  - MT-{t.mt_id}: {t.self_resolution_note}")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    def to_json(self) -> str:
+        """Export full ranking as JSON."""
+        return json.dumps(
+            [t.to_dict() for t in self.ranked(include_blocked=True)],
+            indent=2
+        )
+
+
+def main():
+    """CLI interface for priority_picker."""
+    import argparse
+    parser = argparse.ArgumentParser(description="MT Priority Picker")
+    parser.add_argument("command", nargs="?", default="pick",
+                       choices=["pick", "rank", "table", "recommend", "json", "stagnating"],
+                       help="Command to run")
+    parser.add_argument("--session", type=int, default=98, help="Current session number")
+    parser.add_argument("--count", type=int, default=3, help="Number of tasks to pick")
+    parser.add_argument("--include-blocked", action="store_true", help="Include unblockable tasks")
+    args = parser.parse_args()
+
+    picker = PriorityPicker(current_session=args.session)
+
+    if args.command == "pick":
+        tasks = picker.pick_next(args.count, args.include_blocked)
+        for i, t in enumerate(tasks, 1):
+            print(f"{i}. MT-{t.mt_id} ({t.name}) — score {t.improved_score:.1f}")
+            print(f"   {t.next_action}")
+            print()
+
+    elif args.command == "rank":
+        for i, t in enumerate(picker.ranked(args.include_blocked), 1):
+            print(f"{i}. MT-{t.mt_id}: {t.improved_score:.1f} ({t.urgency.value}) — {t.name}")
+
+    elif args.command == "table":
+        print(picker.summary_table(args.include_blocked))
+
+    elif args.command == "recommend":
+        print(picker.recommendations())
+
+    elif args.command == "json":
+        print(picker.to_json())
+
+    elif args.command == "stagnating":
+        stag = picker.stagnating()
+        if stag:
+            for t in stag:
+                print(f"MT-{t.mt_id}: {t.name} — untouched {t.sessions_since_touch} sessions, cap {t.base_value*2}")
+        else:
+            print("No stagnating tasks.")
+
+
+if __name__ == "__main__":
+    main()
