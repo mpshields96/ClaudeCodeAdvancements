@@ -33,7 +33,15 @@ CCA_DIR="/Users/matthewshields/Projects/ClaudeCodeAdvancements"
 WORKER_ID="${CCA_WORKER_ID:-cli1}"
 TASK_DESC="${1:-}"
 
-# Step 0: Pre-launch duplicate check — abort if same worker already running
+# Step 0a: Rate limit awareness — warn during peak hours
+if python3 "$CCA_DIR/peak_hours.py" --check 2>/dev/null; then
+    : # off-peak, proceed normally
+else
+    echo "WARNING: Peak hours detected (8AM-2PM ET weekday). Standard rate limits apply."
+    echo "Launching worker anyway — but consider pausing during heavy load."
+fi
+
+# Step 0b: Pre-launch duplicate check — abort if same worker already running
 CHECK_RESULT=$(python3 "$CCA_DIR/chat_detector.py" check "$WORKER_ID" 2>&1)
 if echo "$CHECK_RESULT" | grep -q "^BLOCKED"; then
     echo "ABORT: $CHECK_RESULT"

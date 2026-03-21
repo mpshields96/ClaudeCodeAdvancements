@@ -38,6 +38,14 @@ else
     exit 1
 fi
 
+# Rate limit awareness — warn during peak hours
+if python3 "/Users/matthewshields/Projects/ClaudeCodeAdvancements/peak_hours.py" --check 2>/dev/null; then
+    : # off-peak, proceed normally
+else
+    echo "WARNING: Peak hours detected (8AM-2PM ET weekday). Standard rate limits apply."
+    echo "Launching Kalshi chat anyway — but monitor for rate limit hits."
+fi
+
 # Verify the project exists
 if [ ! -d "$KALSHI_DIR" ]; then
     echo "ERROR: $KALSHI_DIR does not exist"
