@@ -320,6 +320,163 @@ class TestPhase2ContextAwareness(unittest.TestCase):
         self.assertIn("orphaned_module", output)
 
 
+class TestPhase2HardenedWorkflows(unittest.TestCase):
+    """S93: Tests for hardened Phase 2 workflows — conflict detection, stale recovery, atomic writes."""
+
+    def setUp(self):
+        self.queue_tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.queue_tmp.close()
+        self.queue_path = self.queue_tmp.name
+        self._orig_queue = ciq.DEFAULT_QUEUE_PATH
+        ciq.DEFAULT_QUEUE_PATH = self.queue_path
+
+    def tearDown(self):
+        ciq.DEFAULT_QUEUE_PATH = self._orig_queue
+        os.unlink(self.queue_path)
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "cli1"})
+    def test_worker_blocked_from_claiming_desktop_scope(self):
+        """Full E2E: desktop claims scope, worker tries same scope, gets blocked."""
+        # Desktop claims agent-guard/
+        with patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"}):
+            cca_comm.cmd_claim(["agent-guard/"])
+
+        # cli1 tries to claim agent-guard/ — should be blocked
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_claim(["agent-guard/"])
+        output = f.getvalue()
+        self.assertIn("SCOPE CONFLICT", output)
+
+        # cli1 claims a different scope — should succeed
+        f2 = io.StringIO()
+        with redirect_stdout(f2):
+            cca_comm.cmd_claim(["memory-system/"])
+        self.assertIn("Scope claimed", f2.getvalue())
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "cli1"})
+    def test_worker_can_claim_after_desktop_releases(self):
+        """Full E2E: desktop claims then releases, worker successfully claims."""
+        with patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"}):
+            cca_comm.cmd_claim(["context-monitor/"])
+            cca_comm.cmd_release(["context-monitor/"])
+
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_claim(["context-monitor/"])
+        self.assertIn("Scope claimed", f.getvalue())
+
+    def test_stale_scope_recovery_in_full_pipeline(self):
+        """Full E2E: worker scope goes stale, recovery pipeline cleans up, new claim succeeds."""
+        from datetime import datetime, timezone, timedelta
+        import json
+
+        # Write a stale scope (45 min old) directly
+        stale_time = (datetime.now(timezone.utc) - timedelta(minutes=45)).isoformat()
+        stale_msg = {
+            "id": "cca_stale_e2e",
+            "sender": "cli1",
+            "target": "desktop",
+            "subject": "stale-work/",
+            "body": "",
+            "priority": "high",
+            "category": "scope_claim",
+            "status": "unread",
+            "created_at": stale_time,
+            "read_at": None,
+        }
+        with open(self.queue_path, "w") as f:
+            f.write(json.dumps(stale_msg) + "\n")
+
+        # Verify scope is active
+        scopes_before = ciq.get_active_scopes(self.queue_path)
+        self.assertTrue(any(s["subject"] == "stale-work/" for s in scopes_before))
+
+        # Run recovery pipeline
+        with patch.object(crash_recovery, "_get_claude_processes", return_value=[]):
+            with patch.object(crash_recovery, "_get_git_status", return_value=""):
+                report = crash_recovery.run_recovery(self.queue_path)
+
+        # Verify stale scope was expired
+        self.assertGreater(report.get("stale_expired", 0), 0)
+
+        # Scope should now be released
+        scopes_after = ciq.get_active_scopes(self.queue_path)
+        self.assertFalse(any(s["subject"] == "stale-work/" for s in scopes_after))
+
+        # cli2 can now claim the same scope
+        with patch.dict(os.environ, {"CCA_CHAT_ID": "cli2"}):
+            import io
+            from contextlib import redirect_stdout
+            f = io.StringIO()
+            with redirect_stdout(f):
+                cca_comm.cmd_claim(["stale-work/"])
+            self.assertIn("Scope claimed", f.getvalue())
+
+    def test_high_volume_queue_with_acknowledges(self):
+        """Full E2E: 60+ messages with interleaved writes and acknowledges."""
+        # Phase 2 requires 50+ msgs/session. Simulate realistic traffic.
+        for i in range(30):
+            ciq.send_message("desktop", "cli1", f"task_{i}", category="handoff",
+                            priority="high", path=self.queue_path)
+            ciq.send_message("cli1", "desktop", f"status_{i}", category="status_update",
+                            path=self.queue_path)
+
+        # cli1 acknowledges all its messages (triggers atomic _save_queue)
+        count = ciq.acknowledge_all("cli1", self.queue_path)
+        self.assertEqual(count, 30)
+
+        # Verify total queue integrity after bulk ack
+        all_msgs = ciq._load_queue(self.queue_path)
+        self.assertEqual(len(all_msgs), 60)
+
+        # All cli1-targeted msgs should be read
+        cli1_msgs = [m for m in all_msgs if m["target"] == "cli1"]
+        self.assertTrue(all(m["status"] == "read" for m in cli1_msgs))
+
+        # Desktop messages still unread
+        desktop_msgs = [m for m in all_msgs if m["target"] == "desktop"]
+        self.assertTrue(all(m["status"] == "unread" for m in desktop_msgs))
+
+        # Queue stats verify throughput
+        stats = cca_comm.get_queue_stats(self.queue_path)
+        self.assertGreaterEqual(stats["total_messages"], 50)
+
+    def test_two_workers_non_overlapping_scopes(self):
+        """Full E2E: cli1 and cli2 work on different scopes simultaneously."""
+        # cli1 claims memory-system/
+        with patch.dict(os.environ, {"CCA_CHAT_ID": "cli1"}):
+            cca_comm.cmd_claim(["memory-system/"])
+
+        # cli2 claims agent-guard/ (different scope — should succeed)
+        with patch.dict(os.environ, {"CCA_CHAT_ID": "cli2"}):
+            import io
+            from contextlib import redirect_stdout
+            f = io.StringIO()
+            with redirect_stdout(f):
+                cca_comm.cmd_claim(["agent-guard/"])
+            self.assertIn("Scope claimed", f.getvalue())
+
+        # Both scopes active
+        scopes = ciq.get_active_scopes(self.queue_path)
+        subjects = [s["subject"] for s in scopes]
+        self.assertIn("memory-system/", subjects)
+        self.assertIn("agent-guard/", subjects)
+
+        # cli1 releases, cli2 still active
+        with patch.dict(os.environ, {"CCA_CHAT_ID": "cli1"}):
+            cca_comm.cmd_release(["memory-system/"])
+
+        scopes_after = ciq.get_active_scopes(self.queue_path)
+        subjects_after = [s["subject"] for s in scopes_after]
+        self.assertNotIn("memory-system/", subjects_after)
+        self.assertIn("agent-guard/", subjects_after)
+
+
 if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = loader.loadTestsFromModule(sys.modules[__name__])
