@@ -176,7 +176,7 @@ class MasterTask:
         }
 
 
-def get_known_tasks(current_session: int = 104) -> list[MasterTask]:
+def get_known_tasks(current_session: int = 105) -> list[MasterTask]:
     """Return the current MT registry.
 
     This is the source of truth for task metadata that can't be reliably
@@ -188,10 +188,10 @@ def get_known_tasks(current_session: int = 104) -> list[MasterTask]:
         MasterTask(
             mt_id=0, name="Kalshi bot self-learning integration",
             base_value=10, status=TaskStatus.ACTIVE,
-            last_touched_session=21, current_session=current_session,
+            last_touched_session=105, current_session=current_session,
             phases_completed=1, phases_total=3,
             aging_rate=1.0,
-            next_action="Phase 2: Deploy trading self-learning schema to Kalshi bot. Closed feedback loop.",
+            next_action="Phase 2: ACTIVE — Kalshi research chat launched with task brief (S105). Deploying self-learning.",
             tags=["kalshi", "self-learning", "trading"],
         ),
         # === COMPLETED ===
@@ -292,10 +292,10 @@ def get_known_tasks(current_session: int = 104) -> list[MasterTask]:
         MasterTask(
             mt_id=28, name="Self-Learning v2 (Multi-Domain)",
             base_value=10, status=TaskStatus.ACTIVE,
-            last_touched_session=103, current_session=current_session,
-            phases_completed=0, phases_total=6,
+            last_touched_session=105, current_session=current_session,
+            phases_completed=1, phases_total=6,
             aging_rate=1.0,
-            next_action="Research: cross-domain YoYo, Sentinel adaptive mutation.",
+            next_action="Phase 2: Pattern plugin registry — refactor reflect.py detectors to extensible registry.",
             tags=["self-learning", "kalshi"],
         ),
         MasterTask(
@@ -367,7 +367,7 @@ def get_known_tasks(current_session: int = 104) -> list[MasterTask]:
 class PriorityPicker:
     """Computes priority rankings and picks next task for autonomous work."""
 
-    def __init__(self, current_session: int = 104):
+    def __init__(self, current_session: int = 105):
         self.current_session = current_session
         self.tasks = get_known_tasks(current_session)
 

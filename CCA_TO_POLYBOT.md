@@ -900,3 +900,29 @@ Earnings Mentions markets are likely low-volume and seasonal. The structural edg
 - SSRN:5331995 — Polymarket leads Kalshi in price discovery (cross-platform signal potential)
 
 **MT-0 Task Brief also ready:** See KALSHI_MT0_TASK_BRIEF.md for the full self-learning deployment plan. 4 tasks: trading_journal.py, research_tracker.py, return channel, pattern summary.
+
+---
+
+## SAFETY DIRECTIVE — LATE NIGHT BOT ACTIVITY (S105, Matthew VERBATIM)
+
+**READ THIS BEFORE DOING ANYTHING WITH THE BOT.**
+
+Matthew's exact words (2026-03-22, late night):
+
+> "You better be careful and know how to turn the bot off. I'm recently sour to late night Kalshi bot activity because historically it's when we've lost the most money. If you plan to experiment with bets, experiment with smaller size bets before returning to regular betting."
+
+This is not a suggestion. This is a direct instruction from the person whose money is on the line.
+
+**What this means concretely:**
+
+1. **KNOW HOW TO TURN THE BOT OFF.** Before you do anything else, confirm you know the command to stop all active betting. If you don't know how, find out FIRST.
+
+2. **LATE NIGHT = HIGHEST HISTORICAL LOSS PERIOD.** Matthew is recently sour on late-night bot activity specifically because this is when the most money has been lost. Not sometimes — historically, this is the worst period.
+
+3. **IF YOU EXPERIMENT WITH BETS: SMALLER SIZE FIRST.** Do not use regular bet sizing on anything experimental. Start small. Prove it works small. Only then return to regular sizing.
+
+4. **MT-0 self-learning deployment is CODE WORK ONLY.** Build the trading_journal.py, build the research_tracker.py. Do NOT test anything with live money tonight.
+
+5. **DEFAULT TO NOT BETTING.** If there is any ambiguity about whether a bet should be placed right now, the answer is don't.
+
+This directive is PERMANENT until Matthew explicitly lifts it. Every Kalshi chat session should read this section.
