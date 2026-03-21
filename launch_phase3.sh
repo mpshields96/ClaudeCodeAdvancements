@@ -23,17 +23,17 @@ CLI2_TASK="${2:-}"
 echo "=== Phase 3 Launch: Desktop + cli1 + cli2 ==="
 echo ""
 
-# Pre-flight: check neither worker is running
-for WID in cli1 cli2; do
-    CHECK_RESULT=$(python3 "$CCA_DIR/chat_detector.py" check "$WID" 2>&1)
-    if echo "$CHECK_RESULT" | grep -q "^BLOCKED"; then
-        echo "ABORT: $WID already running."
-        echo "$CHECK_RESULT"
-        echo "Kill the existing $WID process first."
-        exit 1
-    fi
-    echo "$CHECK_RESULT" | grep "WARNING" || true
-done
+# Pre-flight: run full preflight checks (duplicate workers, queue health, stale scopes)
+echo "Running preflight checks..."
+python3 "$CCA_DIR/phase3_preflight.py"
+PREFLIGHT_EXIT=$?
+if [ $PREFLIGHT_EXIT -ne 0 ]; then
+    echo ""
+    echo "ABORT: Preflight checks failed. Fix issues above before launching Phase 3."
+    echo "  To clear stale scopes: python3 crash_recovery.py run"
+    exit 1
+fi
+echo ""
 
 # Launch cli1
 echo "Launching cli1..."
