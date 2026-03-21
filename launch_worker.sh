@@ -2,8 +2,14 @@
 # launch_worker.sh — Start a CCA worker in a new Terminal tab
 #
 # Usage (from Desktop coordinator chat):
-#   bash launch_worker.sh [task_description]
-#   bash launch_worker.sh "primary task" && python3 cca_comm.py say cli1 "also: second task"
+#   bash launch_worker.sh "single clear task description"
+#
+# IMPORTANT: One task per message. Do NOT combine multiple tasks into the
+# launch task string (e.g., "TASK 1: ... TASK 2: ..."). Workers tend to
+# pick the easiest task and wrap early. Instead:
+#   1. launch_worker.sh "primary task"     ← worker reads this first
+#   2. python3 cca_comm.py task cli1 "second task"  ← queued separately
+# The worker will check inbox after completing task 1 and find task 2.
 #
 # What it does:
 #   1. Pre-launch duplicate check (abort if same worker already running)
