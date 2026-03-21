@@ -225,19 +225,19 @@ def get_known_tasks(current_session: int = 98) -> list[MasterTask]:
         MasterTask(
             mt_id=12, name="Academic research papers",
             base_value=6, status=TaskStatus.ACTIVE,
-            last_touched_session=100, current_session=current_session,
-            phases_completed=3, phases_total=6,
+            last_touched_session=101, current_session=current_session,
+            phases_completed=4, phases_total=6,
             aging_rate=1.0,
-            next_action="Phase 4: Run expanded scans, validate prediction coverage improvement.",
+            next_action="Phase 5: Implement one methodology from top-scored paper.",
             tags=["research", "kalshi"],
         ),
         MasterTask(
             mt_id=20, name="Senior dev agent",
-            base_value=7, status=TaskStatus.ACTIVE,
-            last_touched_session=81, current_session=current_session,
-            phases_completed=9, phases_total=9,  # Phases 1-9 all done (S70-S81). Remaining: session ID normalization, E2E validation
-            aging_rate=1.0,
-            next_action="All phases done. Remaining: session ID normalization (Gap 3), E2E LLM validation with real API key.",
+            base_value=7, status=TaskStatus.COMPLETED,
+            last_touched_session=101, current_session=current_session,
+            phases_completed=9, phases_total=9,  # All phases + gaps closed S101. E2E LLM validated.
+            aging_rate=0,
+            next_action="DONE. Feature-complete. All gaps closed, E2E validated with real API.",
             tags=["quality", "senior-dev"],
         ),
         # === BLOCKED ===

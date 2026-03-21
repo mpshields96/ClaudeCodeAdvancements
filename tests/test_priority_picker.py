@@ -196,8 +196,9 @@ class TestPriorityPicker(unittest.TestCase):
 
     def test_pick_next_count(self):
         picker = PriorityPicker(current_session=100)
+        active_count = len(picker.active_tasks())
         top2 = picker.pick_next(2)
-        self.assertEqual(len(top2), 2)
+        self.assertEqual(len(top2), min(2, active_count))
 
     def test_pick_next_with_blocked(self):
         picker = PriorityPicker(current_session=98)
