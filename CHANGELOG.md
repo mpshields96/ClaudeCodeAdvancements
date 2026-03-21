@@ -3,6 +3,31 @@
 
 ---
 
+## Session 93 — 2026-03-20
+
+**What changed:**
+- **3 critical Phase 2 infrastructure fixes** (`cca_internal_queue.py`, `cca_comm.py`, `crash_recovery.py`):
+  - Atomic file writes for queue (tempfile + os.replace) — prevents corruption from concurrent access
+  - Scope conflict detection wired into `cca_comm.py claim` — blocks workers from claiming owned scopes
+  - Stale scope timeout wired into crash recovery pipeline — expires scopes >30min (catches hung workers)
+- **tests/test_phase2_hardening.py** (22 tests) — tests for all 3 fixes
+- **tests/test_phase2_e2e.py** expanded (5 new tests) — conflict-blocked claims, post-release re-claim, stale recovery, 60-msg bulk ack, dual-worker scopes
+- **2 hardened simulated sessions**: S93 #2 (conflict detection, PASS), S93 #3 (crash+stale+2-worker+54 msgs, PASS)
+- **HIVEMIND_ROLLOUT.md**: Phase 1 Matthew confirmation, Phase 2 gate marked PASSED
+
+**Why:**
+- Phase 2 gate required 3+ hardened sessions — needed infrastructure fixes + 2 more session passes
+- Atomic writes prevent race condition at 50+ msgs/session target
+- Scope conflict detection prevents the most likely dual-chat failure mode
+
+**Tests:** 3687/3687 passing (94 suites)
+
+**Lessons:**
+- Don't check off gates without actually doing the work — paperwork isn't proof
+- When Matthew gives direction, execute immediately instead of over-analyzing
+
+---
+
 ## Session 92 — 2026-03-20
 
 **What changed:**

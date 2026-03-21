@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-20 (Session 91)
+# Last updated: 2026-03-20 (Session 93)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 3660+ tests (93 suites). All must pass before any work.**
+**Total: 3687+ tests (94 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -170,7 +170,8 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | `tests/test_hivemind_metrics.py` | Phase 1+2 metrics persistence + queue throughput (26 tests, S90/S92) |
 | `tests/test_chat_detector.py` | Duplicate session detection + pre-launch checks (31 tests, S91) |
 | `tests/test_crash_recovery.py` | Worker crash detection + scope recovery (15 tests, S91) |
-| `tests/test_phase2_e2e.py` | Phase 2 full lifecycle E2E: assign->context->claim->complete->crash->recover (7 tests, S92) |
+| `tests/test_phase2_e2e.py` | Phase 2 full lifecycle E2E + hardened workflows: conflict detection, stale recovery, high volume, 2-worker scopes (12 tests, S92/S93) |
+| `tests/test_phase2_hardening.py` | Phase 2 hardening: atomic writes, scope conflicts, stale crash recovery (22 tests, S93) |
 
 CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against Python 3.10 + 3.12.
 
