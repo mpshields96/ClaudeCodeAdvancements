@@ -192,7 +192,7 @@ def get_summary(
             "regressions": [],
         }
 
-    today = datetime.now().date().isoformat()
+    today = datetime.now(timezone.utc).date().isoformat()
     today_sessions = [h for h in history if h.timestamp[:10] == today]
 
     # Average grade

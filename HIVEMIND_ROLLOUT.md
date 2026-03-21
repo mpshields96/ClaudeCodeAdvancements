@@ -148,6 +148,15 @@ Same as Phase 1, plus:
 - Multi-task worker loop with keep-busy fallback
 - Terminal close on wrap + stale worker detection
 
+### Suggested Tasks for Remaining Phase 2 Sessions
+
+These tasks are designed to stress-test Phase 2 requirements (multi-file, reading desktop's work, higher message volume, more autonomy):
+
+1. **Worker reads desktop's recent work then extends it** — Desktop builds a module, worker uses `cca_comm.py context` to see recent commits, then writes tests or a companion module that imports desktop's new code. Proves cross-awareness.
+2. **Worker-initiated code review with follow-up fix** — Worker reviews desktop's recent commits via keep-busy, finds an issue, reports it. Desktop assigns the fix back to worker. Tests multi-round coordination.
+3. **Parallel multi-file task** — Desktop and worker each take independent multi-file tasks from the roadmap. Both commit. Verify no conflicts. Tests scope isolation at scale.
+4. **High-volume queue session** — Deliberately increase coordination chatter (status updates, questions, scope claims/releases) to hit the 50+ msgs/session target.
+
 ### Gate to Phase 3
 ALL of the following must be true:
 - [x] Phase 1 gate fully passed (S90: 3/3 PASS, Matthew confirmation pending)
