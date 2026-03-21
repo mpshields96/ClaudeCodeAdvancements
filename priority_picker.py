@@ -225,10 +225,10 @@ def get_known_tasks(current_session: int = 98) -> list[MasterTask]:
         MasterTask(
             mt_id=12, name="Academic research papers",
             base_value=6, status=TaskStatus.ACTIVE,
-            last_touched_session=101, current_session=current_session,
-            phases_completed=4, phases_total=6,
+            last_touched_session=102, current_session=current_session,
+            phases_completed=5, phases_total=6,
             aging_rate=1.0,
-            next_action="Phase 5: Implement one methodology from top-scored paper.",
+            next_action="Phase 6: Refine discovery pipeline hit rate. Wire confidence calibrator into senior dev + paper scoring.",
             tags=["research", "kalshi"],
         ),
         MasterTask(

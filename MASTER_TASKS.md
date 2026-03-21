@@ -460,7 +460,8 @@ Phase 2 (Session 83):
 - Phase 2: Ran across 4 domains, increased delay to 3s (429 rate limit)
 - Phase 3 (S100): paper_digest.py built, expanded prediction/statistics queries (+8 queries, +12 keywords), bridge wiring
 - Phase 4 (S101): Expanded scans across prediction, statistics, trading_systems, context_management. Papers: 25 -> 1242. Domain coverage balanced. 63 Kalshi-relevant papers (score>=55), top 10 sent to bridge.
-- Phase 5 next: Implement one methodology from a top-scored paper. Measure actual improvement on CCA or Kalshi.
+- Phase 5 (S102): Implemented confidence calibrator from ConfTuner (Li et al., 2025). Verbal confidence extraction (%, fraction, decimal, labels, verbal), prediction logging with outcome tracking, ECE calibration metrics, per-source bias detection, confidence adjustment. 29 tests. `self-learning/confidence_calibrator.py`.
+- Phase 6 next: Refine discovery pipeline based on hit rate (useful papers / total papers scanned). Wire confidence calibrator into senior dev + paper scoring.
 
 ---
 
