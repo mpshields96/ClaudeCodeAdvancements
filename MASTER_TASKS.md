@@ -752,6 +752,50 @@ developer colleague.
 
 ---
 
+## MT-22: Autonomous 1-Hour Loop (Desktop + Worker)
+
+**Source:** Matthew's directive (Session 94) — "I want to be able to let you the CCA desktop chat and the helper CLI chat to work autonomously for at least 1 hour segments fully autonomy."
+**What Matthew wants:** CCA desktop + CLI worker run autonomously for 1+ hour segments with zero human intervention. The pair picks tasks, executes with TDD, commits, chains to next task, and wraps cleanly when time is up.
+
+**Why this is high priority:** Every minute Matthew has to babysit the chats is a minute he's not doing other work. The dual-chat system (MT-21) is proven. The safety guards (AG-9 bash_guard, path_validator, credential_guard) are all LIVE. The infrastructure is ready — what's missing is end-to-end validation of sustained autonomous operation.
+
+**Safety status (S65 gaps now CLOSED):**
+| Gap | Solution | Status |
+|-----|----------|--------|
+| Bash command blocklist | bash_guard.py (AG-9) | LIVE in hooks |
+| Network egress guard | bash_guard.py | LIVE |
+| Disk write guard | path_validator.py | LIVE |
+| Process management guard | bash_guard.py | LIVE |
+| Per-session runtime timeout | session_pacer.py | LIVE in cca-auto-desktop (S94) |
+| Error notification | session_notifier.py (ntfy.sh) | LIVE in cca-wrap-desktop (S95, 19 tests) |
+| Crash recovery | crash_recovery.py | Built (S91) |
+
+**What needs to happen:**
+1. ~~**Wire session_pacer into /cca-auto-desktop**~~ DONE (S94) — Step 0 reset, Step 5.7 mandatory check, Step 5.8 health check
+2. ~~**Auto-wrap on timer**~~ DONE (S94) — pacer triggers WRAP_NOW/WRAP_SOON
+3. ~~**Health check loop**~~ DONE (S94) — Step 5.8 runs full test suite every 2nd task
+4. ~~**Failure recovery**~~ DONE (S94) — log blocker, skip task, continue pacing
+5. ~~**Notification on wrap**~~ DONE (S95) — session_notifier.py sends ntfy.sh push on wrap/error
+6. **E2E validation** — run 3 supervised 1-hour segments before trusting unsupervised
+
+**What this is NOT:**
+- NOT overnight operation (still risky, still deferred)
+- NOT --dangerously-skip-permissions (use properly scoped allow list)
+- NOT unguarded (all AG-9 safety hooks remain active)
+
+**Lifecycle:**
+1. Wire session_pacer into desktop/worker auto commands
+2. Build auto-wrap timer integration
+3. Health check loop (tests pass between tasks)
+4. Supervised 1-hour trial #1 (Matthew at computer, not intervening)
+5. Supervised 1-hour trial #2
+6. Supervised 1-hour trial #3
+7. Gate: 3/3 trials clean → approved for autonomous use
+
+**Status:** Phase 1 COMPLETE (S94), Phase 2 (notification) COMPLETE (S95). Infrastructure ready. Next: supervised 1-hour trials (0/3 complete). Base value: 9. Last touched: S95.
+
+---
+
 ## Priority Scoring System (Decay-Based)
 
 **Formula:** `priority = base_value + (chats_since_last_touched * aging_rate)`
@@ -760,7 +804,7 @@ developer colleague.
 - `aging_rate`: 1.0 per chat for partial tasks (Phase 1 done, Phase 2 waiting). 0.5 per chat for not-started tasks.
 - Cap: Priority cannot exceed 2x base_value. Prevents low-value tasks from permanently outranking high-value ones.
 - Update `last_touched_session` whenever ANY work is done on the MT (even research or planning).
-- Current session: 94.
+- Current session: 95.
 
 ### Completed (no scoring needed)
 
@@ -788,7 +832,8 @@ developer colleague.
 | 4 | MT-21 | Hivemind coordination | 8 | Session 93 | 1 | 1.0 | 1.0 | **9.0** | Phase 2 PASSED. Phase 3 (3-chat) deferred by Matthew. |
 | 5 | MT-17 | Design/reports | 5 | Session 89 | 5 | 1.0 | 5.0 | **10.0** | Phase 6 daily_snapshot.py built (S89, 50 tests). Phase 5 website_generator done. |
 | 6 | MT-18 | Academic writing | 4 | NEVER | 94+ | 0.5 | cap | **8.0** | Research phase. Cap: 8.0 |
-| 7 | MT-13 | iOS/macOS app development | 4 | Session 49 | 45 | 0.5 | cap | **8.0** | Phase 3: first real app. Cap: 8.0 |
+| 7 | MT-22 | Autonomous 1-hour loop | 9 | Session 95 | 0 | 1.0 | 0 | **9.0** | Phase 2 COMPLETE (notification). Next: supervised 1-hour trials (0/3) |
+| 8 | MT-13 | iOS/macOS app development | 4 | Session 49 | 45 | 0.5 | cap | **8.0** | Phase 3: first real app. Cap: 8.0 |
 
 ### Blocked / External (no scoring — cannot be worked)
 
