@@ -159,7 +159,7 @@ def parse_total_test_count(content: str) -> Optional[int]:
 
     Expects: **Total: 2279 tests (54 suites).**
     """
-    pattern = re.compile(r'\*\*Total:\s*(\d+)\s*tests')
+    pattern = re.compile(r'\*\*Total:\s*~?(\d+)\s*tests')
     match = pattern.search(content)
     if match:
         return int(match.group(1))
