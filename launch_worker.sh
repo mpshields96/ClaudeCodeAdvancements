@@ -57,25 +57,29 @@ if [ -n "$TASK_DESC" ]; then
     CCA_CHAT_ID=desktop python3 "$CCA_DIR/cca_comm.py" task "$WORKER_ID" "$TASK_DESC"
 fi
 
-# Step 2: Open a new Terminal tab and start the worker
-# Uses AppleScript to open a tab in Terminal.app with the right env
+# Step 2: Launch worker in a new Terminal window using temp script
+# This is more reliable than AppleScript keystroke-based tab creation,
+# which fails with -1719 "Invalid index" when no window exists.
 # CRITICAL: unset ANTHROPIC_API_KEY so claude uses Max subscription (OAuth),
 # not API credits. S105 terminal chats burned $5 API credits because of this.
-osascript <<APPLESCRIPT
-tell application "Terminal"
-    activate
-    -- Open a new tab in the frontmost window
-    tell application "System Events"
-        keystroke "t" using command down
-    end tell
-    delay 0.5
-    -- Run the worker setup command in the new tab
-    do script "unset ANTHROPIC_API_KEY && export CCA_CHAT_ID=$WORKER_ID && cd $CCA_DIR && echo '=== CCA Worker ($WORKER_ID) ===' && claude /cca-worker" in front window
-end tell
-APPLESCRIPT
+TMPSCRIPT=$(mktemp /tmp/cca_worker_launch_XXXXXX.sh)
+cat > "$TMPSCRIPT" <<INNERSCRIPT
+#!/bin/bash
+unset ANTHROPIC_API_KEY
+export CCA_CHAT_ID=$WORKER_ID
+cd "$CCA_DIR"
+echo "=== CCA Worker ($WORKER_ID) ==="
+echo "Auth: Max subscription (ANTHROPIC_API_KEY unset)"
+echo ""
+rm -f "$TMPSCRIPT"
+exec claude /cca-worker
+INNERSCRIPT
+chmod +x "$TMPSCRIPT"
+
+open -a Terminal "$TMPSCRIPT"
 
 echo ""
-echo "Worker launched in new Terminal tab."
+echo "Worker launched in new Terminal window."
 echo "  Worker ID: $WORKER_ID"
 echo "  Directory: $CCA_DIR"
 if [ -n "$TASK_DESC" ]; then
