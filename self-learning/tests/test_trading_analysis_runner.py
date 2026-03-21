@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 def _create_test_db(db_path: str, n_trades: int = 30):
-    """Create a minimal polybot.db-compatible test database."""
+    """Create a minimal polybot.db-compatible test database (legacy schema)."""
     conn = sqlite3.connect(db_path)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS trades (
@@ -46,6 +46,51 @@ def _create_test_db(db_path: str, n_trades: int = 30):
         conn.execute(
             "INSERT INTO trades (strategy, result, timestamp, price_cents, cost_usd, payout_usd, market_id, edge_pct) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             ("sniper", result, base_time + i * 3600, 60 + (i % 20), 1.50, 2.50 if result == "yes" else 0.0, f"MKT-{i % 5}", 0.15 + (i % 10) * 0.01)
+        )
+    conn.commit()
+    conn.close()
+
+
+def _create_kalshi_db(db_path: str, n_trades: int = 30):
+    """Create a polybot.db with real Kalshi schema (pnl_cents, ticker, count)."""
+    conn = sqlite3.connect(db_path)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS trades (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp REAL NOT NULL,
+            ticker TEXT NOT NULL,
+            side TEXT NOT NULL,
+            action TEXT NOT NULL,
+            price_cents INTEGER NOT NULL,
+            count INTEGER NOT NULL,
+            cost_usd REAL NOT NULL,
+            strategy TEXT DEFAULT 'btc_lag',
+            edge_pct REAL,
+            win_prob REAL,
+            is_paper INTEGER NOT NULL DEFAULT 1,
+            result TEXT,
+            pnl_cents INTEGER,
+            settled_at REAL
+        )
+    """)
+    import time
+    base_time = time.time() - (n_trades * 3600)
+    strategies = ["expiry_sniper_v1", "orderbook_imbalance_v1", "btc_drift_v1"]
+    for i in range(n_trades):
+        strat = strategies[i % len(strategies)]
+        # 60% settled, 40% unsettled
+        if i % 5 != 0:
+            result = "yes" if i % 3 != 0 else "no"
+            pnl = 150 if result == "yes" else -100
+        else:
+            result = None
+            pnl = None
+        conn.execute(
+            "INSERT INTO trades (timestamp, ticker, side, action, price_cents, "
+            "count, cost_usd, strategy, edge_pct, result, pnl_cents) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (base_time + i * 3600, f"TICKER-{i % 5}", "yes", "buy",
+             60 + (i % 20), 2, 1.50, strat, 0.15, result, pnl)
         )
     conn.commit()
     conn.close()
@@ -291,6 +336,72 @@ class TestJsonOutput(unittest.TestCase):
         json_str = json.dumps(report)
         parsed = json.loads(json_str)
         self.assertEqual(parsed["trade_count"], 30)
+
+
+class TestKalshiSchema(unittest.TestCase):
+    """Test against real Kalshi DB schema (pnl_cents, ticker, count)."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.db_path = os.path.join(self.tmpdir, "polybot.db")
+        _create_kalshi_db(self.db_path, 50)
+
+    def test_reads_kalshi_schema(self):
+        from trading_analysis_runner import run_analysis
+        report = run_analysis(self.db_path)
+        self.assertEqual(report["trade_count"], 50)
+
+    def test_handles_unsettled_trades(self):
+        from trading_analysis_runner import run_analysis
+        report = run_analysis(self.db_path)
+        # 40 settled (every 5th is unsettled = 10 unsettled)
+        self.assertEqual(report["settled_count"], 40)
+        # Win rate based on settled only
+        self.assertGreater(report["win_rate"], 0)
+        self.assertLess(report["win_rate"], 1)
+
+    def test_pnl_from_pnl_cents(self):
+        from trading_analysis_runner import run_analysis
+        report = run_analysis(self.db_path)
+        # pnl_usd should be non-zero (mix of wins/losses)
+        self.assertNotEqual(report["pnl_usd"], 0)
+
+    def test_ticker_mapped_to_market_id(self):
+        from trading_analysis_runner import _read_trades
+        trades = _read_trades(self.db_path)
+        self.assertTrue(all("market_id" in t for t in trades))
+        self.assertTrue(any(t["market_id"].startswith("TICKER") for t in trades))
+
+    def test_multiple_strategies(self):
+        from trading_analysis_runner import run_analysis
+        report = run_analysis(self.db_path)
+        breakdown = report["strategy_breakdown"]
+        self.assertIn("expiry_sniper_v1", breakdown)
+        self.assertIn("orderbook_imbalance_v1", breakdown)
+        self.assertIn("btc_drift_v1", breakdown)
+
+    def test_settled_vs_count_in_breakdown(self):
+        from trading_analysis_runner import run_analysis
+        report = run_analysis(self.db_path)
+        for strat, data in report["strategy_breakdown"].items():
+            self.assertIn("settled", data)
+            self.assertLessEqual(data["settled"], data["count"])
+
+    def test_contracts_tracked(self):
+        from trading_analysis_runner import _read_trades
+        trades = _read_trades(self.db_path)
+        self.assertTrue(all(t.get("contracts", 0) == 2 for t in trades))
+
+    def test_summary_includes_settled(self):
+        from trading_analysis_runner import run_analysis
+        report = run_analysis(self.db_path)
+        self.assertIn("settled", report["summary"])
+
+    def test_top_strategy_by_pnl(self):
+        from trading_analysis_runner import run_analysis
+        report = run_analysis(self.db_path)
+        # Summary should mention the top strategy by PnL
+        self.assertIn("Top strategy:", report["summary"])
 
 
 if __name__ == "__main__":

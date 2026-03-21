@@ -71,7 +71,11 @@ def discover_db(explicit_path: str | None = None) -> str | None:
 # ── Analysis ─────────────────────────────────────────────────────────────────
 
 def _read_trades(db_path: str) -> list[dict]:
-    """Read all trades from polybot.db (read-only)."""
+    """Read all trades from polybot.db (read-only).
+
+    Handles both legacy schema (payout_usd, market_id) and current Kalshi
+    schema (pnl_cents, ticker, count). Auto-detects by checking column names.
+    """
     uri = f"file:{db_path}?mode=ro"
     try:
         conn = sqlite3.connect(uri, uri=True)
@@ -81,11 +85,42 @@ def _read_trades(db_path: str) -> list[dict]:
 
     conn.row_factory = sqlite3.Row
     try:
-        rows = conn.execute(
-            "SELECT strategy, result, timestamp, price_cents, cost_usd, "
-            "payout_usd, market_id, edge_pct FROM trades ORDER BY timestamp"
-        ).fetchall()
-        return [dict(r) for r in rows]
+        # Detect schema by checking column names
+        cursor = conn.execute("PRAGMA table_info(trades)")
+        columns = {row[1] for row in cursor.fetchall()}
+
+        # Current Kalshi schema: pnl_cents, ticker, count
+        if "pnl_cents" in columns:
+            rows = conn.execute(
+                "SELECT strategy, result, timestamp, price_cents, cost_usd, "
+                "pnl_cents, ticker, edge_pct, count "
+                "FROM trades ORDER BY timestamp"
+            ).fetchall()
+            trades = []
+            for r in rows:
+                d = dict(r)
+                # Normalize to common format
+                pnl_cents = d.pop("pnl_cents", None) or 0
+                d["pnl_usd"] = pnl_cents / 100.0
+                d["market_id"] = d.pop("ticker", "unknown")
+                d["contracts"] = d.pop("count", 1)
+                trades.append(d)
+            return trades
+        else:
+            # Legacy schema: payout_usd, market_id
+            rows = conn.execute(
+                "SELECT strategy, result, timestamp, price_cents, cost_usd, "
+                "payout_usd, market_id, edge_pct FROM trades ORDER BY timestamp"
+            ).fetchall()
+            trades = []
+            for r in rows:
+                d = dict(r)
+                payout = d.pop("payout_usd", 0) or 0
+                cost = d.get("cost_usd", 0) or 0
+                d["pnl_usd"] = payout - cost
+                d["contracts"] = 1
+                trades.append(d)
+            return trades
     except sqlite3.OperationalError:
         return []
     finally:
@@ -93,22 +128,32 @@ def _read_trades(db_path: str) -> list[dict]:
 
 
 def _compute_strategy_breakdown(trades: list[dict]) -> dict:
-    """Compute per-strategy stats."""
+    """Compute per-strategy stats.
+
+    Uses normalized pnl_usd field (set by _read_trades regardless of schema).
+    Only counts settled trades (result is not None) for win rate.
+    """
     breakdown = {}
     for t in trades:
         strat = t.get("strategy", "unknown")
         if strat not in breakdown:
-            breakdown[strat] = {"count": 0, "wins": 0, "pnl_usd": 0.0}
+            breakdown[strat] = {"count": 0, "settled": 0, "wins": 0, "pnl_usd": 0.0, "contracts": 0}
         breakdown[strat]["count"] += 1
-        if t.get("result") == "yes":
-            breakdown[strat]["wins"] += 1
-        payout = t.get("payout_usd", 0) or 0
-        cost = t.get("cost_usd", 0) or 0
-        breakdown[strat]["pnl_usd"] += payout - cost
+        breakdown[strat]["contracts"] += t.get("contracts", 1)
 
-    # Compute win rates
+        result = t.get("result")
+        if result is not None:
+            breakdown[strat]["settled"] += 1
+            if result == "yes":
+                breakdown[strat]["wins"] += 1
+
+        pnl = t.get("pnl_usd", 0) or 0
+        breakdown[strat]["pnl_usd"] += pnl
+
+    # Compute win rates (based on settled trades only)
     for strat, data in breakdown.items():
-        data["win_rate"] = round(data["wins"] / data["count"], 4) if data["count"] > 0 else 0.0
+        settled = data["settled"]
+        data["win_rate"] = round(data["wins"] / settled, 4) if settled > 0 else 0.0
         data["pnl_usd"] = round(data["pnl_usd"], 2)
 
     return breakdown
@@ -137,6 +182,7 @@ def run_analysis(db_path: str) -> dict:
         return {
             "db_path": db_path,
             "trade_count": 0,
+            "settled_count": 0,
             "win_rate": 0.0,
             "pnl_usd": 0.0,
             "proposals": [],
@@ -145,27 +191,27 @@ def run_analysis(db_path: str) -> dict:
             "analyzed_at": datetime.now(timezone.utc).isoformat(),
         }
 
-    wins = sum(1 for t in trades if t.get("result") == "yes")
-    win_rate = round(wins / n, 4)
+    settled = [t for t in trades if t.get("result") is not None]
+    n_settled = len(settled)
+    wins = sum(1 for t in settled if t.get("result") == "yes")
+    win_rate = round(wins / n_settled, 4) if n_settled > 0 else 0.0
 
-    total_pnl = sum(
-        (t.get("payout_usd", 0) or 0) - (t.get("cost_usd", 0) or 0)
-        for t in trades
-    )
+    total_pnl = sum(t.get("pnl_usd", 0) or 0 for t in trades)
 
     breakdown = _compute_strategy_breakdown(trades)
     proposals = _run_trade_reflector(db_path)
 
     # Build summary
-    top_strat = max(breakdown.items(), key=lambda x: x[1]["count"])[0] if breakdown else "none"
+    top_strat = max(breakdown.items(), key=lambda x: x[1]["pnl_usd"])[0] if breakdown else "none"
     summary = (
-        f"{n} trades, {win_rate:.0%} win rate, ${total_pnl:.2f} PnL. "
+        f"{n} trades ({n_settled} settled), {win_rate:.0%} win rate, ${total_pnl:.2f} PnL. "
         f"Top strategy: {top_strat}. {len(proposals)} proposals."
     )
 
     return {
         "db_path": db_path,
         "trade_count": n,
+        "settled_count": n_settled,
         "win_rate": win_rate,
         "pnl_usd": round(total_pnl, 2),
         "proposals": proposals,

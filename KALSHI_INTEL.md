@@ -1199,3 +1199,33 @@ _Kalshi Research: move items here after incorporating into bot strategy/code._
 - Studies how prediction market calibration varies by domain
 - Directly applicable to our domain-specific sniper strategies
 
+
+### Self-Learning Analysis (2026-03-21)
+
+- **Trades:** 4052 | **WR:** 51% | **PnL:** $450.11
+- btc_daily_v1: 16 trades, 56% WR
+- btc_drift_v1: 87 trades, 43% WR
+- btc_lag: 1 trades, 0% WR
+- btc_lag_v1: 46 trades, 59% WR
+- copy_trader_v1: 7 trades, 0% WR
+- eth_daily_v1: 22 trades, 50% WR
+- eth_drift_v1: 222 trades, 49% WR
+- eth_lag_v1: 10 trades, 70% WR
+- eth_orderbook_imbalance_v1: 142 trades, 54% WR
+- expiry_sniper_v1: 878 trades, 53% WR
+- fomc_rate_v1: 59 trades, 50% WR
+- orderbook_imbalance_v1: 105 trades, 56% WR
+- sol_daily_v1: 8 trades, 75% WR
+- sol_drift_v1: 43 trades, 40% WR
+- sol_lag_v1: 1 trades, 100% WR
+- sports_futures_v1: 2224 trades, 0% WR
+- weather_chi_v1: 37 trades, 20% WR
+- weather_den_v1: 28 trades, 21% WR
+- weather_lax_v1: 36 trades, 17% WR
+- weather_mia_v1: 30 trades, 20% WR
+- xrp_drift_v1: 50 trades, 54% WR
+- **3 proposals** — see full analysis
+  - [warning] win_rate_drift
+  - [warning] win_rate_drift
+  - [info] streak_anomaly
+- Summary: 4052 trades (1721 settled), 51% win rate, $450.11 PnL. Top strategy: expiry_sniper_v1. 3 proposals.
