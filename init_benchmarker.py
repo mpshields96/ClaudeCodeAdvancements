@@ -25,6 +25,8 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import List, Optional
 
+from session_id import normalize as normalize_session_id
+
 CCA_DIR = Path.home() / "Projects/ClaudeCodeAdvancements"
 BENCH_FILE = CCA_DIR / ".cca-init-benchmarks.jsonl"
 
@@ -40,6 +42,14 @@ class SessionMetrics:
     loc_shipped: int
     quality_issues: int
     duration_min: float
+
+    def __post_init__(self):
+        # Normalize session_id to canonical "S{number}" format
+        # Handles suffixed IDs like "S99a" gracefully
+        try:
+            self.session_id = normalize_session_id(self.session_id)
+        except (ValueError, TypeError):
+            pass  # Keep original if not parseable (e.g. custom labels)
 
     def to_dict(self) -> dict:
         return asdict(self)

@@ -33,6 +33,8 @@ import json
 import os
 from datetime import datetime, timezone
 
+from session_id import normalize as normalize_session_id, extract_number
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_LOG_PATH = os.path.join(SCRIPT_DIR, "hivemind_sessions.jsonl")
 DEFAULT_QUEUE_PATH = os.path.join(SCRIPT_DIR, "cca_internal_queue.jsonl")
@@ -126,7 +128,8 @@ def record_session(
 ) -> dict:
     """Record a session validation result to the log file."""
     entry = {
-        "session": session_number,
+        "session": extract_number(session_number),
+        "session_id": normalize_session_id(session_number),
         "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "verdict": result.get("verdict", "UNKNOWN"),
         "worker_id": result.get("worker_id", "unknown"),

@@ -32,14 +32,14 @@ class TestSessionMetrics(unittest.TestCase):
             quality_issues=0,
             duration_min=45,
         )
-        self.assertEqual(m.session_id, "S99a")
+        self.assertEqual(m.session_id, "S99")
         self.assertEqual(m.init_type, "slim")
 
     def test_metrics_to_dict(self):
         from init_benchmarker import SessionMetrics
         m = SessionMetrics("S99a", "slim", 4.0, 6, 77, 500, 0, 45)
         d = m.to_dict()
-        self.assertEqual(d["session_id"], "S99a")
+        self.assertEqual(d["session_id"], "S99")
         self.assertIn("init_type", d)
 
     def test_metrics_from_dict(self):
@@ -203,7 +203,7 @@ class TestStorage(unittest.TestCase):
         save_metrics(m, bench_file=self.bench_file)
         loaded = load_metrics(bench_file=self.bench_file)
         self.assertEqual(len(loaded), 1)
-        self.assertEqual(loaded[0].session_id, "S99a")
+        self.assertEqual(loaded[0].session_id, "S99")
 
     def test_load_empty(self):
         from init_benchmarker import load_metrics
@@ -231,7 +231,7 @@ class TestFormatReport(unittest.TestCase):
              "total_commits": 6, "new_tests": 77, "quality_issues": 0},
         ]
         table = format_comparison_table(baseline_avg, trials)
-        self.assertIn("S99a", table)
+        self.assertIn("S99", table)
         self.assertIn("13.5", table)
 
     def test_format_empty(self):
