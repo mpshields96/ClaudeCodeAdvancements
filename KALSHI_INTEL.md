@@ -1159,3 +1159,24 @@ recalibrate(0.70, 1.03)  # Crypto: 0.70 -> 0.702 (+0.2pp edge)
 _Kalshi Research: move items here after incorporating into bot strategy/code._
 
 (Empty — Kalshi Research has not yet processed any items from this bridge)
+
+---
+
+### 2026-03-21: Alternative Data Edge Hierarchy (from r/ClaudeCode satellite post)
+
+**Source:** reddit.com/r/ClaudeCode/comments/1rz4us9 (274pts, 91%, 100 comments)
+
+**Key finding from u/Quirky-Degree-6290 (industry insider):**
+- Satellite parking lot data was deemed "close to useless" ~5 years ago by real hedge funds
+- The actual alpha-generating alternative data: **web scraping + credit card data** (costs millions/year to build/maintain)
+- Big funds build internal alt-data teams AND buy from vendors — knowing what smaller funds read is itself valuable (you can front-run their reactions)
+- Example: scraping every product on MercadoLibre, tracking price changes, stock-outs, sales volume
+
+**Relevance to Kalshi bot:**
+- The hierarchy is: free data (satellite, public APIs) < expensive data (credit card, scraping) < structural edges (market microstructure, timing)
+- Our sniper strategy works on STRUCTURAL edge (timing, market microstructure), not data edge — this is actually stronger than alternative data because it costs nothing to maintain
+- Research implication: don't chase alternative data sources for Kalshi. Our edge is structural timing + probabilistic calibration, not data access
+- The "moat isn't the algorithm, it's the data" applies to equity markets but NOT to prediction markets where the edge is behavioral/structural
+
+**Kalshi-actionable:** No change needed — validates that our current approach (structural timing edge) is on a higher tier than data-acquisition edges. Keep perfecting the structural/behavioral edge rather than seeking alternative data sources.
+
