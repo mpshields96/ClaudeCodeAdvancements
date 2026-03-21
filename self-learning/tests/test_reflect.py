@@ -153,7 +153,9 @@ class TestDetectPatterns(unittest.TestCase):
             mock_pw = {"pain_count": 0, "win_count": 0, "ratio": None,
                        "pain_domains": {}, "win_domains": {}}
         with patch.object(rf, "_load_strategy", return_value=mock_strategy), \
-             patch("reflect.get_pain_win_summary", return_value=mock_pw):
+             patch("reflect.get_pain_win_summary", return_value=mock_pw), \
+             patch("detectors.get_pain_win_summary", return_value=mock_pw), \
+             patch("detectors._load_strategy", return_value=mock_strategy):
             return rf.detect_patterns(entries, min_sample=2)
 
     def test_empty_entries(self):

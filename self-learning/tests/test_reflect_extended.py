@@ -79,9 +79,13 @@ class TestDetectPatternsResearchDeadEnd(unittest.TestCase):
     """research_dead_end pattern — not covered in base tests."""
 
     def _run(self, entries):
+        strat = _make_strategy(updated_days_ago=1)
+        pw = {"pain_count": 0, "win_count": 0, "ratio": None, "pain_domains": {}, "win_domains": {}}
         with patch("reflect._load_journal", return_value=entries), \
-             patch("reflect._load_strategy", return_value=_make_strategy(updated_days_ago=1)), \
-             patch("reflect.get_pain_win_summary", return_value={"pain_count": 0, "win_count": 0, "ratio": None, "pain_domains": {}, "win_domains": {}}):
+             patch("reflect._load_strategy", return_value=strat), \
+             patch("reflect.get_pain_win_summary", return_value=pw), \
+             patch("detectors.get_pain_win_summary", return_value=pw), \
+             patch("detectors._load_strategy", return_value=strat):
             return reflect.detect_patterns(entries)
 
     def test_research_dead_end_detected_at_min_sample(self):
@@ -131,10 +135,12 @@ class TestDetectPatternsBoundaryConditions(unittest.TestCase):
 
     def _run(self, entries, strategy=None, pw=None):
         strat = strategy or _make_strategy(updated_days_ago=1)
-        pw_default = {"pain_count": 0, "win_count": 0, "ratio": None, "pain_domains": {}, "win_domains": {}}
+        pw_val = pw or {"pain_count": 0, "win_count": 0, "ratio": None, "pain_domains": {}, "win_domains": {}}
         with patch("reflect._load_journal", return_value=entries), \
              patch("reflect._load_strategy", return_value=strat), \
-             patch("reflect.get_pain_win_summary", return_value=pw or pw_default):
+             patch("reflect.get_pain_win_summary", return_value=pw_val), \
+             patch("detectors.get_pain_win_summary", return_value=pw_val), \
+             patch("detectors._load_strategy", return_value=strat):
             return reflect.detect_patterns(entries)
 
     def test_skip_rate_exactly_at_threshold_not_triggered(self):
