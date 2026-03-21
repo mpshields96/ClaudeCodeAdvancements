@@ -180,19 +180,24 @@ class SessionPacer:
     ):
         self.context_state_path = context_state_path or _DEFAULT_CONTEXT_STATE
         self.wrap_state_path = wrap_state_path or _DEFAULT_WRAP_STATE
-        self.max_duration_minutes = max_duration_minutes
         self.wrap_buffer_minutes = wrap_buffer_minutes
 
         # Load or create session state
         sp = state_path or _DEFAULT_STATE_PATH
         if os.path.exists(sp):
             self.state = SessionState.load(sp)
+            # Only override loaded max_duration if caller explicitly specified
+            # (not using default). This preserves max_duration set by reset/start.
+            if max_duration_minutes != _DEFAULT_MAX_DURATION:
+                self.state.max_duration_minutes = max_duration_minutes
+            # Sync pacer's max_duration from persisted state
+            self.max_duration_minutes = self.state.max_duration_minutes
         else:
+            self.max_duration_minutes = max_duration_minutes
             self.state = SessionState(
                 state_path=sp,
                 max_duration_minutes=max_duration_minutes,
             )
-        self.state.max_duration_minutes = max_duration_minutes
 
     def _read_context_health(self) -> dict:
         if not os.path.exists(self.context_state_path):

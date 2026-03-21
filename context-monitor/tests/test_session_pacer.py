@@ -144,6 +144,17 @@ class TestSessionState(unittest.TestCase):
         loaded = SessionState.load(self.state_path)
         self.assertEqual(loaded.max_duration_minutes, 180)
 
+    def test_max_duration_survives_pacer_reload(self):
+        """Bug fix S94: Pacer constructor was overwriting loaded max_duration with default."""
+        # Save state with custom max_duration
+        state = SessionState(state_path=self.state_path, max_duration_minutes=60)
+        state.save()
+
+        # Load via Pacer without specifying max_duration (uses default 120)
+        pacer = SessionPacer(state_path=self.state_path)
+        # Should preserve the 60 from state file, not overwrite with 120
+        self.assertEqual(pacer.state.max_duration_minutes, 60)
+
 
 class TestSessionPacer(unittest.TestCase):
     """Test the main pacer logic."""
