@@ -24,6 +24,11 @@ SKIP_COMPLEXITY_EXTENSIONS = {".md", ".json", ".yaml", ".yml", ".txt", ".rst", "
 # Complexity keywords to count (regex word-boundary match)
 _COMPLEXITY_KEYWORDS = re.compile(r"\b(if|for|while|def|class|try|except|elif|with|lambda)\b")
 
+# CLI arg-parsing pattern: sequential if/elif on args[i] == "--flag"
+# These inflate complexity but aren't real logic complexity
+_CLI_ARG_PATTERN = re.compile(r'\bargs\[i\]\s*==\s*["\']--')
+_CLI_ELIF_PATTERN = re.compile(r'\belif\s+args\[i\]\s*==\s*["\']--')
+
 # Score thresholds and labels
 _SCORE_LABELS = {1: "Trivial", 2: "Simple", 3: "Moderate", 4: "Complex", 5: "Very Complex"}
 
@@ -100,6 +105,15 @@ class EffortScorer:
             complexity = 0
         else:
             complexity = len(_COMPLEXITY_KEYWORDS.findall(content))
+            # Discount CLI arg-parsing branches — they inflate complexity
+            # but aren't real logic complexity (just sequential flag checks)
+            cli_arg_matches = len(_CLI_ARG_PATTERN.findall(content))
+            cli_elif_matches = len(_CLI_ELIF_PATTERN.findall(content))
+            cli_discount = cli_arg_matches + cli_elif_matches
+            if cli_discount > 0:
+                # Each arg-parse branch contributes ~2 markers (if/elif + comparison)
+                # Discount those markers from the total
+                complexity = max(0, complexity - cli_discount)
 
         # Compute score
         loc_points = _band_value(loc, _LOC_BANDS)

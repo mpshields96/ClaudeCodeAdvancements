@@ -280,7 +280,87 @@ class TestEffortScorerHookOutput(unittest.TestCase):
         self.assertIsInstance(self.scorer.hook_output(payload), dict)
 
 
-class TestScoreContentTopLevel(unittest.TestCase):
+class TestCLIArgParsingDiscount(unittest.TestCase):
+    """Test CLI arg-parsing discount — if/elif on args[i] shouldn't inflate score."""
+
+    def setUp(self):
+        self.scorer = EffortScorer()
+
+    def test_cli_args_discounted(self):
+        """Sequential args[i] == '--flag' patterns should reduce complexity count."""
+        # Simulate a CLI arg parser with 10 flag checks
+        lines = ['def cli_main(args):']
+        lines.append('    i = 1')
+        lines.append('    while i < len(args):')
+        for j in range(10):
+            keyword = "if" if j == 0 else "elif"
+            lines.append(f'        {keyword} args[i] == "--flag{j}":')
+            lines.append(f'            val{j} = args[i + 1]')
+            lines.append(f'            i += 2')
+        content = "\n".join(lines)
+
+        result = self.scorer.score_content(content, "cli_tool.py")
+        # Without discount: 1 def + 1 while + 10 if/elif = 12+ markers
+        # With discount: the 10 args[i] checks should be discounted
+        # Expect complexity significantly lower than 12
+        self.assertLess(result.complexity, 12)
+
+    def test_non_cli_code_not_discounted(self):
+        """Regular if/elif chains that aren't arg parsing should NOT be discounted."""
+        content = "\n".join([
+            "def process(data):",
+            "    if data > 100:",
+            "        return 'high'",
+            "    elif data > 50:",
+            "        return 'medium'",
+            "    elif data > 10:",
+            "        return 'low'",
+        ])
+        result = self.scorer.score_content(content, "logic.py")
+        # No args[i] pattern, so no discount applied
+        self.assertGreaterEqual(result.complexity, 3)  # def + if + 2 elif
+
+    def test_mixed_cli_and_logic(self):
+        """File with both CLI parsing and real logic — only CLI part discounted."""
+        content = "\n".join([
+            "def real_logic():",
+            "    if x > 0:",
+            "        for i in range(10):",
+            "            pass",
+            "",
+            "def cli_main(args):",
+            "    i = 1",
+            "    while i < len(args):",
+            '        if args[i] == "--verbose":',
+            "            verbose = True",
+            "            i += 1",
+            '        elif args[i] == "--output":',
+            "            output = args[i + 1]",
+            "            i += 2",
+        ])
+        result = self.scorer.score_content(content, "tool.py")
+        # real_logic contributes: def + if + for = 3
+        # cli_main contributes: def + while + if + elif = 4, but 2 discounted
+        # Total raw = 7, discount = 2, net = 5
+        self.assertLessEqual(result.complexity, 6)
+
+    def test_session_notifier_improved(self):
+        """session_notifier.py should score lower with CLI discount."""
+        import os
+        notifier_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "context-monitor", "session_notifier.py"
+        )
+        if os.path.exists(notifier_path):
+            with open(notifier_path) as f:
+                content = f.read()
+            result = self.scorer.score_content(content, "session_notifier.py")
+            # With discount, complexity should be notably lower than the
+            # original 45 markers that caused a false positive
+            self.assertLess(result.complexity, 40)
+
+
+
     """Test the module-level score_content() convenience function."""
 
     def test_top_level_function_exists(self):
