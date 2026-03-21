@@ -78,6 +78,25 @@ Record the verdict in SESSION_STATE.md under the session summary.
 
 ---
 
+## Step 2.6 — Sync bridge file (if CCA_TO_POLYBOT.md was updated)
+
+If `CCA_TO_POLYBOT.md` was modified this session, sync it to the polymarket-bot project
+so the Kalshi chat gets fresh content at its next startup:
+
+```bash
+if git diff --name-only HEAD~5 | grep -q CCA_TO_POLYBOT; then
+    cp CCA_TO_POLYBOT.md /Users/matthewshields/Projects/polymarket-bot/CCA_TO_POLYBOT.md
+    echo "Bridge synced: CCA_TO_POLYBOT.md -> polymarket-bot/"
+else
+    echo "Bridge file unchanged — no sync needed"
+fi
+```
+
+This is safe (CCA_TO_POLYBOT.md is a CCA-authored file, not a polybot-owned file).
+Skip if the file wasn't touched.
+
+---
+
 ## Step 2.7 — APF checkpoint (hit_rate_tracker)
 
 ```bash
