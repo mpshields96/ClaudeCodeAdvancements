@@ -857,7 +857,7 @@ python3 priority_picker.py json          # Export for programmatic use
 | MT-14 | Rescan stale subs | COMPLETE (S84) — execute_rescan_stale + rescan-all CLI, 101 tests |
 | MT-15 | GitHub repo tester | COMPLETE — repo_tester.py, 51 tests |
 | MT-17 | Design/reports | COMPLETE (S96) — 6 phases done: reports, slides, dashboard, charts, website, daily_snapshot. 213 tests |
-| MT-20 | Senior Dev Agent | COMPLETE (S83) — 13 modules, ~890 tests, E2E 10/10 validated |
+| MT-20 | Senior Dev Agent | COMPLETE (S83, LLM validated S101) — 13 modules, ~890 tests, session_id.py wired (7 modules), E2E LLM confirmed |
 
 ### Active Priority Queue (S98 improved scoring)
 
