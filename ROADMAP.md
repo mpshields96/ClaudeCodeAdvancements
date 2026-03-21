@@ -20,7 +20,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 1 — Persistent Cross-Session Memory -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (MEM-1 through MEM-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit). 228 tests passing.
+**Status:** ALL TASKS COMPLETE (MEM-1 through MEM-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit + capture_hook tests). 340 tests passing.
 
 **Module:** `memory-system/`
 
@@ -57,7 +57,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 3 — Context Health Monitor -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (CTX-1 through CTX-7 + Session Pacer). 266 tests passing.
+**Status:** ALL TASKS COMPLETE (CTX-1 through CTX-7 + Session Pacer + Session Notifier). 286 tests passing.
 
 **Module:** `context-monitor/`
 
@@ -75,7 +75,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 4 — Multi-Agent Conflict Guard -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (AG-1 through AG-9 + Edit Guard + Bash Guard + MT-20 Senior Dev Agent: 13 modules). 864 tests passing.
+**Status:** ALL TASKS COMPLETE (AG-1 through AG-9 + Edit Guard + Bash Guard + MT-20 Senior Dev Agent: 13 modules). 893 tests passing.
 
 **Module:** `agent-guard/`
 
