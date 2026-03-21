@@ -41,6 +41,20 @@ You **should**:
 
 ---
 
+## Step 0 — Initialize session pacer
+
+Reset the session pacer at session start. This tracks elapsed time, tasks completed, and
+context health to decide when to wrap. Default 60 minutes; override with `--max-duration`.
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 context-monitor/session_pacer.py reset --max-duration 60
+```
+
+This creates `~/.cca-session-pace.json`. The pacer will be checked between every task.
+
+---
+
 ## Step 1 — Check for worker completions
 
 ```bash
@@ -124,10 +138,53 @@ If no worker messages, continue to next task.
 
 ---
 
+## Step 5.7 — Session pacer check (MANDATORY between every task)
+
+After completing each task and checking worker inbox, check the session pacer:
+
+```bash
+python3 context-monitor/session_pacer.py check --json
+```
+
+**Act on the result:**
+
+- `"action": "continue"` → Proceed to Step 6 (next task)
+- `"action": "wrap_soon"` → Finish current task if mid-way, then run `/cca-wrap-desktop`. Do NOT start a new task.
+- `"action": "wrap_now"` / `"should_wrap": true` → Stop immediately and run `/cca-wrap-desktop`
+
+Also record task completion in the pacer before checking:
+
+```bash
+python3 context-monitor/session_pacer.py complete "Task Name" --commit <hash>
+```
+
+And record task start when beginning a new task:
+
+```bash
+python3 context-monitor/session_pacer.py start "Task Name"
+```
+
+---
+
+## Step 5.8 — Health check (run tests between tasks)
+
+After every 2nd completed task, run the full test suite to catch regressions early:
+
+```bash
+for f in $(find . -name "test_*.py" -type f | sort); do
+  python3 "$f" 2>&1 | tail -1
+done
+```
+
+If any test fails: **fix it immediately** before starting the next task. Regressions
+that compound across multiple tasks are much harder to debug.
+
+---
+
 ## Step 6 — Chain to next task
 
 DO NOT STOP after one task. Pick the next and keep going.
-When context is getting large, run `/cca-wrap-desktop` to save state.
+The session pacer (Step 5.7) handles wrap timing — trust it over gut feel.
 
 ---
 
@@ -139,3 +196,11 @@ When context is getting large, run `/cca-wrap-desktop` to save state.
 - Commit after each component
 - If blocked, log the blocker to SESSION_STATE.md and move on
 - End every response with: `Advancement tip: [one actionable next step]`
+
+## Failure Recovery
+
+If a task fails mid-way (tests won't pass, unexpected error, can't resolve in ~5 min):
+1. **Log it**: Add a BLOCKED note to SESSION_STATE.md with the task name and failure reason
+2. **Skip it**: Move to the next priority task — do not stall the entire session on one failure
+3. **Don't cascade**: Run `git checkout -- .` on uncommitted broken changes if needed to restore clean state
+4. **Keep pacing**: The session pacer still ticks — a failed task shouldn't eat the whole time budget
