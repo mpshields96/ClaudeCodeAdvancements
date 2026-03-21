@@ -199,6 +199,20 @@ If any worker sessions are still running after desktop wrap, flag them:
 
 ---
 
+## Step 9.8 — Send session-end notification (MT-22)
+
+Send a push notification so Matthew knows the autonomous session has finished:
+
+```bash
+python3 context-monitor/session_notifier.py wrap --auto --session S[SESSION_NUMBER] --grade [GRADE]
+```
+
+This reads task count and elapsed time from the session pacer state file and pushes
+a notification to Matthew's iPhone via ntfy.sh. Requires `MOBILE_APPROVER_TOPIC`
+env var to be set. Fails silently if not configured — never blocks wrap.
+
+---
+
 ## Step 10 — Resume prompt
 
 Output AND write to `SESSION_RESUME.md`:
