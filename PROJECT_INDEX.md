@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-21 (Session 109)
+# Last updated: 2026-03-21 (Session 110)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -35,11 +35,11 @@
 | Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook, +cp/script/dd/tee evasion) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 1073 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 369 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15 + url_reader tests | 391 |
-| Self-Learning | `self-learning/` | MT-7,10,12,26,28 + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + reflect tests | 1484 |
+| Self-Learning | `self-learning/` | MT-7,10,12,26,28 + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + reflect tests | 1600 |
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 493 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~6443 tests (~160 suites). All must pass before any work.**
+**Total: ~6559 tests (~165 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -166,6 +166,10 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `cross_platform_signal.py` — MT-26 Phase 1: Cross-platform signal detector (Kalshi/Polymarket divergence, lag analysis, 30 tests)
 - `principle_transfer.py` — MT-28 Phase 3: Cross-domain principle transfer (affinity scoring, transfer candidates, 34 tests)
 - `dynamic_kelly.py` — MT-26 Tier 2: Dynamic Kelly with Bayesian updating (logit-space belief revision, time decay, fractional Kelly, 32 tests)
+- `macro_regime.py` — MT-26 Tier 2: Macro regime context (FOMC/CPI/NFP calendar, CALM/ELEVATED/HIGH_IMPACT, sizing modifier, 30 tests)
+- `fear_greed_filter.py` — MT-26 Tier 2: Fear & greed contrarian filter (5 zones, direction bias, sizing modifier, trend context, 38 tests)
+- `signal_pipeline.py` — MT-26 Pipeline Orchestrator: chains all 6 MT-26 modules, graceful degradation, compound modifiers, BET/SKIP decision (32 tests)
+- `outcome_feedback.py` — MT-28 Phase 4: Research outcomes feedback loop (bridges research_outcomes to principle_registry scoring, 16 tests)
 - `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 - `BATCH_ANALYSIS_S62.md` — Batch trace analysis of 10 recent sessions (avg 73.0, retry rate down to 40%)
 - `research/SENIOR_DEV_AGENT_RESEARCH.md` — S70: Nuclear-level research for Senior Dev Agent MT (11 verified papers, 5 tools, industry standards, MVP architecture)

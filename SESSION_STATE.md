@@ -3,26 +3,28 @@
 
 ---
 
-## Current State (as of Session 109 — 2026-03-21)
+## Current State (as of Session 110 — 2026-03-21)
 
-**Phase:** Session 109 COMPLETE. Solo CCA session. MT-26 Tier 1 ALL 3 ITEMS COMPLETE + Tier 2 item 1 COMPLETE. MT-28 Phase 3 COMPLETE.
+**Phase:** Session 110 IN PROGRESS. Solo CCA session (full 2h autonomy). MT-26 Tier 2 ALL 3 ITEMS COMPLETE + Pipeline Orchestrator COMPLETE. MT-28 Phase 4 COMPLETE. Session daemon design doc COMPLETE.
 
-**What was done this session (S109):**
-- **MT-26 Phase 1: Calibration Bias Exploiter** (`calibration_bias.py`): Binned calibration curves, FLB mispricing zone detection, bias-adjusted probability estimation. Based on Le (2026) arXiv:2602.19520. 43 new tests.
-- **MT-26 Phase 1: Cross-Platform Signal** (`cross_platform_signal.py`): Kalshi/Polymarket price divergence detector, lag analysis (which platform leads), actionable signal generation. Based on SSRN:5331995. 30 new tests.
-- **MT-26 Tier 2: Dynamic Kelly** (`dynamic_kelly.py`): Bayesian belief updating in logit space, time-decaying Kelly fraction (sqrt decay), configurable fractional Kelly multiplier. Based on arXiv:2602.09982. 32 new tests.
-- **MT-28 Phase 3 COMPLETE**: Cross-domain principle transfer (`principle_transfer.py`). Domain affinity scoring, transfer candidate identification, idempotent apply. 34 new tests. Wired into pattern_registry as 12th detector.
-- **Cleanup**: Added runtime state files to .gitignore.
-- **Tests**: 6443 passing (160 suites). Up from 6304/156. +139 new tests.
-- **Commits**: 8 this session. Grade: A.
+**What was done this session (S110):**
+- **MT-26 Tier 2: Macro Regime Context** (`macro_regime.py`): Economic event proximity filter. Built-in 2026 calendar (FOMC, CPI, NFP, jobless claims). CALM/ELEVATED/HIGH_IMPACT classification with sizing modifier. 30 tests.
+- **MT-26 Tier 2: Fear & Greed Filter** (`fear_greed_filter.py`): Sentiment-based contrarian filter. 5 zones, direction bias (UP/DOWN/NONE), sizing modifier (0.5-1.5), confidence scoring, trend context support. 38 tests.
+- **MT-26 Pipeline Orchestrator** (`signal_pipeline.py`): Chains all 6 MT-26 modules (regime_detector -> calibration_bias -> cross_platform_signal -> macro_regime -> fear_greed_filter -> dynamic_kelly). Stages skip gracefully when data missing. Modifiers compound multiplicatively. BET/SKIP decision. 32 tests.
+- **Session Daemon Design** (`SESSION_DAEMON_DESIGN.md`): Comprehensive design for MT-29 tmux-based session auto-manager. 5-phase implementation plan. Per Matthew directive: design only this session, multi-chat careful build.
+- **MT-28 Phase 4: Research Outcomes Feedback Loop** (`outcome_feedback.py`): Bridges research_outcomes.py with principle_registry.py. Profitable outcomes score SUCCESS on linked principles. CCA-side infrastructure ready. 16 tests.
+- **Tests**: 6559 passing (165 suites). Up from 6443/160. +116 new tests.
+- **Commits**: 5 this session (so far).
 
 **Next (prioritized):**
-1. **Session daemon**: Build session_daemon.py (tmux-based auto-spawn). All infrastructure ready, just needs the watcher. #1 force multiplier.
+1. **Session daemon Phase 2**: Build session_registry.py + tmux_manager.py (next session, per Matthew multi-chat directive).
 2. **AUTH FIX**: Matthew must run `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc` before next Kalshi chat launch.
 3. **Bridge sync**: Matthew should run `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md` (48.8K vs 9.2K stale).
-4. **MT-26 Tier 2 continued**: Macro regime context (FRED API integration), fear & greed contrarian filter.
-5. **MT-28 Phase 4**: Research outcomes feedback loop (wire research_outcomes.py into principle scoring).
-5. **3-chat system**: Resume ONLY when Matthew gives explicit clear signal. Correctness before speed.
+4. **MT-26 Tier 3**: Order flow intelligence, belief volatility surface (research phase needed first).
+5. **MT-28 Phase 5**: Predictive capability (principle scores + trajectory similarity for pre-session recommendations).
+6. **3-chat system**: Resume ONLY when Matthew gives explicit clear signal. Correctness before speed.
+
+**What was done this session (S109):**
 
 **What was done this session (S108):**
 - **Launch scripts fixed**: Replaced fragile AppleScript `keystroke "t"` + `front window` with `open -a Terminal` + temp script approach. Eliminates -1719 "Invalid index" errors. Added `bash launch_kalshi.sh both` convenience mode.
