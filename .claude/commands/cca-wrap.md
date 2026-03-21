@@ -22,6 +22,28 @@ Count total tests passing (sum all "Ran N tests" numbers).
 
 ---
 
+## Step 1.5 — Senior dev review on changed files
+
+Run a quick senior review on files changed this session. This catches issues before commit.
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+# Get list of changed .py files (not tests, not __pycache__)
+CHANGED=$(git diff --name-only HEAD~$(git log --oneline --since="4 hours ago" | wc -l | tr -d ' ') 2>/dev/null | grep '\.py$' | grep -v test_ | grep -v __pycache__ | head -5)
+if [ -n "$CHANGED" ]; then
+  for f in $CHANGED; do
+    echo "=== Senior Review: $f ==="
+    python3 agent-guard/senior_review.py "$f" 2>/dev/null || echo "  (review skipped)"
+  done
+fi
+```
+
+If any file gets a REJECT verdict: note it in the self-assessment losses.
+If all files pass or get CONDITIONAL: proceed normally.
+If no .py files changed: skip this step.
+
+---
+
 ## Step 2 — Self-assessment (be brutally honest)
 
 Review what was actually accomplished this session. Output:
