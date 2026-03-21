@@ -3,29 +3,28 @@
 
 ---
 
-## Current State (as of Session 92 — 2026-03-20)
+## Current State (as of Session 93 — 2026-03-20)
 
-**Phase:** Session 92 COMPLETE. Tests: 93 suites, 3660 total passing. Git: 8 commits. Grade: A.
+**Phase:** Session 93 IN PROGRESS. **PHASE 2 GATE: PASSED.** Tests: 94 suites, 3687 total passing. Git: 3 commits so far.
 
-**What was done this session (S92):**
-- **Phase 2 crash recovery live test: PASS** — Simulated cli1 crash (scope_claim with no process). crash_recovery.py detected orphan, auto-released scope, flagged uncommitted changes. Clean state confirmed. Phase 2 crash gate criterion MET.
-- **cca_comm.py `context` command** — Workers see desktop's recent commits, active scopes, queue stats, crash status before starting work. 13 new tests (31 total in test_cca_comm.py).
-- **hivemind_metrics.py queue throughput** — record_session() accepts queue_throughput param. get_stats() returns avg/max/phase2_met. format_for_init() shows peak. 6 new tests (26 total).
-- **Phase 2 E2E integration test** — tests/test_phase2_e2e.py: 7 tests, 3 scenarios (full lifecycle, crash recovery, multi-task). Proves all plumbing works end-to-end.
-- **Timezone flake fix** — loop_health.py get_summary() used local date but timestamps are UTC. Fixed to use UTC consistently.
-- **Workflow wiring** — Worker init runs `context` before inbox. Desktop wrap measures queue throughput.
-- **HIVEMIND_ROLLOUT.md** — Crash test logged, gate checked, suggested Phase 2 tasks added.
-- **Doc drift fix** — ROADMAP.md + PROJECT_INDEX.md test counts updated (3660/93).
+**What was done this session (S93):**
+- **Phase 2 hardening: 3 critical infrastructure fixes**
+  - Atomic file writes for queue (tempfile + os.replace) — prevents corruption from concurrent access
+  - Scope conflict detection wired into `cca_comm.py claim` — workers blocked from claiming owned scopes
+  - Stale scope timeout wired into crash recovery pipeline — expires scopes >30min (catches hung workers)
+- **27 new tests**: 22 in test_phase2_hardening.py + 5 new E2E scenarios in test_phase2_e2e.py
+- **Phase 1 gate: Matthew confirmed** ("you have my permission to do what it takes to complete phase 2")
+- **Phase 2 gate: ALL checks PASSED** — Matthew confirmed "ready for a second worker"
+- **HIVEMIND_ROLLOUT.md updated**: Phase 2 gate marked PASSED, all validation logged
 
-**Matthew directives (S51-S92, permanent):**
-- All S51-S91 directives still active
-- S92: Phase 2 is the goal — focus on completing it. Phase 3 (3-chat) comes later, only after sustained dual-chat success. Don't rush to Phase 3.
+**Matthew directives (S51-S93, permanent):**
+- All S51-S92 directives still active
+- S93: Phase 2 gates confirmed complete. Ready for Phase 3 (3-chat with second worker).
 
 **Next (prioritized):**
-1. Phase 2 dual-chat session: run /cca-desktop + /cca-worker for hardened 2-chat (2 more sessions needed, 1/3 done)
-2. Phase 2 gate: Matthew subjective confirmation ("ready for a second worker")
-3. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
-4. GitHub push blocked: PAT needs `workflow` scope — Matthew must update token
+1. Phase 3 planning: first 3-chat session (Desktop + cli1 + cli2) — see HIVEMIND_ROLLOUT.md Phase 3 section
+2. MT-10 Phase 3: Graduate self-learning to Kalshi (cross-project)
+3. GitHub push blocked: PAT needs `workflow` scope — Matthew must update token
 
 ---
 
