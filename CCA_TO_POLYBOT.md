@@ -968,3 +968,67 @@ This is not a suggestion. This is a direct instruction from the person whose mon
 5. **DEFAULT TO NOT BETTING.** If there is any ambiguity about whether a bet should be placed right now, the answer is don't.
 
 This directive is PERMANENT until Matthew explicitly lifts it. Every Kalshi chat session should read this section.
+
+---
+
+## NEW (S111): MT-28 Self-Learning v2 COMPLETE — Available for Kalshi Integration
+
+MT-28 (Self-Learning v2) graduated S111 with all 6 phases complete. These CCA modules
+are ready for Kalshi bot integration:
+
+### Available Modules (all in `ClaudeCodeAdvancements/self-learning/`)
+
+| Module | What It Does | Kalshi Use Case |
+|--------|-------------|-----------------|
+| `principle_registry.py` | Laplace-scored strategic principles by domain | Store trading principles (entry timing, sizing rules) with success tracking |
+| `pattern_registry.py` | Plugin registry for pattern detectors | Register trading-specific detectors (streak, regime shift, etc.) |
+| `detectors.py` | 12 built-in detectors (7 general, 5 trading) | Use trading detectors: consecutive losses, hour-of-day drift, strategy stagnation |
+| `principle_transfer.py` | Cross-domain principle transfer with affinity scoring | CCA operational lessons that apply to trading research |
+| `outcome_feedback.py` | Research outcomes → principle scoring | When CCA research makes money, boost that principle's score |
+| `predictive_recommender.py` | Pre-session recommendations from principle scores | Start each Kalshi session with "these strategies worked, these didn't" |
+| `sentinel_bridge.py` | Sentinel mutations → principle registry | Failed strategies auto-generate counter-principles |
+
+### How to Use Predictive Recommender from Kalshi Chat
+
+```python
+import sys
+sys.path.insert(0, "/Users/matthewshields/Projects/ClaudeCodeAdvancements/self-learning")
+from predictive_recommender import PredictiveRecommender
+
+rec = PredictiveRecommender()
+# Get trading-relevant recommendations
+recs = rec.recommend(["trading_execution", "trading_research"], current_session=120)
+for r in recs:
+    print(f"[{r.relevance:.0%}] {r.principle_text} — {r.reason}")
+
+# Get risk warnings
+risks = rec.get_risks(["trading_execution"])
+for r in risks:
+    print(f"[{r.risk_level}] {r.principle_text} — {r.warning}")
+
+# Get injectable text for session start
+text = rec.format_injection(["trading_execution"], current_session=120)
+```
+
+### How to Feed Outcomes Back
+
+```python
+from sentinel_bridge import SentinelBridge
+from improver import ImprovementProposal
+
+bridge = SentinelBridge()
+# After a strategy succeeds:
+proposal = ImprovementProposal(
+    pattern_type="strategy_success",
+    pattern_data={"strategy": "expiry_sniper", "pnl": 35},
+    source="kalshi_outcome",
+    proposed_fix="Continue using expiry sniper at current parameters",
+    expected_improvement="maintain profitability",
+    test_plan="track next 20 bets",
+    risk_level="LOW",
+    target_module="trading",
+)
+proposal.status = "validated"
+proposal.outcome = {"improved": True}
+report = bridge.process_cycle([proposal], current_session=120)
+```
