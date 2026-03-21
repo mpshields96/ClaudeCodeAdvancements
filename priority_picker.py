@@ -234,10 +234,10 @@ def get_known_tasks(current_session: int = 98) -> list[MasterTask]:
         MasterTask(
             mt_id=20, name="Senior dev agent",
             base_value=7, status=TaskStatus.ACTIVE,
-            last_touched_session=99, current_session=current_session,
-            phases_completed=5, phases_total=9,  # Phases 1-5 done, 6-9 defined in gap analysis
+            last_touched_session=81, current_session=current_session,
+            phases_completed=9, phases_total=9,  # Phases 1-9 all done (S70-S81). Remaining: session ID normalization, E2E validation
             aging_rate=1.0,
-            next_action="Phases 6-9: intent classifier, tradeoff analyzer, LLM integration, coherence v2.",
+            next_action="All phases done. Remaining: session ID normalization (Gap 3), E2E LLM validation with real API key.",
             tags=["quality", "senior-dev"],
         ),
         # === BLOCKED ===
