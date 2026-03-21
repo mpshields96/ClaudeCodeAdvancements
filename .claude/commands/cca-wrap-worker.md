@@ -72,10 +72,12 @@ Reported to desktop via cca_comm.py
 After all wrap steps are complete, close this Terminal tab to prevent stale sessions:
 
 ```bash
-osascript -e 'tell application "Terminal" to close (first window whose frontmost is true)'
+[[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && \
+  osascript -e 'tell application "Terminal" to close front window'
 ```
 
 This prevents duplicate chat windows from accumulating between sessions.
+The guard skips silently when running in Claude Code's built-in shell (where `TERM_PROGRAM` is not `Apple_Terminal` and no Terminal.app window exists to close).
 Only exception: if Matthew explicitly said to keep this CLI chat open.
 
 ---
