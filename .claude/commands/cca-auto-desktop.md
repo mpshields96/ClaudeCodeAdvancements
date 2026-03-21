@@ -31,100 +31,91 @@ You **own** these files — only you update them:
 You **can**:
 - Pick tasks from SESSION_STATE.md priorities
 - Execute tasks directly (code, tests, commits)
-- Check worker inbox for completed work: `python3 cca_comm.py inbox`
-- Assign tasks to CLI worker: `python3 cca_comm.py assign cli1 "task description"`
-- Incorporate worker summaries into your doc updates at wrap time
+- Delegate to CLI workers via `cca_comm.py`
+- Read bridge files from polymarket-bot (READ-ONLY)
 
-You **should**:
-- Check worker inbox at session start and before wrapping
-- Acknowledge worker completions in SESSION_STATE.md
+---
+
+## The Loop: COORD → WORK → COORD → WORK → ...
+
+The session follows a strict alternating pattern. Never mix orchestration with task execution.
+
+```
+┌─────────────────────────────────────────────────────┐
+│ STARTUP (once)                                       │
+│   Step 0: Init pacer                                 │
+│   Step 1: First coordination round                   │
+│   Step 2: Pick first task                            │
+│   Step 3: Run tests                                  │
+├─────────────────────────────────────────────────────┤
+│ LOOP (repeat until pacer says wrap)                  │
+│   Step 4: WORK — Execute one task (TDD, commit)      │
+│   Step 5: COORD ROUND — 2 min max, then back to work │
+│   → If pacer says continue: pick next task, goto 4   │
+│   → If pacer says wrap: goto WRAP                    │
+├─────────────────────────────────────────────────────┤
+│ WRAP                                                 │
+│   Run /cca-wrap-desktop                              │
+└─────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Step 0 — Initialize session pacer
-
-Reset the session pacer at session start. This tracks elapsed time, tasks completed, and
-context health to decide when to wrap. Default 60 minutes; override with `--max-duration`.
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
 python3 context-monitor/session_pacer.py reset --max-duration 60
 ```
 
-This creates `~/.cca-session-pace.json`. The pacer will be checked between every task.
-
 ---
 
-## Step 1 — Check for worker completions
+## Step 1 — First Coordination Round
+
+Run the coordination round (see below). On the first round, also check if a daily
+intelligence scan is needed:
 
 ```bash
-cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
-python3 cca_comm.py inbox
-```
-
-If workers reported completed work, note it for inclusion in docs.
-
----
-
-## Step 1.5 — Daily intelligence scan (once per session, if not done today)
-
-Check if a daily nuclear scan has been run today. If not, run one:
-
-```bash
-# Check last scan date
 python3 -c "import json; d=json.load(open('reddit-intelligence/scan_registry.json')); print(d.get('claudecode',{}).get('last_scan','never'))"
 ```
 
-If last scan is not today: run `/cca-nuclear-daily` (lightweight, ~5 minutes). This feeds
-the self-learning system with fresh signals daily and keeps FINDINGS_LOG current.
-
-If last scan IS today: skip — already done.
+If last scan is not today AND we're in off-peak hours: run `/cca-nuclear-daily`.
+If peak hours: skip the scan, save tokens.
 
 ---
 
 ## Step 2 — Determine next task (priority-driven)
 
-Run the automated priority picker first:
-
 ```bash
 python3 priority_picker.py recommend
 ```
 
-This outputs the top-ranked MT, quick wins, stagnating tasks, and unblockable blocked tasks.
-Use its recommendation as the primary signal.
+Use the top recommendation unless SESSION_STATE.md has a blocker or critical item.
 
-**Fallback cascade** (if priority_picker output is unclear):
-1. **SESSION_STATE.md priorities** — check for any critical/blocking items
-2. **Self-learning journal** — check for patterns suggesting specific work
-3. **Test coverage gaps** — fill test gaps for untested modules
-
-**Rules:**
+**Task selection rules:**
 - Work the TOP PICK from priority_picker unless SESSION_STATE has a blocker
-- For each MT worked, update `get_known_tasks()` in `priority_picker.py` after completing
-- **Balance**: At least 50% of session on actual MT code work, not process/docs
-- Stagnating tasks need a decision: work them, reduce base_value, or archive
-
-When assigning worker tasks:
-- Pick from the same priority queue but choose tasks suited for independent execution
-- Workers excel at: test writing, module building, coverage analysis, code review
-- Desktop excels at: doc updates, intelligence scans, bridge serving, process improvements
+- At least 50% of session on actual MT code work, not process/docs
+- When assigning worker tasks: pick independent, testable work (test suites, modules)
+- Desktop handles: doc updates, intelligence scans, bridge serving, process improvements
 
 ---
 
-## Step 3 — Run tests first
+## Step 3 — Run tests (session start only)
 
 ```bash
-cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
 for f in $(find . -name "test_*.py" -type f | sort); do
   python3 "$f" 2>&1 | tail -1
 done
 ```
 
-If any test fails: fix it before proceeding.
+If any test fails: fix it before proceeding. After session start, tests run every
+2nd coordination round (not every time).
 
 ---
 
-## Step 4 — Execute the task
+## Step 4 — Execute the task (THE BULK OF YOUR TIME)
+
+This is where 85%+ of your context should go. Do real work here.
 
 Use inline TDD:
 1. Write tests first
@@ -132,7 +123,6 @@ Use inline TDD:
 3. Write implementation
 4. Run tests — confirm they pass (green)
 5. Commit with descriptive message
-6. Move to next component
 
 Architecture rules:
 - One file = one job
@@ -140,90 +130,68 @@ Architecture rules:
 - Tests before promotion
 - Stay within `/Users/matthewshields/Projects/ClaudeCodeAdvancements/` ONLY
 
----
-
-## Step 5 — Update docs and commit
-
-After completing each task:
-1. Update `SESSION_STATE.md` with what was completed + new test counts
-2. Update `PROJECT_INDEX.md` if new files were created
-3. Commit with a clear message
+**DO NOT check inbox, worker status, or pacer during task execution.**
+Finish the task, commit, THEN do the coordination round.
 
 ---
 
-## Step 5.5 — Check worker inbox (between tasks)
+## Step 5 — Coordination Round (MAX 2 MINUTES)
 
-After completing each task, check if workers have reported back:
+This is the ONLY place orchestration happens. Run these checks in order.
+If the round exceeds 2 minutes of your context, STOP the round and go back to work.
 
+### 5a. Record task completion + check pacer
+```bash
+python3 context-monitor/session_pacer.py complete "Task Name" --commit <hash>
+python3 context-monitor/session_pacer.py check --json
+```
+- `"action": "continue"` → proceed with 5b-5f, then pick next task
+- `"action": "wrap_soon"` → do NOT start a new task, run `/cca-wrap-desktop`
+- `"action": "wrap_now"` → stop immediately, run `/cca-wrap-desktop`
+
+### 5b. Check worker inbox (15 seconds max)
 ```bash
 python3 cca_comm.py inbox
 ```
-
-If a worker reported completion:
-1. Acknowledge: `python3 cca_comm.py ack`
-2. Review their commit: `git log --oneline -3`
-3. Run tests to verify no regressions
-4. **Front-load 2-3 tasks** to keep worker busy (workers now multi-task):
+- If worker reported completion: note it, ack it, queue next task
+- If worker reported a problem: note it, don't try to fix it now
+- If no messages: move on
+- **Front-load tasks**: If worker is idle, queue 2-3 tasks immediately:
 ```bash
 python3 cca_comm.py task cli1 "primary: [next task]"
-python3 cca_comm.py say cli1 "also: [follow-up task if time permits]"
+python3 cca_comm.py say cli1 "also: [follow-up task]"
 ```
 
-**Worker utilization note:** Workers now loop on their inbox and do keep-busy analysis
-when idle. Front-loading multiple tasks prevents worker idle time. The worker will
-complete them in order and check inbox between each.
-
-If no worker messages, continue to next task.
-
----
-
-## Step 5.7 — Session pacer check (MANDATORY between every task)
-
-After completing each task and checking worker inbox, check the session pacer:
-
+### 5c. Worker health check (10 seconds max — skip if no worker launched)
 ```bash
-python3 context-monitor/session_pacer.py check --json
+python3 crash_recovery.py check 2>&1 | head -5
 ```
+- If worker crashed: note in SESSION_STATE.md, don't relaunch mid-session
+- If worker alive: good, move on
 
-**Act on the result:**
-
-- `"action": "continue"` → Proceed to Step 6 (next task)
-- `"action": "wrap_soon"` → Finish current task if mid-way, then run `/cca-wrap-desktop`. Do NOT start a new task.
-- `"action": "wrap_now"` / `"should_wrap": true` → Stop immediately and run `/cca-wrap-desktop`
-
-Also record task completion in the pacer before checking:
-
+### 5d. Bridge check (10 seconds max — only in 3-chat mode)
+Only if a Kalshi chat is running:
 ```bash
-python3 context-monitor/session_pacer.py complete "Task Name" --commit <hash>
+cat /Users/matthewshields/Projects/polymarket-bot/POLYBOT_TO_CCA.md 2>/dev/null | head -20
 ```
+- If new content from Kalshi: note it, process at wrap or between tasks
+- If no file or no new content: move on
 
-And record task start when beginning a new task:
-
-```bash
-python3 context-monitor/session_pacer.py start "Task Name"
-```
-
----
-
-## Step 5.8 — Health check (run tests between tasks)
-
-After every 2nd completed task, run the full test suite to catch regressions early:
-
+### 5e. Health check (every 2nd round only)
+Run full test suite every other coordination round:
 ```bash
 for f in $(find . -name "test_*.py" -type f | sort); do
   python3 "$f" 2>&1 | tail -1
 done
 ```
+If any test fails: fix it immediately before the next task.
 
-If any test fails: **fix it immediately** before starting the next task. Regressions
-that compound across multiple tasks are much harder to debug.
-
----
-
-## Step 6 — Chain to next task
-
-DO NOT STOP after one task. Pick the next and keep going.
-The session pacer (Step 5.7) handles wrap timing — trust it over gut feel.
+### 5f. Pick next task
+```bash
+python3 priority_picker.py recommend
+python3 context-monitor/session_pacer.py start "Next Task Name"
+```
+Then go back to Step 4.
 
 ---
 
@@ -233,6 +201,7 @@ The session pacer (Step 5.7) handles wrap timing — trust it over gut feel.
 - Chain tasks continuously
 - TDD is mandatory
 - Commit after each component
+- **Orchestration budget: MAX 15% of context** — if you're spending more, you're doing it wrong
 - If blocked, log the blocker to SESSION_STATE.md and move on
 - End every response with: `Advancement tip: [one actionable next step]`
 
@@ -243,3 +212,10 @@ If a task fails mid-way (tests won't pass, unexpected error, can't resolve in ~5
 2. **Skip it**: Move to the next priority task — do not stall the entire session on one failure
 3. **Don't cascade**: Run `git checkout -- .` on uncommitted broken changes if needed to restore clean state
 4. **Keep pacing**: The session pacer still ticks — a failed task shouldn't eat the whole time budget
+
+## Matthew Departure Protocol
+
+If Matthew says "leaving the house", "shutting down", or similar:
+1. **IMMEDIATELY** turn off the Kalshi bot if running (see KALSHI_3CHAT_GAMEPLAN.md emergency procedures)
+2. Then wrap the session cleanly
+3. This overrides everything — even mid-task execution

@@ -29,12 +29,13 @@ Run 3 simultaneous Claude Code chats:
 
 **Remaining gap**: CCA_TO_POLYBOT.md in polybot project needs manual update (copy from CCA). Matthew should run: `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md`
 
-### Phase 3: Safety Checklist for Kalshi Chat
+### Phase 3: Safety Checklist for Kalshi Chat — DONE (S107)
 
-- [ ] **Small bets only**: Confirm polymarket-bot CLAUDE.md or session command enforces small bet sizes.
-- [ ] **Know how to turn off**: Document the exact command/steps to stop the bot mid-session. Write it down.
-- [ ] **Rate limits**: 3 Opus chats on Max x5. During off-peak (2x promo through March 28), this should be fine. During peak (8AM-2PM ET weekdays), might hit limits. Plan: worker uses Sonnet? Or pause worker during peak?
-- [ ] **Emergency kill**: If Kalshi chat goes rogue, what's the fastest way to stop it? `Ctrl+C` in terminal? `kill <PID>`? Document.
+- [x] **Small bets only**: CONFIRMED. Bot is at Stage 1 ($5/bet max). Kelly sizing is invisible at Stage 1 — $5 cap always binds. Kill switch at 8 consecutive losses. Stage promotion gated on Kelly calibration, not just bankroll.
+- [x] **Know how to turn off**: Documented below in Emergency Procedures (already existed in gameplan). Quick: `Ctrl+C` in terminal tab. Nuclear: `pkill -f "python main.py"` for bot process, `killall claude` for all chats.
+- [x] **Rate limits**: 3 Opus chats on Max x5 during off-peak (2x promo through March 28) should be fine. During peak (8AM-2PM ET weekdays): pause worker or switch to Sonnet. Matthew directive S107: watch tokens during peak.
+- [x] **Emergency kill**: Full procedure documented. Bot kill: switch to Kalshi tab, `Ctrl+C`. If unresponsive: `Ctrl+\` (SIGQUIT). Nuclear: `ps aux | grep python` + `kill <PID>`. All chats: `killall claude`.
+- [x] **Matthew departure protocol**: If Matthew says "leaving" or "shutting down" — turn bot off IMMEDIATELY before anything else. Non-negotiable (S107 explicit).
 
 ### Phase 4: Dry Run (one session)
 
