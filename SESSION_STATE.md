@@ -3,22 +3,27 @@
 
 ---
 
-## Current State (as of Session 100 — 2026-03-21)
+## Current State (as of Session 101 — 2026-03-21)
 
-**Phase:** Session 100 COMPLETE. Desktop + cli1 worker. 9 commits. MT-12 Phase 3 done. MT-20 Gap 3 started.
+**Phase:** Session 101 COMPLETE. Desktop + cli1 worker. 11 commits (8 desktop, 3 worker). MT-20 Gap 3 DONE. MT-12 Phase 4 DONE. MT-20 E2E LLM validated.
 
-**What was done this session (S100):**
-- **phase3_coordinator.py — 3 bugs fixed**: concurrent save_state tmp race (PID-unique), load_state type blindness (isinstance check), dir/ vs dir/ scope conflict detection
-- **Priority picker housekeeping**: MT-22 GRADUATED (3/3 gate), MT-21 Phase 3 SHELVED (2-chat sufficient), MT-18/MT-13 ARCHIVED (stagnating 49-100 sessions), MT-20 updated to 9/9 phases done
-- **MT-12 Phase 3 COMPLETE**: paper_digest.py (35 tests, 260 LOC) — Kalshi/CCA paper digest generator with cross-chat bridge integration. Expanded prediction/statistics domain queries (+8 queries, +12 keywords). `send` CLI command for bridge delivery.
-- **MT-20 Gap 3 started**: session_id.py (32 tests, 100 LOC) — canonical session ID normalizer. normalize/validate/extract_number. Modules can adopt incrementally.
-- **Worker (cli1)**: 76 tests delivered (test_phase3_validator_extended 26, test_phase3_preflight_extended 24, test_crash_recovery_extended 26). 3 more tasks queued.
+**What was done this session (S101):**
+- **MT-20 Gap 3 COMPLETE**: session_id.py wired into 7 modules (slim_init, wrap_tracker, trial_tracker, loop_health, init_benchmarker, hivemind_session_validator, phase3_coordinator). All canonical "S{number}" format.
+- **session_timeline.py built** (36 tests, 292 LOC): Unified cross-module session aggregator using canonical session IDs. CLI: recent/session/stats/json.
+- **MT-12 Phase 4 COMPLETE**: Expanded paper scans across prediction, statistics, trading_systems, context_management. Papers: 25 -> 1242. 63 Kalshi-relevant (score>=55). Top 10 sent to bridge.
+- **MT-20 E2E LLM validation PASSED**: All senior dev LLM features confirmed with real API key — LLMClient.ask(), intent verification, trade-off analysis, multi-turn conversation.
+- **Senior Dev USAGE.md**: Quick-reference for all senior dev tools (passive hook, /senior-review, interactive chat, intent/trade-off).
+- **/cca-wrap Step 1.5**: Wired /senior-review into wrap checklist — runs on changed .py files before self-assessment.
+- **Derailed task #4 closed**: Session ID normalization (S68 item) fully resolved.
+- **Worker (cli1)**: 183 new tests (test_paper_digest_extended 47 + 2 bug fixes, test_dashboard_generator_extended 66, test_chart_generator_extended 70). Worker also found dashboard CSS bug (fixed) and identified low-density modules.
+
+**ANTHROPIC_API_KEY**: Now set in ~/.zshrc. ROTATE the key Matthew pasted in chat — it was exposed in plaintext.
 
 **Next (prioritized):**
-1. Wire session_id.py into key modules (slim_init, wrap_tracker, trial_tracker, loop_health)
-2. MT-12 Phase 4: Run expanded scans, validate prediction coverage improvement
-3. MT-20 remaining: E2E LLM validation with real API key
-4. Continue test coverage improvements for low-density modules
+1. Wire session_timeline.py into /cca-init (quick "last 5 sessions" display)
+2. MT-12 Phase 5: Implement one methodology from a top-scored paper
+3. Low test density modules: report_generator.py (2.2%), dashboard_generator.py (4.2%), journal.py (5.4%)
+4. Worker next tasks: test_coherence_checker_extended, test_session_pacer_extended, test_research_outcomes_extended
 
 **What was done this session (S98):**
 - **priority_picker.py built** — 55 tests. Improved MT priority formula: completion bonus, ROI estimate, stagnation penalty. CLI interface for autonomous task selection. Wired into /cca-auto-desktop Step 2.
