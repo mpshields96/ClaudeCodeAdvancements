@@ -69,7 +69,14 @@
 - Options: (A) Retry Maestro install when stable release drops, (B) Build our own using Electron/Tauri/SwiftUI, (C) Streamlit web-based approximation
 - MCP server approach for real-time session status (Maestro's pattern)
 
-**Status:** Blocked on macOS 15.6 beta SDK. Check for new releases each session.
+**Status:** MOSTLY SELF-RESOLVED (S96). Multiple tools now exist:
+- **Claude Control** (github.com/sverrirsig/claude-control) — ADAPT finding S96. Electron + Next.js. Auto-discovers Claude processes, shows full lifecycle (working->approval->PR/CI). Hook-based status detection + CPU/JSONL heuristics. Permission approval from dashboard. macOS only, free/open source.
+- **PATAPIM** (patapim.ai) — Terminal IDE with 9-session grid, pattern-matching status detection. Electron + xterm.js + node-pty.
+- **Nimbalyst** — Third-party Claude session manager.
+- **Our own infra**: cca_comm.py coordination, crash_recovery.py, chat_detector.py, session_pacer.py already provide the backend. What's missing is the VISUAL layer only.
+
+**Recommended next step:** Try Claude Control first (install + test). If it works, it solves MT-1 immediately. If not, our backend + their visual approach = build our own.
+Last updated: S96 (2026-03-21).
 
 ---
 
