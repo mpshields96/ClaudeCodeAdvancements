@@ -487,3 +487,13 @@
 - **First seen:** 2026-03-20 (Session 89 — found via deep testing)
 - **Last seen:** 2026-03-20
 - **Files:** cca_internal_queue.py, cca_hivemind.py, cross_chat_queue.py
+
+---
+
+### Worker front-loading: one task per message, not combined — Severity: 2 — Count: 1
+- **Anti-pattern:** Combining tasks in a single launch message ("TASK 1 (PRIMARY): do X. TASK 2 (SECONDARY): do Y"). Worker picks the easiest and wraps.
+- **Fix:** Send primary task via `launch_worker.sh "primary task only"`. Queue secondary tasks separately via `python3 cca_comm.py task cli1 "secondary task"` AFTER the worker starts. Worker loops on inbox after each task and finds secondary tasks.
+- **First seen:** 2026-03-21 (Session 96)
+- **Last seen:** 2026-03-21
+- **Files:** launch_worker.sh, cca_comm.py, /cca-auto-desktop
+
