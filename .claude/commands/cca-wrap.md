@@ -44,6 +44,23 @@ If no .py files changed: skip this step.
 
 ---
 
+## Step 1.7 — APF checkpoint (hit_rate_tracker)
+
+Run the APF (Actionable Post Frequency) checkpoint to track scan quality trends:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 self-learning/hit_rate_tracker.py report 2>/dev/null || echo "hit_rate_tracker not available"
+```
+
+Record the APF% and any frontier-level breakdown. Compare to last session's APF.
+If APF dropped: note the decline in losses (Step 2). If APF improved: note in wins.
+Target: 40% APF. Current baseline: 22.7% (S102).
+
+This step is fast (reads FINDINGS_LOG, no API calls) and feeds the session learning summary.
+
+---
+
 ## Step 2 — Self-assessment (be brutally honest)
 
 Review what was actually accomplished this session. Output:

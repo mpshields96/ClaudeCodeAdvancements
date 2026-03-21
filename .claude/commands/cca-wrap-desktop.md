@@ -78,6 +78,17 @@ Record the verdict in SESSION_STATE.md under the session summary.
 
 ---
 
+## Step 2.7 — APF checkpoint (hit_rate_tracker)
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 self-learning/hit_rate_tracker.py report 2>/dev/null || echo "hit_rate_tracker not available"
+```
+
+Record APF% in session summary. Target: 40%. Compare to last session.
+
+---
+
 ## Step 3 — Self-assessment (be brutally honest)
 
 ```
