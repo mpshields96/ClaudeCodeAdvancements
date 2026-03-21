@@ -198,8 +198,43 @@ Same as Phase 2, plus:
 | Net productivity vs 2-chat | >20% improvement | Tasks completed per session |
 | Coordination overhead | <20% combined | Time on coordination vs. work |
 
+### Phase 3 Infrastructure (built S99b, 2026-03-22)
+
+| Component | LOC | Tests | Purpose |
+|-----------|-----|-------|---------|
+| phase3_coordinator.py | ~250 | 34 | Worker registry, load-balanced task assignment, scope conflict detection, metrics, gate evaluation |
+| phase3_validator.py | ~180 | 17 | 3-chat session validation from queue messages, temporal scope conflict detection |
+| test_phase3_integration.py | ~200 | 10 | End-to-end: coordinator + validator + queue interop |
+| launch_phase3.sh | ~50 | -- | One-command launch for both cli1 + cli2 with pre-flight checks |
+
+**Total Phase 3 new: ~680 LOC, 61 tests.**
+
+### How to Run Phase 3
+
+```bash
+# From desktop coordinator:
+bash launch_phase3.sh                           # Launch both workers
+bash launch_phase3.sh "cli1 task" "cli2 task"   # Launch with initial tasks
+
+# Assign tasks dynamically:
+python3 cca_comm.py assign cli1 "task description"
+python3 cca_comm.py assign cli2 "task description"
+
+# Check status:
+python3 cca_comm.py status
+
+# Validate session (after both workers wrap):
+python3 -c "import phase3_validator as p3v; print(p3v.validate_3chat_session())"
+
+# Record session metrics:
+python3 -c "import phase3_coordinator as p3c; c=p3c.Coordinator(); c.record_session_metrics(100, ['cli1','cli2'], 5, 5, 0, 12.0)"
+
+# Check Phase 3 gate:
+python3 -c "import phase3_coordinator as p3c; c=p3c.Coordinator(); print(c.check_phase3_gate())"
+```
+
 ### Gate to Production
-- [ ] Phase 2 gate fully passed
+- [x] Phase 2 gate fully passed (S93, 2026-03-20)
 - [ ] 3+ sessions of 3-chat operation without failures
 - [ ] Measured productivity improvement over 2-chat
 - [ ] Matthew confirms: "this is how I want to work"
