@@ -1,14 +1,19 @@
 # /cca-init — ClaudeCodeAdvancements Session Startup
 
-Run the full session startup ritual. No user input needed — execute every step autonomously.
+Run the session startup ritual. No user input needed — execute every step autonomously.
 After init completes, if Matthew says nothing or runs /cca-auto, proceed to autonomous work immediately.
 
 ---
 
-## Slim Mode (fast startup — use when conditions are met)
+## DEFAULT: Slim Mode (approved S99b — 2 trials, 74% faster, 0 quality issues)
 
-If the init_cache is fresh AND this is a production session (not first session on a new machine),
-use slim_init.py for a ~1 minute startup instead of the full 10-minute ritual:
+Slim init is the DEFAULT startup path. It replaces the 10-minute full init with a ~1 minute
+automated startup. Approved by init_benchmarker.py verdict after 2 independent trials:
+- Trial 1 (S99a): 4 min to first commit, 7 commits, 96 tests, 0 quality issues
+- Trial 2 (S99b): 3 min to first commit, 8 commits, 74 tests, 0 quality issues
+
+**Backtrack path:** Full trial data in `.cca-init-benchmarks.jsonl`. Git history preserves
+the old full-init behavior. Run `python3 init_benchmarker.py compare` to review any time.
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
@@ -17,22 +22,19 @@ python3 slim_init.py
 
 This runs: SESSION_STATE parse + 10-suite smoke test + priority_picker recommend.
 
-**Use slim mode when:**
-- init_cache exists and is < 4 hours old
-- CLAUDE.md is already loaded by the harness
-- This is NOT the first session after a major change (new module, moved files, etc.)
+If slim_init.py outputs READY:
+1. Skip to Step 3.5 (reset pacer)
+2. Include the priority_picker output in the briefing
+3. Proceed to Step 5 (briefing)
 
-**Fall through to full mode when:**
-- slim_init.py reports BLOCKED (smoke failed)
-- No init_cache exists
-- Matthew explicitly requests full init
-
-If slim mode succeeds (READY), skip to Step 3.5 (reset pacer) then Step 5 (briefing).
-Include the priority_picker output in the briefing.
+**Fall through to full mode ONLY when:**
+- slim_init.py reports BLOCKED (smoke test failed)
+- Matthew explicitly requests full init (`/cca-init --full`)
+- First session after major structural changes (new module layout, moved files)
 
 ---
 
-## Step 1 — Orient (parallel reads)
+## FALLBACK: Full Mode — Step 1 — Orient (parallel reads)
 
 Read these three files in parallel:
 - `/Users/matthewshields/Projects/ClaudeCodeAdvancements/PROJECT_INDEX.md`
