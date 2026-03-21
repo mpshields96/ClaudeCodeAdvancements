@@ -3,26 +3,28 @@
 
 ---
 
-## Current State (as of Session 102 — 2026-03-21)
+## Current State (as of Session 103 — 2026-03-21)
 
-**Phase:** Session 102 COMPLETE. Desktop + cli1 worker. 11 commits (8 desktop, 3 worker). MT-12 ALL 6 PHASES COMPLETE. MT-20 graduated to COMPLETED in priority_picker.
+**Phase:** Session 103 COMPLETE. Desktop + cli1 worker. 6 commits (3 desktop, 3 worker). MAJOR VISION SESSION — 7 new MTs defined (23-29). MT-23 Phase 1 research complete.
 
-**What was done this session (S102):**
-- **session_timeline.py wired into /cca-init**: run_timeline() in slim_init.py, Step 2.8 in full mode. 7 new tests (27 total).
-- **priority_picker.py updated**: MT-20 COMPLETED (was stale ACTIVE), MT-12 phases 4->5->6. 55 tests pass.
-- **MT-12 Phase 5 COMPLETE**: confidence_calibrator.py from ConfTuner paper (Li et al. 2025). Verbal confidence extraction, PredictionLog, CalibrationMetrics (ECE), ConfidenceAdjuster. 29 tests.
-- **confidence_calibrator wired into senior_chat**: LLMClient.ask_with_confidence() method. 5 new tests (61 total).
-- **test_journal_extended.py**: 50 tests covering trading metrics, time stratification, nuclear metrics, pain/win, edge cases.
-- **MT-12 Phase 6 COMPLETE**: hit_rate_tracker.py (32 tests). APF=22.7% (target 40%). Frontier 2 (44.2%) and 4 (45.8%) exceed target.
-- **Cross-chat**: Responded to Kalshi Requests 4 (overnight research) and 8 (XRP SPRT analysis). Formal statistics: p=0.084, soft guard justified, hard guard NOT yet.
-- **Worker (cli1)**: 163 new tests (test_coherence_checker_extended 56, test_session_pacer_extended 49, test_research_outcomes_extended 58).
-- **MT-12 ALL 6 PHASES COMPLETE**. MT-20 graduated. Both MTs feature-complete.
+**What was done this session (S103):**
+- **S103_STRATEGIC_VISION.md**: Matthew's comprehensive master direction — 13 themes, 6 guiding principles, financial targets ($125→$250→passive income)
+- **7 new MTs defined (MT-23 through MT-29)**: Mobile v2 (Telegram), Visualization, Presentations (BLOCKED on samples), Financial Intel Engine, Nuclear v2, Self-Learning v2, Cowork+Pro Bridge
+- **MT-12 + MT-22 graduated** to COMPLETED table in MASTER_TASKS.md and priority_picker.py
+- **priority_picker.py updated**: All 7 new MTs registered, session counter to 103, 55 tests pass
+- **8 Reddit posts reviewed**: 1 BUILD (Telegram/Discord channels), 4 REFERENCE, 1 REFERENCE-PERSONAL, 2 SKIP. Findings logged to `findings/2026-03-21-S103-manual.md`
+- **hit_rate_tracker wired into /cca-wrap**: Step 1.7 (solo) and Step 2.7 (desktop) as APF checkpoint
+- **MT-23 Phase 1 COMPLETE**: Full research on official Claude Code Channels (Telegram/Discord). MT23_MOBILE_RESEARCH.md + INSTALL_TELEGRAM_CHANNELS.md (ADHD-friendly copy-paste steps)
+- **Worker (cli1)**: 211 new tests — test_improver_extended (86), test_reflect_extended (63), test_trace_analyzer_extended (62). All passing.
+- **Memory updated**: project_s103_strategic_vision.md added to MEMORY.md
 
 **Next (prioritized):**
-1. No active MTs — all completed or blocked. Consider: unblock MT-1 (Claude Control install), MT-5 (Remote Control), or define new MTs
-2. APF improvement: "Other" category at 9.7% drags overall — better frontier tagging or scan filtering
-3. Cross-chat Requests 5 (Kalshi leaderboard) and 9 (non-stationarity) still OPEN
-4. Low test density remaining: improver.py, reflect.py, trace_analyzer.py
+1. MT-23 Phase 2: Matthew creates Telegram bot via BotFather, then configure + test channels
+2. MT-26 (Financial Intel Engine): Research phase — scope trading/prediction market academic backbone
+3. MT-28 (Self-Learning v2): Research phase — cross-domain YoYo, Sentinel adaptive mutation
+4. Paper digest spam: "Bayesian Trading (score 85)" sent ~15 times — debounce hook
+5. Cross-chat Requests 5 (Kalshi leaderboard) and 9 (non-stationarity) still OPEN
+6. MT-25 BLOCKED: waiting on Matthew's presentation style samples
 
 **What was done this session (S98):**
 - **priority_picker.py built** — 55 tests. Improved MT priority formula: completion bonus, ROI estimate, stagnation penalty. CLI interface for autonomous task selection. Wired into /cca-auto-desktop Step 2.
