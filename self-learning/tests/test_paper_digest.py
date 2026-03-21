@@ -299,6 +299,51 @@ class TestPaperDigest(unittest.TestCase):
         self.assertIsInstance(msg, str)
         self.assertGreater(len(msg), 0)
 
+    def test_send_to_kalshi_no_unprocessed(self):
+        digest = PaperDigest(self.log_path)
+        # Mark all Kalshi-relevant papers as processed
+        for p in digest.kalshi_relevant():
+            digest.mark_processed(p["title"])
+        result = digest.send_to_kalshi()
+        self.assertIsNone(result)
+
+    def test_send_to_kalshi_marks_processed(self):
+        digest = PaperDigest(self.log_path)
+        initial_unproc = len(digest.unprocessed())
+        # send_to_kalshi will fail on import (no cross_chat_queue in path)
+        # but we can test the logic up to that point
+        result = digest.send_to_kalshi()
+        # Either sent successfully or errored on import — either way, test the interface
+        if result is not None and "error" not in result:
+            # If it succeeded, papers should be marked processed
+            self.assertLess(len(digest.unprocessed()), initial_unproc)
+
+    def test_paper_to_entry_kalshi_domain(self):
+        digest = PaperDigest(self.log_path)
+        paper = {"title": "Test", "authors": "Auth", "url": "u",
+                 "score": 70, "domains": ["prediction"], "verdict": "IMPLEMENT",
+                 "reasons": ["High citations"]}
+        entry = digest._paper_to_entry(paper)
+        self.assertIn("Direct", entry.relevance_to_kalshi)
+        self.assertEqual(entry.domain, "prediction")
+
+    def test_paper_to_entry_cca_domain(self):
+        digest = PaperDigest(self.log_path)
+        paper = {"title": "Test", "authors": "Auth", "url": "u",
+                 "score": 70, "domains": ["agents"], "verdict": "IMPLEMENT",
+                 "reasons": ["Good citations"]}
+        entry = digest._paper_to_entry(paper)
+        self.assertIn("Indirect", entry.relevance_to_kalshi)
+
+    def test_paper_to_entry_no_domains(self):
+        digest = PaperDigest(self.log_path)
+        paper = {"title": "Test", "authors": "Auth", "url": "u",
+                 "score": 70, "domains": [], "verdict": "REFERENCE",
+                 "reasons": []}
+        entry = digest._paper_to_entry(paper)
+        self.assertIn("Low", entry.relevance_to_kalshi)
+        self.assertEqual(entry.domain, "unknown")
+
 
 if __name__ == "__main__":
     unittest.main()

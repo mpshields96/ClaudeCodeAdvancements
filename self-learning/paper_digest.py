@@ -261,12 +261,52 @@ class PaperDigest:
         entries = [self._paper_to_entry(p) for p in papers]
         return format_digest_for_bridge(entries, max_entries=max_entries)
 
+    def send_to_kalshi(self, min_score: int = 50, max_entries: int = 5) -> dict | None:
+        """Send unprocessed Kalshi-relevant papers to Kalshi research chat via bridge.
+
+        Only sends papers that haven't been sent before. Marks them processed after.
+        Returns the sent message dict, or None if nothing to send.
+        """
+        # Filter to unprocessed + Kalshi-relevant
+        unproc_titles = {p.get("title") for p in self.unprocessed()}
+        kalshi_papers = [
+            p for p in self.kalshi_relevant(min_score)
+            if p.get("title") in unproc_titles
+        ]
+
+        if not kalshi_papers:
+            return None
+
+        entries = [self._paper_to_entry(p) for p in kalshi_papers[:max_entries]]
+        bridge_msg = format_digest_for_bridge(entries, max_entries=max_entries)
+
+        # Import cross_chat_queue (sibling directory)
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+        try:
+            from cross_chat_queue import send_message
+            result = send_message(
+                sender="cca",
+                target="kr",
+                subject=f"Paper digest: {len(entries)} Kalshi-relevant papers",
+                body=bridge_msg,
+                priority="medium",
+                category="research_finding",
+            )
+        except (ImportError, Exception) as e:
+            return {"error": str(e)}
+
+        # Mark sent papers as processed
+        for entry in entries:
+            self.mark_processed(entry.title)
+
+        return result
+
 
 # === CLI ===
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python3 paper_digest.py [kalshi|cca|bridge|unprocessed|stats]")
+        print("Usage: python3 paper_digest.py [kalshi|cca|bridge|send|unprocessed|stats]")
         sys.exit(1)
 
     cmd = sys.argv[1].lower()
@@ -294,6 +334,14 @@ def main():
         print(f"Kalshi-relevant (score>=50): {len(kalshi)}")
         print(f"CCA-relevant (score>=50): {len(cca)}")
         print(f"Unprocessed: {len(unproc)}")
+    elif cmd == "send":
+        result = digest.send_to_kalshi()
+        if result is None:
+            print("No unprocessed Kalshi-relevant papers to send.")
+        elif "error" in result:
+            print(f"Error sending: {result['error']}")
+        else:
+            print(f"Sent paper digest to Kalshi research chat: {result.get('subject', '')}")
     else:
         print(f"Unknown command: {cmd}")
         sys.exit(1)
