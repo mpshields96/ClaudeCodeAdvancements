@@ -5,19 +5,21 @@
 
 ## Current State (as of Session 109 — 2026-03-21)
 
-**Phase:** Session 109 IN PROGRESS. Solo CCA session. MT-26 Phase 1 Tier 1 items 2+3 COMPLETE. MT-28 Phase 3 COMPLETE.
+**Phase:** Session 109 COMPLETE. Solo CCA session. MT-26 Tier 1 ALL 3 ITEMS COMPLETE + Tier 2 item 1 COMPLETE. MT-28 Phase 3 COMPLETE.
 
 **What was done this session (S109):**
-- **MT-26 Phase 1: Calibration Bias Exploiter** (`calibration_bias.py`): Binned calibration curves, FLB mispricing zone detection, bias-adjusted probability estimation. Based on Le (2026) arXiv:2602.19520. 43 new tests. Ready for Kalshi bot integration.
+- **MT-26 Phase 1: Calibration Bias Exploiter** (`calibration_bias.py`): Binned calibration curves, FLB mispricing zone detection, bias-adjusted probability estimation. Based on Le (2026) arXiv:2602.19520. 43 new tests.
 - **MT-26 Phase 1: Cross-Platform Signal** (`cross_platform_signal.py`): Kalshi/Polymarket price divergence detector, lag analysis (which platform leads), actionable signal generation. Based on SSRN:5331995. 30 new tests.
-- **MT-28 Phase 3 COMPLETE**: Cross-domain principle transfer (`principle_transfer.py`). Domain affinity scoring, transfer candidate identification, idempotent apply. 34 new tests. Wired into pattern_registry as 12th detector — surfaces transfer opportunities during reflect.
-- **Cleanup**: Added .cca-init-benchmarks.jsonl, .cca-stagnation-log.jsonl, .cca-trial-results.jsonl to .gitignore.
-- **Tests**: 6411 passing (159 suites). Up from 6304/156.
+- **MT-26 Tier 2: Dynamic Kelly** (`dynamic_kelly.py`): Bayesian belief updating in logit space, time-decaying Kelly fraction (sqrt decay), configurable fractional Kelly multiplier. Based on arXiv:2602.09982. 32 new tests.
+- **MT-28 Phase 3 COMPLETE**: Cross-domain principle transfer (`principle_transfer.py`). Domain affinity scoring, transfer candidate identification, idempotent apply. 34 new tests. Wired into pattern_registry as 12th detector.
+- **Cleanup**: Added runtime state files to .gitignore.
+- **Tests**: 6443 passing (160 suites). Up from 6304/156. +139 new tests.
+- **Commits**: 7 this session.
 
 **Next (prioritized):**
 1. **AUTH FIX**: Matthew must run `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc` before next Kalshi chat launch.
 2. **Bridge sync**: Matthew should run `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md` (48.8K vs 9.2K stale).
-3. **MT-26 Tier 2**: Dynamic Kelly with Bayesian updating, macro regime context, fear & greed filter.
+3. **MT-26 Tier 2 continued**: Macro regime context (FRED API integration), fear & greed contrarian filter.
 4. **MT-28 Phase 4**: Research outcomes feedback loop (wire research_outcomes.py into principle scoring).
 5. **3-chat system**: Resume ONLY when Matthew gives explicit clear signal. Correctness before speed.
 
