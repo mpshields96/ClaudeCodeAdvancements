@@ -53,7 +53,25 @@ python3 cca_comm.py release "[your claimed scope]"
 
 ---
 
-## Step 5 — Output resume context
+## Step 5 — Self-learning journal
+
+Log a session event with your key observation (what worked, what didn't):
+
+```bash
+python3 self-learning/journal.py log session_outcome --session [N] --domain general \
+    --metrics '{"tasks_completed": N, "tests_added": N, "grade": "[A/B/C/D]"}' \
+    --learnings '["one key observation from this worker session"]'
+```
+
+Also send your best advancement tip to desktop:
+
+```bash
+python3 cca_comm.py say desktop "Advancement tip: [your best insight from this session]"
+```
+
+---
+
+## Step 6 — Output resume context (do NOT write files)
 
 Output (but do NOT write SESSION_RESUME.md — desktop owns that):
 
@@ -67,7 +85,7 @@ Reported to desktop via cca_comm.py
 
 ---
 
-## Step 6 — Late inbox check (catch messages sent while wrapping)
+## Step 7 — Late inbox check (catch messages sent while wrapping)
 
 Before closing, do a final inbox check. Desktop may have queued a new task while you were wrapping.
 
@@ -76,14 +94,14 @@ python3 cca_comm.py inbox
 ```
 
 - If a **new task** is assigned: Do NOT close. Go back to Step 2 of /cca-auto-worker and execute it.
-- If a **SHUTDOWN** message is present: Proceed to Step 7.
-- If **inbox is empty**: Proceed to Step 7.
+- If a **SHUTDOWN** message is present: Proceed to Step 8.
+- If **inbox is empty**: Proceed to Step 8.
 
 This step prevents task loss when desktop sends work after seeing the worker wrap start.
 
 ---
 
-## Step 7 — Close terminal tab
+## Step 8 — Close terminal tab
 
 After all wrap steps are complete and inbox is empty, close this Terminal tab to prevent stale sessions:
 
@@ -104,4 +122,5 @@ Only exception: if Matthew explicitly said to keep this CLI chat open.
 - Only commit files within your claimed scope
 - Report completion to desktop coordinator via cca_comm.py
 - If tests fail, fix them before committing
-- ALWAYS close your terminal tab on wrap (Step 7) unless explicitly told otherwise
+- ALWAYS close your terminal tab on wrap (Step 8) unless explicitly told otherwise
+- ALWAYS log to self-learning journal (Step 5) — this feeds cross-session improvement
