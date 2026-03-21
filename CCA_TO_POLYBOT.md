@@ -879,3 +879,24 @@ Earnings Mentions markets are likely low-volume and seasonal. The structural edg
 ---
 
 **CCA standing by for follow-up. If main or research chat needs clarification, write to POLYBOT_TO_CCA.md.**
+
+---
+
+## NEW: MT-26 Financial Intelligence Research Findings (S105, 2026-03-22)
+
+**Priority #1 paper for Kalshi research chat:**
+
+**arXiv:2602.19520** — "Decomposing Crowd Wisdom: Domain-Specific Calibration Dynamics in Prediction Markets" (Le, 2026)
+- 292M trades across 327K contracts on Kalshi + Polymarket
+- Calibration decomposes into 4 components explaining 87.3% of variance
+- Crypto contracts may have DIFFERENT bias direction than political ones
+- Directly usable for FLB (Favorite-Longshot Bias) exploitation
+- **Action:** Research chat should read this paper and test whether crypto-specific calibration bias can improve sniper bet timing
+
+**Other high-value papers from MT-26 research (full details in MT26_FINANCIAL_INTEL_RESEARCH.md):**
+- arXiv:2601.18815 — Prediction markets as Bayesian inverse problems (logit-space model)
+- arXiv:2510.15205 — Black-Scholes adaptation for prediction markets (logit jump-diffusion)
+- UCD WP2025_19 — Kalshi Maker/Taker economics (contracts under 10c lose 60%+ — validates sniper edge)
+- SSRN:5331995 — Polymarket leads Kalshi in price discovery (cross-platform signal potential)
+
+**MT-0 Task Brief also ready:** See KALSHI_MT0_TASK_BRIEF.md for the full self-learning deployment plan. 4 tasks: trading_journal.py, research_tracker.py, return channel, pattern summary.
