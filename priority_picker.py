@@ -354,12 +354,31 @@ class PriorityPicker:
                 lines.append(f"  - MT-{t.mt_id}: {t.completion_pct:.0f}% done — {t.next_action[:60]}")
             lines.append("")
 
-        # Stagnating tasks (need attention)
+        # Stagnating tasks (need attention) — with resolver recommendations
         stag = self.stagnating()
         if stag:
             lines.append("**STAGNATING (need work or archival decision):**")
-            for t in stag:
-                lines.append(f"  - MT-{t.mt_id}: {t.name} — untouched {t.sessions_since_touch} sessions")
+            try:
+                from stagnation_resolver import classify_stagnation, recommend_action
+                for t in stag:
+                    cls = classify_stagnation(
+                        t.sessions_since_touch,
+                        t.completion_pct,  # already 0-100
+                        int(t.base_value),
+                    )
+                    rec = recommend_action(
+                        f"MT-{t.mt_id}",
+                        cls["severity"],
+                        t.sessions_since_touch,
+                        t.completion_pct,  # already 0-100
+                    )
+                    lines.append(
+                        f"  - MT-{t.mt_id}: {t.name} — untouched {t.sessions_since_touch} sessions "
+                        f"[{cls['severity'].upper()}] -> {rec['action']}"
+                    )
+            except ImportError:
+                for t in stag:
+                    lines.append(f"  - MT-{t.mt_id}: {t.name} — untouched {t.sessions_since_touch} sessions")
             lines.append("")
 
         # Unblockable tasks
