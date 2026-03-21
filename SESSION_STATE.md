@@ -5,18 +5,20 @@
 
 ## Current State (as of Session 100 — 2026-03-21)
 
-**Phase:** Session 100 IN PROGRESS. Desktop + cli1 worker. Priority picker housekeeping + MT-12 Phase 3 complete.
+**Phase:** Session 100 COMPLETE. Desktop + cli1 worker. 9 commits. MT-12 Phase 3 done. MT-20 Gap 3 started.
 
 **What was done this session (S100):**
 - **phase3_coordinator.py — 3 bugs fixed**: concurrent save_state tmp race (PID-unique), load_state type blindness (isinstance check), dir/ vs dir/ scope conflict detection
 - **Priority picker housekeeping**: MT-22 GRADUATED (3/3 gate), MT-21 Phase 3 SHELVED (2-chat sufficient), MT-18/MT-13 ARCHIVED (stagnating 49-100 sessions), MT-20 updated to 9/9 phases done
 - **MT-12 Phase 3 COMPLETE**: paper_digest.py (35 tests, 260 LOC) — Kalshi/CCA paper digest generator with cross-chat bridge integration. Expanded prediction/statistics domain queries (+8 queries, +12 keywords). `send` CLI command for bridge delivery.
-- **Worker (cli1)**: test_phase3_validator_extended, test_phase3_preflight_extended, test_crash_recovery_extended queued
+- **MT-20 Gap 3 started**: session_id.py (32 tests, 100 LOC) — canonical session ID normalizer. normalize/validate/extract_number. Modules can adopt incrementally.
+- **Worker (cli1)**: 76 tests delivered (test_phase3_validator_extended 26, test_phase3_preflight_extended 24, test_crash_recovery_extended 26). 3 more tasks queued.
 
 **Next (prioritized):**
-1. MT-12 Phase 4: Run expanded scans, validate prediction coverage improvement
-2. MT-20 remaining: Session ID normalization (Gap 3), E2E LLM validation
-3. Continue test coverage improvements for low-density modules
+1. Wire session_id.py into key modules (slim_init, wrap_tracker, trial_tracker, loop_health)
+2. MT-12 Phase 4: Run expanded scans, validate prediction coverage improvement
+3. MT-20 remaining: E2E LLM validation with real API key
+4. Continue test coverage improvements for low-density modules
 
 **What was done this session (S98):**
 - **priority_picker.py built** — 55 tests. Improved MT priority formula: completion bonus, ROI estimate, stagnation penalty. CLI interface for autonomous task selection. Wired into /cca-auto-desktop Step 2.
