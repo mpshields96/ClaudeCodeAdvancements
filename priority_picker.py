@@ -225,10 +225,10 @@ def get_known_tasks(current_session: int = 98) -> list[MasterTask]:
         MasterTask(
             mt_id=12, name="Academic research papers",
             base_value=6, status=TaskStatus.ACTIVE,
-            last_touched_session=96, current_session=current_session,
-            phases_completed=2, phases_total=6,
+            last_touched_session=100, current_session=current_session,
+            phases_completed=3, phases_total=6,
             aging_rate=1.0,
-            next_action="Phase 3: Ran scans S98. Agents/context strong, prediction weak.",
+            next_action="Phase 4: Run expanded scans, validate prediction coverage improvement.",
             tags=["research", "kalshi"],
         ),
         MasterTask(
