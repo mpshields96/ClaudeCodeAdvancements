@@ -51,6 +51,8 @@ fi
 
 # Step 2: Open a new Terminal tab and start the worker
 # Uses AppleScript to open a tab in Terminal.app with the right env
+# CRITICAL: unset ANTHROPIC_API_KEY so claude uses Max subscription (OAuth),
+# not API credits. S105 terminal chats burned $5 API credits because of this.
 osascript <<APPLESCRIPT
 tell application "Terminal"
     activate
@@ -60,7 +62,7 @@ tell application "Terminal"
     end tell
     delay 0.5
     -- Run the worker setup command in the new tab
-    do script "export CCA_CHAT_ID=$WORKER_ID && cd $CCA_DIR && echo '=== CCA Worker ($WORKER_ID) ===' && claude /cca-worker" in front window
+    do script "unset ANTHROPIC_API_KEY && export CCA_CHAT_ID=$WORKER_ID && cd $CCA_DIR && echo '=== CCA Worker ($WORKER_ID) ===' && claude /cca-worker" in front window
 end tell
 APPLESCRIPT
 

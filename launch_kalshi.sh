@@ -45,6 +45,8 @@ if [ ! -d "$KALSHI_DIR" ]; then
 fi
 
 # Open a new Terminal tab and start the Kalshi chat
+# CRITICAL: unset ANTHROPIC_API_KEY so claude uses Max subscription (OAuth),
+# not API credits. S105 terminal chats burned $5 API credits because of this.
 osascript <<APPLESCRIPT
 tell application "Terminal"
     activate
@@ -52,7 +54,7 @@ tell application "Terminal"
         keystroke "t" using command down
     end tell
     delay 0.5
-    do script "cd $KALSHI_DIR && echo '=== Kalshi Bot ($MODE) ===' && claude $COMMAND" in front window
+    do script "unset ANTHROPIC_API_KEY && cd $KALSHI_DIR && echo '=== Kalshi Bot ($MODE) ===' && claude $COMMAND" in front window
 end tell
 APPLESCRIPT
 
