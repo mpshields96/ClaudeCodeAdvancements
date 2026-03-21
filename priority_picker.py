@@ -176,7 +176,7 @@ class MasterTask:
         }
 
 
-def get_known_tasks(current_session: int = 105) -> list[MasterTask]:
+def get_known_tasks(current_session: int = 110) -> list[MasterTask]:
     """Return the current MT registry.
 
     This is the source of truth for task metadata that can't be reliably
@@ -274,10 +274,10 @@ def get_known_tasks(current_session: int = 105) -> list[MasterTask]:
         MasterTask(
             mt_id=26, name="Financial Intelligence Engine",
             base_value=9, status=TaskStatus.ACTIVE,
-            last_touched_session=103, current_session=current_session,
-            phases_completed=0, phases_total=6,
+            last_touched_session=110, current_session=current_session,
+            phases_completed=4, phases_total=6,  # Tier 1 (3) + Tier 2 (3) + pipeline. Tier 3 remaining.
             aging_rate=1.0,
-            next_action="Research: scope trading/prediction market academic backbone.",
+            next_action="Tier 3: Order flow intelligence, belief volatility surface (research needed).",
             tags=["kalshi", "trading", "research"],
         ),
         MasterTask(
@@ -292,10 +292,10 @@ def get_known_tasks(current_session: int = 105) -> list[MasterTask]:
         MasterTask(
             mt_id=28, name="Self-Learning v2 (Multi-Domain)",
             base_value=10, status=TaskStatus.ACTIVE,
-            last_touched_session=105, current_session=current_session,
-            phases_completed=1, phases_total=6,
+            last_touched_session=110, current_session=current_session,
+            phases_completed=4, phases_total=6,  # P1 registry, P2 plugin, P3 transfer, P4 feedback loop
             aging_rate=1.0,
-            next_action="Phase 2: Pattern plugin registry — refactor reflect.py detectors to extensible registry.",
+            next_action="Phase 5: Predictive capability (principle scores + trajectory similarity).",
             tags=["self-learning", "kalshi"],
         ),
         MasterTask(
@@ -306,6 +306,15 @@ def get_known_tasks(current_session: int = 105) -> list[MasterTask]:
             aging_rate=0.5,
             next_action="Research: evaluate Cowork, bridge Pro↔Code.",
             tags=["bridge", "hivemind", "cowork"],
+        ),
+        MasterTask(
+            mt_id=30, name="Session Daemon (Tmux Auto-Spawn)",
+            base_value=8, status=TaskStatus.ACTIVE,
+            last_touched_session=110, current_session=current_session,
+            phases_completed=1, phases_total=5,  # P1 design done S110
+            aging_rate=1.0,
+            next_action="Phase 2: session_registry.py + tmux_manager.py (building blocks).",
+            tags=["automation", "hivemind", "tmux"],
         ),
         MasterTask(
             mt_id=20, name="Senior dev agent",

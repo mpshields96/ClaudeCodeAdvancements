@@ -992,6 +992,36 @@ developer colleague.
 
 ---
 
+## MT-30: Session Daemon (Tmux-Based Auto-Spawn)
+
+**Source:** S109-110 — identified as #1 force multiplier
+**What it does:**
+- Tmux-based session lifecycle manager
+- Watches for session endings, auto-spawns replacements
+- Detects crashes, cleans up orphaned scopes
+- Respects peak hours (fewer chats during peak)
+- One command to start/stop all sessions
+
+**Technical path (design doc complete — SESSION_DAEMON_DESIGN.md):**
+1. DESIGN COMPLETE (S110): Full architecture, 5-phase plan
+2. Phase 2: session_registry.py + tmux_manager.py (building blocks)
+3. Phase 3: session_daemon.py (poll loop, health checking, spawn/restart)
+4. Phase 4: Integration testing (dry run with 2 sessions)
+5. Phase 5: Hardening (max restart limits, PID file, log rotation)
+
+**Key constraint:** Matthew explicit S110: "NOT something to build within 1 chat. Spread over several chats."
+
+**Reuses existing infrastructure:**
+- chat_detector.py (process health)
+- crash_recovery.py (orphaned scope cleanup)
+- peak_hours.py (rate limit awareness)
+- cca_comm.py (queue messages)
+- session_pacer.py (wrap timing)
+
+**Status:** Phase 1 COMPLETE (design doc). Phase 2: next session.
+
+---
+
 ## Priority Scoring System (Improved — S98)
 
 **Automated:** `python3 priority_picker.py recommend` — runs the improved formula and returns actionable picks.
