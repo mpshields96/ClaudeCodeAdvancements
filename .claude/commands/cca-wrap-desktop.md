@@ -5,7 +5,7 @@ Fully autonomous — no confirmation needed at any step.
 
 ---
 
-## Step 1 — Run all tests
+## Step 1 — Run all tests + write cache
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
@@ -16,6 +16,12 @@ done
 ```
 
 All must pass before updating docs. Count total tests.
+
+After all tests pass, write the cache for next session's fast init:
+
+```bash
+python3 init_cache.py write --session S98
+```
 
 ---
 

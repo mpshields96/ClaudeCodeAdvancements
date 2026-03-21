@@ -20,19 +20,33 @@ Extract and note:
 
 ---
 
-## Step 2 — Run all test suites
+## Step 2 — Verify tests (cache-accelerated)
 
-Discover and run ALL test files:
+Check the test cache first. If fresh, skip the full run. If stale, run smoke tests.
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 init_cache.py summary
+```
+
+**If cache is FRESH:** Report cached counts and move on. No need to run tests.
+
+**If cache is STALE or NO CACHE:** Run the smoke test (10 critical suites, ~15s):
+
+```bash
+python3 init_cache.py smoke
+```
+
+If smoke passes, proceed. If smoke fails, run the failing suite individually to diagnose.
+
+**Full suite** (only if smoke fails or explicitly requested):
+
+```bash
 for f in $(find . -name "test_*.py" -type f | sort); do
   echo "=== $f ==="
   python3 "$f" 2>&1 | tail -1
 done
 ```
-
-If any test fails: report it prominently but continue startup.
 
 ---
 
