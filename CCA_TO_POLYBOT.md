@@ -903,6 +903,48 @@ Earnings Mentions markets are likely low-volume and seasonal. The structural edg
 
 ---
 
+## MT-26 SIGNAL PIPELINE — READY FOR BOT INTEGRATION (S110, 2026-03-21)
+
+CCA has built a complete 6-stage signal intelligence pipeline. All modules are tested, committed, and ready for the Kalshi bot to import. The pipeline is in `self-learning/` within the CCA project.
+
+**Pipeline stages (in order):**
+
+| Stage | Module | What it does | Bot integration |
+|-------|--------|-------------|-----------------|
+| 1 | `regime_detector.py` | TRENDING/MEAN_REVERTING/CHAOTIC from price data | Feed 15+ 1-min candles |
+| 2 | `calibration_bias.py` | FLB mispricing zone detection | Pre-load historical contract outcomes |
+| 3 | `cross_platform_signal.py` | Kalshi/Polymarket divergence | Feed both platform prices |
+| 4 | `macro_regime.py` | FOMC/CPI/NFP proximity filter | Uses built-in 2026 calendar |
+| 5 | `fear_greed_filter.py` | Sentiment contrarian filter | Feed Alternative.me F&G value |
+| 6 | `dynamic_kelly.py` | Bayesian Kelly with time decay | true_prob + market_price |
+
+**Usage from bot:**
+```python
+from signal_pipeline import SignalPipeline, PipelineInput
+
+pipeline = SignalPipeline(bankroll_cents=10000, kelly_multiplier=0.5)
+decision = pipeline.run(PipelineInput(
+    true_prob=0.65,
+    market_price=0.50,
+    price_history=[...],       # optional: 15+ close prices
+    fear_greed_value=25,       # optional: F&G index 0-100
+    polymarket_price=0.60,     # optional: for cross-platform
+    contract_id="BTC-UP-100K", # optional: for cross-platform
+    now=datetime.now(),        # optional: for macro regime
+))
+# decision.action = "BET" or "SKIP"
+# decision.bet_amount_cents = 450
+# decision.sizing_modifier = 0.85  (compound of all stage modifiers)
+```
+
+Each stage can be disabled independently. Missing data = stage skipped (modifier=1.0). All stdlib, zero external deps.
+
+**Total: 6 modules, 197 tests, all passing.**
+
+**Feedback loop ready:** When the bot records outcomes (profitable/unprofitable) for research deliveries, CCA's `outcome_feedback.py` will update principle scores, closing the research-to-profit loop. Bot needs to report outcomes via the bridge.
+
+---
+
 ## SAFETY DIRECTIVE — LATE NIGHT BOT ACTIVITY (S105, Matthew VERBATIM)
 
 **READ THIS BEFORE DOING ANYTHING WITH THE BOT.**
