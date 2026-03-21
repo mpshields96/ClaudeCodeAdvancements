@@ -760,7 +760,7 @@ developer colleague.
 - `aging_rate`: 1.0 per chat for partial tasks (Phase 1 done, Phase 2 waiting). 0.5 per chat for not-started tasks.
 - Cap: Priority cannot exceed 2x base_value. Prevents low-value tasks from permanently outranking high-value ones.
 - Update `last_touched_session` whenever ANY work is done on the MT (even research or planning).
-- Current session: 82.
+- Current session: 94.
 
 ### Completed (no scoring needed)
 
@@ -772,31 +772,31 @@ developer colleague.
 | MT-4 | Design vocabulary | COMPLETE |
 | MT-6 | Nuclear at will | COMPLETE — profiles.py, 43 tests |
 | MT-7 | Trace analysis | COMPLETE — trace_analyzer.py, 50 tests |
+| MT-8 | iPhone remote control | EXTERNALLY RESOLVED (S94) — native Remote Control + ServerCC/Moshi apps |
+| MT-11 | GitHub intelligence | COMPLETE (S83) — github_scanner.py + trending, 62 tests |
+| MT-14 | Rescan stale subs | COMPLETE (S84) — execute_rescan_stale + rescan-all CLI, 101 tests |
 | MT-15 | GitHub repo tester | COMPLETE — repo_tester.py, 51 tests |
+| MT-20 | Senior Dev Agent | COMPLETE (S83) — 13 modules, ~890 tests, E2E 10/10 validated |
 
 ### Active Priority Queue (sorted by priority score, descending)
 
 | Rank | MT | Task | Base | Last Touched | Chats Ago | Rate | Aging | **Score** | Next Phase |
 |------|----|------|------|-------------|-----------|------|-------|-----------|------------|
-| 1 | MT-10 | YoYo self-learning | 9 | Session 44 | 38 | 1.0 | cap | **18.0** | Phase 3B: graduate to Kalshi bot (cross-project). Cap: 18.0 |
-| 2 | MT-9 | Autonomous scanning | 8 | Session 52 | 30 | 1.0 | cap | **16.0** | Production autonomous runs. Cap: 16.0 |
-| 3 | MT-11 | GitHub intelligence | 7 | Session 83 | 0 | -- | -- | **DONE** | Phase 3 COMPLETE: trending wired into autonomous pipeline (S83). |
-| 4 | MT-14 | Rescan stale subs | 6 | Session 84 | 0 | -- | -- | **DONE** | Phase 3 COMPLETE: execute_rescan_stale + rescan-all CLI + daily --include-rescan (S84). |
-| 5 | MT-12 | Academic papers | 6 | Session 52 | 30 | 1.0 | cap | **12.0** | Phase 3: domain expansion. Cap: 12.0 |
-| 6 | MT-8 | iPhone remote control | 5 | Session 44 | 38 | 0.5 | cap | **10.0** | SOLVED by native Remote Control + ServerCC/Moshi apps. Cap: 10.0. Consider closing. |
-| 7 | MT-17 | Design/reports | 5 | Session 71 | 11 | 1.0 | cap | **10.0** | Phase 5 DONE (website_generator). Phase 6: daily snapshots. Cap: 10.0 |
-| 8 | MT-21 | Hivemind coordination | 8 | Session 81 | 1 | 1.0 | 1.0 | **9.0** | Phase 1 validation: prove 2-chat (needs Matthew). |
-| 9 | MT-20 | Senior Dev Agent | 8 | Session 83 | 0 | -- | -- | **DONE** | COMPLETE: 13 modules, ~890 tests, E2E 10/10 validated (S83). |
-| 10 | MT-18 | Academic writing | 4 | NEVER | 82+ | 0.5 | cap | **8.0** | Research phase. Cap: 8.0 |
-| 11 | MT-13 | iOS/macOS app development | 4 | Session 49 | 33 | 0.5 | cap | **8.0** | Phase 3: first real app. Cap: 8.0 |
+| 1 | MT-9 | Autonomous scanning | 8 | Session 52 | 42 | 1.0 | cap | **16.0** | Phase 3: supervised trial of production autonomous runs. Cap: 16.0 |
+| 2 | MT-12 | Academic papers | 6 | Session 52 | 42 | 1.0 | cap | **12.0** | Phase 3: domain expansion (assigned to worker S94). Cap: 12.0 |
+| 3 | MT-10 | YoYo self-learning | 9 | Session 94 | 0 | 1.0 | 0 | **9.0** | Phase 3B resurfacer_hook built (S94). Phase 3A: graduate to Kalshi (cross-project). |
+| 4 | MT-21 | Hivemind coordination | 8 | Session 93 | 1 | 1.0 | 1.0 | **9.0** | Phase 2 PASSED. Phase 3 (3-chat) deferred by Matthew. |
+| 5 | MT-17 | Design/reports | 5 | Session 89 | 5 | 1.0 | 5.0 | **10.0** | Phase 6 daily_snapshot.py built (S89, 50 tests). Phase 5 website_generator done. |
+| 6 | MT-18 | Academic writing | 4 | NEVER | 94+ | 0.5 | cap | **8.0** | Research phase. Cap: 8.0 |
+| 7 | MT-13 | iOS/macOS app development | 4 | Session 49 | 45 | 0.5 | cap | **8.0** | Phase 3: first real app. Cap: 8.0 |
 
 ### Blocked / External (no scoring — cannot be worked)
 
-| MT | Task | Reason | Self-Resolution Check (Session 42) |
+| MT | Task | Reason | Self-Resolution Check (Session 94) |
 |----|------|--------|--------------------------------------|
-| MT-1 | Maestro visual grid | Was blocked on macOS SDK | MOSTLY SELF-RESOLVED: claude-code-ui, claude-code-monitor, claude-code-dashboard, Claudia GUI, Nimbalyst all exist now. Evaluate before building. |
-| MT-5 | Claude Pro bridge | Was needs-research | PARTIALLY SELF-RESOLVED: claude_code_bridge (multi-AI collaboration), Remote Control (cross-device), Chrome extension (browser context). Evaluate existing tools. |
-| MT-16 | Detachable chat tabs | Anthropic feature request | STILL OPEN: Feature requests filed (GitHub #20100, #29136). VS Code has some multi-panel. Third-party Nimbalyst provides workaround. |
+| MT-1 | Maestro visual grid | Was blocked on macOS SDK | MOSTLY SELF-RESOLVED: claude-code-ui, claude-code-monitor, Claudia GUI, Nimbalyst all exist now. Evaluate before building. |
+| MT-5 | Claude Pro bridge | Was needs-research | PARTIALLY SELF-RESOLVED: Remote Control (cross-device), Chrome extension (browser context). Evaluate existing tools. |
+| MT-16 | Detachable chat tabs | Anthropic feature request | STILL OPEN: Feature requests filed (GitHub #20100, #29136). Third-party Nimbalyst provides workaround. |
 | MT-19 | Local LLM fine-tuning | Long-term exploration | STILL OPEN: Needs GPU resources, not self-resolving. |
 
 ### Scoring Rules
