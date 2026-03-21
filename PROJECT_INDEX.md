@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 3636+ tests (92 suites). All must pass before any work.**
+**Total: 3660+ tests (93 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -167,9 +167,10 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | `tests/test_cca_internal_queue.py` | Desktop/Terminal coordination queue (41 tests) |
 | `tests/test_hivemind_deep.py` | Deep hivemind coverage: 117 tests across 31 classes (S89) |
 | `tests/test_hivemind_session_validator.py` | Desktop-side hivemind cycle validation (17 tests, S90) |
-| `tests/test_hivemind_metrics.py` | Phase 1 metrics persistence (20 tests, S90, cli1 worker) |
+| `tests/test_hivemind_metrics.py` | Phase 1+2 metrics persistence + queue throughput (26 tests, S90/S92) |
 | `tests/test_chat_detector.py` | Duplicate session detection + pre-launch checks (31 tests, S91) |
 | `tests/test_crash_recovery.py` | Worker crash detection + scope recovery (15 tests, S91) |
+| `tests/test_phase2_e2e.py` | Phase 2 full lifecycle E2E: assign->context->claim->complete->crash->recover (7 tests, S92) |
 
 CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against Python 3.10 + 3.12.
 
