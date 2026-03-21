@@ -5,7 +5,7 @@
 
 ## Current State (as of Session 96 — 2026-03-21)
 
-**Phase:** Session 96 IN PROGRESS. Dual-chat (Desktop + cli1 worker). MT-22 Supervised Trial #1. Tests: 99 suites, 3906+ total passing. Git: 4 commits so far.
+**Phase:** Session 96 IN PROGRESS. Dual-chat (Desktop + cli1 worker). MT-22 Supervised Trial #1. Tests: 101 suites, 3997+ total passing. Git: 12 commits (8 desktop, 4 worker). Hivemind: 5th consecutive PASS.
 
 **What was done this session (S96):**
 - **test_capture_hook.py written** — 112 tests (934 LOC) for the highest-risk untested module (664 LOC, 0 tests). All passing. Covers all 3 hook handlers (PostToolUse, UserPromptSubmit, Stop), helpers (dedup, contradiction, credentials, tags, truncation), and main() routing.
