@@ -3,6 +3,35 @@
 
 ---
 
+## Session 96 — 2026-03-21
+
+**What changed:**
+- `memory-system/tests/test_capture_hook.py` (NEW) — 112 tests for capture_hook.py (664 LOC, was 0 tests)
+- `self-learning/tests/test_reflect.py` (NEW, worker) — 61 tests for reflect.py (782 LOC, was 0 tests)
+- `reddit-intelligence/tests/test_url_reader.py` (NEW, worker) — 30 tests for url_reader.py (163 LOC)
+- `.claude/commands/cca-wrap-worker.md` — Added Step 5 self-learning journal + advancement tips. Step numbering fixed (5-8). Worker terminal close guarded with TERM_PROGRAM check.
+- `launch_worker.sh` — Documented front-loading lesson: one task per message
+- `FINDINGS_LOG.md` — 6 new entries from daily scan (1 ADAPT, 3 REFERENCE, 1 REF-PERSONAL, 1 SKIP)
+- `KALSHI_INTEL.md` — Alternative data edge hierarchy insight
+- `LEARNINGS.md` — Worker front-loading pattern (Severity 2)
+- `PROJECT_INDEX.md` — Test counts corrected twice (3794 -> 3997, 98 -> 101 suites)
+
+**Why:**
+- MT-22 Supervised Trial #1: this session IS the trial. 5th consecutive hivemind PASS.
+- Test coverage: filled top 3 untested modules (capture_hook, reflect, url_reader = 203 new tests)
+- Process improvement: workers now have self-learning journal step in wrap
+- Intelligence: daily nuclear scan validated; Claude Control (ADAPT) relevant to MT-1
+
+**Tests:** 101/101 suites passing (3997 total, +203 new)
+
+**Lessons:**
+- Combined TASK 1+TASK 2 messages cause workers to cherry-pick the easiest task
+- Workers are most productive when they find their own rhythm after completing first assignment
+- Desktop best for: scans, docs, bridge intel, process improvements. Worker best for: code/tests.
+- $TERM_PROGRAM is the reliable guard for Terminal.app-specific osascript calls
+
+---
+
 ## Session 95 — 2026-03-20
 
 **What changed:**
