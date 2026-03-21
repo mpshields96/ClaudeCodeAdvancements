@@ -811,7 +811,7 @@ developer colleague.
 - `aging_rate`: 1.0 per chat for partial tasks (Phase 1 done, Phase 2 waiting). 0.5 per chat for not-started tasks.
 - Cap: Priority cannot exceed 2x base_value. Prevents low-value tasks from permanently outranking high-value ones.
 - Update `last_touched_session` whenever ANY work is done on the MT (even research or planning).
-- Current session: 95.
+- Current session: 96.
 
 ### Completed (no scoring needed)
 
@@ -827,26 +827,27 @@ developer colleague.
 | MT-11 | GitHub intelligence | COMPLETE (S83) — github_scanner.py + trending, 62 tests |
 | MT-14 | Rescan stale subs | COMPLETE (S84) — execute_rescan_stale + rescan-all CLI, 101 tests |
 | MT-15 | GitHub repo tester | COMPLETE — repo_tester.py, 51 tests |
+| MT-9 | Autonomous scanning | COMPLETE (S95) — autonomous_scanner.py, Phase 3 E2E validated, 101 tests |
 | MT-20 | Senior Dev Agent | COMPLETE (S83) — 13 modules, ~890 tests, E2E 10/10 validated |
 
 ### Active Priority Queue (sorted by priority score, descending)
 
 | Rank | MT | Task | Base | Last Touched | Chats Ago | Rate | Aging | **Score** | Next Phase |
 |------|----|------|------|-------------|-----------|------|-------|-----------|------------|
-| 1 | MT-9 | Autonomous scanning | 8 | Session 52 | 42 | 1.0 | cap | **16.0** | Phase 3: supervised trial of production autonomous runs. Cap: 16.0 |
-| 2 | MT-12 | Academic papers | 6 | Session 52 | 42 | 1.0 | cap | **12.0** | Phase 3: domain expansion (assigned to worker S94). Cap: 12.0 |
-| 3 | MT-10 | YoYo self-learning | 9 | Session 94 | 0 | 1.0 | 0 | **9.0** | Phase 3B resurfacer_hook built (S94). Phase 3A: graduate to Kalshi (cross-project). |
-| 4 | MT-21 | Hivemind coordination | 8 | Session 93 | 1 | 1.0 | 1.0 | **9.0** | Phase 2 PASSED. Phase 3 (3-chat) deferred by Matthew. |
-| 5 | MT-17 | Design/reports | 5 | Session 89 | 5 | 1.0 | 5.0 | **10.0** | Phase 6 daily_snapshot.py built (S89, 50 tests). Phase 5 website_generator done. |
-| 6 | MT-18 | Academic writing | 4 | NEVER | 94+ | 0.5 | cap | **8.0** | Research phase. Cap: 8.0 |
-| 7 | MT-22 | Autonomous 1-hour loop | 9 | Session 95 | 0 | 1.0 | 0 | **9.0** | Phase 2 COMPLETE (notification). Next: supervised 1-hour trials (0/3) |
-| 8 | MT-13 | iOS/macOS app development | 4 | Session 49 | 45 | 0.5 | cap | **8.0** | Phase 3: first real app. Cap: 8.0 |
+| 1 | MT-9 | Autonomous scanning | 8 | Session 95 | 1 | 1.0 | 1.0 | **9.0** | Phase 3 COMPLETE (S95). Move to Completed. |
+| 2 | MT-10 | YoYo self-learning | 9 | Session 94 | 2 | 1.0 | 2.0 | **11.0** | Phase 3A: graduate to Kalshi (cross-project). Phase 3B done. |
+| 3 | MT-17 | Design/reports | 5 | Session 89 | 7 | 1.0 | cap | **10.0** | Phase 6 daily_snapshot done. All phases complete? Cap: 10.0 |
+| 4 | MT-22 | Autonomous 1-hour loop | 9 | Session 96 | 0 | 1.0 | 0 | **9.0** | Trial #1 IN PROGRESS (S96). Trials: 1/3. |
+| 5 | MT-21 | Hivemind coordination | 8 | Session 96 | 0 | 1.0 | 0 | **8.0** | Phase 2 PASSED (5th consecutive). Phase 3 (3-chat) deferred. |
+| 6 | MT-12 | Academic papers | 6 | Session 96 | 0 | 1.0 | 0 | **6.0** | Phase 3 paper scan run (S96). KalshiBench found. |
+| 7 | MT-18 | Academic writing | 4 | NEVER | 96+ | 0.5 | cap | **8.0** | Research phase. Cap: 8.0 |
+| 8 | MT-13 | iOS/macOS app development | 4 | Session 49 | 47 | 0.5 | cap | **8.0** | Phase 3: first real app. Cap: 8.0 |
 
 ### Blocked / External (no scoring — cannot be worked)
 
 | MT | Task | Reason | Self-Resolution Check (Session 94) |
 |----|------|--------|--------------------------------------|
-| MT-1 | Maestro visual grid | Was blocked on macOS SDK | MOSTLY SELF-RESOLVED: claude-code-ui, claude-code-monitor, Claudia GUI, Nimbalyst all exist now. Evaluate before building. |
+| MT-1 | Maestro visual grid | Was blocked on macOS SDK | MOSTLY SELF-RESOLVED (S96): Claude Control (hook-based, best candidate), PATAPIM, Nimbalyst. Try Claude Control first. |
 | MT-5 | Claude Pro bridge | Was needs-research | PARTIALLY SELF-RESOLVED: Remote Control (cross-device), Chrome extension (browser context). Evaluate existing tools. |
 | MT-16 | Detachable chat tabs | Anthropic feature request | STILL OPEN: Feature requests filed (GitHub #20100, #29136). Third-party Nimbalyst provides workaround. |
 | MT-19 | Local LLM fine-tuning | Long-term exploration | STILL OPEN: Needs GPU resources, not self-resolving. |
