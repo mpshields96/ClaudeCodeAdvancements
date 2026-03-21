@@ -73,7 +73,7 @@ VERDICT_BONUS = {
 
 def filter_papers_by_domain(papers: list[dict], domain: str) -> list[dict]:
     """Filter papers to those matching a specific domain."""
-    return [p for p in papers if domain in p.get("domains", [])]
+    return [p for p in papers if domain in (p.get("domains") or [])]
 
 
 def rank_for_kalshi_relevance(papers: list[dict]) -> list[dict]:

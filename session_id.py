@@ -32,7 +32,7 @@ class SessionIdError(ValueError):
     pass
 
 
-_PATTERN = re.compile(r"^[Ss]?(\d+)[a-zA-Z]?$")
+_PATTERN = re.compile(r"^[Ss]?([0-9]+)[a-zA-Z]?$")
 
 
 def normalize(value) -> str:
@@ -49,6 +49,7 @@ def normalize(value) -> str:
         value = int(value)
 
     if isinstance(value, int):
+        value = int(value)  # normalize bool subclass to plain int
         if value < 0:
             raise SessionIdError(f"Session number cannot be negative: {value}")
         return f"S{value}"
