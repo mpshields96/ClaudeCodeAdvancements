@@ -3,9 +3,23 @@
 
 ---
 
-## Current State (as of Session 108 — 2026-03-21)
+## Current State (as of Session 109 — 2026-03-21)
 
-**Phase:** Session 108 COMPLETE. Solo CCA session (no worker CLI). Kalshi main chat running separately. MT-28 Phase 2 complete. MT-26 Phase 1 started.
+**Phase:** Session 109 IN PROGRESS. Solo CCA session. MT-26 Phase 1 Tier 1 items 2+3 COMPLETE. MT-28 Phase 3 COMPLETE.
+
+**What was done this session (S109):**
+- **MT-26 Phase 1: Calibration Bias Exploiter** (`calibration_bias.py`): Binned calibration curves, FLB mispricing zone detection, bias-adjusted probability estimation. Based on Le (2026) arXiv:2602.19520. 43 new tests. Ready for Kalshi bot integration.
+- **MT-26 Phase 1: Cross-Platform Signal** (`cross_platform_signal.py`): Kalshi/Polymarket price divergence detector, lag analysis (which platform leads), actionable signal generation. Based on SSRN:5331995. 30 new tests.
+- **MT-28 Phase 3 COMPLETE**: Cross-domain principle transfer (`principle_transfer.py`). Domain affinity scoring, transfer candidate identification, idempotent apply. 34 new tests. Wired into pattern_registry as 12th detector — surfaces transfer opportunities during reflect.
+- **Cleanup**: Added .cca-init-benchmarks.jsonl, .cca-stagnation-log.jsonl, .cca-trial-results.jsonl to .gitignore.
+- **Tests**: 6411 passing (159 suites). Up from 6304/156.
+
+**Next (prioritized):**
+1. **AUTH FIX**: Matthew must run `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc` before next Kalshi chat launch.
+2. **Bridge sync**: Matthew should run `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md` (48.8K vs 9.2K stale).
+3. **MT-26 Tier 2**: Dynamic Kelly with Bayesian updating, macro regime context, fear & greed filter.
+4. **MT-28 Phase 4**: Research outcomes feedback loop (wire research_outcomes.py into principle scoring).
+5. **3-chat system**: Resume ONLY when Matthew gives explicit clear signal. Correctness before speed.
 
 **What was done this session (S108):**
 - **Launch scripts fixed**: Replaced fragile AppleScript `keystroke "t"` + `front window` with `open -a Terminal` + temp script approach. Eliminates -1719 "Invalid index" errors. Added `bash launch_kalshi.sh both` convenience mode.
@@ -13,13 +27,6 @@
 - **MT-28 Phase 2 COMPLETE**: Pattern plugin registry for self-learning. Extracted 11 monolithic detectors from reflect.py into pluggable `@register_detector` architecture. New files: `pattern_registry.py` (registry + base class), `detectors.py` (11 built-in detectors). 42 new tests. Full backwards compatibility — all 124 existing reflect tests pass.
 - **MT-26 Phase 1 started**: `regime_detector.py` — market regime classifier (TRENDING/MEAN_REVERTING/CHAOTIC/UNKNOWN). Uses volatility (log returns), trend strength (R-squared), mean reversion (Hurst exponent). 21 new tests. Zero external deps. Ready for Kalshi bot integration.
 - **Tests**: 6304 passing (156 suites). Up from 6167/153.
-
-**Next (prioritized):**
-1. **AUTH FIX**: Matthew must run `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc` before next Kalshi chat launch.
-2. **Bridge sync**: Matthew should run `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md` (48.8K vs 9.2K stale).
-3. **MT-26 Phase 1 continued**: Build calibration bias exploiter (Tier 1 item #2 from research doc).
-4. **MT-28 Phase 3**: Cross-domain principle transfer (wire principle_registry into detectors).
-5. **3-chat system**: Resume ONLY when Matthew gives explicit clear signal. Correctness before speed.
 
 **What was done this session (S107):**
 - **Gameplan Phase 1 DONE**: Root cause found (ANTHROPIC_API_KEY env var in shell profile). Fix: `unset ANTHROPIC_API_KEY` in both launch_worker.sh and launch_kalshi.sh. Committed 277d6e8.
