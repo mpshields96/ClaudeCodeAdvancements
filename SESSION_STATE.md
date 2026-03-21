@@ -3,9 +3,34 @@
 
 ---
 
-## Current State (as of Session 104 — 2026-03-21)
+## Current State (as of Session 105 — 2026-03-22)
 
-**Phase:** Session 104 COMPLETE. Desktop + cli1 worker (+ attempted Kalshi chat launch). RESEARCH + PRIORITY OVERHAUL session. MT-23 Phase 2 and MT-28 Phase 1 research complete. Priority system shifted to financial/self-learning focus.
+**Phase:** Session 105 COMPLETE. Desktop coordinator. 3-CHAT SYSTEM OPERATIONAL: desktop + cli1 worker + Kalshi research. MT-28 Phase 1 built. S104 verification done.
+
+**What was done this session (S105):**
+- **S104 verification COMPLETE**: Confirmed priority_picker.py edits correct, MT-26 research quality good (but was raw JSONL — extracted to clean markdown), KALSHI_MT0_TASK_BRIEF.md accurate. All 131 original suites green.
+- **MT-28 Phase 1 COMPLETE**: `self-learning/principle_registry.py` — EvolveR-style principle distillation with Laplace-smoothed scoring `s(p) = (success+1)/(usage+2)`, domain-scoped dedup, pruning at score<0.3 with 10+ usages, reinforcement at score>=0.7. 73 tests. Wired into reflect.py report output.
+- **MT-26 research CLEANED**: Extracted actual research report from raw JSONL agent transcript (S104 high-context error). 140 lines of clean markdown with 6 verified papers (arXiv, SSRN, UCD).
+- **3-CHAT SYSTEM LAUNCHED**: `launch_kalshi.sh` (new) — opens Terminal tab, cd to polymarket-bot, starts claude with /kalshi-main or /kalshi-research. `LAUNCH_3CHAT.md` — ADHD-friendly copy-paste steps. Successfully launched all 3 chats.
+- **CCA_TO_POLYBOT.md UPDATED**: MT-26 paper findings (arXiv:2602.19520 calibration bias), MT-0 task brief pointer, AND Matthew's verbatim late-night bot safety directive.
+- **Priority picker updated**: MT-0 touched S105 (no longer stagnating), MT-28 Phase 1 complete, session counter to 105. MT-26 now top desktop pick.
+- **Worker launched**: cli1 assigned paper digest spam fix + test_website_generator_extended.py. Worker produced the extended tests (2 pre-existing failures in CSS class matching — same pattern as dashboard_generator bug).
+
+**Matthew directives (S105, permanent):**
+- 3-chat system with Kalshi bot included is the BIGGEST GOAL for next few chats
+- Keep comms simple: bridge file (CCA_TO_POLYBOT.md) for cross-project, cca_comm.py for CCA internal
+- Late night bot safety: Matthew's exact words preserved in CCA_TO_POLYBOT.md. No regular-size bets at night. Small experiments first. Know how to turn bot off. PERMANENT until lifted.
+- Be smart, use tools we have, don't burn tokens on ceremony/gymnastics
+- Use Kalshi research chat (not main) — research chat has more accumulated knowledge
+
+**CAUTION**: test_website_generator_extended.py has 2 pre-existing failures (CSS class in global stylesheet matching when section absent). Same bug pattern as dashboard_generator_extended. Worker should fix.
+
+**Next (prioritized):**
+1. **3-chat coordination**: Verify Kalshi research chat picked up CCA_TO_POLYBOT.md. Check if MT-0 code work started.
+2. **MT-28 Phase 2**: Pattern plugin registry — refactor reflect.py detectors to extensible pattern. Multi-session work.
+3. **MT-26 Phase 1**: Use MT26_FINANCIAL_INTEL_RESEARCH.md to begin building financial intelligence tools.
+4. **Worker fix**: website_generator_extended.py + dashboard_generator_extended.py CSS class bug.
+5. **Paper digest spam**: Worker may or may not have completed the debounce fix. Check git log.
 
 **What was done this session (S104):**
 - **MT-23 Phase 2 COMPLETE**: Direction change (Matthew S103 explicit) — Remote Control is PRIMARY mobile path, Discord is SECONDARY, Telegram deprecated. MT23_MOBILE_RESEARCH.md fully rewritten. GitHub issue #28402 (reconnection broken, 17+ confirmations) identified as key gap for hop-on/hop-off. 6 CCA enhancement opportunities documented.
