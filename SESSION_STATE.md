@@ -3,9 +3,23 @@
 
 ---
 
-## Current State (as of Session 107 — 2026-03-21)
+## Current State (as of Session 108 — 2026-03-21)
 
-**Phase:** Session 107 COMPLETE. Desktop coordinator solo session. 3-chat gameplan Phases 1-3 complete. Orchestration infrastructure hardened. No worker launched (peak hours + auth unverified).
+**Phase:** Session 108 COMPLETE. Solo CCA session (no worker CLI). Kalshi main chat running separately. MT-28 Phase 2 complete. MT-26 Phase 1 started.
+
+**What was done this session (S108):**
+- **Launch scripts fixed**: Replaced fragile AppleScript `keystroke "t"` + `front window` with `open -a Terminal` + temp script approach. Eliminates -1719 "Invalid index" errors. Added `bash launch_kalshi.sh both` convenience mode.
+- **FIX_API_AUTH.md**: Documented root cause of API billing issue (ANTHROPIC_API_KEY export in ~/.zshrc) and 2-line fix. Matthew needs to run this.
+- **MT-28 Phase 2 COMPLETE**: Pattern plugin registry for self-learning. Extracted 11 monolithic detectors from reflect.py into pluggable `@register_detector` architecture. New files: `pattern_registry.py` (registry + base class), `detectors.py` (11 built-in detectors). 42 new tests. Full backwards compatibility — all 124 existing reflect tests pass.
+- **MT-26 Phase 1 started**: `regime_detector.py` — market regime classifier (TRENDING/MEAN_REVERTING/CHAOTIC/UNKNOWN). Uses volatility (log returns), trend strength (R-squared), mean reversion (Hurst exponent). 21 new tests. Zero external deps. Ready for Kalshi bot integration.
+- **Tests**: 6304 passing (156 suites). Up from 6167/153.
+
+**Next (prioritized):**
+1. **AUTH FIX**: Matthew must run `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc` before next Kalshi chat launch.
+2. **Bridge sync**: Matthew should run `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md` (48.8K vs 9.2K stale).
+3. **MT-26 Phase 1 continued**: Build calibration bias exploiter (Tier 1 item #2 from research doc).
+4. **MT-28 Phase 3**: Cross-domain principle transfer (wire principle_registry into detectors).
+5. **3-chat system**: Resume ONLY when Matthew gives explicit clear signal. Correctness before speed.
 
 **What was done this session (S107):**
 - **Gameplan Phase 1 DONE**: Root cause found (ANTHROPIC_API_KEY env var in shell profile). Fix: `unset ANTHROPIC_API_KEY` in both launch_worker.sh and launch_kalshi.sh. Committed 277d6e8.

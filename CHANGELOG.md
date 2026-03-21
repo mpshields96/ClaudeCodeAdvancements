@@ -3,6 +3,36 @@
 
 ---
 
+## Session 108 — 2026-03-21
+
+**What changed:**
+- `launch_kalshi.sh`: Replaced AppleScript keystroke with `open -a Terminal` + temp script. Added `both` mode. Fixed -1719 error.
+- `launch_worker.sh`: Same AppleScript fix.
+- `FIX_API_AUTH.md`: New — documents ANTHROPIC_API_KEY in .zshrc root cause and fix.
+- `self-learning/pattern_registry.py`: New — central plugin registry with `@register_detector`, `PatternDetector` base class, domain filtering, exception isolation.
+- `self-learning/detectors.py`: New — 11 built-in detectors (6 general, 5 trading) extracted from reflect.py.
+- `self-learning/reflect.py`: `detect_patterns()` refactored to delegate to registry (14 LOC vs 200+).
+- `self-learning/regime_detector.py`: New — market regime classifier (volatility, R-squared, Hurst exponent). TRENDING/MEAN_REVERTING/CHAOTIC/UNKNOWN.
+- `self-learning/tests/test_pattern_registry.py`: New — 14 tests.
+- `self-learning/tests/test_detectors.py`: New — 28 tests.
+- `self-learning/tests/test_regime_detector.py`: New — 21 tests.
+- `self-learning/tests/test_reflect.py`: Updated mock paths for registry compatibility.
+- `self-learning/tests/test_reflect_extended.py`: Updated mock paths for registry compatibility.
+
+**Why:**
+- Launch scripts were broken (AppleScript -1719 error when no Terminal window existed)
+- API billing confusion: ANTHROPIC_API_KEY in .zshrc overrode Max subscription OAuth
+- MT-28 Phase 2: Pattern registry enables new domains to add detectors without modifying reflect.py core
+- MT-26 Phase 1: Regime detector gives Kalshi bot awareness of when to trade vs skip
+
+**Tests:** 6304/6304 passing (156 suites). +137 tests, +3 suites from S107.
+
+**Lessons:**
+- AppleScript `front window` fails with -1719 when Terminal has zero windows — use `open -a Terminal` with a temp script instead
+- When refactoring from inline to registry pattern, mock paths in tests must be updated to patch both old and new import locations
+
+---
+
 ## Session 104 — 2026-03-21
 
 **What changed:**

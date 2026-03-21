@@ -497,3 +497,21 @@
 - **Last seen:** 2026-03-21
 - **Files:** launch_worker.sh, cca_comm.py, /cca-auto-desktop
 
+---
+
+### AppleScript keystroke tab creation is fragile — Severity: 2 — Count: 1
+- **Anti-pattern:** Using `keystroke "t" using command down` + `do script ... in front window` in AppleScript to open Terminal tabs. Fails with -1719 "Invalid index" when Terminal has no windows.
+- **Fix:** Use `open -a Terminal <tempscript.sh>` which always works. Creates a new window instead of a tab, but is 100% reliable regardless of Terminal state.
+- **First seen:** 2026-03-21 (Session 108)
+- **Last seen:** 2026-03-21
+- **Files:** launch_kalshi.sh, launch_worker.sh
+
+---
+
+### Refactoring from inline to registry requires dual-path mocking — Severity: 1 — Count: 1
+- **Anti-pattern:** Extracting inline code from module A into module B breaks tests that mock `A.function` — the real code now runs via `B.function` which isn't mocked.
+- **Fix:** Update test mock helpers to patch both the old path (`A.function`) and the new path (`B.function`). This maintains backwards compatibility during the transition.
+- **First seen:** 2026-03-21 (Session 108)
+- **Last seen:** 2026-03-21
+- **Files:** self-learning/tests/test_reflect.py, test_reflect_extended.py
+

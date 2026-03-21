@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-22 (Session 98)
+# Last updated: 2026-03-21 (Session 108)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -35,11 +35,11 @@
 | Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook, +cp/script/dd/tee evasion) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 1073 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 369 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15 + url_reader tests | 391 |
-| Self-Learning | `self-learning/` | MT-7,10,12,28 + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + reflect tests | 1282 |
+| Self-Learning | `self-learning/` | MT-7,10,12,26,28 + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + reflect tests | 1345 |
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 493 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~6167 tests (~153 suites). All must pass before any work.**
+**Total: ~6304 tests (~156 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -159,6 +159,9 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `trade_reflector.py` — MT-10 Phase 3A: Kalshi trade pattern analysis (read-only DB, 5 detectors, proposals)
 - `strategy_health_scorer.py` — Strategy health verdicts (HEALTHY/MONITOR/PAUSE/KILL, 24 tests)
 - `principle_registry.py` — MT-28 Phase 1: EvolveR-style principle registry (Laplace-smoothed scoring, domain-tagged, 73 tests)
+- `pattern_registry.py` — MT-28 Phase 2: Central plugin registry for pattern detectors (@register_detector, domain filtering, exception isolation, 14 tests)
+- `detectors.py` — MT-28 Phase 2: 11 built-in pattern detectors extracted from reflect.py (6 general, 5 trading, 28 tests)
+- `regime_detector.py` — MT-26 Phase 1: Market regime classifier (TRENDING/MEAN_REVERTING/CHAOTIC, volatility+R²+Hurst, 21 tests)
 - `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 - `BATCH_ANALYSIS_S62.md` — Batch trace analysis of 10 recent sessions (avg 73.0, retry rate down to 40%)
 - `research/SENIOR_DEV_AGENT_RESEARCH.md` — S70: Nuclear-level research for Senior Dev Agent MT (11 verified papers, 5 tools, industry standards, MVP architecture)
