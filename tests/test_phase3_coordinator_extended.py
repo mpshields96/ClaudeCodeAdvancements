@@ -235,8 +235,8 @@ class TestNestedScopeConflicts(SetupMixin, unittest.TestCase):
         coord.workers["cli1"]["active_scope"] = ["agent-guard/"]
         coord.workers["cli2"]["active_scope"] = ["agent-guard/hooks/"]
         conflicts = coord.check_inter_worker_conflicts()
-        # Current behavior: 0 conflicts (known gap)
-        self.assertEqual(len(conflicts), 0)
+        # Fixed: dir/ vs dir/ overlap now detected
+        self.assertGreater(len(conflicts), 0)
 
     def test_nested_file_under_directory_scope(self):
         """cli1 owns tests/, cli2 owns tests/test_foo.py — conflict."""

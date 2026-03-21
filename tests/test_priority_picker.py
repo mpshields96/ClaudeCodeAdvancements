@@ -241,13 +241,13 @@ class TestPriorityPicker(unittest.TestCase):
         self.assertGreater(len(data), 0)
         self.assertIn("improved_score", data[0])
 
-    def test_mt22_is_top_priority(self):
-        """MT-22 (base 9, recently touched) should be top or near-top."""
-        picker = PriorityPicker(current_session=98)
+    def test_mt22_is_graduated(self):
+        """MT-22 graduated S99 — should not appear in active ranked list."""
+        picker = PriorityPicker(current_session=100)
         ranked = picker.ranked()
-        mt22 = next(t for t in ranked if t.mt_id == 22)
-        # MT-22 has base=9, 67% complete -> should be very high
-        self.assertGreaterEqual(mt22.improved_score, 10.0)
+        mt22_ids = [t.mt_id for t in ranked if t.mt_id == 22]
+        # Graduated tasks are COMPLETED — excluded from ranked active list
+        self.assertEqual(len(mt22_ids), 0)
 
     def test_session_number_affects_aging(self):
         picker_early = PriorityPicker(current_session=98)

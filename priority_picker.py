@@ -43,7 +43,7 @@ class MasterTask:
     base_value: float
     status: TaskStatus
     last_touched_session: Optional[int]  # None = never touched
-    current_session: int = 98
+    current_session: int = 100
     phases_completed: int = 0
     phases_total: int = 0
     aging_rate: float = 1.0  # 1.0 for partial, 0.5 for not-started
@@ -187,20 +187,20 @@ def get_known_tasks(current_session: int = 98) -> list[MasterTask]:
         # === ACTIVE ===
         MasterTask(
             mt_id=22, name="Autonomous 1-hour loop",
-            base_value=9, status=TaskStatus.ACTIVE,
-            last_touched_session=98, current_session=current_session,
-            phases_completed=2, phases_total=3,  # Infrastructure + notification done, trials in progress
+            base_value=9, status=TaskStatus.COMPLETED,
+            last_touched_session=99, current_session=current_session,
+            phases_completed=3, phases_total=3,  # GRADUATED S99 — 3/3 gate passed
             aging_rate=1.0,
-            next_action="Trial #3 (S98 = supervised trial). 3/3 clean -> approved.",
+            next_action="GRADUATED. Gate passed 3/3 supervised trials.",
             tags=["autonomy", "hivemind"],
         ),
         MasterTask(
             mt_id=21, name="Hivemind multi-chat coordination",
-            base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=98, current_session=current_session,
-            phases_completed=2, phases_total=3,  # Phase 1+2 validated, Phase 3 = 3-chat
+            base_value=8, status=TaskStatus.COMPLETED,
+            last_touched_session=99, current_session=current_session,
+            phases_completed=2, phases_total=2,  # Phase 3 (3-chat) SHELVED — 2-chat sufficient
             aging_rate=1.0,
-            next_action="Phase 2 PASSED (7th consecutive S98). Phase 3 (3-chat) when ready.",
+            next_action="SHELVED Phase 3 (3-chat). 2-chat is sufficient per Matthew.",
             tags=["coordination", "hivemind"],
         ),
         MasterTask(

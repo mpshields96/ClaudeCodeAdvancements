@@ -159,11 +159,17 @@ class Coordinator:
                 for f in overlap:
                     conflicts.append({"file": f, "workers": [w1, w2]})
 
-                # Directory prefix overlap
+                # Directory prefix overlap (including dir/ vs dir/)
                 for s1 in scope1:
                     if s1.endswith("/"):
                         for s2 in scope2:
-                            if not s2.endswith("/") and s2.startswith(s1):
+                            if s2.endswith("/"):
+                                # dir/ vs dir/ — check if one is prefix of other
+                                if s1 != s2 and (s2.startswith(s1) or s1.startswith(s2)):
+                                    conflict = {"file": s2, "workers": [w1, w2]}
+                                    if conflict not in conflicts:
+                                        conflicts.append(conflict)
+                            elif s2.startswith(s1):
                                 conflicts.append({"file": s2, "workers": [w1, w2]})
                 for s2 in scope2:
                     if s2.endswith("/"):
@@ -180,7 +186,7 @@ class Coordinator:
             "workers": self.workers,
             "saved_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         }
-        tmp_path = self.state_path + ".tmp"
+        tmp_path = self.state_path + f".{os.getpid()}.tmp"
         with open(tmp_path, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
         os.replace(tmp_path, self.state_path)
@@ -193,7 +199,8 @@ class Coordinator:
         try:
             with open(self.state_path, "r", encoding="utf-8") as f:
                 state = json.load(f)
-            self.workers = state.get("workers", {})
+            workers = state.get("workers", {})
+            self.workers = workers if isinstance(workers, dict) else {}
         except (json.JSONDecodeError, KeyError, TypeError):
             self.workers = {}
 
