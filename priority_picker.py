@@ -188,19 +188,19 @@ def get_known_tasks(current_session: int = 98) -> list[MasterTask]:
         MasterTask(
             mt_id=22, name="Autonomous 1-hour loop",
             base_value=9, status=TaskStatus.ACTIVE,
-            last_touched_session=97, current_session=current_session,
+            last_touched_session=98, current_session=current_session,
             phases_completed=2, phases_total=3,  # Infrastructure + notification done, trials in progress
             aging_rate=1.0,
-            next_action="Trial #3 (2/3 complete). 3/3 clean trials -> approved.",
+            next_action="Trial #3 (S98 = supervised trial). 3/3 clean -> approved.",
             tags=["autonomy", "hivemind"],
         ),
         MasterTask(
             mt_id=21, name="Hivemind multi-chat coordination",
             base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=97, current_session=current_session,
+            last_touched_session=98, current_session=current_session,
             phases_completed=2, phases_total=3,  # Phase 1+2 validated, Phase 3 = 3-chat
             aging_rate=1.0,
-            next_action="Phase 2 PASSED (6th consecutive). Phase 3 (3-chat) when ready.",
+            next_action="Phase 2 PASSED (7th consecutive S98). Phase 3 (3-chat) when ready.",
             tags=["coordination", "hivemind"],
         ),
         MasterTask(
@@ -227,14 +227,14 @@ def get_known_tasks(current_session: int = 98) -> list[MasterTask]:
             last_touched_session=96, current_session=current_session,
             phases_completed=2, phases_total=6,
             aging_rate=1.0,
-            next_action="Phase 3: Run across all 4 domains. KalshiBench found S96.",
+            next_action="Phase 3: Ran scans S98. Agents/context strong, prediction weak.",
             tags=["research", "kalshi"],
         ),
         # === BLOCKED ===
         MasterTask(
             mt_id=1, name="Maestro visual grid UI",
             base_value=7, status=TaskStatus.BLOCKED,
-            last_touched_session=96, current_session=current_session,
+            last_touched_session=98, current_session=current_session,
             phases_completed=0, phases_total=3,
             aging_rate=0.5,
             block_reason="Was blocked on macOS SDK",
