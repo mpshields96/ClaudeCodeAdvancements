@@ -803,15 +803,38 @@ developer colleague.
 
 ---
 
-## Priority Scoring System (Decay-Based)
+## Priority Scoring System (Improved — S98)
 
-**Formula:** `priority = base_value + (chats_since_last_touched * aging_rate)`
+**Automated:** `python3 priority_picker.py recommend` — runs the improved formula and returns actionable picks.
 
-- `base_value`: Force-multiplier score (1-10). Does this make Claude smarter/faster for ALL future work?
-- `aging_rate`: 1.0 per chat for partial tasks (Phase 1 done, Phase 2 waiting). 0.5 per chat for not-started tasks.
-- Cap: Priority cannot exceed 2x base_value. Prevents low-value tasks from permanently outranking high-value ones.
-- Update `last_touched_session` whenever ANY work is done on the MT (even research or planning).
-- Current session: 97.
+**Improved formula (S98):** `score = base_value + aging_capped + completion_bonus + roi_estimate + stagnation_penalty`
+
+| Component | What | Range |
+|-----------|------|-------|
+| `base_value` | Force-multiplier (1-10) | 1-10 |
+| `aging_capped` | sessions_since_touch * rate, capped at 1x base | 0 to base |
+| `completion_bonus` | 50-74% = +1, 75-89% = +2, 90%+ = +3 | 0-3 |
+| `roi_estimate` | Near done (85%+) = +2, close (70%+) = +1 | 0-2 |
+| `stagnation_penalty` | At cap AND untouched 10+ sessions = -1 | -1 or 0 |
+
+**Why this beats the old formula:**
+- Old formula let capped tasks (MT-18, MT-13) permanently tie with high-base tasks — no way to distinguish
+- Completion bonus rewards finishing what's started over starting new things
+- Stagnation penalty flags tasks that need a decision: work them or archive them
+- ROI estimate prioritizes quick wins (1-session-to-complete)
+- Blocked tasks with self-resolution notes now surface via `--include-blocked`
+
+**CLI commands:**
+```bash
+python3 priority_picker.py pick          # Top 3 tasks to work on
+python3 priority_picker.py recommend     # Full recommendations with context
+python3 priority_picker.py table         # Markdown priority table
+python3 priority_picker.py rank          # Quick ranked list
+python3 priority_picker.py stagnating    # Tasks that need attention
+python3 priority_picker.py json          # Export for programmatic use
+```
+
+- Current session: 98.
 
 ### Completed (no scoring needed)
 
@@ -824,38 +847,38 @@ developer colleague.
 | MT-6 | Nuclear at will | COMPLETE — profiles.py, 43 tests |
 | MT-7 | Trace analysis | COMPLETE — trace_analyzer.py, 50 tests |
 | MT-8 | iPhone remote control | EXTERNALLY RESOLVED (S94) — native Remote Control + ServerCC/Moshi apps |
+| MT-9 | Autonomous scanning | COMPLETE (S95) — autonomous_scanner.py, Phase 3 E2E validated, 101 tests |
+| MT-10 | YoYo self-learning | COMPLETE (S97) — Phase 3A real DB validated, Phase 3B resurfacer done, 28 tests |
 | MT-11 | GitHub intelligence | COMPLETE (S83) — github_scanner.py + trending, 62 tests |
 | MT-14 | Rescan stale subs | COMPLETE (S84) — execute_rescan_stale + rescan-all CLI, 101 tests |
 | MT-15 | GitHub repo tester | COMPLETE — repo_tester.py, 51 tests |
-| MT-9 | Autonomous scanning | COMPLETE (S95) — autonomous_scanner.py, Phase 3 E2E validated, 101 tests |
-| MT-10 | YoYo self-learning | COMPLETE (S97) — Phase 3A real DB validated, Phase 3B resurfacer done, 28 tests. Deploy to polybot = out of CCA scope. |
-| MT-17 | Design/reports | COMPLETE (S96) — 6 phases done: reports, slides, dashboard, charts, website, daily_snapshot. 213 tests. |
+| MT-17 | Design/reports | COMPLETE (S96) — 6 phases done: reports, slides, dashboard, charts, website, daily_snapshot. 213 tests |
 | MT-20 | Senior Dev Agent | COMPLETE (S83) — 13 modules, ~890 tests, E2E 10/10 validated |
 
-### Active Priority Queue (sorted by priority score, descending)
+### Active Priority Queue (S98 improved scoring)
 
-| Rank | MT | Task | Base | Last Touched | Chats Ago | Rate | Aging | **Score** | Next Phase |
-|------|----|------|------|-------------|-----------|------|-------|-----------|------------|
-| 1 | MT-22 | Autonomous 1-hour loop | 9 | Session 97 | 0 | 1.0 | 0 | **9.0** | Trial #2 IN PROGRESS (S97). Trials: 1/3 complete. |
-| 2 | MT-21 | Hivemind coordination | 8 | Session 97 | 0 | 1.0 | 0 | **8.0** | Phase 2 PASSED (5th consecutive). Phase 3 (3-chat) deferred. |
-| 3 | MT-18 | Academic writing | 4 | NEVER | 97+ | 0.5 | cap | **8.0** | Research phase. Cap: 8.0 |
-| 4 | MT-13 | iOS/macOS app development | 4 | Session 49 | 48 | 0.5 | cap | **8.0** | Phase 3: first real app. Cap: 8.0 |
-| 5 | MT-12 | Academic papers | 6 | Session 96 | 1 | 1.0 | 1.0 | **7.0** | Phase 3 paper scan run (S96). KalshiBench found. |
+| Rank | MT | Task | Base | Age | Comp% | Bonus | ROI | Stag | **Score** | Urgency | Next |
+|------|----|------|------|-----|-------|-------|-----|------|-----------|---------|------|
+| 1 | MT-22 | Autonomous 1-hour loop | 9 | +1.0 | 67% | +1.0 | +0.0 | 0.0 | **11.0** | routine | Trial #3 (2/3 complete). 3/3 clean -> approved |
+| 2 | MT-21 | Hivemind coordination | 8 | +1.0 | 67% | +1.0 | +0.0 | 0.0 | **10.0** | routine | Phase 2 PASSED (6th). Phase 3 = 3-chat |
+| 3 | MT-12 | Academic papers | 6 | +2.0 | 33% | +0.0 | +0.0 | 0.0 | **8.0** | routine | Phase 3: full domain scan. KalshiBench found S96 |
+| 4 | MT-18 | Academic writing | 4 | +4.0 | 0% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Research: install/evaluate ClaudePrism |
+| 5 | MT-13 | iOS/macOS app dev | 4 | +4.0 | 33% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Phase 3: first real app |
 
-### Blocked / External (no scoring — cannot be worked)
+### Blocked / External (surfaced via `--include-blocked`)
 
-| MT | Task | Reason | Self-Resolution Check (Session 94) |
-|----|------|--------|--------------------------------------|
-| MT-1 | Maestro visual grid | Was blocked on macOS SDK | MOSTLY SELF-RESOLVED (S96): Claude Control (hook-based, best candidate), PATAPIM, Nimbalyst. Try Claude Control first. |
-| MT-5 | Claude Pro bridge | Was needs-research | PARTIALLY SELF-RESOLVED: Remote Control (cross-device), Chrome extension (browser context). Evaluate existing tools. |
-| MT-16 | Detachable chat tabs | Anthropic feature request | STILL OPEN: Feature requests filed (GitHub #20100, #29136). Third-party Nimbalyst provides workaround. |
-| MT-19 | Local LLM fine-tuning | Long-term exploration | STILL OPEN: Needs GPU resources, not self-resolving. |
+| MT | Task | Reason | Self-Resolution | **Score (if unblocked)** |
+|----|------|--------|-----------------|--------------------------|
+| MT-1 | Maestro visual grid | macOS SDK | MOSTLY SELF-RESOLVED: Claude Control best candidate | **8.0** |
+| MT-5 | Claude Pro bridge | Needs research | PARTIALLY SELF-RESOLVED: Remote Control + Chrome ext | **9.0** |
+| MT-16 | Detachable chat tabs | Anthropic feature | STILL OPEN: GitHub issues filed | N/A |
+| MT-19 | Local LLM fine-tuning | GPU resources | STILL OPEN: not self-resolving | N/A |
 
 ### Scoring Rules
 
-1. **After working on a task:** Set `last_touched_session` to current session, recalculate all scores.
-2. **New tasks:** Start with base_value only (0 aging). Add to "Active" or "Blocked" as appropriate.
-3. **Matthew's ADHD protocol:** New ideas get logged here with base_value assigned but NOT worked on until they naturally rise in priority.
-4. **Re-rank every session:** Recompute aging at session start. Work top-ranked items first.
-5. **Graduation:** When all phases complete, move to "Completed" table.
-6. **Self-resolution scan:** Every 5 sessions, check if blocked/aging MTs have been solved by Anthropic or the community. If >50% solved externally, mark "MOSTLY SELF-RESOLVED" and evaluate whether to adopt existing tool or archive the MT.
+1. **After working on a task:** Update `get_known_tasks()` in `priority_picker.py`, run `python3 priority_picker.py table`.
+2. **New tasks:** Add to `get_known_tasks()` with base_value assigned. ADHD protocol: log but don't start until it rises naturally.
+3. **Re-rank every session:** Run `python3 priority_picker.py recommend` at session start.
+4. **Graduation:** When all phases complete, remove from `get_known_tasks()`, add to Completed table.
+5. **Self-resolution scan:** Every 5 sessions, check if blocked MTs are solvable. Run `python3 priority_picker.py stagnating`.
+6. **Stagnation review:** Tasks flagged as stagnating need a decision: (A) work them this session, (B) reduce base_value, or (C) archive.
