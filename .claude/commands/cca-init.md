@@ -5,6 +5,33 @@ After init completes, if Matthew says nothing or runs /cca-auto, proceed to auto
 
 ---
 
+## Slim Mode (fast startup — use when conditions are met)
+
+If the init_cache is fresh AND this is a production session (not first session on a new machine),
+use slim_init.py for a ~1 minute startup instead of the full 10-minute ritual:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 slim_init.py
+```
+
+This runs: SESSION_STATE parse + 10-suite smoke test + priority_picker recommend.
+
+**Use slim mode when:**
+- init_cache exists and is < 4 hours old
+- CLAUDE.md is already loaded by the harness
+- This is NOT the first session after a major change (new module, moved files, etc.)
+
+**Fall through to full mode when:**
+- slim_init.py reports BLOCKED (smoke failed)
+- No init_cache exists
+- Matthew explicitly requests full init
+
+If slim mode succeeds (READY), skip to Step 3.5 (reset pacer) then Step 5 (briefing).
+Include the priority_picker output in the briefing.
+
+---
+
 ## Step 1 — Orient (parallel reads)
 
 Read these three files in parallel:
