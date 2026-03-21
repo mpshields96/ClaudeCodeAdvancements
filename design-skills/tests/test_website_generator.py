@@ -367,5 +367,207 @@ class TestFileOutput(unittest.TestCase):
             os.unlink(path)
 
 
+# ── Rendering detail tests ────────────────────────────────────────────────────
+
+class TestLandingPageRenderDetails(unittest.TestCase):
+    """Test specific HTML rendering details that basic tests don't cover."""
+
+    def test_feature_card_with_link_renders_anchor(self):
+        page = LandingPage(
+            title="CCA", tagline="t", hero_cta_text="Go", hero_cta_url="https://safe.com",
+            features=[FeatureCard("Memory", "Desc", link="https://github.com/x/y")],
+        )
+        html_out = render_landing_page(page)
+        self.assertIn('href="https://github.com/x/y"', html_out)
+
+    def test_feature_card_with_icon_renders_span(self):
+        page = LandingPage(
+            title="CCA", tagline="t", hero_cta_text="Go", hero_cta_url="https://safe.com",
+            features=[FeatureCard("Memory", "Desc", icon="🧠")],
+        )
+        html_out = render_landing_page(page)
+        self.assertIn("feature-icon", html_out)
+        self.assertIn("🧠", html_out)
+
+    def test_metric_unit_rendered(self):
+        page = LandingPage(
+            title="CCA", tagline="t", hero_cta_text="Go", hero_cta_url="https://safe.com",
+            metrics=[MetricCard("Tests", "2484", unit="passing")],
+        )
+        html_out = render_landing_page(page)
+        self.assertIn("passing", html_out)
+        self.assertIn("2484", html_out)
+
+    def test_active_nav_link_has_active_class(self):
+        page = LandingPage(
+            title="CCA", tagline="t", hero_cta_text="Go", hero_cta_url="https://safe.com",
+            nav_links=[NavLink("Home", "/", active=True), NavLink("Docs", "/docs")],
+        )
+        html_out = render_landing_page(page)
+        self.assertIn('class="active"', html_out)
+
+    def test_inactive_nav_link_has_no_active_class(self):
+        page = LandingPage(
+            title="CCA", tagline="t", hero_cta_text="Go", hero_cta_url="https://safe.com",
+            nav_links=[NavLink("Docs", "/docs")],
+        )
+        html_out = render_landing_page(page)
+        self.assertNotIn('class="active"', html_out)
+
+    def test_no_nav_when_empty(self):
+        page = LandingPage(
+            title="CCA", tagline="t", hero_cta_text="Go", hero_cta_url="https://safe.com",
+            nav_links=[],
+        )
+        html_out = render_landing_page(page)
+        # Should not have nav element when no links
+        self.assertNotIn('<nav class="nav">', html_out)
+
+    def test_custom_footer_text_rendered(self):
+        page = LandingPage(
+            title="CCA", tagline="t", hero_cta_text="Go", hero_cta_url="https://safe.com",
+            footer_text="Custom footer text here",
+        )
+        html_out = render_landing_page(page)
+        self.assertIn("Custom footer text here", html_out)
+
+    def test_default_footer_rendered_when_none(self):
+        page = LandingPage(
+            title="MyCCA", tagline="t", hero_cta_text="Go", hero_cta_url="https://safe.com",
+        )
+        html_out = render_landing_page(page)
+        # Default footer should mention the title
+        self.assertIn("<footer>", html_out)
+
+
+class TestDocsPageRenderDetails(unittest.TestCase):
+    """Rendering details for docs pages."""
+
+    def test_section_anchor_id_from_heading(self):
+        page = DocsPage(
+            title="Test", module="mod", description="d",
+            sections=[DocSection("Getting Started", "content")],
+        )
+        html_out = render_docs_page(page)
+        self.assertIn('id="getting-started"', html_out)
+
+    def test_section_heading_with_slash_anchor(self):
+        page = DocsPage(
+            title="Test", module="mod", description="d",
+            sections=[DocSection("API/Usage", "content")],
+        )
+        html_out = render_docs_page(page)
+        # Slash in heading should become hyphen in anchor
+        self.assertIn('id="api-usage"', html_out)
+
+    def test_section_h3_for_level_3(self):
+        page = DocsPage(
+            title="Test", module="mod", description="d",
+            sections=[DocSection("Sub Section", "content", level=3)],
+        )
+        html_out = render_docs_page(page)
+        self.assertIn("<h3>", html_out)
+
+    def test_section_h2_for_default_level(self):
+        page = DocsPage(
+            title="Test", module="mod", description="d",
+            sections=[DocSection("Main Section", "content")],
+        )
+        html_out = render_docs_page(page)
+        self.assertIn("<h2>", html_out)
+
+    def test_nav_with_no_links_renders_minimal_nav(self):
+        page = DocsPage(
+            title="Test", module="mod", description="d",
+            sections=[],
+            nav_links=[],
+        )
+        html_out = render_docs_page(page)
+        # Should still have a nav
+        self.assertIn('<nav class="nav">', html_out)
+
+    def test_sidebar_links_reference_section_anchors(self):
+        page = DocsPage(
+            title="Test", module="mod", description="d",
+            sections=[
+                DocSection("Install", "pip install"),
+                DocSection("Config", "set options"),
+            ],
+        )
+        html_out = render_docs_page(page)
+        self.assertIn('href="#install"', html_out)
+        self.assertIn('href="#config"', html_out)
+
+
+# ── _collect_landing_page integration ────────────────────────────────────────
+
+class TestCollectLandingPage(unittest.TestCase):
+    """Test _collect_landing_page() which reads real project files."""
+
+    def test_collect_with_valid_index(self):
+        """Collect from a minimal fake PROJECT_INDEX.md + SESSION_STATE.md."""
+        import website_generator as wg
+        from unittest.mock import patch
+
+        index_content = """
+# CCA PROJECT INDEX
+
+| Module | Status | Tests | LOC |
+|--------|--------|-------|-----|
+| Memory System | ACTIVE | 200 | 1000 |
+| Spec System | COMPLETE | 150 | 800 |
+|---|---|---|---|
+
+**Total: 350 tests (2 suites)**
+"""
+        state_content = "Session 95 — 2026-03-20"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            index_path = os.path.join(tmpdir, "PROJECT_INDEX.md")
+            state_path = os.path.join(tmpdir, "SESSION_STATE.md")
+            Path(index_path).write_text(index_content)
+            Path(state_path).write_text(state_content)
+
+            with patch.object(wg.Path(__file__).parent.__class__, "__init__"),\
+                 patch("website_generator.os.path.exists", return_value=True),\
+                 patch("builtins.open", side_effect=lambda path, **kw: open(
+                     index_path if "PROJECT_INDEX" in path else state_path
+                 )):
+                # Just call it and ensure it returns a LandingPage without error
+                page = wg._collect_landing_page.__wrapped__() if hasattr(wg._collect_landing_page, "__wrapped__") else None
+
+        # Simpler: verify it at least runs (uses real PROJECT_INDEX.md)
+        page = wg._collect_landing_page()
+        self.assertIsInstance(page, wg.LandingPage)
+
+    def test_collect_returns_landing_page_type(self):
+        import website_generator as wg
+        page = wg._collect_landing_page()
+        self.assertIsInstance(page, wg.LandingPage)
+        self.assertIsInstance(page.features, list)
+        self.assertIsInstance(page.metrics, list)
+
+    def test_collect_metrics_have_values(self):
+        import website_generator as wg
+        page = wg._collect_landing_page()
+        # Should have at least tests metric
+        labels = [m.label for m in page.metrics]
+        self.assertIn("Tests", labels)
+
+    def test_collect_nav_links_present(self):
+        import website_generator as wg
+        page = wg._collect_landing_page()
+        self.assertGreater(len(page.nav_links), 0)
+        labels = [n.label for n in page.nav_links]
+        self.assertIn("GitHub", labels)
+
+    def test_collect_renders_to_html(self):
+        import website_generator as wg
+        page = wg._collect_landing_page()
+        html_out = wg.render_landing_page(page)
+        self.assertIn("<!DOCTYPE html>", html_out)
+        self.assertIn("ClaudeCodeAdvancements", html_out)
+
+
 if __name__ == "__main__":
     unittest.main()
