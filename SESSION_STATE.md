@@ -3,27 +3,26 @@
 
 ---
 
-## Current State (as of Session 101 — 2026-03-21)
+## Current State (as of Session 102 — 2026-03-21)
 
-**Phase:** Session 101 COMPLETE. Desktop + cli1 worker. 11 commits (8 desktop, 3 worker). MT-20 Gap 3 DONE. MT-12 Phase 4 DONE. MT-20 E2E LLM validated.
+**Phase:** Session 102 COMPLETE. Desktop + cli1 worker. 11 commits (8 desktop, 3 worker). MT-12 ALL 6 PHASES COMPLETE. MT-20 graduated to COMPLETED in priority_picker.
 
-**What was done this session (S101):**
-- **MT-20 Gap 3 COMPLETE**: session_id.py wired into 7 modules (slim_init, wrap_tracker, trial_tracker, loop_health, init_benchmarker, hivemind_session_validator, phase3_coordinator). All canonical "S{number}" format.
-- **session_timeline.py built** (36 tests, 292 LOC): Unified cross-module session aggregator using canonical session IDs. CLI: recent/session/stats/json.
-- **MT-12 Phase 4 COMPLETE**: Expanded paper scans across prediction, statistics, trading_systems, context_management. Papers: 25 -> 1242. 63 Kalshi-relevant (score>=55). Top 10 sent to bridge.
-- **MT-20 E2E LLM validation PASSED**: All senior dev LLM features confirmed with real API key — LLMClient.ask(), intent verification, trade-off analysis, multi-turn conversation.
-- **Senior Dev USAGE.md**: Quick-reference for all senior dev tools (passive hook, /senior-review, interactive chat, intent/trade-off).
-- **/cca-wrap Step 1.5**: Wired /senior-review into wrap checklist — runs on changed .py files before self-assessment.
-- **Derailed task #4 closed**: Session ID normalization (S68 item) fully resolved.
-- **Worker (cli1)**: 183 new tests (test_paper_digest_extended 47 + 2 bug fixes, test_dashboard_generator_extended 66, test_chart_generator_extended 70). Worker also found dashboard CSS bug (fixed) and identified low-density modules.
-
-**ANTHROPIC_API_KEY**: Now set in ~/.zshrc. ROTATE the key Matthew pasted in chat — it was exposed in plaintext.
+**What was done this session (S102):**
+- **session_timeline.py wired into /cca-init**: run_timeline() in slim_init.py, Step 2.8 in full mode. 7 new tests (27 total).
+- **priority_picker.py updated**: MT-20 COMPLETED (was stale ACTIVE), MT-12 phases 4->5->6. 55 tests pass.
+- **MT-12 Phase 5 COMPLETE**: confidence_calibrator.py from ConfTuner paper (Li et al. 2025). Verbal confidence extraction, PredictionLog, CalibrationMetrics (ECE), ConfidenceAdjuster. 29 tests.
+- **confidence_calibrator wired into senior_chat**: LLMClient.ask_with_confidence() method. 5 new tests (61 total).
+- **test_journal_extended.py**: 50 tests covering trading metrics, time stratification, nuclear metrics, pain/win, edge cases.
+- **MT-12 Phase 6 COMPLETE**: hit_rate_tracker.py (32 tests). APF=22.7% (target 40%). Frontier 2 (44.2%) and 4 (45.8%) exceed target.
+- **Cross-chat**: Responded to Kalshi Requests 4 (overnight research) and 8 (XRP SPRT analysis). Formal statistics: p=0.084, soft guard justified, hard guard NOT yet.
+- **Worker (cli1)**: 163 new tests (test_coherence_checker_extended 56, test_session_pacer_extended 49, test_research_outcomes_extended 58).
+- **MT-12 ALL 6 PHASES COMPLETE**. MT-20 graduated. Both MTs feature-complete.
 
 **Next (prioritized):**
-1. Wire session_timeline.py into /cca-init (quick "last 5 sessions" display)
-2. MT-12 Phase 5: Implement one methodology from a top-scored paper
-3. Low test density modules: report_generator.py (2.2%), dashboard_generator.py (4.2%), journal.py (5.4%)
-4. Worker next tasks: test_coherence_checker_extended, test_session_pacer_extended, test_research_outcomes_extended
+1. No active MTs — all completed or blocked. Consider: unblock MT-1 (Claude Control install), MT-5 (Remote Control), or define new MTs
+2. APF improvement: "Other" category at 9.7% drags overall — better frontier tagging or scan filtering
+3. Cross-chat Requests 5 (Kalshi leaderboard) and 9 (non-stationarity) still OPEN
+4. Low test density remaining: improver.py, reflect.py, trace_analyzer.py
 
 **What was done this session (S98):**
 - **priority_picker.py built** — 55 tests. Improved MT priority formula: completion bonus, ROI estimate, stagnation penalty. CLI interface for autonomous task selection. Wired into /cca-auto-desktop Step 2.
