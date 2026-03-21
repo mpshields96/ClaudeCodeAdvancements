@@ -190,7 +190,7 @@ def check_phase1_gate(path: str = DEFAULT_LOG_PATH) -> dict:
 
 
 def format_for_init(path: str = DEFAULT_LOG_PATH) -> str:
-    """One-line briefing for /cca-init."""
+    """One-line briefing for /cca-init. Includes Phase 1-3 status."""
     history = get_history(path)
     if not history:
         return "Hivemind: No hivemind sessions recorded yet."
@@ -202,10 +202,22 @@ def format_for_init(path: str = DEFAULT_LOG_PATH) -> str:
     parts = [f"Hivemind: {total} sessions ({streak} consecutive PASS)"]
 
     if gate["ready"]:
-        parts.append("Phase 1 gate: READY")
+        parts.append("Phase 1: PASSED, Phase 2: PASSED")
     else:
         needed = 3 - streak
         parts.append(f"Phase 1 gate: {needed} more consecutive PASS needed")
+
+    # Phase 3 status (if module available)
+    try:
+        import phase3_coordinator as p3c
+        coord = p3c.Coordinator()
+        p3_brief = coord.format_briefing()
+        if "No Phase 3" not in p3_brief:
+            parts.append(p3_brief)
+        else:
+            parts.append("Phase 3: awaiting first 3-chat session")
+    except ImportError:
+        pass
 
     return " — ".join(parts)
 

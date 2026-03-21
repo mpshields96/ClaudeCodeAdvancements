@@ -198,7 +198,7 @@ class TestFormatForInit(unittest.TestCase):
         for i in range(3):
             hsv.record_session(90 + i, {"verdict": "PASS", "worker_id": "cli1"}, path=self.log_path)
         line = hsv.format_for_init(path=self.log_path)
-        self.assertIn("Phase 1 gate", line)
+        self.assertIn("Phase 1: PASSED", line)
 
 
 class TestCheckPhaseGate(unittest.TestCase):
