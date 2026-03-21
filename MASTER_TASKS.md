@@ -799,7 +799,7 @@ developer colleague.
 6. Supervised 1-hour trial #3
 7. Gate: 3/3 trials clean → approved for autonomous use
 
-**Status:** Phase 1 COMPLETE (S94), Phase 2 (notification) COMPLETE (S95). Infrastructure ready. Supervised trials: 2/3 complete (S96 Trial #1 PASS, S97 Trial #2 PASS). Next: Trial #3 (S99). Base value: 9. Last touched: S98.
+**Status:** GATE PASSED (S99). 3/3 supervised trials complete (S96 PASS, S97 PASS, S99 PASS). Approved for autonomous 1-hour segments. Phase 1 (S94), Phase 2 notification (S95), Phase 3 validation (S99) all COMPLETE. Base value: 9. Last touched: S99.
 
 ---
 
@@ -859,7 +859,7 @@ python3 priority_picker.py json          # Export for programmatic use
 
 | Rank | MT | Task | Base | Age | Comp% | Bonus | ROI | Stag | **Score** | Urgency | Next |
 |------|----|------|------|-----|-------|-------|-----|------|-----------|---------|------|
-| 1 | MT-22 | Autonomous 1-hour loop | 9 | +1.0 | 67% | +1.0 | +0.0 | 0.0 | **11.0** | routine | Trial #3 (2/3 complete). 3/3 clean -> approved |
+| 1 | MT-22 | Autonomous 1-hour loop | 9 | +0.0 | 100% | +1.0 | +0.0 | 0.0 | **10.0** | GRADUATED | GATE PASSED S99. 3/3 trials clean. Approved for autonomous use. |
 | 2 | MT-21 | Hivemind coordination | 8 | +1.0 | 67% | +1.0 | +0.0 | 0.0 | **10.0** | routine | Phase 2 PASSED (6th). Phase 3 = 3-chat |
 | 3 | MT-12 | Academic papers | 6 | +2.0 | 33% | +0.0 | +0.0 | 0.0 | **8.0** | routine | Phase 3: full domain scan. KalshiBench found S96 |
 | 4 | MT-18 | Academic writing | 4 | +4.0 | 0% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Research: install/evaluate ClaudePrism |
