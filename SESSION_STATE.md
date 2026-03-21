@@ -5,16 +5,19 @@
 
 ## Current State (as of Session 111 — 2026-03-21)
 
-**Phase:** Session 111 IN PROGRESS. Solo CCA. MT-30 Phase 2 COMPLETE. MT-28 Phases 5+6 COMPLETE — MT-28 GRADUATED (6/6).
+**Phase:** Session 111 COMPLETE. Solo CCA. 4 MTs advanced: MT-30 Phase 2, MT-28 Phases 5+6 (GRADUATED), MT-24 Phase 1.
 
 **What was done this session (S111):**
 - **MT-30 Phase 2: Session Registry + Tmux Manager** (`session_registry.py`, `tmux_manager.py`): Config loading/validation, session state lifecycle (pending→running→stopped/crashed/failed/paused), tmux window create/monitor/kill, env var injection with ANTHROPIC_API_KEY unset safety. 100 tests (60+40).
 - **MT-28 Phase 5: Predictive Recommender** (`predictive_recommender.py`): Pre-session recommendations from principle scores, domain affinity, recency weighting. Generates ranked principles + risk warnings. Injectable format for session start. 40 tests.
 - **MT-28 Phase 6: Sentinel Bridge** (`sentinel_bridge.py`): Connects SentinelMutator to principle_registry. Creates principles from validated proposals, counter-principles from rejections, feeds cross-pollinations into transfers. 30 tests.
 - **MT-28 GRADUATED**: All 6 phases complete (registry, plugin, transfer, feedback, predictive, sentinel_bridge).
+- **MT-24 Phase 1: Trading Charts** (`trading_chart.py`): 5 SVG chart types for trading analytics — PnLCurve, WinRateChart, StrategyMatrix, DrawdownChart, HeatmapChart. 41 tests.
 - **Default daemon config** (`session_daemon_config.json`): 3-session config validated.
-- **Priority picker updated**: MT-28 completed, MT-30 phase 2 done, session counter 111.
-- **Tests**: 6729 passing (168 suites). Up from 6559/165. +170 new tests.
+- **Bridge updated**: CCA_TO_POLYBOT.md with MT-28 integration guide + code examples.
+- **Priority picker updated**: MT-28 completed, MT-30 Phase 2, MT-24 Phase 1, session counter 111.
+- **Tests**: 6770 passing (169 suites). Up from 6559/165. +211 new tests.
+- **Commits**: 10 this session. Grade: A.
 
 **Next (prioritized):**
 1. **AUTH FIX**: Matthew must run `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc` before next Kalshi chat launch.
