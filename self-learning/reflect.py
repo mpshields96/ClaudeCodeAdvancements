@@ -486,6 +486,21 @@ def reflect(domain=None, apply=False, brief=False, propose=False, session_id=Non
         if pw["win_domains"]:
             print(f"Win by domain: {dict(pw['win_domains'])}")
 
+    # Principles (MT-28)
+    try:
+        from principle_registry import get_top_principles, get_stats as get_principle_stats
+        pstats = get_principle_stats()
+        if pstats["active"] > 0:
+            print(f"\n--- Strategic Principles ({pstats['active']} active, {pstats['reinforced']} reinforced) ---")
+            top = get_top_principles(n=5, domain=domain)
+            for i, p in enumerate(top, 1):
+                status = " [REINFORCED]" if p.is_reinforced else ""
+                print(f"  {i}. [{p.score:.2f}] {p.text[:70]}{status}")
+            if pstats["prunable"] > 0:
+                print(f"  ({pstats['prunable']} principles eligible for pruning)")
+    except ImportError:
+        pass  # principle_registry not available yet
+
     # Patterns
     if patterns:
         print(f"\n--- Detected Patterns ({len(patterns)}) ---")
