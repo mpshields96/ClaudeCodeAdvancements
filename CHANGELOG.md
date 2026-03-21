@@ -3,6 +3,31 @@
 
 ---
 
+## Session 97 — 2026-03-21
+
+**What changed:**
+- `self-learning/trading_analysis_runner.py` — Fixed for real Kalshi schema (pnl_cents/ticker/count/is_paper), auto-detect legacy vs current, paper/live separation, strategy health integration
+- `self-learning/strategy_health_scorer.py` — NEW: Statistical strategy health scorer (HEALTHY/MONITOR/PAUSE/KILL verdicts, 200 LOC)
+- `self-learning/tests/test_strategy_health_scorer.py` — NEW: 24 tests for health scorer
+- `self-learning/tests/test_trading_analysis_runner.py` — +9 Kalshi schema tests (28 total)
+- `MASTER_TASKS.md` — Graduated MT-9, MT-10, MT-17 to Completed. Priority queue recalculated for S97.
+- `KALSHI_INTEL.md` — Real analysis data appended (4052 trades, $450.11 PnL, 21 strategies)
+- `worker_task_tracker.py` — NEW (worker): Detect incomplete worker task completion (147 LOC, 26 tests)
+- `tests/test_worker_task_tracker.py` — NEW (worker): 26 tests
+
+**Why:**
+- MT-10 Phase 3A (top priority at 11.0) — graduate self-learning to Kalshi cross-project
+- Matthew directive: distinguish paper vs live bets, give worker more complex tasks
+- Financial mission: strategy health verdicts give Kalshi research chat actionable kill/pause recommendations
+
+**Tests:** 103/103 suites passing (~4050 total)
+
+**Lessons:**
+- Reading MASTER_TASKS.md in full eats context budget — build priority_picker.py to automate
+- Give worker tasks before heavy context reads to maximize parallel time
+
+---
+
 ## Session 96 — 2026-03-21
 
 **What changed:**
