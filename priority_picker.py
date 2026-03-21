@@ -254,10 +254,10 @@ def get_known_tasks(current_session: int = 111) -> list[MasterTask]:
         MasterTask(
             mt_id=24, name="Visualization & Graphics Engine",
             base_value=6, status=TaskStatus.ACTIVE,
-            last_touched_session=103, current_session=current_session,
-            phases_completed=0, phases_total=5,
+            last_touched_session=111, current_session=current_session,
+            phases_completed=1, phases_total=5,  # P1: trading_chart.py (5 chart types, 41 tests)
             aging_rate=0.5,
-            next_action="Research: diagrams, charts, publication-quality figures.",
+            next_action="Phase 2: Interactive HTML dashboard charts (D3.js or Chart.js).",
             tags=["visual", "reports"],
         ),
         MasterTask(
