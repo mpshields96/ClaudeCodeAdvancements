@@ -67,9 +67,25 @@ Reported to desktop via cca_comm.py
 
 ---
 
-## Step 6 — Close terminal tab
+## Step 6 — Late inbox check (catch messages sent while wrapping)
 
-After all wrap steps are complete, close this Terminal tab to prevent stale sessions:
+Before closing, do a final inbox check. Desktop may have queued a new task while you were wrapping.
+
+```bash
+python3 cca_comm.py inbox
+```
+
+- If a **new task** is assigned: Do NOT close. Go back to Step 2 of /cca-auto-worker and execute it.
+- If a **SHUTDOWN** message is present: Proceed to Step 7.
+- If **inbox is empty**: Proceed to Step 7.
+
+This step prevents task loss when desktop sends work after seeing the worker wrap start.
+
+---
+
+## Step 7 — Close terminal tab
+
+After all wrap steps are complete and inbox is empty, close this Terminal tab to prevent stale sessions:
 
 ```bash
 [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] && \
@@ -88,4 +104,4 @@ Only exception: if Matthew explicitly said to keep this CLI chat open.
 - Only commit files within your claimed scope
 - Report completion to desktop coordinator via cca_comm.py
 - If tests fail, fix them before committing
-- ALWAYS close your terminal tab on wrap (Step 6) unless explicitly told otherwise
+- ALWAYS close your terminal tab on wrap (Step 7) unless explicitly told otherwise
