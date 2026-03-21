@@ -82,9 +82,25 @@ If last scan IS today: skip — already done.
 
 ---
 
-## Step 2 — Determine next task
+## Step 2 — Determine next task (priority-driven)
 
-Read SESSION_STATE.md for current state. Pick the first incomplete task from the priorities.
+Use this priority cascade to pick the next task:
+
+1. **SESSION_STATE.md priorities** — check for any critical/blocking items first
+2. **MASTER_TASKS.md priority queue** — read the "Active Priority Queue" table, pick the highest-scored MT that has an actionable next phase
+3. **Self-learning journal** — check for patterns/recommendations that suggest specific work
+4. **Test coverage gaps** — if nothing above is urgent, fill test gaps for untested modules
+
+When picking from MASTER_TASKS:
+- Prefer MTs with `Rate: 1.0` (partial — more value from incremental progress)
+- Avoid MTs marked "Blocked" or requiring cross-project work
+- For each MT chosen, update `last_touched_session` in the priority queue after working on it
+- **Balance**: Don't spend the whole session on process/docs — at least 50% on actual MT work
+
+When assigning worker tasks:
+- Pick from the same priority queue but choose tasks suited for independent execution
+- Workers excel at: test writing, module building, coverage analysis, code review
+- Desktop excels at: doc updates, intelligence scans, bridge serving, process improvements
 
 ---
 
