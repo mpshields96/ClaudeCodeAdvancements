@@ -84,18 +84,25 @@ If last scan IS today: skip — already done.
 
 ## Step 2 — Determine next task (priority-driven)
 
-Use this priority cascade to pick the next task:
+Run the automated priority picker first:
 
-1. **SESSION_STATE.md priorities** — check for any critical/blocking items first
-2. **MASTER_TASKS.md priority queue** — read the "Active Priority Queue" table, pick the highest-scored MT that has an actionable next phase
-3. **Self-learning journal** — check for patterns/recommendations that suggest specific work
-4. **Test coverage gaps** — if nothing above is urgent, fill test gaps for untested modules
+```bash
+python3 priority_picker.py recommend
+```
 
-When picking from MASTER_TASKS:
-- Prefer MTs with `Rate: 1.0` (partial — more value from incremental progress)
-- Avoid MTs marked "Blocked" or requiring cross-project work
-- For each MT chosen, update `last_touched_session` in the priority queue after working on it
-- **Balance**: Don't spend the whole session on process/docs — at least 50% on actual MT work
+This outputs the top-ranked MT, quick wins, stagnating tasks, and unblockable blocked tasks.
+Use its recommendation as the primary signal.
+
+**Fallback cascade** (if priority_picker output is unclear):
+1. **SESSION_STATE.md priorities** — check for any critical/blocking items
+2. **Self-learning journal** — check for patterns suggesting specific work
+3. **Test coverage gaps** — fill test gaps for untested modules
+
+**Rules:**
+- Work the TOP PICK from priority_picker unless SESSION_STATE has a blocker
+- For each MT worked, update `get_known_tasks()` in `priority_picker.py` after completing
+- **Balance**: At least 50% of session on actual MT code work, not process/docs
+- Stagnating tasks need a decision: work them, reduce base_value, or archive
 
 When assigning worker tasks:
 - Pick from the same priority queue but choose tasks suited for independent execution

@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-21 (Session 97)
+# Last updated: 2026-03-22 (Session 98)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~4050 tests (103 suites). All must pass before any work.**
+**Total: ~4130 tests (104 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -135,6 +135,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `chat_detector.py` — Duplicate Claude Code session detection + pre-launch safety (31 tests, S91)
 - `crash_recovery.py` — Worker crash detection + orphaned scope auto-release (15 tests, S91)
 - `worker_task_tracker.py` — Detect incomplete worker task completion (26 tests, S97)
+- `priority_picker.py` — Automated MT priority selection with improved scoring (55 tests, S98)
 
 **research/** — R&D and tools
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)
