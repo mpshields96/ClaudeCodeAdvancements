@@ -203,22 +203,23 @@ def get_known_tasks(current_session: int = 98) -> list[MasterTask]:
             next_action="SHELVED Phase 3 (3-chat). 2-chat is sufficient per Matthew.",
             tags=["coordination", "hivemind"],
         ),
+        # === ARCHIVED (stagnation resolver recommended, S100) ===
         MasterTask(
             mt_id=18, name="Academic writing workspace",
-            base_value=4, status=TaskStatus.ACTIVE,
+            base_value=4, status=TaskStatus.COMPLETED,
             last_touched_session=None, current_session=current_session,
             phases_completed=0, phases_total=5,
             aging_rate=0.5,
-            next_action="Research phase: install/evaluate ClaudePrism.",
+            next_action="ARCHIVED S100: 100 sessions untouched, 0% complete. Revisit if priorities change.",
             tags=["personal", "academic"],
         ),
         MasterTask(
             mt_id=13, name="iOS/macOS app development",
-            base_value=4, status=TaskStatus.ACTIVE,
+            base_value=4, status=TaskStatus.COMPLETED,
             last_touched_session=49, current_session=current_session,
             phases_completed=2, phases_total=6,
             aging_rate=0.5,
-            next_action="Phase 3: Build first real app (Kalshi mobile dashboard).",
+            next_action="ARCHIVED S100: 51 sessions untouched. Phase 2 done. Revisit when mobile is priority.",
             tags=["mobile", "kalshi"],
         ),
         MasterTask(
@@ -229,6 +230,15 @@ def get_known_tasks(current_session: int = 98) -> list[MasterTask]:
             aging_rate=1.0,
             next_action="Phase 3: Ran scans S98. Agents/context strong, prediction weak.",
             tags=["research", "kalshi"],
+        ),
+        MasterTask(
+            mt_id=20, name="Senior dev agent",
+            base_value=7, status=TaskStatus.ACTIVE,
+            last_touched_session=99, current_session=current_session,
+            phases_completed=5, phases_total=9,  # Phases 1-5 done, 6-9 defined in gap analysis
+            aging_rate=1.0,
+            next_action="Phases 6-9: intent classifier, tradeoff analyzer, LLM integration, coherence v2.",
+            tags=["quality", "senior-dev"],
         ),
         # === BLOCKED ===
         MasterTask(
