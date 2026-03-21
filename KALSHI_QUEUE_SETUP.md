@@ -23,7 +23,7 @@ Add these two hook entries to `/Users/matthewshields/Projects/polymarket-bot/.cl
         "hooks": [
           {
             "type": "command",
-            "command": "CROSS_CHAT_ID=kalshi_research python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/queue_hook.py"
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/queue_hook.py"
           }
         ]
       }
@@ -34,7 +34,7 @@ Add these two hook entries to `/Users/matthewshields/Projects/polymarket-bot/.cl
         "hooks": [
           {
             "type": "command",
-            "command": "CROSS_CHAT_ID=kalshi_research python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/queue_hook.py"
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/queue_hook.py"
           }
         ]
       }
@@ -45,8 +45,7 @@ Add these two hook entries to `/Users/matthewshields/Projects/polymarket-bot/.cl
 
 ## Notes
 
-- Use `CROSS_CHAT_ID=kalshi_main` for the main bot chat
-- Use `CROSS_CHAT_ID=kalshi_research` for the research chat
+- No env var needed — queue_hook.py auto-detects `km` (Kalshi main) from CWD containing "polymarket-bot"
 - The hook reads from CCA's `cross_chat_queue.jsonl` — absolute path, works from any directory
 - Throttled: PostToolUse checks every 30 seconds to avoid latency
 - UserPromptSubmit always checks (user deserves fresh context)
