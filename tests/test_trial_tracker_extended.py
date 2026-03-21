@@ -136,13 +136,12 @@ class TestMissingFields(unittest.TestCase):
         except Exception as e:
             self.fail(f"load_trials crashed on extra fields: {e}")
 
-    def test_null_mt_id_raises_value_error(self):
-        """KNOWN GAP: null mt_id in JSONL raises ValueError from __post_init__.
+    def test_null_mt_id_skipped(self):
+        """Null mt_id in JSONL is gracefully skipped (ValueError caught by load_trials).
 
-        load_trials currently catches (JSONDecodeError, TypeError) but not ValueError.
+        FIXED: load_trials now catches (JSONDecodeError, TypeError, ValueError).
         When mt_id is JSON null (None), TrialRecord.__post_init__ raises ValueError
-        which propagates uncaught. This test documents the current behavior.
-        Desktop should add ValueError to the except clause in load_trials.
+        which is now caught, and the record is skipped. Only the valid record loads.
         """
         from trial_tracker import load_trials, record_trial, TrialRecord
 
@@ -154,9 +153,10 @@ class TestMissingFields(unittest.TestCase):
         with open(self.trial_file, "a") as f:
             f.write(json.dumps(bad) + "\n")
 
-        # Current behavior: raises ValueError (uncaught exception — known gap)
-        with self.assertRaises(ValueError):
-            load_trials(trial_file=self.trial_file)
+        # Fixed behavior: null mt_id is skipped, only the valid record loads
+        trials = load_trials(trial_file=self.trial_file)
+        self.assertEqual(len(trials), 1)
+        self.assertEqual(trials[0].mt_id, "MT-22")
 
     def test_empty_json_object_skipped(self):
         """Empty JSON object should be skipped."""
