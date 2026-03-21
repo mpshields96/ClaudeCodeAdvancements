@@ -291,11 +291,11 @@ def get_known_tasks(current_session: int = 111) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=28, name="Self-Learning v2 (Multi-Domain)",
-            base_value=10, status=TaskStatus.ACTIVE,
+            base_value=10, status=TaskStatus.COMPLETED,
             last_touched_session=111, current_session=current_session,
-            phases_completed=5, phases_total=6,  # P1 registry, P2 plugin, P3 transfer, P4 feedback, P5 predictive
-            aging_rate=1.0,
-            next_action="Phase 6: Sentinel-style adaptive mutation — counter-strategies for failure patterns.",
+            phases_completed=6, phases_total=6,  # ALL COMPLETE: registry, plugin, transfer, feedback, predictive, sentinel_bridge
+            aging_rate=0,
+            next_action="DONE. All 6 phases complete. Full adaptive self-learning pipeline.",
             tags=["self-learning", "kalshi"],
         ),
         MasterTask(
