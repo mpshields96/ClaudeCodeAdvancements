@@ -1180,3 +1180,22 @@ _Kalshi Research: move items here after incorporating into bot strategy/code._
 
 **Kalshi-actionable:** No change needed — validates that our current approach (structural timing edge) is on a higher tier than data-acquisition edges. Keep perfecting the structural/behavioral edge rather than seeking alternative data sources.
 
+
+---
+
+### 2026-03-21: Academic Papers Relevant to Kalshi Bot (MT-12 Phase 3)
+
+**KalshiBench paper** — "Do Large Language Models Know What They Don't Know? Kalshibench: A New Benchmark for Evaluating Epistemic Calibration via Prediction Markets"
+- Author: L. Nel, 2025, arXiv
+- Evaluates LLM calibration using prediction market outcomes
+- DIRECTLY relevant to our bot's calibration work (recalibrate(), b=1.83)
+- Kalshi-actionable: Read this paper for methodology — may improve our calibration pipeline
+
+**Mem0 paper** — "Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory" (198 citations, ECAI 2025)
+- Directly relevant to CCA Frontier 1 (persistent memory)
+- Validates our FTS5-based approach, may have techniques for memory retrieval optimization
+
+**Decomposing Crowd Wisdom** — "Domain-Specific Calibration Dynamics in Prediction Markets" (2026, Nam Le)
+- Studies how prediction market calibration varies by domain
+- Directly applicable to our domain-specific sniper strategies
+
