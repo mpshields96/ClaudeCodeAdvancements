@@ -3,51 +3,51 @@
 
 ---
 
-## Current State (as of Session 97 — 2026-03-21)
+## Current State (as of Session 98 — 2026-03-22)
 
-**Phase:** Session 97 COMPLETE. Dual-chat (Desktop + cli1 worker). MT-22 Supervised Trial #2 COMPLETE. Tests: 103 suites, ~4050 total passing. Git: 3 desktop commits + worker commits. Hivemind: 6th consecutive PASS — Phase 1 gate READY.
+**Phase:** Session 98 COMPLETE. Dual-chat (Desktop + cli1 worker). Tests: ~109 suites, ~4373 total passing. Git: 9 desktop commits + worker commits. Hivemind: 7th consecutive PASS.
 
-**What was done this session (S97):**
-- **MT-10 Phase 3A COMPLETE** — Fixed trading_analysis_runner.py for real Kalshi schema (pnl_cents/ticker/count/is_paper). Auto-detects legacy vs current schema. Tested against real polybot.db: 4052 trades, $450.11 PnL, 21 strategies. KALSHI_INTEL.md updated with real analysis.
-- **strategy_health_scorer.py built** — 200 LOC, 24 tests. Statistical health assessment per strategy (HEALTHY/MONITOR/PAUSE/KILL). Uses PnL thresholds, loss streaks, WR drift, profit/trade. Min sample size guard (N=20). Real DB: sniper PAUSE (11-streak), eth_drift PAUSE (WR dropping).
-- **Paper/live trade separation** — is_paper field extracted, live trades for metrics, paper excluded from health verdicts (Matthew S97 directive).
-- **3 MTs graduated to Completed** — MT-9 (autonomous scanning), MT-10 (YoYo self-learning), MT-17 (design/reports). Priority queue recalculated.
-- **Worker (cli1)**: Built worker_task_tracker.py (147 LOC, 26 tests) — detects workers who wrap without completing all assigned tasks. Keep-busy coverage analysis identified 4 files with no tests.
-- **MT-22 Trial #2 observations** — Desktop hit context red zone (76.8%) after 2 code tasks. Worker completed 1 of 3 tasks. Session followed S96 directive: MT work FIRST.
+**What was done this session (S98):**
+- **priority_picker.py built** — 55 tests. Improved MT priority formula: completion bonus, ROI estimate, stagnation penalty. CLI interface for autonomous task selection. Wired into /cca-auto-desktop Step 2.
+- **MASTER_TASKS.md priority system rewritten** — documents improved formula, CLI commands, stagnation flagging, blocked task re-evaluation.
+- **MT-1 Claude Control evaluated** — active dev (last commit 2026-03-20), DMG install, auto-discovers Claude processes. INSTALL_CLAUDE_CONTROL.md written with explicit step-by-step instructions.
+- **init_cache.py built** — 21 tests. Fast session startup via test caching. Smoke test (10 critical suites, ~15s) replaces full suite at init. Cache written at wrap.
+- **test_validate.py** — 47 tests for spec-system/hooks/validate.py (was 316 LOC, 0 tests)
+- **test_doc_drift_checker.py** — 55 tests for usage-dashboard/doc_drift_checker.py (was 488 LOC, 0 tests). Fixed tilde parsing bug.
+- **MT-12 Phase 3** — Paper scanner ran across agents, prediction, statistics, context_management domains. Agents/context strongest. Mem0 paper found (198 citations, long-term memory for AI agents).
+- **Daily intelligence scan** — OpenWolf ADAPT finding (80% token reduction via file anatomy indexing, 62pts). Claude Control developer posted their own tool (#10 on r/ClaudeCode).
+- **Worker (cli1)**: Built test_cca_hivemind.py (71 tests), test_generate_report_pdf.py (49 tests), test_report_generator_extended.py (in progress).
+- **Feedback saved**: simple explicit instructions to file (ADHD-friendly, copy-pasteable steps)
 
-**Matthew directives (S51-S97, permanent):**
-- All S51-S96 directives still active
-- S97: Recognize difference between paper bets and live bets in analysis
-- S97: Give worker more complex tasks as it gets better
+**Matthew directives (S51-S98, permanent):**
+- All S51-S97 directives still active
+- S98: When giving instructions, write to a file with simplest explicit steps
+- S98: Worker should target 45-60 minutes productive work (excluding startup/wrap)
+- S98: Compaction discussion — clean wrap preferred over compaction for heavy-rules projects
 
 **Next (prioritized):**
-1. GitHub push blocked: PAT needs `workflow` scope — Matthew must update token
-2. Claude Control integration analysis: could serve as visual layer for MT-1
-3. Remaining test gaps: generate_report_pdf.py (418 LOC), doc_drift_checker.py (488 LOC), cca_hivemind.py (625 LOC), validate.py (316 LOC)
-4. Worker queued tasks not completed: report_generator tests, priority_picker.py
-5. MT-22 Trial #3 needed for 3/3 gate
+1. Install Claude Control: open INSTALL_CLAUDE_CONTROL.md and follow steps (Matthew manual)
+2. GitHub push still blocked: PAT needs `workflow` scope
+3. MT-22 Trial #3 counts as S98 (supervised). Need to confirm pass in next session.
+4. OpenWolf anatomy.md concept — adapt for context-monitor (reduce redundant reads)
+5. MT-18/MT-13 stagnating — need decision: work, reduce base_value, or archive
+6. Worker tasks 4+5 may need re-queuing if worker didn't complete them
+
+---
+
+## What Was Done in Session 97 (2026-03-21)
+
+- MT-10 Phase 3A COMPLETE — trading_analysis_runner.py for real Kalshi schema
+- strategy_health_scorer.py built — 200 LOC, 24 tests
+- Paper/live trade separation
+- 3 MTs graduated (MT-9, MT-10, MT-17)
+- Worker: worker_task_tracker.py (26 tests)
+- MT-22 Trial #2 observations
 
 ---
 
 ## What Was Done in Session 66 (2026-03-19)
 
-**What's done:**
-1. **plan_compliance.py built** (SPEC-6, 38 tests) — Plan compliance reviewer. Detects scope creep, future-task drift, unapproved spec state.
-2. **spec_freshness wired into validate.py** — Staleness warning injected as additionalContext.
-3. **journal.jsonl committed** — S65 session journal entries committed.
-
----
-
-## What Was Done in Session 61 (2026-03-19)
-
-1. **FTS5 memory store built** (Frontier 1 P0) — memory_store.py (464 LOC, 80 tests). SQLite+FTS5 backend with BM25 relevance search, atomic transactions, WAL mode, TTL cleanup by confidence. Stdlib-only, zero dependencies. Ready for MCP server backend swap.
-2. **Reddit daily scan** — r/ClaudeCode, r/ClaudeAI, r/vibecoding hot posts scanned. r/AskVibecoders investigated (NOT worth adding — low engagement, high cross-posting). Key theme: "harness debt" = CLAUDE.md compliance degrades with context, hooks fire deterministically.
-3. **Batch URL reviews** — 12 links reviewed total (7 from Matthew's saved posts + 5 from second batch). 19 new FINDINGS_LOG entries.
-
----
-
-## What Was Done in Session 60 (2026-03-19)
-
-1. **trade_reflector schema validated** against real polybot.db — fixed 5 mismatches.
-2. **Frontier 1 memory architecture comparison** — Analyzed engram, ClawMem, claude-mem.
-3. **MT-10 Phase 3B: resurfacer integration** — 8 new tests.
+1. plan_compliance.py built (SPEC-6, 38 tests)
+2. spec_freshness wired into validate.py
+3. journal.jsonl committed
