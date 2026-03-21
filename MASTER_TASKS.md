@@ -809,6 +809,189 @@ developer colleague.
 
 ---
 
+## MT-23: Mobile Remote Control v2 (Telegram/Discord Channels)
+
+**Source:** Matthew S103 vision — seamless iPhone experience for Claude Code communication
+**What Matthew wants:** An app-like experience on iPhone to:
+- Chat with active Claude Code sessions from phone
+- Leave for minutes to an hour, hop right back in seamlessly
+- Memory functions across mobile sessions
+- Replace ntfy (Matthew: "ntfy doesn't seem optimal")
+
+**Why this matters:** Currently the mobile approver uses ntfy which is fire-and-forget push notifications. The new official Anthropic Telegram/Discord channels MCP enables bidirectional chat from phone — a fundamentally better experience.
+
+**Reddit intelligence (S103):**
+- Official Anthropic feature (364 upvotes, 98%): Telegram and Discord channels via MCP
+- Community already had custom solutions (Openclaw, tmux daemons) — Anthropic productized it
+- Bug reported: context loss after long sessions (needs investigation)
+- Signal support requested by community but not available yet
+
+**Technical path:**
+1. Research: Evaluate official Telegram/Discord channels MCP setup
+2. Compare: Telegram vs Discord vs Signal (when available) for Matthew's use case
+3. Build: Configure MCP integration, test session persistence
+4. Validate: Hop-on/hop-off test — leave for 30 min, return, context intact
+5. Wire: Replace ntfy mobile approver with channels-based communication
+6. Polish: Memory persistence, session status display, quick-action buttons
+
+**Status:** NOT STARTED. Phase 1: Research.
+
+---
+
+## MT-24: Visualization & Graphics Engine
+
+**Source:** Matthew S103 vision — "exponentially smarter and better" visual capabilities
+**What Matthew wants:**
+- Diagrams (architecture, flow, sequence — beyond basic mermaid)
+- Charts (data visualization, performance metrics, trading analytics)
+- Figures (publication-quality for academic presentations)
+- Interactive dashboards (beyond current HTML dashboard)
+
+**Technical path (needs research):**
+- Evaluate: matplotlib, plotly, seaborn for chart generation
+- Evaluate: D3.js or Chart.js for interactive web dashboards
+- Evaluate: graphviz, mermaid-cli for diagram generation
+- Build: Chart generator module that produces publication-quality visuals
+- Integration: Wire into reports, slides, dashboards, and academic writing
+
+**Relationship to existing work:**
+- MT-17 (Design/Reports) delivered basic reports/slides/dashboard — COMPLETED
+- This goes deeper: interactive, publication-quality, trading-specific
+
+**Status:** NOT STARTED. Phase 1: Research.
+
+---
+
+## MT-25: Presentation Generator (Matthew's Style)
+
+**Source:** Matthew S103 vision — Grand Rounds and psychopharmacology lecture presentations
+**What Matthew wants:**
+- Perfect PowerPoint generator specific to his presentation style
+- NOT "AI slop" — must match his actual aesthetic and structure preferences
+- Port Claude Pro presentation workflow to Claude Code capability
+- Encode his style rules (layout, fonts, colors, content density, slide transitions)
+
+**WAITING:** Matthew to provide style samples and further info before implementation begins.
+
+**Technical path (after style info received):**
+1. Analyze: Study Matthew's existing presentations to extract style rules
+2. Encode: Build a presentation style profile (similar to Reddit Post #1 infosec Skills pattern)
+3. Build: PowerPoint generator that applies the style profile
+4. Validate: Generate a test presentation, Matthew reviews for "AI slop" detection
+5. Iterate: Refine based on feedback until indistinguishable from manual work
+
+**Status:** NOT STARTED. BLOCKED on style samples from Matthew.
+
+---
+
+## MT-26: Financial Intelligence Engine
+
+**Source:** Matthew S103 vision — academic research + market analysis backbone for trading
+**What Matthew wants:**
+- CCA becomes the research/analysis backbone for Kalshi profitability
+- Academic papers on prediction markets, Bayesian methods, probability theory
+- Market condition analysis: read and interpret market conditions quickly
+- Adaptation speed: respond to changing conditions faster
+- Statistical rigor: proper significance testing, sample size guards
+- Long-term: extend to investments/stocks after Kalshi proves profitable
+
+**Financial targets (ordered milestones):**
+- A: Cover Claude Max 5x ($125/mo)
+- B: Cover Claude Max 20x ($250/mo)
+- C: Compounding passive income (few hundred USD/mo)
+- D: Transition to investments/stocks (long-term)
+
+**Relationship to existing work:**
+- MT-0 (Kalshi self-learning) covers Phase 1 — trading domain schema
+- MT-12 (Academic papers) built the scanner — COMPLETED
+- This MT extends both: specialized financial research + actionable intelligence
+
+**Technical path:**
+1. Research: Survey what financial intelligence tools exist (papers, APIs, data sources)
+2. Design: Financial intelligence pipeline (data ingestion → analysis → signal → cross-chat delivery)
+3. Build: Specialized research modules for prediction markets, economics, Bayesian methods
+4. Wire: Connect to Kalshi cross-chat bridge for direct bot intelligence
+5. Validate: Track which intelligence items led to profitable trades (closed feedback loop)
+6. Expand: Add investment/stocks domain when Kalshi profitability proven
+
+**Status:** NOT STARTED. Phase 1: Research.
+
+---
+
+## MT-27: CCA Nuclear v2 (Enhanced Scanning)
+
+**Source:** Matthew S103 vision — better Reddit/GitHub scanning with safety-first approach
+**What Matthew wants:**
+- Better signal-to-noise ratio (APF currently 22.7%, target 40%)
+- Reduce "Other" category drag (9.7% = misclassified posts)
+- Enhanced GitHub trending repo analysis
+- ABSOLUTE safety: no rat poison, no malware, no personal info exposure
+
+**Technical path:**
+1. Analyze: Why is "Other" at 9.7%? Better frontier tagging or scan filtering
+2. Build: Improved post classifier with more granular category mapping
+3. Wire: hit_rate_tracker into /cca-wrap as APF checkpoint
+4. Validate: APF improvement measured session-over-session
+5. GitHub: Enhance github_scanner with better repo quality signals
+
+**Relationship to existing work:**
+- MT-6 (Nuclear at will) — COMPLETED, built profiles.py
+- MT-9 (Autonomous scanning) — COMPLETED, built autonomous_scanner.py
+- MT-11 (GitHub intelligence) — COMPLETED, built github_scanner.py
+- This MT improves quality of the existing scanning infrastructure
+
+**Status:** NOT STARTED. Phase 1: APF analysis.
+
+---
+
+## MT-28: Self-Learning v2 (Multi-Domain)
+
+**Source:** Matthew S103 vision — significant YoYo improvements across multiple facets
+**What Matthew wants:**
+- Cross-domain learning: CCA self-improvement informs Kalshi self-improvement
+- Predictive capability (not just pattern detection)
+- Sentinel-style adaptive mutation: analyze failures, generate counter-strategies
+- Closed feedback loop from Kalshi outcomes → research prioritization
+
+**Relationship to existing work:**
+- MT-10 (YoYo self-learning) — COMPLETED, Phase 3 validated
+- MT-0 (Kalshi self-learning) — Phase 1 done, Phase 2 = deploy
+- journal.py, reflect.py, strategy.json, improver.py — all built
+- This MT takes existing pieces and makes them work across domains
+
+**Technical path:**
+1. Research: Cross-domain transfer learning patterns in self-improvement systems
+2. Design: Multi-domain journal schema (CCA ops, Kalshi trading, research effectiveness)
+3. Build: Domain adapter layer so same reflect/improve pipeline works across domains
+4. Wire: Closed loop — Kalshi outcomes feed back into research prioritization
+5. Validate: Measurable improvement in research hit rate AND trading ROI
+6. Iterate: Sentinel-style mutation — counter-strategies for repeated failure patterns
+
+**Status:** NOT STARTED. Phase 1: Research.
+
+---
+
+## MT-29: Cowork + Claude Pro Bridge Hivemind
+
+**Source:** Matthew S103 vision — Cowork integration + Pro↔Code bridge
+**What Matthew wants:**
+- Evaluate Claude Cowork for CCA workflows (is it objectively better than current hivemind?)
+- Bridge Claude Pro (web/desktop) with Claude Code for unified experience
+- Strategy discussions in Pro, implementation in Code, shared context
+- Extends MT-5 (partially self-resolved) and MT-21 (hivemind coordination)
+
+**Technical path (needs research):**
+1. Research: What Cowork can and can't do vs our current worker pattern
+2. Research: Claude Pro MCP access, shared context mechanisms
+3. Evaluate: Is Cowork objectively better for our use cases?
+4. Design: Pro↔Code bridge architecture
+5. Build: If Cowork adds value, integrate. If not, document why and close.
+6. Wire: Connect to hivemind coordination (MT-21)
+
+**Status:** NOT STARTED. Phase 1: Research.
+
+---
+
 ## Priority Scoring System (Improved — S98)
 
 **Automated:** `python3 priority_picker.py recommend` — runs the improved formula and returns actionable picks.
@@ -840,7 +1023,7 @@ python3 priority_picker.py stagnating    # Tasks that need attention
 python3 priority_picker.py json          # Export for programmatic use
 ```
 
-- Current session: 98.
+- Current session: 103.
 
 ### Completed (no scoring needed)
 
@@ -860,16 +1043,23 @@ python3 priority_picker.py json          # Export for programmatic use
 | MT-15 | GitHub repo tester | COMPLETE — repo_tester.py, 51 tests |
 | MT-17 | Design/reports | COMPLETE (S96) — 6 phases done: reports, slides, dashboard, charts, website, daily_snapshot. 213 tests |
 | MT-20 | Senior Dev Agent | COMPLETE (S83, LLM validated S101) — 13 modules, ~890 tests, session_id.py wired (7 modules), E2E LLM confirmed |
+| MT-12 | Academic research papers | COMPLETE (S102) — 6 phases: paper scanner, digest, cross-chat bridge, 1242 papers, confidence calibrator, hit_rate_tracker. ~150 tests |
+| MT-22 | Autonomous 1-hour loop | COMPLETE (S99) — 3/3 trials clean. Gate passed. Approved for autonomous use. |
 
 ### Active Priority Queue (S98 improved scoring)
 
 | Rank | MT | Task | Base | Age | Comp% | Bonus | ROI | Stag | **Score** | Urgency | Next |
 |------|----|------|------|-----|-------|-------|-----|------|-----------|---------|------|
-| 1 | MT-22 | Autonomous 1-hour loop | 9 | +0.0 | 100% | +1.0 | +0.0 | 0.0 | **10.0** | GRADUATED | GATE PASSED S99. 3/3 trials clean. Approved for autonomous use. |
-| 2 | MT-21 | Hivemind coordination | 8 | +1.0 | 67% | +1.0 | +0.0 | 0.0 | **10.0** | routine | Phase 2 PASSED (6th). Phase 3 = 3-chat |
-| 3 | MT-12 | Academic papers | 6 | +2.0 | 67% | +0.0 | +0.0 | 0.0 | **8.0** | routine | Phase 4 COMPLETE (S101). 1242 papers, bridge active. Phase 5: implement methodology |
-| 4 | MT-18 | Academic writing | 4 | +4.0 | 0% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Research: install/evaluate ClaudePrism |
-| 5 | MT-13 | iOS/macOS app dev | 4 | +4.0 | 33% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Phase 3: first real app |
+| 1 | MT-21 | Hivemind coordination | 8 | +1.0 | 67% | +1.0 | +0.0 | 0.0 | **10.0** | routine | Phase 2 PASSED (6th). Phase 3 = 3-chat |
+| 2 | MT-23 | Mobile Remote Control v2 | 8 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **9.0** | NEW (S103) | Research: evaluate Telegram/Discord channels MCP |
+| 3 | MT-26 | Financial Intelligence Engine | 7 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **8.0** | NEW (S103) | Research: scope trading/prediction market academic backbone |
+| 4 | MT-28 | Self-Learning v2 (Multi-Domain) | 7 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **8.0** | NEW (S103) | Research: cross-domain YoYo, Sentinel adaptive mutation |
+| 5 | MT-24 | Visualization & Graphics Engine | 6 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **6.0** | NEW (S103) | Research: diagrams, charts, publication-quality figures |
+| 6 | MT-25 | Presentation Generator | 5 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **5.0** | NEW (S103) | WAITING: Matthew to provide style samples |
+| 7 | MT-27 | CCA Nuclear v2 | 5 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **5.0** | NEW (S103) | Research: APF improvement, better frontier tagging |
+| 8 | MT-29 | Cowork + Pro Bridge Hivemind | 5 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **5.0** | NEW (S103) | Research: evaluate Cowork, bridge Pro↔Code |
+| 9 | MT-18 | Academic writing | 4 | +4.0 | 0% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Research: install/evaluate ClaudePrism |
+| 10 | MT-13 | iOS/macOS app dev | 4 | +4.0 | 33% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Phase 3: first real app |
 
 ### Blocked / External (surfaced via `--include-blocked`)
 
