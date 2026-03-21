@@ -3,6 +3,31 @@
 
 ---
 
+## Session 104 — 2026-03-21
+
+**What changed:**
+- `MT23_MOBILE_RESEARCH.md` — Full rewrite: Remote Control as PRIMARY mobile path, Discord as SECONDARY, Telegram deprecated. GitHub #28402 reconnection gap documented. 6 CCA enhancement opportunities.
+- `INSTALL_DISCORD_CHANNELS.md` — NEW: ADHD-friendly copy-paste Discord setup steps
+- `MT28_SELF_LEARNING_V2_RESEARCH.md` — NEW: Self-Learning v2 research (EvolveR principles, pattern plugin registry, feedback loop, 6-phase plan)
+- `KALSHI_MT0_TASK_BRIEF.md` — NEW: Autonomous task brief for Kalshi bot self-learning deployment (4 tasks)
+- `LAUNCH_KALSHI_MT0.md` — NEW: Launch instructions for Kalshi chat with MT-0 task brief
+- `LAUNCH_KALSHI_CHAT.md` — NEW: Generic Kalshi chat launch instructions
+- `priority_picker.py` — MT-0 added (base=10), MT-28 base=10, MT-26 base=9, MT-23 lowered to 5, session counter to 104
+
+**Why:**
+- Matthew S103 directive: Remote Control is PRIMARY mobile path (zero-setup)
+- Matthew S104 directive: Shift priorities to self-learning + financial research for Kalshi bot profitability
+- MT-0 Phase 2 (deploy self-learning to bot) is now THE #1 task — task brief written for cross-project hivemind coordination
+
+**Tests:** 131/131 suites passing (all green)
+
+**Lessons:**
+- AppleScript terminal launch is unreliable for starting claude sessions — test the pipeline first
+- Cross-chat queue must be cleaned of stale messages before launching a new chat (stale hour-block messages from S117 could have caused the Kalshi chat to re-implement reverted changes)
+- Deep-context sessions (this one) need explicit verification flags in the resume prompt
+
+---
+
 ## Session 97 — 2026-03-21
 
 **What changed:**

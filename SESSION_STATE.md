@@ -3,28 +3,36 @@
 
 ---
 
-## Current State (as of Session 103 — 2026-03-21)
+## Current State (as of Session 104 — 2026-03-21)
 
-**Phase:** Session 103 COMPLETE. Desktop + cli1 worker. 6 commits (3 desktop, 3 worker). MAJOR VISION SESSION — 7 new MTs defined (23-29). MT-23 Phase 1 research complete.
+**Phase:** Session 104 COMPLETE. Desktop + cli1 worker (+ attempted Kalshi chat launch). RESEARCH + PRIORITY OVERHAUL session. MT-23 Phase 2 and MT-28 Phase 1 research complete. Priority system shifted to financial/self-learning focus.
 
-**What was done this session (S103):**
-- **S103_STRATEGIC_VISION.md**: Matthew's comprehensive master direction — 13 themes, 6 guiding principles, financial targets ($125→$250→passive income)
-- **7 new MTs defined (MT-23 through MT-29)**: Mobile v2 (Telegram), Visualization, Presentations (BLOCKED on samples), Financial Intel Engine, Nuclear v2, Self-Learning v2, Cowork+Pro Bridge
-- **MT-12 + MT-22 graduated** to COMPLETED table in MASTER_TASKS.md and priority_picker.py
-- **priority_picker.py updated**: All 7 new MTs registered, session counter to 103, 55 tests pass
-- **8 Reddit posts reviewed**: 1 BUILD (Telegram/Discord channels), 4 REFERENCE, 1 REFERENCE-PERSONAL, 2 SKIP. Findings logged to `findings/2026-03-21-S103-manual.md`
-- **hit_rate_tracker wired into /cca-wrap**: Step 1.7 (solo) and Step 2.7 (desktop) as APF checkpoint
-- **MT-23 Phase 1 COMPLETE**: Full research on official Claude Code Channels (Telegram/Discord). MT23_MOBILE_RESEARCH.md + INSTALL_TELEGRAM_CHANNELS.md (ADHD-friendly copy-paste steps)
-- **Worker (cli1)**: 211 new tests — test_improver_extended (86), test_reflect_extended (63), test_trace_analyzer_extended (62). All passing.
-- **Memory updated**: project_s103_strategic_vision.md added to MEMORY.md
+**What was done this session (S104):**
+- **MT-23 Phase 2 COMPLETE**: Direction change (Matthew S103 explicit) — Remote Control is PRIMARY mobile path, Discord is SECONDARY, Telegram deprecated. MT23_MOBILE_RESEARCH.md fully rewritten. GitHub issue #28402 (reconnection broken, 17+ confirmations) identified as key gap for hop-on/hop-off. 6 CCA enhancement opportunities documented.
+- **INSTALL_DISCORD_CHANNELS.md**: New ADHD-friendly copy-paste steps for Discord as secondary notification channel.
+- **MT-28 Phase 1 COMPLETE**: Self-Learning v2 research. Two parallel agents (web research + codebase audit). MT28_SELF_LEARNING_V2_RESEARCH.md with 6-phase implementation plan. Key patterns: EvolveR principle scoring (Laplace-smoothed), pattern plugin registry, research outcomes feedback loop. 10 architectural gaps identified in current self-learning module.
+- **Priority system overhauled**: MT-0 (Kalshi self-learning) added to priority_picker.py (was missing!) at base=10. MT-28 base=10, MT-26 base=9 (financial focus). MT-23 lowered to 5. Session counter updated to 104. 55 tests pass.
+- **KALSHI_MT0_TASK_BRIEF.md**: Complete autonomous task brief for deploying self-learning to Kalshi bot (MT-0 Phase 2). 4 tasks: trading_journal.py, research_tracker.py, return channel, pattern summary.
+- **Cross-chat coordination validated**: Bidirectional CCA<->KM queue tested, stale messages cleared. Kalshi chat launch attempted via AppleScript but failed to produce working session.
+- **Cross-chat Requests 5+9**: Confirmed already answered in CCA_TO_POLYBOT.md (feature importance + non-stationarity). Will be picked up by next Kalshi chat.
+- **Worker (cli1)**: Assigned paper digest spam fix + test coverage. Worker status unknown (terminal closed mid-session).
+
+**Matthew directives (S104, permanent):**
+- MT priority shift: self-learning + financial research > all other MTs
+- MT-0 Phase 2 is THE #1 priority — deploy self-learning to Kalshi bot
+- Remote Control is PRIMARY mobile path (not Telegram)
+- 3-chat max on Max 5x plan; 4 chats too risky for rate limits
+- Full authorization to launch Kalshi bot chats from CCA desktop
+- CCA hivemind coordination extends cross-project (CCA desktop guides Kalshi chat)
+
+**CAUTION**: S104 ran deep into context. Next session MUST verify all S104 changes are correct — priority_picker.py edits, MT23 research doc accuracy, MT28 research doc citations. High-context sessions produce more errors.
 
 **Next (prioritized):**
-1. MT-23 Phase 2: Matthew creates Telegram bot via BotFather, then configure + test channels
-2. MT-26 (Financial Intel Engine): Research phase — scope trading/prediction market academic backbone
-3. MT-28 (Self-Learning v2): Research phase — cross-domain YoYo, Sentinel adaptive mutation
-4. Paper digest spam: "Bayesian Trading (score 85)" sent ~15 times — debounce hook
-5. Cross-chat Requests 5 (Kalshi leaderboard) and 9 (non-stationarity) still OPEN
-6. MT-25 BLOCKED: waiting on Matthew's presentation style samples
+1. **MT-0 Phase 2**: Launch Kalshi chat with KALSHI_MT0_TASK_BRIEF.md — deploy self-learning to bot. VERIFY the terminal launch actually works this time.
+2. **MT-26 (Financial Intel Engine)**: Research agent was launched S104 but results didn't land. Re-run or check output.
+3. **Paper digest spam**: Worker may not have completed fix. Check git log for debounce commit.
+4. **MT-28 Phase 2**: Begin implementation — principle registry (Phase 1 of 6-phase plan in MT28 doc).
+5. MT-25 BLOCKED: waiting on Matthew's presentation style samples.
 
 **What was done this session (S98):**
 - **priority_picker.py built** — 55 tests. Improved MT priority formula: completion bonus, ROI estimate, stagnation penalty. CLI interface for autonomous task selection. Wired into /cca-auto-desktop Step 2.

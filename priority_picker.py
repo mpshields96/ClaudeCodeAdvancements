@@ -176,7 +176,7 @@ class MasterTask:
         }
 
 
-def get_known_tasks(current_session: int = 103) -> list[MasterTask]:
+def get_known_tasks(current_session: int = 104) -> list[MasterTask]:
     """Return the current MT registry.
 
     This is the source of truth for task metadata that can't be reliably
@@ -184,7 +184,17 @@ def get_known_tasks(current_session: int = 103) -> list[MasterTask]:
     Updates should be made here when tasks progress.
     """
     return [
-        # === ACTIVE ===
+        # === HIGHEST PRIORITY (Financial + Self-Learning) ===
+        MasterTask(
+            mt_id=0, name="Kalshi bot self-learning integration",
+            base_value=10, status=TaskStatus.ACTIVE,
+            last_touched_session=21, current_session=current_session,
+            phases_completed=1, phases_total=3,
+            aging_rate=1.0,
+            next_action="Phase 2: Deploy trading self-learning schema to Kalshi bot. Closed feedback loop.",
+            tags=["kalshi", "self-learning", "trading"],
+        ),
+        # === COMPLETED ===
         MasterTask(
             mt_id=22, name="Autonomous 1-hour loop",
             base_value=9, status=TaskStatus.COMPLETED,
@@ -233,8 +243,8 @@ def get_known_tasks(current_session: int = 103) -> list[MasterTask]:
         ),
         # === NEW MTs (S103 Strategic Vision) ===
         MasterTask(
-            mt_id=23, name="Mobile Remote Control v2 (Telegram/Discord)",
-            base_value=8, status=TaskStatus.ACTIVE,
+            mt_id=23, name="Mobile Remote Control v2 (Remote Control/Discord)",
+            base_value=5, status=TaskStatus.ACTIVE,
             last_touched_session=103, current_session=current_session,
             phases_completed=0, phases_total=6,
             aging_rate=1.0,
@@ -263,7 +273,7 @@ def get_known_tasks(current_session: int = 103) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=26, name="Financial Intelligence Engine",
-            base_value=7, status=TaskStatus.ACTIVE,
+            base_value=9, status=TaskStatus.ACTIVE,
             last_touched_session=103, current_session=current_session,
             phases_completed=0, phases_total=6,
             aging_rate=1.0,
@@ -281,7 +291,7 @@ def get_known_tasks(current_session: int = 103) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=28, name="Self-Learning v2 (Multi-Domain)",
-            base_value=7, status=TaskStatus.ACTIVE,
+            base_value=10, status=TaskStatus.ACTIVE,
             last_touched_session=103, current_session=current_session,
             phases_completed=0, phases_total=6,
             aging_rate=1.0,
@@ -357,7 +367,7 @@ def get_known_tasks(current_session: int = 103) -> list[MasterTask]:
 class PriorityPicker:
     """Computes priority rankings and picks next task for autonomous work."""
 
-    def __init__(self, current_session: int = 103):
+    def __init__(self, current_session: int = 104):
         self.current_session = current_session
         self.tasks = get_known_tasks(current_session)
 
