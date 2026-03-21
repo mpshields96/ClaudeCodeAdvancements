@@ -176,7 +176,7 @@ class MasterTask:
         }
 
 
-def get_known_tasks(current_session: int = 110) -> list[MasterTask]:
+def get_known_tasks(current_session: int = 111) -> list[MasterTask]:
     """Return the current MT registry.
 
     This is the source of truth for task metadata that can't be reliably
@@ -292,10 +292,10 @@ def get_known_tasks(current_session: int = 110) -> list[MasterTask]:
         MasterTask(
             mt_id=28, name="Self-Learning v2 (Multi-Domain)",
             base_value=10, status=TaskStatus.ACTIVE,
-            last_touched_session=110, current_session=current_session,
-            phases_completed=4, phases_total=6,  # P1 registry, P2 plugin, P3 transfer, P4 feedback loop
+            last_touched_session=111, current_session=current_session,
+            phases_completed=5, phases_total=6,  # P1 registry, P2 plugin, P3 transfer, P4 feedback, P5 predictive
             aging_rate=1.0,
-            next_action="Phase 5: Predictive capability (principle scores + trajectory similarity).",
+            next_action="Phase 6: Sentinel-style adaptive mutation — counter-strategies for failure patterns.",
             tags=["self-learning", "kalshi"],
         ),
         MasterTask(
@@ -310,10 +310,10 @@ def get_known_tasks(current_session: int = 110) -> list[MasterTask]:
         MasterTask(
             mt_id=30, name="Session Daemon (Tmux Auto-Spawn)",
             base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=110, current_session=current_session,
-            phases_completed=1, phases_total=5,  # P1 design done S110
+            last_touched_session=111, current_session=current_session,
+            phases_completed=2, phases_total=5,  # P1 design, P2 registry+tmux_manager
             aging_rate=1.0,
-            next_action="Phase 2: session_registry.py + tmux_manager.py (building blocks).",
+            next_action="Phase 3: Daemon loop (poll, health check, spawn/restart, CLI).",
             tags=["automation", "hivemind", "tmux"],
         ),
         MasterTask(
@@ -501,7 +501,7 @@ def main():
     parser.add_argument("command", nargs="?", default="pick",
                        choices=["pick", "rank", "table", "recommend", "json", "stagnating"],
                        help="Command to run")
-    parser.add_argument("--session", type=int, default=98, help="Current session number")
+    parser.add_argument("--session", type=int, default=111, help="Current session number")
     parser.add_argument("--count", type=int, default=3, help="Number of tasks to pick")
     parser.add_argument("--include-blocked", action="store_true", help="Include unblockable tasks")
     args = parser.parse_args()
