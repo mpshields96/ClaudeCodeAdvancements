@@ -215,7 +215,7 @@ def cli_main(args: list = None):
     if args is None:
         args = sys.argv[1:]
 
-    if not args or args[0] not in ("run", "status"):
+    if not args or args[0] not in ("run", "status", "check"):
         print("crash_recovery.py — Worker Crash Detection and Recovery")
         print()
         print("Commands:")
@@ -235,7 +235,7 @@ def cli_main(args: list = None):
         if report.get("has_uncommitted_changes"):
             print("  WARNING: Uncommitted changes may need manual review")
 
-    elif cmd == "status":
+    elif cmd in ("status", "check"):
         processes = _get_claude_processes()
         scopes = _get_active_scopes()
         crashed = detect_crashed_workers(scopes)
