@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "max_total_chats": 3,
+  "max_restarts_per_hour": 5,
+  "check_interval_seconds": 60,
+  "sessions": [
+    {
+      "id": "cca-desktop",
+      "type": "cca",
+      "role": "desktop",
+      "command": "claude /cca-init",
+      "auto_restart": true,
+      "restart_delay_seconds": 30,
+      "env": {"CCA_CHAT_ID": "desktop"},
+      "priority": 1
+    },
+    {
+      "id": "kalshi-main",
+      "type": "kalshi",
+      "role": "main",
+      "command": "claude /kalshi-main",
+      "auto_restart": true,
+      "restart_delay_seconds": 60,
+      "env": {},
+      "cwd": "/Users/matthewshields/Projects/polymarket-bot",
+      "priority": 2
+    },
+    {
+      "id": "kalshi-research",
+      "type": "kalshi",
+      "role": "research",
+      "command": "claude /kalshi-research",
+      "auto_restart": true,
+      "restart_delay_seconds": 60,
+      "env": {},
+      "cwd": "/Users/matthewshields/Projects/polymarket-bot",
+      "priority": 3
+    }
+  ],
+  "peak_hours": {
+    "max_chats": 2,
+    "deprioritize": ["kalshi-research"]
+  }
+}
