@@ -30,16 +30,16 @@
 | Module | Path | Status | Tests |
 |--------|------|--------|-------|
 | Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit + capture_hook tests | 340 |
-| Spec System | `spec-system/` | SPEC-1-6 + spec_freshness + plan_compliance (wired into validate.py) | 158 |
-| Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer + Session Notifier (ntfy.sh) | 286 |
-| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook, +cp/script/dd/tee evasion) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 893 |
-| Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 261 |
+| Spec System | `spec-system/` | SPEC-1-6 + spec_freshness + plan_compliance (wired into validate.py) | 205 |
+| Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer + Session Notifier (ntfy.sh) | 396 |
+| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook, +cp/script/dd/tee evasion) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 1073 |
+| Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 369 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15 + url_reader tests | 391 |
-| Self-Learning | `self-learning/` | MT-7,10,12,28 + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + reflect tests | 741 |
-| Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
+| Self-Learning | `self-learning/` | MT-7,10,12,28 + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + reflect tests | 1282 |
+| Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 493 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~6241 tests (~153 suites). All must pass before any work.**
+**Total: ~6167 tests (~153 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
