@@ -3,6 +3,31 @@
 
 ---
 
+## Session 95 — 2026-03-20
+
+**What changed:**
+- `context-monitor/session_notifier.py` (NEW) — ntfy.sh push notifications for session end/error events (19 tests)
+- `.claude/commands/cca-wrap-desktop.md` — Added Step 9.8: session-end notification
+- `.claude/commands/cca-wrap.md` — Added Step 8.5: session-end notification
+- `.claude/commands/cca-desktop.md` — Fixed launch sequence: init → worker → auto-desktop
+- `agent-guard/effort_scorer.py` — CLI arg-parsing complexity discount (4 new tests, 46 total)
+- `MASTER_TASKS.md` — MT-22 Phase 2 complete, priority queue updated
+- Worker: `tests/test_autonomous_scanner_e2e.py` (NEW) — 24 E2E tests for autonomous scanner
+
+**Why:**
+- MT-22 Phase 2: session-end notification so Matthew knows when autonomous runs finish
+- MT-20 validation: discovered and fixed effort_scorer false positive on CLI utility files
+- Process improvement: worker launch sequence was wrong, costing parallel time
+
+**Tests:** 98/98 suites passing (3794 total, +76 new)
+
+**Lessons:**
+- CLI arg-parsing inflates complexity scores — need pattern-aware discounting
+- Worker wraps after first task without checking inbox for follow-ups — front-load tasks at launch
+- macOS grep doesn't support -P flag — use Python or awk for PCRE patterns
+
+---
+
 ## Session 93 — 2026-03-20
 
 **What changed:**

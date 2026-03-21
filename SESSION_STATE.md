@@ -3,36 +3,34 @@
 
 ---
 
-## Current State (as of Session 94 — 2026-03-20)
+## Current State (as of Session 95 — 2026-03-20)
 
-**Phase:** Session 94 COMPLETE. Dual-chat (Desktop + cli1 worker). Tests: 95 suites, 3737+ total passing. Git: 8 commits (7 desktop, 1 worker).
+**Phase:** Session 95 COMPLETE. Dual-chat (Desktop + cli1 worker). Tests: 98 suites, 3794+ total passing. Git: 6 commits (5 desktop, 1 worker).
 
-**What was done this session (S94):**
-- **MT-10 Phase 3B: resurfacer_hook.py** — UserPromptSubmit hook that auto-surfaces FINDINGS_LOG entries based on detected module/frontier/MT context. 31 tests. Wired LIVE in settings.local.json.
-- **MT-10 Phase 3A: trading_analysis_runner.py** — Automated Kalshi analysis pipeline. Reads polybot.db (read-only), runs trade_reflector + per-strategy breakdown, generates structured reports, optionally appends to KALSHI_INTEL.md. 19 tests.
-- **MT-22 created** — Autonomous 1-hour loop (Desktop + Worker). High priority (base 9). All S65 safety gaps now closed.
-- **MT-22 Phase 1 COMPLETE** — Session pacer wired into /cca-auto-desktop: Step 0 (reset), Step 5.7 (MANDATORY check between tasks), Step 5.8 (health check every 2nd task), failure recovery (log+skip). This was the critical missing wire.
-- **session_pacer bug fixed** — max_duration persistence: constructor was overwriting loaded value with default. Fixed + regression test.
-- **MASTER_TASKS.md overhaul** — Priority scores recalculated for S94. MT-8, MT-11, MT-14, MT-20 graduated to COMPLETE.
-- **Doc drift fixed** — self-learning 560→591, total 3687→3718, suites 94→95.
-- **Worker (cli1): MT-12 Phase 3** — paper_scanner.py expanded with 3 new domains (code_review, trading_systems, context_management). 19 new tests.
-- **Infrastructure audit logged** — Hazmat findings for loop + senior dev in memory for future chats.
+**What was done this session (S95):**
+- **MT-22 Phase 2 COMPLETE: session_notifier.py** — ntfy.sh push notifications on session end/error. Wired into /cca-wrap-desktop (Step 9.8) and /cca-wrap (Step 8.5). 19 tests, stdlib only.
+- **MT-20 real-world validation** — Ran /senior-review on session_notifier.py, session_pacer.py, bash_guard.py. Found CLI arg-parsing false positive (effort 5/5 on well-structured utility files).
+- **effort_scorer CLI discount** — Detects `args[i] == "--flag"` patterns and discounts from complexity count. session_notifier.py: 45→30 complexity markers. 4 new tests (46 total effort_scorer).
+- **/cca-desktop launch sequence fixed** — Corrected to: init → launch worker → auto-desktop. Worker needs max parallel time.
+- **MASTER_TASKS.md updated** — MT-22 Phase 2 status, priority queue refreshed for S95.
+- **Worker (cli1): MT-9 Phase 3 COMPLETE** — Live r/ClaudeCode scan (15 posts, 4 NEEDLE). Built test_autonomous_scanner_e2e.py (24 tests, 5 test classes). Safety verified.
+- **Worker coverage analysis** — Identified capture_hook.py (664 LOC, 0 tests) as highest-risk untested module. Also flagged url_reader.py (137 LOC) and generate_report_pdf.py (327 LOC).
+- **Hivemind: 4th consecutive PASS** — Phase 1 gate READY. Queue throughput: 85 messages (target MET).
 
-**Matthew directives (S51-S94, permanent):**
-- All S51-S93 directives still active
-- S94: Kalshi bot prep is fully in CCA scope (build/develop tools here, Kalshi chats implement)
-- S94: Chain tasks continuously — don't wrap prematurely until context is actually full
-- S94: Don't blindly trust existing infrastructure — verify before building on it
-- S94: MT-22 (1-hour autonomous loop) is high priority — fix and build properly
-- S94: Senior dev project needs real-world validation, not more building
-- S94: Phase 3 (3-chat) remains deferred. Focus: MT-22 loop + master tasks by priority.
+**Matthew directives (S51-S95, permanent):**
+- All S51-S94 directives still active
+- S95: First few dual-chat sessions are ALSO process observation runs — note tuning opportunities
+- S95: Worker should catch late messages (messages sent while worker is wrapping)
+- S95: /cca-desktop must launch worker IMMEDIATELY after init, before any desktop work
+- S95: Front-load 2+ tasks to worker at launch to prevent single-task sessions
 
 **Next (prioritized):**
-1. MT-22: Add ntfy.sh notification on session end (so Matthew knows when autonomous session finishes)
-2. MT-22: Supervised 1-hour trial (3 trials needed before autonomous approval)
-3. MT-20: Real-world /senior-review validation — does output change behavior?
+1. MT-22: Supervised 1-hour trial #1 (0/3 complete — all infra ready)
+2. Write test_capture_hook.py (664 LOC, 0 tests — highest risk untested module)
+3. Worker late-message handling: build inbox check after wrap so workers catch messages sent while wrapping
 4. MT-10 Phase 3A: Test trading_analysis_runner against real polybot.db
-5. GitHub push blocked: PAT needs `workflow` scope — Matthew must update token
+5. Front-load 2 tasks to worker at launch (prevent single-task worker sessions)
+6. GitHub push blocked: PAT needs `workflow` scope — Matthew must update token
 
 ---
 

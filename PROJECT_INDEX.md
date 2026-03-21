@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-20 (Session 93)
+# Last updated: 2026-03-20 (Session 95)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -31,15 +31,15 @@
 |--------|------|--------|-------|
 | Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit | 228 |
 | Spec System | `spec-system/` | SPEC-1-6 + spec_freshness + plan_compliance (wired into validate.py) | 158 |
-| Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer | 266 |
-| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook, +cp/script/dd/tee evasion) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 889 |
+| Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer + Session Notifier (ntfy.sh) | 285 |
+| Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook, +cp/script/dd/tee evasion) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 893 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 261 |
-| Reddit Intelligence | `reddit-intelligence/` | MT-6,9,11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15 | 361 |
+| Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15 | 385 |
 | Self-Learning | `self-learning/` | MT-7,10,12 + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector | 591 |
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 213 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: 3718+ tests (95 suites). All must pass before any work.**
+**Total: 3794+ tests (98 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -68,6 +68,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `hooks/post_compact.py` — CTX-7: PostCompact recovery + journal logging
 - `auto_wrap.py` — CTX-6: Automatic session wrap trigger
 - `session_pacer.py` — Session pacing for 2-3h autonomous runs (CONTINUE/WRAP_SOON/WRAP_NOW)
+- `session_notifier.py` — ntfy.sh push notifications on session end/error (MT-22, 19 tests)
 
 **agent-guard/** — Multi-agent conflict prevention + safety
 - `hooks/mobile_approver.py` — AG-1: iPhone push approval (ntfy.sh)
