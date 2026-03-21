@@ -452,11 +452,15 @@ Phase 2 (Session 83):
 5. Validate: Implement one methodology from a paper. Measure actual improvement on CCA or Kalshi.
 6. Iterate: Refine discovery pipeline based on hit rate (useful papers / total papers scanned)
 
-**Status:** Phase 1 COMPLETE (Session 38). Delivered:
-- `self-learning/paper_scanner.py`: Semantic Scholar + arXiv API integration, 4 CCA-relevant domains (agents, prediction, statistics, interaction), paper evaluation scoring (citations/venue/relevance/recency/open-access), JSONL logging to `self-learning/research/papers.jsonl`
-- 54 tests — all passing
-- Live API validated (first paper logged: "Agent0: Self-Evolving Agents from Zero Data")
-- Phase 2: Run across all 4 domains, log top papers. Increase delay to 3s (429 rate limit hit at 1.5s).
+**Status:** Phase 4 COMPLETE (Session 101). Delivered:
+- `self-learning/paper_scanner.py`: Semantic Scholar + arXiv API integration, 7 CCA-relevant domains (agents, prediction, statistics, interaction, code_review, trading_systems, context_management), paper evaluation scoring (citations/venue/relevance/recency/open-access), JSONL logging to `self-learning/research/papers.jsonl`
+- `self-learning/paper_digest.py`: Kalshi/CCA digest generator with cross-chat bridge integration (35 tests)
+- 54 + 35 = 89 tests — all passing
+- Phase 1 (S38): Live API validated, first paper logged
+- Phase 2: Ran across 4 domains, increased delay to 3s (429 rate limit)
+- Phase 3 (S100): paper_digest.py built, expanded prediction/statistics queries (+8 queries, +12 keywords), bridge wiring
+- Phase 4 (S101): Expanded scans across prediction, statistics, trading_systems, context_management. Papers: 25 -> 1242. Domain coverage balanced. 63 Kalshi-relevant papers (score>=55), top 10 sent to bridge.
+- Phase 5 next: Implement one methodology from a top-scored paper. Measure actual improvement on CCA or Kalshi.
 
 ---
 
@@ -861,7 +865,7 @@ python3 priority_picker.py json          # Export for programmatic use
 |------|----|------|------|-----|-------|-------|-----|------|-----------|---------|------|
 | 1 | MT-22 | Autonomous 1-hour loop | 9 | +0.0 | 100% | +1.0 | +0.0 | 0.0 | **10.0** | GRADUATED | GATE PASSED S99. 3/3 trials clean. Approved for autonomous use. |
 | 2 | MT-21 | Hivemind coordination | 8 | +1.0 | 67% | +1.0 | +0.0 | 0.0 | **10.0** | routine | Phase 2 PASSED (6th). Phase 3 = 3-chat |
-| 3 | MT-12 | Academic papers | 6 | +2.0 | 33% | +0.0 | +0.0 | 0.0 | **8.0** | routine | Phase 3: full domain scan. KalshiBench found S96 |
+| 3 | MT-12 | Academic papers | 6 | +2.0 | 67% | +0.0 | +0.0 | 0.0 | **8.0** | routine | Phase 4 COMPLETE (S101). 1242 papers, bridge active. Phase 5: implement methodology |
 | 4 | MT-18 | Academic writing | 4 | +4.0 | 0% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Research: install/evaluate ClaudePrism |
 | 5 | MT-13 | iOS/macOS app dev | 4 | +4.0 | 33% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Phase 3: first real app |
 
