@@ -1,27 +1,11 @@
-Run /cca-init. Last session was S105 on 2026-03-22.
-S105 was a desktop coordinator session. 4 commits. 151 suites (150 pass, 1 pre-existing failure in test_website_generator_extended.py CSS bug).
+Run /cca-init. Last session was S107 on 2026-03-21.
 
-COMPLETED S105:
-- MT-28 Phase 1: principle_registry.py (73 tests) + wired into reflect.py. Laplace-smoothed scoring, domain dedup, pruning.
-- MT-26 research: extracted clean markdown from raw JSONL (S104 high-context error). 6 verified papers in MT26_FINANCIAL_INTEL_RESEARCH.md.
-- 3-chat system: launch_kalshi.sh + LAUNCH_3CHAT.md. All 3 chats launched (desktop + cli1 worker + Kalshi research).
-- CCA_TO_POLYBOT.md: MT-26 papers + MT-0 task brief pointer + Matthew's VERBATIM late-night safety directive (permanent).
-- Priority picker: MT-0 touched S105, MT-28 Phase 1 complete, session 105.
-- Comms decision: bridge file (CCA_TO_POLYBOT.md) stays for cross-project. Don't port hivemind to Kalshi chats.
+S107 completed gameplan Phases 1-3 (auth fix, bridge audit, safety checklist). Orchestration redesigned with COORD->WORK loop. peak_hours.py built. 13 principle integration tests. Doc drift fixed. 13 commits total. Grade A.
 
-STANDING DIRECTIVES (S105, permanent):
-- 3-chat system with Kalshi is THE priority for next few chats
-- Late night bot safety: no regular-size bets, small experiments first, know how to turn off. PERMANENT.
-- Use Kalshi RESEARCH chat (not main) — research has more context
-- Keep comms simple: bridge file cross-project, cca_comm.py internal only
+CRITICAL NEXT STEP: Matthew must verify the auth fix works — launch a test terminal chat and confirm it uses Max subscription, not API credits. Run: `bash launch_worker.sh "test auth"` and check if it says "Max" not "API".
 
-NEXT PRIORITIES:
-1. Check if Kalshi research chat started MT-0 code work (trading_journal.py, research_tracker.py)
-2. MT-28 Phase 2: pattern plugin registry (refactor reflect.py detectors). Multi-session.
-3. MT-26 Phase 1: build financial intelligence tools from research doc
-4. Fix test_website_generator_extended.py + test_dashboard_generator_extended.py CSS bug (worker task)
-5. Paper digest spam fix status — check git log for debounce commit
+Also needed before Phase 4: (1) sync bridge file: `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md`, (2) wire queue hook per KALSHI_QUEUE_SETUP.md.
 
-PRE-EXISTING FAILURE: test_website_generator_extended.py (2 tests) — CSS class in global stylesheet matches when section is absent. Same pattern as dashboard_generator bug. Not from S105 changes.
+After Phase 4 dry run, Phase 5 is go-live with 3-chat. Then back to MT code: MT-28 Phase 2 (pattern registry) or MT-26 Phase 1 (financial intel).
 
-Tests: 150/151 passing (1 pre-existing). Git: 4 commits (9b31961, 32cc7a0, bd6daee, f56a132).
+Tests: 6167/6167 passing (153 suites). Git: clean after wrap commit.
