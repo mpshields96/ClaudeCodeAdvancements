@@ -10,3 +10,6 @@ research/findings/
 .claude-compact-anchor.md
 .claude-compact-recovery.md
 .cca-loop.log
+.cca-init-benchmarks.jsonl
+.cca-stagnation-log.jsonl
+.cca-trial-results.jsonl
