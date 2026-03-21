@@ -3,6 +3,31 @@
 
 ---
 
+## Session 110 — 2026-03-21
+
+**What changed:**
+- `self-learning/macro_regime.py`: MT-26 Tier 2 — Economic event proximity filter with built-in 2026 calendar (FOMC, CPI, NFP, jobless claims). CALM/ELEVATED/HIGH_IMPACT classification (30 tests)
+- `self-learning/fear_greed_filter.py`: MT-26 Tier 2 — Sentiment contrarian filter. 5 zones, direction bias, sizing modifier, trend context support (38 tests)
+- `self-learning/signal_pipeline.py`: MT-26 Pipeline Orchestrator — Chains all 6 MT-26 modules, graceful degradation, compound modifiers, BET/SKIP decision (32 tests)
+- `self-learning/outcome_feedback.py`: MT-28 Phase 4 — Research outcomes feedback loop bridging research_outcomes to principle_registry scoring (16 tests)
+- `SESSION_DAEMON_DESIGN.md`: MT-30 Phase 1 — Complete design for tmux-based session auto-manager (5-phase plan)
+- `MASTER_TASKS.md`: Added MT-30 (Session Daemon)
+- `priority_picker.py`: MT-26 4/6, MT-28 4/6, MT-30 1/5, session counter 110
+- `CCA_TO_POLYBOT.md`: Added signal pipeline integration guide for Kalshi bot
+
+**Why:**
+- MT-26 Tier 2 is now fully complete (macro regime + fear & greed + dynamic kelly). The pipeline orchestrator chains all 6 modules into a single call for the bot. The bot can now get regime-aware, sentiment-adjusted, macro-filtered Kelly bet sizing from one function call.
+- MT-28 Phase 4 closes the research-to-profit feedback loop — when Kalshi outcomes come back, principle scores update automatically.
+- Session daemon design doc lays groundwork for the #1 force multiplier. Multi-chat build per Matthew directive.
+
+**Tests:** 6559/6559 passing (164 suites, up from 6443/160)
+
+**Lessons:**
+- Wrap at ~70% context, not 96% — S109's tip was correct. This session wrapped cleanly with room to spare.
+- Matthew's "spread over several chats" directive for the session daemon was wise — the design doc alone surfaced 4 open questions that need resolution before code.
+
+---
+
 ## Session 109 — 2026-03-21
 
 **What changed:**
