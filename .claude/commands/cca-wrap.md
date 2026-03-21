@@ -348,6 +348,19 @@ let the user decide when to commit (they may want to review first).
 
 ---
 
+## Step 8.5 — Send session-end notification (MT-22)
+
+Send a push notification so Matthew knows the session has finished:
+
+```bash
+python3 context-monitor/session_notifier.py wrap --auto --session S[SESSION_NUMBER] --grade [GRADE]
+```
+
+Reads task count and elapsed time from session pacer state. Requires `MOBILE_APPROVER_TOPIC`.
+Fails silently if not configured — never blocks wrap.
+
+---
+
 ## Step 9 — Resume prompt
 
 Output a copy-paste prompt for the next session:
