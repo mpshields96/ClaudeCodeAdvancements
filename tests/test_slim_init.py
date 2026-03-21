@@ -181,45 +181,142 @@ class TestInitSummary(unittest.TestCase):
         self.assertIn("10/10", text)
 
 
+class TestRunTimeline(unittest.TestCase):
+    """Test session timeline integration."""
+
+    @patch("slim_init.subprocess.run")
+    def test_timeline_returns_recent_sessions(self, mock_run):
+        from slim_init import run_timeline
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Last 5 sessions:\n  S101: B+ | 183 tests | 11 commits | 3 wins\n  S98: A- | 55 tests | 8 commits | 4 wins",
+            stderr=""
+        )
+        result = run_timeline()
+        self.assertIn("raw", result)
+        self.assertIn("S101", result["raw"])
+
+    @patch("slim_init.subprocess.run")
+    def test_timeline_parses_session_count(self, mock_run):
+        from slim_init import run_timeline
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Last 5 sessions:\n  S101: B+ | 183 tests\n  S98: A- | 55 tests\n  S97: B | 60 tests",
+            stderr=""
+        )
+        result = run_timeline()
+        self.assertEqual(result["session_count"], 3)
+
+    @patch("slim_init.subprocess.run")
+    def test_timeline_handles_no_data(self, mock_run):
+        from slim_init import run_timeline
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="No session data found.",
+            stderr=""
+        )
+        result = run_timeline()
+        self.assertEqual(result["session_count"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_timeline_handles_error(self, mock_run):
+        from slim_init import run_timeline
+        mock_run.return_value = MagicMock(
+            returncode=1,
+            stdout="",
+            stderr="ModuleNotFoundError: No module named 'session_id'"
+        )
+        result = run_timeline()
+        self.assertIn("error", result)
+
+    @patch("slim_init.subprocess.run")
+    def test_timeline_timeout(self, mock_run):
+        from slim_init import run_timeline
+        import subprocess
+        mock_run.side_effect = subprocess.TimeoutExpired("python3", 15)
+        result = run_timeline()
+        self.assertIn("error", result)
+        self.assertIn("timeout", result["error"].lower())
+
+
+class TestSummaryIncludesTimeline(unittest.TestCase):
+    """Test that timeline data flows into the summary."""
+
+    def test_format_summary_includes_timeline(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 101,
+            "last_session_id": "S101",
+            "top_pick": "MT-12",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+            "timeline_raw": "Last 5 sessions:\n  S101: B+ | 183 tests | 11 commits | 3 wins\n  S98: A- | 55 tests",
+        }
+        text = format_summary(summary)
+        self.assertIn("Recent sessions", text)
+        self.assertIn("S101", text)
+
+    def test_format_summary_omits_empty_timeline(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 101,
+            "last_session_id": "S101",
+            "top_pick": "MT-12",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+        }
+        text = format_summary(summary)
+        self.assertNotIn("Recent sessions", text)
+
+
 class TestSlimInitFull(unittest.TestCase):
     """Integration test for the full slim_init flow."""
 
+    @patch("slim_init.run_timeline")
     @patch("slim_init.run_priority")
     @patch("slim_init.run_smoke")
     @patch("slim_init.Path.read_text")
-    def test_full_init_happy_path(self, mock_read, mock_smoke, mock_priority):
+    def test_full_init_happy_path(self, mock_read, mock_smoke, mock_priority, mock_timeline):
         from slim_init import run_slim_init
 
         mock_read.return_value = "## Current State (as of Session 98 — 2026-03-22)\n\nTests: ~109 suites, ~4373 total passing."
         mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
         mock_priority.return_value = {"top_pick": "MT-22 (Autonomous loop)", "raw": "full output"}
+        mock_timeline.return_value = {"raw": "Last 5 sessions:\n  S98: A-", "session_count": 1}
 
         result = run_slim_init()
         self.assertTrue(result["ready"])
         self.assertEqual(result["last_session"], 98)
+        self.assertIn("timeline_raw", result)
 
+    @patch("slim_init.run_timeline")
     @patch("slim_init.run_priority")
     @patch("slim_init.run_smoke")
     @patch("slim_init.Path.read_text")
-    def test_full_init_smoke_failure_blocks(self, mock_read, mock_smoke, mock_priority):
+    def test_full_init_smoke_failure_blocks(self, mock_read, mock_smoke, mock_priority, mock_timeline):
         from slim_init import run_slim_init
 
         mock_read.return_value = "## Current State (as of Session 98 — 2026-03-22)"
         mock_smoke.return_value = {"passed": False, "suites_passed": 7, "suites_total": 10, "error": "3 suites failed"}
         mock_priority.return_value = {"top_pick": "MT-22", "raw": "..."}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
 
         result = run_slim_init()
         self.assertFalse(result["ready"])
 
+    @patch("slim_init.run_timeline")
     @patch("slim_init.run_priority")
     @patch("slim_init.run_smoke")
     @patch("slim_init.Path.exists")
-    def test_full_init_missing_session_state(self, mock_exists, mock_smoke, mock_priority):
+    def test_full_init_missing_session_state(self, mock_exists, mock_smoke, mock_priority, mock_timeline):
         from slim_init import run_slim_init
 
         mock_exists.return_value = False
         mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
         mock_priority.return_value = {"top_pick": "MT-22", "raw": "..."}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
 
         result = run_slim_init()
         # Should still work but note missing state

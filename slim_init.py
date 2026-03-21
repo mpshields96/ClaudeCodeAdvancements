@@ -154,6 +154,32 @@ def run_priority() -> dict:
         return {"error": "Timeout: priority_picker exceeded 30 seconds"}
 
 
+def run_timeline(n: int = 5) -> dict:
+    """Run session_timeline.py recent N for quick history."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "session_timeline.py"), "recent", str(n)],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        if proc.returncode != 0:
+            return {"error": proc.stderr.strip() or "session_timeline failed", "raw": "", "session_count": 0}
+
+        output = proc.stdout.strip()
+
+        # Count session lines (lines starting with whitespace + S followed by digits)
+        import re
+        session_lines = re.findall(r"^\s+S\d+:", output, re.MULTILINE)
+        count = len(session_lines)
+
+        return {"raw": output, "session_count": count}
+    except subprocess.TimeoutExpired:
+        return {"error": "Timeout: session_timeline exceeded 15 seconds", "raw": "", "session_count": 0}
+
+
 def build_summary(smoke: dict, priority: dict, state: dict) -> dict:
     """Combine all init results into a summary."""
     blockers = []
@@ -200,6 +226,13 @@ def format_summary(summary: dict) -> str:
         for b in summary["blockers"]:
             lines.append(f"    - {b}")
 
+    if summary.get("timeline_raw"):
+        lines.append(f"\n  Recent sessions:")
+        for tl in summary["timeline_raw"].split("\n"):
+            tl = tl.strip()
+            if tl.startswith("S") and ":" in tl:
+                lines.append(f"    {tl}")
+
     return "\n".join(lines)
 
 
@@ -217,9 +250,14 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3: Priority pick
     priority = run_priority()
 
-    # Step 4: Build summary
+    # Step 4: Session timeline (last 5 sessions)
+    timeline = run_timeline(5)
+
+    # Step 5: Build summary
     summary = build_summary(smoke, priority, state)
     summary["priority_raw"] = priority.get("raw", "")
+    if timeline.get("raw") and timeline.get("session_count", 0) > 0:
+        summary["timeline_raw"] = timeline["raw"]
 
     return summary
 

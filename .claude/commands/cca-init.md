@@ -110,6 +110,19 @@ Include hivemind status line in the briefing (shows Phase 1 gate progress).
 
 ---
 
+## Step 2.8 — Session timeline (last 5 sessions)
+
+Show a compact history of the last 5 sessions for quick context:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_timeline.py recent 5
+```
+
+Include the output in the briefing under "RECENT SESSIONS:". If no data, skip silently.
+
+---
+
 ## Step 3 — Surface relevant findings (resurfacer)
 
 After reading SESSION_STATE.md (Step 1), determine the current work context:
