@@ -3,9 +3,25 @@
 
 ---
 
-## Current State (as of Session 112 — 2026-03-21)
+## Current State (as of Session 113 — 2026-03-21)
 
-**Phase:** Session 112 IN PROGRESS. Solo CCA. 4 areas advanced: MT-30 Phase 3, MT-26 Tier 3, MT-23 resolved, context-monitor StopFailure.
+**Phase:** Session 113 IN PROGRESS. Solo CCA. MT-30 completed, MT-26 pipeline tests, doc drift fixes.
+
+**What was done this session (S113):**
+- **MT-26 Tier 3 pipeline integration tests**: 17 new tests covering order_flow_risk Stage 6 (TOXIC skip, FAVORABLE pass-through, category routing, modifier compounding) and belief_vol_surface cross-module tests (realized vol, Greeks, logit roundtrip). Fixed stale `test_all_stages_in_output` for 7-stage pipeline.
+- **MT-30 Phase 4 COMPLETE**: Session daemon integration tests — 27 tests covering full lifecycle (spawn->crash->respawn), peak hour transitions (deprioritize/restore), restart exhaustion, mixed CCA+Kalshi sessions, audit trail consistency, PID singleton.
+- **MT-30 Phase 5 COMPLETE**: Hardening — `_mark_exhausted_sessions()` fixes gap where crashed sessions with exhausted restarts stayed CRASHED instead of FAILED. Log rotation added to AuditLogger (5MB default, 3 backups). 9 new tests.
+- **MT-30 ALL PHASES COMPLETE**: Session daemon fully shipped (Phases 2-5, 181 tests across 3 suites).
+- **Doc drift fixes**: ROADMAP.md test counts updated (spec 205, ctx 411, ag 1073, usage 369). PROJECT_INDEX updated to 6939 tests / 174 suites.
+- **Tests**: ~6948 passing (~174 suites). +53 new tests this session.
+- **Commits**: 7 this session.
+
+**Next (prioritized):**
+1. **Bridge sync**: Matthew should run `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md`.
+2. **AUTH FIX still pending**: Matthew must run `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc`.
+3. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
+4. **MT-26 Tier 3 Phase 2**: Full Kalman + EM + B-spline surface (needs numpy). Only after Phase 1 proves useful.
+5. **MT-27**: Nuclear v2 — APF improvement (currently 22.0%, target 40%). Reduce "Other" category drag.
 
 **What was done this session (S112):**
 - **MT-30 Phase 3: Session Daemon Core** (`session_daemon.py`): Poll loop, health checking, spawn/restart logic, peak hours enforcement, audit logging, PID file singleton, CLI interface. Integrates with session_registry + tmux_manager from Phase 2. 45 tests. Matthew directive: remaining Phase 4-5 (integration testing, hardening) spread over future sessions.
