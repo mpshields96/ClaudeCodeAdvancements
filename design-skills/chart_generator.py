@@ -11,6 +11,7 @@ Chart types:
     LineChart         — line/area for trends (supports multiple series)
     Sparkline         — compact inline trend indicator
     DonutChart        — progress/completion indicator (NOT for data comparison)
+    AreaChart         — line with gradient fill below for volume/magnitude
     StackedBarChart   — stacked vertical bars for composition comparison
     HeatmapChart      — 2D grid of colored cells for correlation/intensity data
 
@@ -235,6 +236,31 @@ class DonutChart:
     width: int = 300
     height: int = 300
     center_text: str = ""
+
+
+@dataclass
+class AreaChart:
+    """Area chart — line chart with gradient fill below.
+
+    Essentially a LineChart with a filled region between the line and x-axis.
+    Good for showing volume/magnitude over time.
+
+    Args:
+        data: [(label, value), ...] — single series
+        fill_opacity: Opacity of the filled area (0.0-1.0)
+    """
+    data: list  # [(label, value), ...]
+    title: str = ""
+    width: int = 500
+    height: int = 300
+    color: str = ""
+    y_label: str = ""
+    show_points: bool = False
+    fill_opacity: float = 0.3
+
+    def __post_init__(self):
+        if not self.color:
+            self.color = CCA_COLORS["accent"]
 
 
 @dataclass
@@ -729,6 +755,97 @@ def _render_heatmap_chart(chart: HeatmapChart) -> str:
     return "".join(parts)
 
 
+def _render_area_chart(chart: AreaChart) -> str:
+    """Render an area chart to SVG — line with filled region below."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                          font_size=14, fill=CCA_COLORS["muted"], anchor="middle"))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 40
+    margin_left = 60
+    margin_right = 20
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                          font_size=14, font_weight="bold"))
+
+    values = [v for _, v in chart.data]
+    max_val = max(values) if values else 1
+    if max_val == 0:
+        max_val = 1
+
+    # Y-axis gridlines
+    for i in range(5):
+        y = margin_top + plot_h - (plot_h * i / 4)
+        val = max_val * i / 4
+        label = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_line(margin_left, y, margin_left + plot_w, y,
+                          CCA_COLORS["border"], 0.5))
+        parts.append(_text(margin_left - 8, y + 4, label,
+                          font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
+
+    # Y-axis label
+    if chart.y_label:
+        parts.append(_text(14, margin_top + plot_h / 2, chart.y_label,
+                          font_size=10, fill=CCA_COLORS["muted"], anchor="middle",
+                          transform=f"rotate(-90, 14, {margin_top + plot_h / 2})"))
+
+    # Compute points
+    n = len(chart.data)
+    points = []
+    for i, (_, value) in enumerate(chart.data):
+        if n == 1:
+            x = margin_left + plot_w / 2
+        else:
+            x = margin_left + (i / (n - 1)) * plot_w
+        y = margin_top + plot_h - (max(0, value) / max_val) * plot_h
+        points.append((x, y))
+
+    # Filled area polygon (line points + bottom corners)
+    if points:
+        baseline_y = margin_top + plot_h
+        poly_points = list(points)
+        poly_points.append((points[-1][0], baseline_y))
+        poly_points.append((points[0][0], baseline_y))
+
+        coords = " ".join(f"{x:.1f},{y:.1f}" for x, y in poly_points)
+        parts.append(
+            f'<polygon points="{coords}" '
+            f'fill="{chart.color}" fill-opacity="{chart.fill_opacity}" '
+            f'stroke="none"/>\n'
+        )
+
+        # Line on top
+        parts.append(_polyline(points, chart.color, 2.5))
+
+    # Data points
+    if chart.show_points:
+        for x, y in points:
+            parts.append(_circle(x, y, 3, chart.color))
+
+    # X-axis labels
+    step = max(1, n // 10)  # Show at most ~10 labels
+    for i, (label, _) in enumerate(chart.data):
+        if i % step == 0 or i == n - 1:
+            if n == 1:
+                x = margin_left + plot_w / 2
+            else:
+                x = margin_left + (i / (n - 1)) * plot_w
+            parts.append(_text(x, margin_top + plot_h + 16, str(label),
+                              font_size=9, fill=CCA_COLORS["muted"], anchor="middle"))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 def _render_stacked_bar_chart(chart: StackedBarChart) -> str:
     """Render a stacked vertical bar chart to SVG."""
     parts = [_svg_header(chart.width, chart.height)]
@@ -847,6 +964,8 @@ def render_svg(chart) -> str:
         return _render_sparkline(chart)
     elif isinstance(chart, DonutChart):
         return _render_donut_chart(chart)
+    elif isinstance(chart, AreaChart):
+        return _render_area_chart(chart)
     elif isinstance(chart, StackedBarChart):
         return _render_stacked_bar_chart(chart)
     elif isinstance(chart, HeatmapChart):
