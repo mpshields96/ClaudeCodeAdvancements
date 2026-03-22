@@ -834,7 +834,16 @@ developer colleague.
 5. Wire: Replace ntfy mobile approver with channels-based communication
 6. Polish: Memory persistence, session status display, quick-action buttons
 
-**Status:** NOT STARTED. Phase 1: Research.
+**Status:** EXTERNALLY RESOLVED (S112). Claude Code Channels shipped March 20, 2026.
+- Official Anthropic feature: native Telegram + Discord MCP channel servers
+- Research preview, requires Claude Code v2.1.80+, claude.ai login
+- Two-way: send commands from phone, get responses, approve permissions
+- Plugin architecture: `--channels plugin:telegram@anthropic`
+- Custom channels supported via `--dangerously-load-development-channels`
+- Sender gating built in (allowlist-based, pairing flow for auth)
+- Docs: https://code.claude.com/docs/en/channels-reference
+- Source: https://github.com/anthropics/claude-plugins-official/tree/main/external_plugins
+- **Next step for Matthew:** Install Telegram channel plugin and test with Kalshi bot session.
 
 ---
 

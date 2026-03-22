@@ -243,12 +243,14 @@ def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
         ),
         # === NEW MTs (S103 Strategic Vision) ===
         MasterTask(
-            mt_id=23, name="Mobile Remote Control v2 (Remote Control/Discord)",
-            base_value=5, status=TaskStatus.ACTIVE,
-            last_touched_session=103, current_session=current_session,
+            mt_id=23, name="Mobile Remote Control v2 (Telegram/Discord Channels)",
+            base_value=5, status=TaskStatus.BLOCKED,
+            last_touched_session=112, current_session=current_session,
             phases_completed=0, phases_total=6,
-            aging_rate=1.0,
-            next_action="Research: evaluate official Telegram/Discord channels MCP. Replace ntfy.",
+            aging_rate=0.5,
+            block_reason="EXTERNALLY RESOLVED: Claude Code Channels shipped 2026-03-20",
+            self_resolution_note="Official Telegram+Discord MCP channels. Matthew needs to install + test.",
+            next_action="Matthew: install Telegram channel plugin, test with active session.",
             tags=["mobile", "remote"],
         ),
         MasterTask(
