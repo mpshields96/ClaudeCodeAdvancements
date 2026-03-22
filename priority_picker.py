@@ -274,10 +274,10 @@ def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
         MasterTask(
             mt_id=26, name="Financial Intelligence Engine",
             base_value=9, status=TaskStatus.ACTIVE,
-            last_touched_session=110, current_session=current_session,
-            phases_completed=4, phases_total=6,  # Tier 1 (3) + Tier 2 (3) + pipeline. Tier 3 remaining.
+            last_touched_session=112, current_session=current_session,
+            phases_completed=6, phases_total=6,  # Tier 1 (3) + Tier 2 (3) + pipeline + Tier 3 (2 modules)
             aging_rate=1.0,
-            next_action="Tier 3: Order flow intelligence, belief volatility surface (research needed).",
+            next_action="Tier 3 Phase 1 COMPLETE. Phase 2 (Kalman+EM+surface) deferred. Wire into pipeline.",
             tags=["kalshi", "trading", "research"],
         ),
         MasterTask(

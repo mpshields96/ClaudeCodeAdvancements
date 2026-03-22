@@ -35,11 +35,11 @@
 | Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook, +cp/script/dd/tee evasion) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 1073 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 369 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15 + url_reader tests | 391 |
-| Self-Learning | `self-learning/` | MT-7,10,12,26,28(COMPLETE) + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + predictive_recommender + sentinel_bridge + reflect tests | 1670 |
+| Self-Learning | `self-learning/` | MT-7,10,12,26(Tier 3),28(COMPLETE) + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + predictive_recommender + sentinel_bridge + order_flow_intel + belief_vol_surface + reflect tests | 1735 |
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 493 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~6770 tests (~169 suites). All must pass before any work.**
+**Total: ~6880 tests (~172 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -175,6 +175,8 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `outcome_feedback.py` — MT-28 Phase 4: Research outcomes feedback loop (bridges research_outcomes to principle_registry scoring, 16 tests)
 - `predictive_recommender.py` — MT-28 Phase 5: Pre-session recommendations from principle scores + domain affinity (40 tests, S111)
 - `sentinel_bridge.py` — MT-28 Phase 6: Bridge sentinel mutations to principle registry (30 tests, S111)
+- `order_flow_intel.py` — MT-26 Tier 3: Order flow intelligence (FLB regression, Maker/Taker model, risk classifier, 38 tests, S112)
+- `belief_vol_surface.py` — MT-26 Tier 3: Belief volatility surface Phase 1 (logit transforms, Greeks, realized vol, 27 tests, S112)
 - `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 - `BATCH_ANALYSIS_S62.md` — Batch trace analysis of 10 recent sessions (avg 73.0, retry rate down to 40%)
 - `research/SENIOR_DEV_AGENT_RESEARCH.md` — S70: Nuclear-level research for Senior Dev Agent MT (11 verified papers, 5 tools, industry standards, MVP architecture)
