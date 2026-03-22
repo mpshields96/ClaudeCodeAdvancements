@@ -35,11 +35,11 @@
 | Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook, +cp/script/dd/tee evasion) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 1073 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 369 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15 + url_reader tests | 391 |
-| Self-Learning | `self-learning/` | MT-7,10,12,26(Tier 3),28(COMPLETE) + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + predictive_recommender + sentinel_bridge + order_flow_intel + belief_vol_surface + reflect tests | 1735 |
+| Self-Learning | `self-learning/` | MT-7,10,12,26(Tier 3),28(COMPLETE) + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + predictive_recommender + sentinel_bridge + order_flow_intel + belief_vol_surface + reflect tests | 1752 |
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) | 534 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~6895 tests (~173 suites). All must pass before any work.**
+**Total: ~6939 tests (~174 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -199,6 +199,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | `tests/test_crash_recovery.py` | Worker crash detection + scope recovery (15 tests, S91) |
 | `tests/test_phase2_e2e.py` | Phase 2 full lifecycle E2E + hardened workflows: conflict detection, stale recovery, high volume, 2-worker scopes (12 tests, S92/S93) |
 | `tests/test_phase2_hardening.py` | Phase 2 hardening: atomic writes, scope conflicts, stale crash recovery (22 tests, S93) |
+| `tests/test_session_daemon_integration.py` | MT-30 Phase 4: Daemon lifecycle, peak transitions, crash recovery chains, audit trail (27 tests, S113) |
 
 CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against Python 3.10 + 3.12.
 
