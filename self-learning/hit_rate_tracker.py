@@ -208,6 +208,38 @@ def compute_trend(entries: list[dict], window: int = 7) -> list[dict]:
     return trend
 
 
+def apf_checkpoint(log_path: Path = FINDINGS_LOG_PATH) -> str:
+    """Compact APF status line for use in scan reports and /cca-wrap.
+
+    Returns a one-liner like:
+      APF: 22.7% (target 40%) | 335 findings | Drag: Skip/Noise (40 entries, 0.0% APF)
+    """
+    entries = parse_findings(log_path)
+    metrics = compute_apf(entries)
+
+    if not entries:
+        return "APF: 0.0% (target 40%) | 0 findings | No data"
+
+    # Find the worst-performing category (most entries with lowest APF)
+    by_frontier = compute_by_frontier(entries)
+    worst_name = "None"
+    worst_count = 0
+    worst_apf = 100.0
+    for name, data in by_frontier.items():
+        if data["total"] >= 3 and data["apf"] <= worst_apf:
+            # Prefer category with more entries when APF ties
+            if data["apf"] < worst_apf or data["total"] > worst_count:
+                worst_name = name
+                worst_count = data["total"]
+                worst_apf = data["apf"]
+
+    return (
+        f"APF: {metrics['apf']}% (target 40%) | "
+        f"{metrics['total']} findings | "
+        f"Drag: {worst_name} ({worst_count} entries, {worst_apf}% APF)"
+    )
+
+
 def format_report(entries: list[dict]) -> str:
     """Format a full hit rate report."""
     metrics = compute_apf(entries)
@@ -249,6 +281,9 @@ def main():
     elif cmd == "apf":
         metrics = compute_apf(entries)
         print(f"{metrics['apf']}%")
+
+    elif cmd == "checkpoint":
+        print(apf_checkpoint())
 
     elif cmd == "by-frontier":
         by_frontier = compute_by_frontier(entries)

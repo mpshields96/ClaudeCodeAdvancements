@@ -84,7 +84,7 @@ class ScanReport:
     def to_dict(self) -> dict:
         return asdict(self)
 
-    def summary(self) -> str:
+    def summary(self, include_apf: bool = True) -> str:
         lines = [
             f"r/{self.subreddit} ({self.domain}) — Autonomous Scan Report",
             f"  Posts fetched: {self.posts_fetched}",
@@ -95,6 +95,13 @@ class ScanReport:
         if self.blocked_reasons:
             unique = list(set(self.blocked_reasons))[:5]
             lines.append(f"  Block reasons: {', '.join(unique)}")
+        if include_apf:
+            try:
+                sys.path.insert(0, str(_PROJECT_DIR / "self-learning"))
+                from hit_rate_tracker import apf_checkpoint
+                lines.append(f"  {apf_checkpoint()}")
+            except Exception:
+                pass  # APF checkpoint is nice-to-have, not critical
         return "\n".join(lines)
 
 

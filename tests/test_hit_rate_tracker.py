@@ -391,6 +391,49 @@ class TestExpandedPatterns(unittest.TestCase):
             "MT-13 and other MT-X tags should be in 'Other MTs'")
 
 
+class TestAPFCheckpoint(unittest.TestCase):
+    """Test apf_checkpoint() compact status function (MT-27 Phase 3)."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.log_path = Path(self.tmpdir) / "FINDINGS_LOG.md"
+        self.log_path.write_text(SAMPLE_LOG)
+
+    def test_returns_string(self):
+        from hit_rate_tracker import apf_checkpoint
+        result = apf_checkpoint(self.log_path)
+        self.assertIsInstance(result, str)
+
+    def test_contains_apf_value(self):
+        from hit_rate_tracker import apf_checkpoint
+        result = apf_checkpoint(self.log_path)
+        self.assertIn("50.0%", result)
+
+    def test_contains_target(self):
+        from hit_rate_tracker import apf_checkpoint
+        result = apf_checkpoint(self.log_path)
+        self.assertIn("40%", result)
+
+    def test_empty_log(self):
+        from hit_rate_tracker import apf_checkpoint
+        empty = Path(self.tmpdir) / "empty.md"
+        empty.write_text("")
+        result = apf_checkpoint(empty)
+        self.assertIn("0.0%", result)
+
+    def test_contains_total_count(self):
+        from hit_rate_tracker import apf_checkpoint
+        result = apf_checkpoint(self.log_path)
+        self.assertIn("10", result)
+
+    def test_shows_top_drag_category(self):
+        """Should identify which category has most skip/noise drag."""
+        from hit_rate_tracker import apf_checkpoint
+        result = apf_checkpoint(self.log_path)
+        # Should mention the worst-performing category
+        self.assertIn("drag", result.lower())
+
+
 class TestRealData(unittest.TestCase):
     """Test against the actual FINDINGS_LOG.md if it exists."""
 
