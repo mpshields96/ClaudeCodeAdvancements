@@ -440,6 +440,114 @@ class TestQueueThroughput(unittest.TestCase):
         self.assertEqual(stats["by_sender"]["cli1"], 1)
 
 
+class TestCrossProjectRouting(unittest.TestCase):
+    """Tests for routing messages to Kalshi chats (km/kr) via cross_chat_queue."""
+
+    def setUp(self):
+        import cross_chat_queue as ccq
+        self.tmp_internal = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp_internal.close()
+        self.tmp_cross = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp_cross.close()
+        self._orig_internal = ciq.DEFAULT_QUEUE_PATH
+        self._orig_cross = ccq.DEFAULT_QUEUE_PATH
+        ciq.DEFAULT_QUEUE_PATH = self.tmp_internal.name
+        ccq.DEFAULT_QUEUE_PATH = self.tmp_cross.name
+
+    def tearDown(self):
+        import cross_chat_queue as ccq
+        ciq.DEFAULT_QUEUE_PATH = self._orig_internal
+        ccq.DEFAULT_QUEUE_PATH = self._orig_cross
+        os.unlink(self.tmp_internal.name)
+        os.unlink(self.tmp_cross.name)
+
+    def test_is_kalshi_target(self):
+        self.assertTrue(cca_comm.is_kalshi_target("km"))
+        self.assertTrue(cca_comm.is_kalshi_target("kr"))
+        self.assertFalse(cca_comm.is_kalshi_target("cli1"))
+        self.assertFalse(cca_comm.is_kalshi_target("desktop"))
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_task_km_routes_to_cross_queue(self):
+        """task km should route through cross_chat_queue, not internal queue."""
+        import cross_chat_queue as ccq
+        cca_comm.cmd_task(["km", "implement", "sniper", "guard"])
+        # Internal queue should be empty
+        internal_msgs = ciq._load_queue(self.tmp_internal.name)
+        self.assertEqual(len(internal_msgs), 0)
+        # Cross-chat queue should have the message
+        cross_msgs = ccq._load_queue(self.tmp_cross.name)
+        self.assertEqual(len(cross_msgs), 1)
+        self.assertEqual(cross_msgs[0]["target"], "km")
+        self.assertIn("sniper guard", cross_msgs[0]["subject"])
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_task_kr_routes_to_cross_queue(self):
+        """task kr should route through cross_chat_queue."""
+        import cross_chat_queue as ccq
+        cca_comm.cmd_task(["kr", "research", "Kelly", "criterion"])
+        cross_msgs = ccq._load_queue(self.tmp_cross.name)
+        self.assertEqual(len(cross_msgs), 1)
+        self.assertEqual(cross_msgs[0]["target"], "kr")
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_say_km_routes_to_cross_queue(self):
+        """say km should route through cross_chat_queue."""
+        import cross_chat_queue as ccq
+        cca_comm.cmd_say(["km", "check", "bot", "status"])
+        cross_msgs = ccq._load_queue(self.tmp_cross.name)
+        self.assertEqual(len(cross_msgs), 1)
+        self.assertEqual(cross_msgs[0]["target"], "km")
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_task_cli1_still_routes_to_internal(self):
+        """task cli1 should still use internal queue (not cross-chat)."""
+        import cross_chat_queue as ccq
+        cca_comm.cmd_task(["cli1", "build", "feature"])
+        internal_msgs = ciq._load_queue(self.tmp_internal.name)
+        self.assertEqual(len(internal_msgs), 1)
+        cross_msgs = ccq._load_queue(self.tmp_cross.name)
+        self.assertEqual(len(cross_msgs), 0)
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_inbox_km_reads_from_cross_queue(self):
+        """inbox km should read messages targeted AT km from cross_chat_queue."""
+        import cross_chat_queue as ccq
+        ccq.send_message("cca", "km", "implement sniper guard",
+                        priority="high", category="action_item",
+                        path=self.tmp_cross.name)
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_inbox(["km"])
+        output = f.getvalue()
+        self.assertIn("sniper guard", output)
+
+    def test_all_targets_recognized(self):
+        """All valid targets (internal + Kalshi) should be recognized."""
+        all_targets = cca_comm.all_valid_targets()
+        self.assertIn("desktop", all_targets)
+        self.assertIn("cli1", all_targets)
+        self.assertIn("km", all_targets)
+        self.assertIn("kr", all_targets)
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_status_includes_kalshi_chats(self):
+        """status should show Kalshi chat queues too."""
+        import cross_chat_queue as ccq
+        ccq.send_message("cca", "km", "test task",
+                        priority="high", category="action_item",
+                        path=self.tmp_cross.name)
+        import io
+        from contextlib import redirect_stdout
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_status([])
+        output = f.getvalue()
+        self.assertIn("Kalshi", output)
+
+
 class TestCommands(unittest.TestCase):
     def test_all_commands_registered(self):
         expected = {"inbox", "say", "task", "claim", "release", "done", "ack", "status",

@@ -32,9 +32,27 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 
 import cca_internal_queue as ciq
+import cross_chat_queue as ccq
 
 
 ALL_CHAT_IDS = ["desktop", "cli1", "cli2", "terminal"]
+
+# Kalshi chat IDs — routed through cross_chat_queue instead of internal queue
+KALSHI_CHAT_IDS = {"km", "kr"}
+
+# Map from cca_comm target IDs to cross_chat_queue sender/target IDs
+# CCA desktop -> cross_chat uses "cca" as sender
+KALSHI_NAMES = {"km": "Kalshi Main", "kr": "Kalshi Research"}
+
+
+def is_kalshi_target(target: str) -> bool:
+    """Check if target is a Kalshi chat (routes via cross_chat_queue)."""
+    return target in KALSHI_CHAT_IDS
+
+
+def all_valid_targets() -> list:
+    """Return all valid targets (internal CCA + Kalshi)."""
+    return list(ciq.VALID_CHATS.keys()) + list(KALSHI_CHAT_IDS)
 
 
 def _qpath() -> str:
@@ -72,19 +90,32 @@ def detect_chat_id() -> str:
     return "desktop"
 
 
+def _target_name(target: str) -> str:
+    """Get display name for any target (internal or Kalshi)."""
+    if target in ciq.VALID_CHATS:
+        return ciq.VALID_CHATS[target]
+    return KALSHI_NAMES.get(target, target)
+
+
 def cmd_inbox(args):
     """Check inbox for a specific chat."""
     target = args[0] if args else detect_chat_id()
-    if target not in ciq.VALID_CHATS:
-        print(f"Unknown chat: {target}. Valid: {list(ciq.VALID_CHATS.keys())}")
+    if target not in ciq.VALID_CHATS and not is_kalshi_target(target):
+        print(f"Unknown chat: {target}. Valid: {all_valid_targets()}")
         return
-    unread = ciq.get_unread(target, _qpath())
+
+    if is_kalshi_target(target):
+        # Read from cross_chat_queue — messages targeted at this Kalshi chat
+        unread = ccq.get_unread(target, ccq.DEFAULT_QUEUE_PATH)
+    else:
+        unread = ciq.get_unread(target, _qpath())
+
     if not unread:
-        print(f"No unread messages for {ciq.VALID_CHATS[target]}.")
+        print(f"No unread messages for {_target_name(target)}.")
         return
-    print(f"Inbox for {ciq.VALID_CHATS[target]} ({len(unread)} unread):\n")
-    for msg in sorted(unread, key=lambda m: ciq.VALID_PRIORITIES.index(m.get("priority", "low"))):
-        print(f"  [{msg['priority'].upper()}] {msg['subject']}")
+    print(f"Inbox for {_target_name(target)} ({len(unread)} unread):\n")
+    for msg in sorted(unread, key=lambda m: (ciq.VALID_PRIORITIES + ccq.VALID_PRIORITIES).index(m.get("priority", "low")) if m.get("priority", "low") in ciq.VALID_PRIORITIES else 3):
+        print(f"  [{msg['priority'].upper()}] {msg.get('subject', '')}")
         if msg.get("body"):
             body_lines = msg["body"].split("\n")
             for line in body_lines[:3]:
@@ -102,8 +133,11 @@ def cmd_say(args):
     target = args[0]
     message = " ".join(args[1:])
     me = detect_chat_id()
-    ciq.send_message(me, target, message, category="fyi", path=_qpath())
-    print(f"Sent to {ciq.VALID_CHATS[target]}: {message}")
+    if is_kalshi_target(target):
+        ccq.send_message("cca", target, message, category="fyi", path=ccq.DEFAULT_QUEUE_PATH)
+    else:
+        ciq.send_message(me, target, message, category="fyi", path=_qpath())
+    print(f"Sent to {_target_name(target)}: {message}")
 
 
 def cmd_task(args):
@@ -114,8 +148,15 @@ def cmd_task(args):
     target = args[0]
     task = " ".join(args[1:])
     me = detect_chat_id()
-    # Only clear messages older than 2 hours (previous session leftovers).
-    # Do NOT clear recent messages — they may be tasks queued minutes ago.
+
+    if is_kalshi_target(target):
+        # Route through cross_chat_queue for Kalshi chats
+        ccq.send_message("cca", target, task, priority="high",
+                        category="action_item", path=ccq.DEFAULT_QUEUE_PATH)
+        print(f"Task assigned to {_target_name(target)}: {task}")
+        return
+
+    # Internal CCA queue — clear stale messages first
     import datetime as _dt
     cutoff = (_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=2)).isoformat()
     stale = ciq.get_unread(target, _qpath())
@@ -123,9 +164,9 @@ def cmd_task(args):
     if stale_old:
         for m in stale_old:
             ciq.acknowledge(m["id"], target, _qpath())
-        print(f"Cleared {len(stale_old)} stale message(s) from {ciq.VALID_CHATS[target]} inbox.")
+        print(f"Cleared {len(stale_old)} stale message(s) from {_target_name(target)} inbox.")
     ciq.send_message(me, target, task, priority="high", category="handoff", path=_qpath())
-    print(f"Task assigned to {ciq.VALID_CHATS[target]}: {task}")
+    print(f"Task assigned to {_target_name(target)}: {task}")
 
 
 def _check_claim_conflicts(sender: str, scope: str, files: list, queue_path: str) -> list:
@@ -218,12 +259,12 @@ def cmd_ack(args):
 
 
 def cmd_status(args):
-    """Show full hivemind status."""
+    """Show full hivemind status (internal CCA + Kalshi chats)."""
     summary = ciq.get_unread_summary(_qpath())
     scopes = ciq.get_active_scopes(_qpath())
 
     if summary:
-        print("UNREAD MESSAGES:")
+        print("UNREAD MESSAGES (CCA Internal):")
         for chat_id, counts in summary.items():
             name = ciq.VALID_CHATS.get(chat_id, chat_id)
             parts = [f"{counts['total']} total"]
@@ -232,7 +273,24 @@ def cmd_status(args):
                     parts.append(f"{counts[p]} {p}")
             print(f"  {name}: {', '.join(parts)}")
     else:
-        print("No unread messages.")
+        print("No unread internal messages.")
+
+    # Kalshi cross-chat queue status
+    kalshi_unread = {}
+    for kid in KALSHI_CHAT_IDS:
+        msgs = ccq.get_unread(kid, ccq.DEFAULT_QUEUE_PATH)
+        if msgs:
+            kalshi_unread[kid] = len(msgs)
+    # Also check messages FROM Kalshi to CCA
+    cca_from_kalshi = ccq.get_unread("cca", ccq.DEFAULT_QUEUE_PATH)
+    if cca_from_kalshi:
+        kalshi_unread["cca (from Kalshi)"] = len(cca_from_kalshi)
+
+    if kalshi_unread:
+        print("\nUNREAD MESSAGES (Kalshi Cross-Chat):")
+        for kid, count in kalshi_unread.items():
+            name = KALSHI_NAMES.get(kid, kid)
+            print(f"  {name}: {count} unread")
 
     print()
     if scopes:
