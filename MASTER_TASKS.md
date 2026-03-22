@@ -858,7 +858,7 @@ developer colleague.
 - MT-17 (Design/Reports) delivered basic reports/slides/dashboard — COMPLETED
 - This goes deeper: interactive, publication-quality, trading-specific
 
-**Status:** NOT STARTED. Phase 1: Research.
+**Status:** Phase 1 COMPLETE (S111) — `trading_chart.py` (5 SVG chart types: PnL curve, win rate, strategy matrix, drawdown, heatmap). 41 tests.
 
 ---
 
@@ -1024,7 +1024,7 @@ developer colleague.
 - cca_comm.py (queue messages)
 - session_pacer.py (wrap timing)
 
-**Status:** Phase 1 COMPLETE (design doc). Phase 2: next session.
+**Status:** Phase 2 COMPLETE (S111) — `session_registry.py` (60 tests) + `tmux_manager.py` (40 tests). Phase 3 (daemon loop) next — multi-session build.
 
 ---
 

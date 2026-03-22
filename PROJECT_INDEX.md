@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-21 (Session 110)
+# Last updated: 2026-03-21 (Session 112)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 493 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~6729 tests (~168 suites). All must pass before any work.**
+**Total: ~6770 tests (~169 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
