@@ -3,9 +3,23 @@
 
 ---
 
-## Current State (as of Session 118 — 2026-03-21)
+## Current State (as of Session 119 — 2026-03-22)
 
-**Phase:** Session 118 COMPLETE. 2-chat (desktop + worker). MT-32 launched, report charts wired, polybot hook enabled, 14 chart types.
+**Phase:** Session 119 COMPLETE. 2-chat (desktop + worker). Polybot queue hook E2E verified, SankeyChart built (16th chart type).
+
+**What was done this session (S119):**
+- **Polybot queue hook E2E verified**: Simulated Kalshi main receiving CCA task assignments via cross_chat_queue.jsonl. Hook returns additionalContext with unread messages. Cleaned stale MT-0 task and test ping from km queue. The 3-chat coordination pipeline is functionally wired.
+- **SankeyChart** (chart_generator.py): Flow diagram visualization — topological node ordering via BFS, cubic bezier flow bands with proportional thickness, custom node colors, multi-stage support (A->B->C). 25 tests. 16 chart types total.
+- **Worker cli1 launched**: Assigned MT-32 svg.py evaluation + FunnelChart. Worker crashed before completing either task — no commits from worker. Tasks carry forward.
+- **Tests**: 7611 passing (191 suites). +25 new tests (SankeyChart).
+- **Commits**: 1 desktop (SankeyChart).
+
+**Next (prioritized):**
+1. **MT-32 Phase 2**: Evaluate svg.py (zero-dep SVG lib) as chart_generator.py foundation. Evaluate CeTZ-Plot for native Typst charts. Do this as desktop task, not worker.
+2. **FunnelChart**: Build conversion funnel chart type (wide-to-narrow trapezoids). Was queued for worker but not completed.
+3. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
+4. **3-chat full loop**: polybot-auto must support task-driven work. Test with manual task assignment.
+5. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot.
 
 **What was done this session (S118):**
 - **MT-32 created**: "Visual Excellence & Design Engineering" — comprehensive 8-pillar MT covering ALL visual work (report generation, UI development, graphic design, data visualization, figure generation, dashboard enhancement, design system maturation, presentation design). Absorbs MT-24 and MT-25.

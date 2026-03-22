@@ -3,6 +3,25 @@
 
 ---
 
+## Session 119 — 2026-03-22
+
+**What changed:**
+- `design-skills/chart_generator.py`: Added SankeyChart (16th chart type) — flow diagrams with topological node ordering, cubic bezier bands, custom colors
+- `design-skills/tests/test_chart_generator_sankey.py`: 25 tests for SankeyChart
+- Polybot queue hook E2E verified — simulated km receiving CCA tasks via cross_chat_queue.jsonl
+- Cleaned stale messages from km queue (old MT-0 task brief, test ping)
+
+**Why:**
+- MT-32 Visual Excellence: SankeyChart enables intelligence pipeline flow visualization (Scan -> Review -> BUILD/SKIP)
+- Queue hook verification confirms the 3-chat coordination pipeline is functionally wired end-to-end
+
+**Tests:** 7611/7611 passing (191 suites)
+
+**Lessons:**
+- Worker crashed before completing research task — for research-heavy tasks, run as desktop task instead of delegating to worker
+
+---
+
 ## Session 118 — 2026-03-21
 
 **What changed:**
