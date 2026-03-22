@@ -914,7 +914,12 @@ developer colleague.
 5. Validate: Track which intelligence items led to profitable trades (closed feedback loop)
 6. Expand: Add investment/stocks domain when Kalshi profitability proven
 
-**Status:** NOT STARTED. Phase 1: Research.
+**Status:**
+- Research COMPLETE (S104-105): MT26_FINANCIAL_INTEL_RESEARCH.md — papers, data sources, repos, 3-tier plan
+- Tier 1 COMPLETE (S108-110): regime_detector.py (21 tests), calibration_bias.py (43 tests), cross_platform_signal.py (30 tests)
+- Tier 2 COMPLETE (S110): dynamic_kelly.py (32 tests), macro_regime.py (30 tests), fear_greed_filter.py (38 tests)
+- Pipeline COMPLETE (S110): signal_pipeline.py (32 tests) — chains all 6 modules, compound modifiers, BET/SKIP
+- Tier 3 NOT STARTED: Order flow intelligence + belief volatility surface (research needed)
 
 ---
 

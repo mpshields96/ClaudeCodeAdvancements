@@ -176,7 +176,7 @@ class MasterTask:
         }
 
 
-def get_known_tasks(current_session: int = 111) -> list[MasterTask]:
+def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
     """Return the current MT registry.
 
     This is the source of truth for task metadata that can't be reliably
@@ -310,10 +310,10 @@ def get_known_tasks(current_session: int = 111) -> list[MasterTask]:
         MasterTask(
             mt_id=30, name="Session Daemon (Tmux Auto-Spawn)",
             base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=111, current_session=current_session,
-            phases_completed=2, phases_total=5,  # P1 design, P2 registry+tmux_manager
+            last_touched_session=112, current_session=current_session,
+            phases_completed=3, phases_total=5,  # P1 design, P2 registry+tmux_manager, P3 daemon core
             aging_rate=1.0,
-            next_action="Phase 3: Daemon loop (poll, health check, spawn/restart, CLI).",
+            next_action="Phase 4: Integration testing (dry run with 2 sessions). Phase 5: Hardening.",
             tags=["automation", "hivemind", "tmux"],
         ),
         MasterTask(
