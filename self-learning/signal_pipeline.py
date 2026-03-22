@@ -2,13 +2,14 @@
 """
 signal_pipeline.py — MT-26 Pipeline Orchestrator
 
-Chains the 6 MT-26 financial intelligence modules into a composable pipeline:
+Chains the 8 MT-26 financial intelligence modules into a composable pipeline:
 1. regime_detector   — Market regime classification (TRENDING/MEAN_REVERTING/CHAOTIC)
 2. calibration_bias  — Systematic mispricing detection + probability adjustment
 3. cross_platform    — Kalshi/Polymarket divergence signals
 4. macro_regime      — Economic event proximity filter
 5. fear_greed        — Sentiment-based contrarian filter
-6. dynamic_kelly     — Final bet sizing with Bayesian updating
+6. order_flow_risk   — FLB-based risk classification (TOXIC/UNFAVORABLE/NEUTRAL/FAVORABLE)
+7. dynamic_kelly     — Final bet sizing with Bayesian updating
 
 Each stage produces a sizing modifier (0.0 to ~1.5). Modifiers compound
 multiplicatively into a final sizing recommendation.
