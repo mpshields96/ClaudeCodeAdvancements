@@ -368,6 +368,42 @@ class StackedAreaChart:
                           for i in range(len(self.series))]
 
 
+@dataclass
+class GroupedBarChart:
+    """Grouped bar chart — multiple series rendered as side-by-side bars.
+
+    Each category (x-axis label) displays one bar per series, grouped
+    together. Unlike StackedBarChart (cumulative), grouped bars show
+    absolute values side-by-side for direct comparison.
+
+    Good for comparing the same metric across multiple modules or
+    sessions where absolute values matter more than composition.
+
+    Args:
+        data: [(label, [val_series_0, val_series_1, ...]), ...]
+        series_names: ["Series A", "Series B", ...] — legend labels
+        colors: Custom colors per series (default: SERIES_PALETTE)
+        show_values: Show value labels above each bar
+        title: Optional chart title
+        y_label: Optional y-axis label
+        width: SVG width (px)
+        height: SVG height (px)
+    """
+    data: list         # [(label, [values_per_series]), ...]
+    series_names: list  # ["Memory", "Agent Guard", ...]
+    title: str = ""
+    width: int = 500
+    height: int = 300
+    colors: list = field(default_factory=list)
+    show_values: bool = False
+    y_label: str = ""
+
+    def __post_init__(self):
+        if not self.colors:
+            self.colors = [SERIES_PALETTE[i % len(SERIES_PALETTE)]
+                          for i in range(len(self.series_names))]
+
+
 # ---------------------------------------------------------------------------
 # Renderers
 # ---------------------------------------------------------------------------
@@ -1125,6 +1161,107 @@ def _render_stacked_area_chart(chart: StackedAreaChart) -> str:
     return "".join(parts)
 
 
+def _render_grouped_bar_chart(chart: GroupedBarChart) -> str:
+    """Render a grouped bar chart to SVG.
+
+    Each category produces a cluster of bars, one per series, arranged
+    side-by-side within the cluster. All bars share the same y-axis scale
+    (global max across all categories and series).
+    """
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                          font_size=14, fill=CCA_COLORS["muted"], anchor="middle"))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout constants
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 50
+    margin_left = 60
+    margin_right = 20
+    legend_height = 20
+
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom - legend_height
+
+    n_categories = len(chart.data)
+    n_series = len(chart.series_names)
+
+    # Global max across all series and categories
+    max_val = 0
+    for _, values in chart.data:
+        for s_idx in range(n_series):
+            if s_idx < len(values):
+                max_val = max(max_val, max(0, values[s_idx]))
+    if max_val == 0:
+        max_val = 1
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                          font_size=14, font_weight="bold"))
+
+    # Y-axis label
+    if chart.y_label:
+        parts.append(_text(14, margin_top + plot_h / 2, chart.y_label,
+                          font_size=10, fill=CCA_COLORS["muted"], anchor="middle",
+                          transform=f"rotate(-90, 14, {margin_top + plot_h / 2})"))
+
+    # Y-axis gridlines + labels
+    for i in range(5):
+        val = max_val * i / 4
+        y = margin_top + plot_h - (plot_h * i / 4)
+        parts.append(_line(margin_left, y, margin_left + plot_w, y,
+                          CCA_COLORS["border"], 0.5))
+        label = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(margin_left - 8, y + 4, label,
+                          font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
+
+    # Grouped bars
+    cluster_w = plot_w / n_categories
+    bar_w = cluster_w * 0.8 / max(n_series, 1)
+    cluster_gap = cluster_w * 0.1  # left padding within cluster
+
+    for cat_idx, (label, values) in enumerate(chart.data):
+        cluster_x = margin_left + cat_idx * cluster_w
+
+        for s_idx in range(n_series):
+            val = max(0, values[s_idx]) if s_idx < len(values) else 0
+            bar_h = (val / max_val) * plot_h
+            bx = cluster_x + cluster_gap + s_idx * bar_w
+            by = margin_top + plot_h - bar_h
+            color = chart.colors[s_idx % len(chart.colors)]
+
+            parts.append(_rect(bx, by, bar_w * 0.9, bar_h, color, rx=1))
+
+            if chart.show_values and val > 0 and bar_h > 10:
+                lbl = str(int(val)) if val == int(val) else f"{val:.1f}"
+                parts.append(_text(bx + bar_w * 0.45, by - 3, lbl,
+                                  font_size=8, fill=CCA_COLORS["muted"],
+                                  anchor="middle"))
+
+        # Category label centered under the cluster
+        cx = cluster_x + cluster_w / 2
+        parts.append(_text(cx, margin_top + plot_h + 16, str(label),
+                          font_size=9, fill=CCA_COLORS["muted"], anchor="middle"))
+
+    # Legend
+    legend_y = chart.height - legend_height + 4
+    lx = margin_left
+    for s_idx, name in enumerate(chart.series_names):
+        color = chart.colors[s_idx % len(chart.colors)]
+        parts.append(_rect(lx, legend_y, 12, 12, color))
+        parts.append(_text(lx + 16, legend_y + 10, name,
+                          font_size=9, fill=CCA_COLORS["muted"]))
+        lx += max(60, len(name) * 7 + 20)
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -1149,8 +1286,26 @@ def render_svg(chart) -> str:
         return _render_heatmap_chart(chart)
     elif isinstance(chart, StackedAreaChart):
         return _render_stacked_area_chart(chart)
+    elif isinstance(chart, GroupedBarChart):
+        return _render_grouped_bar_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
+
+
+def generate_grouped_bar(data: list, series_names: list, title: str = "", **kwargs) -> str:
+    """Convenience function: render a grouped bar chart and return SVG string.
+
+    Args:
+        data: [(label, [val_series_0, val_series_1, ...]), ...]
+        series_names: ["Series A", "Series B", ...] — legend labels
+        title: Chart title (optional)
+        **kwargs: Additional GroupedBarChart constructor args (width, height, colors, etc.)
+
+    Returns:
+        SVG string ready to embed or save.
+    """
+    chart = GroupedBarChart(data=data, series_names=series_names, title=title, **kwargs)
+    return render_svg(chart)
 
 
 def generate_stacked_area(series: list, labels: list, title: str = "", **kwargs) -> str:
