@@ -52,6 +52,20 @@
   )
 }
 
+// ─── Chart Directory ──────────────────────────────────────────────────────
+#let chart-dir = if sys.inputs.keys().contains("chart_dir") {
+  sys.inputs.chart_dir
+} else {
+  none
+}
+
+#let embed-chart(name, width: 100%) = {
+  if chart-dir != none {
+    let path = chart-dir + "/" + name + ".svg"
+    image(path, width: width)
+  }
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 #let status-badge(label, bg-color, text-color: white) = {
@@ -485,6 +499,14 @@
 ]
 #v(4mm)
 
+// Chart: Frontier test coverage
+#if chart-dir != none {
+  box(width: 100%, inset: (bottom: 6pt))[
+    #embed-chart("frontier_status", width: 85%)
+  ]
+  v(4mm)
+}
+
 #if data.keys().contains("frontiers") and data.frontiers.len() > 0 {
   for frontier in data.frontiers {
     let status-color = if frontier.status == "COMPLETE" { green } else { blue }
@@ -530,6 +552,14 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 #section-header("Module Deep-Dives")
+
+// Chart: Tests per module
+#if chart-dir != none {
+  box(width: 100%, inset: (bottom: 8pt))[
+    #embed-chart("module_tests", width: 90%)
+  ]
+  v(4mm)
+}
 
 #let module-card(mod) = {
   let status-color = if mod.status == "COMPLETE" { green } else { blue }
@@ -610,6 +640,17 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 #section-header("Master Tasks")
+
+// Charts: MT status breakdown + phase progress
+#if chart-dir != none {
+  grid(
+    columns: (1fr, 1fr),
+    column-gutter: 12pt,
+    embed-chart("mt_status", width: 100%),
+    embed-chart("mt_progress", width: 100%),
+  )
+  v(4mm)
+}
 
 #text(size: 9.5pt, fill: mid)[
   #data.summary.master_tasks tasks defined #sym.dot.c
@@ -894,6 +935,17 @@
     ]
   ],
 )
+
+// Charts: Intelligence verdicts donut + LOC distribution
+#if chart-dir != none {
+  v(4mm)
+  grid(
+    columns: (1fr, 1fr),
+    column-gutter: 12pt,
+    embed-chart("intelligence", width: 100%),
+    embed-chart("loc_distribution", width: 100%),
+  )
+}
 
 #v(5mm)
 

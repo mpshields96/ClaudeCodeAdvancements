@@ -267,6 +267,122 @@ class TestIntegration(unittest.TestCase):
             self.assertTrue(os.path.exists(result))
             self.assertGreater(os.path.getsize(result), 10000)  # Should be substantial PDF
 
+    def test_full_pipeline_with_charts(self):
+        """Full pipeline with chart generation: data -> charts -> JSON -> Typst -> PDF."""
+        from report_generator import CCADataCollector, ReportRenderer, ReportChartGenerator
+        project_root = str(Path(__file__).parent.parent.parent)
+        collector = CCADataCollector(project_root=project_root)
+        data = collector.collect_from_project(session=118)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Generate charts
+            chart_dir = os.path.join(tmpdir, "charts")
+            chart_gen = ReportChartGenerator(output_dir=chart_dir)
+            chart_paths = chart_gen.save_all(data)
+
+            self.assertEqual(len(chart_paths), 6)
+            for name, path in chart_paths.items():
+                self.assertTrue(os.path.exists(path), f"Chart {name} not found at {path}")
+                self.assertTrue(path.endswith(".svg"))
+                size = os.path.getsize(path)
+                self.assertGreater(size, 50, f"Chart {name} is too small ({size} bytes)")
+
+            # Generate PDF with charts
+            data_path = os.path.join(tmpdir, "data.json")
+            with open(data_path, "w") as f:
+                json.dump(data, f)
+
+            output_path = os.path.join(tmpdir, "report_with_charts.pdf")
+            renderer = ReportRenderer()
+            result = renderer.render("cca-report", data_path, output_path, chart_dir=chart_dir)
+            self.assertTrue(os.path.exists(result))
+            self.assertGreater(os.path.getsize(result), 10000)
+
+
+class TestChartIntegration(unittest.TestCase):
+    """Tests for chart generation in the report pipeline."""
+
+    def test_render_passes_chart_dir_to_typst(self):
+        """render() passes chart_dir as --input to Typst."""
+        from report_generator import ReportRenderer
+        renderer = ReportRenderer()
+        with patch("report_generator.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                data_path = os.path.join(tmpdir, "data.json")
+                with open(data_path, "w") as f:
+                    json.dump({"title": "Test"}, f)
+                chart_dir = os.path.join(tmpdir, "charts")
+                os.makedirs(chart_dir)
+
+                renderer.render("cca-report", data_path, "/tmp/out.pdf", chart_dir=chart_dir)
+                call_args = mock_run.call_args[0][0]
+                self.assertIn("--input", call_args)
+                # Find the chart_dir input
+                found = False
+                for i, arg in enumerate(call_args):
+                    if arg.startswith("chart_dir="):
+                        found = True
+                        self.assertIn(chart_dir, arg)
+                self.assertTrue(found, "chart_dir not passed to Typst")
+
+    def test_render_without_chart_dir(self):
+        """render() works without chart_dir (backwards compatible)."""
+        from report_generator import ReportRenderer
+        renderer = ReportRenderer()
+        with patch("report_generator.subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                data_path = os.path.join(tmpdir, "data.json")
+                with open(data_path, "w") as f:
+                    json.dump({"title": "Test"}, f)
+
+                renderer.render("cca-report", data_path, "/tmp/out.pdf")
+                call_args = mock_run.call_args[0][0]
+                # Should NOT have chart_dir input
+                chart_inputs = [a for a in call_args if "chart_dir" in str(a)]
+                self.assertEqual(len(chart_inputs), 0)
+
+    def test_chart_generator_produces_six_charts(self):
+        """ReportChartGenerator.generate_all produces 6 named charts."""
+        from report_charts import ReportChartGenerator
+        gen = ReportChartGenerator()
+        data = {
+            "modules": [{"name": "Test", "tests": 100}],
+            "intelligence": {"findings_total": 10, "build": 3, "adapt": 2, "reference": 3, "reference_personal": 1, "skip": 1, "other": 0},
+            "master_tasks_complete": [{"id": "MT-1"}],
+            "master_tasks_active": [{"id": "MT-2", "phases_done": 3, "total_phases": 5}],
+            "master_tasks_pending": [],
+            "summary": {"source_loc": 5000, "test_loc": 4000},
+            "frontiers": [{"name": "Memory", "tests": 340}],
+        }
+        charts = gen.generate_all(data)
+        self.assertEqual(len(charts), 6)
+        expected = {"module_tests", "intelligence", "mt_status", "loc_distribution", "mt_progress", "frontier_status"}
+        self.assertEqual(set(charts.keys()), expected)
+        for name, svg in charts.items():
+            self.assertIn("<svg", svg, f"Chart {name} is not valid SVG")
+
+    def test_chart_save_all_creates_files(self):
+        """save_all creates SVG files in output directory."""
+        from report_charts import ReportChartGenerator
+        with tempfile.TemporaryDirectory() as tmpdir:
+            gen = ReportChartGenerator(output_dir=tmpdir)
+            data = {
+                "modules": [{"name": "Mod", "tests": 50}],
+                "intelligence": {"findings_total": 5, "build": 1, "adapt": 1, "reference": 1, "reference_personal": 1, "skip": 1, "other": 0},
+                "master_tasks_complete": [], "master_tasks_active": [], "master_tasks_pending": [{"id": "MT-1"}],
+                "summary": {"source_loc": 1000, "test_loc": 800},
+                "frontiers": [{"name": "F1", "tests": 100}],
+            }
+            paths = gen.save_all(data)
+            self.assertEqual(len(paths), 6)
+            for name, path in paths.items():
+                self.assertTrue(os.path.exists(path))
+                with open(path) as f:
+                    content = f.read()
+                self.assertIn("<svg", content)
+
 
 if __name__ == "__main__":
     unittest.main()

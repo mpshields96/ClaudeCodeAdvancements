@@ -116,10 +116,10 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `templates/cca-report.typ` — Status report Typst template
 - `templates/cca-slides.typ` — Presentation slide Typst template
 - `dashboard_generator.py` — Self-contained HTML dashboard generator
-- `chart_generator.py` — SVG chart generation (bar, line, sparkline, donut)
+- `chart_generator.py` — SVG chart generation (12 chart types: bar, horizontal bar, line, sparkline, donut, heatmap, stacked bar, area, stacked area, waterfall, radar, gauge)
 - `website_generator.py` — Landing page + docs page HTML generator (665 LOC)
 - `daily_snapshot.py` — Daily project metric snapshots with diff support (474 LOC, 50 tests)
-- `report_charts.py` — SVG chart generation from report data for Typst embedding (6 chart types, 32 tests, S117)
+- `report_charts.py` — SVG chart generation from report data for Typst embedding (6 chart types, 32 tests, S117). Wired into /cca-report pipeline (S118) — charts auto-generated and embedded in PDF.
 
 **root/** — Loop hardening + coordination
 - `resume_generator.py` — cca-loop hardening: auto-generate SESSION_RESUME.md from SESSION_STATE when stale (17 tests)

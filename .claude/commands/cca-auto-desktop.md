@@ -177,6 +177,27 @@ cat /Users/matthewshields/Projects/polymarket-bot/POLYBOT_TO_CCA.md 2>/dev/null 
 - If new content from Kalshi: note it, process at wrap or between tasks
 - If no file or no new content: move on
 
+### 5d2. Kalshi task management (15 seconds max — only in 3-chat mode)
+Only if a Kalshi main chat is running AND CCA desktop is orchestrating it:
+```bash
+python3 cca_comm.py status    # Check cross-chat queue status
+python3 cca_comm.py inbox km  # Check if Kalshi main reported completion
+```
+- If Kalshi main completed a task: ack it, queue next from the task catalog
+- If Kalshi main is idle (no pending tasks): assign from KALSHI_TASK_CATALOG below
+- If Kalshi main is still working: move on
+- Task assignment: `python3 cca_comm.py task km "description of task"`
+
+**Kalshi main productive task catalog** (assign in priority order):
+1. Process unread bridge items from CCA_TO_POLYBOT.md
+2. Run self-learning analysis on recent trades (`python3 self-learning/trade_reflector.py`)
+3. Apply new research findings to sniper parameters (specific findings from CCA research)
+4. Analyze sniper bucket performance by market type
+5. Run Page-Hinkley on recent sniper bet outcomes
+6. Execute calibration check on current model parameters
+
+NOTE: polybot-auto must support task-driven work for this to function (out-of-scope for CCA — requires polybot changes). Until polybot-auto is updated, Kalshi main runs independently and this step is a no-op. Track progress in SESSION_STATE.md.
+
 ### 5e. Health check (every 2nd round only)
 Run full test suite every other coordination round:
 ```bash

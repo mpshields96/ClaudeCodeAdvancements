@@ -18,6 +18,9 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(__file__))
+from report_charts import ReportChartGenerator
+
 
 class CCADataCollector:
     """Collects CCA project data for comprehensive report generation."""
@@ -991,8 +994,15 @@ class ReportRenderer:
             f.stem for f in Path(self.templates_dir).glob("*.typ")
         ]
 
-    def render(self, template, data_path, output_path):
-        """Render a report using Typst."""
+    def render(self, template, data_path, output_path, chart_dir=None):
+        """Render a report using Typst.
+
+        Args:
+            template: Template name (without .typ extension)
+            data_path: Path to JSON data file
+            output_path: Output PDF path
+            chart_dir: Optional directory containing SVG chart files for embedding
+        """
         if not shutil.which("typst"):
             raise RuntimeError("Typst is not installed. Install with: brew install typst")
 
@@ -1002,11 +1012,16 @@ class ReportRenderer:
 
         abs_data_path = os.path.abspath(data_path)
 
-        result = subprocess.run(
-            ["typst", "compile", "--root", "/",
-             "--input", f"data={abs_data_path}", typ_path, output_path],
-            capture_output=True, text=True
-        )
+        cmd = [
+            "typst", "compile", "--root", "/",
+            "--input", f"data={abs_data_path}",
+        ]
+        if chart_dir:
+            abs_chart_dir = os.path.abspath(chart_dir)
+            cmd.extend(["--input", f"chart_dir={abs_chart_dir}"])
+        cmd.extend([typ_path, output_path])
+
+        result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
             raise RuntimeError(f"Typst compilation failed: {result.stderr}")
@@ -1046,9 +1061,20 @@ def main():
 
     if args.command == "generate":
         renderer = ReportRenderer()
+        chart_dir = None
 
         if args.data:
             data_path = args.data
+            # Try to generate charts from provided data
+            try:
+                with open(data_path) as f:
+                    data = json.load(f)
+                chart_dir = os.path.join(tempfile.gettempdir(), "cca_report_charts")
+                chart_gen = ReportChartGenerator(output_dir=chart_dir)
+                chart_paths = chart_gen.save_all(data)
+                print(f"Charts generated: {len(chart_paths)} SVGs in {chart_dir}")
+            except Exception:
+                chart_dir = None  # Fall back to no charts
         else:
             project_root = str(Path(__file__).parent.parent)
             collector = CCADataCollector(project_root=project_root)
@@ -1062,7 +1088,13 @@ def main():
                   f"{data['summary']['master_tasks']} master tasks, "
                   f"{data['summary']['total_findings']} findings")
 
-        output = renderer.render(args.template, data_path, args.output)
+            # Generate charts from collected data
+            chart_dir = os.path.join(tempfile.gettempdir(), "cca_report_charts")
+            chart_gen = ReportChartGenerator(output_dir=chart_dir)
+            chart_paths = chart_gen.save_all(data)
+            print(f"Charts generated: {len(chart_paths)} SVGs in {chart_dir}")
+
+        output = renderer.render(args.template, data_path, args.output, chart_dir=chart_dir)
         print(f"Report generated: {output}")
         print(f"Size: {os.path.getsize(output) / 1024:.1f} KB")
 

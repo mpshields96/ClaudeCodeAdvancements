@@ -1089,6 +1089,64 @@ Revisit when: Anthropic ships native shared context, or Cowork local MCP bugs fi
 
 ---
 
+## MT-32: Visual Excellence & Design Engineering (Comprehensive)
+
+**Source:** Matthew directive (S118, 2026-03-21) — "advancements doesn't just mean different types of charts it means enhancements in UI development or graphic designs or visuals or report generation or figures or images like any of this"
+**What Matthew wants:** A single comprehensive MT that covers ALL visual/design/graphics work across CCA. This is the umbrella task for everything visual — from chart types to UI frameworks to report generation to image creation to design systems.
+
+**Scope — 8 pillars:**
+
+1. **Report Development** — Enhance /cca-report pipeline. Wire report_charts.py into Typst template. Richer layouts (multi-column, pull-quotes, sidebar callouts). Automated visual storytelling. Report version comparison (diff highlights). Professional output that rivals consultancy deliverables.
+
+2. **UI Development** — Building better web interfaces, component libraries, responsive design patterns. Interactive web apps Claude Code can generate. Reusable UI component catalog (buttons, cards, tables, navigation). CSS framework integration (Tailwind, etc.). Accessibility-first patterns.
+
+3. **Graphic Design** — Visual assets, branding, icons, infographics, visual summaries. SVG icon generation. Logo and brand identity tools. Infographic templates for presenting complex data. Visual abstracts for academic papers.
+
+4. **Data Visualization** — Beyond current 12 chart types. Interactive charts (zoom, hover, filter). Real-time data dashboards. D3.js-quality visualizations. Animation/transition support. Publication-quality statistical graphics (box plots, violin, scatter matrix, forest plots).
+
+5. **Figure & Image Generation** — Publication-quality figures for academic/professional use. SVG/PNG export pipelines. Diagram generation (architecture, flow, sequence, ER). Scientific figure layout (multi-panel, consistent axes, proper legends). Screenshot annotation tools.
+
+6. **Dashboard Enhancement** — Current HTML dashboard is functional but basic. Interactive filtering and sorting. Real-time data updates. Responsive mobile layouts. Dark/light theme. Embeddable dashboard widgets. Dashboard-as-a-service pattern.
+
+7. **Design System Maturation** — Expand design-guide.md into a real design system. Color tokens, spacing scale, typography hierarchy. Design lint rules (detect violations). Cross-output consistency (same visual language in PDFs, HTML, slides). Design system documentation generator.
+
+8. **Presentation & Slide Design** — Advanced slide generation. Custom themes. Animation sequencing. Speaker notes integration. Multi-format export (PDF, HTML, PPTX). (Subsumes MT-25 when Matthew provides style samples.)
+
+**Relationship to existing MTs:**
+- MT-17 (COMPLETE): Laid the foundation — reports, slides, dashboard, charts, website, daily_snapshot. 867 tests in `design-skills/`.
+- MT-24 (Phase 1 COMPLETE): Visualization engine — trading_chart.py, 41 tests. **Absorbed into MT-32 Pillar 4.**
+- MT-25 (WAITING): Matthew's presentation style. **Absorbed into MT-32 Pillar 8** — will proceed when style samples arrive.
+- MT-32 drives the NEXT LEVEL of ALL visual work, building on MT-17's foundation.
+
+**What exists today (starting inventory):**
+- `design-skills/` module: 867 tests, 12 chart types, report_generator.py, slide_generator.py, dashboard_generator.py, chart_generator.py, website_generator.py, daily_snapshot.py, report_charts.py
+- `design-skills/design-guide.md`: Color palette, typography, layout rules
+- `design-skills/templates/`: Typst templates (cca-report.typ, cca-slides.typ)
+- `/cca-report`, `/cca-dashboard`, `/cca-slides`, `/cca-website` commands
+- trading_chart.py: 5 trading-specific SVG chart types
+
+**Research needed (worker nuclear scan targets):**
+- **Subreddits**: r/webdev, r/reactjs, r/frontend, r/UI_Design, r/dataisbeautiful, r/datavisualization, r/web_design, r/graphic_design, r/css, r/tailwindcss, r/ClaudeCode (visual posts), r/ChatGPTCoding (visual posts), r/svelte, r/nextjs
+- **GitHub**: Trending repos tagged visualization, design-system, chart, svg, report-generator, dashboard, ui-library, infographic
+- **Focus**: What tools/techniques produce the best AI-assisted visual output? What are the community's biggest pain points with LLM-generated UIs? What design patterns survive beyond the demo?
+- **Rat poison filter**: No 8000-line prompt libraries (MT-17 lesson from Design Studio). No Figma MCP dependencies. No "team of specialists" metaphors. Seek concrete, buildable, testable improvements.
+
+**Phased approach:**
+- Phase 1: Wire report_charts.py into /cca-report (immediate — S118). Research scan.
+- Phase 2: Advanced chart types (interactive, animated, publication-quality statistical graphics)
+- Phase 3: Design system v2 (design tokens, lint rules, cross-format consistency)
+- Phase 4: UI component library (reusable patterns for Claude Code web outputs)
+- Phase 5: Dashboard v2 (interactive, real-time, responsive, themeable)
+- Phase 6: Figure/image generation pipeline (multi-panel, annotation, export)
+- Phase 7: Integration — all pillars feeding into reports, dashboards, slides, websites
+
+**Success criteria:** A CCA session can produce visual outputs (reports, dashboards, charts, web pages) that look professional WITHOUT manual post-processing. The visual quality gap between Claude Code output and professional design tools shrinks measurably.
+
+**Status:** NEW (S118). Phase 1 starting — report_charts.py integration + research scan.
+Last updated: S118 (2026-03-21).
+
+---
+
 ## Priority Scoring System (Improved — S98)
 
 **Automated:** `python3 priority_picker.py recommend` — runs the improved formula and returns actionable picks.
@@ -1151,8 +1209,9 @@ python3 priority_picker.py json          # Export for programmatic use
 | 2 | MT-23 | Mobile Remote Control v2 | 8 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **9.0** | NEW (S103) | Research: evaluate Telegram/Discord channels MCP |
 | 3 | MT-26 | Financial Intelligence Engine | 7 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **8.0** | NEW (S103) | Research: scope trading/prediction market academic backbone |
 | 4 | MT-28 | Self-Learning v2 (Multi-Domain) | 7 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **8.0** | NEW (S103) | Research: cross-domain YoYo, Sentinel adaptive mutation |
-| 5 | MT-24 | Visualization & Graphics Engine | 6 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **6.0** | NEW (S103) | Research: diagrams, charts, publication-quality figures |
-| 6 | MT-25 | Presentation Generator | 5 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **5.0** | NEW (S103) | WAITING: Matthew to provide style samples |
+| 5 | MT-32 | Visual Excellence & Design Engineering | 8 | +0.0 | 5% | +0.0 | +0.0 | 0.0 | **8.0** | NEW (S118) | Phase 1: wire report_charts + nuclear scan. Absorbs MT-24/MT-25 |
+| 6 | MT-24 | Visualization & Graphics Engine | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 4 |
+| 7 | MT-25 | Presentation Generator | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 8 (WAITING: style samples) |
 | 7 | MT-27 | CCA Nuclear v2 | 5 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **5.0** | NEW (S103) | Research: APF improvement, better frontier tagging |
 | 8 | MT-29 | Cowork + Pro Bridge Hivemind | 5 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **5.0** | NEW (S103) | Research: evaluate Cowork, bridge Pro↔Code |
 | 9 | MT-18 | Academic writing | 4 | +4.0 | 0% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Research: install/evaluate ClaudePrism |
