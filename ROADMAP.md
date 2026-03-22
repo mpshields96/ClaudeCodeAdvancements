@@ -1,6 +1,6 @@
 # ClaudeCodeAdvancements — Master Roadmap
 # Created: 2026-02-19 (Session 1)
-# Last updated: 2026-03-20 (Session 91)
+# Last updated: 2026-03-21 (Session 113)
 # This is the authoritative feature backlog. Update status as items complete.
 
 ---
@@ -38,7 +38,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 2 — Spec-Driven Development System -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (SPEC-1 through SPEC-6 + spec_freshness + plan_compliance). 158 tests passing.
+**Status:** ALL TASKS COMPLETE (SPEC-1 through SPEC-6 + spec_freshness + plan_compliance). 205 tests passing.
 
 **Module:** `spec-system/`
 
@@ -57,7 +57,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 3 — Context Health Monitor -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (CTX-1 through CTX-7 + Session Pacer + Session Notifier). 286 tests passing.
+**Status:** ALL TASKS COMPLETE (CTX-1 through CTX-7 + Session Pacer + Session Notifier + StopFailure hook). 411 tests passing.
 
 **Module:** `context-monitor/`
 
@@ -75,7 +75,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 4 — Multi-Agent Conflict Guard -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (AG-1 through AG-9 + Edit Guard + Bash Guard + MT-20 Senior Dev Agent: 13 modules). 893 tests passing.
+**Status:** ALL TASKS COMPLETE (AG-1 through AG-9 + Edit Guard + Bash Guard + MT-20 Senior Dev Agent: 13 modules). 1073 tests passing.
 
 **Module:** `agent-guard/`
 
@@ -98,7 +98,7 @@ This roadmap is grounded in:
 
 ## FRONTIER 5 — Usage Transparency Dashboard -- COMPLETE
 
-**Status:** ALL TASKS COMPLETE (USAGE-1 through USAGE-3 + /arewedone + doc_drift_checker + hook_profiler). 259 tests passing.
+**Status:** ALL TASKS COMPLETE (USAGE-1 through USAGE-3 + /arewedone + doc_drift_checker + hook_profiler). 369 tests passing.
 
 **Module:** `usage-dashboard/`
 
