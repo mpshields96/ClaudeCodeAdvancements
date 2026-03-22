@@ -20,8 +20,9 @@
 - **StopFailure hook** (`context-monitor/hooks/stop_failure.py`): Handles CC v2.1.78+ StopFailure event. Classifies errors (rate_limit/auth/server), updates state file, logs to journal. 15 tests.
 - **CC March features tracked**: rate_limits statusline, StopFailure hook, effort frontmatter, Channels, MCP elicitation — saved to memory.
 - **Doc drift fixed**: design-skills test count (493->534), PROJECT_INDEX totals.
+- **Statusline rate limit display**: Added RL:XX% to statusline using CC v2.1.80+ rate_limits field.
 - **Tests**: ~6895 passing (~173 suites). Up from 6770/169. +125 new tests.
-- **Commits**: 17 this session.
+- **Commits**: 19 this session. Grade: A.
 
 **Next (prioritized):**
 1. **Bridge sync**: Matthew should run `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md` (now ~52K with Tier 3 intel).
