@@ -373,12 +373,17 @@ def run_drift_check(
             actual_counts[mod_name] = count
             actual_total += count
 
-    # Also count top-level tests/
+    # Also count top-level tests/ directory
     top_tests = project_root / "tests"
     if top_tests.is_dir():
         for f in top_tests.iterdir():
             if f.name.startswith("test_") and f.name.endswith(".py"):
                 actual_total += count_tests_in_file(str(f))
+
+    # Also count test files at project root (not in any subdirectory)
+    for f in project_root.iterdir():
+        if f.is_file() and f.name.startswith("test_") and f.name.endswith(".py"):
+            actual_total += count_tests_in_file(str(f))
 
     # Compare PROJECT_INDEX counts
     for mod_name, claimed in pi_counts.items():
