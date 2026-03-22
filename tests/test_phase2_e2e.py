@@ -153,8 +153,9 @@ class TestPhase2FullLifecycle(unittest.TestCase):
             cca_comm.cmd_task(["cli1", "RETRY: Build bar_module.py (recovered from crash)"])
 
         retry_msgs = ciq.get_unread("cli1", self.queue_path)
-        self.assertEqual(len(retry_msgs), 1)
-        self.assertIn("RETRY", retry_msgs[0]["subject"])
+        # Recent messages are preserved (not cleared), so original task + RETRY both present
+        retry_subjects = [m["subject"] for m in retry_msgs]
+        self.assertTrue(any("RETRY" in s for s in retry_subjects))
 
     def test_multi_task_workflow(self):
         """Worker completes multiple tasks in sequence (Phase 2 multi-task loop)."""

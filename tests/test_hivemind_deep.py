@@ -973,25 +973,24 @@ class TestTaskStaleClearingAdvanced(QueueTestCase):
     """Advanced tests for cmd_task's stale message clearing."""
 
     @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
-    def test_task_clears_multiple_stale(self):
-        """Multiple stale messages should all be cleared."""
+    def test_task_preserves_recent_multiple_messages(self):
+        """Recent messages (<2h) should be preserved when queuing new task."""
         for i in range(5):
-            ciq.send_message("desktop", "cli1", f"old task {i}",
+            ciq.send_message("desktop", "cli1", f"recent task {i}",
                             priority="high", category="handoff", path=self.path)
-        # Verify 5 stale messages
+        # Verify 5 recent messages
         self.assertEqual(len(ciq.get_unread("cli1", self.path)), 5)
 
-        # New task should clear all 5
+        # New task should NOT clear recent messages (only >2h old)
         f = io.StringIO()
         with redirect_stdout(f):
             cca_comm.cmd_task(["cli1", "new", "task"])
-        output = f.getvalue()
-        self.assertIn("5 stale", output)
 
-        # Should have only 1 message now
+        # Should have 6 messages now (5 preserved + 1 new)
         unread = ciq.get_unread("cli1", self.path)
-        self.assertEqual(len(unread), 1)
-        self.assertIn("new task", unread[0]["subject"])
+        self.assertEqual(len(unread), 6)
+        subjects = [m["subject"] for m in unread]
+        self.assertIn("new task", subjects)
 
     @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
     def test_task_doesnt_clear_other_targets(self):

@@ -112,19 +112,21 @@ class TestTask(unittest.TestCase):
         self.assertEqual(msgs[0]["priority"], "high")
 
     @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
-    def test_task_clears_stale_messages(self):
-        """New task assignment should clear old unread messages from target's inbox."""
-        # Send an old task
-        ciq.send_message("desktop", "cli1", "old task", priority="high",
+    def test_task_preserves_recent_messages(self):
+        """New task should NOT clear recent (<2h) unread messages from target inbox."""
+        # Send a recent task (just now — within 2h window)
+        ciq.send_message("desktop", "cli1", "recent task", priority="high",
                         category="handoff", path=self.path)
-        # Verify old task exists
         unread = ciq.get_unread("cli1", self.path)
         self.assertEqual(len(unread), 1)
-        # Assign new task — should clear old one first
+        # Assign new task — recent message should be preserved
         cca_comm.cmd_task(["cli1", "new", "task"])
         unread = ciq.get_unread("cli1", self.path)
-        self.assertEqual(len(unread), 1)
-        self.assertIn("new task", unread[0]["subject"])
+        # Both messages should be present (recent preserved + new added)
+        self.assertEqual(len(unread), 2)
+        subjects = [m["subject"] for m in unread]
+        self.assertIn("recent task", subjects)
+        self.assertIn("new task", subjects)
 
     @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
     def test_task_no_stale_messages_still_works(self):
