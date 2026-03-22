@@ -5,7 +5,7 @@
 
 ## Current State (as of Session 112 — 2026-03-21)
 
-**Phase:** Session 112 IN PROGRESS. Solo CCA. 3 MTs advanced: MT-30 Phase 3, MT-26 Tier 3, MT-23 resolved.
+**Phase:** Session 112 IN PROGRESS. Solo CCA. 4 areas advanced: MT-30 Phase 3, MT-26 Tier 3, MT-23 resolved, context-monitor StopFailure.
 
 **What was done this session (S112):**
 - **MT-30 Phase 3: Session Daemon Core** (`session_daemon.py`): Poll loop, health checking, spawn/restart logic, peak hours enforcement, audit logging, PID file singleton, CLI interface. Integrates with session_registry + tmux_manager from Phase 2. 45 tests. Matthew directive: remaining Phase 4-5 (integration testing, hardening) spread over future sessions.
@@ -17,9 +17,11 @@
 - **Doc Drift Fixed**: PROJECT_INDEX test count (6880/172), MASTER_TASKS MT-24/MT-26/MT-30 statuses.
 - **Kalshi main chat launched** via launch_kalshi.sh at 7:31 PM CDT (Matthew-authorized).
 - **MT-23 EXTERNALLY RESOLVED**: Claude Code Channels shipped 2026-03-20. Native Telegram + Discord MCP channel servers. Two-way chat from phone, permission approval, sender gating. INSTALL_CHANNELS.md written with copy-paste setup steps.
-- **Doc drift fixed**: design-skills test count (493->534).
-- **Tests**: 6880 passing (172 suites). Up from 6770/169. +110 new tests.
-- **Commits**: 14 this session.
+- **StopFailure hook** (`context-monitor/hooks/stop_failure.py`): Handles CC v2.1.78+ StopFailure event. Classifies errors (rate_limit/auth/server), updates state file, logs to journal. 15 tests.
+- **CC March features tracked**: rate_limits statusline, StopFailure hook, effort frontmatter, Channels, MCP elicitation — saved to memory.
+- **Doc drift fixed**: design-skills test count (493->534), PROJECT_INDEX totals.
+- **Tests**: ~6895 passing (~173 suites). Up from 6770/169. +125 new tests.
+- **Commits**: 17 this session.
 
 **Next (prioritized):**
 1. **Bridge sync**: Matthew should run `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md` (now ~52K with Tier 3 intel).
