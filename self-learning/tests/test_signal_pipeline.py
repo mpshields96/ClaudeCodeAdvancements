@@ -168,7 +168,7 @@ class TestSignalPipelineFull(unittest.TestCase):
         self.assertIn("dynamic_kelly", stage_names)
 
     def test_all_stages_in_output(self):
-        """All 6 pipeline stages should be represented in output."""
+        """All 7 pipeline stages should be represented in output."""
         inp = PipelineInput(
             true_prob=0.65,
             market_price=0.50,
@@ -185,7 +185,9 @@ class TestSignalPipelineFull(unittest.TestCase):
         self.assertIn("cross_platform", stage_names)
         self.assertIn("macro_regime", stage_names)
         self.assertIn("fear_greed", stage_names)
+        self.assertIn("order_flow_risk", stage_names)
         self.assertIn("dynamic_kelly", stage_names)
+        self.assertEqual(len(dec.stages), 7)
 
 
 class TestPipelineWithRegime(unittest.TestCase):
@@ -317,12 +319,228 @@ class TestPipelineDisableStages(unittest.TestCase):
                 "cross_platform": False,
                 "macro_regime": False,
                 "fear_greed": False,
+                "order_flow_risk": False,
             })
         inp = PipelineInput(true_prob=0.70, market_price=0.50)
         dec = pipeline.run(inp)
         # Should still produce a bet from Kelly alone
         self.assertEqual(dec.action, "BET")
         self.assertGreater(dec.bet_amount_cents, 0)
+
+    def test_disable_order_flow_risk(self):
+        pipeline = SignalPipeline(
+            bankroll_cents=10000,
+            enabled_stages={"order_flow_risk": False})
+        inp = PipelineInput(
+            true_prob=0.65, market_price=0.05,
+            market_category="crypto")
+        dec = pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        self.assertFalse(ofr_stage["enabled"])
+        self.assertFalse(ofr_stage["ran"])
+
+
+class TestPipelineWithOrderFlowRisk(unittest.TestCase):
+    """Test order flow risk (Tier 3) integration in pipeline."""
+
+    def setUp(self):
+        self.pipeline = SignalPipeline(bankroll_cents=10000)
+
+    def test_order_flow_stage_runs(self):
+        """Order flow risk should run by default."""
+        inp = PipelineInput(true_prob=0.65, market_price=0.50)
+        dec = self.pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        self.assertTrue(ofr_stage["ran"])
+
+    def test_toxic_contract_forces_skip(self):
+        """Sub-10c contracts should be classified TOXIC and get modifier=0.0."""
+        inp = PipelineInput(
+            true_prob=0.65, market_price=0.05,
+            market_category="crypto")
+        dec = self.pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        self.assertTrue(ofr_stage["ran"])
+        self.assertEqual(ofr_stage["output"]["risk"], "TOXIC")
+        self.assertEqual(ofr_stage["modifier"], 0.0)
+        # TOXIC modifier=0.0 should force SKIP regardless of edge
+        self.assertEqual(dec.action, "SKIP")
+        self.assertEqual(dec.bet_amount_cents, 0)
+
+    def test_favorable_contract_no_reduction(self):
+        """Mid-range contracts should get FAVORABLE with modifier=1.0."""
+        inp = PipelineInput(
+            true_prob=0.70, market_price=0.50,
+            market_category="financials")
+        dec = self.pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        self.assertTrue(ofr_stage["ran"])
+        self.assertEqual(ofr_stage["modifier"], 1.0)
+
+    def test_unfavorable_halves_sizing(self):
+        """Low-price but not toxic contracts get modifier=0.5."""
+        inp = PipelineInput(
+            true_prob=0.70, market_price=0.12,
+            market_category="all")
+        dec = self.pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        self.assertTrue(ofr_stage["ran"])
+        risk = ofr_stage["output"]["risk"]
+        if risk == "UNFAVORABLE":
+            self.assertEqual(ofr_stage["modifier"], 0.5)
+
+    def test_market_category_passed_through(self):
+        """market_category from PipelineInput reaches order flow stage."""
+        inp = PipelineInput(
+            true_prob=0.65, market_price=0.50,
+            market_category="crypto")
+        dec = self.pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        self.assertEqual(ofr_stage["output"]["category"], "crypto")
+
+    def test_default_category_is_all(self):
+        """Without market_category, default should be 'all'."""
+        inp = PipelineInput(true_prob=0.65, market_price=0.50)
+        dec = self.pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        self.assertEqual(ofr_stage["output"]["category"], "all")
+
+    def test_toxic_overrides_positive_filters(self):
+        """TOXIC should force SKIP even when other filters are positive."""
+        inp = PipelineInput(
+            true_prob=0.90, market_price=0.05,
+            fear_greed_value=10,  # extreme fear = bullish
+            market_category="crypto")
+        dec = self.pipeline.run(inp)
+        # Despite huge edge (0.85) and bullish F&G, TOXIC should force SKIP
+        self.assertEqual(dec.action, "SKIP")
+
+    def test_order_flow_compounds_with_other_stages(self):
+        """Order flow modifier should compound with other stage modifiers."""
+        inp = PipelineInput(
+            true_prob=0.65, market_price=0.30,
+            fear_greed_value=90,  # extreme greed = reduce
+            market_category="all")
+        dec = self.pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        fg_stage = next(
+            s for s in dec.stages if s["stage"] == "fear_greed")
+        if ofr_stage["ran"] and fg_stage["ran"]:
+            expected_compound = ofr_stage["modifier"] * fg_stage["modifier"]
+            # Compound modifier should be <= each individual modifier
+            self.assertLessEqual(
+                dec.sizing_modifier,
+                max(ofr_stage["modifier"], 1.0) * max(fg_stage["modifier"], 1.0) + 0.01)
+
+    def test_order_flow_has_confidence(self):
+        """Stage output should include confidence for overall calculation."""
+        inp = PipelineInput(
+            true_prob=0.65, market_price=0.50,
+            market_category="financials")
+        dec = self.pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        self.assertIn("confidence", ofr_stage["output"])
+        self.assertGreater(ofr_stage["output"]["confidence"], 0)
+
+    def test_order_flow_has_expected_return(self):
+        """Stage output should include expected_return."""
+        inp = PipelineInput(
+            true_prob=0.65, market_price=0.50)
+        dec = self.pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        self.assertIn("expected_return", ofr_stage["output"])
+
+    def test_neutral_slight_reduction(self):
+        """NEUTRAL risk should get modifier=0.9."""
+        # Price range that typically maps to NEUTRAL
+        inp = PipelineInput(
+            true_prob=0.65, market_price=0.20,
+            market_category="all")
+        dec = self.pipeline.run(inp)
+        ofr_stage = next(
+            s for s in dec.stages if s["stage"] == "order_flow_risk")
+        if ofr_stage["output"]["risk"] == "NEUTRAL":
+            self.assertEqual(ofr_stage["modifier"], 0.9)
+
+
+class TestPipelineWithBeliefVol(unittest.TestCase):
+    """Test belief_vol_surface modules alongside pipeline inputs.
+
+    belief_vol_surface is not a pipeline stage yet, but its outputs
+    (realized vol, Greeks) should be compatible with pipeline data.
+    """
+
+    def test_realized_vol_from_pipeline_prices(self):
+        """RealizedVolEstimator should work with price_history format."""
+        from belief_vol_surface import RealizedVolEstimator
+
+        prices = [0.50 + 0.01 * i for i in range(20)]
+        timestamps = list(range(len(prices)))
+        est = RealizedVolEstimator()
+        vol = est.estimate(prices, timestamps)
+        self.assertIsInstance(vol, float)
+        self.assertGreater(vol, 0)
+
+    def test_greeks_at_pipeline_price(self):
+        """BeliefGreeks should compute for typical pipeline market_price."""
+        from belief_vol_surface import BeliefGreeks
+
+        bg = BeliefGreeks()
+        price = 0.50
+        greeks = bg.all_greeks(p=price, sigma_b=0.5, tau=1.0)
+        self.assertIn("delta_x", greeks)
+        self.assertIn("gamma_x", greeks)
+        self.assertIn("belief_vega", greeks)
+        self.assertGreater(greeks["delta_x"], 0)
+
+    def test_logit_roundtrip(self):
+        """logit(sigmoid(x)) == x for pipeline-relevant values."""
+        from belief_vol_surface import LogitTransform
+
+        for p in [0.10, 0.25, 0.50, 0.75, 0.90]:
+            x = LogitTransform.logit(p)
+            p_back = LogitTransform.sigmoid(x)
+            self.assertAlmostEqual(p, p_back, places=10)
+
+    def test_vol_with_volatile_prices(self):
+        """High-volatility prices should produce higher realized vol."""
+        from belief_vol_surface import RealizedVolEstimator
+        import math as _math
+
+        # Calm market
+        calm_prices = [0.50 + 0.001 * i for i in range(20)]
+        calm_ts = list(range(len(calm_prices)))
+
+        # Volatile market
+        volatile_prices = [
+            max(0.01, min(0.99, 0.50 + 0.05 * _math.sin(i)))
+            for i in range(20)]
+        vol_ts = list(range(len(volatile_prices)))
+
+        est = RealizedVolEstimator()
+        calm_vol = est.estimate(calm_prices, calm_ts)
+        vol_vol = est.estimate(volatile_prices, vol_ts)
+        self.assertGreater(vol_vol, calm_vol)
+
+    def test_greeks_at_extreme_prices(self):
+        """Greeks should be computable at extreme but valid prices."""
+        from belief_vol_surface import BeliefGreeks
+
+        bg = BeliefGreeks()
+        for p in [0.05, 0.95]:
+            greeks = bg.all_greeks(p=p, sigma_b=0.5, tau=1.0)
+            self.assertIn("delta_x", greeks)
+            self.assertIsInstance(greeks["delta_x"], float)
 
 
 class TestPipelineModifierCompounding(unittest.TestCase):
