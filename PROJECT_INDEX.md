@@ -31,7 +31,7 @@
 |--------|------|--------|-------|
 | Memory System | `memory-system/` | MEM-1-5 + OMEGA + FTS5 store + capture v2.0 + UserPromptSubmit + capture_hook tests | 340 |
 | Spec System | `spec-system/` | SPEC-1-6 + spec_freshness + plan_compliance (wired into validate.py) | 205 |
-| Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer + Session Notifier (ntfy.sh) | 396 |
+| Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer + Session Notifier (ntfy.sh) + StopFailure hook | 411 |
 | Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook, +cp/script/dd/tee evasion) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 1073 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 369 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15 + url_reader tests | 391 |
@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) | 534 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~6880 tests (~172 suites). All must pass before any work.**
+**Total: ~6895 tests (~173 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -69,6 +69,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `auto_wrap.py` — CTX-6: Automatic session wrap trigger
 - `session_pacer.py` — Session pacing for 2-3h autonomous runs (CONTINUE/WRAP_SOON/WRAP_NOW)
 - `session_notifier.py` — ntfy.sh push notifications on session end/error (MT-22, 19 tests)
+- `hooks/stop_failure.py` — StopFailure hook: rate limit/auth/server error classification + state tracking (CC v2.1.78+, 15 tests, S112)
 
 **agent-guard/** — Multi-agent conflict prevention + safety
 - `hooks/mobile_approver.py` — AG-1: iPhone push approval (ntfy.sh)
