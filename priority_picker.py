@@ -285,10 +285,10 @@ def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
         MasterTask(
             mt_id=27, name="CCA Nuclear v2 (Enhanced Scanning)",
             base_value=5, status=TaskStatus.ACTIVE,
-            last_touched_session=103, current_session=current_session,
-            phases_completed=0, phases_total=5,
+            last_touched_session=114, current_session=current_session,
+            phases_completed=3, phases_total=5,
             aging_rate=0.5,
-            next_action="Research: APF improvement, better frontier tagging.",
+            next_action="Phase 4: NEEDLE precision improvement (reduce false positives).",
             tags=["scanning", "intelligence"],
         ),
         MasterTask(
