@@ -22,7 +22,7 @@ This is CCA's equivalent of Kalshi's net profit. Every session should either mai
 or improve APF. If APF drops, we're scanning noise. If APF rises, we're getting smarter
 about what to read and what to skip.
 
-Current: **32.1%** | Target: **40%**
+Current: **22.7%** | Target: **40%**
 
 ## Skillbook vs Journal
 

@@ -1016,7 +1016,8 @@ developer colleague.
 5. Build: If Cowork adds value, integrate. If not, document why and close.
 6. Wire: Connect to hivemind coordination (MT-21)
 
-**Status:** NOT STARTED. Phase 1: Research.
+**Status:** Research COMPLETE (S114). Verdict: SKIP. Cowork adds no value over our hivemind for dev workflows. No Pro↔Code bridge exists. Local MCP bugs (GitHub #23424). See MT29_COWORK_RESEARCH.md.
+Revisit when: Anthropic ships native shared context, or Cowork local MCP bugs fixed.
 
 ---
 
