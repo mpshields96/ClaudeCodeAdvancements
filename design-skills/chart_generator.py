@@ -381,7 +381,7 @@ def _render_bar_chart(chart: BarChart) -> str:
 
     if not chart.data:
         parts.append(_text(chart.width / 2, chart.height / 2, "No data",
-                           font_size=12, fill=CCA_COLORS["muted"]))
+                           font_size=14, fill=CCA_COLORS["muted"]))
         parts.append(_svg_footer())
         return "".join(parts)
 
@@ -459,7 +459,7 @@ def _render_horizontal_bar_chart(chart: HorizontalBarChart) -> str:
 
     if not chart.data:
         parts.append(_text(chart.width / 2, chart.height / 2, "No data",
-                           font_size=12, fill=CCA_COLORS["muted"]))
+                           font_size=14, fill=CCA_COLORS["muted"]))
         parts.append(_svg_footer())
         return "".join(parts)
 
@@ -512,7 +512,7 @@ def _render_line_chart(chart: LineChart) -> str:
 
     if not chart.data:
         parts.append(_text(chart.width / 2, chart.height / 2, "No data",
-                           font_size=12, fill=CCA_COLORS["muted"]))
+                           font_size=14, fill=CCA_COLORS["muted"]))
         parts.append(_svg_footer())
         return "".join(parts)
 
@@ -640,7 +640,7 @@ def _render_donut_chart(chart: DonutChart) -> str:
 
     if not chart.data:
         parts.append(_text(chart.width / 2, chart.height / 2, "No data",
-                           font_size=12, fill=CCA_COLORS["muted"]))
+                           font_size=14, fill=CCA_COLORS["muted"]))
         parts.append(_svg_footer())
         return "".join(parts)
 
@@ -713,7 +713,7 @@ def _render_heatmap_chart(chart: HeatmapChart) -> str:
     rows = [r for r in chart.data if r]
     if not rows:
         parts.append(_text(chart.width / 2, chart.height / 2, "No data",
-                           font_size=12, fill=CCA_COLORS["muted"]))
+                           font_size=14, fill=CCA_COLORS["muted"]))
         parts.append(_svg_footer())
         return "".join(parts)
 
@@ -738,7 +738,7 @@ def _render_heatmap_chart(chart: HeatmapChart) -> str:
     # Title
     if chart.title:
         parts.append(_text(chart.width / 2, 22, chart.title,
-                           font_size=13, font_weight="bold"))
+                           font_size=14, font_weight="bold"))
 
     # Compute global min/max for color normalization
     all_vals = [v for row in rows for v in row]
