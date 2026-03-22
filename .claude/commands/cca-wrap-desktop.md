@@ -261,6 +261,27 @@ env var to be set. Fails silently if not configured — never blocks wrap.
 
 ---
 
+## Step 9.9 — Generate session handoff file (multi-chat sessions)
+
+If this was a multi-chat session (2-chat or 3-chat), generate a standardized handoff file:
+
+```bash
+python3 handoff_generator.py generate \
+    --session [SESSION_NUMBER] \
+    --mode [solo|2chat|3chat] \
+    --worker-task "[SUGGESTED_TASK_1]" \
+    --worker-task "[SUGGESTED_TASK_2]" \
+    --desktop-focus "[SUGGESTED_DESKTOP_FOCUS]" \
+    --trial-run [TRIAL_RUN_NUMBER_OR_0]
+```
+
+This reads SESSION_STATE.md + git log to auto-generate `SESSION_HANDOFF_S{N}.md`.
+Commit the handoff file — it serves as the next session's briefing.
+
+For solo sessions, skip this step (the resume prompt in Step 10 is sufficient).
+
+---
+
 ## Step 10 — Resume prompt
 
 Output AND write to `SESSION_RESUME.md`:
