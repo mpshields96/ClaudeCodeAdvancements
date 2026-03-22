@@ -302,11 +302,11 @@ def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=29, name="Cowork + Pro Bridge Hivemind",
-            base_value=5, status=TaskStatus.ACTIVE,
-            last_touched_session=103, current_session=current_session,
-            phases_completed=0, phases_total=6,
+            base_value=2, status=TaskStatus.COMPLETED,
+            last_touched_session=114, current_session=current_session,
+            phases_completed=1, phases_total=6,
             aging_rate=0.5,
-            next_action="Research: evaluate Cowork, bridge Pro↔Code.",
+            next_action="SKIP — Cowork adds no value. Revisit if Anthropic ships shared context.",
             tags=["bridge", "hivemind", "cowork"],
         ),
         MasterTask(
