@@ -59,10 +59,24 @@ def peak_hours_get_status() -> dict:
 # ---------------------------------------------------------------------------
 
 class AuditLogger:
-    """Structured JSONL event logger for daemon actions."""
+    """Structured JSONL event logger for daemon actions.
 
-    def __init__(self, path: str = "~/.cca-session-daemon.log"):
+    Supports log rotation: when the log file exceeds max_bytes,
+    it's renamed to .log.1, .log.2, etc. up to max_backups.
+    """
+
+    DEFAULT_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
+    DEFAULT_MAX_BACKUPS = 3
+
+    def __init__(
+        self,
+        path: str = "~/.cca-session-daemon.log",
+        max_bytes: int = DEFAULT_MAX_BYTES,
+        max_backups: int = DEFAULT_MAX_BACKUPS,
+    ):
         self.path = os.path.expanduser(path)
+        self.max_bytes = max_bytes
+        self.max_backups = max_backups
 
     def log(self, event: str, data: Optional[dict] = None):
         """Append a structured event to the log file."""
@@ -72,10 +86,38 @@ class AuditLogger:
             "data": data or {},
         }
         try:
+            self._maybe_rotate()
             with open(self.path, "a") as f:
                 f.write(json.dumps(entry, default=str) + "\n")
         except OSError:
             pass  # Fail silently — logging should never crash the daemon
+
+    def _maybe_rotate(self):
+        """Rotate log file if it exceeds max_bytes."""
+        if not os.path.exists(self.path):
+            return
+        try:
+            size = os.path.getsize(self.path)
+        except OSError:
+            return
+        if size < self.max_bytes:
+            return
+
+        # Shift existing backups: .log.2 -> .log.3, .log.1 -> .log.2
+        for i in range(self.max_backups - 1, 0, -1):
+            src = f"{self.path}.{i}"
+            dst = f"{self.path}.{i + 1}"
+            try:
+                if os.path.exists(src):
+                    os.replace(src, dst)
+            except OSError:
+                pass
+
+        # Move current log to .log.1
+        try:
+            os.replace(self.path, f"{self.path}.1")
+        except OSError:
+            pass
 
     def get_recent(self, n: int = 20) -> list[dict]:
         """Return the last N log entries."""
@@ -93,6 +135,17 @@ class AuditLogger:
             return entries
         except OSError:
             return []
+
+    def total_size_bytes(self) -> int:
+        """Total size of log file plus all backups."""
+        total = 0
+        if os.path.exists(self.path):
+            total += os.path.getsize(self.path)
+        for i in range(1, self.max_backups + 1):
+            backup = f"{self.path}.{i}"
+            if os.path.exists(backup):
+                total += os.path.getsize(backup)
+        return total
 
 
 # ---------------------------------------------------------------------------

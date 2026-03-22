@@ -115,6 +115,93 @@ class TestAuditLogger(unittest.TestCase):
         self.assertEqual(entry["event"], "test")
 
 
+class TestAuditLoggerRotation(unittest.TestCase):
+    """Tests for AuditLogger log rotation."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.log_path = os.path.join(self.tmpdir, "daemon.log")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def test_no_rotation_under_limit(self):
+        """Log file under max_bytes should not rotate."""
+        logger = AuditLogger(self.log_path, max_bytes=10000, max_backups=3)
+        logger.log("small_event", {"x": 1})
+        self.assertTrue(os.path.exists(self.log_path))
+        self.assertFalse(os.path.exists(f"{self.log_path}.1"))
+
+    def test_rotation_creates_backup(self):
+        """Log file exceeding max_bytes should create .1 backup."""
+        logger = AuditLogger(self.log_path, max_bytes=100, max_backups=3)
+        # Write enough to exceed 100 bytes
+        for i in range(10):
+            logger.log(f"event_{i}", {"data": "x" * 20})
+
+        # After rotation, .1 should exist
+        self.assertTrue(os.path.exists(f"{self.log_path}.1"))
+        # Current log should be <= backup (post-rotation has fewer entries)
+        self.assertLessEqual(os.path.getsize(self.log_path),
+                             os.path.getsize(f"{self.log_path}.1"))
+
+    def test_rotation_shifts_backups(self):
+        """Multiple rotations shift .1 -> .2 -> .3."""
+        logger = AuditLogger(self.log_path, max_bytes=50, max_backups=3)
+        # Write many events to trigger multiple rotations
+        for i in range(30):
+            logger.log(f"event_{i}", {"data": "x" * 20})
+
+        # Should have backup files
+        self.assertTrue(os.path.exists(f"{self.log_path}.1"))
+
+    def test_max_backups_respected(self):
+        """Should not create more than max_backups backup files."""
+        logger = AuditLogger(self.log_path, max_bytes=50, max_backups=2)
+        for i in range(50):
+            logger.log(f"event_{i}", {"data": "x" * 20})
+
+        # .1 and .2 may exist, .3 should not
+        self.assertFalse(os.path.exists(f"{self.log_path}.3"))
+
+    def test_total_size_bytes(self):
+        """total_size_bytes should sum log + all backups."""
+        logger = AuditLogger(self.log_path, max_bytes=100, max_backups=3)
+        for i in range(20):
+            logger.log(f"event_{i}", {"data": "x" * 20})
+
+        total = logger.total_size_bytes()
+        self.assertGreater(total, 0)
+
+    def test_total_size_bytes_no_file(self):
+        """total_size_bytes returns 0 for non-existent files."""
+        logger = AuditLogger(os.path.join(self.tmpdir, "nope.log"))
+        self.assertEqual(logger.total_size_bytes(), 0)
+
+    def test_rotation_preserves_recent_entries(self):
+        """After rotation, most recent entries are in the current log."""
+        logger = AuditLogger(self.log_path, max_bytes=100, max_backups=2)
+        for i in range(20):
+            logger.log(f"event_{i}", {"i": i})
+
+        recent = logger.get_recent(100)
+        # Current log has entries written after last rotation
+        self.assertGreater(len(recent), 0)
+        # Last entry should be the most recent event
+        self.assertEqual(recent[-1]["data"]["i"], 19)
+
+    def test_default_max_bytes(self):
+        """Default max_bytes should be 5 MB."""
+        logger = AuditLogger(self.log_path)
+        self.assertEqual(logger.max_bytes, 5 * 1024 * 1024)
+
+    def test_default_max_backups(self):
+        """Default max_backups should be 3."""
+        logger = AuditLogger(self.log_path)
+        self.assertEqual(logger.max_backups, 3)
+
+
 class TestDaemonState(unittest.TestCase):
     """Tests for daemon state tracking."""
 
