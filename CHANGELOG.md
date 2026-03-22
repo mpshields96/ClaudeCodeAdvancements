@@ -3,6 +3,34 @@
 
 ---
 
+## Session 118 — 2026-03-21
+
+**What changed:**
+- `MASTER_TASKS.md`: MT-32 Visual Excellence & Design Engineering created (8 pillars, absorbs MT-24/MT-25)
+- `design-skills/report_generator.py`: Wired report_charts.py into /cca-report — 7 SVG charts auto-generated and embedded in PDF
+- `design-skills/chart_generator.py`: Added BubbleChart + TreemapChart (14 chart types total, 32 tests)
+- `design-skills/report_charts.py`: Added module_loc_treemap() — 7th chart type for reports
+- `design-skills/templates/cca-report.typ`: Embeds charts in 4 report sections (module tests+treemap, frontiers, MT status+progress, intelligence+LOC)
+- `design-skills/design-guide.md`: Design token system — color tokens, spacing scale, typography scale, anti-AI-slop rules
+- `KALSHI_TASK_CATALOG.md`: 6 productive task categories for CCA desktop to assign Kalshi main
+- `.claude/commands/cca-auto-desktop.md`: Added Step 5d2 Kalshi task management in coord round
+- Polybot `settings.local.json`: Wired queue_hook.py UserPromptSubmit hook (Matthew-authorized)
+- Worker: `MT32_VISUAL_DESIGN_SCAN.md` — 14 findings (5 BUILD/ADAPT, 7 REFERENCE, 2 SKIP)
+
+**Why:**
+- Matthew directive: comprehensive visuals/UI/design MT covering all visual work, not just charts
+- 3-chat coordination: polybot hook enables Kalshi main to receive CCA task assignments automatically
+- Design tokens: community-validated fix for "AI slop UI" (purple defaults, generic cards)
+
+**Tests:** 7586/7586 passing (190 suites). +37 desktop tests.
+
+**Lessons:**
+- "AI slop" is a color/typography problem, not a layout problem — design tokens fix it cheaply
+- svg.py is interesting but not worth the dependency for our current needs (REFERENCE not BUILD)
+- Kalshi is ONE chat now (main+research combined) — simplifies 3-chat architecture
+
+---
+
 ## Session 117 — 2026-03-21
 
 **What changed:**
