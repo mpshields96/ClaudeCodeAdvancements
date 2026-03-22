@@ -51,6 +51,71 @@ Fallback fonts: Helvetica Neue, Arial, sans-serif (for systems without Source Sa
 | Failing | Highlight (#e94560) | X mark |
 | Warning | #f59e0b | triangle |
 
+## Design Tokens (MT-32 — Anti-AI-Slop System)
+
+These tokens are the antidote to "AI slop UI" — the purple/indigo, generic card, verbose copy
+pattern that makes AI-generated output immediately identifiable. Every CCA visual output MUST
+use these tokens, never browser/LLM defaults.
+
+### Color Tokens
+
+| Token | Value | When to use | NEVER |
+|-------|-------|-------------|-------|
+| `--cca-primary` | #1a1a2e | Text, headers, emphasis | Never purple/indigo |
+| `--cca-accent` | #0f3460 | Interactive elements, links, section borders | Never generic blue (#0000ff) |
+| `--cca-highlight` | #e94560 | Warnings, critical data, call-to-action | Never red (#ff0000) |
+| `--cca-success` | #16c79a | Passing, complete, positive metrics | Never lime green |
+| `--cca-warning` | #f59e0b | Caution, medium-priority items | Never orange-red blends |
+| `--cca-muted` | #6b7280 | Secondary text, metadata, captions | Never light gray (#ccc) |
+| `--cca-bg` | #ffffff | Page/card backgrounds | Never off-white with tint |
+| `--cca-surface` | #f8f9fa | Elevated surfaces, cards | Never darker than bg |
+| `--cca-border` | #e5e7eb | Dividers, table borders | Never visible on white bg |
+
+### Spacing Scale (8px base grid)
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--space-xs` | 4px / 1mm | Inline gaps, tight packing |
+| `--space-sm` | 8px / 2mm | Within-component spacing |
+| `--space-md` | 16px / 4mm | Between components |
+| `--space-lg` | 24px / 6mm | Section separation |
+| `--space-xl` | 32px / 8mm | Major section breaks |
+| `--space-2xl` | 48px / 12mm | Page-level spacing |
+
+### Typography Scale
+
+| Token | Size | Weight | Line-height | Usage |
+|-------|------|--------|-------------|-------|
+| `--type-display` | 36pt | Bold | 1.1 | Cover page title only |
+| `--type-h1` | 24pt | Bold | 1.2 | Report title |
+| `--type-h2` | 17pt | Bold | 1.3 | Section headers |
+| `--type-h3` | 14pt | Bold | 1.3 | Subsection headers |
+| `--type-body` | 9.5-11pt | Regular | 1.5 | Body text |
+| `--type-caption` | 7.5-8pt | Regular/Semibold | 1.4 | Labels, annotations |
+| `--type-metric` | 22pt | Bold | 1.1 | Large numeric displays |
+| `--type-code` | 10pt | Regular | 1.4 | Code, data values |
+
+### Anti-AI-Slop Rules
+
+1. **NO DEFAULT PURPLE** — if any output uses purple/indigo as a primary color, it's wrong
+2. **NO GENERIC CARDS** — every card must serve a specific data purpose, not be decorative
+3. **NO VERBOSE COPY** — data density over explanation. Show, don't tell.
+4. **NO TAILWIND DEFAULTS** — explicit token values, never `text-gray-500` or `bg-indigo-600`
+5. **NO ROUNDED-EVERYTHING** — use 3-5px radius for cards, 0 for data tables, never `rounded-full` on containers
+
+### Chart Series Palette (not purple)
+
+| Position | Hex | Name |
+|----------|-----|------|
+| Series 1 | #0f3460 | Deep blue (accent) |
+| Series 2 | #e94560 | Rose (highlight) |
+| Series 3 | #16c79a | Teal (success) |
+| Series 4 | #f59e0b | Amber (warning) |
+| Series 5 | #6b7280 | Slate (muted) |
+| Series 6 | #8b5cf6 | Violet (sparingly — NOT as primary) |
+| Series 7 | #06b6d4 | Cyan |
+| Series 8 | #84cc16 | Lime |
+
 ## Chart/Visualization Rules
 
 - Bar charts over pie charts (easier to compare)
@@ -58,6 +123,8 @@ Fallback fonts: Helvetica Neue, Arial, sans-serif (for systems without Source Sa
 - Always label axes
 - Use accent color for primary series, muted for secondary
 - No 3D effects, no gradients, no decorative elements
+- 14 chart types available: Bar, HorizontalBar, Line, Sparkline, Donut, Heatmap, StackedBar, Area, StackedArea, Waterfall, Radar, Gauge, Bubble, Treemap
+- For Typst reports: charts auto-generated as SVG and embedded via report_charts.py
 
 ## Rules: Do
 
