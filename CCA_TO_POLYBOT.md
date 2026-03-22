@@ -1032,3 +1032,52 @@ proposal.status = "validated"
 proposal.outcome = {"improved": True}
 report = bridge.process_cycle([proposal], current_session=120)
 ```
+
+---
+
+## MT-26 Tier 3: Order Flow Intelligence (S112)
+
+### Key Research Finding (VERIFIED — UCD WP2025_19)
+
+**Sub-10c contracts lose 60%+ of invested capital.** This is the favorite-longshot bias (FLB),
+confirmed across 300K+ Kalshi contracts (2021-2025), ALL categories, ALL volume quintiles.
+
+**Crypto has the strongest FLB** (psi=0.058, vs 0.034 average). This academically validates
+the sniper edge — high-price contracts (>50c) have positive post-fee returns.
+
+### Actionable Intelligence for Kalshi Bot
+
+1. **Hard guard on sub-10c contracts** — expected loss 60%+, never buy these
+2. **Always act as Maker** (limit orders, not market orders) — Makers are informed, Takers lose
+3. **Category-specific bias coefficients**: crypto psi=0.058, financials=0.032, climate=0.031
+4. **Monitor for edge decay**: 2025 psi (0.021) is smaller than 2024 (0.048) — FLB may be weakening
+5. **Fee impact**: Kalshi fee (7% * p * (1-p)) hits cheap contracts hardest — 5c contract fee = 7% of price
+
+### New CCA Modules Available
+
+| Module | What It Does | How to Use |
+|--------|-------------|-----------|
+| `order_flow_intel.py` | FLB regression, risk classification, Maker/Taker model | `from order_flow_intel import RiskClassifier; rc = RiskClassifier(); rc.classify(0.05)` |
+| `belief_vol_surface.py` | Logit transforms, prediction market Greeks, realized vol | `from belief_vol_surface import BeliefGreeks; bg = BeliefGreeks(); bg.all_greeks(0.5, 0.1, 1.0)` |
+| `signal_pipeline.py` | Now has 7 stages including order_flow_risk guard | Pass `market_category="crypto"` in PipelineInput |
+
+### Pipeline Integration
+
+The signal pipeline now includes order flow risk as Stage 6:
+- TOXIC (sub-10c): modifier=0.0 (hard SKIP)
+- UNFAVORABLE (10-30c): modifier=0.5
+- NEUTRAL (30-50c): modifier=0.9
+- FAVORABLE (50c+): modifier=1.0
+
+```python
+from signal_pipeline import SignalPipeline, PipelineInput
+
+pipeline = SignalPipeline(bankroll_cents=10000)
+inp = PipelineInput(
+    true_prob=0.65,
+    market_price=0.50,
+    market_category="crypto",  # NEW — enables category-specific FLB
+    # ... other fields
+)
+decision = pipeline.run(inp)
+```
