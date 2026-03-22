@@ -311,11 +311,11 @@ def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=30, name="Session Daemon (Tmux Auto-Spawn)",
-            base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=112, current_session=current_session,
-            phases_completed=3, phases_total=5,  # P1 design, P2 registry+tmux_manager, P3 daemon core
+            base_value=8, status=TaskStatus.COMPLETED,
+            last_touched_session=113, current_session=current_session,
+            phases_completed=5, phases_total=5,
             aging_rate=1.0,
-            next_action="Phase 4: Integration testing (dry run with 2 sessions). Phase 5: Hardening.",
+            next_action="COMPLETE. All 5 phases shipped (S110-S113). 181 tests.",
             tags=["automation", "hivemind", "tmux"],
         ),
         MasterTask(
