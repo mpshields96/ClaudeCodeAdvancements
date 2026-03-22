@@ -62,6 +62,7 @@ class PipelineInput:
     trend: Optional[str] = None                      # UP/DOWN/FLAT for F&G context
     minutes_remaining: Optional[float] = None        # For dynamic Kelly time decay
     total_window: Optional[float] = None             # Total bet window in minutes
+    market_category: Optional[str] = None            # For order flow FLB (crypto/financials/etc)
 
     def to_dict(self) -> Dict[str, Any]:
         d = {
@@ -196,14 +197,19 @@ class SignalPipeline:
         stages.append(stage5.to_dict())
         compound_modifier *= stage5.modifier
 
-        # Stage 6: Dynamic Kelly (always runs — it's the final sizing engine)
-        stage6 = self._run_dynamic_kelly(inp, compound_modifier)
+        # Stage 6: Order Flow Risk (Tier 3)
+        stage6 = self._run_order_flow_risk(inp)
         stages.append(stage6.to_dict())
+        compound_modifier *= stage6.modifier
+
+        # Stage 7: Dynamic Kelly (always runs — it's the final sizing engine)
+        stage7 = self._run_dynamic_kelly(inp, compound_modifier)
+        stages.append(stage7.to_dict())
         # Kelly modifier is already baked into the bet sizing
 
         # Compute final decision
         edge = inp.true_prob - inp.market_price
-        kelly_frac = stage6.output.get("kelly_fraction", 0.0) if stage6.output else 0.0
+        kelly_frac = stage7.output.get("kelly_fraction", 0.0) if stage7.output else 0.0
 
         # Apply compound modifier to Kelly fraction
         adjusted_frac = kelly_frac * compound_modifier
@@ -355,10 +361,44 @@ class SignalPipeline:
 
         return StageResult("fear_greed", True, True, output, modifier)
 
+    def _run_order_flow_risk(self, inp: PipelineInput) -> StageResult:
+        """Stage 6: Order flow risk classification (Tier 3).
+
+        Uses FLB research to flag toxic longshot contracts.
+        Sub-10c contracts get modifier=0.0 (SKIP).
+        """
+        if not self._is_enabled("order_flow_risk"):
+            return StageResult("order_flow_risk", False, False, None, 1.0)
+
+        from order_flow_intel import RiskClassifier
+
+        classifier = RiskClassifier()
+        category = inp.market_category or "all"
+        result = classifier.classify(inp.market_price, category=category)
+
+        risk = result["risk"]
+        if risk == "TOXIC":
+            modifier = 0.0  # Hard skip — 60%+ loss expected
+        elif risk == "UNFAVORABLE":
+            modifier = 0.5  # Halve sizing
+        elif risk == "NEUTRAL":
+            modifier = 0.9  # Slight reduction
+        else:  # FAVORABLE
+            modifier = 1.0  # Full sizing
+
+        output = {
+            "risk": risk,
+            "expected_return": round(result["expected_return"], 4),
+            "category": category,
+            "confidence": 0.85 if risk in ("TOXIC", "FAVORABLE") else 0.65,
+        }
+
+        return StageResult("order_flow_risk", True, True, output, modifier)
+
     def _run_dynamic_kelly(
         self, inp: PipelineInput, compound_modifier: float
     ) -> StageResult:
-        """Stage 6: Dynamic Kelly bet sizing (always runs)."""
+        """Stage 7: Dynamic Kelly bet sizing (always runs)."""
         from dynamic_kelly import DynamicKelly
 
         bankroll = max(1, self.bankroll_cents)
