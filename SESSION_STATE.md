@@ -3,9 +3,38 @@
 
 ---
 
-## Current State (as of Session 115 — 2026-03-21)
+## Current State (as of Session 116 — 2026-03-21)
 
-**Phase:** Session 115 COMPLETE. 3-CHAT TRIAL RUN (desktop coordinator + CLI worker + Kalshi main). Design-skills expansion + MT-27 Phase 5.
+**Phase:** Session 116 COMPLETE. 3-CHAT TRIAL RUN #2 (desktop coordinator + CLI worker + Kalshi main). Coordination infrastructure + design-skills expansion.
+
+**What was done this session (S116):**
+- **3-CHAT TRIAL RUN #2: SUCCESS.** Desktop coordinator + CLI worker + Kalshi main. Worker completed StackedAreaChart (46 tests) + consistency audit tests (43 tests). Desktop built 5 new coordination tools. 8 desktop commits + 1 worker commit = 9 total. Key learning: fixed stale message clearing bug that prevented multi-task worker queuing.
+- **handoff_generator.py**: Automated SESSION_HANDOFF file generation. Supports solo/2chat/3chat modes. Reads SESSION_STATE + git log. 50 tests.
+- **launch_session.sh**: Unified multi-chat launcher with pre-flight safety checks (duplicates, peak hours, auth). 13 tests.
+- **session_metrics.py**: Cross-session analytics aggregator (wrap_tracker + tip_tracker + apf data). Summary, growth, streaks. 55 tests.
+- **coordination_dashboard.py**: At-a-glance multi-chat status (commits, worker state, peak hours). Full/compact/JSON modes. 22 tests.
+- **cca_comm.py bug fix**: cmd_task() was clearing ALL unread messages from target inbox. Fixed to only clear >2h old messages. This was the root cause of workers only completing 1 task in S115 — queued tasks 2/3 were being eaten.
+- **Chart font-size consistency fix**: Worker's audit tests found real inconsistency (some charts used 12, others 14 for "No data" text). Standardized to 14.
+- **StackedAreaChart** (worker cli1): 9th chart type. Cumulative stacking, polygon-per-series, gradient fills, legend, label thinning. 46 tests.
+- **test_chart_consistency.py** (worker cli1): 43 consistency audit tests across all 9 chart types.
+- **Wired handoff_generator into /cca-wrap-desktop** (Step 9.9).
+- **Tests**: 7333 passing (184 suites). +229 new tests this session.
+- **Commits**: 9 this session (8 desktop + 1 worker).
+
+**Chart types now available**: BarChart, HorizontalBarChart, LineChart, Sparkline, DonutChart, HeatmapChart, StackedBarChart, AreaChart, StackedAreaChart (9 total).
+
+**Next (prioritized):**
+1. **Kalshi bot maintenance** — Matthew's #1 priority.
+2. **Design-skills continued expansion** — GroupedBarChart (worker task 2 was queued but worker wrapped before pickup), improved /cca-report using new chart types.
+3. **Autonomous loop** (MT-22/MT-30) — CCA desktop auto-spawning new sessions.
+4. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
+5. **MT-31 Research**: Evaluate Gemini Pro as cross-model complement.
+
+**Key S116 learning:** cca_comm.py `cmd_task()` was eating queued tasks by clearing ALL unread messages. Fixed with 2-hour threshold. This explains why S115 worker only completed 1 of 2 tasks. S117 multi-task queuing should work correctly now.
+
+**Still pending (Matthew manual):**
+- AUTH FIX: `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc`
+- Bridge sync: `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md`
 
 **What was done this session (S115):**
 - **3-CHAT TRIAL RUN: SUCCESS.** Desktop coordinator + CLI worker + Kalshi main all ran without errors, scope conflicts, or interference. Worker launched, received task, executed (42 tests), committed, reported back, wrapped. Clean coordination throughout.
