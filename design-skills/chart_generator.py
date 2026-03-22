@@ -11,6 +11,7 @@ Chart types:
     LineChart         — line/area for trends (supports multiple series)
     Sparkline         — compact inline trend indicator
     DonutChart        — progress/completion indicator (NOT for data comparison)
+    StackedBarChart   — stacked vertical bars for composition comparison
     HeatmapChart      — 2D grid of colored cells for correlation/intensity data
 
 Usage:
@@ -234,6 +235,34 @@ class DonutChart:
     width: int = 300
     height: int = 300
     center_text: str = ""
+
+
+@dataclass
+class StackedBarChart:
+    """Stacked vertical bar chart for comparing composition across categories.
+
+    Each category has a bar divided into segments, one per series.
+    Useful for showing how totals break down (e.g., BUILD/ADAPT/SKIP per session).
+
+    Args:
+        data: [(label, [val_series_0, val_series_1, ...]), ...]
+        series_names: ["Series A", "Series B", ...] — legend labels
+        colors: Custom colors per series (default: SERIES_PALETTE)
+        show_values: Show segment values inside bars
+    """
+    data: list  # [(label, [values_per_series]), ...]
+    series_names: list  # ["Build", "Adapt", "Skip"]
+    title: str = ""
+    width: int = 500
+    height: int = 300
+    colors: list = field(default_factory=list)
+    show_values: bool = False
+    y_label: str = ""
+
+    def __post_init__(self):
+        if not self.colors:
+            self.colors = [SERIES_PALETTE[i % len(SERIES_PALETTE)]
+                          for i in range(len(self.series_names))]
 
 
 @dataclass
@@ -700,6 +729,108 @@ def _render_heatmap_chart(chart: HeatmapChart) -> str:
     return "".join(parts)
 
 
+def _render_stacked_bar_chart(chart: StackedBarChart) -> str:
+    """Render a stacked vertical bar chart to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                          font_size=14, fill=CCA_COLORS["muted"], anchor="middle"))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout constants
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 50
+    margin_left = 60
+    margin_right = 20
+    legend_height = 25
+
+    plot_x = margin_left
+    plot_y = margin_top
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom - legend_height
+
+    n_categories = len(chart.data)
+    n_series = len(chart.series_names)
+
+    # Compute max stack height
+    max_total = 0
+    for _, values in chart.data:
+        total = sum(max(0, v) for v in values[:n_series])
+        max_total = max(max_total, total)
+
+    if max_total == 0:
+        max_total = 1  # Avoid division by zero
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 22, chart.title,
+                          font_size=14, fill=CCA_COLORS["primary"],
+                          anchor="middle", font_weight="600"))
+
+    # Y-axis label
+    if chart.y_label:
+        parts.append(
+            _text(14, plot_y + plot_h / 2, chart.y_label,
+                  font_size=10, fill=CCA_COLORS["muted"], anchor="middle",
+                  transform=f"rotate(-90, 14, {plot_y + plot_h / 2})")
+        )
+
+    # Y-axis gridlines + labels
+    n_ticks = 5
+    for i in range(n_ticks + 1):
+        val = max_total * i / n_ticks
+        y = plot_y + plot_h - (plot_h * i / n_ticks)
+        parts.append(_line(plot_x, y, plot_x + plot_w, y,
+                          stroke=CCA_COLORS["border"]))
+        label = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(plot_x - 8, y + 4, label,
+                          font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
+
+    # Bars
+    bar_spacing = plot_w / n_categories
+    bar_width = bar_spacing * 0.7
+
+    for cat_idx, (label, values) in enumerate(chart.data):
+        bar_x = plot_x + cat_idx * bar_spacing + (bar_spacing - bar_width) / 2
+        cumulative_height = 0
+
+        for s_idx in range(min(n_series, len(values))):
+            val = max(0, values[s_idx])
+            seg_height = (val / max_total) * plot_h
+            seg_y = plot_y + plot_h - cumulative_height - seg_height
+
+            color = chart.colors[s_idx % len(chart.colors)]
+            parts.append(_rect(bar_x, seg_y, bar_width, seg_height, color))
+
+            # Value label inside segment
+            if chart.show_values and val > 0 and seg_height > 14:
+                parts.append(_text(bar_x + bar_width / 2, seg_y + seg_height / 2 + 4,
+                                  str(int(val)) if val == int(val) else f"{val:.1f}",
+                                  font_size=9, fill="#ffffff", anchor="middle"))
+
+            cumulative_height += seg_height
+
+        # Category label
+        parts.append(_text(plot_x + cat_idx * bar_spacing + bar_spacing / 2,
+                          plot_y + plot_h + 16, str(label),
+                          font_size=10, fill=CCA_COLORS["muted"], anchor="middle"))
+
+    # Legend
+    legend_y = chart.height - legend_height + 5
+    legend_x_start = plot_x
+    for s_idx, name in enumerate(chart.series_names):
+        lx = legend_x_start + s_idx * 100
+        parts.append(_rect(lx, legend_y, 12, 12, chart.colors[s_idx % len(chart.colors)]))
+        parts.append(_text(lx + 16, legend_y + 10, name,
+                          font_size=9, fill=CCA_COLORS["muted"]))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -716,6 +847,8 @@ def render_svg(chart) -> str:
         return _render_sparkline(chart)
     elif isinstance(chart, DonutChart):
         return _render_donut_chart(chart)
+    elif isinstance(chart, StackedBarChart):
+        return _render_stacked_bar_chart(chart)
     elif isinstance(chart, HeatmapChart):
         return _render_heatmap_chart(chart)
     else:
