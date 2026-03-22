@@ -36,7 +36,7 @@
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 369 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15 + url_reader tests | 391 |
 | Self-Learning | `self-learning/` | MT-7,10,12,26(Tier 3),28(COMPLETE) + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + predictive_recommender + sentinel_bridge + order_flow_intel + belief_vol_surface + reflect tests | 1735 |
-| Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots | 493 |
+| Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) | 534 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
 **Total: ~6880 tests (~172 suites). All must pass before any work.**
