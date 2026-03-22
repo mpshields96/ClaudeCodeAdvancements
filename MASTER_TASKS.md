@@ -1042,7 +1042,11 @@ developer colleague.
 - cca_comm.py (queue messages)
 - session_pacer.py (wrap timing)
 
-**Status:** Phase 2 COMPLETE (S111) — `session_registry.py` (60 tests) + `tmux_manager.py` (40 tests). Phase 3 (daemon loop) next — multi-session build.
+**Status:** ALL PHASES COMPLETE (S111-S113).
+- Phase 2 (S111): `session_registry.py` (60 tests) + `tmux_manager.py` (40 tests)
+- Phase 3 (S112): `session_daemon.py` — poll loop, health checking, spawn/restart, peak hours (45 tests)
+- Phase 4 (S113): Integration tests — lifecycle, peak transitions, crash recovery chains (27 tests)
+- Phase 5 (S113): Hardening — `_mark_exhausted_sessions` FAILED state fix, log rotation (9 tests)
 
 ---
 
