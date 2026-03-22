@@ -3,29 +3,30 @@
 
 ---
 
-## Current State (as of Session 111 — 2026-03-21)
+## Current State (as of Session 112 — 2026-03-21)
 
-**Phase:** Session 111 COMPLETE. Solo CCA. 4 MTs advanced: MT-30 Phase 2, MT-28 Phases 5+6 (GRADUATED), MT-24 Phase 1.
+**Phase:** Session 112 IN PROGRESS. Solo CCA. 2 MTs advanced: MT-30 Phase 3, MT-26 Tier 3.
 
-**What was done this session (S111):**
-- **MT-30 Phase 2: Session Registry + Tmux Manager** (`session_registry.py`, `tmux_manager.py`): Config loading/validation, session state lifecycle (pending→running→stopped/crashed/failed/paused), tmux window create/monitor/kill, env var injection with ANTHROPIC_API_KEY unset safety. 100 tests (60+40).
-- **MT-28 Phase 5: Predictive Recommender** (`predictive_recommender.py`): Pre-session recommendations from principle scores, domain affinity, recency weighting. Generates ranked principles + risk warnings. Injectable format for session start. 40 tests.
-- **MT-28 Phase 6: Sentinel Bridge** (`sentinel_bridge.py`): Connects SentinelMutator to principle_registry. Creates principles from validated proposals, counter-principles from rejections, feeds cross-pollinations into transfers. 30 tests.
-- **MT-28 GRADUATED**: All 6 phases complete (registry, plugin, transfer, feedback, predictive, sentinel_bridge).
-- **MT-24 Phase 1: Trading Charts** (`trading_chart.py`): 5 SVG chart types for trading analytics — PnLCurve, WinRateChart, StrategyMatrix, DrawdownChart, HeatmapChart. 41 tests.
-- **Default daemon config** (`session_daemon_config.json`): 3-session config validated.
-- **Bridge updated**: CCA_TO_POLYBOT.md with MT-28 integration guide + code examples.
-- **Priority picker updated**: MT-28 completed, MT-30 Phase 2, MT-24 Phase 1, session counter 111.
-- **Tests**: 6770 passing (169 suites). Up from 6559/165. +211 new tests.
-- **Commits**: 10 this session. Grade: A.
+**What was done this session (S112):**
+- **MT-30 Phase 3: Session Daemon Core** (`session_daemon.py`): Poll loop, health checking, spawn/restart logic, peak hours enforcement, audit logging, PID file singleton, CLI interface. Integrates with session_registry + tmux_manager from Phase 2. 45 tests. Matthew directive: remaining Phase 4-5 (integration testing, hardening) spread over future sessions.
+- **MT-26 Tier 3: Order Flow Intelligence** (`order_flow_intel.py`): FeeCalculator, FLBEstimator (OLS with category-specific psi coefficients from UCD WP2025_19), ReturnForecaster, RiskClassifier (TOXIC/UNFAVORABLE/NEUTRAL/FAVORABLE), BiasTracker, MakerTakerAnalyzer (Equation 6 maker pricing model). Stdlib only, 38 tests.
+- **MT-26 Tier 3: Belief Volatility Surface Phase 1** (`belief_vol_surface.py`): LogitTransform (p <-> log-odds), BeliefGreeks (Delta_x, Gamma_x, belief-vega, martingale drift), RealizedVolEstimator (rolling vol from price history). Based on arXiv:2510.15205. Stdlib only, 27 tests.
+- **MT-26 Tier 3 Design Doc** (`MT26_TIER3_DESIGN.md`): Full paper analysis for both Tier 3 modules with implementation plan.
+- **Pipeline Integration**: order_flow_risk wired as Stage 6 in signal_pipeline.py (now 7-stage). TOXIC contracts get modifier=0.0 (hard SKIP). market_category field added to PipelineInput.
+- **Bridge Updated**: CCA_TO_POLYBOT.md with Tier 3 intel, 5 actionable recommendations, code examples, pipeline guide.
+- **Doc Drift Fixed**: PROJECT_INDEX test count (6880/172), MASTER_TASKS MT-24/MT-26/MT-30 statuses.
+- **Kalshi main chat launched** via launch_kalshi.sh at 7:31 PM CDT (Matthew-authorized).
+- **Tests**: 6880 passing (172 suites). Up from 6770/169. +110 new tests.
+- **Commits**: 10 this session.
 
 **Next (prioritized):**
-1. **AUTH FIX**: Matthew must run `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc` before next Kalshi chat launch.
-2. **Bridge sync**: Matthew should run `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md` (48.8K vs 9.2K stale).
-3. **MT-30 Phase 3**: Daemon loop (poll, health check, spawn/restart, CLI). Spread over multiple sessions per Matthew directive.
-4. **MT-26 Tier 3**: Order flow intelligence, belief volatility surface (research phase needed first).
-5. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
-6. **3-chat system**: Resume ONLY when Matthew gives explicit clear signal.
+1. **Bridge sync**: Matthew should run `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md` (now ~52K with Tier 3 intel).
+2. **AUTH FIX still pending**: Matthew must run `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc`.
+3. **MT-30 Phase 4**: Integration testing (dry run with 2 sessions). Multi-session per Matthew directive.
+4. **MT-30 Phase 5**: Hardening (max restart limits, SIGTERM, PID file, log rotation).
+5. **MT-26 Tier 3 Phase 2**: Full Kalman + EM + B-spline surface (needs numpy). Only after Phase 1 proves useful.
+6. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
+7. **MT-23**: Mobile remote control research (Telegram/Discord MCP evaluation).
 
 **What was done this session (S109):**
 
