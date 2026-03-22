@@ -172,6 +172,15 @@ class TestEmptyDataHandling(unittest.TestCase):
         svg = render_svg(Sparkline(values=[]))
         self.assertIn("<svg", svg)
 
+    def test_waterfall_chart_empty(self):
+        self._assert_no_data(WaterfallChart(data=[]), "WaterfallChart")
+
+    def test_radar_chart_empty(self):
+        self._assert_no_data(RadarChart(data=[]), "RadarChart")
+
+    def test_gauge_chart_none_value(self):
+        self._assert_no_data(GaugeChart(value=None), "GaugeChart")
+
 
 # ---------------------------------------------------------------------------
 # (c) Special character escaping in titles and labels
@@ -343,6 +352,59 @@ class TestConsistentViewBox(unittest.TestCase):
             StackedAreaChart(series=[("A", [1])], labels=["X"], width=600, height=350),
             600, 350, "StackedAreaChart"
         )
+
+    def test_waterfall_chart_viewbox(self):
+        self._assert_viewbox(
+            WaterfallChart(data=[("A", 10)], width=600, height=400),
+            600, 400, "WaterfallChart"
+        )
+
+    def test_radar_chart_viewbox(self):
+        self._assert_viewbox(
+            RadarChart(data=[("A", 80), ("B", 60), ("C", 90)], width=500, height=500),
+            500, 500, "RadarChart"
+        )
+
+    def test_gauge_chart_viewbox(self):
+        self._assert_viewbox(
+            GaugeChart(value=75, width=500, height=350),
+            500, 350, "GaugeChart"
+        )
+
+
+class TestNewChartTypesTitleAndEscape(unittest.TestCase):
+    """Title size=14 and special char escaping for WaterfallChart, RadarChart, GaugeChart."""
+
+    def test_waterfall_title_size_14(self):
+        svg = render_svg(WaterfallChart(data=[("A", 10)], title="My Waterfall"))
+        self.assertIn('font-size="14"', svg)
+        self.assertIn("My Waterfall", svg)
+
+    def test_radar_title_size_14(self):
+        svg = render_svg(RadarChart(data=[("A", 80), ("B", 60), ("C", 90)],
+                                   title="My Radar"))
+        self.assertIn('font-size="14"', svg)
+        self.assertIn("My Radar", svg)
+
+    def test_gauge_title_size_14(self):
+        svg = render_svg(GaugeChart(value=75, title="My Gauge"))
+        self.assertIn('font-size="14"', svg)
+        self.assertIn("My Gauge", svg)
+
+    def test_waterfall_label_escaped(self):
+        svg = render_svg(WaterfallChart(data=[("R&D", 100)], title="P&L"))
+        self.assertIn("R&amp;D", svg)
+        self.assertIn("P&amp;L", svg)
+
+    def test_radar_label_escaped(self):
+        svg = render_svg(RadarChart(data=[("R&D", 80), ("A<B", 60), ("C>D", 90)]))
+        self.assertIn("R&amp;D", svg)
+        self.assertIn("A&lt;B", svg)
+        self.assertIn("C&gt;D", svg)
+
+    def test_gauge_title_escaped(self):
+        svg = render_svg(GaugeChart(value=50, title="Score & Grade"))
+        self.assertIn("Score &amp; Grade", svg)
 
 
 if __name__ == "__main__":

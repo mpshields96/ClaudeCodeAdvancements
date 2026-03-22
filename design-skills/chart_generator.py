@@ -15,6 +15,10 @@ Chart types:
     StackedBarChart   — stacked vertical bars for composition comparison
     HeatmapChart      — 2D grid of colored cells for correlation/intensity data
     StackedAreaChart  — stacked filled areas for multiple series over time
+    GroupedBarChart   — side-by-side bars for direct multi-series comparison
+    WaterfallChart    — cumulative P&L waterfall (green positive, red negative)
+    RadarChart        — spider/radar chart for multi-dimensional comparison
+    GaugeChart        — semicircular speedometer for single metric vs target
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
