@@ -404,6 +404,93 @@ class GroupedBarChart:
                           for i in range(len(self.series_names))]
 
 
+@dataclass
+class WaterfallChart:
+    """Waterfall chart — cumulative positive/negative contributions.
+
+    Each bar floats from the running cumulative total. Positive bars are
+    green, negative bars are red. A final 'Total' bar shows the sum of all
+    contributions. Connector lines link adjacent bars to make the flow clear.
+
+    Useful for financial P&L breakdowns, before/after comparisons, or any
+    scenario where you want to show how individual items contribute to a total.
+
+    Args:
+        data: [(label, value), ...] — positive or negative numeric values
+        title: Optional chart title
+        total_label: Label for the final total bar (default: "Total")
+        show_values: If True, render value labels above/below each bar
+        width: SVG width (px)
+        height: SVG height (px)
+    """
+    data: list          # [(label, value), ...]
+    title: str = ""
+    total_label: str = "Total"
+    show_values: bool = True
+    width: int = 500
+    height: int = 300
+
+
+@dataclass
+class RadarChart:
+    """Radar (spider) chart — multi-dimensional comparison on radial axes.
+
+    Each axis radiates from the center at equal angular spacing. Values are
+    plotted along their axis and connected into a polygon. Multiple series
+    can be overlaid for direct comparison. Grid circles at 25/50/75/100%
+    of the max value provide reference.
+
+    Args:
+        data: [(label, value), ...] — single series (3–8 axes)
+        title: Optional chart title
+        max_value: Scale max (default: auto from data)
+        extra_series: [("name", [(label, value)], color), ...] — overlay series
+        fill_opacity: Fill opacity for polygon (default 0.2)
+        width: SVG width (px)
+        height: SVG height (px)
+    """
+    data: list          # [(label, value), ...] — 3-8 items
+    title: str = ""
+    max_value: float = 0.0
+    extra_series: list = field(default_factory=list)
+    fill_opacity: float = 0.2
+    color: str = ""
+    width: int = 400
+    height: int = 400
+
+    def __post_init__(self):
+        if not self.color:
+            self.color = CCA_COLORS["accent"]
+
+
+@dataclass
+class GaugeChart:
+    """Gauge (speedometer) chart — single metric against a target range.
+
+    A semicircular arc is divided into color zones (red/yellow/green) based on
+    configurable thresholds. A needle points to the current value. The value
+    is displayed as text in the center. Min/max markers are shown at arc ends.
+
+    Args:
+        value: Current value to display
+        min_value: Minimum of the scale (default: 0)
+        max_value: Maximum of the scale (default: 100)
+        thresholds: (low, high) — below low=red, low–high=yellow, above high=green
+        title: Optional chart title
+        label: Optional sub-label below value (e.g., "% coverage")
+        width: SVG width (px)
+        height: SVG height (px)
+    """
+    value: float
+    min_value: float = 0.0
+    max_value: float = 100.0
+    thresholds: tuple = (33.0, 66.0)   # (low_threshold, high_threshold)
+    title: str = ""
+    label: str = ""
+    width: int = 400
+    height: int = 280
+
+
 # ---------------------------------------------------------------------------
 # Renderers
 # ---------------------------------------------------------------------------
@@ -1262,6 +1349,356 @@ def _render_grouped_bar_chart(chart: GroupedBarChart) -> str:
     return "".join(parts)
 
 
+def _render_waterfall_chart(chart: WaterfallChart) -> str:
+    """Render a waterfall chart to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 40
+    margin_left = 55
+    margin_right = 20
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    # Build cumulative running totals
+    # Each bar: (label, value, start, end) — bar floats from start to end
+    bars = []
+    running = 0.0
+    for label, value in chart.data:
+        start = running
+        end = running + value
+        running = end
+        bars.append((label, value, start, end))
+
+    total = running
+    # Add the total bar at the end: spans from 0 to total
+    bars.append((chart.total_label, total, 0.0, total))
+
+    # Compute y-axis scale: need to cover all starts/ends including 0
+    all_vals = [0.0]
+    for _, _, start, end in bars:
+        all_vals.extend([start, end])
+    y_min = min(all_vals)
+    y_max = max(all_vals)
+    y_range = y_max - y_min
+    if y_range == 0:
+        y_range = 1
+
+    def to_svg_y(val: float) -> float:
+        """Map a data value to SVG y coordinate (y increases downward)."""
+        return margin_top + plot_h - ((val - y_min) / y_range) * plot_h
+
+    # Y-axis gridlines (5 lines)
+    for i in range(5):
+        val = y_min + (y_range * i / 4)
+        y = to_svg_y(val)
+        parts.append(_line(margin_left, y, margin_left + plot_w, y,
+                           CCA_COLORS["border"], 0.5))
+        label_str = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(margin_left - 6, y + 4, label_str,
+                           font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
+
+    # Zero line (if y_min < 0 < y_max)
+    if y_min < 0 < y_max:
+        zero_y = to_svg_y(0)
+        parts.append(_line(margin_left, zero_y, margin_left + plot_w, zero_y,
+                           CCA_COLORS["muted"], 1))
+
+    # Bars
+    n_bars = len(bars)
+    bar_slot = plot_w / n_bars
+    bar_w = bar_slot * 0.55
+
+    prev_right_x = None
+    prev_end_y = None
+    is_total_idx = n_bars - 1
+
+    for i, (label, value, start, end) in enumerate(bars):
+        is_total = (i == is_total_idx)
+        positive = (value >= 0)
+
+        # Color: total bar = accent, positive = success, negative = highlight
+        if is_total:
+            color = CCA_COLORS["accent"]
+        elif positive:
+            color = CCA_COLORS["success"]
+        else:
+            color = CCA_COLORS["highlight"]
+
+        bx = margin_left + i * bar_slot + (bar_slot - bar_w) / 2
+        y_start = to_svg_y(start)
+        y_end = to_svg_y(end)
+        bar_top = min(y_start, y_end)
+        bar_bot = max(y_start, y_end)
+        bar_h = max(bar_bot - bar_top, 1)
+
+        parts.append(_rect(bx, bar_top, bar_w, bar_h, color, rx=2))
+
+        # Connector line from previous bar's end to this bar's start
+        if prev_right_x is not None and prev_end_y is not None and not is_total:
+            connector_y = to_svg_y(start)
+            parts.append(_line(prev_right_x, connector_y, bx, connector_y,
+                               CCA_COLORS["muted"], 0.8))
+
+        # Value label
+        if chart.show_values:
+            sign = "+" if (value > 0 and not is_total) else ""
+            val_str = f"{sign}{int(value)}" if value == int(value) else f"{sign}{value:.1f}"
+            label_y = bar_top - 4 if positive else bar_bot + 12
+            parts.append(_text(bx + bar_w / 2, label_y, val_str,
+                               font_size=9, fill=color, anchor="middle",
+                               font_weight="bold"))
+
+        # Category label
+        parts.append(_text(bx + bar_w / 2, margin_top + plot_h + 16,
+                           str(label), font_size=9, fill=CCA_COLORS["muted"],
+                           anchor="middle"))
+
+        prev_right_x = bx + bar_w
+        prev_end_y = to_svg_y(end)
+
+    # Axes
+    parts.append(_line(margin_left, margin_top, margin_left,
+                       margin_top + plot_h, CCA_COLORS["border"]))
+    parts.append(_line(margin_left, margin_top + plot_h,
+                       margin_left + plot_w, margin_top + plot_h,
+                       CCA_COLORS["border"]))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
+def _render_radar_chart(chart: RadarChart) -> str:
+    """Render a radar/spider chart to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    n_axes = max(3, min(8, len(chart.data)))
+    data = chart.data[:n_axes]
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 20, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    title_offset = 30 if chart.title else 10
+    cx = chart.width / 2
+    cy = (chart.height - title_offset) / 2 + title_offset
+
+    # Radius: leave room for axis labels
+    label_margin = 40
+    r_max = min(chart.width / 2, (chart.height - title_offset) / 2) - label_margin
+
+    # Scale
+    max_val = chart.max_value if chart.max_value > 0 else max(v for _, v in data)
+    if max_val == 0:
+        max_val = 1
+
+    def axis_angle(i: int) -> float:
+        """Angle in radians for axis i (0 = top, clockwise)."""
+        return math.pi * 2 * i / n_axes - math.pi / 2
+
+    def polar_point(i: int, value: float):
+        """SVG (x, y) for axis i at given value (0..max_val)."""
+        r = (value / max_val) * r_max
+        angle = axis_angle(i)
+        return cx + r * math.cos(angle), cy + r * math.sin(angle)
+
+    # Grid circles at 25%, 50%, 75%, 100%
+    for pct in [0.25, 0.5, 0.75, 1.0]:
+        r = pct * r_max
+        pts = []
+        for i in range(n_axes):
+            angle = axis_angle(i)
+            pts.append((cx + r * math.cos(angle), cy + r * math.sin(angle)))
+        # Polygon for grid
+        pts_str = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
+        parts.append(f'<polygon points="{pts_str}" fill="none" '
+                     f'stroke="{CCA_COLORS["border"]}" stroke-width="0.8"/>\n')
+
+    # Axis lines from center to edge
+    for i in range(n_axes):
+        ex, ey = polar_point(i, max_val)
+        parts.append(_line(cx, cy, ex, ey, CCA_COLORS["border"], 0.8))
+
+    # Axis labels
+    for i, (label, _) in enumerate(data):
+        angle = axis_angle(i)
+        lx = cx + (r_max + label_margin * 0.7) * math.cos(angle)
+        ly = cy + (r_max + label_margin * 0.7) * math.sin(angle)
+        # Determine text anchor based on position
+        if abs(math.cos(angle)) < 0.2:
+            anchor = "middle"
+        elif math.cos(angle) < 0:
+            anchor = "end"
+        else:
+            anchor = "start"
+        parts.append(_text(lx, ly + 4, str(label), font_size=10,
+                           fill=CCA_COLORS["muted"], anchor=anchor))
+
+    def _draw_series_polygon(series_data: list, color: str, opacity: float):
+        pts = []
+        for i, (_, value) in enumerate(series_data[:n_axes]):
+            px_val, py_val = polar_point(i, max(0, value))
+            pts.append((px_val, py_val))
+        if not pts:
+            return ""
+        pts_str = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
+        result = (f'<polygon points="{pts_str}" fill="{color}" '
+                  f'fill-opacity="{opacity}" stroke="{color}" '
+                  f'stroke-width="2"/>\n')
+        # Dots at each vertex
+        for px_val, py_val in pts:
+            result += _circle(px_val, py_val, 3, color)
+        return result
+
+    # Extra series (drawn first, underneath primary)
+    for name, s_data, s_color in chart.extra_series:
+        parts.append(_draw_series_polygon(s_data, s_color, chart.fill_opacity))
+
+    # Primary series
+    parts.append(_draw_series_polygon(data, chart.color, chart.fill_opacity))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
+def _render_gauge_chart(chart: GaugeChart) -> str:
+    """Render a gauge/speedometer chart to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    # Gauge is always rendered (even with zero value); only "No data" if value is None
+    if chart.value is None:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout: semicircle centered horizontally, sitting in upper 2/3
+    title_h = 30 if chart.title else 10
+    cx = chart.width / 2
+    arc_margin = 30
+    r_outer = min(chart.width / 2 - arc_margin, (chart.height - title_h) * 0.7)
+    r_inner = r_outer * 0.65
+    cy = title_h + r_outer + 10
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 22, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    # Semicircle spans 180° — from 180° to 360° (left to right, across bottom)
+    # In SVG coords: angle 0° = right, increases clockwise
+    # We want arc from left (180°) to right (0°/360°) going through top
+    # Map: arc_start=180°, arc_end=360°
+    ARC_START = 180.0
+    ARC_SWEEP = 180.0
+
+    low_thresh, high_thresh = chart.thresholds
+    val_range = chart.max_value - chart.min_value
+    if val_range == 0:
+        val_range = 1
+
+    def val_to_angle(v: float) -> float:
+        """Map value to SVG angle in degrees (180=left, 360=right)."""
+        pct = max(0.0, min(1.0, (v - chart.min_value) / val_range))
+        return ARC_START + pct * ARC_SWEEP
+
+    def arc_xy(angle_deg: float, r: float):
+        rad = math.radians(angle_deg)
+        return cx + r * math.cos(rad), cy + r * math.sin(rad)
+
+    def arc_segment(a_start: float, a_end: float, color: str) -> str:
+        """Draw a filled arc segment (annular sector)."""
+        large = 1 if (a_end - a_start) > 180 else 0
+        ox1, oy1 = arc_xy(a_start, r_outer)
+        ox2, oy2 = arc_xy(a_end, r_outer)
+        ix1, iy1 = arc_xy(a_end, r_inner)
+        ix2, iy2 = arc_xy(a_start, r_inner)
+        d = (f"M {ox1:.1f} {oy1:.1f} "
+             f"A {r_outer:.1f} {r_outer:.1f} 0 {large} 1 {ox2:.1f} {oy2:.1f} "
+             f"L {ix1:.1f} {iy1:.1f} "
+             f"A {r_inner:.1f} {r_inner:.1f} 0 {large} 0 {ix2:.1f} {iy2:.1f} Z")
+        return f'<path d="{d}" fill="{color}"/>\n'
+
+    # Zone boundaries in data-value space
+    low_angle = val_to_angle(chart.min_value + (low_thresh - chart.min_value)
+                             if low_thresh > chart.min_value else low_thresh)
+    high_angle = val_to_angle(chart.min_value + (high_thresh - chart.min_value)
+                              if high_thresh > chart.min_value else high_thresh)
+
+    # Recompute using percentage thresholds relative to min/max
+    low_pct = (low_thresh - chart.min_value) / val_range
+    high_pct = (high_thresh - chart.min_value) / val_range
+    low_angle = ARC_START + low_pct * ARC_SWEEP
+    high_angle = ARC_START + high_pct * ARC_SWEEP
+
+    # Draw three color zones: red / yellow / green
+    parts.append(arc_segment(ARC_START, low_angle, CCA_COLORS["highlight"]))
+    parts.append(arc_segment(low_angle, high_angle, CCA_COLORS["warning"]))
+    parts.append(arc_segment(high_angle, ARC_START + ARC_SWEEP, CCA_COLORS["success"]))
+
+    # Thin border ring
+    ox_left, oy_left = arc_xy(ARC_START, r_outer)
+    ox_right, oy_right = arc_xy(ARC_START + ARC_SWEEP, r_outer)
+    ix_right, iy_right = arc_xy(ARC_START + ARC_SWEEP, r_inner)
+    ix_left, iy_left = arc_xy(ARC_START, r_inner)
+    parts.append(f'<path d="M {ox_left:.1f} {oy_left:.1f} '
+                 f'A {r_outer:.1f} {r_outer:.1f} 0 1 1 {ox_right:.1f} {oy_right:.1f}" '
+                 f'fill="none" stroke="{CCA_COLORS["border"]}" stroke-width="1"/>\n')
+
+    # Min/max markers
+    parts.append(_text(cx - r_outer - 5, cy + 16,
+                       str(int(chart.min_value) if chart.min_value == int(chart.min_value)
+                           else f"{chart.min_value:.1f}"),
+                       font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
+    parts.append(_text(cx + r_outer + 5, cy + 16,
+                       str(int(chart.max_value) if chart.max_value == int(chart.max_value)
+                           else f"{chart.max_value:.1f}"),
+                       font_size=9, fill=CCA_COLORS["muted"], anchor="start"))
+
+    # Needle
+    needle_angle = val_to_angle(max(chart.min_value, min(chart.max_value, chart.value)))
+    needle_len = r_inner * 0.9
+    nx, ny = arc_xy(needle_angle, needle_len)
+    parts.append(_line(cx, cy, nx, ny, CCA_COLORS["primary"], 2.5))
+    parts.append(_circle(cx, cy, 5, CCA_COLORS["primary"]))
+
+    # Center value text
+    val_str = (str(int(chart.value)) if chart.value == int(chart.value)
+               else f"{chart.value:.1f}")
+    parts.append(_text(cx, cy + 30, val_str, font_size=22,
+                       fill=CCA_COLORS["primary"], font_weight="bold"))
+
+    # Sub-label
+    if chart.label:
+        parts.append(_text(cx, cy + 50, chart.label, font_size=11,
+                           fill=CCA_COLORS["muted"]))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -1288,6 +1725,12 @@ def render_svg(chart) -> str:
         return _render_stacked_area_chart(chart)
     elif isinstance(chart, GroupedBarChart):
         return _render_grouped_bar_chart(chart)
+    elif isinstance(chart, WaterfallChart):
+        return _render_waterfall_chart(chart)
+    elif isinstance(chart, RadarChart):
+        return _render_radar_chart(chart)
+    elif isinstance(chart, GaugeChart):
+        return _render_gauge_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 

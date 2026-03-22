@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from chart_generator import (
     BarChart, HorizontalBarChart, LineChart, Sparkline, DonutChart,
     AreaChart, StackedBarChart, HeatmapChart, StackedAreaChart,
+    WaterfallChart, RadarChart, GaugeChart,
     render_svg, CCA_COLORS,
 )
 
@@ -108,6 +109,21 @@ class TestAllChartsRenderValidSVG(unittest.TestCase):
         svg = render_svg(StackedAreaChart(
             series=[("A", [1, 2]), ("B", [2, 3])], labels=["X", "Y"]
         ))
+        self.assertTrue(svg.startswith("<svg"))
+        self.assertIn("</svg>", svg)
+
+    def test_waterfall_chart_renders(self):
+        svg = render_svg(WaterfallChart(data=[("Rev", 500), ("Cost", -200)]))
+        self.assertTrue(svg.startswith("<svg"))
+        self.assertIn("</svg>", svg)
+
+    def test_radar_chart_renders(self):
+        svg = render_svg(RadarChart(data=[("A", 80), ("B", 60), ("C", 90)]))
+        self.assertTrue(svg.startswith("<svg"))
+        self.assertIn("</svg>", svg)
+
+    def test_gauge_chart_renders(self):
+        svg = render_svg(GaugeChart(value=75))
         self.assertTrue(svg.startswith("<svg"))
         self.assertIn("</svg>", svg)
 
