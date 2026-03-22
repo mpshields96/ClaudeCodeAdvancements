@@ -1056,6 +1056,39 @@ Revisit when: Anthropic ships native shared context, or Cowork local MCP bugs fi
 
 ---
 
+## MT-31: Gemini Pro Integration (Cross-Model Leverage)
+
+**Source:** Matthew directive (S115) — has Gemini Pro access via Google account ($20/mo Google One subscription includes 2TB storage + Gemini Pro)
+**What Matthew wants:** Explore how Gemini Pro can be beneficial alongside Claude Code. NOT a replacement — a complement.
+
+**Potential use cases (to be researched):**
+- Cross-model code review (Gemini reviews Claude's output, different training biases = different blind spots — validated by community in MT-20 research)
+- Gemini as design reference generator (MT-4 pattern: Gemini creates design guides from screenshots, feed to Claude)
+- Multi-model research validation (same question to both models, compare answers for higher confidence)
+- Gemini for large document processing (different context window trade-offs)
+- MCP server that bridges Gemini Pro API into Claude Code workflows
+
+**What this is NOT:**
+- Not replacing Claude with Gemini for any core task
+- Not building a Gemini-only workflow
+- Not a priority over Kalshi bot, visuals/design, or autonomous loop
+
+**Technical path:**
+- Research: What APIs/integrations does Gemini Pro provide? Can it be called from Python stdlib?
+- Design: Which CCA workflows would benefit from a second model's perspective?
+- Build: Lightweight adapter (one file) that sends queries to Gemini and returns structured results
+- Test: Compare cross-model review quality vs single-model review
+
+**Matthew's current priorities (S115, explicit):**
+1. Kalshi bot maintenance
+2. Visuals/UI/graphics/design expansion
+3. Autonomous loop (CCA desktop auto-spawning new sessions)
+4. All of the above are multi-session, not single-chat
+
+**Status:** Future task. Research phase needed. Low priority relative to 1-3 above.
+
+---
+
 ## Priority Scoring System (Improved — S98)
 
 **Automated:** `python3 priority_picker.py recommend` — runs the improved formula and returns actionable picks.
