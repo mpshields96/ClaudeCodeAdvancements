@@ -117,6 +117,43 @@ def _format_autocompact_part(proximity: float | None) -> str:
     return f"{YELLOW}AC:{proximity:.0f}pts{RESET}"
 
 
+def _format_rate_limits(rate_limits: dict) -> str:
+    """Format rate limit usage for statusline display (CC v2.1.80+).
+
+    Shows the most constrained window's usage percentage.
+    Only displays when usage is above 50% to avoid clutter.
+
+    Input format (from CC statusline data):
+    {
+      "windows": [
+        {"used_percentage": 45.2, "resets_at": "2026-03-21T20:00:00Z"},
+        {"used_percentage": 12.0, "resets_at": "2026-03-28T00:00:00Z"}
+      ]
+    }
+    """
+    windows = rate_limits.get("windows", [])
+    if not windows:
+        return ""
+
+    # Find the most constrained window
+    max_used = 0.0
+    for w in windows:
+        used = w.get("used_percentage", 0) or 0
+        max_used = max(max_used, float(used))
+
+    if max_used < 50:
+        return ""  # Don't clutter when usage is comfortable
+
+    if max_used >= 90:
+        return f"{BOLD_RED}RL:{max_used:.0f}%{RESET}"
+    elif max_used >= 75:
+        return f"{RED}RL:{max_used:.0f}%{RESET}"
+    elif max_used >= 50:
+        return f"{YELLOW}RL:{max_used:.0f}%{RESET}"
+
+    return ""
+
+
 def main() -> None:
     try:
         raw = sys.stdin.read()
@@ -147,9 +184,14 @@ def main() -> None:
     ac_proximity = _autocompact_proximity(pct, ac_pct)
     ac_part = _format_autocompact_part(ac_proximity)
 
+    # Rate limit usage (CC v2.1.80+)
+    rl_part = _format_rate_limits(data.get("rate_limits", {}))
+
     parts = [ctx_part, cost_part]
     if ac_part:
         parts.append(ac_part)
+    if rl_part:
+        parts.append(rl_part)
     if model_part:
         parts.append(model_part)
     # Show window size when it differs from the standard 200k
