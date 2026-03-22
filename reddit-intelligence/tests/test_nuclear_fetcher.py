@@ -154,6 +154,92 @@ class TestClassifyPost(unittest.TestCase):
         self.assertEqual(classify_post(p), "MAYBE")
 
 
+class TestSentimentHayDetection(unittest.TestCase):
+    """Test that sentiment/opinion posts are classified as HAY (MT-27)."""
+
+    def _post(self, title="Test Post", score=200, comments=50, flair="",
+              is_self=True, body_len=1000):
+        return {
+            "id": "abc123", "title": title, "author": "testuser",
+            "score": score, "upvote_ratio": 0.95, "num_comments": comments,
+            "flair": flair, "is_self": is_self, "selftext_length": body_len,
+            "url": "https://reddit.com/r/ClaudeCode/comments/abc123/",
+            "permalink": "https://reddit.com/r/ClaudeCode/comments/abc123/",
+        }
+
+    def test_changed_my_life_is_hay(self):
+        p = self._post(title="Claude changed my life", score=1096)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_happy_birthday_is_hay(self):
+        p = self._post(title="Happy 1st birthday Claude Code", score=1836)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_vibe_coded_showcase_is_hay(self):
+        p = self._post(title="I vibe coded a 3D city simulator", score=960)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_told_me_no_is_hay(self):
+        p = self._post(title="Claude Code told me 'No.'", score=2316)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_will_never_die_is_hay(self):
+        p = self._post(title="Software Engineer position will never die", score=4094)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_cease_and_desist_is_hay(self):
+        p = self._post(title="OpenClaw cease and desist notice", score=1374)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_subscription_issues_is_hay(self):
+        p = self._post(title="Claude Max subscription revoked + banned", score=207)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_realized_being_tested_is_hay(self):
+        p = self._post(title="Claude realized it was being tested", score=1137)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_traffic_light_story_is_hay(self):
+        p = self._post(title="Claude helped me get a traffic light reprogrammed", score=3296)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_team_morale_is_hay(self):
+        p = self._post(title="Software dev director, team morale impact", score=908)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_vibe_hacked_is_hay(self):
+        p = self._post(title="Vibe hacked a Lovable app in 2 hours", score=1076)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_delayed_launch_is_hay(self):
+        p = self._post(title="I delayed my product launch for demo videos", score=990)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_outage_is_hay(self):
+        p = self._post(title="IT'S OFFICIAL BOYS servers are back", score=500)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_technical_tool_not_affected(self):
+        """Ensure real technical posts aren't caught by sentiment filter."""
+        p = self._post(title="Built a PreToolUse hook for credential scanning")
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_mcp_server_not_affected(self):
+        """Ensure MCP posts aren't caught."""
+        p = self._post(title="My MCP server handles persistent memory")
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_this_is_sonnet_is_hay(self):
+        """Model release announcements without technical content."""
+        p = self._post(title="This is Claude Sonnet 4.6", score=1211)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_interactive_charts_no_tool_is_hay(self):
+        """Showcase without technical depth."""
+        p = self._post(title="Claude creates interactive charts now", score=1279)
+        self.assertEqual(classify_post(p), "HAY")
+
+
 class TestLoadFindingsUrls(unittest.TestCase):
     """Test deduplication against FINDINGS_LOG."""
 

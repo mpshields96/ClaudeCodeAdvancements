@@ -156,9 +156,25 @@ def classify_post(post):
         "gpt vs claude", "gemini vs", "copilot vs", "cursor vs",
         "jailbreak", "bypass", "prompt injection",
         "first time using", "just discovered", "eli5",
+        # Sentiment/opinion (MT-27 expansion — high-score but low-signal)
+        "changed my life", "happy birthday", "happy 1st birthday",
+        "told me no", "told me 'no", "said no",
+        "will never die", "position will never",
+        "cease and desist", "revoked", "banned",
+        "realized it was being tested", "being tested",
+        "helped me get a", "traffic light",
+        "team morale", "dev director",
+        "delayed my", "product launch",
+        "it's official", "servers are back",
+        # Vibe coding showcases (no technical depth)
+        "vibe coded", "vibe hacked", "vibe code",
+        # Model release announcements
+        "this is claude", "this is sonnet", "this is opus", "this is haiku",
+        # Showcases without technical keywords (just "creates X now")
+        "creates interactive", "interactive charts now",
     ]
 
-    # NEEDLE patterns — high-signal keywords
+    # NEEDLE patterns — high-signal keywords (technical + actionable)
     needle_keywords = [
         "claude.md", "claudemd", "hook", "mcp server", "mcp tool",
         "workflow", "automation", "multi-agent", "parallel agent",
@@ -177,7 +193,7 @@ def classify_post(post):
     hay_flairs = ["humor", "meme", "rant", "meta"]
     needle_flairs = ["tutorial / guide", "showcase", "tool", "discussion"]
 
-    # Check HAY
+    # Check HAY first — sentiment/noise overrides score
     if flair in hay_flairs:
         return "HAY"
     if any(kw in title_lower for kw in hay_keywords):
@@ -186,7 +202,7 @@ def classify_post(post):
         # Link post with no body and moderate score — likely image/meme
         return "HAY"
 
-    # Check NEEDLE
+    # Check NEEDLE — technical keywords + engagement signals
     if flair in needle_flairs and score >= 100:
         return "NEEDLE"
     if any(kw in title_lower for kw in needle_keywords):
