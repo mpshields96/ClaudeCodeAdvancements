@@ -189,11 +189,11 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | agent-guard | 1073 |
 | usage-dashboard | 369 |
 | reddit-intelligence | 408 |
-| self-learning | 1752 |
-| design-skills | 534 |
+| self-learning | 1779 |
+| design-skills | 576 |
 | research | 86 |
 | root (integration + coordination) | 1803 |
-| **Total** | **6981** |
+| **Total** | **7050** |
 
 ---
 
