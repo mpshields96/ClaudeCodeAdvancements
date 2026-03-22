@@ -3,6 +3,24 @@
 
 ---
 
+## Session 117 — 2026-03-21
+
+**What changed:**
+- `design-skills/report_charts.py`: SVG chart generator bridging CCA report data to chart_generator.py. 6 chart types for Typst PDF embedding (32 tests)
+- `cca_comm.py`: Cross-project routing — `task km`, `say km`, `inbox km` now route through cross_chat_queue.py. Foundation for true 3-chat coordination (7 new tests)
+
+**Why:**
+- Report charts: CCA has 10+ chart types but reports use none of them. This bridges the gap.
+- Cross-project routing: Matthew identified that Kalshi main running independently != true 3-chat. CCA desktop must orchestrate ALL chats.
+
+**Tests:** 7490/7490 passing (188 suites, +157 new)
+
+**Lessons:**
+- Current "3-chat" is 2+1 independent. True coordination requires CCA desktop tasking Kalshi main with productive work, not just monitoring.
+- Verify worker survives launch — check crash_recovery 5 min after.
+
+---
+
 ## Session 110 — 2026-03-21
 
 **What changed:**

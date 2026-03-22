@@ -3,9 +3,28 @@
 
 ---
 
-## Current State (as of Session 116 — 2026-03-21)
+## Current State (as of Session 117 — 2026-03-21)
 
-**Phase:** Session 116 COMPLETE. 3-CHAT TRIAL RUN #2 (desktop coordinator + CLI worker + Kalshi main). Coordination infrastructure + design-skills expansion.
+**Phase:** Session 117 COMPLETE. 2-chat (desktop + worker attempted). Cross-project routing foundation + report chart integration.
+
+**What was done this session (S117):**
+- **report_charts.py**: SVG chart generator bridging CCA report data to chart_generator.py for Typst PDF embedding. 6 chart types: module tests (HorizontalBar), intelligence verdicts (Donut), MT status (Bar), LOC distribution (Bar), MT phase progress (StackedBar), frontier coverage (HorizontalBar). 32 tests.
+- **Cross-project routing in cca_comm.py**: CCA desktop can now task Kalshi chats directly — `cca_comm.py task km "do X"` routes through cross_chat_queue.py. `inbox km`, `say km`, `status` all work. Step 1 toward true 3-chat coordination where CCA desktop orchestrates ALL chats. 7 new tests (39 total).
+- **Matthew directive captured**: Current "3-chat" is actually 2-chat + 1-independent. Kalshi main must receive productive tasks from CCA desktop and do real work, not just monitoring. Multi-session effort.
+- **Worker cli1**: Launched with 3 chart tasks. Completed ALL 3 (WaterfallChart 39t, RadarChart 33t, GaugeChart 44t = 116 tests) but crashed before committing. Desktop recovered and committed the work. 12 chart types total.
+- **Tests**: 7606 passing (191 suites). +273 new tests this session.
+- **Commits**: 4 this session (3 desktop + 1 recovered worker).
+
+**Queue throughput**: 441 messages (MET Phase 2 target of 50+).
+
+**Next (prioritized):**
+1. **True 3-chat coordination** — Multi-session. Next steps: (a) Update /cca-auto-desktop coord round to include Kalshi task queue management, (b) Define what "productive work" means for Kalshi main beyond monitoring (implement CCA research findings, run sniper analysis, apply Page-Hinkley to sniper buckets), (c) Update launch scripts to include km task pre-loading.
+2. **Worker chart tasks** — All 3 completed and committed (recovered). Next worker: BubbleChart, TreemapChart, or FunnelChart.
+3. **Verify worker stays alive** — Check crash_recovery.py status 5 min after launch next time.
+4. **Design-skills**: Wire report_charts.py into /cca-report pipeline (generate SVGs during report).
+5. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination — now possible via cca_comm.py task km).
+
+**Key S117 insight**: Matthew correctly identified that Kalshi main running independently = NOT a 3-chat system. The cross-project routing in cca_comm.py is the foundation, but the full solution needs: (1) Kalshi main receiving and acting on tasks from CCA desktop, (2) /polybot-auto supporting task-driven work alongside monitoring, (3) CCA desktop coord round managing Kalshi task lifecycle.
 
 **What was done this session (S116):**
 - **3-CHAT TRIAL RUN #2: SUCCESS.** Desktop coordinator + CLI worker + Kalshi main. Worker completed StackedAreaChart (46 tests) + consistency audit tests (43 tests). Desktop built 5 new coordination tools. 8 desktop commits + 1 worker commit = 9 total. Key learning: fixed stale message clearing bug that prevented multi-task worker queuing.
