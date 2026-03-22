@@ -19,6 +19,8 @@ Chart types:
     WaterfallChart    — cumulative P&L waterfall (green positive, red negative)
     RadarChart        — spider/radar chart for multi-dimensional comparison
     GaugeChart        — semicircular speedometer for single metric vs target
+    BubbleChart       — scatter plot with sized circles for 3D data
+    TreemapChart      — nested rectangles sized by value for hierarchical data
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -493,6 +495,48 @@ class GaugeChart:
     label: str = ""
     width: int = 400
     height: int = 280
+
+
+@dataclass
+class BubbleChart:
+    """Bubble chart — scatter plot with sized circles for 3-dimensional data.
+
+    Each data point has x, y, and size (radius). Useful for showing relationships
+    between three variables (e.g., module LOC vs tests vs files).
+
+    Args:
+        data: [(label, x, y, size), ...] or [(label, x, y, size, color), ...]
+        title: Chart title
+        x_label: X-axis label
+        y_label: Y-axis label
+        min_radius: Minimum bubble radius in px
+        max_radius: Maximum bubble radius in px
+    """
+    data: list  # [(label, x, y, size), ...] or [(label, x, y, size, color), ...]
+    title: str = ""
+    x_label: str = ""
+    y_label: str = ""
+    width: int = 500
+    height: int = 400
+    min_radius: float = 8.0
+    max_radius: float = 40.0
+
+
+@dataclass
+class TreemapChart:
+    """Treemap chart — nested rectangles sized by value.
+
+    Good for showing hierarchical data where area = proportion. Each rectangle
+    represents a category, sized by its value relative to the total.
+
+    Args:
+        data: [(label, value), ...] or [(label, value, color), ...]
+        title: Chart title
+    """
+    data: list  # [(label, value), ...] or [(label, value, color), ...]
+    title: str = ""
+    width: int = 500
+    height: int = 400
 
 
 # ---------------------------------------------------------------------------
@@ -1703,6 +1747,247 @@ def _render_gauge_chart(chart: GaugeChart) -> str:
     return "".join(parts)
 
 
+def _render_bubble_chart(chart: BubbleChart) -> str:
+    """Render a bubble chart to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 50 if chart.x_label else 35
+    margin_left = 60 if chart.y_label else 50
+    margin_right = 20
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    # Parse data — handle optional color
+    parsed = []
+    for item in chart.data:
+        if len(item) == 5:
+            label, x, y, size, color = item
+        else:
+            label, x, y, size = item
+            color = SERIES_PALETTE[len(parsed) % len(SERIES_PALETTE)]
+        parsed.append((label, float(x), float(y), float(size), color))
+
+    if not parsed:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Scale
+    xs = [p[1] for p in parsed]
+    ys = [p[2] for p in parsed]
+    sizes = [p[3] for p in parsed]
+
+    x_min, x_max = min(xs), max(xs)
+    y_min, y_max = min(ys), max(ys)
+    s_min, s_max = min(sizes), max(sizes)
+
+    # Add padding to ranges
+    x_range = x_max - x_min if x_max != x_min else 1
+    y_range = y_max - y_min if y_max != y_min else 1
+    s_range = s_max - s_min if s_max != s_min else 1
+
+    x_min -= x_range * 0.05
+    x_max += x_range * 0.05
+    y_min -= y_range * 0.05
+    y_max += y_range * 0.05
+
+    def scale_x(v):
+        return margin_left + ((v - x_min) / (x_max - x_min)) * plot_w
+
+    def scale_y(v):
+        return margin_top + plot_h - ((v - y_min) / (y_max - y_min)) * plot_h
+
+    def scale_r(v):
+        if s_range == 0:
+            return (chart.min_radius + chart.max_radius) / 2
+        t = (v - s_min) / s_range
+        return chart.min_radius + t * (chart.max_radius - chart.min_radius)
+
+    # Axes
+    parts.append(f'<line x1="{margin_left}" y1="{margin_top + plot_h}" '
+                 f'x2="{margin_left + plot_w}" y2="{margin_top + plot_h}" '
+                 f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
+    parts.append(f'<line x1="{margin_left}" y1="{margin_top}" '
+                 f'x2="{margin_left}" y2="{margin_top + plot_h}" '
+                 f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
+
+    # Y-axis labels (5 ticks)
+    for i in range(6):
+        val = y_min + (y_max - y_min) * i / 5
+        yp = scale_y(val)
+        label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(margin_left - 8, yp + 3, label_text,
+                           font_size=8, fill=CCA_COLORS["muted"], anchor="end"))
+        if i > 0:
+            parts.append(f'<line x1="{margin_left}" y1="{yp}" '
+                         f'x2="{margin_left + plot_w}" y2="{yp}" '
+                         f'stroke="{CCA_COLORS["border"]}" stroke-width="0.5" '
+                         f'stroke-dasharray="3,3"/>')
+
+    # X-axis labels (5 ticks)
+    for i in range(6):
+        val = x_min + (x_max - x_min) * i / 5
+        xp = scale_x(val)
+        label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(xp, margin_top + plot_h + 15, label_text,
+                           font_size=8, fill=CCA_COLORS["muted"]))
+
+    # Axis labels
+    if chart.x_label:
+        parts.append(_text(margin_left + plot_w / 2, chart.height - 8,
+                           chart.x_label, font_size=9, fill=CCA_COLORS["muted"]))
+    if chart.y_label:
+        parts.append(f'<text x="14" y="{margin_top + plot_h / 2}" '
+                     f'text-anchor="middle" font-size="9" '
+                     f'font-family="sans-serif" fill="{CCA_COLORS["muted"]}" '
+                     f'transform="rotate(-90, 14, {margin_top + plot_h / 2})">'
+                     f'{_escape(chart.y_label)}</text>')
+
+    # Bubbles (draw largest first so small bubbles aren't hidden)
+    sorted_parsed = sorted(parsed, key=lambda p: p[3], reverse=True)
+    for label, x, y, size, color in sorted_parsed:
+        cx = scale_x(x)
+        cy = scale_y(y)
+        r = scale_r(size)
+        parts.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r:.1f}" '
+                     f'fill="{color}" fill-opacity="0.7" '
+                     f'stroke="{color}" stroke-width="1"/>')
+        # Label
+        if r >= 15:
+            parts.append(_text(cx, cy + 3, label, font_size=7,
+                               fill="#ffffff", font_weight="bold"))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
+def _render_treemap_chart(chart: TreemapChart) -> str:
+    """Render a treemap chart to SVG using simple squarified layout."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Title
+    margin_top = 35 if chart.title else 5
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    # Parse data
+    parsed = []
+    for item in chart.data:
+        if len(item) == 3:
+            label, value, color = item
+        else:
+            label, value = item
+            color = SERIES_PALETTE[len(parsed) % len(SERIES_PALETTE)]
+        if value > 0:
+            parsed.append((label, float(value), color))
+
+    if not parsed:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Sort by value descending
+    parsed.sort(key=lambda p: p[1], reverse=True)
+    total = sum(p[1] for p in parsed)
+
+    # Simple slice-and-dice layout (alternating horizontal/vertical splits)
+    plot_x = 5
+    plot_y = margin_top
+    plot_w = chart.width - 10
+    plot_h = chart.height - margin_top - 5
+
+    def _layout_rects(items, x, y, w, h, horizontal=True):
+        """Recursively layout rectangles using slice-and-dice."""
+        if not items:
+            return []
+        if len(items) == 1:
+            return [(items[0][0], items[0][2], x, y, w, h)]
+
+        item_total = sum(it[1] for it in items)
+        if item_total == 0:
+            return []
+
+        # Split items into two groups of roughly equal total value
+        half = item_total / 2
+        running = 0
+        split_idx = 0
+        for i, (_, val, _) in enumerate(items):
+            running += val
+            if running >= half:
+                split_idx = i + 1
+                break
+        split_idx = max(1, min(split_idx, len(items) - 1))
+
+        left_items = items[:split_idx]
+        right_items = items[split_idx:]
+        left_total = sum(it[1] for it in left_items)
+        ratio = left_total / item_total if item_total > 0 else 0.5
+
+        rects = []
+        if horizontal:
+            split_w = w * ratio
+            rects.extend(_layout_rects(left_items, x, y, split_w, h, not horizontal))
+            rects.extend(_layout_rects(right_items, x + split_w, y, w - split_w, h, not horizontal))
+        else:
+            split_h = h * ratio
+            rects.extend(_layout_rects(left_items, x, y, w, split_h, not horizontal))
+            rects.extend(_layout_rects(right_items, x, y + split_h, w, h - split_h, not horizontal))
+
+        return rects
+
+    rects = _layout_rects(parsed, plot_x, plot_y, plot_w, plot_h)
+
+    for label, color, rx, ry, rw, rh in rects:
+        # Rectangle with gap
+        gap = 1.5
+        parts.append(_rect(rx + gap, ry + gap, max(0, rw - 2 * gap),
+                           max(0, rh - 2 * gap), color, rx=3))
+
+        # Label (only if rectangle is large enough)
+        if rw > 40 and rh > 20:
+            # Determine text color based on background luminance
+            text_color = "#ffffff"
+            # Find value for this label
+            val = next((v for l, v, _ in parsed if l == label), 0)
+            pct = (val / total * 100) if total > 0 else 0
+
+            font_size = min(11, max(7, min(rw, rh) / 5))
+            parts.append(_text(rx + rw / 2, ry + rh / 2 - 2, label,
+                               font_size=font_size, fill=text_color,
+                               font_weight="bold"))
+            if rh > 35:
+                parts.append(_text(rx + rw / 2, ry + rh / 2 + 12,
+                                   f"{pct:.0f}%", font_size=max(7, font_size - 1),
+                                   fill=text_color))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -1735,6 +2020,10 @@ def render_svg(chart) -> str:
         return _render_radar_chart(chart)
     elif isinstance(chart, GaugeChart):
         return _render_gauge_chart(chart)
+    elif isinstance(chart, BubbleChart):
+        return _render_bubble_chart(chart)
+    elif isinstance(chart, TreemapChart):
+        return _render_treemap_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 
