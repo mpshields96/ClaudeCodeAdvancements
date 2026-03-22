@@ -21,6 +21,7 @@ Chart types:
     GaugeChart        — semicircular speedometer for single metric vs target
     BubbleChart       — scatter plot with sized circles for 3D data
     TreemapChart      — nested rectangles sized by value for hierarchical data
+    SankeyChart       — flow diagram showing value transfers between nodes
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -537,6 +538,34 @@ class TreemapChart:
     title: str = ""
     width: int = 500
     height: int = 400
+
+
+@dataclass
+class SankeyChart:
+    """Sankey diagram — flow visualization between nodes.
+
+    Shows how values flow from source nodes to target nodes through
+    connecting bands. Useful for showing conversion funnels, intelligence
+    scan pipelines (Scanned -> BUILD/SKIP/REFERENCE), or budget flows.
+
+    Nodes are automatically arranged in columns (stages) based on the
+    flow topology: source-only nodes on the left, sink-only on the right,
+    intermediate nodes in between.
+
+    Args:
+        flows: [(source, target, value), ...] — directed weighted edges
+        title: Chart title
+        node_width: Width of node rectangles in px
+        node_padding: Vertical gap between nodes in same column
+        node_colors: Optional dict mapping node names to hex colors
+    """
+    flows: list  # [(source, target, value), ...]
+    title: str = ""
+    width: int = 600
+    height: int = 400
+    node_width: int = 20
+    node_padding: int = 10
+    node_colors: dict = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -1988,6 +2017,208 @@ def _render_treemap_chart(chart: TreemapChart) -> str:
     return "".join(parts)
 
 
+def _render_sankey_chart(chart: SankeyChart) -> str:
+    """Render a Sankey flow diagram to SVG.
+
+    Nodes are arranged in columns by topological stage. Flows are drawn as
+    curved bands (cubic bezier paths) connecting source to target nodes,
+    with band thickness proportional to flow value.
+    """
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    # Filter valid flows (skip self-loops, zero values)
+    valid_flows = [
+        (src, tgt, float(val))
+        for src, tgt, val in chart.flows
+        if src != tgt and float(val) > 0
+    ]
+
+    if not valid_flows:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Title
+    margin_top = 40 if chart.title else 15
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    margin_bottom = 15
+    margin_left = 80
+    margin_right = 80
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # --- Build node graph and assign columns via topological ordering ---
+    all_nodes = set()
+    sources_of = {}  # node -> set of nodes that flow INTO it
+    targets_of = {}  # node -> set of nodes it flows TO
+    for src, tgt, _ in valid_flows:
+        all_nodes.add(src)
+        all_nodes.add(tgt)
+        targets_of.setdefault(src, set()).add(tgt)
+        sources_of.setdefault(tgt, set()).add(src)
+
+    # Assign columns: BFS from pure sources (nodes with no incoming flows)
+    pure_sources = [n for n in all_nodes if n not in sources_of]
+    if not pure_sources:
+        # Cyclic — just pick alphabetically first
+        pure_sources = [sorted(all_nodes)[0]]
+
+    node_col = {}
+    queue = [(n, 0) for n in pure_sources]
+    visited = set()
+    while queue:
+        node, col = queue.pop(0)
+        if node in visited:
+            node_col[node] = max(node_col.get(node, 0), col)
+            continue
+        visited.add(node)
+        node_col[node] = max(node_col.get(node, 0), col)
+        for tgt in targets_of.get(node, []):
+            queue.append((tgt, col + 1))
+
+    # Ensure all nodes are assigned
+    for n in all_nodes:
+        if n not in node_col:
+            node_col[n] = 0
+
+    max_col = max(node_col.values()) if node_col else 0
+
+    # Group nodes by column
+    columns = {}
+    for node, col in node_col.items():
+        columns.setdefault(col, []).append(node)
+    for col in columns:
+        columns[col].sort()
+
+    # Calculate node values (total flow through each node)
+    node_out = {}
+    node_in = {}
+    for src, tgt, val in valid_flows:
+        node_out[src] = node_out.get(src, 0) + val
+        node_in[tgt] = node_in.get(tgt, 0) + val
+    node_value = {n: max(node_out.get(n, 0), node_in.get(n, 0)) for n in all_nodes}
+
+    # --- Layout: compute x and y positions ---
+    num_cols = max_col + 1
+    if num_cols == 1:
+        col_x = {0: margin_left}
+    else:
+        col_spacing = (plot_w - chart.node_width) / (num_cols - 1)
+        col_x = {c: margin_left + c * col_spacing for c in range(num_cols)}
+
+    # For each column, distribute nodes vertically proportional to value
+    node_y = {}  # node -> (y_top, height)
+    max_total = max(
+        (sum(node_value[n] for n in columns.get(c, [])) for c in range(num_cols)),
+        default=1,
+    )
+    if max_total == 0:
+        max_total = 1
+
+    for col_idx in range(num_cols):
+        nodes = columns.get(col_idx, [])
+        col_total = sum(node_value[n] for n in nodes)
+        padding_total = chart.node_padding * max(0, len(nodes) - 1)
+        available_h = plot_h - padding_total
+
+        y_cursor = margin_top
+        for node in nodes:
+            frac = node_value[node] / col_total if col_total > 0 else 1.0 / max(len(nodes), 1)
+            h = max(4, frac * available_h)
+            node_y[node] = (y_cursor, h)
+            y_cursor += h + chart.node_padding
+
+    # Assign colors to nodes
+    node_color = {}
+    color_idx = 0
+    for col_idx in range(num_cols):
+        for node in columns.get(col_idx, []):
+            if node in chart.node_colors:
+                node_color[node] = chart.node_colors[node]
+            else:
+                node_color[node] = SERIES_PALETTE[color_idx % len(SERIES_PALETTE)]
+                color_idx += 1
+
+    # --- Draw flow bands (curved paths) ---
+    # Track how much of each node's vertical space has been used for outgoing/incoming
+    out_offset = {n: 0.0 for n in all_nodes}
+    in_offset = {n: 0.0 for n in all_nodes}
+
+    for src, tgt, val in valid_flows:
+        src_y_top, src_h = node_y[src]
+        tgt_y_top, tgt_h = node_y[tgt]
+
+        src_total = node_out.get(src, 1)
+        tgt_total = node_in.get(tgt, 1)
+
+        band_h_src = (val / src_total) * src_h if src_total > 0 else src_h
+        band_h_tgt = (val / tgt_total) * tgt_h if tgt_total > 0 else tgt_h
+
+        src_col = node_col[src]
+        tgt_col = node_col[tgt]
+
+        x0 = col_x[src_col] + chart.node_width
+        x1 = col_x[tgt_col]
+
+        y0_top = src_y_top + out_offset[src]
+        y0_bot = y0_top + band_h_src
+        y1_top = tgt_y_top + in_offset[tgt]
+        y1_bot = y1_top + band_h_tgt
+
+        out_offset[src] += band_h_src
+        in_offset[tgt] += band_h_tgt
+
+        # Cubic bezier control points for smooth curve
+        cx = (x0 + x1) / 2
+        color = node_color[src]
+
+        path_d = (
+            f"M {x0:.1f} {y0_top:.1f} "
+            f"C {cx:.1f} {y0_top:.1f}, {cx:.1f} {y1_top:.1f}, {x1:.1f} {y1_top:.1f} "
+            f"L {x1:.1f} {y1_bot:.1f} "
+            f"C {cx:.1f} {y1_bot:.1f}, {cx:.1f} {y0_bot:.1f}, {x0:.1f} {y0_bot:.1f} Z"
+        )
+        parts.append(f'<path d="{path_d}" fill="{color}" opacity="0.35"/>\n')
+
+    # --- Draw node rectangles ---
+    for node in all_nodes:
+        col_idx = node_col[node]
+        x = col_x[col_idx]
+        y_top, h = node_y[node]
+        color = node_color[node]
+        parts.append(_rect(x, y_top, chart.node_width, h, color, rx=2))
+
+    # --- Draw node labels ---
+    for node in all_nodes:
+        col_idx = node_col[node]
+        x = col_x[col_idx]
+        y_top, h = node_y[node]
+
+        if col_idx == 0:
+            # Left column: label to the left
+            parts.append(_text(x - 5, y_top + h / 2 + 4, str(node),
+                               font_size=10, fill=CCA_COLORS["primary"],
+                               anchor="end"))
+        elif col_idx == max_col:
+            # Right column: label to the right
+            parts.append(_text(x + chart.node_width + 5, y_top + h / 2 + 4,
+                               str(node), font_size=10,
+                               fill=CCA_COLORS["primary"], anchor="start"))
+        else:
+            # Middle column: label above
+            parts.append(_text(x + chart.node_width / 2, y_top - 4, str(node),
+                               font_size=10, fill=CCA_COLORS["primary"],
+                               anchor="middle"))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -2024,6 +2255,8 @@ def render_svg(chart) -> str:
         return _render_bubble_chart(chart)
     elif isinstance(chart, TreemapChart):
         return _render_treemap_chart(chart)
+    elif isinstance(chart, SankeyChart):
+        return _render_sankey_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 
