@@ -61,6 +61,22 @@ This step is fast (reads FINDINGS_LOG, no API calls) and feeds the session learn
 
 ---
 
+## Step 1.8 — APF session snapshot (trend tracking)
+
+Record an APF snapshot for this session to enable session-over-session trend tracking:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 self-learning/apf_session_tracker.py snapshot S<SESSION_NUMBER> 2>/dev/null || echo "apf_session_tracker not available"
+python3 self-learning/apf_session_tracker.py status 2>/dev/null || true
+```
+
+Replace `<SESSION_NUMBER>` with the actual session number (e.g., S115).
+This appends one line to `~/.cca-apf-snapshots.jsonl` (append-only, never overwrites).
+The status line shows delta vs previous session — include in Step 2 wins/losses.
+
+---
+
 ## Step 2 — Self-assessment (be brutally honest)
 
 Review what was actually accomplished this session. Output:

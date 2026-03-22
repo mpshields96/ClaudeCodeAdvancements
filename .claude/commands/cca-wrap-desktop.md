@@ -108,6 +108,18 @@ Record APF% in session summary. Target: 40%. Compare to last session.
 
 ---
 
+## Step 2.8 — APF session snapshot (trend tracking)
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 self-learning/apf_session_tracker.py snapshot S<SESSION_NUMBER> 2>/dev/null || echo "apf_session_tracker not available"
+python3 self-learning/apf_session_tracker.py status 2>/dev/null || true
+```
+
+Replace `<SESSION_NUMBER>` with actual session number. Appends to `~/.cca-apf-snapshots.jsonl`.
+
+---
+
 ## Step 3 — Self-assessment (be brutally honest)
 
 ```
