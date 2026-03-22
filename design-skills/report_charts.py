@@ -21,6 +21,7 @@ from chart_generator import (
     HorizontalBarChart,
     SERIES_PALETTE,
     StackedBarChart,
+    TreemapChart,
     render_svg,
 )
 
@@ -142,6 +143,26 @@ class ReportChartGenerator:
         chart = HorizontalBarChart(items, title="Frontier Test Coverage")
         return render_svg(chart)
 
+    def module_loc_treemap(self, data):
+        """Treemap of source LOC per module — visual size comparison."""
+        modules = data.get("modules", [])
+        if not modules or all(m.get("loc", 0) == 0 for m in modules):
+            return self._empty_chart("Module Size (LOC)")
+
+        # Assign colors from series palette
+        items = []
+        for i, m in enumerate(sorted(modules, key=lambda x: x.get("loc", 0), reverse=True)):
+            loc = m.get("loc", 0)
+            if loc > 0:
+                color = SERIES_PALETTE[i % len(SERIES_PALETTE)]
+                items.append((m["name"], loc, color))
+
+        if not items:
+            return self._empty_chart("Module Size (LOC)")
+
+        chart = TreemapChart(data=items, title="Module Size (LOC)")
+        return render_svg(chart)
+
     # ── Batch operations ────────────────────────────────────────────────
 
     def generate_all(self, data):
@@ -153,6 +174,7 @@ class ReportChartGenerator:
             "loc_distribution": self.loc_chart(data),
             "mt_progress": self.mt_progress_chart(data),
             "frontier_status": self.frontier_chart(data),
+            "module_loc_treemap": self.module_loc_treemap(data),
         }
 
     def save_all(self, data):

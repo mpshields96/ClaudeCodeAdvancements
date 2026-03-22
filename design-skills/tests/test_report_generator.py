@@ -280,7 +280,7 @@ class TestIntegration(unittest.TestCase):
             chart_gen = ReportChartGenerator(output_dir=chart_dir)
             chart_paths = chart_gen.save_all(data)
 
-            self.assertEqual(len(chart_paths), 6)
+            self.assertEqual(len(chart_paths), 7)
             for name, path in chart_paths.items():
                 self.assertTrue(os.path.exists(path), f"Chart {name} not found at {path}")
                 self.assertTrue(path.endswith(".svg"))
@@ -357,8 +357,8 @@ class TestChartIntegration(unittest.TestCase):
             "frontiers": [{"name": "Memory", "tests": 340}],
         }
         charts = gen.generate_all(data)
-        self.assertEqual(len(charts), 6)
-        expected = {"module_tests", "intelligence", "mt_status", "loc_distribution", "mt_progress", "frontier_status"}
+        self.assertEqual(len(charts), 7)
+        expected = {"module_tests", "intelligence", "mt_status", "loc_distribution", "mt_progress", "frontier_status", "module_loc_treemap"}
         self.assertEqual(set(charts.keys()), expected)
         for name, svg in charts.items():
             self.assertIn("<svg", svg, f"Chart {name} is not valid SVG")
@@ -376,7 +376,7 @@ class TestChartIntegration(unittest.TestCase):
                 "frontiers": [{"name": "F1", "tests": 100}],
             }
             paths = gen.save_all(data)
-            self.assertEqual(len(paths), 6)
+            self.assertEqual(len(paths), 7)
             for name, path in paths.items():
                 self.assertTrue(os.path.exists(path))
                 with open(path) as f:

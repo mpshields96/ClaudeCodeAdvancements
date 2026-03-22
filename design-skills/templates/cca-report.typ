@@ -553,11 +553,14 @@
 
 #section-header("Module Deep-Dives")
 
-// Chart: Tests per module
+// Charts: Tests per module + Module size treemap
 #if chart-dir != none {
-  box(width: 100%, inset: (bottom: 8pt))[
-    #embed-chart("module_tests", width: 90%)
-  ]
+  grid(
+    columns: (1fr, 1fr),
+    column-gutter: 12pt,
+    embed-chart("module_tests", width: 100%),
+    embed-chart("module_loc_treemap", width: 100%),
+  )
   v(4mm)
 }
 
