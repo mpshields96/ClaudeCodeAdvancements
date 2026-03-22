@@ -107,18 +107,23 @@ def cmd_say(args):
 
 
 def cmd_task(args):
-    """Assign a task to another chat. Auto-clears target's inbox first to prevent stale task confusion."""
+    """Assign a task to another chat. Clears only OLD stale messages (>2h), preserves recent ones."""
     if len(args) < 2:
         print("Usage: task <target> <task_description>")
         return
     target = args[0]
     task = " ".join(args[1:])
     me = detect_chat_id()
-    # Clear stale messages from target's inbox before assigning new task
+    # Only clear messages older than 2 hours (previous session leftovers).
+    # Do NOT clear recent messages — they may be tasks queued minutes ago.
+    import datetime as _dt
+    cutoff = (_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=2)).isoformat()
     stale = ciq.get_unread(target, _qpath())
-    if stale:
-        ciq.acknowledge_all(target, _qpath())
-        print(f"Cleared {len(stale)} stale message(s) from {ciq.VALID_CHATS[target]} inbox.")
+    stale_old = [m for m in stale if m.get("created_at", "9999") < cutoff]
+    if stale_old:
+        for m in stale_old:
+            ciq.acknowledge(m["id"], target, _qpath())
+        print(f"Cleared {len(stale_old)} stale message(s) from {ciq.VALID_CHATS[target]} inbox.")
     ciq.send_message(me, target, task, priority="high", category="handoff", path=_qpath())
     print(f"Task assigned to {ciq.VALID_CHATS[target]}: {task}")
 
