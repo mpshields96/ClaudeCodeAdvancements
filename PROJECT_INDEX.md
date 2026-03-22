@@ -178,6 +178,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `sentinel_bridge.py` — MT-28 Phase 6: Bridge sentinel mutations to principle registry (30 tests, S111)
 - `order_flow_intel.py` — MT-26 Tier 3: Order flow intelligence (FLB regression, Maker/Taker model, risk classifier, 38 tests, S112)
 - `belief_vol_surface.py` — MT-26 Tier 3: Belief volatility surface Phase 1 (logit transforms, Greeks, realized vol, 27 tests, S112)
+- `apf_session_tracker.py` — MT-27 Phase 5: APF trend tracking per session (append-only JSONL snapshots, 27 tests, S115)
 - `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 - `BATCH_ANALYSIS_S62.md` — Batch trace analysis of 10 recent sessions (avg 73.0, retry rate down to 40%)
 - `research/SENIOR_DEV_AGENT_RESEARCH.md` — S70: Nuclear-level research for Senior Dev Agent MT (11 verified papers, 5 tools, industry standards, MVP architecture)

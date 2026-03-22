@@ -958,11 +958,12 @@ developer colleague.
 - MT-11 (GitHub intelligence) — COMPLETED, built github_scanner.py
 - This MT improves quality of the existing scanning infrastructure
 
-**Status:** Phase 1-3 COMPLETE (S114).
+**Status:** Phase 1-3 COMPLETE (S114), Phase 5 COMPLETE (S115).
 - Phase 1: APF analysis — "Other" category dropped from 124/335 (37%) to 0/335 (0%). Expanded FRONTIER_PATTERNS from 8 to 15 categories. 10 new tests.
 - Phase 2: classify_post HAY expansion — 28 new sentiment/opinion HAY keywords (vibe coded, changed my life, model announcements, outage, etc.). 17 new tests.
 - Phase 3: apf_checkpoint() function + scan report integration. 6 new tests.
-- Next: Phase 4 — improve NEEDLE precision (reduce false positives from overly broad keywords like "tool", "built", "created"). Phase 5 — APF trend tracking per session.
+- Phase 5 (S115): apf_session_tracker.py — per-session APF trend tracking. Append-only JSONL snapshots at ~/.cca-apf-snapshots.jsonl. Wired into /cca-wrap + /cca-wrap-desktop. 27 tests.
+- Next: Phase 4 — improve NEEDLE precision (reduce false positives from overly broad keywords like "tool", "built", "created").
 
 ---
 
