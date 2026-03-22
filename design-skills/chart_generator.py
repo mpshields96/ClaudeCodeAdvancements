@@ -14,6 +14,7 @@ Chart types:
     AreaChart         — line with gradient fill below for volume/magnitude
     StackedBarChart   — stacked vertical bars for composition comparison
     HeatmapChart      — 2D grid of colored cells for correlation/intensity data
+    StackedAreaChart  — stacked filled areas for multiple series over time
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -325,6 +326,46 @@ class HeatmapChart:
             self.low_color = CCA_COLORS["surface"]
         if not self.high_color:
             self.high_color = CCA_COLORS["accent"]
+
+
+@dataclass
+class StackedAreaChart:
+    """Stacked area chart — multiple filled areas layered cumulatively.
+
+    Each series is drawn as a filled polygon whose baseline is the cumulative
+    sum of all series beneath it, producing a stacked effect. Good for showing
+    how multiple components contribute to a total over time.
+
+    Unlike StackedBarChart (discrete categories), StackedAreaChart connects
+    data points with lines — appropriate for continuous/time-series data.
+
+    Single-series degenerates to a plain AreaChart rendering.
+
+    Args:
+        series: [(name, [values]), ...] — ordered bottom-to-top
+        labels: X-axis labels, length should match len(values) in each series
+        colors: Per-series fill colors (default: SERIES_PALETTE)
+        fill_opacity: Opacity of filled areas (0.0–1.0, default 0.5)
+        show_points: If True, draw dots at each data point
+        title: Optional chart title
+        y_label: Optional y-axis label
+        width: SVG width (px)
+        height: SVG height (px)
+    """
+    series: list   # [(name, [values]), ...]
+    labels: list   # [label, ...]
+    title: str = ""
+    width: int = 500
+    height: int = 300
+    colors: list = field(default_factory=list)
+    fill_opacity: float = 0.5
+    y_label: str = ""
+    show_points: bool = False
+
+    def __post_init__(self):
+        if not self.colors:
+            self.colors = [SERIES_PALETTE[i % len(SERIES_PALETTE)]
+                          for i in range(len(self.series))]
 
 
 # ---------------------------------------------------------------------------
@@ -948,6 +989,142 @@ def _render_stacked_bar_chart(chart: StackedBarChart) -> str:
     return "".join(parts)
 
 
+def _render_stacked_area_chart(chart: StackedAreaChart) -> str:
+    """Render a stacked area chart to SVG.
+
+    Each series is drawn as a filled polygon. The bottom series sits on the
+    x-axis baseline; each subsequent series is offset upward by the cumulative
+    sum of the series beneath it. Lines are drawn on top of each fill.
+    """
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.series:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                          font_size=14, fill=CCA_COLORS["muted"], anchor="middle"))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout constants
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 50
+    margin_left = 60
+    margin_right = 20
+    legend_height = 20
+
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom - legend_height
+
+    n_points = len(chart.labels)
+    n_series = len(chart.series)
+
+    # Normalise each series to exactly n_points values (pad with 0 if shorter)
+    series_values = []
+    for _, raw_vals in chart.series:
+        vals = list(raw_vals)[:n_points]  # truncate if longer
+        while len(vals) < n_points:       # pad with 0 if shorter
+            vals.append(0)
+        series_values.append(vals)
+
+    # Compute cumulative stacks — cumulative[i][j] = sum of series 0..i at point j
+    cum_stacks = []  # cum_stacks[series_idx][point_idx]
+    running = [0.0] * n_points
+    for s_idx in range(n_series):
+        layer = []
+        for j in range(n_points):
+            running[j] += max(0, series_values[s_idx][j])
+            layer.append(running[j])
+        cum_stacks.append(layer[:])
+
+    max_val = max(cum_stacks[-1]) if cum_stacks else 0
+    if max_val == 0:
+        max_val = 1  # avoid division by zero on all-zero data
+
+    # Helper: map (point_index, y_value) → SVG (x, y)
+    def px(j):
+        if n_points == 1:
+            return margin_left + plot_w / 2
+        return margin_left + (j / (n_points - 1)) * plot_w
+
+    def py(val):
+        return margin_top + plot_h - (max(0, val) / max_val) * plot_h
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                          font_size=14, font_weight="bold"))
+
+    # Y-axis label
+    if chart.y_label:
+        parts.append(_text(14, margin_top + plot_h / 2, chart.y_label,
+                          font_size=10, fill=CCA_COLORS["muted"], anchor="middle",
+                          transform=f"rotate(-90, 14, {margin_top + plot_h / 2})"))
+
+    # Y-axis gridlines + labels
+    for i in range(5):
+        val = max_val * i / 4
+        y = py(val)
+        parts.append(_line(margin_left, y, margin_left + plot_w, y,
+                          CCA_COLORS["border"], 0.5))
+        label = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(margin_left - 8, y + 4, label,
+                          font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
+
+    # Draw series from top-to-bottom so lower series are painted over higher ones
+    baseline_y = margin_top + plot_h  # the x-axis line (y = 0 in data space)
+
+    for s_idx in range(n_series - 1, -1, -1):
+        color = chart.colors[s_idx % len(chart.colors)]
+        top_ys = [py(cum_stacks[s_idx][j]) for j in range(n_points)]
+
+        if s_idx == 0:
+            # Bottom series: lower boundary is the x-axis baseline
+            bottom_xs = [px(j) for j in range(n_points)]
+            bottom_ys = [baseline_y] * n_points
+        else:
+            # Lower boundary is the cumulative stack of the series below
+            bottom_xs = [px(j) for j in range(n_points)]
+            bottom_ys = [py(cum_stacks[s_idx - 1][j]) for j in range(n_points)]
+
+        # Build filled polygon: top edge (left→right) + bottom edge (right→left)
+        top_pts = [(px(j), top_ys[j]) for j in range(n_points)]
+        bottom_pts = [(bottom_xs[j], bottom_ys[j]) for j in range(n_points - 1, -1, -1)]
+        poly_pts = top_pts + bottom_pts
+        coords = " ".join(f"{x:.1f},{y:.1f}" for x, y in poly_pts)
+        parts.append(
+            f'<polygon points="{coords}" fill="{color}" '
+            f'fill-opacity="{chart.fill_opacity}" stroke="none"/>\n'
+        )
+
+        # Line on top of this series
+        parts.append(_polyline(top_pts, color, 2.0))
+
+        # Data points (dots)
+        if chart.show_points:
+            for x, y in top_pts:
+                parts.append(_circle(x, y, 3, color))
+
+    # X-axis labels (thinned for dense data)
+    step = max(1, n_points // 10)
+    for j in range(n_points):
+        if j % step == 0 or j == n_points - 1:
+            parts.append(_text(px(j), margin_top + plot_h + 16, str(chart.labels[j]),
+                              font_size=9, fill=CCA_COLORS["muted"], anchor="middle"))
+
+    # Legend
+    legend_y = chart.height - legend_height + 4
+    lx = margin_left
+    for s_idx, (name, _) in enumerate(chart.series):
+        color = chart.colors[s_idx % len(chart.colors)]
+        parts.append(_rect(lx, legend_y, 12, 12, color))
+        parts.append(_text(lx + 16, legend_y + 10, name,
+                          font_size=9, fill=CCA_COLORS["muted"]))
+        lx += max(60, len(name) * 7 + 20)
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -970,8 +1147,26 @@ def render_svg(chart) -> str:
         return _render_stacked_bar_chart(chart)
     elif isinstance(chart, HeatmapChart):
         return _render_heatmap_chart(chart)
+    elif isinstance(chart, StackedAreaChart):
+        return _render_stacked_area_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
+
+
+def generate_stacked_area(series: list, labels: list, title: str = "", **kwargs) -> str:
+    """Convenience function: render a stacked area chart and return SVG string.
+
+    Args:
+        series: [(name, [values]), ...] — ordered bottom-to-top
+        labels: X-axis labels
+        title: Chart title (optional)
+        **kwargs: Additional StackedAreaChart constructor args (width, height, colors, etc.)
+
+    Returns:
+        SVG string ready to embed or save.
+    """
+    chart = StackedAreaChart(series=series, labels=labels, title=title, **kwargs)
+    return render_svg(chart)
 
 
 def generate_heatmap(data: list, row_labels: list = None, col_labels: list = None,
