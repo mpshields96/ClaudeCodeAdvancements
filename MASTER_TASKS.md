@@ -919,7 +919,11 @@ developer colleague.
 - Tier 1 COMPLETE (S108-110): regime_detector.py (21 tests), calibration_bias.py (43 tests), cross_platform_signal.py (30 tests)
 - Tier 2 COMPLETE (S110): dynamic_kelly.py (32 tests), macro_regime.py (30 tests), fear_greed_filter.py (38 tests)
 - Pipeline COMPLETE (S110): signal_pipeline.py (32 tests) — chains all 6 modules, compound modifiers, BET/SKIP
-- Tier 3 NOT STARTED: Order flow intelligence + belief volatility surface (research needed)
+- Tier 3 Phase 1 COMPLETE (S112): order_flow_intel.py (38 tests, FLB regression, risk classifier, Maker/Taker model), belief_vol_surface.py (27 tests, logit transforms, Greeks, realized vol)
+- Tier 3 Design COMPLETE (S112): MT26_TIER3_DESIGN.md — full paper analysis for both modules
+- Pipeline updated (S112): order_flow_risk wired as Stage 6 (7-stage pipeline), market_category input added
+- Bridge updated (S112): CCA_TO_POLYBOT.md with Tier 3 intel for Kalshi bot
+- Tier 3 Phase 2 DEFERRED: Kalman filter + EM separator + B-spline surface (needs numpy)
 
 ---
 
