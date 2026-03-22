@@ -205,8 +205,9 @@ class TestLifecycleSpawnAndCrash(unittest.TestCase):
         daemon.run_cycle()  # No respawn (can_restart=False)
 
         cca = daemon.registry._sessions["cca-desktop"]
-        self.assertEqual(cca.status, SessionStatus.CRASHED)
+        self.assertEqual(cca.status, SessionStatus.FAILED)
         self.assertEqual(cca.restart_count, 2)
+        self.assertEqual(cca.last_error, "max_restarts_exceeded")
         # Verify it's not in runnable anymore
         runnable = daemon.registry.get_runnable_sessions()
         self.assertEqual(len(runnable), 0)
@@ -582,12 +583,14 @@ class TestAuditLogCompleteness(unittest.TestCase):
         daemon.run_cycle()
 
         cca = daemon.registry._sessions["cca-desktop"]
-        self.assertEqual(cca.status, SessionStatus.CRASHED)
+        self.assertEqual(cca.status, SessionStatus.FAILED)
 
-        # Verify audit trail shows both crashes
+        # Verify audit trail shows crashes and the final FAILED event
         entries = _read_audit_log(self.tmpdir)
+        events = [e["event"] for e in entries]
         crash_events = [e for e in entries if e["event"] == "session_crashed"]
         self.assertEqual(len(crash_events), 2)
+        self.assertIn("session_failed", events)
 
     @patch("session_daemon.peak_hours_get_status",
            return_value={"is_peak": False, "max_recommended_chats": 3})

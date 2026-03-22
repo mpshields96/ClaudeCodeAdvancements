@@ -206,6 +206,26 @@ class SessionDaemon:
 
         return results
 
+    def _mark_exhausted_sessions(self):
+        """Mark CRASHED sessions that can't restart anymore as FAILED.
+
+        Without this, sessions that exhaust their restart budget stay
+        permanently CRASHED because get_runnable_sessions filters them
+        out before spawn_session can mark them FAILED.
+        """
+        for session in self.registry.get_all_sessions():
+            if session.status != SessionStatus.CRASHED:
+                continue
+            if not session.config.auto_restart:
+                continue
+            if not session.can_restart(self.registry.max_restarts_per_hour):
+                session.mark_failed(reason="max_restarts_exceeded")
+                self.audit.log("session_failed", {
+                    "session": session.config.id,
+                    "reason": "max_restarts_exceeded",
+                    "restart_count": session.restart_count,
+                })
+
     # --- Spawning ---
 
     def spawn_session(self, session: SessionState) -> bool:
@@ -330,6 +350,9 @@ class SessionDaemon:
         """
         # 1. Health check — detect dead sessions
         self.check_health()
+
+        # 1b. Mark sessions that exhausted restarts as FAILED
+        self._mark_exhausted_sessions()
 
         # 2. Enforce peak hours
         self.enforce_peak_hours()
