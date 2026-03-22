@@ -29,15 +29,55 @@ FINDINGS_LOG_PATH = PROJECT_ROOT / "FINDINGS_LOG.md"
 VALID_VERDICTS = {"BUILD", "ADAPT", "REFERENCE", "REFERENCE-PERSONAL", "SKIP"}
 
 # Frontier patterns from findings log format
+# Order matters: more specific patterns checked first, fallback categories last.
+# Case-insensitive matching via re.IGNORECASE.
 FRONTIER_PATTERNS = {
-    "Frontier 1: Memory": re.compile(r"Frontier 1|Memory"),
-    "Frontier 2: Spec": re.compile(r"Frontier 2|Spec"),
-    "Frontier 3: Context": re.compile(r"Frontier 3|Context"),
-    "Frontier 4: Agent Guard": re.compile(r"Frontier 4|Agent Guard"),
-    "Frontier 5: Dashboard": re.compile(r"Frontier 5|Dashboard|Usage"),
-    "MT-0 Kalshi": re.compile(r"MT-0|Kalshi|trading"),
-    "MT-20 Senior Dev": re.compile(r"MT-20|Senior Dev"),
-    "MT-21 Hivemind": re.compile(r"MT-21|Hivemind"),
+    # Core frontiers (most specific)
+    "Frontier 1: Memory": re.compile(r"Frontier 1|Memory", re.IGNORECASE),
+    "Frontier 2: Spec": re.compile(r"Frontier 2|Spec", re.IGNORECASE),
+    "Frontier 3: Context": re.compile(r"Frontier 3|Context", re.IGNORECASE),
+    "Frontier 4: Agent Guard": re.compile(r"Frontier 4|Agent.?Guard|AGENT.?GUARD", re.IGNORECASE),
+    "Frontier 5: Dashboard": re.compile(r"Frontier 5|Dashboard|Usage", re.IGNORECASE),
+    # Kalshi/trading (catch all trading variants)
+    "MT-0 Kalshi": re.compile(
+        r"MT-0|Kalshi|trading|POLYBOT|Prediction Market|polymarket|algotrading",
+        re.IGNORECASE,
+    ),
+    # Named MTs
+    "MT-20 Senior Dev": re.compile(r"MT-20|Senior Dev", re.IGNORECASE),
+    "MT-21 Hivemind": re.compile(r"MT-21|Hivemind", re.IGNORECASE),
+    # Anthropic official announcements/features
+    "Anthropic/Official": re.compile(
+        r"Official Feature|Anthropic|Claude Update|CC Feature", re.IGNORECASE,
+    ),
+    # Cross-cutting (touches multiple frontiers)
+    "Cross-Cutting": re.compile(
+        r"All Frontiers|Multiple Frontiers|Cross.?Cutting|Multi.?Frontier",
+        re.IGNORECASE,
+    ),
+    # Skip/noise bucket (clearly non-actionable)
+    "Skip/Noise": re.compile(
+        r"No frontier|OFF.?SCOPE|Meme|Humor|Novelty|Outage|Rant"
+        r"|r/ClaudeAI$|r/AutoGPT|r/iOSProgramming|r/MachineLearning|r/webdev"
+        r"|AI-Generated|Sentiment only|Comparison",
+        re.IGNORECASE,
+    ),
+    # Personal/misc (not frontier-specific but personally useful)
+    "Personal/Misc": re.compile(
+        r"Academic|Personal|Psychiatry|UI Wrapper|reddit-intelligence"
+        r"|Voice|ADHD|Finance.*Showcase",
+        re.IGNORECASE,
+    ),
+    # Catch-all for other MT-X references (MT-1, MT-8, MT-10, MT-11, MT-13, MT-17, etc.)
+    "Other MTs": re.compile(r"MT-\d+|AG-\d+", re.IGNORECASE),
+    # Generic tags that don't fit elsewhere
+    "General/NEW": re.compile(r"^General|^NEW$|Education|Meta-awareness", re.IGNORECASE),
+    # Agent/research patterns (cross-cutting but code-relevant)
+    "Agent/Research": re.compile(
+        r"Agent Pattern|Research Agent|MCP orchestrat|Code Quality|Security$"
+        r"|Self-Learning",
+        re.IGNORECASE,
+    ),
 }
 
 

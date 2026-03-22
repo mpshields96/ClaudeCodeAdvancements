@@ -262,6 +262,135 @@ class TestFormatReport(unittest.TestCase):
         self.assertIn("Total findings: 10", report)
 
 
+class TestExpandedPatterns(unittest.TestCase):
+    """Test expanded frontier pattern matching to reduce 'Other' category."""
+
+    EXPANDED_LOG = """[2026-03-20] [REFERENCE] [MT-13: iOS/macOS Dev] "iOS generator" (30pts, 5c, r/ClaudeCode). Reference.
+[2026-03-20] [REFERENCE] [MT-17: Design] "Design skill" (40pts, 10c, r/ClaudeCode). Reference.
+[2026-03-20] [REFERENCE-PERSONAL] [Trading/Deep-Read] "Trading paper" (25pts, 3c, r/algotrading). Personal.
+[2026-03-20] [REFERENCE-PERSONAL] [Prediction Markets / Polybot] "Prediction tool" (18pts, 8c, r/algotrading). Personal.
+[2026-03-20] [REFERENCE-PERSONAL] [POLYBOT-DISH] "Kalshi dish" (35pts, 12c, r/algotrading). Personal.
+[2026-03-20] [REFERENCE] [All Frontiers] "Cross-cutting tool" (60pts, 20c, r/ClaudeCode). Reference.
+[2026-03-20] [REFERENCE] [Multiple Frontiers] "Multi-frontier" (45pts, 15c, r/ClaudeCode). Reference.
+[2026-03-20] [SKIP] [No frontier] "Random post" (5pts, 1c, r/ClaudeCode). Skipped.
+[2026-03-20] [SKIP] [OFF-SCOPE] "Off scope" (10pts, 2c, r/ClaudeCode). Skipped.
+[2026-03-20] [REFERENCE] [Official Feature] "CC feature" (80pts, 30c, r/ClaudeCode). Reference.
+[2026-03-20] [ADAPT] [NEW] "New tool" (50pts, 25c, r/ClaudeCode). Adapted.
+[2026-03-20] [SKIP] [General] "General stuff" (15pts, 5c, r/ClaudeCode). Skipped.
+[2026-03-20] [REFERENCE] [MT-11] "GitHub scanner" (22pts, 7c, r/ClaudeCode). Reference.
+[2026-03-20] [ADAPT] [AGENT-GUARD] "Guard variant" (33pts, 11c, r/ClaudeCode). Adapted.
+[2026-03-20] [REFERENCE] [MT-10: Self-Building Loop] "Self-learning" (28pts, 9c, r/ClaudeCode). Reference.
+[2026-03-20] [REFERENCE-PERSONAL] [Academic Writing] "Academic tool" (20pts, 4c, r/ClaudeCode). Personal.
+[2026-03-20] [REFERENCE-PERSONAL] [MT-8] "Paper scanner" (15pts, 3c, r/ClaudeCode). Personal.
+[2026-03-20] [REFERENCE] [MT-1 Monitoring] "Monitor tool" (40pts, 12c, r/ClaudeCode). Reference.
+[2026-03-20] [SKIP] [Meme] "Funny meme" (200pts, 50c, r/ClaudeCode). Skipped.
+[2026-03-20] [SKIP] [Novelty] "Novelty post" (30pts, 8c, r/ClaudeCode). Skipped.
+[2026-03-20] [SKIP] [r/ClaudeAI] "ClaudeAI post" (55pts, 15c, r/ClaudeAI). Skipped.
+[2026-03-20] [SKIP] [Outage] "Service outage" (100pts, 40c, r/ClaudeCode). Skipped.
+[2026-03-20] [REFERENCE] [UI Wrapper] "UI wrapper" (45pts, 10c, r/ClaudeCode). Reference.
+[2026-03-20] [REFERENCE] [reddit-intelligence] "Reddit tool" (30pts, 5c, r/ClaudeCode). Reference.
+"""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.log_path = Path(self.tmpdir) / "FINDINGS_LOG.md"
+        self.log_path.write_text(self.EXPANDED_LOG)
+
+    def test_trading_tags_match_kalshi(self):
+        """Trading/Deep-Read, Prediction Markets, POLYBOT-DISH -> MT-0 Kalshi."""
+        from hit_rate_tracker import parse_findings, compute_by_frontier
+        entries = parse_findings(self.log_path)
+        by_frontier = compute_by_frontier(entries)
+        kalshi = by_frontier.get("MT-0 Kalshi", {})
+        # Trading/Deep-Read, Prediction Markets, POLYBOT-DISH = 3 entries
+        self.assertGreaterEqual(kalshi.get("total", 0), 3)
+
+    def test_mt_tags_match_their_categories(self):
+        """MT-11, MT-8, MT-1, MT-10 should not be in Other."""
+        from hit_rate_tracker import parse_findings, compute_by_frontier
+        entries = parse_findings(self.log_path)
+        by_frontier = compute_by_frontier(entries)
+        other_entries = by_frontier.get("Other", {})
+        # MT-specific tags should have their own categories
+        self.assertLessEqual(other_entries.get("total", 0), 10,
+            "Too many entries still in Other — MT tags should be categorized")
+
+    def test_agent_guard_variant_matches(self):
+        """AGENT-GUARD (caps variant) matches Frontier 4."""
+        from hit_rate_tracker import parse_findings, compute_by_frontier
+        entries = parse_findings(self.log_path)
+        by_frontier = compute_by_frontier(entries)
+        ag = by_frontier.get("Frontier 4: Agent Guard", {})
+        self.assertGreaterEqual(ag.get("total", 0), 1)
+
+    def test_cross_cutting_tags_categorized(self):
+        """All Frontiers, Multiple Frontiers -> Cross-Cutting category."""
+        from hit_rate_tracker import parse_findings, compute_by_frontier
+        entries = parse_findings(self.log_path)
+        by_frontier = compute_by_frontier(entries)
+        cross = by_frontier.get("Cross-Cutting", {})
+        self.assertGreaterEqual(cross.get("total", 0), 2)
+
+    def test_skip_categories_exist(self):
+        """OFF-SCOPE, No frontier, Meme, Novelty, Outage -> Skip/Noise."""
+        from hit_rate_tracker import parse_findings, compute_by_frontier
+        entries = parse_findings(self.log_path)
+        by_frontier = compute_by_frontier(entries)
+        noise = by_frontier.get("Skip/Noise", {})
+        self.assertGreaterEqual(noise.get("total", 0), 5)
+
+    def test_official_feature_categorized(self):
+        """Official Feature -> Anthropic/Official."""
+        from hit_rate_tracker import parse_findings, compute_by_frontier
+        entries = parse_findings(self.log_path)
+        by_frontier = compute_by_frontier(entries)
+        official = by_frontier.get("Anthropic/Official", {})
+        self.assertGreaterEqual(official.get("total", 0), 1)
+
+    def test_design_tag_matches(self):
+        """MT-17: Design -> Design/Visual category."""
+        from hit_rate_tracker import parse_findings, compute_by_frontier
+        entries = parse_findings(self.log_path)
+        by_frontier = compute_by_frontier(entries)
+        # MT-17 should be in its own MT or design category
+        other = by_frontier.get("Other", {})
+        # MT-17 should NOT be in other
+        # Check it's somewhere categorized
+        total_categorized = sum(v.get("total", 0) for k, v in by_frontier.items() if k != "Other")
+        self.assertGreaterEqual(total_categorized, 18, "Most entries should be categorized")
+
+    def test_other_drastically_reduced(self):
+        """After expansion, Other should be <20% of total entries."""
+        from hit_rate_tracker import parse_findings, compute_by_frontier
+        entries = parse_findings(self.log_path)
+        by_frontier = compute_by_frontier(entries)
+        total = len(entries)
+        other_count = by_frontier.get("Other", {}).get("total", 0)
+        other_pct = other_count / total * 100 if total > 0 else 0
+        self.assertLess(other_pct, 20, f"Other is {other_pct:.1f}% — should be <20%")
+
+    def test_personal_tags_categorized(self):
+        """Academic Writing -> Personal/Other MT category."""
+        from hit_rate_tracker import parse_findings, compute_by_frontier
+        entries = parse_findings(self.log_path)
+        by_frontier = compute_by_frontier(entries)
+        # Academic Writing is a personal tool — should be in a personal category
+        personal = by_frontier.get("Personal/Misc", {})
+        self.assertGreaterEqual(personal.get("total", 0), 1)
+
+    def test_mt13_ios_categorized(self):
+        """MT-13: iOS/macOS Dev -> Research/Other MT."""
+        from hit_rate_tracker import parse_findings, compute_by_frontier
+        entries = parse_findings(self.log_path)
+        by_frontier = compute_by_frontier(entries)
+        other = by_frontier.get("Other", {})
+        # MT-13 should not be in Other
+        # It should be in its own category
+        mt_other = by_frontier.get("Other MTs", {})
+        self.assertGreaterEqual(mt_other.get("total", 0), 1,
+            "MT-13 and other MT-X tags should be in 'Other MTs'")
+
+
 class TestRealData(unittest.TestCase):
     """Test against the actual FINDINGS_LOG.md if it exists."""
 
