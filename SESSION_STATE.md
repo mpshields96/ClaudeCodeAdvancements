@@ -3,26 +3,27 @@
 
 ---
 
-## Current State (as of Session 117 — 2026-03-21)
+## Current State (as of Session 118 — 2026-03-21)
 
-**Phase:** Session 117 COMPLETE. 2-chat (desktop + worker attempted). Cross-project routing foundation + report chart integration.
+**Phase:** Session 118 IN PROGRESS. 2-chat (desktop + worker). MT-32 creation + report chart wiring + visual design intelligence scan.
 
-**What was done this session (S117):**
-- **report_charts.py**: SVG chart generator bridging CCA report data to chart_generator.py for Typst PDF embedding. 6 chart types: module tests (HorizontalBar), intelligence verdicts (Donut), MT status (Bar), LOC distribution (Bar), MT phase progress (StackedBar), frontier coverage (HorizontalBar). 32 tests.
-- **Cross-project routing in cca_comm.py**: CCA desktop can now task Kalshi chats directly — `cca_comm.py task km "do X"` routes through cross_chat_queue.py. `inbox km`, `say km`, `status` all work. Step 1 toward true 3-chat coordination where CCA desktop orchestrates ALL chats. 7 new tests (39 total).
-- **Matthew directive captured**: Current "3-chat" is actually 2-chat + 1-independent. Kalshi main must receive productive tasks from CCA desktop and do real work, not just monitoring. Multi-session effort.
-- **Worker cli1**: Launched with 3 chart tasks. Completed ALL 3 (WaterfallChart 39t, RadarChart 33t, GaugeChart 44t = 116 tests) but crashed before committing. Desktop recovered and committed the work. 12 chart types total.
-- **Tests**: 7606 passing (191 suites). +273 new tests this session.
-- **Commits**: 4 this session (3 desktop + 1 recovered worker).
-
-**Queue throughput**: 441 messages (MET Phase 2 target of 50+).
+**What was done this session (S118):**
+- **MT-32 created**: "Visual Excellence & Design Engineering" — comprehensive 8-pillar MT covering ALL visual work (report generation, UI development, graphic design, data visualization, figure generation, dashboard enhancement, design system maturation, presentation design). Absorbs MT-24 and MT-25.
+- **report_charts.py wired into /cca-report**: Auto-generates 6 SVG charts during PDF generation. Charts embedded via Typst `image()` in 4 report sections (module tests, frontiers, master tasks, intelligence). PDF with charts: 331 KB. Backwards compatible — works without charts too. +5 tests.
+- **BubbleChart + TreemapChart**: 2 new chart types added to chart_generator.py. Bubble: scatter with sized circles for 3D data. Treemap: nested rectangles for hierarchical data. 32 tests. 14 chart types total.
+- **Design token system**: Enhanced design-guide.md with explicit color tokens, spacing scale (8px base), typography scale, anti-AI-slop rules (no default purple, no generic cards, no verbose copy, no Tailwind defaults). Based on worker's nuclear scan findings.
+- **3-chat coordination advances**: Updated /cca-auto-desktop coord round with Step 5d2 (Kalshi task management). Created KALSHI_TASK_CATALOG.md with 6 task categories for Kalshi main.
+- **Worker cli1**: MT-32 Visual/Design Nuclear Scan — 14 findings across 5 subreddits + 8 GitHub repos. 5 BUILD/ADAPT, 7 REFERENCE, 2 SKIP. Top finds: svg.py (zero-dep SVG), CeTZ-Plot (native Typst charts), Altair (declarative). Key insight: "AI slop" = purple + Tailwind defaults; fix = design tokens.
+- **Matthew directives saved**: (1) CCA may modify polybot settings if Kalshi main notified, (2) Kalshi runs as ONE chat (main+research combined), (3) Gemini Pro for visuals worth exploring.
+- **Tests**: ~7618 passing (~192 suites). +37 new desktop tests + worker tests.
+- **Commits**: 5 desktop + 1 worker = 6 total.
 
 **Next (prioritized):**
-1. **True 3-chat coordination** — Multi-session. Next steps: (a) Update /cca-auto-desktop coord round to include Kalshi task queue management, (b) Define what "productive work" means for Kalshi main beyond monitoring (implement CCA research findings, run sniper analysis, apply Page-Hinkley to sniper buckets), (c) Update launch scripts to include km task pre-loading.
-2. **Worker chart tasks** — All 3 completed and committed (recovered). Next worker: BubbleChart, TreemapChart, or FunnelChart.
-3. **Verify worker stays alive** — Check crash_recovery.py status 5 min after launch next time.
-4. **Design-skills**: Wire report_charts.py into /cca-report pipeline (generate SVGs during report).
-5. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination — now possible via cca_comm.py task km).
+1. **MT-32 Phase 2**: Act on nuclear scan findings — evaluate svg.py as chart_generator.py foundation (zero-dep, drop-in), evaluate CeTZ-Plot for native Typst charts (eliminate SVG intermediary).
+2. **Wire queue_injector into polybot settings**: Matthew authorized CCA to modify polybot settings.local.json. Need to add UserPromptSubmit hook so Kalshi main receives CCA task assignments.
+3. **Gemini Pro visual adapter**: MT-31 x MT-32 integration — build lightweight Gemini Pro MCP adapter for cross-model design review.
+4. **3-chat full loop**: polybot-auto must support task-driven work (requires polybot-side changes). Test with manual task assignment first.
+5. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (now possible via cca_comm.py task km + settings access).
 
 **Key S117 insight**: Matthew correctly identified that Kalshi main running independently = NOT a 3-chat system. The cross-project routing in cca_comm.py is the foundation, but the full solution needs: (1) Kalshi main receiving and acting on tasks from CCA desktop, (2) /polybot-auto supporting task-driven work alongside monitoring, (3) CCA desktop coord round managing Kalshi task lifecycle.
 
