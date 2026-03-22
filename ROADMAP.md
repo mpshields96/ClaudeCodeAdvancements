@@ -190,10 +190,10 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 | usage-dashboard | 369 |
 | reddit-intelligence | 408 |
 | self-learning | 1779 |
-| design-skills | 576 |
+| design-skills | 630 |
 | research | 86 |
 | root (integration + coordination) | 1803 |
-| **Total** | **7050** |
+| **Total** | **7104** |
 
 ---
 

@@ -3,9 +3,34 @@
 
 ---
 
-## Current State (as of Session 114 — 2026-03-21)
+## Current State (as of Session 115 — 2026-03-21)
 
-**Phase:** Session 114 COMPLETE. Solo CCA. MT-27 Phases 1-3, MT-29 research, doc drift fixes.
+**Phase:** Session 115 COMPLETE. 3-CHAT TRIAL RUN (desktop coordinator + CLI worker + Kalshi main). Design-skills expansion + MT-27 Phase 5.
+
+**What was done this session (S115):**
+- **3-CHAT TRIAL RUN: SUCCESS.** Desktop coordinator + CLI worker + Kalshi main all ran without errors, scope conflicts, or interference. Worker launched, received task, executed (42 tests), committed, reported back, wrapped. Clean coordination throughout.
+- **MT-27 Phase 5 COMPLETE**: `apf_session_tracker.py` — per-session APF trend tracking. Append-only JSONL snapshots at `~/.cca-apf-snapshots.jsonl`. Wired into `/cca-wrap` (Step 1.8) and `/cca-wrap-desktop` (Step 2.8). 27 tests.
+- **StackedBarChart**: New chart type in `chart_generator.py` — stacked vertical bars for composition comparison (BUILD/ADAPT/SKIP per session). Legends, value labels, y-axis labels. 25 tests.
+- **AreaChart**: New chart type — line with gradient fill below for volume/magnitude over time. Fill opacity, data points, label thinning. 29 tests.
+- **HeatmapChart** (worker cli1): 2D colored grid for correlation/intensity data. `_lerp_color()` interpolation, contrast-aware value text. 42 tests. Committed by worker.
+- **MT-31 added**: Gemini Pro Integration (Matthew has access via Google One $20/mo). Future research task.
+- **Matthew priorities saved**: Kalshi bot > visuals/design > autonomous loop. All multi-session.
+- **Doc drift fixed**: design-skills 534->630, self-learning 1752->1779, total 6981->7104.
+- **Tests**: ~7104 passing (~178 suites). +123 new tests this session (27+25+29+42).
+- **Commits**: 8 this session (7 desktop + 1 worker).
+
+**Chart types now available**: BarChart, HorizontalBarChart, LineChart, Sparkline, DonutChart, HeatmapChart, StackedBarChart, AreaChart (8 total).
+
+**Next (prioritized):**
+1. **Kalshi bot maintenance** — Matthew's #1 priority.
+2. **Design-skills continued expansion** — test growth timeline chart, APF trend sparkline in reports, improved /cca-report using new chart types.
+3. **Autonomous loop** (MT-22/MT-30) — CCA desktop auto-spawning new sessions.
+4. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
+5. **MT-31 Research**: Evaluate Gemini Pro as cross-model complement.
+
+**Still pending (Matthew manual):**
+- AUTH FIX: `sed -i '' 's/^export ANTHROPIC_API_KEY/# export ANTHROPIC_API_KEY/' ~/.zshrc`
+- Bridge sync: `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md`
 
 **What was done this session (S114):**
 - **MT-27 Phase 1 COMPLETE**: APF analysis — "Other" category dropped from 124/335 (37%) to 0/335 (0%). Expanded FRONTIER_PATTERNS from 8 to 15 categories with case-insensitive matching. 10 new tests.
