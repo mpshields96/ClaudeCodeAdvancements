@@ -22,6 +22,7 @@ Chart types:
     BubbleChart       — scatter plot with sized circles for 3D data
     TreemapChart      — nested rectangles sized by value for hierarchical data
     SankeyChart       — flow diagram showing value transfers between nodes
+    FunnelChart       — conversion funnel (wide-to-narrow trapezoids, % labels)
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -566,6 +567,31 @@ class SankeyChart:
     node_width: int = 20
     node_padding: int = 10
     node_colors: dict = field(default_factory=dict)
+
+
+@dataclass
+class FunnelChart:
+    """Conversion funnel chart — wide-to-narrow trapezoids for stage drop-off.
+
+    Each stage is rendered as a centered trapezoid whose width is proportional
+    to its value relative to the first (widest) stage. Stage labels appear on
+    the left and values on the right. Optional percentage labels show each
+    stage's conversion rate relative to the top of the funnel.
+
+    Args:
+        data: [(label, value), ...] — stages in order from top (widest) to bottom
+        title: Optional chart title
+        show_percentages: If True, render % of first stage for each stage
+        color: Base hex color for the funnel bars (default: CCA accent)
+        width: SVG width in px (default: 400)
+        height: SVG height in px (default: 350)
+    """
+    data: list              # [(label, value), ...]
+    title: str = ""
+    show_percentages: bool = True
+    color: str = ""
+    width: int = 400
+    height: int = 350
 
 
 # ---------------------------------------------------------------------------
@@ -2219,6 +2245,100 @@ def _render_sankey_chart(chart: SankeyChart) -> str:
     return "".join(parts)
 
 
+def _render_funnel_chart(chart: FunnelChart) -> str:
+    """Render a funnel chart to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    base_color = chart.color or CCA_COLORS["accent"]
+
+    # Layout
+    margin_top = 40 if chart.title else 16
+    margin_bottom = 16
+    margin_left = 90   # room for stage labels on the left
+    margin_right = 70  # room for value labels on the right
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    n = len(chart.data)
+    top_value = chart.data[0][1] if chart.data else 1
+
+    slot_h = plot_h / n
+    bar_h = max(slot_h * 0.72, 8)   # height of each trapezoid
+    gap_h = slot_h - bar_h           # vertical gap between stages
+
+    for i, (label, value) in enumerate(chart.data):
+        # Width fraction relative to first (top) stage
+        frac = (value / top_value) if top_value > 0 else 0.0
+        frac = max(0.0, min(1.0, frac))
+
+        bar_w = max(plot_w * frac, 4)
+        bar_x = margin_left + (plot_w - bar_w) / 2
+        bar_y = margin_top + i * slot_h + gap_h / 2
+
+        # Slight color darkening for deeper stages (lerp toward primary)
+        t = i / max(n - 1, 1) * 0.35
+        fill = _lerp_color(base_color, CCA_COLORS["primary"], t)
+
+        # Trapezoid: if not last, taper toward next stage's width
+        if i < n - 1:
+            next_frac = (chart.data[i + 1][1] / top_value) if top_value > 0 else 0.0
+            next_frac = max(0.0, min(1.0, next_frac))
+            next_w = max(plot_w * next_frac, 4)
+            next_x = margin_left + (plot_w - next_w) / 2
+
+            pts = [
+                (bar_x, bar_y),
+                (bar_x + bar_w, bar_y),
+                (next_x + next_w, bar_y + bar_h),
+                (next_x, bar_y + bar_h),
+            ]
+        else:
+            # Last stage: simple rectangle
+            pts = [
+                (bar_x, bar_y),
+                (bar_x + bar_w, bar_y),
+                (bar_x + bar_w, bar_y + bar_h),
+                (bar_x, bar_y + bar_h),
+            ]
+
+        pts_str = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
+        parts.append(f'<polygon points="{pts_str}" fill="{fill}"/>\n')
+
+        # Stage label (left side, vertically centered on bar)
+        label_y = bar_y + bar_h / 2 + 4
+        parts.append(_text(margin_left - 6, label_y, label,
+                           font_size=10, fill=CCA_COLORS["primary"], anchor="end"))
+
+        # Value label (right side)
+        val_str = str(int(value)) if value == int(value) else f"{value:.1f}"
+        parts.append(_text(margin_left + plot_w + 6, label_y, val_str,
+                           font_size=10, fill=CCA_COLORS["primary"], anchor="start"))
+
+        # Percentage label (inside bar, centered)
+        if chart.show_percentages:
+            pct = round(frac * 100)
+            pct_str = f"{pct}%"
+            if bar_w > 30:
+                parts.append(_text(margin_left + plot_w / 2, label_y, pct_str,
+                                   font_size=10, fill=CCA_COLORS["background"],
+                                   font_weight="bold"))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -2257,6 +2377,8 @@ def render_svg(chart) -> str:
         return _render_treemap_chart(chart)
     elif isinstance(chart, SankeyChart):
         return _render_sankey_chart(chart)
+    elif isinstance(chart, FunnelChart):
+        return _render_funnel_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 
