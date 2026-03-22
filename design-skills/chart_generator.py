@@ -11,6 +11,7 @@ Chart types:
     LineChart         — line/area for trends (supports multiple series)
     Sparkline         — compact inline trend indicator
     DonutChart        — progress/completion indicator (NOT for data comparison)
+    HeatmapChart      — 2D grid of colored cells for correlation/intensity data
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -119,6 +120,17 @@ def _polyline(points: list, stroke: str, stroke_width: float = 2,
             f'stroke-linejoin="round" stroke-linecap="round"/>\n')
 
 
+def _lerp_color(color_a: str, color_b: str, t: float) -> str:
+    """Interpolate between two hex colors. t=0 → color_a, t=1 → color_b."""
+    t = max(0.0, min(1.0, t))
+    ra, ga, ba = int(color_a[1:3], 16), int(color_a[3:5], 16), int(color_a[5:7], 16)
+    rb, gb, bb = int(color_b[1:3], 16), int(color_b[3:5], 16), int(color_b[5:7], 16)
+    r = int(ra + (rb - ra) * t)
+    g = int(ga + (gb - ga) * t)
+    b = int(ba + (bb - ba) * t)
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
 def _arc_path(cx: float, cy: float, r: float, start_angle: float,
               end_angle: float, inner_r: float = 0) -> str:
     """Generate SVG path for an arc segment (donut slice)."""
@@ -222,6 +234,42 @@ class DonutChart:
     width: int = 300
     height: int = 300
     center_text: str = ""
+
+
+@dataclass
+class HeatmapChart:
+    """Heatmap chart: 2D grid of colored cells for correlation/intensity data.
+
+    Colors are computed by interpolating between low_color and high_color
+    using the value's position in [min, max] range. No SVG gradients — each
+    cell gets a computed fill color from the CCA palette.
+
+    Args:
+        data: 2D list of numeric values [[row0_col0, ...], [row1_col0, ...]]
+        row_labels: Labels for rows (y-axis), length must match len(data)
+        col_labels: Labels for columns (x-axis), length must match len(data[0])
+        title: Optional chart title
+        width: SVG width in pixels
+        height: SVG height in pixels
+        show_values: If True, render each cell's value as text
+        low_color: Hex color for minimum values (default: CCA surface)
+        high_color: Hex color for maximum values (default: CCA accent)
+    """
+    data: list  # [[row0_col0, row0_col1, ...], [row1_col0, ...]]
+    row_labels: list = field(default_factory=list)
+    col_labels: list = field(default_factory=list)
+    title: str = ""
+    width: int = 500
+    height: int = 400
+    show_values: bool = False
+    low_color: str = ""
+    high_color: str = ""
+
+    def __post_init__(self):
+        if not self.low_color:
+            self.low_color = CCA_COLORS["surface"]
+        if not self.high_color:
+            self.high_color = CCA_COLORS["accent"]
 
 
 # ---------------------------------------------------------------------------
@@ -555,6 +603,103 @@ def _render_donut_chart(chart: DonutChart) -> str:
     return "".join(parts)
 
 
+def _render_heatmap_chart(chart: HeatmapChart) -> str:
+    """Render a heatmap chart to SVG.
+
+    Each cell is colored by interpolating between chart.low_color and
+    chart.high_color based on the cell's position in [global_min, global_max].
+    No SVG gradient elements are used — colors are computed per-cell.
+    """
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    # Guard: empty data
+    rows = [r for r in chart.data if r]
+    if not rows:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=12, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    n_rows = len(rows)
+    n_cols = max(len(r) for r in rows)
+
+    # Margins: leave space for title, row labels (left), col labels (bottom)
+    has_row_labels = bool(chart.row_labels)
+    has_col_labels = bool(chart.col_labels)
+
+    margin_top = 36 if chart.title else 16
+    margin_bottom = 28 if has_col_labels else 10
+    margin_left = 80 if has_row_labels else 10
+    margin_right = 16
+
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    cell_w = plot_w / n_cols if n_cols else plot_w
+    cell_h = plot_h / n_rows if n_rows else plot_h
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 22, chart.title,
+                           font_size=13, font_weight="bold"))
+
+    # Compute global min/max for color normalization
+    all_vals = [v for row in rows for v in row]
+    v_min = min(all_vals)
+    v_max = max(all_vals)
+    v_range = v_max - v_min if v_max != v_min else 1.0
+
+    # Render cells
+    for ri, row in enumerate(rows):
+        for ci, val in enumerate(row):
+            t = (val - v_min) / v_range
+            fill = _lerp_color(chart.low_color, chart.high_color, t)
+            x = margin_left + ci * cell_w
+            y = margin_top + ri * cell_h
+            parts.append(_rect(x, y, cell_w, cell_h, fill))
+            # Cell border (subtle)
+            parts.append(
+                f'<rect x="{x:.1f}" y="{y:.1f}" width="{cell_w:.1f}" '
+                f'height="{cell_h:.1f}" fill="none" '
+                f'stroke="{CCA_COLORS["background"]}" stroke-width="1"/>\n'
+            )
+            # Value text inside cell
+            if chart.show_values:
+                # Pick text color for contrast: light text on dark fill, dark on light
+                r_int = int(fill[1:3], 16)
+                g_int = int(fill[3:5], 16)
+                b_int = int(fill[5:7], 16)
+                luminance = 0.299 * r_int + 0.587 * g_int + 0.114 * b_int
+                text_color = CCA_COLORS["background"] if luminance < 128 else CCA_COLORS["primary"]
+                parts.append(_text(
+                    x + cell_w / 2, y + cell_h / 2 + 4,
+                    f"{val:.2f}", font_size=9, fill=text_color,
+                ))
+
+    # Row labels (left side)
+    if has_row_labels:
+        for ri, label in enumerate(chart.row_labels[:n_rows]):
+            y = margin_top + ri * cell_h + cell_h / 2 + 4
+            parts.append(_text(
+                margin_left - 6, y, str(label),
+                font_size=10, fill=CCA_COLORS["muted"], anchor="end",
+            ))
+
+    # Column labels (bottom)
+    if has_col_labels:
+        for ci, label in enumerate(chart.col_labels[:n_cols]):
+            x = margin_left + ci * cell_w + cell_w / 2
+            y = margin_top + plot_h + 18
+            parts.append(_text(
+                x, y, str(label),
+                font_size=10, fill=CCA_COLORS["muted"],
+            ))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -571,8 +716,34 @@ def render_svg(chart) -> str:
         return _render_sparkline(chart)
     elif isinstance(chart, DonutChart):
         return _render_donut_chart(chart)
+    elif isinstance(chart, HeatmapChart):
+        return _render_heatmap_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
+
+
+def generate_heatmap(data: list, row_labels: list = None, col_labels: list = None,
+                     title: str = "", **kwargs) -> str:
+    """Convenience function: render a heatmap and return SVG string.
+
+    Args:
+        data: 2D list of numeric values [[row0_col0, ...], ...]
+        row_labels: Labels for rows (optional)
+        col_labels: Labels for columns (optional)
+        title: Chart title (optional)
+        **kwargs: Additional HeatmapChart constructor args (width, height, show_values, etc.)
+
+    Returns:
+        SVG string ready to embed or save.
+    """
+    chart = HeatmapChart(
+        data=data,
+        row_labels=row_labels or [],
+        col_labels=col_labels or [],
+        title=title,
+        **kwargs,
+    )
+    return render_svg(chart)
 
 
 def save_svg(chart, path: str) -> str:
