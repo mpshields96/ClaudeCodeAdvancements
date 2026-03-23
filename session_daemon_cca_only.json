@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "max_total_chats": 1,
+  "max_restarts_per_hour": 3,
+  "check_interval_seconds": 30,
+  "sessions": [
+    {
+      "id": "cca-autoloop",
+      "type": "cca",
+      "role": "desktop",
+      "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/cca_autoloop.py start",
+      "auto_restart": true,
+      "restart_delay_seconds": 30,
+      "env": {"CCA_CHAT_ID": "desktop"},
+      "cwd": "/Users/matthewshields/Projects/ClaudeCodeAdvancements",
+      "priority": 1
+    }
+  ],
+  "peak_hours": {
+    "max_chats": 1,
+    "deprioritize": []
+  }
+}
