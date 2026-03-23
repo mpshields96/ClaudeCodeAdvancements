@@ -3,18 +3,19 @@
 
 ---
 
-## Current State (as of Session 123 — 2026-03-22)
+## Current State (as of Session 123 — 2026-03-23)
 
-**Phase:** Session 123 IN PROGRESS. Solo session. MT-33 Phase 6 + hardening.
+**Phase:** Session 123 IN PROGRESS. Solo session. MT-33 Phase 6 + hardening + MT-32 charts.
 
 **What was done this session (S123):**
 - **MT-33 Phase 6 COMPLETE**: `ReportSidecar` class in report_generator.py — saves JSON alongside every PDF, archives to `~/.cca-reports/{date}_S{session}.json`. Wired into main() pipeline automatically. `report_differ.py` (180 LOC) — structured diff between two report sidecars: test growth, LOC changes, MT transitions, Kalshi P&L, APF movement. `format_summary()` for human-readable trend text. 50 new tests (20 sidecar + 30 differ).
-- **MT-33 hardening COMPLETE**: Edge case tests across all 3 collectors. kalshi_data_collector: +9 tests (paper-only, all-unsettled, single trade, all losses, zero P&L, single bankroll, same-day trades). learning_data_collector: +11 tests (empty journal, malformed lines, no domains, zero pains, single APF snapshot, empty charts). report_differ: +10 tests (empty modules, missing fields, removed modules, both unavailable, corrupt JSON, newly available). Also fixed format_summary detection logic.
-- **Tests**: 201 suites, ~8049 tests passing. +179 new tests this session.
-- **Commits**: 3 this session.
+- **MT-33 hardening COMPLETE**: Edge case tests across all 3 collectors. kalshi_data_collector: +9, learning_data_collector: +11, report_differ: +10. Fixed format_summary detection logic.
+- **MT-32 statistical charts**: 2 new CCA charts wired into /cca-report — `test_density_scatter` (ScatterPlot: tests vs LOC per module with trend line) and `module_composition` (StackedBarChart: source vs test LOC). Report now produces 9 base charts + conditional Kalshi/learning. 9 new tests.
+- **Tests**: 201 suites, ~8058 tests passing. +188 new tests this session.
+- **Commits**: 6 this session.
 
 **Next (prioritized):**
-1. **MT-32 continued**: Wire statistical charts into /cca-report (test distribution BoxPlot, session duration HistogramChart — using real CCA data).
+1. **MT-32 continued**: Add charts to Typst template sections (currently generated but not placed in report layout).
 2. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
 3. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot.
 
