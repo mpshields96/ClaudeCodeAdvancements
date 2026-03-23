@@ -352,11 +352,11 @@ def get_known_tasks(current_session: int = 124) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=33, name="Strategic Intelligence Report",
-            base_value=7, status=TaskStatus.ACTIVE,
+            base_value=7, status=TaskStatus.COMPLETED,
             last_touched_session=123, current_session=current_session,
             phases_completed=6, phases_total=6,  # All 6 phases COMPLETE
             aging_rate=0,
-            next_action="COMPLETE. All 6 phases shipped: collectors, charts, Typst, sidecar, differ.",
+            next_action="DONE. All 6 phases shipped: collectors, charts, Typst, sidecar, differ.",
             tags=["reports", "kalshi", "intelligence"],
         ),
         MasterTask(

@@ -123,6 +123,29 @@ Include the output in the briefing under "RECENT SESSIONS:". If no data, skip si
 
 ---
 
+## Step 2.9 — Priority picker stagnation check
+
+Run the priority picker to detect stagnating MTs and show the current priority ranking:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 priority_picker.py init-briefing --session $(python3 -c "
+import re
+with open('SESSION_STATE.md') as f: c = f.read()
+m = re.search(r'Session (\d+)', c)
+print(int(m.group(1))+1 if m else 125)
+")
+```
+
+Include the output in the briefing. If STAGNATION WARNING appears, it MUST be shown
+prominently — this prevents recency bias where resume prompts keep suggesting recently-worked
+MTs while higher-priority MTs collect dust.
+
+When /cca-auto starts, the priority picker ranking should override the resume prompt's
+"NEXT" list if a higher-priority MT has been stagnating (untouched 5+ sessions).
+
+---
+
 ## Step 3 — Surface relevant findings (resurfacer)
 
 After reading SESSION_STATE.md (Step 1), determine the current work context:

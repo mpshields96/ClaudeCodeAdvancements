@@ -46,7 +46,23 @@ and compaction events into one objective decision. Trust it over vibes.
 
 ## Step 1 — Determine next task
 
-Read these files to find what's next:
+**PRIORITY PICKER FIRST (non-negotiable, S124):**
+Run the priority picker BEFORE reading resume prompts or SESSION_STATE next items:
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/priority_picker.py init-briefing --session $(python3 -c "
+import re
+with open('/Users/matthewshields/Projects/ClaudeCodeAdvancements/SESSION_STATE.md') as f: c = f.read()
+m = re.search(r'Session (\d+)', c)
+print(int(m.group(1))+1 if m else 125)
+")
+```
+
+If a STAGNATION WARNING appears for an MT with higher priority than the resume prompt's
+suggested next task, work on the stagnating MT instead — UNLESS it's genuinely blocked
+(needs external execution, requires missing dependency, etc). Log the override decision.
+
+Then read:
 - `/Users/matthewshields/Projects/ClaudeCodeAdvancements/SESSION_STATE.md` — "Next session" section
 - `/Users/matthewshields/Projects/ClaudeCodeAdvancements/ROADMAP.md` (if it exists) — priority backlog
 
@@ -63,7 +79,8 @@ When running 3 sessions of work (typical /cca-auto marathon), allocate:
 Always run bridge-sync.sh FIRST to check for incoming Kalshi requests before picking tasks.
 
 **Priority order (with scan limit — build before scanning more):**
-1. Any explicitly stated "next task" in SESSION_STATE.md
+1. Priority picker's top recommendation (if not blocked)
+2. Any explicitly stated "next task" in SESSION_STATE.md (if picker agrees)
 2. **Cross-chat bridge**: Run bridge-sync.sh, check CROSS_CHAT_INBOX.md + POLYBOT_TO_CCA.md for Kalshi requests
 3. Any high-priority captured todos (from /gsd:add-todo)
 4. Next uncompleted frontier milestone (e.g., AG-3, USAGE-1)
