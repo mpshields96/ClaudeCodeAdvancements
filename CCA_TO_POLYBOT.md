@@ -1,7 +1,7 @@
 # CCA -> Kalshi Research: Universal Bet Analytics Framework
 # Academic Foundation + Verified Citations + Script Scaffold
 # Written: 2026-03-18 (CCA Session 45)
-# Last updated: 2026-03-19 (CCA Session 57)
+# Last updated: 2026-03-23 (CCA Session 125)
 # Status: READY FOR IMPLEMENTATION
 #
 # Kalshi Research: Read this, implement bet_analytics.py from it.
@@ -1081,3 +1081,66 @@ inp = PipelineInput(
 )
 decision = pipeline.run(inp)
 ```
+
+---
+
+## UPDATE — Sessions 113-125 (2026-03-21 to 2026-03-23)
+
+### MT-0: Self-Learning Deployment Ready
+
+CCA has built a **deployment verifier** (`self-learning/deployment_verifier.py`) that validates
+whether the Kalshi bot has properly integrated the self-learning system. Run after deployment:
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/self-learning/deployment_verifier.py /Users/matthewshields/Projects/polymarket-bot
+```
+
+Checks: trading_journal.py exists, research_tracker.py exists, journal JSONL has valid entries,
+live.py references trading_journal. Reports PASS/PARTIAL/FAIL.
+
+**Full deployment brief:** `KALSHI_MT0_TASK_BRIEF.md` — 4 tasks ordered by priority.
+
+### MT-33: Strategic Intelligence Report (COMPLETE)
+
+The `/cca-report` PDF now includes Kalshi bot analytics:
+- **Kalshi Financial Analytics page**: cumulative P&L, strategy win rates, daily P&L histogram,
+  strategy P&L box plot, win rate vs profit scatter, trade volume donut, bankroll timeline
+- **Self-Learning Intelligence section**: journal event types, APF trend, domain distribution
+- **Report sidecar**: JSON export alongside every PDF for machine-readable diffing
+- **Report differ**: structured diff between two report sidecars (test growth, MT transitions,
+  Kalshi P&L, APF movement)
+
+Data collectors (read-only, zero risk to bot):
+- `kalshi_data_collector.py` — reads polybot.db for trades, strategies, P&L, bankroll (48 tests)
+- `learning_data_collector.py` — reads journal.jsonl for event types, APF, domains (29 tests)
+
+### MT-28: Self-Learning v2 (Phase 1 COMPLETE)
+
+EvolveR-style principle registry with Laplace-smoothed scoring:
+- `principle_registry.py` — 73 tests, domain-tagged principles
+- `pattern_registry.py` — plugin registry for pattern detectors
+- `detectors.py` — 12 built-in detectors (7 general, 6 trading)
+- `principle_transfer.py` — cross-domain principle transfer (34 tests)
+- `outcome_feedback.py` — bridges research_outcomes to principle scoring
+- `predictive_recommender.py` — pre-session recommendations from principles (40 tests)
+- `sentinel_bridge.py` — bridges sentinel mutations to principle registry (30 tests)
+
+### New CCA Capabilities Since S112
+
+| Module | Tests | What's New |
+|--------|-------|-----------|
+| `kalshi_data_collector.py` | 48 | Read-only Kalshi DB analytics (trades, strategies, P&L) |
+| `learning_data_collector.py` | 29 | Self-learning intelligence (journal, APF, domains) |
+| `report_differ.py` | 30 | Structured diff between report sidecars |
+| `deployment_verifier.py` | 24 | MT-0 deployment validation |
+| `predictive_recommender.py` | 40 | Pre-session principle-based recommendations |
+| `sentinel_bridge.py` | 30 | Sentinel mutation -> principle registry |
+| `session_orchestrator.py` | 55 | 3-chat auto-launch decision logic |
+| 21 chart types | 1299 | Full data visualization library |
+
+### Actionable Recommendations
+
+1. **Deploy self-learning (MT-0)**: Follow `KALSHI_MT0_TASK_BRIEF.md`. CCA verifier ready.
+2. **Run /cca-report**: Generates PDF with Kalshi analytics — zero bot modification needed.
+3. **Research ROI tracking**: When implementing CCA recommendations, log via research_outcomes.py
+   so CCA can track which research actually makes money.
