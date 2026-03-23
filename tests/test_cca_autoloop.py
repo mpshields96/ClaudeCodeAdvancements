@@ -28,6 +28,7 @@ from cca_autoloop import (
     spawn_desktop_session,
     close_desktop_window,
     desktop_window_title,
+    check_no_other_cca_sessions,
 )
 
 
@@ -328,24 +329,27 @@ class TestBuildClaudeCommand(unittest.TestCase):
     def test_command_with_model_opus(self):
         cmd = build_claude_command("Resume", "/tmp", model="opus")
         self.assertEqual(cmd[0], "claude")
-        self.assertEqual(cmd[1], "--model")
-        self.assertEqual(cmd[2], "opus")
+        self.assertIn("--dangerously-skip-permissions", cmd)
+        self.assertIn("--model", cmd)
+        model_idx = cmd.index("--model")
+        self.assertEqual(cmd[model_idx + 1], "opus")
         self.assertIn("Resume", cmd[-1])
 
     def test_command_with_model_sonnet(self):
         cmd = build_claude_command("Resume", "/tmp", model="sonnet")
-        self.assertEqual(cmd[1], "--model")
-        self.assertEqual(cmd[2], "sonnet")
+        model_idx = cmd.index("--model")
+        self.assertEqual(cmd[model_idx + 1], "sonnet")
 
     def test_command_without_model(self):
         cmd = build_claude_command("Resume", "/tmp", model=None)
-        self.assertEqual(cmd, ["claude", cmd[-1]])
+        self.assertIn("--dangerously-skip-permissions", cmd)
         self.assertNotIn("--model", cmd)
 
     def test_command_model_none_default(self):
         """No model arg by default (backward compat)."""
         cmd = build_claude_command("Resume", "/tmp")
         self.assertNotIn("--model", cmd)
+        self.assertIn("--dangerously-skip-permissions", cmd)
 
 
 class TestAutoLoopRunner(unittest.TestCase):
@@ -445,10 +449,11 @@ class TestAutoLoopRunner(unittest.TestCase):
         runner.run_one_iteration()
         self.assertEqual(runner.state.total_crashes, 1)
 
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "ok"))
     @patch("cca_autoloop.read_resume_prompt")
     @patch("cca_autoloop.subprocess.run")
     @patch("cca_autoloop.time.sleep")
-    def test_run_loop_stops_at_max_iterations(self, mock_sleep, mock_run, mock_read):
+    def test_run_loop_stops_at_max_iterations(self, mock_sleep, mock_run, mock_read, mock_check):
         mock_read.return_value = "Resume"
         mock_run.return_value = MagicMock(returncode=0)
 
@@ -468,10 +473,11 @@ class TestAutoLoopRunner(unittest.TestCase):
         runner.run()
         self.assertEqual(mock_run.call_count, 3)
 
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "ok"))
     @patch("cca_autoloop.read_resume_prompt")
     @patch("cca_autoloop.subprocess.run")
     @patch("cca_autoloop.time.sleep")
-    def test_run_loop_stops_on_consecutive_crashes(self, mock_sleep, mock_run, mock_read):
+    def test_run_loop_stops_on_consecutive_crashes(self, mock_sleep, mock_run, mock_read, mock_check):
         mock_read.return_value = "Resume"
         mock_run.return_value = MagicMock(returncode=1)
 
@@ -849,6 +855,46 @@ class TestAutoLoopCLI(unittest.TestCase):
         cli_main(["start", "--max-iterations", "5"])
         cfg = mock_runner_cls.call_args[0][0]
         self.assertEqual(cfg.max_iterations, 5)
+
+class TestSessionDedup(unittest.TestCase):
+    """Test session de-duplication (one CCA session at a time)."""
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_no_sessions_is_safe(self, mock_run):
+        mock_run.return_value = MagicMock(stdout="  PID COMMAND\n  123 /bin/bash\n")
+        safe, msg = check_no_other_cca_sessions()
+        self.assertTrue(safe)
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_existing_cca_cli_blocks(self, mock_run):
+        mock_run.return_value = MagicMock(
+            stdout="  PID COMMAND\n  999 claude --dangerously-skip-permissions CCA/ClaudeCodeAdvancements\n"
+        )
+        safe, msg = check_no_other_cca_sessions()
+        self.assertFalse(safe)
+        self.assertIn("1", msg)
+
+    @patch("cca_autoloop.subprocess.run", side_effect=OSError("no ps"))
+    def test_ps_failure_allows_launch(self, mock_run):
+        """If ps fails, don't block — fail open."""
+        safe, msg = check_no_other_cca_sessions()
+        self.assertTrue(safe)
+
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(False, "1 session running"))
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.subprocess.run")
+    @patch("cca_autoloop.time.sleep")
+    def test_runner_blocked_by_dedup(self, mock_sleep, mock_run, mock_read, mock_check):
+        """Runner should refuse to start if dedup check fails."""
+        mock_read.return_value = "Resume"
+        mock_run.return_value = MagicMock(returncode=0)
+
+        cfg = AutoLoopConfig(project_dir="/tmp/test", dry_run=False, max_iterations=3)
+        runner = AutoLoopRunner(cfg)
+        runner.run()
+        # Should not have spawned any sessions
+        mock_run.assert_not_called()
+
 
     @patch("cca_autoloop.AutoLoopRunner")
     def test_cli_desktop(self, mock_runner_cls):

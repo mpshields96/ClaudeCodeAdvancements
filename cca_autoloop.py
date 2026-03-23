@@ -265,7 +265,7 @@ def build_claude_command(
         f"{resume_prompt}"
     )
 
-    cmd = ["claude"]
+    cmd = ["claude", "--dangerously-skip-permissions"]
     if model:
         cmd.extend(["--model", model])
     cmd.append(full_prompt)
@@ -275,6 +275,32 @@ def build_claude_command(
 # ---------------------------------------------------------------------------
 # Desktop Mode
 # ---------------------------------------------------------------------------
+
+def check_no_other_cca_sessions() -> tuple[bool, str]:
+    """Check that no other CCA Claude sessions are running.
+
+    Returns (safe_to_launch, message).
+    Safe to launch if no CLI claude processes are working on CCA.
+    Desktop app processes are excluded (they use a different binary path).
+    """
+    try:
+        result = subprocess.run(
+            ["ps", "axo", "pid,command"],
+            capture_output=True, text=True, timeout=5,
+        )
+        cca_cli_count = 0
+        for line in result.stdout.split("\n"):
+            # Only count CLI claude processes (not desktop app)
+            if "claude" in line.lower() and "--dangerously-skip-permissions" in line:
+                if "ClaudeCodeAdvancements" in line or "cca" in line.lower():
+                    cca_cli_count += 1
+
+        if cca_cli_count > 0:
+            return False, f"{cca_cli_count} CCA CLI session(s) already running"
+        return True, "No CCA CLI sessions running"
+    except (subprocess.TimeoutExpired, OSError):
+        return True, "Could not check (ps failed) — proceeding"
+
 
 def desktop_window_title(iteration: int) -> str:
     """Generate a unique window title for this iteration."""
@@ -576,6 +602,17 @@ class AutoLoopRunner:
         print(f"CCA Auto-Loop starting (max {self.config.max_iterations} iterations)")
         if self.config.dry_run:
             print("DRY RUN — no sessions will be spawned")
+
+        # Pre-flight: ensure no other CCA sessions are running
+        # Skip in dry-run mode (no real sessions spawned)
+        if not self.config.dry_run:
+            safe, msg = check_no_other_cca_sessions()
+            if not safe:
+                print(f"BLOCKED: {msg}")
+                print("Only one CCA session at a time to avoid rate limit burn.")
+                print("Close other CCA sessions first, then retry.")
+                self.logger.log("blocked_duplicate_session", {"message": msg})
+                return
 
         while not self.state.should_stop:
             print(f"\n--- Iteration {self.state.iteration + 1} ---")

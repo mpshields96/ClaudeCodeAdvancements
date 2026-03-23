@@ -207,6 +207,16 @@ cleanup_and_exit() {
 
 trap cleanup_and_exit INT TERM
 
+# Pre-flight: check no other CCA CLI sessions running
+CCA_CLI_COUNT=$(ps ax -o command 2>/dev/null | grep "claude.*dangerously-skip" | grep -i "cca\|ClaudeCodeAdvancements" | grep -v grep | wc -l | tr -d ' ')
+if [ "$CCA_CLI_COUNT" -gt 0 ]; then
+    echo "BLOCKED: $CCA_CLI_COUNT CCA CLI session(s) already running."
+    echo "Only one CCA session at a time to avoid rate limit burn."
+    echo "Close other CCA sessions first, then retry."
+    log_event "blocked_duplicate_session" "{\"count\":$CCA_CLI_COUNT}"
+    exit 1
+fi
+
 while [ $iteration -lt $MAX_ITERATIONS ]; do
     iteration=$((iteration + 1))
     echo "--- Iteration $iteration / $MAX_ITERATIONS ---"
@@ -260,7 +270,7 @@ echo "========================================"
 echo ""
 
 PROMPT=\$(cat "$PROMPT_FILE")
-claude --model "$MODEL" "\$PROMPT"
+claude --dangerously-skip-permissions --model "$MODEL" "\$PROMPT"
 CLAUDE_EXIT=\$?
 
 echo \$CLAUDE_EXIT > "$SENTINEL"
@@ -313,7 +323,7 @@ WRAPEOF
         # Foreground mode: claude inherits TTY directly
         echo "Spawning claude session (--model $MODEL)..."
         set +e
-        claude --model "$MODEL" "$FULL_PROMPT"
+        claude --dangerously-skip-permissions --model "$MODEL" "$FULL_PROMPT"
         exit_code=$?
         set -e
     fi
