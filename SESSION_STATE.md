@@ -3,25 +3,33 @@
 
 ---
 
-## Current State (as of Session 128 — 2026-03-23)
+## Current State (as of Session 129 — 2026-03-23)
 
-**Phase:** Session 128 COMPLETE. Solo session. MT-30 Phase 8 — production hardening for autoloop. Grade: A.
+**Phase:** Session 129 IN PROGRESS. Solo session. Mixed: MT-27 Phase 4 + MT-30 enhancements + doc drift fixes.
 
-**What was done this session (S128):**
-- **Terminal.app close race condition FIXED**: Removed self-close from wrapper script (caused race with `exit`). Controller now waits 3s for shell to fully exit, uses `close w saving no`, handles "terminate?" dialog via System Events, retries close if window persists.
-- **Pre-flight checks ADDED**: claude binary existence, Terminal.app running status, Accessibility permissions check, orphaned temp file cleanup from previous crashes.
-- **Rate limit handling ADDED**: Exit codes 2 and 75 recognized as rate limits — get 5-minute extended cooldown instead of counting as crashes. No longer triggers 3-crash auto-stop.
-- **Critical bug FIXED**: Python desktop wrapper was missing `--dangerously-skip-permissions` — would have blocked all automation with permission prompts.
-- **Stale resume detection**: Logs when SESSION_RESUME.md unchanged between iterations (stuck loop diagnostic).
-- **Prompt size truncation**: Resumes >100KB truncated to avoid CLI arg rejection.
-- **Tests**: 204 suites, ~8156 tests passing. +31 new tests this session (85 → 116 in test_cca_autoloop.py).
+**What was done this session (S129):**
+- **MT-27 Phase 4 COMPLETE**: NEEDLE classifier precision improvement. Split keywords into strong (always NEEDLE: claude.md, hook, mcp server, etc.) and weak (need engagement signals: tool, built, made, created, tips, etc.). Weak keywords require score >= 50 OR body >= 300 chars OR comments >= 15. +30 new tests.
+- **MT-30: Rich --status command**: `parse_audit_log()` reads JSONL audit trail, shows iteration history with duration, model, exit status. `format_status_report()` combines state + audit into human-readable output. +16 new tests.
+- **MT-30: Preflight check command**: `python3 cca_autoloop.py preflight [--desktop]` runs all prerequisites and reports PASS/FAIL/WARN. Critical vs warning classification. +9 new tests.
+- **AUTOLOOP_SETUP.md**: Step-by-step Accessibility permissions guide for Terminal.app (macOS 15 Sequoia). Includes preflight command, model strategy options, and graceful degradation docs.
+- **Doc drift fixed**: Corrected test counts in PROJECT_INDEX.md and ROADMAP.md (usage-dashboard 384→369, reddit-intelligence 408→432, self-learning 1779→1833, design-skills 630→1299, total→8205).
+- **Priority picker updated**: MT-27 Phase 4 complete, current_session=129.
+- **Tests**: ~204 suites, ~8205 tests passing. +55 new tests this session.
 - **Commits**: 5 this session.
 
 **Next (prioritized):**
-1. **LIVE SUPERVISED DRY RUN** (CRITICAL): Close ALL CCA chats. Open plain Terminal. Run `./start_autoloop.sh --desktop`. Watch full cycle: window opens → claude runs /cca-init + /cca-auto → works → wraps → window closes → controller opens NEXT window. Verify each step.
-2. **Pre-requisite**: Grant Terminal.app + terminal emulator Accessibility permissions in System Preferences > Privacy & Security > Accessibility (needed for auto-close dialog handling).
-3. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
-4. **MT-31**: Build Flash-powered CCA tools now that Gemini Flash MCP is validated.
+1. **LIVE SUPERVISED DRY RUN** (CRITICAL): Run `python3 cca_autoloop.py preflight --desktop` first. Then: close ALL CCA chats, grant Accessibility permissions (see AUTOLOOP_SETUP.md), run `./start_autoloop.sh --desktop`.
+2. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
+3. **MT-31**: Build Flash-powered CCA tools now that Gemini Flash MCP is validated.
+4. **MT-27 Phase 5**: APF validation — measure precision improvement on real scans.
+
+---
+
+## Previous State (Session 128 — 2026-03-23)
+
+**What was done this session (S128):**
+- MT-30 Phase 8 — production hardening for autoloop. Terminal.app close race fix, pre-flight checks, rate limit handling, --dangerously-skip-permissions bug fix, stale resume detection, prompt truncation.
+- Tests: 204 suites, ~8156 tests. +31 new tests. 5 commits. Grade: A.
 
 ---
 

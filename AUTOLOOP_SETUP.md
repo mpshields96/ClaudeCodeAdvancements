@@ -39,7 +39,20 @@ If you see "not allowed assistive access": permission wasn't granted yet.
 
 ---
 
-## Step 2: Run the Auto-Loop
+## Step 2: Run Pre-Flight Check
+
+```bash
+cd ~/Projects/ClaudeCodeAdvancements
+python3 cca_autoloop.py preflight --desktop
+```
+
+This checks everything: claude binary, no duplicate sessions, SESSION_RESUME.md,
+start_autoloop.sh executable, Terminal.app running, Accessibility permissions,
+orphaned temp files. Fix any FAIL items before launching.
+
+---
+
+## Step 3: Run the Auto-Loop
 
 ```bash
 # Close ALL CCA Claude Code desktop chats first
@@ -69,8 +82,8 @@ MODEL_STRATEGY=sonnet-primary ./start_autoloop.sh --desktop   # Sonnet only (che
 ### Check status
 
 ```bash
-./start_autoloop.sh --status
-cat ~/.cca-autoloop.log | tail -20    # audit trail
+python3 cca_autoloop.py status          # rich status with audit history
+./start_autoloop.sh --status            # quick state dump
 ```
 
 ---
