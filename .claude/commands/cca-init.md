@@ -174,6 +174,15 @@ python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/crash_recovery.py 
 ```
 
 If duplicates are detected, include a WARNING line in the briefing.
+
+### Register this session with the orchestrator
+
+```bash
+CCA_ROLE="${CCA_CHAT_ID:-desktop}"
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/session_orchestrator.py register "$CCA_ROLE"
+```
+
+This enables auto-launch detection for 3-chat mode. Deregistered automatically at wrap.
 Stale processes (no chat ID) should also be flagged.
 If crashed workers are detected, run `python3 crash_recovery.py run` to auto-recover orphaned scopes.
 

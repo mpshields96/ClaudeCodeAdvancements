@@ -168,10 +168,11 @@ Finish the task, commit, THEN do the coordination round.
 This is the ONLY place orchestration happens. Run these checks in order.
 If the round exceeds 2 minutes of your context, STOP the round and go back to work.
 
-### 5a. Record task completion + check pacer
+### 5a. Record task completion + check pacer + heartbeat
 ```bash
 python3 context-monitor/session_pacer.py complete "Task Name" --commit <hash>
 python3 context-monitor/session_pacer.py check --json
+python3 session_orchestrator.py heartbeat desktop
 ```
 - `"action": "continue"` → proceed with 5b-5f, then pick next task
 - `"action": "wrap_soon"` → do NOT start a new task, run `/cca-wrap-desktop`

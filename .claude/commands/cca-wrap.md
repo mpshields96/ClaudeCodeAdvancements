@@ -416,6 +416,15 @@ Fails silently if not configured — never blocks wrap.
 
 ---
 
+## Step 8.9 — Deregister from session orchestrator
+
+```bash
+CCA_ROLE="${CCA_CHAT_ID:-desktop}"
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/session_orchestrator.py deregister "$CCA_ROLE"
+```
+
+---
+
 ## Step 9 — Resume prompt
 
 Output a copy-paste prompt for the next session:
