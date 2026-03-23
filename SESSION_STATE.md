@@ -13,13 +13,14 @@
 - **MT-22 Phase 3 COMPLETE**: `start_desktop_autoloop.sh` launcher + `DESKTOP_AUTOLOOP_SETUP.md` setup guide. Permissions, quick start, troubleshooting.
 - **MT-22 CPU idle detection**: `get_claude_cpu_usage()` + `is_claude_idle()` for supplementary response monitoring. Periodic CPU state logging during wait. 8 new tests.
 - **Live preflight VALIDATED**: All 4 checks PASS on real system. Claude.app running, 1 window, CPU 0% when idle.
-- **Tests**: 207 suites passing. +115 new tests. 5 commits.
+- **MT-27 Phase 4 COMPLETE**: 3-tier NEEDLE precision. Showcase keywords (built/made/created/tool/tips/setup) need score>=100 OR body>=500 OR comments>=25. Reduces false positives from low-value showcase posts. +7 new tests (104 total nuclear_fetcher).
+- **Tests**: 207 suites passing. +122 new tests. 8 commits.
 
 **Next (prioritized):**
 1. **MT-22 SUPERVISED TRIAL**: Run `./start_desktop_autoloop.sh --max-iterations 2` with Matthew watching. Validate full loop: resume -> activate -> send -> work -> wrap -> next iteration.
-2. **MT-22 enhancements**: Explore `claude://` URL scheme as cleaner alternative to keystrokes. Add window title detection for multi-window safety.
-3. **MT-27 Phase 4**: Improve NEEDLE precision (reduce false positives from broad keywords).
-4. **CI/CD pipeline verify**: Matthew S130 directive.
+2. **MT-22 enhancements**: Explore `claude://` URL scheme. Window title detection for multi-window safety. Accessibility permission auto-detection.
+3. **CI/CD pipeline verify**: Matthew S130 directive.
+4. **Session-level prompt-to-outcome tracker**: Lightweight JSONL (logged as todo, fits MT-10).
 
 ---
 
