@@ -301,7 +301,10 @@ class DesktopAutoLoop:
         return True
 
     def _wait_for_session_end(self, poll_interval: float = None) -> tuple:
-        """Wait for session to complete by watching resume file.
+        """Wait for session to complete by watching resume file + CPU idle.
+
+        Primary signal: SESSION_RESUME.md mtime change (= /cca-wrap ran).
+        Secondary signal: CPU idle logging for observability.
 
         Returns (exit_code, duration).
         exit_code 0 = session wrapped successfully (file changed).
@@ -310,8 +313,11 @@ class DesktopAutoLoop:
         poll = poll_interval or self.config.poll_interval
         start = time.time()
         timeout = self.config.session_timeout
+        last_cpu_log = 0.0
+        cpu_log_interval = 60.0  # log CPU state every 60s
 
         while (time.time() - start) < timeout:
+            # Primary: check for file change
             if self.watcher.has_changed():
                 duration = time.time() - start
                 self._log("session_end_detected", {
@@ -320,10 +326,21 @@ class DesktopAutoLoop:
                 })
                 return (0, duration)
 
+            # Secondary: periodic CPU state logging (observability only)
+            elapsed = time.time() - start
+            if elapsed - last_cpu_log >= cpu_log_interval:
+                cpu = self.automator.get_claude_cpu_usage()
+                idle = self.automator.is_claude_idle()
+                self._log("cpu_check", {
+                    "cpu_pct": round(cpu, 1),
+                    "idle": idle,
+                    "elapsed": round(elapsed, 0),
+                })
+                last_cpu_log = elapsed
+
             if not self.config.dry_run:
                 time.sleep(poll)
             else:
-                # In dry_run, don't actually sleep
                 break
 
         duration = time.time() - start

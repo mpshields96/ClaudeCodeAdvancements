@@ -156,6 +156,47 @@ class DesktopAutomator:
                 return -1
         return -1
 
+    def get_claude_cpu_usage(self) -> float:
+        """Get Claude.app CPU usage percentage. Returns -1.0 on error.
+
+        Uses `ps` to check CPU usage of the Claude process.
+        Useful for heuristic idle detection: when CPU drops below
+        a threshold after being high, Claude likely finished responding.
+        """
+        if self.dry_run:
+            return 0.0
+        try:
+            result = subprocess.run(
+                ["ps", "-eo", "comm,%cpu"],
+                capture_output=True, text=True, timeout=5,
+            )
+            for line in result.stdout.split("\n"):
+                if "Claude" in line and "Helper" not in line:
+                    parts = line.strip().split()
+                    if len(parts) >= 2:
+                        try:
+                            return float(parts[-1])
+                        except ValueError:
+                            continue
+            return 0.0
+        except (subprocess.TimeoutExpired, OSError):
+            return -1.0
+
+    def is_claude_idle(self, cpu_threshold: float = 5.0) -> bool:
+        """Check if Claude.app appears idle (low CPU usage).
+
+        A rough heuristic: when Claude is generating responses, the
+        Electron renderer process uses significant CPU. When it drops
+        below the threshold, the response is likely complete.
+
+        This is NOT reliable for precise detection — use as a supplement
+        to file-based detection (SESSION_RESUME.md mtime), not a replacement.
+        """
+        cpu = self.get_claude_cpu_usage()
+        if cpu < 0:
+            return False  # error — assume not idle
+        return cpu < cpu_threshold
+
     # --- App control ---
 
     def activate_claude(self) -> bool:

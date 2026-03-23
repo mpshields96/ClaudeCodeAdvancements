@@ -6,6 +6,7 @@ All AppleScript calls are mocked since tests run without a GUI.
 
 import json
 import os
+import subprocess
 import tempfile
 import time
 import unittest
@@ -603,6 +604,75 @@ class TestWindowCount(unittest.TestCase):
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
             count = da.get_window_count()
             self.assertEqual(count, -1)
+
+
+class TestCPUUsage(unittest.TestCase):
+    """Test CPU usage detection."""
+
+    @patch("desktop_automator.subprocess.run")
+    def test_get_cpu_usage(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Claude             12.5\nClaude Helper       2.1\n",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            cpu = da.get_claude_cpu_usage()
+            self.assertAlmostEqual(cpu, 12.5)
+
+    @patch("desktop_automator.subprocess.run")
+    def test_cpu_usage_no_claude(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Safari              5.0\nFinder              0.1\n",
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            cpu = da.get_claude_cpu_usage()
+            self.assertEqual(cpu, 0.0)
+
+    @patch("desktop_automator.subprocess.run")
+    def test_cpu_usage_error(self, mock_run):
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd="ps", timeout=5)
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            cpu = da.get_claude_cpu_usage()
+            self.assertEqual(cpu, -1.0)
+
+    def test_dry_run_returns_zero(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            cpu = da.get_claude_cpu_usage()
+            self.assertEqual(cpu, 0.0)
+
+
+class TestIsClaudeIdle(unittest.TestCase):
+    """Test idle detection heuristic."""
+
+    @patch.object(DesktopAutomator, "get_claude_cpu_usage", return_value=1.5)
+    def test_idle_when_low_cpu(self, mock_cpu):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            self.assertTrue(da.is_claude_idle())
+
+    @patch.object(DesktopAutomator, "get_claude_cpu_usage", return_value=25.0)
+    def test_not_idle_when_high_cpu(self, mock_cpu):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            self.assertFalse(da.is_claude_idle())
+
+    @patch.object(DesktopAutomator, "get_claude_cpu_usage", return_value=-1.0)
+    def test_error_returns_not_idle(self, mock_cpu):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            self.assertFalse(da.is_claude_idle())
+
+    @patch.object(DesktopAutomator, "get_claude_cpu_usage", return_value=4.9)
+    def test_custom_threshold(self, mock_cpu):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            self.assertTrue(da.is_claude_idle(cpu_threshold=5.0))
+            self.assertFalse(da.is_claude_idle(cpu_threshold=4.0))
 
 
 if __name__ == "__main__":
