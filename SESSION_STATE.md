@@ -3,26 +3,24 @@
 
 ---
 
-## Current State (as of Session 120 — 2026-03-22)
+## Current State (as of Session 121 — 2026-03-22)
 
-**Phase:** Session 120 IN PROGRESS. Solo session. 3-chat auto-launch infrastructure built.
+**Phase:** Session 121 COMPLETE. Solo session. Statistical chart suite expansion.
 
-**What was done this session (S120):**
-- **test_report_generator_extended.py FIXED**: TestCollectPriorityQueue fixture had 10-col table vs real 12-col format. All 191->194 suites passing.
-- **S119 uncommitted design changes committed**: report_generator.py parser (12-col table support, ~NNN regex), report_charts.py width fix, cca-report.typ v3 visual upgrade.
-- **session_orchestrator.py built**: 3-chat auto-launch decision layer. SessionMode enum, SessionState detection, decide_launches() with peak hours blocking, build_launch_commands(). CLI: status/plan/launch/set-mode/register/heartbeat/deregister. 29 tests.
-- **PidRegistry + heartbeat liveness**: PID file registry for reliable session detection. Heartbeat-based liveness (10min TTL) as primary, PID check as fallback. cleanup_stale() auto-removes dead entries. 26 tests.
-- **Full lifecycle wiring**: /cca-init registers session, /cca-auto-desktop heartbeats on every coord round, /cca-wrap deregisters. /cca-auto-desktop Step 0.5 checks saved preference and can auto-launch missing sessions.
-- **Worker S119 commits verified**: FunnelChart (17th chart type, 39 tests) + MT-32 svg.py evaluation (REFERENCE verdict, keep chart_generator.py) both landed despite resume prompt saying worker crashed.
-- **Tests**: 194 suites passing (was 191). +55 new tests (session_orchestrator).
-- **Commits**: 5 this session.
+**What was done this session (S121):**
+- **Session orchestrator live test PASSED**: register/set-mode/plan/status all work correctly. Orchestrator detects desktop running, recommends worker launch in 2chat mode.
+- **ScatterPlot** (chart type 18): Multi-series XY correlation, optional least-squares trend lines, legend for multi-series, custom colors/point radius. 21 tests.
+- **BoxPlot** (chart type 19): Box-and-whisker distribution comparison. Median, Q1/Q3, whisker caps, 1.5*IQR outlier detection as open circles. Custom colors. 21 tests.
+- **HistogramChart** (chart type 20): Frequency distribution from raw values. Auto-binning via Sturges' rule or explicit bin count. Contiguous bars, bin edge labels. 25 tests.
+- **ViolinPlot** (chart type 21): KDE-based distribution shape with mirrored Gaussian kernel density, embedded Q1/Q3 dashed lines, bold median line. Silverman's bandwidth. Handles bimodal/uniform/degenerate. 23 tests.
+- **Tests**: 197 suites passing (was 194). +90 new tests (42+25+23). Consistency tests updated for all 4 new types.
+- **Commits**: 4 this session (3 chart commits + session state).
 
 **Next (prioritized):**
-1. **Test 3-chat auto-launch**: Run `python3 session_orchestrator.py register desktop && python3 session_orchestrator.py plan --mode 2chat` to verify detection works, then try live launch in a 2-chat session.
-2. **MT-32 Phase 3**: More chart types or visual improvements — Matthew loves the design trajectory.
-3. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
-4. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot.
-5. **3-chat full loop**: polybot-auto must support task-driven work.
+1. **MT-32 continued**: Wire new statistical charts into /cca-report where applicable (test distribution BoxPlot, session duration HistogramChart).
+2. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
+3. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot.
+4. **3-chat full loop**: polybot-auto must support task-driven work.
 
 **What was done this session (S119):**
 - **Polybot queue hook E2E verified**: Simulated Kalshi main receiving CCA task assignments via cross_chat_queue.jsonl. Hook returns additionalContext with unread messages. Cleaned stale MT-0 task and test ping from km queue. The 3-chat coordination pipeline is functionally wired.
