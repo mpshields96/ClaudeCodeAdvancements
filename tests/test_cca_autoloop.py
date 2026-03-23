@@ -36,6 +36,7 @@ from cca_autoloop import (
     _is_desktop_window_open,
     parse_audit_log,
     format_status_report,
+    run_preflight_checks,
     RATE_LIMIT_EXIT_CODES,
     RATE_LIMIT_COOLDOWN,
     MAX_PROMPT_SIZE,
@@ -1485,6 +1486,119 @@ class TestFormatStatusReport(unittest.TestCase):
         os.unlink(sf.name)
         os.unlink(lf.name)
         self.assertIn("RATE_LIMITED", report)
+
+
+class TestPreflightChecks(unittest.TestCase):
+    """Test the preflight check runner."""
+
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "No duplicates"))
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "claude found"))
+    def test_basic_preflight_passes(self, mock_claude, mock_dedup):
+        """Preflight passes when claude exists and no duplicates."""
+        with tempfile.TemporaryDirectory() as td:
+            # Create a resume file
+            resume = os.path.join(td, "SESSION_RESUME.md")
+            with open(resume, "w") as f:
+                f.write("Run /cca-init. Last session was S128 on 2026-03-23. WHAT WAS BUILT: autoloop hardening. Tests: 204 suites passing.")
+            # Create start script
+            script = os.path.join(td, "start_autoloop.sh")
+            with open(script, "w") as f:
+                f.write("#!/bin/bash\necho test\n")
+            os.chmod(script, 0o755)
+
+            result = run_preflight_checks(desktop_mode=False, project_dir=td)
+            self.assertTrue(result["ready"])
+            self.assertIn("All checks passed", result["report"])
+
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "No duplicates"))
+    @patch("cca_autoloop.check_claude_binary", return_value=(False, "claude not found"))
+    def test_missing_claude_blocks(self, mock_claude, mock_dedup):
+        """Missing claude binary is a critical failure."""
+        with tempfile.TemporaryDirectory() as td:
+            result = run_preflight_checks(desktop_mode=False, project_dir=td)
+            self.assertFalse(result["ready"])
+            self.assertIn("BLOCKED", result["report"])
+
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(False, "1 session running"))
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "claude found"))
+    def test_duplicate_session_blocks(self, mock_claude, mock_dedup):
+        """Duplicate CCA session is a critical failure."""
+        with tempfile.TemporaryDirectory() as td:
+            result = run_preflight_checks(desktop_mode=False, project_dir=td)
+            self.assertFalse(result["ready"])
+
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "No duplicates"))
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "claude found"))
+    def test_missing_resume_is_warning(self, mock_claude, mock_dedup):
+        """Missing resume file is a warning, not a blocker."""
+        with tempfile.TemporaryDirectory() as td:
+            result = run_preflight_checks(desktop_mode=False, project_dir=td)
+            self.assertTrue(result["ready"])  # Still ready — will use fallback
+            resume_check = [c for c in result["checks"] if c["name"] == "resume_file"][0]
+            self.assertFalse(resume_check["passed"])
+            self.assertFalse(resume_check["critical"])
+
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "No duplicates"))
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "claude found"))
+    def test_non_executable_script_warned(self, mock_claude, mock_dedup):
+        """Non-executable start script is a warning."""
+        with tempfile.TemporaryDirectory() as td:
+            script = os.path.join(td, "start_autoloop.sh")
+            with open(script, "w") as f:
+                f.write("#!/bin/bash\n")
+            os.chmod(script, 0o644)  # Not executable
+            result = run_preflight_checks(desktop_mode=False, project_dir=td)
+            self.assertTrue(result["ready"])
+            script_check = [c for c in result["checks"] if c["name"] == "start_script"][0]
+            self.assertFalse(script_check["passed"])
+            self.assertIn("chmod", script_check["message"])
+
+    @patch("cca_autoloop.check_accessibility_permissions", return_value=(True, "OK"))
+    @patch("cca_autoloop.check_terminal_app_running", return_value=(True, "Running"))
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "No duplicates"))
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "claude found"))
+    def test_desktop_mode_includes_extra_checks(self, mock_claude, mock_dedup, mock_term, mock_access):
+        """Desktop mode adds Terminal.app and Accessibility checks."""
+        with tempfile.TemporaryDirectory() as td:
+            result = run_preflight_checks(desktop_mode=True, project_dir=td)
+            check_names = [c["name"] for c in result["checks"]]
+            self.assertIn("terminal_app", check_names)
+            self.assertIn("accessibility", check_names)
+
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "No duplicates"))
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "claude found"))
+    def test_foreground_mode_skips_desktop_checks(self, mock_claude, mock_dedup):
+        """Foreground mode does not include Terminal/Accessibility checks."""
+        with tempfile.TemporaryDirectory() as td:
+            result = run_preflight_checks(desktop_mode=False, project_dir=td)
+            check_names = [c["name"] for c in result["checks"]]
+            self.assertNotIn("terminal_app", check_names)
+            self.assertNotIn("accessibility", check_names)
+
+    @patch("cca_autoloop.check_accessibility_permissions", return_value=(False, "No access"))
+    @patch("cca_autoloop.check_terminal_app_running", return_value=(True, "Running"))
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "No duplicates"))
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "claude found"))
+    def test_missing_accessibility_is_warning(self, mock_claude, mock_dedup, mock_term, mock_access):
+        """Missing Accessibility is a warning, not a blocker."""
+        with tempfile.TemporaryDirectory() as td:
+            result = run_preflight_checks(desktop_mode=True, project_dir=td)
+            self.assertTrue(result["ready"])  # Non-critical
+            self.assertIn("warnings present", result["report"])
+
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "No duplicates"))
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "claude found"))
+    def test_checks_list_structure(self, mock_claude, mock_dedup):
+        """Each check has required keys."""
+        with tempfile.TemporaryDirectory() as td:
+            result = run_preflight_checks(desktop_mode=False, project_dir=td)
+            for c in result["checks"]:
+                self.assertIn("name", c)
+                self.assertIn("passed", c)
+                self.assertIn("message", c)
+                self.assertIn("critical", c)
+                self.assertIsInstance(c["passed"], bool)
+                self.assertIsInstance(c["critical"], bool)
 
 
 if __name__ == "__main__":

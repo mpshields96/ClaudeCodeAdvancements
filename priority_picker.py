@@ -176,7 +176,7 @@ class MasterTask:
         }
 
 
-def get_known_tasks(current_session: int = 124) -> list[MasterTask]:
+def get_known_tasks(current_session: int = 129) -> list[MasterTask]:
     """Return the current MT registry.
 
     This is the source of truth for task metadata that can't be reliably
@@ -289,10 +289,10 @@ def get_known_tasks(current_session: int = 124) -> list[MasterTask]:
         MasterTask(
             mt_id=27, name="CCA Nuclear v2 (Enhanced Scanning)",
             base_value=5, status=TaskStatus.ACTIVE,
-            last_touched_session=114, current_session=current_session,
-            phases_completed=3, phases_total=5,
+            last_touched_session=129, current_session=current_session,
+            phases_completed=4, phases_total=5,
             aging_rate=0.5,
-            next_action="Phase 4: NEEDLE precision improvement (reduce false positives).",
+            next_action="Phase 5: APF validation — measure precision improvement on real scans.",
             tags=["scanning", "intelligence"],
         ),
         MasterTask(

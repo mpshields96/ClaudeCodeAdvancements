@@ -1023,6 +1023,112 @@ class AutoLoopRunner:
 # CLI
 # ---------------------------------------------------------------------------
 
+def run_preflight_checks(desktop_mode: bool = False, project_dir: str = DEFAULT_PROJECT_DIR) -> dict:
+    """Run all preflight checks and return a structured report.
+
+    Returns:
+        {
+            "ready": bool,           # True if all critical checks pass
+            "checks": [              # Individual check results
+                {"name": "...", "passed": bool, "message": "...", "critical": bool},
+                ...
+            ],
+            "report": str,           # Human-readable report
+        }
+    """
+    checks = []
+
+    # 1. Claude binary
+    found, msg = check_claude_binary()
+    checks.append({"name": "claude_binary", "passed": found, "message": msg, "critical": True})
+
+    # 2. No duplicate sessions
+    safe, msg = check_no_other_cca_sessions()
+    checks.append({"name": "no_duplicates", "passed": safe, "message": msg, "critical": True})
+
+    # 3. SESSION_RESUME.md exists and has content
+    resume_path = os.path.join(project_dir, "SESSION_RESUME.md")
+    if os.path.exists(resume_path):
+        try:
+            with open(resume_path) as f:
+                content = f.read().strip()
+            if len(content) > 50:
+                checks.append({"name": "resume_file", "passed": True,
+                                "message": f"SESSION_RESUME.md: {len(content)} chars", "critical": False})
+            else:
+                checks.append({"name": "resume_file", "passed": False,
+                                "message": "SESSION_RESUME.md exists but is very short — may be stale", "critical": False})
+        except OSError as e:
+            checks.append({"name": "resume_file", "passed": False,
+                            "message": f"Cannot read SESSION_RESUME.md: {e}", "critical": False})
+    else:
+        checks.append({"name": "resume_file", "passed": False,
+                        "message": "SESSION_RESUME.md not found — will use fallback prompt", "critical": False})
+
+    # 4. start_autoloop.sh exists and is executable
+    script_path = os.path.join(project_dir, "start_autoloop.sh")
+    if os.path.exists(script_path) and os.access(script_path, os.X_OK):
+        checks.append({"name": "start_script", "passed": True,
+                        "message": "start_autoloop.sh exists and is executable", "critical": False})
+    elif os.path.exists(script_path):
+        checks.append({"name": "start_script", "passed": False,
+                        "message": "start_autoloop.sh exists but is NOT executable — run: chmod +x start_autoloop.sh", "critical": False})
+    else:
+        checks.append({"name": "start_script", "passed": False,
+                        "message": "start_autoloop.sh not found", "critical": False})
+
+    # 5. Desktop-mode checks
+    if desktop_mode:
+        running, msg = check_terminal_app_running()
+        checks.append({"name": "terminal_app", "passed": running, "message": msg, "critical": False})
+
+        has_access, msg = check_accessibility_permissions()
+        checks.append({"name": "accessibility", "passed": has_access, "message": msg, "critical": False})
+
+    # 6. Orphaned temp files
+    import glob as glob_mod
+    orphan_count = 0
+    for pattern in ["cca-autoloop-sentinel-*", "cca-autoloop-wrapper-*", "cca-autoloop-prompt-*"]:
+        orphan_count += len(glob_mod.glob(os.path.join(tempfile.gettempdir(), pattern)))
+    if orphan_count > 0:
+        checks.append({"name": "orphaned_temps", "passed": False,
+                        "message": f"{orphan_count} orphaned temp file(s) in /tmp/ — will be cleaned on start", "critical": False})
+    else:
+        checks.append({"name": "orphaned_temps", "passed": True,
+                        "message": "No orphaned temp files", "critical": False})
+
+    # Build report
+    all_critical_pass = all(c["passed"] for c in checks if c["critical"])
+    all_pass = all(c["passed"] for c in checks)
+
+    lines = ["CCA Auto-Loop Pre-Flight Check", "=" * 40]
+    for c in checks:
+        icon = "PASS" if c["passed"] else ("FAIL" if c["critical"] else "WARN")
+        lines.append(f"  [{icon}] {c['name']}: {c['message']}")
+
+    lines.append("")
+    if all_pass:
+        lines.append("All checks passed. Ready to launch.")
+    elif all_critical_pass:
+        lines.append("Critical checks passed (warnings present). Safe to launch.")
+    else:
+        lines.append("BLOCKED: Critical check(s) failed. Fix before launching.")
+
+    if desktop_mode:
+        lines.append("")
+        lines.append("Desktop mode: ./start_autoloop.sh --desktop")
+    else:
+        lines.append("")
+        lines.append("Foreground mode: ./start_autoloop.sh")
+        lines.append("Desktop mode:    ./start_autoloop.sh --desktop")
+
+    return {
+        "ready": all_critical_pass,
+        "checks": checks,
+        "report": "\n".join(lines),
+    }
+
+
 def cli_main(args: list = None):
     """CLI entry point."""
     if args is None:
@@ -1039,8 +1145,11 @@ def cli_main(args: list = None):
         print("    --config PATH           Load config from JSON file")
         print("    --model-strategy STR    Model strategy: round-robin|opus-primary|sonnet-primary")
         print("    --desktop               Open each session in a visible Terminal.app window")
-        print("  status                    Show current loop state")
+        print("  status                    Show current loop state + audit history")
         print("    --state-file PATH       Path to state file")
+        print("    --log-file PATH         Path to audit log file")
+        print("  preflight                 Check all prerequisites before launching")
+        print("    --desktop               Include desktop-mode checks (Terminal.app, Accessibility)")
         print()
         return
 
@@ -1095,6 +1204,16 @@ def cli_main(args: list = None):
                 log_file = args[i + 1]
 
         print(format_status_report(state_file, log_file))
+
+    elif cmd == "preflight":
+        desktop = "--desktop" in args
+        project_dir = DEFAULT_PROJECT_DIR
+        for i, arg in enumerate(args[1:], 1):
+            if arg == "--project-dir" and i + 1 < len(args):
+                project_dir = args[i + 1]
+        result = run_preflight_checks(desktop_mode=desktop, project_dir=project_dir)
+        print(result["report"])
+        sys.exit(0 if result["ready"] else 1)
 
     else:
         print(f"Unknown command: {cmd}", file=sys.stderr)
