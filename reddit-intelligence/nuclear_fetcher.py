@@ -174,20 +174,36 @@ def classify_post(post):
         "creates interactive", "interactive charts now",
     ]
 
-    # NEEDLE patterns — high-signal keywords (technical + actionable)
-    needle_keywords = [
+    # Strong NEEDLE keywords — always high-signal, NEEDLE regardless of engagement
+    strong_keywords = [
         "claude.md", "claudemd", "hook", "mcp server", "mcp tool",
-        "workflow", "automation", "multi-agent", "parallel agent",
-        "context window", "context rot", "compaction", "token",
-        "memory", "persistent", "cross-session", "session management",
-        "spec", "architecture", "design doc", "requirements",
-        "file locking", "conflict", "credential", "security",
-        "dashboard", "monitor", "statusline", "usage",
-        "tool", "built", "made", "created", "open source",
-        "tips", "tricks", "best practice", "workflow", "setup",
-        "tmux", "terminal", "cli", "tui",
-        "self-evolving", "self-learning", "autonomous", "agent",
+        "multi-agent", "parallel agent",
+        "context window", "context rot", "compaction",
+        "persistent", "cross-session", "session management",
+        "architecture", "design doc",
+        "file locking", "credential",
+        "statusline",
+        "tmux", "tui",
+        "self-evolving", "self-learning",
     ]
+
+    # Weak NEEDLE keywords — too broad alone, need engagement signals
+    # (score >= 50, OR body_len >= 300, OR comments >= 15)
+    weak_keywords = [
+        "workflow", "automation", "token",
+        "memory", "spec", "requirements",
+        "conflict", "security",
+        "dashboard", "monitor", "usage",
+        "tool", "built", "made", "created", "open source",
+        "tips", "tricks", "best practice", "setup",
+        "terminal", "cli",
+        "autonomous", "agent",
+    ]
+
+    # Engagement thresholds for weak keywords to qualify as NEEDLE
+    weak_has_engagement = (
+        score >= 50 or body_len >= 300 or comments >= 15
+    )
 
     # Flair-based classification
     hay_flairs = ["humor", "meme", "rant", "meta"]
@@ -205,7 +221,9 @@ def classify_post(post):
     # Check NEEDLE — technical keywords + engagement signals
     if flair in needle_flairs and score >= 100:
         return "NEEDLE"
-    if any(kw in title_lower for kw in needle_keywords):
+    if any(kw in title_lower for kw in strong_keywords):
+        return "NEEDLE"
+    if any(kw in title_lower for kw in weak_keywords) and weak_has_engagement:
         return "NEEDLE"
     if is_self and body_len > 500 and score >= 100:
         # Substantive self-post with good score

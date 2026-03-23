@@ -310,6 +310,140 @@ class TestClassifyEdgeCases(unittest.TestCase):
         self.assertIn(result, ("NEEDLE", "MAYBE", "HAY"))
 
 
+class TestNeedlePrecision(unittest.TestCase):
+    """MT-27 Phase 4: Weak keywords require engagement signals to be NEEDLE.
+
+    Problem: keywords like "tool", "built", "made", "created" are too broad.
+    A 5-upvote "I built a calculator" post shouldn't be NEEDLE.
+
+    Fix: split keywords into strong (always NEEDLE) and weak (need score/body/comments).
+    """
+
+    def _post(self, title="Test Post", score=200, comments=50, flair="",
+              is_self=True, body_len=1000):
+        return {
+            "id": "abc123", "title": title, "author": "testuser",
+            "score": score, "upvote_ratio": 0.95, "num_comments": comments,
+            "flair": flair, "is_self": is_self, "selftext_length": body_len,
+            "url": "https://reddit.com/r/ClaudeCode/comments/abc123/",
+            "permalink": "https://reddit.com/r/ClaudeCode/comments/abc123/",
+        }
+
+    # --- Strong keywords: always NEEDLE regardless of engagement ---
+
+    def test_strong_claude_md_low_score(self):
+        """claude.md is always high-signal."""
+        p = self._post(title="My CLAUDE.md setup", score=5, comments=1, body_len=50)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_strong_hook_low_score(self):
+        p = self._post(title="PreToolUse hook guide", score=8, comments=2, body_len=100)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_strong_mcp_server_low_score(self):
+        p = self._post(title="My MCP server for memory", score=3, comments=0, body_len=50)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_strong_context_window_low_score(self):
+        p = self._post(title="context window management tips", score=10, comments=3, body_len=80)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_strong_multi_agent_low_score(self):
+        p = self._post(title="multi-agent conflict resolution", score=6, comments=1, body_len=40)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_strong_compaction_low_score(self):
+        p = self._post(title="context compaction recovery strategy", score=4, comments=1)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_strong_cross_session_low_score(self):
+        p = self._post(title="cross-session memory with SQLite", score=7, comments=2)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    # --- Weak keywords: MAYBE when low engagement, NEEDLE when high ---
+
+    def test_weak_tool_low_engagement_is_maybe(self):
+        """'tool' alone with 5 upvotes shouldn't be NEEDLE."""
+        p = self._post(title="I made a tool for my class", score=5, comments=2, body_len=50)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_weak_built_low_engagement_is_maybe(self):
+        """'built' with no body and low score is noise."""
+        p = self._post(title="I built something cool", score=8, comments=1, body_len=30)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_weak_created_low_engagement_is_maybe(self):
+        p = self._post(title="Created an app with Claude", score=12, comments=3, body_len=80)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_weak_made_low_engagement_is_maybe(self):
+        p = self._post(title="I made a website", score=4, comments=0, body_len=20)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_weak_open_source_low_engagement_is_maybe(self):
+        p = self._post(title="My open source project", score=10, comments=2, body_len=60)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_weak_tips_low_engagement_is_maybe(self):
+        p = self._post(title="Quick tips for beginners", score=6, comments=1, body_len=40)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_weak_setup_low_engagement_is_maybe(self):
+        p = self._post(title="My setup for coding", score=9, comments=2, body_len=50)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_weak_agent_low_engagement_is_maybe(self):
+        p = self._post(title="Using an AI agent for homework", score=7, comments=1, body_len=30)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    # --- Weak keywords WITH engagement signals → NEEDLE ---
+
+    def test_weak_tool_high_score_is_needle(self):
+        """'tool' with 200 upvotes signals real substance."""
+        p = self._post(title="I made a tool for tracking token usage", score=200, comments=30, body_len=800)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_weak_built_long_body_is_needle(self):
+        """'built' + long body = probably a real write-up."""
+        p = self._post(title="I built a debugging framework", score=40, comments=10, body_len=1500)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_weak_built_many_comments_is_needle(self):
+        """'built' + lots of comments = interesting discussion."""
+        p = self._post(title="I built this last week", score=30, comments=25, body_len=200)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_weak_tips_high_score_is_needle(self):
+        p = self._post(title="My tips after 6 months", score=150, comments=40, body_len=2000)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_weak_automation_high_engagement_is_needle(self):
+        p = self._post(title="My automation setup", score=80, comments=20, body_len=600)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    # --- Existing behavior preserved ---
+
+    def test_hay_still_overrides_weak_keyword(self):
+        """HAY keywords still win even with weak needle keywords present."""
+        p = self._post(title="I built something funny lmao", score=300)
+        self.assertEqual(classify_post(p), "HAY")
+
+    def test_flair_needle_still_works(self):
+        """Flair-based NEEDLE (score >= 100) unchanged."""
+        p = self._post(title="Check this out", flair="showcase", score=150)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_high_engagement_still_needle(self):
+        """50+ comments + 150+ score = NEEDLE regardless."""
+        p = self._post(title="Random discussion", score=200, comments=80)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_substantive_self_post_still_needle(self):
+        """Long body + 100+ score = NEEDLE regardless."""
+        p = self._post(title="My thoughts", score=120, body_len=2000)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+
 class TestSubredditSlug(unittest.TestCase):
     """Test subreddit name to filesystem slug conversion."""
 
