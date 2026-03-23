@@ -625,6 +625,172 @@ class TestTestDistributionChart(unittest.TestCase):
         self.assertNotIn("test_distribution", charts)
 
 
+class TestCoverageRatioChart(unittest.TestCase):
+    """Tests for test coverage ratio chart (MT-32) — tests per 100 LOC per module."""
+
+    def setUp(self):
+        from report_charts import ReportChartGenerator
+        self.gen = ReportChartGenerator()
+        self.sample_modules = [
+            {"name": "Memory System", "tests": 340, "loc": 2000},
+            {"name": "Spec System", "tests": 205, "loc": 1500},
+            {"name": "Context Monitor", "tests": 411, "loc": 2500},
+            {"name": "Agent Guard", "tests": 1073, "loc": 5000},
+            {"name": "Self-Learning", "tests": 1779, "loc": 6000},
+        ]
+
+    def test_returns_svg(self):
+        """coverage_ratio_chart returns valid SVG."""
+        svg = self.gen.coverage_ratio_chart({"modules": self.sample_modules})
+        self.assertIn("<svg", svg)
+        self.assertIn("</svg>", svg)
+
+    def test_has_title(self):
+        svg = self.gen.coverage_ratio_chart({"modules": self.sample_modules})
+        self.assertIn("Test Coverage", svg)
+
+    def test_empty_modules(self):
+        svg = self.gen.coverage_ratio_chart({"modules": []})
+        self.assertIn("No data", svg)
+
+    def test_missing_modules(self):
+        svg = self.gen.coverage_ratio_chart({})
+        self.assertIn("No data", svg)
+
+    def test_zero_loc_modules_excluded(self):
+        """Modules with 0 LOC should be excluded (no division by zero)."""
+        data = {"modules": [
+            {"name": "Empty", "tests": 10, "loc": 0},
+            {"name": "Real", "tests": 50, "loc": 1000},
+        ]}
+        svg = self.gen.coverage_ratio_chart(data)
+        self.assertIn("<svg", svg)
+        self.assertNotIn("Empty", svg)
+        self.assertIn("Real", svg)
+
+    def test_sorted_descending(self):
+        """Modules should be sorted by coverage ratio descending."""
+        data = {"modules": [
+            {"name": "Low", "tests": 10, "loc": 1000},   # 1.0
+            {"name": "High", "tests": 100, "loc": 1000},  # 10.0
+        ]}
+        svg = self.gen.coverage_ratio_chart(data)
+        # High should appear before Low in the SVG
+        high_pos = svg.find("High")
+        low_pos = svg.find("Low")
+        self.assertGreater(high_pos, -1)
+        self.assertGreater(low_pos, -1)
+
+    def test_single_module(self):
+        data = {"modules": [{"name": "Solo", "tests": 50, "loc": 500}]}
+        svg = self.gen.coverage_ratio_chart(data)
+        self.assertIn("<svg", svg)
+        self.assertIn("Solo", svg)
+
+    def test_generate_all_includes_coverage_ratio(self):
+        """generate_all should include coverage_ratio chart."""
+        from report_charts import ReportChartGenerator
+        gen = ReportChartGenerator()
+        data = {
+            "modules": self.sample_modules,
+            "summary": {"source_loc": 500, "test_loc": 300},
+            "intelligence": {"findings_total": 0},
+            "master_tasks_complete": [],
+            "master_tasks_active": [],
+            "master_tasks_pending": [],
+            "frontiers": [],
+        }
+        charts = gen.generate_all(data)
+        self.assertIn("coverage_ratio", charts)
+
+
+class TestHookCoverageChart(unittest.TestCase):
+    """Tests for hook coverage chart (MT-32) — hooks per lifecycle event."""
+
+    def setUp(self):
+        from report_charts import ReportChartGenerator
+        self.gen = ReportChartGenerator()
+        self.sample_hooks = [
+            {"event": "PreToolUse", "hook": "alert.py", "purpose": "Warn at red/critical"},
+            {"event": "PreToolUse", "hook": "cost_alert.py", "purpose": "Cost threshold"},
+            {"event": "PreToolUse", "hook": "path_validator.py", "purpose": "Path detection"},
+            {"event": "PreToolUse", "hook": "validate.py", "purpose": "Spec guard"},
+            {"event": "PreToolUse", "hook": "credential_guard.py", "purpose": "Cred guard"},
+            {"event": "PreToolUse", "hook": "bash_guard.py", "purpose": "Bash safety"},
+            {"event": "PostToolUse", "hook": "meter.py", "purpose": "Token counter"},
+            {"event": "PostToolUse", "hook": "compact_anchor.py", "purpose": "Anchors"},
+            {"event": "PostToolUse", "hook": "senior_dev_hook.py", "purpose": "Quality"},
+            {"event": "UserPromptSubmit", "hook": "skill_activator.py", "purpose": "Activation"},
+            {"event": "UserPromptSubmit", "hook": "skillbook_inject.py", "purpose": "Strategy"},
+            {"event": "UserPromptSubmit", "hook": "capture_hook.py", "purpose": "Memory"},
+            {"event": "UserPromptSubmit", "hook": "queue_injector.py", "purpose": "Queue"},
+            {"event": "Stop", "hook": "auto_handoff.py", "purpose": "Block exit"},
+            {"event": "Stop", "hook": "capture_hook.py", "purpose": "Session memory"},
+            {"event": "PostCompact", "hook": "post_compact.py", "purpose": "Recovery"},
+        ]
+
+    def test_returns_svg(self):
+        svg = self.gen.hook_coverage_chart({"hooks": self.sample_hooks})
+        self.assertIn("<svg", svg)
+        self.assertIn("</svg>", svg)
+
+    def test_has_title(self):
+        svg = self.gen.hook_coverage_chart({"hooks": self.sample_hooks})
+        self.assertIn("Hook", svg)
+
+    def test_contains_event_names(self):
+        svg = self.gen.hook_coverage_chart({"hooks": self.sample_hooks})
+        self.assertIn("PreToolUse", svg)
+        self.assertIn("PostToolUse", svg)
+
+    def test_empty_hooks(self):
+        svg = self.gen.hook_coverage_chart({"hooks": []})
+        self.assertIn("No data", svg)
+
+    def test_missing_hooks(self):
+        svg = self.gen.hook_coverage_chart({})
+        self.assertIn("No data", svg)
+
+    def test_single_hook(self):
+        data = {"hooks": [{"event": "Stop", "hook": "test.py", "purpose": "Test"}]}
+        svg = self.gen.hook_coverage_chart(data)
+        self.assertIn("<svg", svg)
+        self.assertIn("Stop", svg)
+
+    def test_generate_all_includes_hook_coverage(self):
+        """generate_all should include hook_coverage chart."""
+        from report_charts import ReportChartGenerator
+        gen = ReportChartGenerator()
+        data = {
+            "modules": [{"name": "M1", "tests": 100, "loc": 500}],
+            "summary": {"source_loc": 500, "test_loc": 300},
+            "intelligence": {"findings_total": 0},
+            "master_tasks_complete": [],
+            "master_tasks_active": [],
+            "master_tasks_pending": [],
+            "frontiers": [],
+            "hooks": self.sample_hooks,
+        }
+        charts = gen.generate_all(data)
+        self.assertIn("hook_coverage", charts)
+
+    def test_generate_all_skips_without_hooks(self):
+        """generate_all skips hook_coverage when no hooks data."""
+        from report_charts import ReportChartGenerator
+        gen = ReportChartGenerator()
+        data = {
+            "modules": [{"name": "M1", "tests": 100, "loc": 500}],
+            "summary": {"source_loc": 500, "test_loc": 300},
+            "intelligence": {"findings_total": 0},
+            "master_tasks_complete": [],
+            "master_tasks_active": [],
+            "master_tasks_pending": [],
+            "frontiers": [],
+        }
+        charts = gen.generate_all(data)
+        self.assertNotIn("hook_coverage", charts)
+
+
 class TestCollectTestDistribution(unittest.TestCase):
     """Tests for CCADataCollector.collect_test_distribution()."""
 

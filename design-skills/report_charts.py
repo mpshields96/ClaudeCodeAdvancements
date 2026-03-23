@@ -227,6 +227,55 @@ class ReportChartGenerator:
         )
         return render_svg(chart)
 
+    def coverage_ratio_chart(self, data):
+        """HorizontalBarChart: tests per 100 LOC per module — test density comparison.
+
+        Reveals which modules are well-tested vs sparsely tested relative to size.
+        """
+        modules = data.get("modules", [])
+        ratios = []
+        for m in modules:
+            loc = m.get("loc", 0)
+            tests = m.get("tests", 0)
+            if loc > 0:
+                ratio = round(tests / loc * 100, 1)
+                ratios.append((m["name"], ratio))
+
+        if not ratios:
+            return self._empty_chart("Test Coverage Ratio")
+
+        # Sort descending by ratio
+        ratios.sort(key=lambda x: x[1], reverse=True)
+
+        chart = HorizontalBarChart(
+            ratios,
+            title="Test Coverage Ratio (tests/100 LOC)",
+            show_values=True,
+            width=600,
+        )
+        return render_svg(chart)
+
+    def hook_coverage_chart(self, data):
+        """BarChart: hook count per lifecycle event — shows hook chain distribution."""
+        hooks = data.get("hooks", [])
+        if not hooks:
+            return self._empty_chart("Hook Coverage")
+
+        # Count hooks per event type
+        event_counts = {}
+        for h in hooks:
+            event = h.get("event", "Unknown")
+            event_counts[event] = event_counts.get(event, 0) + 1
+
+        if not event_counts:
+            return self._empty_chart("Hook Coverage")
+
+        # Sort by count descending
+        items = sorted(event_counts.items(), key=lambda x: x[1], reverse=True)
+
+        chart = BarChart(items, title="Hooks per Lifecycle Event", show_values=True)
+        return render_svg(chart)
+
     # ── Kalshi financial charts (MT-33) ─────────────────────────────────
 
     def kalshi_cumulative_pnl(self, data):
@@ -415,7 +464,11 @@ class ReportChartGenerator:
             "module_loc_treemap": self.module_loc_treemap(data),
             "test_density_scatter": self.test_density_scatter(data),
             "module_composition": self.module_composition(data),
+            "coverage_ratio": self.coverage_ratio_chart(data),
         }
+        # Hook coverage chart — only if hooks data available
+        if data.get("hooks"):
+            charts["hook_coverage"] = self.hook_coverage_chart(data)
         # Per-file test distribution (MT-32) — only if data available
         if data.get("test_file_counts"):
             charts["test_distribution"] = self.test_distribution(data)

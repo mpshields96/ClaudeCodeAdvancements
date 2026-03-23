@@ -604,8 +604,13 @@
     embed-chart("module_composition", width: 100%),
   )
   v(4mm)
-  // Test distribution histogram (per-file test counts)
-  embed-chart("test_distribution", width: 100%)
+  // Coverage ratio + test distribution
+  grid(
+    columns: (1fr, 1fr),
+    column-gutter: 12pt,
+    embed-chart("coverage_ratio", width: 100%),
+    embed-chart("test_distribution", width: 100%),
+  )
   v(4mm)
 }
 
@@ -942,6 +947,9 @@
     )
   }
 )
+#v(3mm)
+// Hook distribution chart
+embed-chart("hook_coverage", width: 60%)
 
 #v(5mm)
 
