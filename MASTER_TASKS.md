@@ -1085,7 +1085,8 @@ Revisit when: Anthropic ships native shared context, or Cowork local MCP bugs fi
 3. Autonomous loop (CCA desktop auto-spawning new sessions)
 4. All of the above are multi-session, not single-chat
 
-**Status:** Future task. Research phase needed. Low priority relative to 1-3 above.
+**Status:** S125 E2E validation: Gemini Flash WORKS via @rlabs-inc/gemini-mcp (v0.8.1). Pro UNAVAILABLE — Google One gives web app Pro access only, not API access. API Pro requires separate Google Cloud billing. Matthew directive: Flash only (Option 1). Scope narrowed to Gemini Flash integration.
+Last updated: S125 (2026-03-23).
 
 ---
 

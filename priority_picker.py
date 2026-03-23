@@ -333,19 +333,19 @@ def get_known_tasks(current_session: int = 124) -> list[MasterTask]:
         ),
         # === NEW MTs (S115-S124) ===
         MasterTask(
-            mt_id=31, name="Gemini Pro Integration",
+            mt_id=31, name="Gemini Flash Integration",
             base_value=6, status=TaskStatus.ACTIVE,
-            last_touched_session=124, current_session=current_session,
-            phases_completed=0, phases_total=4,  # Research done S124, needs API key + MCP install
+            last_touched_session=125, current_session=current_session,
+            phases_completed=1, phases_total=4,  # S125: Flash works, Pro unavailable. Scope narrowed.
             aging_rate=0.5,
-            next_action="Matthew: get free API key from aistudio.google.com/apikey, then install RLabs gemini-mcp.",
+            next_action="Build Flash-powered CCA tools (code analysis, search). Pro unavailable (web only, no API).",
             tags=["integration", "multi-model"],
         ),
         MasterTask(
             mt_id=32, name="Visual Excellence & Design Engineering",
             base_value=6, status=TaskStatus.ACTIVE,
-            last_touched_session=123, current_session=current_session,
-            phases_completed=3, phases_total=8,  # Charts, Typst wiring, report_charts done
+            last_touched_session=125, current_session=current_session,
+            phases_completed=3, phases_total=8,  # S125: +coverage_ratio, +hook_coverage charts
             aging_rate=0.5,
             next_action="Per-file test distribution HistogramChart, then more CCA statistical charts.",
             tags=["visual", "reports", "design"],
