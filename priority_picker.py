@@ -280,10 +280,10 @@ def get_known_tasks(current_session: int = 124) -> list[MasterTask]:
         MasterTask(
             mt_id=26, name="Financial Intelligence Engine",
             base_value=9, status=TaskStatus.ACTIVE,
-            last_touched_session=112, current_session=current_session,
-            phases_completed=6, phases_total=7,  # Tier 1-3 done, Phase 2 surface deferred
-            aging_rate=1.0,
-            next_action="Tier 3 Phase 2 (Kalman+EM+surface) deferred until Phase 1 proves useful in prod.",
+            last_touched_session=125, current_session=current_session,
+            phases_completed=7, phases_total=7,  # S125: E2E validated. Tier 3 Phase 2 (Kalman) deferred.
+            aging_rate=0.5,
+            next_action="CCA scope COMPLETE. 79 pipeline tests. Tier 3 Phase 2 deferred (needs numpy).",
             tags=["kalshi", "trading", "research"],
         ),
         MasterTask(
