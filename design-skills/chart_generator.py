@@ -23,6 +23,8 @@ Chart types:
     TreemapChart      — nested rectangles sized by value for hierarchical data
     SankeyChart       — flow diagram showing value transfers between nodes
     FunnelChart       — conversion funnel (wide-to-narrow trapezoids, % labels)
+    ScatterPlot       — XY scatter with optional trend lines, multiple series
+    BoxPlot           — box-and-whisker for distribution comparison (median, IQR, outliers)
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -592,6 +594,56 @@ class FunnelChart:
     color: str = ""
     width: int = 400
     height: int = 350
+
+
+@dataclass
+class ScatterPlot:
+    """Scatter plot for correlation analysis between two variables.
+
+    Supports multiple series with distinct colors and optional linear
+    trend line (least-squares regression). Each series is a named group
+    of (x, y) points rendered with filled circles.
+
+    Args:
+        series: [{"name": str, "points": [(x, y), ...], "color": str (optional)}, ...]
+        title: Chart title
+        x_label: X-axis label
+        y_label: Y-axis label
+        show_trend: If True, draw least-squares regression line per series
+        point_radius: Radius of scatter dots in px
+    """
+    series: list  # [{"name": ..., "points": [...], "color": ...}, ...]
+    title: str = ""
+    x_label: str = ""
+    y_label: str = ""
+    width: int = 500
+    height: int = 400
+    show_trend: bool = False
+    point_radius: float = 4.0
+
+
+@dataclass
+class BoxPlot:
+    """Box-and-whisker plot for distribution comparison.
+
+    Each category shows median, Q1, Q3, whiskers (1.5*IQR), and outliers.
+    Standard statistical visualization for comparing distributions across
+    groups (e.g., session durations, test counts per module).
+
+    Args:
+        data: [(label, [values...]), ...] — each category with raw numeric values
+        title: Chart title
+        y_label: Y-axis label
+        show_outliers: If True (default), render outlier dots beyond whiskers
+        color: Base color for boxes (default: CCA accent)
+    """
+    data: list  # [(label, [values...]), ...]
+    title: str = ""
+    y_label: str = ""
+    width: int = 500
+    height: int = 400
+    show_outliers: bool = True
+    color: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -2339,6 +2391,313 @@ def _render_funnel_chart(chart: FunnelChart) -> str:
     return "".join(parts)
 
 
+def _render_scatter_plot(chart: ScatterPlot) -> str:
+    """Render a scatter plot to SVG with optional trend lines."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.series:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 50 if chart.x_label else 35
+    margin_left = 60 if chart.y_label else 50
+    margin_right = 20
+    # Reserve space for legend if multiple series
+    has_legend = len(chart.series) > 1
+    if has_legend:
+        margin_right = 120
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    # Collect all points to find global range
+    all_x = []
+    all_y = []
+    parsed_series = []
+    for i, s in enumerate(chart.series):
+        name = s.get("name", f"Series {i + 1}")
+        points = s.get("points", [])
+        color = s.get("color", SERIES_PALETTE[i % len(SERIES_PALETTE)])
+        pts = [(float(p[0]), float(p[1])) for p in points]
+        parsed_series.append((name, pts, color))
+        for x, y in pts:
+            all_x.append(x)
+            all_y.append(y)
+
+    if not all_x:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    x_min, x_max = min(all_x), max(all_x)
+    y_min, y_max = min(all_y), max(all_y)
+
+    # Add padding to ranges
+    x_range = x_max - x_min if x_max != x_min else 1
+    y_range = y_max - y_min if y_max != y_min else 1
+    x_min -= x_range * 0.05
+    x_max += x_range * 0.05
+    y_min -= y_range * 0.05
+    y_max += y_range * 0.05
+
+    def sx(v):
+        return margin_left + ((v - x_min) / (x_max - x_min)) * plot_w
+
+    def sy(v):
+        return margin_top + plot_h - ((v - y_min) / (y_max - y_min)) * plot_h
+
+    # Axes
+    parts.append(f'<line x1="{margin_left}" y1="{margin_top + plot_h}" '
+                 f'x2="{margin_left + plot_w}" y2="{margin_top + plot_h}" '
+                 f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
+    parts.append(f'<line x1="{margin_left}" y1="{margin_top}" '
+                 f'x2="{margin_left}" y2="{margin_top + plot_h}" '
+                 f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
+
+    # Y-axis ticks (6 values)
+    for i in range(6):
+        val = y_min + (y_max - y_min) * i / 5
+        yp = sy(val)
+        label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(margin_left - 8, yp + 3, label_text,
+                           font_size=8, fill=CCA_COLORS["muted"], anchor="end"))
+        if i > 0:
+            parts.append(f'<line x1="{margin_left}" y1="{yp}" '
+                         f'x2="{margin_left + plot_w}" y2="{yp}" '
+                         f'stroke="{CCA_COLORS["border"]}" stroke-width="0.5" '
+                         f'stroke-dasharray="3,3"/>')
+
+    # X-axis ticks (6 values)
+    for i in range(6):
+        val = x_min + (x_max - x_min) * i / 5
+        xp = sx(val)
+        label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(xp, margin_top + plot_h + 15, label_text,
+                           font_size=8, fill=CCA_COLORS["muted"]))
+
+    # Axis labels
+    if chart.x_label:
+        parts.append(_text(margin_left + plot_w / 2, chart.height - 8,
+                           chart.x_label, font_size=9, fill=CCA_COLORS["muted"]))
+    if chart.y_label:
+        parts.append(f'<text x="14" y="{margin_top + plot_h / 2}" '
+                     f'text-anchor="middle" font-size="9" '
+                     f'font-family="sans-serif" fill="{CCA_COLORS["muted"]}" '
+                     f'transform="rotate(-90, 14, {margin_top + plot_h / 2})">'
+                     f'{_escape(chart.y_label)}</text>')
+
+    # Render each series
+    for si, (name, pts, color) in enumerate(parsed_series):
+        # Trend line (least-squares linear regression)
+        if chart.show_trend and len(pts) >= 2:
+            n = len(pts)
+            sum_x = sum(p[0] for p in pts)
+            sum_y = sum(p[1] for p in pts)
+            sum_xy = sum(p[0] * p[1] for p in pts)
+            sum_x2 = sum(p[0] ** 2 for p in pts)
+            denom = n * sum_x2 - sum_x ** 2
+            if abs(denom) > 1e-10:
+                slope = (n * sum_xy - sum_x * sum_y) / denom
+                intercept = (sum_y - slope * sum_x) / n
+                # Draw line across the plot range
+                lx1 = x_min
+                lx2 = x_max
+                ly1 = slope * lx1 + intercept
+                ly2 = slope * lx2 + intercept
+                parts.append(f'<line x1="{sx(lx1):.1f}" y1="{sy(ly1):.1f}" '
+                             f'x2="{sx(lx2):.1f}" y2="{sy(ly2):.1f}" '
+                             f'stroke="{color}" stroke-width="1.5" '
+                             f'stroke-dasharray="6,3" stroke-opacity="0.6"/>')
+
+        # Points
+        for x, y in pts:
+            parts.append(f'<circle cx="{sx(x):.1f}" cy="{sy(y):.1f}" '
+                         f'r="{chart.point_radius}" '
+                         f'fill="{color}" fill-opacity="0.8" '
+                         f'stroke="{color}" stroke-width="1"/>')
+
+    # Legend (if multiple series)
+    if has_legend:
+        lx = margin_left + plot_w + 15
+        ly = margin_top + 10
+        for si, (name, pts, color) in enumerate(parsed_series):
+            parts.append(f'<circle cx="{lx + 5}" cy="{ly - 3}" r="4" fill="{color}"/>')
+            parts.append(_text(lx + 14, ly, name, font_size=8,
+                               fill=CCA_COLORS["primary"], anchor="start"))
+            ly += 16
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
+def _render_box_plot(chart: BoxPlot) -> str:
+    """Render a box-and-whisker plot to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 45
+    margin_left = 60 if chart.y_label else 50
+    margin_right = 20
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    base_color = chart.color if chart.color else CCA_COLORS["accent"]
+
+    # Compute stats for each category
+    stats = []
+    all_vals = []
+    for item in chart.data:
+        label = item[0]
+        values = sorted([float(v) for v in item[1]])
+        if not values:
+            continue
+        n = len(values)
+        q1_idx = n * 0.25
+        q2_idx = n * 0.5
+        q3_idx = n * 0.75
+
+        def percentile(vals, p):
+            k = (len(vals) - 1) * p
+            f = int(k)
+            c = f + 1 if f + 1 < len(vals) else f
+            d = k - f
+            return vals[f] + d * (vals[c] - vals[f])
+
+        q1 = percentile(values, 0.25)
+        median = percentile(values, 0.5)
+        q3 = percentile(values, 0.75)
+        iqr = q3 - q1
+        whisker_lo = max(min(values), q1 - 1.5 * iqr)
+        whisker_hi = min(max(values), q3 + 1.5 * iqr)
+        # Find actual whisker endpoints (nearest data point within range)
+        whisker_lo = min(v for v in values if v >= q1 - 1.5 * iqr)
+        whisker_hi = max(v for v in values if v <= q3 + 1.5 * iqr)
+        outliers = [v for v in values if v < whisker_lo or v > whisker_hi]
+        stats.append((label, q1, median, q3, whisker_lo, whisker_hi, outliers))
+        all_vals.extend(values)
+
+    if not stats:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Y scale
+    y_min = min(all_vals)
+    y_max = max(all_vals)
+    y_range = y_max - y_min if y_max != y_min else 1
+    y_min -= y_range * 0.08
+    y_max += y_range * 0.08
+
+    def sy(v):
+        return margin_top + plot_h - ((v - y_min) / (y_max - y_min)) * plot_h
+
+    # Axes
+    parts.append(f'<line x1="{margin_left}" y1="{margin_top + plot_h}" '
+                 f'x2="{margin_left + plot_w}" y2="{margin_top + plot_h}" '
+                 f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
+    parts.append(f'<line x1="{margin_left}" y1="{margin_top}" '
+                 f'x2="{margin_left}" y2="{margin_top + plot_h}" '
+                 f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
+
+    # Y-axis ticks
+    for i in range(6):
+        val = y_min + (y_max - y_min) * i / 5
+        yp = sy(val)
+        label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(margin_left - 8, yp + 3, label_text,
+                           font_size=8, fill=CCA_COLORS["muted"], anchor="end"))
+        if i > 0:
+            parts.append(f'<line x1="{margin_left}" y1="{yp}" '
+                         f'x2="{margin_left + plot_w}" y2="{yp}" '
+                         f'stroke="{CCA_COLORS["border"]}" stroke-width="0.5" '
+                         f'stroke-dasharray="3,3"/>')
+
+    # Y-axis label
+    if chart.y_label:
+        parts.append(f'<text x="14" y="{margin_top + plot_h / 2}" '
+                     f'text-anchor="middle" font-size="9" '
+                     f'font-family="sans-serif" fill="{CCA_COLORS["muted"]}" '
+                     f'transform="rotate(-90, 14, {margin_top + plot_h / 2})">'
+                     f'{_escape(chart.y_label)}</text>')
+
+    # Draw boxes
+    n_cats = len(stats)
+    cat_w = plot_w / n_cats
+    box_w = min(cat_w * 0.5, 60)
+
+    for i, (label, q1, median, q3, wlo, whi, outliers) in enumerate(stats):
+        cx = margin_left + cat_w * i + cat_w / 2
+        bx = cx - box_w / 2
+
+        # Whisker lines (vertical thin line)
+        parts.append(f'<line x1="{cx:.1f}" y1="{sy(whi):.1f}" '
+                     f'x2="{cx:.1f}" y2="{sy(q3):.1f}" '
+                     f'stroke="{CCA_COLORS["primary"]}" stroke-width="1"/>')
+        parts.append(f'<line x1="{cx:.1f}" y1="{sy(q1):.1f}" '
+                     f'x2="{cx:.1f}" y2="{sy(wlo):.1f}" '
+                     f'stroke="{CCA_COLORS["primary"]}" stroke-width="1"/>')
+
+        # Whisker caps (horizontal)
+        cap_w = box_w * 0.4
+        parts.append(f'<line x1="{cx - cap_w / 2:.1f}" y1="{sy(whi):.1f}" '
+                     f'x2="{cx + cap_w / 2:.1f}" y2="{sy(whi):.1f}" '
+                     f'stroke="{CCA_COLORS["primary"]}" stroke-width="1"/>')
+        parts.append(f'<line x1="{cx - cap_w / 2:.1f}" y1="{sy(wlo):.1f}" '
+                     f'x2="{cx + cap_w / 2:.1f}" y2="{sy(wlo):.1f}" '
+                     f'stroke="{CCA_COLORS["primary"]}" stroke-width="1"/>')
+
+        # Box (Q1 to Q3)
+        box_y = sy(q3)
+        box_h = sy(q1) - sy(q3)
+        parts.append(f'<rect x="{bx:.1f}" y="{box_y:.1f}" '
+                     f'width="{box_w:.1f}" height="{max(box_h, 1):.1f}" '
+                     f'fill="{base_color}" fill-opacity="0.3" '
+                     f'stroke="{base_color}" stroke-width="1.5"/>')
+
+        # Median line
+        parts.append(f'<line x1="{bx:.1f}" y1="{sy(median):.1f}" '
+                     f'x2="{bx + box_w:.1f}" y2="{sy(median):.1f}" '
+                     f'stroke="{CCA_COLORS["highlight"]}" stroke-width="2"/>')
+
+        # Outliers
+        if chart.show_outliers:
+            for ov in outliers:
+                parts.append(f'<circle cx="{cx:.1f}" cy="{sy(ov):.1f}" r="3" '
+                             f'fill="none" stroke="{CCA_COLORS["highlight"]}" '
+                             f'stroke-width="1.5"/>')
+
+        # Category label
+        parts.append(_text(cx, margin_top + plot_h + 15, label,
+                           font_size=9, fill=CCA_COLORS["primary"]))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -2379,6 +2738,10 @@ def render_svg(chart) -> str:
         return _render_sankey_chart(chart)
     elif isinstance(chart, FunnelChart):
         return _render_funnel_chart(chart)
+    elif isinstance(chart, ScatterPlot):
+        return _render_scatter_plot(chart)
+    elif isinstance(chart, BoxPlot):
+        return _render_box_plot(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 
