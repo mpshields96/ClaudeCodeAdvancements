@@ -242,13 +242,14 @@ class TestPriorityPicker(unittest.TestCase):
         self.assertGreater(len(data), 0)
         self.assertIn("improved_score", data[0])
 
-    def test_mt22_is_graduated(self):
-        """MT-22 graduated S99 — should not appear in active ranked list."""
-        picker = PriorityPicker(current_session=100)
+    def test_mt22_is_active_desktop_scope(self):
+        """MT-22 reactivated S131 — desktop Electron app automation (new scope)."""
+        picker = PriorityPicker(current_session=131)
         ranked = picker.ranked()
-        mt22_ids = [t.mt_id for t in ranked if t.mt_id == 22]
-        # Graduated tasks are COMPLETED — excluded from ranked active list
-        self.assertEqual(len(mt22_ids), 0)
+        mt22 = [t for t in ranked if t.mt_id == 22]
+        self.assertEqual(len(mt22), 1)
+        self.assertEqual(mt22[0].status, TaskStatus.ACTIVE)
+        self.assertIn("Desktop", mt22[0].name)
 
     def test_session_number_affects_aging(self):
         picker_early = PriorityPicker(current_session=98)
@@ -405,6 +406,81 @@ class TestStagnationAlert(unittest.TestCase):
         picker = PriorityPicker(current_session=124)
         briefing = picker.init_briefing()
         self.assertIsInstance(briefing, str)
+
+
+class TestS130PriorityReorder(unittest.TestCase):
+    """Tests for S130 Matthew priority reorder directive."""
+
+    def test_mt10_yoyo_in_registry(self):
+        """MT-10 (YoYo) must exist as crown jewel."""
+        tasks = get_known_tasks(131)
+        mt10 = [t for t in tasks if t.mt_id == 10]
+        self.assertEqual(len(mt10), 1)
+        self.assertEqual(mt10[0].base_value, 10)
+        self.assertEqual(mt10[0].status, TaskStatus.ACTIVE)
+
+    def test_mt9_reddit_intel_in_registry(self):
+        """MT-9 (Reddit Intelligence) must exist in top 5-10 tier."""
+        tasks = get_known_tasks(131)
+        mt9 = [t for t in tasks if t.mt_id == 9]
+        self.assertEqual(len(mt9), 1)
+        self.assertGreaterEqual(mt9[0].base_value, 7)
+
+    def test_mt11_github_intel_in_registry(self):
+        """MT-11 (GitHub Intelligence) must exist in top 5-10 tier."""
+        tasks = get_known_tasks(131)
+        mt11 = [t for t in tasks if t.mt_id == 11]
+        self.assertEqual(len(mt11), 1)
+        self.assertGreaterEqual(mt11[0].base_value, 7)
+
+    def test_mt14_autonomous_scanner_in_registry(self):
+        """MT-14 (Autonomous Scanner) must exist."""
+        tasks = get_known_tasks(131)
+        mt14 = [t for t in tasks if t.mt_id == 14]
+        self.assertEqual(len(mt14), 1)
+        self.assertGreaterEqual(mt14[0].base_value, 6)
+
+    def test_mt7_code_health_in_registry(self):
+        """MT-7 (Code Health) must exist in growth tier."""
+        tasks = get_known_tasks(131)
+        mt7 = [t for t in tasks if t.mt_id == 7]
+        self.assertEqual(len(mt7), 1)
+        self.assertGreaterEqual(mt7[0].base_value, 5)
+
+    def test_mt27_crown_jewel_bump(self):
+        """MT-27 base_value bumped from 5 to 8 per S130 crown jewel status."""
+        tasks = get_known_tasks(131)
+        mt27 = [t for t in tasks if t.mt_id == 27]
+        self.assertEqual(len(mt27), 1)
+        self.assertGreaterEqual(mt27[0].base_value, 8)
+
+    def test_crown_jewels_score_higher_than_growth(self):
+        """Crown jewels (base 9-10) should outscore growth tier (base 5-6) at same age."""
+        picker = PriorityPicker(current_session=131)
+        ranked = picker.ranked()
+        if len(ranked) < 2:
+            self.skipTest("Need at least 2 active tasks")
+        # Crown jewels should dominate the top of the ranking
+        top3_ids = {t.mt_id for t in ranked[:3]}
+        crown_jewel_ids = {10, 0, 22, 27}
+        # At least one crown jewel should be in top 3
+        self.assertTrue(top3_ids & crown_jewel_ids,
+                       f"No crown jewels in top 3: {top3_ids}")
+
+    def test_mt22_desktop_electron_new_scope(self):
+        """MT-22 reactivated with desktop Electron scope, not terminal."""
+        tasks = get_known_tasks(131)
+        mt22 = [t for t in tasks if t.mt_id == 22]
+        self.assertEqual(len(mt22), 1)
+        self.assertEqual(mt22[0].status, TaskStatus.ACTIVE)
+        self.assertEqual(mt22[0].base_value, 10)
+        self.assertIn("Electron", mt22[0].name)
+
+    def test_no_duplicate_mt_ids_after_reorder(self):
+        """No duplicate MT IDs after adding new entries."""
+        tasks = get_known_tasks(131)
+        ids = [t.mt_id for t in tasks]
+        self.assertEqual(len(ids), len(set(ids)), f"Duplicates: {[x for x in ids if ids.count(x) > 1]}")
 
 
 class TestEdgeCases(unittest.TestCase):

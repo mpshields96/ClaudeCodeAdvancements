@@ -176,7 +176,7 @@ class MasterTask:
         }
 
 
-def get_known_tasks(current_session: int = 129) -> list[MasterTask]:
+def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
     """Return the current MT registry.
 
     This is the source of truth for task metadata that can't be reliably
@@ -185,10 +185,25 @@ def get_known_tasks(current_session: int = 129) -> list[MasterTask]:
 
     IMPORTANT: Update last_touched_session every time an MT is worked on.
     Stale values here cause the priority picker to give bad recommendations.
-    Last registry update: S124 (2026-03-23).
+    Last registry update: S131 (2026-03-23).
+
+    Priority tiers (from Matthew's S130 CCA Report 3-22 notes):
+      Crown Jewels (base 9-10): MT-10, MT-0, MT-26, MT-22, MT-28, MT-27
+      Top 5-10 (base 7-8): MT-9, MT-11, MT-12, MT-14, MT-21, MT-20
+      Growth (base 5-6): MT-17/MT-5, MT-32, MT-33, MT-30, MT-7, MT-31
+      Holds/Pivots (base 2-4): MT-1, MT-5, MT-16, MT-19, MT-13, MT-18
     """
     return [
-        # === HIGHEST PRIORITY (Financial + Self-Learning) ===
+        # === CROWN JEWELS (Matthew S130: preserve, perfect, grow) ===
+        MasterTask(
+            mt_id=10, name="Self-Learning YoYo Improvement Loop",
+            base_value=10, status=TaskStatus.ACTIVE,
+            last_touched_session=125, current_session=current_session,
+            phases_completed=4, phases_total=6,
+            aging_rate=1.0,
+            next_action="Phase 5: Cross-session pattern accumulation. YoYo drives continuous improvement.",
+            tags=["self-learning", "core"],
+        ),
         MasterTask(
             mt_id=0, name="Kalshi bot self-learning integration",
             base_value=10, status=TaskStatus.ACTIVE,
@@ -198,15 +213,51 @@ def get_known_tasks(current_session: int = 129) -> list[MasterTask]:
             next_action="Phase 2: Deploy self-learning to Kalshi bot. CCA prep complete, needs Kalshi chat execution.",
             tags=["kalshi", "self-learning", "trading"],
         ),
-        # === COMPLETED ===
         MasterTask(
-            mt_id=22, name="Autonomous 1-hour loop",
-            base_value=9, status=TaskStatus.COMPLETED,
-            last_touched_session=99, current_session=current_session,
-            phases_completed=3, phases_total=3,  # GRADUATED S99 — 3/3 gate passed
+            mt_id=22, name="Desktop Electron app automation",
+            base_value=10, status=TaskStatus.ACTIVE,
+            last_touched_session=129, current_session=current_session,
+            phases_completed=0, phases_total=4,
             aging_rate=1.0,
-            next_action="GRADUATED. Gate passed 3/3 supervised trials.",
-            tags=["autonomy", "hivemind"],
+            next_action="Research: how to automate Claude Code desktop Electron app (AppleScript, Accessibility API, CLI pipe). Terminal autoloop is stepping stone.",
+            tags=["autonomy", "desktop", "crown-jewel"],
+        ),
+        MasterTask(
+            mt_id=27, name="CCA Nuclear v2 (Enhanced Scanning)",
+            base_value=8, status=TaskStatus.ACTIVE,
+            last_touched_session=129, current_session=current_session,
+            phases_completed=4, phases_total=5,
+            aging_rate=0.5,
+            next_action="Phase 5: APF validation — measure precision improvement on real scans.",
+            tags=["scanning", "intelligence", "crown-jewel"],
+        ),
+        # === TOP 5-10 ===
+        MasterTask(
+            mt_id=9, name="Reddit Intelligence Pipeline",
+            base_value=7, status=TaskStatus.ACTIVE,
+            last_touched_session=130, current_session=current_session,
+            phases_completed=3, phases_total=4,
+            aging_rate=0.5,
+            next_action="Phase 4: Real-time monitoring + auto-digest. Core scanning works.",
+            tags=["scanning", "intelligence"],
+        ),
+        MasterTask(
+            mt_id=11, name="GitHub Intelligence Scanner",
+            base_value=7, status=TaskStatus.ACTIVE,
+            last_touched_session=125, current_session=current_session,
+            phases_completed=3, phases_total=5,
+            aging_rate=0.5,
+            next_action="Phase 4: Trending repo auto-analysis. Scanner + fetcher built.",
+            tags=["scanning", "intelligence"],
+        ),
+        MasterTask(
+            mt_id=14, name="Autonomous Scanner Pipeline",
+            base_value=6, status=TaskStatus.ACTIVE,
+            last_touched_session=125, current_session=current_session,
+            phases_completed=3, phases_total=5,
+            aging_rate=0.5,
+            next_action="Phase 4: Scheduled autonomous runs. Safety + prioritizer done.",
+            tags=["scanning", "autonomy"],
         ),
         MasterTask(
             mt_id=21, name="Hivemind multi-chat coordination",
@@ -216,6 +267,16 @@ def get_known_tasks(current_session: int = 129) -> list[MasterTask]:
             aging_rate=1.0,
             next_action="SHELVED Phase 3 (3-chat). 2-chat is sufficient per Matthew.",
             tags=["coordination", "hivemind"],
+        ),
+        # === GROWTH ===
+        MasterTask(
+            mt_id=7, name="Code Health / Trace Analyzer",
+            base_value=5, status=TaskStatus.ACTIVE,
+            last_touched_session=125, current_session=current_session,
+            phases_completed=2, phases_total=4,
+            aging_rate=0.5,
+            next_action="Phase 3: Session-level health scoring. Trace analyzer + batch report built.",
+            tags=["quality", "self-learning"],
         ),
         # === ARCHIVED (stagnation resolver recommended, S100) ===
         MasterTask(
@@ -285,15 +346,6 @@ def get_known_tasks(current_session: int = 129) -> list[MasterTask]:
             aging_rate=0.5,
             next_action="CCA scope COMPLETE. 79 pipeline tests. Tier 3 Phase 2 deferred (needs numpy).",
             tags=["kalshi", "trading", "research"],
-        ),
-        MasterTask(
-            mt_id=27, name="CCA Nuclear v2 (Enhanced Scanning)",
-            base_value=5, status=TaskStatus.ACTIVE,
-            last_touched_session=129, current_session=current_session,
-            phases_completed=4, phases_total=5,
-            aging_rate=0.5,
-            next_action="Phase 5: APF validation — measure precision improvement on real scans.",
-            tags=["scanning", "intelligence"],
         ),
         MasterTask(
             mt_id=28, name="Self-Learning v2 (Multi-Domain)",
@@ -421,7 +473,7 @@ def get_known_tasks(current_session: int = 129) -> list[MasterTask]:
 class PriorityPicker:
     """Computes priority rankings and picks next task for autonomous work."""
 
-    def __init__(self, current_session: int = 105):
+    def __init__(self, current_session: int = 131):
         self.current_session = current_session
         self.tasks = get_known_tasks(current_session)
 
@@ -608,7 +660,7 @@ def main():
     parser.add_argument("command", nargs="?", default="pick",
                        choices=["pick", "rank", "table", "recommend", "json", "stagnating", "init-briefing"],
                        help="Command to run")
-    parser.add_argument("--session", type=int, default=124, help="Current session number")
+    parser.add_argument("--session", type=int, default=131, help="Current session number")
     parser.add_argument("--count", type=int, default=3, help="Number of tasks to pick")
     parser.add_argument("--include-blocked", action="store_true", help="Include unblockable tasks")
     args = parser.parse_args()
