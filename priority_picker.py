@@ -176,12 +176,16 @@ class MasterTask:
         }
 
 
-def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
+def get_known_tasks(current_session: int = 124) -> list[MasterTask]:
     """Return the current MT registry.
 
     This is the source of truth for task metadata that can't be reliably
     parsed from MASTER_TASKS.md (phases, completion %, etc).
     Updates should be made here when tasks progress.
+
+    IMPORTANT: Update last_touched_session every time an MT is worked on.
+    Stale values here cause the priority picker to give bad recommendations.
+    Last registry update: S124 (2026-03-23).
     """
     return [
         # === HIGHEST PRIORITY (Financial + Self-Learning) ===
@@ -191,7 +195,7 @@ def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
             last_touched_session=105, current_session=current_session,
             phases_completed=1, phases_total=3,
             aging_rate=1.0,
-            next_action="Phase 2: ACTIVE — Kalshi research chat launched with task brief (S105). Deploying self-learning.",
+            next_action="Phase 2: Deploy self-learning to Kalshi bot. CCA prep complete, needs Kalshi chat execution.",
             tags=["kalshi", "self-learning", "trading"],
         ),
         # === COMPLETED ===
@@ -255,11 +259,11 @@ def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=24, name="Visualization & Graphics Engine",
-            base_value=6, status=TaskStatus.ACTIVE,
-            last_touched_session=111, current_session=current_session,
-            phases_completed=1, phases_total=5,  # P1: trading_chart.py (5 chart types, 41 tests)
-            aging_rate=0.5,
-            next_action="Phase 2: Interactive HTML dashboard charts (D3.js or Chart.js).",
+            base_value=6, status=TaskStatus.COMPLETED,
+            last_touched_session=118, current_session=current_session,
+            phases_completed=5, phases_total=5,  # Absorbed into MT-32
+            aging_rate=0,
+            next_action="ABSORBED into MT-32 (Visual Excellence). All chart work continues there.",
             tags=["visual", "reports"],
         ),
         MasterTask(
@@ -277,9 +281,9 @@ def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
             mt_id=26, name="Financial Intelligence Engine",
             base_value=9, status=TaskStatus.ACTIVE,
             last_touched_session=112, current_session=current_session,
-            phases_completed=6, phases_total=6,  # Tier 1 (3) + Tier 2 (3) + pipeline + Tier 3 (2 modules)
+            phases_completed=6, phases_total=7,  # Tier 1-3 done, Phase 2 surface deferred
             aging_rate=1.0,
-            next_action="Tier 3 Phase 1 COMPLETE. Phase 2 (Kalman+EM+surface) deferred. Wire into pipeline.",
+            next_action="Tier 3 Phase 2 (Kalman+EM+surface) deferred until Phase 1 proves useful in prod.",
             tags=["kalshi", "trading", "research"],
         ),
         MasterTask(
@@ -326,6 +330,45 @@ def get_known_tasks(current_session: int = 112) -> list[MasterTask]:
             aging_rate=0,
             next_action="DONE. Feature-complete. All gaps closed, E2E validated with real API.",
             tags=["quality", "senior-dev"],
+        ),
+        # === NEW MTs (S115-S124) ===
+        MasterTask(
+            mt_id=31, name="Gemini Pro Integration",
+            base_value=6, status=TaskStatus.ACTIVE,
+            last_touched_session=124, current_session=current_session,
+            phases_completed=0, phases_total=4,  # Research done S124, needs API key + MCP install
+            aging_rate=0.5,
+            next_action="Matthew: get free API key from aistudio.google.com/apikey, then install RLabs gemini-mcp.",
+            tags=["integration", "multi-model"],
+        ),
+        MasterTask(
+            mt_id=32, name="Visual Excellence & Design Engineering",
+            base_value=6, status=TaskStatus.ACTIVE,
+            last_touched_session=123, current_session=current_session,
+            phases_completed=3, phases_total=8,  # Charts, Typst wiring, report_charts done
+            aging_rate=0.5,
+            next_action="Per-file test distribution HistogramChart, then more CCA statistical charts.",
+            tags=["visual", "reports", "design"],
+        ),
+        MasterTask(
+            mt_id=33, name="Strategic Intelligence Report",
+            base_value=7, status=TaskStatus.ACTIVE,
+            last_touched_session=123, current_session=current_session,
+            phases_completed=6, phases_total=6,  # All 6 phases COMPLETE
+            aging_rate=0,
+            next_action="COMPLETE. All 6 phases shipped: collectors, charts, Typst, sidecar, differ.",
+            tags=["reports", "kalshi", "intelligence"],
+        ),
+        MasterTask(
+            mt_id=34, name="Medical AI Tool (OpenEvidence replacement)",
+            base_value=4, status=TaskStatus.BLOCKED,
+            last_touched_session=121, current_session=current_session,
+            phases_completed=0, phases_total=6,
+            aging_rate=0.5,
+            block_reason="IDEA stage only — waiting for Matthew greenlight",
+            self_resolution_note=None,
+            next_action="BLOCKED: awaiting Matthew decision on scope and requirements.",
+            tags=["personal", "medical"],
         ),
         # === BLOCKED ===
         MasterTask(
@@ -431,6 +474,68 @@ class PriorityPicker:
             )
         return "\n".join(lines)
 
+    def stagnation_alert(self, threshold: int = 5) -> str:
+        """Generate stagnation alert for /cca-init briefing.
+
+        Returns empty string if no MTs are stagnating beyond threshold.
+        Otherwise returns a concise warning listing neglected high-priority MTs.
+        """
+        aging = [t for t in self.active_tasks()
+                 if t.sessions_since_touch >= threshold]
+        if not aging:
+            return ""
+        # Sort by improved_score descending (highest priority first)
+        aging.sort(key=lambda t: t.improved_score, reverse=True)
+        lines = ["STAGNATION WARNING:"]
+        for t in aging:
+            lines.append(
+                f"  MT-{t.mt_id} ({t.name}) — base={t.base_value}, "
+                f"untouched {t.sessions_since_touch} sessions, "
+                f"score={t.improved_score:.1f}"
+            )
+        return "\n".join(lines)
+
+    def priority_vs_resume(self, resume_mt_ids: list[int]) -> list[MasterTask]:
+        """Compare resume prompt suggestions against picker rankings.
+
+        Returns MTs that rank higher than ALL resume suggestions but aren't
+        in the resume list — these are being neglected by recency bias.
+        """
+        ranked = self.ranked()
+        if not ranked or not resume_mt_ids:
+            return []
+        # Find the best rank position of any resume MT
+        resume_positions = []
+        for i, t in enumerate(ranked):
+            if t.mt_id in resume_mt_ids:
+                resume_positions.append(i)
+        if not resume_positions:
+            return []
+        best_resume_pos = min(resume_positions)
+        # Return MTs that rank above the best resume suggestion
+        return [t for t in ranked[:best_resume_pos]
+                if t.mt_id not in resume_mt_ids]
+
+    def init_briefing(self) -> str:
+        """Generate priority briefing for /cca-init.
+
+        Combines stagnation alert + top picks into concise init output.
+        """
+        lines = []
+        alert = self.stagnation_alert()
+        if alert:
+            lines.append(alert)
+            lines.append("")
+        top = self.pick_next(3)
+        if top:
+            lines.append("PRIORITY RANKING:")
+            for i, t in enumerate(top, 1):
+                lines.append(
+                    f"  {i}. MT-{t.mt_id} ({t.name}) — "
+                    f"score={t.improved_score:.1f} [{t.urgency.value}]"
+                )
+        return "\n".join(lines)
+
     def recommendations(self) -> str:
         """Generate actionable recommendations for the session."""
         lines = []
@@ -501,9 +606,9 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="MT Priority Picker")
     parser.add_argument("command", nargs="?", default="pick",
-                       choices=["pick", "rank", "table", "recommend", "json", "stagnating"],
+                       choices=["pick", "rank", "table", "recommend", "json", "stagnating", "init-briefing"],
                        help="Command to run")
-    parser.add_argument("--session", type=int, default=111, help="Current session number")
+    parser.add_argument("--session", type=int, default=124, help="Current session number")
     parser.add_argument("--count", type=int, default=3, help="Number of tasks to pick")
     parser.add_argument("--include-blocked", action="store_true", help="Include unblockable tasks")
     args = parser.parse_args()
@@ -537,6 +642,9 @@ def main():
                 print(f"MT-{t.mt_id}: {t.name} — untouched {t.sessions_since_touch} sessions, cap {t.base_value*2}")
         else:
             print("No stagnating tasks.")
+
+    elif args.command == "init-briefing":
+        print(picker.init_briefing())
 
 
 if __name__ == "__main__":

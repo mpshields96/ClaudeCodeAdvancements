@@ -292,6 +292,121 @@ class TestGetKnownTasks(unittest.TestCase):
                 self.assertIsNotNone(t.block_reason, f"MT-{t.mt_id} blocked without reason")
 
 
+class TestStagnationAlert(unittest.TestCase):
+    """Test stagnation alert for /cca-init briefing."""
+
+    def test_stagnation_alert_detects_aging_mt(self):
+        """MTs untouched 5+ sessions should appear in alert."""
+        picker = PriorityPicker(current_session=124)
+        alert = picker.stagnation_alert()
+        # MT-0 is untouched since S105, should be flagged
+        self.assertIn("MT-0", alert)
+
+    def test_stagnation_alert_empty_when_all_recent(self):
+        """No alert if all active MTs were touched recently."""
+        picker = PriorityPicker(current_session=124)
+        # Override with all-recent tasks
+        picker.tasks = [
+            MasterTask(mt_id=1, name="Recent", base_value=5,
+                      status=TaskStatus.ACTIVE, last_touched_session=123,
+                      current_session=124, phases_completed=1, phases_total=3),
+        ]
+        alert = picker.stagnation_alert()
+        self.assertEqual(alert, "")
+
+    def test_stagnation_alert_shows_sessions_untouched(self):
+        """Alert includes how many sessions untouched."""
+        picker = PriorityPicker(current_session=124)
+        picker.tasks = [
+            MasterTask(mt_id=99, name="Old Task", base_value=8,
+                      status=TaskStatus.ACTIVE, last_touched_session=100,
+                      current_session=124, phases_completed=1, phases_total=3),
+        ]
+        alert = picker.stagnation_alert()
+        self.assertIn("24 sessions", alert)
+
+    def test_stagnation_alert_sorted_by_priority(self):
+        """Higher-priority MTs appear first in alert."""
+        picker = PriorityPicker(current_session=124)
+        picker.tasks = [
+            MasterTask(mt_id=1, name="Low", base_value=3,
+                      status=TaskStatus.ACTIVE, last_touched_session=100,
+                      current_session=124, phases_completed=0, phases_total=3),
+            MasterTask(mt_id=2, name="High", base_value=10,
+                      status=TaskStatus.ACTIVE, last_touched_session=100,
+                      current_session=124, phases_completed=1, phases_total=3),
+        ]
+        alert = picker.stagnation_alert()
+        mt2_pos = alert.index("MT-2")
+        mt1_pos = alert.index("MT-1")
+        self.assertLess(mt2_pos, mt1_pos)
+
+    def test_stagnation_alert_excludes_completed(self):
+        """Completed MTs never appear in stagnation alert."""
+        picker = PriorityPicker(current_session=124)
+        picker.tasks = [
+            MasterTask(mt_id=1, name="Done", base_value=10,
+                      status=TaskStatus.COMPLETED, last_touched_session=50,
+                      current_session=124, phases_completed=3, phases_total=3),
+        ]
+        alert = picker.stagnation_alert()
+        self.assertEqual(alert, "")
+
+    def test_stagnation_alert_threshold_5_sessions(self):
+        """Tasks untouched exactly 5 sessions should be flagged."""
+        picker = PriorityPicker(current_session=124)
+        picker.tasks = [
+            MasterTask(mt_id=1, name="Edge", base_value=5,
+                      status=TaskStatus.ACTIVE, last_touched_session=119,
+                      current_session=124, phases_completed=1, phases_total=3),
+        ]
+        alert = picker.stagnation_alert()
+        self.assertIn("MT-1", alert)
+
+    def test_stagnation_alert_threshold_4_sessions_no_flag(self):
+        """Tasks untouched only 4 sessions should NOT be flagged."""
+        picker = PriorityPicker(current_session=124)
+        picker.tasks = [
+            MasterTask(mt_id=1, name="Recent-ish", base_value=5,
+                      status=TaskStatus.ACTIVE, last_touched_session=120,
+                      current_session=124, phases_completed=1, phases_total=3),
+        ]
+        alert = picker.stagnation_alert()
+        self.assertEqual(alert, "")
+
+    def test_priority_vs_resume_detects_mismatch(self):
+        """Should flag when resume prompt suggests lower-priority MT over higher."""
+        picker = PriorityPicker(current_session=124)
+        picker.tasks = [
+            MasterTask(mt_id=0, name="High Priority", base_value=10,
+                      status=TaskStatus.ACTIVE, last_touched_session=105,
+                      current_session=124, phases_completed=1, phases_total=3),
+            MasterTask(mt_id=32, name="Low Priority", base_value=6,
+                      status=TaskStatus.ACTIVE, last_touched_session=123,
+                      current_session=124, phases_completed=2, phases_total=8),
+        ]
+        mismatch = picker.priority_vs_resume(resume_mt_ids=[32])
+        self.assertTrue(len(mismatch) > 0)
+        self.assertEqual(mismatch[0].mt_id, 0)
+
+    def test_priority_vs_resume_no_mismatch_when_aligned(self):
+        """No mismatch when resume prompt suggests the top priority."""
+        picker = PriorityPicker(current_session=124)
+        picker.tasks = [
+            MasterTask(mt_id=0, name="Top", base_value=10,
+                      status=TaskStatus.ACTIVE, last_touched_session=123,
+                      current_session=124, phases_completed=1, phases_total=3),
+        ]
+        mismatch = picker.priority_vs_resume(resume_mt_ids=[0])
+        self.assertEqual(len(mismatch), 0)
+
+    def test_init_briefing_format(self):
+        """init_briefing() returns a formatted string for /cca-init."""
+        picker = PriorityPicker(current_session=124)
+        briefing = picker.init_briefing()
+        self.assertIsInstance(briefing, str)
+
+
 class TestEdgeCases(unittest.TestCase):
     """Edge cases and boundary conditions."""
 
