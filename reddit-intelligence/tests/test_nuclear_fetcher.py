@@ -398,28 +398,76 @@ class TestNeedlePrecision(unittest.TestCase):
 
     # --- Weak keywords WITH engagement signals → NEEDLE ---
 
-    def test_weak_tool_high_score_is_needle(self):
-        """'tool' with 200 upvotes signals real substance."""
+    def test_weak_automation_high_engagement_is_needle(self):
+        """'automation' is standard weak — score 80 qualifies."""
+        p = self._post(title="My automation workflow", score=80, comments=20, body_len=600)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_weak_workflow_moderate_engagement_is_needle(self):
+        """'workflow' needs score >= 50 OR body >= 300 OR comments >= 15."""
+        p = self._post(title="My workflow for debugging", score=55, comments=10, body_len=200)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    def test_weak_memory_long_body_is_needle(self):
+        """'memory' + body >= 300 = NEEDLE."""
+        p = self._post(title="Memory management in Claude", score=30, comments=8, body_len=400)
+        self.assertEqual(classify_post(p), "NEEDLE")
+
+    # --- Showcase keywords WITH high engagement → NEEDLE ---
+    # These require score >= 100 OR body >= 500 OR comments >= 25
+
+    def test_showcase_tool_very_high_score_is_needle(self):
+        """'tool' needs score >= 100 to be NEEDLE (showcase tier)."""
         p = self._post(title="I made a tool for tracking token usage", score=200, comments=30, body_len=800)
         self.assertEqual(classify_post(p), "NEEDLE")
 
-    def test_weak_built_long_body_is_needle(self):
-        """'built' + long body = probably a real write-up."""
+    def test_showcase_built_long_body_is_needle(self):
+        """'built' + body >= 500 = NEEDLE (showcase tier)."""
         p = self._post(title="I built a debugging framework", score=40, comments=10, body_len=1500)
         self.assertEqual(classify_post(p), "NEEDLE")
 
-    def test_weak_built_many_comments_is_needle(self):
-        """'built' + lots of comments = interesting discussion."""
+    def test_showcase_built_many_comments_is_needle(self):
+        """'built' + comments >= 25 = NEEDLE (showcase tier)."""
         p = self._post(title="I built this last week", score=30, comments=25, body_len=200)
         self.assertEqual(classify_post(p), "NEEDLE")
 
-    def test_weak_tips_high_score_is_needle(self):
+    def test_showcase_tips_high_score_is_needle(self):
+        """'tips' needs score >= 100 (showcase tier)."""
         p = self._post(title="My tips after 6 months", score=150, comments=40, body_len=2000)
         self.assertEqual(classify_post(p), "NEEDLE")
 
-    def test_weak_automation_high_engagement_is_needle(self):
-        p = self._post(title="My automation setup", score=80, comments=20, body_len=600)
-        self.assertEqual(classify_post(p), "NEEDLE")
+    # --- Showcase keywords WITHOUT high engagement → MAYBE ---
+    # (this is the PRECISION IMPROVEMENT — these were false positive NEEDLEs before)
+
+    def test_showcase_tool_moderate_score_is_maybe(self):
+        """'tool' with score=60 is MAYBE now (was NEEDLE before with old threshold)."""
+        p = self._post(title="A tool I found useful", score=60, comments=8, body_len=150)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_showcase_built_moderate_body_is_maybe(self):
+        """'built' with body=350 is MAYBE now (was NEEDLE before)."""
+        p = self._post(title="I built a calculator app", score=40, comments=5, body_len=350)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_showcase_tips_moderate_score_is_maybe(self):
+        """'tips' with score=60 is MAYBE now (was NEEDLE before)."""
+        p = self._post(title="Quick tips for beginners", score=60, comments=10, body_len=200)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_showcase_created_moderate_engagement_is_maybe(self):
+        """'created' with moderate engagement is MAYBE (showcase tier)."""
+        p = self._post(title="Created a simple app for fun", score=70, comments=12, body_len=250)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_showcase_setup_moderate_is_maybe(self):
+        """'setup' with moderate engagement is MAYBE (showcase tier)."""
+        p = self._post(title="My setup for dev work", score=55, comments=8, body_len=180)
+        self.assertEqual(classify_post(p), "MAYBE")
+
+    def test_showcase_made_moderate_is_maybe(self):
+        """'made' with moderate engagement is MAYBE (showcase tier)."""
+        p = self._post(title="I made a website with AI", score=80, comments=14, body_len=300)
+        self.assertEqual(classify_post(p), "MAYBE")
 
     # --- Existing behavior preserved ---
 

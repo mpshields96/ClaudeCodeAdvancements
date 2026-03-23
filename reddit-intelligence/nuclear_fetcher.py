@@ -187,22 +187,34 @@ def classify_post(post):
         "self-evolving", "self-learning",
     ]
 
-    # Weak NEEDLE keywords — too broad alone, need engagement signals
+    # Weak NEEDLE keywords — need moderate engagement signals
     # (score >= 50, OR body_len >= 300, OR comments >= 15)
     weak_keywords = [
         "workflow", "automation", "token",
         "memory", "spec", "requirements",
         "conflict", "security",
         "dashboard", "monitor", "usage",
-        "tool", "built", "made", "created", "open source",
-        "tips", "tricks", "best practice", "setup",
+        "open source",
+        "tricks", "best practice",
         "terminal", "cli",
         "autonomous", "agent",
     ]
 
-    # Engagement thresholds for weak keywords to qualify as NEEDLE
+    # Very weak (showcase) keywords — extremely broad, need HIGH engagement
+    # (score >= 100, OR body_len >= 500, OR comments >= 25)
+    # These terms appear in thousands of low-value showcase posts like
+    # "I built a todo app" or "cool tool I found" with zero technical depth.
+    showcase_keywords = [
+        "tool", "built", "made", "created",
+        "tips", "setup",
+    ]
+
+    # Engagement thresholds
     weak_has_engagement = (
         score >= 50 or body_len >= 300 or comments >= 15
+    )
+    showcase_has_engagement = (
+        score >= 100 or body_len >= 500 or comments >= 25
     )
 
     # Flair-based classification
@@ -224,6 +236,8 @@ def classify_post(post):
     if any(kw in title_lower for kw in strong_keywords):
         return "NEEDLE"
     if any(kw in title_lower for kw in weak_keywords) and weak_has_engagement:
+        return "NEEDLE"
+    if any(kw in title_lower for kw in showcase_keywords) and showcase_has_engagement:
         return "NEEDLE"
     if is_self and body_len > 500 and score >= 100:
         # Substantive self-post with good score
