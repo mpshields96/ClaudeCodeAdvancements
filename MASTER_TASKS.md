@@ -1048,7 +1048,7 @@ Revisit when: Anthropic ships native shared context, or Cowork local MCP bugs fi
 - cca_comm.py (queue messages)
 - session_pacer.py (wrap timing)
 
-**Status:** Phase 6 BUILT (S126). Ready for supervised dry run.
+**Status:** Phase 8 COMPLETE (S128). Production hardened. Ready for live supervised dry run.
 - Phase 2 (S111): `session_registry.py` (60 tests) + `tmux_manager.py` (40 tests)
 - Phase 3 (S112): `session_daemon.py` — poll loop, health checking, spawn/restart, peak hours (45 tests)
 - Phase 4 (S113): Integration tests — lifecycle, peak transitions, crash recovery chains (27 tests)
@@ -1057,15 +1057,28 @@ Revisit when: Anthropic ships native shared context, or Cowork local MCP bugs fi
   - `start_autoloop.sh` — one-command tmux launcher
   - `session_daemon_cca_only.json` — CCA-only daemon config (1 session max)
   - Safety: 3 consecutive crashes = stop, 3 short sessions = stop, max 50 iterations, cooldown 15s
+- Phase 7 (S127): Desktop mode + model alternation (85 tests)
+  - `--desktop` opens visible Terminal.app windows via osascript
+  - Model alternation: round-robin/opus-primary/sonnet-primary strategies
+  - `--dangerously-skip-permissions` for full automation
+  - Session de-duplication pre-flight check
+- Phase 8 (S128): Production hardening (116 tests)
+  - Terminal.app close race condition fixed (shell exits before close)
+  - Terminate dialog handled via System Events + retry close
+  - Pre-flight: claude binary check, Terminal.app status, Accessibility permissions, orphan cleanup
+  - Rate limit handling: exit codes 2/75 get 5min cooldown, not counted as crashes
+  - Stale resume detection + prompt size truncation (>100KB)
 
 **How to use (Matthew):**
-1. `./start_autoloop.sh` — starts in tmux, reads SESSION_RESUME.md, spawns claude sessions
-2. `./start_autoloop.sh --dry-run` — simulate without spawning
-3. `./start_autoloop.sh --status` — check loop state
-4. Ctrl-C in tmux window to stop
+1. `./start_autoloop.sh --desktop` — opens visible Terminal.app windows (recommended)
+2. `./start_autoloop.sh` — runs in current terminal (tmux recommended)
+3. `./start_autoloop.sh --tmux` — launches in tmux window
+4. `./start_autoloop.sh --status` — check loop state
+5. `MODEL_STRATEGY=opus-primary ./start_autoloop.sh --desktop` — Opus only
+6. Ctrl-C to stop
 
-**Next: Phase 7 — Supervised dry run, then expand to multi-chat.**
-Last updated: S126 (2026-03-23).
+**Next: Live supervised dry run. Close desktop app chat first, then run from plain terminal.**
+Last updated: S128 (2026-03-23).
 
 ---
 
