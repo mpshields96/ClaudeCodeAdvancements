@@ -1048,29 +1048,24 @@ Revisit when: Anthropic ships native shared context, or Cowork local MCP bugs fi
 - cca_comm.py (queue messages)
 - session_pacer.py (wrap timing)
 
-**Status:** ALL PHASES COMPLETE (S111-S113). NOT YET DEPLOYED.
+**Status:** Phase 6 BUILT (S126). Ready for supervised dry run.
 - Phase 2 (S111): `session_registry.py` (60 tests) + `tmux_manager.py` (40 tests)
 - Phase 3 (S112): `session_daemon.py` — poll loop, health checking, spawn/restart, peak hours (45 tests)
 - Phase 4 (S113): Integration tests — lifecycle, peak transitions, crash recovery chains (27 tests)
 - Phase 5 (S113): Hardening — `_mark_exhausted_sessions` FAILED state fix, log rotation (9 tests)
+- Phase 6 (S126): `cca_autoloop.py` — reads SESSION_RESUME.md, spawns claude, loops (43 tests)
+  - `start_autoloop.sh` — one-command tmux launcher
+  - `session_daemon_cca_only.json` — CCA-only daemon config (1 session max)
+  - Safety: 3 consecutive crashes = stop, 3 short sessions = stop, max 50 iterations, cooldown 15s
 
-**Matthew S125 directive — CCA-ONLY AUTO-LOOP (ready to deploy):**
-Matthew's current workflow: when a CCA chat finishes, he manually copies the session wrap or resume prompt, opens a new chat, types `/cca-init then review last chat's prompt below then /cca-auto`, and pastes the previous output. He wants this automated.
+**How to use (Matthew):**
+1. `./start_autoloop.sh` — starts in tmux, reads SESSION_RESUME.md, spawns claude sessions
+2. `./start_autoloop.sh --dry-run` — simulate without spawning
+3. `./start_autoloop.sh --status` — check loop state
+4. Ctrl-C in tmux window to stop
 
-**Phase 6: CCA-Only Auto-Loop (S125 — NEXT):**
-- Start with ONLY the CCA desktop chat (no Kalshi, no workers)
-- When a CCA session wraps, automatically spawn a new CCA session with the resume prompt
-- Matthew may run Kalshi manually alongside
-- Must be fully error-free and executable before expanding to multi-chat
-- Expand to include Kalshi and worker chats only after CCA-only loop is proven
-
-**How it should work:**
-1. SESSION_RESUME.md is already written by /cca-wrap (contains resume prompt)
-2. Daemon detects session end (tmux pane exit or session_pacer WRAP_NOW)
-3. Daemon spawns new tmux pane with: `claude --resume /path/to/SESSION_RESUME.md` (or equivalent)
-4. New session picks up with /cca-init + /cca-auto automatically
-5. Loop continues until manually stopped or context limit hit
-Last updated: S125 (2026-03-23).
+**Next: Phase 7 — Supervised dry run, then expand to multi-chat.**
+Last updated: S126 (2026-03-23).
 
 ---
 

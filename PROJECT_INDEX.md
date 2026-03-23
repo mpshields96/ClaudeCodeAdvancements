@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) | 1299 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~8040 tests (~203 suites). All must pass before any work.**
+**Total: ~8083 tests (~204 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -152,6 +152,9 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `launch_session.sh` — Unified multi-chat launcher with safety checks (13 tests, S116)
 - `session_metrics.py` — Cross-session analytics aggregator (55 tests, S116)
 - `coordination_dashboard.py` — At-a-glance multi-chat status view (22 tests, S116)
+- `cca_autoloop.py` — MT-30 Phase 6: CCA auto-loop — reads SESSION_RESUME.md, spawns claude, loops (43 tests, S126)
+- `start_autoloop.sh` — One-command auto-loop launcher (tmux or foreground, S126)
+- `session_daemon_cca_only.json` — CCA-only daemon config for auto-loop (1 session max, S126)
 
 **research/** — R&D and tools
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)
