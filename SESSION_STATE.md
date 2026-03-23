@@ -3,9 +3,26 @@
 
 ---
 
-## Current State (as of Session 119 — 2026-03-22)
+## Current State (as of Session 120 — 2026-03-22)
 
-**Phase:** Session 119 COMPLETE. 2-chat (desktop + worker). Polybot queue hook E2E verified, SankeyChart built (16th chart type).
+**Phase:** Session 120 IN PROGRESS. Solo session. 3-chat auto-launch infrastructure built.
+
+**What was done this session (S120):**
+- **test_report_generator_extended.py FIXED**: TestCollectPriorityQueue fixture had 10-col table vs real 12-col format. All 191->194 suites passing.
+- **S119 uncommitted design changes committed**: report_generator.py parser (12-col table support, ~NNN regex), report_charts.py width fix, cca-report.typ v3 visual upgrade.
+- **session_orchestrator.py built**: 3-chat auto-launch decision layer. SessionMode enum, SessionState detection, decide_launches() with peak hours blocking, build_launch_commands(). CLI: status/plan/launch/set-mode/register/heartbeat/deregister. 29 tests.
+- **PidRegistry + heartbeat liveness**: PID file registry for reliable session detection. Heartbeat-based liveness (10min TTL) as primary, PID check as fallback. cleanup_stale() auto-removes dead entries. 26 tests.
+- **Full lifecycle wiring**: /cca-init registers session, /cca-auto-desktop heartbeats on every coord round, /cca-wrap deregisters. /cca-auto-desktop Step 0.5 checks saved preference and can auto-launch missing sessions.
+- **Worker S119 commits verified**: FunnelChart (17th chart type, 39 tests) + MT-32 svg.py evaluation (REFERENCE verdict, keep chart_generator.py) both landed despite resume prompt saying worker crashed.
+- **Tests**: 194 suites passing (was 191). +55 new tests (session_orchestrator).
+- **Commits**: 5 this session.
+
+**Next (prioritized):**
+1. **Test 3-chat auto-launch**: Run `python3 session_orchestrator.py register desktop && python3 session_orchestrator.py plan --mode 2chat` to verify detection works, then try live launch in a 2-chat session.
+2. **MT-32 Phase 3**: More chart types or visual improvements — Matthew loves the design trajectory.
+3. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
+4. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot.
+5. **3-chat full loop**: polybot-auto must support task-driven work.
 
 **What was done this session (S119):**
 - **Polybot queue hook E2E verified**: Simulated Kalshi main receiving CCA task assignments via cross_chat_queue.jsonl. Hook returns additionalContext with unread messages. Cleaned stale MT-0 task and test ping from km queue. The 3-chat coordination pipeline is functionally wired.

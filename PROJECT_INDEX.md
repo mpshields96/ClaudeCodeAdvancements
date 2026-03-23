@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 16 chart types + consistency audit + report_charts (wired into /cca-report) + BubbleChart + TreemapChart + SankeyChart | 924 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~7611 tests (~191 suites). All must pass before any work.**
+**Total: ~7666 tests (~194 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -143,6 +143,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `session_registry.py` — MT-30 Phase 2: Session config loading + state tracking (60 tests, S111)
 - `tmux_manager.py` — MT-30 Phase 2: Tmux window create/monitor/kill (40 tests, S111)
 - `session_daemon_config.json` — Default daemon config (3 sessions, peak hours)
+- `session_orchestrator.py` — 3-chat auto-launch decision logic: detect running sessions, decide launches, PID registry + heartbeat (55 tests, S120)
 - `handoff_generator.py` — Automated SESSION_HANDOFF file generation for multi-chat (50 tests, S116)
 - `launch_session.sh` — Unified multi-chat launcher with safety checks (13 tests, S116)
 - `session_metrics.py` — Cross-session analytics aggregator (55 tests, S116)
