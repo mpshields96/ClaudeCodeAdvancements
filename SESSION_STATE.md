@@ -3,24 +3,30 @@
 
 ---
 
-## Current State (as of Session 132 — 2026-03-23)
+## Current State (as of Session 133 — 2026-03-23)
 
-**Phase:** Session 132 IN PROGRESS. MT-22 Desktop Electron App Automation — building the self-sustaining CCA loop for Claude.app.
+**Phase:** Session 133. Autonomous maintenance + MT-10 self-learning enhancement.
 
-**What was done this session (S132):**
-- **MT-22 Phase 1 COMPLETE**: `desktop_automator.py` — AppleScript-based Claude.app control. activate_claude(), send_prompt() (clipboard injection), wait_for_response(), close_window(), new_conversation(), preflight(), run_loop_iteration(). Full JSONL audit trail. Safety: keystrokes only sent when Claude verified as frontmost. 58 tests.
-- **MT-22 Phase 2 COMPLETE**: `desktop_autoloop.py` — Self-sustaining loop orchestrator. ResumeWatcher (mtime-based SESSION_RESUME.md change detection = session wrapped signal). DesktopLoopState (crash tracking, short session detection, auto-stop). DesktopAutoLoop (read resume -> activate -> new chat -> send -> watch -> repeat). Model selection (round-robin/opus/sonnet). 49 tests.
-- **MT-22 Phase 3 COMPLETE**: `start_desktop_autoloop.sh` launcher + `DESKTOP_AUTOLOOP_SETUP.md` setup guide. Permissions, quick start, troubleshooting.
-- **MT-22 CPU idle detection**: `get_claude_cpu_usage()` + `is_claude_idle()` for supplementary response monitoring. Periodic CPU state logging during wait. 8 new tests.
-- **Live preflight VALIDATED**: All 4 checks PASS on real system. Claude.app running, 1 window, CPU 0% when idle.
-- **MT-27 Phase 4 COMPLETE**: 3-tier NEEDLE precision. Showcase keywords (built/made/created/tool/tips/setup) need score>=100 OR body>=500 OR comments>=25. Reduces false positives from low-value showcase posts. +7 new tests (104 total nuclear_fetcher).
-- **Tests**: 207 suites passing. +122 new tests. 8 commits.
+**What was done this session (S133):**
+- **Doc drift FIXED**: PROJECT_INDEX.md + ROADMAP.md test counts updated (8320->8397). reddit-intelligence 432->440, self-learning 1833->1859, root 2132->2315.
+- **MT-10: session_outcome_tracker.py BUILT**: Prompt-to-outcome JSONL tracker. SessionOutcome data class, OutcomeStore (append-only JSONL), SESSION_STATE.md parser (planned + completed tasks), auto-grade (A+ through D based on completion/commits/tests), trend analysis with grade distribution. 43 tests.
+- **Auto-record integration**: `record_from_session_state()` reads SESSION_STATE.md + git log to auto-capture outcomes. `auto-record` CLI command for /cca-wrap integration. `parse_session_id()` + `count_session_commits()` helpers.
+- **MT-27 status updated**: MASTER_TASKS.md now shows all 5 phases COMPLETE (was stale at Phase 3).
+- **Tests**: 208 suites passing. +43 new tests. 4 commits.
 
 **Next (prioritized):**
-1. **MT-22 SUPERVISED TRIAL**: Run `./start_desktop_autoloop.sh --max-iterations 2` with Matthew watching. Validate full loop: resume -> activate -> send -> work -> wrap -> next iteration.
-2. **MT-22 enhancements**: Explore `claude://` URL scheme. Window title detection for multi-window safety. Accessibility permission auto-detection.
-3. **CI/CD pipeline verify**: Matthew S130 directive.
-4. **Session-level prompt-to-outcome tracker**: Lightweight JSONL (logged as todo, fits MT-10).
+1. **MT-22 SUPERVISED TRIAL**: Run `./start_desktop_autoloop.sh --max-iterations 2` with Matthew watching.
+2. **Wire outcome tracker into /cca-wrap**: Add `python3 session_outcome_tracker.py auto-record` call.
+3. **CI/CD pipeline verify**: Matthew S130 directive (gh CLI needed).
+4. **MT-10 Phase 3B**: Findings re-surfacing if not already covered by resurfacer.py.
+
+---
+
+## Previous State (Session 132 — 2026-03-23)
+
+**What was done this session (S132):**
+- MT-22 Phases 1-3 COMPLETE (desktop_automator.py, desktop_autoloop.py, launcher). MT-27 Phase 4 COMPLETE.
+- Tests: 207 suites passing. +122 new tests. 8 commits.
 
 ---
 
