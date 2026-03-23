@@ -319,5 +319,111 @@ class TestReportDiffer(unittest.TestCase):
         self.assertIn("No changes", text)
 
 
+class TestEdgeCases(unittest.TestCase):
+    """Hardening tests for report differ edge cases."""
+
+    def test_empty_modules_both(self):
+        """Handles both reports having no modules."""
+        old = {"date": "2026-03-20", "session": 120, "summary": {}, "modules": []}
+        new = {"date": "2026-03-22", "session": 122, "summary": {}, "modules": []}
+        differ = ReportDiffer()
+        result = differ.diff_reports(old, new)
+        self.assertEqual(result["module_changes"], [])
+
+    def test_missing_summary_fields(self):
+        """Handles reports with missing summary fields gracefully."""
+        old = {"date": "2026-03-20", "session": 120, "summary": {"total_tests": 100}}
+        new = {"date": "2026-03-22", "session": 122, "summary": {"total_tests": 200}}
+        differ = ReportDiffer()
+        result = differ.diff_reports(old, new)
+        self.assertEqual(result["summary_changes"]["total_tests"]["delta"], 100)
+        # Missing fields default to 0
+        self.assertEqual(result["summary_changes"]["git_commits"]["delta"], 0)
+
+    def test_no_mt_keys(self):
+        """Handles reports with no master task lists."""
+        old = {"date": "2026-03-20", "session": 120, "summary": {}}
+        new = {"date": "2026-03-22", "session": 122, "summary": {}}
+        differ = ReportDiffer()
+        result = differ.diff_reports(old, new)
+        self.assertEqual(result["mt_changes"]["newly_completed"], [])
+        self.assertEqual(result["mt_changes"]["newly_active"], [])
+
+    def test_no_kalshi_key(self):
+        """Handles reports with no kalshi_analytics key at all."""
+        old = {"date": "2026-03-20", "session": 120, "summary": {}}
+        new = {"date": "2026-03-22", "session": 122, "summary": {}}
+        differ = ReportDiffer()
+        result = differ.diff_reports(old, new)
+        k = result["kalshi_changes"]
+        self.assertIsNone(k["pnl_delta"])
+        self.assertFalse(k["became_available"])
+
+    def test_no_learning_key(self):
+        """Handles reports with no learning_intelligence key at all."""
+        old = {"date": "2026-03-20", "session": 120, "summary": {}}
+        new = {"date": "2026-03-22", "session": 122, "summary": {}}
+        differ = ReportDiffer()
+        result = differ.diff_reports(old, new)
+        lc = result["learning_changes"]
+        self.assertIsNone(lc["apf_delta"])
+
+    def test_module_removed(self):
+        """Module present in old but not new shows negative delta."""
+        old = {"date": "2026-03-20", "session": 120, "summary": {},
+               "modules": [{"name": "Old Module", "tests": 50, "loc": 300}]}
+        new = {"date": "2026-03-22", "session": 122, "summary": {}, "modules": []}
+        differ = ReportDiffer()
+        result = differ.diff_reports(old, new)
+        om = next((c for c in result["module_changes"] if c["name"] == "Old Module"), None)
+        self.assertIsNotNone(om)
+        self.assertEqual(om["tests_delta"], -50)
+        self.assertFalse(om["is_new"])
+
+    def test_both_kalshi_unavailable(self):
+        """Both reports with Kalshi unavailable."""
+        old = {"date": "2026-03-20", "session": 120, "summary": {},
+               "kalshi_analytics": {"available": False, "summary": {}}}
+        new = {"date": "2026-03-22", "session": 122, "summary": {},
+               "kalshi_analytics": {"available": False, "summary": {}}}
+        differ = ReportDiffer()
+        result = differ.diff_reports(old, new)
+        self.assertIsNone(result["kalshi_changes"]["pnl_delta"])
+        self.assertFalse(result["kalshi_changes"]["became_available"])
+
+    def test_format_summary_with_new_module(self):
+        """Format summary shows [NEW] prefix for new modules."""
+        old = {"date": "2026-03-20", "session": 120, "summary": {}, "modules": []}
+        new = {"date": "2026-03-22", "session": 122, "summary": {},
+               "modules": [{"name": "Fresh", "tests": 25, "loc": 100}]}
+        differ = ReportDiffer()
+        diff = differ.diff_reports(old, new)
+        text = differ.format_summary(diff)
+        self.assertIn("[NEW]", text)
+        self.assertIn("Fresh", text)
+
+    def test_diff_from_files_corrupt(self):
+        """Returns None if a file is corrupt JSON."""
+        import tempfile
+        f = tempfile.NamedTemporaryFile(suffix=".json", mode="w", delete=False)
+        f.write("not json{{{")
+        f.close()
+        differ = ReportDiffer()
+        result = differ.diff_from_files(f.name, f.name)
+        self.assertIsNone(result)
+        os.unlink(f.name)
+
+    def test_format_summary_kalshi_became_available(self):
+        """Format summary notes when Kalshi data becomes available."""
+        old = {"date": "2026-03-20", "session": 120, "summary": {},
+               "kalshi_analytics": {"available": False, "summary": {}}}
+        new = {"date": "2026-03-22", "session": 122, "summary": {},
+               "kalshi_analytics": {"available": True, "summary": {"total_pnl_usd": 10, "win_rate_pct": 60}}}
+        differ = ReportDiffer()
+        diff = differ.diff_reports(old, new)
+        text = differ.format_summary(diff)
+        self.assertIn("newly available", text)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -187,13 +187,16 @@ class ReportDiffer:
 
         # Check if anything changed
         sc = diff["summary_changes"]
-        has_changes = any(v["delta"] != 0 for v in sc.values())
+        has_summary = any(v["delta"] != 0 for v in sc.values())
         mt_c = diff["mt_changes"]
         has_mt = bool(mt_c["newly_completed"] or mt_c["newly_active"])
+        has_modules = any(m["tests_delta"] != 0 or m["loc_delta"] != 0 for m in diff["module_changes"])
         kc = diff["kalshi_changes"]
+        has_kalshi = (kc.get("pnl_delta") is not None and kc.get("pnl_delta", 0) != 0) or kc.get("became_available", False)
         lc = diff["learning_changes"]
+        has_learning = lc.get("apf_delta") is not None and lc.get("apf_delta", 0) != 0
 
-        if not has_changes and not has_mt:
+        if not has_summary and not has_mt and not has_modules and not has_kalshi and not has_learning:
             lines.append("No changes detected.")
             return "\n".join(lines)
 
