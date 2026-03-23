@@ -662,6 +662,20 @@
         #text(size: 7.5pt, fill: dark)[#mod.next]
       ]
     }
+
+    // Why it matters — ELI5 blurb
+    #if mod.keys().contains("why_it_matters") and mod.why_it_matters != "" {
+      v(2mm)
+      box(
+        fill: rgb("#f8f7f4"),
+        radius: 3pt, inset: (x: 6pt, y: 4pt), width: 100%,
+        stroke: (left: 2pt + rgb("#d4c5a0"), rest: none),
+      )[
+        #text(size: 6.5pt, fill: rgb("#8b7e66"), weight: "semibold", tracking: 0.5pt)[WHY THIS MATTERS]
+        #h(4pt)
+        #text(size: 7.5pt, fill: rgb("#5c5344"))[#mod.why_it_matters]
+      ]
+    }
   ]
   v(3mm)
 }
@@ -785,6 +799,20 @@
           weight: "semibold",
         )[#if task.category == "blocked" [BLOCKED: ] else [NEXT: ]]
         #text(size: 7.5pt, fill: dark)[#task.needs]
+      ]
+    }
+
+    // Why it matters — ELI5 blurb for quick understanding
+    #if task.keys().contains("why_it_matters") and task.why_it_matters != "" {
+      v(2mm)
+      box(
+        fill: rgb("#f8f7f4"),
+        radius: 3pt, inset: (x: 6pt, y: 4pt), width: 100%,
+        stroke: (left: 2pt + rgb("#d4c5a0"), rest: none),
+      )[
+        #text(size: 6.5pt, fill: rgb("#8b7e66"), weight: "semibold", tracking: 0.5pt)[WHY THIS MATTERS]
+        #h(4pt)
+        #text(size: 7.5pt, fill: rgb("#5c5344"))[#task.why_it_matters]
       ]
     }
   ]

@@ -486,6 +486,43 @@ class TestCollectPriorityQueue(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
+# WHY_IT_MATTERS blurbs
+# ---------------------------------------------------------------------------
+
+
+class TestWhyItMatters(unittest.TestCase):
+    """WHY_IT_MATTERS ELI5 blurbs are injected into data."""
+
+    def test_known_module_has_blurb(self):
+        c = CCADataCollector(project_root="/tmp")
+        blurb = c.get_why_it_matters("Memory System")
+        self.assertTrue(len(blurb) > 0)
+        self.assertIn("remember", blurb.lower())
+
+    def test_known_mt_has_blurb(self):
+        c = CCADataCollector(project_root="/tmp")
+        blurb = c.get_why_it_matters("MT-0")
+        self.assertTrue(len(blurb) > 0)
+
+    def test_unknown_key_returns_empty(self):
+        c = CCADataCollector(project_root="/tmp")
+        blurb = c.get_why_it_matters("MT-999")
+        self.assertEqual(blurb, "")
+
+    def test_all_modules_have_blurbs(self):
+        c = CCADataCollector(project_root="/tmp")
+        for mod_def in c.MODULE_DEFINITIONS:
+            blurb = c.get_why_it_matters(mod_def["name"])
+            self.assertTrue(len(blurb) > 0, f"Missing blurb for {mod_def['name']}")
+
+    def test_blurbs_are_short(self):
+        """ELI5 blurbs should be concise (under 300 chars)."""
+        c = CCADataCollector(project_root="/tmp")
+        for key, blurb in c.WHY_IT_MATTERS.items():
+            self.assertLess(len(blurb), 300, f"Blurb too long for {key}: {len(blurb)} chars")
+
+
+# ---------------------------------------------------------------------------
 # collect_daily_diff
 # ---------------------------------------------------------------------------
 

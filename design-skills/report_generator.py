@@ -248,6 +248,7 @@ class CCADataCollector:
                 "description": mod_def["description"],
                 "components": mod_def["components"],
                 "next": next_action,
+                "why_it_matters": self.get_why_it_matters(mod_def["name"]),
             })
 
         return modules
@@ -387,6 +388,9 @@ class CCADataCollector:
                 "source": source,
                 "test_count": test_count,
             }
+
+            # Add ELI5 blurb if available
+            task["why_it_matters"] = self.get_why_it_matters(task_id)
 
             if category == "complete":
                 complete.append(task)
@@ -808,6 +812,44 @@ class CCADataCollector:
         {"decision": "Whitelist-first phishing detection", "rationale": "Zero false positives on legitimate domains"},
         {"decision": "Typst over WeasyPrint", "rationale": "Single binary, millisecond compile, JSON-native"},
     ]
+
+    # ── Why It Matters — ELI5 blurbs for Matthew ──────────────────────
+
+    # Maps MT IDs and module names to plain-English utility blurbs.
+    # These appear in the report so Matthew can quickly grasp why something
+    # matters to him personally, without reading technical details.
+    WHY_IT_MATTERS = {
+        # Modules (frontiers)
+        "Memory System": "Means Claude remembers your preferences and past decisions across sessions — no more re-explaining context every time you start a new chat.",
+        "Spec System": "Forces Claude to plan before coding. You get a reviewable blueprint (requirements, design, tasks) instead of spaghetti code from vague prompts.",
+        "Context Monitor": "Warns you when Claude's memory is getting full so it doesn't silently start forgetting instructions mid-session. Prevents the 'why did it ignore my rules?' problem.",
+        "Agent Guard": "Stops Claude from accidentally deleting files, exposing API keys, or breaking your computer when running autonomously overnight.",
+        "Usage Dashboard": "Shows you exactly how many tokens and dollars each session costs, so you can spot waste and stay within your Max subscription limits.",
+        "Reddit Intelligence": "Automatically finds the best new tools, tips, and techniques from Reddit so you don't have to scroll through hundreds of posts yourself.",
+        "Self-Learning": "Makes your Kalshi bot smarter over time by analyzing what worked and what didn't. The bot learns from its own wins and losses instead of repeating mistakes.",
+        "Design Skills": "Generates professional PDF reports and charts automatically — no manual formatting. One command gives you a polished status overview you could show anyone.",
+        "Research": "R&D sandbox for experimental features. Things get prototyped here before becoming real modules — keeps the main codebase clean.",
+        # Master Tasks
+        "MT-0": "The single most important task: making the Kalshi bot learn from its own trading results. Every dollar of improvement here compounds over time.",
+        "MT-7": "Finds patterns in how Claude wastes tokens (retries, unnecessary reads) so sessions run faster and cheaper.",
+        "MT-9": "Automates Reddit scanning so high-value posts get flagged without you having to check manually.",
+        "MT-10": "The 'get smarter each session' engine. Tracks what strategies work and surfaces the best ones automatically.",
+        "MT-12": "Finds relevant academic papers (trading math, AI research) and summarizes them so you get the insights without reading 30-page PDFs.",
+        "MT-17": "One-command professional reports. Instead of explaining project status verbally, just generate a PDF.",
+        "MT-20": "An automated code reviewer that catches bugs, tech debt, and design issues before they become problems. Like having a senior engineer on call 24/7.",
+        "MT-21": "Lets multiple Claude sessions work in parallel on different tasks — like having a small dev team instead of one assistant.",
+        "MT-22": "Makes the whole system run without you. Sessions start, do work, wrap up, and hand off to the next session automatically.",
+        "MT-26": "Financial intelligence tools for the Kalshi bot: regime detection, calibration analysis, order flow. Directly improves bet quality.",
+        "MT-27": "Smarter Reddit scanning with less noise. Better signal-to-noise means fewer irrelevant posts cluttering your review.",
+        "MT-28": "Self-learning v2: the bot doesn't just track results, it evolves its own principles about what works. Adaptive strategy, not static rules.",
+        "MT-30": "Auto-start and manage all your Claude sessions from one command. No more manually opening 3 terminal windows.",
+        "MT-31": "Use Google's Gemini Pro for visual/design tasks where it excels, while Claude handles the code. Best of both models.",
+        "MT-32": "Makes all visual output (reports, charts, dashboards) look professional. Design quality you'd expect from a real product.",
+    }
+
+    def get_why_it_matters(self, key):
+        """Get the ELI5 blurb for a module or MT, or empty string."""
+        return self.WHY_IT_MATTERS.get(key, "")
 
     # ── Executive summary ───────────────────────────────────────────────
 
