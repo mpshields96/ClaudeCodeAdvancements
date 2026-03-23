@@ -805,7 +805,16 @@ developer colleague.
 6. Supervised 1-hour trial #3
 7. Gate: 3/3 trials clean → approved for autonomous use
 
-**Status:** GATE PASSED (S99). 3/3 supervised trials complete (S96 PASS, S97 PASS, S99 PASS). Approved for autonomous 1-hour segments. Phase 1 (S94), Phase 2 notification (S95), Phase 3 validation (S99) all COMPLETE. Base value: 9. Last touched: S99.
+**Status:** GATE PASSED (S99) for CLI auto-loop. Now pivoting to DESKTOP ELECTRON APP automation (Matthew S130/S132 directive — #1 priority, equal to YoYo).
+
+**NEW SCOPE (S131-132): Desktop Electron App Automation**
+- S131: Research COMPLETE — Claude.app confirmed Electron, AppleScript viable, 5-phase plan
+- S132 Phase 1 COMPLETE: `desktop_automator.py` — AppleScript control (activate, send, close, CPU idle, preflight). 66 tests.
+- S132 Phase 2 COMPLETE: `desktop_autoloop.py` — Self-sustaining loop (ResumeWatcher, state, model selection). 49 tests.
+- S132 Phase 3 COMPLETE: `start_desktop_autoloop.sh` launcher + `DESKTOP_AUTOLOOP_SETUP.md` setup guide.
+- S132: Live preflight VALIDATED — all checks PASS. CPU idle detection working.
+- **NEXT**: Supervised trial (Matthew watches 2 iterations). Then 3/3 clean runs to approve.
+- Base value: 10. Last touched: S132.
 
 ---
 

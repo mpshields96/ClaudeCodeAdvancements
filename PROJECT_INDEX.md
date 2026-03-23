@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-22 (Session 122)
+# Last updated: 2026-03-23 (Session 132)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -39,7 +39,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) | 1299 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~8205 tests (~204 suites). All must pass before any work.**
+**Total: ~8320 tests (~207 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -155,6 +155,10 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `cca_autoloop.py` — MT-30 Phase 6+8: CCA auto-loop — reads SESSION_RESUME.md, spawns claude, loops. Production hardened: pre-flight checks, rate limit handling, Terminal.app dialog handling, stale resume detection (116 tests, S126/S128)
 - `start_autoloop.sh` — One-command auto-loop launcher (tmux or foreground, S126)
 - `session_daemon_cca_only.json` — CCA-only daemon config for auto-loop (1 session max, S126)
+- `desktop_automator.py` — MT-22: AppleScript-based Claude.app control (activate, send, close, CPU idle detection, preflight). 66 tests (S132)
+- `desktop_autoloop.py` — MT-22: Self-sustaining desktop loop orchestrator (resume watcher, state tracking, model selection). 49 tests (S132)
+- `start_desktop_autoloop.sh` — MT-22: One-command desktop auto-loop launcher (S132)
+- `DESKTOP_AUTOLOOP_SETUP.md` — MT-22: Setup guide (permissions, quick start, troubleshooting)
 
 **research/** — R&D and tools
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)

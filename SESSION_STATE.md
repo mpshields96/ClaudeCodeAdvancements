@@ -3,22 +3,31 @@
 
 ---
 
-## Current State (as of Session 131 — 2026-03-23)
+## Current State (as of Session 132 — 2026-03-23)
 
-**Phase:** Session 131 IN PROGRESS. Autonomous work — priority picker update + hardcoded metrics fix + MT-22 research.
+**Phase:** Session 132 IN PROGRESS. MT-22 Desktop Electron App Automation — building the self-sustaining CCA loop for Claude.app.
 
-**What was done this session (S131):**
-- **Priority picker S130 reorder COMPLETE**: Added 6 missing MTs (MT-10, MT-9, MT-11, MT-14, MT-7), reactivated MT-22 as "Desktop Electron app automation" (new scope, base_value=10), bumped MT-27 to crown jewel (5->8). 9 new tests. Crown jewels now dominate rankings.
-- **Hardcoded metrics FIXED (54/54)**: Built centralized `metric_config.py` + `metric_defaults.json`. Wired into all 12 self-learning modules: strategy_health_scorer, trade_reflector, principle_registry, detectors, reflect, improver, predictive_recommender, signal_pipeline, overnight_detector, regime_detector, calibration_bias, trace_analyzer, paper_scanner. 26 new tests for config system. All configurable via `~/.cca-metrics.json`. Zero regressions.
-- **MT-22 desktop research COMPLETE**: Claude.app confirmed Electron. AppleScript keystroke emulation is viable MVP. 5-phase implementation plan in `MT22_DESKTOP_RESEARCH.md`. URL scheme `claude://` registered but undocumented.
-- **Kalshi comms**: Sent status update to cross-chat queue. Metric config system benefits Kalshi bot directly.
-- **Tests**: 205 suites passing. +35 new tests. 6 commits.
+**What was done this session (S132):**
+- **MT-22 Phase 1 COMPLETE**: `desktop_automator.py` — AppleScript-based Claude.app control. activate_claude(), send_prompt() (clipboard injection), wait_for_response(), close_window(), new_conversation(), preflight(), run_loop_iteration(). Full JSONL audit trail. Safety: keystrokes only sent when Claude verified as frontmost. 58 tests.
+- **MT-22 Phase 2 COMPLETE**: `desktop_autoloop.py` — Self-sustaining loop orchestrator. ResumeWatcher (mtime-based SESSION_RESUME.md change detection = session wrapped signal). DesktopLoopState (crash tracking, short session detection, auto-stop). DesktopAutoLoop (read resume -> activate -> new chat -> send -> watch -> repeat). Model selection (round-robin/opus/sonnet). 49 tests.
+- **MT-22 Phase 3 COMPLETE**: `start_desktop_autoloop.sh` launcher + `DESKTOP_AUTOLOOP_SETUP.md` setup guide. Permissions, quick start, troubleshooting.
+- **MT-22 CPU idle detection**: `get_claude_cpu_usage()` + `is_claude_idle()` for supplementary response monitoring. Periodic CPU state logging during wait. 8 new tests.
+- **Live preflight VALIDATED**: All 4 checks PASS on real system. Claude.app running, 1 window, CPU 0% when idle.
+- **Tests**: 207 suites passing. +115 new tests. 5 commits.
 
 **Next (prioritized):**
-1. **LIVE SUPERVISED DRY RUN** (CRITICAL from S129): Run `python3 cca_autoloop.py preflight --desktop` first. Then follow AUTOLOOP_SETUP.md. Needs Matthew present.
-2. **MT-22 Phase 1**: Test AppleScript with live Claude.app, explore `claude://` URL scheme, measure timing.
-3. **Session-level prompt-to-outcome tracker**: Lightweight JSONL (logged as todo, fits MT-10/MT-28).
-4. **CI/CD pipeline verify**: Matthew S130 directive — verify GitHub Actions works or fix it.
+1. **MT-22 SUPERVISED TRIAL**: Run `./start_desktop_autoloop.sh --max-iterations 2` with Matthew watching. Validate full loop: resume -> activate -> send -> work -> wrap -> next iteration.
+2. **MT-22 enhancements**: Explore `claude://` URL scheme as cleaner alternative to keystrokes. Add window title detection for multi-window safety.
+3. **MT-27 Phase 4**: Improve NEEDLE precision (reduce false positives from broad keywords).
+4. **CI/CD pipeline verify**: Matthew S130 directive.
+
+---
+
+## Previous State (Session 131 — 2026-03-23)
+
+**What was done this session (S131):**
+- Priority picker S130 reorder COMPLETE. Hardcoded metrics FIXED (54/54). MT-22 desktop research COMPLETE.
+- Tests: 205 suites passing. +35 new tests. 6 commits.
 
 ---
 
