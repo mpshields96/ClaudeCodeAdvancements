@@ -540,5 +540,129 @@ class TestCCAStatisticalCharts(unittest.TestCase):
         self.assertIn("module_composition", charts)
 
 
+class TestTestDistributionChart(unittest.TestCase):
+    """Tests for per-file test distribution HistogramChart (MT-32)."""
+
+    def setUp(self):
+        from report_charts import ReportChartGenerator
+        self.gen = ReportChartGenerator()
+
+    def test_returns_svg(self):
+        """test_distribution returns valid SVG with test file data."""
+        data = {"test_file_counts": [5, 12, 23, 8, 45, 15, 3, 30, 18, 7]}
+        svg = self.gen.test_distribution(data)
+        self.assertIn("<svg", svg)
+        self.assertIn("</svg>", svg)
+
+    def test_has_title(self):
+        data = {"test_file_counts": [5, 12, 23, 8, 45, 15]}
+        svg = self.gen.test_distribution(data)
+        self.assertIn("Test Distribution", svg)
+
+    def test_empty_data(self):
+        """Empty test_file_counts returns No data chart."""
+        svg = self.gen.test_distribution({"test_file_counts": []})
+        self.assertIn("No data", svg)
+
+    def test_missing_key(self):
+        """Missing test_file_counts key returns No data chart."""
+        svg = self.gen.test_distribution({})
+        self.assertIn("No data", svg)
+
+    def test_single_file(self):
+        """Single test file should still produce valid SVG."""
+        data = {"test_file_counts": [42]}
+        svg = self.gen.test_distribution(data)
+        self.assertIn("<svg", svg)
+
+    def test_all_same_count(self):
+        """All files with same test count should still render."""
+        data = {"test_file_counts": [10, 10, 10, 10, 10]}
+        svg = self.gen.test_distribution(data)
+        self.assertIn("<svg", svg)
+
+    def test_wide_range(self):
+        """Test files with widely varying counts (1 to 100+)."""
+        data = {"test_file_counts": [1, 2, 3, 5, 8, 15, 25, 42, 73, 120]}
+        svg = self.gen.test_distribution(data)
+        self.assertIn("<svg", svg)
+
+    def test_generate_all_includes_test_distribution(self):
+        """generate_all includes test_distribution when data available."""
+        from report_charts import ReportChartGenerator
+        gen = ReportChartGenerator()
+        data = {
+            "modules": [
+                {"name": "M1", "tests": 100, "loc": 500},
+            ],
+            "summary": {"source_loc": 500, "test_loc": 300},
+            "intelligence": {"findings_total": 0},
+            "master_tasks_complete": [],
+            "master_tasks_active": [],
+            "master_tasks_pending": [],
+            "frontiers": [],
+            "test_file_counts": [5, 12, 23, 8],
+        }
+        charts = gen.generate_all(data)
+        self.assertIn("test_distribution", charts)
+
+    def test_generate_all_skips_when_no_data(self):
+        """generate_all skips test_distribution when no test_file_counts."""
+        from report_charts import ReportChartGenerator
+        gen = ReportChartGenerator()
+        data = {
+            "modules": [
+                {"name": "M1", "tests": 100, "loc": 500},
+            ],
+            "summary": {"source_loc": 500, "test_loc": 300},
+            "intelligence": {"findings_total": 0},
+            "master_tasks_complete": [],
+            "master_tasks_active": [],
+            "master_tasks_pending": [],
+            "frontiers": [],
+        }
+        charts = gen.generate_all(data)
+        self.assertNotIn("test_distribution", charts)
+
+
+class TestCollectTestDistribution(unittest.TestCase):
+    """Tests for CCADataCollector.collect_test_distribution()."""
+
+    def test_returns_list_of_ints(self):
+        """collect_test_distribution returns a list of integer counts."""
+        from report_generator import CCADataCollector
+        collector = CCADataCollector()
+        counts = collector.collect_test_distribution()
+        self.assertIsInstance(counts, list)
+        for c in counts:
+            self.assertIsInstance(c, int)
+            self.assertGreater(c, 0)
+
+    def test_finds_real_test_files(self):
+        """Should find test files in the actual CCA project."""
+        from report_generator import CCADataCollector
+        # Use actual project root
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        collector = CCADataCollector(project_root)
+        counts = collector.collect_test_distribution()
+        # CCA has 200+ test files, so should find many
+        self.assertGreater(len(counts), 50)
+
+    def test_nonexistent_project(self):
+        """Returns empty list for nonexistent project."""
+        from report_generator import CCADataCollector
+        collector = CCADataCollector("/tmp/nonexistent_project_xyz")
+        counts = collector.collect_test_distribution()
+        self.assertEqual(counts, [])
+
+    def test_counts_are_positive(self):
+        """All counts should be positive (files with 0 tests excluded)."""
+        from report_generator import CCADataCollector
+        collector = CCADataCollector()
+        counts = collector.collect_test_distribution()
+        for c in counts:
+            self.assertGreater(c, 0)
+
+
 if __name__ == "__main__":
     unittest.main()

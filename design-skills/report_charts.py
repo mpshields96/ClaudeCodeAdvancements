@@ -208,6 +208,25 @@ class ReportChartGenerator:
         )
         return render_svg(chart)
 
+    def test_distribution(self, data):
+        """HistogramChart: distribution of test counts per file.
+
+        Shows how tests are spread across files — reveals whether testing
+        is concentrated in a few mega-files or distributed evenly.
+        """
+        counts = data.get("test_file_counts", [])
+        if not counts:
+            return self._empty_chart("Test Distribution per File")
+
+        chart = HistogramChart(
+            values=counts,
+            title="Test Distribution per File",
+            x_label="Tests per File",
+            y_label="Number of Files",
+            bins=10,
+        )
+        return render_svg(chart)
+
     # ── Kalshi financial charts (MT-33) ─────────────────────────────────
 
     def kalshi_cumulative_pnl(self, data):
@@ -397,6 +416,9 @@ class ReportChartGenerator:
             "test_density_scatter": self.test_density_scatter(data),
             "module_composition": self.module_composition(data),
         }
+        # Per-file test distribution (MT-32) — only if data available
+        if data.get("test_file_counts"):
+            charts["test_distribution"] = self.test_distribution(data)
         # Kalshi financial charts (MT-33) — only if data available
         if data.get("kalshi_analytics", {}).get("available"):
             charts.update({

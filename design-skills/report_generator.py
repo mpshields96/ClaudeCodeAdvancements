@@ -872,6 +872,34 @@ class CCADataCollector:
             f"and professional design output. Zero external Python dependencies."
         )
 
+    # ── Per-file test distribution (MT-32) ─────────────────────────────
+
+    def collect_test_distribution(self):
+        """Count test methods per test file across the entire project.
+
+        Returns a list of positive integers — one per test file, each being
+        the number of `def test_` methods found in that file. Files with zero
+        test methods are excluded.
+        """
+        counts = []
+        root = Path(self.project_root)
+        if not root.is_dir():
+            return counts
+        for test_file in sorted(root.rglob("test_*.py")):
+            # Skip .claude/ and .planning/ directories
+            parts = test_file.parts
+            if ".claude" in parts or ".planning" in parts:
+                continue
+            try:
+                content = test_file.read_text(errors="replace")
+                n = sum(1 for line in content.splitlines()
+                        if line.strip().startswith("def test_"))
+                if n > 0:
+                    counts.append(n)
+            except (OSError, PermissionError):
+                continue
+        return counts
+
     # ── Main collection ─────────────────────────────────────────────────
 
     def collect_from_project(self, session=None):
@@ -1033,6 +1061,7 @@ class CCADataCollector:
             "criticisms": criticisms,
             "kalshi_analytics": kalshi_data,
             "learning_intelligence": learning_data,
+            "test_file_counts": self.collect_test_distribution(),
         }
 
 
