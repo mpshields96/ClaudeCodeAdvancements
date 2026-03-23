@@ -13,14 +13,16 @@
 - **BoxPlot** (chart type 19): Box-and-whisker distribution comparison. Median, Q1/Q3, whisker caps, 1.5*IQR outlier detection as open circles. Custom colors. 21 tests.
 - **HistogramChart** (chart type 20): Frequency distribution from raw values. Auto-binning via Sturges' rule or explicit bin count. Contiguous bars, bin edge labels. 25 tests.
 - **ViolinPlot** (chart type 21): KDE-based distribution shape with mirrored Gaussian kernel density, embedded Q1/Q3 dashed lines, bold median line. Silverman's bandwidth. Handles bimodal/uniform/degenerate. 23 tests.
-- **Tests**: 197 suites passing (was 194). +90 new tests (42+25+23). Consistency tests updated for all 4 new types.
-- **Commits**: 4 this session (3 chart commits + session state).
+- **MT-33 created**: Strategic Intelligence Report — transform /cca-report into Kalshi analytics + self-learning + research pipeline artifact. 6 pillars, multi-session. Matthew S121 directive.
+- **MT-34 logged**: Medical AI Tool (OpenEvidence replacement for PGY-3 Psychiatry). IDEA stage — Matthew refining concept.
+- **Tests**: 197 suites, 7800 tests passing (was 194 suites). +90 new tests.
+- **Commits**: 6 this session.
 
 **Next (prioritized):**
-1. **MT-32 continued**: Wire new statistical charts into /cca-report where applicable (test distribution BoxPlot, session duration HistogramChart).
-2. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
-3. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot.
-4. **3-chat full loop**: polybot-auto must support task-driven work.
+1. **MT-33 Phase 1**: Deep dive research — map Kalshi DB schema, identify available metrics, design chart-to-data mappings.
+2. **MT-32 continued**: Wire statistical charts into /cca-report (test distribution BoxPlot, session duration HistogramChart).
+3. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
+4. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot.
 
 **What was done this session (S119):**
 - **Polybot queue hook E2E verified**: Simulated Kalshi main receiving CCA task assignments via cross_chat_queue.jsonl. Hook returns additionalContext with unread messages. Cleaned stale MT-0 task and test ping from km queue. The 3-chat coordination pipeline is functionally wired.

@@ -3,6 +3,29 @@
 
 ---
 
+## Session 121 — 2026-03-22
+
+**What changed:**
+- `design-skills/chart_generator.py`: Added 4 statistical chart types — ScatterPlot (multi-series, trend lines), BoxPlot (quartiles, outliers), HistogramChart (Sturges' auto-binning), ViolinPlot (Gaussian KDE, quartile lines). 21 chart types total.
+- `design-skills/tests/test_chart_scatter_box.py`: 42 tests for ScatterPlot + BoxPlot
+- `design-skills/tests/test_chart_histogram.py`: 25 tests for HistogramChart
+- `design-skills/tests/test_chart_violin.py`: 23 tests for ViolinPlot
+- `design-skills/tests/test_chart_consistency.py`: Updated for all 4 new types
+- `MASTER_TASKS.md`: MT-33 (Strategic Intelligence Report) and MT-34 (Medical AI Tool) created
+- Session orchestrator live test verified (register/plan/status working)
+
+**Why:**
+- MT-32 Pillar 4: statistical chart types needed for data analysis and future MT-33 financial analytics
+- MT-33: Matthew wants /cca-report to include Kalshi bot analytics, self-learning insights, research pipeline
+- MT-34: Matthew wants a provider-grade medical AI tool better than OpenEvidence (idea logged, not started)
+
+**Tests:** 7800/7800 passing (197 suites)
+
+**Lessons:**
+- Grid lines and trend lines both use stroke-dasharray — use specific patterns ("6,3" vs "3,3") to distinguish in tests
+
+---
+
 ## Session 119 — 2026-03-22
 
 **What changed:**
