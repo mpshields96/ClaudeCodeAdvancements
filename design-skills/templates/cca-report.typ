@@ -1015,6 +1015,99 @@
 #v(5mm)
 
 // ═══════════════════════════════════════════════════════════════════════════
+// KALSHI FINANCIAL ANALYTICS (MT-33)
+// ═══════════════════════════════════════════════════════════════════════════
+
+#if "kalshi_analytics" in data.keys() and data.kalshi_analytics.available {
+  pagebreak()
+  section-header("Financial Analytics — Kalshi Bot", accent: green)
+
+  // Summary stats row
+  let ka = data.kalshi_analytics.summary
+  grid(
+    columns: (1fr, 1fr, 1fr, 1fr),
+    column-gutter: 8pt,
+    metric("Live Trades", str(ka.total_live_trades), accent-color: blue),
+    metric("Win Rate", if ka.win_rate_pct != none { str(ka.win_rate_pct) + "%" } else { "N/A" }, accent-color: green),
+    metric("Total P&L", "$" + str(calc.round(ka.total_pnl_usd, digits: 2)), accent-color: if ka.total_pnl_usd >= 0 { green } else { red }),
+    metric("Settled", str(ka.settled_trades), accent-color: mid),
+  )
+
+  v(4mm)
+
+  // Charts — row 1: Cumulative P&L + Bankroll
+  if chart-dir != none {
+    grid(
+      columns: (1fr, 1fr),
+      column-gutter: 12pt,
+      embed-chart("kalshi_cumulative_pnl", width: 100%),
+      embed-chart("kalshi_bankroll", width: 100%),
+    )
+
+    v(4mm)
+
+    // Charts — row 2: Strategy Win Rate + Trade Volume
+    grid(
+      columns: (1fr, 1fr),
+      column-gutter: 12pt,
+      embed-chart("kalshi_strategy_winrate", width: 100%),
+      embed-chart("kalshi_trade_volume", width: 100%),
+    )
+
+    v(4mm)
+
+    // Charts — row 3: Daily Distribution + Strategy Box Plot
+    grid(
+      columns: (1fr, 1fr),
+      column-gutter: 12pt,
+      embed-chart("kalshi_daily_pnl_histogram", width: 100%),
+      embed-chart("kalshi_strategy_pnl_box", width: 100%),
+    )
+
+    v(4mm)
+
+    // Chart — row 4: Win Rate vs Profit scatter
+    embed-chart("kalshi_winrate_vs_profit", width: 60%)
+  }
+
+  v(4mm)
+
+  // Strategy breakdown table
+  if data.kalshi_analytics.strategies.len() > 0 {
+    v(2mm)
+    text(size: 10pt, weight: "bold", fill: dark)[Strategy Performance]
+    v(2mm)
+    table(
+      columns: (2fr, 0.8fr, 0.8fr, 0.8fr, 1fr, 1fr),
+      stroke: 0.3pt + faint,
+      fill: (_, row) => if row == 0 { black } else if calc.odd(row) { wash } else { white },
+      align: (left, center, center, center, center, right),
+      inset: 6pt,
+      text(fill: white, weight: "semibold", size: 7.5pt)[Strategy],
+      text(fill: white, weight: "semibold", size: 7.5pt)[Trades],
+      text(fill: white, weight: "semibold", size: 7.5pt)[Wins],
+      text(fill: white, weight: "semibold", size: 7.5pt)[Win %],
+      text(fill: white, weight: "semibold", size: 7.5pt)[Avg P&L],
+      text(fill: white, weight: "semibold", size: 7.5pt)[Total P&L],
+      ..for s in data.kalshi_analytics.strategies {
+        let avg-color = if s.avg_pnl_usd >= 0 { green } else { red }
+        let total-color = if s.total_pnl_usd >= 0 { green } else { red }
+        (
+          text(size: 8pt, weight: "semibold", fill: dark)[#s.strategy],
+          text(size: 8pt, fill: mid)[#str(s.trade_count)],
+          text(size: 8pt, fill: mid)[#str(s.wins)],
+          text(size: 8pt, fill: mid)[#str(s.win_rate_pct)%],
+          text(size: 8pt, fill: avg-color)[
+            \$#str(calc.round(s.avg_pnl_usd, digits: 2))],
+          text(size: 8pt, weight: "semibold", fill: total-color)[
+            \$#str(calc.round(s.total_pnl_usd, digits: 2))],
+        )
+      }
+    )
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // ARCHITECTURE DECISIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
