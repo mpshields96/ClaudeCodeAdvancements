@@ -11,11 +11,12 @@
 - **MT-33 Phase 6 COMPLETE**: `ReportSidecar` class in report_generator.py — saves JSON alongside every PDF, archives to `~/.cca-reports/{date}_S{session}.json`. Wired into main() pipeline automatically. `report_differ.py` (180 LOC) — structured diff between two report sidecars: test growth, LOC changes, MT transitions, Kalshi P&L, APF movement. `format_summary()` for human-readable trend text. 50 new tests (20 sidecar + 30 differ).
 - **MT-33 hardening COMPLETE**: Edge case tests across all 3 collectors. kalshi_data_collector: +9, learning_data_collector: +11, report_differ: +10. Fixed format_summary detection logic.
 - **MT-32 statistical charts**: 2 new CCA charts wired into /cca-report — `test_density_scatter` (ScatterPlot: tests vs LOC per module with trend line) and `module_composition` (StackedBarChart: source vs test LOC). Report now produces 9 base charts + conditional Kalshi/learning. 9 new tests.
+- **MT-32 Typst wiring**: Both new charts placed in Module Deep-Dives section (2-column grid). Report now shows 19 charts total (9 base + 7 Kalshi + 3 learning).
 - **Tests**: 201 suites, ~8058 tests passing. +188 new tests this session.
-- **Commits**: 6 this session.
+- **Commits**: 8 this session. Grade: A.
 
 **Next (prioritized):**
-1. **MT-32 continued**: Add charts to Typst template sections (currently generated but not placed in report layout).
+1. **MT-32 continued**: More CCA statistical charts (per-file test distribution HistogramChart needs per-file data collector).
 2. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
 3. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot.
 
