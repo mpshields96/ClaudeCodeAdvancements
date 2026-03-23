@@ -3,6 +3,28 @@
 
 ---
 
+## Session 129 — 2026-03-23
+
+**What changed:**
+- `reddit-intelligence/nuclear_fetcher.py`: MT-27 Phase 4 — split NEEDLE keywords into strong (always NEEDLE) and weak (need engagement signals: score >= 50 OR body >= 300 OR comments >= 15). Reduces false positives from broad keywords like "tool", "built", "made".
+- `cca_autoloop.py`: Added `parse_audit_log()` for JSONL audit log parsing, `format_status_report()` for rich status output, `run_preflight_checks()` for standalone prerequisite verification. New `status` and `preflight` CLI commands.
+- `AUTOLOOP_SETUP.md`: New file — step-by-step Accessibility permissions guide for macOS 15 Sequoia, preflight instructions, model strategy options.
+- `PROJECT_INDEX.md` + `ROADMAP.md`: Fixed stale test counts (usage-dashboard, reddit-intelligence, self-learning, design-skills, totals).
+- `priority_picker.py`: Updated MT-27 Phase 4 complete, current_session=129.
+- `MASTER_TASKS.md`: Updated MT-30 status with S129 additions.
+
+**Why:**
+- MT-27 Phase 4: NEEDLE precision was flagged as stagnating (10 sessions). Broad keywords were generating too many false positives in nuclear scans.
+- MT-30 enhancements: Matthew asked about Accessibility permissions for autoloop dry run. Added tooling to make the first dry run safe and well-documented.
+- Doc drift: Test counts had accumulated drift across multiple sessions.
+
+**Tests:** 8205/8205 passing (+55 new: 30 NEEDLE precision, 16 audit log, 9 preflight)
+
+**Lessons:**
+- None new this session — focused execution, no regressions.
+
+---
+
 ## Session 125 — 2026-03-23
 
 **What changed:**

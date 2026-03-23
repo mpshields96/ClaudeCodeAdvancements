@@ -5,7 +5,7 @@
 
 ## Current State (as of Session 129 — 2026-03-23)
 
-**Phase:** Session 129 IN PROGRESS. Solo session. Mixed: MT-27 Phase 4 + MT-30 enhancements + doc drift fixes.
+**Phase:** Session 129 COMPLETE. Solo session. MT-27 Phase 4 + MT-30 enhancements + doc drift fixes. Grade: A.
 
 **What was done this session (S129):**
 - **MT-27 Phase 4 COMPLETE**: NEEDLE classifier precision improvement. Split keywords into strong (always NEEDLE: claude.md, hook, mcp server, etc.) and weak (need engagement signals: tool, built, made, created, tips, etc.). Weak keywords require score >= 50 OR body >= 300 chars OR comments >= 15. +30 new tests.
@@ -15,7 +15,7 @@
 - **Doc drift fixed**: Corrected test counts in PROJECT_INDEX.md and ROADMAP.md (usage-dashboard 384→369, reddit-intelligence 408→432, self-learning 1779→1833, design-skills 630→1299, total→8205).
 - **Priority picker updated**: MT-27 Phase 4 complete, current_session=129.
 - **Tests**: ~204 suites, ~8205 tests passing. +55 new tests this session.
-- **Commits**: 5 this session.
+- **Commits**: 7 this session (including wrap).
 
 **Next (prioritized):**
 1. **LIVE SUPERVISED DRY RUN** (CRITICAL): Run `python3 cca_autoloop.py preflight --desktop` first. Then: close ALL CCA chats, grant Accessibility permissions (see AUTOLOOP_SETUP.md), run `./start_autoloop.sh --desktop`.
