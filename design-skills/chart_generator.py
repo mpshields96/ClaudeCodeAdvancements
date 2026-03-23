@@ -25,6 +25,7 @@ Chart types:
     FunnelChart       — conversion funnel (wide-to-narrow trapezoids, % labels)
     ScatterPlot       — XY scatter with optional trend lines, multiple series
     BoxPlot           — box-and-whisker for distribution comparison (median, IQR, outliers)
+    HistogramChart    — frequency distribution from raw values (auto-binning, Sturges' rule)
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -643,6 +644,32 @@ class BoxPlot:
     width: int = 500
     height: int = 400
     show_outliers: bool = True
+    color: str = ""
+
+
+@dataclass
+class HistogramChart:
+    """Histogram — frequency distribution from raw numeric values.
+
+    Automatically bins raw values into equal-width intervals and renders
+    vertical bars showing count per bin. Pairs naturally with BoxPlot for
+    distribution analysis.
+
+    Args:
+        values: [float, ...] — raw numeric values to bin
+        title: Chart title
+        x_label: X-axis label (what the values represent)
+        y_label: Y-axis label (default: "Frequency")
+        bins: Number of bins (default: auto based on Sturges' rule)
+        color: Bar color (default: CCA accent)
+    """
+    values: list  # [float, ...]
+    title: str = ""
+    x_label: str = ""
+    y_label: str = "Frequency"
+    width: int = 500
+    height: int = 400
+    bins: int = 0  # 0 = auto (Sturges' rule)
     color: str = ""
 
 
@@ -2698,6 +2725,119 @@ def _render_box_plot(chart: BoxPlot) -> str:
     return "".join(parts)
 
 
+def _render_histogram_chart(chart: HistogramChart) -> str:
+    """Render a histogram to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    vals = [float(v) for v in chart.values]
+    if not vals:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 50 if chart.x_label else 40
+    margin_left = 60 if chart.y_label else 50
+    margin_right = 20
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    base_color = chart.color if chart.color else CCA_COLORS["accent"]
+
+    # Determine bins
+    n_bins = chart.bins
+    if n_bins <= 0:
+        # Sturges' rule: ceil(1 + log2(n))
+        n_bins = max(1, int(math.ceil(1 + math.log2(len(vals)))) if len(vals) > 1 else 1)
+
+    v_min = min(vals)
+    v_max = max(vals)
+    v_range = v_max - v_min if v_max != v_min else 1
+    bin_width = v_range / n_bins
+
+    # Count values per bin
+    counts = [0] * n_bins
+    for v in vals:
+        idx = int((v - v_min) / bin_width)
+        if idx >= n_bins:
+            idx = n_bins - 1
+        counts[idx] = counts[idx] + 1
+
+    max_count = max(counts) if counts else 1
+
+    # Y scale
+    def sy(count):
+        return margin_top + plot_h - (count / max_count) * plot_h
+
+    # Axes
+    parts.append(f'<line x1="{margin_left}" y1="{margin_top + plot_h}" '
+                 f'x2="{margin_left + plot_w}" y2="{margin_top + plot_h}" '
+                 f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
+    parts.append(f'<line x1="{margin_left}" y1="{margin_top}" '
+                 f'x2="{margin_left}" y2="{margin_top + plot_h}" '
+                 f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
+
+    # Y-axis ticks (5 values)
+    for i in range(6):
+        val = max_count * i / 5
+        yp = sy(val)
+        label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(margin_left - 8, yp + 3, label_text,
+                           font_size=8, fill=CCA_COLORS["muted"], anchor="end"))
+        if i > 0:
+            parts.append(f'<line x1="{margin_left}" y1="{yp}" '
+                         f'x2="{margin_left + plot_w}" y2="{yp}" '
+                         f'stroke="{CCA_COLORS["border"]}" stroke-width="0.5" '
+                         f'stroke-dasharray="3,3"/>')
+
+    # Y-axis label
+    if chart.y_label:
+        parts.append(f'<text x="14" y="{margin_top + plot_h / 2}" '
+                     f'text-anchor="middle" font-size="9" '
+                     f'font-family="sans-serif" fill="{CCA_COLORS["muted"]}" '
+                     f'transform="rotate(-90, 14, {margin_top + plot_h / 2})">'
+                     f'{_escape(chart.y_label)}</text>')
+
+    # X-axis label
+    if chart.x_label:
+        parts.append(_text(margin_left + plot_w / 2, chart.height - 8,
+                           chart.x_label, font_size=9, fill=CCA_COLORS["muted"]))
+
+    # Bars (no gap — histogram bars are contiguous)
+    bar_w = plot_w / n_bins
+    for i, count in enumerate(counts):
+        if count == 0:
+            continue
+        bx = margin_left + i * bar_w
+        by = sy(count)
+        bh = margin_top + plot_h - by
+        parts.append(f'<rect x="{bx:.1f}" y="{by:.1f}" '
+                     f'width="{bar_w:.1f}" height="{bh:.1f}" '
+                     f'fill="{base_color}" fill-opacity="0.8" '
+                     f'stroke="{CCA_COLORS["background"]}" stroke-width="0.5"/>')
+
+    # X-axis tick labels (bin edges)
+    max_labels = min(n_bins + 1, 8)
+    step = max(1, (n_bins + 1) // max_labels)
+    for i in range(0, n_bins + 1, step):
+        val = v_min + i * bin_width
+        xp = margin_left + i * bar_w
+        label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(xp, margin_top + plot_h + 15, label_text,
+                           font_size=8, fill=CCA_COLORS["muted"]))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -2742,6 +2882,8 @@ def render_svg(chart) -> str:
         return _render_scatter_plot(chart)
     elif isinstance(chart, BoxPlot):
         return _render_box_plot(chart)
+    elif isinstance(chart, HistogramChart):
+        return _render_histogram_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 

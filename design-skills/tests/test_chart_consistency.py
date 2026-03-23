@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from chart_generator import (
     BarChart, HorizontalBarChart, LineChart, Sparkline, DonutChart,
     AreaChart, StackedBarChart, HeatmapChart, StackedAreaChart,
-    WaterfallChart, RadarChart, GaugeChart, ScatterPlot, BoxPlot,
+    WaterfallChart, RadarChart, GaugeChart, ScatterPlot, BoxPlot, HistogramChart,
     render_svg, CCA_COLORS,
 )
 
@@ -42,6 +42,7 @@ def _all_charts_with_data():
         StackedAreaChart(series=[("P", [1, 2]), ("Q", [2, 3])], labels=["A", "B"]),
         ScatterPlot(series=[{"name": "S1", "points": [(1, 2), (3, 4)]}]),
         BoxPlot(data=[("G1", [1, 2, 3, 4, 5])]),
+        HistogramChart(values=[1, 2, 3, 4, 5, 6, 7, 8]),
     ]
 
 
@@ -58,6 +59,7 @@ def _empty_charts():
         StackedAreaChart(series=[], labels=[]),
         ScatterPlot(series=[]),
         BoxPlot(data=[]),
+        HistogramChart(values=[]),
     ]
 
 
