@@ -20,6 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(__file__))
 from report_charts import ReportChartGenerator
+from kalshi_data_collector import KalshiDataCollector
 
 
 class CCADataCollector:
@@ -975,6 +976,10 @@ class CCADataCollector:
 
         criticisms = self.collect_criticisms(modules, mt_complete, mt_active, mt_pending)
 
+        # Kalshi financial analytics (MT-33)
+        kalshi_collector = KalshiDataCollector()
+        kalshi_data = kalshi_collector.collect_all()
+
         return {
             "title": "ClaudeCodeAdvancements",
             "subtitle": "Comprehensive Project Report",
@@ -1021,6 +1026,7 @@ class CCADataCollector:
             "priority_queue": priority_queue,
             "daily_diff": self.collect_daily_diff(),
             "criticisms": criticisms,
+            "kalshi_analytics": kalshi_data,
         }
 
 

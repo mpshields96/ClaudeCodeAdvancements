@@ -15,10 +15,15 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
 from chart_generator import (
+    AreaChart,
     BarChart,
+    BoxPlot,
     CCA_COLORS,
     DonutChart,
+    HistogramChart,
     HorizontalBarChart,
+    LineChart,
+    ScatterPlot,
     SERIES_PALETTE,
     StackedBarChart,
     TreemapChart,
@@ -163,11 +168,138 @@ class ReportChartGenerator:
         chart = TreemapChart(data=items, title="Module Size (LOC)")
         return render_svg(chart)
 
+    # ── Kalshi financial charts (MT-33) ─────────────────────────────────
+
+    def kalshi_cumulative_pnl(self, data):
+        """LineChart: cumulative P&L over time."""
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Cumulative P&L")
+        chart_data = kalshi.get("charts", {}).get("cumulative_pnl", {})
+        labels = chart_data.get("labels", [])
+        values = chart_data.get("values", [])
+        if not labels:
+            return self._empty_chart("Cumulative P&L")
+        # Thin labels for readability
+        thinned = self._thin_labels(labels, max_labels=12)
+        items = list(zip(thinned, values))
+        chart = LineChart(items, title="Cumulative P&L ($)", show_points=True,
+                          color=CCA_COLORS["success"])
+        return render_svg(chart)
+
+    def kalshi_strategy_winrate(self, data):
+        """HorizontalBarChart: win rate by strategy."""
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Strategy Win Rate")
+        chart_data = kalshi.get("charts", {}).get("strategy_winrate", {})
+        labels = chart_data.get("labels", [])
+        values = chart_data.get("values", [])
+        if not labels:
+            return self._empty_chart("Strategy Win Rate")
+        # Top 10 strategies only
+        items = list(zip(labels[:10], values[:10]))
+        chart = HorizontalBarChart(items, title="Win Rate by Strategy (%)",
+                                   show_values=True, color=CCA_COLORS["primary"])
+        return render_svg(chart)
+
+    def kalshi_daily_pnl_histogram(self, data):
+        """HistogramChart: daily P&L distribution."""
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Daily P&L Distribution")
+        chart_data = kalshi.get("charts", {}).get("daily_pnl_histogram", {})
+        values = chart_data.get("values", [])
+        if not values or len(values) < 3:
+            return self._empty_chart("Daily P&L Distribution")
+        chart = HistogramChart(values, title="Daily P&L Distribution ($)",
+                               color=CCA_COLORS["accent"])
+        return render_svg(chart)
+
+    def kalshi_strategy_pnl_box(self, data):
+        """BoxPlot: P&L distribution per strategy."""
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Strategy P&L Distribution")
+        chart_data = kalshi.get("charts", {}).get("strategy_pnl_distribution", {})
+        categories = chart_data.get("categories", [])
+        data_series = chart_data.get("data_series", [])
+        if not categories:
+            return self._empty_chart("Strategy P&L Distribution")
+        # Top 8 strategies with most data points
+        paired = list(zip(categories, data_series))
+        paired.sort(key=lambda x: len(x[1]), reverse=True)
+        paired = paired[:8]
+        box_data = [(p[0], p[1]) for p in paired]
+        chart = BoxPlot(box_data, title="P&L Distribution by Strategy ($)")
+        return render_svg(chart)
+
+    def kalshi_winrate_vs_profit(self, data):
+        """ScatterPlot: win rate vs avg profit per strategy."""
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Win Rate vs Avg Profit")
+        chart_data = kalshi.get("charts", {}).get("winrate_vs_profit", {})
+        series_list = chart_data.get("series", [])
+        if not series_list or not series_list[0].get("data"):
+            return self._empty_chart("Win Rate vs Avg Profit")
+        points = series_list[0]["data"]
+        series = [{"name": "Strategies",
+                    "data": [(p["x"], p["y"]) for p in points]}]
+        chart = ScatterPlot(series, title="Win Rate vs Avg Profit",
+                            x_label="Win Rate (%)", y_label="Avg P&L ($)")
+        return render_svg(chart)
+
+    def kalshi_trade_volume(self, data):
+        """DonutChart: trade count by strategy."""
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Trade Volume")
+        chart_data = kalshi.get("charts", {}).get("trade_volume", {})
+        labels = chart_data.get("labels", [])
+        values = chart_data.get("values", [])
+        if not labels:
+            return self._empty_chart("Trade Volume")
+        # Top 8, group rest as "Other"
+        if len(labels) > 8:
+            top_labels = labels[:8]
+            top_values = values[:8]
+            other_sum = sum(values[8:])
+            top_labels.append("Other")
+            top_values.append(other_sum)
+            labels, values = top_labels, top_values
+        palette = SERIES_PALETTE[:len(labels)]
+        items = [(l, v, c) for l, v, c in zip(labels, values, palette)]
+        chart = DonutChart(items, title="Trade Volume by Strategy")
+        return render_svg(chart)
+
+    def kalshi_bankroll(self, data):
+        """AreaChart: bankroll balance over time."""
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Bankroll History")
+        chart_data = kalshi.get("charts", {}).get("bankroll_timeline", {})
+        labels = chart_data.get("labels", [])
+        values = chart_data.get("values", [])
+        if not labels:
+            return self._empty_chart("Bankroll History")
+        thinned = self._thin_labels(labels, max_labels=12)
+        items = list(zip(thinned, values))
+        chart = AreaChart(items, title="Bankroll ($)", color=CCA_COLORS["primary"])
+        return render_svg(chart)
+
+    def _thin_labels(self, labels, max_labels=12):
+        """Thin labels for chart readability — show every Nth."""
+        if len(labels) <= max_labels:
+            return labels
+        step = max(1, len(labels) // max_labels)
+        return [l if i % step == 0 else "" for i, l in enumerate(labels)]
+
     # ── Batch operations ────────────────────────────────────────────────
 
     def generate_all(self, data):
         """Generate all charts, return dict of name -> SVG string."""
-        return {
+        charts = {
             "module_tests": self.module_tests_chart(data),
             "intelligence": self.intelligence_chart(data),
             "mt_status": self.mt_status_chart(data),
@@ -176,6 +308,18 @@ class ReportChartGenerator:
             "frontier_status": self.frontier_chart(data),
             "module_loc_treemap": self.module_loc_treemap(data),
         }
+        # Kalshi financial charts (MT-33) — only if data available
+        if data.get("kalshi_analytics", {}).get("available"):
+            charts.update({
+                "kalshi_cumulative_pnl": self.kalshi_cumulative_pnl(data),
+                "kalshi_strategy_winrate": self.kalshi_strategy_winrate(data),
+                "kalshi_daily_pnl_histogram": self.kalshi_daily_pnl_histogram(data),
+                "kalshi_strategy_pnl_box": self.kalshi_strategy_pnl_box(data),
+                "kalshi_winrate_vs_profit": self.kalshi_winrate_vs_profit(data),
+                "kalshi_trade_volume": self.kalshi_trade_volume(data),
+                "kalshi_bankroll": self.kalshi_bankroll(data),
+            })
+        return charts
 
     def save_all(self, data):
         """Generate all charts and save to output_dir. Returns dict of name -> path."""

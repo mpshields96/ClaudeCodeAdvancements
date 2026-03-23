@@ -334,5 +334,134 @@ class TestReportChartGeneratorEdgeCases(unittest.TestCase):
         self.assertIn("99999", svg)
 
 
+class TestKalshiCharts(unittest.TestCase):
+    """Test Kalshi financial chart generation (MT-33)."""
+
+    def setUp(self):
+        from report_charts import ReportChartGenerator
+        self.gen = ReportChartGenerator()
+        self.kalshi_data = {
+            "kalshi_analytics": {
+                "available": True,
+                "summary": {"total_live_trades": 100, "wins": 60, "losses": 40,
+                            "total_pnl_usd": 45.50, "win_rate_pct": 60.0},
+                "strategies": [
+                    {"strategy": "sniper_v1", "trade_count": 50, "wins": 45,
+                     "losses": 5, "win_rate_pct": 90.0, "total_pnl_usd": 35.0,
+                     "avg_pnl_usd": 0.70},
+                    {"strategy": "drift_v1", "trade_count": 30, "wins": 10,
+                     "losses": 20, "win_rate_pct": 33.3, "total_pnl_usd": -5.0,
+                     "avg_pnl_usd": -0.17},
+                    {"strategy": "imbalance_v1", "trade_count": 20, "wins": 5,
+                     "losses": 15, "win_rate_pct": 25.0, "total_pnl_usd": 15.5,
+                     "avg_pnl_usd": 0.78},
+                ],
+                "daily_pnl": [
+                    {"date": "2026-03-10", "pnl_usd": 5.0, "cumulative_pnl_usd": 5.0},
+                    {"date": "2026-03-11", "pnl_usd": -2.0, "cumulative_pnl_usd": 3.0},
+                    {"date": "2026-03-12", "pnl_usd": 8.0, "cumulative_pnl_usd": 11.0},
+                    {"date": "2026-03-13", "pnl_usd": -1.0, "cumulative_pnl_usd": 10.0},
+                ],
+                "bankroll": [
+                    {"timestamp": 1741564800, "datetime": "2026-03-10 00:00",
+                     "balance_usd": 100.0},
+                    {"timestamp": 1741651200, "datetime": "2026-03-11 00:00",
+                     "balance_usd": 105.0},
+                ],
+                "charts": {
+                    "cumulative_pnl": {
+                        "labels": ["2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13"],
+                        "values": [5.0, 3.0, 11.0, 10.0],
+                    },
+                    "strategy_winrate": {
+                        "labels": ["sniper_v1", "drift_v1", "imbalance_v1"],
+                        "values": [90.0, 33.3, 25.0],
+                    },
+                    "daily_pnl_histogram": {
+                        "values": [5.0, -2.0, 8.0, -1.0, 3.0, -4.0, 6.0],
+                    },
+                    "strategy_pnl_distribution": {
+                        "categories": ["sniper_v1", "drift_v1"],
+                        "data_series": [
+                            [0.5, 0.8, -0.1, 1.2, 0.3, 0.6, 0.9, -0.2, 0.4, 0.7],
+                            [-0.3, 0.2, -0.5, -0.1, 0.1, -0.4, 0.3, -0.6, -0.2, 0.0],
+                        ],
+                    },
+                    "winrate_vs_profit": {
+                        "series": [{"name": "Strategies", "data": [
+                            {"x": 90.0, "y": 0.70, "label": "sniper_v1"},
+                            {"x": 33.3, "y": -0.17, "label": "drift_v1"},
+                        ]}],
+                    },
+                    "trade_volume": {
+                        "labels": ["sniper_v1", "drift_v1", "imbalance_v1"],
+                        "values": [50, 30, 20],
+                    },
+                    "bankroll_timeline": {
+                        "labels": ["2026-03-10 00:00", "2026-03-11 00:00"],
+                        "values": [100.0, 105.0],
+                    },
+                },
+            },
+        }
+
+    def test_cumulative_pnl_returns_svg(self):
+        svg = self.gen.kalshi_cumulative_pnl(self.kalshi_data)
+        self.assertIn("<svg", svg)
+        self.assertIn("Cumulative P&amp;L", svg)  # & is XML-escaped in SVG
+
+    def test_strategy_winrate_returns_svg(self):
+        svg = self.gen.kalshi_strategy_winrate(self.kalshi_data)
+        self.assertIn("<svg", svg)
+        self.assertIn("sniper_v1", svg)
+
+    def test_daily_pnl_histogram_returns_svg(self):
+        svg = self.gen.kalshi_daily_pnl_histogram(self.kalshi_data)
+        self.assertIn("<svg", svg)
+
+    def test_strategy_pnl_box_returns_svg(self):
+        svg = self.gen.kalshi_strategy_pnl_box(self.kalshi_data)
+        self.assertIn("<svg", svg)
+        self.assertIn("sniper_v1", svg)
+
+    def test_winrate_vs_profit_returns_svg(self):
+        svg = self.gen.kalshi_winrate_vs_profit(self.kalshi_data)
+        self.assertIn("<svg", svg)
+
+    def test_trade_volume_returns_svg(self):
+        svg = self.gen.kalshi_trade_volume(self.kalshi_data)
+        self.assertIn("<svg", svg)
+
+    def test_bankroll_returns_svg(self):
+        svg = self.gen.kalshi_bankroll(self.kalshi_data)
+        self.assertIn("<svg", svg)
+
+    def test_generate_all_includes_kalshi(self):
+        charts = self.gen.generate_all(self.kalshi_data)
+        kalshi_keys = [k for k in charts if k.startswith("kalshi_")]
+        self.assertEqual(len(kalshi_keys), 7)
+
+    def test_generate_all_without_kalshi(self):
+        """Without kalshi_analytics, no kalshi charts generated."""
+        data = {"modules": [], "master_tasks_complete": [],
+                "master_tasks_active": [], "master_tasks_pending": [],
+                "intelligence": {"findings_total": 0},
+                "frontiers": [],
+                "summary": {"source_loc": 1000, "test_loc": 2000, "total_loc": 3000}}
+        charts = self.gen.generate_all(data)
+        kalshi_keys = [k for k in charts if k.startswith("kalshi_")]
+        self.assertEqual(len(kalshi_keys), 0)
+
+    def test_empty_kalshi_data(self):
+        data = {"kalshi_analytics": {"available": False}}
+        svg = self.gen.kalshi_cumulative_pnl(data)
+        self.assertIn("No data", svg)
+
+    def test_missing_kalshi_key(self):
+        data = {}
+        svg = self.gen.kalshi_cumulative_pnl(data)
+        self.assertIn("No data", svg)
+
+
 if __name__ == "__main__":
     unittest.main()

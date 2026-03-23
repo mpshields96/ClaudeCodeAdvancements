@@ -280,7 +280,7 @@ class TestIntegration(unittest.TestCase):
             chart_gen = ReportChartGenerator(output_dir=chart_dir)
             chart_paths = chart_gen.save_all(data)
 
-            self.assertEqual(len(chart_paths), 7)
+            self.assertGreaterEqual(len(chart_paths), 7)  # 7 base + up to 7 Kalshi charts
             for name, path in chart_paths.items():
                 self.assertTrue(os.path.exists(path), f"Chart {name} not found at {path}")
                 self.assertTrue(path.endswith(".svg"))
