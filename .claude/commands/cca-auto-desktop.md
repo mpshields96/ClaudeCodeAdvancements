@@ -70,6 +70,34 @@ python3 context-monitor/session_pacer.py reset --max-duration 60
 
 ---
 
+## Step 0.5 — Auto-launch check (3-chat readiness)
+
+Check if helper sessions need launching based on saved preference:
+
+```bash
+python3 session_orchestrator.py plan
+```
+
+This shows the current mode, target mode, and any launches needed. If launches
+are READY (not blocked by peak hours), execute them:
+
+```bash
+python3 session_orchestrator.py launch --task "next worker task from SESSION_STATE"
+```
+
+To set the default target mode (persists across sessions):
+```bash
+python3 session_orchestrator.py set-mode 3chat  # or 2chat, solo
+```
+
+**Rules:**
+- During peak hours, launches are blocked — solo mode only
+- Don't launch if Matthew said "no workers" or "solo" this session
+- Worker task should be the top independent task from priority_picker
+- If Kalshi main is already running externally, the orchestrator detects it
+
+---
+
 ## Step 1 — First Coordination Round
 
 Run the coordination round (see below). On the first round, also check if a daily
