@@ -1211,6 +1211,7 @@ python3 priority_picker.py json          # Export for programmatic use
 | 4 | MT-28 | Self-Learning v2 (Multi-Domain) | 7 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **8.0** | NEW (S103) | Research: cross-domain YoYo, Sentinel adaptive mutation |
 | 5 | MT-32 | Visual Excellence & Design Engineering | 8 | +0.0 | 5% | +0.0 | +0.0 | 0.0 | **8.0** | NEW (S118) | Phase 1: wire report_charts + nuclear scan. Absorbs MT-24/MT-25 |
 | 5 | MT-33 | Strategic Intelligence Report | 9 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **10.0** | NEW (S121) | Phase 1: deep dive research — data sources, metrics, chart mapping |
+| — | MT-34 | Medical AI (OpenEvidence replacement) | 6 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **6.0** | IDEA (S121) | BLOCKED: Matthew refining concept. Do not start. |
 | 6 | MT-24 | Visualization & Graphics Engine | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 4 |
 | 7 | MT-25 | Presentation Generator | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 8 (WAITING: style samples) |
 | 7 | MT-27 | CCA Nuclear v2 | 5 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **5.0** | NEW (S103) | Research: APF improvement, better frontier tagging |
@@ -1316,6 +1317,46 @@ python3 priority_picker.py json          # Export for programmatic use
 - Matthew can glance at one PDF and know: bot health, learning progress, research pipeline, next actions
 - Future chats can load the JSON sidecar for continuity
 - Charts make the data genuinely easier to understand than raw numbers
+
+---
+
+---
+
+## MT-34: Medical AI Tool — OpenEvidence Replacement (Provider-Grade)
+
+**Source:** Matthew directive (S121, 2026-03-22) — "I hate OpenEvidence... I want to ClaudeCode an objectively superior, smarter, more capable, more accurate, more effective, less contradictory, less lying form of OpenEvidence"
+
+**What Matthew wants:** An AI tool for himself as a PGY-3 Psychiatry resident and medical provider that answers clinical questions better than OpenEvidence. Not a standalone app — something that augments Claude (Pro or Code) to function as a reliable, evidence-based medical reference.
+
+**Why this matters:** Matthew is a practicing physician who needs accurate, citation-backed medical answers on the fly. OpenEvidence exists but is unreliable (contradictory, inaccurate). A provider-grade tool built by a provider who knows what's actually needed would be genuinely useful.
+
+**Status:** IDEA LOGGED — Matthew needs more time to refine the concept. Do NOT start building until Matthew gives the green light.
+
+**Research needed before any implementation:**
+1. Deep dive on OpenEvidence: how it works, data sources, delivery format, why users love/hate it (Reddit, GitHub, medical forums)
+2. What medical databases/APIs are available (PubMed, UpToDate, Cochrane, DynaMed, clinical guidelines)
+3. How Claude Pro handles medical questions today — what's missing
+4. What form factor works: CLAUDE.md-style system prompt? MCP server connecting to medical DBs? Custom slash commands? Project-specific knowledge base?
+5. PGY-3 Psychiatry-specific needs: DSM-5-TR, prescribing guidelines, drug interactions, evidence levels, treatment algorithms
+6. Accuracy/citation requirements: every claim needs a source, confidence levels, contradictions flagged not hidden
+
+**Possible form factors (TBD — Matthew to decide):**
+- Claude Pro project with curated system prompt + medical knowledge rules
+- MCP server that queries PubMed/medical databases and injects citations
+- Claude Code slash commands for specific clinical workflows
+- Hybrid: Claude Code builds the knowledge layer, Claude Pro consumes it
+
+**Cardinal safety (medical-specific):**
+- This is a PROVIDER tool, not patient-facing — assumes medical training
+- Must always cite sources — never present unsourced claims as fact
+- Must flag uncertainty and contradictions explicitly
+- Must include recency of evidence (guidelines change)
+- NOT a diagnostic tool — it's a reference/lookup augmentation
+
+**Relationship to CCA:**
+- Falls under "personal tools for Matthew" scope (like academic writing MT-18)
+- Could leverage existing CCA infrastructure: paper_scanner.py, research pipeline
+- REFERENCE-PERSONAL verdict category in nuclear scans
 
 ---
 
