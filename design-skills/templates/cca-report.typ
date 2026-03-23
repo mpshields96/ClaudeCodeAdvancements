@@ -604,6 +604,9 @@
     embed-chart("module_composition", width: 100%),
   )
   v(4mm)
+  // Test distribution histogram (per-file test counts)
+  embed-chart("test_distribution", width: 100%)
+  v(4mm)
 }
 
 #let module-card(mod) = {
