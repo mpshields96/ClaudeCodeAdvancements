@@ -463,5 +463,82 @@ class TestKalshiCharts(unittest.TestCase):
         self.assertIn("No data", svg)
 
 
+class TestCCAStatisticalCharts(unittest.TestCase):
+    """Tests for CCA-specific statistical charts (MT-32)."""
+
+    def setUp(self):
+        from report_charts import ReportChartGenerator
+        self.gen = ReportChartGenerator()
+        self.sample_data = {
+            "modules": [
+                {"name": "Memory System", "tests": 340, "loc": 2000},
+                {"name": "Spec System", "tests": 205, "loc": 1500},
+                {"name": "Context Monitor", "tests": 411, "loc": 2500},
+                {"name": "Agent Guard", "tests": 1073, "loc": 5000},
+                {"name": "Usage Dashboard", "tests": 369, "loc": 1800},
+                {"name": "Reddit Intelligence", "tests": 408, "loc": 2200},
+                {"name": "Self-Learning", "tests": 1779, "loc": 6000},
+                {"name": "Design Skills", "tests": 1261, "loc": 3500},
+            ],
+            "summary": {
+                "source_loc": 25000,
+                "test_loc": 35000,
+            },
+        }
+
+    def test_test_density_scatter_returns_svg(self):
+        svg = self.gen.test_density_scatter(self.sample_data)
+        self.assertIn("<svg", svg)
+        self.assertIn("</svg>", svg)
+
+    def test_test_density_scatter_has_title(self):
+        svg = self.gen.test_density_scatter(self.sample_data)
+        self.assertIn("Test Density", svg)
+
+    def test_test_density_scatter_empty_modules(self):
+        svg = self.gen.test_density_scatter({"modules": []})
+        self.assertIn("No data", svg)
+
+    def test_test_density_scatter_zero_loc_modules(self):
+        """Modules with 0 LOC are excluded from scatter."""
+        data = {"modules": [{"name": "Empty", "tests": 0, "loc": 0}]}
+        svg = self.gen.test_density_scatter(data)
+        self.assertIn("No data", svg)
+
+    def test_module_composition_returns_svg(self):
+        svg = self.gen.module_composition(self.sample_data)
+        self.assertIn("<svg", svg)
+        self.assertIn("</svg>", svg)
+
+    def test_module_composition_has_title(self):
+        svg = self.gen.module_composition(self.sample_data)
+        self.assertIn("Code Composition", svg)
+
+    def test_module_composition_empty_data(self):
+        svg = self.gen.module_composition({"summary": {}})
+        self.assertIn("No data", svg)
+
+    def test_module_composition_zero_loc(self):
+        svg = self.gen.module_composition({"summary": {"source_loc": 0, "test_loc": 0}})
+        self.assertIn("No data", svg)
+
+    def test_generate_all_includes_statistical_charts(self):
+        """generate_all includes the new statistical CCA charts."""
+        from report_charts import ReportChartGenerator
+        gen = ReportChartGenerator()
+        # Need minimum data for generate_all to run
+        data = dict(self.sample_data)
+        data.update({
+            "intelligence": {"findings_total": 0},
+            "master_tasks_complete": [],
+            "master_tasks_active": [],
+            "master_tasks_pending": [],
+            "frontiers": [],
+        })
+        charts = gen.generate_all(data)
+        self.assertIn("test_density_scatter", charts)
+        self.assertIn("module_composition", charts)
+
+
 if __name__ == "__main__":
     unittest.main()

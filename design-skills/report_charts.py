@@ -168,6 +168,46 @@ class ReportChartGenerator:
         chart = TreemapChart(data=items, title="Module Size (LOC)")
         return render_svg(chart)
 
+    # ── CCA statistical charts (MT-32) ─────────────────────────────────
+
+    def test_density_scatter(self, data):
+        """ScatterPlot: tests vs LOC per module — reveals test density."""
+        modules = data.get("modules", [])
+        points = [
+            {"x": m.get("loc", 0), "y": m.get("tests", 0), "label": m["name"]}
+            for m in modules
+            if m.get("loc", 0) > 0
+        ]
+        if not points:
+            return self._empty_chart("Test Density by Module")
+
+        chart = ScatterPlot(
+            series=[{"name": "Modules", "data": points}],
+            title="Test Density by Module",
+            x_label="Source LOC",
+            y_label="Tests",
+            width=600,
+            height=400,
+            show_trend=True,
+        )
+        return render_svg(chart)
+
+    def module_composition(self, data):
+        """StackedBarChart: source LOC vs test LOC — code composition."""
+        summary = data.get("summary", {})
+        source = summary.get("source_loc", 0) or 0
+        test = summary.get("test_loc", 0) or 0
+        if source + test == 0:
+            return self._empty_chart("Code Composition")
+
+        chart_data = [("Project", [source, test])]
+        chart = StackedBarChart(
+            data=chart_data,
+            series_names=["Source", "Test"],
+            title="Code Composition (LOC)",
+        )
+        return render_svg(chart)
+
     # ── Kalshi financial charts (MT-33) ─────────────────────────────────
 
     def kalshi_cumulative_pnl(self, data):
@@ -354,6 +394,8 @@ class ReportChartGenerator:
             "mt_progress": self.mt_progress_chart(data),
             "frontier_status": self.frontier_chart(data),
             "module_loc_treemap": self.module_loc_treemap(data),
+            "test_density_scatter": self.test_density_scatter(data),
+            "module_composition": self.module_composition(data),
         }
         # Kalshi financial charts (MT-33) — only if data available
         if data.get("kalshi_analytics", {}).get("available"):
