@@ -596,6 +596,14 @@
     embed-chart("module_loc_treemap", width: 100%),
   )
   v(4mm)
+  // Statistical charts: Test density scatter + Code composition
+  grid(
+    columns: (1fr, 1fr),
+    column-gutter: 12pt,
+    embed-chart("test_density_scatter", width: 100%),
+    embed-chart("module_composition", width: 100%),
+  )
+  v(4mm)
 }
 
 #let module-card(mod) = {
