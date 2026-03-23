@@ -3,9 +3,23 @@
 
 ---
 
-## Current State (as of Session 121 — 2026-03-22)
+## Current State (as of Session 122 — 2026-03-22)
 
-**Phase:** Session 121 COMPLETE. Solo session. Statistical chart suite expansion.
+**Phase:** Session 122 IN PROGRESS. Solo session. MT-33 Kalshi financial analytics.
+
+**What was done this session (S122):**
+- **MT-33 Phase 1 COMPLETE**: Mapped polybot.db schema — primary DB at `data/polybot.db` (4,684 trades, 22,625 bankroll snapshots, 4 tables). Root-level DB files are all 0 bytes. Secondary BTC DB at `refs/kalshi-btc/kalshi_bot.db` (132K, 7 tables). `MT33_DATA_MAPPING.md` written with full schema, SQL queries for 8 charts, data availability matrix.
+- **MT-33 Phase 2 COMPLETE**: `kalshi_data_collector.py` built (265 LOC) — read-only SQLite access, 8 chart-ready data methods (cumulative P&L, strategy win rates, daily distribution, box plots, scatter, donut, bankroll timeline), graceful degradation on missing DB. 39 tests.
+- **MT-33 Phase 3 COMPLETE**: Wired into /cca-report pipeline — 7 Kalshi chart methods added to `report_charts.py` (LineChart, HorizontalBarChart, HistogramChart, BoxPlot, ScatterPlot, DonutChart, AreaChart). Charts auto-generated when Kalshi DB available, skipped otherwise. Report with Kalshi data: 14 SVGs, 363 KB PDF. 11 new report_charts tests.
+- **Tests**: 198 suites, ~7850 tests passing. +50 new tests.
+- **Commits**: 2 this session.
+
+**Next (prioritized):**
+1. **MT-33 Phase 4**: Add Kalshi financial analytics section to Typst template (cca-report.typ) — render the 7 new charts in a dedicated "Financial Analytics" page.
+2. **MT-33 Phase 5**: Self-learning intelligence section (journal, principles, strategy health).
+3. **MT-33 Phase 6**: Self-reference hook (JSON sidecar, report diffing).
+4. **MT-32 continued**: Wire statistical charts into /cca-report (test distribution BoxPlot, session duration HistogramChart).
+5. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
 
 **What was done this session (S121):**
 - **Session orchestrator live test PASSED**: register/set-mode/plan/status all work correctly. Orchestrator detects desktop running, recommends worker launch in 2chat mode.
