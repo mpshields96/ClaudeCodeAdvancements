@@ -12,10 +12,14 @@ Usage:
 """
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from metric_config import get_metric
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -26,7 +30,7 @@ ORIENTATION_FILES = {
     "CLAUDE.md", "SESSION_STATE.md", "PROJECT_INDEX.md",
     "MASTER_ROADMAP.md", "ROADMAP.md",
 }
-WASTE_WINDOW = 20  # look-ahead entries for WasteDetector
+WASTE_WINDOW = get_metric("trace_analyzer.waste_window", 20)
 
 
 # ---------------------------------------------------------------------------
@@ -165,9 +169,9 @@ class RetryDetector:
     error_confirmed = True if intervening tool_results have is_error=True.
     """
 
-    MINOR = 3
-    MAJOR = 5
-    CRITICAL = 8
+    MINOR = get_metric("trace_analyzer.retry_minor", 3)
+    MAJOR = get_metric("trace_analyzer.retry_major", 5)
+    CRITICAL = get_metric("trace_analyzer.retry_critical", 8)
 
     def detect(self, session: TranscriptSession) -> dict:
         retries = []

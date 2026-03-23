@@ -33,6 +33,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from metric_config import get_metric
+
 
 class BiasDirection(Enum):
     """Direction of systematic calibration bias."""
@@ -95,10 +98,9 @@ class CalibrationBias:
     probability estimates.
     """
 
-    # Minimum absolute bias to flag a zone as exploitable
-    EXPLOITABLE_BIAS_THRESHOLD = 0.03
-    # Minimum confidence to flag as exploitable
-    EXPLOITABLE_CONFIDENCE_THRESHOLD = 0.70
+    # Thresholds loaded from metric_config (user-overridable via ~/.cca-metrics.json)
+    EXPLOITABLE_BIAS_THRESHOLD = get_metric("calibration_bias.exploitable_bias_threshold", 0.03)
+    EXPLOITABLE_CONFIDENCE_THRESHOLD = get_metric("calibration_bias.exploitable_confidence_threshold", 0.70)
 
     def __init__(self, n_bins: int = 10, min_samples_per_bin: int = 20):
         if n_bins <= 0:

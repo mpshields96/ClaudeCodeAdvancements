@@ -35,20 +35,21 @@ CLI:
 
 import math
 import json
+import os
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from metric_config import get_metric
 
 
 class RegimeDetector:
     """Classifies market regimes from OHLCV candle data."""
 
-    # Minimum candles needed for meaningful analysis
-    MIN_CANDLES = 10
-
-    # Thresholds for regime classification
-    # These are tunable via strategy.json in the future
-    TREND_THRESHOLD = 0.5       # R-squared above this = trending
-    CHAOTIC_VOL_THRESHOLD = 0.03  # Volatility above this = chaotic candidate
-    MR_HURST_THRESHOLD = 0.4    # Hurst below this = mean-reverting
+    # Thresholds loaded from metric_config (user-overridable via ~/.cca-metrics.json)
+    MIN_CANDLES = get_metric("regime_detector.min_candles", 10)
+    TREND_THRESHOLD = get_metric("regime_detector.trend_threshold", 0.5)
+    CHAOTIC_VOL_THRESHOLD = get_metric("regime_detector.chaotic_vol_threshold", 0.03)
+    MR_HURST_THRESHOLD = get_metric("regime_detector.mr_hurst_threshold", 0.4)
 
     def classify(self, candles):
         """Classify market regime from OHLCV candle data.

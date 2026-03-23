@@ -29,6 +29,9 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from metric_config import get_metric
+
 # === Configuration ===
 
 SEMANTIC_SCHOLAR_BASE = "https://api.semanticscholar.org/graph/v1"
@@ -40,8 +43,8 @@ SS_FIELDS = "title,url,abstract,citationCount,publicationDate,openAccessPdf,auth
 # Paper log file
 PAPER_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "research", "papers.jsonl")
 
-# Quality thresholds
-MIN_CITATION_DEFAULT = 5
+# Quality thresholds (loaded from metric_config, user-overridable)
+MIN_CITATION_DEFAULT = get_metric("paper_scanner.min_citation_default", 5)
 TOP_VENUES = {
     "neurips", "nips", "icml", "iclr", "aaai", "acl", "emnlp", "naacl",
     "cvpr", "iccv", "eccv", "sigir", "kdd", "www", "ijcai",
@@ -51,9 +54,9 @@ TOP_VENUES = {
 }
 
 # Domain search queries — curated for CCA and Kalshi relevance
-# Rate limit retry config
-MAX_RETRIES = 3
-RETRY_BASE_DELAY = 2  # seconds, doubles each retry
+# Rate limit retry config (loaded from metric_config, user-overridable)
+MAX_RETRIES = get_metric("paper_scanner.max_retries", 3)
+RETRY_BASE_DELAY = get_metric("paper_scanner.retry_base_delay", 2)
 
 DOMAIN_QUERIES = {
     "agents": [
