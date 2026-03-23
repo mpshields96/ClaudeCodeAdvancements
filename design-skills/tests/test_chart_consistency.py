@@ -20,7 +20,7 @@ from chart_generator import (
     BarChart, HorizontalBarChart, LineChart, Sparkline, DonutChart,
     AreaChart, StackedBarChart, HeatmapChart, StackedAreaChart,
     WaterfallChart, RadarChart, GaugeChart, ScatterPlot, BoxPlot, HistogramChart,
-    render_svg, CCA_COLORS,
+    ViolinPlot, render_svg, CCA_COLORS,
 )
 
 
@@ -43,6 +43,7 @@ def _all_charts_with_data():
         ScatterPlot(series=[{"name": "S1", "points": [(1, 2), (3, 4)]}]),
         BoxPlot(data=[("G1", [1, 2, 3, 4, 5])]),
         HistogramChart(values=[1, 2, 3, 4, 5, 6, 7, 8]),
+        ViolinPlot(data=[("V1", [1, 2, 3, 4, 5])]),
     ]
 
 
@@ -60,6 +61,7 @@ def _empty_charts():
         ScatterPlot(series=[]),
         BoxPlot(data=[]),
         HistogramChart(values=[]),
+        ViolinPlot(data=[]),
     ]
 
 

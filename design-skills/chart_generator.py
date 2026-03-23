@@ -26,6 +26,7 @@ Chart types:
     ScatterPlot       — XY scatter with optional trend lines, multiple series
     BoxPlot           — box-and-whisker for distribution comparison (median, IQR, outliers)
     HistogramChart    — frequency distribution from raw values (auto-binning, Sturges' rule)
+    ViolinPlot        — KDE-based distribution shape with embedded quartile lines
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -670,6 +671,30 @@ class HistogramChart:
     width: int = 500
     height: int = 400
     bins: int = 0  # 0 = auto (Sturges' rule)
+    color: str = ""
+
+
+@dataclass
+class ViolinPlot:
+    """Violin plot — KDE-based distribution shape with embedded quartile lines.
+
+    Each category shows a mirrored kernel density estimate (KDE) with
+    internal lines at Q1, median, and Q3. Richer than BoxPlot — shows
+    the full shape of the distribution (bimodal, skewed, etc.).
+
+    Uses a Gaussian KDE computed with Silverman's rule-of-thumb bandwidth.
+
+    Args:
+        data: [(label, [values...]), ...] — each category with raw numeric values
+        title: Chart title
+        y_label: Y-axis label
+        color: Base color for violin fill (default: CCA accent)
+    """
+    data: list  # [(label, [values...]), ...]
+    title: str = ""
+    y_label: str = ""
+    width: int = 500
+    height: int = 400
     color: str = ""
 
 
@@ -2838,6 +2863,187 @@ def _render_histogram_chart(chart: HistogramChart) -> str:
     return "".join(parts)
 
 
+def _gaussian_kde(values, grid, bandwidth):
+    """Compute Gaussian KDE on a grid. Returns density values."""
+    n = len(values)
+    densities = []
+    coeff = 1.0 / (n * bandwidth * math.sqrt(2 * math.pi))
+    for x in grid:
+        total = 0.0
+        for v in values:
+            z = (x - v) / bandwidth
+            total += math.exp(-0.5 * z * z)
+        densities.append(coeff * total)
+    return densities
+
+
+def _render_violin_plot(chart: ViolinPlot) -> str:
+    """Render a violin plot to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 45
+    margin_left = 60 if chart.y_label else 50
+    margin_right = 20
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    base_color = chart.color if chart.color else CCA_COLORS["accent"]
+
+    # Filter categories with actual values
+    categories = []
+    all_vals = []
+    for item in chart.data:
+        label = item[0]
+        values = sorted([float(v) for v in item[1]])
+        if values:
+            categories.append((label, values))
+            all_vals.extend(values)
+
+    if not categories:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Y scale (global across all categories)
+    y_min = min(all_vals)
+    y_max = max(all_vals)
+    y_range = y_max - y_min if y_max != y_min else 1
+    y_min -= y_range * 0.08
+    y_max += y_range * 0.08
+
+    def sy(v):
+        return margin_top + plot_h - ((v - y_min) / (y_max - y_min)) * plot_h
+
+    # Axes
+    parts.append(f'<line x1="{margin_left}" y1="{margin_top + plot_h}" '
+                 f'x2="{margin_left + plot_w}" y2="{margin_top + plot_h}" '
+                 f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
+    parts.append(f'<line x1="{margin_left}" y1="{margin_top}" '
+                 f'x2="{margin_left}" y2="{margin_top + plot_h}" '
+                 f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
+
+    # Y-axis ticks
+    for i in range(6):
+        val = y_min + (y_max - y_min) * i / 5
+        yp = sy(val)
+        label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(margin_left - 8, yp + 3, label_text,
+                           font_size=8, fill=CCA_COLORS["muted"], anchor="end"))
+        if i > 0:
+            parts.append(f'<line x1="{margin_left}" y1="{yp}" '
+                         f'x2="{margin_left + plot_w}" y2="{yp}" '
+                         f'stroke="{CCA_COLORS["border"]}" stroke-width="0.5" '
+                         f'stroke-dasharray="3,3"/>')
+
+    if chart.y_label:
+        parts.append(f'<text x="14" y="{margin_top + plot_h / 2}" '
+                     f'text-anchor="middle" font-size="9" '
+                     f'font-family="sans-serif" fill="{CCA_COLORS["muted"]}" '
+                     f'transform="rotate(-90, 14, {margin_top + plot_h / 2})">'
+                     f'{_escape(chart.y_label)}</text>')
+
+    # Draw violins
+    n_cats = len(categories)
+    cat_w = plot_w / n_cats
+    max_half_w = min(cat_w * 0.4, 50)
+
+    for i, (label, values) in enumerate(categories):
+        cx = margin_left + cat_w * i + cat_w / 2
+        n = len(values)
+
+        # Silverman bandwidth
+        std = (sum((v - sum(values) / n) ** 2 for v in values) / n) ** 0.5 if n > 1 else 1
+        bw = 1.06 * std * n ** (-0.2) if std > 0 else 1
+
+        # KDE on a grid of 50 points spanning the data range
+        v_min, v_max = min(values), max(values)
+        v_range_local = v_max - v_min if v_max != v_min else 1
+        grid_lo = v_min - v_range_local * 0.15
+        grid_hi = v_max + v_range_local * 0.15
+        n_grid = 50
+        grid = [grid_lo + (grid_hi - grid_lo) * j / (n_grid - 1) for j in range(n_grid)]
+        densities = _gaussian_kde(values, grid, bw)
+
+        max_density = max(densities) if densities else 1
+
+        # Build mirrored polygon path
+        # Right side (top to bottom in SVG = high to low values)
+        right_points = []
+        left_points = []
+        for j in range(n_grid):
+            yp = sy(grid[j])
+            half_w = (densities[j] / max_density) * max_half_w if max_density > 0 else 0
+            right_points.append((cx + half_w, yp))
+            left_points.append((cx - half_w, yp))
+
+        # Polygon: right side top-to-bottom, then left side bottom-to-top
+        path_parts = []
+        all_points = right_points + list(reversed(left_points))
+        for k, (px, py) in enumerate(all_points):
+            cmd = "M" if k == 0 else "L"
+            path_parts.append(f"{cmd}{px:.1f},{py:.1f}")
+        path_parts.append("Z")
+        path_d = "".join(path_parts)
+
+        parts.append(f'<path d="{path_d}" fill="{base_color}" '
+                     f'fill-opacity="0.3" stroke="{base_color}" stroke-width="1"/>')
+
+        # Quartile lines
+        def percentile(vals, p):
+            k = (len(vals) - 1) * p
+            f = int(k)
+            c = f + 1 if f + 1 < len(vals) else f
+            d = k - f
+            return vals[f] + d * (vals[c] - vals[f])
+
+        q1 = percentile(values, 0.25)
+        median = percentile(values, 0.5)
+        q3 = percentile(values, 0.75)
+
+        # Width at each quartile (interpolate from KDE)
+        def width_at(val):
+            # Find nearest grid index
+            idx = int((val - grid_lo) / (grid_hi - grid_lo) * (n_grid - 1))
+            idx = max(0, min(idx, n_grid - 1))
+            return (densities[idx] / max_density) * max_half_w if max_density > 0 else 0
+
+        # Q1 and Q3 lines (thin)
+        for qv in [q1, q3]:
+            w = width_at(qv)
+            yp = sy(qv)
+            parts.append(f'<line x1="{cx - w:.1f}" y1="{yp:.1f}" '
+                         f'x2="{cx + w:.1f}" y2="{yp:.1f}" '
+                         f'stroke="{CCA_COLORS["primary"]}" stroke-width="1" '
+                         f'stroke-dasharray="3,2"/>')
+
+        # Median line (bold)
+        mw = width_at(median)
+        parts.append(f'<line x1="{cx - mw:.1f}" y1="{sy(median):.1f}" '
+                     f'x2="{cx + mw:.1f}" y2="{sy(median):.1f}" '
+                     f'stroke="{CCA_COLORS["highlight"]}" stroke-width="2"/>')
+
+        # Category label
+        parts.append(_text(cx, margin_top + plot_h + 15, label,
+                           font_size=9, fill=CCA_COLORS["primary"]))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -2884,6 +3090,8 @@ def render_svg(chart) -> str:
         return _render_box_plot(chart)
     elif isinstance(chart, HistogramChart):
         return _render_histogram_chart(chart)
+    elif isinstance(chart, ViolinPlot):
+        return _render_violin_plot(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 
