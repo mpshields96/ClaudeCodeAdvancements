@@ -418,10 +418,10 @@ MASTER_WITH_QUEUE = """\
 
 ### Active Priority Queue
 
-| Rank | ID | Name | Base | C1 | C2 | C3 | C4 | Score | Next Phase |
-|------|----|----- |------|----|----|----|----|-------|------------|
-| 1 | MT-21 | Hivemind | 9 | 0 | 1 | 1 | 0 | **11.0** | Phase 3 |
-| 2 | MT-20 | Senior Dev | 8 | 0 | 0 | 1 | 0 | **9.0** | Phase 6 |
+| Rank | MT | Task | Base | Age | Comp% | Bonus | ROI | Stag | **Score** | Urgency | Next |
+|------|----|------|------|-----|-------|-------|-----|------|-----------|---------|------|
+| 1 | MT-21 | Hivemind | 9 | 0 | 50% | 1 | 1 | 0 | **11.0** | HIGH | Phase 3 |
+| 2 | MT-20 | Senior Dev | 8 | 0 | 30% | 0 | 1 | 0 | **9.0** | MED | Phase 6 |
 
 ### Completed Tasks
 

@@ -645,15 +645,20 @@ class CCADataCollector:
                 cols = [c.strip() for c in line.split("|")[1:-1]]
                 if len(cols) >= 10:
                     try:
-                        score_str = cols[8].replace("*", "").strip()
+                        # Score is in col 9 (0-indexed), wrapped in **...**
+                        score_str = cols[9].replace("*", "").strip()
+                        if score_str in ("ABSORBED", "—", ""):
+                            continue  # Skip absorbed/placeholder rows
                         score = float(score_str) if score_str else 0
+                        # Next phase description is in col 11 (last col)
+                        next_phase = cols[11].strip() if len(cols) > 11 else ""
                         queue.append({
                             "rank": cols[0].strip(),
                             "id": cols[1].strip(),
                             "name": cols[2].strip(),
                             "base": cols[3].strip(),
                             "score": score,
-                            "next_phase": cols[9].strip() if len(cols) > 9 else "",
+                            "next_phase": next_phase,
                         })
                     except (ValueError, IndexError):
                         pass
@@ -806,10 +811,10 @@ class CCADataCollector:
 
     # ── Executive summary ───────────────────────────────────────────────
 
-    def build_executive_summary(self, session, modules, mt_complete, mt_active, mt_pending):
+    def build_executive_summary(self, session, modules, mt_complete, mt_active, mt_pending, total_tests=None):
         """Generate executive summary text."""
-        total_tests = sum(m["tests"] for m in modules)
-        complete_modules = sum(1 for m in modules if m["status"] == "COMPLETE")
+        if total_tests is None:
+            total_tests = sum(m["tests"] for m in modules)
         total_mt = len(mt_complete) + len(mt_active) + len(mt_pending)
 
         return (
@@ -846,11 +851,11 @@ class CCADataCollector:
 
         # Use authoritative test count from PROJECT_INDEX.md
         index_content = self._read_file("PROJECT_INDEX.md")
-        total_match = re.search(r"\*\*Total:\s*(\d+)\s*tests", index_content)
-        total_tests = int(total_match.group(1)) if total_match else sum(m["tests"] for m in modules)
+        total_match = re.search(r"\*\*Total:\s*~?(\d[\d,]*)\s*tests", index_content)
+        total_tests = int(total_match.group(1).replace(",", "")) if total_match else sum(m["tests"] for m in modules)
 
         # Also extract suite count
-        suite_match = re.search(r"\((\d+)\s*suites?\)", index_content)
+        suite_match = re.search(r"\(~?(\d+)\s*suites?\)", index_content)
         test_suites = int(suite_match.group(1)) if suite_match else len([m for m in modules if m["tests"] > 0])
 
         source_loc = sum(m["loc"] for m in modules)
@@ -934,7 +939,8 @@ class CCADataCollector:
             "date": date.today().isoformat(),
             "session": session,
             "executive_summary": self.build_executive_summary(
-                session, modules, mt_complete, mt_active, mt_pending
+                session, modules, mt_complete, mt_active, mt_pending,
+                total_tests=total_tests,
             ),
             "summary": {
                 "total_tests": total_tests,

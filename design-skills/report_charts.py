@@ -140,7 +140,7 @@ class ReportChartGenerator:
             return self._empty_chart("Frontier Test Coverage")
 
         items = [(f["name"], f.get("tests", 0)) for f in frontiers]
-        chart = HorizontalBarChart(items, title="Frontier Test Coverage")
+        chart = HorizontalBarChart(items, title="Frontier Test Coverage", width=600)
         return render_svg(chart)
 
     def module_loc_treemap(self, data):

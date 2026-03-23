@@ -1,4 +1,5 @@
-// CCA Comprehensive Status Report — Apple-Inspired Design v2
+// CCA Comprehensive Status Report — Apple-Inspired Design v3
+// Visual upgrade: accent bars, improved data density, growth callouts
 // Usage: typst compile --root / --input data=/path/to/report.json cca-report.typ output.pdf
 
 // ─── Color Palette ─────────────────────────────────────────────────────────
@@ -87,8 +88,11 @@
   result
 }
 
-#let section-header(title) = {
+#let section-header(title, accent: blue) = {
   v(5mm)
+  // Thin accent bar at top for visual rhythm
+  box(width: 28pt, height: 2.5pt, fill: accent, radius: 1pt)
+  v(2mm)
   text(size: 7.5pt, fill: light, weight: "semibold", tracking: 1.5pt)[#upper(title)]
   v(1mm)
   text(size: 17pt, weight: "bold", fill: black)[#title]
@@ -160,20 +164,28 @@
 // PAGE 1: COVER
 // ═══════════════════════════════════════════════════════════════════════════
 
+// Top accent: thin black bar + blue accent stripe
 #place(top + left, dx: -22mm, dy: -24mm)[
   #rect(width: 210mm + 1mm, height: 0.8mm, fill: black)
+]
+#place(top + left, dx: -22mm, dy: -24mm + 0.8mm)[
+  #rect(width: 210mm + 1mm, height: 2.5pt, fill: blue)
 ]
 
 #v(48mm)
 
 #align(center)[
-  #text(size: 9pt, fill: light, tracking: 2.5pt, weight: "semibold")[PROJECT STATUS REPORT]
+  // Overline label with accent dot
+  #box(inset: (x: 8pt, y: 3pt))[
+    #text(size: 8pt, fill: light, tracking: 2.5pt, weight: "semibold")[PROJECT STATUS REPORT]
+  ]
   #v(6mm)
-  #text(size: 36pt, weight: "bold", fill: black, tracking: -0.5pt)[ClaudeCode]
+  #text(size: 38pt, weight: "bold", fill: black, tracking: -0.5pt)[ClaudeCode]
   #v(-2mm)
-  #text(size: 36pt, weight: "bold", fill: black, tracking: -0.5pt)[Advancements]
+  #text(size: 38pt, weight: "bold", fill: black, tracking: -0.5pt)[Advancements]
   #v(8mm)
-  #line(length: 36mm, stroke: 0.3pt + faint)
+  // Accent-colored divider instead of gray
+  #line(length: 36mm, stroke: 1pt + blue)
   #v(8mm)
   #text(size: 10pt, fill: mid)[
     Research, tools, and systems for AI-assisted development
@@ -238,7 +250,11 @@
 
 #v(8mm)
 
+// Bottom accent: matching blue stripe + black bar
 #place(bottom + left, dx: -22mm, dy: 22mm)[
+  #rect(width: 210mm + 1mm, height: 2.5pt, fill: blue)
+]
+#place(bottom + left, dx: -22mm, dy: 22mm + 2.5pt)[
   #rect(width: 210mm + 1mm, height: 0.8mm, fill: black)
 ]
 
@@ -248,7 +264,7 @@
 // PAGE 2: TABLE OF CONTENTS
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Contents")
+#section-header("Contents", accent: black)
 
 #{
   let toc-items = (
@@ -387,7 +403,7 @@
 // PAGE 3: EXECUTIVE SUMMARY + PROJECT HEALTH
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Executive Summary")
+#section-header("Executive Summary", accent: green)
 
 #{
   set par(leading: 0.8em)
@@ -405,84 +421,102 @@
   column-gutter: 12pt,
   row-gutter: 10pt,
 
-  // Row 1
-  box(fill: wash, radius: 6pt, inset: 10pt, width: 100%)[
-    #text(size: 7pt, fill: light, weight: "semibold")[TESTS]
-    #v(1mm)
-    #text(size: 20pt, weight: "bold", fill: green)[#fmt(data.summary.passing_tests)]
-    #text(size: 8pt, fill: light)[ #sym.slash #fmt(data.summary.total_tests)]
-    #v(2mm)
-    #progress-bar(data.summary.passing_tests, data.summary.total_tests, bar-color: green)
-    #v(1mm)
-    #text(size: 7pt, fill: light)[#data.summary.test_suites suites — 100% pass rate]
-  ],
-
-  box(fill: wash, radius: 6pt, inset: 10pt, width: 100%)[
-    #text(size: 7pt, fill: light, weight: "semibold")[CODEBASE]
-    #v(1mm)
-    #text(size: 20pt, weight: "bold", fill: black)[#fmt(data.summary.total_loc)]
-    #v(2mm)
-    #grid(
-      columns: (1fr, 1fr),
-      text(size: 7pt, fill: light)[Source: #fmt(data.summary.source_loc)],
-      text(size: 7pt, fill: light)[Test: #fmt(data.summary.test_loc)],
-    )
-    #v(2mm)
-    #{
-      let ratio = calc.round(data.summary.test_loc / calc.max(data.summary.source_loc, 1) * 100) / 100
-      text(size: 7pt, fill: mid)[Test-to-source ratio: #str(ratio):1]
-    }
-  ],
-
-  box(fill: wash, radius: 6pt, inset: 10pt, width: 100%)[
-    #text(size: 7pt, fill: light, weight: "semibold")[VELOCITY]
-    #v(1mm)
-    #text(size: 20pt, weight: "bold", fill: black)[#data.summary.git_commits]
-    #text(size: 8pt, fill: light)[ commits]
-    #v(2mm)
-    #{
-      let per_day = calc.round(data.summary.git_commits / calc.max(data.summary.project_age_days, 1) * 10) / 10
-      let per_session = calc.round(data.summary.git_commits / calc.max(data.session, 1) * 10) / 10
-      text(size: 7pt, fill: light)[#str(per_day)/day #sym.dot.c #str(per_session)/session]
-    }
-    #v(2mm)
-    #text(size: 7pt, fill: mid)[#data.summary.project_age_days days #sym.dot.c #data.session sessions]
-  ],
-
-  // Row 2
-  box(fill: wash, radius: 6pt, inset: 10pt, width: 100%)[
-    #text(size: 7pt, fill: light, weight: "semibold")[MODULES]
-    #v(1mm)
-    #text(size: 20pt, weight: "bold", fill: black)[#data.summary.total_modules]
-    #v(2mm)
-    #text(size: 7pt, fill: light)[#data.summary.source_files source files #sym.dot.c #data.summary.test_files test files]
-    #v(2mm)
-    #text(size: 7pt, fill: green)[0 stubs #sym.dot.c 0 syntax errors]
-  ],
-
-  box(fill: wash, radius: 6pt, inset: 10pt, width: 100%)[
-    #text(size: 7pt, fill: light, weight: "semibold")[MASTER TASKS]
-    #v(1mm)
-    #text(size: 20pt, weight: "bold", fill: black)[#data.summary.master_tasks]
-    #v(2mm)
-    #progress-bar(data.summary.completed_tasks, data.summary.master_tasks, bar-color: blue)
-    #v(1mm)
-    #text(size: 7pt, fill: light)[
-      #text(fill: green)[#data.summary.completed_tasks done]
-      #sym.dot.c #data.summary.in_progress_tasks active
-      #sym.dot.c #data.summary.not_started_tasks pending
+  // Row 1 — colored top-accent cards for visual differentiation
+  box(fill: wash, radius: 6pt, inset: 0pt, width: 100%, clip: true)[
+    #rect(width: 100%, height: 2.5pt, fill: green)
+    #pad(x: 10pt, y: 8pt)[
+      #text(size: 7pt, fill: light, weight: "semibold")[TESTS]
+      #v(1mm)
+      #text(size: 20pt, weight: "bold", fill: green)[#fmt(data.summary.passing_tests)]
+      #text(size: 8pt, fill: light)[ #sym.slash #fmt(data.summary.total_tests)]
+      #v(2mm)
+      #progress-bar(data.summary.passing_tests, data.summary.total_tests, bar-color: green)
+      #v(1mm)
+      #text(size: 7pt, fill: light)[#data.summary.test_suites suites — 100% pass rate]
     ]
   ],
 
-  box(fill: wash, radius: 6pt, inset: 10pt, width: 100%)[
-    #text(size: 7pt, fill: light, weight: "semibold")[INTELLIGENCE]
-    #v(1mm)
-    #text(size: 20pt, weight: "bold", fill: black)[#data.summary.total_findings]
-    #text(size: 8pt, fill: light)[ findings]
-    #v(2mm)
-    #text(size: 7pt, fill: light)[#data.summary.total_papers papers #sym.dot.c #data.summary.live_hooks live hooks]
-    #v(2mm)
-    #text(size: 7pt, fill: mid)[Zero external dependencies]
+  box(fill: wash, radius: 6pt, inset: 0pt, width: 100%, clip: true)[
+    #rect(width: 100%, height: 2.5pt, fill: blue)
+    #pad(x: 10pt, y: 8pt)[
+      #text(size: 7pt, fill: light, weight: "semibold")[CODEBASE]
+      #v(1mm)
+      #text(size: 20pt, weight: "bold", fill: black)[#fmt(data.summary.total_loc)]
+      #v(2mm)
+      #grid(
+        columns: (1fr, 1fr),
+        text(size: 7pt, fill: light)[Source: #fmt(data.summary.source_loc)],
+        text(size: 7pt, fill: light)[Test: #fmt(data.summary.test_loc)],
+      )
+      #v(2mm)
+      #{
+        let ratio = calc.round(data.summary.test_loc / calc.max(data.summary.source_loc, 1) * 100) / 100
+        text(size: 7pt, fill: mid)[Test-to-source ratio: #str(ratio):1]
+      }
+    ]
+  ],
+
+  box(fill: wash, radius: 6pt, inset: 0pt, width: 100%, clip: true)[
+    #rect(width: 100%, height: 2.5pt, fill: orange)
+    #pad(x: 10pt, y: 8pt)[
+      #text(size: 7pt, fill: light, weight: "semibold")[VELOCITY]
+      #v(1mm)
+      #text(size: 20pt, weight: "bold", fill: black)[#data.summary.git_commits]
+      #text(size: 8pt, fill: light)[ commits]
+      #v(2mm)
+      #{
+        let per_day = calc.round(data.summary.git_commits / calc.max(data.summary.project_age_days, 1) * 10) / 10
+        let per_session = calc.round(data.summary.git_commits / calc.max(data.session, 1) * 10) / 10
+        text(size: 7pt, fill: light)[#str(per_day)/day #sym.dot.c #str(per_session)/session]
+      }
+      #v(2mm)
+      #text(size: 7pt, fill: mid)[#data.summary.project_age_days days #sym.dot.c #data.session sessions]
+    ]
+  ],
+
+  // Row 2
+  box(fill: wash, radius: 6pt, inset: 0pt, width: 100%, clip: true)[
+    #rect(width: 100%, height: 2.5pt, fill: teal)
+    #pad(x: 10pt, y: 8pt)[
+      #text(size: 7pt, fill: light, weight: "semibold")[MODULES]
+      #v(1mm)
+      #text(size: 20pt, weight: "bold", fill: black)[#data.summary.total_modules]
+      #v(2mm)
+      #text(size: 7pt, fill: light)[#data.summary.source_files source files #sym.dot.c #data.summary.test_files test files]
+      #v(2mm)
+      #text(size: 7pt, fill: green)[0 stubs #sym.dot.c 0 syntax errors]
+    ]
+  ],
+
+  box(fill: wash, radius: 6pt, inset: 0pt, width: 100%, clip: true)[
+    #rect(width: 100%, height: 2.5pt, fill: indigo)
+    #pad(x: 10pt, y: 8pt)[
+      #text(size: 7pt, fill: light, weight: "semibold")[MASTER TASKS]
+      #v(1mm)
+      #text(size: 20pt, weight: "bold", fill: black)[#data.summary.master_tasks]
+      #v(2mm)
+      #progress-bar(data.summary.completed_tasks, data.summary.master_tasks, bar-color: blue)
+      #v(1mm)
+      #text(size: 7pt, fill: light)[
+        #text(fill: green)[#data.summary.completed_tasks done]
+        #sym.dot.c #data.summary.in_progress_tasks active
+        #sym.dot.c #data.summary.not_started_tasks pending
+      ]
+    ]
+  ],
+
+  box(fill: wash, radius: 6pt, inset: 0pt, width: 100%, clip: true)[
+    #rect(width: 100%, height: 2.5pt, fill: red)
+    #pad(x: 10pt, y: 8pt)[
+      #text(size: 7pt, fill: light, weight: "semibold")[INTELLIGENCE]
+      #v(1mm)
+      #text(size: 20pt, weight: "bold", fill: black)[#data.summary.total_findings]
+      #text(size: 8pt, fill: light)[ findings]
+      #v(2mm)
+      #text(size: 7pt, fill: light)[#data.summary.total_papers papers #sym.dot.c #data.summary.live_hooks live hooks]
+      #v(2mm)
+      #text(size: 7pt, fill: mid)[Zero external dependencies]
+    ]
   ],
 )
 
@@ -492,7 +526,7 @@
 // PAGE 4: FIVE FRONTIERS
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Five Frontiers")
+#section-header("Five Frontiers", accent: blue)
 
 #text(size: 9.5pt, fill: mid)[
   The five core research areas that drive CCA's development, each validated through community intelligence, Anthropic research, and developer surveys.
@@ -551,7 +585,7 @@
 // PAGES 5-6: MODULE DEEP-DIVES
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Module Deep-Dives")
+#section-header("Module Deep-Dives", accent: teal)
 
 // Charts: Tests per module + Module size treemap
 #if chart-dir != none {
@@ -642,7 +676,7 @@
 // PAGES 7-9: MASTER TASKS (expanded with phase progress + gaps)
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Master Tasks")
+#section-header("Master Tasks", accent: indigo)
 
 // Charts: MT status breakdown + phase progress
 #if chart-dir != none {
@@ -799,7 +833,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 #if data.keys().contains("priority_queue") and data.priority_queue.len() > 0 {
-  section-header("Priority Queue")
+  section-header("Priority Queue", accent: blue)
 
   text(size: 9pt, fill: mid)[
     Active tasks ranked by decay-based priority scoring. Score = base value + aging penalty. Higher = work on this first.
@@ -807,7 +841,7 @@
   v(3mm)
 
   for (i, item) in data.priority_queue.enumerate() {
-    let bar-pct = item.score / 18.0 // Max possible score is 2x base of 9 = 18
+    let bar-pct = item.score / 12.0 // Max possible score ~12
     box(
       width: 100%,
       fill: if calc.even(i) { wash } else { white },
@@ -840,7 +874,7 @@
 // LIVE INFRASTRUCTURE
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Live Infrastructure")
+#section-header("Live Infrastructure", accent: green)
 
 #text(size: 9pt, fill: mid)[
   #data.summary.live_hooks hooks integrated into Claude Code via settings.local.json.
@@ -876,7 +910,7 @@
 // INTELLIGENCE & RESEARCH
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Intelligence & Research")
+#section-header("Intelligence & Research", accent: orange)
 
 #grid(
   columns: (1fr, 1fr),
@@ -957,7 +991,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 #if data.architecture_decisions.len() > 0 {
-  section-header("Architecture Decisions")
+  section-header("Architecture Decisions", accent: mid)
 
   table(
     columns: (1.5fr, 2.5fr),
@@ -984,7 +1018,7 @@
 // RISKS, BLOCKERS & NEXT PRIORITIES
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Risks & Blockers")
+#section-header("Risks & Blockers", accent: red)
 
 #if data.risks.len() > 0 {
   for risk in data.risks {
@@ -1016,7 +1050,7 @@
 
 #v(5mm)
 
-#section-header("Next Priorities")
+#section-header("Next Priorities", accent: blue)
 
 #for (i, priority) in data.next_priorities.enumerate() {
   box(
@@ -1047,7 +1081,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 #if data.keys().contains("criticisms") and data.criticisms.len() > 0 {
-  section-header("Honest Assessment")
+  section-header("Honest Assessment", accent: orange)
 
   text(size: 9pt, fill: mid)[
     Objective gaps, limitations, and areas where the project falls short of its stated goals. Included for accountability.
@@ -1074,8 +1108,6 @@
     ]
     v(3mm)
   }
-
-  pagebreak()
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1084,35 +1116,96 @@
 
 #pagebreak()
 
+// Top accent bar (matching cover)
+#place(top + left, dx: -22mm, dy: -24mm)[
+  #rect(width: 210mm + 1mm, height: 0.8mm, fill: black)
+]
+#place(top + left, dx: -22mm, dy: -24mm + 0.8mm)[
+  #rect(width: 210mm + 1mm, height: 2.5pt, fill: blue)
+]
+
 #v(1fr)
 
 #align(center)[
-  #text(size: 7.5pt, fill: light, tracking: 2pt)[STATUS]
+  #text(size: 7.5pt, fill: light, tracking: 2.5pt, weight: "semibold")[STATUS]
   #v(4mm)
-  #text(size: 20pt, weight: "bold", fill: black)[All Systems Operational]
-  #v(5mm)
-  #line(length: 36mm, stroke: 0.3pt + faint)
-  #v(5mm)
-  #text(size: 8.5pt, fill: mid)[
-    #fmt(data.summary.total_tests) tests
-    #h(5pt) #sym.dot.c #h(5pt)
-    #fmt(data.summary.total_loc) LOC
-    #h(5pt) #sym.dot.c #h(5pt)
-    #data.session sessions
-    #h(5pt) #sym.dot.c #h(5pt)
-    #data.summary.git_commits commits
-  ]
-  #v(2mm)
+  #text(size: 24pt, weight: "bold", fill: black)[All Systems Operational]
+  #v(6mm)
+  #line(length: 36mm, stroke: 1pt + blue)
+  #v(6mm)
+
+  // Hero stat callout
+  #grid(
+    columns: (1fr, 1fr, 1fr, 1fr),
+    column-gutter: 4pt,
+    align(center)[
+      #text(size: 22pt, weight: "bold", fill: black)[#fmt(data.summary.total_tests)]
+      #v(1mm)
+      #text(size: 7pt, fill: light, tracking: 0.5pt)[TESTS]
+    ],
+    align(center)[
+      #text(size: 22pt, weight: "bold", fill: black)[#fmt(data.summary.total_loc)]
+      #v(1mm)
+      #text(size: 7pt, fill: light, tracking: 0.5pt)[LOC]
+    ],
+    align(center)[
+      #text(size: 22pt, weight: "bold", fill: black)[#data.session]
+      #v(1mm)
+      #text(size: 7pt, fill: light, tracking: 0.5pt)[SESSIONS]
+    ],
+    align(center)[
+      #text(size: 22pt, weight: "bold", fill: black)[#data.summary.git_commits]
+      #v(1mm)
+      #text(size: 7pt, fill: light, tracking: 0.5pt)[COMMITS]
+    ],
+  )
+  #v(6mm)
+
+  // Secondary stats
   #text(size: 8.5pt, fill: mid)[
     #data.summary.total_modules modules
     #h(5pt) #sym.dot.c #h(5pt)
     #data.summary.master_tasks master tasks
     #h(5pt) #sym.dot.c #h(5pt)
+    #data.summary.test_suites test suites
+    #h(5pt) #sym.dot.c #h(5pt)
     Zero external dependencies
+  ]
+
+  #v(8mm)
+
+  // Completion stats row
+  #box(fill: wash, radius: 6pt, inset: 12pt, width: 80%)[
+    #grid(
+      columns: (1fr, 1fr, 1fr),
+      align(center)[
+        #text(size: 14pt, weight: "bold", fill: green)[#data.summary.completed_tasks]
+        #v(1mm)
+        #text(size: 7pt, fill: light)[MTs Complete]
+      ],
+      align(center)[
+        #text(size: 14pt, weight: "bold", fill: blue)[#data.summary.in_progress_tasks]
+        #v(1mm)
+        #text(size: 7pt, fill: light)[MTs Active]
+      ],
+      align(center)[
+        #text(size: 14pt, weight: "bold", fill: black)[#data.summary.total_findings]
+        #v(1mm)
+        #text(size: 7pt, fill: light)[Findings]
+      ],
+    )
   ]
 ]
 
 #v(1fr)
+
+// Bottom accent
+#place(bottom + left, dx: -22mm, dy: 22mm)[
+  #rect(width: 210mm + 1mm, height: 2.5pt, fill: blue)
+]
+#place(bottom + left, dx: -22mm, dy: 22mm + 2.5pt)[
+  #rect(width: 210mm + 1mm, height: 0.8mm, fill: black)
+]
 
 #align(center)[
   #text(size: 7pt, fill: faint)[
