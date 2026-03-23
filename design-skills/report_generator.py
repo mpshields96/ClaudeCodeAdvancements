@@ -1036,6 +1036,112 @@ class CCADataCollector:
         }
 
 
+DEFAULT_ARCHIVE_DIR = os.path.expanduser("~/.cca-reports")
+
+
+class ReportSidecar:
+    """JSON sidecar export alongside PDF reports for machine-readable diffing.
+
+    Saves report data as JSON next to every PDF, and archives copies in
+    ~/.cca-reports/ for cross-session trend comparison.
+    """
+
+    def __init__(self, archive_dir=None):
+        self.archive_dir = archive_dir or DEFAULT_ARCHIVE_DIR
+
+    def save_alongside_pdf(self, data, pdf_path):
+        """Save JSON sidecar next to the PDF file.
+
+        Args:
+            data: The collected report data dict.
+            pdf_path: Path to the PDF output file.
+
+        Returns:
+            Path to the created JSON sidecar file.
+        """
+        base, ext = os.path.splitext(pdf_path)
+        if not ext:
+            json_path = pdf_path + ".json"
+        else:
+            json_path = base + ".json"
+
+        with open(json_path, "w") as f:
+            json.dump(data, f, indent=2)
+        return json_path
+
+    def save_to_archive(self, data):
+        """Save report data to the archive directory.
+
+        Filename: {date}_S{session}.json (e.g., 2026-03-22_S122.json).
+        Overwrites if same date+session already exists.
+
+        Returns:
+            Path to the archived JSON file.
+        """
+        os.makedirs(self.archive_dir, exist_ok=True)
+        report_date = data.get("date", date.today().isoformat())
+        session = data.get("session", 0)
+        filename = f"{report_date}_S{session}.json"
+        path = os.path.join(self.archive_dir, filename)
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2)
+        return path
+
+    def list_archived_reports(self):
+        """List all archived report JSON files, newest first."""
+        if not os.path.isdir(self.archive_dir):
+            return []
+        files = sorted(
+            [
+                os.path.join(self.archive_dir, f)
+                for f in os.listdir(self.archive_dir)
+                if f.endswith(".json")
+            ],
+            reverse=True,
+        )
+        return files
+
+    def load_report(self, path):
+        """Load a sidecar JSON file. Returns None on error."""
+        if not os.path.exists(path):
+            return None
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return None
+
+    def extract_summary_snapshot(self, data):
+        """Extract a compact summary dict for quick comparison/diffing."""
+        summary = data.get("summary", {})
+        kalshi = data.get("kalshi_analytics", {})
+        kalshi_summary = kalshi.get("summary", {})
+        kalshi_available = kalshi.get("available", False)
+        learning = data.get("learning_intelligence", {})
+        learning_available = learning.get("available", False)
+        journal = learning.get("journal", {})
+        apf = learning.get("apf", {})
+
+        return {
+            "session": data.get("session"),
+            "date": data.get("date"),
+            "total_tests": summary.get("total_tests"),
+            "test_suites": summary.get("test_suites"),
+            "total_loc": summary.get("total_loc"),
+            "source_loc": summary.get("source_loc"),
+            "git_commits": summary.get("git_commits"),
+            "completed_mts": len(data.get("master_tasks_complete", [])),
+            "active_mts": len(data.get("master_tasks_active", [])),
+            "pending_mts": len(data.get("master_tasks_pending", [])),
+            "total_modules": summary.get("total_modules"),
+            "total_findings": summary.get("total_findings"),
+            "kalshi_pnl_usd": kalshi_summary.get("total_pnl_usd") if kalshi_available else None,
+            "kalshi_win_rate": kalshi_summary.get("win_rate_pct") if kalshi_available else None,
+            "apf": apf.get("current_apf") if learning_available else None,
+            "journal_entries": journal.get("total_entries") if learning_available else None,
+        }
+
+
 class ReportRenderer:
     """Renders reports using Typst."""
 
@@ -1157,6 +1263,13 @@ def main():
         output = renderer.render(args.template, data_path, args.output, chart_dir=chart_dir)
         print(f"Report generated: {output}")
         print(f"Size: {os.path.getsize(output) / 1024:.1f} KB")
+
+        # JSON sidecar export (MT-33 Phase 6)
+        sidecar = ReportSidecar()
+        sidecar_path = sidecar.save_alongside_pdf(data, args.output)
+        archive_path = sidecar.save_to_archive(data)
+        print(f"Sidecar: {sidecar_path}")
+        print(f"Archived: {archive_path}")
 
 
 if __name__ == "__main__":
