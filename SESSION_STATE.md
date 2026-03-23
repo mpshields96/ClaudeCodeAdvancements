@@ -3,22 +3,22 @@
 
 ---
 
-## Current State (as of Session 127 — 2026-03-23)
+## Current State (as of Session 128 — 2026-03-23)
 
-**Phase:** Session 127 COMPLETE. Solo session. MT-30 Phase 7 — fully automated desktop CCA chat.
+**Phase:** Session 128 IN PROGRESS. Solo session. MT-30 Phase 8 — production hardening for autoloop.
 
-**What was done this session (S127):**
-- **Model alternation COMPLETE**: `select_model()` with 3 strategies (round-robin, opus-primary, sonnet-primary). `--model` flag passed to claude CLI per iteration. `MODEL_STRATEGY` env var + `--model-strategy` CLI flag. Model tracked per iteration in audit log and state file.
-- **Desktop mode COMPLETE + HARDENED**: `--desktop` flag opens each claude session in a visible Terminal.app window via osascript/AppleScript. Matthew can watch and interact freely. Window title per iteration (CCA-AutoLoop-Iter-N). Auto-close after session ends. Fallback close from controller. Ctrl-C cleanup. Sentinel polling with 4h timeout.
-- **--dangerously-skip-permissions**: All spawned claude sessions run with permission bypass for full automation. No manual "yes" prompts.
-- **Session de-duplication**: Pre-flight check blocks launch if another CCA CLI session is already running. One session at a time to protect rate limits.
-- **VERIFIED WORKING**: Terminal.app integration test passed — window opens, runs, writes sentinel in ~6s, auto-closes.
-- **Both features in cca_autoloop.py AND start_autoloop.sh**: Full parity between Python and bash implementations.
-- **Tests**: 204 suites, ~8125 tests passing. +42 new tests this session (85 total in test_cca_autoloop.py, was 43).
-- **Commits**: 5 this session. Grade: A — all S126 directives completed (model alternation, desktop automation, interactive access).
+**What was done this session (S128):**
+- **Terminal.app close race condition FIXED**: Removed self-close from wrapper script (caused race with `exit`). Controller now waits 3s for shell to fully exit, uses `close w saving no`, handles "terminate?" dialog via System Events, retries close if window persists.
+- **Pre-flight checks ADDED**: claude binary existence, Terminal.app running status, Accessibility permissions check, orphaned temp file cleanup from previous crashes.
+- **Rate limit handling ADDED**: Exit codes 2 and 75 recognized as rate limits — get 5-minute extended cooldown instead of counting as crashes. No longer triggers 3-crash auto-stop.
+- **Critical bug FIXED**: Python desktop wrapper was missing `--dangerously-skip-permissions` — would have blocked all automation with permission prompts.
+- **Stale resume detection**: Logs when SESSION_RESUME.md unchanged between iterations (stuck loop diagnostic).
+- **Prompt size truncation**: Resumes >100KB truncated to avoid CLI arg rejection.
+- **Tests**: 204 suites passing. +31 new tests this session (85 → 116 in test_cca_autoloop.py).
+- **Commits**: 3 this session so far.
 
 **Next (prioritized):**
-1. **Live supervised dry run**: Run `./start_autoloop.sh --desktop` with NO other CCA sessions running. Watch claude spawn in Terminal.app, run /cca-init + /cca-auto, work, wrap, exit. Verify auto-loop spawns the NEXT session automatically.
+1. **Live supervised dry run**: Run `./start_autoloop.sh --desktop` with NO other CCA sessions running. Close THIS desktop app chat first.
 2. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
 3. **MT-31**: Build Flash-powered CCA tools now that Gemini Flash MCP is validated.
 
