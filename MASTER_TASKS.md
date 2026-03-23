@@ -1210,6 +1210,7 @@ python3 priority_picker.py json          # Export for programmatic use
 | 3 | MT-26 | Financial Intelligence Engine | 7 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **8.0** | NEW (S103) | Research: scope trading/prediction market academic backbone |
 | 4 | MT-28 | Self-Learning v2 (Multi-Domain) | 7 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **8.0** | NEW (S103) | Research: cross-domain YoYo, Sentinel adaptive mutation |
 | 5 | MT-32 | Visual Excellence & Design Engineering | 8 | +0.0 | 5% | +0.0 | +0.0 | 0.0 | **8.0** | NEW (S118) | Phase 1: wire report_charts + nuclear scan. Absorbs MT-24/MT-25 |
+| 5 | MT-33 | Strategic Intelligence Report | 9 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **10.0** | NEW (S121) | Phase 1: deep dive research — data sources, metrics, chart mapping |
 | 6 | MT-24 | Visualization & Graphics Engine | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 4 |
 | 7 | MT-25 | Presentation Generator | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 8 (WAITING: style samples) |
 | 7 | MT-27 | CCA Nuclear v2 | 5 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **5.0** | NEW (S103) | Research: APF improvement, better frontier tagging |
@@ -1225,6 +1226,98 @@ python3 priority_picker.py json          # Export for programmatic use
 | MT-5 | Claude Pro bridge | Needs research | PARTIALLY SELF-RESOLVED: Remote Control + Chrome ext | **9.0** |
 | MT-16 | Detachable chat tabs | Anthropic feature | STILL OPEN: GitHub issues filed | N/A |
 | MT-19 | Local LLM fine-tuning | GPU resources | STILL OPEN: not self-resolving | N/A |
+
+---
+
+## MT-33: Strategic Intelligence Report (Kalshi + Self-Learning + Research)
+
+**Source:** Matthew directive (S121, 2026-03-22) — "would love to see statistical analysis regarding the overall bets, or bets from that day, market trends... also incorporate the self-learning section there or a whole section talking about future research"
+
+**What Matthew wants:** Transform /cca-report from a project status document into a strategic intelligence artifact that future chats can reference. Merge CCA project health with Kalshi bot financial analytics, self-learning insights, and research pipeline status — all in one professional PDF.
+
+**Why this matters:** Right now the report is a snapshot of CCA's codebase health. Matthew wants it to be the single document he can look at to understand: how the bot is performing, what the self-learning system has discovered, what research is pending, and where CCA is heading. It also stress-tests the chart library with real financial data.
+
+**Scope — 6 pillars:**
+
+1. **Kalshi Bot Financial Analytics Section**
+   - Overall P&L summary (cumulative, daily, weekly)
+   - Win rate and confidence calibration charts
+   - Bet volume and market category breakdown
+   - Signal pipeline performance (which signals are working)
+   - Regime-stratified analysis (trending vs mean-reverting vs chaotic)
+   - Uses: ScatterPlot (win rate vs confidence), BoxPlot (profit distribution by market), HistogramChart (bet size distribution), LineChart (cumulative P&L)
+   - Data source: Kalshi bot SQLite DB (READ-ONLY access per CLAUDE.md)
+
+2. **Self-Learning Intelligence Section**
+   - Pattern detection summary (what the system learned this period)
+   - Principle registry health (which principles are scoring well)
+   - Strategy health verdicts (HEALTHY/MONITOR/PAUSE/KILL)
+   - Sentinel mutation log (what adaptations were made)
+   - Research outcomes ROI (which CCA deliveries produced Kalshi profit)
+   - Uses: BarChart (principle scores), RadarChart (strategy dimensions), GaugeChart (overall learning health)
+
+3. **Research Pipeline Section**
+   - Academic papers discovered and their relevance scores
+   - Research-to-implementation pipeline status
+   - Pending research topics and priority
+   - Cross-domain transfer opportunities
+   - Uses: FunnelChart (papers -> evaluated -> implemented -> profitable)
+
+4. **Market Context Section**
+   - Macro regime current state (CALM/ELEVATED/HIGH_IMPACT)
+   - Upcoming calendar events (FOMC, CPI, NFP)
+   - Cross-platform signals (Kalshi vs Polymarket divergence)
+   - Fear & greed indicator current reading
+   - Uses: HeatmapChart (market activity by category/time), GaugeChart (regime indicator)
+
+5. **Actionable Recommendations Section**
+   - Top 3 research priorities for next session
+   - Strategy adjustments based on self-learning
+   - Risk alerts (drawdown trends, stagnation, regime shifts)
+   - "What to build next" based on where the gaps are
+   - This section is the bridge: CCA tells Kalshi what to do
+
+6. **Self-Reference Hook**
+   - Report data exportable as structured JSON alongside PDF
+   - Future chats can parse previous reports for continuity
+   - Trend comparison: "this report vs last report" diff highlights
+   - Report becomes a persistent knowledge artifact, not just a visual
+
+**Data Sources (all READ-ONLY):**
+- Kalshi bot SQLite DB: `~/Projects/polymarket-bot/kalshi_bot.db` (or equivalent)
+- Self-learning journal: `self-learning/journal.jsonl`
+- Principle registry: `~/.cca-principles.json`
+- Research outcomes: `~/.cca-research-outcomes.jsonl`
+- APF snapshots: `~/.cca-apf-snapshots.jsonl`
+- Existing report_generator.py data collection pipeline
+
+**Cardinal Safety:**
+- NEVER expose account balances, API keys, or wallet addresses in the report
+- Financial data shown as relative (percentages, ratios) not absolute amounts where sensitive
+- P&L can be shown in dollar amounts (Matthew-authorized) but never account credentials
+- All DB access is read-only via Python sqlite3 — no writes, no schema changes
+
+**Multi-session execution (Matthew explicit: "not something that could be developed in one chat"):**
+- Phase 1: Deep dive research — what metrics matter, what data is available, what charts fit
+- Phase 2: Data collection layer — SQL queries, data transformers, schema mapping
+- Phase 3: Report section templates — Typst layouts for each pillar
+- Phase 4: Chart integration — wire real data into chart_generator.py chart types
+- Phase 5: Self-reference hook — JSON export, report diffing, chat-parseable format
+- Phase 6: Hardening — edge cases (empty DB, no bets today, missing data), test suite
+
+**Relationship to existing infrastructure:**
+- Extends report_generator.py (existing /cca-report pipeline)
+- Consumes self-learning/ module outputs (journal, principles, strategies)
+- Consumes Kalshi bot DB (cross-project READ per CLAUDE.md authorization)
+- Uses chart_generator.py's 21 chart types (the real test for MT-32)
+- Feeds into cross-chat bridge (CCA_TO_POLYBOT.md recommendations)
+
+**Success criteria:**
+- Matthew can glance at one PDF and know: bot health, learning progress, research pipeline, next actions
+- Future chats can load the JSON sidecar for continuity
+- Charts make the data genuinely easier to understand than raw numbers
+
+---
 
 ### Scoring Rules
 
