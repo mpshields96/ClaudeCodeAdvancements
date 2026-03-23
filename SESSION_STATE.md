@@ -9,10 +9,11 @@
 
 **What was done this session (S127):**
 - **Model alternation COMPLETE**: `select_model()` with 3 strategies (round-robin, opus-primary, sonnet-primary). `--model` flag passed to claude CLI per iteration. `MODEL_STRATEGY` env var + `--model-strategy` CLI flag. Model tracked per iteration in audit log and state file.
-- **Desktop mode COMPLETE**: `--desktop` flag opens each claude session in a visible Terminal.app window via osascript/AppleScript. Matthew can watch and interact. Controller polls sentinel file for completion. `write_desktop_wrapper()`, `spawn_desktop_session()`, `wait_for_sentinel()` — all with tests.
+- **Desktop mode COMPLETE + HARDENED**: `--desktop` flag opens each claude session in a visible Terminal.app window via osascript/AppleScript. Matthew can watch and interact freely. Window title per iteration (CCA-AutoLoop-Iter-N). Auto-close after session ends. Fallback close from controller. Ctrl-C cleanup. Sentinel polling with 4h timeout.
+- **VERIFIED WORKING**: Terminal.app integration test passed — window opens, runs, writes sentinel in ~6s, auto-closes.
 - **Both features in cca_autoloop.py AND start_autoloop.sh**: Full parity between Python and bash implementations.
-- **Tests**: 204 suites, ~8117 tests passing. +34 new tests this session (77 total in test_cca_autoloop.py, was 43).
-- **Commits**: 1 so far.
+- **Tests**: 204 suites, ~8117 tests passing. +38 new tests this session (81 total in test_cca_autoloop.py, was 43).
+- **Commits**: 3 this session.
 
 **Next (prioritized):**
 1. **MT-30 Phase 7 dry run**: Test `./start_autoloop.sh --desktop` with a real supervised session. Verify Terminal.app window opens, claude runs, sentinel polling works.
