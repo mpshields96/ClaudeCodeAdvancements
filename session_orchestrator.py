@@ -17,14 +17,17 @@ Stdlib only. No external dependencies.
 
 import json
 import os
+import signal
 import subprocess
 import sys
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional
 
 CCA_DIR = "/Users/matthewshields/Projects/ClaudeCodeAdvancements"
 PREF_FILE = os.path.join(CCA_DIR, ".session_preference.json")
+PID_DIR = os.path.join(CCA_DIR, ".session_pids")
 
 
 class SessionMode(Enum):
@@ -78,6 +81,133 @@ def detect_running_sessions(processes: list) -> SessionState:
         elif chat_id in ("cli1", "cli2"):
             state.worker_running = True
         elif project and "polymarket-bot" in project:
+            state.kalshi_running = True
+
+    return state
+
+
+class PidRegistry:
+    """Register/deregister/query sessions via PID files.
+
+    Each session writes a JSON PID file at startup, removes it at wrap.
+    Stale PID files (dead processes) are cleaned up automatically.
+    """
+
+    def __init__(self, pid_dir: str = PID_DIR):
+        self.pid_dir = pid_dir
+        os.makedirs(pid_dir, exist_ok=True)
+
+    def _path(self, role: str) -> str:
+        return os.path.join(self.pid_dir, f"{role}.pid")
+
+    def register(self, role: str, pid: int = 0) -> None:
+        """Register a session. PID is optional — heartbeat is primary liveness signal."""
+        data = {
+            "role": role,
+            "pid": pid if pid else os.getpid(),
+            "started_at": time.time(),
+            "last_heartbeat": time.time(),
+        }
+        with open(self._path(role), "w") as f:
+            json.dump(data, f)
+
+    def deregister(self, role: str) -> None:
+        """Remove a session's PID file."""
+        try:
+            os.remove(self._path(role))
+        except FileNotFoundError:
+            pass
+
+    def read(self, role: str) -> Optional[dict]:
+        """Read a session's PID file. Returns None if not found."""
+        try:
+            with open(self._path(role)) as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return None
+
+    # Heartbeat considered alive if within this many seconds
+    HEARTBEAT_TTL = 600  # 10 minutes
+
+    def heartbeat(self, role: str) -> None:
+        """Update heartbeat timestamp for a running session."""
+        data = self.read(role)
+        if data:
+            data["last_heartbeat"] = time.time()
+            with open(self._path(role), "w") as f:
+                json.dump(data, f)
+
+    def is_alive(self, role: str) -> bool:
+        """Check if a registered session is still running.
+
+        Primary: heartbeat recency (within HEARTBEAT_TTL seconds).
+        Fallback: PID liveness check via os.kill(pid, 0).
+        """
+        data = self.read(role)
+        if not data:
+            return False
+
+        # Primary: heartbeat recency
+        last_hb = data.get("last_heartbeat", 0)
+        if last_hb and (time.time() - last_hb) < self.HEARTBEAT_TTL:
+            return True
+
+        # Fallback: PID check
+        try:
+            os.kill(data["pid"], 0)
+            return True
+        except (OSError, ProcessLookupError):
+            return False
+
+    def list_active(self) -> list:
+        """List all registered sessions (alive or not)."""
+        results = []
+        try:
+            for fname in os.listdir(self.pid_dir):
+                if fname.endswith(".pid"):
+                    role = fname[:-4]
+                    data = self.read(role)
+                    if data:
+                        results.append(data)
+        except FileNotFoundError:
+            pass
+        return results
+
+    def cleanup_stale(self) -> list:
+        """Remove PID files for dead processes. Returns list of cleaned roles."""
+        cleaned = []
+        try:
+            for fname in os.listdir(self.pid_dir):
+                if fname.endswith(".pid"):
+                    role = fname[:-4]
+                    if not self.is_alive(role):
+                        self.deregister(role)
+                        cleaned.append(role)
+        except FileNotFoundError:
+            pass
+        return cleaned
+
+
+def detect_running_sessions_from_pidfiles(
+    registry: Optional[PidRegistry] = None,
+) -> SessionState:
+    """Build SessionState from PID file registry.
+
+    Automatically cleans up stale PID files (dead processes).
+    """
+    if registry is None:
+        registry = PidRegistry()
+
+    registry.cleanup_stale()
+    state = SessionState()
+
+    for entry in registry.list_active():
+        role = entry.get("role", "")
+        if role == "desktop":
+            state.desktop_running = True
+        elif role in ("cli1", "cli2"):
+            state.worker_running = True
+        elif role == "kalshi":
             state.kalshi_running = True
 
     return state
@@ -171,7 +301,13 @@ def load_session_preference(path: str = PREF_FILE) -> SessionMode:
 
 
 def _get_live_state() -> SessionState:
-    """Detect running sessions from live processes."""
+    """Detect running sessions. Uses PID files first, falls back to ps."""
+    # Primary: PID file registry (reliable, explicit)
+    pid_state = detect_running_sessions_from_pidfiles()
+    if pid_state.desktop_running or pid_state.worker_running or pid_state.kalshi_running:
+        return pid_state
+
+    # Fallback: ps-based detection (heuristic, less reliable)
     try:
         result = subprocess.run(
             ["ps", "axo", "pid,command"],
@@ -247,6 +383,8 @@ def cli_main(args: list = None):
         print("  plan [--mode MODE]        Show what would be launched")
         print("  launch [--mode MODE]      Execute launches")
         print("  set-mode MODE             Save default target mode (solo/2chat/3chat)")
+        print("  register ROLE             Register this session (desktop/cli1/kalshi)")
+        print("  deregister ROLE           Deregister a session")
         return
 
     cmd = args[0]
@@ -302,6 +440,33 @@ def cli_main(args: list = None):
         mode = SessionMode(args[1])
         save_session_preference(mode)
         print(f"Default mode set to: {mode.value}")
+
+    elif cmd == "register":
+        if len(args) < 2:
+            print("Usage: register desktop|cli1|cli2|kalshi")
+            return
+        role = args[1]
+        registry = PidRegistry()
+        registry.register(role)
+        print(f"Registered {role}")
+
+    elif cmd == "heartbeat":
+        if len(args) < 2:
+            print("Usage: heartbeat desktop|cli1|cli2|kalshi")
+            return
+        role = args[1]
+        registry = PidRegistry()
+        registry.heartbeat(role)
+        print(f"Heartbeat: {role}")
+
+    elif cmd == "deregister":
+        if len(args) < 2:
+            print("Usage: deregister desktop|cli1|cli2|kalshi")
+            return
+        role = args[1]
+        registry = PidRegistry()
+        registry.deregister(role)
+        print(f"Deregistered {role}")
 
     else:
         print(f"Unknown command: {cmd}")
