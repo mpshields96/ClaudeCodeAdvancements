@@ -15,8 +15,11 @@ from session_outcome_tracker import (
     OutcomeStore,
     parse_session_state_planned,
     parse_session_state_completed,
+    parse_session_id,
     compute_completion_rate,
     compute_session_grade,
+    count_session_commits,
+    record_from_session_state,
     trend_report,
 )
 
@@ -341,6 +344,122 @@ class TestTrendReport(unittest.TestCase):
         ]
         report = trend_report(outcomes)
         self.assertAlmostEqual(report["avg_completion_rate"], 0.75)
+
+
+class TestParseSessionId(unittest.TestCase):
+    """Test session ID extraction from SESSION_STATE.md."""
+
+    def test_parse_session_id(self):
+        content = "## Current State (as of Session 132 — 2026-03-23)"
+        self.assertEqual(parse_session_id(content), 132)
+
+    def test_parse_session_id_not_found(self):
+        self.assertIsNone(parse_session_id("No session here"))
+
+    def test_parse_session_id_multiline(self):
+        content = "header\n## Current State (as of Session 99 — 2026-01-01)\nbody"
+        self.assertEqual(parse_session_id(content), 99)
+
+
+class TestCountSessionCommits(unittest.TestCase):
+    """Test git commit counting."""
+
+    @patch("session_outcome_tracker.subprocess")
+    def test_count_commits_with_session_prefix(self, mock_sub):
+        mock_sub.run.return_value = type("R", (), {
+            "returncode": 0,
+            "stdout": "S133: Fix drift\nS133: Build tracker\nS132: Old commit\n"
+        })()
+        count = count_session_commits(133)
+        self.assertEqual(count, 2)
+
+    @patch("session_outcome_tracker.subprocess")
+    def test_count_commits_none_found(self, mock_sub):
+        mock_sub.run.return_value = type("R", (), {
+            "returncode": 0,
+            "stdout": "S131: Old\nS130: Older\n"
+        })()
+        count = count_session_commits(133)
+        self.assertEqual(count, 0)
+
+    @patch("session_outcome_tracker.subprocess")
+    def test_count_commits_git_fails(self, mock_sub):
+        mock_sub.run.return_value = type("R", (), {
+            "returncode": 1,
+            "stdout": ""
+        })()
+        count = count_session_commits(133)
+        self.assertEqual(count, 0)
+
+
+class TestRecordFromSessionState(unittest.TestCase):
+    """Test automated recording from SESSION_STATE.md."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.store_path = os.path.join(self.tmpdir, "outcomes.jsonl")
+        self.state_path = os.path.join(self.tmpdir, "SESSION_STATE.md")
+
+    def tearDown(self):
+        for f in [self.store_path, self.state_path]:
+            if os.path.exists(f):
+                os.unlink(f)
+        os.rmdir(self.tmpdir)
+
+    def _write_state(self, content):
+        with open(self.state_path, "w") as f:
+            f.write(content)
+
+    @patch("session_outcome_tracker.count_session_commits", return_value=5)
+    def test_record_from_state(self, mock_commits):
+        self._write_state("""## Current State (as of Session 132 — 2026-03-23)
+
+**What was done this session (S132):**
+- **MT-22 Phase 1 COMPLETE**: Built the thing
+- **MT-22 Phase 2 COMPLETE**: Built more
+
+**Next (prioritized):**
+1. **MT-22 trial**: Run it
+2. **CI/CD verify**: Check pipeline
+""")
+        outcome = record_from_session_state(
+            self.state_path,
+            tests_added=50,
+            tests_total=8000,
+            store_path=self.store_path,
+        )
+        self.assertEqual(outcome.session_id, 132)
+        self.assertEqual(len(outcome.completed_tasks), 2)
+        self.assertEqual(len(outcome.planned_tasks), 2)
+        self.assertEqual(outcome.commits, 5)
+        self.assertEqual(outcome.tests_added, 50)
+        self.assertIsNotNone(outcome.grade)
+
+        # Verify persisted
+        store = OutcomeStore(self.store_path)
+        loaded = store.load_all()
+        self.assertEqual(len(loaded), 1)
+        self.assertEqual(loaded[0].session_id, 132)
+
+    @patch("session_outcome_tracker.count_session_commits", return_value=0)
+    def test_record_missing_session_id(self, mock_commits):
+        self._write_state("No session info here")
+        outcome = record_from_session_state(
+            self.state_path,
+            store_path=self.store_path,
+        )
+        self.assertIsNone(outcome)
+
+    @patch("session_outcome_tracker.count_session_commits", return_value=3)
+    def test_record_with_explicit_session_id(self, mock_commits):
+        self._write_state("No parseable session")
+        outcome = record_from_session_state(
+            self.state_path,
+            session_id=200,
+            store_path=self.store_path,
+        )
+        self.assertIsNotNone(outcome)
+        self.assertEqual(outcome.session_id, 200)
 
 
 if __name__ == "__main__":

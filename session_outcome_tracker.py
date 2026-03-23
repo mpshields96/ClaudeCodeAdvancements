@@ -15,6 +15,7 @@ Usage:
 import json
 import os
 import re
+import subprocess
 import sys
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -171,6 +172,67 @@ def parse_session_state_completed(content: str) -> list:
     return tasks
 
 
+def parse_session_id(content: str) -> Optional[int]:
+    """Extract session number from SESSION_STATE.md content."""
+    m = re.search(r"Session\s+(\d+)\s*[—\-]", content)
+    if m:
+        return int(m.group(1))
+    return None
+
+
+def count_session_commits(session_id: int, repo_dir: str = ".") -> int:
+    """Count git commits with the session prefix (e.g., 'S133:')."""
+    prefix = f"S{session_id}:"
+    result = subprocess.run(
+        ["git", "log", "--oneline", "-50"],
+        capture_output=True, text=True, cwd=repo_dir
+    )
+    if result.returncode != 0:
+        return 0
+    return sum(1 for line in result.stdout.strip().split("\n") if prefix in line)
+
+
+def record_from_session_state(
+    state_path: str,
+    session_id: Optional[int] = None,
+    tests_added: int = 0,
+    tests_total: int = 0,
+    store_path: str = DEFAULT_STORE_PATH,
+    repo_dir: str = ".",
+) -> Optional[SessionOutcome]:
+    """Auto-record a session outcome by reading SESSION_STATE.md + git log.
+
+    Called by /cca-wrap to automatically capture the session's outcome.
+    Returns the recorded SessionOutcome, or None if session ID not found.
+    """
+    with open(state_path) as f:
+        content = f.read()
+
+    sid = session_id or parse_session_id(content)
+    if sid is None:
+        return None
+
+    planned = parse_session_state_planned(content)
+    completed = parse_session_state_completed(content)
+    commits = count_session_commits(sid, repo_dir)
+    rate = compute_completion_rate(planned, completed)
+    grade = compute_session_grade(rate, commits, tests_added)
+
+    outcome = SessionOutcome(
+        session_id=sid,
+        planned_tasks=planned,
+        completed_tasks=completed,
+        commits=commits,
+        tests_added=tests_added,
+        tests_total=tests_total,
+        grade=grade,
+    )
+
+    store = OutcomeStore(store_path)
+    store.append(outcome)
+    return outcome
+
+
 def compute_completion_rate(planned: list, completed: list) -> float:
     """Fraction of planned tasks that were completed. Capped at 1.0."""
     if not planned:
@@ -318,6 +380,36 @@ def main():
         outcomes = store.load_last(n)
         report = trend_report(outcomes)
         print(json.dumps(report, indent=2))
+
+    elif cmd == "auto-record":
+        # Auto-record from SESSION_STATE.md — designed for /cca-wrap integration
+        state_path = sys.argv[2] if len(sys.argv) > 2 else "SESSION_STATE.md"
+        tests_added = 0
+        tests_total = 0
+        args = sys.argv[2:]
+        i = 0
+        while i < len(args):
+            if args[i] == "--tests-added" and i + 1 < len(args):
+                tests_added = int(args[i + 1])
+                i += 2
+            elif args[i] == "--tests-total" and i + 1 < len(args):
+                tests_total = int(args[i + 1])
+                i += 2
+            elif not args[i].startswith("--"):
+                state_path = args[i]
+                i += 1
+            else:
+                i += 1
+        outcome = record_from_session_state(
+            state_path, tests_added=tests_added, tests_total=tests_total
+        )
+        if outcome:
+            print(f"Auto-recorded S{outcome.session_id}: grade={outcome.grade}, "
+                  f"{len(outcome.completed_tasks)}/{len(outcome.planned_tasks)} tasks, "
+                  f"{outcome.commits} commits, +{outcome.tests_added} tests")
+        else:
+            print("Could not parse session ID from SESSION_STATE.md")
+            sys.exit(1)
 
     elif cmd == "parse-state":
         if len(sys.argv) < 3:
