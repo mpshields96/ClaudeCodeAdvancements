@@ -3,9 +3,30 @@
 
 ---
 
-## Current State (as of Session 125 — 2026-03-23)
+## Current State (as of Session 126 — 2026-03-23)
 
-**Phase:** Session 125 COMPLETE. Solo session. MT-26/MT-0/MT-32/MT-31 multi-MT work.
+**Phase:** Session 126 COMPLETE. Solo session. MT-30 Phase 6 auto-loop built and verified.
+
+**What was done this session (S126):**
+- **MT-30 Phase 6 COMPLETE**: `cca_autoloop.py` — reads SESSION_RESUME.md, spawns claude with resume prompt + /cca-init + /cca-auto, loops on clean exit. 43 new tests. Safety: 3 consecutive crashes = stop, 3 short sessions = stop, max 50 iterations, 15s cooldown, audit logging.
+- **start_autoloop.sh**: Bash loop runner that spawns claude in foreground (critical TTY fix — subprocess.run() doesn't give claude a real TTY). Supports `--tmux` mode for background operation.
+- **session_daemon_cca_only.json**: CCA-only daemon config (1 session max).
+- **VERIFIED WORKING IN TMUX**: Launched auto-loop, claude started interactive session, read resume prompt (734 chars from S125 SESSION_RESUME.md), ran /cca-init, began full test suite autonomously. Confirmed end-to-end flow works.
+- **TTY bug found and fixed**: Python subprocess.run() piped through tee makes stdout non-TTY. Claude exits immediately. Fix: bash foreground exec inherits TTY naturally.
+- **Matthew S126 directives logged**: (1) Model alternation Sonnet/Opus, (2) Desktop app automation via visible Terminal.app windows, (3) Interactive access.
+- **Tests**: 204 suites, ~8083 tests passing. +43 new tests this session.
+- **Commits**: 3 this session. Grade: B+ (core auto-loop built + verified, but model alternation and desktop mode not yet built).
+
+**Next (prioritized — Matthew S126 explicit):**
+1. **Model alternation**: Add Sonnet 4.6 / Opus 4.6 round-robin to start_autoloop.sh. `claude --model sonnet` or `claude --model opus`. Smart selection based on rate limits or simple alternation.
+2. **Desktop app automation**: `--desktop` mode that opens visible Terminal.app windows via osascript/AppleScript. Matthew wants to watch with his eyes and interact freely. Not hidden tmux.
+3. **MT-30 Phase 7**: Supervised dry run with model alternation + desktop mode. Prove error-free before expanding.
+4. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
+5. **MT-31**: Build Flash-powered CCA tools now that Gemini Flash MCP is validated.
+
+---
+
+## Previous State (Session 125 — 2026-03-23)
 
 **What was done this session (S125):**
 - **Gemini MCP E2E validated**: Flash works, Pro blocked (free tier, no API access). Matthew directive: Flash only. MT-31 scope narrowed.
