@@ -620,6 +620,178 @@ class AutoLoopLogger:
             pass
 
 
+def parse_audit_log(path: str) -> dict:
+    """Parse JSONL audit log into a structured history.
+
+    Returns:
+        {
+            "iterations": [
+                {"iteration": 1, "start": "...", "end": "...",
+                 "duration": 120, "exit_code": 0, "model": "sonnet", ...},
+                ...
+            ],
+            "loop_started": "2026-03-23T...",
+            "loop_ended": "2026-03-23T..." or None,
+            "total_iterations": N,
+            "total_crashes": N,
+            "total_rate_limits": N,
+            "avg_duration": float,
+            "models_used": {"sonnet": 3, "opus": 2},
+            "stale_resumes": N,
+        }
+    """
+    iterations = []
+    pending_start = None
+    loop_started = None
+    loop_ended = None
+    total_crashes = 0
+    total_rate_limits = 0
+    stale_resumes = 0
+    model_counts: dict = {}
+
+    try:
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+
+                event = entry.get("event", "")
+                data = entry.get("data", {})
+                ts = entry.get("ts", "")
+
+                if event == "loop_started":
+                    loop_started = ts
+
+                elif event == "iteration_start":
+                    pending_start = {
+                        "iteration": data.get("iteration", 0),
+                        "start": ts,
+                        "model": data.get("model", ""),
+                        "model_strategy": data.get("model_strategy", ""),
+                        "resume_length": data.get("resume_length", 0),
+                        "dry_run": data.get("dry_run", False),
+                    }
+
+                elif event == "iteration_complete":
+                    iter_data = {
+                        "iteration": data.get("iteration", 0),
+                        "end": ts,
+                        "duration": data.get("duration", 0),
+                        "exit_code": data.get("exit_code", -1),
+                        "model": data.get("model", ""),
+                    }
+                    # Merge with pending start data if available
+                    if pending_start and pending_start["iteration"] == iter_data["iteration"]:
+                        iter_data["start"] = pending_start["start"]
+                        iter_data["resume_length"] = pending_start.get("resume_length", 0)
+                        iter_data["dry_run"] = pending_start.get("dry_run", False)
+                        iter_data["model_strategy"] = pending_start.get("model_strategy", "")
+                        if not iter_data["model"] and pending_start.get("model"):
+                            iter_data["model"] = pending_start["model"]
+                    iterations.append(iter_data)
+                    pending_start = None
+
+                    # Track crashes and rate limits
+                    ec = iter_data["exit_code"]
+                    if ec != 0 and ec not in RATE_LIMIT_EXIT_CODES:
+                        total_crashes += 1
+                    elif ec in RATE_LIMIT_EXIT_CODES:
+                        total_rate_limits += 1
+
+                    # Track models
+                    m = iter_data.get("model", "")
+                    if m:
+                        model_counts[m] = model_counts.get(m, 0) + 1
+
+                elif event == "stale_resume_detected":
+                    stale_resumes += 1
+
+                elif event in ("loop_finished", "loop_stopped", "loop_interrupted"):
+                    loop_ended = ts
+
+    except OSError:
+        pass
+
+    durations = [i["duration"] for i in iterations if i.get("duration", 0) > 0]
+    avg_duration = sum(durations) / len(durations) if durations else 0.0
+
+    return {
+        "iterations": iterations,
+        "loop_started": loop_started,
+        "loop_ended": loop_ended,
+        "total_iterations": len(iterations),
+        "total_crashes": total_crashes,
+        "total_rate_limits": total_rate_limits,
+        "avg_duration": avg_duration,
+        "models_used": model_counts,
+        "stale_resumes": stale_resumes,
+    }
+
+
+def format_status_report(state_file: str, log_file: str) -> str:
+    """Generate a rich status report from state + audit log.
+
+    Returns a human-readable string.
+    """
+    lines = ["CCA Auto-Loop Status", "=" * 40]
+
+    # State file
+    state = {}
+    try:
+        with open(state_file) as f:
+            state = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        pass
+
+    if state:
+        lines.append(f"Iteration: {state.get('iteration', '?')}")
+        lines.append(f"Sessions: {state.get('total_sessions', '?')}  Crashes: {state.get('total_crashes', '?')}")
+        if state.get("last_updated"):
+            lines.append(f"Last updated: {state['last_updated']}")
+        if state.get("should_stop"):
+            lines.append(f"STOPPED: {state.get('stop_reason', 'unknown')}")
+    else:
+        lines.append("No state file found.")
+
+    # Audit log
+    history = parse_audit_log(log_file)
+    if history["total_iterations"] > 0:
+        lines.append("")
+        lines.append(f"Audit Log History ({history['total_iterations']} iterations)")
+        lines.append("-" * 40)
+        if history["loop_started"]:
+            lines.append(f"Loop started: {history['loop_started']}")
+        if history["loop_ended"]:
+            lines.append(f"Loop ended:   {history['loop_ended']}")
+        lines.append(f"Avg duration: {history['avg_duration']:.0f}s")
+        lines.append(f"Crashes: {history['total_crashes']}  Rate limits: {history['total_rate_limits']}  Stale resumes: {history['stale_resumes']}")
+
+        if history["models_used"]:
+            model_str = ", ".join(f"{m}={c}" for m, c in sorted(history["models_used"].items()))
+            lines.append(f"Models: {model_str}")
+
+        # Last 5 iterations
+        recent = history["iterations"][-5:]
+        if recent:
+            lines.append("")
+            lines.append("Recent iterations:")
+            for it in recent:
+                dur = it.get("duration", 0)
+                ec = it.get("exit_code", "?")
+                model = it.get("model", "?")
+                status = "OK" if ec == 0 else f"exit={ec}"
+                if ec in RATE_LIMIT_EXIT_CODES:
+                    status = "RATE_LIMITED"
+                lines.append(f"  #{it.get('iteration', '?')}  {dur:>5.0f}s  {model:<8s}  {status}")
+
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
@@ -915,18 +1087,14 @@ def cli_main(args: list = None):
 
     elif cmd == "status":
         state_file = os.path.expanduser("~/.cca-autoloop-state.json")
+        log_file = os.path.expanduser("~/.cca-autoloop.log")
         for i, arg in enumerate(args[1:], 1):
             if arg == "--state-file" and i + 1 < len(args):
                 state_file = args[i + 1]
+            elif arg == "--log-file" and i + 1 < len(args):
+                log_file = args[i + 1]
 
-        if os.path.exists(state_file):
-            with open(state_file) as f:
-                data = json.load(f)
-            print("CCA Auto-Loop Status:")
-            for k, v in data.items():
-                print(f"  {k}: {v}")
-        else:
-            print("No state file found. Auto-loop may not have run yet.")
+        print(format_status_report(state_file, log_file))
 
     else:
         print(f"Unknown command: {cmd}", file=sys.stderr)

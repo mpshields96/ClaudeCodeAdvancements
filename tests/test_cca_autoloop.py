@@ -34,6 +34,8 @@ from cca_autoloop import (
     check_accessibility_permissions,
     cleanup_orphaned_temp_files,
     _is_desktop_window_open,
+    parse_audit_log,
+    format_status_report,
     RATE_LIMIT_EXIT_CODES,
     RATE_LIMIT_COOLDOWN,
     MAX_PROMPT_SIZE,
@@ -1234,6 +1236,255 @@ class TestRunnerPreFlight(unittest.TestCase):
         runner = AutoLoopRunner(cfg)
         runner.run()
         mock_cleanup.assert_called_once()
+
+
+class TestParseAuditLog(unittest.TestCase):
+    """Test audit log parsing for rich --status output."""
+
+    def setUp(self):
+        from cca_autoloop import parse_audit_log, format_status_report
+        self.parse_audit_log = parse_audit_log
+        self.format_status_report = format_status_report
+
+    def _write_log(self, entries):
+        """Write JSONL entries to a temp file, return path."""
+        f = tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False)
+        for entry in entries:
+            f.write(json.dumps(entry) + "\n")
+        f.flush()
+        f.close()
+        return f.name
+
+    def test_empty_log(self):
+        path = self._write_log([])
+        result = self.parse_audit_log(path)
+        os.unlink(path)
+        self.assertEqual(result["total_iterations"], 0)
+        self.assertEqual(result["iterations"], [])
+        self.assertIsNone(result["loop_started"])
+        self.assertIsNone(result["loop_ended"])
+
+    def test_missing_log_file(self):
+        result = self.parse_audit_log("/nonexistent/path.jsonl")
+        self.assertEqual(result["total_iterations"], 0)
+
+    def test_single_iteration(self):
+        entries = [
+            {"ts": "2026-03-23T10:00:00", "event": "loop_started", "data": {}},
+            {"ts": "2026-03-23T10:00:01", "event": "iteration_start",
+             "data": {"iteration": 1, "model": "sonnet", "resume_length": 500, "model_strategy": "round-robin"}},
+            {"ts": "2026-03-23T10:05:00", "event": "iteration_complete",
+             "data": {"iteration": 1, "exit_code": 0, "duration": 299, "model": "sonnet"}},
+            {"ts": "2026-03-23T10:05:15", "event": "loop_finished", "data": {}},
+        ]
+        path = self._write_log(entries)
+        result = self.parse_audit_log(path)
+        os.unlink(path)
+        self.assertEqual(result["total_iterations"], 1)
+        self.assertEqual(result["loop_started"], "2026-03-23T10:00:00")
+        self.assertEqual(result["loop_ended"], "2026-03-23T10:05:15")
+        self.assertEqual(result["total_crashes"], 0)
+        self.assertEqual(result["total_rate_limits"], 0)
+        self.assertEqual(result["avg_duration"], 299.0)
+        self.assertEqual(result["models_used"], {"sonnet": 1})
+        it = result["iterations"][0]
+        self.assertEqual(it["iteration"], 1)
+        self.assertEqual(it["exit_code"], 0)
+        self.assertEqual(it["duration"], 299)
+        self.assertEqual(it["model"], "sonnet")
+        self.assertEqual(it["start"], "2026-03-23T10:00:01")
+
+    def test_multiple_iterations_with_crash(self):
+        entries = [
+            {"ts": "T1", "event": "loop_started", "data": {}},
+            {"ts": "T2", "event": "iteration_start", "data": {"iteration": 1, "model": "sonnet"}},
+            {"ts": "T3", "event": "iteration_complete", "data": {"iteration": 1, "exit_code": 0, "duration": 120, "model": "sonnet"}},
+            {"ts": "T4", "event": "iteration_start", "data": {"iteration": 2, "model": "opus"}},
+            {"ts": "T5", "event": "iteration_complete", "data": {"iteration": 2, "exit_code": 1, "duration": 5, "model": "opus"}},
+            {"ts": "T6", "event": "iteration_start", "data": {"iteration": 3, "model": "sonnet"}},
+            {"ts": "T7", "event": "iteration_complete", "data": {"iteration": 3, "exit_code": 0, "duration": 300, "model": "sonnet"}},
+            {"ts": "T8", "event": "loop_finished", "data": {}},
+        ]
+        path = self._write_log(entries)
+        result = self.parse_audit_log(path)
+        os.unlink(path)
+        self.assertEqual(result["total_iterations"], 3)
+        self.assertEqual(result["total_crashes"], 1)
+        self.assertEqual(result["total_rate_limits"], 0)
+        self.assertAlmostEqual(result["avg_duration"], (120 + 5 + 300) / 3)
+        self.assertEqual(result["models_used"], {"sonnet": 2, "opus": 1})
+
+    def test_rate_limit_tracked(self):
+        entries = [
+            {"ts": "T1", "event": "iteration_start", "data": {"iteration": 1, "model": "sonnet"}},
+            {"ts": "T2", "event": "iteration_complete", "data": {"iteration": 1, "exit_code": 2, "duration": 10, "model": "sonnet"}},
+            {"ts": "T3", "event": "iteration_start", "data": {"iteration": 2, "model": "opus"}},
+            {"ts": "T4", "event": "iteration_complete", "data": {"iteration": 2, "exit_code": 75, "duration": 15, "model": "opus"}},
+        ]
+        path = self._write_log(entries)
+        result = self.parse_audit_log(path)
+        os.unlink(path)
+        self.assertEqual(result["total_rate_limits"], 2)
+        self.assertEqual(result["total_crashes"], 0)
+
+    def test_stale_resume_counted(self):
+        entries = [
+            {"ts": "T1", "event": "stale_resume_detected", "data": {"iteration": 2}},
+            {"ts": "T2", "event": "stale_resume_detected", "data": {"iteration": 3}},
+        ]
+        path = self._write_log(entries)
+        result = self.parse_audit_log(path)
+        os.unlink(path)
+        self.assertEqual(result["stale_resumes"], 2)
+
+    def test_malformed_json_lines_skipped(self):
+        f = tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False)
+        f.write('{"ts":"T1","event":"loop_started","data":{}}\n')
+        f.write('this is not json\n')
+        f.write('{"ts":"T2","event":"iteration_start","data":{"iteration":1,"model":"sonnet"}}\n')
+        f.write('\n')
+        f.write('{"ts":"T3","event":"iteration_complete","data":{"iteration":1,"exit_code":0,"duration":100,"model":"sonnet"}}\n')
+        f.flush()
+        f.close()
+        result = self.parse_audit_log(f.name)
+        os.unlink(f.name)
+        self.assertEqual(result["total_iterations"], 1)
+        self.assertEqual(result["loop_started"], "T1")
+
+    def test_loop_stopped_records_end(self):
+        entries = [
+            {"ts": "T1", "event": "loop_started", "data": {}},
+            {"ts": "T2", "event": "loop_stopped", "data": {"reason": "consecutive_crashes"}},
+        ]
+        path = self._write_log(entries)
+        result = self.parse_audit_log(path)
+        os.unlink(path)
+        self.assertEqual(result["loop_ended"], "T2")
+
+    def test_loop_interrupted_records_end(self):
+        entries = [
+            {"ts": "T1", "event": "loop_started", "data": {}},
+            {"ts": "T2", "event": "loop_interrupted", "data": {}},
+        ]
+        path = self._write_log(entries)
+        result = self.parse_audit_log(path)
+        os.unlink(path)
+        self.assertEqual(result["loop_ended"], "T2")
+
+    def test_iteration_without_start(self):
+        """iteration_complete without matching start still works."""
+        entries = [
+            {"ts": "T1", "event": "iteration_complete",
+             "data": {"iteration": 1, "exit_code": 0, "duration": 200, "model": "opus"}},
+        ]
+        path = self._write_log(entries)
+        result = self.parse_audit_log(path)
+        os.unlink(path)
+        self.assertEqual(result["total_iterations"], 1)
+        self.assertNotIn("start", result["iterations"][0])
+
+    def test_merge_start_and_complete(self):
+        """start data (resume_length, dry_run) merged into iteration record."""
+        entries = [
+            {"ts": "T1", "event": "iteration_start",
+             "data": {"iteration": 1, "model": "sonnet", "resume_length": 2500,
+                       "model_strategy": "round-robin", "dry_run": True}},
+            {"ts": "T2", "event": "iteration_complete",
+             "data": {"iteration": 1, "exit_code": 0, "duration": 0, "model": "sonnet"}},
+        ]
+        path = self._write_log(entries)
+        result = self.parse_audit_log(path)
+        os.unlink(path)
+        it = result["iterations"][0]
+        self.assertEqual(it["resume_length"], 2500)
+        self.assertTrue(it["dry_run"])
+        self.assertEqual(it["model_strategy"], "round-robin")
+        self.assertEqual(it["start"], "T1")
+
+
+class TestFormatStatusReport(unittest.TestCase):
+    """Test the rich status report formatter."""
+
+    def setUp(self):
+        from cca_autoloop import format_status_report
+        self.format_status_report = format_status_report
+
+    def test_no_files_exist(self):
+        report = self.format_status_report("/nonexistent/state.json", "/nonexistent/log.jsonl")
+        self.assertIn("No state file found", report)
+
+    def test_state_only(self):
+        sf = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+        json.dump({"iteration": 3, "total_sessions": 3, "total_crashes": 0,
+                    "last_updated": "2026-03-23T10:00:00Z"}, sf)
+        sf.flush()
+        sf.close()
+        report = self.format_status_report(sf.name, "/nonexistent/log.jsonl")
+        os.unlink(sf.name)
+        self.assertIn("Iteration: 3", report)
+        self.assertIn("Sessions: 3", report)
+        self.assertIn("Crashes: 0", report)
+
+    def test_full_report(self):
+        sf = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+        json.dump({"iteration": 2, "total_sessions": 2, "total_crashes": 0}, sf)
+        sf.flush()
+        sf.close()
+
+        lf = tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False)
+        entries = [
+            {"ts": "2026-03-23T10:00:00", "event": "loop_started", "data": {}},
+            {"ts": "T2", "event": "iteration_start", "data": {"iteration": 1, "model": "sonnet"}},
+            {"ts": "T3", "event": "iteration_complete", "data": {"iteration": 1, "exit_code": 0, "duration": 120, "model": "sonnet"}},
+            {"ts": "T4", "event": "iteration_start", "data": {"iteration": 2, "model": "opus"}},
+            {"ts": "T5", "event": "iteration_complete", "data": {"iteration": 2, "exit_code": 0, "duration": 180, "model": "opus"}},
+            {"ts": "T6", "event": "loop_finished", "data": {}},
+        ]
+        for e in entries:
+            lf.write(json.dumps(e) + "\n")
+        lf.flush()
+        lf.close()
+
+        report = self.format_status_report(sf.name, lf.name)
+        os.unlink(sf.name)
+        os.unlink(lf.name)
+
+        self.assertIn("Audit Log History (2 iterations)", report)
+        self.assertIn("Avg duration: 150s", report)
+        self.assertIn("Recent iterations:", report)
+        self.assertIn("sonnet", report)
+        self.assertIn("opus", report)
+
+    def test_stopped_state_shown(self):
+        sf = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+        json.dump({"iteration": 5, "total_sessions": 5, "total_crashes": 3,
+                    "should_stop": True, "stop_reason": "3_consecutive_crashes"}, sf)
+        sf.flush()
+        sf.close()
+        report = self.format_status_report(sf.name, "/nonexistent/log.jsonl")
+        os.unlink(sf.name)
+        self.assertIn("STOPPED: 3_consecutive_crashes", report)
+
+    def test_rate_limit_in_recent(self):
+        lf = tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False)
+        entries = [
+            {"ts": "T1", "event": "iteration_start", "data": {"iteration": 1, "model": "sonnet"}},
+            {"ts": "T2", "event": "iteration_complete", "data": {"iteration": 1, "exit_code": 2, "duration": 10, "model": "sonnet"}},
+        ]
+        for e in entries:
+            lf.write(json.dumps(e) + "\n")
+        lf.flush()
+        lf.close()
+
+        sf = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+        json.dump({"iteration": 1, "total_sessions": 1, "total_crashes": 0}, sf)
+        sf.flush()
+        sf.close()
+
+        report = self.format_status_report(sf.name, lf.name)
+        os.unlink(sf.name)
+        os.unlink(lf.name)
+        self.assertIn("RATE_LIMITED", report)
 
 
 if __name__ == "__main__":
