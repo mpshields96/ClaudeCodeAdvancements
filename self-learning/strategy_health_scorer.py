@@ -29,14 +29,16 @@ import os
 import sys
 from dataclasses import dataclass, field
 
+from metric_config import get_metric
 
-# ── Verdict Thresholds ───────────────────────────────────────────────────────
 
-MIN_SAMPLE_SIZE = 20  # Minimum trades before any verdict (Matthew directive)
-KILL_PNL_THRESHOLD = -30.0  # USD — cumulative loss threshold for KILL
-PAUSE_LOSS_STREAK = 8  # Consecutive losses to trigger PAUSE
-MONITOR_WIN_RATE_DROP = 0.10  # 10% drop from lifetime avg to trigger MONITOR
-HEALTHY_MIN_PROFIT_PER_TRADE = 0.0  # Must be profitable per trade on average
+# ── Verdict Thresholds (loaded from metric_config, user-overridable) ─────────
+
+MIN_SAMPLE_SIZE = get_metric("strategy_health.min_sample_size", 20)
+KILL_PNL_THRESHOLD = get_metric("strategy_health.kill_pnl_threshold", -30.0)
+PAUSE_LOSS_STREAK = get_metric("strategy_health.pause_loss_streak", 8)
+MONITOR_WIN_RATE_DROP = get_metric("strategy_health.monitor_win_rate_drop", 0.10)
+HEALTHY_MIN_PROFIT_PER_TRADE = get_metric("strategy_health.healthy_min_profit_per_trade", 0.0)
 
 
 @dataclass

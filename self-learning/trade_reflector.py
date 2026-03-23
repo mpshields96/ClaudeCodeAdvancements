@@ -42,16 +42,18 @@ import sqlite3
 import sys
 from datetime import datetime, timezone
 
+from metric_config import get_metric
 
-# Minimum sample sizes per pattern (from design doc)
-MIN_WIN_RATE_DRIFT = 20
-MIN_TIME_OF_DAY = 50
-MIN_STREAK = 15
-MIN_EDGE_TREND = 30
-MIN_SIZING = 20
+
+# Minimum sample sizes per pattern (loaded from metric_config, user-overridable)
+MIN_WIN_RATE_DRIFT = get_metric("trade_reflector.min_win_rate_drift", 20)
+MIN_TIME_OF_DAY = get_metric("trade_reflector.min_time_of_day", 50)
+MIN_STREAK = get_metric("trade_reflector.min_streak", 15)
+MIN_EDGE_TREND = get_metric("trade_reflector.min_edge_trend", 30)
+MIN_SIZING = get_metric("trade_reflector.min_sizing", 20)
 
 # p-value threshold for proposal generation
-P_VALUE_THRESHOLD = 0.10
+P_VALUE_THRESHOLD = get_metric("trade_reflector.p_value_threshold", 0.10)
 
 VALID_SEVERITIES = {"info", "warning", "critical"}
 VALID_ACTIONS = {"monitor", "parameter_adjust", "strategy_pause", "investigation"}

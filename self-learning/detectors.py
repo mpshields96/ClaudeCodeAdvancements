@@ -24,6 +24,17 @@ sys.path.insert(0, SCRIPT_DIR)
 
 from pattern_registry import register_detector, PatternDetector
 from journal import _load_strategy, get_pain_win_summary
+from metric_config import get_metric
+
+# Configurable thresholds (loaded from metric_config, user-overridable)
+_HIGH_SKIP_RATE = get_metric("detectors.high_skip_rate", 0.6)
+_LOW_BUILD_RATE = get_metric("detectors.low_build_rate", 0.03)
+_DOMAIN_CONCENTRATION = get_metric("detectors.domain_concentration", 0.7)
+_RECURRING_THEME_FREQ = get_metric("detectors.recurring_theme_frequency", 3)
+_LOW_PAIN_WIN_RATIO = get_metric("detectors.low_pain_win_ratio", 0.3)
+_HIGH_WIN_RATE = get_metric("detectors.high_win_rate", 0.8)
+_STALE_STRATEGY_DAYS = get_metric("detectors.stale_strategy_days", 14)
+_OVERNIGHT_WR_DELTA = get_metric("detectors.overnight_wr_delta", 0.10)
 
 
 def _days_between(ts1, ts2):
@@ -63,7 +74,7 @@ class VerdictDriftDetector(PatternDetector):
             build_rate = total_metrics.get("build", 0) / reviewed
             skip_rate = (total_metrics.get("skip", 0) + total_metrics.get("fast_skip", 0)) / reviewed
 
-            if skip_rate > 0.6:
+            if skip_rate > _HIGH_SKIP_RATE:
                 patterns.append({
                     "type": "high_skip_rate",
                     "severity": "info",
@@ -72,7 +83,7 @@ class VerdictDriftDetector(PatternDetector):
                     "suggestion": {"nuclear_scan.min_score_threshold": 50},
                 })
 
-            if build_rate < 0.03 and reviewed >= self.min_sample:
+            if build_rate < _LOW_BUILD_RATE and reviewed >= self.min_sample:
                 patterns.append({
                     "type": "low_build_rate",
                     "severity": "warning",
@@ -95,7 +106,7 @@ class DomainConcentrationDetector(PatternDetector):
         domain_counts = Counter(e.get("domain", "unknown") for e in entries)
         total = len(entries)
         for domain, count in domain_counts.most_common(3):
-            if count / total > 0.7 and total >= self.min_sample:
+            if count / total > _DOMAIN_CONCENTRATION and total >= self.min_sample:
                 patterns.append({
                     "type": "domain_concentration",
                     "severity": "info",
@@ -123,7 +134,7 @@ class RecurringThemesDetector(PatternDetector):
             words = [w.lower() for w in l.split() if len(w) > 4]
             learning_words.update(words)
 
-        repeated = [(w, c) for w, c in learning_words.most_common(10) if c >= 3]
+        repeated = [(w, c) for w, c in learning_words.most_common(10) if c >= _RECURRING_THEME_FREQ]
         if repeated:
             return [{
                 "type": "recurring_themes",
@@ -171,7 +182,7 @@ class PainWinBalanceDetector(PatternDetector):
         if pw["pain_count"] + pw["win_count"] < self.min_sample:
             return patterns
 
-        if pw["ratio"] is not None and pw["ratio"] < 0.3:
+        if pw["ratio"] is not None and pw["ratio"] < _LOW_PAIN_WIN_RATIO:
             top_pain = max(pw["pain_domains"].items(), key=lambda x: x[1])[0] if pw["pain_domains"] else "unknown"
             patterns.append({
                 "type": "high_pain_rate",
@@ -180,7 +191,7 @@ class PainWinBalanceDetector(PatternDetector):
                 "data": {"ratio": pw["ratio"], "pain_count": pw["pain_count"],
                          "win_count": pw["win_count"], "top_pain_domain": top_pain},
             })
-        elif pw["ratio"] is not None and pw["ratio"] > 0.8:
+        elif pw["ratio"] is not None and pw["ratio"] > _HIGH_WIN_RATE:
             patterns.append({
                 "type": "high_win_rate",
                 "severity": "info",
@@ -206,7 +217,7 @@ class StaleStrategyDetector(PatternDetector):
         if not updated:
             return []
         days_old = _days_between(updated, datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
-        if days_old > 14 and len(entries) >= self.min_sample:
+        if days_old > _STALE_STRATEGY_DAYS and len(entries) >= self.min_sample:
             return [{
                 "type": "stale_strategy",
                 "severity": "info",
@@ -386,7 +397,7 @@ class OvernightWrGapDetector(PatternDetector):
         if on_decided >= self.min_sample and day_decided >= self.min_sample:
             on_wr = overnight["wins"] / on_decided
             day_wr = daytime["wins"] / day_decided
-            if day_wr - on_wr > 0.10:
+            if day_wr - on_wr > _OVERNIGHT_WR_DELTA:
                 return [{
                     "type": "overnight_wr_gap",
                     "severity": "warning",

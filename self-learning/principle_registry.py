@@ -33,13 +33,16 @@ from typing import Optional
 from pathlib import Path
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
 PRINCIPLES_PATH = os.path.join(SCRIPT_DIR, "principles.jsonl")
 
-# Score thresholds
-PRUNE_SCORE = 0.3
-PRUNE_MIN_USAGES = 10
-REINFORCE_SCORE = 0.7
-MAX_PRINCIPLES_PER_DOMAIN = 100
+from metric_config import get_metric
+
+# Score thresholds (loaded from metric_config, user-overridable)
+PRUNE_SCORE = get_metric("principle_registry.prune_score", 0.3)
+PRUNE_MIN_USAGES = get_metric("principle_registry.prune_min_usages", 10)
+REINFORCE_SCORE = get_metric("principle_registry.reinforce_score", 0.7)
+MAX_PRINCIPLES_PER_DOMAIN = get_metric("principle_registry.max_principles_per_domain", 100)
 
 VALID_DOMAINS = [
     "cca_operations",
