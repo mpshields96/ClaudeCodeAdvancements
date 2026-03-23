@@ -5,18 +5,20 @@
 
 ## Current State (as of Session 127 — 2026-03-23)
 
-**Phase:** Session 127 IN PROGRESS. Solo session. MT-30 Phase 7 — model alternation + desktop mode.
+**Phase:** Session 127 COMPLETE. Solo session. MT-30 Phase 7 — fully automated desktop CCA chat.
 
 **What was done this session (S127):**
 - **Model alternation COMPLETE**: `select_model()` with 3 strategies (round-robin, opus-primary, sonnet-primary). `--model` flag passed to claude CLI per iteration. `MODEL_STRATEGY` env var + `--model-strategy` CLI flag. Model tracked per iteration in audit log and state file.
 - **Desktop mode COMPLETE + HARDENED**: `--desktop` flag opens each claude session in a visible Terminal.app window via osascript/AppleScript. Matthew can watch and interact freely. Window title per iteration (CCA-AutoLoop-Iter-N). Auto-close after session ends. Fallback close from controller. Ctrl-C cleanup. Sentinel polling with 4h timeout.
+- **--dangerously-skip-permissions**: All spawned claude sessions run with permission bypass for full automation. No manual "yes" prompts.
+- **Session de-duplication**: Pre-flight check blocks launch if another CCA CLI session is already running. One session at a time to protect rate limits.
 - **VERIFIED WORKING**: Terminal.app integration test passed — window opens, runs, writes sentinel in ~6s, auto-closes.
 - **Both features in cca_autoloop.py AND start_autoloop.sh**: Full parity between Python and bash implementations.
-- **Tests**: 204 suites, ~8117 tests passing. +38 new tests this session (81 total in test_cca_autoloop.py, was 43).
-- **Commits**: 3 this session.
+- **Tests**: 204 suites, ~8125 tests passing. +42 new tests this session (85 total in test_cca_autoloop.py, was 43).
+- **Commits**: 5 this session. Grade: A — all S126 directives completed (model alternation, desktop automation, interactive access).
 
 **Next (prioritized):**
-1. **MT-30 Phase 7 dry run**: Test `./start_autoloop.sh --desktop` with a real supervised session. Verify Terminal.app window opens, claude runs, sentinel polling works.
+1. **Live supervised dry run**: Run `./start_autoloop.sh --desktop` with NO other CCA sessions running. Watch claude spawn in Terminal.app, run /cca-init + /cca-auto, work, wrap, exit. Verify auto-loop spawns the NEXT session automatically.
 2. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
 3. **MT-31**: Build Flash-powered CCA tools now that Gemini Flash MCP is validated.
 
