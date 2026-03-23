@@ -3,27 +3,25 @@
 
 ---
 
-## Current State (as of Session 122 — 2026-03-22)
+## Current State (as of Session 123 — 2026-03-22)
 
-**Phase:** Session 122 IN PROGRESS. Solo session. MT-33 Kalshi financial analytics.
+**Phase:** Session 123 IN PROGRESS. Solo session. MT-33 Phase 6 + hardening.
 
-**What was done this session (S122):**
-- **MT-33 Phase 1 COMPLETE**: Mapped polybot.db schema — primary DB at `data/polybot.db` (4,684 trades, 22,625 bankroll snapshots, 4 tables). Root-level DB files are all 0 bytes. Secondary BTC DB at `refs/kalshi-btc/kalshi_bot.db` (132K, 7 tables). `MT33_DATA_MAPPING.md` written with full schema, SQL queries for 8 charts, data availability matrix.
-- **MT-33 Phase 2 COMPLETE**: `kalshi_data_collector.py` built (265 LOC) — read-only SQLite access, 8 chart-ready data methods (cumulative P&L, strategy win rates, daily distribution, box plots, scatter, donut, bankroll timeline), graceful degradation on missing DB. 39 tests.
-- **MT-33 Phase 3 COMPLETE**: Wired into /cca-report pipeline — 7 Kalshi chart methods added to `report_charts.py` (LineChart, HorizontalBarChart, HistogramChart, BoxPlot, ScatterPlot, DonutChart, AreaChart). Charts auto-generated when Kalshi DB available, skipped otherwise. Report with Kalshi data: 14 SVGs, 363 KB PDF. 11 new report_charts tests.
-- **MT-33 Phase 4 COMPLETE**: Kalshi Financial Analytics page in Typst template — KPI metrics row (live trades, win rate, P&L, settled), 7 SVG charts in grid layout (cumulative P&L, bankroll, strategy win rate, trade volume, daily histogram, strategy box plots, scatter), strategy performance table with color-coded P&L.
-- **MT-33 Phase 5 COMPLETE**: `learning_data_collector.py` (180 LOC, 18 tests) — extracts journal events, win/pain ratio, domain distribution, APF trend. 3 chart methods added to report_charts.py. Self-Learning Intelligence section in Typst template with KPI row + charts.
-- **Report now generates 17 SVG charts** (7 project + 7 Kalshi + 3 learning). PDF: 415 KB.
-- **Feedback saved**: Check comms at start of every task cycle (Matthew S122 directive).
-- **Tests**: 199 suites, ~7870 tests passing. +70 new tests (39 kalshi + 18 learning + 11 report_charts + 2 adjusted).
-- **Commits**: 5 this session.
+**What was done this session (S123):**
+- **MT-33 Phase 6 COMPLETE**: `ReportSidecar` class in report_generator.py — saves JSON alongside every PDF, archives to `~/.cca-reports/{date}_S{session}.json`. Wired into main() pipeline automatically. `report_differ.py` (180 LOC) — structured diff between two report sidecars: test growth, LOC changes, MT transitions, Kalshi P&L, APF movement. `format_summary()` for human-readable trend text. 50 new tests (20 sidecar + 30 differ).
+- **MT-33 hardening COMPLETE**: Edge case tests across all 3 collectors. kalshi_data_collector: +9 tests (paper-only, all-unsettled, single trade, all losses, zero P&L, single bankroll, same-day trades). learning_data_collector: +11 tests (empty journal, malformed lines, no domains, zero pains, single APF snapshot, empty charts). report_differ: +10 tests (empty modules, missing fields, removed modules, both unavailable, corrupt JSON, newly available). Also fixed format_summary detection logic.
+- **Tests**: 201 suites, ~8049 tests passing. +179 new tests this session.
+- **Commits**: 3 this session.
 
 **Next (prioritized):**
-1. **MT-33 Phase 6**: Self-reference hook (JSON sidecar alongside PDF, report diffing for trend comparison).
-2. **MT-33 hardening**: Edge cases (empty DB, no bets, missing data), graceful degradation tests.
-3. **MT-32 continued**: Wire statistical charts into /cca-report (test distribution BoxPlot, session duration HistogramChart).
-4. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
-5. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot.
+1. **MT-32 continued**: Wire statistical charts into /cca-report (test distribution BoxPlot, session duration HistogramChart — using real CCA data).
+2. **Gemini Pro visual adapter**: MT-31 x MT-32 integration.
+3. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot.
+
+**What was done this session (S122):**
+- **MT-33 Phases 1-5 COMPLETE**: Full Strategic Intelligence Report pipeline. Mapped polybot.db schema, built kalshi_data_collector.py (265 LOC, 39 tests), wired 7 Kalshi charts into report_charts.py, Kalshi Financial Analytics page in Typst template, learning_data_collector.py (180 LOC, 18 tests), Self-Learning Intelligence section. Report: 17 SVG charts, 415 KB PDF.
+- **Tests**: 199 suites, ~7870 tests passing. +70 new tests.
+- **Commits**: 5 this session.
 
 **What was done this session (S121):**
 - **Session orchestrator live test PASSED**: register/set-mode/plan/status all work correctly. Orchestrator detects desktop running, recommends worker launch in 2chat mode.
