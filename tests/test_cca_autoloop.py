@@ -709,6 +709,27 @@ class TestDesktopMode(unittest.TestCase):
             self.assertIn("exit 0", content)  # clean exit for shell
             os.unlink(wrapper)
 
+    def test_write_desktop_wrapper_has_skip_permissions(self):
+        """Wrapper MUST include --dangerously-skip-permissions for automation."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sentinel = os.path.join(tmpdir, "sentinel")
+            prompt = os.path.join(tmpdir, "prompt.txt")
+            with open(prompt, "w") as f:
+                f.write("test")
+
+            wrapper = write_desktop_wrapper(
+                project_dir="/tmp/project",
+                model="opus",
+                model_strategy="opus-primary",
+                iteration=1,
+                prompt_file=prompt,
+                sentinel_file=sentinel,
+            )
+            with open(wrapper) as f:
+                content = f.read()
+            self.assertIn("--dangerously-skip-permissions", content)
+            os.unlink(wrapper)
+
     def test_write_desktop_wrapper_valid_bash(self):
         """Wrapper script must pass bash syntax check."""
         with tempfile.TemporaryDirectory() as tmpdir:

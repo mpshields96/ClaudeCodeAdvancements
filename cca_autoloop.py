@@ -435,7 +435,7 @@ echo "========================================"
 echo ""
 
 PROMPT=$(cat "{prompt_file}")
-claude --model "{model}" "$PROMPT"
+claude --dangerously-skip-permissions --model "{model}" "$PROMPT"
 CLAUDE_EXIT=$?
 
 echo $CLAUDE_EXIT > "{sentinel_file}"
