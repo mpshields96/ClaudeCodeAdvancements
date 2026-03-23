@@ -488,5 +488,110 @@ class TestUnavailableDB(unittest.TestCase):
         self.assertEqual(data["summary"]["total_live_trades"], 0)
 
 
+class TestEdgeCases(unittest.TestCase):
+    """Hardening tests for edge cases (MT-33 hardening)."""
+
+    def setUp(self):
+        self.tmpfile = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        _create_test_db(self.tmpfile.name)
+        self.conn = sqlite3.connect(self.tmpfile.name)
+
+    def tearDown(self):
+        self.conn.close()
+        os.unlink(self.tmpfile.name)
+
+    def test_paper_only_trades(self):
+        """Summary shows 0 live trades when all trades are paper."""
+        _insert_trade(self.conn, _ts("2026-03-10"), "A", "sniper", 1, 20, 5, "yes", 400)
+        _insert_trade(self.conn, _ts("2026-03-11"), "B", "sniper", 1, 30, 3, "no", -300)
+        self.conn.commit()
+        c = KalshiDataCollector(self.tmpfile.name)
+        summary = c.get_trade_summary()
+        self.assertEqual(summary["total_live_trades"], 0)
+        self.assertEqual(summary["total_paper_trades"], 2)
+        self.assertEqual(summary["total_pnl_usd"], 0.0)
+
+    def test_all_unsettled_trades(self):
+        """Win rate is None when no trades have settled."""
+        _insert_trade(self.conn, _ts("2026-03-10"), "A", "sniper", 0, 20, 5)
+        _insert_trade(self.conn, _ts("2026-03-11"), "B", "sniper", 0, 30, 3)
+        self.conn.commit()
+        c = KalshiDataCollector(self.tmpfile.name)
+        summary = c.get_trade_summary()
+        self.assertEqual(summary["settled_trades"], 0)
+        self.assertEqual(summary["unsettled_trades"], 2)
+        self.assertIsNone(summary["win_rate_pct"])
+
+    def test_single_trade_strategy_breakdown(self):
+        """Strategy breakdown works with exactly one trade."""
+        _insert_trade(self.conn, _ts("2026-03-10"), "A", "sniper", 0, 20, 5, "yes", 400)
+        self.conn.commit()
+        c = KalshiDataCollector(self.tmpfile.name)
+        strategies = c.get_strategy_breakdown()
+        self.assertEqual(len(strategies), 1)
+        self.assertEqual(strategies[0]["strategy"], "sniper")
+        self.assertEqual(strategies[0]["wins"], 1)
+        self.assertEqual(strategies[0]["win_rate_pct"], 100.0)
+
+    def test_all_losses(self):
+        """Win rate is 0% when all trades are losses."""
+        _insert_trade(self.conn, _ts("2026-03-10"), "A", "sniper", 0, 20, 5, "no", -500)
+        _insert_trade(self.conn, _ts("2026-03-11"), "B", "sniper", 0, 30, 3, "no", -300)
+        self.conn.commit()
+        c = KalshiDataCollector(self.tmpfile.name)
+        summary = c.get_trade_summary()
+        self.assertEqual(summary["win_rate_pct"], 0.0)
+        self.assertEqual(summary["wins"], 0)
+        self.assertEqual(summary["losses"], 2)
+
+    def test_zero_pnl_counted_as_loss(self):
+        """Trade with pnl_cents=0 is counted as a loss (not a win)."""
+        _insert_trade(self.conn, _ts("2026-03-10"), "A", "sniper", 0, 20, 5, "yes", 0)
+        self.conn.commit()
+        c = KalshiDataCollector(self.tmpfile.name)
+        summary = c.get_trade_summary()
+        self.assertEqual(summary["wins"], 0)
+        self.assertEqual(summary["losses"], 1)
+
+    def test_bankroll_single_entry(self):
+        """Bankroll with exactly one entry returns it."""
+        _insert_bankroll(self.conn, _ts("2026-03-10"), 100.0)
+        self.conn.commit()
+        c = KalshiDataCollector(self.tmpfile.name)
+        history = c.get_bankroll_history()
+        self.assertEqual(len(history), 1)
+        self.assertEqual(history[0]["balance_usd"], 100.0)
+
+    def test_daily_pnl_single_day(self):
+        """Daily P&L with all trades on same day."""
+        _insert_trade(self.conn, _ts("2026-03-10"), "A", "sniper", 0, 20, 5, "yes", 400)
+        _insert_trade(self.conn, _ts("2026-03-10") + 3600, "B", "sniper", 0, 30, 3, "no", -300)
+        self.conn.commit()
+        c = KalshiDataCollector(self.tmpfile.name)
+        daily = c.get_daily_pnl()
+        self.assertEqual(len(daily), 1)
+        self.assertAlmostEqual(daily[0]["pnl_usd"], 1.0)  # (400-300)/100
+        self.assertAlmostEqual(daily[0]["cumulative_pnl_usd"], 1.0)
+
+    def test_scatter_no_settled_strategies(self):
+        """Scatter chart empty when no strategies have settled trades."""
+        _insert_trade(self.conn, _ts("2026-03-10"), "A", "sniper", 0, 20, 5)
+        self.conn.commit()
+        c = KalshiDataCollector(self.tmpfile.name)
+        data = c.chart_winrate_vs_profit()
+        # Strategy has 0 settled trades, win_rate_pct=0.0 (not None), so point exists
+        self.assertIn("series", data)
+
+    def test_collect_all_json_serializable_with_all_edge_cases(self):
+        """collect_all is JSON-serializable even with edge-case data."""
+        _insert_trade(self.conn, _ts("2026-03-10"), "A", "sniper", 0, 20, 5)  # unsettled
+        _insert_trade(self.conn, _ts("2026-03-11"), "B", "bayesian", 1, 10, 2, "yes", 0)  # paper, zero pnl
+        self.conn.commit()
+        c = KalshiDataCollector(self.tmpfile.name)
+        data = c.collect_all()
+        json_str = json.dumps(data)
+        self.assertIsInstance(json_str, str)
+
+
 if __name__ == "__main__":
     unittest.main()

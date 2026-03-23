@@ -236,5 +236,139 @@ class TestCollectAll(unittest.TestCase):
             os.unlink(journal_file.name)
 
 
+class TestEdgeCases(unittest.TestCase):
+    """Hardening tests for edge cases (MT-33 hardening)."""
+
+    def test_empty_journal_file(self):
+        """Empty journal file returns empty stats, not crash."""
+        f = tempfile.NamedTemporaryFile(suffix=".jsonl", mode="w", delete=False)
+        f.write("")
+        f.close()
+        try:
+            c = LearningDataCollector(journal_path=f.name, apf_path="/nonexistent")
+            stats = c.get_journal_stats()
+            self.assertEqual(stats["total_entries"], 0)
+            self.assertIsNone(stats["win_pain_ratio"])
+            self.assertEqual(stats["wins"], 0)
+            self.assertEqual(stats["pains"], 0)
+        finally:
+            os.unlink(f.name)
+
+    def test_journal_all_malformed(self):
+        """Journal with only malformed lines returns empty stats."""
+        f = tempfile.NamedTemporaryFile(suffix=".jsonl", mode="w", delete=False)
+        f.write("not json\n")
+        f.write("{broken\n")
+        f.write("// comment\n")
+        f.close()
+        try:
+            c = LearningDataCollector(journal_path=f.name, apf_path="/nonexistent")
+            stats = c.get_journal_stats()
+            self.assertEqual(stats["total_entries"], 0)
+        finally:
+            os.unlink(f.name)
+
+    def test_journal_mixed_valid_invalid(self):
+        """Malformed lines are skipped, valid ones counted."""
+        f = tempfile.NamedTemporaryFile(suffix=".jsonl", mode="w", delete=False)
+        f.write("not json\n")
+        f.write(json.dumps({"event_type": "win", "timestamp": "2026-03-10T00:00:00Z"}) + "\n")
+        f.write("{broken\n")
+        f.close()
+        try:
+            c = LearningDataCollector(journal_path=f.name, apf_path="/nonexistent")
+            stats = c.get_journal_stats()
+            self.assertEqual(stats["total_entries"], 1)
+        finally:
+            os.unlink(f.name)
+
+    def test_zero_apf_snapshots(self):
+        """APF with no snapshots returns empty stats."""
+        c = LearningDataCollector(journal_path="/nonexistent", apf_path="/nonexistent")
+        stats = c.get_apf_stats()
+        self.assertEqual(stats["current_apf"], 0)
+        self.assertEqual(stats["trend"], [])
+        self.assertEqual(stats["apf_change"], 0)
+
+    def test_single_apf_snapshot(self):
+        """Single APF snapshot: no delta possible."""
+        f = tempfile.NamedTemporaryFile(suffix=".jsonl", mode="w", delete=False)
+        _write_apf(f.name, [{"session": "S120", "apf": 22.5, "total": 100, "build": 20, "signal": 40}])
+        try:
+            c = LearningDataCollector(journal_path="/nonexistent", apf_path=f.name)
+            stats = c.get_apf_stats()
+            self.assertEqual(stats["current_apf"], 22.5)
+            self.assertEqual(stats["apf_change"], 0)
+            self.assertEqual(len(stats["trend"]), 1)
+        finally:
+            os.unlink(f.name)
+
+    def test_journal_no_domains(self):
+        """Journal entries without domain field still counted."""
+        f = tempfile.NamedTemporaryFile(suffix=".jsonl", mode="w", delete=False)
+        _write_journal(f.name, [
+            {"event_type": "pain", "timestamp": "2026-03-10T00:00:00Z"},
+            {"event_type": "win", "timestamp": "2026-03-11T00:00:00Z"},
+        ])
+        try:
+            c = LearningDataCollector(journal_path=f.name, apf_path="/nonexistent")
+            stats = c.get_journal_stats()
+            self.assertEqual(stats["total_entries"], 2)
+            self.assertEqual(stats["domain_counts"], {})
+        finally:
+            os.unlink(f.name)
+
+    def test_journal_zero_pains(self):
+        """Win/pain ratio is None when no pains recorded."""
+        f = tempfile.NamedTemporaryFile(suffix=".jsonl", mode="w", delete=False)
+        _write_journal(f.name, [
+            {"event_type": "win", "timestamp": "2026-03-10T00:00:00Z"},
+            {"event_type": "win", "timestamp": "2026-03-11T00:00:00Z"},
+        ])
+        try:
+            c = LearningDataCollector(journal_path=f.name, apf_path="/nonexistent")
+            stats = c.get_journal_stats()
+            self.assertIsNone(stats["win_pain_ratio"])
+            self.assertEqual(stats["wins"], 2)
+            self.assertEqual(stats["pains"], 0)
+        finally:
+            os.unlink(f.name)
+
+    def test_chart_event_types_empty(self):
+        """chart_event_types returns empty lists for empty journal."""
+        c = LearningDataCollector(journal_path="/nonexistent", apf_path="/nonexistent")
+        data = c.chart_event_types()
+        self.assertEqual(data["labels"], [])
+        self.assertEqual(data["values"], [])
+
+    def test_chart_apf_trend_empty(self):
+        """chart_apf_trend returns empty lists for no APF data."""
+        c = LearningDataCollector(journal_path="/nonexistent", apf_path="/nonexistent")
+        data = c.chart_apf_trend()
+        self.assertEqual(data["labels"], [])
+        self.assertEqual(data["values"], [])
+
+    def test_chart_domain_empty(self):
+        """chart_domain_distribution returns empty lists for empty journal."""
+        c = LearningDataCollector(journal_path="/nonexistent", apf_path="/nonexistent")
+        data = c.chart_domain_distribution()
+        self.assertEqual(data["labels"], [])
+        self.assertEqual(data["values"], [])
+
+    def test_collect_all_empty_both(self):
+        """collect_all with both sources empty returns consistent structure."""
+        c = LearningDataCollector(journal_path="/nonexistent", apf_path="/nonexistent")
+        data = c.collect_all()
+        self.assertFalse(data["available"])
+        self.assertEqual(data["journal"]["total_entries"], 0)
+        self.assertEqual(data["apf"]["current_apf"], 0)
+        # Charts should still have the right keys
+        self.assertIn("event_types", data["charts"])
+        self.assertIn("apf_trend", data["charts"])
+        self.assertIn("domain_distribution", data["charts"])
+        # And be JSON serializable
+        json.dumps(data)
+
+
 if __name__ == "__main__":
     unittest.main()
