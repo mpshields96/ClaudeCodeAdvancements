@@ -3,25 +3,34 @@
 
 ---
 
-## Current State (as of Session 129 — 2026-03-23)
+## Current State (as of Session 131 — 2026-03-23)
 
-**Phase:** Session 129 COMPLETE. Solo session. MT-27 Phase 4 + MT-30 enhancements + doc drift fixes. Grade: A.
+**Phase:** Session 131 IN PROGRESS. Autonomous work — priority picker update + hardcoded metrics fix + MT-22 research.
+
+**What was done this session (S131):**
+- **Priority picker S130 reorder COMPLETE**: Added 6 missing MTs (MT-10, MT-9, MT-11, MT-14, MT-7), reactivated MT-22 as "Desktop Electron app automation" (new scope, base_value=10), bumped MT-27 to crown jewel (5->8). 9 new tests. Crown jewels now dominate rankings.
+- **Hardcoded metrics FIXED (54/54)**: Built centralized `metric_config.py` + `metric_defaults.json`. Wired into all 12 self-learning modules: strategy_health_scorer, trade_reflector, principle_registry, detectors, reflect, improver, predictive_recommender, signal_pipeline, overnight_detector, regime_detector, calibration_bias, trace_analyzer, paper_scanner. 26 new tests for config system. All configurable via `~/.cca-metrics.json`. Zero regressions.
+- **MT-22 desktop research COMPLETE**: Claude.app confirmed Electron. AppleScript keystroke emulation is viable MVP. 5-phase implementation plan in `MT22_DESKTOP_RESEARCH.md`. URL scheme `claude://` registered but undocumented.
+- **Kalshi comms**: Sent status update to cross-chat queue. Metric config system benefits Kalshi bot directly.
+- **Tests**: 205 suites passing. +35 new tests. 6 commits.
+
+**Next (prioritized):**
+1. **LIVE SUPERVISED DRY RUN** (CRITICAL from S129): Run `python3 cca_autoloop.py preflight --desktop` first. Then follow AUTOLOOP_SETUP.md. Needs Matthew present.
+2. **MT-22 Phase 1**: Test AppleScript with live Claude.app, explore `claude://` URL scheme, measure timing.
+3. **Session-level prompt-to-outcome tracker**: Lightweight JSONL (logged as todo, fits MT-10/MT-28).
+4. **CI/CD pipeline verify**: Matthew S130 directive — verify GitHub Actions works or fix it.
+
+---
+
+## Previous State (Session 129 — 2026-03-23)
 
 **What was done this session (S129):**
 - **MT-27 Phase 4 COMPLETE**: NEEDLE classifier precision improvement. Split keywords into strong (always NEEDLE: claude.md, hook, mcp server, etc.) and weak (need engagement signals: tool, built, made, created, tips, etc.). Weak keywords require score >= 50 OR body >= 300 chars OR comments >= 15. +30 new tests.
 - **MT-30: Rich --status command**: `parse_audit_log()` reads JSONL audit trail, shows iteration history with duration, model, exit status. `format_status_report()` combines state + audit into human-readable output. +16 new tests.
 - **MT-30: Preflight check command**: `python3 cca_autoloop.py preflight [--desktop]` runs all prerequisites and reports PASS/FAIL/WARN. Critical vs warning classification. +9 new tests.
 - **AUTOLOOP_SETUP.md**: Step-by-step Accessibility permissions guide for Terminal.app (macOS 15 Sequoia). Includes preflight command, model strategy options, and graceful degradation docs.
-- **Doc drift fixed**: Corrected test counts in PROJECT_INDEX.md and ROADMAP.md (usage-dashboard 384→369, reddit-intelligence 408→432, self-learning 1779→1833, design-skills 630→1299, total→8205).
-- **Priority picker updated**: MT-27 Phase 4 complete, current_session=129.
-- **Tests**: ~204 suites, ~8205 tests passing. +55 new tests this session.
-- **Commits**: 7 this session (including wrap).
-
-**Next (prioritized):**
-1. **LIVE SUPERVISED DRY RUN** (CRITICAL): Run `python3 cca_autoloop.py preflight --desktop` first. Then: close ALL CCA chats, grant Accessibility permissions (see AUTOLOOP_SETUP.md), run `./start_autoloop.sh --desktop`.
-2. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
-3. **MT-31**: Build Flash-powered CCA tools now that Gemini Flash MCP is validated.
-4. **MT-27 Phase 5**: APF validation — measure precision improvement on real scans.
+- **Tests**: ~204 suites, ~8205 tests passing. +55 new tests.
+- **Commits**: 8 this session.
 
 ---
 
