@@ -21,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(__file__))
 from report_charts import ReportChartGenerator
 from kalshi_data_collector import KalshiDataCollector
+from learning_data_collector import LearningDataCollector
 
 
 class CCADataCollector:
@@ -980,6 +981,10 @@ class CCADataCollector:
         kalshi_collector = KalshiDataCollector()
         kalshi_data = kalshi_collector.collect_all()
 
+        # Self-learning intelligence (MT-33 Phase 5)
+        learning_collector = LearningDataCollector()
+        learning_data = learning_collector.collect_all()
+
         return {
             "title": "ClaudeCodeAdvancements",
             "subtitle": "Comprehensive Project Report",
@@ -1027,6 +1032,7 @@ class CCADataCollector:
             "daily_diff": self.collect_daily_diff(),
             "criticisms": criticisms,
             "kalshi_analytics": kalshi_data,
+            "learning_intelligence": learning_data,
         }
 
 

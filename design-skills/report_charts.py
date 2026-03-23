@@ -288,6 +288,53 @@ class ReportChartGenerator:
         chart = AreaChart(items, title="Bankroll ($)", color=CCA_COLORS["primary"])
         return render_svg(chart)
 
+    # ── Self-learning charts (MT-33 Phase 5) ────────────────────────────
+
+    def learning_event_types(self, data):
+        """BarChart: journal event type distribution."""
+        learning = data.get("learning_intelligence", {})
+        if not learning.get("available"):
+            return self._empty_chart("Journal Events")
+        chart_data = learning.get("charts", {}).get("event_types", {})
+        labels = chart_data.get("labels", [])
+        values = chart_data.get("values", [])
+        if not labels:
+            return self._empty_chart("Journal Events")
+        items = list(zip(labels[:10], values[:10]))
+        chart = BarChart(items, title="Journal Event Types", show_values=True,
+                         color=CCA_COLORS["accent"])
+        return render_svg(chart)
+
+    def learning_apf_trend(self, data):
+        """LineChart: APF score over sessions."""
+        learning = data.get("learning_intelligence", {})
+        if not learning.get("available"):
+            return self._empty_chart("APF Trend")
+        chart_data = learning.get("charts", {}).get("apf_trend", {})
+        labels = chart_data.get("labels", [])
+        values = chart_data.get("values", [])
+        if not labels:
+            return self._empty_chart("APF Trend")
+        items = list(zip(labels, values))
+        chart = LineChart(items, title="Actionable Post Fraction (%)",
+                          show_points=True, color=CCA_COLORS["primary"])
+        return render_svg(chart)
+
+    def learning_domain_distribution(self, data):
+        """DonutChart: journal entries by domain."""
+        learning = data.get("learning_intelligence", {})
+        if not learning.get("available"):
+            return self._empty_chart("Domain Distribution")
+        chart_data = learning.get("charts", {}).get("domain_distribution", {})
+        labels = chart_data.get("labels", [])
+        values = chart_data.get("values", [])
+        if not labels:
+            return self._empty_chart("Domain Distribution")
+        palette = SERIES_PALETTE[:len(labels)]
+        items = [(l, v, c) for l, v, c in zip(labels, values, palette)]
+        chart = DonutChart(items, title="Events by Domain")
+        return render_svg(chart)
+
     def _thin_labels(self, labels, max_labels=12):
         """Thin labels for chart readability — show every Nth."""
         if len(labels) <= max_labels:
@@ -318,6 +365,13 @@ class ReportChartGenerator:
                 "kalshi_winrate_vs_profit": self.kalshi_winrate_vs_profit(data),
                 "kalshi_trade_volume": self.kalshi_trade_volume(data),
                 "kalshi_bankroll": self.kalshi_bankroll(data),
+            })
+        # Self-learning charts (MT-33 Phase 5) — only if data available
+        if data.get("learning_intelligence", {}).get("available"):
+            charts.update({
+                "learning_event_types": self.learning_event_types(data),
+                "learning_apf_trend": self.learning_apf_trend(data),
+                "learning_domain_distribution": self.learning_domain_distribution(data),
             })
         return charts
 

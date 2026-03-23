@@ -1108,6 +1108,43 @@
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// SELF-LEARNING INTELLIGENCE (MT-33 Phase 5)
+// ═══════════════════════════════════════════════════════════════════════════
+
+#if "learning_intelligence" in data.keys() and data.learning_intelligence.available {
+  v(6mm)
+  section-header("Self-Learning Intelligence", accent: indigo)
+
+  // Summary metrics
+  let lj = data.learning_intelligence.journal
+  let la = data.learning_intelligence.apf
+  grid(
+    columns: (1fr, 1fr, 1fr, 1fr),
+    column-gutter: 8pt,
+    metric("Journal Entries", str(lj.total_entries), accent-color: indigo),
+    metric("Wins / Pains", str(lj.wins) + " / " + str(lj.pains), accent-color: if lj.wins >= lj.pains { green } else { orange }),
+    metric("Current APF", str(la.current_apf) + "%", accent-color: blue),
+    metric("Posts Reviewed", str(la.total_reviewed), accent-color: mid),
+  )
+
+  v(4mm)
+
+  // Charts
+  if chart-dir != none {
+    grid(
+      columns: (1fr, 1fr),
+      column-gutter: 12pt,
+      embed-chart("learning_event_types", width: 100%),
+      embed-chart("learning_domain_distribution", width: 100%),
+    )
+
+    v(4mm)
+
+    embed-chart("learning_apf_trend", width: 60%)
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // ARCHITECTURE DECISIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
