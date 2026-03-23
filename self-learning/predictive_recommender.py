@@ -56,11 +56,13 @@ from principle_transfer import DOMAIN_AFFINITY_MAP
 
 JOURNAL_PATH = os.path.join(SCRIPT_DIR, "journal.jsonl")
 
-# Recommendation thresholds
-MIN_RELEVANCE = 0.3       # Below this, don't recommend
-MAX_RECOMMENDATIONS = 10  # Don't overwhelm with too many
-RECENCY_DECAY_SESSIONS = 50  # Half-life in sessions for recency weighting
-RISK_THRESHOLD = 0.4      # Principles below this score flag as risks
+from metric_config import get_metric
+
+# Recommendation thresholds (loaded from metric_config, user-overridable)
+MIN_RELEVANCE = get_metric("predictive_recommender.min_relevance", 0.3)
+MAX_RECOMMENDATIONS = get_metric("predictive_recommender.max_recommendations", 10)
+RECENCY_DECAY_SESSIONS = get_metric("predictive_recommender.recency_decay_sessions", 50)
+RISK_THRESHOLD = get_metric("predictive_recommender.risk_threshold", 0.4)
 
 
 @dataclass

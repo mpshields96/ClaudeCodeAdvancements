@@ -30,6 +30,16 @@ from datetime import datetime, timezone
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 import journal
+from metric_config import get_metric
+
+# Configurable thresholds (loaded from metric_config, user-overridable)
+_MIN_CI = get_metric("overnight_detector.min_confidence_interval", 10)
+_CUSUM_MIN = get_metric("overnight_detector.cusum_min_outcomes", 10)
+_CUSUM_H = get_metric("overnight_detector.cusum_h_threshold", 5.0)
+_WR_DELTA_TREND = get_metric("overnight_detector.win_rate_delta_trend", 0.05)
+_MIN_BETS_NEG_PNL = get_metric("overnight_detector.min_bets_negative_pnl", 5)
+_MIN_BETS_WARNING = get_metric("overnight_detector.min_bets_warning", 10)
+_MIN_TOTAL_BETS_TIME = get_metric("overnight_detector.min_total_bets_time_analysis", 50)
 
 
 # --- Statistical Tools ---
@@ -103,7 +113,7 @@ def analyze_journal_time_patterns():
             "pnl_cents": data["pnl_cents"],
             "win_rate": data["win_rate"],
         }
-        if decided >= 10:
+        if decided >= _MIN_CI:
             ci = wilson_ci(decided, data["wins"])
             bucket_analysis["wilson_ci_95"] = ci
             # CUSUM check for WR degradation (detecting drop from 0.90 to 0.70)
@@ -125,8 +135,8 @@ def analyze_journal_time_patterns():
                             outcomes.append(1)
                         elif r == "loss":
                             outcomes.append(0)
-            if len(outcomes) >= 10:
-                signaled, max_s, idx = cusum_signal(outcomes, 0.90, 0.70, h=5.0)
+            if len(outcomes) >= _CUSUM_MIN:
+                signaled, max_s, idx = cusum_signal(outcomes, 0.90, 0.70, h=_CUSUM_H)
                 bucket_analysis["cusum"] = {
                     "signaled": signaled,
                     "max_S": max_s,
@@ -162,7 +172,7 @@ def analyze_journal_time_patterns():
             "or market regime (overnight news events)? "
             "Run SQL time-stratified query on bot DB for root cause."
         )
-    elif ovd["delta_wr"] is not None and ovd["delta_wr"] > 0.05:
+    elif ovd["delta_wr"] is not None and ovd["delta_wr"] > _WR_DELTA_TREND:
         analysis["signals"].append({
             "type": "overnight_trend",
             "severity": "monitor",
@@ -174,10 +184,10 @@ def analyze_journal_time_patterns():
 
     # Worst hours analysis
     for hour, wr, pnl, n in ts["worst_hours"]:
-        if pnl < 0 and n >= 5:
+        if pnl < 0 and n >= _MIN_BETS_NEG_PNL:
             analysis["signals"].append({
                 "type": "negative_pnl_hour",
-                "severity": "warning" if n >= 10 else "monitor",
+                "severity": "warning" if n >= _MIN_BETS_WARNING else "monitor",
                 "detail": f"Hour {hour}:00 UTC: {n} bets, WR={wr:.1%}, PnL={pnl/100:.2f} USD",
             })
 
@@ -434,10 +444,10 @@ def generate_recommendations(analysis, audit):
         })
 
     # General
-    if analysis.get("total_bets", 0) < 50:
+    if analysis.get("total_bets", 0) < _MIN_TOTAL_BETS_TIME:
         recs.append({
             "priority": "LOW",
-            "action": "Insufficient data for reliable time analysis. Need 50+ bets minimum.",
+            "action": f"Insufficient data for reliable time analysis. Need {_MIN_TOTAL_BETS_TIME}+ bets minimum.",
             "evidence": f"Currently only {analysis.get('total_bets', 0)} bets in journal",
             "type": "data_collection",
         })

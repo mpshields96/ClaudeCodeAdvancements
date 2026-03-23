@@ -28,6 +28,13 @@ from journal import (
     get_stats, get_nuclear_metrics, get_trading_metrics, get_all_learnings,
     get_pain_win_summary, log_event, VALID_DOMAINS,
 )
+from metric_config import get_metric
+
+# Configurable thresholds (loaded from metric_config, user-overridable)
+_REPEATED_FAILURES_THRESHOLD = get_metric("reflect.repeated_failures_threshold", 3)
+_FAILURES_PER_DOMAIN = get_metric("reflect.failures_per_domain", 2)
+_HIGH_SUCCESS_STREAK_PCT = get_metric("reflect.high_success_streak_pct", 0.7)
+_MIN_BETS_PNL_CHECK = get_metric("reflect.min_bets_pnl_check", 5)
 
 
 def _days_between(ts1, ts2):
@@ -347,10 +354,10 @@ def micro_reflect(last_n=10):
     # Quick pattern checks on recent entries only
     # 1. Repeated failures in same domain
     failures = [e for e in recent if e.get("outcome") in ("failure", "needs_improvement")]
-    if len(failures) >= 3:
+    if len(failures) >= _REPEATED_FAILURES_THRESHOLD:
         domains = Counter(e.get("domain", "unknown") for e in failures)
         top_domain, count = domains.most_common(1)[0]
-        if count >= 2:
+        if count >= _FAILURES_PER_DOMAIN:
             result["patterns"].append({
                 "type": "repeated_failure",
                 "domain": top_domain,
@@ -363,7 +370,7 @@ def micro_reflect(last_n=10):
 
     # 2. High success rate (positive signal — keep doing this)
     successes = [e for e in recent if e.get("outcome") == "success"]
-    if len(successes) >= len(recent) * 0.7 and len(recent) >= 5:
+    if len(successes) >= len(recent) * _HIGH_SUCCESS_STREAK_PCT and len(recent) >= 5:
         result["patterns"].append({
             "type": "high_success_streak",
             "count": len(successes),
@@ -372,7 +379,7 @@ def micro_reflect(last_n=10):
 
     # 3. Trading-specific: check for negative PnL trend
     bets = [e for e in recent if e.get("event_type") == "bet_outcome"]
-    if len(bets) >= 5:
+    if len(bets) >= _MIN_BETS_PNL_CHECK:
         pnl_values = [e.get("metrics", {}).get("pnl_cents", 0) for e in bets]
         total_pnl = sum(pnl_values)
         if total_pnl < 0:

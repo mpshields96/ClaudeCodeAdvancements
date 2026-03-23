@@ -524,8 +524,10 @@ MUTATION_STRATEGIES = {
     ],
 }
 
-MAX_MUTATION_DEPTH = 2      # Conservative: shallow mutation chains only (was 3)
-MAX_MUTATIONS_PER_CYCLE = 2  # Conservative: 5-10% effect ceiling (was 5)
+from metric_config import get_metric
+
+MAX_MUTATION_DEPTH = get_metric("improver.max_mutation_depth", 2)
+MAX_MUTATIONS_PER_CYCLE = get_metric("improver.max_mutations_per_cycle", 2)
 
 
 class SentinelMutator:

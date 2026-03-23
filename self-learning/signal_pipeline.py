@@ -45,6 +45,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from metric_config import get_metric as _get_metric
+
 
 @dataclass
 class PipelineInput:
@@ -140,8 +142,8 @@ class SignalPipeline:
     a final bet sizing recommendation via Dynamic Kelly.
     """
 
-    # Default minimum edge to consider betting
-    DEFAULT_MIN_EDGE = 0.03
+    # Default minimum edge to consider betting (loaded from metric_config, user-overridable)
+    DEFAULT_MIN_EDGE = _get_metric("signal_pipeline.default_min_edge", 0.03)
 
     def __init__(
         self,
