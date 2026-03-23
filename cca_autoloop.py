@@ -60,6 +60,8 @@ MIN_COOLDOWN = 5
 MIN_SESSION_DURATION = 30  # Sessions shorter than this are suspicious
 MAX_CONSECUTIVE_CRASHES = 3
 MAX_CONSECUTIVE_SHORT = 3
+RATE_LIMIT_COOLDOWN = 300  # 5 minutes pause on rate limit
+RATE_LIMIT_EXIT_CODES = {2, 75}  # claude rate limit exit codes (2=general, 75=tempfail)
 FALLBACK_PROMPT = "Run /cca-init then /cca-auto. No resume prompt was found."
 
 # Model alternation strategies
@@ -148,8 +150,8 @@ class AutoLoopState:
         if model:
             self._models_used.append(model)
 
-        # Track crashes
-        if exit_code != 0:
+        # Track crashes (rate limits are NOT crashes — expected behavior)
+        if exit_code != 0 and exit_code not in RATE_LIMIT_EXIT_CODES:
             self.total_crashes += 1
             self._consecutive_crashes += 1
         else:
@@ -273,6 +275,96 @@ def build_claude_command(
 
 
 # ---------------------------------------------------------------------------
+# Pre-flight Checks
+# ---------------------------------------------------------------------------
+
+def check_claude_binary() -> tuple[bool, str]:
+    """Check that the `claude` CLI binary is available on PATH.
+
+    Returns (available, message).
+    """
+    try:
+        result = subprocess.run(
+            ["which", "claude"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0:
+            path = result.stdout.strip()
+            return True, f"claude found at {path}"
+        return False, "claude not found on PATH"
+    except (subprocess.TimeoutExpired, OSError):
+        return False, "Could not check for claude binary"
+
+
+def check_terminal_app_running() -> tuple[bool, str]:
+    """Check if Terminal.app is running (needed for desktop mode).
+
+    Returns (running, message).
+    """
+    try:
+        result = subprocess.run(
+            ["osascript", "-e",
+             'tell application "System Events" to (name of processes) contains "Terminal"'],
+            capture_output=True, text=True, timeout=5,
+        )
+        if "true" in result.stdout.lower():
+            return True, "Terminal.app is running"
+        return False, "Terminal.app is not running"
+    except (subprocess.TimeoutExpired, OSError):
+        return True, "Could not check Terminal.app status — proceeding"
+
+
+def check_accessibility_permissions() -> tuple[bool, str]:
+    """Best-effort check for Accessibility permissions (needed for System Events).
+
+    Returns (has_access, message). May return True even without access
+    since there's no reliable non-interactive check.
+    """
+    try:
+        result = subprocess.run(
+            ["osascript", "-e",
+             'tell application "System Events" to get name of first process'],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0:
+            return True, "System Events accessible"
+        if "not allowed assistive access" in result.stderr.lower():
+            return False, "Accessibility permissions required — grant in System Preferences > Privacy > Accessibility"
+        return True, "System Events check inconclusive — proceeding"
+    except (subprocess.TimeoutExpired, OSError):
+        return True, "Could not check accessibility — proceeding"
+
+
+def cleanup_orphaned_temp_files(pid: Optional[int] = None) -> int:
+    """Remove orphaned autoloop temp files from /tmp/.
+
+    Args:
+        pid: If provided, only clean files for this PID. If None, clean all autoloop temps.
+
+    Returns count of files removed.
+    """
+    import glob
+    patterns = [
+        "cca-autoloop-sentinel-*",
+        "cca-autoloop-wrapper-*",
+        "cca-autoloop-prompt-*",
+    ]
+    removed = 0
+    for pattern in patterns:
+        if pid:
+            full_pattern = os.path.join(tempfile.gettempdir(), pattern.replace("*", f"{pid}-*"))
+        else:
+            full_pattern = os.path.join(tempfile.gettempdir(), pattern)
+        for path in glob.glob(full_pattern):
+            try:
+                os.unlink(path)
+                removed += 1
+            except OSError:
+                pass
+    return removed
+
+
+# ---------------------------------------------------------------------------
 # Desktop Mode
 # ---------------------------------------------------------------------------
 
@@ -349,22 +441,11 @@ CLAUDE_EXIT=$?
 echo $CLAUDE_EXIT > "{sentinel_file}"
 
 echo ""
-echo "Session complete (exit=$CLAUDE_EXIT). Window closing in 3 seconds..."
-sleep 3
-
-# Auto-close this Terminal.app window
-osascript -e 'tell application "Terminal"
-    set targetTitle to "{title}"
-    repeat with w in windows
-        repeat with t in tabs of w
-            if name of t contains targetTitle then
-                close w
-                return
-            end if
-        end repeat
-    end repeat
-end tell' &>/dev/null &
-exit
+echo "Session complete (exit=$CLAUDE_EXIT). Controller will close this window."
+# Do NOT self-close — let the controller handle window closing
+# after confirming the shell has exited. Self-close creates a race
+# condition that triggers Terminal.app's "terminate?" dialog.
+exit 0
 """
     with open(wrapper_path, "w") as f:
         f.write(script)
@@ -390,9 +471,23 @@ def spawn_desktop_session(wrapper_path: str) -> bool:
         return False
 
 
-def close_desktop_window(iteration: int) -> None:
-    """Close the Terminal.app window for a specific iteration (fallback cleanup)."""
+def close_desktop_window(iteration: int, wait_for_exit: float = 3.0) -> None:
+    """Close the Terminal.app window for a specific iteration.
+
+    Waits for the shell to exit before closing to avoid Terminal.app's
+    "terminate running processes?" confirmation dialog.
+
+    Args:
+        iteration: The iteration number (used to find the window by title)
+        wait_for_exit: Seconds to wait for shell to fully exit before closing
+    """
     title = desktop_window_title(iteration)
+
+    # Wait for the wrapper shell to fully exit — avoids terminate dialog
+    if wait_for_exit > 0:
+        time.sleep(wait_for_exit)
+
+    # Step 1: Try closing with "saving no" to bypass save dialogs
     try:
         subprocess.run(
             ["osascript", "-e", f'''tell application "Terminal"
@@ -400,7 +495,7 @@ def close_desktop_window(iteration: int) -> None:
                 repeat with w in windows
                     repeat with t in tabs of w
                         if name of t contains targetTitle then
-                            close w
+                            close w saving no
                             return
                         end if
                     end repeat
@@ -411,6 +506,68 @@ def close_desktop_window(iteration: int) -> None:
         )
     except (subprocess.TimeoutExpired, OSError):
         pass
+
+    # Step 2: Handle "terminate?" dialog if it appeared
+    # Uses System Events to click the Terminate button on any sheet
+    time.sleep(0.5)
+    try:
+        subprocess.run(
+            ["osascript", "-e", '''tell application "System Events"
+                tell process "Terminal"
+                    if exists sheet 1 of front window then
+                        click button "Terminate" of sheet 1 of front window
+                    end if
+                end tell
+            end tell'''],
+            capture_output=True,
+            timeout=5,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        pass
+
+    # Step 3: Verify window is gone. If still open, retry close.
+    time.sleep(1.0)
+    if _is_desktop_window_open(title):
+        try:
+            subprocess.run(
+                ["osascript", "-e", f'''tell application "Terminal"
+                    set targetTitle to "{title}"
+                    repeat with w in windows
+                        repeat with t in tabs of w
+                            if name of t contains targetTitle then
+                                close w saving no
+                                return
+                            end if
+                        end repeat
+                    end repeat
+                end tell'''],
+                capture_output=True,
+                timeout=5,
+            )
+        except (subprocess.TimeoutExpired, OSError):
+            pass
+
+
+def _is_desktop_window_open(title: str) -> bool:
+    """Check if a Terminal.app window with the given title still exists."""
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", f'''tell application "Terminal"
+                set targetTitle to "{title}"
+                repeat with w in windows
+                    repeat with t in tabs of w
+                        if name of t contains targetTitle then
+                            return true
+                        end if
+                    end repeat
+                end repeat
+                return false
+            end tell'''],
+            capture_output=True, text=True, timeout=5,
+        )
+        return "true" in result.stdout.lower()
+    except (subprocess.TimeoutExpired, OSError):
+        return False
 
 
 def wait_for_sentinel(sentinel_path: str, poll_interval: float = 2.0, timeout: float = 14400.0) -> int:
@@ -603,9 +760,18 @@ class AutoLoopRunner:
         if self.config.dry_run:
             print("DRY RUN — no sessions will be spawned")
 
-        # Pre-flight: ensure no other CCA sessions are running
-        # Skip in dry-run mode (no real sessions spawned)
+        # Pre-flight checks (skip in dry-run mode)
         if not self.config.dry_run:
+            # Check claude binary exists
+            found, msg = check_claude_binary()
+            if not found:
+                print(f"BLOCKED: {msg}")
+                print("Install Claude Code CLI: https://docs.anthropic.com/en/docs/claude-code")
+                self.logger.log("blocked_no_claude", {"message": msg})
+                return
+            print(f"  claude: {msg}")
+
+            # Check no duplicate sessions
             safe, msg = check_no_other_cca_sessions()
             if not safe:
                 print(f"BLOCKED: {msg}")
@@ -613,6 +779,25 @@ class AutoLoopRunner:
                 print("Close other CCA sessions first, then retry.")
                 self.logger.log("blocked_duplicate_session", {"message": msg})
                 return
+
+            # Desktop mode extra checks
+            if self.config.desktop_mode:
+                running, msg = check_terminal_app_running()
+                if not running:
+                    print(f"WARNING: {msg} — will attempt to launch it")
+                    self.logger.log("terminal_not_running", {"message": msg})
+
+                has_access, msg = check_accessibility_permissions()
+                if not has_access:
+                    print(f"WARNING: {msg}")
+                    print("Window auto-close may not work without Accessibility permissions.")
+                    self.logger.log("no_accessibility", {"message": msg})
+
+            # Clean up orphaned temp files from previous crashes
+            cleaned = cleanup_orphaned_temp_files()
+            if cleaned > 0:
+                print(f"  Cleaned {cleaned} orphaned temp file(s) from previous runs")
+                self.logger.log("orphan_cleanup", {"count": cleaned})
 
         while not self.state.should_stop:
             print(f"\n--- Iteration {self.state.iteration + 1} ---")
@@ -624,10 +809,16 @@ class AutoLoopRunner:
                 print(f"\nAuto-loop stopping: {self.state.stop_reason}")
                 break
 
-            # Cooldown between sessions
+            # Cooldown between sessions — longer for rate limits
             if not self.config.dry_run:
-                print(f"Cooldown: {self.config.cooldown_seconds}s")
-                time.sleep(self.config.cooldown_seconds)
+                exit_code = result.get("exit_code", 0)
+                if exit_code in RATE_LIMIT_EXIT_CODES:
+                    print(f"Rate limit detected (exit={exit_code}). Extended cooldown: {RATE_LIMIT_COOLDOWN}s")
+                    self.logger.log("rate_limit_cooldown", {"exit_code": exit_code, "cooldown": RATE_LIMIT_COOLDOWN})
+                    time.sleep(RATE_LIMIT_COOLDOWN)
+                else:
+                    print(f"Cooldown: {self.config.cooldown_seconds}s")
+                    time.sleep(self.config.cooldown_seconds)
 
         self.logger.log("loop_finished", self.state.to_dict())
         print(f"\n{self.state.summary()}")

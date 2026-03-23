@@ -35,6 +35,7 @@ COOLDOWN=${CCA_AUTOLOOP_COOLDOWN:-15}
 MIN_SESSION_SECS=30
 MAX_CONSECUTIVE_CRASHES=3
 MAX_CONSECUTIVE_SHORT=3
+RATE_LIMIT_COOLDOWN=300  # 5 minutes on rate limit
 
 # Model alternation: round-robin | opus-primary | sonnet-primary
 MODEL_STRATEGY=${MODEL_STRATEGY:-round-robin}
@@ -207,6 +208,41 @@ cleanup_and_exit() {
 
 trap cleanup_and_exit INT TERM
 
+# Pre-flight: check claude binary exists
+if ! command -v claude &>/dev/null; then
+    echo "BLOCKED: claude CLI not found on PATH."
+    echo "Install Claude Code CLI: https://docs.anthropic.com/en/docs/claude-code"
+    log_event "blocked_no_claude" "{}"
+    exit 1
+fi
+echo "  claude: $(which claude)"
+
+# Pre-flight: desktop mode checks
+if [ "$DESKTOP_MODE" = true ]; then
+    # Check Terminal.app is running
+    TERM_RUNNING=$(osascript -e 'tell application "System Events" to (name of processes) contains "Terminal"' 2>/dev/null || echo "false")
+    if [ "$TERM_RUNNING" != "true" ]; then
+        echo "WARNING: Terminal.app not running — will attempt to launch it"
+        log_event "terminal_not_running" "{}"
+    fi
+
+    # Check Accessibility permissions (best effort)
+    ACCESSIBILITY=$(osascript -e 'tell application "System Events" to get name of first process' 2>&1)
+    if echo "$ACCESSIBILITY" | grep -qi "not allowed assistive access"; then
+        echo "WARNING: Accessibility permissions required for auto-close."
+        echo "  Grant in System Preferences > Privacy > Accessibility"
+        log_event "no_accessibility" "{}"
+    fi
+
+    # Clean orphaned temp files from previous crashes
+    ORPHAN_COUNT=$(ls /tmp/cca-autoloop-sentinel-* /tmp/cca-autoloop-wrapper-* /tmp/cca-autoloop-prompt-* 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$ORPHAN_COUNT" -gt 0 ]; then
+        echo "  Cleaning $ORPHAN_COUNT orphaned temp file(s)..."
+        rm -f /tmp/cca-autoloop-sentinel-* /tmp/cca-autoloop-wrapper-* /tmp/cca-autoloop-prompt-* 2>/dev/null
+        log_event "orphan_cleanup" "{\"count\":$ORPHAN_COUNT}"
+    fi
+fi
+
 # Pre-flight: check no other CCA CLI sessions running
 CCA_CLI_COUNT=$(ps ax -o command 2>/dev/null | grep "claude.*dangerously-skip" | grep -i "cca\|ClaudeCodeAdvancements" | grep -v grep | wc -l | tr -d ' ')
 if [ "$CCA_CLI_COUNT" -gt 0 ]; then
@@ -276,22 +312,11 @@ CLAUDE_EXIT=\$?
 echo \$CLAUDE_EXIT > "$SENTINEL"
 
 echo ""
-echo "Session complete (exit=\$CLAUDE_EXIT). Window closing in 3 seconds..."
-sleep 3
-
-# Auto-close this Terminal.app window by title
-osascript -e 'tell application "Terminal"
-    set targetTitle to "$WINDOW_TITLE"
-    repeat with w in windows
-        repeat with t in tabs of w
-            if name of t contains targetTitle then
-                close w
-                return
-            end if
-        end repeat
-    end repeat
-end tell' &>/dev/null &
-exit
+echo "Session complete (exit=\$CLAUDE_EXIT). Controller will close this window."
+# Do NOT self-close — let the controller handle window closing
+# after confirming the shell has exited. Self-close creates a race
+# condition that triggers Terminal.app's "terminate?" dialog.
+exit 0
 WRAPEOF
         chmod +x "$WRAPPER"
 
@@ -304,18 +329,64 @@ WRAPEOF
         done
         exit_code=$(cat "$SENTINEL")
 
-        # Fallback: close the window if auto-close didn't work
+        # Wait for the wrapper shell to fully exit before closing window
+        # This avoids Terminal.app's "terminate running processes?" dialog
+        echo "Waiting for shell to exit before closing window..."
+        sleep 3
+
+        # Close the Terminal.app window (saving no = skip save dialogs)
         osascript -e "tell application \"Terminal\"
             set targetTitle to \"$WINDOW_TITLE\"
             repeat with w in windows
                 repeat with t in tabs of w
                     if name of t contains targetTitle then
-                        close w
+                        close w saving no
                         return
                     end if
                 end repeat
             end repeat
         end tell" &>/dev/null 2>&1 || true
+
+        # Handle "terminate?" dialog if it appeared despite our wait
+        # Uses System Events to click the Terminate button on any sheet
+        sleep 0.5
+        osascript -e 'tell application "System Events"
+            tell process "Terminal"
+                if exists sheet 1 of front window then
+                    click button "Terminate" of sheet 1 of front window
+                end if
+            end tell
+        end tell' &>/dev/null 2>&1 || true
+
+        # Verify window is gone — retry close if still open
+        sleep 1
+        STILL_OPEN=$(osascript -e "tell application \"Terminal\"
+            set targetTitle to \"$WINDOW_TITLE\"
+            repeat with w in windows
+                repeat with t in tabs of w
+                    if name of t contains targetTitle then
+                        return true
+                    end if
+                end repeat
+            end repeat
+            return false
+        end tell" 2>/dev/null || echo "false")
+
+        if [ "$STILL_OPEN" = "true" ]; then
+            echo "WARNING: Window still open after close attempt. Retrying..."
+            log_event "window_close_retry" "{\"iteration\":$iteration}"
+            osascript -e "tell application \"Terminal\"
+                set targetTitle to \"$WINDOW_TITLE\"
+                repeat with w in windows
+                    repeat with t in tabs of w
+                        if name of t contains targetTitle then
+                            close w saving no
+                            return
+                        end if
+                    end repeat
+                end repeat
+            end tell" &>/dev/null 2>&1 || true
+        fi
 
         # Cleanup temp files
         rm -f "$SENTINEL" "$WRAPPER" "$PROMPT_FILE"
@@ -338,11 +409,11 @@ WRAPEOF
 
     log_event "iteration_complete" "{\"iteration\":$iteration,\"exit_code\":$exit_code,\"duration\":$duration,\"model\":\"$MODEL\"}"
 
-    # Track crashes
-    if [ $exit_code -ne 0 ]; then
+    # Track crashes (rate limits are NOT crashes — expected, just need longer cooldown)
+    if [ $exit_code -ne 0 ] && [ $exit_code -ne 2 ] && [ $exit_code -ne 75 ]; then
         total_crashes=$((total_crashes + 1))
         consecutive_crashes=$((consecutive_crashes + 1))
-        echo "WARNING: Session crashed (consecutive: $consecutive_crashes)"
+        echo "WARNING: Session crashed (exit=$exit_code, consecutive: $consecutive_crashes)"
     else
         consecutive_crashes=0
     fi
@@ -371,10 +442,16 @@ WRAPEOF
         break
     fi
 
-    # Cooldown before next iteration
+    # Cooldown before next iteration — longer for rate limits
     if [ $iteration -lt $MAX_ITERATIONS ]; then
-        echo "Cooldown: ${COOLDOWN}s before next session..."
-        sleep $COOLDOWN
+        if [ $exit_code -eq 2 ] || [ $exit_code -eq 75 ]; then
+            echo "Rate limit detected (exit=$exit_code). Extended cooldown: ${RATE_LIMIT_COOLDOWN}s"
+            log_event "rate_limit_cooldown" "{\"exit_code\":$exit_code,\"cooldown\":$RATE_LIMIT_COOLDOWN}"
+            sleep $RATE_LIMIT_COOLDOWN
+        else
+            echo "Cooldown: ${COOLDOWN}s before next session..."
+            sleep $COOLDOWN
+        fi
     fi
 
     echo ""

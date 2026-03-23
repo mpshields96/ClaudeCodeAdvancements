@@ -29,6 +29,13 @@ from cca_autoloop import (
     close_desktop_window,
     desktop_window_title,
     check_no_other_cca_sessions,
+    check_claude_binary,
+    check_terminal_app_running,
+    check_accessibility_permissions,
+    cleanup_orphaned_temp_files,
+    _is_desktop_window_open,
+    RATE_LIMIT_EXIT_CODES,
+    RATE_LIMIT_COOLDOWN,
 )
 
 
@@ -449,11 +456,13 @@ class TestAutoLoopRunner(unittest.TestCase):
         runner.run_one_iteration()
         self.assertEqual(runner.state.total_crashes, 1)
 
+    @patch("cca_autoloop.cleanup_orphaned_temp_files", return_value=0)
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "found"))
     @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "ok"))
     @patch("cca_autoloop.read_resume_prompt")
     @patch("cca_autoloop.subprocess.run")
     @patch("cca_autoloop.time.sleep")
-    def test_run_loop_stops_at_max_iterations(self, mock_sleep, mock_run, mock_read, mock_check):
+    def test_run_loop_stops_at_max_iterations(self, mock_sleep, mock_run, mock_read, mock_check, mock_claude, mock_cleanup):
         mock_read.return_value = "Resume"
         mock_run.return_value = MagicMock(returncode=0)
 
@@ -473,11 +482,13 @@ class TestAutoLoopRunner(unittest.TestCase):
         runner.run()
         self.assertEqual(mock_run.call_count, 3)
 
+    @patch("cca_autoloop.cleanup_orphaned_temp_files", return_value=0)
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "found"))
     @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "ok"))
     @patch("cca_autoloop.read_resume_prompt")
     @patch("cca_autoloop.subprocess.run")
     @patch("cca_autoloop.time.sleep")
-    def test_run_loop_stops_on_consecutive_crashes(self, mock_sleep, mock_run, mock_read, mock_check):
+    def test_run_loop_stops_on_consecutive_crashes(self, mock_sleep, mock_run, mock_read, mock_check, mock_claude, mock_cleanup):
         mock_read.return_value = "Resume"
         mock_run.return_value = MagicMock(returncode=1)
 
@@ -691,10 +702,11 @@ class TestDesktopMode(unittest.TestCase):
             self.assertIn("round-robin", content)
             self.assertIn(sentinel, content)
             self.assertIn("unset ANTHROPIC_API_KEY", content)
-            # Window title and auto-close
+            # Window title set but NO self-close (controller handles closing)
             self.assertIn("CCA-AutoLoop-Iter-3", content)
             self.assertIn("printf", content)  # title escape sequence
-            self.assertIn("close w", content)  # auto-close osascript
+            self.assertNotIn("close w", content)  # no self-close
+            self.assertIn("exit 0", content)  # clean exit for shell
             os.unlink(wrapper)
 
     def test_write_desktop_wrapper_valid_bash(self):
@@ -774,17 +786,53 @@ class TestDesktopMode(unittest.TestCase):
         result = spawn_desktop_session("/tmp/wrapper.sh")
         self.assertFalse(result)
 
+    @patch("cca_autoloop._is_desktop_window_open", return_value=False)
+    @patch("cca_autoloop.time.sleep")
     @patch("cca_autoloop.subprocess.run")
-    def test_close_desktop_window_no_crash(self, mock_run):
+    def test_close_desktop_window_no_crash(self, mock_run, mock_sleep, mock_open):
         """close_desktop_window should not raise even if window doesn't exist."""
         mock_run.return_value = MagicMock(returncode=0)
-        close_desktop_window(1)  # Should not raise
-        mock_run.assert_called_once()
+        close_desktop_window(1, wait_for_exit=0)  # Skip sleep for test speed
+        # Should make 2 calls: close w saving no + System Events terminate handler
+        self.assertEqual(mock_run.call_count, 2)
 
+    @patch("cca_autoloop.time.sleep")
     @patch("cca_autoloop.subprocess.run", side_effect=OSError("no osascript"))
-    def test_close_desktop_window_handles_error(self, mock_run):
+    def test_close_desktop_window_handles_error(self, mock_run, mock_sleep):
         """close_desktop_window should swallow errors."""
-        close_desktop_window(99)  # Should not raise
+        close_desktop_window(99, wait_for_exit=0)  # Should not raise
+
+    @patch("cca_autoloop.time.sleep")
+    @patch("cca_autoloop.subprocess.run")
+    def test_close_desktop_window_uses_saving_no(self, mock_run, mock_sleep):
+        """close_desktop_window should use 'saving no' to bypass save dialogs."""
+        mock_run.return_value = MagicMock(returncode=0)
+        close_desktop_window(5, wait_for_exit=0)
+        # First call is the close command
+        first_call_args = mock_run.call_args_list[0][0][0]
+        osascript_code = first_call_args[2]  # -e argument
+        self.assertIn("saving no", osascript_code)
+
+    @patch("cca_autoloop.time.sleep")
+    @patch("cca_autoloop.subprocess.run")
+    def test_close_desktop_window_handles_terminate_dialog(self, mock_run, mock_sleep):
+        """close_desktop_window should attempt to click Terminate on any sheet dialog."""
+        mock_run.return_value = MagicMock(returncode=0)
+        close_desktop_window(1, wait_for_exit=0)
+        # Second call handles the terminate dialog via System Events
+        second_call_args = mock_run.call_args_list[1][0][0]
+        osascript_code = second_call_args[2]
+        self.assertIn("System Events", osascript_code)
+        self.assertIn("Terminate", osascript_code)
+
+    @patch("cca_autoloop.time.sleep")
+    @patch("cca_autoloop.subprocess.run")
+    def test_close_desktop_window_waits_for_exit(self, mock_run, mock_sleep):
+        """close_desktop_window should wait before closing to let shell exit."""
+        mock_run.return_value = MagicMock(returncode=0)
+        close_desktop_window(1, wait_for_exit=3.0)
+        # First sleep call should be the wait_for_exit delay
+        mock_sleep.assert_any_call(3.0)
 
     @patch("cca_autoloop.spawn_desktop_session")
     @patch("cca_autoloop.wait_for_sentinel")
@@ -880,11 +928,12 @@ class TestSessionDedup(unittest.TestCase):
         safe, msg = check_no_other_cca_sessions()
         self.assertTrue(safe)
 
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "found"))
     @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(False, "1 session running"))
     @patch("cca_autoloop.read_resume_prompt")
     @patch("cca_autoloop.subprocess.run")
     @patch("cca_autoloop.time.sleep")
-    def test_runner_blocked_by_dedup(self, mock_sleep, mock_run, mock_read, mock_check):
+    def test_runner_blocked_by_dedup(self, mock_sleep, mock_run, mock_read, mock_check, mock_claude):
         """Runner should refuse to start if dedup check fails."""
         mock_read.return_value = "Resume"
         mock_run.return_value = MagicMock(returncode=0)
@@ -922,6 +971,206 @@ class TestSessionDedup(unittest.TestCase):
                 json.dump({"iteration": 5, "total_sessions": 5, "total_crashes": 1}, f)
             # Should not raise
             cli_main(["status", "--state-file", state_path])
+
+
+class TestPreFlightChecks(unittest.TestCase):
+    """Test pre-flight checks for autoloop startup."""
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_check_claude_binary_found(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="/usr/local/bin/claude\n")
+        found, msg = check_claude_binary()
+        self.assertTrue(found)
+        self.assertIn("claude found", msg)
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_check_claude_binary_not_found(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=1, stdout="")
+        found, msg = check_claude_binary()
+        self.assertFalse(found)
+        self.assertIn("not found", msg)
+
+    @patch("cca_autoloop.subprocess.run", side_effect=OSError("no which"))
+    def test_check_claude_binary_error(self, mock_run):
+        found, msg = check_claude_binary()
+        self.assertFalse(found)
+        self.assertIn("Could not check", msg)
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_check_terminal_running(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="true\n")
+        running, msg = check_terminal_app_running()
+        self.assertTrue(running)
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_check_terminal_not_running(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="false\n")
+        running, msg = check_terminal_app_running()
+        self.assertFalse(running)
+
+    @patch("cca_autoloop.subprocess.run", side_effect=OSError("no osascript"))
+    def test_check_terminal_error_proceeds(self, mock_run):
+        """If check fails, proceed optimistically."""
+        running, msg = check_terminal_app_running()
+        self.assertTrue(running)  # fail-open
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_check_accessibility_ok(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="loginwindow\n")
+        has_access, msg = check_accessibility_permissions()
+        self.assertTrue(has_access)
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_check_accessibility_denied(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=1,
+            stderr="Not allowed assistive access",
+            stdout="",
+        )
+        has_access, msg = check_accessibility_permissions()
+        self.assertFalse(has_access)
+        self.assertIn("Accessibility permissions", msg)
+
+    @patch("cca_autoloop.subprocess.run", side_effect=OSError("no osascript"))
+    def test_check_accessibility_error_proceeds(self, mock_run):
+        """If check fails, proceed optimistically."""
+        has_access, msg = check_accessibility_permissions()
+        self.assertTrue(has_access)  # fail-open
+
+
+class TestOrphanCleanup(unittest.TestCase):
+    """Test orphaned temp file cleanup."""
+
+    def test_cleanup_removes_orphaned_files(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Create some fake orphaned files
+            sentinel = os.path.join(tmpdir, "cca-autoloop-sentinel-12345-1")
+            wrapper = os.path.join(tmpdir, "cca-autoloop-wrapper-12345-1.sh")
+            for f in (sentinel, wrapper):
+                with open(f, "w") as fh:
+                    fh.write("stale")
+
+            # Patch tempfile.gettempdir to use our test dir
+            with patch("cca_autoloop.tempfile.gettempdir", return_value=tmpdir):
+                removed = cleanup_orphaned_temp_files(pid=12345)
+            self.assertEqual(removed, 2)
+            self.assertFalse(os.path.exists(sentinel))
+            self.assertFalse(os.path.exists(wrapper))
+
+    def test_cleanup_no_files(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch("cca_autoloop.tempfile.gettempdir", return_value=tmpdir):
+                removed = cleanup_orphaned_temp_files()
+            self.assertEqual(removed, 0)
+
+
+class TestRateLimitHandling(unittest.TestCase):
+    """Test rate limit detection and handling."""
+
+    def test_rate_limit_exit_codes_defined(self):
+        """Exit codes 2 and 75 should be recognized as rate limits."""
+        self.assertIn(2, RATE_LIMIT_EXIT_CODES)
+        self.assertIn(75, RATE_LIMIT_EXIT_CODES)
+
+    def test_rate_limit_not_counted_as_crash(self):
+        """Rate limit exits should NOT increment consecutive crash counter."""
+        state = AutoLoopState(max_iterations=10)
+        state.record_session(exit_code=2, duration=60.0)
+        self.assertEqual(state._consecutive_crashes, 0)
+        self.assertEqual(state.total_crashes, 0)
+
+    def test_rate_limit_75_not_counted_as_crash(self):
+        state = AutoLoopState(max_iterations=10)
+        state.record_session(exit_code=75, duration=60.0)
+        self.assertEqual(state._consecutive_crashes, 0)
+        self.assertEqual(state.total_crashes, 0)
+
+    def test_real_crash_still_counted(self):
+        """Non-rate-limit non-zero exits should still be crashes."""
+        state = AutoLoopState(max_iterations=10)
+        state.record_session(exit_code=1, duration=60.0)
+        self.assertEqual(state._consecutive_crashes, 1)
+        self.assertEqual(state.total_crashes, 1)
+
+    def test_rate_limit_resets_consecutive_crashes(self):
+        """Rate limit after a crash should reset consecutive counter."""
+        state = AutoLoopState(max_iterations=10)
+        state.record_session(exit_code=1, duration=60.0)  # real crash
+        self.assertEqual(state._consecutive_crashes, 1)
+        state.record_session(exit_code=2, duration=60.0)  # rate limit
+        self.assertEqual(state._consecutive_crashes, 0)  # reset
+
+    def test_rate_limit_cooldown_value(self):
+        """Rate limit cooldown should be 5 minutes."""
+        self.assertEqual(RATE_LIMIT_COOLDOWN, 300)
+
+
+class TestWindowVerification(unittest.TestCase):
+    """Test window open/close verification."""
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_is_desktop_window_open_true(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="true\n")
+        self.assertTrue(_is_desktop_window_open("CCA-AutoLoop-Iter-1"))
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_is_desktop_window_open_false(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="false\n")
+        self.assertFalse(_is_desktop_window_open("CCA-AutoLoop-Iter-1"))
+
+    @patch("cca_autoloop.subprocess.run", side_effect=OSError("no osascript"))
+    def test_is_desktop_window_open_error(self, mock_run):
+        """On error, assume window is closed (fail-safe)."""
+        self.assertFalse(_is_desktop_window_open("CCA-AutoLoop-Iter-1"))
+
+    @patch("cca_autoloop._is_desktop_window_open", return_value=True)
+    @patch("cca_autoloop.time.sleep")
+    @patch("cca_autoloop.subprocess.run")
+    def test_close_retries_if_window_persists(self, mock_run, mock_sleep, mock_open):
+        """If window is still open after first close, should retry."""
+        mock_run.return_value = MagicMock(returncode=0)
+        close_desktop_window(1, wait_for_exit=0)
+        # Should have 3 subprocess calls: close, system events, retry close
+        self.assertEqual(mock_run.call_count, 3)
+
+    @patch("cca_autoloop._is_desktop_window_open", return_value=False)
+    @patch("cca_autoloop.time.sleep")
+    @patch("cca_autoloop.subprocess.run")
+    def test_close_no_retry_if_window_gone(self, mock_run, mock_sleep, mock_open):
+        """If window closed successfully, no retry needed."""
+        mock_run.return_value = MagicMock(returncode=0)
+        close_desktop_window(1, wait_for_exit=0)
+        # Should have 2 subprocess calls: close, system events (no retry)
+        self.assertEqual(mock_run.call_count, 2)
+
+
+class TestRunnerPreFlight(unittest.TestCase):
+    """Test runner pre-flight check integration."""
+
+    @patch("cca_autoloop.check_claude_binary", return_value=(False, "not found"))
+    @patch("cca_autoloop.time.sleep")
+    def test_runner_blocked_by_missing_claude(self, mock_sleep, mock_check):
+        """Runner should refuse to start if claude binary is missing."""
+        cfg = AutoLoopConfig(project_dir="/tmp/test", dry_run=False, max_iterations=1)
+        runner = AutoLoopRunner(cfg)
+        # Capture that run() returns without spawning
+        runner.run()
+        self.assertEqual(runner.state.total_sessions, 0)
+
+    @patch("cca_autoloop.cleanup_orphaned_temp_files", return_value=3)
+    @patch("cca_autoloop.check_no_other_cca_sessions", return_value=(True, "ok"))
+    @patch("cca_autoloop.check_claude_binary", return_value=(True, "found"))
+    @patch("cca_autoloop.subprocess.run")
+    @patch("cca_autoloop.time.sleep")
+    @patch("cca_autoloop.read_resume_prompt", return_value="test")
+    def test_runner_cleans_orphans_on_start(self, mock_read, mock_sleep, mock_run,
+                                            mock_claude, mock_dedup, mock_cleanup):
+        """Runner should clean orphaned temp files during pre-flight."""
+        mock_run.return_value = MagicMock(returncode=0)
+        cfg = AutoLoopConfig(project_dir="/tmp/test", dry_run=False, max_iterations=1)
+        runner = AutoLoopRunner(cfg)
+        runner.run()
+        mock_cleanup.assert_called_once()
 
 
 if __name__ == "__main__":
