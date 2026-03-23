@@ -1048,7 +1048,7 @@ Revisit when: Anthropic ships native shared context, or Cowork local MCP bugs fi
 - cca_comm.py (queue messages)
 - session_pacer.py (wrap timing)
 
-**Status:** Phase 8 COMPLETE (S128). Production hardened. Ready for live supervised dry run.
+**Status:** Phase 8 COMPLETE (S128). S129: +preflight command, +rich --status with audit log, +AUTOLOOP_SETUP.md. Ready for live supervised dry run.
 - Phase 2 (S111): `session_registry.py` (60 tests) + `tmux_manager.py` (40 tests)
 - Phase 3 (S112): `session_daemon.py` — poll loop, health checking, spawn/restart, peak hours (45 tests)
 - Phase 4 (S113): Integration tests — lifecycle, peak transitions, crash recovery chains (27 tests)
@@ -1070,12 +1070,14 @@ Revisit when: Anthropic ships native shared context, or Cowork local MCP bugs fi
   - Stale resume detection + prompt size truncation (>100KB)
 
 **How to use (Matthew):**
-1. `./start_autoloop.sh --desktop` — opens visible Terminal.app windows (recommended)
-2. `./start_autoloop.sh` — runs in current terminal (tmux recommended)
-3. `./start_autoloop.sh --tmux` — launches in tmux window
-4. `./start_autoloop.sh --status` — check loop state
-5. `MODEL_STRATEGY=opus-primary ./start_autoloop.sh --desktop` — Opus only
-6. Ctrl-C to stop
+1. `python3 cca_autoloop.py preflight --desktop` — check all prerequisites first
+2. `./start_autoloop.sh --desktop` — opens visible Terminal.app windows (recommended)
+3. `./start_autoloop.sh` — runs in current terminal (tmux recommended)
+4. `./start_autoloop.sh --tmux` — launches in tmux window
+5. `python3 cca_autoloop.py status` — rich status with audit history
+6. `MODEL_STRATEGY=opus-primary ./start_autoloop.sh --desktop` — Opus only
+7. Ctrl-C to stop
+8. See `AUTOLOOP_SETUP.md` for Accessibility permissions setup
 
 **Next: Live supervised dry run. Close desktop app chat first, then run from plain terminal.**
 Last updated: S128 (2026-03-23).
