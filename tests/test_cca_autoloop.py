@@ -26,6 +26,8 @@ from cca_autoloop import (
     write_desktop_wrapper,
     wait_for_sentinel,
     spawn_desktop_session,
+    close_desktop_window,
+    desktop_window_title,
 )
 
 
@@ -656,6 +658,10 @@ class TestDesktopMode(unittest.TestCase):
             # Cleanup
             os.unlink(wrapper)
 
+    def test_desktop_window_title(self):
+        self.assertEqual(desktop_window_title(1), "CCA-AutoLoop-Iter-1")
+        self.assertEqual(desktop_window_title(42), "CCA-AutoLoop-Iter-42")
+
     def test_write_desktop_wrapper_content(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             sentinel = os.path.join(tmpdir, "sentinel")
@@ -679,6 +685,32 @@ class TestDesktopMode(unittest.TestCase):
             self.assertIn("round-robin", content)
             self.assertIn(sentinel, content)
             self.assertIn("unset ANTHROPIC_API_KEY", content)
+            # Window title and auto-close
+            self.assertIn("CCA-AutoLoop-Iter-3", content)
+            self.assertIn("printf", content)  # title escape sequence
+            self.assertIn("close w", content)  # auto-close osascript
+            os.unlink(wrapper)
+
+    def test_write_desktop_wrapper_valid_bash(self):
+        """Wrapper script must pass bash syntax check."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sentinel = os.path.join(tmpdir, "sentinel")
+            prompt = os.path.join(tmpdir, "prompt.txt")
+            with open(prompt, "w") as f:
+                f.write("test")
+
+            wrapper = write_desktop_wrapper(
+                project_dir="/tmp/project",
+                model="opus",
+                model_strategy="opus-primary",
+                iteration=1,
+                prompt_file=prompt,
+                sentinel_file=sentinel,
+            )
+            result = subprocess.run(
+                ["bash", "-n", wrapper], capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, f"Bash syntax error: {result.stderr}")
             os.unlink(wrapper)
 
     def test_wait_for_sentinel_success(self):
@@ -735,6 +767,18 @@ class TestDesktopMode(unittest.TestCase):
     def test_spawn_desktop_session_failure(self, mock_run):
         result = spawn_desktop_session("/tmp/wrapper.sh")
         self.assertFalse(result)
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_close_desktop_window_no_crash(self, mock_run):
+        """close_desktop_window should not raise even if window doesn't exist."""
+        mock_run.return_value = MagicMock(returncode=0)
+        close_desktop_window(1)  # Should not raise
+        mock_run.assert_called_once()
+
+    @patch("cca_autoloop.subprocess.run", side_effect=OSError("no osascript"))
+    def test_close_desktop_window_handles_error(self, mock_run):
+        """close_desktop_window should swallow errors."""
+        close_desktop_window(99)  # Should not raise
 
     @patch("cca_autoloop.spawn_desktop_session")
     @patch("cca_autoloop.wait_for_sentinel")

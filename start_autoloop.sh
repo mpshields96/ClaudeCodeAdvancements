@@ -188,7 +188,24 @@ echo ""
 
 log_event "loop_started" "{\"max_iterations\":$MAX_ITERATIONS,\"cooldown\":$COOLDOWN,\"model_strategy\":\"$MODEL_STRATEGY\",\"desktop_mode\":$DESKTOP_MODE}"
 
-trap 'echo ""; echo "Auto-loop interrupted."; save_state; log_event "loop_interrupted" "{}"; exit 0' INT TERM
+cleanup_and_exit() {
+    echo ""
+    echo "Auto-loop interrupted."
+    save_state
+    log_event "loop_interrupted" "{}"
+
+    # If in desktop mode, try to clean up any orphaned temp files
+    if [ "$DESKTOP_MODE" = true ]; then
+        echo "Cleaning up temp files..."
+        rm -f /tmp/cca-autoloop-sentinel-$$-* 2>/dev/null
+        rm -f /tmp/cca-autoloop-wrapper-$$-* 2>/dev/null
+        rm -f /tmp/cca-autoloop-prompt-$$-* 2>/dev/null
+    fi
+
+    exit 0
+}
+
+trap cleanup_and_exit INT TERM
 
 while [ $iteration -lt $MAX_ITERATIONS ]; do
     iteration=$((iteration + 1))
@@ -214,46 +231,81 @@ $RESUME_PROMPT"
     start_ts=$(date +%s)
 
     if [ "$DESKTOP_MODE" = true ]; then
-        # Desktop mode: open a visible Terminal.app window
-        # Claude runs interactively — Matthew can watch and type
-        # We poll for completion via a sentinel file
+        # Desktop mode: open a visible, INTERACTIVE Terminal.app window
+        # Matthew can watch claude and type messages/instructions to it
+        # Controller polls sentinel file for session completion
+        WINDOW_TITLE="CCA-AutoLoop-Iter-$iteration"
         SENTINEL="/tmp/cca-autoloop-sentinel-$$-$iteration"
         rm -f "$SENTINEL"
 
-        # Save the prompt to a temp file (avoids all quoting issues)
+        # Save the prompt to a temp file (avoids quoting issues in osascript)
         PROMPT_FILE="/tmp/cca-autoloop-prompt-$$-$iteration.txt"
         printf '%s' "$FULL_PROMPT" > "$PROMPT_FILE"
 
         # Write a self-contained wrapper script
-        # It reads the prompt from the file, runs claude, writes exit code
         WRAPPER="/tmp/cca-autoloop-wrapper-$$-$iteration.sh"
         cat > "$WRAPPER" <<WRAPEOF
 #!/bin/bash
+# Set window title for identification
+printf '\e]0;$WINDOW_TITLE\a'
+
 cd "$PROJECT_DIR"
 unset ANTHROPIC_API_KEY
+
 echo "========================================"
 echo "  CCA Auto-Loop — Iteration $iteration"
 echo "  Model: $MODEL ($MODEL_STRATEGY)"
+echo "  Window: $WINDOW_TITLE"
 echo "========================================"
 echo ""
+
 PROMPT=\$(cat "$PROMPT_FILE")
 claude --model "$MODEL" "\$PROMPT"
-echo \$? > "$SENTINEL"
+CLAUDE_EXIT=\$?
+
+echo \$CLAUDE_EXIT > "$SENTINEL"
+
 echo ""
-echo "Session complete. This window will close in 5 seconds..."
-sleep 5
+echo "Session complete (exit=\$CLAUDE_EXIT). Window closing in 3 seconds..."
+sleep 3
+
+# Auto-close this Terminal.app window by title
+osascript -e 'tell application "Terminal"
+    set targetTitle to "$WINDOW_TITLE"
+    repeat with w in windows
+        repeat with t in tabs of w
+            if name of t contains targetTitle then
+                close w
+                return
+            end if
+        end repeat
+    end repeat
+end tell' &>/dev/null &
 exit
 WRAPEOF
         chmod +x "$WRAPPER"
 
-        echo "Opening Terminal.app window (--model $MODEL)..."
+        echo "Opening Terminal.app window: $WINDOW_TITLE (--model $MODEL)..."
         osascript -e "tell application \"Terminal\" to do script \"'$WRAPPER'\"" >/dev/null 2>&1
 
-        # Poll for the sentinel file (claude has exited)
+        # Poll for the sentinel file (claude session has exited)
         while [ ! -f "$SENTINEL" ]; do
             sleep 2
         done
         exit_code=$(cat "$SENTINEL")
+
+        # Fallback: close the window if auto-close didn't work
+        osascript -e "tell application \"Terminal\"
+            set targetTitle to \"$WINDOW_TITLE\"
+            repeat with w in windows
+                repeat with t in tabs of w
+                    if name of t contains targetTitle then
+                        close w
+                        return
+                    end if
+                end repeat
+            end repeat
+        end tell" &>/dev/null 2>&1 || true
 
         # Cleanup temp files
         rm -f "$SENTINEL" "$WRAPPER" "$PROMPT_FILE"

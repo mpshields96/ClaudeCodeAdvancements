@@ -276,6 +276,11 @@ def build_claude_command(
 # Desktop Mode
 # ---------------------------------------------------------------------------
 
+def desktop_window_title(iteration: int) -> str:
+    """Generate a unique window title for this iteration."""
+    return f"CCA-AutoLoop-Iter-{iteration}"
+
+
 def write_desktop_wrapper(
     project_dir: str,
     model: str,
@@ -288,6 +293,7 @@ def write_desktop_wrapper(
 
     The wrapper runs claude in the Terminal.app window, then writes
     the exit code to sentinel_file so the controller can detect completion.
+    Sets the window title for identification and auto-closes when done.
 
     Returns the path to the wrapper script.
     """
@@ -295,20 +301,43 @@ def write_desktop_wrapper(
         tempfile.gettempdir(),
         f"cca-autoloop-wrapper-{os.getpid()}-{iteration}.sh",
     )
+    title = desktop_window_title(iteration)
     script = f"""#!/bin/bash
+# Set window title for identification
+printf '\\e]0;{title}\\a'
+
 cd "{project_dir}"
 unset ANTHROPIC_API_KEY
+
 echo "========================================"
 echo "  CCA Auto-Loop — Iteration {iteration}"
 echo "  Model: {model} ({model_strategy})"
+echo "  Window: {title}"
 echo "========================================"
 echo ""
+
 PROMPT=$(cat "{prompt_file}")
 claude --model "{model}" "$PROMPT"
-echo $? > "{sentinel_file}"
+CLAUDE_EXIT=$?
+
+echo $CLAUDE_EXIT > "{sentinel_file}"
+
 echo ""
-echo "Session complete. This window will close in 5 seconds..."
-sleep 5
+echo "Session complete (exit=$CLAUDE_EXIT). Window closing in 3 seconds..."
+sleep 3
+
+# Auto-close this Terminal.app window
+osascript -e 'tell application "Terminal"
+    set targetTitle to "{title}"
+    repeat with w in windows
+        repeat with t in tabs of w
+            if name of t contains targetTitle then
+                close w
+                return
+            end if
+        end repeat
+    end repeat
+end tell' &>/dev/null &
 exit
 """
     with open(wrapper_path, "w") as f:
@@ -323,15 +352,39 @@ def spawn_desktop_session(wrapper_path: str) -> bool:
     Returns True if osascript succeeded, False otherwise.
     """
     try:
-        subprocess.run(
+        result = subprocess.run(
             ["osascript", "-e",
              f'tell application "Terminal" to do script "\'{wrapper_path}\'"'],
             capture_output=True,
+            text=True,
             timeout=10,
         )
-        return True
+        return result.returncode == 0
     except (subprocess.TimeoutExpired, OSError):
         return False
+
+
+def close_desktop_window(iteration: int) -> None:
+    """Close the Terminal.app window for a specific iteration (fallback cleanup)."""
+    title = desktop_window_title(iteration)
+    try:
+        subprocess.run(
+            ["osascript", "-e", f'''tell application "Terminal"
+                set targetTitle to "{title}"
+                repeat with w in windows
+                    repeat with t in tabs of w
+                        if name of t contains targetTitle then
+                            close w
+                            return
+                        end if
+                    end repeat
+                end repeat
+            end tell'''],
+            capture_output=True,
+            timeout=5,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        pass
 
 
 def wait_for_sentinel(sentinel_path: str, poll_interval: float = 2.0, timeout: float = 14400.0) -> int:
@@ -425,6 +478,7 @@ class AutoLoopRunner:
             duration = 0.1  # Near-instant for dry run
         elif self.config.desktop_mode:
             # Desktop mode: open visible Terminal.app window
+            # Matthew can watch and interact with the claude session
             iteration_num = self.state.iteration + 1
             sentinel_path = os.path.join(
                 tempfile.gettempdir(),
@@ -435,7 +489,13 @@ class AutoLoopRunner:
                 f"cca-autoloop-prompt-{os.getpid()}-{iteration_num}.txt",
             )
 
-            # Write prompt to file (avoids quoting issues)
+            # Remove stale sentinel from previous run
+            try:
+                os.unlink(sentinel_path)
+            except OSError:
+                pass
+
+            # Write prompt to file (avoids quoting issues in osascript)
             with open(prompt_file, "w") as f:
                 f.write(cmd[-1])  # The prompt is the last element of cmd
 
@@ -449,12 +509,19 @@ class AutoLoopRunner:
             )
 
             if spawn_desktop_session(wrapper_path):
+                self.logger.log("desktop_window_opened", {
+                    "iteration": iteration_num,
+                    "model": model,
+                    "title": desktop_window_title(iteration_num),
+                })
                 exit_code = wait_for_sentinel(sentinel_path)
+                # Fallback: close the Terminal window if it didn't auto-close
+                close_desktop_window(iteration_num)
             else:
                 self.logger.log("desktop_spawn_error", {})
                 exit_code = 1
 
-            # Cleanup
+            # Cleanup temp files
             for p in (sentinel_path, wrapper_path, prompt_file):
                 try:
                     os.unlink(p)
