@@ -3,9 +3,26 @@
 
 ---
 
-## Current State (as of Session 123 — 2026-03-23)
+## Current State (as of Session 125 — 2026-03-23)
 
-**Phase:** Session 123 IN PROGRESS. Solo session. MT-33 Phase 6 + hardening + MT-32 charts.
+**Phase:** Session 125 COMPLETE. Solo session. MT-26/MT-0/MT-32/MT-31 multi-MT work.
+
+**What was done this session (S125):**
+- **Gemini MCP E2E validated**: Flash works, Pro blocked (free tier, no API access). Matthew directive: Flash only. MT-31 scope narrowed.
+- **MT-32: 2 new report charts**: `coverage_ratio` (tests/100 LOC per module), `hook_coverage` (hooks per lifecycle event). Both wired into Typst template. 16 new tests.
+- **MT-0: deployment_verifier.py**: Validates self-learning integration in Kalshi bot — checks trading_journal.py, research_tracker.py, journal data, live.py wiring. CLI + programmatic. 24 new tests.
+- **MT-26: signal pipeline E2E tests**: 30 scenarios (sniper bets, toxic contracts, chaotic regimes, graceful degradation, stability). 79 total pipeline tests. CCA scope effectively complete.
+- **CCA_TO_POLYBOT bridge updated**: Was stale since S112 (13 sessions). Added MT-0 verifier, MT-33 report pipeline, MT-28 self-learning v2, actionable recommendations.
+- **Doc drift fixed**: PROJECT_INDEX test counts (design-skills 1270->1299, usage-dashboard 369->384, total 8058->8001).
+- **Priority picker updated**: MT-31 Flash-only, MT-26 near-complete, MT-32 last_touched.
+- **Tests**: 203 suites, ~8040 tests passing. +70 new tests this session.
+- **Commits**: 6 this session. Grade: A.
+
+**Next (prioritized):**
+1. **MT-0 Phase 2**: Run deployment verifier against real polybot. Coordinate with Kalshi chat to implement self-learning integration.
+2. **MT-31**: Build Flash-powered CCA tools (code analysis, summarization).
+3. **MT-32 continued**: Design system maturation (Pillar 7), dashboard enhancement (Pillar 6).
+4. **Research ROI loop**: 46 deliveries with 0% implementation tracking — needs Kalshi chat action.
 
 **What was done this session (S123):**
 - **MT-33 Phase 6 COMPLETE**: `ReportSidecar` class in report_generator.py — saves JSON alongside every PDF, archives to `~/.cca-reports/{date}_S{session}.json`. Wired into main() pipeline automatically. `report_differ.py` (180 LOC) — structured diff between two report sidecars: test growth, LOC changes, MT transitions, Kalshi P&L, APF movement. `format_summary()` for human-readable trend text. 50 new tests (20 sidecar + 30 differ).

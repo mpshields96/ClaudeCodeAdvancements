@@ -3,6 +3,34 @@
 
 ---
 
+## Session 125 — 2026-03-23
+
+**What changed:**
+- `design-skills/report_charts.py`: +2 chart methods (coverage_ratio, hook_coverage), wired into generate_all
+- `design-skills/templates/cca-report.typ`: New charts in Module Deep-Dives + Live Infrastructure sections
+- `self-learning/deployment_verifier.py`: NEW — MT-0 deployment validation (CLI + API)
+- `self-learning/tests/test_signal_pipeline_e2e.py`: NEW — 30 E2E scenarios for signal pipeline
+- `self-learning/tests/test_deployment_verifier.py`: NEW — 24 tests
+- `design-skills/tests/test_report_charts.py`: +16 tests (coverage ratio, hook coverage)
+- `CCA_TO_POLYBOT.md`: Updated from S112 to S125 (MT-0 verifier, MT-33, MT-28, recommendations)
+- `priority_picker.py`: MT-31 Flash-only, MT-26 near-complete, MT-32 refreshed
+- `MASTER_TASKS.md`: MT-31 status updated (Pro unavailable, Flash scope)
+- `PROJECT_INDEX.md`: Doc drift fix (design-skills, usage-dashboard, total)
+
+**Why:**
+- S124 resume directive: validate Gemini MCP E2E (done — Flash works, Pro blocked)
+- Priority picker: MT-26 (21.0) and MT-0 (19.0) stagnating — addressed both
+- Bridge file was 13 sessions stale — updated for Kalshi chat consumption
+- Matthew directive: work on MT-26/MT-0
+
+**Tests:** 8040/8040 passing (203 suites). +70 new tests.
+
+**Lessons:**
+- Google One AI Premium gives Gemini Pro in web app but NOT API access — these are separate products
+- Signal pipeline is solid — 30 E2E scenarios all pass first try
+
+---
+
 ## Session 121 — 2026-03-22
 
 **What changed:**
