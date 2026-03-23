@@ -38,8 +38,10 @@ Stdlib only. No external dependencies.
 
 import json
 import os
+import stat
 import subprocess
 import sys
+import tempfile
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -60,6 +62,12 @@ MAX_CONSECUTIVE_CRASHES = 3
 MAX_CONSECUTIVE_SHORT = 3
 FALLBACK_PROMPT = "Run /cca-init then /cca-auto. No resume prompt was found."
 
+# Model alternation strategies
+VALID_MODEL_STRATEGIES = ("round-robin", "opus-primary", "sonnet-primary")
+DEFAULT_MODEL_STRATEGY = "round-robin"
+MODEL_OPUS = "opus"
+MODEL_SONNET = "sonnet"
+
 
 # ---------------------------------------------------------------------------
 # Config
@@ -75,6 +83,8 @@ class AutoLoopConfig:
     dry_run: bool = False
     log_file: str = ""
     state_file: str = ""
+    model_strategy: str = DEFAULT_MODEL_STRATEGY
+    desktop_mode: bool = False
 
     def __post_init__(self):
         # Enforce minimums
@@ -82,6 +92,10 @@ class AutoLoopConfig:
             self.max_iterations = 1
         if self.cooldown_seconds < MIN_COOLDOWN:
             self.cooldown_seconds = MIN_COOLDOWN
+
+        # Validate model strategy
+        if self.model_strategy not in VALID_MODEL_STRATEGIES:
+            self.model_strategy = DEFAULT_MODEL_STRATEGY
 
         # Derive resume_file from project_dir if not set
         if not self.resume_file:
@@ -123,13 +137,16 @@ class AutoLoopState:
     _consecutive_crashes: int = field(default=0, repr=False)
     _consecutive_short: int = field(default=0, repr=False)
     _session_durations: list = field(default_factory=list, repr=False)
+    _models_used: list = field(default_factory=list, repr=False)
 
-    def record_session(self, exit_code: int, duration: float):
+    def record_session(self, exit_code: int, duration: float, model: str = ""):
         """Record the result of a completed session."""
         self.iteration += 1
         self.total_sessions += 1
         self.last_exit_code = exit_code
         self._session_durations.append(duration)
+        if model:
+            self._models_used.append(model)
 
         # Track crashes
         if exit_code != 0:
@@ -181,6 +198,7 @@ class AutoLoopState:
             "last_exit_code": self.last_exit_code,
             "should_stop": self.should_stop,
             "stop_reason": self.stop_reason,
+            "models_used": list(self._models_used),
         }
 
 
@@ -203,8 +221,36 @@ def read_resume_prompt(path: str) -> str:
         return FALLBACK_PROMPT
 
 
-def build_claude_command(resume_prompt: str, project_dir: str) -> list[str]:
+def select_model(strategy: str, iteration: int) -> str:
+    """Select which model to use for this iteration.
+
+    Args:
+        strategy: One of 'round-robin', 'opus-primary', 'sonnet-primary'
+        iteration: 1-based iteration number
+
+    Returns:
+        Model name string ('opus' or 'sonnet')
+    """
+    if strategy == "opus-primary":
+        return MODEL_OPUS
+    elif strategy == "sonnet-primary":
+        return MODEL_SONNET
+    else:
+        # round-robin: odd iterations = sonnet, even = opus
+        return MODEL_SONNET if iteration % 2 == 1 else MODEL_OPUS
+
+
+def build_claude_command(
+    resume_prompt: str,
+    project_dir: str,
+    model: Optional[str] = None,
+) -> list[str]:
     """Build the claude CLI command with resume prompt.
+
+    Args:
+        resume_prompt: The resume prompt text
+        project_dir: Path to the project directory
+        model: Optional model name ('opus' or 'sonnet'). If None, no --model flag.
 
     Returns a list of arguments (no shell escaping needed — subprocess handles it).
     """
@@ -219,7 +265,96 @@ def build_claude_command(resume_prompt: str, project_dir: str) -> list[str]:
         f"{resume_prompt}"
     )
 
-    return ["claude", full_prompt]
+    cmd = ["claude"]
+    if model:
+        cmd.extend(["--model", model])
+    cmd.append(full_prompt)
+    return cmd
+
+
+# ---------------------------------------------------------------------------
+# Desktop Mode
+# ---------------------------------------------------------------------------
+
+def write_desktop_wrapper(
+    project_dir: str,
+    model: str,
+    model_strategy: str,
+    iteration: int,
+    prompt_file: str,
+    sentinel_file: str,
+) -> str:
+    """Write a self-contained wrapper script for desktop mode.
+
+    The wrapper runs claude in the Terminal.app window, then writes
+    the exit code to sentinel_file so the controller can detect completion.
+
+    Returns the path to the wrapper script.
+    """
+    wrapper_path = os.path.join(
+        tempfile.gettempdir(),
+        f"cca-autoloop-wrapper-{os.getpid()}-{iteration}.sh",
+    )
+    script = f"""#!/bin/bash
+cd "{project_dir}"
+unset ANTHROPIC_API_KEY
+echo "========================================"
+echo "  CCA Auto-Loop — Iteration {iteration}"
+echo "  Model: {model} ({model_strategy})"
+echo "========================================"
+echo ""
+PROMPT=$(cat "{prompt_file}")
+claude --model "{model}" "$PROMPT"
+echo $? > "{sentinel_file}"
+echo ""
+echo "Session complete. This window will close in 5 seconds..."
+sleep 5
+exit
+"""
+    with open(wrapper_path, "w") as f:
+        f.write(script)
+    os.chmod(wrapper_path, stat.S_IRWXU)
+    return wrapper_path
+
+
+def spawn_desktop_session(wrapper_path: str) -> bool:
+    """Open a Terminal.app window running the wrapper script.
+
+    Returns True if osascript succeeded, False otherwise.
+    """
+    try:
+        subprocess.run(
+            ["osascript", "-e",
+             f'tell application "Terminal" to do script "\'{wrapper_path}\'"'],
+            capture_output=True,
+            timeout=10,
+        )
+        return True
+    except (subprocess.TimeoutExpired, OSError):
+        return False
+
+
+def wait_for_sentinel(sentinel_path: str, poll_interval: float = 2.0, timeout: float = 14400.0) -> int:
+    """Poll for the sentinel file and return the exit code.
+
+    Args:
+        sentinel_path: Path to the sentinel file written by the wrapper
+        poll_interval: Seconds between polls
+        timeout: Max seconds to wait (default 4 hours)
+
+    Returns exit code from sentinel file, or 1 on timeout.
+    """
+    elapsed = 0.0
+    while elapsed < timeout:
+        if os.path.exists(sentinel_path):
+            try:
+                with open(sentinel_path) as f:
+                    return int(f.read().strip())
+            except (ValueError, OSError):
+                return 1
+        time.sleep(poll_interval)
+        elapsed += poll_interval
+    return 1  # timeout
 
 
 # ---------------------------------------------------------------------------
@@ -265,12 +400,20 @@ class AutoLoopRunner:
         # Read resume prompt
         resume_prompt = read_resume_prompt(self.config.resume_file)
 
-        # Build command
-        cmd = build_claude_command(resume_prompt, self.config.project_dir)
+        # Select model for this iteration (1-based)
+        model = select_model(
+            self.config.model_strategy,
+            self.state.iteration + 1,
+        )
+
+        # Build command with model
+        cmd = build_claude_command(resume_prompt, self.config.project_dir, model=model)
 
         self.logger.log("iteration_start", {
             "iteration": self.state.iteration + 1,
             "resume_length": len(resume_prompt),
+            "model": model,
+            "model_strategy": self.config.model_strategy,
             "dry_run": self.config.dry_run,
         })
 
@@ -280,8 +423,47 @@ class AutoLoopRunner:
             # Simulate a session
             exit_code = 0
             duration = 0.1  # Near-instant for dry run
+        elif self.config.desktop_mode:
+            # Desktop mode: open visible Terminal.app window
+            iteration_num = self.state.iteration + 1
+            sentinel_path = os.path.join(
+                tempfile.gettempdir(),
+                f"cca-autoloop-sentinel-{os.getpid()}-{iteration_num}",
+            )
+            prompt_file = os.path.join(
+                tempfile.gettempdir(),
+                f"cca-autoloop-prompt-{os.getpid()}-{iteration_num}.txt",
+            )
+
+            # Write prompt to file (avoids quoting issues)
+            with open(prompt_file, "w") as f:
+                f.write(cmd[-1])  # The prompt is the last element of cmd
+
+            wrapper_path = write_desktop_wrapper(
+                project_dir=self.config.project_dir,
+                model=model,
+                model_strategy=self.config.model_strategy,
+                iteration=iteration_num,
+                prompt_file=prompt_file,
+                sentinel_file=sentinel_path,
+            )
+
+            if spawn_desktop_session(wrapper_path):
+                exit_code = wait_for_sentinel(sentinel_path)
+            else:
+                self.logger.log("desktop_spawn_error", {})
+                exit_code = 1
+
+            # Cleanup
+            for p in (sentinel_path, wrapper_path, prompt_file):
+                try:
+                    os.unlink(p)
+                except OSError:
+                    pass
+
+            duration = time.time() - start_time
         else:
-            # Spawn claude as subprocess
+            # Foreground mode: spawn claude as subprocess
             env = os.environ.copy()
             env.pop("ANTHROPIC_API_KEY", None)  # Always use Max subscription
 
@@ -298,13 +480,14 @@ class AutoLoopRunner:
 
             duration = time.time() - start_time
 
-        # Record result
-        self.state.record_session(exit_code=exit_code, duration=duration)
+        # Record result with model info
+        self.state.record_session(exit_code=exit_code, duration=duration, model=model)
 
         result = {
             "iteration": self.state.iteration,
             "exit_code": exit_code,
             "duration": duration,
+            "model": model,
             "should_stop": self.state.should_stop,
         }
 
@@ -331,7 +514,7 @@ class AutoLoopRunner:
             print(f"\n--- Iteration {self.state.iteration + 1} ---")
             result = self.run_one_iteration()
 
-            print(f"Exit code: {result['exit_code']}  Duration: {result['duration']:.0f}s")
+            print(f"Exit code: {result['exit_code']}  Duration: {result['duration']:.0f}s  Model: {result.get('model', '?')}")
 
             if self.state.should_stop:
                 print(f"\nAuto-loop stopping: {self.state.stop_reason}")
@@ -372,6 +555,8 @@ def cli_main(args: list = None):
         print("    --max-iterations N      Maximum iterations (default 50)")
         print("    --cooldown N            Seconds between sessions (default 15)")
         print("    --config PATH           Load config from JSON file")
+        print("    --model-strategy STR    Model strategy: round-robin|opus-primary|sonnet-primary")
+        print("    --desktop               Open each session in a visible Terminal.app window")
         print("  status                    Show current loop state")
         print("    --state-file PATH       Path to state file")
         print()
@@ -382,9 +567,11 @@ def cli_main(args: list = None):
     if cmd == "start":
         # Parse options
         dry_run = "--dry-run" in args
+        desktop_mode = "--desktop" in args
         max_iter = DEFAULT_MAX_ITERATIONS
         cooldown = DEFAULT_COOLDOWN
         config_path = None
+        model_strategy = os.environ.get("MODEL_STRATEGY", DEFAULT_MODEL_STRATEGY)
 
         for i, arg in enumerate(args[1:], 1):
             if arg == "--max-iterations" and i + 1 < len(args):
@@ -393,16 +580,24 @@ def cli_main(args: list = None):
                 cooldown = int(args[i + 1])
             elif arg == "--config" and i + 1 < len(args):
                 config_path = args[i + 1]
+            elif arg == "--model-strategy" and i + 1 < len(args):
+                model_strategy = args[i + 1]
 
         if config_path:
             cfg = AutoLoopConfig.from_json(config_path)
             if dry_run:
                 cfg.dry_run = True
+            if desktop_mode:
+                cfg.desktop_mode = True
+            if "--model-strategy" in args:
+                cfg.model_strategy = model_strategy
         else:
             cfg = AutoLoopConfig(
                 max_iterations=max_iter,
                 cooldown_seconds=cooldown,
                 dry_run=dry_run,
+                desktop_mode=desktop_mode,
+                model_strategy=model_strategy,
             )
 
         runner = AutoLoopRunner(cfg)

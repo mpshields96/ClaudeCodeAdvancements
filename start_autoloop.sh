@@ -36,6 +36,9 @@ MIN_SESSION_SECS=30
 MAX_CONSECUTIVE_CRASHES=3
 MAX_CONSECUTIVE_SHORT=3
 
+# Model alternation: round-robin | opus-primary | sonnet-primary
+MODEL_STRATEGY=${MODEL_STRATEGY:-round-robin}
+
 # State tracking
 iteration=0
 total_sessions=0
@@ -88,6 +91,26 @@ read_resume() {
     fi
 }
 
+select_model() {
+    local iter="$1"
+    case "$MODEL_STRATEGY" in
+        opus-primary)
+            echo "opus"
+            ;;
+        sonnet-primary)
+            echo "sonnet"
+            ;;
+        *)
+            # round-robin: odd=sonnet, even=opus
+            if [ $((iter % 2)) -eq 1 ]; then
+                echo "sonnet"
+            else
+                echo "opus"
+            fi
+            ;;
+    esac
+}
+
 # ---------------------------------------------------------------------------
 # Arguments
 # ---------------------------------------------------------------------------
@@ -127,16 +150,26 @@ if [ "${1:-}" = "--tmux" ]; then
 fi
 
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    echo "Usage: ./start_autoloop.sh [--tmux | --status | --help]"
+    echo "Usage: ./start_autoloop.sh [--tmux | --desktop | --status | --help]"
     echo ""
     echo "  (no args)   Run the auto-loop in the current terminal"
     echo "  --tmux      Launch in a new tmux window"
+    echo "  --desktop   Open each session in a visible Terminal.app window (interactive)"
     echo "  --status    Show current loop state"
     echo ""
     echo "Environment:"
     echo "  CCA_AUTOLOOP_MAX=N       Max iterations (default: 50)"
     echo "  CCA_AUTOLOOP_COOLDOWN=N  Seconds between sessions (default: 15)"
+    echo "  MODEL_STRATEGY=STR       Model alternation: round-robin|opus-primary|sonnet-primary (default: round-robin)"
     exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# Desktop Mode Flag
+# ---------------------------------------------------------------------------
+DESKTOP_MODE=false
+if [ "${1:-}" = "--desktop" ]; then
+    DESKTOP_MODE=true
 fi
 
 # ---------------------------------------------------------------------------
@@ -147,11 +180,13 @@ echo "========================================"
 echo "  CCA Auto-Loop Starting"
 echo "  Max iterations: $MAX_ITERATIONS"
 echo "  Cooldown: ${COOLDOWN}s"
+echo "  Model strategy: $MODEL_STRATEGY"
+echo "  Desktop mode: $DESKTOP_MODE"
 echo "  Project: $PROJECT_DIR"
 echo "========================================"
 echo ""
 
-log_event "loop_started" "{\"max_iterations\":$MAX_ITERATIONS,\"cooldown\":$COOLDOWN}"
+log_event "loop_started" "{\"max_iterations\":$MAX_ITERATIONS,\"cooldown\":$COOLDOWN,\"model_strategy\":\"$MODEL_STRATEGY\",\"desktop_mode\":$DESKTOP_MODE}"
 
 trap 'echo ""; echo "Auto-loop interrupted."; save_state; log_event "loop_interrupted" "{}"; exit 0' INT TERM
 
@@ -169,17 +204,67 @@ while [ $iteration -lt $MAX_ITERATIONS ]; do
 
 $RESUME_PROMPT"
 
-    log_event "iteration_start" "{\"iteration\":$iteration,\"resume_length\":$resume_len}"
+    # Select model for this iteration
+    MODEL=$(select_model $iteration)
+    echo "Model: $MODEL ($MODEL_STRATEGY)"
+
+    log_event "iteration_start" "{\"iteration\":$iteration,\"resume_length\":$resume_len,\"model\":\"$MODEL\",\"model_strategy\":\"$MODEL_STRATEGY\"}"
 
     # Record start time
     start_ts=$(date +%s)
 
-    # Spawn claude — FOREGROUND, inherits TTY
-    echo "Spawning claude session..."
-    set +e
-    claude "$FULL_PROMPT"
-    exit_code=$?
-    set -e
+    if [ "$DESKTOP_MODE" = true ]; then
+        # Desktop mode: open a visible Terminal.app window
+        # Claude runs interactively — Matthew can watch and type
+        # We poll for completion via a sentinel file
+        SENTINEL="/tmp/cca-autoloop-sentinel-$$-$iteration"
+        rm -f "$SENTINEL"
+
+        # Save the prompt to a temp file (avoids all quoting issues)
+        PROMPT_FILE="/tmp/cca-autoloop-prompt-$$-$iteration.txt"
+        printf '%s' "$FULL_PROMPT" > "$PROMPT_FILE"
+
+        # Write a self-contained wrapper script
+        # It reads the prompt from the file, runs claude, writes exit code
+        WRAPPER="/tmp/cca-autoloop-wrapper-$$-$iteration.sh"
+        cat > "$WRAPPER" <<WRAPEOF
+#!/bin/bash
+cd "$PROJECT_DIR"
+unset ANTHROPIC_API_KEY
+echo "========================================"
+echo "  CCA Auto-Loop — Iteration $iteration"
+echo "  Model: $MODEL ($MODEL_STRATEGY)"
+echo "========================================"
+echo ""
+PROMPT=\$(cat "$PROMPT_FILE")
+claude --model "$MODEL" "\$PROMPT"
+echo \$? > "$SENTINEL"
+echo ""
+echo "Session complete. This window will close in 5 seconds..."
+sleep 5
+exit
+WRAPEOF
+        chmod +x "$WRAPPER"
+
+        echo "Opening Terminal.app window (--model $MODEL)..."
+        osascript -e "tell application \"Terminal\" to do script \"'$WRAPPER'\"" >/dev/null 2>&1
+
+        # Poll for the sentinel file (claude has exited)
+        while [ ! -f "$SENTINEL" ]; do
+            sleep 2
+        done
+        exit_code=$(cat "$SENTINEL")
+
+        # Cleanup temp files
+        rm -f "$SENTINEL" "$WRAPPER" "$PROMPT_FILE"
+    else
+        # Foreground mode: claude inherits TTY directly
+        echo "Spawning claude session (--model $MODEL)..."
+        set +e
+        claude --model "$MODEL" "$FULL_PROMPT"
+        exit_code=$?
+        set -e
+    fi
 
     # Record end time
     end_ts=$(date +%s)
@@ -187,9 +272,9 @@ $RESUME_PROMPT"
     total_sessions=$((total_sessions + 1))
 
     echo ""
-    echo "Session exited: code=$exit_code  duration=${duration}s"
+    echo "Session exited: code=$exit_code  duration=${duration}s  model=$MODEL"
 
-    log_event "iteration_complete" "{\"iteration\":$iteration,\"exit_code\":$exit_code,\"duration\":$duration}"
+    log_event "iteration_complete" "{\"iteration\":$iteration,\"exit_code\":$exit_code,\"duration\":$duration,\"model\":\"$MODEL\"}"
 
     # Track crashes
     if [ $exit_code -ne 0 ]; then

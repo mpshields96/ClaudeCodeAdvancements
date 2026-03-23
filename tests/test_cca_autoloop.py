@@ -22,6 +22,10 @@ from cca_autoloop import (
     AutoLoopRunner,
     build_claude_command,
     read_resume_prompt,
+    select_model,
+    write_desktop_wrapper,
+    wait_for_sentinel,
+    spawn_desktop_session,
 )
 
 
@@ -86,6 +90,26 @@ class TestAutoLoopConfig(unittest.TestCase):
     def test_from_json_missing_file_uses_defaults(self):
         cfg = AutoLoopConfig.from_json("/nonexistent/config.json")
         self.assertEqual(cfg.max_iterations, 50)
+
+    def test_default_model_strategy(self):
+        cfg = AutoLoopConfig()
+        self.assertEqual(cfg.model_strategy, "round-robin")
+
+    def test_custom_model_strategy(self):
+        cfg = AutoLoopConfig(model_strategy="opus-primary")
+        self.assertEqual(cfg.model_strategy, "opus-primary")
+
+    def test_invalid_model_strategy_falls_back(self):
+        cfg = AutoLoopConfig(model_strategy="invalid-strategy")
+        self.assertEqual(cfg.model_strategy, "round-robin")
+
+    def test_from_json_with_model_strategy(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump({"model_strategy": "sonnet-primary"}, f)
+            f.flush()
+            cfg = AutoLoopConfig.from_json(f.name)
+        os.unlink(f.name)
+        self.assertEqual(cfg.model_strategy, "sonnet-primary")
 
 
 class TestAutoLoopState(unittest.TestCase):
@@ -152,6 +176,19 @@ class TestAutoLoopState(unittest.TestCase):
         state.record_session(exit_code=0, duration=10.0)
         self.assertFalse(state.should_stop)
 
+    def test_record_session_with_model(self):
+        state = AutoLoopState()
+        state.record_session(exit_code=0, duration=120.0, model="opus")
+        state.record_session(exit_code=0, duration=180.0, model="sonnet")
+        self.assertEqual(state._models_used, ["opus", "sonnet"])
+
+    def test_to_dict_includes_models(self):
+        state = AutoLoopState()
+        state.record_session(exit_code=0, duration=60.0, model="sonnet")
+        d = state.to_dict()
+        self.assertIn("models_used", d)
+        self.assertEqual(d["models_used"], ["sonnet"])
+
     def test_summary(self):
         state = AutoLoopState()
         state.record_session(exit_code=0, duration=120.0)
@@ -200,6 +237,38 @@ class TestReadResumePrompt(unittest.TestCase):
             prompt = read_resume_prompt(f.name)
         os.unlink(f.name)
         self.assertEqual(prompt, "Resume prompt here.")
+
+
+class TestSelectModel(unittest.TestCase):
+    """Test model alternation logic."""
+
+    def test_round_robin_odd_is_sonnet(self):
+        self.assertEqual(select_model("round-robin", 1), "sonnet")
+        self.assertEqual(select_model("round-robin", 3), "sonnet")
+        self.assertEqual(select_model("round-robin", 5), "sonnet")
+
+    def test_round_robin_even_is_opus(self):
+        self.assertEqual(select_model("round-robin", 2), "opus")
+        self.assertEqual(select_model("round-robin", 4), "opus")
+        self.assertEqual(select_model("round-robin", 6), "opus")
+
+    def test_opus_primary_always_opus(self):
+        for i in range(1, 6):
+            self.assertEqual(select_model("opus-primary", i), "opus")
+
+    def test_sonnet_primary_always_sonnet(self):
+        for i in range(1, 6):
+            self.assertEqual(select_model("sonnet-primary", i), "sonnet")
+
+    def test_unknown_strategy_defaults_to_round_robin(self):
+        # Unknown falls through to else (round-robin behavior)
+        self.assertEqual(select_model("unknown", 1), "sonnet")
+        self.assertEqual(select_model("unknown", 2), "opus")
+
+    def test_round_robin_sequence(self):
+        """Verify the full alternation pattern."""
+        models = [select_model("round-robin", i) for i in range(1, 7)]
+        self.assertEqual(models, ["sonnet", "opus", "sonnet", "opus", "sonnet", "opus"])
 
 
 class TestBuildClaudeCommand(unittest.TestCase):
@@ -253,6 +322,28 @@ class TestBuildClaudeCommand(unittest.TestCase):
         prompt_arg = cmd[-1]
         self.assertIn("/cca-init", prompt_arg)
         self.assertIn("/cca-auto", prompt_arg)
+
+    def test_command_with_model_opus(self):
+        cmd = build_claude_command("Resume", "/tmp", model="opus")
+        self.assertEqual(cmd[0], "claude")
+        self.assertEqual(cmd[1], "--model")
+        self.assertEqual(cmd[2], "opus")
+        self.assertIn("Resume", cmd[-1])
+
+    def test_command_with_model_sonnet(self):
+        cmd = build_claude_command("Resume", "/tmp", model="sonnet")
+        self.assertEqual(cmd[1], "--model")
+        self.assertEqual(cmd[2], "sonnet")
+
+    def test_command_without_model(self):
+        cmd = build_claude_command("Resume", "/tmp", model=None)
+        self.assertEqual(cmd, ["claude", cmd[-1]])
+        self.assertNotIn("--model", cmd)
+
+    def test_command_model_none_default(self):
+        """No model arg by default (backward compat)."""
+        cmd = build_claude_command("Resume", "/tmp")
+        self.assertNotIn("--model", cmd)
 
 
 class TestAutoLoopRunner(unittest.TestCase):
@@ -368,8 +459,8 @@ class TestAutoLoopRunner(unittest.TestCase):
         runner = AutoLoopRunner(cfg)
         # Simulate that sessions last > 30s so short-session guard doesn't trip
         original_record = runner.state.record_session
-        def fake_record(exit_code, duration):
-            original_record(exit_code=exit_code, duration=max(duration, 60.0))
+        def fake_record(exit_code, duration, model=""):
+            original_record(exit_code=exit_code, duration=max(duration, 60.0), model=model)
         runner.state.record_session = fake_record
 
         runner.run()
@@ -441,6 +532,76 @@ class TestAutoLoopRunner(unittest.TestCase):
             self.assertEqual(data["total_sessions"], 2)
 
 
+class TestAutoLoopRunnerModel(unittest.TestCase):
+    """Test that runner uses model selection."""
+
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_dry_run_records_models(self, mock_sleep, mock_read):
+        mock_read.return_value = "Resume"
+        cfg = AutoLoopConfig(
+            project_dir="/tmp/test",
+            dry_run=True,
+            max_iterations=4,
+            model_strategy="round-robin",
+        )
+        runner = AutoLoopRunner(cfg)
+        runner.run()
+        # dry runs are near-instant (<30s) so short session guard stops at 3
+        # round-robin: iter1=sonnet, iter2=opus, iter3=sonnet
+        self.assertEqual(runner.state._models_used, ["sonnet", "opus", "sonnet"])
+
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_opus_primary_all_opus(self, mock_sleep, mock_read):
+        mock_read.return_value = "Resume"
+        cfg = AutoLoopConfig(
+            project_dir="/tmp/test",
+            dry_run=True,
+            max_iterations=3,
+            model_strategy="opus-primary",
+        )
+        runner = AutoLoopRunner(cfg)
+        runner.run()
+        self.assertEqual(runner.state._models_used, ["opus", "opus", "opus"])
+
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.subprocess.run")
+    @patch("cca_autoloop.time.sleep")
+    def test_model_passed_to_subprocess(self, mock_sleep, mock_run, mock_read):
+        """Verify --model flag is in the subprocess command."""
+        mock_read.return_value = "Resume"
+        mock_run.return_value = MagicMock(returncode=0)
+
+        cfg = AutoLoopConfig(
+            project_dir="/tmp/test",
+            dry_run=False,
+            max_iterations=1,
+            model_strategy="opus-primary",
+        )
+        runner = AutoLoopRunner(cfg)
+        runner.run_one_iteration()
+
+        call_args = mock_run.call_args[0][0]
+        self.assertIn("--model", call_args)
+        model_idx = call_args.index("--model")
+        self.assertEqual(call_args[model_idx + 1], "opus")
+
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_iteration_result_includes_model(self, mock_sleep, mock_read):
+        mock_read.return_value = "Resume"
+        cfg = AutoLoopConfig(
+            project_dir="/tmp/test",
+            dry_run=True,
+            max_iterations=1,
+        )
+        runner = AutoLoopRunner(cfg)
+        result = runner.run_one_iteration()
+        self.assertIn("model", result)
+        self.assertIn(result["model"], ("opus", "sonnet"))
+
+
 class TestAutoLoopRunnerCWD(unittest.TestCase):
     """Test that runner sets correct working directory."""
 
@@ -461,6 +622,158 @@ class TestAutoLoopRunnerCWD(unittest.TestCase):
 
         call_kwargs = mock_run.call_args[1]
         self.assertEqual(call_kwargs["cwd"], "/tmp/test_project")
+
+
+class TestDesktopMode(unittest.TestCase):
+    """Test desktop mode (Terminal.app window spawning)."""
+
+    def test_config_desktop_mode_default_false(self):
+        cfg = AutoLoopConfig()
+        self.assertFalse(cfg.desktop_mode)
+
+    def test_config_desktop_mode_true(self):
+        cfg = AutoLoopConfig(desktop_mode=True)
+        self.assertTrue(cfg.desktop_mode)
+
+    def test_write_desktop_wrapper_creates_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sentinel = os.path.join(tmpdir, "sentinel")
+            prompt = os.path.join(tmpdir, "prompt.txt")
+            with open(prompt, "w") as f:
+                f.write("test prompt")
+
+            wrapper = write_desktop_wrapper(
+                project_dir=tmpdir,
+                model="opus",
+                model_strategy="opus-primary",
+                iteration=1,
+                prompt_file=prompt,
+                sentinel_file=sentinel,
+            )
+            self.assertTrue(os.path.exists(wrapper))
+            # Should be executable
+            self.assertTrue(os.access(wrapper, os.X_OK))
+            # Cleanup
+            os.unlink(wrapper)
+
+    def test_write_desktop_wrapper_content(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sentinel = os.path.join(tmpdir, "sentinel")
+            prompt = os.path.join(tmpdir, "prompt.txt")
+            with open(prompt, "w") as f:
+                f.write("test")
+
+            wrapper = write_desktop_wrapper(
+                project_dir="/tmp/project",
+                model="sonnet",
+                model_strategy="round-robin",
+                iteration=3,
+                prompt_file=prompt,
+                sentinel_file=sentinel,
+            )
+            with open(wrapper) as f:
+                content = f.read()
+            self.assertIn("cd \"/tmp/project\"", content)
+            self.assertIn("--model \"sonnet\"", content)
+            self.assertIn("Iteration 3", content)
+            self.assertIn("round-robin", content)
+            self.assertIn(sentinel, content)
+            self.assertIn("unset ANTHROPIC_API_KEY", content)
+            os.unlink(wrapper)
+
+    def test_wait_for_sentinel_success(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".sentinel", delete=False) as f:
+            f.write("0\n")
+            f.flush()
+            result = wait_for_sentinel(f.name, poll_interval=0.01)
+        os.unlink(f.name)
+        self.assertEqual(result, 0)
+
+    def test_wait_for_sentinel_nonzero_exit(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".sentinel", delete=False) as f:
+            f.write("1\n")
+            f.flush()
+            result = wait_for_sentinel(f.name, poll_interval=0.01)
+        os.unlink(f.name)
+        self.assertEqual(result, 1)
+
+    def test_wait_for_sentinel_timeout(self):
+        """Should return 1 on timeout."""
+        result = wait_for_sentinel(
+            "/nonexistent/sentinel",
+            poll_interval=0.01,
+            timeout=0.03,
+        )
+        self.assertEqual(result, 1)
+
+    def test_wait_for_sentinel_delayed_creation(self):
+        """Sentinel created after polling starts."""
+        import threading
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sentinel = os.path.join(tmpdir, "sentinel")
+
+            def write_later():
+                time.sleep(0.05)
+                with open(sentinel, "w") as f:
+                    f.write("0\n")
+
+            t = threading.Thread(target=write_later)
+            t.start()
+            result = wait_for_sentinel(sentinel, poll_interval=0.02, timeout=2.0)
+            t.join()
+            self.assertEqual(result, 0)
+
+    @patch("cca_autoloop.subprocess.run")
+    def test_spawn_desktop_session_success(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0)
+        result = spawn_desktop_session("/tmp/wrapper.sh")
+        self.assertTrue(result)
+        call_args = mock_run.call_args[0][0]
+        self.assertEqual(call_args[0], "osascript")
+
+    @patch("cca_autoloop.subprocess.run", side_effect=OSError("no osascript"))
+    def test_spawn_desktop_session_failure(self, mock_run):
+        result = spawn_desktop_session("/tmp/wrapper.sh")
+        self.assertFalse(result)
+
+    @patch("cca_autoloop.spawn_desktop_session")
+    @patch("cca_autoloop.wait_for_sentinel")
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_runner_desktop_mode_calls_spawn(self, mock_sleep, mock_read, mock_wait, mock_spawn):
+        """Runner in desktop mode should use spawn_desktop_session."""
+        mock_read.return_value = "Resume"
+        mock_spawn.return_value = True
+        mock_wait.return_value = 0
+
+        cfg = AutoLoopConfig(
+            project_dir="/tmp/test",
+            desktop_mode=True,
+            max_iterations=1,
+        )
+        runner = AutoLoopRunner(cfg)
+        result = runner.run_one_iteration()
+
+        mock_spawn.assert_called_once()
+        mock_wait.assert_called_once()
+        self.assertEqual(result["exit_code"], 0)
+
+    @patch("cca_autoloop.spawn_desktop_session")
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_runner_desktop_mode_spawn_failure(self, mock_sleep, mock_read, mock_spawn):
+        """If osascript fails, exit code should be 1."""
+        mock_read.return_value = "Resume"
+        mock_spawn.return_value = False
+
+        cfg = AutoLoopConfig(
+            project_dir="/tmp/test",
+            desktop_mode=True,
+            max_iterations=1,
+        )
+        runner = AutoLoopRunner(cfg)
+        result = runner.run_one_iteration()
+        self.assertEqual(result["exit_code"], 1)
 
 
 class TestAutoLoopCLI(unittest.TestCase):
@@ -492,6 +805,24 @@ class TestAutoLoopCLI(unittest.TestCase):
         cli_main(["start", "--max-iterations", "5"])
         cfg = mock_runner_cls.call_args[0][0]
         self.assertEqual(cfg.max_iterations, 5)
+
+    @patch("cca_autoloop.AutoLoopRunner")
+    def test_cli_desktop(self, mock_runner_cls):
+        from cca_autoloop import cli_main
+        mock_runner = MagicMock()
+        mock_runner_cls.return_value = mock_runner
+        cli_main(["start", "--desktop"])
+        cfg = mock_runner_cls.call_args[0][0]
+        self.assertTrue(cfg.desktop_mode)
+
+    @patch("cca_autoloop.AutoLoopRunner")
+    def test_cli_model_strategy(self, mock_runner_cls):
+        from cca_autoloop import cli_main
+        mock_runner = MagicMock()
+        mock_runner_cls.return_value = mock_runner
+        cli_main(["start", "--model-strategy", "opus-primary"])
+        cfg = mock_runner_cls.call_args[0][0]
+        self.assertEqual(cfg.model_strategy, "opus-primary")
 
     def test_cli_status(self):
         from cca_autoloop import cli_main
