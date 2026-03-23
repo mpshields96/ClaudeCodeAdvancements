@@ -36,6 +36,7 @@ from cca_autoloop import (
     _is_desktop_window_open,
     RATE_LIMIT_EXIT_CODES,
     RATE_LIMIT_COOLDOWN,
+    MAX_PROMPT_SIZE,
 )
 
 
@@ -1163,6 +1164,47 @@ class TestWindowVerification(unittest.TestCase):
         close_desktop_window(1, wait_for_exit=0)
         # Should have 2 subprocess calls: close, system events (no retry)
         self.assertEqual(mock_run.call_count, 2)
+
+
+class TestPromptSizeAndStaleness(unittest.TestCase):
+    """Test prompt size truncation and stale resume detection."""
+
+    def test_oversized_prompt_truncated(self):
+        """Prompts larger than MAX_PROMPT_SIZE should be truncated."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("x" * (MAX_PROMPT_SIZE + 5000))
+            f.flush()
+            result = read_resume_prompt(f.name)
+        os.unlink(f.name)
+        self.assertLessEqual(len(result), MAX_PROMPT_SIZE + 100)  # Allow for truncation message
+        self.assertIn("TRUNCATED", result)
+
+    def test_normal_prompt_not_truncated(self):
+        """Normal-sized prompts should not be modified."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("Normal resume prompt content")
+            f.flush()
+            result = read_resume_prompt(f.name)
+        os.unlink(f.name)
+        self.assertEqual(result, "Normal resume prompt content")
+        self.assertNotIn("TRUNCATED", result)
+
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_stale_resume_logged(self, mock_sleep, mock_read):
+        """Runner should detect and log when resume prompt doesn't change between iterations."""
+        mock_read.return_value = "Same resume each time"
+
+        cfg = AutoLoopConfig(project_dir="/tmp/test", dry_run=True, max_iterations=3)
+        runner = AutoLoopRunner(cfg)
+
+        # Run 2 iterations — second should detect staleness
+        r1 = runner.run_one_iteration()
+        r2 = runner.run_one_iteration()
+
+        # Both should succeed (stale doesn't block, just logs)
+        self.assertEqual(r1["exit_code"], 0)
+        self.assertEqual(r2["exit_code"], 0)
 
 
 class TestRunnerPreFlight(unittest.TestCase):

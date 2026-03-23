@@ -62,6 +62,7 @@ MAX_CONSECUTIVE_CRASHES = 3
 MAX_CONSECUTIVE_SHORT = 3
 RATE_LIMIT_COOLDOWN = 300  # 5 minutes pause on rate limit
 RATE_LIMIT_EXIT_CODES = {2, 75}  # claude rate limit exit codes (2=general, 75=tempfail)
+MAX_PROMPT_SIZE = 100_000  # 100KB — beyond this, CLI arg may be rejected
 FALLBACK_PROMPT = "Run /cca-init then /cca-auto. No resume prompt was found."
 
 # Model alternation strategies
@@ -218,6 +219,9 @@ def read_resume_prompt(path: str) -> str:
             content = f.read().strip()
         if not content:
             return FALLBACK_PROMPT
+        # Truncate oversized prompts to avoid CLI arg rejection
+        if len(content) > MAX_PROMPT_SIZE:
+            content = content[:MAX_PROMPT_SIZE] + "\n\n[TRUNCATED — resume prompt exceeded 100KB]"
         return content
     except OSError:
         return FALLBACK_PROMPT
@@ -627,14 +631,25 @@ class AutoLoopRunner:
         self.config = config
         self.state = AutoLoopState(max_iterations=config.max_iterations)
         self.logger = AutoLoopLogger(config.log_file)
+        self._last_resume_hash: Optional[str] = None  # For stale resume detection
 
     def run_one_iteration(self) -> dict:
         """Run a single iteration: read resume, spawn claude, wait.
 
         Returns a dict with iteration results.
         """
-        # Read resume prompt
+        # Read resume prompt and check for staleness
         resume_prompt = read_resume_prompt(self.config.resume_file)
+        import hashlib
+        resume_hash = hashlib.md5(resume_prompt.encode()).hexdigest()
+        if self._last_resume_hash and resume_hash == self._last_resume_hash:
+            self.logger.log("stale_resume_detected", {
+                "iteration": self.state.iteration + 1,
+                "resume_length": len(resume_prompt),
+            })
+            # Still proceed — the session might update it this time
+            # But log it so we can detect stuck loops in the audit trail
+        self._last_resume_hash = resume_hash
 
         # Select model for this iteration (1-based)
         model = select_model(
