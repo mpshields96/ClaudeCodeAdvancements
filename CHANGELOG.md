@@ -2002,3 +2002,23 @@ CLI chat 2:
 - Project-root CLAUDE.md rules serve as a "global policy" layer that module rules can't override
 
 ---
+
+## Session 128 — 2026-03-23
+
+**What changed:**
+- `cca_autoloop.py`: Fixed Terminal.app close race condition, added pre-flight checks, rate limit handling, stale resume detection, prompt truncation, missing `--dangerously-skip-permissions` in Python wrapper
+- `start_autoloop.sh`: Same fixes — pre-flight checks, rate limit cooldown, terminate dialog handling, retry close, orphan cleanup
+- `tests/test_cca_autoloop.py`: 85 → 116 tests (+31 new)
+
+**Why:**
+- Production hardening for the autoloop (MT-30 Phase 8). S127 built the desktop mode but had race conditions and missing obstacle handling that would block live usage.
+- Matthew flagged Terminal.app "terminate?" confirmation dialogs as a blocking issue.
+
+**Tests:** 204/204 suites, ~8156 tests passing
+
+**Lessons:**
+- Terminal.app `close w` triggers a "terminate?" dialog if shell hasn't fully exited — must wait for clean exit before closing
+- Self-close from within a wrapper script races with `exit` — always let the controller handle window lifecycle
+- Rate limit exits (code 2/75) should NOT count as crashes — they're expected behavior needing longer cooldown
+
+---

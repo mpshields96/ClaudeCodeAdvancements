@@ -5,7 +5,7 @@
 
 ## Current State (as of Session 128 — 2026-03-23)
 
-**Phase:** Session 128 IN PROGRESS. Solo session. MT-30 Phase 8 — production hardening for autoloop.
+**Phase:** Session 128 COMPLETE. Solo session. MT-30 Phase 8 — production hardening for autoloop. Grade: A.
 
 **What was done this session (S128):**
 - **Terminal.app close race condition FIXED**: Removed self-close from wrapper script (caused race with `exit`). Controller now waits 3s for shell to fully exit, uses `close w saving no`, handles "terminate?" dialog via System Events, retries close if window persists.
@@ -14,13 +14,14 @@
 - **Critical bug FIXED**: Python desktop wrapper was missing `--dangerously-skip-permissions` — would have blocked all automation with permission prompts.
 - **Stale resume detection**: Logs when SESSION_RESUME.md unchanged between iterations (stuck loop diagnostic).
 - **Prompt size truncation**: Resumes >100KB truncated to avoid CLI arg rejection.
-- **Tests**: 204 suites passing. +31 new tests this session (85 → 116 in test_cca_autoloop.py).
-- **Commits**: 3 this session so far.
+- **Tests**: 204 suites, ~8156 tests passing. +31 new tests this session (85 → 116 in test_cca_autoloop.py).
+- **Commits**: 5 this session.
 
 **Next (prioritized):**
-1. **Live supervised dry run**: Run `./start_autoloop.sh --desktop` with NO other CCA sessions running. Close THIS desktop app chat first.
-2. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
-3. **MT-31**: Build Flash-powered CCA tools now that Gemini Flash MCP is validated.
+1. **LIVE SUPERVISED DRY RUN** (CRITICAL): Close ALL CCA chats. Open plain Terminal. Run `./start_autoloop.sh --desktop`. Watch full cycle: window opens → claude runs /cca-init + /cca-auto → works → wraps → window closes → controller opens NEXT window. Verify each step.
+2. **Pre-requisite**: Grant Terminal.app + terminal emulator Accessibility permissions in System Preferences > Privacy & Security > Accessibility (needed for auto-close dialog handling).
+3. **MT-0 Phase 2**: Deploy self-learning to Kalshi bot (requires Kalshi chat coordination).
+4. **MT-31**: Build Flash-powered CCA tools now that Gemini Flash MCP is validated.
 
 ---
 
