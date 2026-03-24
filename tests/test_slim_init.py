@@ -323,5 +323,108 @@ class TestSlimInitFull(unittest.TestCase):
         self.assertIsNone(result.get("last_session"))
 
 
+class TestRunPrincipleSeeder(unittest.TestCase):
+    """Test principle seeder integration in slim init."""
+
+    @patch("slim_init.subprocess.run")
+    def test_seeder_returns_count(self, mock_run):
+        from slim_init import run_principle_seeder
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Seeded 0 principles total\n  From LEARNINGS.md: 0\n  From journal: 0",
+            stderr=""
+        )
+        result = run_principle_seeder()
+        self.assertEqual(result["seeded"], 0)
+        self.assertFalse(result.get("error"))
+
+    @patch("slim_init.subprocess.run")
+    def test_seeder_reports_new_seeds(self, mock_run):
+        from slim_init import run_principle_seeder
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Seeded 5 principles total\n  From LEARNINGS.md: 3\n  From journal: 2",
+            stderr=""
+        )
+        result = run_principle_seeder()
+        self.assertEqual(result["seeded"], 5)
+
+    @patch("slim_init.subprocess.run")
+    def test_seeder_handles_failure(self, mock_run):
+        from slim_init import run_principle_seeder
+        mock_run.return_value = MagicMock(
+            returncode=1,
+            stdout="",
+            stderr="ImportError: no module"
+        )
+        result = run_principle_seeder()
+        self.assertIn("error", result)
+        self.assertEqual(result["seeded"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_seeder_handles_timeout(self, mock_run):
+        from slim_init import run_principle_seeder
+        import subprocess
+        mock_run.side_effect = subprocess.TimeoutExpired("python3", 30)
+        result = run_principle_seeder()
+        self.assertIn("error", result)
+        self.assertEqual(result["seeded"], 0)
+
+
+class TestSummaryIncludesSeeder(unittest.TestCase):
+    """Test that seeder results flow into the summary and format."""
+
+    def test_format_summary_shows_seeder_count(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 141,
+            "last_session_id": "S141",
+            "top_pick": "MT-22",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+            "principles_seeded": 5,
+        }
+        text = format_summary(summary)
+        self.assertIn("Principles", text)
+        self.assertIn("5", text)
+
+    def test_format_summary_omits_seeder_when_zero(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 141,
+            "last_session_id": "S141",
+            "top_pick": "MT-22",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+            "principles_seeded": 0,
+        }
+        text = format_summary(summary)
+        self.assertNotIn("Principles", text)
+
+
+class TestSlimInitIncludesSeeder(unittest.TestCase):
+    """Test seeder is wired into the full slim init flow."""
+
+    @patch("slim_init.run_principle_seeder")
+    @patch("slim_init.run_timeline")
+    @patch("slim_init.run_priority")
+    @patch("slim_init.run_smoke")
+    @patch("slim_init.Path.read_text")
+    def test_full_init_calls_seeder(self, mock_read, mock_smoke, mock_priority, mock_timeline, mock_seeder):
+        from slim_init import run_slim_init
+
+        mock_read.return_value = "## Current State (as of Session 141 — 2026-03-23)"
+        mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
+        mock_priority.return_value = {"top_pick": "MT-22", "raw": "output"}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
+        mock_seeder.return_value = {"seeded": 3, "raw": "Seeded 3 principles total"}
+
+        result = run_slim_init()
+        mock_seeder.assert_called_once()
+        self.assertEqual(result.get("principles_seeded"), 3)
+
+
 if __name__ == "__main__":
     unittest.main()

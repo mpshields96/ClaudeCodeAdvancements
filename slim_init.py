@@ -154,6 +154,31 @@ def run_priority() -> dict:
         return {"error": "Timeout: priority_picker exceeded 30 seconds"}
 
 
+def run_principle_seeder() -> dict:
+    """Run principle_seeder.py seed-all (idempotent — skips existing)."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "principle_seeder.py"), "seed-all"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+
+        if proc.returncode != 0:
+            return {"seeded": 0, "error": proc.stderr.strip() or "principle_seeder failed", "raw": output}
+
+        # Parse "Seeded N principles total"
+        m = re.search(r"Seeded\s+(\d+)\s+principles?\s+total", output)
+        seeded = int(m.group(1)) if m else 0
+
+        return {"seeded": seeded, "raw": output}
+    except subprocess.TimeoutExpired:
+        return {"seeded": 0, "error": "Timeout: principle_seeder exceeded 30 seconds"}
+
+
 def run_timeline(n: int = 5) -> dict:
     """Run session_timeline.py recent N for quick history."""
     try:
@@ -216,6 +241,8 @@ def format_summary(summary: dict) -> str:
     lines.append(f"  Smoke: {summary.get('smoke_status', '?')}")
     lines.append(f"  Top pick: {summary.get('top_pick', '?')}")
 
+    if summary.get("principles_seeded", 0) > 0:
+        lines.append(f"  Principles seeded: {summary['principles_seeded']} new")
     if summary.get("cached_test_count"):
         lines.append(f"  Tests: ~{summary['cached_test_count']} ({summary.get('cached_suite_count', '?')} suites)")
     if summary.get("hivemind_streak"):
@@ -247,6 +274,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 2: Smoke test
     smoke = run_smoke()
 
+    # Step 2.5: Seed principles (idempotent — zero cost if already seeded)
+    seeder = run_principle_seeder()
+
     # Step 3: Priority pick
     priority = run_priority()
 
@@ -256,6 +286,7 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 5: Build summary
     summary = build_summary(smoke, priority, state)
     summary["priority_raw"] = priority.get("raw", "")
+    summary["principles_seeded"] = seeder.get("seeded", 0)
     if timeline.get("raw") and timeline.get("session_count", 0) > 0:
         summary["timeline_raw"] = timeline["raw"]
 
