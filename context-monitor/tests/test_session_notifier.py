@@ -8,8 +8,16 @@ import unittest
 from unittest.mock import patch, MagicMock
 from io import BytesIO
 
+import tempfile
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import session_notifier
+
+# Patch cooldown state file to a temp location for ALL tests,
+# preventing cross-test interference from cooldown writes.
+_ORIG_COOLDOWN_FILE = session_notifier.COOLDOWN_STATE_FILE
+_TEST_COOLDOWN_DIR = tempfile.mkdtemp()
+session_notifier.COOLDOWN_STATE_FILE = os.path.join(_TEST_COOLDOWN_DIR, "test-cooldown.json")
 
 
 class TestNotificationMessage(unittest.TestCase):
@@ -74,6 +82,11 @@ class TestNotificationMessage(unittest.TestCase):
 class TestSendNotification(unittest.TestCase):
     """Test the ntfy.sh send function."""
 
+    def setUp(self):
+        # Clear cooldown state before each test
+        if os.path.exists(session_notifier.COOLDOWN_STATE_FILE):
+            os.unlink(session_notifier.COOLDOWN_STATE_FILE)
+
     @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
     @patch("session_notifier.urlopen")
     def test_send_success(self, mock_urlopen):
@@ -137,6 +150,10 @@ class TestSendNotification(unittest.TestCase):
 class TestNotifySessionEnd(unittest.TestCase):
     """Test the high-level notify_session_end function."""
 
+    def setUp(self):
+        if os.path.exists(session_notifier.COOLDOWN_STATE_FILE):
+            os.unlink(session_notifier.COOLDOWN_STATE_FILE)
+
     @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
     @patch("session_notifier.urlopen")
     def test_notify_session_end_wrap(self, mock_urlopen):
@@ -172,6 +189,10 @@ class TestNotifySessionEnd(unittest.TestCase):
 
 class TestCLI(unittest.TestCase):
     """Test CLI interface."""
+
+    def setUp(self):
+        if os.path.exists(session_notifier.COOLDOWN_STATE_FILE):
+            os.unlink(session_notifier.COOLDOWN_STATE_FILE)
 
     @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
     @patch("session_notifier.urlopen")
@@ -334,6 +355,10 @@ class TestLoopStoppedMessage(unittest.TestCase):
 class TestNotifyLoopHealth(unittest.TestCase):
     """Test high-level loop health notification API."""
 
+    def setUp(self):
+        if os.path.exists(session_notifier.COOLDOWN_STATE_FILE):
+            os.unlink(session_notifier.COOLDOWN_STATE_FILE)
+
     @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
     @patch("session_notifier.urlopen")
     def test_notify_loop_health(self, mock_urlopen):
@@ -408,6 +433,10 @@ class TestNotifyLoopHealth(unittest.TestCase):
 class TestLoopHealthCLI(unittest.TestCase):
     """Test CLI for loop health commands."""
 
+    def setUp(self):
+        if os.path.exists(session_notifier.COOLDOWN_STATE_FILE):
+            os.unlink(session_notifier.COOLDOWN_STATE_FILE)
+
     @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
     @patch("session_notifier.urlopen")
     def test_cli_loop_health(self, mock_urlopen):
@@ -437,6 +466,109 @@ class TestLoopHealthCLI(unittest.TestCase):
             "--iterations", "50", "--crashes", "1", "--uptime", "600"
         ])
         mock_urlopen.assert_called_once()
+
+
+class TestCooldown(unittest.TestCase):
+    """Test notification cooldown mechanism (S144 Matthew directive)."""
+
+    def setUp(self):
+        import tempfile
+        self.tmpfile = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+        self.tmpfile.close()
+        self.state_file = self.tmpfile.name
+        # Clean state
+        if os.path.exists(self.state_file):
+            os.unlink(self.state_file)
+
+    def tearDown(self):
+        if os.path.exists(self.state_file):
+            os.unlink(self.state_file)
+
+    def test_no_cooldown_file_allows_send(self):
+        """First send always goes through."""
+        result = session_notifier._check_cooldown("default", self.state_file)
+        self.assertTrue(result)
+
+    def test_high_priority_bypasses_cooldown(self):
+        """High priority always sends, even in cooldown."""
+        # Record a recent send
+        session_notifier._record_send(self.state_file)
+        result = session_notifier._check_cooldown("high", self.state_file)
+        self.assertTrue(result)
+
+    @patch.dict(os.environ, {"CCA_NTFY_COOLDOWN_MIN": "30"})
+    def test_recent_send_blocks_default(self):
+        """Default priority blocked if sent within cooldown window."""
+        session_notifier._record_send(self.state_file)
+        result = session_notifier._check_cooldown("default", self.state_file)
+        self.assertFalse(result)
+
+    @patch.dict(os.environ, {"CCA_NTFY_COOLDOWN_MIN": "30"})
+    def test_recent_send_blocks_low(self):
+        """Low priority also blocked by cooldown."""
+        session_notifier._record_send(self.state_file)
+        result = session_notifier._check_cooldown("low", self.state_file)
+        self.assertFalse(result)
+
+    @patch.dict(os.environ, {"CCA_NTFY_COOLDOWN_MIN": "0"})
+    def test_cooldown_zero_disables(self):
+        """Setting cooldown to 0 disables rate limiting."""
+        session_notifier._record_send(self.state_file)
+        result = session_notifier._check_cooldown("default", self.state_file)
+        self.assertTrue(result)
+
+    def test_expired_cooldown_allows_send(self):
+        """Send allowed after cooldown window expires."""
+        import time as t
+        # Write a timestamp 60 minutes ago
+        old_ts = t.time() - 3600
+        with open(self.state_file, "w") as f:
+            json.dump({"last_sent_ts": old_ts}, f)
+        result = session_notifier._check_cooldown("default", self.state_file)
+        self.assertTrue(result)
+
+    def test_corrupt_state_file_allows_send(self):
+        """Corrupt state file = fail open, allow send."""
+        with open(self.state_file, "w") as f:
+            f.write("not json")
+        result = session_notifier._check_cooldown("default", self.state_file)
+        self.assertTrue(result)
+
+    def test_record_send_creates_file(self):
+        """_record_send creates the state file."""
+        session_notifier._record_send(self.state_file)
+        self.assertTrue(os.path.exists(self.state_file))
+        with open(self.state_file) as f:
+            data = json.load(f)
+        self.assertIn("last_sent_ts", data)
+
+    @patch.dict(os.environ, {"CCA_NTFY_COOLDOWN_MIN": "not_a_number"})
+    def test_invalid_cooldown_env_uses_default(self):
+        """Invalid env var falls back to default cooldown."""
+        cooldown = session_notifier._get_cooldown_minutes()
+        self.assertEqual(cooldown, session_notifier.DEFAULT_COOLDOWN_MINUTES)
+
+    @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic", "CCA_NTFY_COOLDOWN_MIN": "30"})
+    @patch("session_notifier.urlopen")
+    def test_send_notification_respects_cooldown(self, mock_urlopen):
+        """Integration: send_notification skips when in cooldown."""
+        resp = MagicMock()
+        resp.status = 200
+        resp.__enter__ = MagicMock(return_value=resp)
+        resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = resp
+
+        # Patch the cooldown state file to use our temp
+        with patch.object(session_notifier, 'COOLDOWN_STATE_FILE', self.state_file):
+            # First send should go through
+            r1 = session_notifier.send_notification("Test", "body1")
+            self.assertTrue(r1)
+            # Second send should be blocked by cooldown
+            r2 = session_notifier.send_notification("Test", "body2")
+            self.assertFalse(r2)
+            # High priority should bypass
+            r3 = session_notifier.send_notification("Error", "critical", priority="high")
+            self.assertTrue(r3)
 
 
 if __name__ == "__main__":

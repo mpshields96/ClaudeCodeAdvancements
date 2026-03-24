@@ -29,12 +29,68 @@ Stdlib only. No external dependencies.
 import json
 import os
 import sys
+import time
 from datetime import datetime, timezone
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 from urllib.parse import quote
 
 NTFY_BASE = "https://ntfy.sh"
+DEFAULT_COOLDOWN_MINUTES = 30  # Matthew directive S144: reduce notification spam
+COOLDOWN_STATE_FILE = os.path.expanduser("~/.cca-ntfy-cooldown.json")
+
+
+# ── Cooldown mechanism (MT-35 Phase 3, S144 Matthew directive) ──────────────
+
+
+def _get_cooldown_minutes() -> float:
+    """Get cooldown from env or default. 0 = no cooldown."""
+    try:
+        return float(os.environ.get("CCA_NTFY_COOLDOWN_MIN", DEFAULT_COOLDOWN_MINUTES))
+    except (ValueError, TypeError):
+        return DEFAULT_COOLDOWN_MINUTES
+
+
+def _check_cooldown(priority: str, state_file: str = None) -> bool:
+    """Check if we're still in cooldown period.
+
+    High priority messages always bypass cooldown.
+    Returns True if send should proceed, False if in cooldown.
+    """
+    if state_file is None:
+        state_file = COOLDOWN_STATE_FILE
+
+    if priority == "high":
+        return True  # Errors always get through
+
+    cooldown_min = _get_cooldown_minutes()
+    if cooldown_min <= 0:
+        return True  # Cooldown disabled
+
+    try:
+        if os.path.exists(state_file):
+            with open(state_file) as f:
+                data = json.load(f)
+            last_sent = data.get("last_sent_ts", 0)
+            elapsed_min = (time.time() - last_sent) / 60.0
+            if elapsed_min < cooldown_min:
+                return False  # Still in cooldown
+    except (json.JSONDecodeError, OSError, TypeError):
+        pass  # Fail open — send if state is corrupt
+
+    return True
+
+
+def _record_send(state_file: str = None) -> None:
+    """Record that a notification was just sent."""
+    if state_file is None:
+        state_file = COOLDOWN_STATE_FILE
+    try:
+        os.makedirs(os.path.dirname(state_file) or ".", exist_ok=True)
+        with open(state_file, "w") as f:
+            json.dump({"last_sent_ts": time.time()}, f)
+    except OSError:
+        pass  # Fail open
 
 
 # ── Message formatting ───────────────────────────────────────────────────────
@@ -86,7 +142,13 @@ def send_notification(
 
     Returns True on success, False on any failure (fail-open).
     Reads topic from MOBILE_APPROVER_TOPIC env var.
+
+    Cooldown: Non-high-priority messages are rate-limited to one per
+    CCA_NTFY_COOLDOWN_MIN minutes (default 30). High priority always sends.
     """
+    if not _check_cooldown(priority):
+        return False  # In cooldown, skip silently
+
     topic = os.environ.get("MOBILE_APPROVER_TOPIC", "").strip()
     if not topic:
         return False
@@ -103,7 +165,10 @@ def send_notification(
     req = Request(url, data=body.encode(), headers=headers, method="POST")
     try:
         with urlopen(req, timeout=10) as resp:
-            return resp.status == 200
+            if resp.status == 200:
+                _record_send()
+                return True
+            return False
     except (URLError, HTTPError, OSError):
         return False
 

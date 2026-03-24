@@ -356,8 +356,9 @@ class TestCLIArgParsingDiscount(unittest.TestCase):
                 content = f.read()
             result = self.scorer.score_content(content, "session_notifier.py")
             # With discount, complexity should be notably lower than raw
-            # marker count. File grew with MT-35 Phase 3 loop health (S144).
-            self.assertLess(result.complexity, 60)
+            # marker count. File grew with MT-35 Phase 3 loop health +
+            # cooldown mechanism (S144).
+            self.assertLess(result.complexity, 85)
 
 
 
