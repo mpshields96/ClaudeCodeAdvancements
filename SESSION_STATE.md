@@ -3,31 +3,37 @@
 
 ---
 
-## Current State (as of Session 148 — 2026-03-24)
+## Current State (as of Session 149 — 2026-03-24)
 
-**Phase:** Session 148 COMPLETE. MT-32 Phase 5, MT-36 Phase 4, MT-37, Reddit intel, doc fixes. 8 commits. Grade: A.
+**Phase:** Session 149 COMPLETE. Nuclear scan (6 subs + GitHub), priority picker v2, MT-10 growth (convergence detector), cross-chat delivery. 4 commits. Grade: A.
+
+**What was done this session (S149):**
+- **Nuclear reddit/github scan**: Scanned r/ClaudeCode, r/ClaudeAI, r/vibecoding, r/algotrading, r/MachineLearning, r/LocalLLaMA hot+rising. 5 GitHub trending repos evaluated. 17 findings logged to FINDINGS_LOG. Key: Claude computer use (official), DevMoses 5 Levels (Citadel), ResearcherSkill convergence detection, multi-agent coordination patterns, usage limit bug wave.
+- **Priority picker v2**: Three new priority concepts for mature project: RecurringTask (staleness-based scoring), Growth actions (completed MTs re-enter queue), Directive injection (Matthew's explicit instructions). New `full` CLI command. 6 completed MTs now have growth_action fields. 38 new tests (93 total). Matthew-requested improvement.
+- **MT-10 Growth — convergence detector**: New module convergence_detector.py inspired by ResearcherSkill nuclear scan finding. Three signal types: metric plateau, discard streak, oscillation. Serializable for cross-session persistence. 35 new tests.
+- **MT-36 Phase 4 confirmed**: Kalshi sessions already optimized (S148 analysis). Updated picker status.
+- **Cross-chat delivery**: Nuclear scan intel delivered to CCA_TO_POLYBOT.md. Acknowledged pending Kalshi research request (Monte Carlo simulators) — flagged as multi-session Kalshi research chat work, not solo CCA.
+- **Tests**: 219 suites, ~8849 tests (35 convergence + 38 picker new = +73). 0 regressions. 4 commits.
+
+**Next (from priority picker v2 `full` command):**
+1. **MT-22 Desktop Electron** — Phase 4: supervised trial (needs Matthew present)
+2. **MT-35 Background Autoloop** — Phase 4: keyboard shortcut pause/resume
+3. **MT-36 Phase 5** — Dashboard tracking of session efficiency metrics
+4. **MT-0 Growth** [8] — Wire principle_registry into live Kalshi bet decisions
+5. **MT-10 Growth** [7] — Wire convergence_detector into reflect.py / improver.py
+6. **Kalshi research request** — Monte Carlo simulators, ruin probability, edge stability (multi-session, research chat scope)
+
+**Matthew S149 directives:**
+- Priority system "lackluster" — ADDRESSED: built priority picker v2 with 4-section full ranking
+- Kalshi pending requests are extensive multi-chat work, not solo CCA
+- All previous directives still active (Two Pillars, cross-chat comms, session longevity, polybot full access)
+
+---
+
+## Previous State (Session 148 — 2026-03-24)
 
 **What was done this session (S148):**
-- **MT-32 Phase 5 — Dashboard v2**: Dark mode toggle (CSS custom properties + localStorage), sortable task table (click headers), module search/filter, collapsible sections with chevrons, --theme CLI flag. 28 new tests (test_dashboard_v2.py). 0 regressions.
-- **MT-37 documented**: AI Investment Research & Portfolio Intelligence — long-term MT per Matthew directive. 7 phases, research-first. Added to MASTER_TASKS.md and priority_picker.py.
-- **MT-36 Phase 4 analysis**: Kalshi sessions already optimized. CCA was the correct target (Phases 1-3). Analysis document written (MT36_KALSHI_ANALYSIS.md).
-- **Reddit intel**: r/PredictionsMarkets — CF Benchmarks BRTI confirmed. synthesis.trade API investigated (prediction market aggregator, not CF Benchmarks source). Corrected assessment delivered to CCA_TO_POLYBOT.
-- **Doc drift fixed**: Test counts corrected across PROJECT_INDEX and ROADMAP (context-monitor 411->434, self-learning 1859->1885, design-skills 1353->1381, total 8468->8779).
-- **Dashboard regex fix**: Total test count regex now handles tilde-prefixed numbers (~8779 format).
-- **Priority picker updates**: MT-32 Phase 5 done, MT-36 Phases 2-3 done, MT-37 added.
-- **Tests**: 217 suites, ~8779 tests. 8 commits.
-
-**Next (prioritized — Matthew S148 directive):**
-1. **Nuclear reddit/github scan** — multiple subs 5-6 days stale, Matthew explicitly requested
-2. **Advance completed MTs** — self-learning (MT-10/28), nuclear v2 (MT-27), reddit intel (MT-9)
-3. **MT-22 Desktop Electron** — Phase 4: supervised trial (needs Matthew present)
-4. **MT-37 Phase 1** — Long-term: begin academic research survey (no rush)
-
-**Matthew S148 directives:**
-- MT-37: Long-term AI algo investing research — no rush, plant the seed
-- Nuclear reddit/github scans + advancing self-learning
-- Look at old dusty MTs, advance completed MTs
-- All previous directives still active (Two Pillars, priority picker, cross-chat comms, session longevity, polybot full access)
+- MT-32 Phase 5 (Dashboard v2), MT-37 documented, MT-36 Phase 4 analysis, Reddit intel, doc drift fixes. 8 commits. Grade: A.
 
 ---
 
