@@ -187,6 +187,7 @@ class DesktopAutomator:
         self.response_timeout = response_timeout
         self.audit_log = Path(audit_log)
         self.dry_run = dry_run
+        self.saved_frontmost_app: Optional[str] = None
 
     # --- Low-level AppleScript execution ---
 
@@ -510,6 +511,53 @@ class DesktopAutomator:
 
         self._log("activate_success")
         return True
+
+    def save_frontmost_app(self) -> Optional[str]:
+        """Save the current frontmost app so it can be restored after autoloop trigger.
+
+        MT-35: Non-intrusive autoloop. Saves the app Matthew is using so we can
+        switch back to it after spawning a new CCA session.
+
+        Returns the app name if saved, None if Claude is already frontmost or error.
+        """
+        app = self.get_frontmost_app()
+        if not app:
+            self._log("save_frontmost_skipped", {"reason": "no_frontmost_detected"})
+            self.saved_frontmost_app = None
+            return None
+
+        # If Claude is already frontmost, nothing to save/restore
+        if APP_NAME.lower() in app.lower():
+            self._log("save_frontmost_skipped", {"reason": "claude_already_frontmost"})
+            self.saved_frontmost_app = None
+            return None
+
+        self.saved_frontmost_app = app
+        self._log("save_frontmost", {"app": app})
+        return app
+
+    def restore_frontmost_app(self) -> bool:
+        """Restore the previously frontmost app after autoloop trigger completes.
+
+        MT-35: Returns focus to whatever Matthew was doing before the trigger
+        stole the screen for a few seconds.
+
+        Returns True if restoration succeeded, False if nothing to restore or error.
+        """
+        if not self.saved_frontmost_app:
+            return False
+
+        app = self.saved_frontmost_app
+        script = f'tell application "{app}" to activate'
+        ok, _ = self._run_applescript(script)
+
+        if ok:
+            self._log("restore_frontmost", {"app": app})
+            self.saved_frontmost_app = None
+            return True
+        else:
+            self._log("restore_frontmost_failed", {"app": app})
+            return False
 
     def send_prompt(self, prompt: str) -> bool:
         """Send a prompt to Claude via clipboard + keystroke injection.

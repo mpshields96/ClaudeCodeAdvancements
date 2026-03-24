@@ -1027,5 +1027,84 @@ class TestSwitchToTabCoreGraphics(unittest.TestCase):
             self.assertTrue(len(fallback) > 0)
 
 
+class TestSaveFrontmostApp(unittest.TestCase):
+    """Test saving the frontmost app before activating Claude (MT-35)."""
+
+    def test_save_frontmost_app_stores_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            with patch.object(da, "get_frontmost_app", return_value="Safari"):
+                result = da.save_frontmost_app()
+            self.assertEqual(result, "Safari")
+            self.assertEqual(da.saved_frontmost_app, "Safari")
+
+    def test_save_frontmost_app_skips_claude(self):
+        """If Claude is already frontmost, don't save it (nothing to restore to)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            with patch.object(da, "get_frontmost_app", return_value="Claude"):
+                result = da.save_frontmost_app()
+            self.assertIsNone(result)
+            self.assertIsNone(da.saved_frontmost_app)
+
+    def test_save_frontmost_app_handles_empty(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            with patch.object(da, "get_frontmost_app", return_value=""):
+                result = da.save_frontmost_app()
+            self.assertIsNone(result)
+
+
+class TestRestoreFrontmostApp(unittest.TestCase):
+    """Test restoring the previous frontmost app after loop trigger (MT-35)."""
+
+    def test_restore_activates_saved_app(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            da.saved_frontmost_app = "Safari"
+            with patch.object(da, "_run_applescript", return_value=(True, "")) as mock_as:
+                result = da.restore_frontmost_app()
+            self.assertTrue(result)
+            mock_as.assert_called_once()
+            call_script = mock_as.call_args[0][0]
+            self.assertIn("Safari", call_script)
+            self.assertIn("activate", call_script)
+
+    def test_restore_clears_saved_app(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            da.saved_frontmost_app = "Safari"
+            with patch.object(da, "_run_applescript", return_value=(True, "")):
+                da.restore_frontmost_app()
+            self.assertIsNone(da.saved_frontmost_app)
+
+    def test_restore_noop_when_nothing_saved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            da.saved_frontmost_app = None
+            result = da.restore_frontmost_app()
+            self.assertFalse(result)
+
+    def test_restore_handles_applescript_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            da.saved_frontmost_app = "Safari"
+            with patch.object(da, "_run_applescript", return_value=(False, "error")):
+                result = da.restore_frontmost_app()
+            self.assertFalse(result)
+
+    def test_restore_logs_event(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            da.saved_frontmost_app = "Firefox"
+            with patch.object(da, "_run_applescript", return_value=(True, "")):
+                da.restore_frontmost_app()
+            with open(da.audit_log) as f:
+                entries = [json.loads(l) for l in f]
+            restore_events = [e for e in entries if e["event"] == "restore_frontmost"]
+            self.assertEqual(len(restore_events), 1)
+            self.assertEqual(restore_events[0]["app"], "Firefox")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -114,12 +114,21 @@ def trigger_next_session(dry_run: bool = False) -> bool:
         dry_run=dry_run,
     )
 
+    # Step -1: Save the app Matthew is currently using (MT-35)
+    # So we can restore focus after spawning the new session.
+    saved_app = automator.save_frontmost_app()
+    if saved_app:
+        _log("step_pre_save", {"saved_app": str(saved_app)})
+
     # Step 0: Activate Claude.app (bring to foreground)
     # When called from a CCA session, the bash subprocess runs in Terminal
     # context, so Claude.app is NOT frontmost. We must activate it first.
     if not automator.activate_claude():
         _log("trigger_failed", {"reason": "activate_failed"})
         print("ERROR: Could not activate Claude.app.")
+        # Restore focus even on failure
+        if saved_app:
+            automator.restore_frontmost_app()
         return False
     _log("step_0_activate", {"status": "ok"})
 
@@ -153,6 +162,14 @@ def trigger_next_session(dry_run: bool = False) -> bool:
         print("ERROR: Could not paste/send prompt.")
         return False
     _log("step_4_send", {"status": "ok", "prompt_length": len(prompt)})
+
+    # Step 5: Restore focus to whatever Matthew was using (MT-35)
+    if saved_app:
+        time.sleep(0.3)  # Brief pause for prompt to register
+        if automator.restore_frontmost_app():
+            _log("step_5_restore", {"restored_app": str(saved_app)})
+        else:
+            _log("step_5_restore_failed", {"target_app": str(saved_app)})
 
     _log("trigger_success")
     print(f"Autoloop trigger fired. Prompt ({len(prompt)} chars) sent to new session.")
