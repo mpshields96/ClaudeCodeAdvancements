@@ -444,9 +444,9 @@ python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/session_orchestrat
 
 ---
 
-## Step 9 — Resume prompt
+## Step 9 — Resume prompt + write SESSION_RESUME.md
 
-Output a copy-paste prompt for the next session:
+Output a copy-paste prompt for the next session AND write it to disk (for desktop autoloop):
 
 ```
 RESUME PROMPT (copy-paste into next CCA session):
@@ -457,6 +457,17 @@ Run /cca-init. Last session was [N] on [date].
 Tests: [N]/[N] passing. Git: [clean/uncommitted changes].
 ---
 ```
+
+**CRITICAL for desktop autoloop (MT-22):** Also write the resume prompt to disk so the
+autoloop can detect session completion via mtime change:
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/resume_generator.py --force
+```
+
+This writes `SESSION_RESUME.md` from the current SESSION_STATE.md. The desktop autoloop
+watches this file for mtime changes to know when to start the next iteration. If you
+skip this step, the autoloop will hang indefinitely waiting for a signal that never comes.
 
 ---
 
