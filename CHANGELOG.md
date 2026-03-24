@@ -2204,3 +2204,24 @@ CLI chat 2:
 - Effort scorer threshold tests that hardcode complexity bounds break when the target file grows. Use relative thresholds or wider bounds.
 
 ---
+
+## Session 146 — 2026-03-24
+
+**What changed:**
+- `.claude/commands/cca-init.md` — Step 2.5 expanded: displays full cross-chat content, flags stale comms
+- `.claude/commands/cca-auto.md` — Step 3.5 added: mid-session cross-chat check every 2nd task. Step 5: priority picker re-runs every iteration.
+- `.claude/commands/cca-wrap.md` — Step 7.5 added: mandatory cross-chat comms update at wrap
+- `priority_picker.py` — MT-27, MT-9, MT-11, MT-14 corrected from ACTIVE to COMPLETED
+- `tests/test_priority_picker.py` — Updated stagnation and crown jewel tests for corrected statuses
+- Cross-chat update written to CCA_TO_POLYBOT.md (REQ-025 acknowledged)
+
+**Why:**
+- Matthew directive: better MT prioritization process and more frequent Kalshi bot comms
+- Recurring bug: stale ACTIVE statuses on completed MTs (2nd session in a row fixing these)
+
+**Tests:** 213/213 passing
+
+**Lessons:**
+- Priority picker stale status is a recurring pattern — may need automated cross-check against MASTER_TASKS.md
+
+---
