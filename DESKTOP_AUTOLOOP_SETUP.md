@@ -46,18 +46,56 @@ open /Applications/Claude.app
 
 ---
 
+## Claude Desktop App UI Layout (Critical for Autoloop)
+
+The Claude desktop app (`com.anthropic.claudefordesktop`) hosts three modes in one window:
+
+```
++--------------------------------------------------+
+|  [Chat]  [Cowork]  [Code]     (top-center island) |
++--------------------------------------------------+
+| + New session  |                                   |
+| Search         |   (main content area)             |
+| Scheduled      |                                   |
+| Dispatch       |                                   |
+| Customize      |                                   |
+|                |                                   |
+| Session list   |                                   |
+| ...            |                                   |
++----------------+-----------------------------------+
+| + Bypass permissions | Opus 4.6 | ~/Projects/CCA  |
++--------------------------------------------------+
+```
+
+**Three tabs** (top-center island, left to right):
+1. **Chat** — Claude Pro conversational AI. NOT Code. Never use for CCA.
+2. **Cowork** — Collaborative mode. NOT Code. Never use for CCA.
+3. **Code** — Claude Code (CLI-powered coding agent). **ALWAYS this one.**
+
+**Key elements:**
+- **"+ New session"** — Top-left sidebar. Opens a new Code session.
+- **Default new session:** Opus 4.6 model, Bypass permissions ON, project folder linked.
+- **Recovery:** If ever not in Code tab, click "Code" (far right of the 3-tab island).
+
+**For the autoloop script:** Must navigate to Code tab first, then use "+ New session" or Cmd+N. If the app opens on Chat or Cowork, the script must click Code tab before proceeding.
+
+**NEVER run the autoloop script from WITHIN a Code session.** Run it from an external Terminal.app window. The script orchestrates from outside; Code sessions are what it creates.
+
+---
+
 ## How It Works
 
 ```
 Loop iteration:
   1. Read SESSION_RESUME.md (written by previous /cca-wrap)
   2. Activate Claude.app (bring to foreground)
-  3. Cmd+N to start new conversation (skipped on first iteration)
-  4. Paste resume prompt via clipboard
-  5. Cmd+Return to send
-  6. Monitor SESSION_RESUME.md for mtime change (= session wrapped)
-  7. Cooldown (15s default)
-  8. Repeat from step 1
+  3. Ensure Code tab is active (not Chat, not Cowork)
+  4. Cmd+N to start new conversation (skipped on first iteration)
+  5. Paste resume prompt via clipboard
+  6. Cmd+Return to send
+  7. Monitor SESSION_RESUME.md for mtime change (= session wrapped)
+  8. Cooldown (15s default)
+  9. Repeat from step 1
 ```
 
 **Signal mechanism**: When `/cca-wrap` runs at the end of a session, it writes

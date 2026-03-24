@@ -526,3 +526,22 @@
 - **Last seen:** 2026-03-23
 - **Files:** desktop_autoloop.py, start_desktop_autoloop.sh
 
+---
+
+### Claude Desktop App UI Layout — Critical Reference for Autoloop — Severity: 2 — Count: 1
+- **The app is `Claude` (com.anthropic.claudefordesktop)** — one app hosts Chat, Cowork, AND Code.
+- **Three tabs in top-center island** (left to right):
+  1. **Chat** — Claude Pro conversational AI. NOT us. Never go here.
+  2. **Cowork** — Collaborative mode. NOT us. Never go here.
+  3. **Code** — Claude Code (CLI-powered coding agent). **ALWAYS be here. ALWAYS click back here if not.**
+- **"+ New session" button** — Top-left corner of the sidebar. Opens a new Code session window.
+- **New session defaults:** Opus 4.6 model, Bypass permissions ON, project folder linked to ClaudeCodeAdvancements (linked to GitHub).
+- **Left sidebar:** Session history list (named sessions, today/yesterday groupings).
+- **Bottom bar:** `+ Bypass permissions` | model selector (`Opus 4.6 (1M context)`) | project folder path.
+- **Git status bar:** Shows branch, diff stats, "Create PR" button.
+- **For the autoloop:** The script must navigate to Code tab, click "+ New session", paste resume prompt. AppleScript must target the correct tab. If landed on Chat or Cowork tab, click Code tab first.
+- **Recovery pattern:** If ever not in Code tab, click the "Code" tab (far right of the 3-tab island at top center). This is the ONLY tab CCA sessions should ever be in.
+- **First seen:** 2026-03-23 (Session 135) — Matthew screenshot walkthrough
+- **Last seen:** 2026-03-23
+- **Files:** desktop_automator.py, desktop_autoloop.py, DESKTOP_AUTOLOOP_SETUP.md
+
