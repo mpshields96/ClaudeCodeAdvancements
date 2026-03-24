@@ -41,7 +41,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) | 1381 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~8779 tests (~217 suites). All must pass before any work.**
+**Total: ~8888 tests (~220 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -167,6 +167,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `session_timer.py` — MT-36 Phase 1: Per-step timing instrumentation for session lifecycle (init/wrap/test/code/doc categories, context manager + manual timing, JSONL persistence, cross-session averages, outlier detection, 31 tests, S144)
 - `efficiency_analyzer.py` — MT-36 Phase 2: Session overhead analyzer (SessionProfile, OverheadAnalyzer, static wrap analysis, slim wrap proposal, recommendations, 32 tests, S147)
 - `batch_wrap_learning.py` — MT-36 Phase 3: Consolidated wrap self-learning (replaces 11 subprocess calls with single batch, JSONL writes for journal/wrap/tips/outcomes, 18 tests, S147)
+- `autoloop_stop_hook.py` — S150: Fire-and-forget Stop hook for autoloop resilience. Spawns next session even when context exhaustion kills wrap. Breadcrumb anti-double-fire. (27 tests, S150)
 
 **research/** — R&D and tools
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)

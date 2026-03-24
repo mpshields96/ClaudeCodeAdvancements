@@ -2252,3 +2252,32 @@ CLI chat 2:
 - synthesis.trade is a prediction market aggregator, NOT a CF Benchmarks data provider
 
 ---
+
+## Session 150 — 2026-03-24
+
+**What changed:**
+- autoloop_stop_hook.py: Fire-and-forget Stop hook for autoloop resilience (27 tests)
+- autoloop_trigger.py: Added breadcrumb write on success for anti-double-fire
+- self-learning/reflect.py: Added check_improvement_convergence() from trace scores + proposals
+- self-learning/improver.py: Added Improver.check_convergence() + get_convergence_summary()
+- self-learning/tests/test_convergence_wiring.py: 12 tests for convergence integration
+- design-skills/chart_generator.py: Dynamic left margin for horizontal bar charts (fixes clipped labels)
+- design-skills/templates/cca-report.typ: Fixed missing # prefix on embed-chart call
+- design-skills/report_charts.py: Replace "No data" charts with invisible SVG
+- design-skills/learning_data_collector.py: Filter infrastructure noise from self-learning charts
+- .claude/settings.local.json: Wired autoloop_stop_hook as Stop hook
+- CCA_STATUS_REPORT_2026-03-24.pdf: Regenerated with all fixes (436.6 KB)
+
+**Why:**
+- S149 autoloop chain broke when context exhaustion killed wrap before Step 10
+- convergence_detector built S149 needed wiring into reflect + improver to be useful
+- Matthew requested hard audit of CCA report — found 18 issues, fixed 4 critical ones
+
+**Tests:** 220/220 suites passing (+39 new tests)
+
+**Lessons:**
+- Chart label clipping is caused by hardcoded margins — always use dynamic margins based on content
+- "No data" chart placeholders should never appear in a report — either provide data or hide the chart
+- Infrastructure noise (context_monitor_alert) dwarfs actual learning events in charts — always filter
+
+---

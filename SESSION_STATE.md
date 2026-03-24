@@ -3,30 +3,29 @@
 
 ---
 
-## Current State (as of Session 149 — 2026-03-24)
+## Current State (as of Session 150 — 2026-03-24)
 
-**Phase:** Session 149 COMPLETE. Nuclear scan (6 subs + GitHub), priority picker v2, MT-10 growth (convergence detector), cross-chat delivery. 4 commits. Grade: A.
+**Phase:** Session 150 COMPLETE. Autoloop resilience fix, MT-10 convergence wiring, CCA report hard audit + fixes, report regenerated. 4 commits. Grade: A.
 
-**What was done this session (S149):**
-- **Nuclear reddit/github scan**: Scanned r/ClaudeCode, r/ClaudeAI, r/vibecoding, r/algotrading, r/MachineLearning, r/LocalLLaMA hot+rising. 5 GitHub trending repos evaluated. 17 findings logged to FINDINGS_LOG. Key: Claude computer use (official), DevMoses 5 Levels (Citadel), ResearcherSkill convergence detection, multi-agent coordination patterns, usage limit bug wave.
-- **Priority picker v2**: Three new priority concepts for mature project: RecurringTask (staleness-based scoring), Growth actions (completed MTs re-enter queue), Directive injection (Matthew's explicit instructions). New `full` CLI command. 6 completed MTs now have growth_action fields. 38 new tests (93 total). Matthew-requested improvement.
-- **MT-10 Growth — convergence detector**: New module convergence_detector.py inspired by ResearcherSkill nuclear scan finding. Three signal types: metric plateau, discard streak, oscillation. Serializable for cross-session persistence. 35 new tests.
-- **MT-36 Phase 4 confirmed**: Kalshi sessions already optimized (S148 analysis). Updated picker status.
-- **Cross-chat delivery**: Nuclear scan intel delivered to CCA_TO_POLYBOT.md. Acknowledged pending Kalshi research request (Monte Carlo simulators) — flagged as multi-session Kalshi research chat work, not solo CCA.
-- **Tests**: 219 suites, ~8849 tests (35 convergence + 38 picker new = +73). 0 regressions. 4 commits.
+**What was done this session (S150):**
+- **Autoloop stop hook** (autoloop_stop_hook.py): Fire-and-forget Stop hook that spawns the next CCA session even when context exhaustion kills /cca-wrap before Step 10. Breadcrumb anti-double-fire. Wired into settings.local.json. 27 new tests. Also updated autoloop_trigger.py to write breadcrumb on success.
+- **MT-10 Growth — convergence wiring**: Wired convergence_detector into reflect.py (check_improvement_convergence from trace scores + proposal outcomes, shown in reflect output) and improver.py (Improver.check_convergence + get_convergence_summary). 12 new tests.
+- **CCA Report hard audit**: Full 29-page review identifying 18 concrete issues. Fixed 4 critical bugs: (1) clipped frontier chart labels via dynamic margin, (2) raw Typst code in output (missing # prefix), (3) "No data" chart placeholders replaced with invisible SVGs, (4) infrastructure noise filtered from self-learning charts. Regenerated report (436.6 KB).
+- **Report generated**: CCA_STATUS_REPORT_2026-03-24.pdf with fixes applied. Sidecar archived.
+- **Tests**: 220 suites, ~8888 tests (+39 new: 27 stop hook + 12 convergence). 0 regressions. 4 commits.
 
-**Next (from priority picker v2 `full` command):**
-1. **MT-22 Desktop Electron** — Phase 4: supervised trial (needs Matthew present)
-2. **MT-35 Background Autoloop** — Phase 4: keyboard shortcut pause/resume
-3. **MT-36 Phase 5** — Dashboard tracking of session efficiency metrics
-4. **MT-0 Growth** [8] — Wire principle_registry into live Kalshi bet decisions
-5. **MT-10 Growth** [7] — Wire convergence_detector into reflect.py / improver.py
-6. **Kalshi research request** — Monte Carlo simulators, ruin probability, edge stability (multi-session, research chat scope)
+**Next (report audit remaining + priorities):**
+1. **MT-32 Report improvements** — TOC page numbers, cover title fix, MT phase tracking contradictions, trend/delta section (report_differ integration), MT section condensing
+2. **MT-22 Desktop Electron** — Phase 4: supervised trial (needs Matthew present)
+3. **MT-0 Growth** [8] — Wire principle_registry into live Kalshi bet decisions
+4. **MT-35 Phase 4** — Keyboard shortcut pause/resume for autoloop
 
-**Matthew S149 directives:**
-- Priority system "lackluster" — ADDRESSED: built priority picker v2 with 4-section full ranking
-- Kalshi pending requests are extensive multi-chat work, not solo CCA
-- All previous directives still active (Two Pillars, cross-chat comms, session longevity, polybot full access)
+**Matthew S150 directives:**
+- Spend sessions on visual design/graphics/UI/reports — seek advancements
+- Hard audit of CCA report style, format, content — DONE (18 issues identified, 4 fixed)
+- Report should be visually nice AND something you learn from or profit from
+- Stop autoloop for tonight — DONE (disabled)
+- All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
 
 ---
 
