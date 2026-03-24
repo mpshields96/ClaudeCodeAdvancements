@@ -84,11 +84,22 @@ class DesktopAutomator:
     def _run_applescript(self, script: str) -> tuple:
         """Execute an AppleScript and return (success, output).
 
-        In dry_run mode, logs the script and returns success without
-        actually executing anything.
+        In dry_run mode, logs the script and returns plausible output
+        so the full flow can be simulated end-to-end.
         """
         if self.dry_run:
             self._log("dry_run_applescript", {"script": script[:200]})
+            # Return plausible output for common checks
+            if "name of processes" in script:
+                return (True, "true")  # is_claude_running
+            if "frontmost is true" in script:
+                return (True, APP_NAME)  # get_frontmost_app
+            if "count of windows" in script:
+                return (True, "1")  # get_window_count
+            if "radio buttons" in script and "value of rb" in script:
+                return (True, "Code")  # get_active_tab
+            if "click rb" in script:
+                return (True, "clicked")  # click_code_tab
             return (True, "")
         try:
             result = subprocess.run(

@@ -547,14 +547,11 @@ class TestDryRunMode(unittest.TestCase):
                 response_timeout=0.01,
                 dry_run=True,
             )
-            # In dry run, all AppleScript calls succeed
-            # But activate_claude still checks is_claude_running which calls _run_applescript
-            # In dry_run, _run_applescript returns (True, "")
-            # is_claude_running checks output == "true", but dry_run returns ""
-            # So activate will fail in pure dry_run — this is expected
+            # In dry run, _run_applescript returns plausible output for
+            # common checks (is_running -> "true", frontmost -> "Claude", etc.)
+            # so the full flow can be simulated end-to-end
             result = da.run_loop_iteration("test prompt")
-            # activate_claude fails because is_claude_running returns False in dry_run
-            self.assertFalse(result["success"])
+            self.assertTrue(result["success"])
 
     def test_dry_run_logs_actions(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -730,12 +727,12 @@ class TestGetActiveTab(unittest.TestCase):
             tab = da.get_active_tab()
             self.assertEqual(tab, "Code")
 
-    def test_dry_run_returns_unknown(self):
+    def test_dry_run_returns_code(self):
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
             tab = da.get_active_tab()
-            # dry_run _run_applescript returns (True, ""), so unknown
-            self.assertEqual(tab, "unknown")
+            # dry_run returns plausible "Code" for tab detection
+            self.assertEqual(tab, "Code")
 
 
 class TestClickCodeTab(unittest.TestCase):
