@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from report_charts import ReportChartGenerator
 from kalshi_data_collector import KalshiDataCollector
 from learning_data_collector import LearningDataCollector
+from report_differ import ReportDiffer
 
 
 class CCADataCollector:
@@ -700,6 +701,12 @@ class CCADataCollector:
         except Exception:
             return None
 
+    # ── Cross-report diff (report_differ.py integration) ────────────────
+
+    def collect_report_diff(self):
+        """Placeholder — actual diff computed post-collection in generate command."""
+        return None
+
     # ── Next priorities ─────────────────────────────────────────────────
 
     def collect_priorities(self):
@@ -1058,6 +1065,7 @@ class CCADataCollector:
             "frontiers": frontiers,
             "priority_queue": priority_queue,
             "daily_diff": self.collect_daily_diff(),
+            "report_diff": self.collect_report_diff(),
             "criticisms": criticisms,
             "kalshi_analytics": kalshi_data,
             "learning_intelligence": learning_data,
@@ -1274,6 +1282,19 @@ def main():
             project_root = str(Path(__file__).parent.parent)
             collector = CCADataCollector(project_root=project_root)
             data = collector.collect_from_project(session=args.session)
+
+            # Compute cross-report diff against most recent archived sidecar
+            try:
+                sidecar_mgr = ReportSidecar()
+                archives = sidecar_mgr.list_archived_reports()
+                if archives:
+                    old_data = sidecar_mgr.load_report(archives[0])
+                    if old_data:
+                        differ = ReportDiffer()
+                        data["report_diff"] = differ.diff_reports(old_data, data)
+                        print(f"Report diff computed against {os.path.basename(archives[0])}")
+            except Exception as e:
+                print(f"Report diff skipped: {e}")
 
             data_path = os.path.join(tempfile.gettempdir(), "cca_report_data.json")
             with open(data_path, "w") as f:

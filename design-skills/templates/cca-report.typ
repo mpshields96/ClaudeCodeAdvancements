@@ -410,6 +410,95 @@
   text(size: 9.5pt, fill: dark)[#data.executive_summary]
 }
 
+// ── Since Last Report (cross-report diff) ──────────────────────────────────
+#if data.keys().contains("report_diff") and data.report_diff != none {
+  v(4mm)
+  box(
+    width: 100%,
+    fill: rgb("#f0f7ff"),
+    stroke: (left: 3pt + blue, rest: 0.5pt + faint),
+    radius: (right: 6pt),
+    inset: 12pt,
+  )[
+    #{
+      text(size: 7.5pt, fill: blue, weight: "semibold", tracking: 1pt)[SINCE LAST REPORT]
+      if data.report_diff.keys().contains("sessions") and data.report_diff.sessions != none {
+        text(size: 7pt, fill: light)[ — Session ]
+        text(size: 7pt, fill: light)[#str(data.report_diff.sessions.old)]
+        text(size: 7pt, fill: light)[ → ]
+        text(size: 7pt, fill: light)[#str(data.report_diff.sessions.new)]
+      }
+      v(3mm)
+    }
+
+    // Summary deltas row
+    #{
+      if data.report_diff.keys().contains("summary_changes") {
+        let changes = data.report_diff.summary_changes
+        let items = ()
+        for (key, label) in (
+          ("total_tests", "Tests"),
+          ("total_loc", "LOC"),
+          ("git_commits", "Commits"),
+          ("completed_tasks", "Completed MTs"),
+          ("total_findings", "Findings"),
+          ("total_delivered", "Delivered"),
+        ) {
+          if changes.keys().contains(key) {
+            let entry = changes.at(key)
+            if entry.delta != 0 {
+              let sign = if entry.delta > 0 { "+" } else { "" }
+              let color = if entry.delta > 0 { green } else { red }
+              items.push((label, sign + str(entry.delta), color))
+            }
+          }
+        }
+
+        if items.len() > 0 {
+          grid(
+            columns: items.map(_ => 1fr),
+            column-gutter: 6pt,
+            ..items.map(((label, delta, color)) => {
+              align(center)[
+                #text(size: 18pt, weight: "bold", fill: color)[#delta]
+                #v(1mm)
+                #text(size: 7pt, fill: light)[#label]
+              ]
+            })
+          )
+        }
+      }
+
+      // MT transitions
+      if data.report_diff.keys().contains("mt_changes") {
+        let mtc = data.report_diff.mt_changes
+        if mtc.keys().contains("newly_completed") and mtc.newly_completed.len() > 0 {
+          v(3mm)
+          text(size: 7.5pt, fill: green, weight: "semibold")[Newly Completed:]
+          for mt in mtc.newly_completed {
+            text(size: 8pt, fill: dark)[ #mt.id — #mt.name]
+            linebreak()
+          }
+        }
+      }
+
+      // Kalshi P&L change
+      if data.report_diff.keys().contains("kalshi_changes") and data.report_diff.kalshi_changes != none {
+        let kc = data.report_diff.kalshi_changes
+        if kc.keys().contains("pnl_delta_usd") and kc.pnl_delta_usd != 0 {
+          v(2mm)
+          let sign = if kc.pnl_delta_usd > 0 { "+" } else { "" }
+          let color = if kc.pnl_delta_usd > 0 { green } else { red }
+          text(size: 8pt, fill: color, weight: "semibold")[Kalshi P&L: #sign\$#str(calc.round(kc.pnl_delta_usd, digits: 2))]
+          if kc.keys().contains("trades_delta") and kc.trades_delta != 0 {
+            text(size: 7.5pt, fill: light)[ (+#str(kc.trades_delta) trades)]
+          }
+        }
+      }
+    }
+  ]
+}
+
 #v(5mm)
 
 // Project Health Grid — 3x2
