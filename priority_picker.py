@@ -499,6 +499,35 @@ class PriorityPicker:
                 ("MOSTLY SELF-RESOLVED" in t.self_resolution_note or
                  "PARTIALLY SELF-RESOLVED" in t.self_resolution_note)]
 
+    def completed_tasks(self) -> list[MasterTask]:
+        return [t for t in self.tasks if t.status == TaskStatus.COMPLETED]
+
+    def reopen_mt(self, mt_id: int, new_phase: str, new_total: int) -> bool:
+        """Reopen a completed MT with a new phase.
+
+        Completed MTs can evolve when new requirements emerge, the ecosystem
+        changes, or downstream success reveals next steps. This preserves
+        completion history while making the MT active again.
+
+        Args:
+            mt_id: The MT to reopen
+            new_phase: Description of the new phase/next_action
+            new_total: New total phases (must be > current phases_completed)
+
+        Returns True if reopened, False if MT not found or invalid.
+        """
+        for t in self.tasks:
+            if t.mt_id == mt_id:
+                if new_total <= t.phases_completed:
+                    return False
+                t.status = TaskStatus.ACTIVE
+                t.phases_total = new_total
+                t.next_action = new_phase
+                t.aging_rate = 1.0
+                t.last_touched_session = self.current_session
+                return True
+        return False
+
     def ranked(self, include_blocked: bool = False) -> list[MasterTask]:
         """Return tasks sorted by improved_score descending."""
         pool = self.active_tasks()

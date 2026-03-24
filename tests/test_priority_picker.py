@@ -527,5 +527,52 @@ class TestEdgeCases(unittest.TestCase):
         self.assertIsInstance(rec, str)
 
 
+class TestReopenMT(unittest.TestCase):
+    """Tests for reopening completed MTs with new phases."""
+
+    def test_reopen_completed_mt(self):
+        """Reopening a completed MT makes it active with new phase."""
+        picker = PriorityPicker(current_session=145)
+        # MT-10 is COMPLETED
+        mt10 = [t for t in picker.tasks if t.mt_id == 10][0]
+        self.assertEqual(mt10.status, TaskStatus.COMPLETED)
+
+        result = picker.reopen_mt(10, "Phase 7: New capability", 7)
+        self.assertTrue(result)
+        self.assertEqual(mt10.status, TaskStatus.ACTIVE)
+        self.assertEqual(mt10.phases_total, 7)
+        self.assertEqual(mt10.next_action, "Phase 7: New capability")
+        self.assertIn(mt10, picker.active_tasks())
+
+    def test_reopen_invalid_total_rejected(self):
+        """Cannot reopen with phases_total <= phases_completed."""
+        picker = PriorityPicker(current_session=145)
+        result = picker.reopen_mt(10, "Bad reopen", 5)  # MT-10 has 6 completed
+        self.assertFalse(result)
+
+    def test_reopen_nonexistent_mt(self):
+        """Reopening unknown MT returns False."""
+        picker = PriorityPicker(current_session=145)
+        self.assertFalse(picker.reopen_mt(999, "Nope", 5))
+
+    def test_reopen_resets_last_touched(self):
+        """Reopened MT gets current session as last_touched."""
+        picker = PriorityPicker(current_session=150)
+        picker.reopen_mt(26, "Tier 3 Phase 2 with numpy", 8)
+        mt26 = [t for t in picker.tasks if t.mt_id == 26][0]
+        self.assertEqual(mt26.last_touched_session, 150)
+
+    def test_completed_tasks_list(self):
+        """completed_tasks() returns only COMPLETED MTs."""
+        picker = PriorityPicker(current_session=145)
+        completed = picker.completed_tasks()
+        self.assertTrue(all(t.status == TaskStatus.COMPLETED for t in completed))
+        # MT-10, MT-26, MT-0 should all be in there
+        completed_ids = {t.mt_id for t in completed}
+        self.assertIn(10, completed_ids)
+        self.assertIn(26, completed_ids)
+        self.assertIn(0, completed_ids)
+
+
 if __name__ == "__main__":
     unittest.main()
