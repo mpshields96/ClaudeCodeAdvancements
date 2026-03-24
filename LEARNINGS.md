@@ -515,3 +515,14 @@
 - **Last seen:** 2026-03-21
 - **Files:** self-learning/tests/test_reflect.py, test_reflect_extended.py
 
+---
+
+### Desktop autoloop must NOT run from within an active Claude Code session — Severity: 2 — Count: 1
+- **Anti-pattern:** Running `./start_desktop_autoloop.sh` from within a Claude Code CLI session. The script uses AppleScript to control Claude.app — running it inside the very app it's trying to control creates recursive conflicts.
+- **Fix:** The autoloop script must be run from a **separate Terminal.app window** (external orchestrator pattern). The script controls Claude.app from outside; the Claude Code sessions are what it creates and monitors. Never run the orchestrator from inside the thing being orchestrated.
+- **Correct supervised trial pattern:** (1) Open a separate Terminal window, (2) `cd /Users/matthewshields/Projects/ClaudeCodeAdvancements`, (3) `./start_desktop_autoloop.sh --max-iterations 2`. OR: manually use the Claude desktop app "+ New session" button and paste the resume prompt.
+- **Standing note:** Terminal Accessibility permission is GRANTED (Matthew confirmed S135). Do not re-ask.
+- **First seen:** 2026-03-23 (Session 135)
+- **Last seen:** 2026-03-23
+- **Files:** desktop_autoloop.py, start_desktop_autoloop.sh
+
