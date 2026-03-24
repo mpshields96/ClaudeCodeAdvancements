@@ -209,6 +209,34 @@ cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
 python3 session_timer.py mark wrap:self_learning wrap
 ```
 
+### SLIM MODE (DEFAULT — MT-36 Phase 3)
+
+Use `batch_wrap_learning.py` to consolidate steps 6a-6a.7 into ONE call.
+This saves ~5,000-10,000 tokens by eliminating 11 subprocess spawns.
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 batch_wrap_learning.py \
+    --session [SESSION_NUMBER] --grade [GRADE] \
+    --wins "[WIN_1]" "[WIN_2]" \
+    --losses "[LOSS_1]" "[LOSS_2]" \
+    --summary "[one-sentence summary]" \
+    --domain general \
+    --tests-added [TESTS_ADDED] --tests-total [TOTAL_TESTS] \
+    --tips "[TIP_1]" "[TIP_2]"
+```
+
+This writes to journal.jsonl, wrap_assessments.jsonl, tip_tracker_data.jsonl,
+and session_outcomes.jsonl in one call. After this, skip to Step 6b.
+
+Analysis steps (6b-6h) are DEFERRED to next init for slim wrap.
+Only run them if you have plenty of context remaining (under 50% usage).
+
+### FULL MODE (when context budget allows)
+
+If context is under 50%, run the full self-learning cascade below.
+Otherwise, skip to Step 6i (summary) after the batch call.
+
 ### 6a — Log session outcome to journal
 
 ```bash
