@@ -189,6 +189,13 @@ def trigger_next_session(dry_run: bool = False) -> bool:
             _log("step_5_restore_failed", {"target_app": str(saved_app)})
 
     _log("trigger_success")
+    # Write breadcrumb to prevent double-fire from stop hook (S150)
+    breadcrumb_path = os.path.expanduser("~/.cca-autoloop-fired")
+    try:
+        with open(breadcrumb_path, "w") as f:
+            f.write(str(time.time()))
+    except OSError:
+        pass
     print(f"Autoloop trigger fired. Prompt ({len(prompt)} chars) sent to new session.")
     return True
 
