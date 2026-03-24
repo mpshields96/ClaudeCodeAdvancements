@@ -197,6 +197,105 @@ class DesktopAutomator:
             return False  # error — assume not idle
         return cpu < cpu_threshold
 
+    # --- Tab detection (Chat / Cowork / Code) ---
+
+    # Claude desktop app has 3 tabs in a top-center island:
+    #   Chat | Cowork | Code
+    # The autoloop MUST be on the Code tab. AppleScript UI inspection
+    # reads the accessibility tree to find which radio button is selected.
+
+    VALID_TABS = {"Chat", "Cowork", "Code"}
+
+    def get_active_tab(self) -> str:
+        """Detect which tab (Chat/Cowork/Code) is active in Claude.app.
+
+        Uses Accessibility Inspector approach: reads the value of radio
+        buttons in the tab bar group. Returns the tab name or "unknown".
+        """
+        # The tab bar uses radio buttons in System Events accessibility.
+        # We look for a radio button whose value is 1 (selected).
+        script = (
+            'tell application "System Events"\n'
+            f'  tell process "{APP_NAME}"\n'
+            '    try\n'
+            '      set tabGroup to first tab group of first window\n'
+            '      repeat with rb in radio buttons of tabGroup\n'
+            '        if value of rb is 1 then\n'
+            '          return description of rb\n'
+            '        end if\n'
+            '      end repeat\n'
+            '      return ""\n'
+            '    on error\n'
+            '      return ""\n'
+            '    end try\n'
+            '  end tell\n'
+            'end tell'
+        )
+        ok, output = self._run_applescript(script)
+        if not ok or not output.strip():
+            self._log("get_active_tab", {"result": "unknown", "raw": output})
+            return "unknown"
+        tab = output.strip()
+        self._log("get_active_tab", {"result": tab})
+        return tab
+
+    def click_code_tab(self) -> bool:
+        """Click the Code tab in Claude.app's tab bar.
+
+        Safety: only sends click if Claude is frontmost.
+        Uses accessibility click on the Code radio button.
+        """
+        frontmost = self.get_frontmost_app()
+        if APP_NAME.lower() not in frontmost.lower():
+            self._log("click_code_tab_failed", {"reason": f"wrong_app: {frontmost}"})
+            return False
+
+        script = (
+            'tell application "System Events"\n'
+            f'  tell process "{APP_NAME}"\n'
+            '    try\n'
+            '      set tabGroup to first tab group of first window\n'
+            '      repeat with rb in radio buttons of tabGroup\n'
+            '        if description of rb is "Code" then\n'
+            '          click rb\n'
+            '          return "clicked"\n'
+            '        end if\n'
+            '      end repeat\n'
+            '      return "not_found"\n'
+            '    on error errMsg\n'
+            '      return "error: " & errMsg\n'
+            '    end try\n'
+            '  end tell\n'
+            'end tell'
+        )
+        ok, output = self._run_applescript(script)
+        success = ok and output == "clicked"
+        self._log("click_code_tab", {"success": success, "output": output})
+        return success
+
+    def ensure_code_tab(self) -> bool:
+        """Ensure the Code tab is active. Detect + click if needed.
+
+        Returns True if Code tab is (or becomes) active.
+        If detection fails (unknown), tries clicking anyway.
+        """
+        tab = self.get_active_tab()
+
+        if tab == "Code":
+            self._log("ensure_code_tab", {"action": "already_active"})
+            return True
+
+        # Need to switch
+        self._log("ensure_code_tab", {"action": "switching", "from_tab": tab})
+        result = self.click_code_tab()
+
+        if result:
+            # Small delay for tab switch animation
+            if not self.dry_run:
+                time.sleep(0.3)
+
+        return result
+
     # --- App control ---
 
     def activate_claude(self) -> bool:
@@ -319,8 +418,14 @@ class DesktopAutomator:
     def new_conversation(self) -> bool:
         """Start a new conversation (Cmd+N).
 
-        Safety: only sends keystroke if Claude is frontmost.
+        Safety: ensures Code tab is active first, then only sends
+        keystroke if Claude is frontmost.
         """
+        # Ensure we're on the Code tab before creating a new conversation
+        if not self.ensure_code_tab():
+            self._log("new_conversation_failed", {"reason": "code_tab_unreachable"})
+            return False
+
         frontmost = self.get_frontmost_app()
         if APP_NAME.lower() not in frontmost.lower():
             self._log(
@@ -379,7 +484,7 @@ class DesktopAutomator:
     # --- Loop iteration ---
 
     def run_loop_iteration(self, prompt: str, timeout: int = None) -> dict:
-        """Run one full loop iteration: activate -> send -> wait.
+        """Run one full loop iteration: activate -> ensure Code tab -> send -> wait.
 
         Returns dict with success status and timing.
         """
@@ -392,7 +497,13 @@ class DesktopAutomator:
             result["duration"] = time.time() - start
             return result
 
-        # Step 2: Send prompt
+        # Step 2: Ensure Code tab is active (not Chat or Cowork)
+        if not self.ensure_code_tab():
+            result["error"] = "code_tab_failed"
+            result["duration"] = time.time() - start
+            return result
+
+        # Step 3: Send prompt
         if not self.send_prompt(prompt):
             result["error"] = "send_failed"
             result["duration"] = time.time() - start
