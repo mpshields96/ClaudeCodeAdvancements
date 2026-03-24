@@ -216,7 +216,7 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         MasterTask(
             mt_id=22, name="Desktop Electron app automation",
             base_value=10, status=TaskStatus.ACTIVE,
-            last_touched_session=129, current_session=current_session,
+            last_touched_session=142, current_session=current_session,
             phases_completed=0, phases_total=4,
             aging_rate=1.0,
             next_action="Research: how to automate Claude Code desktop Electron app (AppleScript, Accessibility API, CLI pipe). Terminal autoloop is stepping stone.",
@@ -421,6 +421,15 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             self_resolution_note=None,
             next_action="BLOCKED: awaiting Matthew decision on scope and requirements.",
             tags=["personal", "medical"],
+        ),
+        MasterTask(
+            mt_id=35, name="Background Autoloop (non-intrusive desktop loop)",
+            base_value=8, status=TaskStatus.ACTIVE,
+            last_touched_session=142, current_session=current_session,
+            phases_completed=0, phases_total=4,
+            aging_rate=1.0,
+            next_action="Phase 1: Save/restore frontmost app around autoloop trigger (AppleScript).",
+            tags=["autonomy", "desktop", "crown-jewel"],
         ),
         # === BLOCKED ===
         MasterTask(

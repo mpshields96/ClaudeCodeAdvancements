@@ -1408,6 +1408,34 @@ background process. Everything else serves these two axes. See `CCA_PRIME_DIRECT
 
 ---
 
+## MT-35: Background Autoloop — Non-Intrusive Desktop Loop
+
+**Source:** Matthew directive (S142, 2026-03-23) — "I want to be able to use my macbook as much as I want to freely while you engage in the automated loop. I'm okay with letting you take control of the mouse and prompting for a few seconds if it means I can immediately go right back to Reddit or any other program while you're working."
+
+**What Matthew wants:** The desktop autoloop (MT-22) should be virtually invisible during normal laptop use. The loop can briefly take mouse/keyboard control for the few seconds needed to spawn a new Claude Code session (activate app, click New Session, paste prompt, send), then immediately release control so Matthew can go right back to browsing, reading, or whatever he's doing. The rest of the time — while CCA is actually working — Matthew has full control of his machine.
+
+**Core requirements:**
+1. **Minimal takeover window**: Only grab mouse/keyboard for the absolute minimum time needed (activate + new session + paste + send = ~3-5 seconds max)
+2. **Immediate release**: After the prompt is sent, immediately return focus to whatever app Matthew was using before
+3. **No modal blocking**: Never leave Claude.app in the foreground waiting for input. Send prompt and get out.
+4. **User-awareness**: Detect if Matthew is actively typing/clicking and delay the loop spawn by a few seconds until idle
+5. **Foreground restore**: Save the frontmost app before activation, restore it after prompt send
+6. **Status visibility**: Some non-intrusive way to know the loop is running (menu bar icon, tmux status, notification)
+
+**Implementation approach (incremental):**
+- Phase 1: Save/restore frontmost app around autoloop trigger (AppleScript: get frontmost app name, activate Claude, do work, activate saved app)
+- Phase 2: Idle detection — wait for 2-3 seconds of no mouse/keyboard activity before triggering
+- Phase 3: Menu bar status indicator or periodic ntfy.sh notification of loop health
+- Phase 4: Keyboard shortcut to pause/resume loop without killing it
+
+**Status:** NOT STARTED — MT-22 autoloop is working, this is the UX polish layer.
+
+**Files:** `autoloop_trigger.py`, `desktop_automator.py`, `desktop_autoloop.py`
+
+**Relationship:** Extends MT-22 (Desktop Autoloop). Part of "Get More Bodies" pillar.
+
+---
+
 ### Scoring Rules
 
 1. **After working on a task:** Update `get_known_tasks()` in `priority_picker.py`, run `python3 priority_picker.py table`.
