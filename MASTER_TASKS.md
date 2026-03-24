@@ -1237,22 +1237,23 @@ python3 priority_picker.py json          # Export for programmatic use
 | MT-17 | Design/reports | COMPLETE (S96) — 6 phases done: reports, slides, dashboard, charts, website, daily_snapshot. 213 tests |
 | MT-20 | Senior Dev Agent | COMPLETE (S83, LLM validated S101) — 13 modules, ~890 tests, session_id.py wired (7 modules), E2E LLM confirmed |
 | MT-12 | Academic research papers | COMPLETE (S102) — 6 phases: paper scanner, digest, cross-chat bridge, 1242 papers, confidence calibrator, hit_rate_tracker. ~150 tests |
-| MT-22 | Autonomous 1-hour loop | COMPLETE (S99) — 3/3 trials clean. Gate passed. Approved for autonomous use. |
+| MT-22 | Autonomous 1-hour loop | COMPLETE (S99/S132) — CLI autoloop gate passed (S99). Desktop autoloop built (S132): desktop_automator.py, desktop_autoloop.py, 115 tests. Awaiting supervised trial. |
+| MT-27 | CCA Nuclear v2 | COMPLETE (S115/S129) — 5/5 phases: NEEDLE classifier, APF tracking, precision improvement. 440 tests. |
+| MT-28 | Self-Learning v2 | COMPLETE (S111) — 6/6 phases: principle_registry, pattern_registry, principle_transfer, outcome_feedback, predictive_recommender, sentinel_bridge. ~230 tests. |
+| MT-30 | Session Daemon | COMPLETE (S128) — 8/8 phases: cca_autoloop.py, start_autoloop.sh, preflight checks, audit logging, rate limit handling. 116 tests. Awaiting supervised trial. |
 
-### Active Priority Queue (S98 improved scoring)
+### Active Priority Queue (S134 updated)
 
 | Rank | MT | Task | Base | Age | Comp% | Bonus | ROI | Stag | **Score** | Urgency | Next |
 |------|----|------|------|-----|-------|-------|-----|------|-----------|---------|------|
 | 1 | MT-21 | Hivemind coordination | 8 | +1.0 | 67% | +1.0 | +0.0 | 0.0 | **10.0** | routine | Phase 2 PASSED (6th). Phase 3 = 3-chat |
-| 2 | MT-23 | Mobile Remote Control v2 | 8 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **9.0** | NEW (S103) | Research: evaluate Telegram/Discord channels MCP |
-| 3 | MT-26 | Financial Intelligence Engine | 7 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **8.0** | NEW (S103) | Research: scope trading/prediction market academic backbone |
-| 4 | MT-28 | Self-Learning v2 (Multi-Domain) | 7 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **8.0** | NEW (S103) | Research: cross-domain YoYo, Sentinel adaptive mutation |
-| 5 | MT-32 | Visual Excellence & Design Engineering | 8 | +0.0 | 5% | +0.0 | +0.0 | 0.0 | **8.0** | NEW (S118) | Phase 1: wire report_charts + nuclear scan. Absorbs MT-24/MT-25 |
-| 5 | MT-33 | Strategic Intelligence Report | 9 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **10.0** | NEW (S121) | Phase 1: deep dive research — data sources, metrics, chart mapping |
+| 2 | MT-33 | Strategic Intelligence Report | 9 | +0.0 | 50% | +0.0 | +1.0 | 0.0 | **10.0** | S121 | Phase 4-6: chart integration, self-reference, hardening. kalshi_data_collector + learning_data_collector + report_differ built (S122-S123). |
+| 3 | MT-23 | Mobile Remote Control v2 | 8 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **9.0** | NEW (S103) | Research: evaluate Telegram/Discord channels MCP |
+| 4 | MT-26 | Financial Intelligence Engine | 7 | +0.0 | 92% | +0.0 | +1.0 | 0.0 | **8.0** | S103 | CCA scope COMPLETE. Tier 3 Phase 2 deferred (needs numpy). 79 pipeline tests. |
+| 5 | MT-32 | Visual Excellence & Design Engineering | 8 | +0.0 | 15% | +0.0 | +0.0 | 0.0 | **8.0** | S118 | Phase 2+: nuclear scan, Kalshi charts, consistency. report_charts wired (S117). |
 | — | MT-34 | Medical AI (OpenEvidence replacement) | 6 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **6.0** | IDEA (S121) | BLOCKED: Matthew refining concept. Do not start. |
 | 6 | MT-24 | Visualization & Graphics Engine | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 4 |
 | 7 | MT-25 | Presentation Generator | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 8 (WAITING: style samples) |
-| 7 | MT-27 | CCA Nuclear v2 | 5 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **5.0** | NEW (S103) | Research: APF improvement, better frontier tagging |
 | 8 | MT-29 | Cowork + Pro Bridge Hivemind | 5 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **5.0** | NEW (S103) | Research: evaluate Cowork, bridge Pro↔Code |
 | 9 | MT-18 | Academic writing | 4 | +4.0 | 0% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Research: install/evaluate ClaudePrism |
 | 10 | MT-13 | iOS/macOS app dev | 4 | +4.0 | 33% | +0.0 | +0.0 | -1.0 | **7.0** | stagnating | Phase 3: first real app |
