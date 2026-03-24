@@ -3,28 +3,26 @@
 
 ---
 
-## Current State (as of Session 143 — 2026-03-23)
+## Current State (as of Session 144 — 2026-03-24)
 
-**Phase:** Session 143. Autoloop chat #3. MT-35 Phase 2 shipped. KXBTCD research delivered.
+**Phase:** Session 144. Reddit review batch (9 URLs) + MT-36 Phase 1 shipped.
 
-**What was done this session (S143):**
-- **MT-35 Phase 2 shipped**: Idle detection via CoreGraphics CGEventSourceSecondsSinceLastEventType. `get_user_idle_seconds()` and `wait_for_idle()` on DesktopAutomator. Autoloop trigger now waits 3s idle before stealing focus (configurable via CCA_IDLE_THRESHOLD/CCA_IDLE_TIMEOUT env vars). Fails open on timeout. +16 tests (122 desktop_automator, 22 autoloop_trigger).
-- **KXBTCD threshold analysis delivered**: Le (2026) arXiv:2602.19520 shows crypto calibration slope 0.99 at 0-1h — well-calibrated, FLB absent. Verdict: paper-trade first, expected WR 92-93% (not 97%+ like 15M sniper). Written to CCA_TO_POLYBOT.md with 2 verified citations.
-- **MT-35 status updated**: Phase 1+2 COMPLETE in MASTER_TASKS.md. Phase 3 (status indicator) and Phase 4 (pause/resume shortcut) remain.
-- **Autoloop trigger confirmed functional**: `--check` passes, wired in /cca-wrap Step 10.
-- **Tests**: 212 suites passing. 3 commits.
+**What was done this session (S144):**
+- **Reddit review batch**: 9 URLs reviewed. 3 ADAPT (multi-agent coordination, claude-devtools 252pts, multi-agent orchestration tools), 3 REFERENCE, 1 REFERENCE-PERSONAL, 2 SKIP. All logged to FINDINGS_LOG.md. Key signal: claude-devtools validates F3+F5, per-category token breakdown feeds MT-36.
+- **MT-36 Phase 1 shipped**: `session_timer.py` — per-step timing instrumentation for session lifecycle. SessionTimer with context manager + manual start/stop. 6 categories (init/wrap/test/code/doc/other). Cross-session: JSONL persistence, step averages, category averages, outlier detection. format_breakdown + format_category_bar for human output. CLI: history/averages/outliers. +31 tests. TDD red-green.
+- **Tests**: 213 suites passing. 1 commit so far.
 
 **Next (prioritized):**
-1. **Review Matthew's Reddit links** — he has links to share for /cca-review
+1. **MT-36 Phase 2** — wire session_timer into /cca-init and /cca-wrap to collect real baseline data
 2. **MT-35 Phase 3** — menu bar status indicator or ntfy.sh loop health notification
 3. **Shift+Cmd+O via CoreGraphics keyboard events** — position-independent autoloop fallback
-4. **Sustained autoloop** — continue running, proving reliability with idle detection
+4. **Study claude-devtools repo** — per-category token breakdown patterns for MT-36 enhancement
 
-**Matthew S143 directives:**
-- Autoloop trigger must fire from /cca-wrap every time (confirmed working)
-- Next session: review Reddit links Matthew has queued
-- CCA is CCA first — max 50% time on Kalshi work
-- All previous directives still active (Two Pillars, CoreGraphics, polybot full access, XRP ban)
+**Matthew S144 directives:**
+- Never wait for input in autonomous mode — chain tasks continuously
+- Never neglect advancement tips (both CCA and Kalshi bot)
+- Maintain frequent cross-chat comms with Kalshi bot
+- All previous directives still active (Two Pillars, CoreGraphics, polybot full access, XRP ban, CCA first max 50% Kalshi)
 
 ---
 
