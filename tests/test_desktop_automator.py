@@ -676,86 +676,52 @@ class TestIsClaudeIdle(unittest.TestCase):
             self.assertFalse(da.is_claude_idle(cpu_threshold=4.0))
 
 
-class TestGetActiveTab(unittest.TestCase):
-    """Test active tab detection (Chat/Cowork/Code)."""
-
-    @patch.object(DesktopAutomator, "_run_applescript")
-    def test_detects_code_tab(self, mock_as):
-        mock_as.return_value = (True, "Code")
-        with tempfile.TemporaryDirectory() as tmp:
-            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            tab = da.get_active_tab()
-            self.assertEqual(tab, "Code")
-
-    @patch.object(DesktopAutomator, "_run_applescript")
-    def test_detects_chat_tab(self, mock_as):
-        mock_as.return_value = (True, "Chat")
-        with tempfile.TemporaryDirectory() as tmp:
-            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            tab = da.get_active_tab()
-            self.assertEqual(tab, "Chat")
-
-    @patch.object(DesktopAutomator, "_run_applescript")
-    def test_detects_cowork_tab(self, mock_as):
-        mock_as.return_value = (True, "Cowork")
-        with tempfile.TemporaryDirectory() as tmp:
-            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            tab = da.get_active_tab()
-            self.assertEqual(tab, "Cowork")
-
-    @patch.object(DesktopAutomator, "_run_applescript")
-    def test_returns_unknown_on_failure(self, mock_as):
-        mock_as.return_value = (False, "")
-        with tempfile.TemporaryDirectory() as tmp:
-            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            tab = da.get_active_tab()
-            self.assertEqual(tab, "unknown")
-
-    @patch.object(DesktopAutomator, "_run_applescript")
-    def test_returns_unknown_on_empty(self, mock_as):
-        mock_as.return_value = (True, "")
-        with tempfile.TemporaryDirectory() as tmp:
-            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            tab = da.get_active_tab()
-            self.assertEqual(tab, "unknown")
-
-    @patch.object(DesktopAutomator, "_run_applescript")
-    def test_normalizes_whitespace(self, mock_as):
-        mock_as.return_value = (True, "  Code  ")
-        with tempfile.TemporaryDirectory() as tmp:
-            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            tab = da.get_active_tab()
-            self.assertEqual(tab, "Code")
-
-    def test_dry_run_returns_code(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
-            tab = da.get_active_tab()
-            # dry_run returns plausible "Code" for tab detection
-            self.assertEqual(tab, "Code")
-
-
-class TestClickCodeTab(unittest.TestCase):
-    """Test clicking the Code tab."""
+class TestSwitchToTab(unittest.TestCase):
+    """Test tab switching via Cmd+N keyboard shortcuts."""
 
     @patch.object(DesktopAutomator, "get_frontmost_app", return_value="Claude")
-    @patch.object(DesktopAutomator, "_run_applescript", return_value=(True, "clicked"))
-    def test_clicks_code_tab(self, mock_as, mock_front):
+    @patch.object(DesktopAutomator, "_run_applescript", return_value=(True, ""))
+    def test_switches_to_code_tab(self, mock_as, mock_front):
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            result = da.click_code_tab()
+            result = da.switch_to_tab("Code")
             self.assertTrue(result)
-            # Should have logged the click
-            with open(da.audit_log) as f:
-                entries = [json.loads(l) for l in f]
-            events = [e["event"] for e in entries]
-            self.assertIn("click_code_tab", events)
+            # Verify Cmd+3 was sent
+            call_args = mock_as.call_args[0][0]
+            self.assertIn('keystroke "3"', call_args)
+            self.assertIn("command down", call_args)
+
+    @patch.object(DesktopAutomator, "get_frontmost_app", return_value="Claude")
+    @patch.object(DesktopAutomator, "_run_applescript", return_value=(True, ""))
+    def test_switches_to_chat_tab(self, mock_as, mock_front):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            result = da.switch_to_tab("Chat")
+            self.assertTrue(result)
+            call_args = mock_as.call_args[0][0]
+            self.assertIn('keystroke "1"', call_args)
+
+    @patch.object(DesktopAutomator, "get_frontmost_app", return_value="Claude")
+    @patch.object(DesktopAutomator, "_run_applescript", return_value=(True, ""))
+    def test_switches_to_cowork_tab(self, mock_as, mock_front):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            result = da.switch_to_tab("Cowork")
+            self.assertTrue(result)
+            call_args = mock_as.call_args[0][0]
+            self.assertIn('keystroke "2"', call_args)
+
+    def test_rejects_invalid_tab_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            result = da.switch_to_tab("Settings")
+            self.assertFalse(result)
 
     @patch.object(DesktopAutomator, "get_frontmost_app", return_value="Safari")
     def test_fails_wrong_app(self, mock_front):
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            result = da.click_code_tab()
+            result = da.switch_to_tab("Code")
             self.assertFalse(result)
 
     @patch.object(DesktopAutomator, "get_frontmost_app", return_value="Claude")
@@ -763,65 +729,67 @@ class TestClickCodeTab(unittest.TestCase):
     def test_fails_on_applescript_error(self, mock_as, mock_front):
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            result = da.click_code_tab()
+            result = da.switch_to_tab("Code")
             self.assertFalse(result)
+
+    @patch.object(DesktopAutomator, "get_frontmost_app", return_value="Claude")
+    @patch.object(DesktopAutomator, "_run_applescript", return_value=(True, ""))
+    def test_logs_switch_event(self, mock_as, mock_front):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            da.switch_to_tab("Code")
+            with open(da.audit_log) as f:
+                entries = [json.loads(l) for l in f]
+            switch_entry = [e for e in entries if e["event"] == "switch_to_tab"][0]
+            self.assertEqual(switch_entry["tab"], "Code")
+            self.assertEqual(switch_entry["key"], "Cmd+3")
+            self.assertTrue(switch_entry["success"])
+
+    def test_dry_run_succeeds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            result = da.switch_to_tab("Code")
+            self.assertTrue(result)
 
 
 class TestEnsureCodeTab(unittest.TestCase):
-    """Test ensure_code_tab — detect + click if needed."""
+    """Test ensure_code_tab — sends Cmd+3 unconditionally."""
 
-    @patch.object(DesktopAutomator, "get_active_tab", return_value="Code")
-    def test_already_on_code_tab(self, mock_tab):
+    @patch.object(DesktopAutomator, "switch_to_tab", return_value=True)
+    def test_sends_cmd3(self, mock_switch):
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
             result = da.ensure_code_tab()
             self.assertTrue(result)
-            # Should log that we're already on Code
-            with open(da.audit_log) as f:
-                entries = [json.loads(l) for l in f]
-            events = [e["event"] for e in entries]
-            self.assertIn("ensure_code_tab", events)
-            tab_entry = [e for e in entries if e["event"] == "ensure_code_tab"][0]
-            self.assertEqual(tab_entry.get("action"), "already_active")
+            mock_switch.assert_called_once_with("Code")
 
-    @patch.object(DesktopAutomator, "click_code_tab", return_value=True)
-    @patch.object(DesktopAutomator, "get_active_tab", return_value="Chat")
-    def test_switches_from_chat(self, mock_tab, mock_click):
+    @patch.object(DesktopAutomator, "switch_to_tab", return_value=True)
+    def test_logs_success(self, mock_switch):
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            result = da.ensure_code_tab()
-            self.assertTrue(result)
-            mock_click.assert_called_once()
+            da.ensure_code_tab()
             with open(da.audit_log) as f:
                 entries = [json.loads(l) for l in f]
             tab_entry = [e for e in entries if e["event"] == "ensure_code_tab"][0]
-            self.assertEqual(tab_entry.get("action"), "switching")
-            self.assertEqual(tab_entry.get("from_tab"), "Chat")
+            self.assertEqual(tab_entry["action"], "cmd3_sent")
+            self.assertTrue(tab_entry["success"])
 
-    @patch.object(DesktopAutomator, "click_code_tab", return_value=True)
-    @patch.object(DesktopAutomator, "get_active_tab", return_value="Cowork")
-    def test_switches_from_cowork(self, mock_tab, mock_click):
+    @patch.object(DesktopAutomator, "switch_to_tab", return_value=False)
+    def test_returns_false_on_failure(self, mock_switch):
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
             result = da.ensure_code_tab()
-            self.assertTrue(result)
+            self.assertFalse(result)
 
-    @patch.object(DesktopAutomator, "click_code_tab", return_value=False)
-    @patch.object(DesktopAutomator, "get_active_tab", return_value="Chat")
-    def test_proceeds_even_if_click_fails(self, mock_tab, mock_click):
-        """Proceeds optimistically even if click fails — user may fix manually."""
+    @patch.object(DesktopAutomator, "switch_to_tab", return_value=False)
+    def test_logs_failure(self, mock_switch):
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            result = da.ensure_code_tab()
-            self.assertTrue(result)
-
-    @patch.object(DesktopAutomator, "get_active_tab", return_value="unknown")
-    def test_proceeds_on_unknown_tab(self, mock_tab):
-        """Electron apps don't expose tabs — proceed optimistically."""
-        with tempfile.TemporaryDirectory() as tmp:
-            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            result = da.ensure_code_tab()
-            self.assertTrue(result)
+            da.ensure_code_tab()
+            with open(da.audit_log) as f:
+                entries = [json.loads(l) for l in f]
+            tab_entry = [e for e in entries if e["event"] == "ensure_code_tab"][0]
+            self.assertEqual(tab_entry["action"], "cmd3_failed")
 
 
 class TestNewConversationWithCodeTab(unittest.TestCase):

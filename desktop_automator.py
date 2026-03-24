@@ -96,10 +96,8 @@ class DesktopAutomator:
                 return (True, APP_NAME)  # get_frontmost_app
             if "count of windows" in script:
                 return (True, "1")  # get_window_count
-            if "radio buttons" in script and "value of rb" in script:
-                return (True, "Code")  # get_active_tab
-            if "click rb" in script:
-                return (True, "clicked")  # click_code_tab
+            if "keystroke" in script and "using command down" in script:
+                return (True, "")  # tab switch or other keystroke
             return (True, "")
         try:
             result = subprocess.run(
@@ -208,121 +206,68 @@ class DesktopAutomator:
             return False  # error — assume not idle
         return cpu < cpu_threshold
 
-    # --- Tab detection (Chat / Cowork / Code) ---
+    # --- Tab switching (Chat / Cowork / Code) ---
 
     # Claude desktop app has 3 tabs in a top-center island:
     #   Chat | Cowork | Code
-    # The autoloop MUST be on the Code tab. AppleScript UI inspection
-    # reads the accessibility tree to find which radio button is selected.
+    # The autoloop MUST be on the Code tab.
+    #
+    # Tab switching uses keyboard shortcuts (Cmd+1/2/3):
+    #   Cmd+1 = Chat, Cmd+2 = Cowork, Cmd+3 = Code
+    #
+    # Previous approach tried accessibility tree inspection (tab groups,
+    # radio buttons) but Electron doesn't expose these elements. The
+    # keyboard shortcut approach is position-independent, works at any
+    # window size/location, and requires only that Claude is frontmost.
 
     VALID_TABS = {"Chat", "Cowork", "Code"}
+    TAB_SHORTCUTS = {"Chat": "1", "Cowork": "2", "Code": "3"}
 
-    def get_active_tab(self) -> str:
-        """Detect which tab (Chat/Cowork/Code) is active in Claude.app.
+    def switch_to_tab(self, tab_name: str) -> bool:
+        """Switch to a tab using Cmd+N keyboard shortcut.
 
-        Uses Accessibility Inspector approach: reads the value of radio
-        buttons in the tab bar group. Returns the tab name or "unknown".
+        Args:
+            tab_name: One of "Chat", "Cowork", "Code"
+
+        Returns True if the keystroke was sent successfully.
+        Requires Claude to be the frontmost application.
         """
-        # The tab bar uses radio buttons in System Events accessibility.
-        # We look for a radio button whose value is 1 (selected).
-        script = (
-            'tell application "System Events"\n'
-            f'  tell process "{APP_NAME}"\n'
-            '    try\n'
-            '      set tabGroup to first tab group of first window\n'
-            '      repeat with rb in radio buttons of tabGroup\n'
-            '        if value of rb is 1 then\n'
-            '          return description of rb\n'
-            '        end if\n'
-            '      end repeat\n'
-            '      return ""\n'
-            '    on error\n'
-            '      return ""\n'
-            '    end try\n'
-            '  end tell\n'
-            'end tell'
-        )
-        ok, output = self._run_applescript(script)
-        if not ok or not output.strip():
-            self._log("get_active_tab", {"result": "unknown", "raw": output})
-            return "unknown"
-        tab = output.strip()
-        self._log("get_active_tab", {"result": tab})
-        return tab
-
-    def click_code_tab(self) -> bool:
-        """Click the Code tab in Claude.app's tab bar.
-
-        Safety: only sends click if Claude is frontmost.
-        Uses accessibility click on the Code radio button.
-        """
-        frontmost = self.get_frontmost_app()
-        if APP_NAME.lower() not in frontmost.lower():
-            self._log("click_code_tab_failed", {"reason": f"wrong_app: {frontmost}"})
+        if tab_name not in self.TAB_SHORTCUTS:
+            self._log("switch_to_tab_failed", {"reason": f"invalid_tab: {tab_name}"})
             return False
 
-        script = (
-            'tell application "System Events"\n'
-            f'  tell process "{APP_NAME}"\n'
-            '    try\n'
-            '      set tabGroup to first tab group of first window\n'
-            '      repeat with rb in radio buttons of tabGroup\n'
-            '        if description of rb is "Code" then\n'
-            '          click rb\n'
-            '          return "clicked"\n'
-            '        end if\n'
-            '      end repeat\n'
-            '      return "not_found"\n'
-            '    on error errMsg\n'
-            '      return "error: " & errMsg\n'
-            '    end try\n'
-            '  end tell\n'
-            'end tell'
+        frontmost = self.get_frontmost_app()
+        if APP_NAME.lower() not in frontmost.lower():
+            self._log("switch_to_tab_failed", {
+                "reason": f"wrong_app: {frontmost}",
+                "target_tab": tab_name,
+            })
+            return False
+
+        key = self.TAB_SHORTCUTS[tab_name]
+        ok, _ = self._run_applescript(
+            f'tell application "System Events" to keystroke "{key}" using command down'
         )
-        ok, output = self._run_applescript(script)
-        success = ok and output == "clicked"
-        self._log("click_code_tab", {"success": success, "output": output})
-        return success
+        self._log("switch_to_tab", {"tab": tab_name, "key": f"Cmd+{key}", "success": ok})
+
+        if ok and not self.dry_run:
+            time.sleep(0.3)
+
+        return ok
 
     def ensure_code_tab(self) -> bool:
-        """Ensure the Code tab is active. Detect + click if needed.
+        """Ensure the Code tab is active by sending Cmd+3.
 
-        Returns True if Code tab is (or becomes) active.
-        If detection fails (unknown — common when Electron doesn't expose
-        web UI elements to native accessibility), returns True optimistically.
-        The user is expected to have the Code tab open.
+        Always sends the keystroke (idempotent — if already on Code tab,
+        Cmd+3 is a no-op). Returns True if keystroke sent successfully.
+        Requires Claude to be frontmost (call activate_claude() first).
         """
-        tab = self.get_active_tab()
-
-        if tab == "Code":
-            self._log("ensure_code_tab", {"action": "already_active"})
-            return True
-
-        if tab == "unknown":
-            # Electron apps often don't expose tab state to accessibility.
-            # Proceed optimistically — user should have Code tab open.
-            self._log("ensure_code_tab", {
-                "action": "unknown_tab_proceeding",
-                "note": "Electron accessibility limited — assuming Code tab",
-            })
-            return True
-
-        # Detected a non-Code tab (Chat or Cowork) — try to switch
-        self._log("ensure_code_tab", {"action": "switching", "from_tab": tab})
-        result = self.click_code_tab()
-
-        if result:
-            if not self.dry_run:
-                time.sleep(0.3)
-            return True
-
-        # Click failed — still proceed optimistically rather than blocking
+        ok = self.switch_to_tab("Code")
         self._log("ensure_code_tab", {
-            "action": "click_failed_proceeding",
-            "from_tab": tab,
-            "note": "Proceeding despite click failure — user may need to switch manually",
+            "action": "cmd3_sent" if ok else "cmd3_failed",
+            "success": ok,
         })
-        return True
+        return ok
 
     # --- App control ---
 
