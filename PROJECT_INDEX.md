@@ -41,7 +41,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) | 1353 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~8468 tests (~210 suites). All must pass before any work.**
+**Total: ~8524 tests (~211 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -158,11 +158,11 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `cca_autoloop.py` — MT-30 Phase 6+8: CCA auto-loop — reads SESSION_RESUME.md, spawns claude, loops. Production hardened: pre-flight checks, rate limit handling, Terminal.app dialog handling, stale resume detection (116 tests, S126/S128)
 - `start_autoloop.sh` — One-command auto-loop launcher (tmux or foreground, S126)
 - `session_daemon_cca_only.json` — CCA-only daemon config for auto-loop (1 session max, S126)
-- `desktop_automator.py` — MT-22: AppleScript-based Claude.app control (activate, send, close, CPU idle detection, preflight). 66 tests (S132)
-- `desktop_autoloop.py` — MT-22: Self-sustaining desktop loop orchestrator (resume watcher, state tracking, model selection). 49 tests (S132)
+- `desktop_automator.py` — MT-22: AppleScript-based Claude.app control (activate, send, close, CPU idle detection, preflight, Code tab awareness). 85 tests (S132/S136)
+- `desktop_autoloop.py` — MT-22: Self-sustaining desktop loop orchestrator (resume watcher, state tracking, model selection, Code tab awareness). 60 tests (S132/S136)
 - `start_desktop_autoloop.sh` — MT-22: One-command desktop auto-loop launcher (S132)
 - `DESKTOP_AUTOLOOP_SETUP.md` — MT-22: Setup guide (permissions, quick start, troubleshooting)
-- `session_outcome_tracker.py` — MT-10: Session prompt-to-outcome JSONL tracker (planned vs completed, auto-grade, trend analysis, 34 tests, S133)
+- `session_outcome_tracker.py` — MT-10: Session prompt-to-outcome JSONL tracker (planned vs completed, auto-grade, trend analysis, outcome analyzer with pattern detection + recommendations, 62 tests, S133/S136)
 
 **research/** — R&D and tools
 - `ios_project_gen.py` — MT-13: Xcode project generator (SwiftUI + tests)

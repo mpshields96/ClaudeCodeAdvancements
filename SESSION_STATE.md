@@ -3,30 +3,26 @@
 
 ---
 
-## Current State (as of Session 135 — 2026-03-23)
+## Current State (as of Session 136 — 2026-03-23)
 
-**Phase:** Session 135. Test coverage + desktop autoloop trial documentation.
+**Phase:** Session 136. Code tab awareness + session outcome analyzer.
 
-**What was done this session (S135):**
-- **54 tests for standalone report_sidecar.py**: Full coverage of extract(), save(), load(), find_latest(), _sidecar_path(), Kalshi/learning extraction, empty data, corrupt JSON, JSON serialization edge cases. New file: `design-skills/tests/test_report_sidecar_standalone.py`.
-- **8 idle detection tests for desktop_autoloop**: Extended idle triggering exit code 2, min_session_time guard, counter reset on active CPU, file change priority, state tracking (crash counting), 3-consecutive stop, reset on success, CPU log capture.
-- **Desktop autoloop preflight PASSED**: All 4 checks green. Accessibility permission confirmed granted.
-- **Desktop autoloop trial DOCUMENTED**: Critical learning — script must run from external Terminal.app, NOT from within a Claude Code session. Running inside the session it orchestrates creates recursive conflicts. See LEARNINGS.md.
-- **MT-33 Phase 6 verified complete**: All 3 data collectors + differ already have comprehensive TestEdgeCases classes (181 tests across MT-33 modules). No additional hardening needed.
-- **Claude desktop UI documented**: 3-tab layout (Chat/Cowork/Code), always use Code tab, "+ New session" button location, recovery pattern. DESKTOP_AUTOLOOP_SETUP.md updated with ASCII diagram.
-- **Doc drift fixed**: design-skills 1299->1353, total 8406->8468.
-- **Tests**: 210 suites passing. ~8468 total (+62 new). 5 commits.
+**What was done this session (S136):**
+- **Code tab awareness for desktop_automator.py (MT-22)**: 3 new methods — `get_active_tab()`, `click_code_tab()`, `ensure_code_tab()`. Uses AppleScript accessibility tree to detect active radio button in Claude.app's 3-tab bar (Chat/Cowork/Code). `new_conversation()` and `run_loop_iteration()` now ensure Code tab before sending keystrokes. 24 new tests (85 total in suite).
+- **desktop_autoloop.py wired**: `_send_prompt_to_app()` now calls `ensure_code_tab()` after activation, even on first iteration. 4 new tests (60 total in autoloop suite).
+- **Session outcome analyzer (Get Smarter pillar)**: 4 analysis functions added to `session_outcome_tracker.py` — `detect_recurring_blockers`, `detect_task_type_success`, `detect_productivity_trend`, `generate_recommendations`. Reads `session_outcomes.jsonl` and produces actionable insights. CLI: `python3 session_outcome_tracker.py analyze`. 28 new tests.
+- **Matthew directive noted**: Kalshi chat gets read-only access to CCA files for analytical tools.
+- **Tests**: 211 suites passing. ~8524 total (+56 new). 3 commits.
 
 **Next (prioritized — per CCA_PRIME_DIRECTIVE.md):**
-1. **MT-22 SUPERVISED TRIAL**: Run `./start_desktop_autoloop.sh --max-iterations 2` from an EXTERNAL Terminal.app window (not from within Claude Code). Matthew watches. Preflight already passed.
-2. **Update desktop_automator.py**: Add Code tab awareness — verify/click Code tab before Cmd+N. The autoloop must handle landing on Chat or Cowork tab.
-3. **Self-learning improvements** — continue Get Smarter pillar work.
+1. **MT-22 SUPERVISED TRIAL**: Run `./start_desktop_autoloop.sh --max-iterations 2` from an EXTERNAL Terminal.app window (not from within Claude Code). Matthew watches. Preflight already passed. Code tab awareness now built in.
+2. **Wire outcome analyzer into /cca-init**: Show recommendations at session start so each session learns from previous ones.
+3. **Self-learning improvements** — continue Get Smarter pillar: outcome feedback loop, parse planned tasks more accurately (distinguish backlog from committed).
 4. **Explore next MT priorities** — check priority_picker for highest-impact work.
 
-**Matthew S135 directives:**
-- Terminal Accessibility permission is GRANTED — do not re-ask (ever)
-- Desktop autoloop must run from external Terminal, not from within Claude Code session
-- All S134 directives still active (Two Pillars, polybot full access, autoloop P1)
+**Matthew S136 directives:**
+- Kalshi chat allowed read-only access to CCA files for analytical tools (Matthew verbal)
+- All S135 directives still active (Terminal Accessibility GRANTED, external Terminal only, Two Pillars, polybot full access)
 
 ---
 
