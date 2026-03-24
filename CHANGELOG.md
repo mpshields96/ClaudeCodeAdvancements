@@ -3,6 +3,28 @@
 
 ---
 
+## Session 137 — 2026-03-23
+
+**What changed:**
+- `session_outcome_tracker.py`: `format_init_briefing()` + `init-briefing` CLI. Planned task parser scoped to current section (63->4 items fix).
+- `.claude/commands/cca-init.md`: Step 2.95 — session outcome insights at init.
+- `.claude/commands/cca-wrap.md`: Step 9 now writes SESSION_RESUME.md to disk for autoloop.
+- `desktop_automator.py`: `_run_applescript` dry_run returns plausible output. `ensure_code_tab` proceeds optimistically.
+- `tests/test_desktop_automator.py`: Updated 4 tests for new behavior.
+- `tests/test_session_outcome_analyzer.py`: +8 tests for format_init_briefing.
+
+**Why:**
+- Making desktop autoloop production-ready. First real trial revealed Electron accessibility limitation and critical first-iteration Cmd+N skip bug.
+
+**Tests:** 8526/8526 passing (210 suites)
+
+**Lessons:**
+- Electron apps don't expose web UI to macOS accessibility APIs — tab detection via System Events impossible.
+- Autoloop must ALWAYS Cmd+N on first iteration — it runs from external context, not an empty chat.
+- Run trials immediately, fix from failures. Don't over-research before trying.
+
+---
+
 ## Session 135 — 2026-03-23
 
 **What changed:**
