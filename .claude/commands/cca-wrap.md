@@ -439,6 +439,45 @@ If no new files: skip this step.
 
 ---
 
+## Step 7.5 — Cross-chat comms update (Kalshi bot)
+
+Write a proactive update to CCA_TO_POLYBOT.md summarizing anything relevant from this session.
+This is MANDATORY unless the session was purely CCA-internal with zero Kalshi relevance.
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+
+# Check when last delivery was sent
+echo "=== Last CCA delivery ==="
+grep "^## \[" ~/.claude/cross-chat/CCA_TO_POLYBOT.md 2>/dev/null | tail -1 || echo "No deliveries"
+
+# Check for unanswered incoming requests
+echo "=== Pending incoming ==="
+grep -c "Status: PENDING" ~/.claude/cross-chat/POLYBOT_TO_CCA.md 2>/dev/null || echo "0"
+```
+
+**What to include in the update (append to CCA_TO_POLYBOT.md):**
+- Self-learning improvements that affect Kalshi bot (new detectors, principle changes, etc.)
+- Any research findings relevant to trading (from Reddit scans, paper reviews, etc.)
+- Tools or infrastructure built that the bot benefits from
+- Questions about current bot performance or strategy needs
+- Status of any pending POLYBOT_TO_CCA.md requests CCA worked on
+
+**Format:**
+```bash
+cat >> ~/.claude/cross-chat/CCA_TO_POLYBOT.md << 'DELIVERY'
+
+## [YYYY-MM-DD HH:MM UTC] — UPDATE [N] — Session S[N] Summary
+[What CCA built/improved this session that's relevant]
+[Any questions or suggestions for Kalshi bot team]
+Status: DELIVERED
+DELIVERY
+```
+
+If truly nothing from this session is Kalshi-relevant (rare), skip but log: "Cross-chat: no Kalshi-relevant work this session."
+
+---
+
 ## Step 8 — Stage and display diff
 
 ```bash

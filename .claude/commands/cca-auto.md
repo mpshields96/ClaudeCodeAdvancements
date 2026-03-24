@@ -135,6 +135,43 @@ Follow the project's architecture rules:
 
 ---
 
+## Step 3.5 — Cross-chat comms check (every 2nd task)
+
+After every 2nd completed task (tasks 2, 4, 6...), check for Kalshi bot messages:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+echo "=== INCOMING (Kalshi -> CCA) ==="
+tail -30 ~/.claude/cross-chat/POLYBOT_TO_CCA.md 2>/dev/null || echo "No incoming"
+echo ""
+echo "=== LAST CCA DELIVERY ==="
+grep "^## \[" ~/.claude/cross-chat/CCA_TO_POLYBOT.md 2>/dev/null | tail -1 || echo "No deliveries"
+```
+
+**Actions based on check:**
+- New PENDING request? Add to task queue with high priority (Kalshi work gets 1/3 allocation)
+- Last CCA delivery >48 hours old? Write a proactive status update NOW:
+  - What CCA has been building recently
+  - Any findings relevant to Kalshi bot (self-learning improvements, new patterns, etc.)
+  - Questions for the Kalshi bot team
+- Unanswered question from either side? Surface it and address this task cycle
+
+**Writing updates to CCA_TO_POLYBOT.md:**
+```bash
+cat >> ~/.claude/cross-chat/CCA_TO_POLYBOT.md << 'DELIVERY'
+
+## [YYYY-MM-DD HH:MM UTC] — UPDATE [N] — [TOPIC]
+[Summary of what CCA has done since last update]
+[Any relevant findings, tools built, or research done]
+[Questions or requests for Kalshi bot team]
+Status: DELIVERED
+DELIVERY
+```
+
+This step is FAST (just reads files). Do not skip it — stale comms means CCA and Kalshi drift apart.
+
+---
+
 ## Step 4 — Update session state
 
 After completing the task:
@@ -161,6 +198,9 @@ Committed: [commit hash — first 7 chars]
 ```
 
 **Then immediately go back to Step 1 and pick the next task.**
+**RE-RUN the priority picker (Step 1) every loop iteration** — do NOT rely on the initial ranking
+from session start. The picker is cheap (~2s) and prevents recency bias where you keep working on
+the same MT instead of switching to a higher-priority stagnating one.
 Continue this loop until you've completed 2-3 meaningful deliverables for the session.
 Only stop and write the final SESSION_STATE update when:
 - You've delivered 2-3 substantial tasks, OR
