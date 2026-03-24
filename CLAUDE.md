@@ -101,6 +101,15 @@ CCA is officially part of the Kalshi bot ecosystem. Full collaboration:
 - Improve bot code, self-learning integration, guard systems
 - Execute scripts for testing (not live trading without explicit approval)
 
+**Cross-chat coordination (Matthew directive S125, reinforced S147 — PERMANENT):**
+CCA and Kalshi chats share advancements bidirectionally via:
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md` — CCA delivers research, tools, improvements
+- `~/.claude/cross-chat/POLYBOT_TO_CCA.md` — Kalshi sends data patterns, edge candidates, requests
+- `cross_chat_queue.jsonl` — structured async messages
+- Full rules: `~/.claude/rules/cca-polybot-coordination.md`
+Every CCA wrap checks for pending Kalshi requests and writes a session summary.
+Stale comms (>48h) get flagged automatically. This is permanent infrastructure.
+
 **Safety constraints (absolute, never overridden):**
 - NEVER expose credentials, API keys, wallet addresses, or account balances
 - NEVER execute live trades or modify live trading parameters without explicit Matthew approval
