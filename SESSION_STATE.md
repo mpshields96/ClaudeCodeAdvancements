@@ -5,18 +5,19 @@
 
 ## Current State (as of Session 144 — 2026-03-24)
 
-**Phase:** Session 144. Reddit review (9 URLs) + MT-36 Phase 1 + MT-35 Phase 3 + notification cooldown.
+**Phase:** Session 144 COMPLETE. Reddit review (9 URLs) + MT-36 Phases 1-2 + MT-35 Phase 3 + notification cooldown. Grade: A.
 
 **What was done this session (S144):**
-- **Reddit review batch**: 9 URLs reviewed. 3 ADAPT (multi-agent coordination, claude-devtools 252pts, multi-agent orchestration tools), 3 REFERENCE, 1 REFERENCE-PERSONAL, 2 SKIP. All logged to FINDINGS_LOG.md. Key signal: claude-devtools validates F3+F5, per-category token breakdown feeds MT-36.
-- **MT-36 Phase 1 shipped**: `session_timer.py` — per-step timing instrumentation for session lifecycle. SessionTimer with context manager + manual start/stop. 6 categories (init/wrap/test/code/doc/other). Cross-session: JSONL persistence, step averages, category averages, outlier detection. +31 tests.
-- **MT-35 Phase 3 shipped**: ntfy.sh loop health notifications in `session_notifier.py`. `notify_loop_health()` (low-priority periodic ping) + `notify_loop_stopped()` (high-priority on crash). CLI: `loop-health` and `loop-stopped` commands. +13 tests.
-- **Notification cooldown shipped**: 30-minute rate limiter for ntfy.sh (Matthew directive — too many notifications). `CCA_NTFY_COOLDOWN_MIN` env var (default 30). High priority always bypasses. +10 tests.
-- **Cross-chat**: Proactive update to CCA_TO_POLYBOT.md with Reddit intel + status questions.
-- **Tests**: 213 suites passing. 4 commits.
+- **Reddit review batch**: 9 URLs reviewed. 3 ADAPT (multi-agent coordination, claude-devtools 252pts, multi-agent orchestration tools), 3 REFERENCE, 1 REFERENCE-PERSONAL, 2 SKIP. All logged to FINDINGS_LOG.md.
+- **MT-36 Phase 1 shipped**: `session_timer.py` — per-step timing instrumentation. SessionTimer with context manager + manual start/stop. 6 categories. Cross-session JSONL persistence, averages, outlier detection. +31 tests.
+- **MT-36 Phase 2 shipped**: CLI mark/done workflow. start_session/mark_step/done_step/finish_session. Active state in ~/.cca-session-timer-active.json. Auto-closes previous step. +11 tests (42 total).
+- **MT-35 Phase 3 shipped**: ntfy.sh loop health notifications. `notify_loop_health()` + `notify_loop_stopped()`. +13 tests (32 total).
+- **Notification cooldown shipped**: 30-min rate limiter for ntfy.sh (Matthew directive). `CCA_NTFY_COOLDOWN_MIN` env var. High priority bypasses. +10 tests (42 total).
+- **Cross-chat**: Proactive CCA_TO_POLYBOT.md update with Reddit intel + status questions.
+- **Tests**: 213 suites, ~8683 tests passing. 7 commits.
 
 **Next (prioritized):**
-1. **MT-36 Phase 2** — wire session_timer into /cca-init and /cca-wrap to collect real baseline data
+1. **Wire session_timer into /cca-init and /cca-wrap** — add mark/done calls so real timing data accumulates
 2. **MT-35 Phase 4** — keyboard shortcut to pause/resume loop
 3. **Shift+Cmd+O via CoreGraphics keyboard events** — position-independent autoloop fallback
 4. **Study claude-devtools repo** — per-category token breakdown patterns for MT-36 enhancement
@@ -26,6 +27,7 @@
 - Never neglect advancement tips (both CCA and Kalshi bot)
 - Reduce ntfy notification frequency (addressed: 30-min cooldown)
 - Maintain frequent cross-chat comms with Kalshi bot
+- All previous directives still active (Two Pillars, CoreGraphics, polybot full access, XRP ban, CCA first max 50% Kalshi)
 - All previous directives still active (Two Pillars, CoreGraphics, polybot full access, XRP ban, CCA first max 50% Kalshi)
 
 ---

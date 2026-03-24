@@ -2181,3 +2181,26 @@ CLI chat 2:
 - Cross-chat queue is the fastest way to communicate; persistent files (CCA_TO_POLYBOT.md) are the most reliable.
 
 ---
+
+## Session 144 — 2026-03-24
+
+**What changed:**
+- `session_timer.py` (NEW): MT-36 Phases 1-2. Per-step timing instrumentation for session lifecycle. SessionTimer class with context manager, 6 categories, JSONL persistence, cross-session averages, outlier detection. CLI mark/done workflow for live session timing. 42 tests.
+- `context-monitor/session_notifier.py` (MODIFIED): MT-35 Phase 3. Loop health notifications (`notify_loop_health`, `notify_loop_stopped`). 30-minute notification cooldown rate limiter (`CCA_NTFY_COOLDOWN_MIN`). High priority bypasses cooldown. 42 tests (was 19).
+- `FINDINGS_LOG.md` (APPENDED): 9 Reddit review entries (3 ADAPT, 3 REFERENCE, 1 REFERENCE-PERSONAL, 2 SKIP).
+- `CCA_TO_POLYBOT.md` (APPENDED): Proactive status update + Reddit intel relevant to Kalshi.
+- `MASTER_TASKS.md` (MODIFIED): MT-35 Phase 3 marked COMPLETE.
+
+**Why:**
+- MT-36 (Matthew directive S143): systematic measurement of session overhead — where time goes
+- MT-35 Phase 3: loop health visibility without being physically present at the machine
+- Notification cooldown (Matthew directive S144): ntfy.sh was too noisy, had to mute daily
+- Reddit reviews: 9 URLs Matthew queued, strongest signal = claude-devtools (252pts) validating F3+F5
+
+**Tests:** 213 suites, ~8683 tests passing
+
+**Lessons:**
+- Function default parameter capture: `def f(x=GLOBAL_VAR)` captures at definition time, not call time. Use `def f(x=None): if x is None: x = GLOBAL_VAR` for mutable module-level state.
+- Effort scorer threshold tests that hardcode complexity bounds break when the target file grows. Use relative thresholds or wider bounds.
+
+---

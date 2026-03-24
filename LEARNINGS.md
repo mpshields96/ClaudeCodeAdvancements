@@ -559,3 +559,17 @@
 - **First seen:** 2026-03-23 (Session 138) — Matthew directive after Terminal.app approach failed
 - **Last seen:** 2026-03-23
 - **Files:** autoloop_trigger.py, .claude/commands/cca-wrap.md (Step 10)
+
+### Python default parameter capture binds at definition time — Severity: 1 — Count: 1
+- **Anti-pattern:** `def f(state_file: str = COOLDOWN_STATE_FILE)` captures the module-level value when the function is defined. If tests later patch `COOLDOWN_STATE_FILE`, the function still uses the original value.
+- **Fix:** Use `def f(state_file: str = None): if state_file is None: state_file = COOLDOWN_STATE_FILE`. This reads the module-level variable at call time, respecting patches.
+- **First seen:** 2026-03-24 (Session 144) — cooldown tests failed because patched state file wasn't used
+- **Last seen:** 2026-03-24
+- **Files:** context-monitor/session_notifier.py (_check_cooldown, _record_send)
+
+### Effort scorer threshold tests are fragile to file growth — Severity: 1 — Count: 2
+- **Anti-pattern:** `self.assertLess(result.complexity, 40)` — hardcoded threshold breaks when the target file legitimately grows with new features.
+- **Fix:** Use wider thresholds or relative checks (e.g., "complexity should be < 2x the number of functions"). Broke twice this session (40 -> 60 -> 85) as session_notifier.py grew.
+- **First seen:** 2026-03-24 (Session 144)
+- **Last seen:** 2026-03-24
+- **Files:** agent-guard/tests/test_effort_scorer.py (test_session_notifier_improved)
