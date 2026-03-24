@@ -298,11 +298,11 @@ class TestStagnationAlert(unittest.TestCase):
 
     def test_stagnation_alert_detects_aging_mt(self):
         """MTs untouched 5+ sessions should appear in alert."""
-        picker = PriorityPicker(current_session=146)
+        picker = PriorityPicker(current_session=160)
         alert = picker.stagnation_alert()
         # MT-27, MT-9, MT-11, MT-14 are now COMPLETED — should NOT appear
         self.assertNotIn("MT-27", alert)
-        # Active MTs like MT-31, MT-32, MT-7 should be flagged
+        # Active MTs untouched for 5+ sessions should be flagged
         self.assertTrue(len(alert) > 0, "Should have some stagnation warnings")
 
     def test_stagnation_alert_empty_when_all_recent(self):

@@ -398,10 +398,10 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         MasterTask(
             mt_id=32, name="Visual Excellence & Design Engineering",
             base_value=6, status=TaskStatus.ACTIVE,
-            last_touched_session=125, current_session=current_session,
-            phases_completed=4, phases_total=8,  # S125: test_distribution already built. Phase 5: interactive dashboard or new chart types.
+            last_touched_session=148, current_session=current_session,
+            phases_completed=5, phases_total=8,  # S148: Dashboard v2 (dark mode, sortable, search, collapsible). 28 new tests.
             aging_rate=0.5,
-            next_action="Phase 5: Interactive dashboard improvements or new statistical charts for CCA reports.",
+            next_action="Phase 6: Design system v2 (design tokens, lint rules, cross-format consistency).",
             tags=["visual", "reports", "design"],
         ),
         MasterTask(
@@ -436,11 +436,21 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         MasterTask(
             mt_id=36, name="Session Efficiency Optimizer",
             base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=144, current_session=current_session,
-            phases_completed=1, phases_total=5,  # Phase 1 done: session_timer.py (31 tests). Phase 2: analysis.
+            last_touched_session=147, current_session=current_session,
+            phases_completed=3, phases_total=5,  # S147: Phase 2 efficiency_analyzer (32 tests) + Phase 3 batch_wrap_learning (18 tests).
             aging_rate=1.0,
-            next_action="Phase 2: Analyze timing data, identify top 3 time sinks, propose optimizations.",
+            next_action="Phase 4: Kalshi session optimization + deferred analysis in init.",
             tags=["optimization", "efficiency", "crown-jewel"],
+        ),
+        MasterTask(
+            mt_id=37, name="AI Investment Research & Portfolio Intelligence",
+            base_value=5, status=TaskStatus.BLOCKED,
+            last_touched_session=148, current_session=current_session,
+            phases_completed=0, phases_total=7,
+            aging_rate=0.3,  # Low — very long-term, no rush
+            block_reason="Long-term research project — Phase 1 academic survey not yet started",
+            next_action="Phase 1: Deep academic research survey (MPT, factor models, ETF analysis).",
+            tags=["research", "finance", "long-term"],
         ),
         # === BLOCKED ===
         MasterTask(

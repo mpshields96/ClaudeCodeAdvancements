@@ -1482,6 +1482,63 @@ background process. Everything else serves these two axes. See `CCA_PRIME_DIRECT
 
 ---
 
+## MT-37: AI-Driven Investment Research & Portfolio Intelligence (Long-Term)
+
+**Source:** Matthew directive (S148, 2026-03-24) — "need to eventually seek investments/stock long-term safe savings with ETFs whatever the objective recommendation here... CCA developing the ability to look into objective AI algo investing elite level with significant academic research, economic financial data EVERYTHING related to this very long-term conquest"
+
+**What Matthew wants:** A comprehensive, research-heavy capability for CCA to provide objective, academically-grounded investment intelligence. Long-term safe savings via ETFs, index funds, and algorithmic portfolio construction — built on the same rigor standard as the Kalshi bot (structural basis + math validation + backtesting). This is NOT a trading bot — it's a research and recommendation engine for long-term wealth building.
+
+**Core scope (8 pillars):**
+
+1. **Academic Foundation** — Survey the quantitative finance literature: Modern Portfolio Theory, Fama-French factor models, Black-Litterman, risk parity, momentum/value/quality factors, tax-loss harvesting theory. Every recommendation traces to peer-reviewed research. No speculation, no vibes.
+
+2. **ETF/Index Fund Universe** — Build a structured database of ETFs and index funds: expense ratios, tracking error, AUM, sector/geographic exposure, factor loadings. Objective comparison tooling. Eliminate high-fee funds that underperform benchmarks.
+
+3. **Portfolio Construction** — Implement and backtest portfolio allocation strategies: mean-variance optimization, risk parity, equal weight, target-date glide paths, Kelly criterion for long-horizon investing. Compare Sharpe ratios, max drawdown, CAGR across strategies.
+
+4. **Economic Data Integration** — Ingest and analyze macro indicators: Fed funds rate, CPI, GDP, unemployment, yield curve, corporate earnings. Regime detection (expansion/contraction/crisis) that feeds portfolio allocation. Use FRED, BLS, BEA data APIs.
+
+5. **Risk Analysis** — Tail risk measurement (CVaR, VaR), correlation regime shifts, drawdown analysis, sequence-of-returns risk for retirement planning. Monte Carlo simulations for retirement projections. Stress testing against historical crises (2008, 2020, dot-com).
+
+6. **Tax Optimization** — Tax-loss harvesting strategies, Roth vs traditional analysis, asset location optimization (which assets in which account types), capital gains management. Country-specific (US-focused initially).
+
+7. **Reporting & Visualization** — Leverage MT-32 infrastructure for professional portfolio reports, allocation pie charts, historical performance charts, risk dashboards. Make complex financial data accessible.
+
+8. **Self-Learning Integration** — Feed portfolio performance data back into the self-learning pipeline. Track recommendation accuracy over time. Use the same principle_registry/pattern_registry architecture from MT-28.
+
+**What this is NOT:**
+- NOT a day-trading or active trading system (that's the Kalshi bot)
+- NOT financial advice (always disclaim — Matthew makes his own decisions)
+- NOT speculative (no crypto recommendations, no options, no leveraged products unless academically justified)
+- NOT a replacement for a financial advisor (augmentation, not replacement)
+
+**Research needed (EXTENSIVE — this is primarily a research MT):**
+- Academic papers: Fama-French, Carhart 4-factor, AQR research, Vanguard research papers, Dimensional Fund Advisors research
+- Data sources: FRED API, Yahoo Finance, Alpha Vantage, Quandl, SEC EDGAR
+- Existing tools: QuantLib, zipline, backtrader, PyPortfolioOpt, Riskfolio-Lib
+- Books: "A Random Walk Down Wall Street", "The Intelligent Investor", "Quantitative Portfolio Management" (Isichenko), "Expected Returns" (Ilmanen)
+- Subreddits: r/Bogleheads, r/investing, r/financialindependence, r/portfolios, r/quantfinance
+
+**Phased approach (very long-term, no rush):**
+- Phase 1: Deep academic research survey — produce RESEARCH.md with literature review, methodology comparison, factor model summary
+- Phase 2: Data pipeline — FRED API integration, ETF universe builder, basic factor loading calculator
+- Phase 3: Portfolio constructor — implement 3-5 allocation strategies with backtest framework
+- Phase 4: Risk analysis toolkit — VaR/CVaR, Monte Carlo, stress testing
+- Phase 5: Tax optimization layer — asset location, TLH simulation
+- Phase 6: Reporting integration — wire into CCA report/dashboard infrastructure
+- Phase 7: Self-learning feedback loop — track recommendations vs outcomes
+
+**Relationship to existing CCA infrastructure:**
+- Uses self-learning pipeline (MT-28) for outcome tracking
+- Uses design-skills (MT-32) for visualization
+- Uses research infrastructure (paper_scanner.py, paper_digest.py) for academic papers
+- Leverages Kalshi bot experience with probability, Kelly criterion, regime detection
+- Cross-chat coordination: investment insights may inform Kalshi macro regime detector
+
+**Status:** IDEA LOGGED (S148) — Long-term, research-first. Do NOT start building until Phase 1 research is complete. No rush — Matthew directive.
+
+---
+
 ### Scoring Rules
 
 1. **After working on a task:** Update `get_known_tasks()` in `priority_picker.py`, run `python3 priority_picker.py table`.
