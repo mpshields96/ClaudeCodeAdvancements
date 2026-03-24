@@ -389,15 +389,20 @@ class DesktopAutomator:
         return ok
 
     def new_conversation(self) -> bool:
-        """Start a new conversation (Cmd+N).
+        """Start a new conversation (Cmd+N) on the Code tab.
 
-        Safety: ensures Code tab is active first, then only sends
-        keystroke if Claude is frontmost.
+        Sends Cmd+3 (Code tab) with a settling delay, then Cmd+N.
+        Electron apps need time to process tab switches before
+        accepting new-conversation shortcuts on the correct tab.
         """
-        # Ensure we're on the Code tab before creating a new conversation
+        # Step 1: Switch to Code tab
         if not self.ensure_code_tab():
             self._log("new_conversation_failed", {"reason": "code_tab_unreachable"})
             return False
+
+        # Step 2: Wait for tab switch to settle (Electron rendering)
+        if not self.dry_run:
+            time.sleep(0.5)
 
         frontmost = self.get_frontmost_app()
         if APP_NAME.lower() not in frontmost.lower():
@@ -407,9 +412,19 @@ class DesktopAutomator:
             )
             return False
 
+        # Step 3: Send Cmd+N for new conversation
         ok, _ = self._run_applescript(
             'tell application "System Events" to keystroke "n" using command down'
         )
+
+        # Step 4: Send Cmd+3 again after Cmd+N as safety belt
+        # (Cmd+N on Chat tab opens Chat session — this corrects it)
+        if ok and not self.dry_run:
+            time.sleep(0.3)
+            self._run_applescript(
+                'tell application "System Events" to keystroke "3" using command down'
+            )
+
         self._log("new_conversation", {"success": ok})
         return ok
 
