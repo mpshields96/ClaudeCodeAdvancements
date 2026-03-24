@@ -3,28 +3,29 @@
 
 ---
 
-## Current State (as of Session 150 — 2026-03-24)
+## Current State (as of Session 151 — 2026-03-24)
 
-**Phase:** Session 150 COMPLETE. Autoloop resilience fix, MT-10 convergence wiring, CCA report hard audit + fixes, report regenerated. 4 commits. Grade: A.
+**Phase:** Session 151 COMPLETE. REQ-027 Kalshi scripts (3 new tools, 95 tests), report differ integration, autoloop re-enabled, active cross-chat coordination. 2 commits (CCA) + 1 commit (polybot). Grade: A.
 
-**What was done this session (S150):**
-- **Autoloop stop hook** (autoloop_stop_hook.py): Fire-and-forget Stop hook that spawns the next CCA session even when context exhaustion kills /cca-wrap before Step 10. Breadcrumb anti-double-fire. Wired into settings.local.json. 27 new tests. Also updated autoloop_trigger.py to write breadcrumb on success.
-- **MT-10 Growth — convergence wiring**: Wired convergence_detector into reflect.py (check_improvement_convergence from trace scores + proposal outcomes, shown in reflect output) and improver.py (Improver.check_convergence + get_convergence_summary). 12 new tests.
-- **CCA Report hard audit**: Full 29-page review identifying 18 concrete issues. Fixed 4 critical bugs: (1) clipped frontier chart labels via dynamic margin, (2) raw Typst code in output (missing # prefix), (3) "No data" chart placeholders replaced with invisible SVGs, (4) infrastructure noise filtered from self-learning charts. Regenerated report (436.6 KB).
-- **Report generated**: CCA_STATUS_REPORT_2026-03-24.pdf with fixes applied. Sidecar archived.
-- **Tests**: 220 suites, ~8888 tests (+39 new: 27 stop hook + 12 convergence). 0 regressions. 4 commits.
+**What was done this session (S151):**
+- **REQ-027 DELIVERED** (polybot repo): edge_stability.py (40 tests), synthetic_bet_generator.py (28 tests), monte_carlo_simulator.py (27 tests). Theil-Sen slopes, CUSUM proximity, Monte Carlo forward projection, synthetic bet generation. All stdlib-only, read-only DB.
+- **Report differ integration** (MT-32): Wired report_differ.py into report_generator.py pipeline. Added "Since Last Report" section to Typst template showing delta badges (tests/LOC/commits/MTs), MT transitions, Kalshi P&L changes. Correct Typst syntax (code-mode nesting).
+- **TODAYS_TASKS.md**: Cross-session task manifest for all CCA chats today (K1-K4 Kalshi, C1-C6 CCA).
+- **Autoloop re-enabled**: Flag file created, stale breadcrumb cleared, trigger verified ready.
+- **Cross-chat coordination**: 3 CCA_TO_POLYBOT deliveries (REQ-027 + Topics A-D, REQ-030 convergence spec, REQ-031 synthetic validation). Responded to all open Kalshi requests.
+- **Tests**: 220 suites, ~8867 tests (+95 new in polybot). 1 env-dependent failure (autoloop flag file present = correct).
 
-**Next (report audit remaining + priorities):**
-1. **MT-32 Report improvements** — TOC page numbers, cover title fix, MT phase tracking contradictions, trend/delta section (report_differ integration), MT section condensing
-2. **MT-22 Desktop Electron** — Phase 4: supervised trial (needs Matthew present)
-3. **MT-0 Growth** [8] — Wire principle_registry into live Kalshi bet decisions
-4. **MT-35 Phase 4** — Keyboard shortcut pause/resume for autoloop
+**Next (from TODAYS_TASKS.md):**
+1. **K2: Process academic research results** — FLB non-sports, sequential testing, Kelly correlated (agent output pending)
+2. **C2: Report visual enhancement deep exploration** — style, charts, content improvements
+3. **MT-32 remaining** — TOC page numbers, cover title fix, MT section condensing
+4. **Continue Kalshi cross-chat coordination** — check POLYBOT_TO_CCA.md for new requests
 
-**Matthew S150 directives:**
-- Spend sessions on visual design/graphics/UI/reports — seek advancements
-- Hard audit of CCA report style, format, content — DONE (18 issues identified, 4 fixed)
-- Report should be visually nice AND something you learn from or profit from
-- Stop autoloop for tonight — DONE (disabled)
+**Matthew S151 directives (TODAYS_TASKS.md is authoritative):**
+- 50%+ time on Kalshi bot work (higher priority)
+- Frequent comms with Kalshi main chat
+- Report visual enhancement research
+- Autoloop firing correctly — DONE (re-enabled)
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
 
 ---
