@@ -43,7 +43,7 @@
     master_tasks_pending: (),
     hooks: (),
     intelligence: (findings_total: 289, build: 19, adapt: 51, reference: 104, reference_personal: 13, skip: 32, other: 26, subreddits_scanned: 7, github_repos_evaluated: 30),
-    self_learning: (strategies_total: 10, strategies_confirmed: 4, proposals: 6, trace_sessions: 31, avg_score: 70, papers_logged: 21, sentinel_rate: "5-10%"),
+    self_learning: (principles_total: 65, principles_avg_score: 0.50, sentinel_rate: "0%", journal_sessions: 105, journal_wins: 72, journal_pains: 53, papers_logged: 21, research_deliveries: 0, research_implemented: 0, research_profitable: 0, research_profit_cents: 0),
     risks: (),
     next_priorities: (),
     architecture_decisions: (),
@@ -184,7 +184,7 @@
     #text(size: 8pt, fill: light, tracking: 2.5pt, weight: "semibold")[PROJECT STATUS REPORT]
   ]
   #v(6mm)
-  #text(size: 38pt, weight: "bold", fill: black, tracking: -0.5pt)[ClaudeCode]
+  #text(size: 38pt, weight: "bold", fill: black, tracking: -0.5pt)[Claude Code]
   #v(-2mm)
   #text(size: 38pt, weight: "bold", fill: black, tracking: -0.5pt)[Advancements]
   #v(8mm)
@@ -934,14 +934,32 @@
   v(3mm)
 }
 
-// Group: Complete
+// Group: Complete (condensed — one line per task to save space)
 #if data.master_tasks_complete.len() > 0 {
   text(size: 12pt, weight: "bold", fill: black)[Completed]
   v(1mm)
   text(size: 8pt, fill: light)[#data.master_tasks_complete.len() tasks delivered]
   v(3mm)
   for task in data.master_tasks_complete {
-    task-card(task)
+    box(
+      width: 100%,
+      fill: wash,
+      radius: 4pt,
+      inset: (x: 10pt, y: 6pt),
+    )[
+      #grid(
+        columns: (auto, 1fr, auto, auto),
+        column-gutter: 8pt,
+        align: (left, left, right, right),
+        text(size: 8pt, font: "Menlo", fill: light)[#task.id],
+        text(size: 9pt, weight: "semibold", fill: dark)[#task.name],
+        if task.keys().contains("test_count") and task.test_count > 0 {
+          text(size: 7.5pt, fill: green)[#sym.checkmark #task.test_count tests]
+        },
+        status-badge("Complete", green),
+      )
+    ]
+    v(2pt)
   }
 }
 
@@ -1105,12 +1123,23 @@
     #text(size: 10pt, weight: "bold", fill: black)[Self-Learning System]
     #v(3mm)
 
-    #kv-row("Strategies", [#data.self_learning.strategies_total total (#data.self_learning.strategies_confirmed confirmed)])
-    #kv-row("Proposals", [#data.self_learning.proposals (all LOW risk)])
-    #kv-row("Trace Sessions", [#data.self_learning.trace_sessions analyzed])
-    #kv-row("Avg Score", [#data.self_learning.avg_score / 100])
-    #kv-row("Papers Logged", str(data.self_learning.papers_logged), highlight: true)
-    #kv-row("Sentinel Rate", data.self_learning.sentinel_rate)
+    // Dynamic fields with fallbacks for older JSON data
+    #let sl = data.self_learning
+    #if sl.keys().contains("principles_total") {
+      kv-row("Principles", [#sl.principles_total active (avg score: #sl.principles_avg_score)])
+      kv-row("Journal Sessions", [#sl.journal_sessions tracked])
+      kv-row("Wins / Pains", [#sl.journal_wins / #sl.journal_pains])
+    } else {
+      // Legacy fields
+      kv-row("Strategies", [#sl.strategies_total total (#sl.strategies_confirmed confirmed)])
+      kv-row("Trace Sessions", [#sl.trace_sessions analyzed])
+      kv-row("Avg Score", [#sl.avg_score / 100])
+    }
+    #kv-row("Papers Logged", str(sl.papers_logged), highlight: true)
+    #kv-row("Sentinel Rate", sl.sentinel_rate)
+    #if sl.keys().contains("research_deliveries") and sl.research_deliveries > 0 {
+      kv-row("Research ROI", [#sl.research_deliveries deliveries, #sl.research_profitable profitable], highlight: true)
+    }
 
     #v(2mm)
     #text(size: 7pt, fill: light)[

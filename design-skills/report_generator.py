@@ -461,12 +461,61 @@ class CCADataCollector:
     # ── Self-learning data ──────────────────────────────────────────────
 
     def collect_self_learning(self):
-        """Collect self-learning system metrics."""
+        """Collect self-learning system metrics dynamically from real data files."""
+        # Papers from papers.jsonl
         papers_path = os.path.join(self.project_root, "self-learning", "research", "papers.jsonl")
         papers = 0
         if os.path.exists(papers_path):
             with open(papers_path) as f:
                 papers = sum(1 for line in f if line.strip())
+
+        # Journal metrics: event counts, unique sessions, wins/pains
+        journal_path = os.path.join(self.project_root, "self-learning", "journal.jsonl")
+        journal_sessions = set()
+        wins = 0
+        pains = 0
+        if os.path.exists(journal_path):
+            with open(journal_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                        sid = entry.get("session_id") or (entry.get("data") or {}).get("session_id")
+                        if sid:
+                            journal_sessions.add(sid)
+                        etype = entry.get("event_type", "")
+                        if etype == "win":
+                            wins += 1
+                        elif etype == "pain":
+                            pains += 1
+                    except (json.JSONDecodeError, KeyError):
+                        continue
+
+        # Principles from principles.jsonl
+        principles_path = os.path.join(self.project_root, "self-learning", "principles.jsonl")
+        principles_total = 0
+        principle_scores = []
+        sentinel_count = 0
+        if os.path.exists(principles_path):
+            with open(principles_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        p = json.loads(line)
+                        principles_total += 1
+                        if "score" in p:
+                            principle_scores.append(p["score"])
+                        if "sentinel" in str(p.get("source", "")).lower():
+                            sentinel_count += 1
+                    except (json.JSONDecodeError, KeyError):
+                        continue
+
+        avg_principle_score = sum(principle_scores) / len(principle_scores) if principle_scores else 0
+        sentinel_pct = f"{sentinel_count / principles_total * 100:.0f}%" if principles_total > 0 else "0%"
 
         # Research outcomes ROI data
         outcomes_path = os.path.join(self.project_root, "self-learning", "research_outcomes.jsonl")
@@ -477,23 +526,26 @@ class CCADataCollector:
                     line = line.strip()
                     if not line:
                         continue
-                    entry = json.loads(line)
-                    research_roi["total"] += 1
-                    if entry.get("status") in ("implemented", "profitable", "unprofitable"):
-                        research_roi["implemented"] += 1
-                    if entry.get("status") == "profitable":
-                        research_roi["profitable"] += 1
-                    if entry.get("profit_impact_cents"):
-                        research_roi["profit_cents"] += entry["profit_impact_cents"]
+                    try:
+                        entry = json.loads(line)
+                        research_roi["total"] += 1
+                        if entry.get("status") in ("implemented", "profitable", "unprofitable"):
+                            research_roi["implemented"] += 1
+                        if entry.get("status") == "profitable":
+                            research_roi["profitable"] += 1
+                        if entry.get("profit_impact_cents"):
+                            research_roi["profit_cents"] += entry["profit_impact_cents"]
+                    except (json.JSONDecodeError, KeyError):
+                        continue
 
         return {
-            "strategies_total": 10,
-            "strategies_confirmed": 4,
-            "proposals": 6,
-            "trace_sessions": 31,
-            "avg_score": 70,
+            "principles_total": principles_total,
+            "principles_avg_score": round(avg_principle_score, 2),
+            "sentinel_rate": sentinel_pct,
+            "journal_sessions": len(journal_sessions),
+            "journal_wins": wins,
+            "journal_pains": pains,
             "papers_logged": papers,
-            "sentinel_rate": "5-10%",
             "research_deliveries": research_roi["total"],
             "research_implemented": research_roi["implemented"],
             "research_profitable": research_roi["profitable"],
@@ -786,12 +838,8 @@ class CCADataCollector:
                 "detail": "; ".join(f"{t['id']}: {t['name']}" for t in blocked),
             })
 
-        # 5. Self-learning metrics hardcoded
-        criticisms.append({
-            "title": "Self-learning metrics partially hardcoded",
-            "severity": "debt",
-            "detail": "Strategy count, proposal count, and avg score are hardcoded in the data collector rather than dynamically parsed from journal/strategy files.",
-        })
+        # 5. Self-learning metrics — RESOLVED S153
+        # Previously hardcoded; now dynamically parsed from principles.jsonl, journal.jsonl, papers.jsonl
 
         # 6. Kalshi integration gap
         criticisms.append({

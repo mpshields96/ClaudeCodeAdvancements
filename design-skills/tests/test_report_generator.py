@@ -84,11 +84,15 @@ class TestDataCollector(unittest.TestCase):
         self.assertEqual(intel["build"], 0)
 
     def test_collect_self_learning(self):
-        """Returns self-learning metrics."""
+        """Returns self-learning metrics dynamically from data files."""
         from report_generator import CCADataCollector
         collector = CCADataCollector(project_root="/tmp/fake_nonexistent")
         sl = collector.collect_self_learning()
-        self.assertIn("strategies_total", sl)
+        self.assertIn("principles_total", sl)
+        self.assertIn("principles_avg_score", sl)
+        self.assertIn("journal_sessions", sl)
+        self.assertIn("journal_wins", sl)
+        self.assertIn("journal_pains", sl)
         self.assertIn("papers_logged", sl)
         self.assertIn("sentinel_rate", sl)
 
