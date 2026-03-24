@@ -185,7 +185,7 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
 
     IMPORTANT: Update last_touched_session every time an MT is worked on.
     Stale values here cause the priority picker to give bad recommendations.
-    Last registry update: S131 (2026-03-23).
+    Last registry update: S147 (2026-03-24).
 
     Priority tiers (from Matthew's S130 CCA Report 3-22 notes):
       Crown Jewels (base 9-10): MT-10, MT-0, MT-26, MT-22, MT-28, MT-27
@@ -217,9 +217,9 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             mt_id=22, name="Desktop Electron app automation",
             base_value=10, status=TaskStatus.ACTIVE,
             last_touched_session=142, current_session=current_session,
-            phases_completed=0, phases_total=4,
+            phases_completed=3, phases_total=4,  # S132-S142: desktop_automator, desktop_autoloop, autoloop_trigger built. Phase 4: supervised trial.
             aging_rate=1.0,
-            next_action="Research: how to automate Claude Code desktop Electron app (AppleScript, Accessibility API, CLI pipe). Terminal autoloop is stepping stone.",
+            next_action="Phase 4: Supervised trial of desktop autoloop — validate reliability in production.",
             tags=["autonomy", "desktop", "crown-jewel"],
         ),
         MasterTask(
@@ -271,11 +271,11 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         # === GROWTH ===
         MasterTask(
             mt_id=7, name="Code Health / Trace Analyzer",
-            base_value=5, status=TaskStatus.ACTIVE,
+            base_value=5, status=TaskStatus.COMPLETED,
             last_touched_session=125, current_session=current_session,
-            phases_completed=2, phases_total=4,
-            aging_rate=0.5,
-            next_action="Phase 3: Session-level health scoring. Trace analyzer + batch report built.",
+            phases_completed=4, phases_total=4,  # COMPLETE: trace_analyzer.py + batch_report.py, 50 tests
+            aging_rate=0,
+            next_action="COMPLETE. trace_analyzer.py + batch_report.py built and validated.",
             tags=["quality", "self-learning"],
         ),
         # === ARCHIVED (stagnation resolver recommended, S100) ===
@@ -425,11 +425,20 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         MasterTask(
             mt_id=35, name="Background Autoloop (non-intrusive desktop loop)",
             base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=142, current_session=current_session,
-            phases_completed=0, phases_total=4,
+            last_touched_session=144, current_session=current_session,
+            phases_completed=3, phases_total=4,  # S142-S144: Phases 1-3 done (save/restore, notification, keyboard shortcut)
             aging_rate=1.0,
-            next_action="Phase 1: Save/restore frontmost app around autoloop trigger (AppleScript).",
+            next_action="Phase 4: Keyboard shortcut to pause/resume loop.",
             tags=["autonomy", "desktop", "crown-jewel"],
+        ),
+        MasterTask(
+            mt_id=36, name="Session Efficiency Optimizer",
+            base_value=8, status=TaskStatus.ACTIVE,
+            last_touched_session=144, current_session=current_session,
+            phases_completed=1, phases_total=5,  # Phase 1 done: session_timer.py (31 tests). Phase 2: analysis.
+            aging_rate=1.0,
+            next_action="Phase 2: Analyze timing data, identify top 3 time sinks, propose optimizations.",
+            tags=["optimization", "efficiency", "crown-jewel"],
         ),
         # === BLOCKED ===
         MasterTask(
