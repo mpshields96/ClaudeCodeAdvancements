@@ -322,10 +322,10 @@ class TestCloseWindow(unittest.TestCase):
 class TestNewConversation(unittest.TestCase):
     """Test new conversation (Cmd+N)."""
 
+    @patch.object(DesktopAutomator, "click_new_session_button", return_value=True)
     @patch.object(DesktopAutomator, "ensure_code_tab", return_value=True)
     @patch.object(DesktopAutomator, "get_frontmost_app", return_value="Claude")
-    @patch.object(DesktopAutomator, "_run_applescript", return_value=(True, ""))
-    def test_starts_new_conversation(self, mock_as, mock_front, mock_ensure):
+    def test_starts_new_conversation(self, mock_front, mock_ensure, mock_btn):
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
             self.assertTrue(da.new_conversation())
@@ -794,15 +794,16 @@ class TestEnsureCodeTab(unittest.TestCase):
 class TestNewConversationWithCodeTab(unittest.TestCase):
     """Test that new_conversation uses Code tab awareness."""
 
+    @patch.object(DesktopAutomator, "click_new_session_button", return_value=True)
     @patch.object(DesktopAutomator, "ensure_code_tab", return_value=True)
     @patch.object(DesktopAutomator, "get_frontmost_app", return_value="Claude")
-    @patch.object(DesktopAutomator, "_run_applescript", return_value=(True, ""))
-    def test_ensures_code_tab_before_cmd_n(self, mock_as, mock_front, mock_ensure):
+    def test_ensures_code_tab_before_new_session(self, mock_front, mock_ensure, mock_btn):
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
             result = da.new_conversation()
             self.assertTrue(result)
             mock_ensure.assert_called_once()
+            mock_btn.assert_called_once()
 
     @patch.object(DesktopAutomator, "ensure_code_tab", return_value=False)
     def test_fails_if_code_tab_unreachable(self, mock_ensure):

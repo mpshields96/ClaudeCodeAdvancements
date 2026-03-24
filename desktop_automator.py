@@ -48,6 +48,12 @@ TAB_WIDTH = 65           # approximate width per tab
 # Offsets from window center X to each tab center:
 TAB_OFFSETS = {"Chat": -65, "Cowork": 0, "Code": 65}
 
+# "+ New session" button geometry (top-left sidebar on Code tab)
+# Calibrated via live cursor sweep with Matthew (S140).
+# Button is in the left sidebar, below the tab bar.
+NEW_SESSION_BTN_X_OFFSET = 70   # from window left edge to button center
+NEW_SESSION_BTN_Y_OFFSET = 60   # from window top edge to button center (39+60=99)
+
 
 # --- CoreGraphics mouse click (ctypes) ---
 
@@ -592,17 +598,58 @@ class DesktopAutomator:
         self._log("close_window", {"success": ok})
         return ok
 
+    def get_new_session_button_coordinates(self) -> Optional[Tuple[float, float]]:
+        """Calculate screen coordinates for the '+ New session' button.
+
+        The button is in the top-left sidebar, visible on the Code tab.
+        Returns (x, y) screen coordinates in points, or None on error.
+        """
+        geom = self.get_window_geometry()
+        if geom is None:
+            if self.dry_run:
+                return (70.0, 90.0)
+            return None
+
+        win_x, win_y, win_w, win_h = geom
+        btn_x = win_x + NEW_SESSION_BTN_X_OFFSET
+        btn_y = win_y + NEW_SESSION_BTN_Y_OFFSET
+        return (btn_x, btn_y)
+
+    def click_new_session_button(self) -> bool:
+        """Click the '+ New session' button using CoreGraphics.
+
+        This replaces Cmd+N which Electron intercepts and routes to Chat.
+        The button is only visible/functional on the Code tab.
+
+        Returns True if the click was posted successfully.
+        """
+        coords = self.get_new_session_button_coordinates()
+        if coords is None:
+            self._log("click_new_session_failed", {"reason": "no_coordinates"})
+            return False
+
+        x, y = coords
+        if self.dry_run:
+            self._log("click_new_session_dry_run", {"x": x, "y": y})
+            return True
+
+        ok = cg_click_at(x, y)
+        self._log("click_new_session", {
+            "x": x, "y": y, "success": ok,
+            "method": "CoreGraphics",
+        })
+        return ok
+
     def new_conversation(self) -> bool:
-        """Start a new conversation (Cmd+N) on the Code tab.
+        """Start a new conversation on the Code tab.
+
+        Uses CoreGraphics clicks ONLY — no AppleScript keystrokes.
+        Electron intercepts programmatic Cmd+N and routes to Chat (S140).
 
         Steps:
-        1. Click Code tab via CoreGraphics (ensure correct tab)
+        1. Click Code tab (CoreGraphics) — ensure correct tab
         2. Wait for Electron to settle
-        3. Cmd+N to open new conversation
-        4. Click Code tab again as safety belt (in case Cmd+N
-           opened on wrong tab)
-
-        Normally we're already on Code tab, so step 1 is a no-op.
+        3. Click '+ New session' button (CoreGraphics) — NOT Cmd+N
         """
         # Step 1: Ensure Code tab via CoreGraphics click
         if not self.ensure_code_tab():
@@ -621,17 +668,10 @@ class DesktopAutomator:
             )
             return False
 
-        # Step 3: Send Cmd+N for new conversation
-        ok, _ = self._run_applescript(
-            'tell application "System Events" to keystroke "n" using command down'
-        )
+        # Step 3: Click "+ New session" button (CoreGraphics, NOT Cmd+N)
+        ok = self.click_new_session_button()
 
-        # Step 4: Click Code tab again as safety belt
-        if ok and not self.dry_run:
-            time.sleep(0.3)
-            self.click_tab("Code")
-
-        self._log("new_conversation", {"success": ok})
+        self._log("new_conversation", {"success": ok, "method": "CoreGraphics_button_click"})
         return ok
 
     # --- Pre-flight ---
