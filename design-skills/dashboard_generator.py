@@ -895,7 +895,7 @@ def _collect_project_data() -> DashboardData:
                 in_module_table = False
 
         # Extract total test count from "Total: NNNN tests" line
-        total_match = _re.search(r"\*\*Total:\s*([\d,]+)\s*tests\s*\((\d+)\s*suites\)", content)
+        total_match = _re.search(r"\*\*Total:\s*~?([\d,]+)\s*tests\s*\(~?(\d+)\s*suites\)", content)
         if total_match:
             total_tests = int(total_match.group(1).replace(",", ""))
             total_suites = int(total_match.group(2))
