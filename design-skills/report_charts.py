@@ -490,6 +490,11 @@ class ReportChartGenerator:
                 "learning_apf_trend": self.learning_apf_trend(data),
                 "learning_domain_distribution": self.learning_domain_distribution(data),
             })
+        # Replace empty "No data" charts with a minimal invisible SVG
+        # so Typst embed-chart() calls don't error on missing files
+        _invisible = '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>'
+        charts = {k: (v if "No data</text>" not in v else _invisible)
+                  for k, v in charts.items()}
         return charts
 
     def save_all(self, data):

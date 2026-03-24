@@ -172,8 +172,10 @@ class LearningDataCollector:
         """BarChart data: journal event type distribution."""
         stats = self.get_journal_stats()
         counts = stats["event_counts"]
-        # Filter out 'unknown' and sort by count
-        filtered = {k: v for k, v in counts.items() if k != "unknown"}
+        # Filter out infrastructure noise — these dominate charts but aren't learning events
+        noise_types = {"unknown", "context_monitor_alert", "compact_anchor", "meter_update",
+                       "hook_fired", "queue_check"}
+        filtered = {k: v for k, v in counts.items() if k not in noise_types}
         sorted_items = sorted(filtered.items(), key=lambda x: -x[1])
         return {
             "labels": [item[0] for item in sorted_items],

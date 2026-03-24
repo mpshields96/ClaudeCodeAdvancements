@@ -949,7 +949,7 @@
 )
 #v(3mm)
 // Hook distribution chart
-embed-chart("hook_coverage", width: 60%)
+#embed-chart("hook_coverage", width: 60%)
 
 #v(5mm)
 

@@ -795,7 +795,9 @@ def _render_horizontal_bar_chart(chart: HorizontalBarChart) -> str:
 
     margin_top = 40 if chart.title else 20
     margin_bottom = 20
-    margin_left = 120  # Space for labels
+    # Dynamic left margin: ~6px per character at font_size=10, min 120
+    max_label_len = max((len(str(label)) for label, _ in chart.data), default=10)
+    margin_left = max(120, int(max_label_len * 6.2) + 16)
     margin_right = 60 if chart.show_values else 20
     plot_w = chart.width - margin_left - margin_right
     plot_h = chart.height - margin_top - margin_bottom
