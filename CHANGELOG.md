@@ -2225,3 +2225,30 @@ CLI chat 2:
 - Priority picker stale status is a recurring pattern — may need automated cross-check against MASTER_TASKS.md
 
 ---
+
+## Session 148 — 2026-03-24
+
+**What changed:**
+- `design-skills/dashboard_generator.py`: Dashboard v2 — dark mode toggle (CSS custom properties + localStorage), sortable task table, module search filter, collapsible sections, --theme CLI flag. Fixed total test count regex for tilde-prefixed numbers.
+- `design-skills/tests/test_dashboard_v2.py`: 28 new tests for v2 features.
+- `MASTER_TASKS.md`: MT-37 (AI Investment Research & Portfolio Intelligence) documented — 8 pillars, 7 phases, long-term research MT.
+- `priority_picker.py`: MT-37 added (blocked/long-term), MT-32 updated (Phase 5 done), MT-36 updated (Phases 2-3 done). Stagnation test adjusted for current registry.
+- `MT36_KALSHI_ANALYSIS.md`: New file — Kalshi session optimization analysis. Verdict: already optimized.
+- `PROJECT_INDEX.md`, `ROADMAP.md`: Doc drift fixed — test counts corrected (8468->8779).
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md`: Reddit intel on CF Benchmarks BRTI + synthesis.trade API assessment + correction.
+- `FINDINGS_LOG.md`: Logged r/PredictionsMarkets crypto price provider review.
+
+**Why:**
+- MT-32 Phase 5 was top priority (score 10.0). Dashboard needed interactivity for Matthew's use.
+- MT-37 planted per Matthew directive for long-term investment research capability.
+- MT-36 Phase 4 needed to assess Kalshi sessions — found they're already lean.
+- Doc drift was caught by doc_drift_checker and fixed.
+
+**Tests:** 217/217 suites passing (~8779 tests)
+
+**Lessons:**
+- Dashboard test count regex must handle optional tilde prefix (~8779 vs 8779)
+- Kalshi sessions are already well-optimized — CCA was the correct MT-36 optimization target
+- synthesis.trade is a prediction market aggregator, NOT a CF Benchmarks data provider
+
+---

@@ -5,26 +5,28 @@
 
 ## Current State (as of Session 148 — 2026-03-24)
 
-**Phase:** Session 148 IN PROGRESS. MT-32 Phase 5 COMPLETE, MT-36 Phase 4 analyzed, MT-37 documented, Reddit intel delivered. 7 commits.
+**Phase:** Session 148 COMPLETE. MT-32 Phase 5, MT-36 Phase 4, MT-37, Reddit intel, doc fixes. 8 commits. Grade: A.
 
 **What was done this session (S148):**
 - **MT-32 Phase 5 — Dashboard v2**: Dark mode toggle (CSS custom properties + localStorage), sortable task table (click headers), module search/filter, collapsible sections with chevrons, --theme CLI flag. 28 new tests (test_dashboard_v2.py). 0 regressions.
 - **MT-37 documented**: AI Investment Research & Portfolio Intelligence — long-term MT per Matthew directive. 7 phases, research-first. Added to MASTER_TASKS.md and priority_picker.py.
-- **MT-36 Phase 4 analysis**: Kalshi sessions already optimized. CCA was the correct target (Phases 1-3). Analysis document written.
+- **MT-36 Phase 4 analysis**: Kalshi sessions already optimized. CCA was the correct target (Phases 1-3). Analysis document written (MT36_KALSHI_ANALYSIS.md).
 - **Reddit intel**: r/PredictionsMarkets — CF Benchmarks BRTI confirmed. synthesis.trade API investigated (prediction market aggregator, not CF Benchmarks source). Corrected assessment delivered to CCA_TO_POLYBOT.
 - **Doc drift fixed**: Test counts corrected across PROJECT_INDEX and ROADMAP (context-monitor 411->434, self-learning 1859->1885, design-skills 1353->1381, total 8468->8779).
-- **Dashboard regex fix**: Total test count regex now handles tilde-prefixed numbers.
+- **Dashboard regex fix**: Total test count regex now handles tilde-prefixed numbers (~8779 format).
 - **Priority picker updates**: MT-32 Phase 5 done, MT-36 Phases 2-3 done, MT-37 added.
-- **Tests**: 217 suites, ~8779 tests. 7 commits.
+- **Tests**: 217 suites, ~8779 tests. 8 commits.
 
-**Next (prioritized by priority picker):**
-1. **MT-22 Desktop Electron** — Phase 4: supervised trial (score 2.0, near complete)
-2. **MT-35 Background Autoloop** — Phase 4: keyboard shortcut pause/resume
-3. **MT-36 Session Efficiency** — Phase 4: Kalshi session optimization
+**Next (prioritized — Matthew S148 directive):**
+1. **Nuclear reddit/github scan** — multiple subs 5-6 days stale, Matthew explicitly requested
+2. **Advance completed MTs** — self-learning (MT-10/28), nuclear v2 (MT-27), reddit intel (MT-9)
+3. **MT-22 Desktop Electron** — Phase 4: supervised trial (needs Matthew present)
+4. **MT-37 Phase 1** — Long-term: begin academic research survey (no rush)
 
 **Matthew S148 directives:**
 - MT-37: Long-term AI algo investing research — no rush, plant the seed
-- Reddit review on Kalshi crypto price provider
+- Nuclear reddit/github scans + advancing self-learning
+- Look at old dusty MTs, advance completed MTs
 - All previous directives still active (Two Pillars, priority picker, cross-chat comms, session longevity, polybot full access)
 
 ---
