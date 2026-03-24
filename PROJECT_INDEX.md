@@ -125,6 +125,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `kalshi_data_collector.py` — MT-33: Read-only Kalshi bot DB analytics (trades, strategies, P&L, bankroll). 8 chart-ready methods. 48 tests (S122/S123).
 - `learning_data_collector.py` — MT-33: Self-learning intelligence (journal events, APF trend, domain distribution). 3 chart methods. 29 tests (S122/S123).
 - `report_differ.py` — MT-33 Phase 6: Structured diff between two report sidecars (test growth, MT transitions, Kalshi P&L, APF). 30 tests (S123).
+- `report_sidecar.py` — MT-33 Phase 5: JSON export alongside PDF (extract, save, load, find_latest). S134.
 - `MT33_DATA_MAPPING.md` — Schema mapping, SQL queries, chart-to-data design doc (S122).
 
 **root/** — Loop hardening + coordination

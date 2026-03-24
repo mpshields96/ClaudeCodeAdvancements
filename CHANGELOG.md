@@ -2044,3 +2044,30 @@ CLI chat 2:
 - Rate limit exits (code 2/75) should NOT count as crashes — they're expected behavior needing longer cooldown
 
 ---
+
+## Session 134 — 2026-03-23
+
+**What changed:**
+- `CCA_PRIME_DIRECTIVE.md` — NEW: Two Pillars framework (Get Smarter + Get More Bodies)
+- `CLAUDE.md` — Scope boundary updated: polymarket-bot now full read+write (S134 auth)
+- `CLAUDE.md` — Mission updated: references prime directive
+- `.claude/commands/cca-wrap.md` — Step 6a.1: outcome tracker auto-record wired in
+- `.claude/commands/cca-wrap-desktop.md` — Same outcome tracker wiring
+- `MASTER_TASKS.md` — MT-27/28/30 moved to Completed, MT-22/30 P1 override, percentages fixed
+- `desktop_autoloop.py` — Extended idle detection (exit code 2, 5min idle threshold)
+- `design-skills/report_sidecar.py` — NEW: JSON sidecar export alongside PDF (MT-33 Phase 5)
+- `PROJECT_INDEX.md` — References prime directive, updated scope, test counts 8397->8406
+- `ROADMAP.md` — Test counts 8397->8406
+
+**Why:**
+- Matthew S134 directive: document the Two Pillars, grant full polybot access, prioritize autoloop
+- Outcome tracker was S133's top recommendation — now wired into wrap workflow
+- Status table was stale for multiple MTs — cleaned up for accuracy
+
+**Tests:** 208/208 suites passing (8406 total)
+
+**Lessons:**
+- Check if work is already done before building — MT-33 Phase 4 charts were already implemented
+- Prime directive documents should be created early — they prevent priority drift
+
+---
