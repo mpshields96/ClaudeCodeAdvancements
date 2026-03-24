@@ -5,6 +5,28 @@ After init completes, if Matthew says nothing or runs /cca-auto, proceed to auto
 
 ---
 
+## Step 0 — Start session timer (MT-36)
+
+Start the per-step timing instrumentation so real data accumulates. Extract the session
+number from SESSION_STATE.md and start the timer before doing anything else:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+SESSION_NUM=$(python3 -c "
+import re
+with open('SESSION_STATE.md') as f: c = f.read()
+m = re.search(r'Session (\d+)', c)
+print(int(m.group(1))+1 if m else 145)
+")
+python3 session_timer.py start "$SESSION_NUM"
+python3 session_timer.py mark init:startup init
+```
+
+This runs before slim or full mode. Each subsequent step marks its own timing boundary.
+If session_timer fails, continue — timing is non-blocking.
+
+---
+
 ## DEFAULT: Slim Mode (approved S99b — 2 trials, 74% faster, 0 quality issues)
 
 Slim init is the DEFAULT startup path. It replaces the 10-minute full init with a ~1 minute
@@ -17,6 +39,7 @@ the old full-init behavior. Run `python3 init_benchmarker.py compare` to review 
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_timer.py mark init:slim_init init
 python3 slim_init.py
 ```
 
@@ -55,6 +78,7 @@ Check the test cache first. If fresh, skip the full run. If stale, run smoke tes
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_timer.py mark init:tests test
 python3 init_cache.py summary
 ```
 
@@ -84,6 +108,8 @@ done
 Read the Kalshi cross-chat inbox for pending requests:
 
 ```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_timer.py mark init:enrichment init
 cat ~/.claude/cross-chat/POLYBOT_TO_CCA.md 2>/dev/null | grep -c "Status: PENDING"
 ```
 
@@ -223,6 +249,20 @@ python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/session_orchestrat
 This enables auto-launch detection for 3-chat mode. Deregistered automatically at wrap.
 Stale processes (no chat ID) should also be flagged.
 If crashed workers are detected, run `python3 crash_recovery.py run` to auto-recover orphaned scopes.
+
+---
+
+## Step 4.9 — Close init timer step (MT-36)
+
+Close the last timing step so the init duration is recorded:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_timer.py done 2>/dev/null || true
+```
+
+The session timer remains active for /cca-auto to add code/test/doc steps.
+It will be finalized by /cca-wrap's `finish` call.
 
 ---
 

@@ -4,6 +4,19 @@ Run the full session wrap ritual. Fully autonomous — no confirmation needed at
 
 ---
 
+## Step 0.5 — Start wrap timer (MT-36)
+
+Mark the wrap phase in the session timer (started by /cca-init Step 0):
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_timer.py mark wrap:tests test
+```
+
+If no active session exists (e.g., timer was never started), this is a no-op.
+
+---
+
 ## Step 1 — Run all tests
 
 Run every test suite. ALL must pass before any docs get updated.
@@ -102,6 +115,15 @@ ONE THING next session must do differently:
 
 ---
 
+## Step 2.5 — Mark doc update timer (MT-36)
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_timer.py mark wrap:docs doc
+```
+
+---
+
 ## Step 3 — Update SESSION_STATE.md
 
 Update `/Users/matthewshields/Projects/ClaudeCodeAdvancements/SESSION_STATE.md` with:
@@ -180,6 +202,12 @@ If nothing was learned this session: skip this step. Don't fabricate lessons.
 ## Step 6 — Review & Apply (Self-Learning)
 
 This is the self-improvement loop. Claude catches its own patterns and auto-writes rules.
+
+Mark self-learning timing:
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_timer.py mark wrap:self_learning wrap
+```
 
 ### 6a — Log session outcome to journal
 
@@ -468,6 +496,22 @@ python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/resume_generator.p
 This writes `SESSION_RESUME.md` from the current SESSION_STATE.md. The desktop autoloop
 watches this file for mtime changes to know when to start the next iteration. If you
 skip this step, the autoloop will hang indefinitely waiting for a signal that never comes.
+
+---
+
+## Step 9.5 — Finalize session timer (MT-36)
+
+Save all accumulated timing data to `session_timings.jsonl` and clean up active state:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_timer.py finish
+python3 session_timer.py history
+```
+
+This outputs a summary of where time went this session. The data accumulates across
+sessions — after 3+ sessions, `python3 session_timer.py averages` and `outliers`
+become useful for identifying efficiency bottlenecks.
 
 ---
 
