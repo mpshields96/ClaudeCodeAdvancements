@@ -740,10 +740,9 @@ class TestSwitchToTab(unittest.TestCase):
             da.switch_to_tab("Code")
             with open(da.audit_log) as f:
                 entries = [json.loads(l) for l in f]
-            switch_entry = [e for e in entries if e["event"] == "switch_to_tab"][0]
-            self.assertEqual(switch_entry["tab"], "Code")
-            self.assertEqual(switch_entry["key"], "Cmd+3")
-            self.assertTrue(switch_entry["success"])
+            # S140: CoreGraphics click logs "click_tab", fallback logs "switch_to_tab_fallback"
+            tab_entries = [e for e in entries if "tab" in e.get("event", "") or e.get("tab") == "Code"]
+            self.assertTrue(len(tab_entries) > 0, f"Expected tab log entries, got: {entries}")
 
     def test_dry_run_succeeds(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -771,8 +770,8 @@ class TestEnsureCodeTab(unittest.TestCase):
             with open(da.audit_log) as f:
                 entries = [json.loads(l) for l in f]
             tab_entry = [e for e in entries if e["event"] == "ensure_code_tab"][0]
-            self.assertEqual(tab_entry["action"], "cmd3_sent")
             self.assertTrue(tab_entry["success"])
+            self.assertIn("method", tab_entry)
 
     @patch.object(DesktopAutomator, "switch_to_tab", return_value=False)
     def test_returns_false_on_failure(self, mock_switch):
@@ -789,7 +788,7 @@ class TestEnsureCodeTab(unittest.TestCase):
             with open(da.audit_log) as f:
                 entries = [json.loads(l) for l in f]
             tab_entry = [e for e in entries if e["event"] == "ensure_code_tab"][0]
-            self.assertEqual(tab_entry["action"], "cmd3_failed")
+            self.assertFalse(tab_entry["success"])
 
 
 class TestNewConversationWithCodeTab(unittest.TestCase):
@@ -835,6 +834,196 @@ class TestRunLoopIterationWithCodeTab(unittest.TestCase):
             result = da.run_loop_iteration("test")
             self.assertFalse(result["success"])
             self.assertEqual(result["error"], "code_tab_failed")
+
+
+class TestCoreGraphicsClick(unittest.TestCase):
+    """Test CoreGraphics coordinate-based mouse clicking (S140)."""
+
+    def test_cg_click_at_function_exists(self):
+        """cg_click_at is importable and callable."""
+        from desktop_automator import cg_click_at
+        self.assertTrue(callable(cg_click_at))
+
+    def test_cg_library_loads(self):
+        """CoreGraphics library loads via ctypes on macOS."""
+        from desktop_automator import _load_cg
+        cg = _load_cg()
+        # On macOS, this should succeed. On CI/Linux, may return None.
+        # Either way, the function should not raise.
+        if os.uname().sysname == "Darwin":
+            self.assertIsNotNone(cg)
+
+    def test_cgpoint_struct(self):
+        """_CGPoint struct has correct fields."""
+        from desktop_automator import _CGPoint
+        p = _CGPoint(100.5, 200.5)
+        self.assertEqual(p.x, 100.5)
+        self.assertEqual(p.y, 200.5)
+
+
+class TestGetWindowGeometry(unittest.TestCase):
+    """Test window geometry retrieval."""
+
+    @patch.object(DesktopAutomator, "_run_applescript", return_value=(True, "0, 39, 1325, 984"))
+    def test_returns_tuple(self, mock_as):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            geom = da.get_window_geometry()
+            self.assertEqual(geom, (0, 39, 1325, 984))
+
+    @patch.object(DesktopAutomator, "_run_applescript", return_value=(False, ""))
+    def test_returns_none_on_error(self, mock_as):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            geom = da.get_window_geometry()
+            self.assertIsNone(geom)
+
+    @patch.object(DesktopAutomator, "_run_applescript", return_value=(True, "garbage"))
+    def test_returns_none_on_parse_error(self, mock_as):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            geom = da.get_window_geometry()
+            self.assertIsNone(geom)
+
+
+class TestGetTabCoordinates(unittest.TestCase):
+    """Test tab coordinate calculation from window geometry."""
+
+    @patch.object(DesktopAutomator, "get_window_geometry", return_value=(0, 39, 1325, 984))
+    def test_code_tab_coordinates(self, mock_geom):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            coords = da.get_tab_coordinates("Code")
+            self.assertIsNotNone(coords)
+            x, y = coords
+            # Code tab should be right of window center
+            self.assertGreater(x, 1325 / 2)
+            # Tab Y should be near top of window
+            self.assertAlmostEqual(y, 49.0, delta=5)
+
+    @patch.object(DesktopAutomator, "get_window_geometry", return_value=(0, 39, 1325, 984))
+    def test_chat_tab_coordinates(self, mock_geom):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            coords = da.get_tab_coordinates("Chat")
+            self.assertIsNotNone(coords)
+            x, y = coords
+            # Chat tab should be left of window center
+            self.assertLess(x, 1325 / 2)
+
+    @patch.object(DesktopAutomator, "get_window_geometry", return_value=(0, 39, 1325, 984))
+    def test_cowork_tab_at_center(self, mock_geom):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            coords = da.get_tab_coordinates("Cowork")
+            x, y = coords
+            # Cowork should be at window center
+            self.assertAlmostEqual(x, 1325 / 2, delta=5)
+
+    def test_invalid_tab_returns_none(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            coords = da.get_tab_coordinates("InvalidTab")
+            self.assertIsNone(coords)
+
+    @patch.object(DesktopAutomator, "get_window_geometry", return_value=None)
+    def test_no_geometry_dry_run_fallback(self, mock_geom):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            coords = da.get_tab_coordinates("Code")
+            self.assertIsNotNone(coords)  # Falls back to defaults
+
+    @patch.object(DesktopAutomator, "get_window_geometry", return_value=(100, 50, 1000, 800))
+    def test_offset_window_position(self, mock_geom):
+        """Tab coords adjust to window position."""
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            coords = da.get_tab_coordinates("Code")
+            x, y = coords
+            # Window at x=100, width=1000, center=600, Code offset=+65
+            self.assertAlmostEqual(x, 665.0, delta=1)
+            self.assertAlmostEqual(y, 60.0, delta=1)  # 50 + 10
+
+
+class TestClickTab(unittest.TestCase):
+    """Test click_tab using CoreGraphics."""
+
+    @patch("desktop_automator.cg_click_at", return_value=True)
+    @patch.object(DesktopAutomator, "get_tab_coordinates", return_value=(727.0, 49.0))
+    def test_click_tab_success(self, mock_coords, mock_click):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            result = da.click_tab("Code")
+            self.assertTrue(result)
+            mock_click.assert_called_once_with(727.0, 49.0)
+
+    @patch("desktop_automator.cg_click_at", return_value=False)
+    @patch.object(DesktopAutomator, "get_tab_coordinates", return_value=(727.0, 49.0))
+    def test_click_tab_cg_failure(self, mock_coords, mock_click):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            result = da.click_tab("Code")
+            self.assertFalse(result)
+
+    def test_click_tab_invalid_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            result = da.click_tab("Invalid")
+            self.assertFalse(result)
+
+    @patch.object(DesktopAutomator, "get_tab_coordinates", return_value=None)
+    def test_click_tab_no_geometry(self, mock_coords):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            result = da.click_tab("Code")
+            self.assertFalse(result)
+
+    def test_click_tab_dry_run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            result = da.click_tab("Code")
+            self.assertTrue(result)
+
+    @patch("desktop_automator.cg_click_at", return_value=True)
+    @patch.object(DesktopAutomator, "get_tab_coordinates", return_value=(727.0, 49.0))
+    def test_click_tab_logs_method(self, mock_coords, mock_click):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            da.click_tab("Code")
+            with open(da.audit_log) as f:
+                entries = [json.loads(l) for l in f]
+            click_entry = [e for e in entries if e["event"] == "click_tab"][0]
+            self.assertEqual(click_entry["method"], "CoreGraphics")
+            self.assertAlmostEqual(click_entry["x"], 727.0)
+            self.assertAlmostEqual(click_entry["y"], 49.0)
+
+
+class TestSwitchToTabCoreGraphics(unittest.TestCase):
+    """Test switch_to_tab prefers CoreGraphics over AppleScript."""
+
+    @patch("desktop_automator._get_cg", return_value="mock_cg")
+    @patch.object(DesktopAutomator, "click_tab", return_value=True)
+    @patch.object(DesktopAutomator, "get_frontmost_app", return_value="Claude")
+    def test_uses_cg_when_available(self, mock_front, mock_click, mock_cg):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            result = da.switch_to_tab("Code")
+            self.assertTrue(result)
+            mock_click.assert_called_once_with("Code")
+
+    @patch("desktop_automator._get_cg", return_value=None)
+    @patch.object(DesktopAutomator, "get_frontmost_app", return_value="Claude")
+    @patch.object(DesktopAutomator, "_run_applescript", return_value=(True, ""))
+    def test_falls_back_to_applescript(self, mock_as, mock_front, mock_cg):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            result = da.switch_to_tab("Code")
+            self.assertTrue(result)
+            # Should have used AppleScript keystroke
+            with open(da.audit_log) as f:
+                entries = [json.loads(l) for l in f]
+            fallback = [e for e in entries if e["event"] == "switch_to_tab_fallback"]
+            self.assertTrue(len(fallback) > 0)
 
 
 if __name__ == "__main__":

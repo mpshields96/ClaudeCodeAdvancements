@@ -1,6 +1,6 @@
 """desktop_automator.py — MT-22: Claude Desktop App Automation.
 
-Automates Claude.app (Electron) via AppleScript keystroke emulation.
+Automates Claude.app (Electron) via AppleScript + CoreGraphics.
 Designed for supervised/unsupervised auto-loop on the desktop app.
 
 Matthew directive (S130/S132): This is THE #1 priority. Automate
@@ -9,12 +9,19 @@ sessions while Matthew watches and interacts freely.
 
 Architecture:
 - AppleScript for app control (activate, keystroke, window management)
+- CoreGraphics for coordinate-based mouse clicks (tab switching)
 - Clipboard-based prompt injection (reliable for long prompts)
 - Conservative timeout-based response detection (no state access)
 - Full audit logging (every action timestamped in JSONL)
 - Safety: always verify frontmost app before sending keystrokes
+
+Tab switching (S140): Electron ignores AppleScript keystrokes (Cmd+3)
+for tab switching. CoreGraphics CGEvent mouse clicks work because they
+go through the HID event tap — same path as physical mouse clicks.
 """
 
+import ctypes
+import ctypes.util
 import json
 import os
 import subprocess
@@ -22,7 +29,7 @@ import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 # --- Constants ---
 
@@ -31,6 +38,102 @@ APP_NAME = "Claude"
 DEFAULT_ACTIVATE_DELAY = 0.5  # seconds after activate before keystroke
 DEFAULT_RESPONSE_TIMEOUT = 120  # seconds to wait for response
 DEFAULT_AUDIT_LOG = Path.home() / ".cca-desktop-autoloop.jsonl"
+
+# Tab geometry constants (derived from Claude.app layout analysis, S140)
+# The tab island [Chat | Cowork | Code] is centered in the window header.
+# Each tab is ~55-65 points wide. Code is the rightmost tab.
+TAB_Y_OFFSET = 10       # points below window top edge to tab center
+TAB_ISLAND_WIDTH = 195   # approximate total width of the 3-tab island
+TAB_WIDTH = 65           # approximate width per tab
+# Offsets from window center X to each tab center:
+TAB_OFFSETS = {"Chat": -65, "Cowork": 0, "Code": 65}
+
+
+# --- CoreGraphics mouse click (ctypes) ---
+
+class _CGPoint(ctypes.Structure):
+    """CoreGraphics CGPoint for mouse event coordinates."""
+    _fields_ = [("x", ctypes.c_double), ("y", ctypes.c_double)]
+
+
+def _load_cg():
+    """Load CoreGraphics framework. Returns None if unavailable."""
+    try:
+        path = ctypes.util.find_library('CoreGraphics')
+        if not path:
+            return None
+        cg = ctypes.cdll.LoadLibrary(path)
+        # Set up function signatures
+        cg.CGEventCreateMouseEvent.restype = ctypes.c_void_p
+        cg.CGEventCreateMouseEvent.argtypes = [
+            ctypes.c_void_p, ctypes.c_uint32, _CGPoint, ctypes.c_uint32,
+        ]
+        cg.CGEventPost.restype = None
+        cg.CGEventPost.argtypes = [ctypes.c_uint32, ctypes.c_void_p]
+        cg.CFRelease.restype = None
+        cg.CFRelease.argtypes = [ctypes.c_void_p]
+        return cg
+    except (OSError, AttributeError):
+        return None
+
+
+# Lazy-load CoreGraphics (loaded on first use)
+_cg_lib = None
+
+
+def _get_cg():
+    """Get CoreGraphics library (lazy singleton)."""
+    global _cg_lib
+    if _cg_lib is None:
+        _cg_lib = _load_cg()
+    return _cg_lib
+
+
+# CGEvent constants
+_kCGEventLeftMouseDown = 1
+_kCGEventLeftMouseUp = 2
+_kCGHIDEventTap = 0
+
+
+def cg_click_at(x: float, y: float) -> bool:
+    """Click at screen coordinates (x, y) using CoreGraphics.
+
+    Uses CGEventCreateMouseEvent + CGEventPost to send mouse down/up
+    through the HID event tap — identical to a physical mouse click.
+    This works where AppleScript keystrokes fail (Electron tab switching).
+
+    Args:
+        x: Screen X coordinate in points (not pixels)
+        y: Screen Y coordinate in points (not pixels)
+
+    Returns True if the click was posted successfully.
+    """
+    cg = _get_cg()
+    if cg is None:
+        return False
+
+    point = _CGPoint(x, y)
+    down = cg.CGEventCreateMouseEvent(
+        None, _kCGEventLeftMouseDown, point, 0
+    )
+    up = cg.CGEventCreateMouseEvent(
+        None, _kCGEventLeftMouseUp, point, 0
+    )
+
+    if not down or not up:
+        if down:
+            cg.CFRelease(down)
+        if up:
+            cg.CFRelease(up)
+        return False
+
+    cg.CGEventPost(_kCGHIDEventTap, down)
+    time.sleep(0.05)
+    cg.CGEventPost(_kCGHIDEventTap, up)
+
+    cg.CFRelease(down)
+    cg.CFRelease(up)
+    return True
 
 
 # --- Data classes ---
@@ -206,33 +309,123 @@ class DesktopAutomator:
             return False  # error — assume not idle
         return cpu < cpu_threshold
 
+    # --- Window geometry ---
+
+    def get_window_geometry(self) -> Optional[Tuple[int, int, int, int]]:
+        """Get Claude window position and size as (x, y, width, height).
+
+        Returns None if window info can't be retrieved.
+        Coordinates are in macOS screen points (not pixels).
+        """
+        script = (
+            'tell application "System Events" to tell process "Claude" to '
+            'get {position, size} of window 1'
+        )
+        ok, output = self._run_applescript(script)
+        if not ok:
+            return None
+        try:
+            # Output format: "x, y, width, height"
+            parts = [int(p.strip()) for p in output.split(",")]
+            if len(parts) == 4:
+                return (parts[0], parts[1], parts[2], parts[3])
+        except (ValueError, IndexError):
+            pass
+        return None
+
+    def get_tab_coordinates(self, tab_name: str) -> Optional[Tuple[float, float]]:
+        """Calculate screen coordinates for a tab click target.
+
+        Uses window geometry to find the center of the requested tab
+        in the top-center island bar: [Chat | Cowork | Code].
+
+        Args:
+            tab_name: One of "Chat", "Cowork", "Code"
+
+        Returns (x, y) screen coordinates in points, or None on error.
+        """
+        if tab_name not in TAB_OFFSETS:
+            return None
+
+        geom = self.get_window_geometry()
+        if geom is None:
+            # Dry run fallback: use reasonable defaults
+            if self.dry_run:
+                return (727.0, 49.0)
+            return None
+
+        win_x, win_y, win_w, win_h = geom
+        center_x = win_x + win_w / 2.0
+        tab_x = center_x + TAB_OFFSETS[tab_name]
+        tab_y = win_y + TAB_Y_OFFSET
+        return (tab_x, tab_y)
+
     # --- Tab switching (Chat / Cowork / Code) ---
 
     # Claude desktop app has 3 tabs in a top-center island:
     #   Chat | Cowork | Code
     # The autoloop MUST be on the Code tab.
     #
-    # Tab switching uses keyboard shortcuts (Cmd+1/2/3):
-    #   Cmd+1 = Chat, Cmd+2 = Cowork, Cmd+3 = Code
+    # S139: AppleScript keystrokes (Cmd+1/2/3) do NOT work — Electron
+    # intercepts them differently from physical keyboard input.
     #
-    # Previous approach tried accessibility tree inspection (tab groups,
-    # radio buttons) but Electron doesn't expose these elements. The
-    # keyboard shortcut approach is position-independent, works at any
-    # window size/location, and requires only that Claude is frontmost.
+    # S140: CoreGraphics CGEvent mouse clicks DO work — they go through
+    # the HID event tap, same path as physical mouse clicks. We calculate
+    # tab coordinates from window geometry and click directly.
+    #
+    # Fallback: if CoreGraphics is unavailable, try Cmd+3 keystroke.
 
     VALID_TABS = {"Chat", "Cowork", "Code"}
     TAB_SHORTCUTS = {"Chat": "1", "Cowork": "2", "Code": "3"}
 
-    def switch_to_tab(self, tab_name: str) -> bool:
-        """Switch to a tab using Cmd+N keyboard shortcut.
+    def click_tab(self, tab_name: str) -> bool:
+        """Click a tab using CoreGraphics coordinate-based mouse click.
+
+        This is the PRIMARY tab switching method (S140). It calculates
+        the screen coordinates of the tab from window geometry and posts
+        a CGEvent mouse click — identical to a physical mouse click.
 
         Args:
             tab_name: One of "Chat", "Cowork", "Code"
 
-        Returns True if the keystroke was sent successfully.
-        Requires Claude to be the frontmost application.
+        Returns True if the click was posted successfully.
         """
-        if tab_name not in self.TAB_SHORTCUTS:
+        if tab_name not in TAB_OFFSETS:
+            self._log("click_tab_failed", {"reason": f"invalid_tab: {tab_name}"})
+            return False
+
+        coords = self.get_tab_coordinates(tab_name)
+        if coords is None:
+            self._log("click_tab_failed", {"reason": "no_window_geometry"})
+            return False
+
+        x, y = coords
+        if self.dry_run:
+            self._log("click_tab_dry_run", {
+                "tab": tab_name, "x": x, "y": y,
+            })
+            return True
+
+        ok = cg_click_at(x, y)
+        self._log("click_tab", {
+            "tab": tab_name, "x": x, "y": y, "success": ok,
+            "method": "CoreGraphics",
+        })
+
+        if ok:
+            time.sleep(0.3)  # Let Electron process the click
+
+        return ok
+
+    def switch_to_tab(self, tab_name: str) -> bool:
+        """Switch to a tab. Tries CoreGraphics click first, falls back to Cmd+N.
+
+        Args:
+            tab_name: One of "Chat", "Cowork", "Code"
+
+        Returns True if the tab switch was attempted successfully.
+        """
+        if tab_name not in self.VALID_TABS:
             self._log("switch_to_tab_failed", {"reason": f"invalid_tab: {tab_name}"})
             return False
 
@@ -244,28 +437,39 @@ class DesktopAutomator:
             })
             return False
 
+        # Primary: CoreGraphics coordinate click (S140)
+        if _get_cg() is not None:
+            ok = self.click_tab(tab_name)
+            if ok:
+                return True
+            self._log("switch_to_tab_cg_fallthrough", {"tab": tab_name})
+
+        # Fallback: AppleScript keystroke (unreliable on Electron, S139)
         key = self.TAB_SHORTCUTS[tab_name]
         ok, _ = self._run_applescript(
             f'tell application "System Events" to keystroke "{key}" using command down'
         )
-        self._log("switch_to_tab", {"tab": tab_name, "key": f"Cmd+{key}", "success": ok})
-
+        self._log("switch_to_tab_fallback", {
+            "tab": tab_name, "key": f"Cmd+{key}", "success": ok,
+            "method": "AppleScript_keystroke",
+        })
         if ok and not self.dry_run:
             time.sleep(0.3)
-
         return ok
 
     def ensure_code_tab(self) -> bool:
-        """Ensure the Code tab is active by sending Cmd+3.
+        """Ensure the Code tab is active.
 
-        Always sends the keystroke (idempotent — if already on Code tab,
-        Cmd+3 is a no-op). Returns True if keystroke sent successfully.
+        Uses CoreGraphics coordinate click (primary, S140) with
+        AppleScript keystroke fallback. Idempotent — clicking Code
+        when already on Code is a no-op.
+
         Requires Claude to be frontmost (call activate_claude() first).
         """
         ok = self.switch_to_tab("Code")
         self._log("ensure_code_tab", {
-            "action": "cmd3_sent" if ok else "cmd3_failed",
             "success": ok,
+            "method": "CoreGraphics" if _get_cg() is not None else "AppleScript",
         })
         return ok
 
@@ -391,11 +595,16 @@ class DesktopAutomator:
     def new_conversation(self) -> bool:
         """Start a new conversation (Cmd+N) on the Code tab.
 
-        Sends Cmd+3 (Code tab) with a settling delay, then Cmd+N.
-        Electron apps need time to process tab switches before
-        accepting new-conversation shortcuts on the correct tab.
+        Steps:
+        1. Click Code tab via CoreGraphics (ensure correct tab)
+        2. Wait for Electron to settle
+        3. Cmd+N to open new conversation
+        4. Click Code tab again as safety belt (in case Cmd+N
+           opened on wrong tab)
+
+        Normally we're already on Code tab, so step 1 is a no-op.
         """
-        # Step 1: Switch to Code tab
+        # Step 1: Ensure Code tab via CoreGraphics click
         if not self.ensure_code_tab():
             self._log("new_conversation_failed", {"reason": "code_tab_unreachable"})
             return False
@@ -417,13 +626,10 @@ class DesktopAutomator:
             'tell application "System Events" to keystroke "n" using command down'
         )
 
-        # Step 4: Send Cmd+3 again after Cmd+N as safety belt
-        # (Cmd+N on Chat tab opens Chat session — this corrects it)
+        # Step 4: Click Code tab again as safety belt
         if ok and not self.dry_run:
             time.sleep(0.3)
-            self._run_applescript(
-                'tell application "System Events" to keystroke "3" using command down'
-            )
+            self.click_tab("Code")
 
         self._log("new_conversation", {"success": ok})
         return ok
