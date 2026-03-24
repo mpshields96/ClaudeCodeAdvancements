@@ -5,14 +5,17 @@
 
 ## Current State (as of Session 148 — 2026-03-24)
 
-**Phase:** Session 148 IN PROGRESS. MT-32 Phase 5 COMPLETE, MT-37 documented, Reddit intel delivered.
+**Phase:** Session 148 IN PROGRESS. MT-32 Phase 5 COMPLETE, MT-36 Phase 4 analyzed, MT-37 documented, Reddit intel delivered. 7 commits.
 
 **What was done this session (S148):**
 - **MT-32 Phase 5 — Dashboard v2**: Dark mode toggle (CSS custom properties + localStorage), sortable task table (click headers), module search/filter, collapsible sections with chevrons, --theme CLI flag. 28 new tests (test_dashboard_v2.py). 0 regressions.
 - **MT-37 documented**: AI Investment Research & Portfolio Intelligence — long-term MT per Matthew directive. 7 phases, research-first. Added to MASTER_TASKS.md and priority_picker.py.
-- **Reddit intel**: r/PredictionsMarkets — CF Benchmarks BRTI confirmed as Kalshi crypto settlement source. synthesis.trade API discovered. Written to CCA_TO_POLYBOT.md.
-- **Priority picker updates**: MT-32 Phase 5 done, MT-36 Phases 2-3 done, MT-37 added as blocked (long-term).
-- **Tests**: 214 suites, ~8761 tests. 2 commits so far.
+- **MT-36 Phase 4 analysis**: Kalshi sessions already optimized. CCA was the correct target (Phases 1-3). Analysis document written.
+- **Reddit intel**: r/PredictionsMarkets — CF Benchmarks BRTI confirmed. synthesis.trade API investigated (prediction market aggregator, not CF Benchmarks source). Corrected assessment delivered to CCA_TO_POLYBOT.
+- **Doc drift fixed**: Test counts corrected across PROJECT_INDEX and ROADMAP (context-monitor 411->434, self-learning 1859->1885, design-skills 1353->1381, total 8468->8779).
+- **Dashboard regex fix**: Total test count regex now handles tilde-prefixed numbers.
+- **Priority picker updates**: MT-32 Phase 5 done, MT-36 Phases 2-3 done, MT-37 added.
+- **Tests**: 217 suites, ~8779 tests. 7 commits.
 
 **Next (prioritized by priority picker):**
 1. **MT-22 Desktop Electron** — Phase 4: supervised trial (score 2.0, near complete)
