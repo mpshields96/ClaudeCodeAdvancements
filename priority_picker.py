@@ -224,39 +224,39 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=27, name="CCA Nuclear v2 (Enhanced Scanning)",
-            base_value=8, status=TaskStatus.ACTIVE,
+            base_value=8, status=TaskStatus.COMPLETED,
             last_touched_session=129, current_session=current_session,
-            phases_completed=4, phases_total=5,
-            aging_rate=0.5,
-            next_action="Phase 5: APF validation — measure precision improvement on real scans.",
+            phases_completed=5, phases_total=5,  # COMPLETE (S115/S129): NEEDLE classifier, APF tracking, precision improvement. 440 tests.
+            aging_rate=0,
+            next_action="COMPLETE. All 5 phases done.",
             tags=["scanning", "intelligence", "crown-jewel"],
         ),
         # === TOP 5-10 ===
         MasterTask(
             mt_id=9, name="Reddit Intelligence Pipeline",
-            base_value=7, status=TaskStatus.ACTIVE,
+            base_value=7, status=TaskStatus.COMPLETED,
             last_touched_session=130, current_session=current_session,
-            phases_completed=3, phases_total=4,
-            aging_rate=0.5,
-            next_action="Phase 4: Real-time monitoring + auto-digest. Core scanning works.",
+            phases_completed=4, phases_total=4,  # COMPLETE (S95): autonomous_scanner.py, Phase 3 E2E validated, 101 tests
+            aging_rate=0,
+            next_action="COMPLETE. Core scanning works, E2E validated.",
             tags=["scanning", "intelligence"],
         ),
         MasterTask(
             mt_id=11, name="GitHub Intelligence Scanner",
-            base_value=7, status=TaskStatus.ACTIVE,
+            base_value=7, status=TaskStatus.COMPLETED,
             last_touched_session=125, current_session=current_session,
-            phases_completed=3, phases_total=5,
-            aging_rate=0.5,
-            next_action="Phase 4: Trending repo auto-analysis. Scanner + fetcher built.",
+            phases_completed=5, phases_total=5,  # COMPLETE (S83): github_scanner.py + trending, 62 tests
+            aging_rate=0,
+            next_action="COMPLETE. Scanner + trending built.",
             tags=["scanning", "intelligence"],
         ),
         MasterTask(
             mt_id=14, name="Autonomous Scanner Pipeline",
-            base_value=6, status=TaskStatus.ACTIVE,
+            base_value=6, status=TaskStatus.COMPLETED,
             last_touched_session=125, current_session=current_session,
-            phases_completed=3, phases_total=5,
-            aging_rate=0.5,
-            next_action="Phase 4: Scheduled autonomous runs. Safety + prioritizer done.",
+            phases_completed=5, phases_total=5,  # COMPLETE (S84): execute_rescan_stale + rescan-all CLI, 101 tests
+            aging_rate=0,
+            next_action="COMPLETE. Rescan stale + CLI done.",
             tags=["scanning", "autonomy"],
         ),
         MasterTask(

@@ -298,10 +298,12 @@ class TestStagnationAlert(unittest.TestCase):
 
     def test_stagnation_alert_detects_aging_mt(self):
         """MTs untouched 5+ sessions should appear in alert."""
-        picker = PriorityPicker(current_session=145)
+        picker = PriorityPicker(current_session=146)
         alert = picker.stagnation_alert()
-        # MT-27 is active and untouched since S129, should be flagged at S145
-        self.assertIn("MT-27", alert)
+        # MT-27, MT-9, MT-11, MT-14 are now COMPLETED — should NOT appear
+        self.assertNotIn("MT-27", alert)
+        # Active MTs like MT-31, MT-32, MT-7 should be flagged
+        self.assertTrue(len(alert) > 0, "Should have some stagnation warnings")
 
     def test_stagnation_alert_empty_when_all_recent(self):
         """No alert if all active MTs were touched recently."""
@@ -455,17 +457,17 @@ class TestS130PriorityReorder(unittest.TestCase):
         self.assertGreaterEqual(mt27[0].base_value, 8)
 
     def test_crown_jewels_score_higher_than_growth(self):
-        """Crown jewels (base 9-10) should outscore growth tier (base 5-6) at same age."""
-        picker = PriorityPicker(current_session=131)
+        """Active crown jewels (base 9-10) should outscore growth tier (base 5-6) at same age."""
+        picker = PriorityPicker(current_session=146)
         ranked = picker.ranked()
         if len(ranked) < 2:
             self.skipTest("Need at least 2 active tasks")
-        # Crown jewels should dominate the top of the ranking
+        # MT-22 is the remaining active crown jewel (base 10)
+        # MT-10, MT-0, MT-27 are now COMPLETED
         top3_ids = {t.mt_id for t in ranked[:3]}
-        crown_jewel_ids = {10, 0, 22, 27}
-        # At least one crown jewel should be in top 3
-        self.assertTrue(top3_ids & crown_jewel_ids,
-                       f"No crown jewels in top 3: {top3_ids}")
+        # MT-22 (base 10) should be in top 3 over growth tier tasks
+        self.assertIn(22, top3_ids,
+                     f"MT-22 (crown jewel, base 10) should be in top 3: {top3_ids}")
 
     def test_mt22_desktop_electron_new_scope(self):
         """MT-22 reactivated with desktop Electron scope, not terminal."""
