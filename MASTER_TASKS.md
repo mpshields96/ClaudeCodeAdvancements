@@ -1428,7 +1428,11 @@ background process. Everything else serves these two axes. See `CCA_PRIME_DIRECT
 - Phase 3: Menu bar status indicator or periodic ntfy.sh notification of loop health
 - Phase 4: Keyboard shortcut to pause/resume loop without killing it
 
-**Status:** NOT STARTED — MT-22 autoloop is working, this is the UX polish layer.
+**Status:**
+- Phase 1 COMPLETE (S142): save/restore frontmost app around autoloop trigger (~3-5s takeover)
+- Phase 2 COMPLETE (S143): idle detection via CoreGraphics CGEventSourceSecondsSinceLastEventType. Waits for 3s idle before triggering. Configurable via CCA_IDLE_THRESHOLD/CCA_IDLE_TIMEOUT env vars. Fails open on timeout.
+- Phase 3: TODO — menu bar status indicator or ntfy.sh loop health notification
+- Phase 4: TODO — keyboard shortcut to pause/resume loop
 
 **Files:** `autoloop_trigger.py`, `desktop_automator.py`, `desktop_autoloop.py`
 
