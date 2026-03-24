@@ -5,7 +5,7 @@
 
 ## Current State (as of Session 147 — 2026-03-24)
 
-**Phase:** Session 147 IN PROGRESS. MT-36 Phases 2-3 + priority picker fixes. 3 commits.
+**Phase:** Session 147 COMPLETE. MT-36 Phases 2-3, cross-chat permanent, cca-auto chaining fix. 7 commits. Grade: A.
 
 **What was done this session (S147):**
 - **MT-36 Phase 2 — efficiency_analyzer.py**: Session overhead analyzer with static wrap analysis. Maps all 32 cca-wrap steps, identifies 47% deferrable tokens (~10,300 savings). Slim wrap proposal: 13,800 tokens vs 24,100 current. OverheadAnalyzer for multi-session trends. 32 tests.
