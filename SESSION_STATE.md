@@ -3,30 +3,29 @@
 
 ---
 
-## Current State (as of Session 141 — 2026-03-23)
+## Current State (as of Session 142 — 2026-03-23)
 
-**Phase:** Session 141. Get Smarter: principle seeder. Kalshi bot analysis. Autoloop working.
+**Phase:** Session 142. Autoloop chat #2. Principle seeder wired. Journal fixed. MT-35 Phase 1.
 
-**What was done this session (S141):**
-- **principle_seeder.py** (Get Smarter): Bootstrapped 62 principles from LEARNINGS.md into principle_registry. Predictive recommender now produces real session-start recommendations. Self-learning feedback loop CLOSED. 26 tests.
-- **Kalshi bot full DB analysis**: Read polybot.db (1959 trades). Sniper sweet spot 90-93c (+$243). Weather MIA/CHI/DEN kill recommendation (-$298). Delivered to CCA_TO_POLYBOT.md.
-- **Cross-chat direct communication**: CCA↔Kalshi queue messaging established. Matthew no longer needs to relay.
-- **SESSION_STATE.md**: Updated for S139-S140 (was stale at S138).
-- **Autoloop proven**: S141 was successfully spawned by the CoreGraphics autoloop trigger.
-- **Matthew directive (S141)**: CCA and Kalshi bot have FULL permission to intermingle files and projects. XRP is permanently banned.
-- **Tests**: 212 suites passing (+1 new). 3 commits.
+**What was done this session (S142):**
+- **Principle seeder wired into slim_init.py**: Auto-seeds principles on every /cca-init. Idempotent — zero cost on subsequent runs. 10 new tests (34 total in test_slim_init.py).
+- **Journal data quality fix**: 759/989 entries had `type` instead of `event_type` (from post_compact.py). Fixed source hook + backfilled all entries. 989/989 now have proper event_type + domain.
+- **MT-35 created** (Matthew directive): Background Autoloop — non-intrusive desktop loop. Matthew wants to use his MacBook freely while autoloop runs.
+- **MT-35 Phase 1 shipped**: save_frontmost_app() + restore_frontmost_app() on DesktopAutomator. Autoloop trigger saves current app, activates Claude, spawns session, restores focus (~3-5s takeover). 8 new tests (110 total).
+- **Autoloop chat #2 confirmed**: This session was successfully spawned by the automated loop.
+- **Matthew directives (S142)**: CCA is CCA first (max 50% Kalshi work). Background autoloop must be non-intrusive.
+- **Tests**: 212 suites passing. 4 commits.
 
 **Next (prioritized):**
-1. **Wire principle_seeder into /cca-init** — auto-seed on every session start (zero cost)
-2. **Sustained autoloop** — continue running, proving reliability
-3. **Kalshi research** — KXBTCD weekly threshold analysis per POLYBOT_TO_CCA.md request
+1. **MT-35 Phase 2** — idle detection: wait for 2-3s of no mouse/keyboard activity before triggering
+2. **Sustained autoloop** — continue running, proving reliability with focus restore
+3. **Kalshi research** — KXBTCD weekly threshold analysis per POLYBOT_TO_CCA.md request (max 50%)
 4. **Shift+Cmd+O via CoreGraphics keyboard events** — position-independent autoloop fallback
 
-**Matthew S141 directives:**
-- CCA and Kalshi bot: FULL cross-project file intermingling permission
-- XRP permanently banned from sniper
-- CCA↔Kalshi direct communication (no Matthew relay)
-- All previous directives still active (Two Pillars, CoreGraphics, polybot full access)
+**Matthew S142 directives:**
+- CCA is CCA first — max 50% time on Kalshi work
+- Background autoloop must be non-intrusive (MT-35)
+- All previous directives still active (Two Pillars, CoreGraphics, polybot full access, XRP ban)
 
 ---
 
