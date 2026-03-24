@@ -349,5 +349,118 @@ class TestCLI(unittest.TestCase):
         self.assertIsInstance(output, str)
 
 
+class TestActiveSessionWorkflow(unittest.TestCase):
+    """Test the mark/done CLI workflow for real session timing."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.state_file = os.path.join(self.tmpdir, "active.json")
+        self.log_path = os.path.join(self.tmpdir, "timings.jsonl")
+
+    def tearDown(self):
+        for f in [self.state_file, self.log_path]:
+            if os.path.exists(f):
+                os.unlink(f)
+        os.rmdir(self.tmpdir)
+
+    def test_start_session(self):
+        from session_timer import start_session
+        state = start_session(144, self.state_file)
+        self.assertEqual(state["session_id"], 144)
+        self.assertIsNotNone(state["started_at"])
+        self.assertTrue(os.path.exists(self.state_file))
+
+    def test_mark_and_done_step(self):
+        from session_timer import start_session, mark_step, done_step
+        start_session(144, self.state_file)
+        mark_step("init:read_files", "init", self.state_file)
+        time.sleep(0.02)
+        duration = done_step(self.state_file)
+        self.assertGreater(duration, 0.01)
+
+    def test_mark_closes_previous_step(self):
+        """Marking a new step auto-closes the previous one."""
+        from session_timer import start_session, mark_step, _load_active_state
+        start_session(144, self.state_file)
+        mark_step("init:a", "init", self.state_file)
+        time.sleep(0.01)
+        mark_step("init:b", "init", self.state_file)
+        state = _load_active_state(self.state_file)
+        self.assertEqual(len(state["steps"]), 1)  # 'a' was closed
+        self.assertEqual(state["active_step"]["name"], "init:b")
+
+    def test_finish_session_saves_to_jsonl(self):
+        from session_timer import start_session, mark_step, done_step, finish_session, load_timing_history
+        start_session(144, self.state_file)
+        mark_step("init:read", "init", self.state_file)
+        time.sleep(0.01)
+        done_step(self.state_file)
+        mark_step("code:work", "code", self.state_file)
+        time.sleep(0.01)
+        done_step(self.state_file)
+        summary = finish_session(self.state_file, self.log_path)
+        self.assertEqual(summary["session_id"], 144)
+        self.assertEqual(summary["steps"], 2)
+        self.assertGreater(summary["total_s"], 0)
+        # JSONL should have one entry
+        history = load_timing_history(self.log_path)
+        self.assertEqual(len(history), 1)
+
+    def test_finish_cleans_state_file(self):
+        from session_timer import start_session, finish_session
+        start_session(144, self.state_file)
+        finish_session(self.state_file, self.log_path)
+        self.assertFalse(os.path.exists(self.state_file))
+
+    def test_finish_closes_active_step(self):
+        """finish_session closes any lingering active step."""
+        from session_timer import start_session, mark_step, finish_session
+        start_session(144, self.state_file)
+        mark_step("code:work", "code", self.state_file)
+        time.sleep(0.01)
+        summary = finish_session(self.state_file, self.log_path)
+        self.assertEqual(summary["steps"], 1)
+
+    def test_done_no_active_session(self):
+        """done_step with no session returns 0."""
+        from session_timer import done_step
+        duration = done_step(self.state_file)
+        self.assertEqual(duration, 0.0)
+
+    def test_mark_no_active_session(self):
+        """mark_step with no session is a no-op."""
+        from session_timer import mark_step
+        # Should not raise
+        mark_step("test:x", "test", self.state_file)
+
+    def test_finish_no_active_session(self):
+        """finish_session with no session returns empty dict."""
+        from session_timer import finish_session
+        result = finish_session(self.state_file, self.log_path)
+        self.assertEqual(result, {})
+
+    def test_invalid_category_in_mark(self):
+        from session_timer import start_session, mark_step
+        start_session(144, self.state_file)
+        with self.assertRaises(ValueError):
+            mark_step("bad:step", "invalid_cat", self.state_file)
+
+    def test_full_lifecycle(self):
+        """Full init -> code -> test -> wrap lifecycle."""
+        from session_timer import start_session, mark_step, done_step, finish_session
+        start_session(144, self.state_file)
+        for name, cat in [("init:read", "init"), ("code:implement", "code"),
+                          ("test:run_suites", "test"), ("wrap:update_docs", "wrap")]:
+            mark_step(name, cat, self.state_file)
+            time.sleep(0.01)
+            done_step(self.state_file)
+        summary = finish_session(self.state_file, self.log_path)
+        self.assertEqual(summary["steps"], 4)
+        self.assertIn("init", summary["by_category"])
+        self.assertIn("code", summary["by_category"])
+        self.assertIn("test", summary["by_category"])
+        self.assertIn("wrap", summary["by_category"])
+
+
 if __name__ == "__main__":
     unittest.main()

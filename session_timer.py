@@ -49,6 +49,7 @@ from typing import Optional
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_LOG_PATH = os.path.join(SCRIPT_DIR, "session_timings.jsonl")
+ACTIVE_SESSION_FILE = os.path.expanduser("~/.cca-session-timer-active.json")
 
 VALID_CATEGORIES = ("init", "wrap", "test", "code", "doc", "other")
 
@@ -301,18 +302,169 @@ def format_category_bar(timer: "SessionTimer", width: int = 40) -> str:
     return "\n".join(lines)
 
 
+# ── Active session state (CLI mark/done workflow) ───────────────────────────
+
+
+def start_session(session_id: int, state_file: str = None) -> dict:
+    """Start tracking a new session. Returns the state dict."""
+    if state_file is None:
+        state_file = ACTIVE_SESSION_FILE
+    state = {
+        "session_id": session_id,
+        "started_at": time.time(),
+        "steps": [],
+        "active_step": None,
+    }
+    os.makedirs(os.path.dirname(state_file) or ".", exist_ok=True)
+    with open(state_file, "w") as f:
+        json.dump(state, f)
+    return state
+
+
+def mark_step(name: str, category: str, state_file: str = None) -> None:
+    """Mark the start of a named step. Closes any active step first."""
+    if state_file is None:
+        state_file = ACTIVE_SESSION_FILE
+    if category not in VALID_CATEGORIES:
+        raise ValueError(f"Invalid category: {category!r}")
+
+    state = _load_active_state(state_file)
+    if state is None:
+        return  # No active session
+
+    # Close any active step
+    if state.get("active_step"):
+        _close_active_step(state)
+
+    state["active_step"] = {
+        "name": name,
+        "category": category,
+        "started_at": time.time(),
+    }
+    _save_active_state(state, state_file)
+
+
+def done_step(state_file: str = None) -> float:
+    """Close the active step. Returns duration in seconds."""
+    if state_file is None:
+        state_file = ACTIVE_SESSION_FILE
+    state = _load_active_state(state_file)
+    if state is None or not state.get("active_step"):
+        return 0.0
+
+    duration = _close_active_step(state)
+    _save_active_state(state, state_file)
+    return duration
+
+
+def finish_session(state_file: str = None, log_path: str = None) -> dict:
+    """Close the active session, save to JSONL, return summary."""
+    if state_file is None:
+        state_file = ACTIVE_SESSION_FILE
+    if log_path is None:
+        log_path = DEFAULT_LOG_PATH
+
+    state = _load_active_state(state_file)
+    if state is None:
+        return {}
+
+    # Close any lingering step
+    if state.get("active_step"):
+        _close_active_step(state)
+
+    # Build a SessionTimer and save
+    timer = SessionTimer(session_id=state["session_id"])
+    for s in state.get("steps", []):
+        timer.add_step(s["name"], s["category"], s["duration_s"])
+    timer.save(log_path)
+
+    # Clean up state file
+    try:
+        os.unlink(state_file)
+    except OSError:
+        pass
+
+    return {
+        "session_id": state["session_id"],
+        "total_s": timer.total_duration(),
+        "steps": len(timer.steps),
+        "by_category": timer.duration_by_category(),
+    }
+
+
+def _load_active_state(state_file: str) -> dict | None:
+    """Load active session state."""
+    try:
+        if os.path.exists(state_file):
+            with open(state_file) as f:
+                return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        pass
+    return None
+
+
+def _save_active_state(state: dict, state_file: str) -> None:
+    """Save active session state."""
+    try:
+        with open(state_file, "w") as f:
+            json.dump(state, f)
+    except OSError:
+        pass
+
+
+def _close_active_step(state: dict) -> float:
+    """Close the active step, add to steps list. Returns duration."""
+    active = state.get("active_step")
+    if not active:
+        return 0.0
+    duration = round(time.time() - active["started_at"], 3)
+    state.setdefault("steps", []).append({
+        "name": active["name"],
+        "category": active["category"],
+        "duration_s": duration,
+    })
+    state["active_step"] = None
+    return duration
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if not args:
         print("Usage:")
-        print("  python3 session_timer.py history    # Show all session timings")
-        print("  python3 session_timer.py averages   # Step averages across sessions")
-        print("  python3 session_timer.py outliers   # Detect timing anomalies")
+        print("  python3 session_timer.py start <session_id>  # Start session")
+        print("  python3 session_timer.py mark <name> <cat>   # Start a step")
+        print("  python3 session_timer.py done                # End current step")
+        print("  python3 session_timer.py finish              # End session, save")
+        print("  python3 session_timer.py history              # Show timings")
+        print("  python3 session_timer.py averages             # Step averages")
+        print("  python3 session_timer.py outliers             # Timing anomalies")
         sys.exit(0)
 
     cmd = args[0]
 
-    if cmd == "history":
+    if cmd == "start" and len(args) >= 2:
+        sid = int(args[1])
+        start_session(sid)
+        print(f"Session {sid} timer started.")
+
+    elif cmd == "mark" and len(args) >= 3:
+        name = args[1]
+        category = args[2]
+        mark_step(name, category)
+        print(f"Step started: {name} ({category})")
+
+    elif cmd == "done":
+        duration = done_step()
+        print(f"Step done: {duration:.1f}s")
+
+    elif cmd == "finish":
+        summary = finish_session()
+        if summary:
+            print(f"Session {summary['session_id']}: {summary['total_s']:.0f}s, {summary['steps']} steps")
+        else:
+            print("No active session.")
+
+    elif cmd == "history":
         history = load_timing_history()
         if not history:
             print("No timing data recorded yet.")
