@@ -2140,3 +2140,24 @@ CLI chat 2:
 - Prime directive documents should be created early — they prevent priority drift
 
 ---
+
+## Session 141 — 2026-03-23
+
+**What changed:**
+- `self-learning/principle_seeder.py` — NEW: Bootstrap principle registry from LEARNINGS.md and journal patterns. 62 principles seeded across 6 domains. Closes Get Smarter feedback loop.
+- `self-learning/tests/test_principle_seeder.py` — NEW: 26 tests for parser, domain mapping, seeding, idempotency, journal patterns.
+- `self-learning/principles.jsonl` — NEW: 62 seeded principles (code_quality=16, session_management=15, cca_operations=14, nuclear_scan=11, trading_research=3, general=3).
+- `SESSION_STATE.md` — Updated for S139-S141 (was stale at S138).
+- `CCA_TO_POLYBOT.md` — Full Kalshi bot DB analysis delivered (sniper price optimization, weather kill, overall health).
+
+**Why:**
+- Principle registry was empty (0 principles) despite 62 learnings and 984 journal entries. Predictive recommender produced nothing. Seeder bridges this gap.
+- Kalshi bot needed data-driven analysis — Matthew asked CCA to coordinate directly.
+
+**Tests:** 212/212 suites passing (+1 new)
+
+**Lessons:**
+- 755/984 journal entries have "unknown" event_type/domain — early sessions wrote unstructured data. Seeder works around this by using LEARNINGS.md as primary source.
+- Cross-chat queue is the fastest way to communicate; persistent files (CCA_TO_POLYBOT.md) are the most reliable.
+
+---

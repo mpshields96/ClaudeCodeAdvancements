@@ -3,31 +3,30 @@
 
 ---
 
-## Current State (as of Session 140 — 2026-03-23)
+## Current State (as of Session 141 — 2026-03-23)
 
-**Phase:** Session 140. MT-22 autoloop bug FIXED. Full end-to-end trigger works.
+**Phase:** Session 141. Get Smarter: principle seeder. Kalshi bot analysis. Autoloop working.
 
-**What was done this session (S140):**
-- **FIXED CODE TAB BUG (MT-22).** Replaced ALL broken AppleScript keystrokes with CoreGraphics CGEvent mouse clicks. CoreGraphics goes through HID event tap (same as physical mouse clicks) — Electron processes them correctly.
-- **CoreGraphics clicking:** `cg_click_at()` via ctypes (no pip install), `get_window_geometry()`, `get_tab_coordinates()`, `click_tab()`, `click_new_session_button()`.
-- **Replaced Cmd+N:** The "New Conversation" AppleScript keystroke also failed (routed to Chat). Replaced with CoreGraphics click on "+ New session" button. Coordinates calibrated via live cursor sweep with Matthew.
-- **Calibrated coordinates:** Code tab at (window_center_x + 65, window_top + 10). New session button at (window_left + 70, window_top + 60). Dynamic from window geometry.
-- **Trial results:** 10/10 tab switching, 5/5 full triggers, 1 successful end-to-end autoloop (spawned S141).
-- **Tests:** 20 new (102 total for desktop_automator), 211 suites all passing.
-- **Commits:** 6d8a2a7 (CoreGraphics tab clicking), 01b0c35 (New Session button click).
-- **Discovery:** Hovering "+ New session" shows shortcut Shift+Cmd+O. Not yet tested via CoreGraphics keyboard events.
+**What was done this session (S141):**
+- **principle_seeder.py** (Get Smarter): Bootstrapped 62 principles from LEARNINGS.md into principle_registry. Predictive recommender now produces real session-start recommendations. Self-learning feedback loop CLOSED. 26 tests.
+- **Kalshi bot full DB analysis**: Read polybot.db (1959 trades). Sniper sweet spot 90-93c (+$243). Weather MIA/CHI/DEN kill recommendation (-$298). Delivered to CCA_TO_POLYBOT.md.
+- **Cross-chat direct communication**: CCA↔Kalshi queue messaging established. Matthew no longer needs to relay.
+- **SESSION_STATE.md**: Updated for S139-S140 (was stale at S138).
+- **Autoloop proven**: S141 was successfully spawned by the CoreGraphics autoloop trigger.
+- **Matthew directive (S141)**: CCA and Kalshi bot have FULL permission to intermingle files and projects. XRP is permanently banned.
+- **Tests**: 212 suites passing (+1 new). 3 commits.
 
 **Next (prioritized):**
-1. **Sustained autoloop** — multiple iterations end-to-end (trigger in /cca-wrap)
-2. **Consider Shift+Cmd+O via CoreGraphics keyboard events** — position-independent alternative
-3. **Self-learning improvements** — continue Get Smarter pillar
-4. **Custom UI wrapper** — Code-tab-only launcher (Matthew idea, eliminates tab problem class)
+1. **Wire principle_seeder into /cca-init** — auto-seed on every session start (zero cost)
+2. **Sustained autoloop** — continue running, proving reliability
+3. **Kalshi research** — KXBTCD weekly threshold analysis per POLYBOT_TO_CCA.md request
+4. **Shift+Cmd+O via CoreGraphics keyboard events** — position-independent autoloop fallback
 
-**Matthew S140 directives:**
-- Autoloop is CCA-internal (triggered by /cca-wrap), NOT from Terminal.app
-- CoreGraphics coordinate clicking is THE solution — do not revert to AppleScript keystrokes
-- Do not spawn many sessions for "trial runs" — burns tokens
-- All previous directives still active (Two Pillars, polybot full access)
+**Matthew S141 directives:**
+- CCA and Kalshi bot: FULL cross-project file intermingling permission
+- XRP permanently banned from sniper
+- CCA↔Kalshi direct communication (no Matthew relay)
+- All previous directives still active (Two Pillars, CoreGraphics, polybot full access)
 
 ---
 
