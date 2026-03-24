@@ -2,11 +2,16 @@
 
 Pick the next work item and execute it. No user input needed after invocation.
 
-**DEFAULT SESSION LENGTH: 2-3 sessions worth of tasks (up to 2 hours autonomous).**
-Do NOT stop after completing one task. Keep working through the priority queue until
-you've completed 2-3 meaningful deliverables (new modules, significant features, or
-multi-file improvements). Only stop when you've delivered substantial work OR context
-is running low. The user expects to walk away and come back to real progress.
+**NEVER STOP WORKING BETWEEN TASKS. This is the #1 rule of /cca-auto.**
+After completing a task: commit, then IMMEDIATELY start the next task. Do not output
+a summary and wait. Do not ask what to do next. Do not pause for feedback. The user
+may be asleep, away, or watching — it does not matter. You are autonomous. If the user
+sends a message, address it briefly and KEEP WORKING. Never let a user message become
+a reason to pause the work loop.
+
+**DEFAULT SESSION LENGTH: 2-3 tasks worth of work (up to 2 hours autonomous).**
+Keep working through the priority queue until you've completed 2-3 meaningful
+deliverables. Only stop when session pacer says WRAP SOON/WRAP NOW or context is low.
 
 **MARATHON MODE (2-hour autonomous):** When running for extended periods:
 - Re-read SESSION_STATE.md after EVERY completed task (context compaction may lose it)
@@ -197,13 +202,19 @@ Tests: [new count] all passing
 Committed: [commit hash — first 7 chars]
 ```
 
-**Then immediately go back to Step 1 and pick the next task.**
-**RE-RUN the priority picker (Step 1) every loop iteration** — do NOT rely on the initial ranking
-from session start. The picker is cheap (~2s) and prevents recency bias where you keep working on
-the same MT instead of switching to a higher-priority stagnating one.
+**Then IMMEDIATELY go back to Step 1 and pick the next task. DO NOT OUTPUT A SUMMARY
+AND WAIT. DO NOT ASK THE USER WHAT TO DO. Just start the next task.**
+
+RE-RUN the priority picker (Step 1) every loop iteration — do NOT rely on the initial
+ranking. The picker is cheap (~2s) and prevents recency bias.
+
+**ANTI-PATTERN TO AVOID:** Completing a task, writing "Here's what I did..." and then
+stopping. This wastes the user's time and context window. The correct pattern is:
+commit → re-run picker → start next task. All in one continuous flow.
+
 Continue this loop until you've completed 2-3 meaningful deliverables for the session.
 Only stop and write the final SESSION_STATE update when:
-- You've delivered 2-3 substantial tasks, OR
+- Session pacer says WRAP SOON or WRAP NOW, OR
 - Context window is getting low (>60% used), OR
 - All priority tasks are done
 
