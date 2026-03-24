@@ -501,10 +501,10 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         MasterTask(
             mt_id=36, name="Session Efficiency Optimizer",
             base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=147, current_session=current_session,
-            phases_completed=3, phases_total=5,  # S147: Phase 2 efficiency_analyzer (32 tests) + Phase 3 batch_wrap_learning (18 tests).
+            last_touched_session=149, current_session=current_session,
+            phases_completed=4, phases_total=5,  # S148: Phase 4 analysis done — Kalshi already optimized. S149: confirmed.
             aging_rate=1.0,
-            next_action="Phase 4: Kalshi session optimization + deferred analysis in init.",
+            next_action="Phase 5: Dashboard tracking of session efficiency metrics over time.",
             tags=["optimization", "efficiency", "crown-jewel"],
         ),
         MasterTask(
