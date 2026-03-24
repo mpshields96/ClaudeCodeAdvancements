@@ -412,12 +412,12 @@ class TestS130PriorityReorder(unittest.TestCase):
     """Tests for S130 Matthew priority reorder directive."""
 
     def test_mt10_yoyo_in_registry(self):
-        """MT-10 (YoYo) must exist as crown jewel."""
+        """MT-10 (YoYo) must exist — COMPLETED as of S97."""
         tasks = get_known_tasks(131)
         mt10 = [t for t in tasks if t.mt_id == 10]
         self.assertEqual(len(mt10), 1)
         self.assertEqual(mt10[0].base_value, 10)
-        self.assertEqual(mt10[0].status, TaskStatus.ACTIVE)
+        self.assertEqual(mt10[0].status, TaskStatus.COMPLETED)
 
     def test_mt9_reddit_intel_in_registry(self):
         """MT-9 (Reddit Intelligence) must exist in top 5-10 tier."""

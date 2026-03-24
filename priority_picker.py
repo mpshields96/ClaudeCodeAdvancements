@@ -197,11 +197,11 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         # === CROWN JEWELS (Matthew S130: preserve, perfect, grow) ===
         MasterTask(
             mt_id=10, name="Self-Learning YoYo Improvement Loop",
-            base_value=10, status=TaskStatus.ACTIVE,
+            base_value=10, status=TaskStatus.COMPLETED,
             last_touched_session=125, current_session=current_session,
-            phases_completed=4, phases_total=6,
-            aging_rate=1.0,
-            next_action="Phase 5: Cross-session pattern accumulation. YoYo drives continuous improvement.",
+            phases_completed=6, phases_total=6,  # COMPLETE (S97): Phase 3A real DB validated, Phase 3B resurfacer
+            aging_rate=0,
+            next_action="COMPLETE. Phase 3A real DB validated, Phase 3B resurfacer done.",
             tags=["self-learning", "core"],
         ),
         MasterTask(
@@ -340,11 +340,11 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=26, name="Financial Intelligence Engine",
-            base_value=9, status=TaskStatus.ACTIVE,
+            base_value=9, status=TaskStatus.COMPLETED,
             last_touched_session=125, current_session=current_session,
             phases_completed=7, phases_total=7,  # S125: E2E validated. Tier 3 Phase 2 (Kalman) deferred.
-            aging_rate=0.5,
-            next_action="CCA scope COMPLETE. 79 pipeline tests. Tier 3 Phase 2 deferred (needs numpy).",
+            aging_rate=0,
+            next_action="COMPLETE. Tier 3 Phase 2 deferred (needs numpy). 79 pipeline tests.",
             tags=["kalshi", "trading", "research"],
         ),
         MasterTask(
