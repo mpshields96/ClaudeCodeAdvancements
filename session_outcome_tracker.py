@@ -135,11 +135,28 @@ class OutcomeStore:
 
 
 def parse_session_state_planned(content: str) -> list:
-    """Extract planned/next tasks from SESSION_STATE.md content."""
+    """Extract planned/next tasks from SESSION_STATE.md current section only.
+
+    Scopes to ## Current State section to avoid accumulating backlog from
+    historical sections (which caused 63-item planned lists and false low
+    completion rates).
+    """
+    # Extract only the current state section
+    current_section = content
+    current_match = re.search(r"## Current State.*?\n", content)
+    if current_match:
+        rest = content[current_match.end():]
+        # End at next ## Previous or end of file
+        prev_match = re.search(r"\n## Previous State", rest)
+        if prev_match:
+            current_section = rest[:prev_match.start()]
+        else:
+            current_section = rest
+
     tasks = []
     in_next = False
-    for line in content.split("\n"):
-        if "**Next (prioritized):**" in line:
+    for line in current_section.split("\n"):
+        if re.search(r"\*\*Next\b.*?:", line):
             in_next = True
             continue
         if in_next:
@@ -150,7 +167,6 @@ def parse_session_state_planned(content: str) -> list:
             elif line.strip().startswith("---") or (line.strip().startswith("##") and line.strip() != ""):
                 break
             elif line.strip() == "":
-                # Allow blank lines within section
                 continue
     return tasks
 
