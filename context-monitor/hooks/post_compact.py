@@ -232,7 +232,8 @@ def build_compaction_event(
     """Build a structured compaction event for the self-learning journal."""
     now = datetime.now(timezone.utc).isoformat()
     return {
-        "type": "compaction",
+        "event_type": "compaction",
+        "domain": "context_monitor",
         "timestamp": now,
         "session_id": session_id,
         "trigger": trigger,

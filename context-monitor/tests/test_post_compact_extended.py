@@ -381,14 +381,15 @@ class TestBuildCompactionEventExtended(unittest.TestCase):
     def test_event_has_required_keys(self):
         from post_compact import build_compaction_event
         event = build_compaction_event("auto", "sess", "summary", {})
-        for key in ("type", "timestamp", "session_id", "trigger", "pre_zone",
+        for key in ("event_type", "domain", "timestamp", "session_id", "trigger", "pre_zone",
                     "pre_pct", "pre_turns", "compact_summary_len", "compaction_count"):
             self.assertIn(key, event)
 
     def test_event_type_is_compaction(self):
         from post_compact import build_compaction_event
         event = build_compaction_event("manual", "sess", "summary", {})
-        self.assertEqual(event["type"], "compaction")
+        self.assertEqual(event["event_type"], "compaction")
+        self.assertEqual(event["domain"], "context_monitor")
 
     def test_timestamp_is_iso_format(self):
         from post_compact import build_compaction_event
@@ -523,7 +524,7 @@ class TestMainIntegration(unittest.TestCase):
         self.assertEqual(state["zone"], "green")
         self.assertIn("COMPACT RECOVERY", recovery)
         self.assertEqual(len(journal), 1)
-        self.assertEqual(journal[0]["type"], "compaction")
+        self.assertEqual(journal[0]["event_type"], "compaction")
 
     def test_disabled_env_exits_without_writing(self):
         from post_compact import main

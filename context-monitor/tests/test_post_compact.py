@@ -229,7 +229,8 @@ class TestLogCompactionEvent(unittest.TestCase):
             compact_summary="Working on X",
             pre_compaction_state={"zone": "red", "pct": 82, "turns": 47},
         )
-        self.assertEqual(event["type"], "compaction")
+        self.assertEqual(event["event_type"], "compaction")
+        self.assertEqual(event["domain"], "context_monitor")
         self.assertEqual(event["trigger"], "auto")
         self.assertEqual(event["session_id"], "sess-001")
         self.assertEqual(event["pre_zone"], "red")
@@ -255,12 +256,12 @@ class TestLogCompactionEvent(unittest.TestCase):
             journal_path = Path(f.name)
 
         try:
-            event = {"type": "compaction", "trigger": "auto", "timestamp": "2026-03-19T00:00:00Z"}
+            event = {"event_type": "compaction", "domain": "context_monitor", "trigger": "auto", "timestamp": "2026-03-19T00:00:00Z"}
             append_journal_event(journal_path, event)
             lines = journal_path.read_text().strip().split("\n")
             self.assertEqual(len(lines), 2)
             last = json.loads(lines[-1])
-            self.assertEqual(last["type"], "compaction")
+            self.assertEqual(last["event_type"], "compaction")
         finally:
             os.unlink(journal_path)
 
@@ -268,11 +269,11 @@ class TestLogCompactionEvent(unittest.TestCase):
         from post_compact import append_journal_event
         with tempfile.TemporaryDirectory() as tmpdir:
             journal_path = Path(tmpdir) / "journal.jsonl"
-            event = {"type": "compaction", "trigger": "manual"}
+            event = {"event_type": "compaction", "domain": "context_monitor", "trigger": "manual"}
             append_journal_event(journal_path, event)
             self.assertTrue(journal_path.exists())
             line = json.loads(journal_path.read_text().strip())
-            self.assertEqual(line["type"], "compaction")
+            self.assertEqual(line["event_type"], "compaction")
 
 
 class TestDisableEnvVar(unittest.TestCase):
