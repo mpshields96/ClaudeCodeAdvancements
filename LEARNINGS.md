@@ -573,3 +573,12 @@
 - **First seen:** 2026-03-24 (Session 144)
 - **Last seen:** 2026-03-24
 - **Files:** agent-guard/tests/test_effort_scorer.py (test_session_notifier_improved)
+
+### /cca-wrap Step 10 (autoloop trigger) consistently skipped — Severity: 3 — Count: 3+
+- **Anti-pattern:** Claude completes Steps 1-9 of /cca-wrap, outputs the resume prompt, then STOPS — never executing Step 10 (`python3 autoloop_trigger.py`). This breaks the self-sustaining loop.
+- **Root cause:** The /cca-wrap skill file has 10 steps but Step 10 is after the resume prompt (Step 9), which feels like a natural stopping point. Context pressure at wrap time makes Claude eager to finish.
+- **Fix:** Step 10 MUST run after Step 9. The autoloop trigger is the FINAL action. The session is NOT complete until the trigger fires. If context is critical, still run `python3 autoloop_trigger.py` — it's a single command.
+- **First seen:** S137 (2026-03-23)
+- **Last seen:** S148 (2026-03-24)
+- **Files:** `.claude/commands/cca-wrap.md` (Step 10), `autoloop_trigger.py`
+- **Promoted:** 2026-03-24 -> ~/.claude/rules/ and CLAUDE.md Known Gotchas

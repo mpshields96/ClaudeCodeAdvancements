@@ -370,3 +370,4 @@ The **"+ New session"** button is in the top-left corner of the window (visible 
 - **Claude Island auto-hooks:** Do NOT launch while other CC sessions are active — it auto-installs global hooks into `~/.claude/hooks/`.
 - **PROJECT_INDEX.md Edit retries:** Always Read PROJECT_INDEX.md (and SESSION_STATE.md) before editing. These structured table files cause Edit failures in 68% of sessions (25/37) when the old_string doesn't exactly match. Read costs ~500 tokens, saves ~2000 in retry loops.
 - **GitHub repo:** `https://github.com/mpshields96/ClaudeCodeAdvancements`
+- **AUTOLOOP TRIGGER (Step 10):** /cca-wrap has 10 steps, NOT 9. Step 10 (`python3 autoloop_trigger.py`) is the FINAL action and MUST execute after the resume prompt. The session is NOT complete until the trigger fires. This has been skipped in 3+ consecutive sessions. NEVER skip Step 10.
