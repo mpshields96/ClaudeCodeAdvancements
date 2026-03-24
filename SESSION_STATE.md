@@ -3,27 +3,26 @@
 
 ---
 
-## Current State (as of Session 147 — 2026-03-24)
+## Current State (as of Session 148 — 2026-03-24)
 
-**Phase:** Session 147 COMPLETE. MT-36 Phases 2-3, cross-chat permanent, cca-auto chaining fix. 7 commits. Grade: A.
+**Phase:** Session 148 IN PROGRESS. MT-32 Phase 5 COMPLETE, MT-37 documented, Reddit intel delivered.
 
-**What was done this session (S147):**
-- **MT-36 Phase 2 — efficiency_analyzer.py**: Session overhead analyzer with static wrap analysis. Maps all 32 cca-wrap steps, identifies 47% deferrable tokens (~10,300 savings). Slim wrap proposal: 13,800 tokens vs 24,100 current. OverheadAnalyzer for multi-session trends. 32 tests.
-- **MT-36 Phase 3 — batch_wrap_learning.py**: Consolidates 11 self-learning subprocess calls into single batch. Writes journal, wrap assessment, tips, outcomes in one call. Wired into cca-wrap as slim mode default. 18 tests.
-- **cca-wrap slim mode wired**: Step 6 now defaults to batch_wrap_learning.py. Analysis steps (reflect, sentinel, validate) deferred to next init. Saves ~5,000-10,000 tokens per wrap.
-- **Priority picker data fixes**: MT-7->COMPLETED, MT-22 phases 0->3, MT-35 phases 0->3, MT-36 added. Registry updated to S147.
-- **Tests**: 213 suites + 50 new = ~8733 tests. 3 commits.
+**What was done this session (S148):**
+- **MT-32 Phase 5 — Dashboard v2**: Dark mode toggle (CSS custom properties + localStorage), sortable task table (click headers), module search/filter, collapsible sections with chevrons, --theme CLI flag. 28 new tests (test_dashboard_v2.py). 0 regressions.
+- **MT-37 documented**: AI Investment Research & Portfolio Intelligence — long-term MT per Matthew directive. 7 phases, research-first. Added to MASTER_TASKS.md and priority_picker.py.
+- **Reddit intel**: r/PredictionsMarkets — CF Benchmarks BRTI confirmed as Kalshi crypto settlement source. synthesis.trade API discovered. Written to CCA_TO_POLYBOT.md.
+- **Priority picker updates**: MT-32 Phase 5 done, MT-36 Phases 2-3 done, MT-37 added as blocked (long-term).
+- **Tests**: 214 suites, ~8761 tests. 2 commits so far.
 
 **Next (prioritized by priority picker):**
-1. **MT-31 Gemini Flash Integration** — aging 22 sessions, needs work or archival decision (score 9.0)
-2. **MT-32 Visual Excellence** — aging 22 sessions, needs work or archival decision (score 9.0)
-3. **MT-22 Desktop Electron** — Phase 4: supervised trial (score 2.0, near complete)
-4. **MT-36 Session Efficiency** — Phase 4: Kalshi session optimization + deferred analysis in init
+1. **MT-22 Desktop Electron** — Phase 4: supervised trial (score 2.0, near complete)
+2. **MT-35 Background Autoloop** — Phase 4: keyboard shortcut pause/resume
+3. **MT-36 Session Efficiency** — Phase 4: Kalshi session optimization
 
-**Matthew S147 directives:**
-- Session longevity: make CCA sessions last longer, knock out more tasks per session before wrapping
-- CCA helper chat should last 2-3 CCA desktop cycles; Kalshi chat lasts 4-5x
-- All previous directives still active (Two Pillars, priority picker, cross-chat comms, CoreGraphics, polybot full access, XRP ban)
+**Matthew S148 directives:**
+- MT-37: Long-term AI algo investing research — no rush, plant the seed
+- Reddit review on Kalshi crypto price provider
+- All previous directives still active (Two Pillars, priority picker, cross-chat comms, session longevity, polybot full access)
 
 ---
 

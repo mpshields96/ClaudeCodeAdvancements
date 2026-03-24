@@ -382,3 +382,9 @@
 [2026-03-23] [SKIP] [OFF-SCOPE] "Where to start quant development" (7pts, 82%, 5c, r/algotrading). Beginner question. Concepts mentioned (cross-validation, lookahead bias, non-stationarity) already embedded in Kalshi bot architecture. No novel insights. — https://www.reddit.com/r/algotrading/comments/1s1vvna/
 [2026-03-23] [ADAPT] [F4 Agent Guard] "Multiagent orchestration for parallel work tools" (64pts, 43c, r/ClaudeCode). Comprehensive tool comparison: Vibe Kanban (most mature), Maestro (stable), Auto Claude, GasTown (Yegge), Emdash, Chloe (Rust TUI), iloom (issue tracker + worktrees), sudocode (task DAG + web UI), DevSwarm, Air.dev. Community consensus: git worktrees for isolation, test gates before merge, clear task boundaries, visibility dashboards. Richest thread for "Get More Bodies" pillar. Study Vibe Kanban + sudocode approaches. — https://www.reddit.com/r/ClaudeCode/comments/1q9dmxd/
 [2026-03-21] [REFERENCE] [MT-32: Visual/Design] Pencil.dev — "Cursor for Design" AI UI generator. MCP integration with Claude Code (March 2026 feature). Exports clean HTML/CSS/React. Free. Use as visual benchmark and CSS pattern reference for dashboard_generator.py improvements, NOT as a dependency. — https://www.pencil.dev/
+
+## [2026-03-24] r/PredictionsMarkets — "Kalshi crypto price provider"
+- **URL:** https://www.reddit.com/r/PredictionsMarkets/comments/1s1xecm/kalshi_crypto_price_provider/
+- **Verdict:** REFERENCE
+- **Key intel:** CF Benchmarks BRTI confirmed as Kalshi 15-min crypto settlement source (60s average). synthesis.trade API provides real-time BRTI via WebSocket. One competitor bot builder using Kalshi-native data only.
+- **Action:** Written to CCA_TO_POLYBOT.md for Kalshi chat to evaluate synthesis.trade API.
