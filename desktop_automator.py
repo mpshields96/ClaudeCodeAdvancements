@@ -288,7 +288,9 @@ class DesktopAutomator:
         """Ensure the Code tab is active. Detect + click if needed.
 
         Returns True if Code tab is (or becomes) active.
-        If detection fails (unknown), tries clicking anyway.
+        If detection fails (unknown — common when Electron doesn't expose
+        web UI elements to native accessibility), returns True optimistically.
+        The user is expected to have the Code tab open.
         """
         tab = self.get_active_tab()
 
@@ -296,16 +298,31 @@ class DesktopAutomator:
             self._log("ensure_code_tab", {"action": "already_active"})
             return True
 
-        # Need to switch
+        if tab == "unknown":
+            # Electron apps often don't expose tab state to accessibility.
+            # Proceed optimistically — user should have Code tab open.
+            self._log("ensure_code_tab", {
+                "action": "unknown_tab_proceeding",
+                "note": "Electron accessibility limited — assuming Code tab",
+            })
+            return True
+
+        # Detected a non-Code tab (Chat or Cowork) — try to switch
         self._log("ensure_code_tab", {"action": "switching", "from_tab": tab})
         result = self.click_code_tab()
 
         if result:
-            # Small delay for tab switch animation
             if not self.dry_run:
                 time.sleep(0.3)
+            return True
 
-        return result
+        # Click failed — still proceed optimistically rather than blocking
+        self._log("ensure_code_tab", {
+            "action": "click_failed_proceeding",
+            "from_tab": tab,
+            "note": "Proceeding despite click failure — user may need to switch manually",
+        })
+        return True
 
     # --- App control ---
 

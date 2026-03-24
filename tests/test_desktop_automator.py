@@ -808,21 +808,20 @@ class TestEnsureCodeTab(unittest.TestCase):
 
     @patch.object(DesktopAutomator, "click_code_tab", return_value=False)
     @patch.object(DesktopAutomator, "get_active_tab", return_value="Chat")
-    def test_fails_if_click_fails(self, mock_tab, mock_click):
-        with tempfile.TemporaryDirectory() as tmp:
-            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
-            result = da.ensure_code_tab()
-            self.assertFalse(result)
-
-    @patch.object(DesktopAutomator, "get_active_tab", return_value="unknown")
-    @patch.object(DesktopAutomator, "click_code_tab", return_value=True)
-    def test_attempts_click_on_unknown_tab(self, mock_click, mock_tab):
-        """If tab detection fails, try clicking Code tab anyway."""
+    def test_proceeds_even_if_click_fails(self, mock_tab, mock_click):
+        """Proceeds optimistically even if click fails — user may fix manually."""
         with tempfile.TemporaryDirectory() as tmp:
             da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
             result = da.ensure_code_tab()
             self.assertTrue(result)
-            mock_click.assert_called_once()
+
+    @patch.object(DesktopAutomator, "get_active_tab", return_value="unknown")
+    def test_proceeds_on_unknown_tab(self, mock_tab):
+        """Electron apps don't expose tabs — proceed optimistically."""
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=False)
+            result = da.ensure_code_tab()
+            self.assertTrue(result)
 
 
 class TestNewConversationWithCodeTab(unittest.TestCase):
