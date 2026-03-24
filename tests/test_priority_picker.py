@@ -298,10 +298,10 @@ class TestStagnationAlert(unittest.TestCase):
 
     def test_stagnation_alert_detects_aging_mt(self):
         """MTs untouched 5+ sessions should appear in alert."""
-        picker = PriorityPicker(current_session=124)
+        picker = PriorityPicker(current_session=145)
         alert = picker.stagnation_alert()
-        # MT-0 is untouched since S105, should be flagged
-        self.assertIn("MT-0", alert)
+        # MT-27 is active and untouched since S129, should be flagged at S145
+        self.assertIn("MT-27", alert)
 
     def test_stagnation_alert_empty_when_all_recent(self):
         """No alert if all active MTs were touched recently."""

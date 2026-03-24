@@ -32,13 +32,17 @@
 
 **Relationship to CCA:** The self-learning module in CCA is the R&D lab. The Kalshi deployment is the production application. Patterns proven in CCA get promoted to Kalshi. This is R&D-before-production applied to self-learning itself.
 
-**Status:** Phase 1 COMPLETE (Session 21). Trading domain schema built in CCA self-learning module:
-- 6 new event types: bet_placed, bet_outcome, market_research, edge_discovered, edge_rejected, strategy_shift
-- `get_trading_metrics()` with PnL tracking, win rate, by-market-type and by-strategy breakdowns, research effectiveness
-- 4 trading pattern detectors: losing_strategy, research_dead_end, negative_pnl, strong_edge_discovery
-- Trading section in strategy.json with bounded auto-adjust params
-- 24 new tests (75 total self-learning)
-- Phase 2: Deploy to polymarket-bot (requires cross-project work)
+**Status:** COMPLETE (Phase 1: S21, Phase 2: deployed via polymarket-bot monitoring chat).
+- Phase 1 (CCA): 6 event types, trading metrics, 4 pattern detectors, 24 tests
+- Phase 2 (Polybot): Deployed via different implementation path (DB-direct vs JSONL journal):
+  - `kalshi_self_learning.py` (916 LOC): Bucket stats, Wilson CI, CUSUM, learning proposals, persistent state
+  - `trade_reflector.py` (791 LOC): Trade pattern analysis, 5 detectors
+  - `calibration_bias.py` (426 LOC): Systematic mispricing detection
+  - `dynamic_kelly.py` (341 LOC): Per-bucket optimal sizing
+  - `strategy_health_scorer.py` (296 LOC): HEALTHY/MONITOR/PAUSE/KILL verdicts
+  - `overnight_detector.py` (497 LOC): Time-stratified analysis
+  - `trading_analysis_runner.py` (391 LOC): Unified runner
+  - Total: 7 modules, 4225 LOC — closed feedback loop active (bet outcomes -> bucket analysis -> proposals)
 
 ---
 
@@ -1222,7 +1226,7 @@ python3 priority_picker.py json          # Export for programmatic use
 
 | MT | Task | Status |
 |----|------|--------|
-| MT-0 | Kalshi self-learning integration | Phase 1 COMPLETE — Phase 2 = deploy to polybot (out of CCA scope) |
+| MT-0 | Kalshi self-learning integration | COMPLETE — Phase 2 deployed via kalshi_self_learning.py (916 LOC) + 6 analysis modules (4225 LOC total) in polymarket-bot |
 | MT-2 | Mermaid diagrams | COMPLETE |
 | MT-3 | Virtual design team | COMPLETE |
 | MT-4 | Design vocabulary | COMPLETE |

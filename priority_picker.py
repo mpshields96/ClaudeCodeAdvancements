@@ -206,11 +206,11 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=0, name="Kalshi bot self-learning integration",
-            base_value=10, status=TaskStatus.ACTIVE,
-            last_touched_session=105, current_session=current_session,
-            phases_completed=1, phases_total=3,
-            aging_rate=1.0,
-            next_action="Phase 2: Deploy self-learning to Kalshi bot. CCA prep complete, needs Kalshi chat execution.",
+            base_value=10, status=TaskStatus.COMPLETED,
+            last_touched_session=131, current_session=current_session,
+            phases_completed=3, phases_total=3,  # Phase 2 deployed via different path: kalshi_self_learning.py (916 LOC) + 6 analysis modules (4225 LOC total) in polymarket-bot/scripts/analysis/
+            aging_rate=0,
+            next_action="COMPLETE. 7 modules deployed to polymarket-bot (DB-direct approach vs CCA journal.py). Closed feedback loop active.",
             tags=["kalshi", "self-learning", "trading"],
         ),
         MasterTask(
