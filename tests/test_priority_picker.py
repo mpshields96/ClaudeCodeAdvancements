@@ -576,5 +576,215 @@ class TestReopenMT(unittest.TestCase):
         self.assertIn(0, completed_ids)
 
 
+class TestRecurringTasks(unittest.TestCase):
+    """Tests for recurring task staleness detection."""
+
+    def test_recurring_task_creation(self):
+        from priority_picker import RecurringTask
+        rt = RecurringTask(
+            task_id="nuclear_scan",
+            name="Nuclear Reddit/GitHub scan",
+            base_priority=8,
+            staleness_days=3,
+            last_run_date="2026-03-21",
+            current_date="2026-03-24",
+        )
+        self.assertEqual(rt.days_stale, 3)
+
+    def test_recurring_task_overdue(self):
+        from priority_picker import RecurringTask
+        rt = RecurringTask(
+            task_id="nuclear_scan",
+            name="Nuclear Reddit/GitHub scan",
+            base_priority=8,
+            staleness_days=3,
+            last_run_date="2026-03-20",
+            current_date="2026-03-24",
+        )
+        self.assertTrue(rt.is_overdue)
+        self.assertEqual(rt.days_stale, 4)
+
+    def test_recurring_task_not_overdue(self):
+        from priority_picker import RecurringTask
+        rt = RecurringTask(
+            task_id="nuclear_scan",
+            name="Nuclear Reddit/GitHub scan",
+            base_priority=8,
+            staleness_days=3,
+            last_run_date="2026-03-23",
+            current_date="2026-03-24",
+        )
+        self.assertFalse(rt.is_overdue)
+
+    def test_recurring_task_score(self):
+        from priority_picker import RecurringTask
+        rt = RecurringTask(
+            task_id="nuclear_scan",
+            name="Nuclear Reddit/GitHub scan",
+            base_priority=8,
+            staleness_days=3,
+            last_run_date="2026-03-20",
+            current_date="2026-03-24",
+        )
+        # Overdue by 1 day: base + (days_over * 2) = 8 + 2 = 10
+        self.assertEqual(rt.score, 10.0)
+
+    def test_recurring_task_score_not_overdue(self):
+        from priority_picker import RecurringTask
+        rt = RecurringTask(
+            task_id="nuclear_scan",
+            name="Nuclear Reddit/GitHub scan",
+            base_priority=8,
+            staleness_days=3,
+            last_run_date="2026-03-24",
+            current_date="2026-03-24",
+        )
+        self.assertEqual(rt.score, 0.0)
+
+    def test_recurring_task_never_run(self):
+        from priority_picker import RecurringTask
+        rt = RecurringTask(
+            task_id="nuclear_scan",
+            name="Nuclear Reddit/GitHub scan",
+            base_priority=8,
+            staleness_days=3,
+            last_run_date=None,
+            current_date="2026-03-24",
+        )
+        self.assertTrue(rt.is_overdue)
+        # Never run = max staleness score (base + cap at 2x)
+        self.assertGreaterEqual(rt.score, 8.0)
+
+
+class TestGrowthActions(unittest.TestCase):
+    """Tests for growth actions on completed MTs."""
+
+    def test_growth_action_field(self):
+        t = MasterTask(
+            mt_id=10, name="YoYo", base_value=10,
+            status=TaskStatus.COMPLETED, last_touched_session=125,
+            current_session=149, phases_completed=6, phases_total=6,
+            growth_action="Integrate ResearcherSkill convergence detection pattern",
+            growth_priority=6,
+        )
+        self.assertEqual(t.growth_action, "Integrate ResearcherSkill convergence detection pattern")
+        self.assertEqual(t.growth_priority, 6)
+
+    def test_growth_action_default_none(self):
+        t = MasterTask(
+            mt_id=10, name="YoYo", base_value=10,
+            status=TaskStatus.COMPLETED, last_touched_session=125,
+            current_session=149, phases_completed=6, phases_total=6,
+        )
+        self.assertIsNone(t.growth_action)
+        self.assertEqual(t.growth_priority, 0)
+
+    def test_picker_growth_tasks(self):
+        from priority_picker import PriorityPicker
+        picker = PriorityPicker(current_session=149)
+        # Override with test data
+        picker.tasks = [
+            MasterTask(mt_id=10, name="YoYo", base_value=10,
+                      status=TaskStatus.COMPLETED, last_touched_session=125,
+                      current_session=149, phases_completed=6, phases_total=6,
+                      growth_action="Extend with convergence detection",
+                      growth_priority=6),
+            MasterTask(mt_id=99, name="No growth", base_value=8,
+                      status=TaskStatus.COMPLETED, last_touched_session=100,
+                      current_session=149, phases_completed=3, phases_total=3),
+        ]
+        growth = picker.growth_tasks()
+        self.assertEqual(len(growth), 1)
+        self.assertEqual(growth[0].mt_id, 10)
+
+
+class TestDirectiveQueue(unittest.TestCase):
+    """Tests for Matthew's explicit session directives."""
+
+    def test_add_directive(self):
+        from priority_picker import PriorityPicker, Directive
+        picker = PriorityPicker(current_session=149)
+        d = Directive(
+            text="Nuclear reddit/github scan — subs 5-6 days stale",
+            priority=9,
+            source="S148",
+        )
+        picker.add_directive(d)
+        self.assertEqual(len(picker.directives), 1)
+
+    def test_directive_appears_in_full_ranking(self):
+        from priority_picker import PriorityPicker, Directive
+        picker = PriorityPicker(current_session=149)
+        # Override tasks to a controlled set so directive is highest
+        picker.tasks = [
+            MasterTask(mt_id=1, name="Low", base_value=3,
+                      status=TaskStatus.ACTIVE, last_touched_session=148,
+                      current_session=149, phases_completed=1, phases_total=4),
+        ]
+        d = Directive(
+            text="Nuclear reddit/github scan",
+            priority=15,
+            source="S148",
+        )
+        picker.add_directive(d)
+        full = picker.full_ranking()
+        self.assertGreater(len(full), 0)
+        # Directive with priority 15 should beat MT with score ~4
+        self.assertEqual(full[0]["type"], "directive")
+        self.assertEqual(full[0]["score"], 15)
+
+    def test_full_ranking_mixes_all_types(self):
+        from priority_picker import PriorityPicker, Directive, RecurringTask
+        picker = PriorityPicker(current_session=149)
+        picker.add_directive(Directive("Do X", priority=5, source="S148"))
+        picker.add_recurring(RecurringTask(
+            task_id="scan", name="Scan", base_priority=8,
+            staleness_days=3, last_run_date="2026-03-20",
+            current_date="2026-03-24",
+        ))
+        full = picker.full_ranking()
+        types = {item["type"] for item in full}
+        # Should have at least mt and one of directive/recurring
+        self.assertTrue(len(types) >= 2)
+
+    def test_full_ranking_sorted_by_score(self):
+        from priority_picker import PriorityPicker, Directive
+        picker = PriorityPicker(current_session=149)
+        picker.add_directive(Directive("Low", priority=1, source="test"))
+        picker.add_directive(Directive("High", priority=99, source="test"))
+        full = picker.full_ranking()
+        scores = [item["score"] for item in full]
+        self.assertEqual(scores, sorted(scores, reverse=True))
+
+
+class TestFullRecommend(unittest.TestCase):
+    """Tests for the enhanced recommendations output."""
+
+    def test_recommend_shows_all_sections(self):
+        from priority_picker import PriorityPicker, Directive, RecurringTask
+        picker = PriorityPicker(current_session=149)
+        picker.add_directive(Directive("Nuclear scan", priority=9, source="S148"))
+        picker.add_recurring(RecurringTask(
+            task_id="scan", name="Nuclear scan",
+            base_priority=8, staleness_days=3,
+            last_run_date="2026-03-20", current_date="2026-03-24",
+        ))
+        # Add a growth task
+        picker.tasks = [
+            MasterTask(mt_id=22, name="Desktop", base_value=10,
+                      status=TaskStatus.ACTIVE, last_touched_session=142,
+                      current_session=149, phases_completed=3, phases_total=4),
+            MasterTask(mt_id=10, name="YoYo", base_value=10,
+                      status=TaskStatus.COMPLETED, last_touched_session=125,
+                      current_session=149, phases_completed=6, phases_total=6,
+                      growth_action="Convergence detection", growth_priority=6),
+        ]
+        rec = picker.full_recommendations()
+        self.assertIn("DIRECTIVES", rec)
+        self.assertIn("OVERDUE", rec)
+        self.assertIn("ACTIVE", rec)
+        self.assertIn("GROWTH", rec)
+
+
 if __name__ == "__main__":
     unittest.main()

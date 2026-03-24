@@ -16,6 +16,7 @@ import json
 import re
 import sys
 from dataclasses import dataclass, field, asdict
+from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Optional
@@ -36,6 +37,56 @@ class Urgency(Enum):
 
 
 @dataclass
+class RecurringTask:
+    """A recurring maintenance task with staleness-based scoring.
+
+    Examples: nuclear reddit scans, cross-chat checks, doc maintenance.
+    These re-enter the priority queue when overdue based on time, not session count.
+    """
+    task_id: str
+    name: str
+    base_priority: float
+    staleness_days: int  # How many days before considered overdue
+    last_run_date: Optional[str]  # ISO date string "YYYY-MM-DD" or None
+    current_date: str = ""  # ISO date string
+
+    @property
+    def days_stale(self) -> int:
+        if not self.last_run_date:
+            return 999  # Never run
+        try:
+            last = date.fromisoformat(self.last_run_date)
+            now = date.fromisoformat(self.current_date) if self.current_date else date.today()
+            return (now - last).days
+        except (ValueError, TypeError):
+            return 999
+
+    @property
+    def is_overdue(self) -> bool:
+        return self.days_stale >= self.staleness_days
+
+    @property
+    def score(self) -> float:
+        """Score: 0 if not overdue, base + 2*days_over if overdue. Caps at 2x base."""
+        if not self.is_overdue:
+            return 0.0
+        days_over = self.days_stale - self.staleness_days
+        raw = self.base_priority + (days_over * 2.0)
+        return min(raw, self.base_priority * 2.0)
+
+
+@dataclass
+class Directive:
+    """An explicit Matthew directive injected into the priority queue.
+
+    These represent session-specific instructions that override normal scoring.
+    """
+    text: str
+    priority: float
+    source: str  # Which session created it, e.g. "S148"
+
+
+@dataclass
 class MasterTask:
     """Parsed representation of a Master-Level Task."""
     mt_id: int
@@ -51,6 +102,8 @@ class MasterTask:
     self_resolution_note: Optional[str] = None
     next_action: str = ""
     tags: list = field(default_factory=list)
+    growth_action: Optional[str] = None  # Next growth opportunity for completed MTs
+    growth_priority: float = 0  # Priority of growth action (0 = no growth)
 
     @property
     def sessions_since_touch(self) -> int:
@@ -199,19 +252,23 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             mt_id=10, name="Self-Learning YoYo Improvement Loop",
             base_value=10, status=TaskStatus.COMPLETED,
             last_touched_session=125, current_session=current_session,
-            phases_completed=6, phases_total=6,  # COMPLETE (S97): Phase 3A real DB validated, Phase 3B resurfacer
+            phases_completed=6, phases_total=6,
             aging_rate=0,
             next_action="COMPLETE. Phase 3A real DB validated, Phase 3B resurfacer done.",
             tags=["self-learning", "core"],
+            growth_action="Add convergence detection (ResearcherSkill pattern: metric plateau, discard streaks, approach exhaustion)",
+            growth_priority=7,
         ),
         MasterTask(
             mt_id=0, name="Kalshi bot self-learning integration",
             base_value=10, status=TaskStatus.COMPLETED,
             last_touched_session=131, current_session=current_session,
-            phases_completed=3, phases_total=3,  # Phase 2 deployed via different path: kalshi_self_learning.py (916 LOC) + 6 analysis modules (4225 LOC total) in polymarket-bot/scripts/analysis/
+            phases_completed=3, phases_total=3,
             aging_rate=0,
             next_action="COMPLETE. 7 modules deployed to polymarket-bot (DB-direct approach vs CCA journal.py). Closed feedback loop active.",
             tags=["kalshi", "self-learning", "trading"],
+            growth_action="Wire principle_registry scoring into live Kalshi bet decisions (bridge CCA self-learning v2 -> polybot)",
+            growth_priority=8,
         ),
         MasterTask(
             mt_id=22, name="Desktop Electron app automation",
@@ -226,20 +283,24 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             mt_id=27, name="CCA Nuclear v2 (Enhanced Scanning)",
             base_value=8, status=TaskStatus.COMPLETED,
             last_touched_session=129, current_session=current_session,
-            phases_completed=5, phases_total=5,  # COMPLETE (S115/S129): NEEDLE classifier, APF tracking, precision improvement. 440 tests.
+            phases_completed=5, phases_total=5,
             aging_rate=0,
             next_action="COMPLETE. All 5 phases done.",
             tags=["scanning", "intelligence", "crown-jewel"],
+            growth_action="Auto-schedule recurring scans via cron + staleness-triggered scanning",
+            growth_priority=5,
         ),
         # === TOP 5-10 ===
         MasterTask(
             mt_id=9, name="Reddit Intelligence Pipeline",
             base_value=7, status=TaskStatus.COMPLETED,
             last_touched_session=130, current_session=current_session,
-            phases_completed=4, phases_total=4,  # COMPLETE (S95): autonomous_scanner.py, Phase 3 E2E validated, 101 tests
+            phases_completed=4, phases_total=4,
             aging_rate=0,
             next_action="COMPLETE. Core scanning works, E2E validated.",
             tags=["scanning", "intelligence"],
+            growth_action="MCP integration (reddit-mcp-buddy pattern) or comment-level sentiment scoring",
+            growth_priority=4,
         ),
         MasterTask(
             mt_id=11, name="GitHub Intelligence Scanner",
@@ -342,19 +403,23 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             mt_id=26, name="Financial Intelligence Engine",
             base_value=9, status=TaskStatus.COMPLETED,
             last_touched_session=125, current_session=current_session,
-            phases_completed=7, phases_total=7,  # S125: E2E validated. Tier 3 Phase 2 (Kalman) deferred.
+            phases_completed=7, phases_total=7,
             aging_rate=0,
             next_action="COMPLETE. Tier 3 Phase 2 deferred (needs numpy). 79 pipeline tests.",
             tags=["kalshi", "trading", "research"],
+            growth_action="Tier 3 Phase 2: Kalman filter (deferred — needs numpy). Or: wire signal_pipeline into live Kalshi bot",
+            growth_priority=7,
         ),
         MasterTask(
             mt_id=28, name="Self-Learning v2 (Multi-Domain)",
             base_value=10, status=TaskStatus.COMPLETED,
             last_touched_session=111, current_session=current_session,
-            phases_completed=6, phases_total=6,  # ALL COMPLETE: registry, plugin, transfer, feedback, predictive, sentinel_bridge
+            phases_completed=6, phases_total=6,
             aging_rate=0,
             next_action="DONE. All 6 phases complete. Full adaptive self-learning pipeline.",
             tags=["self-learning", "kalshi"],
+            growth_action="Principle seeding from nuclear scan findings (auto-extract patterns from FINDINGS_LOG)",
+            growth_priority=6,
         ),
         MasterTask(
             mt_id=29, name="Cowork + Pro Bridge Hivemind",
@@ -506,6 +571,119 @@ class PriorityPicker:
     def __init__(self, current_session: int = 131):
         self.current_session = current_session
         self.tasks = get_known_tasks(current_session)
+        self.directives: list[Directive] = []
+        self.recurring_tasks: list[RecurringTask] = []
+
+    def add_directive(self, directive: Directive) -> None:
+        """Add a Matthew directive to the priority queue."""
+        self.directives.append(directive)
+
+    def add_recurring(self, task: RecurringTask) -> None:
+        """Add a recurring task to the priority queue."""
+        self.recurring_tasks.append(task)
+
+    def growth_tasks(self) -> list[MasterTask]:
+        """Completed MTs that have growth actions defined."""
+        return [t for t in self.tasks
+                if t.status == TaskStatus.COMPLETED
+                and t.growth_action is not None
+                and t.growth_priority > 0]
+
+    def full_ranking(self) -> list[dict]:
+        """Unified ranking across all item types: directives, recurring, active MTs, growth MTs.
+
+        Returns a list of dicts with keys: type, name, score, detail.
+        Sorted by score descending.
+        """
+        items = []
+
+        # Directives
+        for d in self.directives:
+            items.append({
+                "type": "directive",
+                "name": f"[DIRECTIVE] {d.text}",
+                "score": d.priority,
+                "detail": f"Source: {d.source}",
+            })
+
+        # Overdue recurring tasks
+        for rt in self.recurring_tasks:
+            if rt.is_overdue:
+                items.append({
+                    "type": "recurring",
+                    "name": f"[OVERDUE] {rt.name}",
+                    "score": rt.score,
+                    "detail": f"{rt.days_stale}d stale (threshold: {rt.staleness_days}d)",
+                })
+
+        # Active MTs
+        for t in self.active_tasks():
+            items.append({
+                "type": "mt",
+                "name": f"MT-{t.mt_id}: {t.name}",
+                "score": t.improved_score,
+                "detail": t.next_action,
+            })
+
+        # Growth opportunities on completed MTs
+        for t in self.growth_tasks():
+            items.append({
+                "type": "growth",
+                "name": f"MT-{t.mt_id}: {t.name} [GROWTH]",
+                "score": t.growth_priority,
+                "detail": t.growth_action,
+            })
+
+        items.sort(key=lambda x: x["score"], reverse=True)
+        return items
+
+    def full_recommendations(self) -> str:
+        """Enhanced recommendations showing all priority types."""
+        lines = []
+        full = self.full_ranking()
+
+        # Group by type
+        directives = [i for i in full if i["type"] == "directive"]
+        overdue = [i for i in full if i["type"] == "recurring"]
+        active = [i for i in full if i["type"] == "mt"]
+        growth = [i for i in full if i["type"] == "growth"]
+
+        if directives:
+            lines.append("**DIRECTIVES (Matthew explicit):**")
+            for d in directives:
+                lines.append(f"  [{d['score']:.0f}] {d['name'][12:]}")  # strip [DIRECTIVE]
+            lines.append("")
+
+        if overdue:
+            lines.append("**OVERDUE RECURRING:**")
+            for r in overdue:
+                lines.append(f"  [{r['score']:.0f}] {r['name'][10:]} — {r['detail']}")  # strip [OVERDUE]
+            lines.append("")
+
+        if active:
+            lines.append("**ACTIVE MTs:**")
+            for a in active:
+                lines.append(f"  [{a['score']:.1f}] {a['name']} — {a['detail'][:60]}")
+            lines.append("")
+
+        if growth:
+            lines.append("**GROWTH OPPORTUNITIES (completed MTs with next steps):**")
+            for g in growth:
+                lines.append(f"  [{g['score']:.0f}] {g['name']} — {g['detail'][:60]}")
+            lines.append("")
+
+        # Unblockable
+        ub = self.unblockable_tasks()
+        if ub:
+            lines.append("**POTENTIALLY UNBLOCKABLE:**")
+            for t in ub:
+                lines.append(f"  MT-{t.mt_id}: {t.self_resolution_note}")
+            lines.append("")
+
+        if not lines:
+            lines.append("No actionable items found.")
+
+        return "\n".join(lines)
 
     def active_tasks(self) -> list[MasterTask]:
         return [t for t in self.tasks if t.status == TaskStatus.ACTIVE]
@@ -712,19 +890,76 @@ class PriorityPicker:
         )
 
 
+def get_default_recurring_tasks(current_date: str = "") -> list[RecurringTask]:
+    """Default recurring tasks for CCA.
+
+    Reads FINDINGS_LOG.md to determine last scan date for nuclear scans.
+    """
+    if not current_date:
+        current_date = date.today().isoformat()
+
+    # Try to detect last nuclear scan date from FINDINGS_LOG
+    last_scan_date = None
+    findings_path = Path(__file__).parent / "FINDINGS_LOG.md"
+    if findings_path.exists():
+        try:
+            text = findings_path.read_text()
+            # Find most recent date entry
+            dates = re.findall(r'\[(\d{4}-\d{2}-\d{2})\]', text)
+            if dates:
+                last_scan_date = dates[-1]
+        except Exception:
+            pass
+
+    # Try to detect last cross-chat check from cross_chat_queue.jsonl mtime
+    last_crosschat_date = None
+    crosschat_path = Path(__file__).parent / "cross_chat_queue.jsonl"
+    if crosschat_path.exists():
+        try:
+            mtime = datetime.fromtimestamp(crosschat_path.stat().st_mtime)
+            last_crosschat_date = mtime.date().isoformat()
+        except Exception:
+            pass
+
+    return [
+        RecurringTask(
+            task_id="nuclear_scan",
+            name="Nuclear Reddit/GitHub scan",
+            base_priority=8,
+            staleness_days=3,
+            last_run_date=last_scan_date,
+            current_date=current_date,
+        ),
+        RecurringTask(
+            task_id="cross_chat_check",
+            name="Cross-chat comms check (CCA <-> Kalshi)",
+            base_priority=6,
+            staleness_days=2,
+            last_run_date=last_crosschat_date,
+            current_date=current_date,
+        ),
+    ]
+
+
 def main():
     """CLI interface for priority_picker."""
     import argparse
     parser = argparse.ArgumentParser(description="MT Priority Picker")
     parser.add_argument("command", nargs="?", default="pick",
-                       choices=["pick", "rank", "table", "recommend", "json", "stagnating", "init-briefing"],
+                       choices=["pick", "rank", "table", "recommend", "json",
+                                "stagnating", "init-briefing", "full"],
                        help="Command to run")
-    parser.add_argument("--session", type=int, default=131, help="Current session number")
+    parser.add_argument("--session", type=int, default=149, help="Current session number")
     parser.add_argument("--count", type=int, default=3, help="Number of tasks to pick")
     parser.add_argument("--include-blocked", action="store_true", help="Include unblockable tasks")
     args = parser.parse_args()
 
     picker = PriorityPicker(current_session=args.session)
+
+    # Always load recurring tasks for full/recommend commands
+    if args.command in ("full", "recommend", "init-briefing"):
+        for rt in get_default_recurring_tasks():
+            picker.add_recurring(rt)
 
     if args.command == "pick":
         tasks = picker.pick_next(args.count, args.include_blocked)
@@ -742,6 +977,9 @@ def main():
 
     elif args.command == "recommend":
         print(picker.recommendations())
+
+    elif args.command == "full":
+        print(picker.full_recommendations())
 
     elif args.command == "json":
         print(picker.to_json())
