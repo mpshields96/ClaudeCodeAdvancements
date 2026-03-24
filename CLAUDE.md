@@ -256,6 +256,103 @@ See `REFERENCE.md` for the full test-by-test breakdown.
 
 ---
 
+## Desktop Autoloop Workflow (MT-22 — Matthew Directive, S138)
+
+The desktop autoloop is a self-sustaining CCA session cycle running inside the Claude desktop
+Electron app (Claude.app). It is the "Get More Bodies" pillar in action. Every CCA chat that
+participates in the autoloop MUST follow this exact workflow. No shortcuts. No deviations.
+
+### The App Layout
+
+Claude.app has three tabs in a centered island bar at the top of the window:
+
+```
+  [ Chat ]  [ Cowork ]  [ Code ]
+```
+
+- **Chat** = Claude Pro web chat. WRONG tab. Never use this for CCA.
+- **Cowork** = Cowork mode. WRONG tab. Never use this for CCA.
+- **Code** = Claude Code. CORRECT tab. CCA sessions run here and ONLY here.
+
+The **"+ New session"** button is in the top-left corner of the window (visible when on the Code tab).
+
+### The Cycle (exact steps, in order)
+
+1. **Verify Code tab is active.** Look at the top island bar. The "Code" tab on the far right
+   must be selected/highlighted. If it is not active, click it to switch. Do NOT proceed until
+   you are on the Code tab.
+
+2. **Click "+ New session" button.** This is in the top-left corner. This opens a fresh, empty
+   Claude Code chat. You MUST do this every iteration — never paste into an old/existing chat.
+
+3. **Paste the resume prompt.** Read SESSION_RESUME.md, build the prompt (prefixed with
+   `/cca-init then review the resume prompt below then /cca-auto`), and paste it into the
+   NEW chat window. Send it.
+
+4. **The new CCA session runs.** It executes /cca-init, reads context, runs /cca-auto, does
+   work, and eventually runs /cca-wrap. The wrap writes an updated SESSION_RESUME.md to disk.
+
+5. **Detect session end.** Watch for SESSION_RESUME.md mtime change (primary signal) or
+   extended CPU idle (secondary signal = session ended without writing resume).
+
+6. **Cooldown.** Wait the configured cooldown period (default 15 seconds).
+
+7. **Loop back to step 1.** Repeat until max iterations reached or safety stop triggered.
+
+### Critical Rules
+
+- **ALWAYS start a new conversation (step 2).** The autoloop runs from an external context
+  (Terminal.app or a script). It must NEVER inject a prompt into an existing/old CCA chat.
+  This was a critical bug in S137 — `_is_first_iteration` skipped Cmd+N on the first pass,
+  causing the prompt to land in the wrong session. Fixed in S138: Cmd+N runs every iteration.
+
+- **ALWAYS verify the Code tab first (step 1).** If the app is on Chat or Cowork, the
+  autoloop will paste into the wrong interface. The `ensure_code_tab()` method detects the
+  active tab via accessibility inspection and clicks the Code radio button if needed.
+
+- **Never paste into an old chat.** The "+ New session" button is the gate. If it wasn't
+  clicked, the prompt goes into whatever chat was previously open. This corrupts that session
+  and wastes the autoloop iteration.
+
+- **CCA-internal trigger.** The autoloop is triggered by /cca-wrap Step 10, which calls
+  `python3 autoloop_trigger.py`. This runs FROM WITHIN the current CCA session and uses
+  AppleScript to control Claude.app itself — clicking "+ New session" and pasting the prompt
+  into the fresh chat. The current session's wrap is already complete at this point, so the
+  new session starts clean. The `start_desktop_autoloop.sh` script is an alternative external
+  launcher for use from Terminal.app when no CCA session is running.
+
+### Implementation Files
+
+| File | Purpose |
+|------|---------|
+| `autoloop_trigger.py` | **CCA-internal trigger** — called by /cca-wrap Step 10 to spawn the next session |
+| `desktop_automator.py` | AppleScript-based Claude.app control (activate, ensure_code_tab, new_conversation, send_prompt) |
+| `desktop_autoloop.py` | External loop orchestrator (resume watcher, state tracking, model selection, iteration control) |
+| `start_desktop_autoloop.sh` | One-command external launcher (preflight, then start) — alternative to CCA-internal trigger |
+| `DESKTOP_AUTOLOOP_SETUP.md` | Setup guide (permissions, quick start, troubleshooting) |
+
+### AppleScript Operations
+
+| Operation | What it does |
+|-----------|-------------|
+| `activate_claude()` | Brings Claude.app to foreground, verifies it's frontmost |
+| `ensure_code_tab()` | Detects active tab via accessibility tree, clicks Code if needed |
+| `new_conversation()` | Sends Cmd+N to open a fresh chat (verifies Code tab + frontmost first) |
+| `send_prompt(text)` | Clears input (Cmd+A, Delete), pastes via clipboard (Cmd+V), sends (Cmd+Return) |
+
+### Failure Modes and Recovery
+
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| `activate_failed` | Claude.app not running or can't become frontmost | Check Claude.app is open, no modal dialogs blocking |
+| `code_tab_failed` | Accessibility can't detect tabs (Electron limitation) | Proceeds optimistically — Electron doesn't always expose tab state |
+| `new_conversation_failed` | Cmd+N didn't work (wrong app frontmost) | Retry activate + ensure_code_tab |
+| `prompt_send_failed` | Paste or Cmd+Return failed | Check clipboard, check Claude.app responsiveness |
+| `session_timeout` | Session ran longer than timeout (default 2h) | Counted as crash, loop continues |
+| `extended_idle` | 5+ minutes of low CPU after 2min session time | Session likely ended without /cca-wrap |
+
+---
+
 ## Known Gotchas
 
 - **Credential regex for Anthropic keys:** Pattern must include hyphens — `sk-[A-Za-z0-9\-]{20,}` not `sk-[A-Za-z0-9]{20,}`. Keys contain `sk-ant-api03-...`.

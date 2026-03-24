@@ -233,7 +233,7 @@ class DesktopAutoLoop:
         )
         self.watcher = ResumeWatcher(config.resume_file)
         self.state = DesktopLoopState(max_iterations=config.max_iterations)
-        self._is_first_iteration = True
+
 
     def _log(self, event: str, data: dict = None):
         """Append to loop audit log."""
@@ -274,11 +274,10 @@ class DesktopAutoLoop:
         )
 
     def _send_prompt_to_app(self, prompt: str) -> bool:
-        """Activate Claude, ensure Code tab, optionally start new conversation, send prompt.
+        """Activate Claude, ensure Code tab, start new conversation, send prompt.
 
-        On first iteration, assumes the user already has a fresh chat
-        open (or the app just launched), so skips Cmd+N but still ensures
-        Code tab is active.
+        ALWAYS starts a new conversation (Cmd+N) since the autoloop runs
+        from an external context and must never inject into an existing session.
         """
         # Step 1: Activate Claude
         if not self.automator.activate_claude():
@@ -290,20 +289,18 @@ class DesktopAutoLoop:
             self._log("send_failed", {"reason": "code_tab_failed"})
             return False
 
-        # Step 3: New conversation (skip on first iteration)
-        if not self._is_first_iteration:
-            time.sleep(0.3)
-            if not self.automator.new_conversation():
-                self._log("send_failed", {"reason": "new_conversation_failed"})
-                return False
-            time.sleep(1.0)  # wait for new chat to load
+        # Step 3: New conversation (ALWAYS — autoloop runs from external context)
+        time.sleep(0.3)
+        if not self.automator.new_conversation():
+            self._log("send_failed", {"reason": "new_conversation_failed"})
+            return False
+        time.sleep(1.0)  # wait for new chat to load
 
         # Step 4: Send prompt
         if not self.automator.send_prompt(prompt):
             self._log("send_failed", {"reason": "prompt_send_failed"})
             return False
 
-        self._is_first_iteration = False
         return True
 
     def _wait_for_session_end(self, poll_interval: float = None) -> tuple:

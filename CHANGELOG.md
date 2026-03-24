@@ -3,6 +3,30 @@
 
 ---
 
+## Session 138 — 2026-03-23
+
+**What changed:**
+- `desktop_autoloop.py`: Removed `_is_first_iteration` — Cmd+N now fires every iteration. Updated docstrings.
+- `autoloop_trigger.py`: NEW — CCA-internal autoloop trigger. Activate Claude.app -> Code tab -> Cmd+N -> paste resume -> send. 155 LOC.
+- `tests/test_autoloop_trigger.py`: NEW — 18 tests (success flow, each failure mode, step ordering, prompt content, audit logging).
+- `tests/test_desktop_autoloop.py`: Updated 4 tests for always-Cmd+N behavior.
+- `.claude/commands/cca-wrap.md`: Added Step 10 — autoloop trigger as final wrap action.
+- `CLAUDE.md`: Added full "Desktop Autoloop Workflow" section (app layout, exact cycle steps, critical rules, implementation files, failure modes).
+
+**Why:**
+- S137 trial found `_is_first_iteration` bug causing prompt injection into wrong session
+- Matthew directive: autoloop must be CCA-internal (triggered by /cca-wrap), not from Terminal.app
+- Code tab detection still broken (Electron accessibility limitation) — trigger lands on Chat tab
+
+**Tests:** 211/211 suites passing, 8544 total (+18 new)
+
+**Lessons:**
+- Electron apps don't expose tab groups to macOS accessibility tree — need alternative approach for tab detection
+- CCA autoloop is session-internal (wrap triggers next session), not external (Terminal.app script)
+- Always activate Claude.app before frontmost check — bash subprocess runs in Terminal context
+
+---
+
 ## Session 137 — 2026-03-23
 
 **What changed:**

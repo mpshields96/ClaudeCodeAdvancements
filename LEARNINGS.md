@@ -545,3 +545,17 @@
 - **Last seen:** 2026-03-23
 - **Files:** desktop_automator.py, desktop_autoloop.py, DESKTOP_AUTOLOOP_SETUP.md
 
+
+### Electron accessibility tree lacks tab groups — Severity: 2 — Count: 2
+- **Anti-pattern:** Using `first tab group of first window` in AppleScript to detect Claude.app tabs. Returns "Invalid index" error because Electron doesn't expose tab bar as standard macOS tab group.
+- **Fix:** Need alternative approach. Options: (1) keyboard shortcut if one exists, (2) menu bar navigation, (3) enumerate all UI elements and find by description/name, (4) coordinate-based click as last resort. `ensure_code_tab()` currently proceeds optimistically when detection fails — but this means it doesn't actually switch tabs.
+- **First seen:** 2026-03-23 (Session 137)
+- **Last seen:** 2026-03-23 (Session 138) — trigger landed on Chat tab instead of Code
+- **Files:** desktop_automator.py (get_active_tab, ensure_code_tab, click_code_tab)
+
+### CCA autoloop is session-internal not external — Severity: 2 — Count: 1
+- **Anti-pattern:** Running autoloop from Terminal.app via `start_desktop_autoloop.sh`. Terminal.app subprocess context means AppleScript targets wrong app (Terminal is frontmost, not Claude).
+- **Fix:** Autoloop trigger runs FROM WITHIN a CCA session as the final step of /cca-wrap (Step 10). The CCA session calls `python3 autoloop_trigger.py` which uses AppleScript to activate Claude.app, click "+ New session", and paste the resume prompt. Each session spawns the next.
+- **First seen:** 2026-03-23 (Session 138) — Matthew directive after Terminal.app approach failed
+- **Last seen:** 2026-03-23
+- **Files:** autoloop_trigger.py, .claude/commands/cca-wrap.md (Step 10)

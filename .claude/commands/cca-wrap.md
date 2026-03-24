@@ -471,6 +471,31 @@ skip this step, the autoloop will hang indefinitely waiting for a signal that ne
 
 ---
 
+## Step 10 — Trigger next session (Desktop Autoloop — MT-22)
+
+This is the FINAL step. After SESSION_RESUME.md is written to disk, trigger the next
+CCA session automatically. This makes CCA self-sustaining — each session spawns the next.
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 autoloop_trigger.py
+```
+
+What this does (see CLAUDE.md "Desktop Autoloop Workflow" for full spec):
+1. Reads SESSION_RESUME.md
+2. Verifies Code tab is active in Claude.app
+3. Clicks "+ New session" (Cmd+N) to open a fresh chat
+4. Pastes the resume prompt into the NEW chat
+5. Sends it (Cmd+Return)
+
+**If the trigger fails:** Print the error but do NOT retry or debug. The wrap is still
+complete. Matthew can manually start the next session.
+
+**If `--no-autoloop` was passed or `CCA_NO_AUTOLOOP=1` is set:** Skip this step entirely.
+This allows manual sessions without auto-chaining.
+
+---
+
 ## Rules
 
 - Fully autonomous — execute every step without asking
@@ -479,15 +504,17 @@ skip this step, the autoloop will hang indefinitely waiting for a signal that ne
 - Self-assessment must be honest — do not inflate grades
 - Resume prompt is the most important output — never skip it
 - Do not push to remote — only stage changes
+- Step 10 (autoloop trigger) runs LAST — after all docs are committed
 
 ## CRITICAL: End-of-Wrap Behavior
 
-After outputting the resume prompt in Step 9, your wrap is COMPLETE. Follow these rules exactly:
+After Step 10 fires the autoloop trigger, your wrap is COMPLETE. Follow these rules exactly:
 
-1. Output one final line: `Session [N] wrap complete. Waiting for instructions.`
+1. Output one final line: `Session [N] wrap complete. Autoloop triggered.`
+   (or `Session [N] wrap complete. Autoloop skipped.` if trigger was skipped/failed)
 2. **STOP RESPONDING.** Do not output any further text.
 3. Do NOT say "done", "exit", "safe to close", "acknowledged", or any other sign-off.
-4. Do NOT respond to your own completion — there is no Step 10.
+4. Do NOT respond to your own completion — there is no Step 11.
 5. If the user says nothing, say nothing. Wait silently for the next user message.
 
-The exit loop anti-pattern (repeatedly saying "Done." / "Exit." / "Safe to close.") wastes tokens and confuses the user. The wrap is finished when the resume prompt is printed. Full stop.
+The exit loop anti-pattern (repeatedly saying "Done." / "Exit." / "Safe to close.") wastes tokens and confuses the user. The wrap is finished when the autoloop trigger fires. Full stop.

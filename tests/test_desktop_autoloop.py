@@ -453,7 +453,6 @@ class TestSendPromptToApp(unittest.TestCase):
             cfg = DesktopLoopConfig(project_dir=tmp, dry_run=True)
             loop = DesktopAutoLoop(cfg)
             loop.automator = mock_da
-            loop._is_first_iteration = False  # not first = should call new_conversation
             result = loop._send_prompt_to_app("test prompt")
             self.assertTrue(result)
             mock_da.activate_claude.assert_called_once()
@@ -473,19 +472,21 @@ class TestSendPromptToApp(unittest.TestCase):
             self.assertFalse(result)
 
     @patch("desktop_autoloop.DesktopAutomator")
-    def test_skips_new_conversation_on_first_iteration(self, MockDA):
+    def test_always_calls_new_conversation(self, MockDA):
+        """Autoloop runs from external context — ALWAYS needs Cmd+N."""
         mock_da = MockDA.return_value
         mock_da.activate_claude.return_value = True
+        mock_da.ensure_code_tab.return_value = True
+        mock_da.new_conversation.return_value = True
         mock_da.send_prompt.return_value = True
 
         with tempfile.TemporaryDirectory() as tmp:
             cfg = DesktopLoopConfig(project_dir=tmp, dry_run=True)
             loop = DesktopAutoLoop(cfg)
             loop.automator = mock_da
-            loop._is_first_iteration = True
             result = loop._send_prompt_to_app("test prompt")
             self.assertTrue(result)
-            mock_da.new_conversation.assert_not_called()
+            mock_da.new_conversation.assert_called_once()
 
     @patch("desktop_autoloop.DesktopAutomator")
     def test_fails_if_code_tab_fails(self, MockDA):
@@ -503,20 +504,19 @@ class TestSendPromptToApp(unittest.TestCase):
             mock_da.send_prompt.assert_not_called()
 
     @patch("desktop_autoloop.DesktopAutomator")
-    def test_ensures_code_tab_on_first_iteration(self, MockDA):
+    def test_ensures_code_tab_always(self, MockDA):
         mock_da = MockDA.return_value
         mock_da.activate_claude.return_value = True
         mock_da.ensure_code_tab.return_value = True
+        mock_da.new_conversation.return_value = True
         mock_da.send_prompt.return_value = True
 
         with tempfile.TemporaryDirectory() as tmp:
             cfg = DesktopLoopConfig(project_dir=tmp, dry_run=True)
             loop = DesktopAutoLoop(cfg)
             loop.automator = mock_da
-            loop._is_first_iteration = True
             result = loop._send_prompt_to_app("test prompt")
             self.assertTrue(result)
-            # Code tab ensured even on first iteration
             mock_da.ensure_code_tab.assert_called_once()
 
     @patch("desktop_autoloop.DesktopAutomator")
@@ -531,7 +531,6 @@ class TestSendPromptToApp(unittest.TestCase):
             cfg = DesktopLoopConfig(project_dir=tmp, dry_run=True)
             loop = DesktopAutoLoop(cfg)
             loop.automator = mock_da
-            loop._is_first_iteration = False
             result = loop._send_prompt_to_app("test prompt")
             self.assertTrue(result)
             # Verify call order: activate -> ensure_code_tab -> new_conversation -> send

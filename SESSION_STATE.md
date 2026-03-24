@@ -3,28 +3,28 @@
 
 ---
 
-## Current State (as of Session 137 — 2026-03-23)
+## Current State (as of Session 138 — 2026-03-23)
 
-**Phase:** Session 137. Autoloop production hardening + init briefing wiring.
+**Phase:** Session 138. Autoloop CCA-internal trigger + _is_first_iteration bug fix.
 
-**What was done this session (S137):**
-- **Outcome analyzer wired into /cca-init**: `format_init_briefing()` + `init-briefing` CLI subcommand in `session_outcome_tracker.py`. Compact human-readable output: trends, blockers, top 3 recommendations. Step 2.95 added to `cca-init.md`. 8 new tests.
-- **Planned task parser fixed (MT-10)**: `parse_session_state_planned()` scoped to `## Current State` section only. Was reading across all historical sections, accumulating 63 "planned" tasks instead of 4. Root cause of false low completion rates.
-- **SESSION_RESUME.md disk write wired into /cca-wrap**: Critical gap — /cca-wrap was printing resume but not writing to disk. Autoloop watches mtime for session-end detection. Added `resume_generator.py --force` to Step 9.
-- **dry_run mode fixed**: `_run_applescript` now returns plausible output (is_running="true", frontmost="Claude", tab="Code") for end-to-end simulation.
-- **ensure_code_tab made optimistic**: Electron apps don't expose web UI to macOS accessibility. Now proceeds when tab detection returns "unknown" or when click fails, instead of blocking.
-- **REAL autoloop trial run**: Activated Claude.app, sent prompt, ran 6 minutes. Exit code 2 (extended idle). **BUG FOUND**: first iteration skips Cmd+N, so prompt injected into THIS session instead of a new one.
-- **Tests**: 210 suites passing. 8526 total (+10 new). 5 commits.
+**What was done this session (S138):**
+- **Fixed _is_first_iteration bug**: Removed `_is_first_iteration` field entirely from `desktop_autoloop.py`. Cmd+N (new conversation) now fires EVERY iteration, never skipped. Root cause of S137 trial failure.
+- **Created `autoloop_trigger.py`**: CCA-internal trigger called by /cca-wrap Step 10. Steps: activate Claude.app -> verify Code tab -> Cmd+N -> paste resume prompt -> Cmd+Return. 18 tests.
+- **Wired Step 10 into /cca-wrap**: `cca-wrap.md` now has final step calling `python3 autoloop_trigger.py` to auto-spawn next session.
+- **Documented full Desktop Autoloop Workflow in CLAUDE.md**: App layout (Chat/Cowork/Code tabs), exact cycle steps, critical rules, implementation files, AppleScript operations, failure modes. Permanent — every CCA session sees this.
+- **Real trigger fired successfully**: From within this CCA session, activated Claude.app, Cmd+N opened new chat, prompt pasted and sent. Audit log confirms all steps.
+- **Known issue**: Trigger landed on Chat tab (wrong). `ensure_code_tab()` can't detect tabs via Electron accessibility — proceeds optimistically but wrong tab may be active. Must fix Code tab switching.
+- **Tests**: 211 suites passing. 8544 total (+18 new).
 
-**Next (prioritized — per CCA_PRIME_DIRECTIVE.md):**
-1. **FIX CRITICAL AUTOLOOP BUG**: `_is_first_iteration` must ALWAYS run Cmd+N — never skip. The autoloop runs from an external context, so it must ALWAYS start a new conversation.
-2. **RE-RUN TRIAL FROM EXTERNAL TERMINAL**: After fixing, run `./start_desktop_autoloop.sh --max-iterations 2` from Terminal.app (NOT from within a Code session). This is the #1 priority.
+**Next (prioritized):**
+1. **FIX CODE TAB DETECTION**: Electron accessibility tree doesn't expose tab groups. `ensure_code_tab()` always returns "unknown" and proceeds optimistically. Need alternative approach: keyboard shortcut, menu bar navigation, or coordinate-based click. This is blocking reliable autoloop.
+2. **Re-run autoloop trial** after Code tab detection is fixed.
 3. **Self-learning improvements** — continue Get Smarter pillar.
-4. **Explore next MT priorities** — check priority_picker.
 
-**Matthew S137 directives:**
-- Run the trial, stop stalling. Fix issues from failures and re-run until it works.
-- All previous directives still active (Terminal Accessibility GRANTED, external Terminal only, Two Pillars, polybot full access)
+**Matthew S138 directives:**
+- Autoloop is CCA-internal (triggered by /cca-wrap), NOT from Terminal.app
+- Must verify Code tab (far right), click "+ New session", paste into NEW chat only
+- All previous directives still active (Two Pillars, polybot full access)
 
 ---
 
