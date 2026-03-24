@@ -1106,5 +1106,119 @@ class TestRestoreFrontmostApp(unittest.TestCase):
             self.assertEqual(restore_events[0]["app"], "Firefox")
 
 
+class TestGetUserIdleSeconds(unittest.TestCase):
+    """Test idle time detection via CoreGraphics (MT-35 Phase 2)."""
+
+    def test_returns_float_in_dry_run(self):
+        """Dry run returns a plausible idle time."""
+        da = DesktopAutomator(dry_run=True)
+        idle = da.get_user_idle_seconds()
+        self.assertIsInstance(idle, float)
+        self.assertGreaterEqual(idle, 0.0)
+
+    def test_returns_none_when_cg_unavailable(self):
+        """Returns None if CoreGraphics can't be loaded."""
+        da = DesktopAutomator(dry_run=False)
+        with patch("desktop_automator._get_cg", return_value=None):
+            idle = da.get_user_idle_seconds()
+            self.assertIsNone(idle)
+
+    @patch("desktop_automator._get_cg")
+    def test_calls_cg_event_source(self, mock_get_cg):
+        """Calls CGEventSourceSecondsSinceLastEventType correctly."""
+        mock_cg = MagicMock()
+        mock_cg.CGEventSourceSecondsSinceLastEventType.return_value = 5.2
+        mock_get_cg.return_value = mock_cg
+        da = DesktopAutomator(dry_run=False)
+        idle = da.get_user_idle_seconds()
+        self.assertAlmostEqual(idle, 5.2, places=1)
+        mock_cg.CGEventSourceSecondsSinceLastEventType.assert_called_once()
+
+    @patch("desktop_automator._get_cg")
+    def test_handles_cg_exception(self, mock_get_cg):
+        """Returns None if CG call raises an exception."""
+        mock_cg = MagicMock()
+        mock_cg.CGEventSourceSecondsSinceLastEventType.side_effect = OSError("fail")
+        mock_get_cg.return_value = mock_cg
+        da = DesktopAutomator(dry_run=False)
+        idle = da.get_user_idle_seconds()
+        self.assertIsNone(idle)
+
+    def test_logs_idle_check(self):
+        """Logs the idle check event."""
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            da.get_user_idle_seconds()
+            with open(da.audit_log) as f:
+                entries = [json.loads(l) for l in f]
+            idle_events = [e for e in entries if e["event"] == "idle_check"]
+            self.assertEqual(len(idle_events), 1)
+
+
+class TestWaitForIdle(unittest.TestCase):
+    """Test wait_for_idle polling loop (MT-35 Phase 2)."""
+
+    def test_returns_immediately_when_idle(self):
+        """If user is already idle, returns True without looping."""
+        da = DesktopAutomator(dry_run=True)
+        with patch.object(da, "get_user_idle_seconds", return_value=10.0):
+            result = da.wait_for_idle(idle_threshold=3.0, timeout=5.0)
+            self.assertTrue(result)
+
+    def test_returns_false_on_timeout(self):
+        """If user never goes idle, returns False after timeout."""
+        da = DesktopAutomator(dry_run=True)
+        with patch.object(da, "get_user_idle_seconds", return_value=0.1):
+            result = da.wait_for_idle(idle_threshold=3.0, timeout=0.5, poll_interval=0.1)
+            self.assertFalse(result)
+
+    def test_waits_then_succeeds(self):
+        """User becomes idle after a few polls."""
+        da = DesktopAutomator(dry_run=True)
+        # First 3 calls: active. 4th call: idle.
+        side_effects = [0.1, 0.2, 0.1, 5.0, 5.0]
+        with patch.object(da, "get_user_idle_seconds", side_effect=side_effects):
+            result = da.wait_for_idle(idle_threshold=3.0, timeout=5.0, poll_interval=0.05)
+            self.assertTrue(result)
+
+    def test_skips_when_cg_unavailable(self):
+        """If CG is unavailable (idle returns None), proceeds without waiting."""
+        da = DesktopAutomator(dry_run=True)
+        with patch.object(da, "get_user_idle_seconds", return_value=None):
+            result = da.wait_for_idle(idle_threshold=3.0, timeout=5.0)
+            self.assertTrue(result)
+
+    def test_logs_idle_wait(self):
+        """Logs the wait_for_idle event."""
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            with patch.object(da, "get_user_idle_seconds", return_value=10.0):
+                da.wait_for_idle(idle_threshold=3.0, timeout=5.0)
+            with open(da.audit_log) as f:
+                entries = [json.loads(l) for l in f]
+            wait_events = [e for e in entries if e["event"] == "wait_for_idle"]
+            self.assertEqual(len(wait_events), 1)
+            self.assertTrue(wait_events[0]["idle_detected"])
+
+    def test_logs_timeout_event(self):
+        """Logs timeout when user never goes idle."""
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            with patch.object(da, "get_user_idle_seconds", return_value=0.1):
+                da.wait_for_idle(idle_threshold=3.0, timeout=0.3, poll_interval=0.05)
+            with open(da.audit_log) as f:
+                entries = [json.loads(l) for l in f]
+            wait_events = [e for e in entries if e["event"] == "wait_for_idle"]
+            self.assertEqual(len(wait_events), 1)
+            self.assertFalse(wait_events[0]["idle_detected"])
+
+    def test_zero_threshold_returns_immediately(self):
+        """Threshold of 0 always considers user idle."""
+        da = DesktopAutomator(dry_run=True)
+        with patch.object(da, "get_user_idle_seconds", return_value=0.0):
+            result = da.wait_for_idle(idle_threshold=0.0, timeout=1.0)
+            self.assertTrue(result)
+
+
 if __name__ == "__main__":
     unittest.main()

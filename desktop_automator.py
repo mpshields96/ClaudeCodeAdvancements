@@ -78,6 +78,11 @@ def _load_cg():
         cg.CGEventPost.argtypes = [ctypes.c_uint32, ctypes.c_void_p]
         cg.CFRelease.restype = None
         cg.CFRelease.argtypes = [ctypes.c_void_p]
+        # Idle time detection (MT-35 Phase 2)
+        cg.CGEventSourceSecondsSinceLastEventType.restype = ctypes.c_double
+        cg.CGEventSourceSecondsSinceLastEventType.argtypes = [
+            ctypes.c_int32, ctypes.c_uint32,
+        ]
         return cg
     except (OSError, AttributeError):
         return None
@@ -99,6 +104,10 @@ def _get_cg():
 _kCGEventLeftMouseDown = 1
 _kCGEventLeftMouseUp = 2
 _kCGHIDEventTap = 0
+# CGEventSourceStateID for combined HID state (all input devices)
+_kCGEventSourceStateCombinedSessionState = 0
+# CGEventType for "any input" — kCGAnyInputEventType
+_kCGAnyInputEventType = 0xFFFFFFFF
 
 
 def cg_click_at(x: float, y: float) -> bool:
@@ -558,6 +567,89 @@ class DesktopAutomator:
         else:
             self._log("restore_frontmost_failed", {"app": app})
             return False
+
+    def get_user_idle_seconds(self) -> "float | None":
+        """Get seconds since last user input (mouse/keyboard).
+
+        MT-35 Phase 2: Uses CoreGraphics CGEventSourceSecondsSinceLastEventType
+        to detect how long the user has been idle. This lets the autoloop wait
+        for a quiet moment before stealing focus.
+
+        Returns float (seconds idle) or None if CG is unavailable.
+        In dry_run mode, returns 999.0 (simulates idle user).
+        """
+        if self.dry_run:
+            self._log("idle_check", {"idle_seconds": 999.0, "dry_run": True})
+            return 999.0
+
+        cg = _get_cg()
+        if cg is None:
+            self._log("idle_check", {"idle_seconds": None, "cg_unavailable": True})
+            return None
+
+        try:
+            idle = cg.CGEventSourceSecondsSinceLastEventType(
+                _kCGEventSourceStateCombinedSessionState,
+                _kCGAnyInputEventType,
+            )
+            self._log("idle_check", {"idle_seconds": round(idle, 2)})
+            return float(idle)
+        except (OSError, ctypes.ArgumentError) as e:
+            self._log("idle_check", {"idle_seconds": None, "error": str(e)})
+            return None
+
+    def wait_for_idle(
+        self,
+        idle_threshold: float = 3.0,
+        timeout: float = 30.0,
+        poll_interval: float = 0.5,
+    ) -> bool:
+        """Wait until the user has been idle for idle_threshold seconds.
+
+        MT-35 Phase 2: Polls get_user_idle_seconds() until the user is idle
+        or the timeout expires. This prevents the autoloop from interrupting
+        Matthew while he's actively typing or clicking.
+
+        Args:
+            idle_threshold: Seconds of idle time required before proceeding.
+            timeout: Max seconds to wait. If user never goes idle, proceed anyway.
+            poll_interval: Seconds between idle checks.
+
+        Returns True if idle detected (or CG unavailable — fail open).
+        Returns False only if timeout expired while user was active.
+        """
+        if idle_threshold <= 0:
+            self._log("wait_for_idle", {"idle_detected": True, "reason": "zero_threshold"})
+            return True
+
+        start = time.monotonic()
+        while True:
+            idle = self.get_user_idle_seconds()
+
+            # If CG is unavailable, fail open — don't block the trigger
+            if idle is None:
+                self._log("wait_for_idle", {"idle_detected": True, "reason": "cg_unavailable"})
+                return True
+
+            if idle >= idle_threshold:
+                self._log("wait_for_idle", {
+                    "idle_detected": True,
+                    "idle_seconds": round(idle, 2),
+                    "waited": round(time.monotonic() - start, 2),
+                })
+                return True
+
+            elapsed = time.monotonic() - start
+            if elapsed >= timeout:
+                self._log("wait_for_idle", {
+                    "idle_detected": False,
+                    "idle_seconds": round(idle, 2),
+                    "waited": round(elapsed, 2),
+                    "reason": "timeout",
+                })
+                return False
+
+            time.sleep(poll_interval)
 
     def send_prompt(self, prompt: str) -> bool:
         """Send a prompt to Claude via clipboard + keystroke injection.

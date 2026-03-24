@@ -114,6 +114,23 @@ def trigger_next_session(dry_run: bool = False) -> bool:
         dry_run=dry_run,
     )
 
+    # Step -2: Wait for user idle before stealing focus (MT-35 Phase 2)
+    # Polls mouse/keyboard idle via CoreGraphics. Default: wait for 3s idle,
+    # up to 30s timeout. If timeout expires, proceed anyway (fail open).
+    idle_threshold = float(os.environ.get("CCA_IDLE_THRESHOLD", "3.0"))
+    idle_timeout = float(os.environ.get("CCA_IDLE_TIMEOUT", "30.0"))
+    if idle_threshold > 0 and not dry_run:
+        _log("idle_wait_start", {"threshold": idle_threshold, "timeout": idle_timeout})
+        idle_ok = automator.wait_for_idle(
+            idle_threshold=idle_threshold,
+            timeout=idle_timeout,
+        )
+        if idle_ok:
+            _log("idle_wait_done", {"result": "idle_detected"})
+        else:
+            _log("idle_wait_done", {"result": "timeout_proceeding"})
+            print(f"NOTE: User active for {idle_timeout}s — proceeding anyway.")
+
     # Step -1: Save the app Matthew is currently using (MT-35)
     # So we can restore focus after spawning the new session.
     saved_app = automator.save_frontmost_app()

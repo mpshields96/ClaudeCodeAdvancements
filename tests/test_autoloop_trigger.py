@@ -278,5 +278,105 @@ class TestAuditLogging(unittest.TestCase):
             os.unlink(log_path)
 
 
+class TestIdleIntegration(unittest.TestCase):
+    """Test MT-35 Phase 2 idle detection in autoloop trigger."""
+
+    def test_idle_wait_called_before_activate(self):
+        """wait_for_idle is called before save_frontmost_app."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("Resume content")
+            path = f.name
+        try:
+            call_order = []
+            mock_automator = MagicMock()
+            mock_automator.wait_for_idle.side_effect = lambda **kw: (call_order.append("idle"), True)[1]
+            mock_automator.save_frontmost_app.side_effect = lambda: (call_order.append("save"), "Safari")[1]
+            mock_automator.activate_claude.return_value = True
+            mock_automator.ensure_code_tab.return_value = True
+            mock_automator.new_conversation.return_value = True
+            mock_automator.send_prompt.return_value = True
+            mock_automator.restore_frontmost_app.return_value = True
+
+            with patch.object(autoloop_trigger, "RESUME_FILE", path), \
+                 patch("autoloop_trigger.DesktopAutomator", return_value=mock_automator), \
+                 patch.dict(os.environ, {"CCA_IDLE_THRESHOLD": "3.0", "CCA_IDLE_TIMEOUT": "10.0"}):
+                result = autoloop_trigger.trigger_next_session(dry_run=False)
+
+            self.assertTrue(result)
+            self.assertEqual(call_order[0], "idle")
+            self.assertEqual(call_order[1], "save")
+        finally:
+            os.unlink(path)
+
+    def test_idle_skipped_in_dry_run(self):
+        """Idle wait is skipped in dry_run mode."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("Resume content")
+            path = f.name
+        try:
+            mock_automator = MagicMock()
+            mock_automator.save_frontmost_app.return_value = None
+            mock_automator.activate_claude.return_value = True
+            mock_automator.ensure_code_tab.return_value = True
+            mock_automator.new_conversation.return_value = True
+            mock_automator.send_prompt.return_value = True
+
+            with patch.object(autoloop_trigger, "RESUME_FILE", path), \
+                 patch("autoloop_trigger.DesktopAutomator", return_value=mock_automator):
+                result = autoloop_trigger.trigger_next_session(dry_run=True)
+
+            self.assertTrue(result)
+            mock_automator.wait_for_idle.assert_not_called()
+        finally:
+            os.unlink(path)
+
+    def test_idle_timeout_still_proceeds(self):
+        """If user never goes idle (timeout), trigger still fires."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("Resume content")
+            path = f.name
+        try:
+            mock_automator = MagicMock()
+            mock_automator.wait_for_idle.return_value = False  # timeout
+            mock_automator.save_frontmost_app.return_value = None
+            mock_automator.activate_claude.return_value = True
+            mock_automator.ensure_code_tab.return_value = True
+            mock_automator.new_conversation.return_value = True
+            mock_automator.send_prompt.return_value = True
+
+            with patch.object(autoloop_trigger, "RESUME_FILE", path), \
+                 patch("autoloop_trigger.DesktopAutomator", return_value=mock_automator), \
+                 patch.dict(os.environ, {"CCA_IDLE_THRESHOLD": "3.0"}):
+                result = autoloop_trigger.trigger_next_session(dry_run=False)
+
+            self.assertTrue(result)
+            mock_automator.wait_for_idle.assert_called_once()
+        finally:
+            os.unlink(path)
+
+    def test_idle_disabled_with_zero_threshold(self):
+        """CCA_IDLE_THRESHOLD=0 disables idle waiting."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("Resume content")
+            path = f.name
+        try:
+            mock_automator = MagicMock()
+            mock_automator.save_frontmost_app.return_value = None
+            mock_automator.activate_claude.return_value = True
+            mock_automator.ensure_code_tab.return_value = True
+            mock_automator.new_conversation.return_value = True
+            mock_automator.send_prompt.return_value = True
+
+            with patch.object(autoloop_trigger, "RESUME_FILE", path), \
+                 patch("autoloop_trigger.DesktopAutomator", return_value=mock_automator), \
+                 patch.dict(os.environ, {"CCA_IDLE_THRESHOLD": "0"}):
+                result = autoloop_trigger.trigger_next_session(dry_run=False)
+
+            self.assertTrue(result)
+            mock_automator.wait_for_idle.assert_not_called()
+        finally:
+            os.unlink(path)
+
+
 if __name__ == "__main__":
     unittest.main()
