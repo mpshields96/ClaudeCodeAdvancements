@@ -274,17 +274,23 @@ class DesktopAutoLoop:
         )
 
     def _send_prompt_to_app(self, prompt: str) -> bool:
-        """Activate Claude, optionally start new conversation, send prompt.
+        """Activate Claude, ensure Code tab, optionally start new conversation, send prompt.
 
         On first iteration, assumes the user already has a fresh chat
-        open (or the app just launched), so skips Cmd+N.
+        open (or the app just launched), so skips Cmd+N but still ensures
+        Code tab is active.
         """
         # Step 1: Activate Claude
         if not self.automator.activate_claude():
             self._log("send_failed", {"reason": "activate_failed"})
             return False
 
-        # Step 2: New conversation (skip on first iteration)
+        # Step 2: Ensure Code tab (always — even on first iteration)
+        if not self.automator.ensure_code_tab():
+            self._log("send_failed", {"reason": "code_tab_failed"})
+            return False
+
+        # Step 3: New conversation (skip on first iteration)
         if not self._is_first_iteration:
             time.sleep(0.3)
             if not self.automator.new_conversation():
@@ -292,7 +298,7 @@ class DesktopAutoLoop:
                 return False
             time.sleep(1.0)  # wait for new chat to load
 
-        # Step 3: Send prompt
+        # Step 4: Send prompt
         if not self.automator.send_prompt(prompt):
             self._log("send_failed", {"reason": "prompt_send_failed"})
             return False
