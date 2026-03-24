@@ -1242,10 +1242,19 @@ python3 priority_picker.py json          # Export for programmatic use
 | MT-28 | Self-Learning v2 | COMPLETE (S111) — 6/6 phases: principle_registry, pattern_registry, principle_transfer, outcome_feedback, predictive_recommender, sentinel_bridge. ~230 tests. |
 | MT-30 | Session Daemon | COMPLETE (S128) — 8/8 phases: cca_autoloop.py, start_autoloop.sh, preflight checks, audit logging, rate limit handling. 116 tests. Awaiting supervised trial. |
 
+### Matthew's Priority Override (S134 — CCA_PRIME_DIRECTIVE.md)
+
+**The Two Pillars override scoring.** Desktop autoloop (MT-22/MT-30) is the #1 priority
+until proven reliable through supervised trials. Self-learning evolution is the permanent
+background process. Everything else serves these two axes. See `CCA_PRIME_DIRECTIVE.md`.
+
+**Immediate sequence:** Supervised trial -> Perfect error handling -> Prove quality -> Run constantly -> Knock out MTs at scale.
+
 ### Active Priority Queue (S134 updated)
 
 | Rank | MT | Task | Base | Age | Comp% | Bonus | ROI | Stag | **Score** | Urgency | Next |
 |------|----|------|------|-----|-------|-------|-----|------|-----------|---------|------|
+| **P1** | **MT-22/30** | **Desktop autoloop supervised trial** | **—** | **—** | **100%** | **—** | **—** | **—** | **OVERRIDE** | **S134 DIRECTIVE** | **Run supervised trial -> perfect -> prove -> run constantly** |
 | 1 | MT-21 | Hivemind coordination | 8 | +1.0 | 67% | +1.0 | +0.0 | 0.0 | **10.0** | routine | Phase 2 PASSED (6th). Phase 3 = 3-chat |
 | 2 | MT-33 | Strategic Intelligence Report | 9 | +0.0 | 50% | +0.0 | +1.0 | 0.0 | **10.0** | S121 | Phase 4-6: chart integration, self-reference, hardening. kalshi_data_collector + learning_data_collector + report_differ built (S122-S123). |
 | 3 | MT-23 | Mobile Remote Control v2 | 8 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **9.0** | NEW (S103) | Research: evaluate Telegram/Discord channels MCP |

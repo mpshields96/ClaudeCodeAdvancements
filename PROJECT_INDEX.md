@@ -18,10 +18,12 @@
 | Master-level aspirational tasks | `MASTER_TASKS.md` |
 | Senior Dev gap analysis (MT-20) | `SENIOR_DEV_GAP_ANALYSIS.md` |
 | Hivemind phased rollout (MT-21) | `HIVEMIND_ROLLOUT.md` |
+| **CCA Prime Directive (S134)** | `CCA_PRIME_DIRECTIVE.md` |
 
-**Mission:** Build validated advancements for Claude Code users. CCA advancements serve the financial mission — see `KALSHI_PRIME_DIRECTIVE.md`.
-**Scope:** Read + write `/Users/matthewshields/Projects/ClaudeCodeAdvancements/` ONLY.
-**Strategic priority:** Hivemind (MT-21) + Senior Dev (MT-20) → smarter bot → $250/mo self-sustainability. See `memory/project_hivemind_vision.md` for Matthew's 5-phase vision.
+**Mission:** Build validated advancements for Claude Code users. CCA is part of the Kalshi bot ecosystem (S134).
+**Two Pillars (CCA_PRIME_DIRECTIVE.md):** (1) Get Smarter — self-learning/evolution. (2) Get More Bodies — automation/multi-chat.
+**Scope:** Full read+write to both `/Users/matthewshields/Projects/ClaudeCodeAdvancements/` and `/Users/matthewshields/Projects/polymarket-bot/` (S134).
+**Top priority:** Desktop autoloop (MT-22/MT-30) → proven reliable → run constantly → knock out MTs at scale.
 
 ---
 

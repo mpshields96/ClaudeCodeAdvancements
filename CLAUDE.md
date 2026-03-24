@@ -3,7 +3,7 @@
 ## Mission
 Research, design, and build the next significant advancements for Claude Code users and AI/LLM-assisted development. This project pursues what is objectively next — based on validated community intelligence, Anthropic's own research, and frontier AI trends — not speculation or novelty for its own sake.
 
-This is NOT a betting project. There is NO domain overlap with Titanium.
+CCA is officially part of the Kalshi bot ecosystem (Matthew authorized, S134). CCA advancements serve the financial mission. See `CCA_PRIME_DIRECTIVE.md` for the Two Pillars framework: **Get Smarter** (self-learning/evolution) and **Get More Bodies** (automation/multi-chat). These two pillars are the highest-priority axes of advancement.
 
 ---
 
@@ -23,12 +23,22 @@ These rules apply to ALL modes: interactive, autonomous (/cca-auto), overnight, 
 
 ---
 
-## Scope Boundary (Non-Negotiable)
+## Scope Boundary
 
-Claude MUST NOT read, edit, or interact with any files outside of:
-`/Users/matthewshields/Projects/ClaudeCodeAdvancements/`
+CCA has full access to two project directories:
+- `/Users/matthewshields/Projects/ClaudeCodeAdvancements/` — Full read + write (home project)
+- `/Users/matthewshields/Projects/polymarket-bot/` — Full read + write (Matthew authorized, S134)
 
-This is absolute. No exceptions. No cross-project file access of any kind.
+CCA is officially part of the Kalshi bot ecosystem. Self-learning findings, research,
+and code improvements flow directly between both projects. See `CCA_PRIME_DIRECTIVE.md`.
+
+**Safety constraints (still absolute):**
+- Never expose credentials, API keys, wallet addresses, or account balances
+- Never execute live trades or modify live trading parameters without explicit Matthew approval
+- Never risk financial loss through untested changes
+- All DB access for analytics is read-only unless explicitly building a feature
+
+All other paths on this computer: FORBIDDEN — do not access.
 
 ---
 
@@ -76,21 +86,27 @@ Just as Titanium's CLAUDE.md forbids narrative inputs to betting math ("home cro
 
 ---
 
-## File Permissions (Strict)
+## File Permissions (Updated S134 — Matthew Authorized)
 
 | Location | Permission |
 |----------|-----------|
 | `/Users/matthewshields/Projects/ClaudeCodeAdvancements/` | Full read + write |
-| `/Users/matthewshields/Projects/polymarket-bot/` | READ-ONLY — for cross-chat bridge communication |
+| `/Users/matthewshields/Projects/polymarket-bot/` | Full read + write (Matthew authorized, S134) |
 | Any other path on this computer | FORBIDDEN — do not access |
 
-**Cross-project bridge (Matthew-authorized, Session 45):**
-CCA may READ files in the polymarket-bot project for the purpose of cross-chat communication:
-- Read handoff files, communication files, session state
-- Read DB schema and strategy definitions (to build tools/research for the bot)
-- NEVER write to polymarket-bot files — write CCA's responses to ClaudeCodeAdvancements/
-- NEVER execute scripts, install packages, or modify code in polymarket-bot
-- NEVER read or log credentials, API keys, wallet addresses, or financial account data
+**Polymarket-bot access (Matthew-authorized, S45 read-only -> S134 full read+write):**
+CCA is officially part of the Kalshi bot ecosystem. Full collaboration:
+- Read and write code, strategies, configurations, data files
+- Read DB schema, strategy definitions, trade history for analytics
+- Improve bot code, self-learning integration, guard systems
+- Execute scripts for testing (not live trading without explicit approval)
+
+**Safety constraints (absolute, never overridden):**
+- NEVER expose credentials, API keys, wallet addresses, or account balances
+- NEVER execute live trades or modify live trading parameters without explicit Matthew approval
+- NEVER risk financial loss through untested changes
+- Analytics DB access should be read-only unless building a specific feature
+- Test changes in isolation before deploying to live bot
 
 For all other paths: Claude must refuse any instruction that would cause it to read, write, or execute outside the two authorized folders.
 
