@@ -3,6 +3,29 @@
 
 ---
 
+## Session 135 — 2026-03-23
+
+**What changed:**
+- `design-skills/tests/test_report_sidecar_standalone.py`: 54 tests for standalone report_sidecar.py (extract, save, load, find_latest, Kalshi/learning extraction, edge cases)
+- `tests/test_desktop_autoloop.py`: +8 idle detection tests (exit code 2 path — extended idle, min_session_time, counter reset, file change priority, state tracking)
+- `LEARNINGS.md`: 2 new entries — autoloop external terminal pattern, Claude desktop UI layout (3-tab system)
+- `DESKTOP_AUTOLOOP_SETUP.md`: ASCII UI diagram, Code tab awareness, recovery pattern
+- `PROJECT_INDEX.md` + `ROADMAP.md`: Doc drift fix (design-skills 1299->1353, total 8406->8468)
+
+**Why:**
+- Test coverage gaps from S134 needed filling (report_sidecar standalone, idle detection)
+- Attempted desktop autoloop trial revealed critical pattern: script must run from external terminal
+- Matthew's UI walkthrough provided essential knowledge for autoloop tab navigation
+
+**Tests:** 210/210 suites passing (~8468 total)
+
+**Lessons:**
+- Never run the desktop autoloop orchestrator from within a Claude Code session
+- Claude desktop app has 3 tabs (Chat/Cowork/Code) — autoloop must ensure Code tab is active
+- Terminal Accessibility permission is permanently granted
+
+---
+
 ## Session 129 — 2026-03-23
 
 **What changed:**

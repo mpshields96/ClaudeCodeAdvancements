@@ -13,11 +13,13 @@
 - **Desktop autoloop preflight PASSED**: All 4 checks green. Accessibility permission confirmed granted.
 - **Desktop autoloop trial DOCUMENTED**: Critical learning — script must run from external Terminal.app, NOT from within a Claude Code session. Running inside the session it orchestrates creates recursive conflicts. See LEARNINGS.md.
 - **MT-33 Phase 6 verified complete**: All 3 data collectors + differ already have comprehensive TestEdgeCases classes (181 tests across MT-33 modules). No additional hardening needed.
-- **Tests**: 210 suites passing. ~8468 total (+62 new). 2 commits.
+- **Claude desktop UI documented**: 3-tab layout (Chat/Cowork/Code), always use Code tab, "+ New session" button location, recovery pattern. DESKTOP_AUTOLOOP_SETUP.md updated with ASCII diagram.
+- **Doc drift fixed**: design-skills 1299->1353, total 8406->8468.
+- **Tests**: 210 suites passing. ~8468 total (+62 new). 5 commits.
 
 **Next (prioritized — per CCA_PRIME_DIRECTIVE.md):**
-1. **MT-22 SUPERVISED TRIAL**: Run `./start_desktop_autoloop.sh --max-iterations 2` from an EXTERNAL Terminal.app window (not from within Claude Code). Matthew watches.
-2. **MT-33 Phase 6 DONE** — mark complete in MASTER_TASKS.
+1. **MT-22 SUPERVISED TRIAL**: Run `./start_desktop_autoloop.sh --max-iterations 2` from an EXTERNAL Terminal.app window (not from within Claude Code). Matthew watches. Preflight already passed.
+2. **Update desktop_automator.py**: Add Code tab awareness — verify/click Code tab before Cmd+N. The autoloop must handle landing on Chat or Cowork tab.
 3. **Self-learning improvements** — continue Get Smarter pillar work.
 4. **Explore next MT priorities** — check priority_picker for highest-impact work.
 
