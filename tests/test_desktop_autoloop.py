@@ -523,5 +523,202 @@ class TestWaitForSessionEnd(unittest.TestCase):
             self.assertEqual(exit_code, 1)  # timeout = crash
 
 
+class TestIdleDetection(unittest.TestCase):
+    """Tests for extended idle detection (exit code 2).
+
+    When Claude CPU is idle for 5+ consecutive minutes after at least
+    2 minutes of session time, exit with code 2 instead of waiting
+    for full timeout.
+    """
+
+    def _make_loop(self, tmp, timeout=600):
+        """Create a DesktopAutoLoop with mocked automator."""
+        resume_path = Path(tmp) / "SESSION_RESUME.md"
+        resume_path.write_text("v1")
+        cfg = DesktopLoopConfig(
+            project_dir=tmp,
+            dry_run=False,
+            session_timeout=timeout,
+        )
+        loop = DesktopAutoLoop(cfg)
+        loop.watcher.snapshot_mtime()
+        loop.automator = MagicMock()
+        return loop
+
+    @patch("desktop_autoloop.time")
+    def test_extended_idle_returns_exit_code_2(self, mock_time):
+        """5 consecutive idle checks after 2min session = exit code 2."""
+        with tempfile.TemporaryDirectory() as tmp:
+            loop = self._make_loop(tmp)
+
+            # Simulate: each time.time() call advances by 60s,
+            # starting at elapsed > 120s (past min_session_time)
+            # Need enough calls for 5 idle checks at 60s intervals
+            start = 1000.0
+            # time.time() is called: once for start, then in while condition,
+            # then for file check, then for elapsed, etc.
+            # The loop calls time.time() repeatedly. Let's just set up a sequence.
+            call_count = [0]
+            def time_side_effect():
+                call_count[0] += 1
+                # After enough calls, we should be past min_session_time
+                # and have checked idle 5+ times at 60s intervals
+                return start + call_count[0] * 15.0  # 15s per call, ramps up fast
+
+            mock_time.time.side_effect = time_side_effect
+            mock_time.sleep = MagicMock()  # don't actually sleep
+
+            # File never changes
+            loop.watcher.has_changed = MagicMock(return_value=False)
+
+            # CPU always idle
+            loop.automator.get_claude_cpu_usage.return_value = 1.0
+            loop.automator.is_claude_idle.return_value = True
+
+            exit_code, duration = loop._wait_for_session_end(poll_interval=1.0)
+            self.assertEqual(exit_code, 2)
+
+    @patch("desktop_autoloop.time")
+    def test_idle_not_triggered_before_min_session_time(self, mock_time):
+        """Idle detection doesn't trigger before 2 minutes of session time."""
+        with tempfile.TemporaryDirectory() as tmp:
+            loop = self._make_loop(tmp, timeout=5)
+
+            # Simulate short elapsed times (< 120s min_session_time)
+            start = 1000.0
+            call_count = [0]
+            def time_side_effect():
+                call_count[0] += 1
+                # Stay under 120s, then exceed timeout
+                elapsed = min(call_count[0] * 1.0, 6.0)  # max 6s
+                return start + elapsed
+
+            mock_time.time.side_effect = time_side_effect
+            mock_time.sleep = MagicMock()
+
+            loop.watcher.has_changed = MagicMock(return_value=False)
+            loop.automator.is_claude_idle.return_value = True
+            loop.automator.get_claude_cpu_usage.return_value = 0.5
+
+            exit_code, duration = loop._wait_for_session_end(poll_interval=0.5)
+            # Should timeout (1), not idle (2), since elapsed < 120s
+            self.assertEqual(exit_code, 1)
+
+    @patch("desktop_autoloop.time")
+    def test_idle_counter_resets_on_active(self, mock_time):
+        """Consecutive idle counter resets when CPU becomes active."""
+        with tempfile.TemporaryDirectory() as tmp:
+            loop = self._make_loop(tmp, timeout=900)
+
+            start = 1000.0
+            call_count = [0]
+            def time_side_effect():
+                call_count[0] += 1
+                return start + call_count[0] * 15.0
+
+            mock_time.time.side_effect = time_side_effect
+            mock_time.sleep = MagicMock()
+
+            loop.watcher.has_changed = MagicMock(return_value=False)
+
+            # Alternate idle/active — idle 3 times, then active, then idle 3 times
+            # This should NOT trigger idle exit (never gets to 5 consecutive)
+            idle_sequence = [True, True, True, False, True, True, True, False]
+            idle_idx = [0]
+            def is_idle():
+                idx = idle_idx[0]
+                idle_idx[0] += 1
+                if idx < len(idle_sequence):
+                    return idle_sequence[idx]
+                return False  # active after sequence ends
+
+            loop.automator.is_claude_idle.side_effect = is_idle
+            loop.automator.get_claude_cpu_usage.return_value = 2.0
+
+            exit_code, duration = loop._wait_for_session_end(poll_interval=1.0)
+            # Should timeout (1), not idle (2)
+            self.assertEqual(exit_code, 1)
+
+    @patch("desktop_autoloop.time")
+    def test_file_change_takes_priority_over_idle(self, mock_time):
+        """If file changes while idle, exit code 0 (not 2)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            loop = self._make_loop(tmp)
+
+            start = 1000.0
+            call_count = [0]
+            def time_side_effect():
+                call_count[0] += 1
+                return start + call_count[0] * 30.0
+
+            mock_time.time.side_effect = time_side_effect
+            mock_time.sleep = MagicMock()
+
+            # File changes on first check
+            loop.watcher.has_changed = MagicMock(return_value=True)
+            loop.automator.is_claude_idle.return_value = True
+            loop.automator.get_claude_cpu_usage.return_value = 0.5
+
+            exit_code, duration = loop._wait_for_session_end(poll_interval=1.0)
+            self.assertEqual(exit_code, 0)
+
+    def test_exit_code_2_counts_as_crash_in_state(self):
+        """Exit code 2 (idle) is treated as non-zero (crash) in state tracking."""
+        st = DesktopLoopState(max_iterations=50)
+        st.record_session(exit_code=2, duration=300.0)
+        self.assertEqual(st.total_crashes, 1)
+        self.assertEqual(st._consecutive_crashes, 1)
+
+    def test_three_consecutive_idle_exits_stops_loop(self):
+        """3 consecutive exit code 2 triggers crash stop."""
+        st = DesktopLoopState(max_iterations=50)
+        for _ in range(3):
+            st.record_session(exit_code=2, duration=300.0)
+        self.assertTrue(st.should_stop)
+        self.assertIn("crash", st.stop_reason)
+
+    def test_idle_exit_reset_by_success(self):
+        """A successful session resets the idle/crash counter."""
+        st = DesktopLoopState(max_iterations=50)
+        st.record_session(exit_code=2, duration=300.0)
+        st.record_session(exit_code=2, duration=300.0)
+        st.record_session(exit_code=0, duration=300.0)  # success resets
+        st.record_session(exit_code=2, duration=300.0)
+        self.assertFalse(st.should_stop)
+        self.assertEqual(st._consecutive_crashes, 1)
+
+    @patch("desktop_autoloop.time")
+    def test_idle_logs_cpu_checks(self, mock_time):
+        """CPU checks are logged with idle state."""
+        with tempfile.TemporaryDirectory() as tmp:
+            loop = self._make_loop(tmp)
+
+            start = 1000.0
+            call_count = [0]
+            def time_side_effect():
+                call_count[0] += 1
+                return start + call_count[0] * 15.0
+
+            mock_time.time.side_effect = time_side_effect
+            mock_time.sleep = MagicMock()
+
+            loop.watcher.has_changed = MagicMock(return_value=False)
+            loop.automator.is_claude_idle.return_value = True
+            loop.automator.get_claude_cpu_usage.return_value = 1.5
+
+            # Capture logs
+            logged_events = []
+            original_log = loop._log
+            def capture_log(event, data=None):
+                logged_events.append(event)
+                original_log(event, data)
+            loop._log = capture_log
+
+            exit_code, _ = loop._wait_for_session_end(poll_interval=1.0)
+            self.assertEqual(exit_code, 2)
+            self.assertIn("cpu_check", logged_events)
+            self.assertIn("session_end_detected", logged_events)
+
+
 if __name__ == "__main__":
     unittest.main()
