@@ -307,8 +307,8 @@ The **"+ New session"** button is in the top-left corner of the window (visible 
   causing the prompt to land in the wrong session. Fixed in S138: Cmd+N runs every iteration.
 
 - **ALWAYS verify the Code tab first (step 1).** If the app is on Chat or Cowork, the
-  autoloop will paste into the wrong interface. The `ensure_code_tab()` method detects the
-  active tab via accessibility inspection and clicks the Code radio button if needed.
+  autoloop will paste into the wrong interface. The `ensure_code_tab()` method sends
+  Cmd+3 to switch to Code tab (idempotent — no-op if already on Code).
 
 - **Never paste into an old chat.** The "+ New session" button is the gate. If it wasn't
   clicked, the prompt goes into whatever chat was previously open. This corrupts that session
@@ -336,7 +336,7 @@ The **"+ New session"** button is in the top-left corner of the window (visible 
 | Operation | What it does |
 |-----------|-------------|
 | `activate_claude()` | Brings Claude.app to foreground, verifies it's frontmost |
-| `ensure_code_tab()` | Detects active tab via accessibility tree, clicks Code if needed |
+| `ensure_code_tab()` | Sends Cmd+3 to switch to Code tab (idempotent, position-independent) |
 | `new_conversation()` | Sends Cmd+N to open a fresh chat (verifies Code tab + frontmost first) |
 | `send_prompt(text)` | Clears input (Cmd+A, Delete), pastes via clipboard (Cmd+V), sends (Cmd+Return) |
 
@@ -345,7 +345,7 @@ The **"+ New session"** button is in the top-left corner of the window (visible 
 | Failure | Cause | Recovery |
 |---------|-------|----------|
 | `activate_failed` | Claude.app not running or can't become frontmost | Check Claude.app is open, no modal dialogs blocking |
-| `code_tab_failed` | Accessibility can't detect tabs (Electron limitation) | Proceeds optimistically — Electron doesn't always expose tab state |
+| `code_tab_failed` | Cmd+3 keystroke failed (Claude not frontmost) | Retry activate_claude() first |
 | `new_conversation_failed` | Cmd+N didn't work (wrong app frontmost) | Retry activate + ensure_code_tab |
 | `prompt_send_failed` | Paste or Cmd+Return failed | Check clipboard, check Claude.app responsiveness |
 | `session_timeout` | Session ran longer than timeout (default 2h) | Counted as crash, loop continues |
