@@ -195,6 +195,12 @@ python3 self-learning/journal.py log session_outcome \
     --learnings '[]'
 ```
 
+Record session outcome for trend tracking:
+```bash
+python3 session_outcome_tracker.py auto-record SESSION_STATE.md --tests-added [TESTS_ADDED_THIS_SESSION] --tests-total [TOTAL_TEST_COUNT]
+python3 session_outcome_tracker.py trend --last 5
+```
+
 Run reflection:
 ```bash
 python3 self-learning/reflect.py --brief

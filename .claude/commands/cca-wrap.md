@@ -194,6 +194,25 @@ python3 self-learning/journal.py log session_outcome \
 
 Use the grade from Step 2: A/B = success, C = partial, D = failure.
 
+### 6a.1 — Record session outcome (trend tracking)
+
+Record the session's planned-vs-completed outcome for cross-session trend analysis:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_outcome_tracker.py auto-record SESSION_STATE.md --tests-added [TESTS_ADDED_THIS_SESSION] --tests-total [TOTAL_TEST_COUNT]
+```
+
+Replace `[TESTS_ADDED_THIS_SESSION]` with the number of new tests written this session.
+Replace `[TOTAL_TEST_COUNT]` with the total from Step 1.
+This parses SESSION_STATE.md to extract planned/completed tasks, counts commits from git log,
+auto-grades, and appends to `session_outcomes.jsonl` (append-only JSONL).
+
+After recording, show the trend:
+```bash
+python3 session_outcome_tracker.py trend --last 5
+```
+
 ### 6a.5 — Log pain/win signals from self-assessment
 
 From the WINS and LOSSES in Step 2, log individual pain and win events. These feed the
