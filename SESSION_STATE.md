@@ -3,27 +3,34 @@
 
 ---
 
-## Current State (as of Session 146 — 2026-03-24)
+## Current State (as of Session 147 — 2026-03-24)
 
-**Phase:** Session 146 COMPLETE. Cross-chat comms improvement + priority picker fix. Grade: B.
+**Phase:** Session 147 IN PROGRESS. MT-36 Phases 2-3 + priority picker fixes. 3 commits.
 
-**What was done this session (S146):**
-- **Cross-chat comms improvement**: Wired better Kalshi bot communication into all 3 session commands. cca-init now displays full cross-chat content (not just PENDING count). cca-auto checks every 2nd task. cca-wrap writes mandatory session summary. Stale comms (>48h) auto-flagged.
-- **Priority picker reinforced**: cca-auto now re-runs priority picker every loop iteration (not just at start). Prevents recency bias.
-- **Priority picker fix**: MT-27, MT-9, MT-11, MT-14 corrected from ACTIVE to COMPLETED. Same bug class as S145 fix. False stagnation warnings eliminated. Tests updated (79+53 pass).
-- **Proactive cross-chat update**: Wrote CCA_TO_POLYBOT.md session summary. Acknowledged REQ-025 (new edge discovery). Bot status: ~151 USD bankroll, clean zone running.
-- **Tests**: 213 suites, ~8683 tests passing. 2 commits.
+**What was done this session (S147):**
+- **MT-36 Phase 2 — efficiency_analyzer.py**: Session overhead analyzer with static wrap analysis. Maps all 32 cca-wrap steps, identifies 47% deferrable tokens (~10,300 savings). Slim wrap proposal: 13,800 tokens vs 24,100 current. OverheadAnalyzer for multi-session trends. 32 tests.
+- **MT-36 Phase 3 — batch_wrap_learning.py**: Consolidates 11 self-learning subprocess calls into single batch. Writes journal, wrap assessment, tips, outcomes in one call. Wired into cca-wrap as slim mode default. 18 tests.
+- **cca-wrap slim mode wired**: Step 6 now defaults to batch_wrap_learning.py. Analysis steps (reflect, sentinel, validate) deferred to next init. Saves ~5,000-10,000 tokens per wrap.
+- **Priority picker data fixes**: MT-7->COMPLETED, MT-22 phases 0->3, MT-35 phases 0->3, MT-36 added. Registry updated to S147.
+- **Tests**: 213 suites + 50 new = ~8733 tests. 3 commits.
 
 **Next (prioritized by priority picker):**
-1. **MT-22 Desktop Electron** — supervised trial of desktop autoloop (score 14.0, top active MT)
-2. **MT-35 Background Autoloop** — Phase 4: keyboard shortcut to pause/resume loop (score 12.0)
-3. **MT-31 Gemini Flash Integration** — stagnating 21 sessions, needs work or archival decision
-4. **MT-32 Visual Excellence** — stagnating 21 sessions, needs work or archival decision
+1. **MT-31 Gemini Flash Integration** — aging 22 sessions, needs work or archival decision (score 9.0)
+2. **MT-32 Visual Excellence** — aging 22 sessions, needs work or archival decision (score 9.0)
+3. **MT-22 Desktop Electron** — Phase 4: supervised trial (score 2.0, near complete)
+4. **MT-36 Session Efficiency** — Phase 4: Kalshi session optimization + deferred analysis in init
 
-**Matthew S146 directives:**
-- Use priority picker NOT resume recency bias (reinforced: re-run every task loop iteration)
-- Better/more frequent Kalshi bot cross-chat comms (addressed: wired into init/auto/wrap)
-- All previous directives still active (Two Pillars, CoreGraphics, polybot full access, XRP ban, CCA first max 50% Kalshi)
+**Matthew S147 directives:**
+- Session longevity: make CCA sessions last longer, knock out more tasks per session before wrapping
+- CCA helper chat should last 2-3 CCA desktop cycles; Kalshi chat lasts 4-5x
+- All previous directives still active (Two Pillars, priority picker, cross-chat comms, CoreGraphics, polybot full access, XRP ban)
+
+---
+
+## Previous State (Session 146 — 2026-03-24)
+
+**What was done this session (S146):**
+- Cross-chat comms improvement + priority picker fix. Grade: B.
 
 ---
 
