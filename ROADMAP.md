@@ -185,15 +185,15 @@ These are multi-session aspirational goals. See `MASTER_TASKS.md` for full detai
 |--------|-------|
 | memory-system | 340 |
 | spec-system | 205 |
-| context-monitor | 411 |
+| context-monitor | 434 |
 | agent-guard | 1073 |
 | usage-dashboard | 369 |
 | reddit-intelligence | 440 |
-| self-learning | 1859 |
-| design-skills | 1353 |
+| self-learning | 1885 |
+| design-skills | 1381 |
 | research | 86 |
 | root (integration + coordination) | 2323 |
-| **Total** | **8468** |
+| **Total** | **8779** |
 
 ---
 
