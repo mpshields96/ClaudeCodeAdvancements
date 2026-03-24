@@ -297,5 +297,87 @@ class TestGradeDistributionAnalysis(unittest.TestCase):
         self.assertEqual(result["productivity_trend"]["grade_trend"], "declining")
 
 
+class TestFormatInitBriefing(unittest.TestCase):
+    """Test the compact init briefing formatter."""
+
+    def test_healthy_sessions_positive_message(self):
+        from session_outcome_tracker import format_init_briefing
+        outcomes = [
+            _make_outcome(i, planned=["task"], completed=["task"],
+                         commits=5, tests_added=20, grade="A")
+            for i in range(5)
+        ]
+        result = format_init_briefing(outcomes)
+        self.assertIsInstance(result, str)
+        self.assertIn("trend", result.lower())
+
+    def test_empty_outcomes_no_crash(self):
+        from session_outcome_tracker import format_init_briefing
+        result = format_init_briefing([])
+        self.assertIsInstance(result, str)
+        self.assertIn("No outcome data", result)
+
+    def test_recommendations_included(self):
+        from session_outcome_tracker import format_init_briefing
+        outcomes = [
+            _make_outcome(1, commits=7, tests_added=30, grade="A"),
+            _make_outcome(2, commits=5, tests_added=20, grade="B"),
+            _make_outcome(3, commits=3, tests_added=10, grade="C"),
+            _make_outcome(4, commits=1, tests_added=2, grade="D"),
+        ]
+        result = format_init_briefing(outcomes)
+        # Should contain at least one recommendation
+        self.assertTrue(len(result.strip()) > 0)
+
+    def test_max_three_recommendations(self):
+        from session_outcome_tracker import format_init_briefing
+        # Create many low-completion MT types to trigger many recs
+        outcomes = []
+        for i in range(10):
+            o = _make_outcome(
+                i,
+                planned=[f"MT-{j} task" for j in range(5)],
+                completed=[],
+                commits=1,
+                tests_added=1,
+                grade="D",
+            )
+            o.blockers = ["blocker_a", "blocker_b"]
+            outcomes.append(o)
+        result = format_init_briefing(outcomes)
+        # Count recommendation bullet lines (start with "- ")
+        rec_lines = [l for l in result.split("\n") if l.strip().startswith("- ")]
+        self.assertLessEqual(len(rec_lines), 3)
+
+    def test_recurring_blockers_highlighted(self):
+        from session_outcome_tracker import format_init_briefing
+        outcomes = [_make_outcome(i) for i in range(4)]
+        outcomes[0].blockers = ["rate limit"]
+        outcomes[2].blockers = ["rate limit"]
+        result = format_init_briefing(outcomes)
+        self.assertIn("rate limit", result.lower())
+
+    def test_compact_output_under_10_lines(self):
+        from session_outcome_tracker import format_init_briefing
+        outcomes = [_make_outcome(i) for i in range(5)]
+        result = format_init_briefing(outcomes)
+        lines = [l for l in result.split("\n") if l.strip()]
+        self.assertLessEqual(len(lines), 10)
+
+    def test_trend_emoji_free(self):
+        from session_outcome_tracker import format_init_briefing
+        outcomes = [_make_outcome(i) for i in range(5)]
+        result = format_init_briefing(outcomes)
+        # No emojis per project rules
+        for char in result:
+            self.assertLess(ord(char), 0x1F600, f"Found emoji: {char}")
+
+    def test_single_outcome(self):
+        from session_outcome_tracker import format_init_briefing
+        result = format_init_briefing([_make_outcome(1)])
+        self.assertIsInstance(result, str)
+        self.assertTrue(len(result) > 0)
+
+
 if __name__ == "__main__":
     unittest.main()

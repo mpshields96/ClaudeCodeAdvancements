@@ -10,6 +10,7 @@ Usage:
     python3 session_outcome_tracker.py show <session_id>
     python3 session_outcome_tracker.py trend [--last N]
     python3 session_outcome_tracker.py parse-state <session_state_path>
+    python3 session_outcome_tracker.py init-briefing [--last N]
 """
 
 import json
@@ -513,6 +514,50 @@ def analyze_outcomes(outcomes: list) -> dict:
     }
 
 
+def format_init_briefing(outcomes: list, max_recs: int = 3) -> str:
+    """Format a compact init briefing from outcome analysis.
+
+    Returns a human-readable string (no JSON) suitable for embedding
+    in the /cca-init session briefing. Max ~8 lines.
+    """
+    if not outcomes:
+        return "No outcome data yet. Run /cca-wrap to start tracking."
+
+    report = analyze_outcomes(outcomes)
+    trend = report["productivity_trend"]
+    blockers = report["recurring_blockers"]
+    recs = report["recommendations"]
+
+    lines = []
+
+    # Trend summary line
+    parts = []
+    if trend.get("commits_trend") and trend["commits_trend"] != "insufficient_data":
+        parts.append(f"commits {trend['commits_trend']}")
+    if trend.get("tests_trend") and trend["tests_trend"] != "insufficient_data":
+        parts.append(f"tests {trend['tests_trend']}")
+    if trend.get("grade_trend") and trend["grade_trend"] != "insufficient_data":
+        parts.append(f"grades {trend['grade_trend']}")
+    if parts:
+        n = trend.get("session_count", len(outcomes))
+        lines.append(f"OUTCOME TREND ({n} sessions): {', '.join(parts)}")
+    else:
+        lines.append(f"OUTCOME TREND: insufficient data ({len(outcomes)} session(s))")
+
+    # Recurring blockers
+    if blockers:
+        blocker_strs = [f"{b['blocker']} ({b['count']}x)" for b in blockers[:2]]
+        lines.append(f"RECURRING BLOCKERS: {', '.join(blocker_strs)}")
+
+    # Top recommendations (capped)
+    if recs:
+        lines.append("RECOMMENDATIONS:")
+        for r in recs[:max_recs]:
+            lines.append(f"- {r}")
+
+    return "\n".join(lines)
+
+
 def main():
     """CLI interface."""
     if len(sys.argv) < 2:
@@ -619,6 +664,15 @@ def main():
         outcomes = store.load_last(n)
         report = analyze_outcomes(outcomes)
         print(json.dumps(report, indent=2))
+
+    elif cmd == "init-briefing":
+        n = 10
+        if "--last" in sys.argv:
+            idx = sys.argv.index("--last")
+            if idx + 1 < len(sys.argv):
+                n = int(sys.argv[idx + 1])
+        outcomes = store.load_last(n)
+        print(format_init_briefing(outcomes))
 
     elif cmd == "parse-state":
         if len(sys.argv) < 3:

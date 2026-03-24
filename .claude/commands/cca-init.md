@@ -146,6 +146,21 @@ When /cca-auto starts, the priority picker ranking should override the resume pr
 
 ---
 
+## Step 2.95 — Session outcome insights (Get Smarter)
+
+Show learnings from past session outcomes so this session starts smarter:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_outcome_tracker.py init-briefing --last 10
+```
+
+Include the output in the briefing under "SESSION INSIGHTS:". If no data or only
+"No outcome data", skip silently. If recommendations exist, they should inform
+task selection during /cca-auto.
+
+---
+
 ## Step 3 — Surface relevant findings (resurfacer)
 
 After reading SESSION_STATE.md (Step 1), determine the current work context:
