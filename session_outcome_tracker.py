@@ -314,6 +314,205 @@ def trend_report(outcomes: list) -> dict:
     }
 
 
+# --- Analysis functions (Get Smarter pillar) ---
+
+GRADE_ORDER = {"D": 0, "C": 1, "B": 2, "B+": 3, "A": 4, "A+": 5}
+
+
+def detect_recurring_blockers(outcomes: list) -> list:
+    """Find blockers that appear in 2+ sessions.
+
+    Returns list of {"blocker": str, "count": int, "sessions": list[int]}.
+    """
+    if not outcomes:
+        return []
+    blocker_map = defaultdict(list)
+    for o in outcomes:
+        for b in (o.blockers or []):
+            blocker_map[b.lower()].append(o.session_id)
+    return sorted(
+        [
+            {"blocker": k, "count": len(v), "sessions": v}
+            for k, v in blocker_map.items()
+            if len(v) >= 2
+        ],
+        key=lambda x: x["count"],
+        reverse=True,
+    )
+
+
+def detect_task_type_success(outcomes: list) -> list:
+    """Analyze success rates by task type prefix (e.g., MT-22, MT-10).
+
+    Tasks not matching MT-N pattern are grouped under "other".
+    Returns list of {"type": str, "planned": int, "completed": int, "success_rate": float}.
+    """
+    if not outcomes:
+        return []
+    type_stats = defaultdict(lambda: {"planned": 0, "completed": 0})
+
+    for o in outcomes:
+        planned_types = defaultdict(int)
+        completed_types = defaultdict(int)
+
+        for t in (o.planned_tasks or []):
+            mt = _extract_mt_prefix(t)
+            planned_types[mt] += 1
+
+        for t in (o.completed_tasks or []):
+            mt = _extract_mt_prefix(t)
+            completed_types[mt] += 1
+
+        for mt, count in planned_types.items():
+            type_stats[mt]["planned"] += count
+        for mt, count in completed_types.items():
+            type_stats[mt]["completed"] += count
+
+    result = []
+    for mt, stats in type_stats.items():
+        if stats["planned"] > 0:
+            result.append({
+                "type": mt,
+                "planned": stats["planned"],
+                "completed": stats["completed"],
+                "success_rate": min(stats["completed"] / stats["planned"], 1.0),
+            })
+    return sorted(result, key=lambda x: x["success_rate"])
+
+
+def _extract_mt_prefix(task: str) -> str:
+    """Extract MT-N prefix from a task string, or 'other'."""
+    m = re.match(r"(MT-\d+)", task)
+    return m.group(1) if m else "other"
+
+
+def detect_productivity_trend(outcomes: list) -> dict:
+    """Detect if commits, tests, and grades are trending up/down/stable.
+
+    Uses simple comparison of first-half vs second-half averages.
+    Needs at least 2 outcomes for trend detection.
+    """
+    if len(outcomes) < 2:
+        return {
+            "commits_trend": "insufficient_data",
+            "tests_trend": "insufficient_data",
+            "grade_trend": "insufficient_data",
+            "session_count": len(outcomes),
+        }
+
+    mid = len(outcomes) // 2
+    first_half = outcomes[:mid]
+    second_half = outcomes[mid:]
+
+    def avg(items, attr):
+        vals = [getattr(i, attr) for i in items]
+        return sum(vals) / len(vals) if vals else 0
+
+    def grade_avg(items):
+        vals = [GRADE_ORDER.get(i.grade, 2) for i in items if i.grade]
+        return sum(vals) / len(vals) if vals else 2
+
+    commits_first = avg(first_half, "commits")
+    commits_second = avg(second_half, "commits")
+    tests_first = avg(first_half, "tests_added")
+    tests_second = avg(second_half, "tests_added")
+    grade_first = grade_avg(first_half)
+    grade_second = grade_avg(second_half)
+
+    threshold = 0.2  # 20% change = significant
+
+    def trend(first, second):
+        if first == 0 and second == 0:
+            return "stable"
+        if first == 0:
+            return "up"
+        change = (second - first) / max(first, 1)
+        if change > threshold:
+            return "up"
+        elif change < -threshold:
+            return "down"
+        return "stable"
+
+    def grade_trend(first, second):
+        diff = second - first
+        if diff > 0.5:
+            return "improving"
+        elif diff < -0.5:
+            return "declining"
+        return "stable"
+
+    return {
+        "commits_trend": trend(commits_first, commits_second),
+        "tests_trend": trend(tests_first, tests_second),
+        "grade_trend": grade_trend(grade_first, grade_second),
+        "avg_commits_recent": round(commits_second, 1),
+        "avg_tests_recent": round(tests_second, 1),
+        "session_count": len(outcomes),
+    }
+
+
+def generate_recommendations(outcomes: list) -> list:
+    """Generate actionable recommendations from outcome patterns.
+
+    Returns list of recommendation strings, prioritized by impact.
+    """
+    if not outcomes:
+        return []
+
+    recs = []
+
+    # 1. Recurring blockers
+    blockers = detect_recurring_blockers(outcomes)
+    for b in blockers:
+        recs.append(
+            f"Recurring blocker: '{b['blocker']}' appeared in {b['count']} sessions "
+            f"({b['sessions']}). Fix the root cause to unblock future work."
+        )
+
+    # 2. Low success rate task types
+    type_success = detect_task_type_success(outcomes)
+    for ts in type_success:
+        if ts["success_rate"] < 0.5 and ts["planned"] >= 2:
+            recs.append(
+                f"MT type '{ts['type']}' has low completion rate "
+                f"({ts['success_rate']:.0%}, {ts['completed']}/{ts['planned']}). "
+                f"Break these tasks into smaller pieces or address blockers."
+            )
+
+    # 3. Productivity trends
+    trend = detect_productivity_trend(outcomes)
+    if trend["commits_trend"] == "down":
+        recs.append(
+            "Commits per session declining. Sessions may be getting less productive "
+            "or tasks more complex. Consider smaller task scopes."
+        )
+    if trend["tests_trend"] == "down":
+        recs.append(
+            "Tests per session declining. Maintain TDD discipline — tests are "
+            "the primary quality signal."
+        )
+    if trend.get("grade_trend") == "declining":
+        recs.append(
+            "Session grades declining. Review recent sessions for scope creep, "
+            "blockers, or context degradation."
+        )
+
+    return recs
+
+
+def analyze_outcomes(outcomes: list) -> dict:
+    """Top-level analysis: combines all detectors into one report.
+
+    Returns a JSON-serializable dict suitable for session context injection.
+    """
+    return {
+        "recurring_blockers": detect_recurring_blockers(outcomes),
+        "task_type_success": detect_task_type_success(outcomes),
+        "productivity_trend": detect_productivity_trend(outcomes),
+        "recommendations": generate_recommendations(outcomes),
+    }
+
+
 def main():
     """CLI interface."""
     if len(sys.argv) < 2:
@@ -410,6 +609,16 @@ def main():
         else:
             print("Could not parse session ID from SESSION_STATE.md")
             sys.exit(1)
+
+    elif cmd == "analyze":
+        n = 10
+        if "--last" in sys.argv:
+            idx = sys.argv.index("--last")
+            if idx + 1 < len(sys.argv):
+                n = int(sys.argv[idx + 1])
+        outcomes = store.load_last(n)
+        report = analyze_outcomes(outcomes)
+        print(json.dumps(report, indent=2))
 
     elif cmd == "parse-state":
         if len(sys.argv) < 3:
