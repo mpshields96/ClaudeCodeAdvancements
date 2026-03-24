@@ -386,20 +386,22 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         # === NEW MTs (S115-S124) ===
         MasterTask(
             mt_id=31, name="Gemini Flash Integration",
-            base_value=6, status=TaskStatus.ACTIVE,
+            base_value=6, status=TaskStatus.BLOCKED,
             last_touched_session=125, current_session=current_session,
             phases_completed=1, phases_total=4,  # S125: Flash works, Pro unavailable. Scope narrowed.
             aging_rate=0.5,
-            next_action="Build Flash-powered CCA tools (code analysis, search). Pro unavailable (web only, no API).",
+            block_reason="Gemini MCP server not configured in settings.local.json. Matthew needs to install @rlabs-inc/gemini-mcp.",
+            self_resolution_note="PARTIALLY SELF-RESOLVED: MCP exists (@rlabs-inc/gemini-mcp v0.8.1). Matthew needs to add to settings.",
+            next_action="BLOCKED: install Gemini MCP, then build Flash-powered CCA tools.",
             tags=["integration", "multi-model"],
         ),
         MasterTask(
             mt_id=32, name="Visual Excellence & Design Engineering",
             base_value=6, status=TaskStatus.ACTIVE,
             last_touched_session=125, current_session=current_session,
-            phases_completed=3, phases_total=8,  # S125: +coverage_ratio, +hook_coverage charts
+            phases_completed=4, phases_total=8,  # S125: test_distribution already built. Phase 5: interactive dashboard or new chart types.
             aging_rate=0.5,
-            next_action="Per-file test distribution HistogramChart, then more CCA statistical charts.",
+            next_action="Phase 5: Interactive dashboard improvements or new statistical charts for CCA reports.",
             tags=["visual", "reports", "design"],
         ),
         MasterTask(
