@@ -1431,10 +1431,10 @@ background process. Everything else serves these two axes. See `CCA_PRIME_DIRECT
 **Status:**
 - Phase 1 COMPLETE (S142): save/restore frontmost app around autoloop trigger (~3-5s takeover)
 - Phase 2 COMPLETE (S143): idle detection via CoreGraphics CGEventSourceSecondsSinceLastEventType. Waits for 3s idle before triggering. Configurable via CCA_IDLE_THRESHOLD/CCA_IDLE_TIMEOUT env vars. Fails open on timeout.
-- Phase 3: TODO — menu bar status indicator or ntfy.sh loop health notification
+- Phase 3 COMPLETE (S144): ntfy.sh loop health notifications. `notify_loop_health()` (periodic low-priority ping) + `notify_loop_stopped()` (high-priority on crash). 30-min cooldown rate limiter (`CCA_NTFY_COOLDOWN_MIN`). +23 tests.
 - Phase 4: TODO — keyboard shortcut to pause/resume loop
 
-**Files:** `autoloop_trigger.py`, `desktop_automator.py`, `desktop_autoloop.py`
+**Files:** `autoloop_trigger.py`, `desktop_automator.py`, `desktop_autoloop.py`, `context-monitor/session_notifier.py`
 
 **Relationship:** Extends MT-22 (Desktop Autoloop). Part of "Get More Bodies" pillar.
 

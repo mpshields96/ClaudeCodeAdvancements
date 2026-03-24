@@ -5,22 +5,26 @@
 
 ## Current State (as of Session 144 — 2026-03-24)
 
-**Phase:** Session 144. Reddit review batch (9 URLs) + MT-36 Phase 1 shipped.
+**Phase:** Session 144. Reddit review (9 URLs) + MT-36 Phase 1 + MT-35 Phase 3 + notification cooldown.
 
 **What was done this session (S144):**
 - **Reddit review batch**: 9 URLs reviewed. 3 ADAPT (multi-agent coordination, claude-devtools 252pts, multi-agent orchestration tools), 3 REFERENCE, 1 REFERENCE-PERSONAL, 2 SKIP. All logged to FINDINGS_LOG.md. Key signal: claude-devtools validates F3+F5, per-category token breakdown feeds MT-36.
-- **MT-36 Phase 1 shipped**: `session_timer.py` — per-step timing instrumentation for session lifecycle. SessionTimer with context manager + manual start/stop. 6 categories (init/wrap/test/code/doc/other). Cross-session: JSONL persistence, step averages, category averages, outlier detection. format_breakdown + format_category_bar for human output. CLI: history/averages/outliers. +31 tests. TDD red-green.
-- **Tests**: 213 suites passing. 1 commit so far.
+- **MT-36 Phase 1 shipped**: `session_timer.py` — per-step timing instrumentation for session lifecycle. SessionTimer with context manager + manual start/stop. 6 categories (init/wrap/test/code/doc/other). Cross-session: JSONL persistence, step averages, category averages, outlier detection. +31 tests.
+- **MT-35 Phase 3 shipped**: ntfy.sh loop health notifications in `session_notifier.py`. `notify_loop_health()` (low-priority periodic ping) + `notify_loop_stopped()` (high-priority on crash). CLI: `loop-health` and `loop-stopped` commands. +13 tests.
+- **Notification cooldown shipped**: 30-minute rate limiter for ntfy.sh (Matthew directive — too many notifications). `CCA_NTFY_COOLDOWN_MIN` env var (default 30). High priority always bypasses. +10 tests.
+- **Cross-chat**: Proactive update to CCA_TO_POLYBOT.md with Reddit intel + status questions.
+- **Tests**: 213 suites passing. 4 commits.
 
 **Next (prioritized):**
 1. **MT-36 Phase 2** — wire session_timer into /cca-init and /cca-wrap to collect real baseline data
-2. **MT-35 Phase 3** — menu bar status indicator or ntfy.sh loop health notification
+2. **MT-35 Phase 4** — keyboard shortcut to pause/resume loop
 3. **Shift+Cmd+O via CoreGraphics keyboard events** — position-independent autoloop fallback
 4. **Study claude-devtools repo** — per-category token breakdown patterns for MT-36 enhancement
 
 **Matthew S144 directives:**
 - Never wait for input in autonomous mode — chain tasks continuously
 - Never neglect advancement tips (both CCA and Kalshi bot)
+- Reduce ntfy notification frequency (addressed: 30-min cooldown)
 - Maintain frequent cross-chat comms with Kalshi bot
 - All previous directives still active (Two Pillars, CoreGraphics, polybot full access, XRP ban, CCA first max 50% Kalshi)
 
