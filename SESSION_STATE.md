@@ -3,22 +3,31 @@
 
 ---
 
-## Current State (as of Session 133 — 2026-03-23)
+## Current State (as of Session 134 — 2026-03-23)
 
-**Phase:** Session 133. Autonomous maintenance + MT-10 self-learning enhancement.
+**Phase:** Session 134. CCA Prime Directive established. Desktop autoloop hardening.
 
-**What was done this session (S133):**
-- **Doc drift FIXED**: PROJECT_INDEX.md + ROADMAP.md test counts updated (8320->8397). reddit-intelligence 432->440, self-learning 1833->1859, root 2132->2315.
-- **MT-10: session_outcome_tracker.py BUILT**: Prompt-to-outcome JSONL tracker. SessionOutcome data class, OutcomeStore (append-only JSONL), SESSION_STATE.md parser (planned + completed tasks), auto-grade (A+ through D based on completion/commits/tests), trend analysis with grade distribution. 43 tests.
-- **Auto-record integration**: `record_from_session_state()` reads SESSION_STATE.md + git log to auto-capture outcomes. `auto-record` CLI command for /cca-wrap integration. `parse_session_id()` + `count_session_commits()` helpers.
-- **MT-27 status updated**: MASTER_TASKS.md now shows all 5 phases COMPLETE (was stale at Phase 3).
-- **Tests**: 208 suites passing. +43 new tests. 4 commits.
+**What was done this session (S134):**
+- **CCA_PRIME_DIRECTIVE.md CREATED**: Documents Matthew's Two Pillars framework — (1) Get Smarter (self-learning/evolution), (2) Get More Bodies (automation/multi-chat). This is the foundational directive for all CCA work.
+- **Full polybot access granted**: CLAUDE.md updated — polymarket-bot now full read+write (was read-only since S45). Matthew S134 authorization.
+- **Outcome tracker wired into /cca-wrap**: Step 6a.1 added to cca-wrap.md and cca-wrap-desktop.md. Auto-records planned-vs-completed, grades, commits.
+- **MASTER_TASKS status table updated**: MT-27, MT-28, MT-30 moved to Completed. MT-22/30 elevated to P1 priority override. MT-33/MT-26 completion percentages corrected.
+- **Desktop autoloop hardened**: Extended idle detection added (exit code 2) — if Claude CPU idle 5+ consecutive minutes after 2min session time, treats as session ended without resume. Prevents 4-hour timeout waits on crashed sessions.
+- **report_sidecar.py BUILT**: JSON export alongside PDF reports (MT-33 Phase 5). Extracts key metrics, saves .sidecar.json, find_latest() for archives.
+- **Doc drift fixed**: 8397->8406 test counts.
+- **Tests**: 208 suites passing. 8406 total. 6 commits.
 
-**Next (prioritized):**
-1. **MT-22 SUPERVISED TRIAL**: Run `./start_desktop_autoloop.sh --max-iterations 2` with Matthew watching.
-2. **Wire outcome tracker into /cca-wrap**: Add `python3 session_outcome_tracker.py auto-record` call.
-3. **CI/CD pipeline verify**: Matthew S130 directive (gh CLI needed).
-4. **MT-10 Phase 3B**: Findings re-surfacing if not already covered by resurfacer.py.
+**Next (prioritized — per CCA_PRIME_DIRECTIVE.md):**
+1. **MT-22 SUPERVISED TRIAL**: Matthew grants Terminal Accessibility permission, then run `python3 desktop_autoloop.py preflight` to confirm, then `./start_desktop_autoloop.sh --max-iterations 2` with Matthew watching. THIS IS P1.
+2. **Write tests for report_sidecar.py**: Module exists but needs test suite.
+3. **Write tests for desktop_autoloop idle detection**: New exit code 2 path needs coverage.
+4. **MT-33 Phase 6**: Hardening — edge cases, empty DB, missing data.
+
+**Matthew S134 directives (non-negotiable):**
+- Desktop autoloop is #1 priority above all scoring
+- Self-learning/evolution is the permanent background process
+- CCA has full read+write to polymarket-bot
+- Two Pillars: Get Smarter + Get More Bodies
 
 ---
 
