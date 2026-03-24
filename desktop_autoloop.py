@@ -304,17 +304,23 @@ class DesktopAutoLoop:
         """Wait for session to complete by watching resume file + CPU idle.
 
         Primary signal: SESSION_RESUME.md mtime change (= /cca-wrap ran).
-        Secondary signal: CPU idle logging for observability.
+        Secondary signal: Extended CPU idle (5+ consecutive minutes of idle
+        after at least 2 minutes of session time) = session likely ended
+        without writing resume (crash, rate limit, or manual close).
 
         Returns (exit_code, duration).
         exit_code 0 = session wrapped successfully (file changed).
         exit_code 1 = timeout (session may have stalled).
+        exit_code 2 = extended idle detected (session ended without resume).
         """
         poll = poll_interval or self.config.poll_interval
         start = time.time()
         timeout = self.config.session_timeout
         last_cpu_log = 0.0
         cpu_log_interval = 60.0  # log CPU state every 60s
+        consecutive_idle_checks = 0
+        idle_threshold_checks = 5  # 5 consecutive idle checks = 5 minutes
+        min_session_time = 120.0  # don't trigger idle exit before 2 minutes
 
         while (time.time() - start) < timeout:
             # Primary: check for file change
@@ -326,7 +332,7 @@ class DesktopAutoLoop:
                 })
                 return (0, duration)
 
-            # Secondary: periodic CPU state logging (observability only)
+            # Secondary: periodic CPU state check with idle detection
             elapsed = time.time() - start
             if elapsed - last_cpu_log >= cpu_log_interval:
                 cpu = self.automator.get_claude_cpu_usage()
@@ -335,8 +341,25 @@ class DesktopAutoLoop:
                     "cpu_pct": round(cpu, 1),
                     "idle": idle,
                     "elapsed": round(elapsed, 0),
+                    "consecutive_idle": consecutive_idle_checks,
                 })
                 last_cpu_log = elapsed
+
+                # Track consecutive idle periods
+                if idle and elapsed > min_session_time:
+                    consecutive_idle_checks += 1
+                else:
+                    consecutive_idle_checks = 0
+
+                # Extended idle = session likely ended without resume
+                if consecutive_idle_checks >= idle_threshold_checks:
+                    duration = time.time() - start
+                    self._log("session_end_detected", {
+                        "method": "extended_idle",
+                        "duration": round(duration, 1),
+                        "idle_minutes": consecutive_idle_checks,
+                    })
+                    return (2, duration)
 
             if not self.config.dry_run:
                 time.sleep(poll)
