@@ -99,6 +99,13 @@ def trigger_next_session(dry_run: bool = False) -> bool:
     """
     _log("trigger_start", {"dry_run": dry_run})
 
+    # Check pause state (MT-35 Phase 4)
+    pause_file = os.path.expanduser("~/.cca-autoloop-paused")
+    if os.path.exists(pause_file):
+        _log("trigger_skipped", {"reason": "paused"})
+        print("Autoloop PAUSED — skipping trigger. Resume with: python3 autoloop_pause.py resume")
+        return False
+
     # Read resume
     resume = read_resume()
     if not resume:

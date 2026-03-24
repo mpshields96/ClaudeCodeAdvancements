@@ -46,6 +46,7 @@ PROJECT_DIR = "/Users/matthewshields/Projects/ClaudeCodeAdvancements"
 RESUME_FILE = os.path.join(PROJECT_DIR, "SESSION_RESUME.md")
 BREADCRUMB_FILE = os.path.expanduser("~/.cca-autoloop-fired")
 AUTOLOOP_FLAG_FILE = os.path.expanduser("~/.cca-autoloop-enabled")
+AUTOLOOP_PAUSE_FILE = os.path.expanduser("~/.cca-autoloop-paused")
 TRIGGER_SCRIPT = os.path.join(PROJECT_DIR, "autoloop_trigger.py")
 
 DEFAULT_MAX_RESUME_AGE = 600  # 10 minutes
@@ -66,6 +67,16 @@ def is_autoloop_enabled() -> bool:
     return os.path.exists(AUTOLOOP_FLAG_FILE)
 
 
+def is_autoloop_paused(pause_path: str = AUTOLOOP_PAUSE_FILE) -> bool:
+    """Check if autoloop is temporarily paused.
+
+    Paused via ~/.cca-autoloop-paused flag file. When paused, the loop
+    stays enabled but skips triggering new sessions until unpaused.
+    MT-35 Phase 4: toggle via `python3 autoloop_pause.py toggle`.
+    """
+    return os.path.exists(pause_path)
+
+
 def is_cca_session() -> bool:
     """Check if current session is a CCA project session."""
     try:
@@ -81,6 +92,7 @@ def should_trigger(
     autoloop_enabled: bool = None,
     max_resume_age_seconds: float = DEFAULT_MAX_RESUME_AGE,
     breadcrumb_max_age_seconds: float = DEFAULT_BREADCRUMB_MAX_AGE,
+    pause_path: str = None,
 ) -> bool:
     """Decide whether to fire the autoloop trigger.
 
@@ -92,6 +104,10 @@ def should_trigger(
             after last trigger, so fire again). S152 fix for stale breadcrumb
             preventing back-to-back sessions under 10 minutes.
     """
+    # Condition 0: not paused (MT-35 Phase 4)
+    if is_autoloop_paused(pause_path or AUTOLOOP_PAUSE_FILE):
+        return False
+
     # Condition 1: autoloop enabled
     if autoloop_enabled is None:
         autoloop_enabled = is_autoloop_enabled()
