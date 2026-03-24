@@ -818,6 +818,46 @@ class Improver:
             "gap_details": gaps,
         }
 
+    def check_convergence(self):
+        """Check if the improvement loop has converged.
+
+        Builds a ConvergenceDetector from proposal outcomes:
+        - committed/validated = accepted observation
+        - rejected = rejected observation
+
+        Returns dict with: signals, is_converged, summary
+        """
+        try:
+            from convergence_detector import ConvergenceDetector
+        except ImportError:
+            return {"signals": [], "is_converged": False, "summary": "convergence_detector not available"}
+
+        all_proposals = self.store.load_all()
+        # Only look at decided proposals (not pending/building)
+        decided = [p for p in all_proposals if p.status in ("committed", "validated", "rejected")]
+
+        detector = ConvergenceDetector(
+            discard_streak_limit=5,
+            oscillation_window=6,
+        )
+
+        for p in decided:
+            accepted = p.status in ("committed", "validated")
+            detector.add_observation(accepted=accepted, label=p.pattern_type)
+
+        signals = detector.check_convergence()
+        return {
+            "signals": signals,
+            "is_converged": detector.is_converged,
+            "summary": detector.summary(),
+            "total_decided": len(decided),
+        }
+
+    def get_convergence_summary(self):
+        """Human-readable convergence summary for the improvement loop."""
+        result = self.check_convergence()
+        return result["summary"]
+
     def get_stats(self):
         """Get improvement system statistics."""
         all_proposals = self.store.load_all()

@@ -47,6 +47,43 @@ def _days_between(ts1, ts2):
         return 0
 
 
+def check_improvement_convergence(entries):
+    """Check if the self-learning improvement loop has converged.
+
+    Builds a ConvergenceDetector from:
+    1. trace_analysis scores (metric observations)
+    2. improvement_outcome events (accepted/rejected observations)
+
+    Returns list of ConvergenceSignal objects.
+    """
+    try:
+        from convergence_detector import ConvergenceDetector
+    except ImportError:
+        return []
+
+    detector = ConvergenceDetector(
+        plateau_threshold=0.5,
+        plateau_window=5,
+        discard_streak_limit=5,
+        oscillation_window=6,
+    )
+
+    # Feed trace analysis scores as metric observations
+    trace_entries = [e for e in entries if e.get("event_type") == "trace_analysis"]
+    for te in trace_entries:
+        score = te.get("metrics", {}).get("score")
+        if score is not None:
+            detector.add_observation(metric_value=float(score), accepted=True, label="trace_score")
+
+    # Feed improvement outcomes as accept/reject observations
+    outcome_entries = [e for e in entries if e.get("event_type") == "improvement_outcome"]
+    for oe in outcome_entries:
+        accepted = oe.get("outcome") not in ("rejected", "failure")
+        detector.add_observation(accepted=accepted, label="proposal_outcome")
+
+    return detector.check_convergence()
+
+
 def detect_patterns(entries, min_sample=5):
     """Detect recurring patterns from journal entries.
 
@@ -285,6 +322,14 @@ def reflect(domain=None, apply=False, brief=False, propose=False, session_id=Non
                 print(f"  ({pstats['prunable']} principles eligible for pruning)")
     except ImportError:
         pass  # principle_registry not available yet
+
+    # Convergence detection (MT-10 Growth, S150)
+    conv_signals = check_improvement_convergence(entries)
+    if conv_signals:
+        print(f"\n--- Convergence Signals ({len(conv_signals)}) ---")
+        for s in conv_signals:
+            print(f"  [{s.severity.upper()}] {s.signal_type}: {s.detail}")
+            print(f"    -> {s.recommendation}")
 
     # Patterns
     if patterns:
