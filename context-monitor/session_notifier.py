@@ -108,7 +108,79 @@ def send_notification(
         return False
 
 
+# ── Loop health formatting (MT-35 Phase 3) ──────────────────────────────────
+
+
+def format_loop_health_message(
+    iteration: int,
+    max_iterations: int,
+    total_crashes: int,
+    uptime_minutes: float,
+    last_session_grade: str = None,
+    test_suites_passing: int = None,
+) -> dict:
+    """Format a periodic loop health ping."""
+    title = "CCA Loop Health"
+
+    parts = [f"{iteration}/{max_iterations} iterations", f"{uptime_minutes:.0f}m uptime"]
+    if total_crashes > 0:
+        parts.append(f"{total_crashes} crashes")
+    if last_session_grade:
+        parts.append(f"Last: {last_session_grade}")
+    if test_suites_passing is not None:
+        parts.append(f"{test_suites_passing} suites OK")
+
+    return {"title": title, "body": " | ".join(parts)}
+
+
+def format_loop_stopped_message(
+    reason: str,
+    total_iterations: int,
+    total_crashes: int,
+    uptime_minutes: float,
+) -> dict:
+    """Format a loop-stopped notification."""
+    title = "CCA Loop Stopped"
+
+    parts = [
+        f"{total_iterations} iterations",
+        f"{uptime_minutes:.0f}m",
+        f"{total_crashes} crashes",
+        reason,
+    ]
+
+    return {"title": title, "body": " | ".join(parts)}
+
+
 # ── High-level API ───────────────────────────────────────────────────────────
+
+
+def notify_loop_health(
+    iteration: int,
+    max_iterations: int,
+    total_crashes: int,
+    uptime_minutes: float,
+    last_session_grade: str = None,
+    test_suites_passing: int = None,
+) -> bool:
+    """Send periodic loop health ping. Low priority to avoid buzzing."""
+    msg = format_loop_health_message(
+        iteration, max_iterations, total_crashes, uptime_minutes,
+        last_session_grade, test_suites_passing,
+    )
+    return send_notification(msg["title"], msg["body"], priority="low")
+
+
+def notify_loop_stopped(
+    reason: str,
+    total_iterations: int,
+    total_crashes: int,
+    uptime_minutes: float,
+) -> bool:
+    """Send loop-stopped notification. High priority if crash-related."""
+    msg = format_loop_stopped_message(reason, total_iterations, total_crashes, uptime_minutes)
+    priority = "high" if "crash" in reason.lower() else "default"
+    return send_notification(msg["title"], msg["body"], priority=priority)
 
 
 def notify_session_end(
@@ -230,7 +302,59 @@ def cli_main(args: list = None):
         else:
             i += 1
 
-    if cmd == "wrap":
+    # Loop health flags
+    iteration = 0
+    max_iter = 50
+    crashes = 0
+    uptime = 0.0
+    iterations_total = 0
+    reason = ""
+
+    # Re-parse for loop flags
+    j = 1
+    while j < len(args):
+        if args[j] == "--iteration" and j + 1 < len(args):
+            iteration = int(args[j + 1])
+            j += 2
+        elif args[j] == "--max" and j + 1 < len(args):
+            max_iter = int(args[j + 1])
+            j += 2
+        elif args[j] == "--crashes" and j + 1 < len(args):
+            crashes = int(args[j + 1])
+            j += 2
+        elif args[j] == "--uptime" and j + 1 < len(args):
+            uptime = float(args[j + 1])
+            j += 2
+        elif args[j] == "--iterations" and j + 1 < len(args):
+            iterations_total = int(args[j + 1])
+            j += 2
+        elif args[j] == "--reason" and j + 1 < len(args):
+            reason = args[j + 1]
+            j += 2
+        else:
+            j += 1
+
+    if cmd == "loop-health":
+        result = notify_loop_health(
+            iteration=iteration, max_iterations=max_iter,
+            total_crashes=crashes, uptime_minutes=uptime,
+        )
+        if result:
+            print(f"Loop health sent: {iteration}/{max_iter}")
+        else:
+            print("Notification not sent (no topic or network error)")
+
+    elif cmd == "loop-stopped":
+        result = notify_loop_stopped(
+            reason=reason, total_iterations=iterations_total,
+            total_crashes=crashes, uptime_minutes=uptime,
+        )
+        if result:
+            print(f"Loop stopped sent: {reason}")
+        else:
+            print("Notification not sent (no topic or network error)")
+
+    elif cmd == "wrap":
         if auto:
             summary = _read_pacer_state(pacer_state)
             tasks = summary["tasks_completed"]

@@ -254,5 +254,190 @@ class TestCLI(unittest.TestCase):
             os.unlink(tmp_path)
 
 
+class TestLoopHealthMessage(unittest.TestCase):
+    """Test loop health notification formatting (MT-35 Phase 3)."""
+
+    def test_format_loop_health_basic(self):
+        msg = session_notifier.format_loop_health_message(
+            iteration=5,
+            max_iterations=50,
+            total_crashes=0,
+            uptime_minutes=120.0,
+        )
+        self.assertIn("Loop", msg["title"])
+        self.assertIn("5/50", msg["body"])
+        self.assertIn("120m", msg["body"])
+
+    def test_format_loop_health_with_crashes(self):
+        msg = session_notifier.format_loop_health_message(
+            iteration=10,
+            max_iterations=50,
+            total_crashes=2,
+            uptime_minutes=300.0,
+        )
+        self.assertIn("2 crashes", msg["body"])
+
+    def test_format_loop_health_zero_crashes_omitted(self):
+        msg = session_notifier.format_loop_health_message(
+            iteration=3,
+            max_iterations=50,
+            total_crashes=0,
+            uptime_minutes=45.0,
+        )
+        self.assertNotIn("crash", msg["body"])
+
+    def test_format_loop_health_with_last_grade(self):
+        msg = session_notifier.format_loop_health_message(
+            iteration=7,
+            max_iterations=50,
+            total_crashes=0,
+            uptime_minutes=200.0,
+            last_session_grade="A-",
+        )
+        self.assertIn("A-", msg["body"])
+
+    def test_format_loop_health_with_tests(self):
+        msg = session_notifier.format_loop_health_message(
+            iteration=4,
+            max_iterations=50,
+            total_crashes=0,
+            uptime_minutes=90.0,
+            test_suites_passing=213,
+        )
+        self.assertIn("213", msg["body"])
+
+
+class TestLoopStoppedMessage(unittest.TestCase):
+    """Test loop stopped notification."""
+
+    def test_format_loop_stopped_normal(self):
+        msg = session_notifier.format_loop_stopped_message(
+            reason="Max iterations reached",
+            total_iterations=50,
+            total_crashes=1,
+            uptime_minutes=600.0,
+        )
+        self.assertIn("Stopped", msg["title"])
+        self.assertIn("50 iterations", msg["body"])
+        self.assertIn("Max iterations", msg["body"])
+
+    def test_format_loop_stopped_crash(self):
+        msg = session_notifier.format_loop_stopped_message(
+            reason="3 consecutive crashes",
+            total_iterations=8,
+            total_crashes=3,
+            uptime_minutes=120.0,
+        )
+        self.assertIn("crash", msg["body"].lower())
+
+
+class TestNotifyLoopHealth(unittest.TestCase):
+    """Test high-level loop health notification API."""
+
+    @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
+    @patch("session_notifier.urlopen")
+    def test_notify_loop_health(self, mock_urlopen):
+        resp = MagicMock()
+        resp.status = 200
+        resp.__enter__ = MagicMock(return_value=resp)
+        resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = resp
+
+        result = session_notifier.notify_loop_health(
+            iteration=5,
+            max_iterations=50,
+            total_crashes=0,
+            uptime_minutes=120.0,
+        )
+        self.assertTrue(result)
+
+    @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
+    @patch("session_notifier.urlopen")
+    def test_notify_loop_stopped(self, mock_urlopen):
+        resp = MagicMock()
+        resp.status = 200
+        resp.__enter__ = MagicMock(return_value=resp)
+        resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = resp
+
+        result = session_notifier.notify_loop_stopped(
+            reason="Max iterations",
+            total_iterations=50,
+            total_crashes=1,
+            uptime_minutes=600.0,
+        )
+        self.assertTrue(result)
+
+    @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
+    @patch("session_notifier.urlopen")
+    def test_notify_loop_health_low_priority(self, mock_urlopen):
+        """Health pings use low priority to avoid excessive buzzing."""
+        resp = MagicMock()
+        resp.status = 200
+        resp.__enter__ = MagicMock(return_value=resp)
+        resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = resp
+
+        session_notifier.notify_loop_health(
+            iteration=5, max_iterations=50,
+            total_crashes=0, uptime_minutes=120.0,
+        )
+        call_args = mock_urlopen.call_args
+        req = call_args[0][0]
+        self.assertEqual(req.get_header("Priority"), "low")
+
+    @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
+    @patch("session_notifier.urlopen")
+    def test_notify_loop_stopped_high_priority_on_crash(self, mock_urlopen):
+        """Loop stopped by crash uses high priority."""
+        resp = MagicMock()
+        resp.status = 200
+        resp.__enter__ = MagicMock(return_value=resp)
+        resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = resp
+
+        session_notifier.notify_loop_stopped(
+            reason="3 consecutive crashes",
+            total_iterations=8, total_crashes=3, uptime_minutes=120.0,
+        )
+        call_args = mock_urlopen.call_args
+        req = call_args[0][0]
+        self.assertEqual(req.get_header("Priority"), "high")
+
+
+class TestLoopHealthCLI(unittest.TestCase):
+    """Test CLI for loop health commands."""
+
+    @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
+    @patch("session_notifier.urlopen")
+    def test_cli_loop_health(self, mock_urlopen):
+        resp = MagicMock()
+        resp.status = 200
+        resp.__enter__ = MagicMock(return_value=resp)
+        resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = resp
+
+        session_notifier.cli_main([
+            "loop-health", "--iteration", "5", "--max", "50",
+            "--crashes", "0", "--uptime", "120"
+        ])
+        mock_urlopen.assert_called_once()
+
+    @patch.dict(os.environ, {"MOBILE_APPROVER_TOPIC": "test-topic"})
+    @patch("session_notifier.urlopen")
+    def test_cli_loop_stopped(self, mock_urlopen):
+        resp = MagicMock()
+        resp.status = 200
+        resp.__enter__ = MagicMock(return_value=resp)
+        resp.__exit__ = MagicMock(return_value=False)
+        mock_urlopen.return_value = resp
+
+        session_notifier.cli_main([
+            "loop-stopped", "--reason", "Max iterations",
+            "--iterations", "50", "--crashes", "1", "--uptime", "600"
+        ])
+        mock_urlopen.assert_called_once()
+
+
 if __name__ == "__main__":
     unittest.main()

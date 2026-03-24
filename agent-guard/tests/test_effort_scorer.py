@@ -355,9 +355,9 @@ class TestCLIArgParsingDiscount(unittest.TestCase):
             with open(notifier_path) as f:
                 content = f.read()
             result = self.scorer.score_content(content, "session_notifier.py")
-            # With discount, complexity should be notably lower than the
-            # original 45 markers that caused a false positive
-            self.assertLess(result.complexity, 40)
+            # With discount, complexity should be notably lower than raw
+            # marker count. File grew with MT-35 Phase 3 loop health (S144).
+            self.assertLess(result.complexity, 60)
 
 
 
