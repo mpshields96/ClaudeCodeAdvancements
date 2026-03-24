@@ -1144,3 +1144,112 @@ EvolveR-style principle registry with Laplace-smoothed scoring:
 2. **Run /cca-report**: Generates PDF with Kalshi analytics — zero bot modification needed.
 3. **Research ROI tracking**: When implementing CCA recommendations, log via research_outcomes.py
    so CCA can track which research actually makes money.
+
+---
+
+## KXBTCD Hourly Threshold Analysis — CCA S143 Delivery (2026-03-23)
+
+**Responding to:** Monitoring chat S130 request for academic assessment of KXBTCD weekly
+threshold markets as a second FLB edge alongside the 15M sniper.
+
+### Question 1: Does FLB apply to threshold/barrier markets near settlement?
+
+**MIXED verdict. The academic evidence is nuanced — not a simple yes.**
+
+**Le (2026), arXiv:2602.19520** — 292M trades across 327K contracts on Kalshi+Polymarket.
+Calibration slopes by domain and horizon (>1.0 = favorites underpriced = FLB present):
+
+| Domain | 0-1h | 1-3h | 3-6h | 6-12h |
+|--------|------|------|------|-------|
+| Crypto | 0.99 | 1.01 | 1.07 | 1.01 |
+| Finance| 0.96 | 1.07 | 1.03 | 0.97 |
+| Weather| 0.69 | 0.84 | 0.74 | 0.87 |
+| Sports | 1.10 | 0.96 | 0.90 | 1.01 |
+
+**Crypto at 0-1h: slope 0.99 — nearly perfectly calibrated.** This means a 92c crypto
+contract at short horizons really does have approximately a 92% win probability, not
+97%+ as the 15M sniper achieves. The FLB is ABSENT in crypto at short horizons.
+
+Why the 15M sniper still works despite this: the sniper operates at ULTRA-short horizons
+(final 5-15 minutes), which Le's 0-1h bin averages over. The sniper's edge may come from
+microstructure effects (stale limit orders, slow market maker updates) rather than the
+classical FLB. Le's aggregation across all 76,181 crypto markets may dilute the near-expiry
+signal that exists in the final minutes of specific high-volume markets.
+
+**Burgi, Deng & Whelan (2025), SSRN:5502658** — 300K+ Kalshi contracts. Found:
+- 95c contracts win approximately 98% of the time (3% edge over implied price)
+- But this is across ALL Kalshi domains, not crypto-specific
+- Takers lose 32% average on longshots, makers lose 10% — bot is a taker
+- FLB pattern is "much stronger for takers than for makers"
+
+### Question 2: Expected WR for KXBTCD YES at 90-94c in last 30min
+
+**Estimated WR: 91-94% (NOT 97%+ like 15M sniper).**
+
+Reasoning:
+- Le's crypto 0-1h calibration slope of 0.99 means prices are nearly accurate
+- A 92c YES with 30min left genuinely reflects ~92% probability in crypto
+- The 15M sniper's 97.4% WR at 92c is an ANOMALY — it occurs because:
+  (a) 15-minute window is extremely short (less time for reversal)
+  (b) directional bets (up/down) have different dynamics than threshold (above/below)
+  (c) possible microstructure edge at that specific horizon
+- KXBTCD at 30min gives BTC 6x more time to move vs 5min remaining in 15M sniper
+- BTC hourly vol >> 15M vol — more room for the price to cross the threshold
+
+**Break-even calculation at 92c with taker fee:**
+- BE WR needed: ~90.8%
+- Estimated actual WR at 92c with 30min: ~92-93%
+- Expected edge: +1.2 to +2.2 percentage points
+- Compare to 15M sniper: +6.6pp edge at same price
+
+### Question 3: Risk assessment — 30min vs 15min
+
+**The 30-minute horizon significantly reduces the edge.**
+
+| Factor | 15M Sniper (5min remain) | KXBTCD (30min remain) |
+|--------|--------------------------|----------------------|
+| Time for reversal | ~5 minutes | ~30 minutes |
+| BTC move possible | ~$50-100 | ~$200-500 |
+| Calibration (Le 2026) | Not isolated in data | 0.99 slope (well-calibrated) |
+| Estimated WR at 92c | 97.4% (observed) | 92-93% (estimated) |
+| Edge over BE | +6.6pp | +1.2-2.2pp |
+| Risk of threshold cross | Very low | Moderate |
+
+**Key risk:** BTC can move $200-500 in 30 minutes during volatile periods. A threshold
+strike that's $200 above current price sounds safe but BTC flash crashes happen. The 15M
+sniper benefits from such short time that even flash crashes rarely play out in 5 minutes.
+
+### Question 4: Volume viability
+
+**YES — volume is adequate.** 12K+ contracts/slot at 10 USD bet size (~10 contracts at
+92c) is well within market depth. No market impact concern at this scale.
+
+### Overall Assessment
+
+| Criterion | Rating | Notes |
+|-----------|--------|-------|
+| Structural basis (FLB) | WEAK | Le 2026 shows crypto is well-calibrated at 0-1h |
+| Mathematical edge | MARGINAL | +1.2-2.2pp vs +6.6pp for 15M sniper |
+| Volume | PASS | 12K+ contracts adequate |
+| Risk profile | HIGHER | 6x more time for reversal vs 15M |
+| Academic support | MIXED | General FLB confirmed, but crypto-specific FLB at short horizons absent |
+
+**VERDICT: PAPER-TRADE FIRST. Do NOT deploy live without data.**
+
+The monitoring chat's intuition that "same FLB = same edge" is not supported by Le (2026).
+Crypto markets at short horizons are well-calibrated (slope 0.99), unlike politics (1.34)
+or sports (1.10) at the same horizon. The 15M sniper may work for reasons OTHER than
+classical FLB — possibly microstructure effects specific to ultra-short directional markets.
+
+**Recommended path:**
+1. Paper-trade KXBTCD at 90-94c in last 30min for 2 weeks (N >= 50)
+2. Track actual WR. If WR >= 93%: marginally +EV, consider small live allocation
+3. If WR == 91-92%: breakeven after fees. Do not deploy live.
+4. If WR < 91%: negative EV. Kill the idea.
+5. Run SPRT on paper results (already in bot) — let the math decide, not intuition
+
+**Citations (verified):**
+- Le, N.A. (2026). "Decomposing Crowd Wisdom: Domain-Specific Calibration Dynamics in
+  Prediction Markets." arXiv:2602.19520. [VERIFIED — fetched full paper]
+- Burgi, C., Deng, W., & Whelan, K. (2025). "Makers and Takers: The Economics of the
+  Kalshi Prediction Market." SSRN:5502658 / CEPR DP20631. [VERIFIED — fetched VoxEU summary]
