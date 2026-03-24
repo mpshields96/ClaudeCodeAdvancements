@@ -1440,6 +1440,44 @@ background process. Everything else serves these two axes. See `CCA_PRIME_DIRECT
 
 ---
 
+## MT-36: Session Efficiency Optimizer — Quality-Preserving Speed
+
+**Source:** Matthew directive (S143, 2026-03-23) — "a thorough but carefully constructed tool for all this optimization type deal... maintaining equal or greater quality production and output while optimizing coding, start up time for CCA, wrap up time for CCA, same thing for Kalshi bot chat if applicable"
+
+**What Matthew wants:** A systematic tool/framework that measures and optimizes the time spent on session overhead (init, wrap, test runs, doc updates) and coding velocity WITHOUT sacrificing output quality. Applies to both CCA and Kalshi bot sessions.
+
+**Core requirements:**
+1. **Measure current baselines**: Time spent on /cca-init, /cca-wrap, test suites, doc reads, coding. Break down where time goes.
+2. **Identify waste**: Which init/wrap steps take disproportionate time? Are any steps redundant? Can test runs be parallelized or cached?
+3. **Optimize without quality loss**: Faster init (cached test results? incremental test runs?), leaner wrap (parallel doc updates?), smarter coding (fewer retry loops, better first-attempt code). Quality gates remain — tests must pass, docs must be accurate.
+4. **Kalshi applicability**: Same analysis for /polybot-init, /polybot-auto, /polybot-wrap. Different session shape but same optimization principles.
+5. **Dashboard/reporting**: Track efficiency metrics over time. Are sessions getting faster? Is quality (grade, test count, regressions) maintained?
+
+**What this is NOT:**
+- NOT about removing safety checks, tests, or documentation
+- NOT about rushing through work at the cost of bugs
+- NOT about cutting wrap steps that produce valuable data (journal, learnings, etc.)
+
+**Technical approach (incremental):**
+- Phase 1: Instrumentation — time every major step in init/wrap/auto, produce per-session timing breakdown
+- Phase 2: Analysis — identify top 3 time sinks, propose optimizations with quality impact assessment
+- Phase 3: Implement quick wins — parallel test runs, incremental testing, cached reads, smarter doc updates
+- Phase 4: Kalshi session optimization — apply same analysis to polybot sessions
+- Phase 5: Dashboard — track efficiency metrics, quality metrics, and their correlation over time
+
+**Existing infrastructure to leverage:**
+- `overhead_timer.py` — already measures coordination overhead
+- `session_outcome_tracker.py` — tracks planned vs completed tasks, auto-grades
+- `wrap_tracker.py` — session quality trends
+- `hook_profiler.py` — hook chain latency diagnostics
+- `session_pacer.py` — session pacing for autonomous runs
+
+**Status:** NOT STARTED — created S143 per Matthew directive.
+
+**Relationship:** Part of "Get Smarter" pillar — self-optimizing sessions.
+
+---
+
 ### Scoring Rules
 
 1. **After working on a task:** Update `get_known_tasks()` in `priority_picker.py`, run `python3 priority_picker.py table`.

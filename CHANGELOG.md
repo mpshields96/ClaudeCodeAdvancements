@@ -3,6 +3,26 @@
 
 ---
 
+## Session 143 — 2026-03-23
+
+**What changed:**
+- MT-35 Phase 2: `get_user_idle_seconds()` and `wait_for_idle()` on DesktopAutomator using CoreGraphics `CGEventSourceSecondsSinceLastEventType`. Autoloop trigger waits 3s idle before stealing focus. Env-configurable (CCA_IDLE_THRESHOLD, CCA_IDLE_TIMEOUT). Fails open.
+- KXBTCD threshold analysis written to `CCA_TO_POLYBOT.md`: Le (2026) arXiv:2602.19520 + Burgi/Deng/Whelan (2025) SSRN:5502658. Verdict: paper-trade first, crypto well-calibrated at short horizons.
+- MT-35 Phase 1+2 marked COMPLETE in `MASTER_TASKS.md`.
+- MT-36 created (Matthew directive): Session Efficiency Optimizer — measure/optimize init/wrap/coding time while maintaining quality.
+
+**Why:**
+- MT-35 Phase 2 makes autoloop non-intrusive per Matthew directive (S142)
+- KXBTCD research responds to monitoring chat S130 request for second FLB edge assessment
+- MT-36 addresses Matthew's request for systematic session efficiency optimization
+
+**Tests:** 212/212 passing (+16 new: 12 desktop_automator, 4 autoloop_trigger)
+
+**Lessons:**
+- Le (2026) provides domain-specific calibration data that changes the KXBTCD calculus — crypto is well-calibrated at short horizons unlike politics/sports
+
+---
+
 ## Session 138 — 2026-03-23
 
 **What changed:**

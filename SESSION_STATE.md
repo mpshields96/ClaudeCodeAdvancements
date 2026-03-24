@@ -3,28 +3,27 @@
 
 ---
 
-## Current State (as of Session 142 — 2026-03-23)
+## Current State (as of Session 143 — 2026-03-23)
 
-**Phase:** Session 142. Autoloop chat #2. Principle seeder wired. Journal fixed. MT-35 Phase 1.
+**Phase:** Session 143. Autoloop chat #3. MT-35 Phase 2 shipped. KXBTCD research delivered.
 
-**What was done this session (S142):**
-- **Principle seeder wired into slim_init.py**: Auto-seeds principles on every /cca-init. Idempotent — zero cost on subsequent runs. 10 new tests (34 total in test_slim_init.py).
-- **Journal data quality fix**: 759/989 entries had `type` instead of `event_type` (from post_compact.py). Fixed source hook + backfilled all entries. 989/989 now have proper event_type + domain.
-- **MT-35 created** (Matthew directive): Background Autoloop — non-intrusive desktop loop. Matthew wants to use his MacBook freely while autoloop runs.
-- **MT-35 Phase 1 shipped**: save_frontmost_app() + restore_frontmost_app() on DesktopAutomator. Autoloop trigger saves current app, activates Claude, spawns session, restores focus (~3-5s takeover). 8 new tests (110 total).
-- **Autoloop chat #2 confirmed**: This session was successfully spawned by the automated loop.
-- **Matthew directives (S142)**: CCA is CCA first (max 50% Kalshi work). Background autoloop must be non-intrusive.
-- **Tests**: 212 suites passing. 4 commits.
+**What was done this session (S143):**
+- **MT-35 Phase 2 shipped**: Idle detection via CoreGraphics CGEventSourceSecondsSinceLastEventType. `get_user_idle_seconds()` and `wait_for_idle()` on DesktopAutomator. Autoloop trigger now waits 3s idle before stealing focus (configurable via CCA_IDLE_THRESHOLD/CCA_IDLE_TIMEOUT env vars). Fails open on timeout. +16 tests (122 desktop_automator, 22 autoloop_trigger).
+- **KXBTCD threshold analysis delivered**: Le (2026) arXiv:2602.19520 shows crypto calibration slope 0.99 at 0-1h — well-calibrated, FLB absent. Verdict: paper-trade first, expected WR 92-93% (not 97%+ like 15M sniper). Written to CCA_TO_POLYBOT.md with 2 verified citations.
+- **MT-35 status updated**: Phase 1+2 COMPLETE in MASTER_TASKS.md. Phase 3 (status indicator) and Phase 4 (pause/resume shortcut) remain.
+- **Autoloop trigger confirmed functional**: `--check` passes, wired in /cca-wrap Step 10.
+- **Tests**: 212 suites passing. 3 commits.
 
 **Next (prioritized):**
-1. **MT-35 Phase 2** — idle detection: wait for 2-3s of no mouse/keyboard activity before triggering
-2. **Sustained autoloop** — continue running, proving reliability with focus restore
-3. **Kalshi research** — KXBTCD weekly threshold analysis per POLYBOT_TO_CCA.md request (max 50%)
-4. **Shift+Cmd+O via CoreGraphics keyboard events** — position-independent autoloop fallback
+1. **Review Matthew's Reddit links** — he has links to share for /cca-review
+2. **MT-35 Phase 3** — menu bar status indicator or ntfy.sh loop health notification
+3. **Shift+Cmd+O via CoreGraphics keyboard events** — position-independent autoloop fallback
+4. **Sustained autoloop** — continue running, proving reliability with idle detection
 
-**Matthew S142 directives:**
+**Matthew S143 directives:**
+- Autoloop trigger must fire from /cca-wrap every time (confirmed working)
+- Next session: review Reddit links Matthew has queued
 - CCA is CCA first — max 50% time on Kalshi work
-- Background autoloop must be non-intrusive (MT-35)
 - All previous directives still active (Two Pillars, CoreGraphics, polybot full access, XRP ban)
 
 ---
