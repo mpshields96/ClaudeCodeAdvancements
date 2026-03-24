@@ -2281,3 +2281,27 @@ CLI chat 2:
 - Infrastructure noise (context_monitor_alert) dwarfs actual learning events in charts — always filter
 
 ---
+
+## Session 152 — 2026-03-24
+
+**What changed:**
+- `autoloop_stop_hook.py`: Fixed breadcrumb stale detection — now compares resume mtime vs breadcrumb mtime to allow back-to-back sessions under 10min
+- `autoloop_pause.py` (NEW): MT-35 Phase 4 — pause/resume/toggle/status CLI for autoloop control
+- `autoloop_trigger.py`: Added pause check before session spawn
+- `design-skills/templates/cca-report.typ`: TOC page numbers with labeled section headers and clickable links
+- `tests/test_autoloop_pause.py` (NEW): 19 tests for pause/resume
+- `tests/test_autoloop_stop_hook.py`: +2 tests for mtime comparison + fixed env-dependent test
+
+**Why:**
+- Autoloop was failing to chain sessions when they ran under 10 minutes (breadcrumb from session N blocked session N+1's stop hook)
+- MT-35 Phase 4: Matthew needs ability to pause/resume the autoloop without disabling it entirely
+- TOC page numbers make the report navigable for longer documents
+
+**Tests:** 8888/8888 passing (221 suites, +21 net new)
+
+**Kalshi coordination:**
+- Delivered E-value implementation confirmation (pure Python, log-space, erosion thresholds)
+- Updated REQ-030 spec to use cusum_s >= 4.0 as CONVERGING signal
+- No new pending requests from Kalshi chat
+
+---

@@ -3,30 +3,35 @@
 
 ---
 
-## Current State (as of Session 151 — 2026-03-24)
+## Current State (as of Session 152 — 2026-03-24)
 
-**Phase:** Session 151 COMPLETE. REQ-027 Kalshi scripts (3 new tools, 95 tests), report differ integration, autoloop re-enabled, active cross-chat coordination. 2 commits (CCA) + 1 commit (polybot). Grade: A.
+**Phase:** Session 152 COMPLETE. Autoloop breadcrumb bug fix, MT-35 Phase 4 (pause/resume), TOC page numbers, Kalshi E-value confirmation. 2 commits. Grade: A.
 
-**What was done this session (S151):**
-- **REQ-027 DELIVERED** (polybot repo): edge_stability.py (40 tests), synthetic_bet_generator.py (28 tests), monte_carlo_simulator.py (27 tests). Theil-Sen slopes, CUSUM proximity, Monte Carlo forward projection, synthetic bet generation. All stdlib-only, read-only DB.
-- **Report differ integration** (MT-32): Wired report_differ.py into report_generator.py pipeline. Added "Since Last Report" section to Typst template showing delta badges (tests/LOC/commits/MTs), MT transitions, Kalshi P&L changes. Correct Typst syntax (code-mode nesting).
-- **TODAYS_TASKS.md**: Cross-session task manifest for all CCA chats today (K1-K4 Kalshi, C1-C6 CCA).
-- **Autoloop re-enabled**: Flag file created, stale breadcrumb cleared, trigger verified ready.
-- **Cross-chat coordination**: 3 CCA_TO_POLYBOT deliveries (REQ-027 + Topics A-D, REQ-030 convergence spec, REQ-031 synthetic validation). Responded to all open Kalshi requests.
-- **Tests**: 220 suites, ~8867 tests (+95 new in polybot). 1 env-dependent failure (autoloop flag file present = correct).
+**What was done this session (S152):**
+- **Autoloop breadcrumb fix** (critical): Stop hook now compares resume mtime vs breadcrumb mtime. If resume is newer than breadcrumb, a new session completed — fire trigger again. Fixes back-to-back sessions under 10min failing to chain. +2 tests (autoloop_stop_hook.py).
+- **MT-35 Phase 4 COMPLETE**: autoloop_pause.py — pause/resume/toggle/status CLI. Flag file ~/.cca-autoloop-paused. Both stop hook and trigger respect pause state. 19 new tests.
+- **MT-32 C6: TOC page numbers**: Added labeled section headers to cca-report.typ with clickable TOC entries showing real page numbers. All 11 sections linked.
+- **Kalshi E-value confirmation**: Delivered via CCA_TO_POLYBOT.md — confirmed pure-Python implementation correct, recommended log-space to avoid overflow, provided erosion threshold guidance (E_n < 1.0 = edge gone), updated REQ-030 to use cusum_s.
+- **Tests**: 221 suites, 8888 tests. All passing. +21 net new tests.
 
 **Next (from TODAYS_TASKS.md):**
-1. **K2: Process academic research results** — FLB non-sports, sequential testing, Kelly correlated (agent output pending)
-2. **C2: Report visual enhancement deep exploration** — style, charts, content improvements
-3. **MT-32 remaining** — TOC page numbers, cover title fix, MT section condensing
-4. **Continue Kalshi cross-chat coordination** — check POLYBOT_TO_CCA.md for new requests
+1. **C2: Report visual enhancement deep exploration** — style, charts, content improvements
+2. **MT-32 remaining** — cover title fix, MT section condensing
+3. **K2: Second edge discovery** — research + validate structural basis for new edge
+4. **Continue Kalshi cross-chat coordination** — check POLYBOT_TO_CCA.md
 
-**Matthew S151 directives (TODAYS_TASKS.md is authoritative):**
+**Matthew directives (TODAYS_TASKS.md is authoritative):**
 - 50%+ time on Kalshi bot work (higher priority)
 - Frequent comms with Kalshi main chat
-- Report visual enhancement research
-- Autoloop firing correctly — DONE (re-enabled)
+- Autoloop ENABLED and firing — breadcrumb fix deployed
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 151 — 2026-03-24)
+
+**What was done this session (S151):**
+- REQ-027 delivered (polybot), report differ integration, TODAYS_TASKS.md, autoloop re-enabled, 3 CCA_TO_POLYBOT deliveries. 2 commits. Grade A.
 
 ---
 
