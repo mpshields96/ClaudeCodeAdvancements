@@ -3,27 +3,30 @@
 
 ---
 
-## Current State (as of Session 138 — 2026-03-23)
+## Current State (as of Session 140 — 2026-03-23)
 
-**Phase:** Session 138. Autoloop CCA-internal trigger + _is_first_iteration bug fix.
+**Phase:** Session 140. MT-22 autoloop bug FIXED. Full end-to-end trigger works.
 
-**What was done this session (S138):**
-- **Fixed _is_first_iteration bug**: Removed `_is_first_iteration` field entirely from `desktop_autoloop.py`. Cmd+N (new conversation) now fires EVERY iteration, never skipped. Root cause of S137 trial failure.
-- **Created `autoloop_trigger.py`**: CCA-internal trigger called by /cca-wrap Step 10. Steps: activate Claude.app -> verify Code tab -> Cmd+N -> paste resume prompt -> Cmd+Return. 18 tests.
-- **Wired Step 10 into /cca-wrap**: `cca-wrap.md` now has final step calling `python3 autoloop_trigger.py` to auto-spawn next session.
-- **Documented full Desktop Autoloop Workflow in CLAUDE.md**: App layout (Chat/Cowork/Code tabs), exact cycle steps, critical rules, implementation files, AppleScript operations, failure modes. Permanent — every CCA session sees this.
-- **Real trigger fired successfully**: From within this CCA session, activated Claude.app, Cmd+N opened new chat, prompt pasted and sent. Audit log confirms all steps.
-- **Known issue**: Trigger landed on Chat tab (wrong). `ensure_code_tab()` can't detect tabs via Electron accessibility — proceeds optimistically but wrong tab may be active. Must fix Code tab switching.
-- **Tests**: 211 suites passing. 8544 total (+18 new).
+**What was done this session (S140):**
+- **FIXED CODE TAB BUG (MT-22).** Replaced ALL broken AppleScript keystrokes with CoreGraphics CGEvent mouse clicks. CoreGraphics goes through HID event tap (same as physical mouse clicks) — Electron processes them correctly.
+- **CoreGraphics clicking:** `cg_click_at()` via ctypes (no pip install), `get_window_geometry()`, `get_tab_coordinates()`, `click_tab()`, `click_new_session_button()`.
+- **Replaced Cmd+N:** The "New Conversation" AppleScript keystroke also failed (routed to Chat). Replaced with CoreGraphics click on "+ New session" button. Coordinates calibrated via live cursor sweep with Matthew.
+- **Calibrated coordinates:** Code tab at (window_center_x + 65, window_top + 10). New session button at (window_left + 70, window_top + 60). Dynamic from window geometry.
+- **Trial results:** 10/10 tab switching, 5/5 full triggers, 1 successful end-to-end autoloop (spawned S141).
+- **Tests:** 20 new (102 total for desktop_automator), 211 suites all passing.
+- **Commits:** 6d8a2a7 (CoreGraphics tab clicking), 01b0c35 (New Session button click).
+- **Discovery:** Hovering "+ New session" shows shortcut Shift+Cmd+O. Not yet tested via CoreGraphics keyboard events.
 
 **Next (prioritized):**
-1. **FIX CODE TAB DETECTION**: Electron accessibility tree doesn't expose tab groups. `ensure_code_tab()` always returns "unknown" and proceeds optimistically. Need alternative approach: keyboard shortcut, menu bar navigation, or coordinate-based click. This is blocking reliable autoloop.
-2. **Re-run autoloop trial** after Code tab detection is fixed.
-3. **Self-learning improvements** — continue Get Smarter pillar.
+1. **Sustained autoloop** — multiple iterations end-to-end (trigger in /cca-wrap)
+2. **Consider Shift+Cmd+O via CoreGraphics keyboard events** — position-independent alternative
+3. **Self-learning improvements** — continue Get Smarter pillar
+4. **Custom UI wrapper** — Code-tab-only launcher (Matthew idea, eliminates tab problem class)
 
-**Matthew S138 directives:**
+**Matthew S140 directives:**
 - Autoloop is CCA-internal (triggered by /cca-wrap), NOT from Terminal.app
-- Must verify Code tab (far right), click "+ New session", paste into NEW chat only
+- CoreGraphics coordinate clicking is THE solution — do not revert to AppleScript keystrokes
+- Do not spawn many sessions for "trial runs" — burns tokens
 - All previous directives still active (Two Pillars, polybot full access)
 
 ---
