@@ -88,14 +88,18 @@
   result
 }
 
-#let section-header(title, accent: blue) = {
+#let section-header(title, accent: blue, lbl: none) = {
   v(5mm)
   // Thin accent bar at top for visual rhythm
   box(width: 28pt, height: 2.5pt, fill: accent, radius: 1pt)
   v(2mm)
   text(size: 7.5pt, fill: light, weight: "semibold", tracking: 1.5pt)[#upper(title)]
   v(1mm)
-  text(size: 17pt, weight: "bold", fill: black)[#title]
+  if lbl != none [
+    #text(size: 17pt, weight: "bold", fill: black)[#title] #label(lbl)
+  ] else {
+    text(size: 17pt, weight: "bold", fill: black)[#title]
+  }
   v(2mm)
   line(length: 100%, stroke: 0.3pt + faint)
   v(3mm)
@@ -268,31 +272,37 @@
 
 #{
   let toc-items = (
-    ("Executive Summary", "Project overview, health dashboard, and key metrics"),
-    ("Five Frontiers", "Status of the five core research areas"),
-    ("Module Deep-Dives", "Detailed breakdown of each module's capabilities and progress"),
-    ("Master Tasks", "All aspirational goals — complete, active, pending, and blocked"),
-    ("Priority Queue", "Decay-based priority scoring for active work"),
-    ("Live Infrastructure", "Hook architecture integrated into Claude Code"),
-    ("Intelligence & Research", "Reddit findings, academic papers, and self-learning metrics"),
-    ("Architecture Decisions", "Key technical decisions and their rationale"),
-    ("Risks & Blockers", "Known issues, mitigations, and technical debt"),
-    ("Next Priorities", "Upcoming work items ranked by impact"),
-    ("Honest Assessment", "Objective gaps, limitations, and areas falling short"),
+    ("Executive Summary", "Project overview, health dashboard, and key metrics", <sec-exec>),
+    ("Five Frontiers", "Status of the five core research areas", <sec-frontiers>),
+    ("Module Deep-Dives", "Detailed breakdown of each module's capabilities and progress", <sec-modules>),
+    ("Master Tasks", "All aspirational goals — complete, active, pending, and blocked", <sec-tasks>),
+    ("Priority Queue", "Decay-based priority scoring for active work", <sec-priority>),
+    ("Live Infrastructure", "Hook architecture integrated into Claude Code", <sec-hooks>),
+    ("Intelligence & Research", "Reddit findings, academic papers, and self-learning metrics", <sec-intel>),
+    ("Architecture Decisions", "Key technical decisions and their rationale", <sec-arch>),
+    ("Risks & Blockers", "Known issues, mitigations, and technical debt", <sec-risks>),
+    ("Next Priorities", "Upcoming work items ranked by impact", <sec-next>),
+    ("Honest Assessment", "Objective gaps, limitations, and areas falling short", <sec-honest>),
   )
 
-  for (i, (title, desc)) in toc-items.enumerate() {
+  for (i, (title, desc, lbl)) in toc-items.enumerate() {
     box(width: 100%, inset: (y: 4pt))[
       #grid(
         columns: (auto, 1fr, auto),
         column-gutter: 8pt,
         text(size: 14pt, weight: "bold", fill: blue)[#str(i + 1)],
         [
-          #text(size: 10pt, weight: "semibold", fill: black)[#title]
+          #link(lbl)[#text(size: 10pt, weight: "semibold", fill: black)[#title]]
           #linebreak()
           #text(size: 8pt, fill: light)[#desc]
         ],
-        text(size: 8pt, fill: faint)[],
+        context {
+          let loc = query(lbl)
+          if loc.len() > 0 {
+            let pg = counter(page).at(loc.first().location()).first()
+            text(size: 9pt, fill: mid, weight: "semibold")[#str(pg)]
+          }
+        },
       )
     ]
     if i < toc-items.len() - 1 {
@@ -403,7 +413,7 @@
 // PAGE 3: EXECUTIVE SUMMARY + PROJECT HEALTH
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Executive Summary", accent: green)
+#section-header("Executive Summary", accent: green, lbl: "sec-exec")
 
 #{
   set par(leading: 0.8em)
@@ -615,7 +625,7 @@
 // PAGE 4: FIVE FRONTIERS
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Five Frontiers", accent: blue)
+#section-header("Five Frontiers", accent: blue, lbl: "sec-frontiers")
 
 #text(size: 9.5pt, fill: mid)[
   The five core research areas that drive CCA's development, each validated through community intelligence, Anthropic research, and developer surveys.
@@ -674,7 +684,7 @@
 // PAGES 5-6: MODULE DEEP-DIVES
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Module Deep-Dives", accent: teal)
+#section-header("Module Deep-Dives", accent: teal, lbl: "sec-modules")
 
 // Charts: Tests per module + Module size treemap
 #if chart-dir != none {
@@ -795,7 +805,7 @@
 // PAGES 7-9: MASTER TASKS (expanded with phase progress + gaps)
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Master Tasks", accent: indigo)
+#section-header("Master Tasks", accent: indigo, lbl: "sec-tasks")
 
 // Charts: MT status breakdown + phase progress
 #if chart-dir != none {
@@ -966,7 +976,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 #if data.keys().contains("priority_queue") and data.priority_queue.len() > 0 {
-  section-header("Priority Queue", accent: blue)
+  section-header("Priority Queue", accent: blue, lbl: "sec-priority")
 
   text(size: 9pt, fill: mid)[
     Active tasks ranked by decay-based priority scoring. Score = base value + aging penalty. Higher = work on this first.
@@ -1007,7 +1017,7 @@
 // LIVE INFRASTRUCTURE
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Live Infrastructure", accent: green)
+#section-header("Live Infrastructure", accent: green, lbl: "sec-hooks")
 
 #text(size: 9pt, fill: mid)[
   #data.summary.live_hooks hooks integrated into Claude Code via settings.local.json.
@@ -1046,7 +1056,7 @@
 // INTELLIGENCE & RESEARCH
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Intelligence & Research", accent: orange)
+#section-header("Intelligence & Research", accent: orange, lbl: "sec-intel")
 
 #grid(
   columns: (1fr, 1fr),
@@ -1128,7 +1138,7 @@
 
 #if "kalshi_analytics" in data.keys() and data.kalshi_analytics.available {
   pagebreak()
-  section-header("Financial Analytics — Kalshi Bot", accent: green)
+  section-header("Financial Analytics — Kalshi Bot", accent: green, lbl: "sec-kalshi")
 
   // Summary stats row
   let ka = data.kalshi_analytics.summary
@@ -1221,7 +1231,7 @@
 
 #if "learning_intelligence" in data.keys() and data.learning_intelligence.available {
   v(6mm)
-  section-header("Self-Learning Intelligence", accent: indigo)
+  section-header("Self-Learning Intelligence", accent: indigo, lbl: "sec-selflearn")
 
   // Summary metrics
   let lj = data.learning_intelligence.journal
@@ -1257,7 +1267,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 #if data.architecture_decisions.len() > 0 {
-  section-header("Architecture Decisions", accent: mid)
+  section-header("Architecture Decisions", accent: mid, lbl: "sec-arch")
 
   table(
     columns: (1.5fr, 2.5fr),
@@ -1284,7 +1294,7 @@
 // RISKS, BLOCKERS & NEXT PRIORITIES
 // ═══════════════════════════════════════════════════════════════════════════
 
-#section-header("Risks & Blockers", accent: red)
+#section-header("Risks & Blockers", accent: red, lbl: "sec-risks")
 
 #if data.risks.len() > 0 {
   for risk in data.risks {
@@ -1316,7 +1326,7 @@
 
 #v(5mm)
 
-#section-header("Next Priorities", accent: blue)
+#section-header("Next Priorities", accent: blue, lbl: "sec-next")
 
 #for (i, priority) in data.next_priorities.enumerate() {
   box(
@@ -1347,7 +1357,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 #if data.keys().contains("criticisms") and data.criticisms.len() > 0 {
-  section-header("Honest Assessment", accent: orange)
+  section-header("Honest Assessment", accent: orange, lbl: "sec-honest")
 
   text(size: 9pt, fill: mid)[
     Objective gaps, limitations, and areas where the project falls short of its stated goals. Included for accountability.

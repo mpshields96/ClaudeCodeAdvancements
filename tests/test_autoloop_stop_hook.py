@@ -101,14 +101,15 @@ class TestShouldTrigger(unittest.TestCase):
         self.assertFalse(result)
 
     def test_no_trigger_when_breadcrumb_fresh(self):
-        """Don't trigger when breadcrumb exists (trigger already fired this cycle)."""
-        self._write_resume("Resume content")
-        self._write_breadcrumb(age_seconds=30)  # 30 seconds ago
+        """Don't trigger when breadcrumb exists and is newer than resume (same cycle)."""
+        self._write_resume("Resume content", age_seconds=60)  # Resume 60s ago
+        self._write_breadcrumb(age_seconds=30)  # Breadcrumb 30s ago (after resume = same cycle)
         result = self.mod.should_trigger(
             resume_path=self.resume_file,
             breadcrumb_path=self.breadcrumb,
             autoloop_enabled=True,
             max_resume_age_seconds=600,
+            breadcrumb_max_age_seconds=600,
         )
         self.assertFalse(result)
 
@@ -124,6 +125,41 @@ class TestShouldTrigger(unittest.TestCase):
             breadcrumb_max_age_seconds=600,  # 10 min max
         )
         self.assertTrue(result)
+
+    def test_trigger_when_resume_newer_than_fresh_breadcrumb(self):
+        """S152 fix: breadcrumb is fresh but resume is newer — new session completed.
+
+        Scenario: Session N fires trigger (writes breadcrumb). Session N+1 runs
+        for < 10 min, writes resume. Stop hook should fire again because resume
+        mtime > breadcrumb mtime means a new session completed.
+        """
+        # Breadcrumb written 2 minutes ago (fresh, within 10min window)
+        self._write_breadcrumb(age_seconds=120)
+        # Resume written 30 seconds ago (AFTER the breadcrumb)
+        self._write_resume("New session resume", age_seconds=30)
+        result = self.mod.should_trigger(
+            resume_path=self.resume_file,
+            breadcrumb_path=self.breadcrumb,
+            autoloop_enabled=True,
+            max_resume_age_seconds=600,
+            breadcrumb_max_age_seconds=600,
+        )
+        self.assertTrue(result)
+
+    def test_no_trigger_when_breadcrumb_newer_than_resume(self):
+        """Same cycle: breadcrumb written AFTER resume — trigger already fired."""
+        # Resume written 2 minutes ago
+        self._write_resume("Resume content", age_seconds=120)
+        # Breadcrumb written 30 seconds ago (AFTER resume — same cycle)
+        self._write_breadcrumb(age_seconds=30)
+        result = self.mod.should_trigger(
+            resume_path=self.resume_file,
+            breadcrumb_path=self.breadcrumb,
+            autoloop_enabled=True,
+            max_resume_age_seconds=600,
+            breadcrumb_max_age_seconds=600,
+        )
+        self.assertFalse(result)
 
     def test_resume_freshness_boundary(self):
         """Resume exactly at max age boundary should still trigger."""
@@ -279,9 +315,10 @@ class TestAutoloopEnabledDetection(unittest.TestCase):
             self.assertFalse(self.mod.is_autoloop_enabled())
 
     def test_disabled_when_no_env_var(self):
-        """Default: disabled (opt-in, not opt-out)."""
+        """Default: disabled (opt-in, not opt-out) when no flag file exists."""
         env = {k: v for k, v in os.environ.items() if k != "CCA_AUTOLOOP_ENABLED"}
-        with patch.dict(os.environ, env, clear=True):
+        with patch.dict(os.environ, env, clear=True), \
+             patch.object(self.mod, "AUTOLOOP_FLAG_FILE", "/tmp/nonexistent-flag-file"):
             self.assertFalse(self.mod.is_autoloop_enabled())
 
     def test_enabled_via_flag_file(self):

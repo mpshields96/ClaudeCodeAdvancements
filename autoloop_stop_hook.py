@@ -88,6 +88,9 @@ def should_trigger(
       1. Autoloop is enabled
       2. SESSION_RESUME.md exists, is non-empty, and is fresh
       3. No fresh breadcrumb (trigger hasn't fired recently)
+          — UNLESS resume is newer than breadcrumb (new session completed
+            after last trigger, so fire again). S152 fix for stale breadcrumb
+            preventing back-to-back sessions under 10 minutes.
     """
     # Condition 1: autoloop enabled
     if autoloop_enabled is None:
@@ -109,12 +112,19 @@ def should_trigger(
     except OSError:
         return False
 
-    # Condition 3: no fresh breadcrumb
+    # Condition 3: no fresh breadcrumb — unless resume is newer (new session completed)
     if os.path.exists(breadcrumb_path):
         try:
-            bc_age = time.time() - os.path.getmtime(breadcrumb_path)
+            bc_mtime = os.path.getmtime(breadcrumb_path)
+            bc_age = time.time() - bc_mtime
             if bc_age < breadcrumb_max_age_seconds:
-                return False  # Trigger already fired recently
+                # Breadcrumb is fresh — but check if resume is newer.
+                # If resume was written AFTER the breadcrumb, a new session
+                # completed since the last trigger fired. Fire again.
+                resume_mtime = os.path.getmtime(resume_path)
+                if resume_mtime <= bc_mtime:
+                    return False  # Same cycle — trigger already fired
+                # Resume is newer than breadcrumb — new session completed
         except OSError:
             pass  # Can't read breadcrumb — proceed cautiously
 
