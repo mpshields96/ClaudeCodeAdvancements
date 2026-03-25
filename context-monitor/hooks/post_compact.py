@@ -129,7 +129,7 @@ def update_state_after_compact(state_path: Path, trigger: str, session_id: str) 
         "pct": 0,
         "tokens": 0,
         "turns": 0,
-        "window": pre_state.get("window", 200000),
+        "window": pre_state.get("window", 1_000_000),
         "session_id": session_id or pre_state.get("session_id", ""),
         "last_compaction_time": now,
         "last_compaction_auto": trigger == "auto",

@@ -167,14 +167,14 @@ class TestUpdateStateExtended(unittest.TestCase):
         new_state = json.loads(path.read_text())
         self.assertEqual(new_state["compaction_count"], 1)
 
-    def test_window_defaults_to_200000(self):
+    def test_window_defaults_to_1m(self):
         from post_compact import update_state_after_compact
         path = self._state_path()
         # State without window field
         path.write_text(json.dumps({"zone": "green"}))
         update_state_after_compact(path, "auto", "sess")
         new_state = json.loads(path.read_text())
-        self.assertEqual(new_state["window"], 200000)
+        self.assertEqual(new_state["window"], 1_000_000)
 
     def test_last_compaction_time_is_utc_isoformat(self):
         from post_compact import update_state_after_compact

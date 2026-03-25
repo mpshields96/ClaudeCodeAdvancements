@@ -45,10 +45,10 @@
   dynamic_kelly, macro_regime, fear_greed_filter, signal_pipeline — all unused by Kalshi bot
 - Remove or wire into bot
 
-### C2. Agent Teams/TeammateTool Awareness [TODO]
-- BUILD verdict from S176 nuclear scan
-- Official Anthropic multi-agent system uses worktree isolation
-- CCA's agent-guard must handle TeammateTool conflicts + auto mode safety
+### C2. Agent Teams/TeammateTool Awareness [DONE S177]
+- AG-10: worktree_guard.py (265 LOC, 29 tests)
+- Worktree detection, delegate isolation, shared state protection, git safety
+- Commit 8edadbc
 
 ### C3. memsearch Patterns [TODO]
 - Study markdown-first hook patterns for CCA memory-system evolution

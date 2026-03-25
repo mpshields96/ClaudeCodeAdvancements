@@ -28,7 +28,7 @@ Usage (PostToolUse hook in .claude/settings.local.json):
 }
 
 Environment variables (all optional):
-  CLAUDE_CONTEXT_WINDOW              - Context window size in tokens (default: 200000)
+  CLAUDE_CONTEXT_WINDOW              - Context window size in tokens (default: 1000000)
   CLAUDE_CONTEXT_STATE_FILE          - State file path (default: ~/.claude-context-health.json)
   CLAUDE_CONTEXT_DISABLED            - Set to "1" to disable this hook
   CLAUDE_AUTOCOMPACT_PCT_OVERRIDE    - CC's autocompact threshold (read-only, state output includes proximity)
@@ -44,7 +44,7 @@ from pathlib import Path
 # Constants
 # ---------------------------------------------------------------------------
 
-DEFAULT_WINDOW = 200000  # 200k tokens — standard Claude Sonnet/Opus window
+DEFAULT_WINDOW = 1_000_000  # 1M tokens — Opus 4.6 / Sonnet 4.6 (March 2026 GA)
 DEFAULT_STATE_FILE = Path.home() / ".claude-context-health.json"
 
 DEFAULT_THRESHOLDS = {

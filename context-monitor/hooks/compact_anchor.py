@@ -96,7 +96,7 @@ def build_anchor_content(
     zone = state.get("zone", "unknown")
     pct = state.get("pct", 0)
     tokens = state.get("tokens", 0)
-    window = state.get("window", 200000)
+    window = state.get("window", 1_000_000)
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     # Format window size for display

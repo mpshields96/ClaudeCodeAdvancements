@@ -164,7 +164,7 @@ def main() -> None:
     ctx = data.get("context_window", {})
     pct = ctx.get("used_percentage", 0) or 0
     pct = min(float(pct), 100.0)
-    window = ctx.get("context_window_size", 200_000) or 200_000
+    window = ctx.get("context_window_size", 1_000_000) or 1_000_000
 
     cost_usd = data.get("cost", {}).get("total_cost_usd", 0) or 0
     model = data.get("model", {}).get("display_name", "")
