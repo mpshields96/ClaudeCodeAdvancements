@@ -670,3 +670,9 @@
 - **Fix:** Either (a) do foreground-only work and wait for agents, or (b) spawn agents and do minimal foreground work to avoid triggering compaction. If compaction kills agents, re-run them — budget for the re-run cost.
 - **First seen:** 2026-03-25 (S178)
 - **Files:** N/A (general workflow pattern)
+
+### Sub-agents are inefficient for prose/research writing — Severity: 1 — Count: 1
+- **Anti-pattern:** Launching 4 background agents to write research sections (MT-37 areas 4-7). Each agent's tool calls trigger 10+ hooks, burning tokens on overhead. Agents timed out without completing.
+- **Fix:** Write research content directly in the main session. Agents are for code exploration and multi-file code tasks, not prose writing. Direct writing is 5-10x more token-efficient for text content.
+- **First seen:** 2026-03-25 (S179)
+- **Files:** N/A (general workflow pattern)

@@ -3,6 +3,30 @@
 
 ---
 
+## Session 179 — 2026-03-25
+
+**What changed:**
+- `reddit-intelligence/subreddit_discoverer.py` — NEW: Domain-based subreddit discovery tool (25 tests)
+- `reddit-intelligence/github_scanner.py` — Added RepoDiscoverer class + discover CLI command (16 tests)
+- `reddit-intelligence/tests/test_subreddit_discoverer.py` — NEW: 25 tests for subreddit discovery
+- `reddit-intelligence/tests/test_github_discoverer.py` — NEW: 16 tests for GitHub discovery
+- `self-learning/research/MT37_RESEARCH.md` — Areas 4-7 added (451 lines, 15 papers: Momentum, Behavioral, TLH, Retirement)
+- `TODAYS_TASKS.md` — Updated with C6 nuclear tools task, budget notes for all future chats
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md` — MAX_LOSS audit results delivered
+
+**Why:**
+- Matthew requested nuclear reddit/github discovery tools to find best subreddits and repos
+- MT-37 continuation: areas 4-7 of the UBER academic research survey
+- Kalshi HIGH-priority request: audit all loop functions for MAX_LOSS bypass pattern
+
+**Tests:** 9838/9838 passing (253 suites, +41 new tests)
+
+**Lessons:**
+- Sub-agents are inefficient for research writing due to hook overhead per tool call. Write directly instead.
+- /model command does not work in the desktop Electron app
+
+---
+
 ## Session 178 — 2026-03-25
 
 **What changed:**

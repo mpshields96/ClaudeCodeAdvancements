@@ -3,30 +3,36 @@
 
 ---
 
-## Current State (as of Session 178 — 2026-03-25)
+## Current State (as of Session 179 — 2026-03-25)
 
-**Phase:** Session 178 COMPLETE. All TODAYS_TASKS.md items completed + TODAYS_TASKS directive wired into CCA ecosystem. Grade: A.
+**Phase:** Session 179 COMPLETE. Kalshi MAX_LOSS audit, nuclear discovery tools, MT-37 areas 4-7. Grade: A.
 
-**What was done this session (S178):**
-- **AG-10 worktree_guard wired as live PreToolUse hook** (commit 80ef51a):
-  - hook_output() method + main() stdin/stdout entry point (13 new tests, 42 total)
-  - Added to .claude/settings.local.json as PreToolUse hook
-- **TODAYS_TASKS.md directive** wired into ALL CCA session files (10+ files, commits 80ef51a-891a5a6):
-  - CLAUDE.md: Task Priority section added
-  - cca-init.md, cca-auto.md, cca-auto-desktop.md, cca-wrap.md: TODAYS_TASKS.md checks first
-  - slim_init.py: scan_todays_tasks() shows daily tasks in briefing (5 new tests)
-  - resume_generator.py: TODAYS_TASKS.md reminder in autoloop prompts
-  - SESSION_STATE.md: "Next: SEE TODAYS_TASKS.md"
-- **Cross-chat delivery** (CCA_TO_POLYBOT.md): post-guard clean bet counter spec + 95c guard consolidation
-- **C1 MT-26 assessment**: NOT dead code — 7-stage signal pipeline (2,559 LOC, 256 tests). KEEP all.
-- **C3 memsearch research**: Markdown+FTS5 hybrid is evolution path (P0/P1/P2 defined, ~750 LOC total)
-- **C5 MT-37 Phase 1**: MT37_RESEARCH.md created (745 lines, areas 1-3 of 10, 15 papers). Commit 58eef2f.
-- 6 CCA commits, 18 new tests (9779→9797), zero regressions
-- **Tests**: 251 suites, 9797 tests passing
+**What was done this session (S179):**
+- **Kalshi MAX_LOSS bypass audit** (CCA_TO_POLYBOT.md delivery):
+  - Audited all 11 loop functions in polybot main.py. All safe. No remaining bypass.
+  - expiry_sniper_loop was the only vulnerable one (already fixed in ce71048)
+- **subreddit_discoverer.py** (reddit-intelligence/, commit acd4e98):
+  - Domain-based subreddit discovery (claude/trading/research/dev, 4 domains, 30+ search terms)
+  - Scores by relevance+subscribers+activity, filters already-tracked subs
+  - 25 tests, CLI with --domain/--json/--top/--propose flags
+- **github_scanner.py discover command** (reddit-intelligence/, commit acd4e98):
+  - RepoDiscoverer class + discover CLI command. Domain-based repo discovery.
+  - 16 tests, integrates with existing RepoEvaluator scoring
+- **MT-37 UBER Phase 1 areas 4-7** (self-learning/research/MT37_RESEARCH.md, commit 7cc16bb):
+  - Area 4: Momentum & Value (Jegadeesh & Titman 1993, Asness et al. 2013, AQR 2014)
+  - Area 5: Behavioral Finance (Kahneman & Tversky 1979, Shiller CAPE, Benartzi & Thaler 1995)
+  - Area 6: Tax-Loss Harvesting (Constantinides 1983, Berkin & Ye 2003, practical TLH rules)
+  - Area 7: Retirement Planning (Bengen 4% rule, Kitces CAPE, Guyton-Klinger, ERN series)
+  - 745→1196 lines, 30 papers total (15 new this session)
+- **TODAYS_TASKS.md updated** with budget notes for all future chats, C6 nuclear tools task
+- 3 CCA commits, 41 new tests (9797→9838), zero regressions
+- **Tests**: 253 suites, 9838 tests passing
 
 **Next: SEE TODAYS_TASKS.md** — authoritative daily task list (Matthew directive S178).
-Work ALL TODO items there first. Only use priority_picker/MASTER_TASKS after ALL are done.
-Currently all S178 items DONE — next session should check for new items or fall through to priority_picker.
+Remaining work:
+- MT-37 areas 8-10 (Kelly Criterion, Index Investing, Alt Risk Premia)
+- Wire discovery tools into nuclear scan pipelines
+- memsearch P0 implementation when prioritized
 
 **Matthew directives (carried forward):**
 - **TODAYS_TASKS.md is the daily driver** — all CCA sessions follow it (S178 permanent)
@@ -34,7 +40,16 @@ Currently all S178 items DONE — next session should check for new items or fal
 - CCA does NOT touch model selection — Matthew sets manually (S161 reaffirmed)
 - Peak/off-peak token budgeting UNIVERSAL (MT-38)
 - Autoloop ENABLED
+- Don't use sub-agents for research writing — write directly (S179 lesson)
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 178 — 2026-03-25)
+
+**Phase:** Session 178 COMPLETE. TODAYS_TASKS directive wired + C1/C3/C5. Grade: A.
+
+**What was done (S178):** AG-10 worktree_guard wired as live hook (13 new tests). TODAYS_TASKS directive wired into all CCA files (10+ files, 5 tests). C1 MT-26 assessment (NOT dead code). C3 memsearch research. C5 MT-37 areas 1-3 (745 lines, 15 papers). 6 commits, 18 new tests (9797 total).
 
 ---
 
