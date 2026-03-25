@@ -420,3 +420,12 @@
 [2026-03-25] [REFERENCE] [Frontier 4: Agent Guard] Claude Code Ultimate Guide — 23K-line community reference with 24 CVE-style threat models and 655 catalogued malicious MCP skills. Strong agent-guard reference. github.com/FlorianBruniaux/claude-code-ultimate-guide
 [2026-03-25] [REFERENCE] [Kalshi Competitive Intel] "Why is no one building Kalshi bots?" — r/PredictionsMarkets. Field is small, unsophisticated. KYC barrier = structural moat. Algorithmic > AI on BTC hourly. No repos shared. — https://reddit.com/r/PredictionsMarkets/comments/1s2tz7c/
 [2026-03-25] [SKIP] [r/algotrading] "Free & open-source tool that catches emerging trends" — 1-day-old repo, misleading "free" (requires $14-864/day Sylvia API), Reddit sentiment as signal = methodologically weak. Hazmat: safe to read, don't run. — https://reddit.com/r/algotrading/comments/1s28las/
+
+### Session 160 Manual Research (2026-03-25)
+
+[2026-03-25] [BUILD] [MT-1 Visual Grid] Claude Control v0.10.0 (released 2026-03-24) — Electron+Next.js multi-session dashboard. Card layout, real-time status, git state, one-click permission approval. DMG install. Active dev (133 commits, daily releases). — github.com/sverrirsig/claude-control
+[2026-03-25] [REFERENCE] [MT-1 Visual Grid] ccmanager — Rust TUI session manager, no tmux needed. — github.com/kbwo/ccmanager
+[2026-03-25] [REFERENCE] [MT-1 Visual Grid] agtx — Kanban board with parallel agents in git worktrees. — github.com/fynnfluegge/agtx
+[2026-03-25] [REFERENCE] [MT-1 Visual Grid] PATAPIM — Terminal IDE with 9-session Ctrl+1-9 switching. — patapim.ai
+[2026-03-25] [REFERENCE] [MT-1 Visual Grid] Nimbalyst — 6+ sessions, unified kanban, visual editing, free. — nimbalyst.com
+[2026-03-25] [REFERENCE] [MT-1 Visual Grid] Native Claude Agent Teams — built-in split panes with tmux/iTerm2. No install needed. — code.claude.com/docs/en/agent-teams

@@ -3,24 +3,29 @@
 
 ---
 
-## Current State (as of Session 160 — 2026-03-24)
+## Current State (as of Session 160 — 2026-03-25)
 
-**Phase:** Session 160 IN PROGRESS. MT audit, priority picker overhaul, synthetic origination, scan scheduler, efficiency dashboard.
+**Phase:** Session 160 COMPLETE. Meta overhaul session: dust detection, MT archival, synthetic origination, scan scheduler, 3 Reddit reviews, CLV delivery, MT-42 created. Grade: A.
 
 **What was done this session (S160):**
-- MT-36 Phase 5: Efficiency dashboard (efficiency_dashboard.py) — self-contained HTML with dark mode, overhead trends, stacked bars, scatter plot (28 tests, 66480bd)
-- MT-39 Phase 1: Priority picker overhaul — dust detection (growth_score with dust bonus), `dust` CLI command, dust alerts in init_briefing, added MT-8/39/40/41, fixed default session (36e40d7)
-- MT-39 Phase 2 + MT-41 Phase 1: Dust alerts + synthetic MT originator (mt_originator.py) — scans FINDINGS_LOG for uncovered BUILD verdicts, scores by recency/signal/frontier (22 tests, 526c14d)
-- MT-40 Phase 1: Scan scheduler (scan_scheduler.py) — per-subreddit staleness policies, urgency ranking, SCAN_NOW/OK recommendation (17 tests, f0590b5)
-- Created MASTER_TASKS.md entries for MT-39, MT-40, MT-41
-- Diagnosed 15+ dusty MTs caused by aging_rate=0 blindspot in priority picker
+- MT-39 COMPLETE (3/3): Priority picker overhaul — growth_score with dust bonus, `dust` CLI, ARCHIVED status, 8 MTs archived per Matthew (36e40d7, ec41a4f)
+- MT-41 Phase 1: Synthetic MT originator (mt_originator.py, 22 tests) — FINDINGS_LOG BUILD coverage detection (526c14d)
+- MT-40 Phase 1+2: Scan scheduler (scan_scheduler.py, 17 tests) + SCAN ALERT in init briefing (f0590b5, 6fac076)
+- MT-36 Phase 5: Efficiency dashboard (efficiency_dashboard.py, 28 tests) — self-contained HTML (66480bd)
+- MT-42 created: Kalshi Smart Money Copytrading — follow others' edges via order flow (51adbd9)
+- 8 MTs archived: MT-5,8,16,19,23,25,31,34 (Matthew decisions S160)
+- MT-1 research: Claude Control v0.10.0 found — viable visual grid solution
+- 3 Reddit reviews: Kalshi bots (REFERENCE), algotrading hazmat (SKIP), Claude Code docs (REFERENCE)
+- CLV tracking design delivered to Kalshi (REQ-036 answered)
+- 11 commits, 108 new tests added
 - **Tests**: 227 suites, 9067 tests passing. All green.
 
 **Next:**
-1. Process Reddit review (r/ClaudeCode docs post)
-2. MT-40 Phase 2: Wire scan scheduler into autoloop trigger
-3. Cross-chat Kalshi coordination check
-4. Further report improvements
+1. Nuclear scan — all 3 core subs stale (SCAN ALERT active)
+2. MT-1: Matthew to install Claude Control v0.10.0 (DMG from GitHub)
+3. MT-42 Phase 1: Research Kalshi API order flow visibility
+4. MT-40 Phase 3: Auto-trigger nuclear scan when top_target stale
+5. MT-22 supervised trial (Matthew hands-on)
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority)

@@ -3,23 +3,32 @@
 
 ---
 
-## Session 160 — 2026-03-24
+## Session 160 — 2026-03-25
 
 **What changed:**
-- `efficiency_dashboard.py` (NEW): MT-36 Phase 5 — self-contained HTML dashboard with dark mode, overhead trends, stacked bars, quality-speed scatter plot (28 tests)
-- `priority_picker.py`: MT-39 Phase 1+2 — dust detection via growth_score(), dust CLI command, dust alerts in init_briefing, added MT-8/39/40/41, fixed stale default session
-- `mt_originator.py` (NEW): MT-41 Phase 1 — scans FINDINGS_LOG for uncovered BUILD verdicts, keyword-based coverage matching, recency/signal/frontier scoring (22 tests)
-- `scan_scheduler.py` (NEW): MT-40 Phase 1 — per-subreddit staleness policies, urgency ranking, SCAN_NOW/OK recommendation engine (17 tests)
-- `MASTER_TASKS.md`: Added MT-39/40/41 entries with full descriptions and phases
-- Reddit review: r/ClaudeCode docs guide (REFERENCE — 655 malicious MCP skills catalogue useful for Frontier 4)
+- `efficiency_dashboard.py` (NEW): MT-36 Phase 5 — self-contained HTML dashboard (28 tests)
+- `priority_picker.py`: MT-39 COMPLETE (3/3) — growth_score, dust CLI, ARCHIVED status, 8 MTs archived, SCAN ALERT integration, MT-42 created
+- `mt_originator.py` (NEW): MT-41 Phase 1 — synthetic MT origination from FINDINGS_LOG (22 tests)
+- `scan_scheduler.py` (NEW): MT-40 Phase 1+2 — staleness policies + init briefing integration (17 tests)
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md`: REQ-036 CLV tracking design delivered
+- `FINDINGS_LOG.md`: 6 new entries (3 Reddit reviews + 6 MT-1 research findings)
+- `LEARNINGS.md`: 4 new learnings (aging_rate blindspot, URL keyword matching, Claude Control, MT archival)
+- 8 MTs archived per Matthew: MT-5,8,16,19,23,25,31,34
+- MT-42 created: Kalshi Smart Money Copytrading (order flow analysis)
 
 **Why:**
-- Matthew directive: "LOG ALL OF THIS, make them MTs, I'm ready for these problems to get fixed"
-- 15+ MTs collecting dust undetected — priority picker had aging_rate=0 blindspot on completed MTs
-- Synthetic MT origination and automated scanning were talked about but never built
-- Session efficiency dashboard completes MT-36's visible metric pipeline
+- Matthew directive: "LOG ALL OF THIS, make them MTs"
+- 15+ MTs collecting dust — priority picker aging_rate=0 blindspot
+- Synthetic MT origination and scan scheduling never built
+- Kalshi copytrading idea from Matthew (follow smart money, not broadcast)
+- CLV tracking requested by Kalshi chat (REQ-036)
 
-**Tests:** 9,067/9,067 passing (227 suites)
+**Tests:** 9,067/9,067 passing (227 suites). 11 commits.
+
+**Lessons:**
+- aging_rate=0 makes completed MTs invisible to dust detection — use growth_score with dust bonus
+- Keyword matching must exclude URLs (github in URLs matched MT-11)
+- Claude Control v0.10.0 exists and solves MT-1 — install DMG
 
 ---
 

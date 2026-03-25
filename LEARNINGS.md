@@ -591,3 +591,31 @@
 - **Last seen:** S148 (2026-03-24)
 - **Files:** `.claude/commands/cca-wrap.md` (Step 10), `autoloop_trigger.py`
 - **Promoted:** 2026-03-24 -> ~/.claude/rules/ and CLAUDE.md Known Gotchas
+
+### Priority picker aging_rate=0 blindspot — Severity: 2 — Count: 1
+- Anti-pattern: Completed MTs with aging_rate=0 become invisible to dust detection
+- Fix: growth_score() adds dust_bonus = min(sessions_since_touch * 0.1, 5.0)
+- Also: ARCHIVED status for MTs Matthew explicitly kills — removes noise from dust report
+- First seen: 2026-03-25 (S160)
+- Last seen: 2026-03-25
+- Files: priority_picker.py
+
+### Keyword matching must exclude URLs — Severity: 2 — Count: 1
+- Anti-pattern: mt_originator coverage check matched "github" in URLs against MT-11's "github" keyword
+- Fix: search_text = f"{f.title} {f.frontier}" — exclude URL from keyword matching
+- First seen: 2026-03-25 (S160)
+- Last seen: 2026-03-25
+- Files: mt_originator.py
+
+### Claude Control exists for MT-1 — Severity: 1 — Count: 1
+- Claude Control (github.com/sverrirsig/claude-control) is a real, actively maintained macOS app
+- v0.10.0 released 2026-03-24, Electron+Next.js, auto-discovers Claude Code sessions
+- Card dashboard with real-time status, git state, permission approval
+- DMG install, works with Terminal.app and iTerm2
+- First seen: 2026-03-25 (S160)
+
+### Matthew MT archival decisions (S160) — Severity: 1 — Count: 1
+- Archived 8 MTs: MT-5, MT-8, MT-16, MT-19, MT-23, MT-25, MT-31, MT-34
+- Kept MT-1 (Maestro — wants visual grid)
+- Created MT-42 (Kalshi Smart Money Copytrading — follow others' edges via order flow)
+- "I'm okay on all others" = archive everything except what's explicitly wanted
