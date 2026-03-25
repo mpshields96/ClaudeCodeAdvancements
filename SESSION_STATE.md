@@ -29,20 +29,15 @@
 - 4 CCA commits + 1 polybot commit, 54 new tests (9750→9779 CCA + 25 polybot), zero regressions
 - **Tests**: 251 suites, 9779 tests passing
 
-**Next (prioritized):**
-
-1. **Wire worktree_guard into settings.local.json** — Make AG-10 live as PreToolUse hook
-2. **memsearch patterns** — Study markdown-first hook patterns for CCA memory-system evolution
-3. **MT-26 signal pipeline wiring** — Wire 7 modules into Kalshi bot (assessed: not dead, just unwired)
-4. **95c+ NO-side guard** — Kelly analysis shows negative EV, auto-skip recommended
-5. **Post-guard clean bet counter** — Track for HARD_MAX ramp schedule (need 48 more for Gate 1)
-6. **MT-37 UBER** — Investment/AI trading master task
+**Next: SEE TODAYS_TASKS.md** — authoritative daily task list (Matthew directive S178).
+Work ALL TODO items there first. Only use priority_picker/MASTER_TASKS after ALL are done.
 
 **Matthew directives (carried forward):**
+- **TODAYS_TASKS.md is the daily driver** — all CCA sessions follow it (S178 permanent)
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
 - CCA does NOT touch model selection — Matthew sets manually (S161 reaffirmed)
 - Peak/off-peak token budgeting UNIVERSAL (MT-38)
-- Autoloop ENABLED — focus on TODAYS_TASKS.md priorities
+- Autoloop ENABLED
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
 
 ---

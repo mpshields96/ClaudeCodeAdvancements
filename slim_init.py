@@ -30,6 +30,7 @@ from session_id import normalize as normalize_session_id
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 SESSION_STATE_PATH = PROJECT_ROOT / "SESSION_STATE.md"
+TODAYS_TASKS_PATH = PROJECT_ROOT / "TODAYS_TASKS.md"
 
 INIT_STEPS = ["smoke", "priority", "summary"]
 
@@ -127,6 +128,24 @@ def run_smoke() -> dict:
             "suites_total": 0,
             "error": "Timeout: smoke test exceeded 60 seconds",
         }
+
+
+def scan_todays_tasks() -> dict:
+    """Scan TODAYS_TASKS.md for remaining TODO items (Matthew directive S178)."""
+    result: dict = {"todos": [], "count": 0}
+    if not TODAYS_TASKS_PATH.exists():
+        return result
+    try:
+        content = TODAYS_TASKS_PATH.read_text()
+        for line in content.splitlines():
+            if "[TODO]" in line:
+                # Extract task label (e.g., "### C1. MT-26 Dead Code Cleanup [TODO]")
+                task = line.strip().lstrip("#").strip()
+                result["todos"].append(task)
+        result["count"] = len(result["todos"])
+    except Exception:
+        pass
+    return result
 
 
 def run_priority() -> dict:
@@ -475,7 +494,15 @@ def format_summary(summary: dict) -> str:
     lines.append(f"Slim Init: {status}")
     lines.append(f"  Last session: {summary.get('last_session_id', 'S?')}")
     lines.append(f"  Smoke: {summary.get('smoke_status', '?')}")
-    lines.append(f"  Top pick: {summary.get('top_pick', '?')}")
+    # TODAYS_TASKS.md — authoritative daily list (Matthew directive S178)
+    if summary.get("todays_tasks_count", 0) > 0:
+        lines.append(f"  TODAY'S TASKS ({summary['todays_tasks_count']} remaining):")
+        for task in summary.get("todays_tasks", []):
+            lines.append(f"    - {task}")
+        lines.append(f"  Top pick (after today's tasks): {summary.get('top_pick', '?')}")
+    else:
+        lines.append(f"  Today's tasks: ALL DONE")
+        lines.append(f"  Top pick: {summary.get('top_pick', '?')}")
 
     if summary.get("meta_learning_brief"):
         lines.append(f"  {summary['meta_learning_brief']}")
@@ -526,13 +553,16 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
         content = session_state_path.read_text()
         state = parse_session_state(content)
 
+    # Step 1.5: Scan TODAYS_TASKS.md (Matthew directive S178 — authoritative daily list)
+    todays = scan_todays_tasks()
+
     # Step 2: Smoke test
     smoke = run_smoke()
 
     # Step 2.5: Seed principles (idempotent — zero cost if already seeded)
     seeder = run_principle_seeder()
 
-    # Step 3: Priority pick
+    # Step 3: Priority pick (informational — TODAYS_TASKS takes precedence)
     priority = run_priority()
 
     # Step 3.5: MT proposals from findings (MT-41)
@@ -568,6 +598,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 5: Build summary
     summary = build_summary(smoke, priority, state)
     summary["priority_raw"] = priority.get("raw", "")
+    if todays.get("count", 0) > 0:
+        summary["todays_tasks"] = todays["todos"]
+        summary["todays_tasks_count"] = todays["count"]
     summary["principles_seeded"] = seeder.get("seeded", 0)
     if mt_proposals.get("count", 0) > 0:
         summary["mt_proposals_raw"] = mt_proposals["raw"]

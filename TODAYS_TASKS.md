@@ -54,8 +54,9 @@
 - Study markdown-first hook patterns for CCA memory-system evolution
 - REFERENCE from S176 nuclear scan
 
-### C4. Context-Monitor 1M Recalibration [TODO]
-- Update DEFAULT_WINDOW auto-detection for 1M context window
+### C4. Context-Monitor 1M Recalibration [DONE S177]
+- DEFAULT_WINDOW 200K→1M across meter.py, post_compact.py, compact_anchor.py, statusline.py
+- Commit 59c42ff
 
 ### C5. MT-37 UBER [TODO]
 - Investment/AI trading master task
@@ -64,7 +65,15 @@
 
 ## COMPLETED TODAY (all sessions)
 
-### S177 (current)
+### S178 (current)
+- [x] AG-10 worktree_guard wired as live PreToolUse hook (13 new tests, 42 total)
+- [x] Cross-chat delivery: post-guard clean bet counter + 95c guard consolidation
+- [x] C4 already done in S177 (marked)
+- [ ] C1: MT-26 dead code assessment (agent running)
+- [ ] C3: memsearch research (agent running)
+- [ ] C5: MT-37 UBER Phase 1 start
+
+### S177
 - [x] MAX_LOSS cap + kelly_scale in polybot sizing.py (25 tests)
 - [x] Wire into main.py (commit 784bdc5, delivery written)
 
@@ -87,7 +96,11 @@
 
 ---
 
-## SESSION RULES
+## SESSION RULES (Matthew directive, S178)
+- **THIS FILE IS AUTHORITATIVE.** All CCA sessions work on TODO items here until complete.
+- Do NOT use priority_picker or MASTER_TASKS until ALL TODOs here are done.
+- Kalshi bot tasks: deliver via CCA_TO_POLYBOT.md, don't implement in polybot directly.
 - Autoloop ENABLED
-- Mark items [DONE] as they complete, but NEVER remove them
-- Each subsequent CCA chat reads THIS FILE to know what to work on
+- Mark items [DONE SN] as they complete, but NEVER remove them
+- Each subsequent CCA chat reads THIS FILE FIRST to know what to work on
+- Matthew updates this file daily — follow it, don't second-guess it

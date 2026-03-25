@@ -51,8 +51,21 @@ and compaction events into one objective decision. Trust it over vibes.
 
 ## Step 1 — Determine next task
 
-**PRIORITY PICKER FIRST (non-negotiable, S124):**
-Run the priority picker BEFORE reading resume prompts or SESSION_STATE next items:
+**TODAYS_TASKS.md FIRST (Matthew directive S178 — overrides S124 priority picker):**
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+echo "=== TODAY'S REMAINING TASKS ==="
+grep "TODO\]" TODAYS_TASKS.md 2>/dev/null
+```
+
+If TODAYS_TASKS.md has any TODO items: work on the FIRST one. Do not skip it.
+Do not use priority_picker to override it. Matthew's daily task list is authoritative.
+
+Kalshi bot tasks in TODAYS_TASKS.md: deliver via CCA_TO_POLYBOT.md, don't implement
+in polybot directly (unless the task explicitly says to build in polybot).
+
+**ONLY IF ALL TODOs ARE DONE** — fall through to priority picker:
 
 ```bash
 python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/priority_picker.py init-briefing --session $(python3 -c "
@@ -63,32 +76,22 @@ print(int(m.group(1))+1 if m else 125)
 ")
 ```
 
-If a STAGNATION WARNING appears for an MT with higher priority than the resume prompt's
-suggested next task, work on the stagnating MT instead — UNLESS it's genuinely blocked
-(needs external execution, requires missing dependency, etc). Log the override decision.
-
 Then read:
 - `/Users/matthewshields/Projects/ClaudeCodeAdvancements/SESSION_STATE.md` — "Next session" section
-- `/Users/matthewshields/Projects/ClaudeCodeAdvancements/ROADMAP.md` (if it exists) — priority backlog
 
 Check for any captured todos:
 ```bash
 ls /Users/matthewshields/Projects/ClaudeCodeAdvancements/.planning/todos/ 2>/dev/null
 ```
 
-**SESSION ALLOCATION RULE (non-negotiable):**
-When running 3 sessions of work (typical /cca-auto marathon), allocate:
-- **1 session** on Kalshi/cross-chat work: bridge-sync, respond to POLYBOT_TO_CCA.md requests,
-  research academic papers for Kalshi, build tools for the bot, update KALSHI_INTEL.md
-- **2 sessions** on master-level CCA tasks: MT-10, MT-14, MT-17, frontier work, scanning
-Always run bridge-sync.sh FIRST to check for incoming Kalshi requests before picking tasks.
+**Cross-chat bridge**: Check POLYBOT_TO_CCA.md for Kalshi requests.
 
-**Priority order (with scan limit — build before scanning more):**
+**Priority order (after TODAYS_TASKS.md is complete):**
 1. Priority picker's top recommendation (if not blocked)
 2. Any explicitly stated "next task" in SESSION_STATE.md (if picker agrees)
-2. **Cross-chat bridge**: Run bridge-sync.sh, check CROSS_CHAT_INBOX.md + POLYBOT_TO_CCA.md for Kalshi requests
-3. Any high-priority captured todos (from /gsd:add-todo)
-4. Next uncompleted frontier milestone (e.g., AG-3, USAGE-1)
+3. Cross-chat requests from POLYBOT_TO_CCA.md
+4. Any high-priority captured todos (from /gsd:add-todo)
+5. Next uncompleted frontier milestone (e.g., AG-3, USAGE-1)
 5. Master Tasks (MASTER_TASKS.md) — next incomplete MT by priority
 6. **Intelligence intake (ONLY if scan budget allows):**
    - `/cca-nuclear-daily` — if no daily scan was done today
@@ -205,12 +208,12 @@ Committed: [commit hash — first 7 chars]
 **Then IMMEDIATELY go back to Step 1 and pick the next task. DO NOT OUTPUT A SUMMARY
 AND WAIT. DO NOT ASK THE USER WHAT TO DO. Just start the next task.**
 
-RE-RUN the priority picker (Step 1) every loop iteration — do NOT rely on the initial
-ranking. The picker is cheap (~2s) and prevents recency bias.
+RE-RUN Step 1 every loop iteration — re-check TODAYS_TASKS.md for remaining TODOs.
+Only fall through to priority_picker after ALL TODOs are done.
 
 **ANTI-PATTERN TO AVOID:** Completing a task, writing "Here's what I did..." and then
 stopping. This wastes the user's time and context window. The correct pattern is:
-commit → re-run picker → start next task. All in one continuous flow.
+commit → re-check TODAYS_TASKS.md → start next task. All in one continuous flow.
 
 Continue this loop until you've completed 2-3 meaningful deliverables for the session.
 Only stop and write the final SESSION_STATE update when:

@@ -93,7 +93,7 @@ python3 session_orchestrator.py set-mode 3chat  # or 2chat, solo
 **Rules:**
 - During peak hours, launches are blocked — solo mode only
 - Don't launch if Matthew said "no workers" or "solo" this session
-- Worker task should be the top independent task from priority_picker
+- Worker task should come from TODAYS_TASKS.md TODO items first, then priority_picker
 - If Kalshi main is already running externally, the orchestrator detects it
 
 ---
@@ -112,16 +112,21 @@ If peak hours: skip the scan, save tokens.
 
 ---
 
-## Step 2 — Determine next task (priority-driven)
+## Step 2 — Determine next task (TODAYS_TASKS.md first, then priority picker)
+
+**TODAYS_TASKS.md is the authoritative daily task list (Matthew directive S178).**
+Work ALL TODO items there first. Only use priority_picker after ALL are done.
 
 ```bash
+echo "=== TODAY'S REMAINING TASKS ==="
+grep "TODO\]" TODAYS_TASKS.md 2>/dev/null || echo "ALL DONE"
+echo ""
 python3 priority_picker.py recommend
 ```
 
-Use the top recommendation unless SESSION_STATE.md has a blocker or critical item.
-
 **Task selection rules:**
-- Work the TOP PICK from priority_picker unless SESSION_STATE has a blocker
+- Work TODAYS_TASKS.md TODO items first — they override priority_picker
+- Only after all TODOs done: use priority_picker top recommendation
 - At least 50% of session on actual MT code work, not process/docs
 - When assigning worker tasks: pick independent, testable work (test suites, modules)
 - Desktop handles: doc updates, intelligence scans, bridge serving, process improvements

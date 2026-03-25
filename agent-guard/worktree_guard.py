@@ -31,11 +31,13 @@ USAGE:
 
 from __future__ import annotations
 
+import json
 import os
 import re
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 
 # Files that should only be modified by the lead agent / main worktree.
@@ -275,6 +277,65 @@ class WorktreeGuard:
             return f"Delegate worktree '{self.worktree_name}' at {self.worktree_path}"
         return f"Main worktree at {self.main_worktree_path}"
 
+    # -- Write-like tools that need scope checks --
+    _WRITE_TOOLS = {"Write", "Edit", "NotebookEdit"}
+    # -- Read-like tools that are always allowed --
+    _READ_TOOLS = {"Read", "Glob", "Grep"}
+
+    def hook_output(self, tool_name: str, tool_input: Dict) -> Optional[Dict]:
+        """Return hook JSON for PreToolUse, or None to allow.
+
+        Returns:
+            None — allow the operation (no output)
+            dict — deny with hookSpecificOutput.permissionDecision="deny"
+        """
+        if not self.is_delegate:
+            return None
+
+        # Read-like tools are never blocked
+        if tool_name in self._READ_TOOLS:
+            return None
+
+        # Write-like tools — check file path
+        if tool_name in self._WRITE_TOOLS:
+            file_path = tool_input.get("file_path", "")
+            if not file_path:
+                return None
+            result = self.check_write(file_path)
+            if result.decision == "block":
+                return {
+                    "hookSpecificOutput": {
+                        "permissionDecision": "deny",
+                        "reason": f"[AG-10 Worktree Guard] {result.reason}",
+                    }
+                }
+            if result.decision == "warn":
+                # Warn to stderr but don't block
+                print(
+                    f"[AG-10 Worktree Guard] WARNING: {result.reason}",
+                    file=sys.stderr,
+                )
+                return None
+            return None
+
+        # Bash — check command safety
+        if tool_name == "Bash":
+            command = tool_input.get("command", "")
+            if not command:
+                return None
+            result = self.check_bash(command)
+            if result.decision == "block":
+                return {
+                    "hookSpecificOutput": {
+                        "permissionDecision": "deny",
+                        "reason": f"[AG-10 Worktree Guard] {result.reason}",
+                    }
+                }
+            return None
+
+        # All other tools — allow
+        return None
+
     @classmethod
     def from_environment(cls, cwd: Optional[str] = None) -> "WorktreeGuard":
         """Create guard from current environment."""
@@ -303,3 +364,30 @@ class WorktreeGuard:
             worktree_path=cwd,
             main_worktree_path=git_root,
         )
+
+
+def main():
+    """PreToolUse hook entry point. Reads JSON from stdin, writes to stdout."""
+    raw = sys.stdin.read().strip()
+    if not raw:
+        sys.exit(0)
+
+    try:
+        hook_input = json.loads(raw)
+    except json.JSONDecodeError:
+        sys.exit(0)
+
+    tool_name = hook_input.get("tool_name", "")
+    tool_input = hook_input.get("tool_input", {})
+
+    guard = WorktreeGuard.from_environment()
+    output = guard.hook_output(tool_name, tool_input)
+
+    if output:
+        print(json.dumps(output))
+
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

@@ -158,12 +158,19 @@ Include the output in the briefing under "RECENT SESSIONS:". If no data, skip si
 
 ---
 
-## Step 2.9 — Priority picker stagnation check
+## Step 2.9 — TODAYS_TASKS.md check (PRIMARY) + priority picker (SECONDARY)
 
-Run the priority picker to detect stagnating MTs and show the current priority ranking:
+**TODAYS_TASKS.md is the authoritative daily task list (Matthew directive S178).**
+Read it and show all remaining TODO items in the briefing. These are the ONLY tasks
+to work on until ALL are marked [DONE]. Do NOT use priority_picker or MASTER_TASKS
+to override TODAYS_TASKS.md — those are for AFTER all TODOs are complete.
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+echo "=== TODAY'S TASKS (AUTHORITATIVE) ==="
+grep -n "TODO\]" TODAYS_TASKS.md 2>/dev/null || echo "ALL DONE — fall through to priority picker"
+echo ""
+echo "=== PRIORITY PICKER (use only after all TODOs done) ==="
 python3 priority_picker.py init-briefing --session $(python3 -c "
 import re
 with open('SESSION_STATE.md') as f: c = f.read()
@@ -172,12 +179,8 @@ print(int(m.group(1))+1 if m else 125)
 ")
 ```
 
-Include the output in the briefing. If STAGNATION WARNING appears, it MUST be shown
-prominently — this prevents recency bias where resume prompts keep suggesting recently-worked
-MTs while higher-priority MTs collect dust.
-
-When /cca-auto starts, the priority picker ranking should override the resume prompt's
-"NEXT" list if a higher-priority MT has been stagnating (untouched 5+ sessions).
+Include TODAYS_TASKS TODO items prominently in the briefing under "TODAY'S WORK:".
+Priority picker output goes under "NEXT (after today's tasks):" — informational only.
 
 ---
 

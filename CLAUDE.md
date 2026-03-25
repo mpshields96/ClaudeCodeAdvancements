@@ -162,14 +162,31 @@ ClaudeCodeAdvancements/
 
 ---
 
+## Task Priority (Matthew directive, S178 — PERMANENT)
+
+**TODAYS_TASKS.md is the authoritative daily task list.** Every CCA session reads it at init
+and works ONLY on its TODO items until ALL are complete. Kalshi bot tasks listed there get
+delivered to the Kalshi chat via CCA_TO_POLYBOT.md — CCA does not implement them directly.
+
+Order of operations:
+1. Complete ALL TODO items in TODAYS_TASKS.md
+2. ONLY AFTER all TODOs are done: use priority_picker / MASTER_TASKS for next work
+3. Kalshi bot work that CCA can't do itself: write delivery to CCA_TO_POLYBOT.md
+
+Matthew updates TODAYS_TASKS.md daily. It reflects his current priorities, which may change
+day to day. Follow it, don't second-guess it, don't skip items for "higher priority" MTs.
+
+---
+
 ## Session Workflow
 
 ### Starting a Session
 1. Read `PROJECT_INDEX.md` — fast module overview
 2. Read `SESSION_STATE.md` — exact current state
-3. Read `CLAUDE.md` (this file) — rules
-4. Run smoke tests for the module you're working on
-5. State what you're building today before touching any file
+3. Read `TODAYS_TASKS.md` — **authoritative daily task list (work these first)**
+4. Read `CLAUDE.md` (this file) — rules
+5. Run smoke tests for the module you're working on
+6. State what you're building today before touching any file
 
 ### Ending a Session
 1. Update `SESSION_STATE.md` — what was done, what's next

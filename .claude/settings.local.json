@@ -1,4 +1,58 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "WebFetch(domain:www.reddit.com)",
+      "WebFetch(domain:reddit.com)",
+      "WebFetch(domain:www.aitooldiscovery.com)",
+      "WebFetch(domain:skywork.ai)",
+      "WebFetch(domain:solveoco.medium.com)",
+      "WebFetch(domain:sankalp.bearblog.dev)",
+      "WebFetch(domain:needle.app)",
+      "WebFetch(domain:paddo.dev)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.oneusefulthing.org)",
+      "WebFetch(domain:redmonk.com)",
+      "WebFetch(domain:www.faros.ai)",
+      "WebFetch(domain:dnyuz.com)",
+      "WebFetch(domain:beyond.addy.ie)",
+      "WebFetch(domain:siliconangle.com)",
+      "WebFetch(domain:mortenvistisen.com)",
+      "WebFetch(domain:claudelog.com)",
+      "Skill(*)",
+      "mcp__plugin_playwright_playwright__browser_run_code",
+      "mcp__plugin_playwright_playwright__browser_close",
+      "mcp__Control_Chrome__open_url",
+      "mcp__Control_Chrome__get_current_tab",
+      "mcp__Control_Chrome__execute_javascript",
+      "mcp__Control_Chrome__list_tabs",
+      "mcp__Control_Chrome__switch_to_tab",
+      "WebFetch(domain:old.reddit.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:agentbets.ai)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:agnost.ai)",
+      "WebSearch",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:svg.orsinium.dev)",
+      "WebFetch(domain:pypi.org)",
+      "WebFetch(domain:www.federalreserve.gov)",
+      "WebFetch(domain:www.nber.org)",
+      "WebFetch(domain:papers.ssrn.com)",
+      "WebFetch(domain:arxiv.org)",
+      "WebFetch(domain:quantpedia.com)",
+      "WebFetch(domain:www.sciencedirect.com)",
+      "WebFetch(domain:cepr.org)",
+      "WebFetch(domain:www.jbecker.dev)",
+      "WebFetch(domain:www.dlnews.com)"
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -46,6 +100,14 @@
           {
             "type": "command",
             "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/spec-system/hooks/validate.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/agent-guard/worktree_guard.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/peak_budget_hook.py"
           }
         ]
       },
@@ -82,6 +144,10 @@
           {
             "type": "command",
             "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/queue_hook.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/self-learning/resurfacer_hook.py"
           }
         ]
       }
@@ -97,6 +163,10 @@
           {
             "type": "command",
             "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/memory-system/hooks/capture_hook.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/autoloop_stop_hook.py"
           }
         ]
       }
@@ -111,46 +181,6 @@
           }
         ]
       }
-    ]
-  },
-  "permissions": {
-    "allow": [
-      "Bash(*)",
-      "Read(*)",
-      "Write(*)",
-      "Edit(*)",
-      "Glob(*)",
-      "Grep(*)",
-      "WebFetch(domain:www.reddit.com)",
-      "WebFetch(domain:reddit.com)",
-      "WebFetch(domain:www.aitooldiscovery.com)",
-      "WebFetch(domain:skywork.ai)",
-      "WebFetch(domain:solveoco.medium.com)",
-      "WebFetch(domain:sankalp.bearblog.dev)",
-      "WebFetch(domain:needle.app)",
-      "WebFetch(domain:paddo.dev)",
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:www.oneusefulthing.org)",
-      "WebFetch(domain:redmonk.com)",
-      "WebFetch(domain:www.faros.ai)",
-      "WebFetch(domain:dnyuz.com)",
-      "WebFetch(domain:beyond.addy.ie)",
-      "WebFetch(domain:siliconangle.com)",
-      "WebFetch(domain:mortenvistisen.com)",
-      "WebFetch(domain:claudelog.com)",
-      "Skill(*)",
-      "mcp__plugin_playwright_playwright__browser_run_code",
-      "mcp__plugin_playwright_playwright__browser_close",
-      "mcp__Control_Chrome__open_url",
-      "mcp__Control_Chrome__get_current_tab",
-      "mcp__Control_Chrome__execute_javascript",
-      "mcp__Control_Chrome__list_tabs",
-      "mcp__Control_Chrome__switch_to_tab",
-      "WebFetch(domain:old.reddit.com)",
-      "WebFetch(domain:medium.com)",
-      "WebFetch(domain:agentbets.ai)",
-      "WebFetch(domain:dev.to)",
-      "WebFetch(domain:agnost.ai)"
     ]
   }
 }

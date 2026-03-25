@@ -8,10 +8,12 @@ Detects Agent Teams / worktree contexts and validates isolation:
 - Safety classification (stricter rules for delegated agents)
 """
 
+import io
 import json
 import os
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
@@ -244,6 +246,162 @@ class TestWorktreeGuardCheckResult(unittest.TestCase):
         )
         defaults.update(kwargs)
         return WorktreeGuard(**defaults)
+
+
+class TestWorktreeHookOutput(unittest.TestCase):
+    """Tests for hook_output() — the hook JSON interface."""
+
+    def _guard(self, **kwargs):
+        defaults = dict(
+            is_delegate=True, worktree_name="feat",
+            worktree_path="/project/.claude/worktrees/feat",
+            main_worktree_path="/project",
+        )
+        defaults.update(kwargs)
+        return WorktreeGuard(**defaults)
+
+    def test_hook_output_write_to_own_worktree_allows(self):
+        """Write to own worktree — no hook output (allow)."""
+        guard = self._guard()
+        result = guard.hook_output(
+            tool_name="Write",
+            tool_input={"file_path": "/project/.claude/worktrees/feat/src/foo.py"}
+        )
+        self.assertIsNone(result)
+
+    def test_hook_output_write_to_main_worktree_blocks(self):
+        """Delegate writing to main worktree — deny."""
+        guard = self._guard()
+        result = guard.hook_output(
+            tool_name="Write",
+            tool_input={"file_path": "/project/src/bar.py"}
+        )
+        self.assertIsNotNone(result)
+        self.assertEqual(
+            result["hookSpecificOutput"]["permissionDecision"], "deny"
+        )
+
+    def test_hook_output_edit_to_other_worktree_blocks(self):
+        """Delegate editing in another worktree — deny."""
+        guard = self._guard()
+        result = guard.hook_output(
+            tool_name="Edit",
+            tool_input={"file_path": "/project/.claude/worktrees/other/file.py"}
+        )
+        self.assertIsNotNone(result)
+        self.assertEqual(
+            result["hookSpecificOutput"]["permissionDecision"], "deny"
+        )
+
+    def test_hook_output_read_never_blocked(self):
+        """Read operations are never blocked, even to main worktree."""
+        guard = self._guard()
+        result = guard.hook_output(
+            tool_name="Read",
+            tool_input={"file_path": "/project/src/bar.py"}
+        )
+        self.assertIsNone(result)
+
+    def test_hook_output_bash_dangerous_git_blocks(self):
+        """Bash with dangerous git command — deny."""
+        guard = self._guard()
+        result = guard.hook_output(
+            tool_name="Bash",
+            tool_input={"command": "git push origin main"}
+        )
+        self.assertIsNotNone(result)
+        self.assertEqual(
+            result["hookSpecificOutput"]["permissionDecision"], "deny"
+        )
+
+    def test_hook_output_bash_safe_command_allows(self):
+        """Bash with safe command — allow."""
+        guard = self._guard()
+        result = guard.hook_output(
+            tool_name="Bash",
+            tool_input={"command": "python3 -m pytest tests/"}
+        )
+        self.assertIsNone(result)
+
+    def test_hook_output_shared_state_warns(self):
+        """Write to shared state file in own worktree — warn (not block)."""
+        guard = self._guard()
+        result = guard.hook_output(
+            tool_name="Write",
+            tool_input={"file_path": "/project/.claude/worktrees/feat/SESSION_STATE.md"}
+        )
+        # Warn should NOT produce a deny — just stderr warning
+        self.assertIsNone(result)
+
+    def test_hook_output_not_delegate_allows_everything(self):
+        """Non-delegate (main worktree) allows everything."""
+        guard = self._guard(is_delegate=False)
+        result = guard.hook_output(
+            tool_name="Write",
+            tool_input={"file_path": "/anywhere/file.py"}
+        )
+        self.assertIsNone(result)
+
+    def test_hook_output_glob_grep_allow(self):
+        """Glob and Grep are read-like operations — never blocked."""
+        guard = self._guard()
+        for tool in ["Glob", "Grep"]:
+            result = guard.hook_output(
+                tool_name=tool,
+                tool_input={"pattern": "*.py"}
+            )
+            self.assertIsNone(result, f"{tool} should not be blocked")
+
+    def test_hook_output_deny_message_includes_reason(self):
+        """Deny output includes a human-readable reason."""
+        guard = self._guard()
+        result = guard.hook_output(
+            tool_name="Write",
+            tool_input={"file_path": "/project/src/bar.py"}
+        )
+        self.assertIn("reason", result["hookSpecificOutput"])
+        self.assertIn("main worktree", result["hookSpecificOutput"]["reason"])
+
+
+class TestWorktreeHookMain(unittest.TestCase):
+    """Tests for main() — the stdin/stdout hook entry point."""
+
+    def test_main_empty_stdin(self):
+        """Empty stdin — exit cleanly."""
+        from worktree_guard import main as wt_main
+        with unittest.mock.patch("sys.stdin", io.StringIO("")):
+            with self.assertRaises(SystemExit) as cm:
+                wt_main()
+            self.assertEqual(cm.exception.code, 0)
+
+    def test_main_invalid_json(self):
+        """Invalid JSON — exit cleanly."""
+        from worktree_guard import main as wt_main
+        with unittest.mock.patch("sys.stdin", io.StringIO("not json")):
+            with self.assertRaises(SystemExit) as cm:
+                wt_main()
+            self.assertEqual(cm.exception.code, 0)
+
+    def test_main_non_delegate_passthrough(self):
+        """Non-delegate context — no output, exit 0."""
+        from worktree_guard import main as wt_main
+        payload = json.dumps({
+            "tool_name": "Write",
+            "tool_input": {"file_path": "/some/file.py"}
+        })
+        with unittest.mock.patch("sys.stdin", io.StringIO(payload)):
+            with unittest.mock.patch.dict(os.environ, {}, clear=False):
+                # Patch from_environment to return non-delegate
+                with unittest.mock.patch(
+                    "worktree_guard.WorktreeGuard.from_environment",
+                    return_value=WorktreeGuard(
+                        is_delegate=False, worktree_name="",
+                        worktree_path="/project", main_worktree_path="/project"
+                    )
+                ):
+                    with self.assertRaises(SystemExit) as cm:
+                        wt_main()
+                    self.assertEqual(cm.exception.code, 0)
 
 
 if __name__ == "__main__":
