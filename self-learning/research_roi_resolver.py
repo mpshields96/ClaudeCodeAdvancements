@@ -231,32 +231,44 @@ def resolve_deliveries(
         best_score = 0.0
         match_method = None
 
-        # Build combined search text from ACK
-        ack_text = " ".join(filter(None, [ack.req_id, ack.description, ack.session]))
+        # Priority 1: Exact REQ-ID match (highest confidence)
+        if ack.req_id:
+            for d in deliveries:
+                if d["delivery_id"] in matched_delivery_ids:
+                    continue
+                if d.get("req_id") == ack.req_id:
+                    best_match = d
+                    best_score = 1.0
+                    match_method = "req_id"
+                    break
 
-        for d in deliveries:
-            if d["delivery_id"] in matched_delivery_ids:
-                continue
-
-            # Try fuzzy match against title + description
-            score = _fuzzy_match_score(
-                ack_text,
-                d.get("title", ""),
-                d.get("description", ""),
-            )
-            if score > best_score and score >= 0.15:
-                best_match = d
-                best_score = score
-                match_method = "fuzzy"
-
-            # Try session number match (ACK session -> delivery session)
-            if ack.session:
-                session_num = ack.session.replace("S", "")
+        # Priority 2: Session number match
+        if best_match is None and ack.session:
+            session_num = ack.session.replace("S", "")
+            for d in deliveries:
+                if d["delivery_id"] in matched_delivery_ids:
+                    continue
                 if str(d.get("session", "")) == session_num:
                     best_match = d
                     match_method = "session"
                     best_score = 1.0
                     break
+
+        # Priority 3: Fuzzy title/description match
+        if best_match is None:
+            ack_text = " ".join(filter(None, [ack.req_id, ack.description, ack.session]))
+            for d in deliveries:
+                if d["delivery_id"] in matched_delivery_ids:
+                    continue
+                score = _fuzzy_match_score(
+                    ack_text,
+                    d.get("title", ""),
+                    d.get("description", ""),
+                )
+                if score > best_score and score >= 0.15:
+                    best_match = d
+                    best_score = score
+                    match_method = "fuzzy"
 
         if best_match and best_score >= 0.15:
             matched_delivery_ids.add(best_match["delivery_id"])

@@ -268,5 +268,106 @@ class TestROIResolver(unittest.TestCase):
         json.dumps(report)
 
 
+class TestReqIdMatching(unittest.TestCase):
+    """Tests for REQ-ID exact matching in resolve_deliveries."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.outcomes_path = os.path.join(self.tmpdir, "outcomes.jsonl")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+
+    def _write_outcomes(self, entries):
+        with open(self.outcomes_path, "w") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+
+    def test_exact_req_id_match(self):
+        """ACK with REQ-042 matches outcome with req_id='REQ-042'."""
+        self._write_outcomes([
+            {"delivery_id": "d-abc123", "session": 174, "title": "Fill rate simulator",
+             "category": "tool", "description": "Monte Carlo sim", "status": "delivered",
+             "req_id": "REQ-042"},
+        ])
+        acks = [AckEntry(req_id="REQ-042", status="implemented", date="2026-03-25")]
+        updates = resolve_deliveries(acks, self.outcomes_path)
+        self.assertEqual(len(updates), 1)
+        self.assertEqual(updates[0]["delivery_id"], "d-abc123")
+        self.assertEqual(updates[0]["new_status"], "implemented")
+        self.assertEqual(updates[0]["matched_by"], "req_id")
+
+    def test_req_id_match_takes_priority_over_fuzzy(self):
+        """REQ-ID match should win even if fuzzy match scores higher on a different entry."""
+        self._write_outcomes([
+            {"delivery_id": "d-wrong", "session": 50, "title": "Fill rate simulation research",
+             "category": "tool", "description": "Fill rate Monte Carlo simulation for sniper",
+             "status": "delivered"},
+            {"delivery_id": "d-right", "session": 174, "title": "Something unrelated",
+             "category": "tool", "description": "Unrelated description", "status": "delivered",
+             "req_id": "REQ-042"},
+        ])
+        acks = [AckEntry(req_id="REQ-042", status="implemented", date="2026-03-25",
+                         description="Fill rate simulation for maker sniper")]
+        updates = resolve_deliveries(acks, self.outcomes_path)
+        self.assertEqual(len(updates), 1)
+        self.assertEqual(updates[0]["delivery_id"], "d-right")
+        self.assertEqual(updates[0]["matched_by"], "req_id")
+
+    def test_no_req_id_falls_back_to_fuzzy(self):
+        """Without req_id on outcomes, should fall back to fuzzy matching."""
+        self._write_outcomes([
+            {"delivery_id": "d-fuzzy", "session": 50, "title": "CUSUM h=5.0 validation",
+             "category": "framework", "description": "CUSUM detection threshold",
+             "status": "delivered"},
+        ])
+        acks = [AckEntry(req_id=None, status="implemented", date="2026-03-25",
+                         description="CUSUM threshold validation implemented")]
+        updates = resolve_deliveries(acks, self.outcomes_path)
+        self.assertEqual(len(updates), 1)
+        self.assertEqual(updates[0]["matched_by"], "fuzzy")
+
+    def test_multiple_req_id_matches(self):
+        """Multiple ACKs with different REQ-IDs resolve correctly."""
+        self._write_outcomes([
+            {"delivery_id": "d-a", "session": 170, "title": "Monte Carlo",
+             "category": "tool", "status": "delivered", "req_id": "REQ-040"},
+            {"delivery_id": "d-b", "session": 174, "title": "Fill rate",
+             "category": "tool", "status": "delivered", "req_id": "REQ-042"},
+        ])
+        acks = [
+            AckEntry(req_id="REQ-040", status="implemented"),
+            AckEntry(req_id="REQ-042", status="implemented"),
+        ]
+        updates = resolve_deliveries(acks, self.outcomes_path)
+        self.assertEqual(len(updates), 2)
+        ids = {u["delivery_id"] for u in updates}
+        self.assertEqual(ids, {"d-a", "d-b"})
+
+    def test_req_id_no_match(self):
+        """ACK with REQ-099 when no outcome has that req_id."""
+        self._write_outcomes([
+            {"delivery_id": "d-x", "session": 50, "title": "Something",
+             "category": "tool", "status": "delivered", "req_id": "REQ-001"},
+        ])
+        acks = [AckEntry(req_id="REQ-099", status="implemented")]
+        updates = resolve_deliveries(acks, self.outcomes_path)
+        self.assertEqual(len(updates), 0)
+
+    def test_req_id_already_matched_skipped(self):
+        """Once a delivery is matched by req_id, it shouldn't match again."""
+        self._write_outcomes([
+            {"delivery_id": "d-only", "session": 174, "title": "Unique tool",
+             "category": "tool", "status": "delivered", "req_id": "REQ-042"},
+        ])
+        acks = [
+            AckEntry(req_id="REQ-042", status="implemented"),
+            AckEntry(req_id="REQ-042", status="acknowledged"),  # duplicate ACK
+        ]
+        updates = resolve_deliveries(acks, self.outcomes_path)
+        # Only first ACK should match
+        self.assertEqual(len(updates), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

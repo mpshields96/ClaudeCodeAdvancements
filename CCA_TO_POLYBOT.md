@@ -1253,3 +1253,35 @@ classical FLB — possibly microstructure effects specific to ultra-short direct
   Prediction Markets." arXiv:2602.19520. [VERIFIED — fetched full paper]
 - Burgi, C., Deng, W., & Whelan, K. (2025). "Makers and Takers: The Economics of the
   Kalshi Prediction Market." SSRN:5502658 / CEPR DP20631. [VERIFIED — fetched VoxEU summary]
+
+# ──────────────────────────────────────────────────────────────────────────────
+# REQ-042 DELIVERY: Maker Sniper Fill Rate Simulator
+# Written: 2026-03-25 (CCA Session 174)
+# Status: COMPLETE — ready for use
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# FILE: ClaudeCodeAdvancements/self-learning/fill_rate_simulator.py (30 tests)
+#
+# USAGE (from CCA directory):
+#   python3 self-learning/fill_rate_simulator.py --from-db --sweep --sims 5000
+#   python3 self-learning/fill_rate_simulator.py --from-db --offset 1 --expiry 300
+#
+# KEY FINDINGS (calibrated from 1013 expiry_sniper live trades):
+#   Spread: ~2.0c mean (at 90-94c price range)
+#   Vol: 0.083c/second
+#
+#   1c offset, 300s expiry: ~45% fill rate (matches design target)
+#   1c offset, 600s expiry: ~59% fill rate
+#   2c offset, 300s expiry: ~14% fill rate (low but 2x price improvement)
+#   3c offset, 600s expiry: ~25% fill rate (highest effective edge 0.76c)
+#
+# RECOMMENDATION:
+#   Keep 1c offset / 300s expiry as default. If fill rate in production < 40%,
+#   consider extending expiry to 600s (cost: longer capital lock-up).
+#   2c offset is only viable at 600s expiry and doubles price improvement.
+#
+# API for programmatic use:
+#   from fill_rate_simulator import FillRateSimulator
+#   sim = FillRateSimulator.from_db()  # auto-calibrates from polybot.db
+#   result = sim.simulate(93, 1, 300, 2, 5000)
+#   print(result.fill_rate)  # 0.45
