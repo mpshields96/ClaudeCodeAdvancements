@@ -40,7 +40,7 @@ import hashlib
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -173,6 +173,17 @@ def send_message(
         msg["ref_file"] = ref_file
     if ref_line:
         msg["ref_line"] = ref_line
+
+    # Dedup: skip if identical sender+target+subject+body sent in last 24h
+    existing = _load_queue(path)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    for old in reversed(existing):
+        created = old.get("created_at", "")
+        if created and created < cutoff.isoformat():
+            break  # Past 24h window, stop scanning
+        if (old.get("sender") == sender and old.get("target") == target
+                and old.get("subject") == subject and old.get("body") == body):
+            return old  # Duplicate — return existing message, don't append
 
     _append_message(msg, path)
     return msg
