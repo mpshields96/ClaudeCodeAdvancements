@@ -1479,60 +1479,41 @@ See `CCA_PRIME_DIRECTIVE.md`.
 
 ---
 
-## MT-37: AI-Driven Investment Research & Portfolio Intelligence (Long-Term)
+## MT-37: AI-Driven Investment Research & Portfolio Intelligence (UBER-LEVEL)
 
-**Source:** Matthew directive (S148, 2026-03-24) — "need to eventually seek investments/stock long-term safe savings with ETFs whatever the objective recommendation here... CCA developing the ability to look into objective AI algo investing elite level with significant academic research, economic financial data EVERYTHING related to this very long-term conquest"
+**Classification:** UBER-LEVEL MASTER TASK — Matthew's Long-Term Financial Conquest
+**Elevated:** S169 (2026-03-26) — Matthew directive to make this the uber-level MT
+**Source:** Matthew directive (S148, 2026-03-24) + S103 Strategic Vision Milestone D
+**Full spec:** `MT37_INVESTMENT_RESEARCH_UBER.md` (comprehensive 8-pillar, 7-phase design doc)
 
 **What Matthew wants:** A comprehensive, research-heavy capability for CCA to provide objective, academically-grounded investment intelligence. Long-term safe savings via ETFs, index funds, and algorithmic portfolio construction — built on the same rigor standard as the Kalshi bot (structural basis + math validation + backtesting). This is NOT a trading bot — it's a research and recommendation engine for long-term wealth building.
 
+**Strategic position:** This is **Milestone D** from S103 Strategic Vision — the final financial milestone. Kalshi (Milestones A-C) proves the methodology. MT-37 applies it to long-term wealth.
+
 **Core scope (8 pillars):**
+1. Academic Foundation (50+ papers: Fama-French, Black-Litterman, AQR, Vanguard, risk parity)
+2. ETF/Index Fund Universe (structured database: expense ratios, factor loadings, tax efficiency)
+3. Portfolio Construction (5+ strategies: 3-fund, 60/40, All Weather, factor tilt, Black-Litterman)
+4. Economic Data Integration (FRED API, regime detection, macro indicators)
+5. Risk Analysis (VaR/CVaR, Monte Carlo retirement projections, stress testing)
+6. Tax Optimization (TLH, Roth analysis, asset location)
+7. Reporting & Visualization (reuse MT-32 infrastructure)
+8. Self-Learning Integration (reuse MT-28 principle/pattern registries)
 
-1. **Academic Foundation** — Survey the quantitative finance literature: Modern Portfolio Theory, Fama-French factor models, Black-Litterman, risk parity, momentum/value/quality factors, tax-loss harvesting theory. Every recommendation traces to peer-reviewed research. No speculation, no vibes.
+**Phased approach (14-23 sessions, no rush):**
+- Phase 1: Deep academic research survey (3-5 sessions) — RESEARCH.md literature review
+- Phase 2: Data pipeline — FRED API, ETF universe builder (2-3 sessions)
+- Phase 3: Portfolio constructor — 5+ strategies + backtest framework (3-5 sessions)
+- Phase 4: Risk analysis toolkit — VaR, Monte Carlo, stress testing (2-3 sessions)
+- Phase 5: Tax optimization layer — TLH, Roth, asset location (2-3 sessions)
+- Phase 6: Reporting integration — wire into MT-32 (1-2 sessions)
+- Phase 7: Self-learning feedback loop (1-2 sessions)
 
-2. **ETF/Index Fund Universe** — Build a structured database of ETFs and index funds: expense ratios, tracking error, AUM, sector/geographic exposure, factor loadings. Objective comparison tooling. Eliminate high-fee funds that underperform benchmarks.
+**CCA infrastructure reuse:** monte_carlo_simulator.py, regime_detector.py, dynamic_kelly.py, macro_regime.py, paper_scanner.py, chart_generator.py, report_generator.py, principle_registry.py — 12+ existing modules directly applicable.
 
-3. **Portfolio Construction** — Implement and backtest portfolio allocation strategies: mean-variance optimization, risk parity, equal weight, target-date glide paths, Kelly criterion for long-horizon investing. Compare Sharpe ratios, max drawdown, CAGR across strategies.
+**Rigor standard (same as Kalshi):** structural basis + math validation + 20yr backtest + statistical significance. No exceptions.
 
-4. **Economic Data Integration** — Ingest and analyze macro indicators: Fed funds rate, CPI, GDP, unemployment, yield curve, corporate earnings. Regime detection (expansion/contraction/crisis) that feeds portfolio allocation. Use FRED, BLS, BEA data APIs.
-
-5. **Risk Analysis** — Tail risk measurement (CVaR, VaR), correlation regime shifts, drawdown analysis, sequence-of-returns risk for retirement planning. Monte Carlo simulations for retirement projections. Stress testing against historical crises (2008, 2020, dot-com).
-
-6. **Tax Optimization** — Tax-loss harvesting strategies, Roth vs traditional analysis, asset location optimization (which assets in which account types), capital gains management. Country-specific (US-focused initially).
-
-7. **Reporting & Visualization** — Leverage MT-32 infrastructure for professional portfolio reports, allocation pie charts, historical performance charts, risk dashboards. Make complex financial data accessible.
-
-8. **Self-Learning Integration** — Feed portfolio performance data back into the self-learning pipeline. Track recommendation accuracy over time. Use the same principle_registry/pattern_registry architecture from MT-28.
-
-**What this is NOT:**
-- NOT a day-trading or active trading system (that's the Kalshi bot)
-- NOT financial advice (always disclaim — Matthew makes his own decisions)
-- NOT speculative (no crypto recommendations, no options, no leveraged products unless academically justified)
-- NOT a replacement for a financial advisor (augmentation, not replacement)
-
-**Research needed (EXTENSIVE — this is primarily a research MT):**
-- Academic papers: Fama-French, Carhart 4-factor, AQR research, Vanguard research papers, Dimensional Fund Advisors research
-- Data sources: FRED API, Yahoo Finance, Alpha Vantage, Quandl, SEC EDGAR
-- Existing tools: QuantLib, zipline, backtrader, PyPortfolioOpt, Riskfolio-Lib
-- Books: "A Random Walk Down Wall Street", "The Intelligent Investor", "Quantitative Portfolio Management" (Isichenko), "Expected Returns" (Ilmanen)
-- Subreddits: r/Bogleheads, r/investing, r/financialindependence, r/portfolios, r/quantfinance
-
-**Phased approach (very long-term, no rush):**
-- Phase 1: Deep academic research survey — produce RESEARCH.md with literature review, methodology comparison, factor model summary
-- Phase 2: Data pipeline — FRED API integration, ETF universe builder, basic factor loading calculator
-- Phase 3: Portfolio constructor — implement 3-5 allocation strategies with backtest framework
-- Phase 4: Risk analysis toolkit — VaR/CVaR, Monte Carlo, stress testing
-- Phase 5: Tax optimization layer — asset location, TLH simulation
-- Phase 6: Reporting integration — wire into CCA report/dashboard infrastructure
-- Phase 7: Self-learning feedback loop — track recommendations vs outcomes
-
-**Relationship to existing CCA infrastructure:**
-- Uses self-learning pipeline (MT-28) for outcome tracking
-- Uses design-skills (MT-32) for visualization
-- Uses research infrastructure (paper_scanner.py, paper_digest.py) for academic papers
-- Leverages Kalshi bot experience with probability, Kelly criterion, regime detection
-- Cross-chat coordination: investment insights may inform Kalshi macro regime detector
-
-**Status:** IDEA LOGGED (S148) — Long-term, research-first. Do NOT start building until Phase 1 research is complete. No rush — Matthew directive.
+**Status:** UBER-LEVEL DOCUMENTED (S169). Full spec in MT37_INVESTMENT_RESEARCH_UBER.md. Phase 1 (research) not yet started. Long-term, research-first. Do NOT start building until Phase 1 research is complete.
 
 ---
 
@@ -1690,3 +1671,246 @@ See `CCA_PRIME_DIRECTIVE.md`.
 - Community sentiment confirms this: power users on Reddit explicitly prefer custom hooks over Auto Mode.
 
 **No code changes needed.** CCA's Agent Guard is already the correct architecture. Auto Mode validates the NEED, not the approach.
+
+---
+
+## MT-43: Data Analysis Excellence (Excel/PowerPoint MCP Quality)
+
+**Source:** S103 Strategic Vision Theme 4 (2026-03-21) — "Enhanced ability to work with data in professional formats"
+**Elevated:** S169 (2026-03-26) — documented as MT per Matthew directive
+
+**What Matthew wants:** The MCP tools for Excel (xlsx) and PowerPoint (pptx) already exist as Anthropic skills, but the quality of their output needs to be raised to Matthew's standard. This is about making the tools work BETTER, not just "exist."
+
+**Specific improvements:**
+- Excel: better chart formatting, formula preservation, conditional formatting, pivot-table-like analysis
+- PowerPoint: Matthew-specific slide templates (psychiatry Grand Rounds, psychopharmacology lectures), anti-slop presentation quality
+- General: data analysis pipelines that produce publication-quality output
+
+**Relationship to existing MTs:**
+- MT-25 (Presentation Generator) covers the PPT style aspect — this MT covers the broader data analysis quality
+- MT-32 (Design Engineering) covers CCA's own design system — this MT covers external document quality
+- Anthropic skills (anthropic-skills:xlsx, anthropic-skills:pptx) are the base — this MT improves them
+
+**Status:** IDEA LOGGED (S169). Pending definition of specific quality gaps vs current MCP tool output.
+
+---
+
+## MT-44: Automated Cross-Chat Task Execution Pipeline
+
+**Source:** KALSHI_TASK_CATALOG.md (S118), ORCHESTRATION_GAPS.md Gaps 1-6 (S107)
+**Elevated:** S169 (2026-03-26) — documented as MT per Matthew directive
+
+**What Matthew wants:** Fully automated task assignment and execution between CCA and Kalshi chats. Currently, cross-chat tasks require manual orchestration. The infrastructure exists (cca_comm.py, queue_injector.py, cross_chat_queue.py) but the automation loop is incomplete.
+
+**What's built:**
+- Task assignment via cca_comm.py (manual trigger)
+- Queue injection via queue_injector.py (automated hook)
+- Task catalog (KALSHI_TASK_CATALOG.md) with 5 task categories
+- Bridge files (CCA_TO_POLYBOT.md, POLYBOT_TO_CCA.md)
+
+**What's missing (from ORCHESTRATION_GAPS.md):**
+1. Worker health monitoring — desktop doesn't know if a chat died
+2. Automatic inbox processing — desktop manually checks inbox
+3. Orchestration budget enforcement — no limit on coordination overhead
+4. Bridge file sync automation — CCA_TO_POLYBOT.md diverges between projects
+5. Rate limit awareness in multi-chat orchestration
+6. Structured coordination loop in /cca-auto-desktop
+
+**Phases:**
+- Phase 1: Auto-inbox processing in /cca-auto-desktop work loop
+- Phase 2: Worker health monitoring (lightweight heartbeat/PID check)
+- Phase 3: Bridge file sync (symlink or copy-on-wrap)
+- Phase 4: Orchestration budget cap (10-15% context per session)
+- Phase 5: Full automated task assignment — CCA assigns, Kalshi executes, CCA verifies
+
+**Relationship to existing MTs:**
+- MT-21 (Hivemind) covers the 2-chat/3-chat coordination framework
+- MT-30 (Session Daemon) covers auto-spawning
+- This MT covers the automation BETWEEN chats — making them a self-coordinating system
+
+**Status:** IDEA LOGGED (S169). Infrastructure partially built. Gaps documented in ORCHESTRATION_GAPS.md.
+
+---
+
+## MT-45: USAGE-5 Streamlit/Web Dashboard
+
+**Source:** ROADMAP.md (original 5-frontier plan), usage-dashboard/CLAUDE.md
+**Elevated:** S169 (2026-03-26) — documented as MT per Matthew directive
+
+**What:** A web-based Streamlit (or standalone HTML) dashboard for real-time token/cost visibility. Originally planned as USAGE-5 in the frontier roadmap but deprioritized because the CLI covers basic needs.
+
+**Why it was deferred:** "not started, not urgent — CLI covers all needs" (ROADMAP.md). The HTML dashboard from MT-32 partially addresses this.
+
+**What it would add beyond current tooling:**
+- Real-time token burn tracking per session (live updating)
+- Cost breakdown by tool type (Read/Write/Bash/Agent/etc.)
+- Historical session comparison (cost trends over time)
+- Budget alerting with visual indicators
+- Sub-agent cost attribution (which spawned agents cost the most)
+- Integration with usage_counter.py and otel_receiver.py (both built)
+
+**Relationship to existing MTs:**
+- MT-32 (Design Engineering) — dashboard_generator.py already makes static HTML dashboards
+- MT-36 (Session Efficiency) — efficiency_dashboard.py tracks overhead
+- USAGE-1/2/3 all built — this adds the VISUAL layer
+
+**Status:** IDEA LOGGED (S169). Low priority — current CLI and HTML dashboards cover most needs. Build only if Matthew specifically requests real-time web visualization.
+
+---
+
+## MT-46: Report Self-Audit System (Honest Assessment)
+
+**Source:** TODAYS_TASKS.md C5 (S151) — "Address Honest Assessment report issues"
+**Elevated:** S169 (2026-03-26) — documented as MT per Matthew directive
+
+**What Matthew wants:** CCA reports (/cca-report) include an "Honest Assessment" section that self-critiques the project's progress. This MT makes that self-critique systematic and actionable — not just a paragraph in a PDF.
+
+**Scope:**
+- Systematic gap detection between MASTER_TASKS.md status claims and actual code/test state
+- doc_drift_checker.py already does this for test counts and file paths — extend to MT status claims
+- Automated "are we lying to ourselves?" audit each session
+- Flag MTs marked as COMPLETE that have known regression or unfixed issues
+- Integration with /arewedone structural completeness checker
+
+**What exists:**
+- doc_drift_checker.py — checks test counts, file paths vs reality
+- arewedone.py — structural completeness checker
+- TODAYS_TASKS C5 notes this as an identified gap
+
+**Phases:**
+- Phase 1: Build mt_status_auditor.py — cross-reference MT status claims with code/test reality
+- Phase 2: Wire into /cca-report "Honest Assessment" section — auto-generate, not hand-written
+- Phase 3: Wire into /cca-init briefing — flag any dishonest MT status claims at session start
+
+**Status:** IDEA LOGGED (S169). doc_drift_checker.py and arewedone.py provide the foundation.
+
+---
+
+## MT-47: External Tool Evaluation Pipeline (BUILD Findings Backlog)
+
+**Source:** FINDINGS_LOG.md BUILD verdicts (S14-S165), MT-41 (Synthetic MT Origination)
+**Elevated:** S169 (2026-03-26) — documented as MT per Matthew directive
+
+**What:** Multiple community tools have been flagged as BUILD in FINDINGS_LOG.md but never systematically evaluated for integration. MT-41 auto-proposes MTs from findings, but this MT covers the actual evaluation pipeline — downloading, testing, assessing, and deciding ADOPT/ADAPT/PASS for each tool.
+
+**BUILD findings backlog (not yet evaluated in depth):**
+1. **CShip** — Rust statusline for Claude Code (cost, context bar, usage limits)
+2. **claude-devtools** — desktop app tailing ~/.claude/ session logs (diffs, token breakdown, sub-agent tree)
+3. **Claude Control** — Electron multi-session dashboard (card layout, permission approval)
+4. **Recon** — tmux-native Rust+Ratatui dashboard (context bar, multi-session)
+5. **ccusage.com** — web-based usage tracking
+6. **ClaudeCode Usage Menu Bar** — macOS menu bar usage display
+
+**Pipeline per tool:**
+1. Read source code (never execute untrusted code — Cardinal Rule 3)
+2. Assess architecture: is it clean? Secure? Well-tested?
+3. Compare vs CCA's existing equivalent (if any)
+4. Verdict: ADOPT (install/use as-is) / ADAPT (rebuild core ideas in CCA) / PASS (not useful)
+5. If ADAPT: create specific MT for the rebuild
+
+**Relationship to existing MTs:**
+- MT-41 (Synthetic MT Origination) proposes new MTs from findings — this MT evaluates the tools themselves
+- MT-1 (Visual Grid) was partially self-resolved by evaluating Claude Control and PATAPIM
+- MT-15 (Sandboxed Repo Testing) provides the testing framework — repo_tester.py
+
+**Status:** IDEA LOGGED (S169). 7+ tools in backlog. Safety-first: read source only, rebuild from scratch if useful.
+
+---
+
+## MT-48: Report Visual Polish (Chart/Layout Fixes)
+
+**Source:** TODAYS_TASKS.md C6 + C2 Notes (S151/S154/S155)
+**Elevated:** S169 (2026-03-26) — documented as MT per Matthew directive
+
+**What:** Specific, identified visual issues in CCA status reports that need fixing. These are concrete Typst template and chart_generator fixes, not research.
+
+**Known issues (from S154 agent visual audit of CCA_STATUS_REPORT_2026-03-24.pdf):**
+1. MT Phase Progress chart: X-axis labels overlap and are unreadable
+2. Chart axes show decimal values for integer data (LOC counts, file counts)
+3. Pages 5 and 10 have significant wasted whitespace
+4. design-guide.md color palette does not match actual Typst template colors
+5. TOC page numbers missing
+6. Cover title formatting inconsistent
+7. MT section needs condensing
+8. Trend/delta section (report_differ.py integration) not yet wired in
+
+**Fixes needed:**
+- Rotate/abbreviate X-axis labels in chart_generator.py
+- Force integer axis ticks for count-based charts
+- Compress whitespace in Typst template
+- Sync design-guide.md colors with actual template colors
+- Wire report_differ.py into /cca-report for trend data
+
+**Relationship to existing MTs:**
+- MT-32 (Design Engineering) is the parent — these are specific Phase 8+ items
+- MT-33 (Strategic Intelligence Report) covers the data side — this covers the visual side
+
+**Status:** IDEA LOGGED (S169). All issues are concrete and actionable — no research needed, just implementation.
+
+---
+
+## MT-49: Self-Learning Evolution Engine (UBER-LEVEL)
+
+**Classification:** UBER-LEVEL MASTER TASK — Continuous Self-Improvement for CCA + Kalshi Bot
+**Elevated:** S169 (2026-03-26) — Matthew directive: "How do I also emphasize evolving the self-learning/improvement/advancement mechanisms for both you and Kalshi bot too?"
+**Source:** CCA_PRIME_DIRECTIVE.md Pillar 1 (Get Smarter) + Matthew S169 explicit
+
+**What Matthew wants:** The self-learning infrastructure that already exists (MT-10, MT-28, MT-0) must NEVER stop evolving. This is not a "build it and done" MT — it's a permanent, ongoing commitment to making CCA and the Kalshi bot measurably smarter every session. The self-learning system itself must self-learn — meta-improvement.
+
+**Why this is UBER-LEVEL:** Self-learning is the foundation that makes EVERYTHING ELSE better. A smarter agent writes better code, makes better trading decisions, produces better research, catches more bugs, and wastes fewer tokens. This MT is the multiplier on all other MTs.
+
+**Current state (what's already built):**
+
+| System | Module | What It Does | Domain |
+|--------|--------|-------------|--------|
+| Session learning | journal.py, reflect.py | Log events, detect patterns, recommend improvements | CCA |
+| YoYo evolution | improver.py | Self-modifying improvement loop | CCA |
+| Principle registry | principle_registry.py | Laplace-scored principles across domains | CCA + Kalshi |
+| Pattern detectors | pattern_registry.py, detectors.py | 12 pluggable pattern detectors | CCA + Kalshi |
+| Sentinel bridge | sentinel_bridge.py | Adaptive mutation from sentinel events | CCA |
+| Predictive recommender | predictive_recommender.py | Pre-session recommendations from principle scores | CCA |
+| Outcome feedback | outcome_feedback.py | Close loop: research outcomes -> principle scores | CCA + Kalshi |
+| Principle transfer | principle_transfer.py | Cross-domain principle affinity scoring | CCA + Kalshi |
+| Trade reflector | trade_reflector.py | 5 pattern detectors on live Kalshi trade data | Kalshi |
+| Strategy health | strategy_health_scorer.py | HEALTHY/MONITOR/PAUSE/KILL verdicts | Kalshi |
+| Calibration bias | calibration_bias.py | FLB detection, mispricing zones | Kalshi |
+| Regime detector | regime_detector.py | Market regime classification | Kalshi |
+| Dynamic Kelly | dynamic_kelly.py | Bayesian-updated bet sizing | Kalshi |
+| Session outcomes | session_outcome_tracker.py | Prompt-to-outcome tracking + auto-grade | CCA |
+| Batch wrap learning | batch_wrap_learning.py | Consolidated self-learning at session end | CCA |
+| Monte Carlo sim | monte_carlo_simulator.py | Bankroll simulation with DB bridge | Kalshi |
+| Signal pipeline | signal_pipeline.py | 6-module compound signal chain | Kalshi |
+
+**What "evolving the self-learning" means (concrete directions):**
+
+1. **Meta-learning** — The self-learning system tracks its OWN effectiveness. Which principles actually improved outcomes? Which detectors fire but add no value? Prune the noise, amplify the signal. The system that learns must also learn about its own learning.
+
+2. **Cross-domain transfer acceleration** — principle_transfer.py exists but is passive. Make it active: when a principle succeeds in CCA (e.g., "tests before code"), automatically propose it to Kalshi domain (e.g., "paper trade before live"). Measure transfer success rate.
+
+3. **Automated principle discovery** — Currently principles are seeded manually or from FINDINGS_LOG. Add automated principle extraction from: (a) session transcripts, (b) git commit patterns, (c) test pass/fail sequences, (d) Kalshi bet outcome patterns. The system should discover principles humans didn't think to encode.
+
+4. **Confidence calibration** — Track principle prediction accuracy over time. If a principle says "do X" and outcomes are 50/50, its confidence should decay. If another principle is right 90% of the time, boost it. Bayesian updating, not static scores.
+
+5. **Adversarial self-testing** — Periodically run the self-learning system against historical data with known outcomes. Does it correctly predict which sessions were good? Which trades were profitable? If not, something is miscalibrated.
+
+6. **Research-to-production pipeline** — CCA does academic research (paper_scanner, paper_digest). The Kalshi bot uses live trading. The gap: turning research findings into live trading improvements with measured ROI. learning_loop.py and research_outcomes.py started this but need deeper integration.
+
+7. **Session-over-session metrics** — Track measurable improvement: session grade trend, test-per-session velocity, Kalshi win rate trend, principle accuracy trend, token efficiency trend. If these metrics plateau, the self-learning system needs to evolve.
+
+**Phases (ongoing — no "done" state):**
+- Phase 1: Meta-learning dashboard — track self-learning system effectiveness over 20+ sessions
+- Phase 2: Active principle transfer — automated cross-domain proposal with acceptance tracking
+- Phase 3: Automated principle discovery — extract from transcripts + git + test patterns
+- Phase 4: Confidence recalibration — Bayesian decay/boost on principle scores
+- Phase 5: Research-to-production ROI tracking — measure which CCA research actually made money
+- Phase 6+: Continuous evolution — this MT never closes. New phases added as the system evolves.
+
+**Relationship to existing MTs:**
+- MT-10 (YoYo Self-Learning) — COMPLETED foundation. MT-49 is the permanent evolution layer on top.
+- MT-28 (Self-Learning v2) — COMPLETED multi-domain extension. MT-49 ensures it keeps getting smarter.
+- MT-0 (Kalshi Self-Learning Integration) — COMPLETED Phase 1. MT-49 drives the Kalshi side forward.
+- MT-37 (Investment Research) — Pillar 8 (Self-Learning Integration) feeds back into MT-49.
+
+**Rigor standard:** Same as everything else — structural basis, math validation, measured outcomes. No "I think this makes us smarter" — prove it with data.
+
+**Status:** UBER-LEVEL DOCUMENTED (S169). Permanent MT — no completion date. Existing infrastructure is strong. Focus on meta-learning and automated principle discovery as first priorities.
