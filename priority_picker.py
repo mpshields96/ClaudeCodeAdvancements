@@ -991,6 +991,17 @@ class PriorityPicker:
                 lines.append(f"  {rt.name} — {rt.days_stale}d stale")
             lines.append("")
 
+        # Scan staleness check (MT-40)
+        try:
+            from scan_scheduler import ScanScheduler
+            sched = ScanScheduler.from_registry_file()
+            rec = sched.recommend()
+            if rec.action == "SCAN_NOW":
+                lines.append(f"SCAN ALERT: {len(rec.stale_subs)} subreddit(s) stale — top target: {rec.top_target}")
+                lines.append("")
+        except Exception:
+            pass  # scan_scheduler not available or broken — skip silently
+
         alert = self.stagnation_alert()
         if alert:
             lines.append(alert)
