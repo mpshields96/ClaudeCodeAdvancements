@@ -3,7 +3,8 @@
 **Status:** IN PROGRESS
 **Phase:** 1 of 7 (Deep Academic Research Survey)
 **Estimated Sessions:** 3-5
-**This Session:** Areas 1-3 of 10 (Modern Portfolio Theory, Factor Models, Risk Parity)
+**S178:** Areas 1-3 of 10 (Modern Portfolio Theory, Factor Models, Risk Parity)
+**S179:** Areas 4-7 of 10 (Momentum & Value, Behavioral Finance, Tax-Loss Harvesting, Retirement Planning)
 **Rigor Standard:** Structural basis + math validation + 20yr backtest + statistical significance
 
 ---
@@ -15,15 +16,15 @@
 | 1 | Modern Portfolio Theory | Markowitz 1952, Sharpe 1964, Black-Litterman 1992 | COMPLETE |
 | 2 | Factor Models | FF 3-factor 1993, Carhart 4-factor 1997, FF 5-factor 2015 | COMPLETE |
 | 3 | Risk Parity | Qian 2005/2016, Bridgewater All Weather, Maillard et al. 2010 | COMPLETE |
-| 4 | Momentum & Value | Asness et al. 2013, AQR research | NOT STARTED |
-| 5 | Behavioral Finance | Kahneman & Tversky 1979, Shiller 2000, Thaler 2015 | NOT STARTED |
-| 6 | Tax-Loss Harvesting | Constantinides 1983, Berkin & Ye 2003 | NOT STARTED |
-| 7 | Retirement Planning | Bengen 1994, Kitces 2008, ERN 2017 | NOT STARTED |
+| 4 | Momentum & Value | Jegadeesh & Titman 1993, Asness et al. 2013, AQR 2014 | COMPLETE |
+| 5 | Behavioral Finance | Kahneman & Tversky 1979, Shiller 2000/2015, Benartzi & Thaler 1995 | COMPLETE |
+| 6 | Tax-Loss Harvesting | Constantinides 1983, Berkin & Ye 2003 | COMPLETE |
+| 7 | Retirement Planning | Bengen 1994, Kitces 2008, Guyton-Klinger 2006, ERN 2017 | COMPLETE |
 | 8 | Kelly Criterion (Long-Horizon) | Thorp 2006, MacLean et al. 2011 | NOT STARTED |
 | 9 | Index Investing | Bogle 2007, Sharpe 1991 | NOT STARTED |
 | 10 | Alternative Risk Premia | Ilmanen 2011, Ang 2014 | NOT STARTED |
 
-**Papers synthesized so far:** 15 of 50+ target
+**Papers synthesized so far:** 30 of 50+ target
 
 ---
 
@@ -730,16 +731,466 @@ All citations below have been verified via web search. DOIs and URLs confirmed.
 13. Maillard, S., Roncalli, T. & Teiletche, J. (2010). "On the Properties of Equally-Weighted Risk Contributions Portfolios." Journal of Portfolio Management, 36(4), 60-70. DOI: 10.3905/jpm.2010.36.4.060
 14. Bridgewater Associates. "The All Weather Story." https://www.bridgewater.com/research-and-insights/the-all-weather-story
 
+### Area 4: Momentum & Value
+16. Jegadeesh, N. & Titman, S. (1993). "Returns to Buying Winners and Selling Losers." Journal of Finance, 48(1), 65-91. DOI: 10.1111/j.1540-6261.1993.tb04702.x
+17. Asness, C.S., Frazzini, A., Israel, R. & Moskowitz, T.J. (2014). "Fact, Fiction and Momentum Investing." Journal of Portfolio Management, 40(5), 75-92. [UNVERIFIED — widely cited AQR paper]
+18. Fama, E.F. & French, K.R. (2012). "Size, Value, and Momentum in International Stock Returns." Journal of Financial Economics, 105(3), 457-472. DOI: 10.1016/j.jfineco.2012.05.011
+
+### Area 5: Behavioral Finance
+19. Kahneman, D. & Tversky, A. (1979). "Prospect Theory: An Analysis of Decision under Risk." Econometrica, 47(2), 263-292. DOI: 10.2307/1914185
+20. Shiller, R.J. (2015). "Irrational Exuberance" (3rd Edition). Princeton University Press.
+21. Benartzi, S. & Thaler, R.H. (1995). "Myopic Loss Aversion and the Equity Premium Puzzle." Quarterly Journal of Economics, 110(1), 73-92. DOI: 10.2307/2118511
+22. Odean, T. (1998). "Are Investors Reluctant to Realize Their Losses?" Journal of Finance, 53(5), 1775-1798. [UNVERIFIED — widely cited]
+
+### Area 6: Tax-Loss Harvesting
+23. Constantinides, G.M. (1983). "Capital Market Equilibrium with Personal Tax." Econometrica, 51(3), 611-636. DOI: 10.2307/1912150
+24. Berkin, A.L. & Ye, J. (2003). "Tax Management, Loss Harvesting, and HIFO Accounting." Financial Analysts Journal, 59(6), 91-98. [UNVERIFIED — widely cited]
+25. Arnott, R.D., Berkin, A.L. & Ye, J. (2001). "The Management and Mismanagement of Taxable Portfolios." Journal of Investing, 10(1). [UNVERIFIED]
+
+### Area 7: Retirement Planning
+26. Bengen, W.P. (1994). "Determining Withdrawal Rates Using Historical Data." Journal of Financial Planning, 7(4), 171-180. [UNVERIFIED — original source of the 4% rule]
+27. Guyton, J.T. & Klinger, W.J. (2006). "Decision Rules and Maximum Initial Withdrawal Rates." Journal of Financial Planning, 19(3), 48-58. [UNVERIFIED]
+28. Jeske, K. (2017-2018). "Safe Withdrawal Rate Series." earlyretirementnow.com/safe-withdrawal-rate-series/
+29. Kitces, M. (2008). "Resolving the Paradox — Is the Safe Withdrawal Rate Sometimes Too Safe?" Kitces.com. [UNVERIFIED — practitioner research]
+
 ### Supporting References (cited in analysis)
 15. Banz, R. (1981). "The Relationship Between Return and Market Value of Common Stocks." Journal of Financial Economics, 9(1), 3-18. [UNVERIFIED — widely cited, not independently confirmed via search]
+30. Campbell, J.Y. & Shiller, R.J. (1998). "Valuation Ratios and the Long-Run Stock Market Outlook." Journal of Portfolio Management, 24(2), 11-26. [UNVERIFIED]
 
 ---
 
-## Next Steps (Areas 4-10)
+## Area 4: Momentum & Value
+
+Cross-asset momentum and value are among the most robust anomalies in finance. They are
+negatively correlated with each other, making a combined momentum+value portfolio significantly
+more efficient than either alone.
+
+### 4.1 Jegadeesh & Titman (1993) — Returns to Buying Winners and Selling Losers
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency |
+| **Authors** | Narasimhan Jegadeesh, Sheridan Titman |
+| **Year** | 1993 |
+| **Journal** | Journal of Finance, 48(1), 65-91 |
+| **DOI** | 10.1111/j.1540-6261.1993.tb04702.x |
+
+**Core Thesis:**
+Stocks that performed well over the past 3-12 months continue to outperform, and stocks that
+performed poorly continue to underperform, over the following 3-12 months. This "momentum effect"
+is one of the most robust anomalies — it persists across time periods, countries, and asset classes.
+The optimal formation-holding period is roughly 6 months look-back, 6 months hold (6/6 strategy).
+
+Critically, momentum reverses at horizons beyond 12 months (long-term reversal / mean reversion).
+This means momentum is a medium-term phenomenon, not a permanent drift.
+
+**Key Mathematical Framework:**
+- Sort stocks into deciles by past 6-month return
+- Long top decile (winners), short bottom decile (losers)
+- Average monthly return of long-short portfolio: ~1% per month (12% annually)
+- Skip the most recent month (avoids short-term reversal / bid-ask bounce)
+
+**Empirical Evidence:**
+- U.S. equities 1965-1989. The 6-month/6-month strategy produced 12.01% annualized excess return
+- Results robust across size quintiles (not a small-cap effect)
+- Momentum profits partially reversed after 12 months, consistent with delayed overreaction
+
+**Relevance to UBER:**
+Momentum is implementable via sector/country ETF rotation: overweight recent winners, underweight
+recent losers. The 6-month lookback with 1-month skip is the standard parameterization. Rebalancing
+frequency should be monthly or quarterly to capture the effect without excessive turnover.
+
+### 4.2 Asness, Moskowitz & Pedersen (2013) — Value and Momentum Everywhere
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Value and Momentum Everywhere |
+| **Authors** | Clifford S. Asness, Tobias J. Moskowitz, Lasse Heje Pedersen |
+| **Year** | 2013 |
+| **Journal** | Journal of Finance, 68(3), 929-985 |
+| **DOI** | 10.1111/jofi.12021 |
+
+**Core Thesis:**
+Value and momentum premia exist in every major asset class: U.S. equities, international equities,
+government bonds, currencies, and commodity futures. More importantly, value and momentum are
+**negatively correlated** within and across asset classes. A combined value+momentum portfolio
+has significantly higher Sharpe ratio than either strategy alone.
+
+The negative correlation suggests different economic mechanisms drive value (discount rate risk,
+distress risk) and momentum (behavioral underreaction, slow information diffusion). This makes
+them natural complements in a diversified portfolio.
+
+**Key Mathematical Framework:**
+- Value signal: book-to-market (equities), carry (bonds/FX), 5-year reversal (commodities)
+- Momentum signal: past 12-month return minus most recent month (12-1)
+- Within each asset class, long cheap+winners, short expensive+losers
+- Cross-asset correlation of value strategies: +0.58 (substantial positive correlation)
+- Cross-asset correlation of momentum strategies: +0.55
+- Correlation between value and momentum within same asset class: approximately -0.50
+
+**Empirical Evidence:**
+- 8 asset classes, multiple countries, 1972-2011
+- Value Sharpe ratio (diversified): ~0.60. Momentum Sharpe ratio (diversified): ~0.80
+- Combined 50/50 value+momentum Sharpe ratio: ~1.10 (synergy from negative correlation)
+- Results robust out-of-sample, across subperiods, and after transaction costs
+
+**Relevance to UBER:**
+This is the strongest argument for combining value tilt and momentum tilt in an ETF portfolio.
+Practical implementation: value-tilted ETFs (e.g., small-cap value) + momentum overlay (sector
+or country rotation). The negative correlation between the two means rebalancing toward value
+when momentum underperforms (and vice versa) is a natural rebalancing alpha source.
+
+### 4.3 AQR — Fact, Fiction and Momentum Investing
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Fact, Fiction and Momentum Investing |
+| **Authors** | Clifford S. Asness, Andrea Frazzini, Ronen Israel, Tobias J. Moskowitz |
+| **Year** | 2014 |
+| **Journal** | Journal of Portfolio Management, 40(5), 75-92 [UNVERIFIED — widely cited AQR paper] |
+
+**Core Thesis:**
+Addresses common objections to momentum: (1) "momentum is too expensive to trade" — false,
+with modern execution costs of 10-20bps, momentum profits far exceed costs; (2) "momentum crashes"
+— real risk, but manageable with dynamic exposure; (3) "momentum doesn't work in large-caps"
+— false, works across all size segments; (4) "momentum is just risk" — partially, but not fully
+explained by standard risk models.
+
+**Key Insight for UBER:**
+Momentum crashes (like 2009 reversal) are the main risk. They occur when markets reverse sharply
+after prolonged trends. Mitigation: combine momentum with value (natural hedge), limit concentration,
+and use volatility-scaling (reduce exposure when market volatility is high).
+
+### Synthesis: Momentum & Value
+
+Momentum and value are the two most robust return anomalies in finance. Their negative correlation
+is arguably the single most important diversification opportunity within factor investing. For UBER:
+- Value tilt via small-cap value ETFs (persistent long-run premium, ~2-3% annually)
+- Momentum via sector/country rotation (monthly or quarterly rebalance)
+- Combined Sharpe improvement of ~40-50% over either alone
+- Key risk: momentum crashes during sharp market reversals (2009-type)
+
+---
+
+## Area 5: Behavioral Finance
+
+Behavioral finance explains WHY anomalies like momentum and value persist: cognitive biases cause
+systematic mispricings that rational arbitrageurs cannot fully eliminate. For UBER, the key
+application is designing guard rails that prevent the investor from sabotaging their own strategy.
+
+### 5.1 Kahneman & Tversky (1979) — Prospect Theory
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Prospect Theory: An Analysis of Decision under Risk |
+| **Authors** | Daniel Kahneman, Amos Tversky |
+| **Year** | 1979 |
+| **Journal** | Econometrica, 47(2), 263-292 |
+| **DOI** | 10.2307/1914185 |
+
+**Core Thesis:**
+People evaluate outcomes relative to a reference point (not absolute wealth) and exhibit loss
+aversion — losses hurt roughly 2x as much as equivalent gains feel good. Additionally, people
+overweight small probabilities and underweight large probabilities (probability weighting function).
+
+This explains the disposition effect (selling winners too early, holding losers too long), the
+equity premium puzzle (demanding too much compensation for stock volatility), and lottery-like
+behavior in markets (overpaying for long-shot bets).
+
+**Key Mathematical Framework:**
+- Value function: v(x) = x^α for gains, v(x) = -λ(-x)^β for losses
+- λ ≈ 2.25 (loss aversion coefficient)
+- α ≈ β ≈ 0.88 (diminishing sensitivity)
+- Probability weighting: π(p) — overweights small p, underweights large p
+- Reference dependence: outcomes coded as gains/losses relative to status quo
+
+**Relevance to UBER:**
+Automation is the primary defense against loss aversion. A systematic rebalancing system removes
+the emotional decision of whether to "sell winners" or "hold losers." UBER should rebalance on
+schedule (time-based) or on threshold (drift-based), never on feeling.
+
+### 5.2 Shiller (2000/2015) — Irrational Exuberance & CAPE
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Irrational Exuberance (Third Edition) |
+| **Authors** | Robert J. Shiller |
+| **Year** | 2000 (1st ed), 2015 (3rd ed) |
+| **Publisher** | Princeton University Press |
+| **URL** | http://www.econ.yale.edu/~shiller/data.htm (data) |
+
+**Core Thesis:**
+Stock market valuations deviate from fundamentals for extended periods due to feedback loops
+between price increases, media narratives, and investor enthusiasm. The CAPE ratio (Cyclically
+Adjusted Price-to-Earnings, also Shiller PE) — current price divided by 10-year average real
+earnings — is the best single predictor of long-run (10-year) real stock returns.
+
+**Key Mathematical Framework:**
+- CAPE = Price / (10-year average real earnings per share)
+- Historical average CAPE ≈ 16-17 (U.S. market)
+- Correlation with subsequent 10-year real return: approximately -0.70
+- CAPE > 25: expect below-average returns. CAPE < 15: expect above-average returns
+
+**Empirical Evidence:**
+- U.S. data 1871-2015 (Shiller dataset, freely available)
+- CAPE predicted the 2000 dot-com crash (CAPE > 40) and 2007 financial crisis (CAPE ~27)
+- The 10-year predictive power is robust internationally (Campbell & Shiller 1998)
+
+**Relevance to UBER:**
+CAPE is the primary valuation signal for strategic asset allocation. When CAPE is high (>25),
+tilt toward international equities, bonds, or value. When CAPE is low (<15), overweight domestic
+equities. This should not be a timing signal (CAPE can stay elevated for years) but a gradual
+allocation adjustment. UBER should include CAPE as a rebalancing modifier, not a binary switch.
+
+### 5.3 Benartzi & Thaler (1995) — Myopic Loss Aversion
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Myopic Loss Aversion and the Equity Premium Puzzle |
+| **Authors** | Shlomo Benartzi, Richard H. Thaler |
+| **Year** | 1995 |
+| **Journal** | Quarterly Journal of Economics, 110(1), 73-92 |
+| **DOI** | 10.2307/2118511 |
+
+**Core Thesis:**
+The equity premium puzzle (stocks returning ~6% more than bonds annually, far more than risk models
+predict) is explained by the combination of loss aversion (from prospect theory) and narrow framing
+(evaluating returns too frequently). An investor who checks their portfolio daily experiences many
+more "loss days" than one who checks annually — and each loss hurts 2.25x as much as gains feel good.
+
+The optimal evaluation frequency that makes investors indifferent between stocks and bonds is
+approximately 13 months — remarkably close to the typical annual review period.
+
+**Key Insight for UBER:**
+Check portfolio performance infrequently. Quarterly or annual review is optimal. More frequent
+checking increases the perceived riskiness of equities and triggers loss-averse selling behavior.
+UBER's automation should handle rebalancing without requiring the investor to look at returns.
+
+### Synthesis: Behavioral Finance
+
+Behavioral biases are the primary reason market anomalies persist and the primary risk to any
+systematic strategy. For UBER:
+- **Automate everything** — remove emotional decision points (rebalancing, tax-loss harvesting)
+- **Reduce check frequency** — quarterly or annual review, never daily
+- **Use CAPE as a slow valuation signal** — not timing, but gradual allocation adjustment
+- **Design for loss aversion** — frame contributions as "buying cheap" during drawdowns
+- **Pre-commit to strategy** — write rules before implementing, don't change mid-drawdown
+
+---
+
+## Area 6: Tax-Loss Harvesting
+
+Tax-loss harvesting (TLH) is one of the few strategies that provides genuine "free" alpha — it
+doesn't require any market view, only tax code awareness. For taxable accounts, systematic TLH
+can add 0.5-1.5% annually after tax.
+
+### 6.1 Constantinides (1983) — Optimal Tax Trading Strategy
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Capital Market Equilibrium with Personal Tax |
+| **Authors** | George M. Constantinides |
+| **Year** | 1983 |
+| **Journal** | Econometrica, 51(3), 611-636 |
+| **DOI** | 10.2307/1912150 |
+
+**Core Thesis:**
+In the presence of capital gains taxes, the optimal strategy is to realize losses immediately and
+defer gains as long as possible. This is because realized losses provide an immediate tax benefit
+(reducing current tax liability), while deferred gains grow tax-free. The value of the tax deferral
+option increases with the investor's tax rate and the expected return of the asset.
+
+**Key Mathematical Framework:**
+- After-tax return = Pre-tax return - Tax drag
+- Tax drag = τ × (realized gains - realized losses) / portfolio value
+- Optimal strategy: harvest losses when unrealized loss > threshold
+- Threshold depends on: tax rate, transaction costs, expected holding period
+- Net benefit: ~0.5-1.0% annually for a diversified equity portfolio at typical tax rates
+
+**Relevance to UBER:**
+Every taxable account should have automated TLH. The rules are simple: (1) sell any position with
+unrealized loss > threshold (e.g., 5%), (2) immediately buy a "substantially different" replacement
+(different ETF tracking similar index), (3) wait 31 days before buying back original (wash sale rule).
+
+### 6.2 Berkin & Ye (2003) — Tax Management and Loss Harvesting
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Tax Management, Loss Harvesting, and HIFO Accounting |
+| **Authors** | Andrew L. Berkin, Jia Ye |
+| **Year** | 2003 |
+| **Journal** | Financial Analysts Journal, 59(6), 91-98 [UNVERIFIED — widely cited] |
+
+**Core Thesis:**
+Systematic tax-loss harvesting with HIFO (Highest In, First Out) lot accounting adds 0.75-1.50%
+annually to after-tax returns. HIFO means selling the highest-cost-basis lots first when realizing
+losses, maximizing the tax benefit per share sold. The combination of TLH + HIFO + tax-lot
+management is the most impactful after-tax optimization available to taxable investors.
+
+**Key Findings:**
+- TLH alone adds ~0.50% annually (conservative, high-quality index)
+- HIFO accounting adds another ~0.25% vs FIFO
+- Combined with deferral of gains: ~1.0-1.5% total after-tax alpha
+- Benefits compound over time (deferred gains grow tax-free)
+- Transaction costs (~10-20bps per harvest) are far outweighed by tax savings
+
+**Relevance to UBER:**
+UBER should use HIFO accounting for all taxable accounts and trigger TLH automatically when
+unrealized losses exceed a threshold. Replacement securities should be pre-mapped (e.g., VTI ↔ ITOT,
+VXUS ↔ IXUS) to maintain market exposure while satisfying wash sale rules.
+
+### 6.3 Practical TLH Implementation
+
+Key rules for automated TLH in UBER:
+- **Loss threshold**: Harvest when unrealized loss > 5% of position (avoid over-trading)
+- **Wash sale awareness**: Track 30-day windows across all accounts (IRA, 401k, taxable)
+- **Replacement pairs**: Map each ETF to 2-3 substitutes (different fund family, same exposure)
+- **Year-end**: Accelerate harvesting in November-December for current-year tax benefit
+- **Short-term vs long-term**: Prioritize short-term losses (taxed at ordinary income rate)
+- **Direct indexing**: For larger portfolios (>$100K), individual stocks enable more harvesting
+  opportunities than ETFs (more positions = more independent loss events)
+
+### Synthesis: Tax-Loss Harvesting
+
+TLH is the highest-ROI automation feature for taxable accounts. It requires no market view,
+no factor bets, no risk — just tax code awareness and disciplined execution. For UBER:
+- Automated TLH with HIFO accounting = 0.75-1.50% annual after-tax alpha
+- Pre-mapped replacement securities avoid wash sale violations
+- Batch harvesting (monthly scan) is sufficient — daily scanning adds complexity without benefit
+- Track across all accounts to avoid inadvertent wash sales
+
+---
+
+## Area 7: Retirement Planning & Safe Withdrawal Rates
+
+Retirement planning answers the decumulation question: how much can you safely spend from a
+portfolio without running out of money? This is the complement to accumulation (portfolio growth).
+
+### 7.1 Bengen (1994) — The 4% Rule
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Determining Withdrawal Rates Using Historical Data |
+| **Authors** | William P. Bengen |
+| **Year** | 1994 |
+| **Journal** | Journal of Financial Planning, 7(4), 171-180 [UNVERIFIED — widely cited, original journal] |
+
+**Core Thesis:**
+A retiree with a 50/50 stock/bond portfolio can withdraw 4% of initial portfolio value (adjusted for
+inflation annually) and never run out of money over any historical 30-year period. This is the
+"4% rule" — the SAFEMAX (maximum safe withdrawal rate) across all historical U.S. 30-year periods.
+
+**Key Mathematical Framework:**
+- Initial withdrawal = 4% × Portfolio value at retirement
+- Annual withdrawal = Prior year withdrawal × (1 + inflation)
+- Success = Portfolio balance > 0 at end of 30 years
+- SAFEMAX = Maximum initial withdrawal rate with 0% failure across all historical periods
+- Result: SAFEMAX ≈ 4.0-4.2% for 50/50 U.S. stock/bond, 30-year horizon
+
+**Empirical Evidence:**
+- U.S. data 1926-1992 (rolling 30-year periods)
+- Worst starting year: 1966 (high inflation + poor stock returns)
+- 75/25 stock/bond actually had higher SAFEMAX (~4.2%) than 50/50 (~4.0%)
+- 100% bonds: SAFEMAX only ~2.3% (inflation destroys fixed income)
+
+**Relevance to UBER:**
+The 4% rule is a conservative floor for withdrawal planning. UBER should use it as a baseline
+but allow dynamic adjustments based on CAPE (Kitces) and guardrails (Guyton-Klinger).
+
+### 7.2 Kitces (2008) — CAPE-Based Dynamic Withdrawals
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Resolving the Paradox — Is the Safe Withdrawal Rate Sometimes Too Safe? |
+| **Authors** | Michael Kitces |
+| **Year** | 2008 |
+| **Source** | Kitces.com / Nerd's Eye View blog [UNVERIFIED — widely cited practitioner research] |
+
+**Core Thesis:**
+The safe withdrawal rate depends on starting valuations. When CAPE is below 12, the historical
+SAFEMAX has been 5.5%+. When CAPE is above 20, the SAFEMAX drops to 4.0-4.5%. By adjusting
+the initial withdrawal rate based on CAPE at retirement, retirees can safely withdraw more in
+favorable environments and protect themselves in expensive markets.
+
+**Key Framework:**
+- CAPE < 12: Initial withdrawal rate 5.0-5.5%
+- CAPE 12-20: Initial withdrawal rate 4.5-5.0%
+- CAPE > 20: Initial withdrawal rate 4.0-4.5%
+- CAPE > 25: Initial withdrawal rate 3.5-4.0%
+
+**Relevance to UBER:**
+CAPE at retirement should set the initial withdrawal rate. UBER should store CAPE at portfolio
+inception and adjust the withdrawal rate accordingly. This is a simple, evidence-based enhancement
+over the fixed 4% rule.
+
+### 7.3 Guyton & Klinger (2006) — Guardrail Decision Rules
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Decision Rules and Maximum Initial Withdrawal Rates |
+| **Authors** | Jonathan T. Guyton, William J. Klinger |
+| **Year** | 2006 |
+| **Journal** | Journal of Financial Planning, 19(3), 48-58 [UNVERIFIED — widely cited] |
+
+**Core Thesis:**
+Dynamic withdrawal rules ("guardrails") allow higher initial withdrawal rates (5.2-5.6%) while
+maintaining portfolio sustainability. The key rules:
+
+1. **Prosperity Rule**: If portfolio grows significantly (withdrawal rate drops below initial rate
+   by >20%), increase withdrawal by inflation + a bonus
+2. **Capital Preservation Rule**: If withdrawal rate exceeds initial rate by >20%, freeze nominal
+   withdrawal (no inflation adjustment that year)
+3. **Portfolio Management Rule**: Spend from asset class that is above target allocation (natural
+   rebalancing through spending)
+
+**Relevance to UBER:**
+Guardrails are the withdrawal equivalent of rebalancing bands. UBER should implement Guyton-Klinger
+style rules: raise spending when portfolio outperforms (prosperity), freeze spending when portfolio
+underperforms (preservation). This allows ~1% higher initial withdrawal vs static 4% rule.
+
+### 7.4 Early Retirement Now (ERN, 2017-2018) — Safe Withdrawal Rate Series
+
+| Field | Detail |
+|-------|--------|
+| **Title** | Safe Withdrawal Rate Series (60+ posts) |
+| **Authors** | Karsten Jeske (PhD Economics, a.k.a. "Big ERN") |
+| **Year** | 2017-2018 |
+| **Source** | earlyretirementnow.com/safe-withdrawal-rate-series/ |
+
+**Core Thesis:**
+The most comprehensive modern treatment of withdrawal rates. Key findings:
+- For 60-year horizons (early retirement), the safe rate drops to ~3.25-3.50%
+- CAPE-based dynamic rules improve success rates significantly
+- Equity glidepath (increasing equity allocation through retirement) outperforms static allocation
+- Bond tent (high bonds early, increasing equities over time) reduces sequence-of-returns risk
+- Monte Carlo simulation overstates success vs historical simulation (fat tails matter)
+
+**Key Insight — Equity Glidepath:**
+Start retirement with ~60% equities, increase to ~100% equities over 10 years. This protects
+against sequence-of-returns risk in the critical early years while maintaining long-run growth.
+Counter-intuitive but well-supported by both historical and Monte Carlo analysis.
+
+**Relevance to UBER:**
+For early retirement scenarios, UBER should use 3.25-3.50% initial rate (not 4%), implement an
+equity glidepath, and use CAPE as a dynamic modifier. The ERN series is the most actionable
+reference for modern withdrawal planning.
+
+### Synthesis: Retirement Planning
+
+Withdrawal planning is the complement to portfolio construction. For UBER:
+- **Baseline**: 4% rule (Bengen) as conservative floor
+- **Dynamic adjustment**: CAPE-based initial rate (Kitces) + guardrails (Guyton-Klinger)
+- **Long horizons**: 3.25-3.50% for 60+ year horizons (ERN)
+- **Glidepath**: Start 60% equity, increase to 100% over 10 years
+- **Automation**: Guardrails trigger automatically, no emotional spending decisions
+
+---
+
+## Next Steps (Areas 8-10)
 
 The next session should cover:
-- **Area 4:** Momentum & Value — Asness et al. 2013 (deeper dive), AQR research library
-- **Area 5:** Behavioral Finance — Kahneman & Tversky 1979, Shiller 2000, Thaler 2015
-- **Area 6:** Tax-Loss Harvesting — Constantinides 1983, Berkin & Ye 2003
+- **Area 8:** Kelly Criterion (Long-Horizon) — Thorp 2006, MacLean et al. 2011
+- **Area 9:** Index Investing — Bogle 2007, Sharpe 1991 "Arithmetic of Active Management"
+- **Area 10:** Alternative Risk Premia — Ilmanen 2011, Ang 2014
 
 Target: 50+ papers synthesized across all 10 areas.
