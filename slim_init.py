@@ -313,6 +313,33 @@ def run_principle_discoverer() -> dict:
         return {"discovered": 0, "error": "Timeout: principle_discoverer exceeded 30 seconds"}
 
 
+def run_recalibration(current_session: int = 0) -> dict:
+    """Run confidence_recalibrator.py summary for staleness info."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "confidence_recalibrator.py"),
+             "recalibrate", "--session", str(current_session)],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            return {"decayed": 0, "total": 0}
+
+        # Parse "Decayed: N  Stable: M"
+        m = re.search(r"Decayed:\s*(\d+)", output)
+        decayed = int(m.group(1)) if m else 0
+        m = re.search(r"(\d+)\s*principles?", output)
+        total = int(m.group(1)) if m else 0
+
+        return {"decayed": decayed, "total": total, "raw": output}
+    except subprocess.TimeoutExpired:
+        return {"decayed": 0, "total": 0, "error": "Timeout"}
+
+
 def run_timeline(n: int = 5) -> dict:
     """Run session_timeline.py recent N for quick history."""
     try:
@@ -390,6 +417,8 @@ def format_summary(summary: dict) -> str:
             lines.append(f"    Top: {summary['transfer_top']}")
     if summary.get("discoveries_count", 0) > 0:
         lines.append(f"  Discoveries: {summary['discoveries_count']} new patterns (dry-run)")
+    if summary.get("recal_decayed", 0) > 0:
+        lines.append(f"  Recalibration: {summary['recal_decayed']}/{summary.get('recal_total', 0)} principles decayed (staleness)")
     if summary.get("blockers"):
         lines.append("  BLOCKERS:")
         for b in summary["blockers"]:
@@ -440,6 +469,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3.9: Principle discovery (MT-49 Phase 3 — dry-run scan)
     discoverer = run_principle_discoverer()
 
+    # Step 3.10: Confidence recalibration (MT-49 Phase 4 — staleness check)
+    recal = run_recalibration(current_session=state.get("session_num", 0))
+
     # Step 4: Session timeline (last 5 sessions)
     timeline = run_timeline(5)
 
@@ -463,6 +495,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if discoverer.get("discovered", 0) > 0:
         summary["discoveries_count"] = discoverer["discovered"]
         summary["discoveries_raw"] = discoverer.get("raw", "")
+    if recal.get("decayed", 0) > 0:
+        summary["recal_decayed"] = recal["decayed"]
+        summary["recal_total"] = recal["total"]
 
     return summary
 

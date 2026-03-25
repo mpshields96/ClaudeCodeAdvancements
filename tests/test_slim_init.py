@@ -887,6 +887,83 @@ class TestSummaryIncludesDiscoverer(unittest.TestCase):
         self.assertNotIn("Discoveries", text)
 
 
+class TestRunRecalibration(unittest.TestCase):
+    """Test confidence recalibration integration in slim init."""
+
+    @patch("slim_init.subprocess.run")
+    def test_recalibration_returns_decayed_count(self, mock_run):
+        from slim_init import run_recalibration
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Recalibration: 50 principles (session 172)\n  Decayed: 8  Stable: 42",
+            stderr=""
+        )
+        result = run_recalibration(current_session=172)
+        self.assertEqual(result["decayed"], 8)
+        self.assertEqual(result["total"], 50)
+
+    @patch("slim_init.subprocess.run")
+    def test_recalibration_zero_decayed(self, mock_run):
+        from slim_init import run_recalibration
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Recalibration: 30 principles (session 172)\n  Decayed: 0  Stable: 30",
+            stderr=""
+        )
+        result = run_recalibration(current_session=172)
+        self.assertEqual(result["decayed"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_recalibration_handles_failure(self, mock_run):
+        from slim_init import run_recalibration
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="", stderr="Error"
+        )
+        result = run_recalibration()
+        self.assertEqual(result["decayed"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_recalibration_handles_timeout(self, mock_run):
+        from slim_init import run_recalibration
+        import subprocess
+        mock_run.side_effect = subprocess.TimeoutExpired("python3", 15)
+        result = run_recalibration()
+        self.assertIn("error", result)
+
+
+class TestSummaryIncludesRecalibration(unittest.TestCase):
+    """Test that recalibration results flow into summary format."""
+
+    def test_format_summary_shows_recalibration(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 172,
+            "last_session_id": "S172",
+            "top_pick": "MT-49",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+            "recal_decayed": 8,
+            "recal_total": 50,
+        }
+        text = format_summary(summary)
+        self.assertIn("Recalibration", text)
+        self.assertIn("8", text)
+
+    def test_format_summary_omits_recalibration_when_zero(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 172,
+            "last_session_id": "S172",
+            "top_pick": "MT-49",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+        }
+        text = format_summary(summary)
+        self.assertNotIn("Recalibration", text)
+
+
 class TestSlimInitIncludesDiscoverer(unittest.TestCase):
     """Test principle discoverer is wired into the full slim init flow."""
 
