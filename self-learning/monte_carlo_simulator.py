@@ -19,9 +19,12 @@ CLI:
 import argparse
 import json
 import math
+import os
 import random
+import sqlite3
 import statistics
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -63,6 +66,73 @@ class BetDistribution:
             win_values=wins,
             loss_values=losses,
         )
+
+    @classmethod
+    def from_db(
+        cls,
+        db_path: str | None = None,
+        strategy: str | None = None,
+        daily_volume: int | None = None,
+    ) -> "BetDistribution":
+        """Create distribution from actual polybot.db trade history.
+
+        Args:
+            db_path: Path to polybot.db. Defaults to ~/Projects/polymarket-bot/data/polybot.db
+            strategy: Filter to specific strategy (e.g. 'expiry_sniper_v1'). None = all live.
+            daily_volume: Override daily volume. None = estimate from data.
+        """
+        if db_path is None:
+            db_path = os.path.expanduser("~/Projects/polymarket-bot/data/polybot.db")
+
+        if not os.path.exists(db_path):
+            raise FileNotFoundError(f"DB not found: {db_path}")
+
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        try:
+            # Get settled live trade P&L values
+            query = """
+                SELECT pnl_cents FROM trades
+                WHERE is_paper = 0 AND result IS NOT NULL AND pnl_cents IS NOT NULL
+            """
+            params = []
+            if strategy:
+                query += " AND strategy = ?"
+                params.append(strategy)
+
+            rows = conn.execute(query, params).fetchall()
+            if not rows:
+                return cls(total_bets=0)
+
+            outcomes = [r[0] / 100.0 for r in rows]  # cents to USD
+
+            # Estimate daily volume from data if not provided
+            if daily_volume is None:
+                date_query = """
+                    SELECT COUNT(*) as n, date(timestamp, 'unixepoch') as d
+                    FROM trades
+                    WHERE is_paper = 0 AND result IS NOT NULL
+                """
+                if strategy:
+                    date_query += " AND strategy = ?"
+                date_query += " GROUP BY d HAVING n > 0"
+                day_rows = conn.execute(date_query, params).fetchall()
+                if day_rows:
+                    daily_counts = [r[0] for r in day_rows]
+                    daily_volume = round(statistics.mean(daily_counts))
+                else:
+                    daily_volume = 30  # fallback
+
+            # Get current bankroll
+            bankroll_row = conn.execute(
+                "SELECT balance_usd FROM bankroll_history WHERE source = 'api' ORDER BY timestamp DESC LIMIT 1"
+            ).fetchone()
+            current_bankroll = bankroll_row[0] if bankroll_row else None
+
+            dist = cls.from_outcomes(outcomes, daily_volume)
+            dist._current_bankroll = current_bankroll
+            return dist
+        finally:
+            conn.close()
 
     def expected_value(self) -> float:
         """Expected value of a single bet."""
@@ -420,15 +490,37 @@ def main():
     parser.add_argument("--json", action="store_true", help="Output JSON")
     parser.add_argument("--sensitivity", action="store_true", help="Run WR sensitivity analysis")
     parser.add_argument("--scenarios", action="store_true", help="Run 30/60/90 day scenarios")
+    parser.add_argument("--from-db", action="store_true", help="Use actual polybot.db bet history")
+    parser.add_argument("--db-path", type=str, default=None, help="Custom DB path (with --from-db)")
+    parser.add_argument("--strategy", type=str, default=None, help="Filter to strategy (with --from-db)")
 
     args = parser.parse_args()
 
-    dist = BetDistribution(
-        win_rate=args.wr,
-        avg_win=args.win,
-        avg_loss=args.loss,
-        daily_volume=args.volume,
-    )
+    if args.from_db:
+        try:
+            dist = BetDistribution.from_db(
+                db_path=args.db_path,
+                strategy=args.strategy,
+                daily_volume=args.volume if args.volume != 30 else None,
+            )
+            bankroll = args.bankroll
+            if hasattr(dist, '_current_bankroll') and dist._current_bankroll and bankroll == 100.0:
+                bankroll = dist._current_bankroll
+                print(f"Using DB bankroll: ${bankroll:.2f}")
+            print(f"From DB: {dist.total_bets} bets, WR={dist.win_rate:.1%}, "
+                  f"avg_win=${dist.avg_win:.2f}, avg_loss=${dist.avg_loss:.2f}, "
+                  f"volume={dist.daily_volume}/day")
+            args.bankroll = bankroll
+        except FileNotFoundError as e:
+            print(f"Error: {e}")
+            return
+    else:
+        dist = BetDistribution(
+            win_rate=args.wr,
+            avg_win=args.win,
+            avg_loss=args.loss,
+            daily_volume=args.volume,
+        )
     sim = MonteCarloSimulator(dist)
 
     if args.sensitivity:

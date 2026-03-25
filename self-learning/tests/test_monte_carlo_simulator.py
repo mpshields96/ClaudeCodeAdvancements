@@ -7,6 +7,7 @@ import json
 import math
 import os
 import random
+import sqlite3
 import sys
 import tempfile
 import unittest
@@ -482,6 +483,101 @@ class TestSimulatorCLI(unittest.TestCase):
         probs = [r["target_probability"] for r in results]
         # General trend should be increasing (allow some MC noise)
         self.assertGreater(probs[-1], probs[0])
+
+
+class TestFromDB(unittest.TestCase):
+    """Test BetDistribution.from_db with synthetic SQLite DB."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.db_path = os.path.join(self.tmpdir, "test_polybot.db")
+        conn = sqlite3.connect(self.db_path)
+        conn.execute("""
+            CREATE TABLE trades (
+                id INTEGER PRIMARY KEY,
+                strategy TEXT,
+                is_paper INTEGER,
+                result TEXT,
+                pnl_cents INTEGER,
+                timestamp INTEGER,
+                side TEXT
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE bankroll_history (
+                id INTEGER PRIMARY KEY,
+                timestamp INTEGER,
+                balance_usd REAL,
+                source TEXT
+            )
+        """)
+        # Insert 20 sniper trades: 19 wins (90c each), 1 loss (-1000c)
+        import time
+        base_ts = int(time.time()) - 86400 * 5
+        for i in range(19):
+            conn.execute(
+                "INSERT INTO trades (strategy, is_paper, result, pnl_cents, timestamp, side) VALUES (?,?,?,?,?,?)",
+                ("expiry_sniper_v1", 0, "win", 90, base_ts + i * 3600, "yes"),
+            )
+        conn.execute(
+            "INSERT INTO trades (strategy, is_paper, result, pnl_cents, timestamp, side) VALUES (?,?,?,?,?,?)",
+            ("expiry_sniper_v1", 0, "loss", -1000, base_ts + 20 * 3600, "yes"),
+        )
+        # Insert bankroll
+        conn.execute(
+            "INSERT INTO bankroll_history (timestamp, balance_usd, source) VALUES (?,?,?)",
+            (base_ts + 21 * 3600, 125.50, "api"),
+        )
+        conn.commit()
+        conn.close()
+
+    def tearDown(self):
+        os.remove(self.db_path)
+        os.rmdir(self.tmpdir)
+
+    def test_from_db_basic(self):
+        dist = BetDistribution.from_db(db_path=self.db_path)
+        self.assertEqual(dist.total_bets, 20)
+        self.assertAlmostEqual(dist.win_rate, 0.95, places=2)
+        self.assertAlmostEqual(dist.avg_win, 0.90, places=2)
+        self.assertAlmostEqual(dist.avg_loss, -10.0, places=2)
+
+    def test_from_db_captures_bankroll(self):
+        dist = BetDistribution.from_db(db_path=self.db_path)
+        self.assertAlmostEqual(dist._current_bankroll, 125.50)
+
+    def test_from_db_strategy_filter(self):
+        dist = BetDistribution.from_db(db_path=self.db_path, strategy="expiry_sniper_v1")
+        self.assertEqual(dist.total_bets, 20)
+
+    def test_from_db_nonexistent_strategy(self):
+        dist = BetDistribution.from_db(db_path=self.db_path, strategy="nonexistent")
+        self.assertEqual(dist.total_bets, 0)
+
+    def test_from_db_daily_volume_estimated(self):
+        dist = BetDistribution.from_db(db_path=self.db_path)
+        self.assertGreater(dist.daily_volume, 0)
+
+    def test_from_db_daily_volume_override(self):
+        dist = BetDistribution.from_db(db_path=self.db_path, daily_volume=50)
+        self.assertEqual(dist.daily_volume, 50)
+
+    def test_from_db_missing_file(self):
+        with self.assertRaises(FileNotFoundError):
+            BetDistribution.from_db(db_path="/nonexistent/path.db")
+
+    def test_from_db_has_empirical_values(self):
+        dist = BetDistribution.from_db(db_path=self.db_path)
+        self.assertEqual(len(dist.win_values), 19)
+        self.assertEqual(len(dist.loss_values), 1)
+
+    def test_from_db_simulation_works(self):
+        """End-to-end: DB -> distribution -> simulation."""
+        dist = BetDistribution.from_db(db_path=self.db_path)
+        sim = MonteCarloSimulator(dist)
+        result = sim.run(125.0, 250.0, 30, 100, seed=42)
+        self.assertEqual(result.n_simulations, 100)
+        self.assertGreater(result.target_probability, 0)
 
 
 class TestEdgeCases(unittest.TestCase):
