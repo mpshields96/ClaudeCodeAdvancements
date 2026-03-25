@@ -322,3 +322,83 @@ def save_figure(fig: Figure, path: str) -> str:
     with open(path, "w") as f:
         f.write(svg)
     return path
+
+
+# ---------------------------------------------------------------------------
+# Convenience / preset functions
+# ---------------------------------------------------------------------------
+
+def quick_figure(
+    charts: list,
+    title: Optional[str] = None,
+    cols: Optional[int] = None,
+    labels: bool = True,
+) -> Figure:
+    """Create a figure from a list of charts with automatic layout.
+
+    Args:
+        charts: List of chart objects (BarChart, LineChart, etc.)
+        title: Optional figure title.
+        cols: Number of columns (auto-detected if None).
+        labels: Whether to add automatic (a), (b), (c) labels.
+
+    Returns:
+        Figure ready to render.
+    """
+    if not charts:
+        raise ValueError("quick_figure requires at least one chart")
+
+    panels = []
+    for i, chart in enumerate(charts):
+        label = chr(97 + i) if labels else None
+        panels.append(FigurePanel(chart=chart, label=label))
+
+    return Figure(panels=panels, title=title, cols=cols)
+
+
+def comparison_figure(
+    left: object,
+    right: object,
+    title: Optional[str] = None,
+) -> Figure:
+    """Create a side-by-side comparison of two charts.
+
+    Args:
+        left: Left chart object.
+        right: Right chart object.
+        title: Optional figure title.
+
+    Returns:
+        Figure with two panels in a 1x2 layout.
+    """
+    return Figure(
+        panels=[
+            FigurePanel(chart=left, label="a"),
+            FigurePanel(chart=right, label="b"),
+        ],
+        cols=2,
+        title=title,
+    )
+
+
+def dashboard_figure(
+    charts: list,
+    title: Optional[str] = None,
+) -> Figure:
+    """Create a 2-column dashboard layout from charts.
+
+    Args:
+        charts: List of 2-6 chart objects.
+        title: Optional figure title.
+
+    Returns:
+        Figure with 2-column grid layout and auto-labels.
+    """
+    if not charts:
+        raise ValueError("dashboard_figure requires at least one chart")
+
+    panels = [
+        FigurePanel(chart=c, label=chr(97 + i))
+        for i, c in enumerate(charts)
+    ]
+    return Figure(panels=panels, cols=2, title=title)
