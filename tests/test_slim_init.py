@@ -795,5 +795,156 @@ class TestSlimInitIncludesExtensions(unittest.TestCase):
         self.assertNotIn("mt_extensions_raw", result)
 
 
+class TestRunPrincipleDiscoverer(unittest.TestCase):
+    """Test principle_discoverer --dry-run integration in slim init."""
+
+    @patch("slim_init.subprocess.run")
+    def test_discoverer_returns_count(self, mock_run):
+        from slim_init import run_principle_discoverer
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Discovered: 3 patterns\nRegistered: 0 new principles\nSkipped: 0 (duplicate or low confidence)",
+            stderr=""
+        )
+        result = run_principle_discoverer()
+        self.assertEqual(result["discovered"], 3)
+        self.assertFalse(result.get("error"))
+
+    @patch("slim_init.subprocess.run")
+    def test_discoverer_zero_patterns(self, mock_run):
+        from slim_init import run_principle_discoverer
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Discovered: 0 patterns\nRegistered: 0 new principles\nSkipped: 0 (duplicate or low confidence)",
+            stderr=""
+        )
+        result = run_principle_discoverer()
+        self.assertEqual(result["discovered"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_discoverer_handles_failure(self, mock_run):
+        from slim_init import run_principle_discoverer
+        mock_run.return_value = MagicMock(
+            returncode=1,
+            stdout="",
+            stderr="ImportError: no module"
+        )
+        result = run_principle_discoverer()
+        self.assertIn("error", result)
+        self.assertEqual(result["discovered"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_discoverer_handles_timeout(self, mock_run):
+        from slim_init import run_principle_discoverer
+        import subprocess
+        mock_run.side_effect = subprocess.TimeoutExpired("python3", 30)
+        result = run_principle_discoverer()
+        self.assertIn("error", result)
+        self.assertEqual(result["discovered"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_discoverer_uses_dry_run(self, mock_run):
+        from slim_init import run_principle_discoverer
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Discovered: 2 patterns\nRegistered: 0 new principles\nSkipped: 0",
+            stderr=""
+        )
+        run_principle_discoverer()
+        call_args = mock_run.call_args[0][0]
+        self.assertIn("--dry-run", call_args)
+
+
+class TestSummaryIncludesDiscoverer(unittest.TestCase):
+    """Test that discoverer results flow into summary format."""
+
+    def test_format_summary_shows_discoveries(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 172,
+            "last_session_id": "S172",
+            "top_pick": "MT-49",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+            "discoveries_count": 3,
+        }
+        text = format_summary(summary)
+        self.assertIn("Discoveries", text)
+        self.assertIn("3", text)
+
+    def test_format_summary_omits_discoveries_when_zero(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 172,
+            "last_session_id": "S172",
+            "top_pick": "MT-49",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+        }
+        text = format_summary(summary)
+        self.assertNotIn("Discoveries", text)
+
+
+class TestSlimInitIncludesDiscoverer(unittest.TestCase):
+    """Test principle discoverer is wired into the full slim init flow."""
+
+    @patch("slim_init.run_principle_discoverer")
+    @patch("slim_init.run_meta_learning")
+    @patch("slim_init.run_mt_extensions")
+    @patch("slim_init.run_mt_proposals")
+    @patch("slim_init.run_principle_seeder")
+    @patch("slim_init.run_timeline")
+    @patch("slim_init.run_priority")
+    @patch("slim_init.run_smoke")
+    @patch("slim_init.Path.read_text")
+    def test_full_init_calls_discoverer(self, mock_read, mock_smoke, mock_priority,
+                                         mock_timeline, mock_seeder, mock_proposals,
+                                         mock_extensions, mock_meta, mock_discoverer):
+        from slim_init import run_slim_init
+
+        mock_read.return_value = "## Current State (as of Session 171 — 2026-03-25)"
+        mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
+        mock_priority.return_value = {"top_pick": "MT-49", "raw": "output"}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
+        mock_seeder.return_value = {"seeded": 0, "raw": ""}
+        mock_proposals.return_value = {"count": 0, "proposals": [], "raw": ""}
+        mock_extensions.return_value = {"count": 0, "extensions": [], "raw": ""}
+        mock_meta.return_value = {"status": "HEALTHY", "brief": "Self-Learning: HEALTHY"}
+        mock_discoverer.return_value = {"discovered": 4, "raw": "Discovered: 4 patterns"}
+
+        result = run_slim_init()
+        mock_discoverer.assert_called_once()
+        self.assertEqual(result.get("discoveries_count"), 4)
+
+    @patch("slim_init.run_principle_discoverer")
+    @patch("slim_init.run_meta_learning")
+    @patch("slim_init.run_mt_extensions")
+    @patch("slim_init.run_mt_proposals")
+    @patch("slim_init.run_principle_seeder")
+    @patch("slim_init.run_timeline")
+    @patch("slim_init.run_priority")
+    @patch("slim_init.run_smoke")
+    @patch("slim_init.Path.read_text")
+    def test_full_init_zero_discoveries_omits_key(self, mock_read, mock_smoke, mock_priority,
+                                                    mock_timeline, mock_seeder, mock_proposals,
+                                                    mock_extensions, mock_meta, mock_discoverer):
+        from slim_init import run_slim_init
+
+        mock_read.return_value = "## Current State (as of Session 171 — 2026-03-25)"
+        mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
+        mock_priority.return_value = {"top_pick": "MT-49", "raw": "output"}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
+        mock_seeder.return_value = {"seeded": 0, "raw": ""}
+        mock_proposals.return_value = {"count": 0, "proposals": [], "raw": ""}
+        mock_extensions.return_value = {"count": 0, "extensions": [], "raw": ""}
+        mock_meta.return_value = {"status": "HEALTHY", "brief": ""}
+        mock_discoverer.return_value = {"discovered": 0, "raw": ""}
+
+        result = run_slim_init()
+        self.assertNotIn("discoveries_count", result)
+
+
 if __name__ == "__main__":
     unittest.main()

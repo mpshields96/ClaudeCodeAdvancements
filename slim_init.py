@@ -287,6 +287,32 @@ def run_transfer_proposals() -> dict:
         return {"pending": 0, "error": "Timeout"}
 
 
+def run_principle_discoverer() -> dict:
+    """Run principle_discoverer.py discover --dry-run to surface new patterns."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "principle_discoverer.py"),
+             "discover", "--dry-run"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            error = proc.stderr.strip() or "principle_discoverer failed"
+            return {"discovered": 0, "error": error, "raw": output}
+
+        # Parse "Discovered: N patterns"
+        m = re.search(r"Discovered:\s*(\d+)\s*patterns?", output)
+        discovered = int(m.group(1)) if m else 0
+
+        return {"discovered": discovered, "raw": output}
+    except subprocess.TimeoutExpired:
+        return {"discovered": 0, "error": "Timeout: principle_discoverer exceeded 30 seconds"}
+
+
 def run_timeline(n: int = 5) -> dict:
     """Run session_timeline.py recent N for quick history."""
     try:
@@ -362,6 +388,8 @@ def format_summary(summary: dict) -> str:
         lines.append(f"  Transfer proposals: {summary['transfer_pending']} pending")
         if summary.get("transfer_top"):
             lines.append(f"    Top: {summary['transfer_top']}")
+    if summary.get("discoveries_count", 0) > 0:
+        lines.append(f"  Discoveries: {summary['discoveries_count']} new patterns (dry-run)")
     if summary.get("blockers"):
         lines.append("  BLOCKERS:")
         for b in summary["blockers"]:
@@ -409,6 +437,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3.8: Transfer proposals (MT-49 Phase 2 — auto-propose)
     transfer = run_transfer_proposals()
 
+    # Step 3.9: Principle discovery (MT-49 Phase 3 — dry-run scan)
+    discoverer = run_principle_discoverer()
+
     # Step 4: Session timeline (last 5 sessions)
     timeline = run_timeline(5)
 
@@ -429,6 +460,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if transfer.get("pending", 0) > 0:
         summary["transfer_pending"] = transfer["pending"]
         summary["transfer_top"] = transfer.get("top_text", "")
+    if discoverer.get("discovered", 0) > 0:
+        summary["discoveries_count"] = discoverer["discovered"]
+        summary["discoveries_raw"] = discoverer.get("raw", "")
 
     return summary
 
