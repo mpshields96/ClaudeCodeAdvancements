@@ -384,15 +384,24 @@ def roi_by_principle(feedback_entries: List[dict]) -> Dict[str, dict]:
 
 
 class ROIResolver:
-    """Full ROI resolver pipeline."""
+    """Full ROI resolver pipeline.
+
+    Combines two resolution sources:
+    1. DELIVERY_ACK.md parsing (manual acknowledgments from monitoring chat)
+    2. Kalshi bot git commit scanning (automated implementation detection)
+    """
 
     def __init__(
         self,
         outcomes_path: str = DEFAULT_OUTCOMES_PATH,
         ack_path: str = DEFAULT_ACK_PATH,
+        kalshi_repo_path: Optional[str] = None,
     ):
         self.outcomes_path = outcomes_path
         self.ack_path = ack_path
+        self.kalshi_repo_path = kalshi_repo_path or os.path.expanduser(
+            "~/Projects/polymarket-bot"
+        )
 
     def run(self) -> dict:
         """Run the full resolve + ROI pipeline. Returns JSON-serializable report."""
@@ -403,9 +412,19 @@ class ROIResolver:
             with open(self.ack_path) as f:
                 ack_text = f.read()
 
-        # Parse & resolve
+        # Source 1: Parse & resolve from DELIVERY_ACK.md
         acks = parse_delivery_acks(ack_text)
         updates = resolve_deliveries(acks, self.outcomes_path)
+
+        # Source 2: Scan Kalshi bot git commits for REQ implementations
+        commit_updates = self._scan_commits()
+
+        # Merge: commit_updates fill gaps not covered by ACK-based resolution
+        resolved_delivery_ids = {u["delivery_id"] for u in updates}
+        for cu in commit_updates:
+            if cu["delivery_id"] not in resolved_delivery_ids:
+                updates.append(cu)
+                resolved_delivery_ids.add(cu["delivery_id"])
 
         # Apply updates to delivery copies for ROI calculation
         delivery_map = {d["delivery_id"]: dict(d) for d in deliveries}
@@ -429,6 +448,18 @@ class ROIResolver:
             "by_category": by_cat,
             "by_status": dict(status_counts),
         }
+
+    def _scan_commits(self) -> List[dict]:
+        """Scan Kalshi bot commits for REQ implementations."""
+        try:
+            from commit_scanner import scan_commits, get_git_log, match_commits_to_outcomes
+            log_text = get_git_log(self.kalshi_repo_path, 200)
+            if not log_text:
+                return []
+            commits = scan_commits(log_text)
+            return match_commits_to_outcomes(commits, self.outcomes_path)
+        except (ImportError, Exception):
+            return []
 
 
 def main():

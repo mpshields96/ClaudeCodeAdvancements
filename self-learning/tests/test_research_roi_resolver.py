@@ -411,5 +411,29 @@ class TestParseNoStatusAck(unittest.TestCase):
         self.assertEqual(req_032[0].status, "implemented")
 
 
+class TestROIResolverCommitIntegration(unittest.TestCase):
+    """Test ROIResolver integrates commit scanning."""
+
+    def test_resolver_includes_commit_scan_source(self):
+        """ROIResolver.run() report should include commit_scan matches."""
+        from research_roi_resolver import ROIResolver
+        resolver = ROIResolver()
+        report = resolver.run()
+        # Should have some updates from commit_scan
+        scan_updates = [u for u in report["updates"] if u.get("matched_by") == "commit_scan"]
+        # We know real data has REQ-036, REQ-040 etc. in Kalshi commits
+        self.assertGreater(len(scan_updates), 0,
+                           "Expected commit_scan matches from real Kalshi bot repo")
+
+    def test_resolver_no_duplicate_delivery_ids(self):
+        """Each delivery_id should appear at most once in updates."""
+        from research_roi_resolver import ROIResolver
+        resolver = ROIResolver()
+        report = resolver.run()
+        delivery_ids = [u["delivery_id"] for u in report["updates"]]
+        self.assertEqual(len(delivery_ids), len(set(delivery_ids)),
+                         "Duplicate delivery_ids in updates")
+
+
 if __name__ == "__main__":
     unittest.main()
