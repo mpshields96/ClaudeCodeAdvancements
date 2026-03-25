@@ -114,6 +114,7 @@ class ResumeGenerator:
         if next_task:
             parts.append(f"NEXT: {next_task}")
 
+        parts.append("FOCUS ON TODAYS_TASKS.md -- read it first for today's priorities.")
         parts.append("Run /cca-auto for autonomous work.")
 
         return " ".join(parts)
