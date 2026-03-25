@@ -3,6 +3,28 @@
 
 ---
 
+## Session 180 — 2026-03-25
+
+**What changed:**
+- `self-learning/research/MT37_RESEARCH.md` — Areas 8-10 complete: Kelly Criterion (4 papers), Index Investing (3 papers), Alt Risk Premia (4 papers). Phase 1 COMPLETE: 1762 lines, 42 papers.
+- `.claude/commands/cca-nuclear-daily.md` — Added Phase 0 (Discovery) using subreddit_discoverer.py
+- `.claude/commands/cca-nuclear-github.md` — Added Phase 0 (Discovery) using github_scanner.py discover
+- `reddit-intelligence/profiles.py` — Added r/modelcontextprotocol profile (23K subs, S179 discovery)
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md` — REQ-041 plateau framework + REQ-044 sol_drift re-enable
+
+**Why:**
+- MT-37 Phase 1 completion: final 3 areas of the UBER academic research survey
+- C6: Wire discovery tools into nuclear scan pipelines for automated sub/repo finding
+- Kalshi requests: REQ-041 (performance plateau diagnosis) and REQ-044 (sol_drift decision)
+
+**Tests:** 9838/9838 passing (253 suites, 0 new tests — research + wiring session)
+
+**Lessons:**
+- All TODAYS_TASKS items cleared across 4 sessions (S177-S180). Structured daily task lists work.
+- Writing research directly (no agents) is efficient for academic content — confirmed S179 finding.
+
+---
+
 ## Session 179 — 2026-03-25
 
 **What changed:**

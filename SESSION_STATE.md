@@ -3,36 +3,35 @@
 
 ---
 
-## Current State (as of Session 179 — 2026-03-25)
+## Current State (as of Session 180 — 2026-03-25)
 
-**Phase:** Session 179 COMPLETE. Kalshi MAX_LOSS audit, nuclear discovery tools, MT-37 areas 4-7. Grade: A.
+**Phase:** Session 180 COMPLETE. MT-37 Phase 1 finished, nuclear pipeline wiring, Kalshi deliveries. Grade: A.
 
-**What was done this session (S179):**
-- **Kalshi MAX_LOSS bypass audit** (CCA_TO_POLYBOT.md delivery):
-  - Audited all 11 loop functions in polybot main.py. All safe. No remaining bypass.
-  - expiry_sniper_loop was the only vulnerable one (already fixed in ce71048)
-- **subreddit_discoverer.py** (reddit-intelligence/, commit acd4e98):
-  - Domain-based subreddit discovery (claude/trading/research/dev, 4 domains, 30+ search terms)
-  - Scores by relevance+subscribers+activity, filters already-tracked subs
-  - 25 tests, CLI with --domain/--json/--top/--propose flags
-- **github_scanner.py discover command** (reddit-intelligence/, commit acd4e98):
-  - RepoDiscoverer class + discover CLI command. Domain-based repo discovery.
-  - 16 tests, integrates with existing RepoEvaluator scoring
-- **MT-37 UBER Phase 1 areas 4-7** (self-learning/research/MT37_RESEARCH.md, commit 7cc16bb):
-  - Area 4: Momentum & Value (Jegadeesh & Titman 1993, Asness et al. 2013, AQR 2014)
-  - Area 5: Behavioral Finance (Kahneman & Tversky 1979, Shiller CAPE, Benartzi & Thaler 1995)
-  - Area 6: Tax-Loss Harvesting (Constantinides 1983, Berkin & Ye 2003, practical TLH rules)
-  - Area 7: Retirement Planning (Bengen 4% rule, Kitces CAPE, Guyton-Klinger, ERN series)
-  - 745→1196 lines, 30 papers total (15 new this session)
-- **TODAYS_TASKS.md updated** with budget notes for all future chats, C6 nuclear tools task
-- 3 CCA commits, 41 new tests (9797→9838), zero regressions
-- **Tests**: 253 suites, 9838 tests passing
+**What was done this session (S180):**
+- **MT-37 UBER Phase 1 COMPLETE** (self-learning/research/MT37_RESEARCH.md, commit 53b8d49):
+  - Area 8: Kelly Criterion — Kelly 1956, Breiman 1961, Thorp 2006, MacLean et al. 2011
+  - Area 9: Index Investing — Sharpe 1991, Bogle 2007, Malkiel 2003
+  - Area 10: Alt Risk Premia — Ilmanen 2011, Ang 2014, Asness et al. 2013, Moskowitz et al. 2012
+  - Phase 1 completion summary with coverage map and architecture synthesis
+  - 1196→1762 lines, 42 papers total (12 new this session)
+- **C6 Nuclear pipeline wiring** (commit 292fe26):
+  - Phase 0 (Discovery) added to /cca-nuclear-daily — runs subreddit_discoverer.py
+  - Phase 0 (Discovery) added to /cca-nuclear-github — runs github_scanner.py discover
+  - r/modelcontextprotocol added to profiles.py (23K subs, S179 discovery finding)
+- **Kalshi REQ-041 delivery** (CCA_TO_POLYBOT.md):
+  - Plateau diagnostic triangle: variance vs drift vs constraint
+  - Includes z-test formula, CUSUM thresholds, constraint_ratio calculation
+  - Diagnosis: bot plateau is SIZING CONSTRAINT, not edge decay
+- **Kalshi REQ-044 delivery** (CCA_TO_POLYBOT.md):
+  - sol_drift re-enable decision framework (3 options: fresh start, wait, requalify)
+  - Principled threshold: SPRT + CUSUM + reduced sizing for 50-bet trial
+- **All TODAYS_TASKS items now complete** (C5+C6 this session, K1-K5+C1-C4 prior)
+- 3 CCA commits, 0 new tests, 9838 total, zero regressions
 
-**Next: SEE TODAYS_TASKS.md** — authoritative daily task list (Matthew directive S178).
-Remaining work:
-- MT-37 areas 8-10 (Kelly Criterion, Index Investing, Alt Risk Premia)
-- Wire discovery tools into nuclear scan pipelines
+**Next:** TODAYS_TASKS.md items all done. Use priority_picker for next work:
+- MT-32 Phase 6 (design system v2) or MT-47 (external tool evaluation)
 - memsearch P0 implementation when prioritized
+- MT-37 Phase 2 (architecture design) when ready
 
 **Matthew directives (carried forward):**
 - **TODAYS_TASKS.md is the daily driver** — all CCA sessions follow it (S178 permanent)
@@ -45,9 +44,9 @@ Remaining work:
 
 ---
 
-## Previous State (Session 178 — 2026-03-25)
+## Previous State (Session 179 — 2026-03-25)
 
-**Phase:** Session 178 COMPLETE. TODAYS_TASKS directive wired + C1/C3/C5. Grade: A.
+**Phase:** Session 179 COMPLETE. Kalshi MAX_LOSS audit, nuclear discovery tools, MT-37 areas 4-7. Grade: A.
 
 **What was done (S178):** AG-10 worktree_guard wired as live hook (13 new tests). TODAYS_TASKS directive wired into all CCA files (10+ files, 5 tests). C1 MT-26 assessment (NOT dead code). C3 memsearch research. C5 MT-37 areas 1-3 (745 lines, 15 papers). 6 commits, 18 new tests (9797 total).
 
