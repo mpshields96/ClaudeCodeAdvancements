@@ -1356,5 +1356,98 @@ class TestSlimInitIncludesEnricher(unittest.TestCase):
         self.assertNotIn("enriched_count", result)
 
 
+class TestSlimInitTodaysTasks(unittest.TestCase):
+    """Tests for TODAYS_TASKS.md scanning (Matthew directive S178)."""
+
+    def test_scan_todays_tasks_with_todos(self):
+        """scan_todays_tasks returns TODO items from TODAYS_TASKS.md."""
+        from slim_init import scan_todays_tasks, TODAYS_TASKS_PATH
+        import tempfile
+        content = """# CCA Tasks for 2026-03-25
+### C1. MT-26 Dead Code Cleanup [TODO]
+### C2. Agent Teams [DONE S177]
+### C3. memsearch Patterns [TODO]
+### C5. MT-37 UBER [TODO]
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(content)
+            f.flush()
+            import slim_init
+            orig = slim_init.TODAYS_TASKS_PATH
+            slim_init.TODAYS_TASKS_PATH = Path(f.name)
+            try:
+                result = scan_todays_tasks()
+                self.assertEqual(result["count"], 3)
+                self.assertIn("C1. MT-26 Dead Code Cleanup [TODO]", result["todos"][0])
+                self.assertIn("C3. memsearch Patterns [TODO]", result["todos"][1])
+                self.assertIn("C5. MT-37 UBER [TODO]", result["todos"][2])
+            finally:
+                slim_init.TODAYS_TASKS_PATH = orig
+                os.unlink(f.name)
+
+    def test_scan_todays_tasks_all_done(self):
+        """scan_todays_tasks returns empty list when all items are DONE."""
+        from slim_init import scan_todays_tasks
+        import tempfile
+        content = """# CCA Tasks
+### C1. Something [DONE S177]
+### C2. Something else [DONE S178]
+"""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write(content)
+            f.flush()
+            import slim_init
+            orig = slim_init.TODAYS_TASKS_PATH
+            slim_init.TODAYS_TASKS_PATH = Path(f.name)
+            try:
+                result = scan_todays_tasks()
+                self.assertEqual(result["count"], 0)
+                self.assertEqual(result["todos"], [])
+            finally:
+                slim_init.TODAYS_TASKS_PATH = orig
+                os.unlink(f.name)
+
+    def test_scan_todays_tasks_no_file(self):
+        """scan_todays_tasks handles missing file gracefully."""
+        from slim_init import scan_todays_tasks
+        import slim_init
+        orig = slim_init.TODAYS_TASKS_PATH
+        slim_init.TODAYS_TASKS_PATH = Path("/nonexistent/TODAYS_TASKS.md")
+        try:
+            result = scan_todays_tasks()
+            self.assertEqual(result["count"], 0)
+        finally:
+            slim_init.TODAYS_TASKS_PATH = orig
+
+    def test_format_summary_shows_todays_tasks(self):
+        """format_summary displays TODAY'S TASKS when present."""
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S177",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-32",
+            "todays_tasks_count": 2,
+            "todays_tasks": ["C1. Cleanup [TODO]", "C3. Research [TODO]"],
+        }
+        output = format_summary(summary)
+        self.assertIn("TODAY'S TASKS (2 remaining)", output)
+        self.assertIn("C1. Cleanup [TODO]", output)
+        self.assertIn("after today's tasks", output)
+
+    def test_format_summary_shows_all_done(self):
+        """format_summary shows ALL DONE when no TODOs remain."""
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S177",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-32",
+        }
+        output = format_summary(summary)
+        self.assertIn("ALL DONE", output)
+        self.assertNotIn("after today's tasks", output)
+
+
 if __name__ == "__main__":
     unittest.main()
