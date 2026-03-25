@@ -127,6 +127,7 @@ class TestFormatting(unittest.TestCase):
         brief = format_brief(info)
         self.assertIn("PEAK (60%)", brief)
         self.assertIn("Tue", brief)
+        self.assertIn("ET", brief)
 
     def test_full_contains_guidelines(self):
         info = get_budget(datetime(2026, 3, 24, 10, 0))

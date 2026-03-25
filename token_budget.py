@@ -14,8 +14,14 @@ import json
 import sys
 from datetime import datetime
 
+try:
+    from zoneinfo import ZoneInfo
+except ImportError:
+    ZoneInfo = None  # Python < 3.9 fallback
 
-# Budget windows (ET — machine timezone)
+ET_ZONE = ZoneInfo("America/New_York") if ZoneInfo else None
+
+# Budget windows (US Eastern Time)
 WINDOWS = {
     "PEAK": {
         "hours": "8 AM - 2 PM ET weekdays",
@@ -64,7 +70,11 @@ def get_budget(now=None):
         is_weekend, hour, weekday
     """
     if now is None:
-        now = datetime.now()
+        # Convert to ET regardless of machine timezone
+        if ET_ZONE:
+            now = datetime.now(ET_ZONE)
+        else:
+            now = datetime.now()
 
     hour = now.hour
     weekday = now.weekday()  # 0=Mon, 6=Sun
@@ -91,7 +101,7 @@ def get_budget(now=None):
 
 def format_brief(info):
     """One-line briefing string."""
-    return f"Token budget: {info['label']} ({info['weekday_name']} {info['hour']:02d}:xx)"
+    return f"Token budget: {info['label']} ({info['weekday_name']} {info['hour']:02d}:xx ET)"
 
 
 def format_full(info):
