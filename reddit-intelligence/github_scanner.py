@@ -621,6 +621,153 @@ class TrendingScanner:
             f.write(json.dumps(entry) + "\n")
 
 
+# ── Repo Discovery (domain-based) ────────────────────────────────────────────
+
+# Domain-specific search queries for repo discovery
+DISCOVERY_QUERIES = {
+    "claude": {
+        "description": "Claude Code, MCP servers, AI coding assistants",
+        "queries": [
+            "claude code mcp",
+            "anthropic claude tool",
+            "claude hooks agent",
+            "model context protocol server",
+            "ai coding assistant cli",
+            "llm developer tools",
+        ],
+        "min_stars": 5,
+    },
+    "trading": {
+        "description": "Prediction markets, algo trading, quant tools",
+        "queries": [
+            "prediction market bot",
+            "kalshi polymarket api",
+            "trading bot python backtest",
+            "kelly criterion portfolio",
+            "market making algorithm",
+            "bayesian trading strategy",
+        ],
+        "min_stars": 10,
+    },
+    "research": {
+        "description": "AI agents, self-learning, multi-agent systems",
+        "queries": [
+            "ai agent autonomous",
+            "self-improving llm agent",
+            "multi-agent coordination",
+            "llm tool use framework",
+            "agent memory persistent",
+            "code generation benchmark",
+        ],
+        "min_stars": 20,
+    },
+    "dev": {
+        "description": "Dev tools, CLI, testing, code review",
+        "queries": [
+            "developer cli tool ai",
+            "code review automation llm",
+            "spec driven development",
+            "ai testing framework",
+            "token usage tracking",
+        ],
+        "min_stars": 10,
+    },
+}
+
+
+@dataclass
+class RepoCandidate:
+    """A discovered repo candidate from domain-based search."""
+    full_name: str
+    description: str
+    stars: int
+    language: str
+    license_id: str
+    days_since_push: float
+    topics: list
+    url: str
+    domain: str
+    eval_score: float
+    eval_verdict: str
+    warnings: list
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+class RepoDiscoverer:
+    """
+    Domain-based GitHub repo discovery.
+
+    Searches across project domains, evaluates each repo, and returns
+    ranked candidates. Filters out already-evaluated repos.
+    """
+
+    def __init__(self, eval_log_path: str = None):
+        self.scanner = GitHubScanner(eval_log_path=eval_log_path)
+
+    def discover(
+        self,
+        domains: list = None,
+        top_n: int = 20,
+        min_stars: int = 5,
+        limit_per_query: int = 8,
+    ) -> list:
+        """
+        Discover repos across specified domains.
+
+        Returns list of RepoCandidate sorted by eval_score descending.
+        """
+        if domains is None:
+            domains = list(DISCOVERY_QUERIES.keys())
+
+        seen = set()
+        candidates = []
+
+        for domain in domains:
+            if domain not in DISCOVERY_QUERIES:
+                continue
+
+            config = DISCOVERY_QUERIES[domain]
+            domain_min_stars = max(min_stars, config.get("min_stars", 5))
+
+            for query in config["queries"]:
+                # Add star filter to query
+                full_query = f"{query} stars:>={domain_min_stars}"
+                repos = search_repos(full_query, limit=limit_per_query, sort="stars")
+
+                for meta in repos:
+                    if meta.full_name in seen:
+                        continue
+                    seen.add(meta.full_name)
+
+                    # Skip already evaluated
+                    if self.scanner.already_evaluated(meta.full_name):
+                        continue
+
+                    result = self.scanner.evaluate(meta)
+                    self.scanner.log_evaluation(meta, result)
+
+                    candidates.append(RepoCandidate(
+                        full_name=meta.full_name,
+                        description=meta.description[:200],
+                        stars=meta.stars,
+                        language=meta.language,
+                        license_id=meta.license_id or "none",
+                        days_since_push=meta.days_since_push,
+                        topics=meta.topics[:8],
+                        url=meta.url,
+                        domain=domain,
+                        eval_score=result.total,
+                        eval_verdict=result.verdict,
+                        warnings=result.warnings,
+                    ))
+
+        # Sort by score, highest first
+        candidates.sort(key=lambda c: c.eval_score, reverse=True)
+        return candidates[:top_n]
+
+
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 
@@ -637,6 +784,7 @@ def cli_main(args: list = None):
         print("  scan [query]          Search + evaluate repos (live API)")
         print("  scan --all            Run all built-in queries")
         print("  trending              Discover trending repos by language + recency")
+        print("  discover              Discover repos by project domain (claude/trading/research/dev)")
         return
 
     cmd = args[0]
@@ -800,9 +948,58 @@ def cli_main(args: list = None):
                 marker = ">>>" if result.verdict == "EVALUATE" else "   "
                 print(f"  {marker} [{result.total:4.0f}] {result.verdict:<8} {meta.full_name} ({meta.stars} stars, {meta.age_days:.0f}d old, {meta.language})")
 
+    elif cmd == "discover":
+        rest = args[1:]
+
+        if "--help" in rest:
+            print("Usage: python3 github_scanner.py discover [--domain DOMAIN] [--top N] [--json]")
+            print("  discover                  Discover across all domains")
+            print("  discover --domain claude  Single domain (claude/trading/research/dev)")
+            print("  discover --top 10         Top N results")
+            print("  discover --json           JSON output")
+            return
+
+        json_output = "--json" in rest
+        domain = None
+        top_n = 20
+
+        for i, a in enumerate(rest):
+            if a == "--domain" and i + 1 < len(rest):
+                domain = rest[i + 1]
+            elif a == "--top" and i + 1 < len(rest):
+                try:
+                    top_n = int(rest[i + 1])
+                except ValueError:
+                    pass
+
+        domains = [domain] if domain else None
+        label = domain or "all"
+        print(f"Discovering repos across {label} domains...")
+
+        discoverer = RepoDiscoverer(eval_log_path=str(_THIS_DIR / "github_evaluations.jsonl"))
+        candidates = discoverer.discover(domains=domains, top_n=top_n)
+
+        if json_output:
+            print(json.dumps([c.to_dict() for c in candidates], indent=2))
+        else:
+            if not candidates:
+                print("No new repo candidates found.")
+                return
+            evaluate_count = sum(1 for c in candidates if c.eval_verdict == "EVALUATE")
+            print(f"\nFound {len(candidates)} candidates ({evaluate_count} EVALUATE):\n")
+            for i, c in enumerate(candidates, 1):
+                marker = ">>>" if c.eval_verdict == "EVALUATE" else "   "
+                print(f"  {marker} {i:2d}. [{c.eval_score:4.0f}] {c.full_name} ({c.stars} stars, {c.language})")
+                print(f"       Domain: {c.domain} | License: {c.license_id} | Last push: {c.days_since_push:.0f}d ago")
+                if c.description:
+                    print(f"       {c.description[:100]}")
+                if c.warnings:
+                    print(f"       Warnings: {'; '.join(c.warnings)}")
+                print()
+
     else:
         print(f"Unknown command: {cmd}")
-        print("Usage: python3 github_scanner.py [queries|fetch|evaluate|scan|trending] ...")
+        print("Usage: python3 github_scanner.py [queries|fetch|evaluate|scan|trending|discover] ...")
 
 
 if __name__ == "__main__":

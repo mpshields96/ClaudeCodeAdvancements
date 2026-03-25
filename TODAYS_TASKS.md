@@ -10,6 +10,14 @@
 - Frequent comms with Kalshi main chat
 - Peak/off-peak budgeting UNIVERSAL (MT-38)
 
+## IMPORTANT NOTES FOR ALL CCA CHATS (Matthew directive, S179)
+- **TOKEN BUDGET:** We are in OFF-PEAK hours = 100% budget. Agents OK but pace usage
+  across the full remaining limit window (~3 hours). Do NOT burn 55% remaining tokens
+  in the first 30 minutes. Spread work evenly.
+- **"DONE" items below had PROGRESS MADE, not necessarily fully completed.** C5 MT-37 is
+  only 3/10 areas done. Read the notes on each item carefully — "[DONE S178 — Phase 1 partial]"
+  means partial, not complete. Continue unfinished work.
+
 ---
 
 ## KALSHI BOT WORK (HIGH PRIORITY — 50%+)
@@ -63,16 +71,30 @@
 - DEFAULT_WINDOW 200K→1M across meter.py, post_compact.py, compact_anchor.py, statusline.py
 - Commit 59c42ff
 
-### C5. MT-37 UBER [DONE S178 — Phase 1 partial]
+### C5. MT-37 UBER [DONE S178 — Phase 1 partial, areas 4-10 STILL PENDING]
 - MT37_RESEARCH.md created: 745 lines, areas 1-3 complete (MPT, Factor Models, Risk Parity)
 - 15 papers synthesized, 7 more areas pending (momentum, behavioral, tax-loss, etc.)
-- Commit 58eef2f. Remaining areas continue in future sessions.
+- Commit 58eef2f. **Continue areas 4-10 in future sessions.**
+
+### C6. Nuclear Reddit/GitHub Discovery Tools [IN PROGRESS S179]
+- Build subreddit_discoverer.py: domain-based subreddit discovery (find subs we're NOT tracking)
+- Build github_scanner.py discover command: domain-based repo discovery
+- S179: subreddit_discoverer.py DONE (25 tests), github discover command DONE (16 tests)
+- **Next:** Run live discovery scans, evaluate results, add best candidates to profiles.py
+- **Next:** Wire into /cca-nuclear-daily and /cca-nuclear-github scan pipelines
 
 ---
 
 ## COMPLETED TODAY (all sessions)
 
-### S178 (current)
+### S179
+- [x] Kalshi MAX_LOSS audit: all 11 loop functions verified safe, delivery written to CCA_TO_POLYBOT.md
+- [x] subreddit_discoverer.py built (25 tests) — domain-based subreddit discovery
+- [x] github_scanner.py discover command added (16 tests) — domain-based repo discovery
+- [ ] MT-37 areas 4-10 (continuation from S178)
+- [ ] Wire discovery tools into nuclear scan pipelines
+
+### S178
 - [x] AG-10 worktree_guard wired as live PreToolUse hook (13 new tests, 42 total)
 - [x] Cross-chat delivery: post-guard clean bet counter + 95c guard consolidation
 - [x] C4 already done in S177 (marked)
