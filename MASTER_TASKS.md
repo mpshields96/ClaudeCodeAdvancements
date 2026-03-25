@@ -1563,7 +1563,7 @@ background process. Everything else serves these two axes. See `CCA_PRIME_DIRECT
 
 **Phase 4:** Autoloop scheduling — autoloop prefers off-peak windows, defers heavy tasks during peak.
 
-**Status:** Phase 1 COMPLETE (S154). Rule active globally. Phase 2-4 are enhancement.
+**Status:** Phase 1-3 COMPLETE (S154-S155). Rule active globally. token_budget.py built (21 tests, S154). Peak-hour agent blocking hook active (S155). Phase 4 (autoloop scheduling) remaining.
 
 ---
 

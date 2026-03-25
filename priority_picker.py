@@ -463,8 +463,8 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         MasterTask(
             mt_id=32, name="Visual Excellence & Design Engineering",
             base_value=6, status=TaskStatus.ACTIVE,
-            last_touched_session=148, current_session=current_session,
-            phases_completed=5, phases_total=8,  # S148: Dashboard v2 (dark mode, sortable, search, collapsible). 28 new tests.
+            last_touched_session=158, current_session=current_session,
+            phases_completed=5, phases_total=8,  # S158: Color palette sync + whitespace fix. S156: MT condensing + integer axes.
             aging_rate=0.5,
             next_action="Phase 6: Design system v2 (design tokens, lint rules, cross-format consistency).",
             tags=["visual", "reports", "design"],
@@ -501,8 +501,8 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         MasterTask(
             mt_id=36, name="Session Efficiency Optimizer",
             base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=149, current_session=current_session,
-            phases_completed=4, phases_total=5,  # S148: Phase 4 analysis done — Kalshi already optimized. S149: confirmed.
+            last_touched_session=158, current_session=current_session,
+            phases_completed=4, phases_total=5,  # S158: doc_updater.py batch wrap optimization. S147: batch_wrap_learning.py.
             aging_rate=1.0,
             next_action="Phase 5: Dashboard tracking of session efficiency metrics over time.",
             tags=["optimization", "efficiency", "crown-jewel"],
@@ -520,10 +520,10 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         MasterTask(
             mt_id=38, name="Peak/Off-Peak Token Budget System",
             base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=154, current_session=current_session,
-            phases_completed=1, phases_total=4,
+            last_touched_session=155, current_session=current_session,
+            phases_completed=3, phases_total=4,
             aging_rate=1.0,  # High — directly impacts all sessions
-            next_action="Phase 2: Build token_budget.py utility for init briefings.",
+            next_action="Phase 4: Autoloop scheduling — prefer off-peak windows for heavy tasks.",
             tags=["efficiency", "automation", "universal"],
         ),
         # === BLOCKED ===
