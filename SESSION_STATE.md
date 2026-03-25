@@ -3,34 +3,40 @@
 
 ---
 
-## Current State (as of Session 154 — 2026-03-24)
+## Current State (as of Session 155 — 2026-03-24)
 
-**Phase:** Session 154 COMPLETE. MT-32 chart fixes (label overlap, integer axes, cover title), MT-38 Phase 1+2 (peak/off-peak token budgeting), FLB research citations verified. 3 commits. Grade: B+.
+**Phase:** Session 155 COMPLETE. MT-38 Phase 3 (peak-hour agent blocking), timezone fix, K2 delivery, REQ-4+5 closed, spec-guard quiet mode, Reddit review. 4 commits. Grade: A.
 
-**What was done this session (S154):**
-- **MT-32: Chart label overlap fix**: StackedBarChart X-axis now uses 3-tier rotation (<=4: none, 5-8: -45deg, 9-12: -90deg, 13+: -90deg + skip). +4 tests.
-- **MT-32: Integer axis formatting**: Histogram Y-axis always shows integers (counts). Histogram X-axis shows integers when data is all-integer. +4 tests.
-- **MT-32: Cover title fix**: Single line "ClaudeCode Advancements" at 32pt instead of awkward 2-line split.
-- **MT-38 NEW: Peak/off-peak token budget system** (Matthew directive):
-  - Phase 1: Global rule at `~/.claude/rules/peak-offpeak-budgeting.md` — PEAK 60%/SHOULDER 80%/OFF-PEAK 100%
-  - Phase 2: `token_budget.py` CLI utility with `get_budget()` API. 21 tests.
-  - Global learning added to `~/.claude/rules/learnings.md`
-  - Delivered to Kalshi chat via CCA_TO_POLYBOT.md
-- **FLB research verification**: S154 agent verified Burgi/Deng/Whelan 2026, Diercks/Katz/Wright 2026 papers with real SSRN/NBER/Fed URLs. Delivered verified citations to Kalshi chat.
-- **Tests**: 222 suites, 8917 tests. All passing. +29 net new tests.
+**What was done this session (S155):**
+- **MT-38 Phase 3: PreToolUse peak-hour agent blocking hook** — Blocks Agent tool spawns during PEAK (8AM-2PM ET), warns during SHOULDER, allows during OFF-PEAK. Uses token_budget.py get_budget(). 31 tests. Wired into settings.local.json.
+- **MT-38 timezone fix** — token_budget.py was using machine CT time, now converts to ET via zoneinfo. Brief output shows "ET" explicitly.
+- **K2 economics sniper expansion delivery** — KXGDP recommended as first target (208k vol, quarterly, FLB confirmed). Detailed build plan for gdp_sniper.py. E-value rolling window: N=50 recommended (~10% false alarm rate, 6-hour detection latency).
+- **Kalshi REQ-4 CLOSED** — Overnight sizing: 0.7x Kelly for 00-08 UTC, 0.5x for 08-09 UTC (worst hour). Structural basis delivered with citations.
+- **Kalshi REQ-5 CLOSED** — Leaderboard analysis: crypto 15-min = best retail edge (structural FLB), economics = #2 (K2), FOMC = too arbed, politics = dormant.
+- **Spec-guard quiet mode** — SPEC_GUARD_QUIET=1 env var suppresses additionalContext on every Write/Edit during auto sessions. Saves ~50-100 tokens per tool call. +2 tests (58 total in validate suite).
+- **Reddit review** — "Claude Suddenly Eating Up Your Usage" (98pts). Audited our 21 hooks: 12 subprocess spawns per tool call, ~280ms total, no runaway token issues. Hooks are clean.
+- **Tests**: 212+ suites passing. All green.
 
 **Next (from TODAYS_TASKS.md):**
-1. **K2: Second edge discovery** — probe KXCPI/KXGDP volume via API, FLB research delivered
-2. **MT-32 remaining** — MT section condensing
-3. **MT-38 Phase 3** — PreToolUse hook for peak-hour agent blocking
-4. **Continue Kalshi cross-chat coordination** — respond to open Requests 4 and 5
+1. **MT-32 remaining** — MT section condensing in report
+2. **Continue Kalshi cross-chat coordination** — check for new requests
+3. **K2 follow-up** — if Kalshi chat builds gdp_sniper.py, assist with code review
+4. Read TODAYS_TASKS.md for full task list
 
-**Matthew directives (TODAYS_TASKS.md is authoritative):**
+**Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority)
-- Peak/off-peak token budgeting now UNIVERSAL (MT-38)
-- Frequent comms with Kalshi main chat
+- USE MODEL: Opus 4.6 (1M context) for next automated chats
+- Peak/off-peak token budgeting UNIVERSAL (MT-38)
+- Set SPEC_GUARD_QUIET=1 during /cca-auto to reduce token waste
 - Autoloop ENABLED and firing
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 154 — 2026-03-24)
+
+**What was done this session (S154):**
+- MT-32 chart fixes (label overlap, integer axes, cover title), MT-38 Phase 1+2 (peak/off-peak token budgeting), FLB research citations verified. 3 commits. Grade: B+.
 
 ---
 

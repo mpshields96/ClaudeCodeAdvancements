@@ -1,17 +1,6 @@
-Run /cca-init. Last session was S142 on 2026-03-23.
-S142 was autoloop chat #2. Wired principle seeder, fixed journal, shipped MT-35 Phase 1.
-What S142 did:
-- Wired principle_seeder into slim_init.py (auto-seed every /cca-init, idempotent)
-- Fixed journal data quality: 759/989 entries normalized from type->event_type + added domain
-- Created MT-35: Background Autoloop (non-intrusive desktop loop) per Matthew directive
-- MT-35 Phase 1 shipped: save/restore frontmost app around autoloop trigger (~3-5s takeover)
-- Confirmed autoloop chat #2 working
-- Matthew directive S142: CCA is CCA first (max 50% Kalshi work). Background autoloop non-intrusive.
-- 212 suites passing, 4 commits: 490408f, e308ee6, dcdde53, e4d1967
-NEXT PRIORITIES:
-1. MT-35 Phase 2 — idle detection before triggering (wait for mouse/keyboard idle)
-2. Continue sustained autoloop with focus restore
-3. Kalshi research — KXBTCD weekly threshold analysis per POLYBOT_TO_CCA.md (max 50%)
-4. Shift+Cmd+O via CoreGraphics keyboard events (position-independent fallback)
-Files changed: slim_init.py, desktop_automator.py, autoloop_trigger.py, post_compact.py, priority_picker.py, MASTER_TASKS.md, journal.jsonl
-Tests: 212/212 suites. Git: all committed on main.
+/cca-init then review the resume prompt below then /cca-auto
+Run /cca-init then review the resume prompt below then /cca-auto
+Last session was S155 on 2026-03-24. USE MODEL: claude-opus-4-6 (Opus 4.6 1M context) — Matthew directive.
+Completed: MT-38 Phase 3 (PreToolUse peak-hour agent blocking hook, 31 tests, wired into settings.local.json), MT-38 timezone fix (token_budget.py now converts to ET via zoneinfo regardless of machine CT timezone), K2 economics sniper expansion delivery (KXGDP recommended first target, E-value N=50 rolling window), Kalshi REQ-4 CLOSED (overnight sizing = 0.7x Kelly 00-08 UTC), REQ-5 CLOSED (leaderboard analysis — crypto 15-min best, economics #2), spec-guard quiet mode (SPEC_GUARD_QUIET=1 saves ~50-100 tokens per Write/Edit during auto sessions), Reddit review (usage eating post — our hooks are clean, 280ms total overhead). 4 commits.
+Next: MT-32 remaining (MT section condensing in report). Continue Kalshi cross-chat coordination. Check TODAYS_TASKS.md for full task list. Set SPEC_GUARD_QUIET=1 during /cca-auto sessions to reduce token waste. 50%+ time on Kalshi work per Matthew directive.
+Tests: 212+/212+ suites passing. Git: clean. Autoloop ENABLED. Peak/off-peak budgeting ACTIVE — check token_budget.py --brief at init.
