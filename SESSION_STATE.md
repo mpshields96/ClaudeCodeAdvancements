@@ -3,32 +3,27 @@
 
 ---
 
-## Current State (as of Session 171 — 2026-03-25)
+## Current State (as of Session 172 — 2026-03-25)
 
-**Phase:** Session 171 COMPLETE. MT-48 Phase 3 + MT-49 Phase 3. Grade: A.
+**Phase:** Session 172 COMPLETE. MT-49 Phase 4 + slim_init wiring. Grade: A.
 
-**What was done this session (S171):**
-- MT-48 Phase 3 COMPLETE: Cover title, MT condensing, report_differ field alignment
-  - Cover title now data-driven (`data.title`) — "Claude Code Advancements" with proper spacing
-  - Kalshi diff fields aligned: `pnl_delta_usd` -> `pnl_delta`, `trades_delta` -> `win_rate_delta`
-  - Active MT cards condensed: removed delivered/remaining rows, compact phase bar, reduced padding
-  - 6 new Typst-alignment tests in `test_report_differ.py` (36 total)
-- MT-49 Phase 3 COMPLETE: Automated principle discovery from git + journal patterns
-  - `principle_discoverer.py`: GitPatternDiscoverer (coupling, hotspots, large commits) + SessionPatternDiscoverer (recurring pains/wins)
-  - Filters out test+source coupling (expected TDD, not a discovery)
-  - PrincipleDiscoverer orchestrator with dedup, confidence filtering, registry wiring
-  - CLI: `discover [--dry-run]` and `status` commands
-  - 27 new tests in `test_principle_discoverer.py`
-- Validated economics_sniper_v1 tests (19/19 passing) — DB not on local disk, deployment validation needs monitoring chat
-- Confirmed MT-41 Phases 2-3 already implemented (31 tests passing, status in MASTER_TASKS stale)
-- 2 commits, 33 new tests (9524 -> 9557), no regressions
-- **Tests**: ~244 suites, ~9557 tests passing (1 pre-existing autoloop model test failure)
+**What was done this session (S172):**
+- Wired principle_discoverer into slim_init.py — dry-run at session start, 8 new tests in test_slim_init.py
+- MT-49 Phase 4 COMPLETE: confidence_recalibrator.py — Bayesian staleness decay on principle scores
+  - Exponential decay (half-life ~70 sessions), floor at 0.3, read-only view
+  - CLI: `recalibrate [--session N] [--json]` and `summary` commands
+  - 22 new tests in test_confidence_recalibrator.py
+- Wired recalibrator into slim_init.py — surfaces decayed count in briefing, 6 new tests
+- Updated MT-41 status in MASTER_TASKS.md — Phases 2-3 confirmed COMPLETE (S163)
+- Cross-chat coordination check — REQ-042 (maker sniper fill rate sim) still pending
+- 3 commits, 36 new tests (9557 -> 9594), no regressions
+- **Tests**: ~245 suites, ~9594 tests passing (1 pre-existing autoloop model test failure)
 
 **Next (prioritized):**
-1. Wire principle_discoverer into slim_init.py for auto-discovery at session start
-2. MT-49 Phase 4: Confidence recalibration (Bayesian decay/boost on principle scores)
+1. Validate recalibrator against real principles.jsonl — verify output is useful in briefings
+2. MT-49 Phase 5: Research-to-production ROI tracking
 3. economics_sniper_v1 deployment validation via Kalshi monitoring chat
-4. MT-41 status update in MASTER_TASKS.md (Phases 2-3 already done)
+4. REQ-042: Maker sniper fill rate simulation (Kalshi request)
 5. Cross-chat coordination
 
 **Matthew directives:**
@@ -39,6 +34,14 @@
 - Autoloop ENABLED — run /cca-wrap at natural stopping points, not when Matthew reminds
 - CCA and Kalshi chats should have automated feedback loop (S161 directive, IMPLEMENTED S162)
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 171 — 2026-03-25)
+
+**Phase:** Session 171 COMPLETE. MT-48 Phase 3 + MT-49 Phase 3. Grade: A.
+
+**What was done (S171):** MT-48 Phase 3 (cover title, MT condensing, report_differ alignment, 6 tests). MT-49 Phase 3 (principle_discoverer.py, 27 tests). MT-41 Phases 2-3 confirmed done. 2 commits, 33 new tests (9557 total).
 
 ---
 

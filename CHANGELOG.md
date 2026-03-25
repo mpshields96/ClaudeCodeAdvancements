@@ -3,6 +3,23 @@
 
 ---
 
+## Session 172 — 2026-03-25
+
+**What changed:**
+- `slim_init.py`: Added `run_principle_discoverer()` — dry-run discovery at session start
+- `self-learning/confidence_recalibrator.py`: NEW — MT-49 Phase 4 Bayesian staleness decay (exponential, half-life ~70 sessions, floor 0.3)
+- `slim_init.py`: Added `run_recalibration()` — surfaces decayed principle count in briefing
+- `MASTER_TASKS.md`: Updated MT-41 status — Phases 2-3 confirmed COMPLETE (S163)
+
+**Why:**
+- MT-49 Phase 3 follow-up: principle_discoverer needed to be wired into session startup
+- MT-49 Phase 4: Principles that haven't been used recently should decay in confidence score
+- MT-41 had stale status (said "Phase 2-3 remaining" but they were already done)
+
+**Tests:** 9594/9594 passing (36 new: 8+6 slim_init, 22 recalibrator)
+
+---
+
 ## Session 171 — 2026-03-25
 
 **What changed:**
