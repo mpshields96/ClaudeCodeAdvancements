@@ -2597,3 +2597,26 @@ CLI chat 2:
 - Findings seeder needed Optional[str] sentinel (not empty string) to distinguish "no input" from "read from file"
 
 ---
+
+## Session 170 — 2026-03-25
+
+**What changed:**
+- MT-48 Phase 2: `cca-report.typ` — module-card and task-card `box` -> `block(breakable: true)`, fixing page 5 whitespace
+- MT-48 Phase 2: `design-guide.md` — synced 3 undocumented template colors (dark, mid, teal)
+- MT-49 Phase 2: `principle_transfer.py` — TransferProposal dataclass, JSONL store, auto-propose with dedup, accept/reject tracking, 4 CLI commands
+- MT-49 Phase 2: `test_principle_transfer.py` — 15 new tests (49 total)
+- `slim_init.py` — wired `run_transfer_proposals()` into session startup (Step 3.8)
+- Cross-chat: peak/off-peak adoption directive to Kalshi chats
+
+**Why:**
+- MT-48: Report pages had wasted whitespace because unbreakable box containers pushed to next page
+- MT-49: principle_transfer.py was passive (CLI-only scan). Now active — auto-proposes transfers at session start with dedup + acceptance tracking
+- Peak/off-peak: Matthew directive to ensure Kalshi chats adopt the same budget scaling system
+
+**Tests:** 527/527 smoke passing, 49/49 principle_transfer passing
+
+**Lessons:**
+- In Typst, `box` is unbreakable (whole element must fit on page), `block(breakable: true)` allows page breaks within — use block for any card that might not fit
+- Principle `score` is a computed property in principle_registry.py, not a constructor argument — tests must use `success_count`/`usage_count` to set scores indirectly
+
+---

@@ -3,37 +3,33 @@
 
 ---
 
-## Current State (as of Session 169 — 2026-03-26)
+## Current State (as of Session 170 — 2026-03-25)
 
-**Phase:** Session 169 COMPLETE. MT documentation overhaul + 2 MTs advanced. Grade: A.
+**Phase:** Session 170 COMPLETE. MT-48 Phase 2 + MT-49 Phase 2 + slim_init wiring. Grade: A.
 
-**What was done this session (S169):**
-- MT-37 elevated to UBER-LEVEL master task with full spec doc (`MT37_INVESTMENT_RESEARCH_UBER.md`)
-- 7 new MTs documented (MT-43 through MT-49) from comprehensive project-wide goal audit:
-  - MT-43: Data Analysis Excellence (Excel/PPT MCP Quality)
-  - MT-44: Automated Cross-Chat Task Execution Pipeline
-  - MT-45: USAGE-5 Streamlit/Web Dashboard
-  - MT-46: Report Self-Audit System (Honest Assessment)
-  - MT-47: External Tool Evaluation Pipeline (BUILD Backlog)
-  - MT-48: Report Visual Polish (Chart/Layout Fixes)
-  - MT-49: Self-Learning Evolution Engine (UBER) — permanent, never-closing MT
-- MT-49 Phase 1 COMPLETE: `self-learning/meta_learning_dashboard.py` — self-learning effectiveness tracker
-  - PrincipleAnalyzer, SessionTrendAnalyzer, ImprovementTracker, ResearchROITracker, JournalAnalyzer
-  - CLI: --json, --brief, --data-dir modes. Brief output for /cca-init integration.
-  - 28 tests in `self-learning/tests/test_meta_learning.py`
-- MT-48 Phase 1 COMPLETE: BarChart + StackedBarChart X-axis label rotation + integer Y-axis ticks
-  - Auto-rotate labels: -90deg for >12 bars, -45deg for 5-8, horizontal for <=4
-  - Auto-expand bottom margin, force integer Y-axis for count data
-- All 44 MTs registered in priority_picker.py (93 tests passing)
-- Cross-chat notifications sent to both Kalshi chats (Matthew 2hr absence)
-- 3 commits, 28 new tests (9473 -> 9501), no regressions
-- **Tests**: ~243 suites, ~9501 tests passing. All green.
+**What was done this session (S170):**
+- MT-48 Phase 2 COMPLETE: Typst breakable cards + design-guide color sync
+  - Module cards and task cards: `box` -> `block(breakable: true)` — reduces page whitespace
+  - Page 5 whitespace fixed (Spec System card now flows up after Memory System)
+  - design-guide.md synced: added 3 undocumented template colors (dark #3a3a3c, mid #636366, teal #5ac8fa)
+  - TOC page numbers already working (no fix needed)
+- MT-49 Phase 2 COMPLETE: Active principle transfer with proposal tracking
+  - `TransferProposal` dataclass with status tracking (proposed/accepted/rejected)
+  - JSONL proposal store (`transfer_proposals.jsonl`) with save/load/update
+  - `propose_transfers()` — auto-scan all domains, dedup against existing proposals
+  - `pending_summary()` — count + top proposals for briefing integration
+  - CLI commands: propose, review, accept, reject
+  - 15 new tests in `test_principle_transfer.py` (49 total)
+- Wired transfer proposals into slim_init.py (Step 3.8) — auto-propose + show pending at session start
+- Cross-chat: peak/off-peak adoption directive sent to Kalshi chats via CCA_TO_POLYBOT.md
+- 3 commits, 15 new tests (9501 -> 9516), no regressions
+- **Tests**: ~243 suites, ~9516 tests passing. All green.
 
-**Next:**
-1. Wire meta_learning_dashboard --brief into /cca-init briefing
-2. MT-49 Phase 2: Active principle transfer — automated cross-domain proposals
-3. MT-48 Phase 2: Typst template whitespace compression, color sync, TOC page numbers
-4. economics_sniper_v1 validation (April 8 CPI approaching)
+**Next (prioritized):**
+1. MT-48 remaining: cover title formatting, MT section condensing, report_differ wiring
+2. MT-49 Phase 3: Automated principle discovery from transcripts + git + test patterns
+3. economics_sniper_v1 validation (April 8 CPI approaching)
+4. MT-32 Phase 6: Design system v2 (design tokens, lint rules, cross-format consistency)
 5. Ongoing cross-chat coordination
 
 **Matthew directives:**
