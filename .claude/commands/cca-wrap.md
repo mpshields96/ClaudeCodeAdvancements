@@ -31,13 +31,14 @@ Fix failures before proceeding. Do not skip failing tests to update docs.
 
 ---
 
-## Step 1.5 — Senior dev review on changed files
+## Step 1.5 — Senior dev review on changed files (OPTIONAL in autoloop)
 
-Run a quick senior review on files changed this session. This catches issues before commit.
+**Skip this step during autoloop sessions** (when context budget is tight).
+Only run in interactive sessions or when Matthew explicitly requests a review.
 
+If running:
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
-# Get list of changed .py files (not tests, not __pycache__)
 CHANGED=$(git diff --name-only HEAD~$(git log --oneline --since="4 hours ago" | wc -l | tr -d ' ') 2>/dev/null | grep '\.py$' | grep -v test_ | grep -v __pycache__ | head -5)
 if [ -n "$CHANGED" ]; then
   for f in $CHANGED; do
@@ -46,10 +47,6 @@ if [ -n "$CHANGED" ]; then
   done
 fi
 ```
-
-If any file gets a REJECT verdict: note it in the self-assessment losses.
-If all files pass or get CONDITIONAL: proceed normally.
-If no .py files changed: skip this step.
 
 ---
 
@@ -120,76 +117,38 @@ python3 session_timer.py mark wrap:docs doc
 
 ---
 
-## Step 3 — Update SESSION_STATE.md
+## Steps 3-5 — Batch doc update (SESSION_STATE + CHANGELOG + LEARNINGS)
 
-Update `/Users/matthewshields/Projects/ClaudeCodeAdvancements/SESSION_STATE.md` with:
-- Session number incremented
-- Date
-- What was completed (bullets with file names)
-- New test count
-- What's next (specific task, not vague)
-- Any architectural decisions made
+Use `doc_updater.py` to update all three docs in ONE subprocess call.
+This replaces separate Read/Edit cycles, saving ~3000-5000 tokens per wrap.
 
----
-
-## Step 4 — Append to CHANGELOG.md
-
-Append (NEVER overwrite) to `/Users/matthewshields/Projects/ClaudeCodeAdvancements/CHANGELOG.md`.
-
-If the file doesn't exist, create it with a header first.
-
-Format:
-
-```
-## Session [N] — [YYYY-MM-DD]
-
-**What changed:**
-- [bullet per change, with file names]
-
-**Why:**
-- [motivation — what problem was solved or what feature was requested]
-
-**Tests:** [N]/[N] passing
-
-**Lessons:**
-- [anything learned that future sessions should know]
-
----
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 doc_updater.py \
+    --session [SESSION_NUMBER] --grade [GRADE] \
+    --summary "[one-sentence summary]" \
+    --wins "[WIN_1]" "[WIN_2]" \
+    --losses "[LOSS_1]" "[LOSS_2]" \
+    --next "[NEXT_1]" "[NEXT_2]" \
+    --tests [TOTAL_TEST_COUNT] --suites [TOTAL_SUITES] \
+    --date [YYYY-MM-DD]
 ```
 
-This file is append-only. NEVER truncate or rewrite previous entries.
+Add `--learnings-json '[{"title": "...", "severity": 1, "anti_pattern": "...", "fix": "..."}]'`
+only if there are actual learnings this session. Skip if nothing was learned.
 
----
+Add `--new-files "file1.py" "file2.py"` only if new files were created.
 
-## Step 5 — Capture learnings
+The script handles:
+- SESSION_STATE.md: new state at top, old demoted to Previous
+- CHANGELOG.md: append-only new session entry
+- LEARNINGS.md: append new patterns (skipped if none)
+- PROJECT_INDEX.md: add new file entries (skipped if none)
 
-Review the session for any mistakes, gotchas, or patterns worth remembering.
-Append to `/Users/matthewshields/Projects/ClaudeCodeAdvancements/LEARNINGS.md`.
+**Severity escalation still applies** — if a learning from a previous session recurred,
+manually bump its Count in LEARNINGS.md after the batch update.
 
-If the file doesn't exist, create it with this header:
-```
-# CCA Learnings — Severity-Tracked Patterns
-# Severity: 1 = noted, 2 = hard rule, 3 = global (promoted to ~/.claude/rules/)
-# Append-only. Never truncate.
-```
-
-Format per entry:
-```
-### [SHORT TITLE] — Severity: [1/2/3] — Count: [N]
-- **Anti-pattern:** [what went wrong]
-- **Fix:** [the correct approach]
-- **First seen:** [date]
-- **Last seen:** [date]
-- **Files:** [where it applies]
-```
-
-Rules for severity escalation:
-- First occurrence: Severity 1 (noted here)
-- Second occurrence: Severity 2 (add as hard rule to CLAUDE.md)
-- Third occurrence: Severity 3 (tell user to promote to ~/.claude/rules/ for all projects)
-
-If a pattern from a previous session recurred this session, bump its Count and Last seen
-date. If Count reaches the next severity threshold, escalate it.
+**Do NOT also Read/Edit these files manually.** The batch call handles everything.
 
 If nothing was learned this session: skip this step. Don't fabricate lessons.
 
@@ -458,8 +417,9 @@ This block is mandatory — always print it, even if all values are "none"/"0".
 
 ## Step 7 — Update PROJECT_INDEX.md
 
-If any new files were created this session, add them to PROJECT_INDEX.md.
-If no new files: skip this step.
+PROJECT_INDEX is now handled by doc_updater.py in Steps 3-5 (via --new-files).
+Only manually edit PROJECT_INDEX.md if the batch updater missed something or
+if you need to update existing entries (not just add new ones).
 
 ---
 
