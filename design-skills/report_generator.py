@@ -361,11 +361,16 @@ class CCADataCollector:
             if source_match:
                 source = source_match.group(1)
 
-            # Extract test count from status
+            # Extract test count — check status line first, then full body
             test_count = 0
             test_match = re.search(r"(\d+)\s*tests?", status)
             if test_match:
                 test_count = int(test_match.group(1))
+            if test_count == 0:
+                # Scan body for test counts — take the largest mentioned
+                body_tests = re.findall(r"(\d+)\s*tests?", task_body)
+                if body_tests:
+                    test_count = max(int(t) for t in body_tests)
 
             # Categorize
             status_upper = status.upper()
