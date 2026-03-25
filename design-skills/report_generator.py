@@ -766,24 +766,41 @@ class CCADataCollector:
         content = self._read_file("SESSION_STATE.md")
         priorities = []
 
-        # Look for the Next: line in current state
-        next_match = re.search(r"\*\*Next:\*\*\s*(.+?)(?:\n\n|\n---)", content, re.DOTALL)
+        # Look for the Next section in current state
+        next_match = re.search(r"\*\*Next[^*]*\*\*[:\s]*(.+?)(?:\n\n|\n---|\n\*\*)", content, re.DOTALL)
         if next_match:
             next_text = next_match.group(1)
-            # Parse (1) ... (2) ... format
+            # Try format: (1) ... (2) ...
             items = re.findall(r"\((\d+)\)\s*(.+?)(?=\(\d+\)|$)", next_text, re.DOTALL)
-            for _, item_text in items:
-                item_text = item_text.strip().rstrip(".")
-                # Split into title and detail at first period or colon
-                parts = re.split(r"[.:]", item_text, maxsplit=1)
-                title = parts[0].strip()
-                detail = parts[1].strip() if len(parts) > 1 else ""
-                # Clean up
-                title = re.sub(r"\s+", " ", title)
-                detail = re.sub(r"\s+", " ", detail)
-                if len(detail) > 150:
-                    detail = detail[:147] + "..."
-                priorities.append({"title": title, "detail": detail})
+            if not items:
+                # Try format: 1. **title** — detail  OR  1. text
+                items = re.findall(
+                    r"^\s*\d+\.\s+\*?\*?(.+?)$",
+                    next_text, re.MULTILINE
+                )
+                for item_text in items:
+                    item_text = item_text.strip().rstrip(".")
+                    # Strip bold markers and split at — or :
+                    item_text = item_text.replace("**", "")
+                    parts = re.split(r"\s*[—:]\s*", item_text, maxsplit=1)
+                    title = parts[0].strip()
+                    detail = parts[1].strip() if len(parts) > 1 else ""
+                    title = re.sub(r"\s+", " ", title)
+                    detail = re.sub(r"\s+", " ", detail)
+                    if len(detail) > 150:
+                        detail = detail[:147] + "..."
+                    priorities.append({"title": title, "detail": detail})
+            else:
+                for _, item_text in items:
+                    item_text = item_text.strip().rstrip(".")
+                    parts = re.split(r"[.:]", item_text, maxsplit=1)
+                    title = parts[0].strip()
+                    detail = parts[1].strip() if len(parts) > 1 else ""
+                    title = re.sub(r"\s+", " ", title)
+                    detail = re.sub(r"\s+", " ", detail)
+                    if len(detail) > 150:
+                        detail = detail[:147] + "..."
+                    priorities.append({"title": title, "detail": detail})
 
         if not priorities:
             priorities = [{"title": "Check SESSION_STATE.md for current priorities", "detail": ""}]
