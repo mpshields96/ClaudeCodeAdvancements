@@ -1269,13 +1269,18 @@ def _render_stacked_bar_chart(chart: StackedBarChart) -> str:
         )
 
     # Y-axis gridlines + labels
+    # Force integer display when max_total is a whole number (LOC, tests, phases)
+    all_integer = max_total == int(max_total)
     n_ticks = 5
     for i in range(n_ticks + 1):
         val = max_total * i / n_ticks
         y = plot_y + plot_h - (plot_h * i / n_ticks)
         parts.append(_line(plot_x, y, plot_x + plot_w, y,
                           stroke=CCA_COLORS["border"]))
-        label = str(int(val)) if val == int(val) else f"{val:.1f}"
+        if all_integer:
+            label = str(int(val))
+        else:
+            label = str(int(val)) if val == int(val) else f"{val:.1f}"
         parts.append(_text(plot_x - 8, y + 4, label,
                           font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
 
@@ -1303,10 +1308,31 @@ def _render_stacked_bar_chart(chart: StackedBarChart) -> str:
 
             cumulative_height += seg_height
 
-        # Category label
-        parts.append(_text(plot_x + cat_idx * bar_spacing + bar_spacing / 2,
-                          plot_y + plot_h + 16, str(label),
-                          font_size=10, fill=CCA_COLORS["muted"], anchor="middle"))
+        # Category label — rotate when many categories to prevent overlap
+        label_x = plot_x + cat_idx * bar_spacing + bar_spacing / 2
+        label_y = plot_y + plot_h + 16
+        if n_categories > 12:
+            # Very crowded: -90 degrees, skip every other label
+            if cat_idx % 2 == 0:
+                display_label = str(label)[:10]
+                parts.append(_text(label_x, label_y, display_label,
+                                  font_size=8, fill=CCA_COLORS["muted"], anchor="end",
+                                  transform=f"rotate(-90, {label_x}, {label_y})"))
+        elif n_categories > 8:
+            # Crowded: -90 degrees, all labels
+            display_label = str(label)[:10]
+            parts.append(_text(label_x, label_y, display_label,
+                              font_size=8, fill=CCA_COLORS["muted"], anchor="end",
+                              transform=f"rotate(-90, {label_x}, {label_y})"))
+        elif n_categories > 4:
+            # Moderate: -45 degrees
+            display_label = str(label)[:12]
+            parts.append(_text(label_x, label_y, display_label,
+                              font_size=9, fill=CCA_COLORS["muted"], anchor="end",
+                              transform=f"rotate(-45, {label_x}, {label_y})"))
+        else:
+            parts.append(_text(label_x, label_y, str(label),
+                              font_size=10, fill=CCA_COLORS["muted"], anchor="middle"))
 
     # Legend
     legend_y = chart.height - legend_height + 5
@@ -2812,11 +2838,11 @@ def _render_histogram_chart(chart: HistogramChart) -> str:
                  f'x2="{margin_left}" y2="{margin_top + plot_h}" '
                  f'stroke="{CCA_COLORS["border"]}" stroke-width="1"/>')
 
-    # Y-axis ticks (5 values)
+    # Y-axis ticks (5 values) — counts are always integers
     for i in range(6):
         val = max_count * i / 5
         yp = sy(val)
-        label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
+        label_text = str(int(round(val)))
         parts.append(_text(margin_left - 8, yp + 3, label_text,
                            font_size=8, fill=CCA_COLORS["muted"], anchor="end"))
         if i > 0:
@@ -2852,12 +2878,17 @@ def _render_histogram_chart(chart: HistogramChart) -> str:
                      f'stroke="{CCA_COLORS["background"]}" stroke-width="0.5"/>')
 
     # X-axis tick labels (bin edges)
+    # Detect all-integer input data — show integer bin edges
+    all_int_data = all(v == int(v) for v in vals)
     max_labels = min(n_bins + 1, 8)
     step = max(1, (n_bins + 1) // max_labels)
     for i in range(0, n_bins + 1, step):
         val = v_min + i * bin_width
         xp = margin_left + i * bar_w
-        label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
+        if all_int_data:
+            label_text = str(int(round(val)))
+        else:
+            label_text = str(int(val)) if val == int(val) else f"{val:.1f}"
         parts.append(_text(xp, margin_top + plot_h + 15, label_text,
                            font_size=8, fill=CCA_COLORS["muted"]))
 

@@ -415,5 +415,75 @@ class TestNewChartTypesTitleAndEscape(unittest.TestCase):
         self.assertIn("Score &amp; Grade", svg)
 
 
+class TestStackedBarLabelOverflow(unittest.TestCase):
+    """MT-32: X-axis labels must not overlap when many categories exist."""
+
+    def test_many_categories_uses_90deg_rotation(self):
+        """With 10+ categories, labels should rotate -90 degrees."""
+        data = [(f"MT-{i}", [i, 10 - i]) for i in range(12)]
+        svg = render_svg(StackedBarChart(data=data, series_names=["Done", "Remaining"]))
+        self.assertIn("rotate(-90", svg)
+
+    def test_few_categories_no_rotation(self):
+        """With 4 or fewer categories, labels should not rotate."""
+        data = [(f"MT-{i}", [i, 4 - i]) for i in range(4)]
+        svg = render_svg(StackedBarChart(data=data, series_names=["Done", "Remaining"]))
+        self.assertNotIn("rotate(", svg)
+
+    def test_medium_categories_uses_45deg(self):
+        """With 5-8 categories, labels should use -45 degree rotation."""
+        data = [(f"MT-{i}", [i, 7 - i]) for i in range(7)]
+        svg = render_svg(StackedBarChart(data=data, series_names=["Done", "Remaining"]))
+        self.assertIn("rotate(-45", svg)
+        self.assertNotIn("rotate(-90", svg)
+
+    def test_skip_labels_when_very_crowded(self):
+        """With 15+ categories, should skip some labels to prevent overlap."""
+        data = [(f"MT-{i}", [i, 15 - i]) for i in range(16)]
+        svg = render_svg(StackedBarChart(data=data, series_names=["Done", "Remaining"]))
+        # Not all 16 labels should appear — some skipped
+        label_count = sum(1 for i in range(16) if f"MT-{i}" in svg)
+        self.assertLess(label_count, 16)
+
+
+class TestIntegerAxisFormatting(unittest.TestCase):
+    """MT-32: Chart axes should show integers when data is integer-valued."""
+
+    def test_stacked_bar_integer_y_axis(self):
+        """StackedBarChart Y-axis should show integers for integer data."""
+        data = [("Total", [31000, 31000])]
+        svg = render_svg(StackedBarChart(data=data, series_names=["Source", "Test"]))
+        # Should NOT contain decimal values like "12400.0" or "31000.0"
+        import re
+        decimal_labels = re.findall(r'>(\d+\.\d+)<', svg)
+        self.assertEqual(decimal_labels, [], f"Found decimal Y-axis labels: {decimal_labels}")
+
+    def test_stacked_bar_float_max_treated_as_integer(self):
+        """Even if max_total comes from JSON as float, Y-axis should show ints."""
+        data = [("Total", [31335.0, 31236.0])]  # Floats from JSON
+        svg = render_svg(StackedBarChart(data=data, series_names=["Source", "Test"]))
+        import re
+        decimal_labels = re.findall(r'>(\d+\.\d+)<', svg)
+        self.assertEqual(decimal_labels, [], f"Found decimal Y-axis labels: {decimal_labels}")
+
+    def test_histogram_y_axis_always_integer(self):
+        """Histogram Y-axis (counts) should always be integers."""
+        values = list(range(50)) + list(range(20))  # 70 values
+        svg = render_svg(HistogramChart(values=values))
+        import re
+        # Y-axis labels should be integers (counts are always whole numbers)
+        decimal_labels = re.findall(r'>(\d+\.\d+)<', svg)
+        self.assertEqual(decimal_labels, [], f"Found decimal Y-axis labels: {decimal_labels}")
+
+    def test_histogram_x_axis_integer_for_integer_data(self):
+        """Histogram X-axis should show integers when input data is all integers."""
+        values = [1, 2, 3, 4, 5, 5, 5, 6, 7, 8, 8, 9, 10, 10, 10, 10]
+        svg = render_svg(HistogramChart(values=values))
+        import re
+        # X-axis bin edges should be integers for integer input
+        decimal_labels = re.findall(r'>(\d+\.\d+)<', svg)
+        self.assertEqual(decimal_labels, [], f"Found decimal X-axis labels: {decimal_labels}")
+
+
 if __name__ == "__main__":
     unittest.main()
