@@ -583,14 +583,15 @@ class TestCollectCriticisms(unittest.TestCase):
         titles = [r["title"] for r in result]
         self.assertTrue(any("single-developer" in t.lower() or "external users" in t.lower() for t in titles))
 
-    def test_always_includes_kalshi_gap(self):
-        """The Kalshi integration gap criticism is always present."""
+    def test_includes_research_outcome_criticism(self):
+        """Research outcome tracking gap is flagged when data is thin or missing."""
         c = CCADataCollector(project_root="/tmp")
         result = c.collect_criticisms(
             _make_modules_for_criticism(), [], [], []
         )
         titles = [r["title"] for r in result]
-        self.assertTrue(any("kalshi" in t.lower() for t in titles))
+        # Either "outcome tracking" or "research outcome" should appear
+        self.assertTrue(any("outcome" in t.lower() or "research" in t.lower() for t in titles))
 
     def test_stuck_phase1_criticism_when_applicable(self):
         """Tasks at phase 1 with more phases trigger a specific criticism."""

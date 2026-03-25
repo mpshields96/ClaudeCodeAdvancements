@@ -858,12 +858,28 @@ class CCADataCollector:
         # 5. Self-learning metrics — RESOLVED S153
         # Previously hardcoded; now dynamically parsed from principles.jsonl, journal.jsonl, papers.jsonl
 
-        # 6. Kalshi integration gap
-        criticisms.append({
-            "title": "Kalshi bot integration remains read-only",
-            "severity": "gap",
-            "detail": "CCA scans for research and surfaces findings, but no closed-loop feedback exists: no tracking of which CCA recommendations led to profitable Kalshi trades.",
-        })
+        # 6. Kalshi delivery feedback gap
+        # CCA has full read+write since S134, but check if research outcomes are being tracked
+        outcomes_path = os.path.expanduser("~/.cca-research-outcomes.jsonl")
+        if os.path.exists(outcomes_path):
+            try:
+                with open(outcomes_path) as f:
+                    outcomes = [l for l in f if l.strip()]
+                profitable = sum(1 for l in outcomes if '"profitable"' in l or '"profit"' in l.lower())
+                if len(outcomes) < 5:
+                    criticisms.append({
+                        "title": f"Research outcome tracking thin ({len(outcomes)} entries)",
+                        "severity": "gap",
+                        "detail": "CCA delivers research to Kalshi but few outcomes are tracked back. Need more closed-loop data to measure which CCA deliveries produce profit.",
+                    })
+            except Exception:
+                pass
+        else:
+            criticisms.append({
+                "title": "No research outcome tracking file found",
+                "severity": "gap",
+                "detail": "~/.cca-research-outcomes.jsonl missing. CCA cannot measure which deliveries to Kalshi produced profit.",
+            })
 
         # 7. CI/CD
         ci_path = os.path.join(self.project_root, ".github", "workflows", "tests.yml")
