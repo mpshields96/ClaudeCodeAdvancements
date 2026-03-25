@@ -3,26 +3,28 @@
 
 ---
 
-## Current State (as of Session 166 — 2026-03-25)
+## Current State (as of Session 167 — 2026-03-26)
 
-**Phase:** Session 166 COMPLETE. MT-32 Phase 6 + Phase 7. Grade: A.
+**Phase:** Session 167 COMPLETE. MT-32 Phase 7 COMPLETE. Grade: A.
 
-**What was done this session (S166):**
-- MT-32 Phase 6 COMPLETE: figure_generator.py — multi-panel figure composer with grid layout (auto cols), panel labels (a,b,c), captions, figure titles, 3 annotation types (TextAnnotation, ArrowAnnotation, HighlightAnnotation). 41 tests in test_figure_generator.py.
-- MT-32 Phase 6 extension: Preset layouts — quick_figure(), comparison_figure(), dashboard_figure() convenience functions. 21 tests in test_figure_presets.py.
-- MT-32 Phase 7 started: generate_summary_figure() and save_summary_figure() wired into ReportChartGenerator.generate_all(). 2-panel overview (tests per module + active MT progress) auto-included in /cca-report pipeline. 13 tests in test_report_figures.py.
-- REQ-039 DELIVERED: MakerSniperStrategy architecture design (post_only+expiry, 1c spread offset, 50% fill rate base, 50-fill paper gate, taker fallback)
-- REQ-033 DELIVERED: NO@91-92c statistical analysis (p=0.46/0.50, DO NOT GUARD, need n>=84-159 for significance)
-- Fixed 2 existing test expectations for new summary_figure in generate_all
-- 4 commits, 75 new tests added (9318 -> 9393), 3 new suites (237 -> 240)
-- **Tests**: ~240 suites, ~9393 tests passing. All green.
+**What was done this session (S167):**
+- MT-32 Phase 7 COMPLETE: Figures wired into all 3 output pipelines:
+  - slide_generator.py: build_chart_slide() for SVG chart embedding in decks + cca-slides.typ template update
+  - dashboard_generator.py: _render_summary_figure() multi-panel figure using figure_generator, wired into _render_charts()
+  - website_generator.py: figures field added to LandingPage with XSS-safe figure-section rendering
+  - collect_slides_from_project() now auto-generates summary figure chart slide via ReportChartGenerator
+- 30 new tests in test_figure_integration.py (9393 -> 9423), 1 new suite (240 -> 241)
+- 2 commits, no regressions
+- CCA status report generated (425 KB, 27 pages)
+- Cross-chat checked: REQ-040 (Monte Carlo) still outstanding
+- **Tests**: ~241 suites, ~9423 tests passing. All green.
 
 **Next:**
-1. MT-32 Phase 7 continued: Wire figures into slides, dashboard, website pipelines
+1. REQ-040: Monte Carlo bankroll simulator (URGENT — pushed multiple sessions)
 2. economics_sniper_v1 validation (April 8 CPI data)
 3. MakerSniperStrategy implementation (Kalshi monitoring chat builds from REQ-039 spec)
-4. Ongoing cross-chat coordination (check POLYBOT_TO_CCA.md each session)
-5. REQ-035 response: daily_sniper interim analysis (Wilson CI, sizing recommendation)
+4. REQ-035 response: daily_sniper interim analysis (Wilson CI, sizing recommendation)
+5. Ongoing cross-chat coordination (check POLYBOT_TO_CCA.md each session)
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit

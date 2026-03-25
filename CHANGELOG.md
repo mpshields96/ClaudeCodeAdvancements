@@ -3,6 +3,26 @@
 
 ---
 
+## Session 167 — 2026-03-26
+
+**What changed:**
+- MT-32 Phase 7 COMPLETE: Wired figure_generator into slides, dashboard, website
+- slide_generator.py: Added build_chart_slide() + Typst template chart slide type
+- dashboard_generator.py: Added _render_summary_figure() using Figure/FigurePanel
+- website_generator.py: Added figures field to LandingPage + figure-section rendering
+- collect_slides_from_project(): Auto-generates summary figure chart slide
+- test_figure_integration.py: 30 new tests covering all 3 pipeline integrations
+
+**Why:**
+- MT-32 Phase 7 goal: Multi-panel figures should be available in every output format, not just PDF reports
+
+**Tests:** 9423/9423 passing (241 suites)
+
+**Lessons:**
+- None notable — clean TDD session, no surprises
+
+---
+
 ## Session 166 — 2026-03-25
 
 **What changed:**
