@@ -3,24 +3,26 @@
 
 ---
 
-## Current State (as of Session 163 — 2026-03-25)
+## Current State (as of Session 164 — 2026-03-25)
 
-**Phase:** Session 163 COMPLETE. MT-41 Phase 2-3, REQ-025 research, MT-28 growth, MT-32 Phase 3. Grade: A.
+**Phase:** Session 164 COMPLETE. MT-41 /cca-init wiring, REQ-038/039/040 Kalshi deliveries, MT-32 Phase 4. Grade: A.
 
-**What was done this session (S163):**
-- MT-41 Phase 2-3 COMPLETE: cluster scoring + MASTER_TASKS append + /cca-init briefing (mt_originator.py, 31 tests)
-- REQ-025 follow-up DELIVERED: FLB confirmed across all Kalshi categories (Whelan 2026, Diercks 2026, QuantPedia). maker_sniper_v1 identified as highest-ROI next step. Written to CCA_TO_POLYBOT.md.
-- MT-28 growth: principle seeding from FINDINGS_LOG.md (principle_seeder.py, 19 tests, 40 principles seeded from 200+ point findings)
-- MT-32 Phase 3: design_linter.py — anti-slop lint rules for HTML/SVG (colors, fonts, spacing, AI-slop detection, 31 tests)
-- 4 commits, 81 new tests added (9113 -> 9194), 3 new suites (229 -> 232)
-- **Tests**: 232 suites, 9194 tests passing. All green.
+**What was done this session (S164):**
+- MT-41: Wired --briefing into /cca-init skill + slim_init.py (run_mt_proposals(), 14 tests in test_slim_init.py)
+- REQ-038 DELIVERED: send_outcome_report() + parse_research_priorities() in polybot_comm.py (13 tests)
+- REQ-039 DELIVERED: MakerSniperStrategy architecture (class design, 60% fill rate, 1c spread offset, ~$88/month additive)
+- REQ-040: Confirmed already delivered S151 (monte_carlo, synthetic, edge_stability)
+- MT-32 Phase 4 COMPLETE: consistency_checker.py — cross-format design audit (22 tests, found 12 real issues)
+- MT-32: Added DARK_PALETTE (9 tokens) to design_linter.py, fixed 12 orphan colors in dashboard + website generators
+- 4 commits, 49 new tests added (9194 -> 9239), 2 new suites (232 -> 234)
+- **Tests**: 234 suites, 9239 tests passing. All green.
 
 **Next:**
-1. Wire MT-41 --briefing into /cca-init skill file (proposals surface in startup)
-2. MakerSniperStrategy: paper-trade maker-side limit orders (architecture, REQ-037)
+1. MT-32 Phase 5: Dashboard v2 (interactive, responsive, real-time data)
+2. MT-33 Phase 4-6: chart integration, self-reference, hardening
 3. economics_sniper_v1 validation (April 8 CPI data)
-4. MT-32 Phase 4-5: cross-format consistency checker, dashboard v2
-5. MT-33 Phase 4-6: chart integration, self-reference, hardening
+4. MakerSniperStrategy implementation (Kalshi monitoring chat builds from REQ-039 spec)
+5. Ongoing cross-chat coordination (check POLYBOT_TO_CCA.md each session)
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
@@ -30,6 +32,14 @@
 - Autoloop ENABLED — run /cca-wrap at natural stopping points, not when Matthew reminds
 - CCA and Kalshi chats should have automated feedback loop (S161 directive, IMPLEMENTED S162)
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 163 — 2026-03-25)
+
+**Phase:** Session 163 COMPLETE. MT-41 Phase 2-3, REQ-025 research, MT-28 growth, MT-32 Phase 3. Grade: A.
+
+**What was done (S163):** MT-41 Phase 2-3 (cluster scoring, MASTER_TASKS append, /cca-init briefing, 31 tests). REQ-025 follow-up DELIVERED (FLB confirmed). MT-28 growth (principle seeding, 19 tests). MT-32 Phase 3 (design_linter.py, 31 tests). 4 commits, 81 new tests. 232 suites, 9194 tests.
 
 ---
 

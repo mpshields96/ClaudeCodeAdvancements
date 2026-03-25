@@ -3,6 +3,27 @@
 
 ---
 
+## Session 164 — 2026-03-25
+
+**What changed:**
+- MT-41: Wired --briefing into /cca-init skill (Step 2.92) + slim_init.py (run_mt_proposals())
+- REQ-038: Added send_outcome_report() + parse_research_priorities() to polybot_comm.py
+- REQ-039: MakerSniperStrategy architecture delivered to CCA_TO_POLYBOT.md
+- REQ-040: Confirmed delivered S151 (monte_carlo, synthetic, edge_stability)
+- MT-32 Phase 4: New consistency_checker.py — audits all generators for design token drift
+- MT-32: Added DARK_PALETTE (9 tokens) to design_linter.py, fixed 12 orphan colors in dashboard_generator + website_generator
+- New test file: tests/test_polybot_comm_learning.py (13 tests)
+- New test file: design-skills/tests/test_consistency_checker.py (22 tests)
+
+**Why:**
+- MT-41 wiring closes the loop: FINDINGS_LOG BUILD verdicts now surface as MT proposals during /cca-init
+- REQ-038/039 serve the Kalshi bot ecosystem (50%+ time directive)
+- MT-32 Phase 4 prevents visual output regression as more generators are added
+
+**Tests:** 9239/9239 passing (234 suites). +49 tests, +2 suites.
+
+---
+
 ## Session 162 — 2026-03-26
 
 **What changed:**

@@ -41,7 +41,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) | 1381 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~9194 tests (~232 suites). All must pass before any work.**
+**Total: ~9239 tests (~234 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -293,3 +293,7 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `design-skills/design_linter.py` — MT-32 Phase 3: Design system lint rules (colors, fonts, spacing, anti-slop). 31 tests.
 - `tests/test_mt_originator_phase2.py` — MT-41 Phase 2-3 tests (cluster scoring, append, briefing). 31 tests.
 - `self-learning/tests/test_principle_seeder_findings.py` — MT-28 growth: findings seeder tests. 19 tests.
+
+### Added in S164
+- `design-skills/consistency_checker.py` — MT-32 Phase 4: Cross-format design consistency auditor. Scans generator source for orphan colors, token drift, font mismatches. 22 tests.
+- `tests/test_polybot_comm_learning.py` — REQ-038: Tests for polybot_comm.py send_outcome_report + parse_research_priorities. 13 tests.
