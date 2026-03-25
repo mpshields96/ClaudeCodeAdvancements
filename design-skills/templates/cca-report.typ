@@ -677,29 +677,13 @@
 
 #section-header("Module Deep-Dives", accent: teal, lbl: "sec-modules")
 
-// Charts: Tests per module + Module size treemap
+// Charts: Tests per module + Module size treemap (fluff charts removed S159)
 #if chart-dir != none {
   grid(
     columns: (1fr, 1fr),
     column-gutter: 12pt,
     embed-chart("module_tests", width: 100%),
     embed-chart("module_loc_treemap", width: 100%),
-  )
-  v(4mm)
-  // Statistical charts: Test density scatter + Code composition
-  grid(
-    columns: (1fr, 1fr),
-    column-gutter: 12pt,
-    embed-chart("test_density_scatter", width: 100%),
-    embed-chart("module_composition", width: 100%),
-  )
-  v(4mm)
-  // Coverage ratio + test distribution
-  grid(
-    columns: (1fr, 1fr),
-    column-gutter: 12pt,
-    embed-chart("coverage_ratio", width: 100%),
-    embed-chart("test_distribution", width: 100%),
   )
   v(4mm)
 }
@@ -1156,8 +1140,6 @@
   }
 )
 #v(3mm)
-// Hook distribution chart
-#embed-chart("hook_coverage", width: 60%)
 
 #v(5mm)
 
@@ -1217,37 +1199,64 @@
     // Dynamic fields with fallbacks for older JSON data
     #let sl = data.self_learning
     #if sl.keys().contains("principles_total") {
-      kv-row("Principles", [#sl.principles_total active (avg score: #sl.principles_avg_score)])
+      // Key metrics grid — compact visual
+      grid(
+        columns: (1fr, 1fr),
+        column-gutter: 8pt,
+        row-gutter: 4pt,
+        box(inset: 4pt)[
+          #text(size: 18pt, weight: "bold", fill: indigo)[#sl.principles_total]
+          #v(1mm)
+          #text(size: 7pt, fill: light)[PRINCIPLES]
+        ],
+        box(inset: 4pt)[
+          #text(size: 18pt, weight: "bold", fill: if sl.journal_wins >= sl.journal_pains { green } else { orange })[#sl.journal_wins#text(size: 10pt, fill: light)[/#sl.journal_pains]]
+          #v(1mm)
+          #text(size: 7pt, fill: light)[WINS / PAINS]
+        ],
+      )
+      v(2mm)
+      kv-row("Avg Score", [#sl.principles_avg_score #text(fill: light)[(higher = more validated)]])
       kv-row("Journal Sessions", [#sl.journal_sessions tracked])
-      kv-row("Wins / Pains", [#sl.journal_wins / #sl.journal_pains])
     } else {
-      // Legacy fields
       kv-row("Strategies", [#sl.strategies_total total (#sl.strategies_confirmed confirmed)])
       kv-row("Trace Sessions", [#sl.trace_sessions analyzed])
       kv-row("Avg Score", [#sl.avg_score / 100])
     }
     #kv-row("Papers Logged", str(sl.papers_logged), highlight: true)
     #kv-row("Sentinel Rate", sl.sentinel_rate)
-    #if sl.keys().contains("research_deliveries") and sl.research_deliveries > 0 {
-      kv-row("Research ROI", [#sl.research_deliveries deliveries, #sl.research_profitable profitable], highlight: true)
-    }
 
-    #v(2mm)
-    #text(size: 7pt, fill: light)[
-      YoYo loop: observe #sym.arrow detect #sym.arrow hypothesize #sym.arrow build #sym.arrow validate
-    ]
+    // Research ROI — key metric for CCA↔Kalshi loop
+    #if sl.keys().contains("research_deliveries") and sl.research_deliveries > 0 {
+      v(2mm)
+      box(
+        fill: if sl.research_profitable > 0 { rgb("#f0fdf4") } else { rgb("#fff7ed") },
+        radius: 3pt, inset: (x: 6pt, y: 4pt), width: 100%,
+        stroke: (left: 2pt + if sl.research_profitable > 0 { green } else { orange }, rest: none),
+      )[
+        #text(size: 7pt, fill: if sl.research_profitable > 0 { green } else { orange }, weight: "semibold")[RESEARCH ROI]
+        #h(4pt)
+        #text(size: 8pt, fill: dark, weight: "bold")[#sl.research_deliveries]
+        #text(size: 7.5pt, fill: mid)[ deliveries]
+        #h(4pt)
+        #text(size: 7pt, fill: light)[#sym.arrow.r]
+        #h(4pt)
+        #text(size: 8pt, fill: dark, weight: "bold")[#sl.research_implemented]
+        #text(size: 7.5pt, fill: mid)[ implemented]
+        #h(4pt)
+        #text(size: 7pt, fill: light)[#sym.arrow.r]
+        #h(4pt)
+        #text(size: 8pt, fill: green, weight: "bold")[#sl.research_profitable]
+        #text(size: 7.5pt, fill: mid)[ profitable]
+      ]
+    }
   ],
 )
 
-// Charts: Intelligence verdicts donut + LOC distribution
+// Charts: Intelligence verdicts donut (LOC distribution removed — fluff, S159)
 #if chart-dir != none {
   v(4mm)
-  grid(
-    columns: (1fr, 1fr),
-    column-gutter: 12pt,
-    embed-chart("intelligence", width: 100%),
-    embed-chart("loc_distribution", width: 100%),
-  )
+  embed-chart("intelligence", width: 55%)
 }
 
 #v(5mm)
@@ -1389,22 +1398,30 @@
 #if data.architecture_decisions.len() > 0 {
   section-header("Architecture Decisions", accent: mid, lbl: "sec-arch")
 
-  table(
-    columns: (1.5fr, 2.5fr),
-    stroke: 0.3pt + faint,
-    fill: (_, row) => if row == 0 { black } else if calc.odd(row) { wash } else { white },
-    align: (left, left),
-    inset: 7pt,
+  text(size: 9pt, fill: mid)[
+    Key technical decisions and their rationale. Each decision was made to optimize for simplicity, reliability, or developer experience.
+  ]
+  v(3mm)
 
-    text(fill: white, weight: "semibold", size: 8pt)[Decision],
-    text(fill: white, weight: "semibold", size: 8pt)[Rationale],
-
-    ..for dec in data.architecture_decisions {
-      (
-        text(size: 8.5pt, weight: "semibold", fill: dark)[#dec.decision],
-        text(size: 8pt, fill: mid)[#dec.rationale],
-      )
-    }
+  // Card-based ADR layout — two columns of compact cards
+  let half = calc.ceil(data.architecture_decisions.len() / 2)
+  grid(
+    columns: (1fr, 1fr),
+    column-gutter: 8pt,
+    row-gutter: 6pt,
+    ..data.architecture_decisions.map(dec => {
+      box(
+        width: 100%,
+        stroke: (left: 2pt + blue, rest: 0.5pt + faint),
+        radius: (right: 3pt),
+        inset: (x: 8pt, y: 6pt),
+        fill: white,
+      )[
+        #text(size: 8.5pt, weight: "bold", fill: black)[#dec.decision]
+        #v(1mm)
+        #text(size: 7.5pt, fill: mid)[#dec.rationale]
+      ]
+    })
   )
 }
 
@@ -1501,6 +1518,16 @@
       )
       #v(1.5mm)
       #text(size: 8.5pt, fill: mid)[#criticism.detail]
+      #if criticism.keys().contains("action") and criticism.action != "" {
+        v(2mm)
+        box(
+          fill: rgb("#eff6ff"),
+          radius: 3pt, inset: (x: 6pt, y: 4pt), width: 100%,
+        )[
+          #text(size: 7pt, fill: blue, weight: "semibold")[ACTION: ]
+          #text(size: 7.5pt, fill: dark)[#criticism.action]
+        ]
+      }
     ]
     v(3mm)
   }

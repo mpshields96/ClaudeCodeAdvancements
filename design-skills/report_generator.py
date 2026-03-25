@@ -870,6 +870,7 @@ class CCADataCollector:
                 "title": f"{len(stuck_phase1)} master tasks stalled at Phase 1",
                 "severity": "gap",
                 "detail": f"{', '.join(stuck_phase1)} — started but no subsequent phases shipped. Risk of scope sprawl without depth.",
+                "action": f"Pick one stalled MT and advance it to Phase 2 this week. Suggested: {stuck_phase1[0]} (oldest).",
             })
 
         # 2. No external users
@@ -877,6 +878,7 @@ class CCADataCollector:
             "title": "Single-developer project with no external users",
             "severity": "limitation",
             "detail": "All tooling built for one developer. No community testing, no feedback loop from other Claude Code users. Limits validation of 'community-demanded' features.",
+            "action": "Consider publishing 1-2 standalone tools (e.g. context monitor, memory system) as open-source to get external feedback.",
         })
 
         # 3. Test depth vs breadth
@@ -889,6 +891,7 @@ class CCADataCollector:
                     "title": f"High test count ({total_tests:,}) may overstate coverage",
                     "severity": "nuance",
                     "detail": f"Average {tests_per_file:.0f} tests per source file. Many test trivial properties (dict keys, return types). Integration test coverage across modules is limited to 1 suite.",
+                    "action": "Add 3-5 cross-module integration tests that exercise real workflows (e.g. memory capture → retrieval, context alert → handoff).",
                 })
 
         # 4. Blocked items
@@ -898,6 +901,7 @@ class CCADataCollector:
                 "title": f"{len(blocked)} task(s) blocked with no resolution timeline",
                 "severity": "blocker",
                 "detail": "; ".join(f"{t['id']}: {t['name']}" for t in blocked),
+                "action": "Review each blocked MT: either unblock with a workaround, rescope to remove the blocker, or archive if no longer relevant.",
             })
 
         # 5. Self-learning metrics — RESOLVED S153
@@ -919,6 +923,7 @@ class CCADataCollector:
                         "title": f"Research outcome tracking thin ({len(outcomes)} entries)",
                         "severity": "gap",
                         "detail": "CCA delivers research to Kalshi but few outcomes are tracked back. Need more closed-loop data to measure which CCA deliveries produce profit.",
+                        "action": "Add outcome logging to Kalshi wrap: for each CCA delivery used, record whether it was profitable. Target: 20+ tracked outcomes.",
                     })
             except Exception:
                 pass
@@ -927,6 +932,7 @@ class CCADataCollector:
                 "title": "No research outcome tracking file found",
                 "severity": "gap",
                 "detail": "~/.cca-research-outcomes.jsonl missing. CCA cannot measure which deliveries to Kalshi produced profit.",
+                "action": "Create self-learning/research_outcomes.jsonl and backfill from CCA_TO_POLYBOT.md delivery history.",
             })
 
         # 7. CI/CD
@@ -936,6 +942,7 @@ class CCADataCollector:
                 "title": "CI/CD pipeline exists but unverified",
                 "severity": "nuance",
                 "detail": "GitHub Actions workflow defined but no evidence of runs in git history. All testing is local-only.",
+                "action": "Push to GitHub and verify the Actions workflow runs. Fix any failures. Add status badge to README.",
             })
 
         return criticisms
