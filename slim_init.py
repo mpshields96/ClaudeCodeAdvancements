@@ -340,6 +340,32 @@ def run_recalibration(current_session: int = 0) -> dict:
         return {"decayed": 0, "total": 0, "error": "Timeout"}
 
 
+def run_research_roi() -> dict:
+    """Run research_roi_resolver.py report --json for delivery ROI summary."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "research_roi_resolver.py"),
+             "report", "--json"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            return {"total": 0, "resolved": 0}
+
+        data = json.loads(output)
+        return {
+            "total": data.get("total_deliveries", 0),
+            "resolved": data.get("resolved", 0),
+            "by_status": data.get("by_status", {}),
+        }
+    except (subprocess.TimeoutExpired, json.JSONDecodeError):
+        return {"total": 0, "resolved": 0, "error": "Timeout or parse error"}
+
+
 def run_timeline(n: int = 5) -> dict:
     """Run session_timeline.py recent N for quick history."""
     try:
@@ -419,6 +445,8 @@ def format_summary(summary: dict) -> str:
         lines.append(f"  Discoveries: {summary['discoveries_count']} new patterns (dry-run)")
     if summary.get("recal_decayed", 0) > 0:
         lines.append(f"  Recalibration: {summary['recal_decayed']}/{summary.get('recal_total', 0)} principles decayed (staleness)")
+    if summary.get("roi_resolved", 0) > 0:
+        lines.append(f"  Research ROI: {summary['roi_resolved']}/{summary.get('roi_total', 0)} deliveries resolved")
     if summary.get("blockers"):
         lines.append("  BLOCKERS:")
         for b in summary["blockers"]:
@@ -472,6 +500,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3.10: Confidence recalibration (MT-49 Phase 4 — staleness check)
     recal = run_recalibration(current_session=state.get("session_num", 0))
 
+    # Step 3.11: Research ROI (MT-49 Phase 5 — delivery resolution)
+    roi = run_research_roi()
+
     # Step 4: Session timeline (last 5 sessions)
     timeline = run_timeline(5)
 
@@ -498,6 +529,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if recal.get("decayed", 0) > 0:
         summary["recal_decayed"] = recal["decayed"]
         summary["recal_total"] = recal["total"]
+    if roi.get("resolved", 0) > 0:
+        summary["roi_resolved"] = roi["resolved"]
+        summary["roi_total"] = roi["total"]
 
     return summary
 
