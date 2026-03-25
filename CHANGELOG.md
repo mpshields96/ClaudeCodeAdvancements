@@ -3,6 +3,28 @@
 
 ---
 
+## Session 173 — 2026-03-25
+
+**What changed:**
+- `self-learning/principle_seeder.py` — Added session= param to all seed functions + backfill_sessions()
+- `self-learning/principles.jsonl` — Backfilled 122 principles from session 0 to session 168
+- `self-learning/research_roi_resolver.py` — NEW: MT-49 Phase 5 delivery-to-outcome resolver (24 tests)
+- `self-learning/tests/test_research_roi_resolver.py` — NEW: 24 tests
+- `slim_init.py` — Added run_research_roi() step + display in briefing
+- `tests/test_slim_init.py` — 6 new tests for ROI wiring + slim_init integration
+
+**Why:**
+- Recalibrator was useless because all principles had session 0 (seeder bug since S168)
+- MT-49 Phase 5 needed a way to measure which CCA research actually produced Kalshi profit
+- ROI resolver parses DELIVERY_ACK.md and fuzzy-matches to research_outcomes deliveries
+
+**Tests:** ~9631 passing (~248 suites), 37 new this session
+
+**Lessons:**
+- Seeded data should carry real metadata (session numbers, descriptive titles) from day 1 — backfilling is always harder
+
+---
+
 ## Session 172 — 2026-03-25
 
 **What changed:**

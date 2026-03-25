@@ -3,27 +3,30 @@
 
 ---
 
-## Current State (as of Session 172 — 2026-03-25)
+## Current State (as of Session 173 — 2026-03-25)
 
-**Phase:** Session 172 COMPLETE. MT-49 Phase 4 + slim_init wiring. Grade: A.
+**Phase:** Session 173 COMPLETE. MT-49 Phase 5 + seeder bugfix. Grade: A.
 
-**What was done this session (S172):**
-- Wired principle_discoverer into slim_init.py — dry-run at session start, 8 new tests in test_slim_init.py
-- MT-49 Phase 4 COMPLETE: confidence_recalibrator.py — Bayesian staleness decay on principle scores
-  - Exponential decay (half-life ~70 sessions), floor at 0.3, read-only view
-  - CLI: `recalibrate [--session N] [--json]` and `summary` commands
-  - 22 new tests in test_confidence_recalibrator.py
-- Wired recalibrator into slim_init.py — surfaces decayed count in briefing, 6 new tests
-- Updated MT-41 status in MASTER_TASKS.md — Phases 2-3 confirmed COMPLETE (S163)
-- Cross-chat coordination check — REQ-042 (maker sniper fill rate sim) still pending
-- 3 commits, 36 new tests (9557 -> 9594), no regressions
-- **Tests**: ~245 suites, ~9594 tests passing (1 pre-existing autoloop model test failure)
+**What was done this session (S173):**
+- Fixed session-0 bug in principle_seeder.py — all seed functions now accept session= param
+  - Added backfill_sessions() to fix existing principles (122 backfilled to session 168)
+  - 7 new tests in test_principle_seeder.py
+  - Recalibrator now produces meaningful scores (0.476-0.916 vs all-0.150 before fix)
+- MT-49 Phase 5 STARTED: research_roi_resolver.py — parses DELIVERY_ACK.md, fuzzy-matches
+  to research_outcomes.jsonl deliveries, ROI by category and by principle
+  - Batch ACK parsing (REQ-001 through REQ-009), modern + legacy formats
+  - 24 new tests in test_research_roi_resolver.py
+  - Real data: 2/46 deliveries auto-resolved (limited by vocabulary mismatch in bulk-seeded titles)
+- Wired ROI resolver into slim_init.py — surfaces "Research ROI: N/M resolved" in briefing
+  - 6 new tests in test_slim_init.py
+- 3 commits, 37 new tests (9594 -> 9631), no regressions
+- **Tests**: ~248 suites, ~9631 tests passing
 
 **Next (prioritized):**
-1. Validate recalibrator against real principles.jsonl — verify output is useful in briefings
-2. MT-49 Phase 5: Research-to-production ROI tracking
-3. economics_sniper_v1 deployment validation via Kalshi monitoring chat
-4. REQ-042: Maker sniper fill rate simulation (Kalshi request)
+1. REQ-042: Maker sniper fill rate simulation (Kalshi request)
+2. Improve delivery metadata in research_outcomes.jsonl for better ROI resolution
+3. MT-49 Phase 5 continued: automated delivery status updates from Kalshi bot commits
+4. economics_sniper_v1 deployment validation via Kalshi monitoring chat
 5. Cross-chat coordination
 
 **Matthew directives:**
@@ -34,6 +37,14 @@
 - Autoloop ENABLED — run /cca-wrap at natural stopping points, not when Matthew reminds
 - CCA and Kalshi chats should have automated feedback loop (S161 directive, IMPLEMENTED S162)
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 172 — 2026-03-25)
+
+**Phase:** Session 172 COMPLETE. MT-49 Phase 4 + slim_init wiring. Grade: A.
+
+**What was done (S172):** Wired principle_discoverer into slim_init (8 tests). MT-49 Phase 4 COMPLETE — confidence_recalibrator.py (22 tests) + slim_init wiring (6 tests). MT-41 status updated. 3 commits, 36 new tests (9594 total).
 
 ---
 
