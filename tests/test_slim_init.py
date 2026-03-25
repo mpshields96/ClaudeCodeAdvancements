@@ -426,5 +426,153 @@ class TestSlimInitIncludesSeeder(unittest.TestCase):
         self.assertEqual(result.get("principles_seeded"), 3)
 
 
+class TestRunMtProposals(unittest.TestCase):
+    """Test MT-41 proposal surfacing in slim init."""
+
+    @patch("slim_init.subprocess.run")
+    def test_proposals_returned(self, mock_run):
+        from slim_init import run_mt_proposals
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout='Parsed 387 findings (24 BUILD)\n\nMT PROPOSALS (1 above score 30.0):\n\n  [90.0] "Claude Code can now /dream"',
+            stderr=""
+        )
+        result = run_mt_proposals()
+        self.assertEqual(result["count"], 1)
+        self.assertIn("MT PROPOSALS", result["raw"])
+
+    @patch("slim_init.subprocess.run")
+    def test_no_proposals_above_threshold(self, mock_run):
+        from slim_init import run_mt_proposals
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Parsed 50 findings (2 BUILD)\n\nNo proposals above score threshold.",
+            stderr=""
+        )
+        result = run_mt_proposals()
+        self.assertEqual(result["count"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_proposals_empty_output(self, mock_run):
+        from slim_init import run_mt_proposals
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="",
+            stderr=""
+        )
+        result = run_mt_proposals()
+        self.assertEqual(result.get("count", 0), 0)
+        self.assertEqual(result["raw"], "")
+
+    @patch("slim_init.subprocess.run")
+    def test_proposals_failure(self, mock_run):
+        from slim_init import run_mt_proposals
+        mock_run.return_value = MagicMock(
+            returncode=1,
+            stdout="",
+            stderr="FileNotFoundError"
+        )
+        result = run_mt_proposals()
+        self.assertEqual(result["raw"], "")
+
+    @patch("slim_init.subprocess.run")
+    def test_proposals_timeout(self, mock_run):
+        from slim_init import run_mt_proposals
+        import subprocess
+        mock_run.side_effect = subprocess.TimeoutExpired("python3", 30)
+        result = run_mt_proposals()
+        self.assertIn("error", result)
+        self.assertEqual(result["count"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_multiple_proposals(self, mock_run):
+        from slim_init import run_mt_proposals
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout='MT PROPOSALS (3 above score 30.0):\n\n  [90.0] "Dream"\n  [55.0] "Guard"\n  [32.0] "Lint"',
+            stderr=""
+        )
+        result = run_mt_proposals()
+        self.assertEqual(result["count"], 3)
+
+
+class TestSummaryIncludesProposals(unittest.TestCase):
+    """Test that MT proposals flow into the summary format."""
+
+    def test_format_summary_shows_proposals(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 163,
+            "last_session_id": "S163",
+            "top_pick": "MT-32",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+            "mt_proposals_count": 2,
+            "mt_proposals_raw": "MT PROPOSALS (2 above score 30.0):\n  [90.0] Dream\n  [55.0] Guard",
+        }
+        text = format_summary(summary)
+        self.assertIn("MT proposals", text)
+        self.assertIn("2", text)
+
+    def test_format_summary_omits_proposals_when_zero(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 163,
+            "last_session_id": "S163",
+            "top_pick": "MT-32",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+        }
+        text = format_summary(summary)
+        self.assertNotIn("MT proposals", text)
+
+
+class TestSlimInitIncludesProposals(unittest.TestCase):
+    """Test MT proposals are wired into the full slim init flow."""
+
+    @patch("slim_init.run_mt_proposals")
+    @patch("slim_init.run_principle_seeder")
+    @patch("slim_init.run_timeline")
+    @patch("slim_init.run_priority")
+    @patch("slim_init.run_smoke")
+    @patch("slim_init.Path.read_text")
+    def test_full_init_calls_mt_proposals(self, mock_read, mock_smoke, mock_priority, mock_timeline, mock_seeder, mock_proposals):
+        from slim_init import run_slim_init
+
+        mock_read.return_value = "## Current State (as of Session 163 — 2026-03-25)"
+        mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
+        mock_priority.return_value = {"top_pick": "MT-32", "raw": "output"}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
+        mock_seeder.return_value = {"seeded": 0, "raw": ""}
+        mock_proposals.return_value = {"count": 1, "proposals": ["[90.0]"], "raw": "MT PROPOSALS (1):\n  [90.0] Dream"}
+
+        result = run_slim_init()
+        mock_proposals.assert_called_once()
+        self.assertEqual(result.get("mt_proposals_count"), 1)
+        self.assertIn("MT PROPOSALS", result.get("mt_proposals_raw", ""))
+
+    @patch("slim_init.run_mt_proposals")
+    @patch("slim_init.run_principle_seeder")
+    @patch("slim_init.run_timeline")
+    @patch("slim_init.run_priority")
+    @patch("slim_init.run_smoke")
+    @patch("slim_init.Path.read_text")
+    def test_full_init_no_proposals_omits_key(self, mock_read, mock_smoke, mock_priority, mock_timeline, mock_seeder, mock_proposals):
+        from slim_init import run_slim_init
+
+        mock_read.return_value = "## Current State (as of Session 163 — 2026-03-25)"
+        mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
+        mock_priority.return_value = {"top_pick": "MT-32", "raw": "output"}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
+        mock_seeder.return_value = {"seeded": 0, "raw": ""}
+        mock_proposals.return_value = {"count": 0, "proposals": [], "raw": ""}
+
+        result = run_slim_init()
+        self.assertNotIn("mt_proposals_count", result)
+        self.assertNotIn("mt_proposals_raw", result)
+
+
 if __name__ == "__main__":
     unittest.main()

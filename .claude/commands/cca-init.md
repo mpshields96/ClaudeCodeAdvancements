@@ -181,6 +181,22 @@ When /cca-auto starts, the priority picker ranking should override the resume pr
 
 ---
 
+## Step 2.92 — MT proposals from findings (MT-41)
+
+Surface any new MT proposals synthesized from FINDINGS_LOG BUILD verdicts:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 mt_originator.py --briefing 2>/dev/null
+```
+
+If proposals are returned (score >= 30.0), include them in the briefing under
+"MT PROPOSALS:". These represent community-validated BUILD findings that don't map
+to any existing MT — potential new work items. If no proposals meet the threshold,
+skip silently.
+
+---
+
 ## Step 2.95 — Session outcome insights (Get Smarter)
 
 Show learnings from past session outcomes so this session starts smarter:

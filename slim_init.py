@@ -179,6 +179,28 @@ def run_principle_seeder() -> dict:
         return {"seeded": 0, "error": "Timeout: principle_seeder exceeded 30 seconds"}
 
 
+def run_mt_proposals() -> dict:
+    """Run mt_originator.py --briefing for MT-41 proposals."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "mt_originator.py"), "--briefing"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            return {"proposals": [], "raw": ""}
+
+        # Count proposals (lines starting with spaces + "[score]")
+        proposal_lines = re.findall(r"^\s+\[\d+", output, re.MULTILINE)
+        return {"proposals": proposal_lines, "count": len(proposal_lines), "raw": output}
+    except subprocess.TimeoutExpired:
+        return {"proposals": [], "count": 0, "raw": "", "error": "Timeout"}
+
+
 def run_timeline(n: int = 5) -> dict:
     """Run session_timeline.py recent N for quick history."""
     try:
@@ -253,6 +275,9 @@ def format_summary(summary: dict) -> str:
         for b in summary["blockers"]:
             lines.append(f"    - {b}")
 
+    if summary.get("mt_proposals_count", 0) > 0:
+        lines.append(f"  MT proposals: {summary['mt_proposals_count']} from findings")
+
     if summary.get("timeline_raw"):
         lines.append(f"\n  Recent sessions:")
         for tl in summary["timeline_raw"].split("\n"):
@@ -280,6 +305,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3: Priority pick
     priority = run_priority()
 
+    # Step 3.5: MT proposals from findings (MT-41)
+    mt_proposals = run_mt_proposals()
+
     # Step 4: Session timeline (last 5 sessions)
     timeline = run_timeline(5)
 
@@ -287,6 +315,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     summary = build_summary(smoke, priority, state)
     summary["priority_raw"] = priority.get("raw", "")
     summary["principles_seeded"] = seeder.get("seeded", 0)
+    if mt_proposals.get("count", 0) > 0:
+        summary["mt_proposals_raw"] = mt_proposals["raw"]
+        summary["mt_proposals_count"] = mt_proposals["count"]
     if timeline.get("raw") and timeline.get("session_count", 0) > 0:
         summary["timeline_raw"] = timeline["raw"]
 
@@ -305,6 +336,8 @@ if __name__ == "__main__":
             print(format_summary(result))
             if result.get("priority_raw"):
                 print(f"\n{result['priority_raw']}")
+            if result.get("mt_proposals_raw"):
+                print(f"\n{result['mt_proposals_raw']}")
     elif args[0] == "--json":
         result = run_slim_init()
         print(json.dumps(result, indent=2))
