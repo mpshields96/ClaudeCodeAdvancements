@@ -545,29 +545,29 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         # === META/INFRASTRUCTURE (S160 — Matthew directive: fix the system) ===
         MasterTask(
             mt_id=39, name="Priority Picker Overhaul — Dust Detection",
-            base_value=9, status=TaskStatus.ACTIVE,
+            base_value=9, status=TaskStatus.COMPLETED,
             last_touched_session=160, current_session=current_session,
-            phases_completed=1, phases_total=3,  # Phase 1: registry fixes (S160)
-            aging_rate=1.0,
-            next_action="Phase 2: Growth tasks get aging. Phase 3: 'dust' command shows ALL neglected work.",
+            phases_completed=3, phases_total=3,  # All 3 phases COMPLETE (S160): registry fixes, growth scoring, dust command + ARCHIVED status
+            aging_rate=0,
+            next_action="COMPLETE. All 3 phases: registry fixes, growth_score with dust bonus, dust CLI + ARCHIVED status + 8 MTs archived.",
             tags=["meta", "infrastructure", "priority"],
         ),
         MasterTask(
             mt_id=40, name="Automated Nuclear Scanning Loop",
             base_value=9, status=TaskStatus.ACTIVE,
             last_touched_session=160, current_session=current_session,
-            phases_completed=0, phases_total=3,
+            phases_completed=1, phases_total=3,  # Phase 1 COMPLETE (S160): scan_scheduler.py + 17 tests
             aging_rate=1.0,
-            next_action="Phase 1: Wire Reddit+GitHub scanners into recurring auto-run (cron or session-start). Phase 2: Staleness alerts. Phase 3: Results feed into MT-41.",
+            next_action="Phase 2: Wire scan_scheduler into autoloop/session-start trigger. Phase 3: Results feed into MT-41.",
             tags=["scanning", "automation", "intelligence"],
         ),
         MasterTask(
             mt_id=41, name="Synthetic MT Origination",
             base_value=8, status=TaskStatus.ACTIVE,
             last_touched_session=160, current_session=current_session,
-            phases_completed=0, phases_total=3,
+            phases_completed=1, phases_total=3,  # Phase 1 COMPLETE (S160): mt_originator.py + 22 tests
             aging_rate=1.0,
-            next_action="Phase 1: Auto-propose MTs from BUILD findings in FINDINGS_LOG. Phase 2: Score proposals. Phase 3: Auto-append to MASTER_TASKS.md with PROPOSED status.",
+            next_action="Phase 2: Score proposals with community signal weighting. Phase 3: Auto-append to MASTER_TASKS.md with PROPOSED status.",
             tags=["meta", "intelligence", "automation"],
         ),
         # === BLOCKED ===
