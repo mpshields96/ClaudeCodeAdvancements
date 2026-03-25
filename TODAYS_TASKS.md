@@ -39,31 +39,34 @@
 
 ## CCA IMPROVEMENTS
 
-### C1. MT-26 Dead Code Cleanup [IN PROGRESS S178]
-- 2,110 LOC of unused signal pipeline in self-learning/
-- S176 evaluation flagged: regime_detector, calibration_bias, cross_platform_signal,
-  dynamic_kelly, macro_regime, fear_greed_filter, signal_pipeline — all unused by Kalshi bot
-- Remove or wire into bot
-- S178: Assessment agent running — awaiting recommendation
+### C1. MT-26 Dead Code Cleanup [DONE S178]
+- S178 assessment: NOT dead code. All 7 modules form a tested 7-stage signal pipeline
+  (2,559 LOC, 256 passing tests). regime_detector→calibration_bias→cross_platform_signal→
+  macro_regime→fear_greed_filter→order_flow_intel→dynamic_kelly. Modifiers compound multiplicatively.
+- Correct framing: "wire into production" not "remove dead code"
+- Action: Schedule MT-26 Phase 3 (production integration) when bot capacity allows
 
 ### C2. Agent Teams/TeammateTool Awareness [DONE S177]
 - AG-10: worktree_guard.py (265 LOC, 29 tests)
 - Worktree detection, delegate isolation, shared state protection, git safety
 - Commit 8edadbc
 
-### C3. memsearch Patterns [IN PROGRESS S178]
-- Study markdown-first hook patterns for CCA memory-system evolution
-- REFERENCE from S176 nuclear scan
-- S178: Research agent running — awaiting findings
+### C3. memsearch Patterns [DONE S178]
+- memsearch (Zilliz) validates CCA's hook-based memory architecture
+- Key finding: Markdown + FTS5 hybrid storage is the pragmatic middle ground
+- P0 (highest ROI): Add markdown export/import alongside FTS5 (~400 LOC, 0 deps)
+- P1: Compaction-aware markdown snapshots (~150 LOC, integrates with post_compact.py)
+- P2: Handoff markdown export for agent teams (~200 LOC)
+- Implementation deferred until prioritized in MASTER_TASKS
 
 ### C4. Context-Monitor 1M Recalibration [DONE S177]
 - DEFAULT_WINDOW 200K→1M across meter.py, post_compact.py, compact_anchor.py, statusline.py
 - Commit 59c42ff
 
-### C5. MT-37 UBER [IN PROGRESS S178]
-- Investment/AI trading master task
-- Phase 1: Academic research survey (3-5 sessions)
-- S178: Research agent running — creating MT37_RESEARCH.md (first 3 areas)
+### C5. MT-37 UBER [DONE S178 — Phase 1 partial]
+- MT37_RESEARCH.md created: 745 lines, areas 1-3 complete (MPT, Factor Models, Risk Parity)
+- 15 papers synthesized, 7 more areas pending (momentum, behavioral, tax-loss, etc.)
+- Commit 58eef2f. Remaining areas continue in future sessions.
 
 ---
 
@@ -76,9 +79,9 @@
 - [x] TODAYS_TASKS.md directive wired into all CCA session files (8 files, 5 new tests)
 - [x] slim_init.py shows TODAY'S TASKS in briefing (scan_todays_tasks())
 - [x] resume_generator.py adds TODAYS_TASKS.md reminder to autoloop prompts
-- [ ] C1: MT-26 dead code assessment (agent running)
-- [ ] C3: memsearch research (agent running)
-- [ ] C5: MT-37 UBER Phase 1 start (agent running)
+- [x] C1: MT-26 assessment complete — NOT dead code, 7-stage pipeline (2,559 LOC, 256 tests). KEEP all.
+- [x] C3: memsearch research complete — markdown+FTS5 hybrid is the evolution path (P0/P1/P2 defined)
+- [x] C5: MT-37 Phase 1 partial — MT37_RESEARCH.md (745 lines, areas 1-3, 15 papers). Commit 58eef2f.
 
 ### S177
 - [x] MAX_LOSS cap + kelly_scale in polybot sizing.py (25 tests)
