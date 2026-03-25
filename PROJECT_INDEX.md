@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-23 (Session 132)
+# Last updated: 2026-03-24 (Session 160)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -36,12 +36,12 @@
 | Context Monitor | `context-monitor/` | CTX-1-7 + Session Pacer + Session Notifier (ntfy.sh) + StopFailure hook | 434 |
 | Agent Guard | `agent-guard/` | AG-1-9 + Edit Guard + Bash Guard (global hook, +cp/script/dd/tee evasion) + MT-20 Senior Dev (13 modules + ADR + /senior-review + coherence + rules + fp_filter + chat + git_context + LLM + intent + tradeoff) | 1073 |
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 369 |
-| Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15,27(Phase 4 NEEDLE precision) + url_reader tests | 440 |
+| Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending),14(Phase 3 COMPLETE),15,27(Phase 4 NEEDLE precision),40(Phase 1 scan scheduler) + url_reader tests | 457 |
 | Self-Learning | `self-learning/` | MT-7,10,12,26(Tier 3+E2E),27(Phase 5),28(COMPLETE) + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + predictive_recommender + sentinel_bridge + order_flow_intel + belief_vol_surface + apf_session_tracker + deployment_verifier + principle_seeder + reflect tests | 1885 |
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) | 1381 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~8959 tests (~223 suites). All must pass before any work.**
+**Total: ~9067 tests (~227 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -144,7 +144,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `chat_detector.py` — Duplicate Claude Code session detection + pre-launch safety (31 tests, S91)
 - `crash_recovery.py` — Worker crash detection + orphaned scope auto-release (15 tests, S91)
 - `worker_task_tracker.py` — Detect incomplete worker task completion (26 tests, S97)
-- `priority_picker.py` — Automated MT priority selection with improved scoring (55 tests, S98)
+- `priority_picker.py` — Automated MT priority selection with dust detection, growth scoring (93 tests, S98/S160)
 - `peak_hours.py` — Rate limit awareness for multi-chat orchestration (19 tests, S107)
 - `launch_kalshi.sh` — Kalshi chat launcher with auth fix + peak hours warning (S107)
 - `session_registry.py` — MT-30 Phase 2: Session config loading + state tracking (60 tests, S111)
@@ -276,3 +276,9 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S158
 - `doc_updater.py` — Batch doc updates for /cca-wrap optimization (25 tests, S158)
 - `tests/test_doc_updater.py` — Tests for doc_updater.py (S158)
+
+### Added in S160
+- `efficiency_dashboard.py` — MT-36 Phase 5: Self-contained HTML dashboard (dark mode, overhead trends, scatter plot, 28 tests)
+- `mt_originator.py` — MT-41 Phase 1: Synthetic MT origination from FINDINGS_LOG BUILD verdicts (22 tests)
+- `scan_scheduler.py` — MT-40 Phase 1: Per-subreddit staleness policies + scan recommendation (17 tests)
+- `tests/test_efficiency_dashboard.py`, `tests/test_mt_originator.py`, `tests/test_scan_scheduler.py`

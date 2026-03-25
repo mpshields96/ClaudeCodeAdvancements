@@ -3,6 +3,26 @@
 
 ---
 
+## Session 160 — 2026-03-24
+
+**What changed:**
+- `efficiency_dashboard.py` (NEW): MT-36 Phase 5 — self-contained HTML dashboard with dark mode, overhead trends, stacked bars, quality-speed scatter plot (28 tests)
+- `priority_picker.py`: MT-39 Phase 1+2 — dust detection via growth_score(), dust CLI command, dust alerts in init_briefing, added MT-8/39/40/41, fixed stale default session
+- `mt_originator.py` (NEW): MT-41 Phase 1 — scans FINDINGS_LOG for uncovered BUILD verdicts, keyword-based coverage matching, recency/signal/frontier scoring (22 tests)
+- `scan_scheduler.py` (NEW): MT-40 Phase 1 — per-subreddit staleness policies, urgency ranking, SCAN_NOW/OK recommendation engine (17 tests)
+- `MASTER_TASKS.md`: Added MT-39/40/41 entries with full descriptions and phases
+- Reddit review: r/ClaudeCode docs guide (REFERENCE — 655 malicious MCP skills catalogue useful for Frontier 4)
+
+**Why:**
+- Matthew directive: "LOG ALL OF THIS, make them MTs, I'm ready for these problems to get fixed"
+- 15+ MTs collecting dust undetected — priority picker had aging_rate=0 blindspot on completed MTs
+- Synthetic MT origination and automated scanning were talked about but never built
+- Session efficiency dashboard completes MT-36's visible metric pipeline
+
+**Tests:** 9,067/9,067 passing (227 suites)
+
+---
+
 ## Session 159 — 2026-03-24
 
 **What changed:**

@@ -3,24 +3,24 @@
 
 ---
 
-## Current State (as of Session 159 — 2026-03-24)
+## Current State (as of Session 160 — 2026-03-24)
 
-**Phase:** Session 159 COMPLETE. Report overhaul (Matthew feedback), MT-38 Phase 4, Kalshi cross-chat REQ-034/035
+**Phase:** Session 160 IN PROGRESS. MT audit, priority picker overhaul, synthetic origination, scan scheduler, efficiency dashboard.
 
-**What was done this session (S159):**
-- MT-38 Phase 4: Peak-aware autoloop scheduling — cooldown/model adjust by time window (16 tests, e1b5469)
-- Report round 1: MT descriptions restored for all groups, frontier chart removed, research outcomes path fixed (b9ddae9)
-- Report overhaul: 5 fluff charts removed, ACTION items in Honest Assessment, Self-Learning metrics enhanced, Architecture Decisions card layout (5b0127e)
-- Kalshi REQ-034: Monte Carlo + synthetic integration plan delivered
-- Kalshi REQ-035: Daily sniper paper analysis (10/10 wins, Wilson CI, sizing recs)
-- Model fix: confirmed Opus 4.6 = Opus 4.6 (1M context) same model, CCA doesn't touch it
-- **Tests**: 223 suites, 8959 tests passing. All green.
+**What was done this session (S160):**
+- MT-36 Phase 5: Efficiency dashboard (efficiency_dashboard.py) — self-contained HTML with dark mode, overhead trends, stacked bars, scatter plot (28 tests, 66480bd)
+- MT-39 Phase 1: Priority picker overhaul — dust detection (growth_score with dust bonus), `dust` CLI command, dust alerts in init_briefing, added MT-8/39/40/41, fixed default session (36e40d7)
+- MT-39 Phase 2 + MT-41 Phase 1: Dust alerts + synthetic MT originator (mt_originator.py) — scans FINDINGS_LOG for uncovered BUILD verdicts, scores by recency/signal/frontier (22 tests, 526c14d)
+- MT-40 Phase 1: Scan scheduler (scan_scheduler.py) — per-subreddit staleness policies, urgency ranking, SCAN_NOW/OK recommendation (17 tests, f0590b5)
+- Created MASTER_TASKS.md entries for MT-39, MT-40, MT-41
+- Diagnosed 15+ dusty MTs caused by aging_rate=0 blindspot in priority picker
+- **Tests**: 227 suites, 9067 tests passing. All green.
 
 **Next:**
-1. Continue Kalshi cross-chat coordination
-2. K2 follow-up when economics_sniper.py ready for review
-3. MT-36 Phase 5: Session efficiency dashboard
-4. Further report improvements (user wants "much better" overall)
+1. Process Reddit review (r/ClaudeCode docs post)
+2. MT-40 Phase 2: Wire scan scheduler into autoloop trigger
+3. Cross-chat Kalshi coordination check
+4. Further report improvements
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority)
