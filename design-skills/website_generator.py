@@ -145,7 +145,7 @@ code, pre {{
 }}
 pre {{
     background: {p};
-    color: #e8eaf0;
+    color: #e6edf3;
     padding: 1.2rem;
     border-radius: 6px;
     overflow-x: auto;
@@ -177,7 +177,7 @@ code:not(pre code) {{
 }}
 .nav-links {{ display: flex; gap: 1.5rem; }}
 .nav-links a {{
-    color: #c8cfe0;
+    color: #e6edf3;
     font-size: 0.9rem;
     font-weight: 500;
 }}
@@ -223,7 +223,7 @@ def _landing_css() -> str:
 }}
 .hero p {{
     font-size: 1.2rem;
-    color: #c8cfe0;
+    color: #e6edf3;
     max-width: 600px;
     margin: 0 auto 2rem;
 }}

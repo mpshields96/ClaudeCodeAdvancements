@@ -47,6 +47,19 @@ SERIES_COLORS = [
     "#84cc16",  # Series 8: Lime
 ]
 
+# Dark mode palette (GitHub-inspired dark theme for dashboards)
+DARK_PALETTE = {
+    "dark_bg": "#0d1117",
+    "dark_text": "#e6edf3",
+    "dark_surface": "#161b22",
+    "dark_border": "#30363d",
+    "dark_muted": "#8b949e",
+    "dark_accent": "#388bfd",
+    "dark_highlight": "#f85149",
+    "dark_success": "#3fb950",
+    "dark_warning": "#d29922",
+}
+
 # Common safe colors that should never trigger violations
 SAFE_COLORS = {
     "#000000", "#ffffff", "#000", "#fff",
@@ -57,6 +70,7 @@ SAFE_COLORS = {
 
 ALL_APPROVED_COLORS = (
     set(CCA_PALETTE.values())
+    | set(DARK_PALETTE.values())
     | set(SERIES_COLORS)
     | SAFE_COLORS
 )

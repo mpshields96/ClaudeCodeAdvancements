@@ -36,19 +36,26 @@ try:
 except ImportError:
     CHARTS_AVAILABLE = False
 
+# Import canonical design tokens
+try:
+    from design_linter import CCA_PALETTE, DARK_PALETTE
+except ImportError:
+    CCA_PALETTE = {}
+    DARK_PALETTE = {}
 
-# ── Design tokens from design-guide.md ───────────────────────────────────────
+
+# ── Design tokens from design_linter.py (canonical source) ───────────────────
 
 COLORS = {
-    "primary": "#1a1a2e",
-    "accent": "#0f3460",
-    "highlight": "#e94560",
-    "success": "#16c79a",
-    "muted": "#6b7280",
-    "background": "#ffffff",
-    "surface": "#f8f9fa",
-    "border": "#e5e7eb",
-    "warning": "#f59e0b",
+    "primary": CCA_PALETTE.get("primary", "#1a1a2e"),
+    "accent": CCA_PALETTE.get("accent", "#0f3460"),
+    "highlight": CCA_PALETTE.get("highlight", "#e94560"),
+    "success": CCA_PALETTE.get("success", "#16c79a"),
+    "muted": CCA_PALETTE.get("muted", "#6b7280"),
+    "background": CCA_PALETTE.get("bg", "#ffffff"),
+    "surface": CCA_PALETTE.get("surface", "#f8f9fa"),
+    "border": CCA_PALETTE.get("border", "#e5e7eb"),
+    "warning": CCA_PALETTE.get("warning", "#f59e0b"),
 }
 
 
@@ -215,15 +222,15 @@ class DashboardRenderer:
   --warning: {COLORS['warning']};
 }}
 [data-theme="dark"] {{
-  --bg-primary: #0d1117;
-  --text-primary: #e6edf3;
-  --surface: #161b22;
-  --border: #30363d;
-  --muted: #8b949e;
-  --accent: #388bfd;
-  --highlight: #f85149;
-  --success: #3fb950;
-  --warning: #d29922;
+  --bg-primary: {DARK_PALETTE.get('dark_bg', '#0d1117')};
+  --text-primary: {DARK_PALETTE.get('dark_text', '#e6edf3')};
+  --surface: {DARK_PALETTE.get('dark_surface', '#161b22')};
+  --border: {DARK_PALETTE.get('dark_border', '#30363d')};
+  --muted: {DARK_PALETTE.get('dark_muted', '#8b949e')};
+  --accent: {DARK_PALETTE.get('dark_accent', '#388bfd')};
+  --highlight: {DARK_PALETTE.get('dark_highlight', '#f85149')};
+  --success: {DARK_PALETTE.get('dark_success', '#3fb950')};
+  --warning: {DARK_PALETTE.get('dark_warning', '#d29922')};
 }}
 
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
