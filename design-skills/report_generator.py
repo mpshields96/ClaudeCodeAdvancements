@@ -404,6 +404,28 @@ class CCADataCollector:
 
             i += 3
 
+        # Correct phase data from priority table (authoritative Comp% values)
+        comp_pct_map = {}
+        for row_match in re.finditer(
+            r"\|\s*(?:\*\*)?(?:P?\d+|—)(?:\*\*)?\s*\|\s*(?:\*\*)?(MT-[\d/]+)(?:\*\*)?\s*\|"
+            r"[^|]*\|[^|]*\|[^|]*\|\s*(\d+)%\s*\|",
+            content,
+        ):
+            mt_id = row_match.group(1).strip("*")
+            comp = int(row_match.group(2))
+            comp_pct_map[mt_id] = comp
+
+        for task_list in (complete, active, pending):
+            for task in task_list:
+                tid = task["id"]
+                if tid in comp_pct_map:
+                    pct = comp_pct_map[tid]
+                    tp = task.get("total_phases", 0) or 1
+                    computed_done = max(1, round(tp * pct / 100))
+                    # Only override if priority table has more progress than parser found
+                    if computed_done > task.get("phases_done", 0):
+                        task["phases_done"] = computed_done
+
         return complete, active, pending
 
     # ── Hook data ───────────────────────────────────────────────────────
