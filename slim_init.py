@@ -201,6 +201,31 @@ def run_mt_proposals() -> dict:
         return {"proposals": [], "count": 0, "raw": "", "error": "Timeout"}
 
 
+def run_meta_learning() -> dict:
+    """Run meta_learning_dashboard.py --brief for self-learning health."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "meta_learning_dashboard.py"), "--brief"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            error = proc.stderr.strip() or "meta_learning_dashboard failed"
+            return {"status": "", "brief": "", "error": error}
+
+        # Parse status from "Self-Learning: STATUS | ..."
+        m = re.search(r"Self-Learning:\s*(\w+)", output)
+        status = m.group(1) if m else ""
+
+        return {"status": status, "brief": output}
+    except subprocess.TimeoutExpired:
+        return {"status": "", "brief": "", "error": "Timeout: meta_learning_dashboard exceeded 30 seconds"}
+
+
 def run_mt_extensions() -> dict:
     """Run mt_originator.py --extend-existing for phase extension proposals."""
     try:
@@ -222,6 +247,44 @@ def run_mt_extensions() -> dict:
         return {"extensions": ext_lines, "count": len(ext_lines), "raw": output}
     except subprocess.TimeoutExpired:
         return {"extensions": [], "count": 0, "raw": "", "error": "Timeout"}
+
+
+def run_transfer_proposals() -> dict:
+    """Run principle_transfer.py propose + review for active transfer proposals."""
+    try:
+        # Auto-propose new transfers (idempotent — deduplicates)
+        subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "principle_transfer.py"),
+             "propose", "--max", "5"],
+            capture_output=True, text=True, timeout=15,
+            cwd=str(PROJECT_ROOT),
+        )
+        # Get summary
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "principle_transfer.py"),
+             "review"],
+            capture_output=True, text=True, timeout=15,
+            cwd=str(PROJECT_ROOT),
+        )
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            return {"pending": 0}
+
+        # Parse pending count
+        m = re.search(r"(\d+)\s+pending", output)
+        pending = int(m.group(1)) if m else 0
+
+        # Extract top proposal text
+        top_text = ""
+        lines = output.split("\n")
+        for line in lines:
+            if line.strip().startswith("["):
+                top_text = line.strip()
+                break
+
+        return {"pending": pending, "top_text": top_text, "raw": output}
+    except subprocess.TimeoutExpired:
+        return {"pending": 0, "error": "Timeout"}
 
 
 def run_timeline(n: int = 5) -> dict:
@@ -286,6 +349,8 @@ def format_summary(summary: dict) -> str:
     lines.append(f"  Smoke: {summary.get('smoke_status', '?')}")
     lines.append(f"  Top pick: {summary.get('top_pick', '?')}")
 
+    if summary.get("meta_learning_brief"):
+        lines.append(f"  {summary['meta_learning_brief']}")
     if summary.get("principles_seeded", 0) > 0:
         lines.append(f"  Principles seeded: {summary['principles_seeded']} new")
     if summary.get("cached_test_count"):
@@ -293,6 +358,10 @@ def format_summary(summary: dict) -> str:
     if summary.get("hivemind_streak"):
         lines.append(f"  Hivemind: {summary['hivemind_streak']}th consecutive PASS")
 
+    if summary.get("transfer_pending", 0) > 0:
+        lines.append(f"  Transfer proposals: {summary['transfer_pending']} pending")
+        if summary.get("transfer_top"):
+            lines.append(f"    Top: {summary['transfer_top']}")
     if summary.get("blockers"):
         lines.append("  BLOCKERS:")
         for b in summary["blockers"]:
@@ -334,6 +403,12 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3.6: MT phase extensions for existing MTs (MT-41 Phase 4)
     mt_extensions = run_mt_extensions()
 
+    # Step 3.7: Meta-learning health (MT-49)
+    meta_learning = run_meta_learning()
+
+    # Step 3.8: Transfer proposals (MT-49 Phase 2 — auto-propose)
+    transfer = run_transfer_proposals()
+
     # Step 4: Session timeline (last 5 sessions)
     timeline = run_timeline(5)
 
@@ -349,6 +424,11 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
         summary["mt_extensions_count"] = mt_extensions["count"]
     if timeline.get("raw") and timeline.get("session_count", 0) > 0:
         summary["timeline_raw"] = timeline["raw"]
+    if meta_learning.get("brief"):
+        summary["meta_learning_brief"] = meta_learning["brief"]
+    if transfer.get("pending", 0) > 0:
+        summary["transfer_pending"] = transfer["pending"]
+        summary["transfer_top"] = transfer.get("top_text", "")
 
     return summary
 

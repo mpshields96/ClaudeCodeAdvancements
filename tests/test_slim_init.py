@@ -574,6 +574,124 @@ class TestSlimInitIncludesProposals(unittest.TestCase):
         self.assertNotIn("mt_proposals_raw", result)
 
 
+class TestRunMetaLearning(unittest.TestCase):
+    """Test meta_learning_dashboard --brief integration in slim init."""
+
+    @patch("slim_init.subprocess.run")
+    def test_meta_learning_returns_brief(self, mock_run):
+        from slim_init import run_meta_learning
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Self-Learning: HEALTHY | 122 principles (avg 0.52) | 8 sessions (stable) | Improvement success: N/A",
+            stderr=""
+        )
+        result = run_meta_learning()
+        self.assertEqual(result["status"], "HEALTHY")
+        self.assertIn("122 principles", result["brief"])
+
+    @patch("slim_init.subprocess.run")
+    def test_meta_learning_parses_degraded(self, mock_run):
+        from slim_init import run_meta_learning
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Self-Learning: DEGRADED | 50 principles (avg 0.31) | 3 sessions (declining) | Improvement success: 40%",
+            stderr=""
+        )
+        result = run_meta_learning()
+        self.assertEqual(result["status"], "DEGRADED")
+        self.assertIn("DEGRADED", result["brief"])
+
+    @patch("slim_init.subprocess.run")
+    def test_meta_learning_handles_failure(self, mock_run):
+        from slim_init import run_meta_learning
+        mock_run.return_value = MagicMock(
+            returncode=1,
+            stdout="",
+            stderr="ImportError: no module"
+        )
+        result = run_meta_learning()
+        self.assertIn("error", result)
+        self.assertEqual(result["brief"], "")
+
+    @patch("slim_init.subprocess.run")
+    def test_meta_learning_handles_timeout(self, mock_run):
+        from slim_init import run_meta_learning
+        import subprocess
+        mock_run.side_effect = subprocess.TimeoutExpired("python3", 30)
+        result = run_meta_learning()
+        self.assertIn("error", result)
+        self.assertEqual(result["brief"], "")
+
+    @patch("slim_init.subprocess.run")
+    def test_meta_learning_empty_output(self, mock_run):
+        from slim_init import run_meta_learning
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout="", stderr=""
+        )
+        result = run_meta_learning()
+        self.assertEqual(result["brief"], "")
+
+
+class TestSummaryIncludesMetaLearning(unittest.TestCase):
+    """Test that meta learning brief flows into the summary format."""
+
+    def test_format_summary_shows_meta_learning(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 170,
+            "last_session_id": "S170",
+            "top_pick": "MT-49",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+            "meta_learning_brief": "Self-Learning: HEALTHY | 122 principles (avg 0.52) | 8 sessions (stable)",
+        }
+        text = format_summary(summary)
+        self.assertIn("Self-Learning", text)
+        self.assertIn("HEALTHY", text)
+
+    def test_format_summary_omits_meta_learning_when_empty(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session": 170,
+            "last_session_id": "S170",
+            "top_pick": "MT-49",
+            "smoke_status": "10/10 PASS",
+            "blockers": [],
+        }
+        text = format_summary(summary)
+        self.assertNotIn("Self-Learning", text)
+
+
+class TestSlimInitIncludesMetaLearning(unittest.TestCase):
+    """Test meta learning is wired into the full slim init flow."""
+
+    @patch("slim_init.run_meta_learning")
+    @patch("slim_init.run_mt_extensions")
+    @patch("slim_init.run_mt_proposals")
+    @patch("slim_init.run_principle_seeder")
+    @patch("slim_init.run_timeline")
+    @patch("slim_init.run_priority")
+    @patch("slim_init.run_smoke")
+    @patch("slim_init.Path.read_text")
+    def test_full_init_calls_meta_learning(self, mock_read, mock_smoke, mock_priority, mock_timeline, mock_seeder, mock_proposals, mock_extensions, mock_meta):
+        from slim_init import run_slim_init
+
+        mock_read.return_value = "## Current State (as of Session 169 — 2026-03-26)"
+        mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
+        mock_priority.return_value = {"top_pick": "MT-49", "raw": "output"}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
+        mock_seeder.return_value = {"seeded": 0, "raw": ""}
+        mock_proposals.return_value = {"count": 0, "proposals": [], "raw": ""}
+        mock_extensions.return_value = {"count": 0, "extensions": [], "raw": ""}
+        mock_meta.return_value = {"status": "HEALTHY", "brief": "Self-Learning: HEALTHY | 122 principles"}
+
+        result = run_slim_init()
+        mock_meta.assert_called_once()
+        self.assertEqual(result.get("meta_learning_brief"), "Self-Learning: HEALTHY | 122 principles")
+
+
 class TestRunMTExtensions(unittest.TestCase):
     """Test run_mt_extensions() for phase extension proposals."""
 
