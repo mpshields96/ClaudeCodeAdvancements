@@ -646,3 +646,9 @@
 - Portfolio endpoints: YOUR data only (authenticated).
 - MT-42 copytrading NOT feasible on Kalshi. Reframe as order flow signal detection.
 - First seen: 2026-03-25 (S161)
+
+### Git log in generated docs causes false positive assertions — Severity: 1 — Count: 1
+- **Anti-pattern:** Asserting `assertNotIn("X", content)` on full generated output that includes git log
+- **Fix:** Scope assertions to the relevant section (e.g., split on "## RECENT COMMITS" first)
+- **First seen:** 2026-03-25 (S175)
+- **Files:** tests/test_handoff_generator.py

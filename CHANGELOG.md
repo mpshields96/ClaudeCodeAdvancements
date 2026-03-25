@@ -3,6 +3,26 @@
 
 ---
 
+## Session 175 — 2026-03-25
+
+**What changed:**
+- `self-learning/outcomes_enricher.py` — NEW: Parse CCA_TO_POLYBOT.md for missing REQ delivery entries, add to research_outcomes.jsonl
+- `self-learning/commit_scanner.py` — NEW: Scan polymarket-bot git log for REQ-referencing commits, auto-detect implementation status
+- `self-learning/research_roi_resolver.py` — Added no-status ACK parsing (ACK_REQ_NO_STATUS_RE) + integrated commit_scanner as second resolution source
+- `self-learning/research_outcomes.jsonl` — Enriched with 13 REQ entries (REQ-025 through REQ-040)
+- `tests/test_handoff_generator.py` — Fixed false positive: "0 tests" matched in git log RECENT COMMITS section
+
+**Why:**
+- MT-49 Phase 5: ROI resolution was stuck at 2/47 — most REQ deliveries were never recorded in outcomes file, and ACK parsing missed no-status headers
+- Commit scanning closes the loop: even without manual ACKs, CCA can detect implementations from Kalshi's git history
+
+**Tests:** 9722/9722 passing (249 suites, +55 new tests)
+
+**Lessons:**
+- Git log output in generated documents can cause false positive test assertions — always scope assertions to the relevant section
+
+---
+
 ## Session 173 — 2026-03-25
 
 **What changed:**

@@ -3,31 +3,35 @@
 
 ---
 
-## Current State (as of Session 174 — 2026-03-25)
+## Current State (as of Session 175 — 2026-03-25)
 
-**Phase:** Session 174 COMPLETE. REQ-042 fill rate simulator + ROI resolver improvement. Grade: A.
+**Phase:** Session 175 COMPLETE. MT-49 Phase 5 — ROI pipeline enrichment + automated commit scanning. Grade: A.
 
-**What was done this session (S174):**
-- REQ-042 COMPLETE: fill_rate_simulator.py — Monte Carlo maker sniper fill rate simulation
-  - SpreadModel, FillRateSimulator, ParameterSweep, MarketSnapshot classes
-  - from_db() calibration from 1013 expiry_sniper trades (spread=2.0c, vol=0.083c/s)
-  - Key finding: 1c offset / 300s expiry = ~45% fill rate (confirms design target)
-  - CLI with --sweep and --from-db modes
-  - 30 new tests in test_fill_rate_simulator.py
-- ROI resolver improved: req_id exact matching as priority 1 (before session/fuzzy)
-  - 6 new tests in test_research_roi_resolver.py
-- REQ-042 delivery registered in research_outcomes.jsonl with req_id field
-- REQ-042 results delivered to CCA_TO_POLYBOT.md
+**What was done this session (S175):**
+- outcomes_enricher.py — NEW: Parses CCA_TO_POLYBOT.md for missing REQ delivery entries
+  - Added 13 REQ entries (REQ-025 through REQ-040) to research_outcomes.jsonl with proper req_id fields
+  - Known title mapping, zero-padding normalization, deduplication
+  - 25 new tests in test_outcomes_enricher.py
+- commit_scanner.py — NEW: Scans polymarket-bot git log for REQ-referencing commits
+  - Categorizes commits (implementation/testing/documentation), matches to outcomes
+  - Found 4 real implementations (REQ-027, REQ-030, REQ-036, REQ-040) from Kalshi commits
+  - 23 new tests in test_commit_scanner.py
+- research_roi_resolver.py improved:
+  - Added ACK_REQ_NO_STATUS_RE for parsing ACK headers without explicit status keyword
+  - Integrated commit_scanner into ROIResolver.run() as second resolution source
+  - 6 new tests (4 no-status parsing + 2 integration)
+- ROI resolution: 2/47 -> 8/60 (4x improvement, 3 sources: fuzzy, req_id, commit_scan)
+- test_handoff_generator.py: Fixed false positive from git log in RECENT COMMITS section
 - Cross-chat coordination checked — no pending Kalshi requests
-- 2 commits, 36 new tests (9631 -> 9667), no regressions
-- **Tests**: ~247 suites, ~9667 tests passing (2 pre-existing failures in autoloop/handoff)
+- 4 commits, 55 new tests (9667 -> 9722), no regressions
+- **Tests**: 249 suites, 9722 tests passing (0 failures — pre-existing handoff bug fixed)
 
 **Next (prioritized):**
-1. Enrich older research_outcomes entries with req_ids (improve ROI resolution above 2/47)
-2. MT-49 Phase 5 continued: automated delivery status from Kalshi bot commits
-3. economics_sniper_v1 deployment validation via Kalshi monitoring chat
+1. Wire outcomes_enricher into slim_init for auto-enrichment at session start
+2. economics_sniper_v1 deployment validation via Kalshi monitoring chat
+3. MT-49 Phase 6+: adversarial self-testing, session-over-session metrics
 4. Cross-chat coordination — check for new Kalshi requests
-5. Pre-existing test fixes: test_cca_autoloop model selection, test_handoff_generator git log
+5. Any remaining MASTER_TASKS backlog
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
@@ -37,6 +41,14 @@
 - Autoloop ENABLED — run /cca-wrap at natural stopping points, not when Matthew reminds
 - CCA and Kalshi chats should have automated feedback loop (S161 directive, IMPLEMENTED S162)
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 174 — 2026-03-25)
+
+**Phase:** Session 174 COMPLETE. REQ-042 fill rate simulator + ROI resolver improvement. Grade: A.
+
+**What was done (S174):** REQ-042 fill_rate_simulator.py (30 tests), ROI resolver req_id matching (6 tests), REQ-042 delivery to CCA_TO_POLYBOT.md. 2 commits, 36 new tests (9667 total).
 
 ---
 

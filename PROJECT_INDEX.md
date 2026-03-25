@@ -212,7 +212,9 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `meta_learning_dashboard.py` — MT-49 Phase 1: Self-learning meta-analysis (PrincipleAnalyzer, SessionTrendAnalyzer, ImprovementTracker, ResearchROITracker, JournalAnalyzer, MetaLearningDashboard). CLI: --json/--brief/--data-dir. 28 tests (S169).
 - `principle_discoverer.py` — MT-49 Phase 3: Automated principle discovery from git patterns + journal (GitPatternDiscoverer, SessionPatternDiscoverer, PrincipleDiscoverer). CLI: discover [--dry-run], status. 27 tests (S171).
 - `confidence_recalibrator.py` — MT-49 Phase 4: Bayesian staleness decay on principle scores (exponential decay, half-life ~70 sessions, floor 0.3). CLI: recalibrate [--session N], summary. 22 tests (S172).
-- `research_roi_resolver.py` — MT-49 Phase 5: Research-to-production ROI tracking. Parses DELIVERY_ACK.md, req_id + fuzzy-matches to research_outcomes.jsonl, ROI by category/principle. CLI: resolve/report/summary. 30 tests (S173/S174).
+- `research_roi_resolver.py` — MT-49 Phase 5: Research-to-production ROI tracking. Parses DELIVERY_ACK.md + scans Kalshi git commits. 3 resolution sources: req_id, fuzzy, commit_scan. CLI: resolve/report/summary. 36 tests (S173-S175).
+- `outcomes_enricher.py` — MT-49 Phase 5: Enrich research_outcomes.jsonl with missing REQ delivery entries from CCA_TO_POLYBOT.md. CLI: scan/enrich. 25 tests (S175).
+- `commit_scanner.py` — MT-49 Phase 5: Scan polymarket-bot git log for REQ-referencing commits, auto-detect implementation status. CLI: scan/match. 23 tests (S175).
 - `fill_rate_simulator.py` — REQ-042: Maker sniper fill rate Monte Carlo (SpreadModel, FillRateSimulator, ParameterSweep, from_db calibration, CLI --sweep/--from-db). 30 tests (S174).
 - `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 - `BATCH_ANALYSIS_S62.md` — Batch trace analysis of 10 recent sessions (avg 73.0, retry rate down to 40%)
