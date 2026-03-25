@@ -42,6 +42,12 @@ ACK_HEADER_RE = re.compile(
     r"(?:\s*\(?(S\d+)\)?)?",
     re.IGNORECASE,
 )
+# Matches: ## [date] — ACK REQ-NNN (session) — no explicit status
+ACK_REQ_NO_STATUS_RE = re.compile(
+    r"##\s+\[?(\d{4}-\d{2}-\d{2}[^]]*)\]?\s*[—-]+\s*ACK\s+"
+    r"REQ-(\d+)\s*\(?(S\d+)\)?",
+    re.IGNORECASE,
+)
 # Matches: ### REQ-NNN ... | IMPLEMENTED | ... | date
 LEGACY_ACK_RE = re.compile(
     r"###\s+(?:REQ-(\d+).*?)\s*\|\s*(IMPLEMENTED|PARTIAL|REJECTED|REVIEWED)",
@@ -91,6 +97,27 @@ def parse_delivery_acks(text: str) -> List[AckEntry]:
             entry = AckEntry(
                 req_id=f"REQ-{req_num}" if req_num else None,
                 status=_normalize_status(status_str),
+                date=_clean_date(date_str),
+                session=session_str,
+                description=" ".join(desc_lines),
+            )
+            entries.append(entry)
+            continue
+
+        # Try no-status format: ## [date] — ACK REQ-NNN (session)
+        m = ACK_REQ_NO_STATUS_RE.search(line_stripped)
+        if m:
+            date_str, req_num, session_str = m.groups()
+            desc_lines = []
+            for j in range(i + 1, min(i + 10, len(lines))):
+                if lines[j].strip().startswith("##"):
+                    break
+                if lines[j].strip():
+                    desc_lines.append(lines[j].strip())
+
+            entry = AckEntry(
+                req_id=f"REQ-{req_num}",
+                status="acknowledged",
                 date=_clean_date(date_str),
                 session=session_str,
                 description=" ".join(desc_lines),

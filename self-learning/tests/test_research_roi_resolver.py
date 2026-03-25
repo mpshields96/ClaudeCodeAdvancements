@@ -369,5 +369,47 @@ class TestReqIdMatching(unittest.TestCase):
         self.assertEqual(len(updates), 1)
 
 
+class TestParseNoStatusAck(unittest.TestCase):
+    """Test parsing ACK headers without explicit status keyword."""
+
+    def test_ack_req_with_session_no_status(self):
+        """## [date] — ACK REQ-025 (S136) should parse as acknowledged."""
+        text = (
+            "## [2026-03-25 04:54 UTC] — ACK REQ-025 (S136)\n"
+            "Delivery: CCA second edge research\n"
+        )
+        acks = parse_delivery_acks(text)
+        req_025 = [a for a in acks if a.req_id == "REQ-025"]
+        self.assertEqual(len(req_025), 1)
+        self.assertEqual(req_025[0].status, "acknowledged")
+        self.assertEqual(req_025[0].session, "S136")
+
+    def test_ack_req_037_no_status(self):
+        text = "## [2026-03-25 04:54 UTC] — ACK REQ-037 (S136)\n"
+        acks = parse_delivery_acks(text)
+        req_037 = [a for a in acks if a.req_id == "REQ-037"]
+        self.assertEqual(len(req_037), 1)
+        self.assertEqual(req_037[0].status, "acknowledged")
+
+    def test_no_status_collects_description(self):
+        text = (
+            "## [2026-03-25 04:54 UTC] — ACK REQ-025 (S136)\n"
+            "Delivery: Second edge research — 10 verified papers\n"
+            "Key finding: economics_sniper already in pipeline\n"
+        )
+        acks = parse_delivery_acks(text)
+        req_025 = [a for a in acks if a.req_id == "REQ-025"]
+        self.assertIn("verified papers", req_025[0].description)
+
+    def test_no_status_does_not_match_status_format(self):
+        """Modern format with status should NOT also match no-status pattern."""
+        text = "## [2026-03-25 02:30 UTC] — ACK REQ-032 IMPLEMENTED (S134)\n"
+        acks = parse_delivery_acks(text)
+        # Should match modern format (implemented), not no-status (acknowledged)
+        req_032 = [a for a in acks if a.req_id == "REQ-032"]
+        self.assertEqual(len(req_032), 1)
+        self.assertEqual(req_032[0].status, "implemented")
+
+
 if __name__ == "__main__":
     unittest.main()
