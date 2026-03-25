@@ -26,6 +26,7 @@ class TaskStatus(Enum):
     ACTIVE = "active"
     BLOCKED = "blocked"
     COMPLETED = "completed"
+    ARCHIVED = "archived"  # Matthew decided to kill/archive (S160)
 
 
 class Urgency(Enum):
@@ -342,13 +343,13 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=8, name="iPhone Remote Control Perfection",
-            base_value=5, status=TaskStatus.BLOCKED,
+            base_value=5, status=TaskStatus.ARCHIVED,
             last_touched_session=None, current_session=current_session,
             phases_completed=0, phases_total=4,
-            aging_rate=0.5,
-            block_reason="Not started. Needs r/ClaudeCode research sweep for remote control posts.",
-            self_resolution_note="PARTIALLY SELF-RESOLVED: Claude Code Channels (MT-23) may cover mobile use case.",
-            next_action="Research: scan for remote control + iPhone + mobile posts. Check if Channels resolves this.",
+            aging_rate=0,
+            block_reason="ARCHIVED S160: Matthew approved. Claude Code Channels covers mobile use case.",
+            self_resolution_note="SELF-RESOLVED: Claude Code Channels (MT-23) covers mobile use case.",
+            next_action="ARCHIVED.",
             tags=["mobile", "remote"],
         ),
         # === ARCHIVED (stagnation resolver recommended, S100) ===
@@ -382,13 +383,13 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         # === NEW MTs (S103 Strategic Vision) ===
         MasterTask(
             mt_id=23, name="Mobile Remote Control v2 (Telegram/Discord Channels)",
-            base_value=5, status=TaskStatus.BLOCKED,
+            base_value=5, status=TaskStatus.ARCHIVED,
             last_touched_session=112, current_session=current_session,
             phases_completed=0, phases_total=6,
-            aging_rate=0.5,
-            block_reason="EXTERNALLY RESOLVED: Claude Code Channels shipped 2026-03-20",
-            self_resolution_note="Official Telegram+Discord MCP channels. Matthew needs to install + test.",
-            next_action="Matthew: install Telegram channel plugin, test with active session.",
+            aging_rate=0,
+            block_reason="ARCHIVED S160: Matthew approved. Official Channels shipped.",
+            self_resolution_note="SELF-RESOLVED: Official Telegram+Discord MCP channels shipped.",
+            next_action="ARCHIVED.",
             tags=["mobile", "remote"],
         ),
         MasterTask(
@@ -402,13 +403,13 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=25, name="Presentation Generator (Matthew's Style)",
-            base_value=5, status=TaskStatus.BLOCKED,
+            base_value=5, status=TaskStatus.ARCHIVED,
             last_touched_session=103, current_session=current_session,
             phases_completed=0, phases_total=5,
-            aging_rate=0.5,
-            block_reason="WAITING on Matthew's style samples and preferences",
-            self_resolution_note="Matthew to provide Grand Rounds / psychopharm lecture samples.",
-            next_action="BLOCKED: awaiting style samples from Matthew.",
+            aging_rate=0,
+            block_reason="ARCHIVED S160: Matthew approved archive.",
+            self_resolution_note=None,
+            next_action="ARCHIVED.",
             tags=["personal", "academic", "presentations"],
         ),
         MasterTask(
@@ -463,13 +464,13 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         # === NEW MTs (S115-S124) ===
         MasterTask(
             mt_id=31, name="Gemini Flash Integration",
-            base_value=6, status=TaskStatus.BLOCKED,
+            base_value=6, status=TaskStatus.ARCHIVED,
             last_touched_session=125, current_session=current_session,
-            phases_completed=1, phases_total=4,  # S125: Flash works, Pro unavailable. Scope narrowed.
-            aging_rate=0.5,
-            block_reason="Gemini MCP server not configured in settings.local.json. Matthew needs to install @rlabs-inc/gemini-mcp.",
-            self_resolution_note="PARTIALLY SELF-RESOLVED: MCP exists (@rlabs-inc/gemini-mcp v0.8.1). Matthew needs to add to settings.",
-            next_action="BLOCKED: install Gemini MCP, then build Flash-powered CCA tools.",
+            phases_completed=1, phases_total=4,
+            aging_rate=0,
+            block_reason="ARCHIVED S160: Matthew approved archive.",
+            self_resolution_note="MCP exists but not prioritized.",
+            next_action="ARCHIVED.",
             tags=["integration", "multi-model"],
         ),
         MasterTask(
@@ -492,13 +493,13 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=34, name="Medical AI Tool (OpenEvidence replacement)",
-            base_value=4, status=TaskStatus.BLOCKED,
+            base_value=4, status=TaskStatus.ARCHIVED,
             last_touched_session=121, current_session=current_session,
             phases_completed=0, phases_total=6,
-            aging_rate=0.5,
-            block_reason="IDEA stage only — waiting for Matthew greenlight",
+            aging_rate=0,
+            block_reason="ARCHIVED S160: Matthew killed — not greenlit.",
             self_resolution_note=None,
-            next_action="BLOCKED: awaiting Matthew decision on scope and requirements.",
+            next_action="ARCHIVED.",
             tags=["personal", "medical"],
         ),
         MasterTask(
@@ -576,42 +577,42 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             last_touched_session=98, current_session=current_session,
             phases_completed=0, phases_total=3,
             aging_rate=0.5,
-            block_reason="Was blocked on macOS SDK",
+            block_reason="Matthew wants this (S160). Research Claude Control install.",
             self_resolution_note="MOSTLY SELF-RESOLVED (S96): Claude Control best candidate. Try install.",
-            next_action="Try Claude Control install + test. If works, MT-1 solved.",
+            next_action="Research Claude Control — find install instructions, test if it provides visual grid UI.",
             tags=["ui", "visual"],
         ),
         MasterTask(
             mt_id=5, name="Claude Pro <-> Claude Code bridge",
-            base_value=5, status=TaskStatus.BLOCKED,
+            base_value=5, status=TaskStatus.ARCHIVED,
             last_touched_session=None, current_session=current_session,
             phases_completed=0, phases_total=4,
-            aging_rate=0.5,
-            block_reason="Needs research on Claude Pro integration options",
-            self_resolution_note="PARTIALLY SELF-RESOLVED: Remote Control + Chrome extension exist.",
-            next_action="Evaluate existing tools (Remote Control, Chrome extension).",
+            aging_rate=0,
+            block_reason="ARCHIVED S160: Matthew approved. Self-resolved via Remote Control + Chrome ext.",
+            self_resolution_note="SELF-RESOLVED: Remote Control + Chrome extension exist.",
+            next_action="ARCHIVED.",
             tags=["bridge", "productivity"],
         ),
         MasterTask(
             mt_id=16, name="Detachable chat tabs",
-            base_value=3, status=TaskStatus.BLOCKED,
+            base_value=3, status=TaskStatus.ARCHIVED,
             last_touched_session=None, current_session=current_session,
             phases_completed=0, phases_total=1,
-            aging_rate=0.5,
-            block_reason="Anthropic feature request",
-            self_resolution_note="STILL OPEN: GitHub issues filed. Nimbalyst workaround exists.",
-            next_action="Monitor. Low priority.",
+            aging_rate=0,
+            block_reason="ARCHIVED S160: Matthew approved. Anthropic feature request — out of CCA scope.",
+            self_resolution_note="Nimbalyst workaround exists.",
+            next_action="ARCHIVED.",
             tags=["ux"],
         ),
         MasterTask(
             mt_id=19, name="Local LLM fine-tuning",
-            base_value=2, status=TaskStatus.BLOCKED,
+            base_value=2, status=TaskStatus.ARCHIVED,
             last_touched_session=None, current_session=current_session,
             phases_completed=0, phases_total=7,
-            aging_rate=0.5,
-            block_reason="Needs GPU resources, long-term exploration",
-            self_resolution_note="STILL OPEN: Not self-resolving.",
-            next_action="Long-term. Wait for Mac GPU support maturity.",
+            aging_rate=0,
+            block_reason="ARCHIVED S160: Matthew killed. Not prioritized.",
+            self_resolution_note=None,
+            next_action="ARCHIVED.",
             tags=["ml", "long-term"],
         ),
     ]
@@ -931,10 +932,10 @@ class PriorityPicker:
                 lines.append(f"    Status: {note[:80]}")
             lines.append("")
 
-        # Never-touched tasks
+        # Never-touched tasks (exclude completed and archived)
         never_touched = [t for t in self.tasks
                          if t.last_touched_session is None
-                         and t.status != TaskStatus.COMPLETED]
+                         and t.status not in (TaskStatus.COMPLETED, TaskStatus.ARCHIVED)]
         if never_touched:
             found_any = True
             lines.append("NEVER STARTED:")
@@ -950,13 +951,14 @@ class PriorityPicker:
         active_count = len(self.active_tasks())
         completed_count = len(self.completed_tasks())
         blocked_count = len(self.blocked_tasks())
+        archived_count = len([t for t in self.tasks if t.status == TaskStatus.ARCHIVED])
         growth_count = len(self.growth_tasks())
         dusty_total = len(dusty_active if dusty_active else []) + \
                       len(dusty_growth if dusty_growth else []) + \
                       len(dusty_blocked if dusty_blocked else [])
         lines.append(f"SUMMARY: {total} MTs total | {active_count} active | "
                      f"{completed_count} complete ({growth_count} with growth) | "
-                     f"{blocked_count} blocked | {dusty_total} dusty")
+                     f"{blocked_count} blocked | {archived_count} archived | {dusty_total} dusty")
 
         return "\n".join(lines)
 
