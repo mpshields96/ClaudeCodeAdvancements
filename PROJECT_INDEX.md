@@ -160,6 +160,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `session_daemon_cca_only.json` — CCA-only daemon config for auto-loop (1 session max, S126)
 - `autoloop_trigger.py` — MT-22: CCA-internal autoloop trigger — called by /cca-wrap Step 10 to spawn next session (activate, Code tab, Cmd+N, paste, send). 18 tests (S138)
 - `autoloop_pause.py` — MT-35 Phase 4: Pause/resume/toggle/status CLI for autoloop control. Flag file ~/.cca-autoloop-paused. 19 tests (S152)
+- `token_budget.py` — MT-38: Peak/off-peak token budget detection. get_budget() API, --brief/--json CLI modes. PEAK 60%/SHOULDER 80%/OFF-PEAK 100%. 21 tests (S154)
 - `desktop_automator.py` — MT-22: AppleScript-based Claude.app control (activate, send, close, CPU idle detection, preflight, Code tab awareness). 85 tests (S132/S136)
 - `desktop_autoloop.py` — MT-22: Self-sustaining desktop loop orchestrator (resume watcher, state tracking, model selection, Code tab awareness). 60 tests (S132/S136)
 - `start_desktop_autoloop.sh` — MT-22: One-command desktop auto-loop launcher (S132)

@@ -2305,3 +2305,26 @@ CLI chat 2:
 - No new pending requests from Kalshi chat
 
 ---
+
+## Session 154 — 2026-03-24
+
+**What changed:**
+- MT-32: Fixed StackedBarChart X-axis label overlap (3-tier rotation: <=4 none, 5-8 -45deg, 9+ -90deg, 13+ skip) — `chart_generator.py`
+- MT-32: Fixed histogram integer axis formatting (Y-axis counts always int, X-axis int for int data) — `chart_generator.py`
+- MT-32: Fixed cover title to single line at 32pt — `cca-report.typ`
+- MT-38 NEW: Peak/off-peak token budget system Phase 1+2 — `token_budget.py`, `~/.claude/rules/peak-offpeak-budgeting.md`
+- FLB research citations verified and delivered — `CCA_TO_POLYBOT.md`
+- +8 chart tests in `test_chart_consistency.py`, +21 token budget tests in `test_token_budget.py`
+
+**Why:**
+- Chart label overlap made MT Phase Progress chart unreadable (S154 agent visual audit)
+- Rate limit instability prompted MT-38 — time-aware token budgeting is now universal
+- FLB research from S154 agents needed persistence and verified citations
+
+**Tests:** 222 suites / 8917 tests passing (+1 suite, +29 tests)
+
+**Lessons:**
+- Background agent results must be persisted to disk immediately — session interruptions can lose context
+- Peak/off-peak awareness prevents wasteful usage during high-demand windows
+
+---

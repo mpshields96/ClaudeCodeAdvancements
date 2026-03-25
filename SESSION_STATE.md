@@ -3,28 +3,41 @@
 
 ---
 
-## Current State (as of Session 152 — 2026-03-24)
+## Current State (as of Session 154 — 2026-03-24)
 
-**Phase:** Session 152 COMPLETE. Autoloop breadcrumb bug fix, MT-35 Phase 4 (pause/resume), TOC page numbers, Kalshi E-value confirmation. 2 commits. Grade: A.
+**Phase:** Session 154 COMPLETE. MT-32 chart fixes (label overlap, integer axes, cover title), MT-38 Phase 1+2 (peak/off-peak token budgeting), FLB research citations verified. 3 commits. Grade: B+.
 
-**What was done this session (S152):**
-- **Autoloop breadcrumb fix** (critical): Stop hook now compares resume mtime vs breadcrumb mtime. If resume is newer than breadcrumb, a new session completed — fire trigger again. Fixes back-to-back sessions under 10min failing to chain. +2 tests (autoloop_stop_hook.py).
-- **MT-35 Phase 4 COMPLETE**: autoloop_pause.py — pause/resume/toggle/status CLI. Flag file ~/.cca-autoloop-paused. Both stop hook and trigger respect pause state. 19 new tests.
-- **MT-32 C6: TOC page numbers**: Added labeled section headers to cca-report.typ with clickable TOC entries showing real page numbers. All 11 sections linked.
-- **Kalshi E-value confirmation**: Delivered via CCA_TO_POLYBOT.md — confirmed pure-Python implementation correct, recommended log-space to avoid overflow, provided erosion threshold guidance (E_n < 1.0 = edge gone), updated REQ-030 to use cusum_s.
-- **Tests**: 221 suites, 8888 tests. All passing. +21 net new tests.
+**What was done this session (S154):**
+- **MT-32: Chart label overlap fix**: StackedBarChart X-axis now uses 3-tier rotation (<=4: none, 5-8: -45deg, 9-12: -90deg, 13+: -90deg + skip). +4 tests.
+- **MT-32: Integer axis formatting**: Histogram Y-axis always shows integers (counts). Histogram X-axis shows integers when data is all-integer. +4 tests.
+- **MT-32: Cover title fix**: Single line "ClaudeCode Advancements" at 32pt instead of awkward 2-line split.
+- **MT-38 NEW: Peak/off-peak token budget system** (Matthew directive):
+  - Phase 1: Global rule at `~/.claude/rules/peak-offpeak-budgeting.md` — PEAK 60%/SHOULDER 80%/OFF-PEAK 100%
+  - Phase 2: `token_budget.py` CLI utility with `get_budget()` API. 21 tests.
+  - Global learning added to `~/.claude/rules/learnings.md`
+  - Delivered to Kalshi chat via CCA_TO_POLYBOT.md
+- **FLB research verification**: S154 agent verified Burgi/Deng/Whelan 2026, Diercks/Katz/Wright 2026 papers with real SSRN/NBER/Fed URLs. Delivered verified citations to Kalshi chat.
+- **Tests**: 222 suites, 8917 tests. All passing. +29 net new tests.
 
 **Next (from TODAYS_TASKS.md):**
-1. **C2: Report visual enhancement deep exploration** — style, charts, content improvements
-2. **MT-32 remaining** — cover title fix, MT section condensing
-3. **K2: Second edge discovery** — research + validate structural basis for new edge
-4. **Continue Kalshi cross-chat coordination** — check POLYBOT_TO_CCA.md
+1. **K2: Second edge discovery** — probe KXCPI/KXGDP volume via API, FLB research delivered
+2. **MT-32 remaining** — MT section condensing
+3. **MT-38 Phase 3** — PreToolUse hook for peak-hour agent blocking
+4. **Continue Kalshi cross-chat coordination** — respond to open Requests 4 and 5
 
 **Matthew directives (TODAYS_TASKS.md is authoritative):**
 - 50%+ time on Kalshi bot work (higher priority)
+- Peak/off-peak token budgeting now UNIVERSAL (MT-38)
 - Frequent comms with Kalshi main chat
-- Autoloop ENABLED and firing — breadcrumb fix deployed
+- Autoloop ENABLED and firing
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 152 — 2026-03-24)
+
+**What was done this session (S152):**
+- Autoloop breadcrumb fix, MT-35 Phase 4 (pause/resume), TOC page numbers, Kalshi E-value confirmation. 2 commits. Grade A.
 
 ---
 

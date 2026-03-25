@@ -77,3 +77,12 @@
 - Keep Kalshi comms frequent — Kalshi main chat is active NOW
 - Each subsequent CCA chat reads THIS FILE to know what to work on
 - Mark items [DONE] as they complete, but NEVER remove them
+
+### C2 Notes: Report Visual Findings (from S154 agent — persisted S155)
+Agent did a 20-page visual audit of CCA_STATUS_REPORT_2026-03-24.pdf. Key issues found:
+- MT Phase Progress chart: X-axis labels overlap and are unreadable
+- Chart axes show decimal values for integer data (LOC counts, file counts)
+- Pages 5 and 10 have significant wasted whitespace
+- design-guide.md color palette does not match actual Typst template colors
+- Suggested fixes: rotate/abbreviate X labels, force integer axis ticks, compress whitespace, sync color definitions
+These are actionable Typst template fixes — no research needed, just implementation.
