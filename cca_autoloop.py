@@ -829,6 +829,18 @@ class AutoLoopRunner:
             self.state.iteration + 1,
         )
 
+        # Peak-aware model override (MT-38 Phase 4)
+        peak_window = ""
+        try:
+            from token_budget import get_autoloop_settings
+            settings = get_autoloop_settings()
+            peak_window = settings["window"]
+            peak_model = settings["model_preference"]
+            if peak_model != model and peak_window == "PEAK":
+                model = peak_model
+        except Exception:
+            pass
+
         # Build command with model
         cmd = build_claude_command(resume_prompt, self.config.project_dir, model=model)
 
@@ -837,6 +849,7 @@ class AutoLoopRunner:
             "resume_length": len(resume_prompt),
             "model": model,
             "model_strategy": self.config.model_strategy,
+            "peak_window": peak_window,
             "dry_run": self.config.dry_run,
         })
 
@@ -996,7 +1009,7 @@ class AutoLoopRunner:
                 print(f"\nAuto-loop stopping: {self.state.stop_reason}")
                 break
 
-            # Cooldown between sessions — longer for rate limits
+            # Cooldown between sessions — peak-aware + rate limit handling
             if not self.config.dry_run:
                 exit_code = result.get("exit_code", 0)
                 if exit_code in RATE_LIMIT_EXIT_CODES:
@@ -1004,11 +1017,39 @@ class AutoLoopRunner:
                     self.logger.log("rate_limit_cooldown", {"exit_code": exit_code, "cooldown": RATE_LIMIT_COOLDOWN})
                     time.sleep(RATE_LIMIT_COOLDOWN)
                 else:
-                    print(f"Cooldown: {self.config.cooldown_seconds}s")
-                    time.sleep(self.config.cooldown_seconds)
+                    cooldown = self._get_peak_aware_cooldown()
+                    time.sleep(cooldown)
 
         self.logger.log("loop_finished", self.state.to_dict())
         print(f"\n{self.state.summary()}")
+
+    def _get_peak_aware_cooldown(self):
+        """Return cooldown adjusted for peak/off-peak hours (MT-38 Phase 4).
+
+        Falls back to config.cooldown_seconds if token_budget is unavailable.
+        Uses whichever cooldown is longer: config or peak-aware.
+        """
+        try:
+            from token_budget import get_autoloop_settings
+            settings = get_autoloop_settings()
+            peak_cooldown = settings["cooldown"]
+            # Use the longer of config cooldown and peak-aware cooldown
+            cooldown = max(self.config.cooldown_seconds, peak_cooldown)
+            window = settings["window"]
+            if peak_cooldown > self.config.cooldown_seconds:
+                print(f"Cooldown: {cooldown}s (peak-adjusted, {window})")
+                self.logger.log("peak_aware_cooldown", {
+                    "cooldown": cooldown,
+                    "window": window,
+                    "budget_pct": settings["budget_pct"],
+                })
+            else:
+                print(f"Cooldown: {cooldown}s ({window})")
+            return cooldown
+        except Exception:
+            # Graceful fallback — never crash over scheduling
+            print(f"Cooldown: {self.config.cooldown_seconds}s")
+            return self.config.cooldown_seconds
 
     def _save_state(self):
         """Persist state to file."""

@@ -97,7 +97,17 @@ def trigger_next_session(dry_run: bool = False) -> bool:
 
     Returns True if all steps succeeded.
     """
-    _log("trigger_start", {"dry_run": dry_run})
+    # Log peak/off-peak context (MT-38 Phase 4)
+    peak_info = {}
+    try:
+        from token_budget import get_autoloop_settings
+        settings = get_autoloop_settings()
+        peak_info = {"window": settings["window"], "budget_pct": settings["budget_pct"],
+                     "cooldown": settings["cooldown"]}
+    except Exception:
+        pass
+
+    _log("trigger_start", {"dry_run": dry_run, **peak_info})
 
     # Check pause state (MT-35 Phase 4)
     pause_file = os.path.expanduser("~/.cca-autoloop-paused")

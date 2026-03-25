@@ -118,6 +118,49 @@ def format_full(info):
     return "\n".join(lines)
 
 
+# Autoloop scheduling constants (MT-38 Phase 4)
+AUTOLOOP_COOLDOWNS = {
+    "PEAK": 300,       # 5 min — conserve rate limits
+    "SHOULDER": 60,    # 1 min — moderate pace
+    "OFF-PEAK": 15,    # 15 sec — full speed
+}
+
+AUTOLOOP_MODEL_PREF = {
+    "PEAK": "sonnet",      # Lighter model during peak
+    "SHOULDER": "opus",    # Full model OK at shoulder
+    "OFF-PEAK": "opus",    # Full power
+}
+
+AUTOLOOP_REASONS = {
+    "PEAK": "Peak hours (8AM-2PM ET) — extended cooldown, lighter model to conserve rate limits",
+    "SHOULDER": "Shoulder hours (6-8AM/2-6PM ET) — moderate cooldown",
+    "OFF-PEAK": "Off-peak hours — full speed, no restrictions",
+}
+
+
+def get_autoloop_settings(now=None):
+    """Return autoloop scheduling settings based on current budget window.
+
+    Args:
+        now: datetime override for testing.
+
+    Returns:
+        dict with: cooldown (seconds), model_preference, defer (bool),
+        window, budget_pct, reason
+    """
+    budget = get_budget(now)
+    window = budget["window"]
+
+    return {
+        "cooldown": AUTOLOOP_COOLDOWNS[window],
+        "model_preference": AUTOLOOP_MODEL_PREF[window],
+        "defer": False,  # Never fully stop — just slow down
+        "window": window,
+        "budget_pct": budget["budget_pct"],
+        "reason": AUTOLOOP_REASONS[window],
+    }
+
+
 def main():
     info = get_budget()
 

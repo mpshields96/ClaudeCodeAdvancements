@@ -144,5 +144,87 @@ class TestFormatting(unittest.TestCase):
         self.assertEqual(deserialized["budget_pct"], 60)
 
 
+class TestAutoloopScheduling(unittest.TestCase):
+    """Test autoloop scheduling settings (MT-38 Phase 4)."""
+
+    def test_offpeak_full_speed(self):
+        from token_budget import get_autoloop_settings
+        now = datetime(2026, 3, 24, 22, 0)  # Tuesday 10 PM
+        settings = get_autoloop_settings(now)
+        self.assertEqual(settings["cooldown"], 15)
+        self.assertEqual(settings["model_preference"], "opus")
+        self.assertFalse(settings["defer"])
+
+    def test_peak_extended_cooldown(self):
+        from token_budget import get_autoloop_settings
+        now = datetime(2026, 3, 24, 10, 0)  # Tuesday 10 AM
+        settings = get_autoloop_settings(now)
+        self.assertEqual(settings["cooldown"], 300)  # 5 min
+        self.assertEqual(settings["model_preference"], "sonnet")
+        self.assertFalse(settings["defer"])
+
+    def test_shoulder_moderate_cooldown(self):
+        from token_budget import get_autoloop_settings
+        now = datetime(2026, 3, 24, 15, 0)  # Tuesday 3 PM
+        settings = get_autoloop_settings(now)
+        self.assertEqual(settings["cooldown"], 60)
+        self.assertEqual(settings["model_preference"], "opus")
+        self.assertFalse(settings["defer"])
+
+    def test_weekend_full_speed(self):
+        from token_budget import get_autoloop_settings
+        now = datetime(2026, 3, 28, 10, 0)  # Saturday 10 AM
+        settings = get_autoloop_settings(now)
+        self.assertEqual(settings["cooldown"], 15)
+        self.assertFalse(settings["defer"])
+
+    def test_returns_budget_info(self):
+        from token_budget import get_autoloop_settings
+        now = datetime(2026, 3, 24, 10, 0)
+        settings = get_autoloop_settings(now)
+        self.assertEqual(settings["window"], "PEAK")
+        self.assertEqual(settings["budget_pct"], 60)
+
+    def test_all_fields_present(self):
+        from token_budget import get_autoloop_settings
+        now = datetime(2026, 3, 24, 10, 0)
+        settings = get_autoloop_settings(now)
+        for field in ["cooldown", "model_preference", "defer", "window", "budget_pct", "reason"]:
+            self.assertIn(field, settings, f"Missing field: {field}")
+
+    def test_reason_explains_peak(self):
+        from token_budget import get_autoloop_settings
+        now = datetime(2026, 3, 24, 10, 0)
+        settings = get_autoloop_settings(now)
+        self.assertIn("peak", settings["reason"].lower())
+
+    def test_reason_explains_offpeak(self):
+        from token_budget import get_autoloop_settings
+        now = datetime(2026, 3, 24, 22, 0)
+        settings = get_autoloop_settings(now)
+        self.assertIn("off-peak", settings["reason"].lower())
+
+    def test_shoulder_reason(self):
+        from token_budget import get_autoloop_settings
+        now = datetime(2026, 3, 24, 15, 0)
+        settings = get_autoloop_settings(now)
+        self.assertIn("shoulder", settings["reason"].lower())
+
+    def test_peak_defer_flag_off_by_default(self):
+        """Peak slows down but doesn't stop — defer is False."""
+        from token_budget import get_autoloop_settings
+        now = datetime(2026, 3, 24, 10, 0)
+        settings = get_autoloop_settings(now)
+        self.assertFalse(settings["defer"])
+
+    def test_cooldown_types(self):
+        from token_budget import get_autoloop_settings
+        for hour in [2, 7, 10, 15, 22]:
+            now = datetime(2026, 3, 24, hour, 0)
+            settings = get_autoloop_settings(now)
+            self.assertIsInstance(settings["cooldown"], int)
+            self.assertGreater(settings["cooldown"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

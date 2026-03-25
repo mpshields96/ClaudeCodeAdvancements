@@ -1601,5 +1601,85 @@ class TestPreflightChecks(unittest.TestCase):
                 self.assertIsInstance(c["critical"], bool)
 
 
+class TestPeakAwareCooldown(unittest.TestCase):
+    """Test peak-aware cooldown in autoloop (MT-38 Phase 4)."""
+
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_peak_aware_cooldown_returns_int(self, mock_sleep, mock_read):
+        mock_read.return_value = "Resume"
+        cfg = AutoLoopConfig(project_dir="/tmp/test", dry_run=True, max_iterations=1)
+        runner = AutoLoopRunner(cfg)
+        cooldown = runner._get_peak_aware_cooldown()
+        self.assertIsInstance(cooldown, int)
+        self.assertGreater(cooldown, 0)
+
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_peak_cooldown_at_least_config(self, mock_sleep, mock_read):
+        """Peak-aware cooldown should never be less than config cooldown."""
+        mock_read.return_value = "Resume"
+        cfg = AutoLoopConfig(project_dir="/tmp/test", dry_run=True, max_iterations=1, cooldown_seconds=30)
+        runner = AutoLoopRunner(cfg)
+        cooldown = runner._get_peak_aware_cooldown()
+        self.assertGreaterEqual(cooldown, 30)
+
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_fallback_on_import_error(self, mock_sleep, mock_read):
+        """If token_budget is unavailable, falls back to config cooldown."""
+        mock_read.return_value = "Resume"
+        cfg = AutoLoopConfig(project_dir="/tmp/test", dry_run=True, max_iterations=1, cooldown_seconds=20)
+        runner = AutoLoopRunner(cfg)
+        # Patch the import to fail
+        import builtins
+        original_import = builtins.__import__
+        def fail_import(name, *args, **kwargs):
+            if name == "token_budget":
+                raise ImportError("test")
+            return original_import(name, *args, **kwargs)
+        with patch.object(builtins, "__import__", side_effect=fail_import):
+            cooldown = runner._get_peak_aware_cooldown()
+        self.assertEqual(cooldown, 20)
+
+    @patch("token_budget.get_autoloop_settings")
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_peak_model_override(self, mock_sleep, mock_read, mock_settings):
+        """During PEAK, model should be overridden to sonnet."""
+        mock_read.return_value = "Resume"
+        mock_settings.return_value = {
+            "cooldown": 300, "model_preference": "sonnet",
+            "defer": False, "window": "PEAK", "budget_pct": 60,
+            "reason": "Peak hours",
+        }
+        cfg = AutoLoopConfig(
+            project_dir="/tmp/test", dry_run=True,
+            max_iterations=1, model_strategy="opus-primary",
+        )
+        runner = AutoLoopRunner(cfg)
+        result = runner.run_one_iteration()
+        self.assertEqual(result["model"], "sonnet")
+
+    @patch("token_budget.get_autoloop_settings")
+    @patch("cca_autoloop.read_resume_prompt")
+    @patch("cca_autoloop.time.sleep")
+    def test_offpeak_no_model_override(self, mock_sleep, mock_read, mock_settings):
+        """During OFF-PEAK, model should not be overridden."""
+        mock_read.return_value = "Resume"
+        mock_settings.return_value = {
+            "cooldown": 15, "model_preference": "opus",
+            "defer": False, "window": "OFF-PEAK", "budget_pct": 100,
+            "reason": "Off-peak hours",
+        }
+        cfg = AutoLoopConfig(
+            project_dir="/tmp/test", dry_run=True,
+            max_iterations=1, model_strategy="opus-primary",
+        )
+        runner = AutoLoopRunner(cfg)
+        result = runner.run_one_iteration()
+        self.assertEqual(result["model"], "opus")
+
+
 if __name__ == "__main__":
     unittest.main()
