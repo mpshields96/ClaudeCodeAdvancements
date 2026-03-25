@@ -574,5 +574,108 @@ class TestSlimInitIncludesProposals(unittest.TestCase):
         self.assertNotIn("mt_proposals_raw", result)
 
 
+class TestRunMTExtensions(unittest.TestCase):
+    """Test run_mt_extensions() for phase extension proposals."""
+
+    @patch("slim_init.subprocess.run")
+    def test_extensions_found(self, mock_run):
+        from slim_init import run_mt_extensions
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout='Parsed 387 findings (24 BUILD)\nPHASE EXTENSIONS (2 proposals for existing MTs):\n\n  [72.0] MT-10 (YoYo): Self-evolution\n  [59.0] MT-1 (Grid): Claude Control',
+            stderr=""
+        )
+        result = run_mt_extensions()
+        self.assertEqual(result["count"], 2)
+        self.assertIn("PHASE EXTENSIONS", result["raw"])
+
+    @patch("slim_init.subprocess.run")
+    def test_no_extensions(self, mock_run):
+        from slim_init import run_mt_extensions
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Parsed 50 findings (2 BUILD)\nNo phase extensions found.",
+            stderr=""
+        )
+        result = run_mt_extensions()
+        self.assertEqual(result["count"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_extensions_empty_output(self, mock_run):
+        from slim_init import run_mt_extensions
+        mock_run.return_value = MagicMock(
+            returncode=0, stdout="", stderr=""
+        )
+        result = run_mt_extensions()
+        self.assertEqual(result.get("count", 0), 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_extensions_timeout(self, mock_run):
+        from slim_init import run_mt_extensions
+        import subprocess
+        mock_run.side_effect = subprocess.TimeoutExpired("python3", 30)
+        result = run_mt_extensions()
+        self.assertIn("error", result)
+        self.assertEqual(result["count"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_extensions_failure(self, mock_run):
+        from slim_init import run_mt_extensions
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="", stderr="Error"
+        )
+        result = run_mt_extensions()
+        self.assertEqual(result["raw"], "")
+
+
+class TestSlimInitIncludesExtensions(unittest.TestCase):
+    """Test MT extensions are wired into the full slim init flow."""
+
+    @patch("slim_init.run_mt_extensions")
+    @patch("slim_init.run_mt_proposals")
+    @patch("slim_init.run_principle_seeder")
+    @patch("slim_init.run_timeline")
+    @patch("slim_init.run_priority")
+    @patch("slim_init.run_smoke")
+    @patch("slim_init.Path.read_text")
+    def test_full_init_includes_extensions(self, mock_read, mock_smoke, mock_priority, mock_timeline, mock_seeder, mock_proposals, mock_extensions):
+        from slim_init import run_slim_init
+
+        mock_read.return_value = "## Current State (as of Session 165 — 2026-03-25)"
+        mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
+        mock_priority.return_value = {"top_pick": "MT-32", "raw": "output"}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
+        mock_seeder.return_value = {"seeded": 0, "raw": ""}
+        mock_proposals.return_value = {"count": 0, "proposals": [], "raw": ""}
+        mock_extensions.return_value = {"count": 2, "extensions": ["[72.0]", "[59.0]"], "raw": "PHASE EXTENSIONS (2):\n  [72.0] MT-10\n  [59.0] MT-1"}
+
+        result = run_slim_init()
+        mock_extensions.assert_called_once()
+        self.assertEqual(result.get("mt_extensions_count"), 2)
+        self.assertIn("PHASE EXTENSIONS", result.get("mt_extensions_raw", ""))
+
+    @patch("slim_init.run_mt_extensions")
+    @patch("slim_init.run_mt_proposals")
+    @patch("slim_init.run_principle_seeder")
+    @patch("slim_init.run_timeline")
+    @patch("slim_init.run_priority")
+    @patch("slim_init.run_smoke")
+    @patch("slim_init.Path.read_text")
+    def test_full_init_no_extensions_omits_key(self, mock_read, mock_smoke, mock_priority, mock_timeline, mock_seeder, mock_proposals, mock_extensions):
+        from slim_init import run_slim_init
+
+        mock_read.return_value = "## Current State (as of Session 165 — 2026-03-25)"
+        mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
+        mock_priority.return_value = {"top_pick": "MT-32", "raw": "output"}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
+        mock_seeder.return_value = {"seeded": 0, "raw": ""}
+        mock_proposals.return_value = {"count": 0, "proposals": [], "raw": ""}
+        mock_extensions.return_value = {"count": 0, "extensions": [], "raw": ""}
+
+        result = run_slim_init()
+        self.assertNotIn("mt_extensions_count", result)
+        self.assertNotIn("mt_extensions_raw", result)
+
+
 if __name__ == "__main__":
     unittest.main()

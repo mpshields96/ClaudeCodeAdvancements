@@ -201,6 +201,29 @@ def run_mt_proposals() -> dict:
         return {"proposals": [], "count": 0, "raw": "", "error": "Timeout"}
 
 
+def run_mt_extensions() -> dict:
+    """Run mt_originator.py --extend-existing for phase extension proposals."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "mt_originator.py"),
+             "--extend-existing", "--top", "3", "--min-score", "50"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            return {"extensions": [], "raw": ""}
+
+        # Count extension lines (start with spaces + "[score]")
+        ext_lines = re.findall(r"^\s+\[\d+", output, re.MULTILINE)
+        return {"extensions": ext_lines, "count": len(ext_lines), "raw": output}
+    except subprocess.TimeoutExpired:
+        return {"extensions": [], "count": 0, "raw": "", "error": "Timeout"}
+
+
 def run_timeline(n: int = 5) -> dict:
     """Run session_timeline.py recent N for quick history."""
     try:
@@ -308,6 +331,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3.5: MT proposals from findings (MT-41)
     mt_proposals = run_mt_proposals()
 
+    # Step 3.6: MT phase extensions for existing MTs (MT-41 Phase 4)
+    mt_extensions = run_mt_extensions()
+
     # Step 4: Session timeline (last 5 sessions)
     timeline = run_timeline(5)
 
@@ -318,6 +344,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if mt_proposals.get("count", 0) > 0:
         summary["mt_proposals_raw"] = mt_proposals["raw"]
         summary["mt_proposals_count"] = mt_proposals["count"]
+    if mt_extensions.get("count", 0) > 0:
+        summary["mt_extensions_raw"] = mt_extensions["raw"]
+        summary["mt_extensions_count"] = mt_extensions["count"]
     if timeline.get("raw") and timeline.get("session_count", 0) > 0:
         summary["timeline_raw"] = timeline["raw"]
 
@@ -338,6 +367,8 @@ if __name__ == "__main__":
                 print(f"\n{result['priority_raw']}")
             if result.get("mt_proposals_raw"):
                 print(f"\n{result['mt_proposals_raw']}")
+            if result.get("mt_extensions_raw"):
+                print(f"\n{result['mt_extensions_raw']}")
     elif args[0] == "--json":
         result = run_slim_init()
         print(json.dumps(result, indent=2))
