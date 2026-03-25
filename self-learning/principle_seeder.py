@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-"""principle_seeder.py — Bootstrap principle registry from LEARNINGS.md and journal.
+"""principle_seeder.py — Bootstrap principle registry from LEARNINGS.md, journal, and findings.
 
 Seeds the principle_registry with principles derived from:
 1. LEARNINGS.md — severity-tracked patterns already distilled by humans
 2. journal.jsonl — recurring pain/win patterns detected programmatically
+3. FINDINGS_LOG.md — community-validated BUILD/ADAPT verdicts from nuclear scans
 
-This bridges the gap between raw data (journal, learnings) and the
+This bridges the gap between raw data (journal, learnings, findings) and the
 principle_registry → predictive_recommender pipeline.
 
 Usage:
     python3 self-learning/principle_seeder.py seed-learnings [--min-severity 1]
     python3 self-learning/principle_seeder.py seed-journal
+    python3 self-learning/principle_seeder.py seed-findings [--min-points 50]
     python3 self-learning/principle_seeder.py seed-all
     python3 self-learning/principle_seeder.py status
 
@@ -33,6 +35,7 @@ from principle_registry import add_principle, _load_principles, VALID_DOMAINS
 DEFAULT_LEARNINGS_PATH = os.path.join(PROJECT_ROOT, "LEARNINGS.md")
 DEFAULT_JOURNAL_PATH = os.path.join(SCRIPT_DIR, "journal.jsonl")
 DEFAULT_PRINCIPLES_PATH = os.path.join(SCRIPT_DIR, "principles.jsonl")
+DEFAULT_FINDINGS_PATH = os.path.join(PROJECT_ROOT, "FINDINGS_LOG.md")
 
 # Minimum occurrences of a journal pattern before it becomes a principle
 MIN_PATTERN_OCCURRENCES = 3
@@ -436,24 +439,203 @@ def seed_principles_from_journal(
     return results
 
 
+# --- Phase: Findings seeder (MT-28 growth) ---
+
+# Reuse FINDING_RE from mt_originator pattern
+FINDING_RE = re.compile(
+    r'^\[(\d{4}-\d{2}-\d{2})\]\s+'
+    r'\[(\w+(?:-\w+)?)\]\s+'
+    r'\[([^\]]+)\]\s+'
+    r'(.+?)(?:\s*—\s*(https?://\S+))?$'
+)
+POINTS_RE = re.compile(r'\((\d+)pts')
+
+# Frontier -> domain mapping for findings
+FRONTIER_DOMAIN_MAP = {
+    "memory": "cca_operations",
+    "spec": "cca_operations",
+    "context": "cca_operations",
+    "agent guard": "code_quality",
+    "usage": "cca_operations",
+    "security": "code_quality",
+    "guard": "code_quality",
+}
+
+
+def parse_findings_for_seeding(text: str, min_points: int = 0) -> list:
+    """Parse FINDINGS_LOG.md, return BUILD and ADAPT findings for seeding.
+
+    Returns list of dicts with keys: date, verdict, frontier, title, url, points.
+    """
+    if not text:
+        return []
+
+    results = []
+    for line in text.splitlines():
+        line = line.strip()
+        m = FINDING_RE.match(line)
+        if not m:
+            continue
+        date_str, verdict, frontier, title, url = m.groups()
+        url = url or ""
+
+        if verdict not in ("BUILD", "ADAPT"):
+            continue
+
+        pm = POINTS_RE.search(title)
+        points = int(pm.group(1)) if pm else 0
+
+        if points < min_points:
+            continue
+
+        # Clean title
+        title_clean = title.split("—")[0].strip().rstrip(".")
+        if len(title_clean) > 120:
+            title_clean = title_clean[:117] + "..."
+
+        results.append({
+            "date": date_str,
+            "verdict": verdict,
+            "frontier": frontier,
+            "title": title_clean,
+            "url": url,
+            "points": points,
+        })
+    return results
+
+
+def map_finding_to_domain(frontier: str, title: str) -> str:
+    """Map a finding's frontier and title to a principle domain."""
+    searchable = f"{frontier} {title}".lower()
+
+    # Check trading keywords first (higher priority)
+    trading_kws = ["kalshi", "trading", "bet", "market", "edge", "profit", "polymarket"]
+    if any(kw in searchable for kw in trading_kws):
+        return "trading_research"
+
+    # Check frontier mapping
+    for key, domain in FRONTIER_DOMAIN_MAP.items():
+        if key in searchable:
+            return domain
+
+    # Check general domain keywords
+    for domain, keywords in DOMAIN_KEYWORDS.items():
+        if any(kw in searchable for kw in keywords):
+            return domain
+
+    return "general"
+
+
+def finding_to_principle_text(verdict: str, title: str, frontier: str) -> str:
+    """Convert a finding into a principle statement.
+
+    BUILD findings become "Community-validated: <insight>"
+    ADAPT findings become "Adapt pattern: <insight>"
+    """
+    # Extract the core insight from the title
+    core = title.strip().strip('"').strip("'")
+
+    frontier_tag = frontier.split(":")[-1].strip() if ":" in frontier else frontier
+
+    if verdict == "BUILD":
+        return f"Community-validated ({frontier_tag}): {core}"
+    else:
+        return f"Adapt pattern ({frontier_tag}): {core}"
+
+
+def seed_principles_from_findings(
+    findings_text: Optional[str] = None,
+    findings_path: str = DEFAULT_FINDINGS_PATH,
+    principles_path: str = DEFAULT_PRINCIPLES_PATH,
+    min_points: int = 50,
+) -> list:
+    """Seed principle registry from FINDINGS_LOG.md BUILD/ADAPT verdicts.
+
+    Args:
+        findings_text: Direct text input (overrides findings_path if provided)
+        findings_path: Path to FINDINGS_LOG.md (used only if findings_text is None)
+        principles_path: Path to principles.jsonl
+        min_points: Minimum community points to seed (filters noise)
+
+    Returns list of dicts describing what was seeded.
+    """
+    if findings_text is None:
+        if os.path.isfile(findings_path):
+            with open(findings_path) as f:
+                findings_text = f.read()
+        else:
+            return []
+
+    parsed = parse_findings_for_seeding(findings_text, min_points=min_points)
+    if not parsed:
+        return []
+
+    existing = _existing_principle_texts(principles_path)
+    results = []
+
+    for finding in parsed:
+        text = finding_to_principle_text(
+            finding["verdict"], finding["title"], finding["frontier"]
+        )
+        if text in existing:
+            continue
+
+        domain = map_finding_to_domain(finding["frontier"], finding["title"])
+        if domain not in VALID_DOMAINS:
+            domain = "general"
+
+        applicable = [domain]
+        if domain != "general":
+            applicable.append("general")
+
+        principle = add_principle(
+            text=text,
+            source_domain=domain,
+            applicable_domains=applicable,
+            session=0,
+            source_context=f"Seeded from FINDINGS_LOG.md ({finding['verdict']}, {finding['points']}pts, {finding['date']})",
+            path=principles_path,
+        )
+
+        existing.add(text)
+        results.append({
+            "text": text,
+            "domain": domain,
+            "verdict": finding["verdict"],
+            "points": finding["points"],
+            "source_context": "FINDINGS_LOG.md",
+        })
+
+    return results
+
+
 def seed_all(
     learnings_path: str = DEFAULT_LEARNINGS_PATH,
     journal_path: str = DEFAULT_JOURNAL_PATH,
+    findings_path: str = DEFAULT_FINDINGS_PATH,
     principles_path: str = DEFAULT_PRINCIPLES_PATH,
     min_severity: int = 1,
+    min_points: int = 50,
 ) -> dict:
-    """Seed from both learnings and journal. Returns summary."""
+    """Seed from learnings, journal, and findings. Returns summary."""
     learnings_results = seed_principles_from_learnings(
         learnings_path, principles_path, min_severity
     )
     journal_results = seed_principles_from_journal(journal_path, principles_path)
+    findings_results = seed_principles_from_findings(
+        findings_path=findings_path,
+        principles_path=principles_path,
+        min_points=min_points,
+    )
 
     return {
         "from_learnings": len(learnings_results),
         "from_journal": len(journal_results),
-        "total_seeded": len(learnings_results) + len(journal_results),
+        "from_findings": len(findings_results),
+        "total_seeded": len(learnings_results) + len(journal_results) + len(findings_results),
         "learnings_details": learnings_results,
         "journal_details": journal_results,
+        "findings_details": findings_results,
     }
 
 
@@ -479,7 +661,7 @@ def get_status(principles_path: str = DEFAULT_PRINCIPLES_PATH) -> dict:
 def main():
     """CLI entrypoint."""
     if len(sys.argv) < 2:
-        print("Usage: principle_seeder.py [seed-learnings|seed-journal|seed-all|status]")
+        print("Usage: principle_seeder.py [seed-learnings|seed-journal|seed-findings|seed-all|status]")
         sys.exit(1)
 
     cmd = sys.argv[1]
@@ -501,11 +683,23 @@ def main():
         for r in results:
             print(f"  [{r['domain']}] {r['text'][:80]}")
 
+    elif cmd == "seed-findings":
+        min_pts = 50
+        if "--min-points" in sys.argv:
+            idx = sys.argv.index("--min-points")
+            if idx + 1 < len(sys.argv):
+                min_pts = int(sys.argv[idx + 1])
+        results = seed_principles_from_findings(min_points=min_pts)
+        print(f"Seeded {len(results)} principles from FINDINGS_LOG.md")
+        for r in results:
+            print(f"  [{r['domain']}] {r['text'][:80]}")
+
     elif cmd == "seed-all":
         summary = seed_all()
         print(f"Seeded {summary['total_seeded']} principles total")
         print(f"  From LEARNINGS.md: {summary['from_learnings']}")
         print(f"  From journal: {summary['from_journal']}")
+        print(f"  From FINDINGS_LOG: {summary.get('from_findings', 0)}")
 
     elif cmd == "status":
         status = get_status()
