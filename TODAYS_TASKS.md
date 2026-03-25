@@ -78,12 +78,11 @@
 - S180: Areas 8-10 (Kelly Criterion, Index Investing, Alt Risk Premia) — +578 lines, +12 papers
 - Phase 1 COMPLETE. Next: Phase 2 (Architecture Design) when prioritized.
 
-### C6. Nuclear Reddit/GitHub Discovery Tools [IN PROGRESS S179]
-- Build subreddit_discoverer.py: domain-based subreddit discovery (find subs we're NOT tracking)
-- Build github_scanner.py discover command: domain-based repo discovery
-- S179: subreddit_discoverer.py DONE (25 tests), github discover command DONE (16 tests)
-- **Next:** Run live discovery scans, evaluate results, add best candidates to profiles.py
-- **Next:** Wire into /cca-nuclear-daily and /cca-nuclear-github scan pipelines
+### C6. Nuclear Reddit/GitHub Discovery Tools [DONE S180]
+- S179: subreddit_discoverer.py (25 tests), github discover command (16 tests)
+- S180: Wired Phase 0 (Discovery) into both /cca-nuclear-daily and /cca-nuclear-github
+- S180: Added r/modelcontextprotocol to profiles.py (S179 discovery finding)
+- Both nuclear commands now run discovery before their main scan phase
 
 ---
 
