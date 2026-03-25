@@ -3,6 +3,34 @@
 
 ---
 
+## Session 177 — 2026-03-25
+
+**What changed:**
+- `polymarket-bot/src/risk/sizing.py` — REQ-042: Added `max_loss_usd` (DEFAULT_MAX_LOSS_USD=$7.50) and `kelly_scale` (0-1 Bayesian multiplier) params to `calculate_size()`
+- `polymarket-bot/main.py` — Wired max_loss_usd + kelly_scale into all 5 calculate_size() call sites
+- `polymarket-bot/tests/test_sizing.py` — NEW: 25 tests for MAX_LOSS cap, kelly_scale, regressions
+- `agent-guard/worktree_guard.py` — NEW (AG-10): Worktree isolation guard for Agent Teams (265 LOC)
+- `agent-guard/tests/test_worktree_guard.py` — NEW: 29 tests for worktree detection, isolation, git safety
+- `context-monitor/hooks/meter.py` — DEFAULT_WINDOW 200K→1M for Opus 4.6
+- `context-monitor/hooks/post_compact.py` — Window default 200K→1M
+- `context-monitor/hooks/compact_anchor.py` — Window default 200K→1M
+- `context-monitor/statusline.py` — Window default 200K→1M
+- `TODAYS_TASKS.md` — Updated with session progress
+- `CCA_TO_POLYBOT.md` — Two deliveries: REQ-042 implementation + Kelly ramp schedule analysis
+
+**Why:**
+- REQ-042 sizing caps reduce max loss from ~$19 to $7.50 per trade; kelly_scale connects Bayesian uncertainty to position sizing
+- AG-10 prepares agent-guard for Anthropic's Agent Teams (worktree isolation for delegate agents)
+- 1M recalibration aligns context monitor with Opus 4.6's actual window size
+- Kelly ramp schedule gives Kalshi bot a principled path to raise HARD_MAX as confidence grows
+
+**Tests:** 251/251 CCA suites (9779 tests) + 1902 polybot tests passing
+
+**Lessons:**
+- MT-26 modules are NOT dead code — they form a tested signal_pipeline. "Remove dead code" was wrong framing; "wire into production" is correct.
+
+---
+
 ## Session 175 — 2026-03-25
 
 **What changed:**

@@ -3,49 +3,46 @@
 
 ---
 
-## Current State (as of Session 176 — 2026-03-25)
+## Current State (as of Session 177 — 2026-03-25)
 
-**Phase:** Session 176 COMPLETE. Self-Learning Evaluation Day + CUSUM Guard Wiring + REQ-042. Grade: A.
+**Phase:** Session 177 COMPLETE. REQ-042 sizing implementation + AG-10 worktree guard + 1M recalibration. Grade: A.
 
-**What was done this session (S176):**
-- **Self-learning evaluation (BOTH systems):**
-  - CCA: 70% bloat by LOC. Core loop (journal→reflect→SKILLBOOK→injection) works. MT-26 signal pipeline = 2,110 LOC dead code. improver.py loop broken. predictive_recommender not wired.
-  - Kalshi: auto-guards WORKING. Bayesian posterior partially wired (kelly_scale unused). CUSUM computed but never auto-triggered guards (NOW FIXED).
-- **CUSUM drift detection → auto_guard_discovery.py** (polymarket-bot commit CCA-S176)
-  - cusum_statistic() — Page 1954 CUSUM, Biometrika 41:100-115
-  - Guards now promoted when CUSUM S >= 5.0 AND n >= 15 AND WR < break-even
-  - guard_type field: "STATISTICAL" vs "CUSUM_DRIFT" for observability
-  - All 44 existing polybot tests pass, 13 new CCA tests
-- **REQ-042 COMPLETE** — Loss magnitude analysis delivered to CCA_TO_POLYBOT.md
-  - Tail loss audit: 95.6% of losses > $5, avg loss = -$17.30
-  - Guard coverage: 64.4% of historical losses now blocked
-  - Post-guard profile: WR 97.2%, PnL/trade $0.70 (7x improvement)
-  - Position sizing formula: max_contracts = MAX_LOSS / (1 - price/100)
-  - Rolling WR: 17 episodes below 93%, recommended CUSUM over rolling WR circuit breaker
-- **outcomes_enricher → slim_init** (9 new tests) — auto-enriches REQ entries at startup
-- **predictive_recommender → slim_init** (6 new tests) — closes MT-28 Phase 5 gap
-- **Nuclear Reddit scan:** 10 findings, 60% APF (3 BUILD, 3 ADAPT, 4 REFERENCE)
-  - Key: Agent Teams/TeammateTool (official), memsearch (markdown-first memory), 1M context window
-- Cross-chat: REQ-042 delivered, CUSUM delivery written, no pending Kalshi requests
-- 4 commits, 28 new tests (9722 → 9750), zero regressions
-- **Tests**: 250 suites, 9750 tests passing
+**What was done this session (S177):**
+- **REQ-042 implementation in polybot** (commit 784bdc5):
+  - `sizing.py`: Added `max_loss_usd` param (DEFAULT_MAX_LOSS_USD=$7.50) and `kelly_scale` param (0-1 Bayesian multiplier)
+  - `main.py`: All 5 `calculate_size()` call sites wired with max_loss + kelly_scale
+  - `test_sizing.py`: 25 new tests (max_loss cap, kelly_scale, regressions)
+  - Zero regressions across 1902 polybot tests
+- **Kelly ramp schedule analysis** delivered to CCA_TO_POLYBOT.md:
+  - Wilson 95% CI at n=1028: [94.17%, 96.69%]
+  - Current $10 HARD_MAX = ~1.15x quarter-Kelly (safe, no change needed)
+  - Kelly negative at 95c+ NO-side — should be auto-skipped
+  - Ramp: $12@200 clean bets, $14@300, $15@500, then let compounding work
+- **AG-10: worktree_guard.py** (commit 8edadbc, 265 LOC, 29 tests):
+  - Detects Agent Teams worktree context, enforces delegate isolation
+  - Cross-worktree writes blocked, shared state warned, destructive git blocked
+- **Context monitor 1M recalibration** (commit 59c42ff):
+  - DEFAULT_WINDOW 200K→1M across meter.py, post_compact.py, compact_anchor.py, statusline.py
+  - Adaptive quality ceilings (250K/400K/600K) already in place
+- **MT-26 assessed**: 7 modules NOT dead (used by signal_pipeline), correctly deferred
+- **TODAYS_TASKS.md**: Created cross-session task tracking for today
+- 4 CCA commits + 1 polybot commit, 54 new tests (9750→9779 CCA + 25 polybot), zero regressions
+- **Tests**: 251 suites, 9779 tests passing
 
 **Next (prioritized):**
 
-1. **Agent Teams/TeammateTool awareness for agent-guard** — Official Anthropic multi-agent system uses worktree isolation. CCA's agent-guard must handle TeammateTool conflicts + auto mode safety classifier.
-2. **MT-26 dead code cleanup** — 2,110 LOC of dead signal pipeline. Remove or wire into Kalshi bot.
-3. **MAX_LOSS position sizing cap** — Build into polybot sizing.py (REQ-042 item 1). MAX_LOSS=$7.50 cap.
-4. **Wire kelly_scale from drift_posterior.json into sizing.py** — Currently fixed 0.25x Kelly.
-5. **memsearch patterns** — Study markdown-first hook patterns for CCA memory-system evolution.
-6. **Context-monitor 1M recalibration** — Update DEFAULT_WINDOW auto-detection.
-7. **MT-37 UBER** — Investment/AI trading master task.
+1. **Wire worktree_guard into settings.local.json** — Make AG-10 live as PreToolUse hook
+2. **memsearch patterns** — Study markdown-first hook patterns for CCA memory-system evolution
+3. **MT-26 signal pipeline wiring** — Wire 7 modules into Kalshi bot (assessed: not dead, just unwired)
+4. **95c+ NO-side guard** — Kelly analysis shows negative EV, auto-skip recommended
+5. **Post-guard clean bet counter** — Track for HARD_MAX ramp schedule (need 48 more for Gate 1)
+6. **MT-37 UBER** — Investment/AI trading master task
 
 **Matthew directives (carried forward):**
-- Self-learning day theme COMPLETE — evaluate done, CUSUM wired, predictive_recommender wired
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
 - CCA does NOT touch model selection — Matthew sets manually (S161 reaffirmed)
 - Peak/off-peak token budgeting UNIVERSAL (MT-38)
-- Autoloop ENABLED
+- Autoloop ENABLED — focus on TODAYS_TASKS.md priorities
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
 
 ---
