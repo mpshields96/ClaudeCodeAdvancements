@@ -3,6 +3,27 @@
 
 ---
 
+## Session 171 — 2026-03-25
+
+**What changed:**
+- `design-skills/templates/cca-report.typ` — MT-48 Phase 3: Cover title data-driven, Active MT cards condensed, Kalshi diff field alignment
+- `design-skills/report_generator.py` — Title changed to "Claude Code Advancements" (proper spacing)
+- `design-skills/tests/test_report_differ.py` — 6 new Typst-alignment tests (36 total)
+- `self-learning/principle_discoverer.py` — MT-49 Phase 3: Automated principle discovery (git patterns + journal)
+- `self-learning/tests/test_principle_discoverer.py` — 27 new tests
+
+**Why:**
+- MT-48: Report visual polish — title was hardcoded, Kalshi diff fields mismatched template, Active MT section too verbose
+- MT-49: Self-learning evolution — automated discovery of principles from git commit patterns and journal recurring events
+
+**Tests:** 9557/9557 passing (1 pre-existing autoloop failure)
+
+**Lessons:**
+- Test+source file coupling is expected TDD behavior — filter it out of coupling detection
+- PEAK hours (60% budget) are fine for focused 2-task sessions with no agent spawns
+
+---
+
 ## Session 169 — 2026-03-26
 
 **What changed:**

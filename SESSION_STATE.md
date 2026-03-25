@@ -3,34 +3,33 @@
 
 ---
 
-## Current State (as of Session 170 — 2026-03-25)
+## Current State (as of Session 171 — 2026-03-25)
 
-**Phase:** Session 170 COMPLETE. MT-48 Phase 2 + MT-49 Phase 2 + slim_init wiring. Grade: A.
+**Phase:** Session 171 COMPLETE. MT-48 Phase 3 + MT-49 Phase 3. Grade: A.
 
-**What was done this session (S170):**
-- MT-48 Phase 2 COMPLETE: Typst breakable cards + design-guide color sync
-  - Module cards and task cards: `box` -> `block(breakable: true)` — reduces page whitespace
-  - Page 5 whitespace fixed (Spec System card now flows up after Memory System)
-  - design-guide.md synced: added 3 undocumented template colors (dark #3a3a3c, mid #636366, teal #5ac8fa)
-  - TOC page numbers already working (no fix needed)
-- MT-49 Phase 2 COMPLETE: Active principle transfer with proposal tracking
-  - `TransferProposal` dataclass with status tracking (proposed/accepted/rejected)
-  - JSONL proposal store (`transfer_proposals.jsonl`) with save/load/update
-  - `propose_transfers()` — auto-scan all domains, dedup against existing proposals
-  - `pending_summary()` — count + top proposals for briefing integration
-  - CLI commands: propose, review, accept, reject
-  - 15 new tests in `test_principle_transfer.py` (49 total)
-- Wired transfer proposals into slim_init.py (Step 3.8) — auto-propose + show pending at session start
-- Cross-chat: peak/off-peak adoption directive sent to Kalshi chats via CCA_TO_POLYBOT.md
-- 3 commits, 15 new tests (9501 -> 9516), no regressions
-- **Tests**: ~243 suites, ~9516 tests passing. All green.
+**What was done this session (S171):**
+- MT-48 Phase 3 COMPLETE: Cover title, MT condensing, report_differ field alignment
+  - Cover title now data-driven (`data.title`) — "Claude Code Advancements" with proper spacing
+  - Kalshi diff fields aligned: `pnl_delta_usd` -> `pnl_delta`, `trades_delta` -> `win_rate_delta`
+  - Active MT cards condensed: removed delivered/remaining rows, compact phase bar, reduced padding
+  - 6 new Typst-alignment tests in `test_report_differ.py` (36 total)
+- MT-49 Phase 3 COMPLETE: Automated principle discovery from git + journal patterns
+  - `principle_discoverer.py`: GitPatternDiscoverer (coupling, hotspots, large commits) + SessionPatternDiscoverer (recurring pains/wins)
+  - Filters out test+source coupling (expected TDD, not a discovery)
+  - PrincipleDiscoverer orchestrator with dedup, confidence filtering, registry wiring
+  - CLI: `discover [--dry-run]` and `status` commands
+  - 27 new tests in `test_principle_discoverer.py`
+- Validated economics_sniper_v1 tests (19/19 passing) — DB not on local disk, deployment validation needs monitoring chat
+- Confirmed MT-41 Phases 2-3 already implemented (31 tests passing, status in MASTER_TASKS stale)
+- 2 commits, 33 new tests (9524 -> 9557), no regressions
+- **Tests**: ~244 suites, ~9557 tests passing (1 pre-existing autoloop model test failure)
 
 **Next (prioritized):**
-1. MT-48 remaining: cover title formatting, MT section condensing, report_differ wiring
-2. MT-49 Phase 3: Automated principle discovery from transcripts + git + test patterns
-3. economics_sniper_v1 validation (April 8 CPI approaching)
-4. MT-32 Phase 6: Design system v2 (design tokens, lint rules, cross-format consistency)
-5. Ongoing cross-chat coordination
+1. Wire principle_discoverer into slim_init.py for auto-discovery at session start
+2. MT-49 Phase 4: Confidence recalibration (Bayesian decay/boost on principle scores)
+3. economics_sniper_v1 deployment validation via Kalshi monitoring chat
+4. MT-41 status update in MASTER_TASKS.md (Phases 2-3 already done)
+5. Cross-chat coordination
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
@@ -43,11 +42,11 @@
 
 ---
 
-## Previous State (Session 165 — 2026-03-25)
+## Previous State (Session 170 — 2026-03-25)
 
-**Phase:** Session 165 COMPLETE. MT-32 Phase 5, MT-33 Phase 6, MT-41 Phase 4. Grade: A.
+**Phase:** Session 170 COMPLETE. MT-48 Phase 2 + MT-49 Phase 2 + slim_init wiring. Grade: A.
 
-**What was done (S165):** MT-32 Phase 5 (Dashboard v2 interactive, 27 tests). MT-33 Phase 6 (report chart hardening, 27 tests). MT-41 Phase 4 (--extend-existing, 18 tests). 4 commits, 79 new tests. 237 suites, 9318 tests.
+**What was done (S170):** MT-48 Phase 2 (Typst breakable cards + design-guide color sync). MT-49 Phase 2 (active principle transfer + proposal tracking). slim_init wiring. 3 commits, 15 new tests (9516 total).
 
 ---
 
