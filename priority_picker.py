@@ -556,9 +556,9 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             mt_id=40, name="Automated Nuclear Scanning Loop",
             base_value=9, status=TaskStatus.ACTIVE,
             last_touched_session=160, current_session=current_session,
-            phases_completed=1, phases_total=3,  # Phase 1 COMPLETE (S160): scan_scheduler.py + 17 tests
+            phases_completed=2, phases_total=3,  # Phase 1+2 COMPLETE (S160): scan_scheduler.py + init briefing integration
             aging_rate=1.0,
-            next_action="Phase 2: Wire scan_scheduler into autoloop/session-start trigger. Phase 3: Results feed into MT-41.",
+            next_action="Phase 3: Auto-trigger nuclear scan when top_target is stale (cron or session hook).",
             tags=["scanning", "automation", "intelligence"],
         ),
         MasterTask(
@@ -570,16 +570,26 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             next_action="Phase 2: Score proposals with community signal weighting. Phase 3: Auto-append to MASTER_TASKS.md with PROPOSED status.",
             tags=["meta", "intelligence", "automation"],
         ),
+        # === MT-42: Kalshi Copytrading (S160 — Matthew request) ===
+        MasterTask(
+            mt_id=42, name="Kalshi Copytrading / Signal Service",
+            base_value=7, status=TaskStatus.ACTIVE,
+            last_touched_session=160, current_session=current_session,
+            phases_completed=0, phases_total=4,
+            aging_rate=1.0,
+            next_action="Phase 1: Research Kalshi API for signal broadcasting. Phase 2: Regulatory assessment. Phase 3: Edge erosion modeling. Phase 4: Build if viable.",
+            tags=["kalshi", "trading", "revenue"],
+        ),
         # === BLOCKED ===
         MasterTask(
             mt_id=1, name="Maestro visual grid UI",
             base_value=7, status=TaskStatus.BLOCKED,
-            last_touched_session=98, current_session=current_session,
+            last_touched_session=160, current_session=current_session,
             phases_completed=0, phases_total=3,
             aging_rate=0.5,
-            block_reason="Matthew wants this (S160). Research Claude Control install.",
-            self_resolution_note="MOSTLY SELF-RESOLVED (S96): Claude Control best candidate. Try install.",
-            next_action="Research Claude Control — find install instructions, test if it provides visual grid UI.",
+            block_reason="S160: Native Agent Teams + tmux is the path. Matthew needs to test.",
+            self_resolution_note="SELF-RESOLVED: Claude Agent Teams (native) provides split-pane grid. Also: ccmanager, agtx, claude-squad.",
+            next_action="Matthew: run /terminal-setup in Claude Code to get tmux split panes. Test multi-agent grid.",
             tags=["ui", "visual"],
         ),
         MasterTask(
