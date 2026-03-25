@@ -214,6 +214,18 @@ def collect_slides_from_project(collector, session=None):
         ]),
     ]
 
+    # Add summary figure chart slide (MT-32 Phase 7)
+    try:
+        from report_charts import ReportChartGenerator
+        chart_gen = ReportChartGenerator()
+        summary_svg = chart_gen.generate_summary_figure(report_data)
+        if summary_svg and "<svg" in summary_svg:
+            slides.append(collector.build_chart_slide(
+                "Project Overview", summary_svg, caption="Multi-panel summary figure"
+            ))
+    except Exception:
+        pass  # Chart generation is optional — slides still work without it
+
     return report_data["session"] or session, slides
 
 

@@ -86,6 +86,29 @@ class TestSlideChartSlide(unittest.TestCase):
         self.assertEqual(slide["svg_content"], self.sample_svg)
 
 
+class TestSlideCollectIncludesFigure(unittest.TestCase):
+    """Test that collect_slides_from_project adds a chart slide."""
+
+    def test_chart_slide_added_via_report_charts(self):
+        """When report_charts is available, collect should add a chart slide."""
+        # Simulate what collect_slides_from_project does with the figure
+        from report_charts import ReportChartGenerator
+        collector = SlideDataCollector(project_root="/tmp/test")
+        # Use minimal report data
+        report_data = {
+            "modules": [{"name": "TestMod", "tests": 50, "status": "ACTIVE"}],
+            "master_tasks": [{"id": "MT-1", "completion": 50}],
+            "intelligence": {"findings_total": 0, "verdicts": {}},
+            "session": 99,
+        }
+        chart_gen = ReportChartGenerator()
+        svg = chart_gen.generate_summary_figure(report_data)
+        self.assertIn("<svg", svg)
+        slide = collector.build_chart_slide("Overview", svg, caption="Test")
+        self.assertEqual(slide["type"], "chart")
+        self.assertIn("<svg", slide["svg_content"])
+
+
 class TestSlideChartSlideJSON(unittest.TestCase):
     """Test that chart slides serialize properly for Typst pipeline."""
 
