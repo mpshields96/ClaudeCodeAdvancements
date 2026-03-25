@@ -692,12 +692,13 @@
   let status-color = if mod.status == "COMPLETE" { green } else { blue }
   let badge-label = if mod.status == "COMPLETE" { "Complete" } else { "Active" }
 
-  box(
+  block(
     width: 100%,
     fill: white,
     stroke: 0.5pt + faint,
     radius: 5pt,
     inset: 12pt,
+    breakable: true,
   )[
     #grid(
       columns: (1fr, auto),
@@ -815,12 +816,13 @@
     ("Not Started", light)
   }
 
-  box(
+  block(
     width: 100%,
     stroke: (left: 3pt + badge-color, rest: 0.5pt + faint),
     radius: (right: 4pt),
     inset: 10pt,
     fill: white,
+    breakable: true,
   )[
     // Header
     #grid(

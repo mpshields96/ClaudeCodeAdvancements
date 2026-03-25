@@ -20,6 +20,9 @@ and the website all share these exact values. See chart_generator.py CCA_COLORS.
 | Background | #ffffff | Page background |
 | Surface | #f8f9fa | Card/section backgrounds |
 | Border | #e5e7eb | Table borders, dividers |
+| Dark | #3a3a3c | Body text (Typst template default text fill) |
+| Mid | #636366 | Descriptions, secondary body text |
+| Teal | #5ac8fa | Module section accents (e.g. Module Deep-Dives header) |
 
 ## Typography
 
