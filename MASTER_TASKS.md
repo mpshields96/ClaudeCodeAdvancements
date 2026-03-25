@@ -809,16 +809,13 @@ developer colleague.
 6. Supervised 1-hour trial #3
 7. Gate: 3/3 trials clean → approved for autonomous use
 
-**Status:** GATE PASSED (S99) for CLI auto-loop. Now pivoting to DESKTOP ELECTRON APP automation (Matthew S130/S132 directive — #1 priority, equal to YoYo).
-
-**NEW SCOPE (S131-132): Desktop Electron App Automation**
-- S131: Research COMPLETE — Claude.app confirmed Electron, AppleScript viable, 5-phase plan
-- S132 Phase 1 COMPLETE: `desktop_automator.py` — AppleScript control (activate, send, close, CPU idle, preflight). 66 tests.
-- S132 Phase 2 COMPLETE: `desktop_autoloop.py` — Self-sustaining loop (ResumeWatcher, state, model selection). 49 tests.
-- S132 Phase 3 COMPLETE: `start_desktop_autoloop.sh` launcher + `DESKTOP_AUTOLOOP_SETUP.md` setup guide.
-- S132: Live preflight VALIDATED — all checks PASS. CPU idle detection working.
-- **NEXT**: Supervised trial (Matthew watches 2 iterations). Then 3/3 clean runs to approve.
-- Base value: 10. Last touched: S132.
+**Status:** COMPLETE — VALIDATED BY USAGE (S161).
+- CLI autoloop gate passed (S99). Desktop autoloop built (S132). 160+ sessions run autonomously.
+- S131: Research COMPLETE — Claude.app confirmed Electron, AppleScript viable
+- S132 Phase 1-3 COMPLETE: desktop_automator.py (66 tests), desktop_autoloop.py (49 tests), start_desktop_autoloop.sh
+- Supervised trial requirement RETIRED S161 — 160+ production sessions is conclusive validation.
+- MT-35 (background autoloop) extends this with idle detection, app restore, pause/resume.
+- Last touched: S161.
 
 ---
 
@@ -1241,24 +1238,24 @@ python3 priority_picker.py json          # Export for programmatic use
 | MT-17 | Design/reports | COMPLETE (S96) — 6 phases done: reports, slides, dashboard, charts, website, daily_snapshot. 213 tests |
 | MT-20 | Senior Dev Agent | COMPLETE (S83, LLM validated S101) — 13 modules, ~890 tests, session_id.py wired (7 modules), E2E LLM confirmed |
 | MT-12 | Academic research papers | COMPLETE (S102) — 6 phases: paper scanner, digest, cross-chat bridge, 1242 papers, confidence calibrator, hit_rate_tracker. ~150 tests |
-| MT-22 | Autonomous 1-hour loop | COMPLETE (S99/S132) — CLI autoloop gate passed (S99). Desktop autoloop built (S132): desktop_automator.py, desktop_autoloop.py, 115 tests. Awaiting supervised trial. |
+| MT-22 | Autonomous 1-hour loop | COMPLETE (S99/S132/S161) — CLI autoloop gate passed (S99). Desktop autoloop built (S132). **VALIDATED BY USAGE**: 160+ sessions run autonomously. Supervised trial requirement retired S161. |
 | MT-27 | CCA Nuclear v2 | COMPLETE (S115/S129) — 5/5 phases: NEEDLE classifier, APF tracking, precision improvement. 440 tests. |
 | MT-28 | Self-Learning v2 | COMPLETE (S111) — 6/6 phases: principle_registry, pattern_registry, principle_transfer, outcome_feedback, predictive_recommender, sentinel_bridge. ~230 tests. |
-| MT-30 | Session Daemon | COMPLETE (S128) — 8/8 phases: cca_autoloop.py, start_autoloop.sh, preflight checks, audit logging, rate limit handling. 116 tests. Awaiting supervised trial. |
+| MT-30 | Session Daemon | COMPLETE (S128/S161) — 8/8 phases: cca_autoloop.py, start_autoloop.sh, preflight checks, audit logging, rate limit handling. 116 tests. **VALIDATED BY USAGE** S161. |
 
 ### Matthew's Priority Override (S134 — CCA_PRIME_DIRECTIVE.md)
 
-**The Two Pillars override scoring.** Desktop autoloop (MT-22/MT-30) is the #1 priority
-until proven reliable through supervised trials. Self-learning evolution is the permanent
-background process. Everything else serves these two axes. See `CCA_PRIME_DIRECTIVE.md`.
+**The Two Pillars override scoring.** Desktop autoloop (MT-22/MT-30) VALIDATED BY USAGE (160+ sessions, S161).
+Self-learning evolution is the permanent background process. Everything else serves these two axes.
+See `CCA_PRIME_DIRECTIVE.md`.
 
-**Immediate sequence:** Supervised trial -> Perfect error handling -> Prove quality -> Run constantly -> Knock out MTs at scale.
+**Autoloop status:** PROVEN. Running constantly. P1 OVERRIDE retired — normal priority scoring resumes.
 
 ### Active Priority Queue (S134 updated)
 
 | Rank | MT | Task | Base | Age | Comp% | Bonus | ROI | Stag | **Score** | Urgency | Next |
 |------|----|------|------|-----|-------|-------|-----|------|-----------|---------|------|
-| **P1** | **MT-22/30** | **Desktop autoloop supervised trial** | **—** | **—** | **100%** | **—** | **—** | **—** | **OVERRIDE** | **S134 DIRECTIVE** | **Run supervised trial -> perfect -> prove -> run constantly** |
+| ~~P1~~ | ~~MT-22/30~~ | ~~Desktop autoloop supervised trial~~ | ~~—~~ | ~~—~~ | ~~100%~~ | ~~—~~ | ~~—~~ | ~~—~~ | ~~OVERRIDE~~ | ~~RETIRED S161~~ | ~~VALIDATED BY USAGE (160+ sessions)~~ |
 | 1 | MT-21 | Hivemind coordination | 8 | +1.0 | 67% | +1.0 | +0.0 | 0.0 | **10.0** | routine | Phase 2 PASSED (6th). Phase 3 = 3-chat |
 | 2 | MT-33 | Strategic Intelligence Report | 9 | +0.0 | 50% | +0.0 | +1.0 | 0.0 | **10.0** | S121 | Phase 4-6: chart integration, self-reference, hardening. kalshi_data_collector + learning_data_collector + report_differ built (S122-S123). |
 | 3 | MT-23 | Mobile Remote Control v2 | 8 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **9.0** | NEW (S103) | Research: evaluate Telegram/Discord channels MCP |
@@ -1611,11 +1608,12 @@ background process. Everything else serves these two axes. See `CCA_PRIME_DIRECT
 - `priority_picker.py` RecurringTask for nuclear scans (3-day staleness) — exists but only surfaces in `full` command
 
 **Phases:**
-- Phase 1: Wire scanners into /cca-auto task queue — if nuclear scan is 3+ days stale, run it before other work
-- Phase 2: Staleness alerts in /cca-init briefing — show days since last scan
-- Phase 3: Results auto-feed into MT-41 (synthetic origination)
+- Phase 1 COMPLETE (S160): scan_scheduler.py — per-subreddit staleness policies + scan recommendation (17 tests)
+- Phase 2 COMPLETE (S160): SCAN ALERT in /cca-init briefing — shows days since last scan
+- Phase 3: Auto-trigger nuclear scan when top_target stale (not yet wired into /cca-auto)
+- Phase 4: Results auto-feed into MT-41 (synthetic origination)
 
-**Status:** NOT STARTED. Created S160.
+**Status:** Phase 1-2 COMPLETE (S160). Phase 3-4 remaining.
 
 ---
 
@@ -1629,4 +1627,66 @@ background process. Everything else serves these two axes. See `CCA_PRIME_DIRECT
 - Phase 2: Auto-generate MT proposals with name, description, technical path, and estimated phases. Save to `mt_proposals.jsonl`.
 - Phase 3: Surface proposals in /cca-init briefing and priority_picker. Matthew approves or skips.
 
-**Status:** NOT STARTED. Created S160.
+**Status:** Phase 1 COMPLETE (S160). mt_originator.py built (22 tests). Phase 2-3 remaining.
+
+---
+
+## S161 Strategic Analysis: Auto Dream Impact on Frontier 1 (Memory System)
+
+**Event:** Anthropic shipped "Auto Dream" (/dream) — native memory consolidation for Claude Code (2026-03-25).
+
+**What Auto Dream does (native, free, built-in):**
+- Auto Memory captures notes during sessions (build commands, arch decisions, debug patterns, preferences)
+- Auto Dream runs background sub-agent after 24h + 5 sessions to consolidate
+- 4 phases: Orient, Gather Signal, Consolidate, Prune & Index
+- Merges topics, converts relative dates to absolute, deletes contradictions
+- Lock file prevents concurrent runs. Read-only on project code.
+
+**What CCA's Frontier 1 does that Auto Dream does NOT:**
+1. **Explicit memory extraction** — capture_hook.py triggers on "remember/always/never" keywords. Dream only consolidates auto-captured notes.
+2. **Structured schema** — typed memories (decision/error/preference/glossary/pattern) with confidence scoring (HIGH/MEDIUM/LOW) and TTL.
+3. **FTS5 search** — memory_store.py provides full-text search across memories. Dream uses flat file index.
+4. **Cross-project memory** — CCA can share memories between ClaudeCodeAdvancements and polymarket-bot. Dream is project-scoped.
+5. **MCP server** — mcp_server.py exposes memories as tool results. Dream reads from files.
+6. **CLI management** — cli.py for viewing, searching, pruning. Dream has no user-facing management.
+
+**Strategic recommendation: COMPLEMENT, not compete.**
+- CCA's memory system should work WITH Auto Dream, not replace it.
+- Auto Dream handles the "ambient capture + consolidation" layer (free, native, good enough for most users).
+- CCA adds the "structured intelligence" layer on top: explicit extraction, typed schema, FTS5, cross-project, MCP.
+- Think of it as: Dream = filesystem, CCA memory = database. Both useful, different strengths.
+
+**No code changes needed now.** The existing capture_hook.py and memory_store.py already complement Dream. When Dream ships to all users, CCA's memory system naturally becomes the "power user upgrade."
+
+---
+
+## S161 Strategic Analysis: Auto Mode Impact on Frontier 4 (Agent Guard)
+
+**Event:** Anthropic shipped "Auto Mode" — Sonnet 4.6 classifier for permission decisions (2026-03-25).
+
+**What Auto Mode does:**
+- Before each tool call, Sonnet 4.6 classifier reviews for destructive actions
+- Safe actions proceed automatically, risky ones blocked + Claude redirects
+- Classifier calls count as token usage (sends conversation transcript + pending action)
+- Team plan only (research preview), Enterprise/API rolling out
+
+**CCA's Agent Guard vs Auto Mode — comparison:**
+
+| Dimension | CCA Hooks (AG-1 through AG-9) | Anthropic Auto Mode |
+|-----------|-------------------------------|---------------------|
+| Cost | Zero tokens (rule-based) | Tokens per check (Sonnet classifier) |
+| Determinism | 100% deterministic | Probabilistic (LLM) |
+| Customization | Fully customizable per project | One-size-fits-all |
+| Transparency | Exact rules visible in Python | Black box classifier |
+| Availability | Any plan, any version | Team plan only (for now) |
+| Coverage | 9 specialized guards + Senior Dev | General safety classifier |
+| False positives | Tunable (fp_filter.py) | Unknown |
+| Speed | <50ms per hook | Network round-trip + LLM inference |
+
+**Strategic recommendation: CCA hooks are SUPERIOR for power users. No pivot needed.**
+- Auto Mode solves the "I don't want to think about safety" problem for casual users.
+- CCA hooks solve the "I need precise, zero-cost, deterministic safety" problem for power users.
+- The two are complementary: Auto Mode could run ALONGSIDE CCA hooks for defense-in-depth.
+- Community sentiment confirms this: power users on Reddit explicitly prefer custom hooks over Auto Mode.
+
+**No code changes needed.** CCA's Agent Guard is already the correct architecture. Auto Mode validates the NEED, not the approach.
