@@ -3,23 +3,22 @@
 
 ---
 
-## Current State (as of Session 164 — 2026-03-25)
+## Current State (as of Session 165 — 2026-03-25)
 
-**Phase:** Session 164 COMPLETE. MT-41 /cca-init wiring, REQ-038/039/040 Kalshi deliveries, MT-32 Phase 4. Grade: A.
+**Phase:** Session 165 COMPLETE. MT-32 Phase 5, MT-33 Phase 6, MT-41 Phase 4. Grade: A.
 
-**What was done this session (S164):**
-- MT-41: Wired --briefing into /cca-init skill + slim_init.py (run_mt_proposals(), 14 tests in test_slim_init.py)
-- REQ-038 DELIVERED: send_outcome_report() + parse_research_priorities() in polybot_comm.py (13 tests)
-- REQ-039 DELIVERED: MakerSniperStrategy architecture (class design, 60% fill rate, 1c spread offset, ~$88/month additive)
-- REQ-040: Confirmed already delivered S151 (monte_carlo, synthetic, edge_stability)
-- MT-32 Phase 4 COMPLETE: consistency_checker.py — cross-format design audit (22 tests, found 12 real issues)
-- MT-32: Added DARK_PALETTE (9 tokens) to design_linter.py, fixed 12 orphan colors in dashboard + website generators
-- 4 commits, 49 new tests added (9194 -> 9239), 2 new suites (232 -> 234)
-- **Tests**: 234 suites, 9239 tests passing. All green.
+**What was done this session (S165):**
+- MT-32 Phase 5 COMPLETE: Dashboard v2 interactive enhancements — responsive tablet (768px), auto-refresh (--refresh N), keyboard shortcuts (/ and Escape), print styles, embedded JSON data export, accessibility (aria-labels, scope, role). 27 tests in test_dashboard_phase5.py.
+- MT-33 Phase 6 COMPLETE: Report chart pipeline hardening — learning chart tests (event_types, apf_trend, domain_distribution), combined Kalshi+learning pipeline, empty/partial/missing data resilience, save_all file verification. 27 tests in test_report_charts_phase6.py.
+- MT-41 Phase 4 COMPLETE: --extend-existing flag for mt_originator.py — proposes new phases for active AND completed MTs based on BUILD findings. PhaseExtension dataclass, score_extension(), find_phase_extensions(), format_extension_briefing(), MT_NAMES map. 18 tests in test_mt_originator_extend.py.
+- MT-41 wiring: Phase extensions integrated into /cca-init briefing via slim_init.py run_mt_extensions(). 7 tests added to test_slim_init.py.
+- Cross-chat: REQ-040 confirmed already delivered (all 3 files in polymarket-bot). Updated CCA_TO_POLYBOT.md.
+- 4 commits, 79 new tests added (9239 -> 9318), 3 new suites (234 -> 237)
+- **Tests**: ~237 suites, ~9318 tests passing. All green.
 
 **Next:**
-1. MT-32 Phase 5: Dashboard v2 (interactive, responsive, real-time data)
-2. MT-33 Phase 4-6: chart integration, self-reference, hardening
+1. MT-32 Phase 6: Figure/image generation pipeline (multi-panel, annotation, export)
+2. MT-32 Phase 7: Integration — all pillars feeding into reports, dashboards, slides
 3. economics_sniper_v1 validation (April 8 CPI data)
 4. MakerSniperStrategy implementation (Kalshi monitoring chat builds from REQ-039 spec)
 5. Ongoing cross-chat coordination (check POLYBOT_TO_CCA.md each session)
