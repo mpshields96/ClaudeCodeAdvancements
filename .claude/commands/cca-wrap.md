@@ -145,6 +145,12 @@ The script handles:
 - LEARNINGS.md: append new patterns (skipped if none)
 - PROJECT_INDEX.md: add new file entries (skipped if none)
 
+**ALSO update TODAYS_TASKS.md manually** (Matthew directive S178):
+- Mark completed items as `[DONE SN]` (where N is session number)
+- Update `[IN PROGRESS]` items with current status
+- Add session progress to the "COMPLETED TODAY" section
+- NEVER remove items — only mark them done
+
 **Severity escalation still applies** — if a learning from a previous session recurred,
 manually bump its Count in LEARNINGS.md after the batch update.
 
@@ -504,7 +510,8 @@ RESUME PROMPT (copy-paste into next CCA session):
 ---
 Run /cca-init. Last session was [N] on [date].
 [One sentence: what was just completed.]
-[One sentence: what's next — specific task from SESSION_STATE.]
+[One sentence: what's next — specific task from TODAYS_TASKS.md or SESSION_STATE.]
+FOCUS ON TODAYS_TASKS.md — read it first for today's priorities.
 Tests: [N]/[N] passing. Git: [clean/uncommitted changes].
 ---
 ```

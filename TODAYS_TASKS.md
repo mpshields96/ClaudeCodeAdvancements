@@ -39,27 +39,31 @@
 
 ## CCA IMPROVEMENTS
 
-### C1. MT-26 Dead Code Cleanup [TODO]
+### C1. MT-26 Dead Code Cleanup [IN PROGRESS S178]
 - 2,110 LOC of unused signal pipeline in self-learning/
 - S176 evaluation flagged: regime_detector, calibration_bias, cross_platform_signal,
   dynamic_kelly, macro_regime, fear_greed_filter, signal_pipeline — all unused by Kalshi bot
 - Remove or wire into bot
+- S178: Assessment agent running — awaiting recommendation
 
 ### C2. Agent Teams/TeammateTool Awareness [DONE S177]
 - AG-10: worktree_guard.py (265 LOC, 29 tests)
 - Worktree detection, delegate isolation, shared state protection, git safety
 - Commit 8edadbc
 
-### C3. memsearch Patterns [TODO]
+### C3. memsearch Patterns [IN PROGRESS S178]
 - Study markdown-first hook patterns for CCA memory-system evolution
 - REFERENCE from S176 nuclear scan
+- S178: Research agent running — awaiting findings
 
 ### C4. Context-Monitor 1M Recalibration [DONE S177]
 - DEFAULT_WINDOW 200K→1M across meter.py, post_compact.py, compact_anchor.py, statusline.py
 - Commit 59c42ff
 
-### C5. MT-37 UBER [TODO]
+### C5. MT-37 UBER [IN PROGRESS S178]
 - Investment/AI trading master task
+- Phase 1: Academic research survey (3-5 sessions)
+- S178: Research agent running — creating MT37_RESEARCH.md (first 3 areas)
 
 ---
 
@@ -69,9 +73,12 @@
 - [x] AG-10 worktree_guard wired as live PreToolUse hook (13 new tests, 42 total)
 - [x] Cross-chat delivery: post-guard clean bet counter + 95c guard consolidation
 - [x] C4 already done in S177 (marked)
+- [x] TODAYS_TASKS.md directive wired into all CCA session files (8 files, 5 new tests)
+- [x] slim_init.py shows TODAY'S TASKS in briefing (scan_todays_tasks())
+- [x] resume_generator.py adds TODAYS_TASKS.md reminder to autoloop prompts
 - [ ] C1: MT-26 dead code assessment (agent running)
 - [ ] C3: memsearch research (agent running)
-- [ ] C5: MT-37 UBER Phase 1 start
+- [ ] C5: MT-37 UBER Phase 1 start (agent running)
 
 ### S177
 - [x] MAX_LOSS cap + kelly_scale in polybot sizing.py (25 tests)
