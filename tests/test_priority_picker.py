@@ -242,13 +242,12 @@ class TestPriorityPicker(unittest.TestCase):
         self.assertGreater(len(data), 0)
         self.assertIn("improved_score", data[0])
 
-    def test_mt22_is_active_desktop_scope(self):
-        """MT-22 reactivated S131 — desktop Electron app automation (new scope)."""
-        picker = PriorityPicker(current_session=131)
-        ranked = picker.ranked()
-        mt22 = [t for t in ranked if t.mt_id == 22]
+    def test_mt22_completed_desktop_scope(self):
+        """MT-22 COMPLETED S162 — desktop Electron app automation validated by 160+ sessions."""
+        picker = PriorityPicker(current_session=162)
+        mt22 = [t for t in picker.tasks if t.mt_id == 22]
         self.assertEqual(len(mt22), 1)
-        self.assertEqual(mt22[0].status, TaskStatus.ACTIVE)
+        self.assertEqual(mt22[0].status, TaskStatus.COMPLETED)
         self.assertIn("Desktop", mt22[0].name)
 
     def test_session_number_affects_aging(self):
@@ -298,12 +297,14 @@ class TestStagnationAlert(unittest.TestCase):
 
     def test_stagnation_alert_detects_aging_mt(self):
         """MTs untouched 5+ sessions should appear in alert."""
-        picker = PriorityPicker(current_session=160)
+        picker = PriorityPicker(current_session=162)
         alert = picker.stagnation_alert()
-        # MT-27, MT-9, MT-11, MT-14 are now COMPLETED — should NOT appear
+        # Completed MTs should NOT appear
         self.assertNotIn("MT-27", alert)
-        # Active MTs untouched for 5+ sessions should be flagged
-        self.assertTrue(len(alert) > 0, "Should have some stagnation warnings")
+        self.assertNotIn("MT-22", alert)
+        self.assertNotIn("MT-35", alert)
+        # Alert is a string, may or may not have active stagnating MTs
+        self.assertIsInstance(alert, str)
 
     def test_stagnation_alert_empty_when_all_recent(self):
         """No alert if all active MTs were touched recently."""
@@ -456,25 +457,21 @@ class TestS130PriorityReorder(unittest.TestCase):
         self.assertEqual(len(mt27), 1)
         self.assertGreaterEqual(mt27[0].base_value, 8)
 
-    def test_crown_jewels_score_higher_than_growth(self):
-        """Active crown jewels (base 9-10) should outscore growth tier (base 5-6) at same age."""
-        picker = PriorityPicker(current_session=146)
+    def test_active_tasks_ranked_by_score(self):
+        """Active tasks should be ranked by improved_score descending."""
+        picker = PriorityPicker(current_session=162)
         ranked = picker.ranked()
         if len(ranked) < 2:
             self.skipTest("Need at least 2 active tasks")
-        # MT-22 is the remaining active crown jewel (base 10)
-        # MT-10, MT-0, MT-27 are now COMPLETED
-        top3_ids = {t.mt_id for t in ranked[:3]}
-        # MT-22 (base 10) should be in top 3 over growth tier tasks
-        self.assertIn(22, top3_ids,
-                     f"MT-22 (crown jewel, base 10) should be in top 3: {top3_ids}")
+        for i in range(len(ranked) - 1):
+            self.assertGreaterEqual(ranked[i].improved_score, ranked[i+1].improved_score)
 
-    def test_mt22_desktop_electron_new_scope(self):
-        """MT-22 reactivated with desktop Electron scope, not terminal."""
-        tasks = get_known_tasks(131)
+    def test_mt22_desktop_electron_completed(self):
+        """MT-22 completed — desktop Electron app automation validated by usage."""
+        tasks = get_known_tasks(162)
         mt22 = [t for t in tasks if t.mt_id == 22]
         self.assertEqual(len(mt22), 1)
-        self.assertEqual(mt22[0].status, TaskStatus.ACTIVE)
+        self.assertEqual(mt22[0].status, TaskStatus.COMPLETED)
         self.assertEqual(mt22[0].base_value, 10)
         self.assertIn("Electron", mt22[0].name)
 

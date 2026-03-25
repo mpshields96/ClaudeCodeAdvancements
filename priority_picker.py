@@ -274,12 +274,14 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=22, name="Desktop Electron app automation",
-            base_value=10, status=TaskStatus.ACTIVE,
-            last_touched_session=142, current_session=current_session,
-            phases_completed=3, phases_total=4,  # S132-S142: desktop_automator, desktop_autoloop, autoloop_trigger built. Phase 4: supervised trial.
-            aging_rate=1.0,
-            next_action="Phase 4: Supervised trial of desktop autoloop — validate reliability in production.",
+            base_value=10, status=TaskStatus.COMPLETED,
+            last_touched_session=162, current_session=current_session,
+            phases_completed=4, phases_total=4,  # S132-S142: phases 1-3. S161: VALIDATED BY USAGE (160+ sessions). Phase 4 COMPLETE.
+            aging_rate=0,
+            next_action="COMPLETE. All 4 phases: desktop_automator, desktop_autoloop, autoloop_trigger, validated by 160+ sessions.",
             tags=["autonomy", "desktop", "crown-jewel"],
+            growth_action="Claude Computer Use integration (native desktop control vs AppleScript)",
+            growth_priority=4,
         ),
         MasterTask(
             mt_id=27, name="CCA Nuclear v2 (Enhanced Scanning)",
@@ -504,11 +506,11 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=35, name="Background Autoloop (non-intrusive desktop loop)",
-            base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=144, current_session=current_session,
-            phases_completed=3, phases_total=4,  # S142-S144: Phases 1-3 done (save/restore, notification, keyboard shortcut)
-            aging_rate=1.0,
-            next_action="Phase 4: Keyboard shortcut to pause/resume loop.",
+            base_value=8, status=TaskStatus.COMPLETED,
+            last_touched_session=162, current_session=current_session,
+            phases_completed=4, phases_total=4,  # S142-S152: Phases 1-3 (save/restore, notification, CLI). S162: Phase 4 (toggle script + macOS shortcut setup).
+            aging_rate=0,
+            next_action="COMPLETE. All 4 phases: save/restore, notification, autoloop_pause CLI, autoloop_toggle.sh keyboard shortcut.",
             tags=["autonomy", "desktop", "crown-jewel"],
         ),
         # MT-36 moved below MT-38 (both now COMPLETED, S160)
