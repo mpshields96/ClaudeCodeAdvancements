@@ -517,6 +517,15 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             next_action="Phase 1: Deep academic research survey (MPT, factor models, ETF analysis).",
             tags=["research", "finance", "long-term"],
         ),
+        MasterTask(
+            mt_id=38, name="Peak/Off-Peak Token Budget System",
+            base_value=8, status=TaskStatus.ACTIVE,
+            last_touched_session=154, current_session=current_session,
+            phases_completed=1, phases_total=4,
+            aging_rate=1.0,  # High — directly impacts all sessions
+            next_action="Phase 2: Build token_budget.py utility for init briefings.",
+            tags=["efficiency", "automation", "universal"],
+        ),
         # === BLOCKED ===
         MasterTask(
             mt_id=1, name="Maestro visual grid UI",

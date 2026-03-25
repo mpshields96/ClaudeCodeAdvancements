@@ -1539,6 +1539,34 @@ background process. Everything else serves these two axes. See `CCA_PRIME_DIRECT
 
 ---
 
+---
+
+## MT-38: Peak/Off-Peak Token Budget System
+
+**Source:** Matthew directive (S154) — observed Anthropic rate limit instability affecting all plan tiers
+**What Matthew wants:** All CCA and Kalshi chats automatically adjust token usage intensity based on time of day. More conservative during peak Claude Code usage hours (US business hours), full power during off-peak/overnight/weekends. This persists permanently — not tied to any specific Anthropic promotion.
+
+**Why it matters:** Rate limits are a real constraint. Heavy usage during peak hours risks hitting limits faster when server load is highest. Shifting expensive work to off-peak windows maximizes throughput per dollar.
+
+**Phase 1 (COMPLETE — S154):** Global rule deployed to `~/.claude/rules/peak-offpeak-budgeting.md`. Defines PEAK (8AM-2PM ET, 60%), SHOULDER (6-8AM/2-6PM ET, 80%), OFF-PEAK (6PM-6AM ET + weekends, 100%). All chats read this immediately.
+
+**Phase 2:** Build `token_budget.py` utility that:
+- Detects current time window
+- Returns budget percentage and behavioral guidelines
+- Integrates with `/cca-init` and `/polybot-init` briefings
+- Provides `get_budget()` API for other tools
+
+**Phase 3:** Hook integration — PreToolUse hook that warns/blocks expensive operations during PEAK:
+- Block agent spawns during PEAK
+- Warn on agent spawns during SHOULDER
+- No restrictions during OFF-PEAK
+
+**Phase 4:** Autoloop scheduling — autoloop prefers off-peak windows, defers heavy tasks during peak.
+
+**Status:** Phase 1 COMPLETE (S154). Rule active globally. Phase 2-4 are enhancement.
+
+---
+
 ### Scoring Rules
 
 1. **After working on a task:** Update `get_known_tasks()` in `priority_picker.py`, run `python3 priority_picker.py table`.
