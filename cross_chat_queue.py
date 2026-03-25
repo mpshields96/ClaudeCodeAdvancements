@@ -56,11 +56,13 @@ VALID_CHATS = {
 VALID_PRIORITIES = ["critical", "high", "medium", "low"]
 
 VALID_CATEGORIES = [
-    "action_item",      # Specific thing to implement
-    "research_finding",  # Paper, signal, framework to evaluate
-    "status_update",     # Progress report or outcome
-    "question",          # Needs a response
-    "fyi",              # Informational, no action needed
+    "action_item",         # Specific thing to implement
+    "research_finding",    # Paper, signal, framework to evaluate
+    "status_update",       # Progress report or outcome
+    "question",            # Needs a response
+    "fyi",                 # Informational, no action needed
+    "outcome_report",      # Kalshi reports implementation result (profit/loss)
+    "research_priority",   # CCA reports research category priorities by ROI
 ]
 
 
