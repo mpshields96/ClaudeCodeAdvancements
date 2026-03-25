@@ -233,12 +233,12 @@ class TestZeroScoreEdgeCases(unittest.TestCase):
                   phases_completed=0, phases_total=4)
         self.assertAlmostEqual(t.improved_score, 0.0)
 
-    def test_stagnation_caps_max_score_to_2x_base_minus_one(self):
-        """Stagnating task: max score is (2 * base_value - 1) not (2 * base_value)."""
+    def test_stagnation_boosts_max_score_to_2x_base_plus_one(self):
+        """Stagnating task: max score is (2 * base_value + 1) with dust bonus."""
         t = _task(base_value=5, last_touched_session=None, current_session=98,
                   phases_completed=0, phases_total=4)
-        # base=5, aging=5(capped), stag=-1 → 9.0
-        self.assertAlmostEqual(t.improved_score, 9.0)
+        # base=5, aging=5(capped), stag=+1 → 11.0
+        self.assertAlmostEqual(t.improved_score, 11.0)
 
     def test_pick_next_more_than_available_returns_all(self):
         """Requesting N tasks when only 1 exists returns the 1, not crash."""
@@ -281,7 +281,7 @@ class TestStagnationPenaltyBoundary(unittest.TestCase):
                   phases_completed=0, phases_total=4)
         # sessions_since_touch=10, raw_aging=10, capped=3, 3>=3 AND 10>=10
         self.assertTrue(t.stagnation_flag)
-        self.assertEqual(t.stagnation_penalty, -1.0)
+        self.assertEqual(t.stagnation_penalty, 1.0)  # Dust bonus
 
     def test_stagnation_does_not_trigger_at_9_sessions(self):
         """9 sessions since touch: below 10-session threshold → no stagnation."""
@@ -291,17 +291,17 @@ class TestStagnationPenaltyBoundary(unittest.TestCase):
         self.assertFalse(t.stagnation_flag)
         self.assertEqual(t.stagnation_penalty, 0.0)
 
-    def test_stagnation_penalty_is_fixed_minus_one(self):
-        """Penalty is always exactly -1.0 regardless of how long stagnating."""
+    def test_stagnation_bonus_is_fixed_plus_one(self):
+        """Dust bonus is always exactly +1.0 regardless of how long stagnating."""
         barely_stagnating = _task(base_value=3, last_touched_session=88, current_session=98,
                                   phases_completed=0, phases_total=4)
         very_stagnating = _task(base_value=3, last_touched_session=None, current_session=98,
                                 phases_completed=0, phases_total=4)
-        self.assertEqual(barely_stagnating.stagnation_penalty, -1.0)
-        self.assertEqual(very_stagnating.stagnation_penalty, -1.0)
+        self.assertEqual(barely_stagnating.stagnation_penalty, 1.0)
+        self.assertEqual(very_stagnating.stagnation_penalty, 1.0)
 
-    def test_stagnation_penalty_does_not_compound_across_tasks(self):
-        """Two stagnating tasks each carry -1.0 individually — they don't compound."""
+    def test_stagnation_bonus_does_not_compound_across_tasks(self):
+        """Two stagnating tasks each carry +1.0 individually — they don't compound."""
         picker = PriorityPicker(current_session=98)
         picker.tasks = [
             _task(mt_id=1, base_value=2, last_touched_session=None, current_session=98,
@@ -312,7 +312,7 @@ class TestStagnationPenaltyBoundary(unittest.TestCase):
         stagnating = picker.stagnating()
         self.assertEqual(len(stagnating), 2)
         for t in stagnating:
-            self.assertEqual(t.stagnation_penalty, -1.0)
+            self.assertEqual(t.stagnation_penalty, 1.0)
 
     def test_stagnation_flag_requires_cap_reached(self):
         """At cap AND 10+ sessions: flag True. Under cap AND 10+ sessions: flag False."""
@@ -326,13 +326,13 @@ class TestStagnationPenaltyBoundary(unittest.TestCase):
         # sessions=13, aging=13 < 100 → False
         self.assertFalse(under_cap.stagnation_flag)
 
-    def test_stagnation_score_stays_positive_for_high_base(self):
-        """High base_value tasks remain positive even with stagnation penalty."""
+    def test_stagnation_score_boosted_for_high_base(self):
+        """High base_value tasks get dust bonus when stagnating."""
         t = _task(base_value=10, last_touched_session=None, current_session=98,
                   phases_completed=0, phases_total=4)
-        # base=10, aging=10(capped), stag=-1 → score=19
+        # base=10, aging=10(capped), stag=+1 → score=21
         self.assertGreater(t.improved_score, 0)
-        self.assertAlmostEqual(t.improved_score, 19.0)
+        self.assertAlmostEqual(t.improved_score, 21.0)
 
     def test_stagnation_flag_false_when_at_cap_but_under_10_sessions(self):
         """At cap but only 9 sessions → not stagnating."""
