@@ -90,6 +90,7 @@ class LandingPage:
     features: List[FeatureCard] = field(default_factory=list)
     metrics: List[MetricCard] = field(default_factory=list)
     nav_links: List[NavLink] = field(default_factory=list)
+    figures: List[dict] = field(default_factory=list)
     footer_text: Optional[str] = None
 
 
@@ -375,6 +376,28 @@ def render_landing_page(page: LandingPage) -> str:
 </section>
 """
 
+    # Figures section (MT-32 Phase 7)
+    figures_html = ""
+    if page.figures:
+        fig_cards = ""
+        for fig in page.figures:
+            fig_title = e(fig.get("title", ""))
+            fig_svg = fig.get("svg", "")
+            fig_cards += f"""
+<div class="figure-card">
+  <h3 class="figure-title">{fig_title}</h3>
+  <div class="figure-content">{fig_svg}</div>
+</div>
+"""
+        figures_html = f"""
+<section class="figure-section">
+  <h2 class="features-heading">Visualizations</h2>
+  <div class="figures-grid">
+    {fig_cards}
+  </div>
+</section>
+"""
+
     # Footer
     footer_text = page.footer_text or f"Built with Claude Code &amp; CCA &middot; {e(page.title)}"
     footer_html = f'<footer>{footer_text}</footer>'
@@ -399,6 +422,7 @@ def render_landing_page(page: LandingPage) -> str:
 </section>
 {metrics_html}
 {features_html}
+{figures_html}
 {footer_html}
 </body>
 </html>"""

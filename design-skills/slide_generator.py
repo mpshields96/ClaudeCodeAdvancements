@@ -88,6 +88,24 @@ class SlideDataCollector:
             ],
         }
 
+    def build_chart_slide(self, title, svg_content, caption=""):
+        """Build a chart/figure slide with embedded SVG.
+
+        Args:
+            title: Slide title displayed above the chart.
+            svg_content: Raw SVG string (from chart_generator or figure_generator).
+            caption: Optional caption below the chart.
+
+        Returns:
+            Slide dict with type "chart".
+        """
+        return {
+            "type": "chart",
+            "title": title,
+            "svg_content": svg_content,
+            "caption": caption,
+        }
+
     def build_section_slide(self, title):
         """Build a section divider slide."""
         return {

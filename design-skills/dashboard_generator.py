@@ -36,6 +36,13 @@ try:
 except ImportError:
     CHARTS_AVAILABLE = False
 
+# Import figure generator for multi-panel figures
+try:
+    from figure_generator import Figure, FigurePanel, render_figure
+    FIGURES_AVAILABLE = True
+except ImportError:
+    FIGURES_AVAILABLE = False
+
 # Import canonical design tokens
 try:
     from design_linter import CCA_PALETTE, DARK_PALETTE
@@ -714,6 +721,11 @@ document.addEventListener('keydown', function(e) {
                 )
                 charts.append(f'<div class="chart-card">{render_svg(donut)}</div>')
 
+        # Summary figure (multi-panel, MT-32 Phase 7)
+        summary_fig_svg = self._render_summary_figure(data.modules)
+        if summary_fig_svg:
+            charts.append(f'<div class="chart-card">{summary_fig_svg}</div>')
+
         if not charts:
             return ""
 
@@ -721,6 +733,53 @@ document.addEventListener('keydown', function(e) {
 <div class="charts">
 {chr(10).join(charts)}
 </div>"""
+
+    def _render_summary_figure(self, modules: list) -> str:
+        """Render a multi-panel summary figure from module data.
+
+        Uses figure_generator to create a 2-panel figure:
+          (a) Tests by module (horizontal bar)
+          (b) Module status breakdown (donut)
+
+        Returns SVG string, or empty string if no data or figures unavailable.
+        """
+        if not modules or not FIGURES_AVAILABLE or not CHARTS_AVAILABLE:
+            return ""
+
+        panels = []
+
+        # Panel (a): Tests by module
+        sorted_mods = sorted(modules, key=lambda m: m.tests, reverse=True)
+        items = [(m.name, m.tests) for m in sorted_mods[:8]]
+        if items:
+            bar_height = max(200, len(items) * 32 + 60)
+            chart_a = HorizontalBarChart(
+                items, title="Tests by Module",
+                width=400, height=bar_height, show_values=True,
+            )
+            panels.append(FigurePanel(chart=chart_a, label="a"))
+
+        # Panel (b): Status breakdown donut
+        complete = sum(1 for m in modules if m.status == "COMPLETE")
+        active = len(modules) - complete
+        if complete or active:
+            donut_data = []
+            if complete:
+                donut_data.append(("Complete", complete, CHART_COLORS["success"]))
+            if active:
+                donut_data.append(("Active", active, CHART_COLORS["accent"]))
+            chart_b = DonutChart(
+                donut_data, title="Module Status",
+                width=300, height=280,
+                center_text=f"{complete}/{len(modules)}",
+            )
+            panels.append(FigurePanel(chart=chart_b, label="b"))
+
+        if not panels:
+            return ""
+
+        fig = Figure(panels=panels, cols=len(panels), title="Project Summary")
+        return render_figure(fig)
 
     def _render_daily_diff(self, diff: Optional[dict]) -> str:
         """Render daily snapshot diff as a compact summary card."""

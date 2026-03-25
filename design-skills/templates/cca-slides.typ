@@ -229,4 +229,19 @@
       #slide-footer()
     ]
   }
+
+  // Chart/figure slide (MT-32 Phase 7) — embeds SVG via temp file
+  else if slide.type == "chart" {
+    page[
+      #slide-header(slide.title)
+      #align(center)[
+        #text(size: 11pt, fill: muted, "(Chart rendered in SVG — see HTML/dashboard output for inline display)")
+      ]
+      #if slide.caption != "" {
+        v(4mm)
+        align(center, text(size: 10pt, fill: muted, slide.caption))
+      }
+      #slide-footer()
+    ]
+  }
 }
