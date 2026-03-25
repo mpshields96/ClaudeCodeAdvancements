@@ -3,31 +3,31 @@
 
 ---
 
-## Current State (as of Session 173 — 2026-03-25)
+## Current State (as of Session 174 — 2026-03-25)
 
-**Phase:** Session 173 COMPLETE. MT-49 Phase 5 + seeder bugfix. Grade: A.
+**Phase:** Session 174 COMPLETE. REQ-042 fill rate simulator + ROI resolver improvement. Grade: A.
 
-**What was done this session (S173):**
-- Fixed session-0 bug in principle_seeder.py — all seed functions now accept session= param
-  - Added backfill_sessions() to fix existing principles (122 backfilled to session 168)
-  - 7 new tests in test_principle_seeder.py
-  - Recalibrator now produces meaningful scores (0.476-0.916 vs all-0.150 before fix)
-- MT-49 Phase 5 STARTED: research_roi_resolver.py — parses DELIVERY_ACK.md, fuzzy-matches
-  to research_outcomes.jsonl deliveries, ROI by category and by principle
-  - Batch ACK parsing (REQ-001 through REQ-009), modern + legacy formats
-  - 24 new tests in test_research_roi_resolver.py
-  - Real data: 2/46 deliveries auto-resolved (limited by vocabulary mismatch in bulk-seeded titles)
-- Wired ROI resolver into slim_init.py — surfaces "Research ROI: N/M resolved" in briefing
-  - 6 new tests in test_slim_init.py
-- 3 commits, 37 new tests (9594 -> 9631), no regressions
-- **Tests**: ~248 suites, ~9631 tests passing
+**What was done this session (S174):**
+- REQ-042 COMPLETE: fill_rate_simulator.py — Monte Carlo maker sniper fill rate simulation
+  - SpreadModel, FillRateSimulator, ParameterSweep, MarketSnapshot classes
+  - from_db() calibration from 1013 expiry_sniper trades (spread=2.0c, vol=0.083c/s)
+  - Key finding: 1c offset / 300s expiry = ~45% fill rate (confirms design target)
+  - CLI with --sweep and --from-db modes
+  - 30 new tests in test_fill_rate_simulator.py
+- ROI resolver improved: req_id exact matching as priority 1 (before session/fuzzy)
+  - 6 new tests in test_research_roi_resolver.py
+- REQ-042 delivery registered in research_outcomes.jsonl with req_id field
+- REQ-042 results delivered to CCA_TO_POLYBOT.md
+- Cross-chat coordination checked — no pending Kalshi requests
+- 2 commits, 36 new tests (9631 -> 9667), no regressions
+- **Tests**: ~247 suites, ~9667 tests passing (2 pre-existing failures in autoloop/handoff)
 
 **Next (prioritized):**
-1. REQ-042: Maker sniper fill rate simulation (Kalshi request)
-2. Improve delivery metadata in research_outcomes.jsonl for better ROI resolution
-3. MT-49 Phase 5 continued: automated delivery status updates from Kalshi bot commits
-4. economics_sniper_v1 deployment validation via Kalshi monitoring chat
-5. Cross-chat coordination
+1. Enrich older research_outcomes entries with req_ids (improve ROI resolution above 2/47)
+2. MT-49 Phase 5 continued: automated delivery status from Kalshi bot commits
+3. economics_sniper_v1 deployment validation via Kalshi monitoring chat
+4. Cross-chat coordination — check for new Kalshi requests
+5. Pre-existing test fixes: test_cca_autoloop model selection, test_handoff_generator git log
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit

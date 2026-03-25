@@ -2680,3 +2680,22 @@ CLI chat 2:
 - Principle `score` is a computed property in principle_registry.py, not a constructor argument — tests must use `success_count`/`usage_count` to set scores indirectly
 
 ---
+
+## Session 174 — 2026-03-25
+
+**What changed:**
+- NEW: `self-learning/fill_rate_simulator.py` — REQ-042 maker sniper fill rate Monte Carlo (30 tests)
+- IMPROVED: `self-learning/research_roi_resolver.py` — req_id exact matching priority (6 tests)
+- UPDATED: `self-learning/research_outcomes.jsonl` — REQ-042 delivery with req_id field
+- UPDATED: `CCA_TO_POLYBOT.md` — REQ-042 delivery with fill rate findings
+
+**Why:**
+- REQ-042 Kalshi request: validate maker_sniper fill rate assumptions before live promotion
+- ROI resolver matching was 2/46 due to missing req_ids — now has exact match path
+
+**Tests:** 9667/9668 passing (2 pre-existing failures unrelated to S174)
+
+**Lessons:**
+- from_db() calibration using price variance as spread proxy works well for parametric models
+
+---
