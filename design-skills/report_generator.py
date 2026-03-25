@@ -905,7 +905,10 @@ class CCADataCollector:
 
         # 6. Kalshi delivery feedback gap
         # CCA has full read+write since S134, but check if research outcomes are being tracked
-        outcomes_path = os.path.expanduser("~/.cca-research-outcomes.jsonl")
+        # Check both possible locations for research outcomes
+        outcomes_path = os.path.join(self.project_root, "self-learning", "research_outcomes.jsonl")
+        if not os.path.exists(outcomes_path):
+            outcomes_path = os.path.expanduser("~/.cca-research-outcomes.jsonl")
         if os.path.exists(outcomes_path):
             try:
                 with open(outcomes_path) as f:
@@ -980,6 +983,29 @@ class CCADataCollector:
         "MT-30": "Auto-start and manage all your Claude sessions from one command. No more manually opening 3 terminal windows.",
         "MT-31": "Use Google's Gemini Pro for visual/design tasks where it excels, while Claude handles the code. Best of both models.",
         "MT-32": "Makes all visual output (reports, charts, dashboards) look professional. Design quality you'd expect from a real product.",
+        "MT-33": "Combines Kalshi trading data, self-learning intelligence, and research outcomes into one strategic report. Answers: is the bot getting smarter and more profitable?",
+        "MT-34": "Medical AI research tool for provider-grade clinical decision support. Uses same research rigor as Kalshi bot — academic evidence first, no speculation.",
+        "MT-35": "Makes the autoloop unobtrusive — runs in the background, pauses when you're active, resumes when idle. The system works FOR you, not against you.",
+        "MT-36": "Measures and optimizes session overhead (init, wrap, tests) without cutting quality. Every second saved on overhead is a second spent shipping code.",
+        "MT-37": "Long-term investment research engine — ETF analysis, portfolio construction, factor models. Same rigor as Kalshi: academic basis + backtesting + math validation.",
+        "MT-38": "Rate limit awareness — automatically adjusts token usage based on time of day. Heavy work at night, light work during peak hours. Prevents rate limit hits.",
+        # Older MTs missing descriptions
+        "MT-5": "Bridges Claude Pro web chat with Claude Code CLI sessions. Share context and continue conversations across interfaces.",
+        "MT-1": "Visual grid dashboard showing all active sessions, system status, and task progress at a glance — like a mission control center.",
+        "MT-2": "Auto-generates architecture diagrams in the spec workflow. See the design visually before writing code.",
+        "MT-3": "Multiple AI personas (backend, frontend, security) review designs from different expert perspectives.",
+        "MT-4": "Gives Claude a professional design vocabulary so UI recommendations use real design principles, not vague suggestions.",
+        "MT-6": "Scan any subreddit on demand for Claude Code relevant posts. The 'nuclear' option for deep intelligence sweeps.",
+        "MT-8": "Control Claude Code sessions from your iPhone. Approve, reject, or steer work while away from your desk.",
+        "MT-11": "Scans GitHub trending repos for tools, techniques, and patterns that could improve CCA or the Kalshi bot.",
+        "MT-13": "Generate complete Xcode projects with Swift code and tests from Claude. Prototype iOS apps without manual setup.",
+        "MT-14": "Re-scans previously visited subreddits to catch new posts and updates since last scan. Keeps intelligence fresh.",
+        "MT-18": "Academic writing workspace — structured paper composition with citation management. Professional research output.",
+        "MT-19": "Fine-tune local LLMs on CCA data. Long-term goal: specialized models trained on your specific workflows.",
+        "MT-23": "Mobile control v2 via Telegram/Discord. Richer interface than push notifications — send commands, receive status updates.",
+        "MT-24": "SVG chart engine with 20+ chart types. Powers all data visualization across reports, dashboards, and presentations.",
+        "MT-25": "Generate presentation slides matching Matthew's preferred style. One command from data to polished deck.",
+        "MT-29": "Bridge between Claude Pro web Cowork mode and Claude Code CLI for hivemind coordination across interfaces.",
     }
 
     def get_why_it_matters(self, key):

@@ -629,13 +629,7 @@
 ]
 #v(4mm)
 
-// Chart: Frontier test coverage
-#if chart-dir != none {
-  box(width: 100%, inset: (bottom: 6pt))[
-    #embed-chart("frontier_status", width: 85%)
-  ]
-  v(4mm)
-}
+// Frontier detail cards below — chart removed (redundant with detail cards, S159)
 
 #if data.keys().contains("frontiers") and data.frontiers.len() > 0 {
   for frontier in data.frontiers {
@@ -942,21 +936,34 @@
       width: 100%,
       fill: wash,
       radius: 4pt,
-      inset: (x: 10pt, y: 6pt),
+      inset: (x: 10pt, y: 7pt),
     )[
+      // Row 1: ID, name, tests, badge
       #grid(
         columns: (auto, 1fr, auto, auto),
         column-gutter: 8pt,
         align: (left, left, right, right),
         text(size: 8pt, font: "Menlo", fill: light)[#task.id],
-        text(size: 9pt, weight: "semibold", fill: dark)[#task.name],
+        text(size: 9.5pt, weight: "semibold", fill: dark)[#task.name],
         if task.keys().contains("test_count") and task.test_count > 0 {
           text(size: 7.5pt, fill: green)[#sym.checkmark #task.test_count tests]
         },
         status-badge("Complete", green),
       )
+      // Row 2: Description / why it matters
+      #if task.keys().contains("why_it_matters") and task.why_it_matters != "" {
+        v(1.5mm)
+        text(size: 8pt, fill: mid)[#task.why_it_matters]
+      }
+      // Row 3: Key deliverables (up to 4)
+      #if task.keys().contains("delivered") and task.delivered.len() > 0 {
+        v(1mm)
+        text(size: 7.5pt, fill: light)[
+          #task.delivered.slice(0, calc.min(4, task.delivered.len())).join(" · ")
+        ]
+      }
     ]
-    v(2pt)
+    v(2.5pt)
   }
 }
 
@@ -999,10 +1006,26 @@
           text(size: 7pt, weight: "bold", fill: dark)[#task.phases_done#sym.slash#task.total_phases],
         )
       }
-      // Row 3: Status one-liner + next action (if any)
+      // Row 3: Description / why it matters
+      #if task.keys().contains("why_it_matters") and task.why_it_matters != "" {
+        v(1.5mm)
+        text(size: 8pt, fill: mid)[#task.why_it_matters]
+      }
+      // Row 4: Key deliverables so far
+      #if task.keys().contains("delivered") and task.delivered.len() > 0 {
+        v(1mm)
+        text(size: 7.5pt, weight: "semibold", fill: dark)[Delivered: ]
+        text(size: 7.5pt, fill: mid)[
+          #task.delivered.slice(0, calc.min(5, task.delivered.len())).join(" · ")
+        ]
+      }
+      // Row 5: Status + remaining work + next action
       #v(1.5mm)
       #text(size: 8pt, fill: mid)[#task.status]
-      #if task.keys().contains("needs") and task.needs != "" {
+      #if task.keys().contains("remaining") and task.remaining.len() > 0 {
+        v(1mm)
+        text(size: 7.5pt, fill: blue)[Remaining: #task.remaining.join(" · ")]
+      } else if task.keys().contains("needs") and task.needs != "" {
         h(6pt)
         text(size: 7.5pt, fill: blue, weight: "semibold")[Next: #task.needs]
       }
@@ -1039,6 +1062,11 @@
         text(size: 9pt, weight: "semibold", fill: dark)[#task.name],
         status-badge(badge-label, badge-color),
       )
+      // Description
+      #if task.keys().contains("why_it_matters") and task.why_it_matters != "" {
+        v(1.5mm)
+        text(size: 8pt, fill: mid)[#task.why_it_matters]
+      }
       #if task.keys().contains("needs") and task.needs != "" {
         v(1mm)
         text(size: 7.5pt, fill: if task.category == "blocked" { red } else { mid })[
@@ -1046,7 +1074,7 @@
         ]
       }
     ]
-    v(2pt)
+    v(2.5pt)
   }
 }
 
