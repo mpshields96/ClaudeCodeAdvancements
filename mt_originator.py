@@ -55,6 +55,25 @@ class Finding:
 
 
 @dataclass
+class PhaseExtension:
+    """A proposed new phase for an existing MT from a partially-matched BUILD finding."""
+    mt_id: int
+    mt_name: str
+    finding: Finding
+    score: float
+    suggested_phase: str
+
+    def to_dict(self) -> dict:
+        d = asdict(self)
+        d["finding"] = asdict(self.finding)
+        return d
+
+    def briefing_line(self) -> str:
+        """One-line summary for briefing output."""
+        return f"[{self.score:.1f}] MT-{self.mt_id} ({self.mt_name}): {self.suggested_phase}"
+
+
+@dataclass
 class MTProposal:
     """A proposed new MT from an uncovered BUILD finding."""
     name: str
@@ -458,6 +477,135 @@ def append_to_master_tasks(
     return mt_id
 
 
+# --- Phase 4: Extend existing MTs with new phases ---
+
+# MT names for briefing output (covers active + completed)
+MT_NAMES: dict[int, str] = {
+    0: "Kalshi Self-Learning Integration",
+    1: "Maestro Visual Grid UI",
+    5: "Claude Pro Bridge",
+    6: "Nuclear At Will",
+    7: "Trace Analysis",
+    9: "Autonomous Scanning",
+    10: "YoYo Self-Learning",
+    11: "GitHub Intelligence",
+    12: "Academic Research Papers",
+    14: "Rescan Stale Subs",
+    15: "GitHub Repo Tester",
+    17: "Design/Reports",
+    18: "Academic Writing (PRISM)",
+    19: "Local LLM Fine-Tuning",
+    20: "Senior Dev Agent",
+    22: "Autonomous Autoloop",
+    27: "CCA Nuclear v2",
+    28: "Self-Learning v2",
+    30: "Session Daemon",
+    32: "Visual Excellence",
+    33: "Strategic Intelligence Report",
+    34: "Medical AI Tool",
+    35: "Background Autoloop",
+    36: "Session Efficiency",
+    37: "Investment Portfolio",
+    38: "Peak/Off-Peak Budget",
+    39: "Priority Picker",
+    40: "Nuclear Loop",
+    41: "Synthetic MT Origination",
+}
+
+
+def score_extension(finding: Finding, match_strength: int = 1) -> float:
+    """Score a phase extension proposal 0-100.
+
+    Components:
+    - Recency: 30 points max (decays 3 points per day)
+    - Community signal: 30 points max (log scale of upvotes)
+    - Match strength: 40 points max (how many keywords matched)
+    """
+    score = 0.0
+
+    # Recency (30 points max)
+    try:
+        finding_date = date.fromisoformat(finding.date)
+        days_old = (date.today() - finding_date).days
+        score += max(0, 30 - days_old * 3)
+    except (ValueError, TypeError):
+        pass
+
+    # Community signal (30 points max)
+    if finding.points > 0:
+        score += min(30, math.log(finding.points + 1) * 5)
+    else:
+        score += 5
+
+    # Match strength (40 points max): 1 keyword=10, 2=20, 3+=30-40
+    score += min(40, match_strength * 12)
+
+    return round(min(max(score, 0), 100), 1)
+
+
+def find_phase_extensions(builds: list[Finding]) -> list[PhaseExtension]:
+    """Find BUILD findings that match existing MTs and propose new phases.
+
+    Unlike find_uncovered_builds (which finds findings NOT covered by any MT),
+    this finds findings that ARE covered — meaning they extend an existing MT.
+    Covers both active AND completed MTs.
+    """
+    if not builds:
+        return []
+
+    # Filter to BUILD only
+    builds = [f for f in builds if f.verdict == "BUILD"]
+    if not builds:
+        return []
+
+    coverage = get_existing_mt_coverage()
+    extensions = []
+
+    for f in builds:
+        search_text = f"{f.title} {f.frontier}".lower()
+
+        # Find which MTs this finding matches
+        for mt_id, keywords in coverage.items():
+            if mt_id >= 100:  # Skip frontier-level pseudo-IDs
+                continue
+
+            matched_keywords = [kw for kw in keywords if kw in search_text]
+            if not matched_keywords:
+                continue
+
+            match_strength = len(matched_keywords)
+            mt_name = MT_NAMES.get(mt_id, f"MT-{mt_id}")
+
+            # Generate a suggested phase from the finding title
+            suggested = f"{f.title}"
+
+            ext_score = score_extension(f, match_strength)
+
+            extensions.append(PhaseExtension(
+                mt_id=mt_id,
+                mt_name=mt_name,
+                finding=f,
+                score=ext_score,
+                suggested_phase=suggested,
+            ))
+
+    # Sort by score descending
+    extensions.sort(key=lambda e: e.score, reverse=True)
+    return extensions
+
+
+def format_extension_briefing(extensions: list[PhaseExtension], n: int = 5) -> str:
+    """Format top N extensions as a readable briefing string."""
+    if not extensions:
+        return "No phase extensions found for existing MTs."
+
+    lines = [f"PHASE EXTENSIONS ({min(n, len(extensions))} proposals for existing MTs):\n"]
+    for ext in extensions[:n]:
+        lines.append(f"  {ext.briefing_line()}")
+        lines.append(f"     Source: {ext.finding.url or 'N/A'} ({ext.finding.date})")
+    return "\n".join(lines)
+
+
 def load_proposals(path: str = PROPOSALS_PATH) -> list[MTProposal]:
     """Load proposals from JSONL file."""
     if not os.path.exists(path):
@@ -519,6 +667,8 @@ def main():
     parser.add_argument("--json", action="store_true", help="JSON output")
     parser.add_argument("--briefing", action="store_true", help="Show top proposals for /cca-init")
     parser.add_argument("--append", action="store_true", help="Append top proposals to MASTER_TASKS.md")
+    parser.add_argument("--extend-existing", action="store_true",
+                        help="Propose new phases for existing MTs (active + completed)")
     parser.add_argument("--findings", default=FINDINGS_LOG_PATH, help="Path to FINDINGS_LOG.md")
     parser.add_argument("--min-score", type=float, default=30.0, help="Minimum score for surfacing")
     parser.add_argument("--top", type=int, default=3, help="Number of top proposals to show")
@@ -529,6 +679,16 @@ def main():
     builds = [f for f in findings if f.verdict == "BUILD"]
 
     print(f"Parsed {len(findings)} findings ({len(builds)} BUILD)")
+
+    # --extend-existing: propose phases for existing MTs
+    if args.extend_existing:
+        extensions = find_phase_extensions(builds)
+        filtered = [e for e in extensions if e.score >= args.min_score]
+        if args.json:
+            print(json.dumps([e.to_dict() for e in filtered[:args.top]], indent=2, default=str))
+        else:
+            print(format_extension_briefing(filtered, n=args.top))
+        return
 
     # Use rich proposals (Phase 2) with cluster detection
     proposals = generate_rich_proposals(builds)
