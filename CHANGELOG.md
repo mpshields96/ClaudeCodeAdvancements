@@ -3,6 +3,28 @@
 
 ---
 
+## Session 169 — 2026-03-26
+
+**What changed:**
+- `MT37_INVESTMENT_RESEARCH_UBER.md` — New uber-level spec doc for AI Investment Research (8 pillars, 7 phases)
+- `MASTER_TASKS.md` — MT-37 elevated to UBER-LEVEL. 7 new MTs added (MT-43 through MT-49). Total: 49 MTs.
+- `priority_picker.py` — All 44 active MTs registered (7 new + MT-37 base_value raised to 8)
+- `self-learning/meta_learning_dashboard.py` — MT-49 Phase 1: Self-learning meta-analysis dashboard (5 analyzers, CLI, 28 tests)
+- `self-learning/tests/test_meta_learning.py` — 28 tests for meta_learning_dashboard
+- `design-skills/chart_generator.py` — MT-48 Phase 1: BarChart X-axis rotation + integer Y-axis + auto margins
+
+**Why:**
+- Matthew directive: document ALL undocumented goals as MTs + elevate MT-37 to uber-level
+- Matthew directive: emphasize self-learning evolution for CCA + Kalshi (-> MT-49 UBER)
+- S154 visual audit: chart labels overlap + decimal axes on integer data (-> MT-48 fixes)
+
+**Tests:** 9501/9501 passing (243 suites). +28 new tests.
+
+**Lessons:**
+- The meta_learning_dashboard revealed session grade trend "declining" — only 7 sessions tracked in session_outcomes.jsonl. Need to ensure session_outcome_tracker.py auto-record runs every wrap.
+
+---
+
 ## Session 168 — 2026-03-26
 
 **What changed:**

@@ -3,29 +3,38 @@
 
 ---
 
-## Current State (as of Session 168 — 2026-03-26)
+## Current State (as of Session 169 — 2026-03-26)
 
-**Phase:** Session 168 COMPLETE. REQ-040 DELIVERED. All cross-chat backlog cleared. Grade: A.
+**Phase:** Session 169 COMPLETE. MT documentation overhaul + 2 MTs advanced. Grade: A.
 
-**What was done this session (S168):**
-- REQ-040 COMPLETE: `self-learning/monte_carlo_simulator.py` — Monte Carlo bankroll simulator
-  - BetDistribution (parametric + empirical bootstrap + from_db())
-  - MonteCarloSimulator (path simulation, ruin/target probability, scenario + sensitivity analysis)
-  - SyntheticBetGenerator (multi-strategy, volume proportions, bootstrap)
-  - CLI: --from-db --strategy --sensitivity --scenarios --json
-  - DB bridge: reads polybot.db read-only, auto-detects bankroll + daily volume
-  - Live validation: sniper 93.6% WR, 96.7% target probability $186->$250, 1.5% ruin
-- 50 new tests in test_monte_carlo_simulator.py (9423 -> 9473), 1 new suite (241 -> 242)
-- 2 commits, no regressions
-- Cross-chat backlog CLEARED: REQ-034 (integration plan), REQ-035 (daily_sniper analysis with Kelly math finding), REQ-036 (CLV schema design), REQ-037 (maker feasibility — confirmed API support), REQ-038 (already implemented S164), REQ-039 (maker_sniper architecture spec)
-- **Tests**: ~242 suites, ~9473 tests passing. All green.
+**What was done this session (S169):**
+- MT-37 elevated to UBER-LEVEL master task with full spec doc (`MT37_INVESTMENT_RESEARCH_UBER.md`)
+- 7 new MTs documented (MT-43 through MT-49) from comprehensive project-wide goal audit:
+  - MT-43: Data Analysis Excellence (Excel/PPT MCP Quality)
+  - MT-44: Automated Cross-Chat Task Execution Pipeline
+  - MT-45: USAGE-5 Streamlit/Web Dashboard
+  - MT-46: Report Self-Audit System (Honest Assessment)
+  - MT-47: External Tool Evaluation Pipeline (BUILD Backlog)
+  - MT-48: Report Visual Polish (Chart/Layout Fixes)
+  - MT-49: Self-Learning Evolution Engine (UBER) — permanent, never-closing MT
+- MT-49 Phase 1 COMPLETE: `self-learning/meta_learning_dashboard.py` — self-learning effectiveness tracker
+  - PrincipleAnalyzer, SessionTrendAnalyzer, ImprovementTracker, ResearchROITracker, JournalAnalyzer
+  - CLI: --json, --brief, --data-dir modes. Brief output for /cca-init integration.
+  - 28 tests in `self-learning/tests/test_meta_learning.py`
+- MT-48 Phase 1 COMPLETE: BarChart + StackedBarChart X-axis label rotation + integer Y-axis ticks
+  - Auto-rotate labels: -90deg for >12 bars, -45deg for 5-8, horizontal for <=4
+  - Auto-expand bottom margin, force integer Y-axis for count data
+- All 44 MTs registered in priority_picker.py (93 tests passing)
+- Cross-chat notifications sent to both Kalshi chats (Matthew 2hr absence)
+- 3 commits, 28 new tests (9473 -> 9501), no regressions
+- **Tests**: ~243 suites, ~9501 tests passing. All green.
 
 **Next:**
-1. economics_sniper_v1 validation (April 8 CPI data — approaching)
-2. MakerSniperStrategy implementation (Kalshi builds from REQ-039 spec delivered this session)
-3. CCA-internal MT advancement (MT-32 Phase 8+, MT-41 Phase 5+, or new MT)
-4. Ongoing cross-chat coordination (all current REQs answered)
-5. CLV tracking implementation (REQ-036 spec delivered, monitoring chat implements)
+1. Wire meta_learning_dashboard --brief into /cca-init briefing
+2. MT-49 Phase 2: Active principle transfer — automated cross-domain proposals
+3. MT-48 Phase 2: Typst template whitespace compression, color sync, TOC page numbers
+4. economics_sniper_v1 validation (April 8 CPI approaching)
+5. Ongoing cross-chat coordination
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
