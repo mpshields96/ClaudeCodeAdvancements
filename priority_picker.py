@@ -546,7 +546,7 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         MasterTask(
             mt_id=39, name="Priority Picker Overhaul — Dust Detection",
             base_value=9, status=TaskStatus.COMPLETED,
-            last_touched_session=160, current_session=current_session,
+            last_touched_session=162, current_session=current_session,
             phases_completed=3, phases_total=3,  # All 3 phases COMPLETE (S160): registry fixes, growth scoring, dust command + ARCHIVED status
             aging_rate=0,
             next_action="COMPLETE. All 3 phases: registry fixes, growth_score with dust bonus, dust CLI + ARCHIVED status + 8 MTs archived.",
@@ -554,11 +554,11 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=40, name="Automated Nuclear Scanning Loop",
-            base_value=9, status=TaskStatus.ACTIVE,
-            last_touched_session=160, current_session=current_session,
-            phases_completed=2, phases_total=3,  # Phase 1+2 COMPLETE (S160): scan_scheduler.py + init briefing integration
-            aging_rate=1.0,
-            next_action="Phase 3: Auto-trigger nuclear scan when top_target is stale (cron or session hook).",
+            base_value=9, status=TaskStatus.COMPLETED,
+            last_touched_session=162, current_session=current_session,
+            phases_completed=4, phases_total=4,  # Phase 3 (S161): auto-scan API. Phase 4 (S162): scan_executor.py pipeline
+            aging_rate=0,
+            next_action="COMPLETE. All 4 phases: scheduler, init briefing, auto-scan API, executor pipeline.",
             tags=["scanning", "automation", "intelligence"],
         ),
         MasterTask(
@@ -573,11 +573,12 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         # === MT-42: Kalshi Copytrading (S160 — Matthew request) ===
         MasterTask(
             mt_id=42, name="Kalshi Smart Money Copytrading",
-            base_value=9, status=TaskStatus.ACTIVE,
-            last_touched_session=160, current_session=current_session,
-            phases_completed=0, phases_total=5,
-            aging_rate=1.0,
-            next_action="Phase 1: Research Kalshi API for order flow visibility (public trades, order book snapshots, volume spikes). Phase 2: Identify smart money signals (large orders, consistent winners, unusual volume). Phase 3: Build detector. Phase 4: Paper-trade following detected signals. Phase 5: Live if edge confirmed.",
+            base_value=9, status=TaskStatus.BLOCKED,
+            last_touched_session=161, current_session=current_session,
+            phases_completed=1, phases_total=5,
+            aging_rate=0,
+            block_reason="S161: Phase 1 NEGATIVE RESULT — Kalshi API has no trader attribution, no public order flow, no way to identify smart money. Copytrading not feasible on Kalshi.",
+            next_action="BLOCKED — no path forward without Kalshi API changes. Pivot to order_flow_intel.py (MT-26 Tier 3) for alternative approaches.",
             tags=["kalshi", "trading", "edge", "order-flow"],
         ),
         # === BLOCKED ===
