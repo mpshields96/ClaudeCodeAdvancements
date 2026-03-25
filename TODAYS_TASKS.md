@@ -1,5 +1,5 @@
-# CCA Tasks for 2026-03-24 (Matthew's Full Directive)
-# Created: S151. Read by ALL subsequent CCA chats today.
+# CCA Tasks for 2026-03-25
+# Created: S177. Read by ALL subsequent CCA chats today.
 # This file persists across sessions so nothing gets forgotten.
 
 ---
@@ -7,83 +7,87 @@
 ## Priority Allocation (Matthew directive)
 - **50%+ time on Kalshi bot work** (higher priority)
 - Remaining time on CCA improvements
-- Frequent comms with Kalshi main chat (starting now)
-- **CCA report as task reference (S156):** Read latest CCA_STATUS_REPORT JSON when deciding next tasks. Report content informs priorities — not just SESSION_STATE. All CCA chats.
+- Frequent comms with Kalshi main chat
+- Peak/off-peak budgeting UNIVERSAL (MT-38)
 
 ---
 
 ## KALSHI BOT WORK (HIGH PRIORITY — 50%+)
 
-### K1. REQ-027: Monte Carlo + Synthetic Origination + Edge Stability [DONE S151]
-- Built and committed: edge_stability.py (40t), synthetic_bet_generator.py (28t), monte_carlo_simulator.py (27t)
-- Delivered to polybot repo. CCA_TO_POLYBOT.md updated.
+### K1. MAX_LOSS + kelly_scale in sizing.py [DONE S177]
+- REQ-042: DEFAULT_MAX_LOSS_USD=$7.50 cap, kelly_scale multiplier from BayesianDriftModel
+- 25 new tests in test_sizing.py, 0 regressions (1902 polybot tests pass)
+- Still need: wire into main.py call sites
 
-### K2. REQ-025: Second Edge Discovery [URGENT]
-- Find >3% EV/bet, >5 bets/day edge
-- Current sniper ~8 USD/day. Target: 15-25 USD/day total
-- Research + validate structural basis
+### K2. Wire MAX_LOSS + kelly_scale into main.py [DONE S177]
+- All 5 call sites wired. Commit 784bdc5 in polybot.
+- Delivery written to CCA_TO_POLYBOT.md
 
-### K3. Respond to Kalshi Topics A-D [DONE S151]
-- All 4 topics responded via CCA_TO_POLYBOT.md
-- REQ-030 convergence spec delivered, REQ-031 synthetic validation completed
+### K3. CUSUM Drift Detection [DONE S176]
+- Wired into auto_guard_discovery.py, 13 CCA tests
+- cusum_statistic(), guards promoted when CUSUM S >= 5.0 AND n >= 15 AND WR < break-even
 
-### K4. Ongoing Cross-Chat Coordination
+### K4. REQ-042 Tail Loss Audit [DONE S176]
+- 95.6% losses > $5, avg loss = -$17.30, guard coverage 64.4%
+- Post-guard profile: WR 97.2%, PnL/trade $0.70 (7x improvement)
+
+### K5. Ongoing Cross-Chat Coordination
 - Check POLYBOT_TO_CCA.md every cycle
 - Write CCA_TO_POLYBOT.md deliveries promptly
-- Implement any Kalshi chat deliveries same-session
 
 ---
 
 ## CCA IMPROVEMENTS
 
-### C1. Autoloop Correctly Firing [DONE S151]
-- Flag file created, breadcrumb cleared, trigger verified ready
-- Stop hook wired in settings.local.json
+### C1. MT-26 Dead Code Cleanup [TODO]
+- 2,110 LOC of unused signal pipeline in self-learning/
+- S176 evaluation flagged: regime_detector, calibration_bias, cross_platform_signal,
+  dynamic_kelly, macro_regime, fear_greed_filter, signal_pipeline — all unused by Kalshi bot
+- Remove or wire into bot
 
-### C2. Report Visual Enhancement Research [MEDIUM]
-- Read CCA_STATUS_REPORT_2026-03-24.pdf — assess current state
-- Research how reports could become much more advanced:
-  - Style and appearance improvements
-  - Formatting and layout upgrades
-  - Content depth and readability
-  - Charts/graphs/figures (more types, better data viz)
-  - Key data points to add to each section
-  - Trend/delta data (report_differ integration)
-- This is exploration/research — not necessarily building all of it today
+### C2. Agent Teams/TeammateTool Awareness [TODO]
+- BUILD verdict from S176 nuclear scan
+- Official Anthropic multi-agent system uses worktree isolation
+- CCA's agent-guard must handle TeammateTool conflicts + auto mode safety
 
-### C3. MT Knockouts [MEDIUM]
-- Continue knocking out MTs from MASTER_TASKS.md
-- Priority picker: `python3 priority_picker.py full --session 151`
-- Focus on MTs that advance the Two Pillars (Get Smarter, Get More Bodies)
+### C3. memsearch Patterns [TODO]
+- Study markdown-first hook patterns for CCA memory-system evolution
+- REFERENCE from S176 nuclear scan
 
-### C4. Discover Advancements to Other MTs [LOW]
-- While working, identify connections/advancements that apply to other MTs
-- Log discoveries in session state
+### C4. Context-Monitor 1M Recalibration [TODO]
+- Update DEFAULT_WINDOW auto-detection for 1M context window
 
-### C5. Address "Honest Assessment" Report Issues [LOW]
-- Read the honest assessment section of CCA reports
-- Identify and fix gaps/issues flagged there
+### C5. MT-37 UBER [TODO]
+- Investment/AI trading master task
 
-### C6. MT-32 Report Improvements (from S150 carryover)
-- TOC page numbers
-- Cover title fix
-- MT phase tracking contradictions
-- Trend/delta section (report_differ.py integration)
-- MT section condensing
+---
+
+## COMPLETED TODAY (all sessions)
+
+### S177 (current)
+- [x] MAX_LOSS cap + kelly_scale in polybot sizing.py (25 tests)
+- [x] Wire into main.py (commit 784bdc5, delivery written)
+
+### S176 (Grade A)
+- [x] Self-learning evaluation (CCA + Kalshi)
+- [x] CUSUM drift detection in auto_guard_discovery.py (13 tests)
+- [x] REQ-042 complete (tail loss audit + position sizing formula)
+- [x] outcomes_enricher + predictive_recommender wired into slim_init (15 tests)
+- [x] Nuclear scan: 10 findings, 60% APF (3 BUILD, 3 ADAPT, 4 REFERENCE)
+- 5 commits, 28 new tests (9750 total)
+
+### S175 (Grade A)
+- [x] MT-49 Phase 5: outcomes_enricher, commit_scanner, ROI resolver
+
+### S174 (Grade A)
+- [x] REQ-042 fill_rate_simulator.py (30 tests)
+
+### S173-S170
+- [x] MT-49 Phases 2-5, MT-48 Phases 2-3
 
 ---
 
 ## SESSION RULES
-- Autoloop SHOULD fire at end of this session (re-enabled for today)
-- Keep Kalshi comms frequent — Kalshi main chat is active NOW
-- Each subsequent CCA chat reads THIS FILE to know what to work on
+- Autoloop ENABLED
 - Mark items [DONE] as they complete, but NEVER remove them
-
-### C2 Notes: Report Visual Findings (from S154 agent — persisted S155)
-Agent did a 20-page visual audit of CCA_STATUS_REPORT_2026-03-24.pdf. Key issues found:
-- MT Phase Progress chart: X-axis labels overlap and are unreadable
-- Chart axes show decimal values for integer data (LOC counts, file counts)
-- Pages 5 and 10 have significant wasted whitespace
-- design-guide.md color palette does not match actual Typst template colors
-- Suggested fixes: rotate/abbreviate X labels, force integer axis ticks, compress whitespace, sync color definitions
-These are actionable Typst template fixes — no research needed, just implementation.
+- Each subsequent CCA chat reads THIS FILE to know what to work on
