@@ -715,9 +715,10 @@ def _render_bar_chart(chart: BarChart) -> str:
         parts.append(_svg_footer())
         return "".join(parts)
 
-    # Layout
+    # Layout — auto-expand bottom margin for rotated labels when crowded
+    n = len(chart.data)
     margin_top = 40 if chart.title else 20
-    margin_bottom = 40
+    margin_bottom = 70 if n > 8 else (50 if n > 4 else 40)
     margin_left = 60
     margin_right = 20
     plot_w = chart.width - margin_left - margin_right
@@ -733,13 +734,18 @@ def _render_bar_chart(chart: BarChart) -> str:
     if max_val == 0:
         max_val = 1
 
-    # Y-axis gridlines (4 lines)
+    # Y-axis gridlines (4 lines) — force integer ticks for count data
+    all_integer = max_val == int(max_val)
     for i in range(5):
         y = margin_top + plot_h - (plot_h * i / 4)
-        val = int(max_val * i / 4)
+        val = max_val * i / 4
         parts.append(_line(margin_left, y, margin_left + plot_w, y,
                            CCA_COLORS["border"], 0.5))
-        parts.append(_text(margin_left - 8, y + 4, str(val),
+        if all_integer:
+            label_str = str(int(val))
+        else:
+            label_str = str(int(val)) if val == int(val) else f"{val:.1f}"
+        parts.append(_text(margin_left - 8, y + 4, label_str,
                            font_size=9, fill=CCA_COLORS["muted"],
                            anchor="end"))
 
@@ -761,9 +767,34 @@ def _render_bar_chart(chart: BarChart) -> str:
 
         parts.append(_rect(x, y, bar_width, bar_h, chart.color, rx=2))
 
-        # Label below bar
-        parts.append(_text(x + bar_width / 2, margin_top + plot_h + 16,
-                           str(label), font_size=9, fill=CCA_COLORS["muted"]))
+        # Label below bar — rotate when crowded to prevent overlap
+        label_x = x + bar_width / 2
+        label_y = margin_top + plot_h + 16
+        if n > 12:
+            # Very crowded: -90 degrees, skip every other, truncate
+            if i % 2 == 0:
+                display_label = str(label)[:10]
+                parts.append(_text(label_x, label_y, display_label,
+                                   font_size=8, fill=CCA_COLORS["muted"],
+                                   anchor="end",
+                                   transform=f"rotate(-90, {label_x}, {label_y})"))
+        elif n > 8:
+            # Crowded: -90 degrees, all labels, truncate
+            display_label = str(label)[:10]
+            parts.append(_text(label_x, label_y, display_label,
+                               font_size=8, fill=CCA_COLORS["muted"],
+                               anchor="end",
+                               transform=f"rotate(-90, {label_x}, {label_y})"))
+        elif n > 4:
+            # Moderate: -45 degrees
+            display_label = str(label)[:12]
+            parts.append(_text(label_x, label_y, display_label,
+                               font_size=9, fill=CCA_COLORS["muted"],
+                               anchor="end",
+                               transform=f"rotate(-45, {label_x}, {label_y})"))
+        else:
+            parts.append(_text(label_x, label_y, str(label),
+                               font_size=9, fill=CCA_COLORS["muted"]))
 
         # Value on bar
         if chart.show_values:
@@ -1235,9 +1266,10 @@ def _render_stacked_bar_chart(chart: StackedBarChart) -> str:
         parts.append(_svg_footer())
         return "".join(parts)
 
-    # Layout constants
+    # Layout constants — auto-expand bottom margin for rotated labels
+    n_categories = len(chart.data)
     margin_top = 40 if chart.title else 20
-    margin_bottom = 50
+    margin_bottom = 70 if n_categories > 8 else 50
     margin_left = 60
     margin_right = 20
     legend_height = 25
@@ -1246,8 +1278,6 @@ def _render_stacked_bar_chart(chart: StackedBarChart) -> str:
     plot_y = margin_top
     plot_w = chart.width - margin_left - margin_right
     plot_h = chart.height - margin_top - margin_bottom - legend_height
-
-    n_categories = len(chart.data)
     n_series = len(chart.series_names)
 
     # Compute max stack height
