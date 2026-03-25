@@ -572,13 +572,13 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         # === MT-42: Kalshi Copytrading (S160 — Matthew request) ===
         MasterTask(
-            mt_id=42, name="Kalshi Copytrading / Signal Service",
-            base_value=7, status=TaskStatus.ACTIVE,
+            mt_id=42, name="Kalshi Smart Money Copytrading",
+            base_value=9, status=TaskStatus.ACTIVE,
             last_touched_session=160, current_session=current_session,
-            phases_completed=0, phases_total=4,
+            phases_completed=0, phases_total=5,
             aging_rate=1.0,
-            next_action="Phase 1: Research Kalshi API for signal broadcasting. Phase 2: Regulatory assessment. Phase 3: Edge erosion modeling. Phase 4: Build if viable.",
-            tags=["kalshi", "trading", "revenue"],
+            next_action="Phase 1: Research Kalshi API for order flow visibility (public trades, order book snapshots, volume spikes). Phase 2: Identify smart money signals (large orders, consistent winners, unusual volume). Phase 3: Build detector. Phase 4: Paper-trade following detected signals. Phase 5: Live if edge confirmed.",
+            tags=["kalshi", "trading", "edge", "order-flow"],
         ),
         # === BLOCKED ===
         MasterTask(
