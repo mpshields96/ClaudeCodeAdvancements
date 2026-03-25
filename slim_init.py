@@ -273,6 +273,31 @@ def run_outcomes_enricher() -> dict:
         return {"enriched": 0, "error": "Timeout: outcomes_enricher exceeded 15 seconds"}
 
 
+def run_predictive_recommendations(session_num: int = 0) -> dict:
+    """Run predictive_recommender.py summary for pre-session recommendations."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "predictive_recommender.py"),
+             "summary", "--domains", "cca_operations", "trading_research",
+             "--session", str(session_num)],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            return {"recommendations": 0}
+
+        # Count recommendation lines (lines with "[XX%]")
+        rec_lines = [l for l in output.split("\n") if "[" in l and "%]" in l]
+
+        return {"recommendations": len(rec_lines), "brief": output}
+    except subprocess.TimeoutExpired:
+        return {"recommendations": 0, "error": "Timeout"}
+
+
 def run_transfer_proposals() -> dict:
     """Run principle_transfer.py propose + review for active transfer proposals."""
     try:
@@ -473,6 +498,8 @@ def format_summary(summary: dict) -> str:
         lines.append(f"  Research ROI: {summary['roi_resolved']}/{summary.get('roi_total', 0)} deliveries resolved")
     if summary.get("enriched_count", 0) > 0:
         lines.append(f"  Enriched: {summary['enriched_count']} new REQ entries added to outcomes")
+    if summary.get("predictions_count", 0) > 0:
+        lines.append(f"  Predictions: {summary['predictions_count']} principle recommendations")
     if summary.get("blockers"):
         lines.append("  BLOCKERS:")
         for b in summary["blockers"]:
@@ -532,6 +559,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3.12: Outcomes enricher (MT-49 Phase 5 — auto-enrich missing REQs)
     enricher = run_outcomes_enricher()
 
+    # Step 3.13: Predictive recommendations (MT-28 Phase 5 — pre-session principle ranking)
+    predictions = run_predictive_recommendations(session_num=state.get("session_num", 0))
+
     # Step 4: Session timeline (last 5 sessions)
     timeline = run_timeline(5)
 
@@ -563,6 +593,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
         summary["roi_total"] = roi["total"]
     if enricher.get("enriched", 0) > 0:
         summary["enriched_count"] = enricher["enriched"]
+    if predictions.get("recommendations", 0) > 0:
+        summary["predictions_count"] = predictions["recommendations"]
+        summary["predictions_brief"] = predictions.get("brief", "")
 
     return summary
 

@@ -1214,6 +1214,73 @@ class TestSummaryIncludesEnricher(unittest.TestCase):
         self.assertNotIn("Enriched", text)
 
 
+class TestRunPredictiveRecommender(unittest.TestCase):
+    """Test predictive_recommender wiring into slim_init."""
+
+    @patch("slim_init.subprocess.run")
+    def test_run_predictions_success(self, mock_run):
+        from slim_init import run_predictive_recommendations
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="[85%] Verify citations\n  Category: research\n[72%] Test first\n  Category: dev",
+            stderr="",
+        )
+        result = run_predictive_recommendations(session_num=176)
+        self.assertEqual(result["recommendations"], 2)
+        self.assertIn("brief", result)
+
+    @patch("slim_init.subprocess.run")
+    def test_run_predictions_zero(self, mock_run):
+        from slim_init import run_predictive_recommendations
+        mock_run.return_value = MagicMock(returncode=0, stdout="No recommendations.", stderr="")
+        result = run_predictive_recommendations()
+        self.assertEqual(result["recommendations"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_run_predictions_timeout(self, mock_run):
+        import subprocess
+        from slim_init import run_predictive_recommendations
+        mock_run.side_effect = subprocess.TimeoutExpired("cmd", 15)
+        result = run_predictive_recommendations()
+        self.assertEqual(result["recommendations"], 0)
+        self.assertIn("error", result)
+
+    @patch("slim_init.subprocess.run")
+    def test_run_predictions_failure(self, mock_run):
+        from slim_init import run_predictive_recommendations
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="error")
+        result = run_predictive_recommendations()
+        self.assertEqual(result["recommendations"], 0)
+
+
+class TestSummaryIncludesPredictions(unittest.TestCase):
+    """Test that predictions appear in formatted summary."""
+
+    def test_predictions_show_in_summary(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S176",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-49",
+            "predictions_count": 3,
+        }
+        text = format_summary(summary)
+        self.assertIn("Predictions", text)
+        self.assertIn("3", text)
+
+    def test_zero_predictions_omits_from_summary(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S176",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-49",
+        }
+        text = format_summary(summary)
+        self.assertNotIn("Predictions", text)
+
+
 class TestSlimInitIncludesEnricher(unittest.TestCase):
     """Test that run_slim_init includes outcomes_enricher."""
 
