@@ -101,7 +101,7 @@ class TestMasterTask(unittest.TestCase):
 
     def test_stagnation_penalty(self):
         t = self._make_task(base_value=4, last_touched_session=None)
-        self.assertEqual(t.stagnation_penalty, -1.0)
+        self.assertEqual(t.stagnation_penalty, 1.0)  # Bonus to surface dusty tasks
 
     def test_no_stagnation_penalty_when_recent(self):
         t = self._make_task(base_value=4, last_touched_session=97)
@@ -146,8 +146,8 @@ class TestMasterTask(unittest.TestCase):
     def test_improved_score_with_stagnation(self):
         t = self._make_task(base_value=4, last_touched_session=None,
                            phases_completed=0, phases_total=5)
-        # base=4, aging=4(capped), completion=0%->0, roi=0, stag=-1
-        expected = 4 + 4 + 0 + 0 + (-1)
+        # base=4, aging=4(capped), completion=0%->0, roi=0, stag=+1 (dust bonus)
+        expected = 4 + 4 + 0 + 0 + 1
         self.assertAlmostEqual(t.improved_score, expected)
 
     def test_to_dict(self):

@@ -157,14 +157,14 @@ class MasterTask:
 
     @property
     def stagnation_penalty(self) -> float:
-        """Penalty for stagnating tasks that should be worked or archived.
+        """Bonus for stagnating tasks to surface them for attention.
 
-        Stagnating tasks (capped, untouched 10+ sessions) get -1.0.
-        This prevents them from permanently blocking the queue while
-        providing a signal that they need attention (work or archive).
+        Stagnating tasks (capped, untouched 10+ sessions) get +1.0 bonus.
+        This ensures dusty tasks rise in priority the longer they wait,
+        surfacing them for either work or archival.
         """
         if self.stagnation_flag:
-            return -1.0
+            return 1.0
         return 0.0
 
     @property
@@ -660,10 +660,11 @@ class PriorityPicker:
     def growth_score(self, t: MasterTask) -> float:
         """Effective growth score that rises with neglect.
 
-        Base growth_priority + 0.1 per session since last touch, capped at +5.
-        This means a growth task untouched for 50 sessions gets +5 boost.
+        Base growth_priority + 0.2 per session since last touch, capped at +10.
+        A growth task untouched for 50 sessions gets +10 boost, enough to
+        compete with active tasks. This ensures dusty tasks surface eventually.
         """
-        dust_bonus = min(t.sessions_since_touch * 0.1, 5.0)
+        dust_bonus = min(t.sessions_since_touch * 0.2, 10.0)
         return t.growth_priority + dust_bonus
 
     def full_ranking(self) -> list[dict]:
@@ -708,7 +709,7 @@ class PriorityPicker:
                 "type": "growth",
                 "name": f"MT-{t.mt_id}: {t.name} [GROWTH]",
                 "score": self.growth_score(t),
-                "detail": f"{t.growth_action} (dust: +{min(t.sessions_since_touch * 0.1, 5.0):.1f})",
+                "detail": f"{t.growth_action} (dust: +{min(t.sessions_since_touch * 0.2, 10.0):.1f})",
             })
 
         items.sort(key=lambda x: x["score"], reverse=True)
