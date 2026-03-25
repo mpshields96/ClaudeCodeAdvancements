@@ -1575,3 +1575,58 @@ background process. Everything else serves these two axes. See `CCA_PRIME_DIRECT
 4. **Graduation:** When all phases complete, remove from `get_known_tasks()`, add to Completed table.
 5. **Self-resolution scan:** Every 5 sessions, check if blocked MTs are solvable. Run `python3 priority_picker.py stagnating`.
 6. **Stagnation review:** Tasks flagged as stagnating need a decision: (A) work them this session, (B) reduce base_value, or (C) archive.
+7. **Dust check:** Run `python3 priority_picker.py dust` to see ALL neglected work (growth, blocked, never-started). Added S160.
+
+---
+
+## MT-39: Priority Picker Overhaul — Dust Detection
+
+**Source:** Matthew directive (S160, 2026-03-24) — "Our prioritization system was designed to prevent [dust collection]"
+**What:** Fix the priority picker's blind spots that allowed 15+ MTs to collect dust undetected. The picker only showed 5 active MTs and reported "no stagnating tasks" while many MTs were untouched for 30-160 sessions.
+
+**Root causes fixed (Phase 1, S160):**
+1. MT-8 was missing entirely from the registry
+2. Completed MTs with `aging_rate=0` were invisible — growth actions couldn't accumulate priority
+3. No command showed ALL neglected work across active/growth/blocked categories
+4. Default session number was stale (149 instead of 160)
+
+**Phases:**
+- Phase 1 (S160): Registry fixes — add MT-8, MT-39/40/41, fix MT-36/38 status, growth_score with dust bonus, `dust` command
+- Phase 2: Wire dust report into /cca-init briefing — auto-surface dusty MTs at session start
+- Phase 3: Auto-archive policy — MTs blocked 100+ sessions with no self-resolution note get auto-archived
+
+**Status:** Phase 1 COMPLETE (S160). 93 existing tests still pass. `python3 priority_picker.py dust` now shows 15 dusty MTs.
+
+---
+
+## MT-40: Automated Nuclear Scanning Loop
+
+**Source:** Matthew directive (S160, 2026-03-24) — "where is cca nuclear for reddit and github?"
+**What:** Wire the existing Reddit (MT-9) and GitHub (MT-11) scanning infrastructure into an automated recurring loop. Scanners exist but haven't been run in 30-77 sessions because nothing triggers them automatically.
+
+**Existing infrastructure:**
+- `reddit-intelligence/autonomous_scanner.py` — full scan pipeline with prioritizer + safety
+- `reddit-intelligence/github_scanner.py` — trending repo evaluator
+- `reddit-intelligence/profiles.py` — 10 subreddit profiles with staleness tracking
+- `priority_picker.py` RecurringTask for nuclear scans (3-day staleness) — exists but only surfaces in `full` command
+
+**Phases:**
+- Phase 1: Wire scanners into /cca-auto task queue — if nuclear scan is 3+ days stale, run it before other work
+- Phase 2: Staleness alerts in /cca-init briefing — show days since last scan
+- Phase 3: Results auto-feed into MT-41 (synthetic origination)
+
+**Status:** NOT STARTED. Created S160.
+
+---
+
+## MT-41: Synthetic MT Origination
+
+**Source:** Matthew directive (S160, 2026-03-24) — "did we launch the synthetic origination of MTs?"
+**What:** Auto-propose new MTs from intelligence findings. Currently, BUILD verdicts in FINDINGS_LOG.md require manual promotion to MTs. This system auto-detects unaddressed BUILD findings and proposes new MTs.
+
+**Phases:**
+- Phase 1: Scan FINDINGS_LOG.md for BUILD verdicts not yet covered by existing MTs. Score by recency, community signal (upvotes), and frontier relevance.
+- Phase 2: Auto-generate MT proposals with name, description, technical path, and estimated phases. Save to `mt_proposals.jsonl`.
+- Phase 3: Surface proposals in /cca-init briefing and priority_picker. Matthew approves or skips.
+
+**Status:** NOT STARTED. Created S160.

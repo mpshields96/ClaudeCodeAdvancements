@@ -238,13 +238,14 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
 
     IMPORTANT: Update last_touched_session every time an MT is worked on.
     Stale values here cause the priority picker to give bad recommendations.
-    Last registry update: S147 (2026-03-24).
+    Last registry update: S160 (2026-03-24).
 
     Priority tiers (from Matthew's S130 CCA Report 3-22 notes):
       Crown Jewels (base 9-10): MT-10, MT-0, MT-26, MT-22, MT-28, MT-27
       Top 5-10 (base 7-8): MT-9, MT-11, MT-12, MT-14, MT-21, MT-20
       Growth (base 5-6): MT-17/MT-5, MT-32, MT-33, MT-30, MT-7, MT-31
       Holds/Pivots (base 2-4): MT-1, MT-5, MT-16, MT-19, MT-13, MT-18
+      Meta/Infrastructure (base 8-9): MT-39, MT-40, MT-41
     """
     return [
         # === CROWN JEWELS (Matthew S130: preserve, perfect, grow) ===
@@ -338,6 +339,17 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             aging_rate=0,
             next_action="COMPLETE. trace_analyzer.py + batch_report.py built and validated.",
             tags=["quality", "self-learning"],
+        ),
+        MasterTask(
+            mt_id=8, name="iPhone Remote Control Perfection",
+            base_value=5, status=TaskStatus.BLOCKED,
+            last_touched_session=None, current_session=current_session,
+            phases_completed=0, phases_total=4,
+            aging_rate=0.5,
+            block_reason="Not started. Needs r/ClaudeCode research sweep for remote control posts.",
+            self_resolution_note="PARTIALLY SELF-RESOLVED: Claude Code Channels (MT-23) may cover mobile use case.",
+            next_action="Research: scan for remote control + iPhone + mobile posts. Check if Channels resolves this.",
+            tags=["mobile", "remote"],
         ),
         # === ARCHIVED (stagnation resolver recommended, S100) ===
         MasterTask(
@@ -498,15 +510,7 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
             next_action="Phase 4: Keyboard shortcut to pause/resume loop.",
             tags=["autonomy", "desktop", "crown-jewel"],
         ),
-        MasterTask(
-            mt_id=36, name="Session Efficiency Optimizer",
-            base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=158, current_session=current_session,
-            phases_completed=4, phases_total=5,  # S158: doc_updater.py batch wrap optimization. S147: batch_wrap_learning.py.
-            aging_rate=1.0,
-            next_action="Phase 5: Dashboard tracking of session efficiency metrics over time.",
-            tags=["optimization", "efficiency", "crown-jewel"],
-        ),
+        # MT-36 moved below MT-38 (both now COMPLETED, S160)
         MasterTask(
             mt_id=37, name="AI Investment Research & Portfolio Intelligence",
             base_value=5, status=TaskStatus.BLOCKED,
@@ -519,12 +523,51 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
         ),
         MasterTask(
             mt_id=38, name="Peak/Off-Peak Token Budget System",
-            base_value=8, status=TaskStatus.ACTIVE,
-            last_touched_session=155, current_session=current_session,
-            phases_completed=3, phases_total=4,
-            aging_rate=1.0,  # High — directly impacts all sessions
-            next_action="Phase 4: Autoloop scheduling — prefer off-peak windows for heavy tasks.",
+            base_value=8, status=TaskStatus.COMPLETED,
+            last_touched_session=159, current_session=current_session,
+            phases_completed=4, phases_total=4,  # Phase 4 done S159: peak-aware autoloop scheduling
+            aging_rate=0,
+            next_action="COMPLETE. All 4 phases done: token_budget.py, agent blocking hook, autoloop scheduling.",
             tags=["efficiency", "automation", "universal"],
+        ),
+        MasterTask(
+            mt_id=36, name="Session Efficiency Optimizer",
+            base_value=8, status=TaskStatus.COMPLETED,
+            last_touched_session=160, current_session=current_session,
+            phases_completed=5, phases_total=5,  # Phase 5 done S160: efficiency_dashboard.py
+            aging_rate=0,
+            next_action="COMPLETE. All 5 phases: timer, analyzer, batch_wrap, doc_updater, dashboard.",
+            tags=["optimization", "efficiency"],
+            growth_action="Wire session_timer into /cca-init and /cca-wrap for live data collection",
+            growth_priority=6,
+        ),
+        # === META/INFRASTRUCTURE (S160 — Matthew directive: fix the system) ===
+        MasterTask(
+            mt_id=39, name="Priority Picker Overhaul — Dust Detection",
+            base_value=9, status=TaskStatus.ACTIVE,
+            last_touched_session=160, current_session=current_session,
+            phases_completed=1, phases_total=3,  # Phase 1: registry fixes (S160)
+            aging_rate=1.0,
+            next_action="Phase 2: Growth tasks get aging. Phase 3: 'dust' command shows ALL neglected work.",
+            tags=["meta", "infrastructure", "priority"],
+        ),
+        MasterTask(
+            mt_id=40, name="Automated Nuclear Scanning Loop",
+            base_value=9, status=TaskStatus.ACTIVE,
+            last_touched_session=160, current_session=current_session,
+            phases_completed=0, phases_total=3,
+            aging_rate=1.0,
+            next_action="Phase 1: Wire Reddit+GitHub scanners into recurring auto-run (cron or session-start). Phase 2: Staleness alerts. Phase 3: Results feed into MT-41.",
+            tags=["scanning", "automation", "intelligence"],
+        ),
+        MasterTask(
+            mt_id=41, name="Synthetic MT Origination",
+            base_value=8, status=TaskStatus.ACTIVE,
+            last_touched_session=160, current_session=current_session,
+            phases_completed=0, phases_total=3,
+            aging_rate=1.0,
+            next_action="Phase 1: Auto-propose MTs from BUILD findings in FINDINGS_LOG. Phase 2: Score proposals. Phase 3: Auto-append to MASTER_TASKS.md with PROPOSED status.",
+            tags=["meta", "intelligence", "automation"],
         ),
         # === BLOCKED ===
         MasterTask(
@@ -577,7 +620,7 @@ def get_known_tasks(current_session: int = 131) -> list[MasterTask]:
 class PriorityPicker:
     """Computes priority rankings and picks next task for autonomous work."""
 
-    def __init__(self, current_session: int = 131):
+    def __init__(self, current_session: int = 160):
         self.current_session = current_session
         self.tasks = get_known_tasks(current_session)
         self.directives: list[Directive] = []
@@ -592,11 +635,25 @@ class PriorityPicker:
         self.recurring_tasks.append(task)
 
     def growth_tasks(self) -> list[MasterTask]:
-        """Completed MTs that have growth actions defined."""
+        """Completed MTs that have growth actions defined.
+
+        Growth tasks accumulate dust: their effective priority rises
+        based on how long they've been ignored (sessions_since_touch).
+        This prevents completed-but-growable MTs from becoming invisible.
+        """
         return [t for t in self.tasks
                 if t.status == TaskStatus.COMPLETED
                 and t.growth_action is not None
                 and t.growth_priority > 0]
+
+    def growth_score(self, t: MasterTask) -> float:
+        """Effective growth score that rises with neglect.
+
+        Base growth_priority + 0.1 per session since last touch, capped at +5.
+        This means a growth task untouched for 50 sessions gets +5 boost.
+        """
+        dust_bonus = min(t.sessions_since_touch * 0.1, 5.0)
+        return t.growth_priority + dust_bonus
 
     def full_ranking(self) -> list[dict]:
         """Unified ranking across all item types: directives, recurring, active MTs, growth MTs.
@@ -634,13 +691,13 @@ class PriorityPicker:
                 "detail": t.next_action,
             })
 
-        # Growth opportunities on completed MTs
+        # Growth opportunities on completed MTs (score rises with neglect)
         for t in self.growth_tasks():
             items.append({
                 "type": "growth",
                 "name": f"MT-{t.mt_id}: {t.name} [GROWTH]",
-                "score": t.growth_priority,
-                "detail": t.growth_action,
+                "score": self.growth_score(t),
+                "detail": f"{t.growth_action} (dust: +{min(t.sessions_since_touch * 0.1, 5.0):.1f})",
             })
 
         items.sort(key=lambda x: x["score"], reverse=True)
@@ -814,6 +871,95 @@ class PriorityPicker:
         return [t for t in ranked[:best_resume_pos]
                 if t.mt_id not in resume_mt_ids]
 
+    def dust_report(self, threshold: int = 20) -> str:
+        """Show ALL neglected work — active, growth, and blocked.
+
+        Unlike stagnating() which only checks active tasks at cap,
+        this checks everything: growth tasks untouched for ages, blocked
+        tasks that might be unblockable, and active tasks collecting dust.
+
+        Args:
+            threshold: sessions since last touch to consider "dusty"
+        """
+        lines = ["DUST REPORT — All Neglected Work"]
+        lines.append(f"(threshold: {threshold}+ sessions untouched)\n")
+
+        found_any = False
+
+        # Active tasks collecting dust
+        dusty_active = [t for t in self.active_tasks()
+                        if t.sessions_since_touch >= threshold]
+        if dusty_active:
+            found_any = True
+            dusty_active.sort(key=lambda t: t.sessions_since_touch, reverse=True)
+            lines.append("DUSTY ACTIVE MTs:")
+            for t in dusty_active:
+                lines.append(
+                    f"  MT-{t.mt_id}: {t.name} — {t.sessions_since_touch} sessions ago, "
+                    f"base={t.base_value}, {t.completion_pct:.0f}% done"
+                )
+                lines.append(f"    Next: {t.next_action[:80]}")
+            lines.append("")
+
+        # Growth tasks collecting dust
+        dusty_growth = [t for t in self.growth_tasks()
+                        if t.sessions_since_touch >= threshold]
+        if dusty_growth:
+            found_any = True
+            dusty_growth.sort(key=lambda t: t.sessions_since_touch, reverse=True)
+            lines.append("DUSTY GROWTH OPPORTUNITIES:")
+            for t in dusty_growth:
+                lines.append(
+                    f"  MT-{t.mt_id}: {t.name} — {t.sessions_since_touch} sessions ago, "
+                    f"growth_score={self.growth_score(t):.1f}"
+                )
+                lines.append(f"    Growth: {t.growth_action[:80]}")
+            lines.append("")
+
+        # Blocked tasks that might be unblockable
+        dusty_blocked = [t for t in self.blocked_tasks()
+                         if t.sessions_since_touch >= threshold]
+        if dusty_blocked:
+            found_any = True
+            dusty_blocked.sort(key=lambda t: t.sessions_since_touch, reverse=True)
+            lines.append("DUSTY BLOCKED MTs (may need triage/archival):")
+            for t in dusty_blocked:
+                note = t.self_resolution_note or t.block_reason or "No resolution note"
+                lines.append(
+                    f"  MT-{t.mt_id}: {t.name} — {t.sessions_since_touch} sessions ago"
+                )
+                lines.append(f"    Status: {note[:80]}")
+            lines.append("")
+
+        # Never-touched tasks
+        never_touched = [t for t in self.tasks
+                         if t.last_touched_session is None
+                         and t.status != TaskStatus.COMPLETED]
+        if never_touched:
+            found_any = True
+            lines.append("NEVER STARTED:")
+            for t in never_touched:
+                lines.append(f"  MT-{t.mt_id}: {t.name} — {t.status.value}")
+            lines.append("")
+
+        if not found_any:
+            lines.append("No dusty tasks found. All MTs are actively maintained.")
+
+        # Summary
+        total = len(self.tasks)
+        active_count = len(self.active_tasks())
+        completed_count = len(self.completed_tasks())
+        blocked_count = len(self.blocked_tasks())
+        growth_count = len(self.growth_tasks())
+        dusty_total = len(dusty_active if dusty_active else []) + \
+                      len(dusty_growth if dusty_growth else []) + \
+                      len(dusty_blocked if dusty_blocked else [])
+        lines.append(f"SUMMARY: {total} MTs total | {active_count} active | "
+                     f"{completed_count} complete ({growth_count} with growth) | "
+                     f"{blocked_count} blocked | {dusty_total} dusty")
+
+        return "\n".join(lines)
+
     def init_briefing(self) -> str:
         """Generate priority briefing for /cca-init.
 
@@ -956,9 +1102,9 @@ def main():
     parser = argparse.ArgumentParser(description="MT Priority Picker")
     parser.add_argument("command", nargs="?", default="pick",
                        choices=["pick", "rank", "table", "recommend", "json",
-                                "stagnating", "init-briefing", "full"],
+                                "stagnating", "init-briefing", "full", "dust"],
                        help="Command to run")
-    parser.add_argument("--session", type=int, default=149, help="Current session number")
+    parser.add_argument("--session", type=int, default=160, help="Current session number")
     parser.add_argument("--count", type=int, default=3, help="Number of tasks to pick")
     parser.add_argument("--include-blocked", action="store_true", help="Include unblockable tasks")
     args = parser.parse_args()
@@ -1003,6 +1149,9 @@ def main():
 
     elif args.command == "init-briefing":
         print(picker.init_briefing())
+
+    elif args.command == "dust":
+        print(picker.dust_report())
 
 
 if __name__ == "__main__":
