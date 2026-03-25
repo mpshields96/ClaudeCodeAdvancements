@@ -3,30 +3,24 @@
 
 ---
 
-## Current State (as of Session 162 — 2026-03-26)
+## Current State (as of Session 163 — 2026-03-25)
 
-**Phase:** Session 162 COMPLETE. Cross-chat learning loop + MT completions + model drift fix. Grade: A.
+**Phase:** Session 163 COMPLETE. MT-41 Phase 2-3, REQ-025 research, MT-28 growth, MT-32 Phase 3. Grade: A.
 
-**What was done this session (S162):**
-- Cross-chat learning loop: learning_loop.py (23 tests) — automated outcome reporting + research prioritization
-- MT-40 COMPLETE (Phase 4): scan_executor.py (17 tests) — auto-trigger pipeline wired for /cca-auto
-- Priority picker dust fix: stagnation penalty -> +1.0 bonus, growth dust rate 0.1->0.2/session cap 5->10
-- MT-22 COMPLETE: Desktop Electron autoloop validated by 160+ sessions
-- MT-35 COMPLETE: autoloop_toggle.sh keyboard shortcut + macOS setup instructions
-- Model drift fix: autoloop_trigger.py now sends /model claude-opus-4-6[1m] before each session
-- REQ-037 answered: Maker-side limit orders ALREADY IMPLEMENTED (maker_mode=True in bot)
-- REQ-038 answered: Cross-chat learning loop built this session
-- MT-42 marked BLOCKED: Kalshi API has no trader attribution for copytrading
-- Added outcome_report + research_priority categories to cross_chat_queue.py
-- 8 commits, 40 new tests added
-- **Tests**: 229 suites, 9113 tests passing. All green.
+**What was done this session (S163):**
+- MT-41 Phase 2-3 COMPLETE: cluster scoring + MASTER_TASKS append + /cca-init briefing (mt_originator.py, 31 tests)
+- REQ-025 follow-up DELIVERED: FLB confirmed across all Kalshi categories (Whelan 2026, Diercks 2026, QuantPedia). maker_sniper_v1 identified as highest-ROI next step. Written to CCA_TO_POLYBOT.md.
+- MT-28 growth: principle seeding from FINDINGS_LOG.md (principle_seeder.py, 19 tests, 40 principles seeded from 200+ point findings)
+- MT-32 Phase 3: design_linter.py — anti-slop lint rules for HTML/SVG (colors, fonts, spacing, AI-slop detection, 31 tests)
+- 4 commits, 81 new tests added (9113 -> 9194), 3 new suites (229 -> 232)
+- **Tests**: 232 suites, 9194 tests passing. All green.
 
 **Next:**
-1. REQ-025 follow-up: economics_sniper_v1 validation (paper pipeline, April 8 data)
-2. MakerSniperStrategy: paper-trade maker-side limit orders (architecture sketch delivered)
-3. MT-41 Phase 2-3: Score proposals with community signal + surface in /cca-init
-4. MT-32 Phase 6: Design system v2 (design tokens, lint rules)
-5. Growth: MT-28 principle seeding from nuclear scan findings (score 15.8, highest growth)
+1. Wire MT-41 --briefing into /cca-init skill file (proposals surface in startup)
+2. MakerSniperStrategy: paper-trade maker-side limit orders (architecture, REQ-037)
+3. economics_sniper_v1 validation (April 8 CPI data)
+4. MT-32 Phase 4-5: cross-format consistency checker, dashboard v2
+5. MT-33 Phase 4-6: chart integration, self-reference, hardening
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit

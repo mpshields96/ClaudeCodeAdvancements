@@ -2470,3 +2470,25 @@ CLI chat 2:
 - Explored principle_registry integration before checking data volume (only 3 trading principles)
 
 ---
+
+## Session 163 — 2026-03-25
+
+**What changed:**
+- mt_originator.py: Phase 2-3 — cluster detection, score_with_clusters(), generate_rich_proposals(), format_mt_entry(), append_to_master_tasks(), get_top_proposals_for_briefing(), load_proposals() (31 tests in test_mt_originator_phase2.py)
+- CCA_TO_POLYBOT.md: REQ-025 follow-up — FLB research across all Kalshi categories (3 verified papers: Whelan 2026, Diercks 2026, QuantPedia)
+- principle_seeder.py: seed_principles_from_findings() — seeds from FINDINGS_LOG.md BUILD/ADAPT verdicts (19 tests in test_principle_seeder_findings.py)
+- design_linter.py: Design system lint rules — colors, fonts, spacing, anti-slop (31 tests in test_design_linter.py)
+
+**Why:**
+- MT-41 Phase 2-3: Surface community-validated proposals in /cca-init briefing
+- REQ-025: Kalshi bot needs second edge — research confirms maker_sniper_v1 as highest-ROI path
+- MT-28 growth: Nuclear scan findings now feed principle registry -> predictive_recommender pipeline
+- MT-32 Phase 3: Automated enforcement of design tokens prevents AI-slop visual output
+
+**Tests:** 9194/9194 passing (232 suites)
+
+**Lessons:**
+- PDF extraction via WebFetch fails on academic papers — use summaries and secondary sources instead
+- Findings seeder needed Optional[str] sentinel (not empty string) to distinguish "no input" from "read from file"
+
+---
