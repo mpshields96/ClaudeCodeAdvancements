@@ -41,7 +41,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) | 1381 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~9067 tests (~227 suites). All must pass before any work.**
+**Total: ~9113 tests (~229 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -282,3 +282,9 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `mt_originator.py` — MT-41 Phase 1: Synthetic MT origination from FINDINGS_LOG BUILD verdicts (22 tests)
 - `scan_scheduler.py` — MT-40 Phase 1: Per-subreddit staleness policies + scan recommendation (17 tests)
 - `tests/test_efficiency_dashboard.py`, `tests/test_mt_originator.py`, `tests/test_scan_scheduler.py`
+
+### Added in S162
+- `learning_loop.py` — Cross-chat learning feedback loop: OutcomeReport parser, ResearchPriority scorer, run_cycle() (23 tests)
+- `scan_executor.py` — MT-40 Phase 4: Automated scan pipeline orchestrator (17 tests)
+- `autoloop_toggle.sh` — MT-35 Phase 4: One-key autoloop pause/resume with macOS notifications
+- `tests/test_learning_loop.py`, `tests/test_scan_executor.py`

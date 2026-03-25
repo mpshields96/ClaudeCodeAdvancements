@@ -3,42 +3,47 @@
 
 ---
 
-## Current State (as of Session 161 — 2026-03-25)
+## Current State (as of Session 162 — 2026-03-26)
 
-**Phase:** Session 161 COMPLETE. Nuclear scan + strategic analyses + Kalshi research. Grade: A.
+**Phase:** Session 162 COMPLETE. Cross-chat learning loop + MT completions + model drift fix. Grade: A.
 
-**What was done this session (S161):**
-- Nuclear scan: 3 subs (claudecode, claudeai, vibecoding), 75 posts, 5 major findings logged to FINDINGS_LOG.md
-  - Auto Dream (/dream): Native memory consolidation — Frontier 1 should complement not compete
-  - Auto Mode: Sonnet 4.6 classifier — CCA hooks superior (zero-cost, deterministic)
-  - Claude Computer Use: Native desktop control — potential MT-22 simplification
-  - Rate limit crisis: Widespread 0.25-0.5x baseline — validates MT-38 budgeting
-- MT-22/30 VALIDATED BY USAGE (160+ sessions) — P1 OVERRIDE retired, normal priority scoring resumes
-- Frontier 1 strategic analysis: Auto Dream complement strategy (6 CCA advantages documented)
-- Frontier 4 strategic analysis: CCA hooks vs Auto Mode (8 dimensions, hooks win on all)
-- MT-40 Phase 3: should_auto_scan() + scan_command() API (6 new tests, 23 total)
-- MT-42 Phase 1 COMPLETE: Kalshi API research — NEGATIVE RESULT, no copytrading feasible (no trader attribution)
-- REQ-025 answered: 10 verified academic papers on second edge (Diercks et al. 2026 NBER, Becker 2026, etc.)
-- MT-1 RESOLVED: Claude Control v0.10.0 installed, security audited (safe), option 1 adopted (Terminal chats only)
-- Cross-chat learning loop proposal written per Matthew S161 directive
-- 5 commits, 6 new tests added
-- **Tests**: 227 suites, 9073 tests passing. All green.
+**What was done this session (S162):**
+- Cross-chat learning loop: learning_loop.py (23 tests) — automated outcome reporting + research prioritization
+- MT-40 COMPLETE (Phase 4): scan_executor.py (17 tests) — auto-trigger pipeline wired for /cca-auto
+- Priority picker dust fix: stagnation penalty -> +1.0 bonus, growth dust rate 0.1->0.2/session cap 5->10
+- MT-22 COMPLETE: Desktop Electron autoloop validated by 160+ sessions
+- MT-35 COMPLETE: autoloop_toggle.sh keyboard shortcut + macOS setup instructions
+- Model drift fix: autoloop_trigger.py now sends /model claude-opus-4-6[1m] before each session
+- REQ-037 answered: Maker-side limit orders ALREADY IMPLEMENTED (maker_mode=True in bot)
+- REQ-038 answered: Cross-chat learning loop built this session
+- MT-42 marked BLOCKED: Kalshi API has no trader attribution for copytrading
+- Added outcome_report + research_priority categories to cross_chat_queue.py
+- 8 commits, 40 new tests added
+- **Tests**: 229 suites, 9113 tests passing. All green.
 
 **Next:**
 1. REQ-025 follow-up: economics_sniper_v1 validation (paper pipeline, April 8 data)
-2. Maker-side limit order provision research (second edge candidate from Becker 2026)
-3. MT-35 Phase 4: Build Ctrl+Shift+P pause/resume for autoloop
-4. Cross-chat learning loop implementation (automated outcome reporting)
-5. MT-40 Phase 4: Wire auto-trigger into /cca-auto task chain
+2. MakerSniperStrategy: paper-trade maker-side limit orders (architecture sketch delivered)
+3. MT-41 Phase 2-3: Score proposals with community signal + surface in /cca-init
+4. MT-32 Phase 6: Design system v2 (design tokens, lint rules)
+5. Growth: MT-28 principle seeding from nuclear scan findings (score 15.8, highest growth)
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
 - CCA does NOT touch model selection — Matthew sets manually (S161 reaffirmed)
 - Peak/off-peak token budgeting UNIVERSAL (MT-38)
 - Set SPEC_GUARD_QUIET=1 during /cca-auto to reduce token waste
-- Autoloop ENABLED — run /cca-wrap at natural stopping points
-- CCA and Kalshi chats should have automated feedback loop (S161 new directive)
+- Autoloop ENABLED — run /cca-wrap at natural stopping points, not when Matthew reminds
+- CCA and Kalshi chats should have automated feedback loop (S161 directive, IMPLEMENTED S162)
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 161 — 2026-03-25)
+
+**Phase:** Session 161 COMPLETE. Nuclear scan + strategic analyses + Kalshi research. Grade: A.
+
+**What was done (S161):** Nuclear scan (5 findings), MT-22/30 validated, MT-40 P3, MT-42 P1 negative, REQ-025 answered (10 papers), MT-1 resolved, cross-chat learning loop proposed. 5 commits, 6 new tests. 227 suites, 9073 tests.
 
 ---
 

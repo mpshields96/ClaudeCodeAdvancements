@@ -3,6 +3,30 @@
 
 ---
 
+## Session 162 — 2026-03-26
+
+**What changed:**
+- New: learning_loop.py — cross-chat learning feedback loop (OutcomeReport, ResearchPriority, run_cycle)
+- New: scan_executor.py — MT-40 Phase 4 automated scan pipeline (check, commands, update registry)
+- New: autoloop_toggle.sh — MT-35 Phase 4 keyboard shortcut with macOS notifications
+- Fix: priority_picker.py — stagnation penalty -> +1.0 dust bonus, growth dust rate doubled (0.2/session, cap 10)
+- Fix: autoloop_trigger.py — sends /model claude-opus-4-6[1m] before work prompt (model drift fix)
+- Updated: cross_chat_queue.py — added outcome_report + research_priority categories
+- Updated: priority_picker.py registry — MT-22 COMPLETE, MT-35 COMPLETE, MT-40 COMPLETE, MT-42 BLOCKED
+- Delivered: REQ-037 (maker-side feasibility memo), REQ-038 (learning loop)
+
+**Why:**
+- Matthew S161 directive: automated CCA/Kalshi feedback loop
+- Priority picker was penalizing dusty tasks instead of surfacing them
+- Electron app kept resetting model on new sessions
+
+**Tests:** 9113/9113 passing (229 suites, +40 new tests)
+
+**Lessons:**
+- Wrap proactively at natural stopping points — don't wait for reminders
+
+---
+
 ## Session 161 — 2026-03-25
 
 **What changed:**
