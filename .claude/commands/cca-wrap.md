@@ -23,15 +23,11 @@ Run every test suite. ALL must pass before any docs get updated.
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
-for f in $(find . -name "test_*.py" -type f | sort); do
-  echo "=== $f ==="
-  python3 "$f" 2>&1 | tail -1
-done
+python3 parallel_test_runner.py --workers 8
 ```
 
-If any test fails: fix it before proceeding. Do not skip failing tests to update docs.
-
-Count total tests passing (sum all "Ran N tests" numbers).
+This runs all suites in ~26s (vs ~110s serial). If any suite fails, the runner reports it.
+Fix failures before proceeding. Do not skip failing tests to update docs.
 
 ---
 

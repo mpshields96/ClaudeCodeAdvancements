@@ -257,10 +257,15 @@ Verified against Claude Code docs in Session 2 — treat as settled:
 ## Test Commands (run before any session work)
 
 ```bash
-for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done
+# Parallel (preferred — ~26s with 8 workers):
+python3 parallel_test_runner.py --workers 8
+
+# Quick smoke (init only — ~2s, 10 core suites):
+python3 parallel_test_runner.py --quick --workers 8
 ```
 
-All 38 suites must show "OK" (1552 total) before touching any other file.
+All 223 suites must pass (8959 total) before touching any other file.
+Never use the serial for loop — parallel runner is 4-5x faster.
 See `REFERENCE.md` for the full test-by-test breakdown.
 
 ---

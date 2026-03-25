@@ -95,11 +95,10 @@ If smoke passes, proceed. If smoke fails, run the failing suite individually to 
 **Full suite** (only if smoke fails or explicitly requested):
 
 ```bash
-for f in $(find . -name "test_*.py" -type f | sort); do
-  echo "=== $f ==="
-  python3 "$f" 2>&1 | tail -1
-done
+python3 parallel_test_runner.py --workers 8
 ```
+
+This runs all 223 suites in ~26s (vs ~110s serial). Never use the serial for loop.
 
 ---
 
