@@ -3,43 +3,49 @@
 
 ---
 
-## Current State (as of Session 175 — 2026-03-25)
+## Current State (as of Session 176 — 2026-03-25)
 
-**Phase:** Session 175 COMPLETE. MT-49 Phase 5 — ROI pipeline enrichment + automated commit scanning. Grade: A.
+**Phase:** Session 176 COMPLETE. Self-Learning Evaluation Day + CUSUM Guard Wiring + REQ-042. Grade: A.
 
-**What was done this session (S175):**
-- outcomes_enricher.py — NEW: Parses CCA_TO_POLYBOT.md for missing REQ delivery entries
-  - Added 13 REQ entries (REQ-025 through REQ-040) to research_outcomes.jsonl with proper req_id fields
-  - Known title mapping, zero-padding normalization, deduplication
-  - 25 new tests in test_outcomes_enricher.py
-- commit_scanner.py — NEW: Scans polymarket-bot git log for REQ-referencing commits
-  - Categorizes commits (implementation/testing/documentation), matches to outcomes
-  - Found 4 real implementations (REQ-027, REQ-030, REQ-036, REQ-040) from Kalshi commits
-  - 23 new tests in test_commit_scanner.py
-- research_roi_resolver.py improved:
-  - Added ACK_REQ_NO_STATUS_RE for parsing ACK headers without explicit status keyword
-  - Integrated commit_scanner into ROIResolver.run() as second resolution source
-  - 6 new tests (4 no-status parsing + 2 integration)
-- ROI resolution: 2/47 -> 8/60 (4x improvement, 3 sources: fuzzy, req_id, commit_scan)
-- test_handoff_generator.py: Fixed false positive from git log in RECENT COMMITS section
-- Cross-chat coordination checked — no pending Kalshi requests
-- 4 commits, 55 new tests (9667 -> 9722), no regressions
-- **Tests**: 249 suites, 9722 tests passing (0 failures — pre-existing handoff bug fixed)
+**What was done this session (S176):**
+- **Self-learning evaluation (BOTH systems):**
+  - CCA: 70% bloat by LOC. Core loop (journal→reflect→SKILLBOOK→injection) works. MT-26 signal pipeline = 2,110 LOC dead code. improver.py loop broken. predictive_recommender not wired.
+  - Kalshi: auto-guards WORKING. Bayesian posterior partially wired (kelly_scale unused). CUSUM computed but never auto-triggered guards (NOW FIXED).
+- **CUSUM drift detection → auto_guard_discovery.py** (polymarket-bot commit CCA-S176)
+  - cusum_statistic() — Page 1954 CUSUM, Biometrika 41:100-115
+  - Guards now promoted when CUSUM S >= 5.0 AND n >= 15 AND WR < break-even
+  - guard_type field: "STATISTICAL" vs "CUSUM_DRIFT" for observability
+  - All 44 existing polybot tests pass, 13 new CCA tests
+- **REQ-042 COMPLETE** — Loss magnitude analysis delivered to CCA_TO_POLYBOT.md
+  - Tail loss audit: 95.6% of losses > $5, avg loss = -$17.30
+  - Guard coverage: 64.4% of historical losses now blocked
+  - Post-guard profile: WR 97.2%, PnL/trade $0.70 (7x improvement)
+  - Position sizing formula: max_contracts = MAX_LOSS / (1 - price/100)
+  - Rolling WR: 17 episodes below 93%, recommended CUSUM over rolling WR circuit breaker
+- **outcomes_enricher → slim_init** (9 new tests) — auto-enriches REQ entries at startup
+- **predictive_recommender → slim_init** (6 new tests) — closes MT-28 Phase 5 gap
+- **Nuclear Reddit scan:** 10 findings, 60% APF (3 BUILD, 3 ADAPT, 4 REFERENCE)
+  - Key: Agent Teams/TeammateTool (official), memsearch (markdown-first memory), 1M context window
+- Cross-chat: REQ-042 delivered, CUSUM delivery written, no pending Kalshi requests
+- 4 commits, 28 new tests (9722 → 9750), zero regressions
+- **Tests**: 250 suites, 9750 tests passing
 
 **Next (prioritized):**
-1. Wire outcomes_enricher into slim_init for auto-enrichment at session start
-2. economics_sniper_v1 deployment validation via Kalshi monitoring chat
-3. MT-49 Phase 6+: adversarial self-testing, session-over-session metrics
-4. Cross-chat coordination — check for new Kalshi requests
-5. Any remaining MASTER_TASKS backlog
 
-**Matthew directives:**
+1. **Agent Teams/TeammateTool awareness for agent-guard** — Official Anthropic multi-agent system uses worktree isolation. CCA's agent-guard must handle TeammateTool conflicts + auto mode safety classifier.
+2. **MT-26 dead code cleanup** — 2,110 LOC of dead signal pipeline. Remove or wire into Kalshi bot.
+3. **MAX_LOSS position sizing cap** — Build into polybot sizing.py (REQ-042 item 1). MAX_LOSS=$7.50 cap.
+4. **Wire kelly_scale from drift_posterior.json into sizing.py** — Currently fixed 0.25x Kelly.
+5. **memsearch patterns** — Study markdown-first hook patterns for CCA memory-system evolution.
+6. **Context-monitor 1M recalibration** — Update DEFAULT_WINDOW auto-detection.
+7. **MT-37 UBER** — Investment/AI trading master task.
+
+**Matthew directives (carried forward):**
+- Self-learning day theme COMPLETE — evaluate done, CUSUM wired, predictive_recommender wired
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
 - CCA does NOT touch model selection — Matthew sets manually (S161 reaffirmed)
 - Peak/off-peak token budgeting UNIVERSAL (MT-38)
-- Set SPEC_GUARD_QUIET=1 during /cca-auto to reduce token waste
-- Autoloop ENABLED — run /cca-wrap at natural stopping points, not when Matthew reminds
-- CCA and Kalshi chats should have automated feedback loop (S161 directive, IMPLEMENTED S162)
+- Autoloop ENABLED
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
 
 ---

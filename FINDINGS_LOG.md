@@ -434,3 +434,82 @@
 [2026-03-25] [REFERENCE] [MT-1 Visual Grid] PATAPIM — Terminal IDE with 9-session Ctrl+1-9 switching. — patapim.ai
 [2026-03-25] [REFERENCE] [MT-1 Visual Grid] Nimbalyst — 6+ sessions, unified kanban, visual editing, free. — nimbalyst.com
 [2026-03-25] [REFERENCE] [MT-1 Visual Grid] Native Claude Agent Teams — built-in split panes with tmux/iTerm2. No install needed. — code.claude.com/docs/en/agent-teams
+
+## S176 Nuclear Scan — 2026-03-25 (Self-Learning Evaluation Day)
+
+### [BUILD] Agent Teams / TeammateTool (Official Anthropic Launch)
+- Source: addyosmani.com/blog/claude-code-agent-teams/ + Reddit discussions
+- Frontier: F4 (Multi-Agent Conflict Guard)
+- Anthropic shipped Agent Teams as research preview with Opus 4.6
+- Lead agent delegates to parallel teammates, each in own context window + git worktree
+- Enable: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1" in settings.json
+- Each teammate stays ~40% context vs 80-90% single agent
+- CCA's agent-guard needs TeammateTool conflict handling + worktree awareness
+
+### [BUILD] memsearch (Zilliz/Milvus) — Markdown-First Memory
+- Source: github.com/zilliztech/memsearch
+- Frontier: F1 (Persistent Cross-Session Memory)
+- Markdown files as source of truth (human-readable, git-friendly)
+- Four shell hooks + background watch process, no MCP server
+- Validates CCA's hook-based memory architecture
+- Key differentiator: vector search via Milvus vs CCA's confidence-tiered TTL
+
+### [BUILD] Usage Dashboard Gap Confirmed
+- Source: dev.to/kuldeep_paul (token monitoring guide)
+- Frontier: F5 (Usage Dashboard)
+- Official /cost and /stats are post-hoc only, no attribution by project
+- Average developer ~$6/day, 90% under $12/day
+- CCA's real-time monitoring + predictive alerts fills confirmed gap
+
+### [ADAPT] 1M Context Window + Compaction Numbers
+- Source: claudefa.st/blog/guide/mechanics/1m-context-ga/
+- Frontier: F3 (Context Health Monitor)
+- Opus 4.6 = 1M context (vs 256K for 4.5)
+- 15% decrease in compaction events
+- ~33K token buffer, compacts at ~83.5%
+- CCA zones need recalibration for 1M window
+
+### [ADAPT] Auto Mode (March 24, 2026)
+- Source: buildfastwithai.com/blogs/claude-code-auto-mode-2026
+- Frontier: F4 (Multi-Agent Guard)
+- AI safety classifier watches every tool call
+- Research preview on Team plan
+- CCA's agent-guard needs to account for auto mode bypassing manual permissions
+
+### [ADAPT] Hooks Expansion — 21 Lifecycle Events
+- Source: code.claude.com/docs/en/hooks-guide
+- Frontier: F1/F3/F4 (all hook-based)
+- New events: InstructionsLoaded, ConfigChange, WorktreeCreate/Remove
+- Four handler types: command, http, prompt, agent
+- CCA must audit hooks against new lifecycle
+
+### [REFERENCE] claude-mem (thedotmack) — Auto-Capture Memory
+- Source: github.com/thedotmack/claude-mem
+- Frontier: F1
+- SQLite + ChromaDB, AI compression, auto-injection
+- Different arch (opaque DB vs markdown) — study compression patterns
+
+### [REFERENCE] neural-memory MCP Server
+- Source: docs.bswen.com/blog/2026-03-25-neural-memory-mcp-claude-code/
+- Frontier: F1
+- MCP server with remember()/recall() tools + local SQLite
+- Validates MCP-as-memory-server pattern
+
+### [REFERENCE] claude-flow — 60+ Agent Swarm with SONA Self-Learning
+- Source: kieranklaassen GitHub gists
+- Frontier: F1/F4/Self-Learning
+- SONA self-learning system, hybrid memory (in-memory + disk)
+- Pre/post-task hooks log patterns and trigger learning
+
+### [REFERENCE] Planner/Worker/Judge Pattern
+- Source: david.coffee/vibe-coding-advanced/
+- Frontier: F4
+- Three-role architecture: Planners, Workers, Judge agents
+- CCA's hivemind already implements Planner/Worker; Judge role is additive
+
+### APF Update
+- Findings this scan: 10
+- BUILD: 3 (30%)
+- ADAPT: 3 (30%)
+- REFERENCE: 4 (40%)
+- Actionable (BUILD+ADAPT): 6/10 = 60% — above 40% APF target

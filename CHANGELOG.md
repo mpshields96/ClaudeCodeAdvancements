@@ -2719,3 +2719,30 @@ CLI chat 2:
 - from_db() calibration using price variance as spread proxy works well for parametric models
 
 ---
+
+## Session 176 — 2026-03-25
+
+**What changed:**
+- slim_init.py: Wired outcomes_enricher (Step 3.12) + predictive_recommender (Step 3.13) into session startup
+- tests/test_slim_init.py: +15 tests (outcomes_enricher wiring 9 + predictive_recommender 6)
+- tests/test_cusum_guard.py: NEW — 13 tests for CUSUM drift detection in auto_guard_discovery.py
+- polymarket-bot/scripts/auto_guard_discovery.py: Added cusum_statistic() + CUSUM_DRIFT guard type
+- FINDINGS_LOG.md: 10 new findings from nuclear Reddit scan (60% APF)
+- CCA_TO_POLYBOT.md: CUSUM delivery + REQ-042 complete analysis
+- Self-learning evaluation: both CCA and Kalshi systems assessed
+
+**Why:**
+- Matthew S175 directive: Self-Learning Evaluation + Nuclear Enhancement Day
+- REQ-042 URGENT from Kalshi chat: loss magnitude crisis, position sizing math needed
+- CUSUM wiring converts reporting pipeline into actual self-learning (highest-impact change)
+- Wiring outcomes_enricher + predictive_recommender closes existing gaps identified in evaluation
+
+**Tests:** 250/250 suites, 9750/9750 passing (28 new)
+
+**Lessons:**
+- CCA self-learning is 70% bloat — MT-26 signal pipeline (2,110 LOC) is dead code
+- CUSUM guards found no new price buckets on live DB scan (existing guards already cover)
+- The value is FUTURE drift detection before binomial p-value reaches significance
+- Position sizing caps (MAX_LOSS formula) are higher leverage than Kelly adjustments
+
+---

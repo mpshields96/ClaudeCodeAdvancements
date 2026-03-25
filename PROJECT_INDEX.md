@@ -41,7 +41,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) + figure integration (slides/dashboard/website, MT-32 Phase 7) | 1411 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~9667 tests (~247 suites). All must pass before any work.**
+**Total: ~9750 tests (~250 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -238,6 +238,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 | `tests/test_phase2_e2e.py` | Phase 2 full lifecycle E2E + hardened workflows: conflict detection, stale recovery, high volume, 2-worker scopes (12 tests, S92/S93) |
 | `tests/test_phase2_hardening.py` | Phase 2 hardening: atomic writes, scope conflicts, stale crash recovery (22 tests, S93) |
 | `tests/test_session_daemon_integration.py` | MT-30 Phase 4: Daemon lifecycle, peak transitions, crash recovery chains, audit trail (27 tests, S113) |
+| `tests/test_cusum_guard.py` | CUSUM drift detection for polybot auto_guard_discovery.py (13 tests, S176) |
 
 CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against Python 3.10 + 3.12.
 
