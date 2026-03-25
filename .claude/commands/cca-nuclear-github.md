@@ -4,6 +4,22 @@ Autonomous scan of GitHub repos relevant to CCA frontiers.
 Evaluates repos by stars, activity, license, relevance, and safety.
 No questions needed. Just type `/cca-nuclear-github` and walk away.
 
+## Phase 0 — Discovery (find repos beyond built-in queries)
+
+Run the domain-based repo discoverer to find new repos across all project domains:
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/github_scanner.py discover --json
+```
+
+This searches across claude, trading, research, and dev domains with broader queries
+than the built-in 10. Results are deduped against `github_evaluations.jsonl`.
+
+Review the top EVALUATE-verdict repos. Include any high-scoring discoveries (score >= 70)
+in the Phase 2 deep review alongside the built-in scan results.
+
+Skip if GitHub API is rate-limited (unauthenticated: 10 requests/minute).
+
 ## Phase 1 — Search & Evaluate
 
 ```bash

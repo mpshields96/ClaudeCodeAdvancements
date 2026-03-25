@@ -71,11 +71,12 @@
 - DEFAULT_WINDOW 200K→1M across meter.py, post_compact.py, compact_anchor.py, statusline.py
 - Commit 59c42ff
 
-### C5. MT-37 UBER [Areas 1-7 DONE S178+S179 — Areas 8-10 STILL PENDING]
-- MT37_RESEARCH.md: 1196 lines, areas 1-7 complete, 30 papers synthesized
+### C5. MT-37 UBER [DONE S180 — Phase 1 COMPLETE]
+- MT37_RESEARCH.md: 1762 lines, all 10 areas complete, 42 papers synthesized
 - S178: Areas 1-3 (MPT, Factor Models, Risk Parity) — 745 lines, 15 papers
 - S179: Areas 4-7 (Momentum & Value, Behavioral Finance, TLH, Retirement) — +451 lines, +15 papers
-- **Remaining:** Area 8 (Kelly Criterion), Area 9 (Index Investing), Area 10 (Alt Risk Premia)
+- S180: Areas 8-10 (Kelly Criterion, Index Investing, Alt Risk Premia) — +578 lines, +12 papers
+- Phase 1 COMPLETE. Next: Phase 2 (Architecture Design) when prioritized.
 
 ### C6. Nuclear Reddit/GitHub Discovery Tools [IN PROGRESS S179]
 - Build subreddit_discoverer.py: domain-based subreddit discovery (find subs we're NOT tracking)

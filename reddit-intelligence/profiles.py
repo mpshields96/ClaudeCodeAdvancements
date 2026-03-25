@@ -189,6 +189,18 @@ BUILTIN_PROFILES = {
         ],
         domain="trading",
     ),
+    # MCP-specific — discovered by subreddit_discoverer.py (Session 180)
+    "modelcontextprotocol": SubredditProfile(
+        subreddit="modelcontextprotocol",
+        min_score=15,
+        timeframe="month",
+        limit=75,
+        extra_needle_keywords=[
+            "mcp", "server", "tool", "hook", "claude", "sdk",
+            "protocol", "integration", "transport", "resource",
+        ],
+        domain="claude",
+    ),
     # AI agent/framework subs — added per Matthew's directive (Session 45)
     "autogpt": SubredditProfile(
         subreddit="AutoGPT",

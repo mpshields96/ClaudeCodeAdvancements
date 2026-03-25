@@ -14,6 +14,20 @@ No questions needed. Just type `/cca-nuclear-daily` and walk away.
 4. Reviews top NEEDLEs with full /cca-review treatment
 5. Logs findings and feeds self-learning journal
 
+## Phase 0 — Discovery (find new subreddits we're not tracking)
+
+Run the subreddit discoverer to check for new relevant subs across all domains:
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/subreddit_discoverer.py --top 5 --json
+```
+
+Review the top candidates. If any score >= 70 and have > 5K subscribers:
+1. Note them in the daily briefing output
+2. Optionally add to profiles.py for future scans (requires code change — log as TODO)
+
+This step uses Reddit's public API — no auth or tokens needed. Skip if rate-limited.
+
 ## Phase 1 — Fetch & Classify
 
 ```bash
