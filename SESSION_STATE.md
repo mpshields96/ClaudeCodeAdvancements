@@ -3,36 +3,41 @@
 
 ---
 
-## Current State (as of Session 160 — 2026-03-25)
+## Current State (as of Session 161 — 2026-03-25)
 
-**Phase:** Session 160 COMPLETE. Meta overhaul session: dust detection, MT archival, synthetic origination, scan scheduler, 3 Reddit reviews, CLV delivery, MT-42 created. Grade: A.
+**Phase:** Session 161 COMPLETE. Nuclear scan + strategic analyses + Kalshi research. Grade: A.
 
-**What was done this session (S160):**
-- MT-39 COMPLETE (3/3): Priority picker overhaul — growth_score with dust bonus, `dust` CLI, ARCHIVED status, 8 MTs archived per Matthew (36e40d7, ec41a4f)
-- MT-41 Phase 1: Synthetic MT originator (mt_originator.py, 22 tests) — FINDINGS_LOG BUILD coverage detection (526c14d)
-- MT-40 Phase 1+2: Scan scheduler (scan_scheduler.py, 17 tests) + SCAN ALERT in init briefing (f0590b5, 6fac076)
-- MT-36 Phase 5: Efficiency dashboard (efficiency_dashboard.py, 28 tests) — self-contained HTML (66480bd)
-- MT-42 created: Kalshi Smart Money Copytrading — follow others' edges via order flow (51adbd9)
-- 8 MTs archived: MT-5,8,16,19,23,25,31,34 (Matthew decisions S160)
-- MT-1 research: Claude Control v0.10.0 found — viable visual grid solution
-- 3 Reddit reviews: Kalshi bots (REFERENCE), algotrading hazmat (SKIP), Claude Code docs (REFERENCE)
-- CLV tracking design delivered to Kalshi (REQ-036 answered)
-- 11 commits, 108 new tests added
-- **Tests**: 227 suites, 9067 tests passing. All green.
+**What was done this session (S161):**
+- Nuclear scan: 3 subs (claudecode, claudeai, vibecoding), 75 posts, 5 major findings logged to FINDINGS_LOG.md
+  - Auto Dream (/dream): Native memory consolidation — Frontier 1 should complement not compete
+  - Auto Mode: Sonnet 4.6 classifier — CCA hooks superior (zero-cost, deterministic)
+  - Claude Computer Use: Native desktop control — potential MT-22 simplification
+  - Rate limit crisis: Widespread 0.25-0.5x baseline — validates MT-38 budgeting
+- MT-22/30 VALIDATED BY USAGE (160+ sessions) — P1 OVERRIDE retired, normal priority scoring resumes
+- Frontier 1 strategic analysis: Auto Dream complement strategy (6 CCA advantages documented)
+- Frontier 4 strategic analysis: CCA hooks vs Auto Mode (8 dimensions, hooks win on all)
+- MT-40 Phase 3: should_auto_scan() + scan_command() API (6 new tests, 23 total)
+- MT-42 Phase 1 COMPLETE: Kalshi API research — NEGATIVE RESULT, no copytrading feasible (no trader attribution)
+- REQ-025 answered: 10 verified academic papers on second edge (Diercks et al. 2026 NBER, Becker 2026, etc.)
+- MT-1 RESOLVED: Claude Control v0.10.0 installed, security audited (safe), option 1 adopted (Terminal chats only)
+- Cross-chat learning loop proposal written per Matthew S161 directive
+- 5 commits, 6 new tests added
+- **Tests**: 227 suites, 9073 tests passing. All green.
 
 **Next:**
-1. Nuclear scan — all 3 core subs stale (SCAN ALERT active)
-2. MT-1: Matthew to install Claude Control v0.10.0 (DMG from GitHub)
-3. MT-42 Phase 1: Research Kalshi API order flow visibility
-4. MT-40 Phase 3: Auto-trigger nuclear scan when top_target stale
-5. MT-22 supervised trial (Matthew hands-on)
+1. REQ-025 follow-up: economics_sniper_v1 validation (paper pipeline, April 8 data)
+2. Maker-side limit order provision research (second edge candidate from Becker 2026)
+3. MT-35 Phase 4: Build Ctrl+Shift+P pause/resume for autoloop
+4. Cross-chat learning loop implementation (automated outcome reporting)
+5. MT-40 Phase 4: Wire auto-trigger into /cca-auto task chain
 
 **Matthew directives:**
-- 50%+ time on Kalshi bot work (higher priority)
+- 50%+ time on Kalshi bot work (higher priority) — S161 explicit
+- CCA does NOT touch model selection — Matthew sets manually (S161 reaffirmed)
 - Peak/off-peak token budgeting UNIVERSAL (MT-38)
 - Set SPEC_GUARD_QUIET=1 during /cca-auto to reduce token waste
-- Autoloop ENABLED — CCA does NOT touch model selection, Matthew sets manually
-- CCA report is DAILY, end-of-day only
+- Autoloop ENABLED — run /cca-wrap at natural stopping points
+- CCA and Kalshi chats should have automated feedback loop (S161 new directive)
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
 
 ---

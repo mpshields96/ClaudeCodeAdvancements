@@ -3,6 +3,32 @@
 
 ---
 
+## Session 161 — 2026-03-25
+
+**What changed:**
+- Nuclear scan: 5 findings from 75 posts across r/ClaudeCode, r/ClaudeAI, r/vibecoding (FINDINGS_LOG.md, scan_registry.json)
+- MT-22/30 VALIDATED BY USAGE — P1 OVERRIDE retired in MASTER_TASKS.md
+- Frontier 1 + Frontier 4 strategic analyses added to MASTER_TASKS.md
+- MT-40 Phase 3: `should_auto_scan()` + `scan_command()` in scan_scheduler.py (6 new tests)
+- MT-42 Phase 1: Kalshi API research — negative result delivered to CCA_TO_POLYBOT.md
+- REQ-025: 10 verified papers on second edge delivered to CCA_TO_POLYBOT.md
+- MT-1: Claude Control installed + audited (option 1: Terminal chats only)
+- Cross-chat learning loop proposal in CCA_TO_POLYBOT.md
+
+**Why:**
+- Nuclear scan overdue (3 subs stale 4-7 days) — cleared SCAN ALERT
+- Anthropic shipped 3 major features this week — needed strategic response
+- Kalshi bot near self-sustaining ($261/mo) — second edge research is URGENT
+- Matthew directive: more Kalshi focus, automated CCA<->Kalshi feedback loop
+
+**Tests:** 9073/9073 passing (227 suites). +6 new.
+
+**Lessons:**
+- Run /cca-wrap at natural stopping points — don't wait for Matthew to remind
+- CCA must NOT touch model selection in UI — Matthew sets manually
+
+---
+
 ## Session 160 — 2026-03-25
 
 **What changed:**

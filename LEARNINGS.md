@@ -619,3 +619,30 @@
 - Kept MT-1 (Maestro — wants visual grid)
 - Created MT-42 (Kalshi Smart Money Copytrading — follow others' edges via order flow)
 - "I'm okay on all others" = archive everything except what's explicitly wanted
+
+### CCA must NEVER touch model selection — Severity: 2 — Count: 2
+- **Anti-pattern:** CCA autoloop or session commands changing the model type in Claude.app UI
+- **Fix:** CCA does NOT touch model selection. Matthew sets it manually. Period.
+- **Context:** Model changed from "Opus 4.6 (1M context)" back to "Opus 4.6" — Matthew flagged S161
+- **First seen:** 2026-03-23 (S134 directive)
+- **Last seen:** 2026-03-25 (S161 — Matthew reaffirmed)
+- **Files:** autoloop_trigger.py, desktop_automator.py, /cca-init, /cca-auto, /cca-wrap
+
+### Run /cca-wrap proactively — Severity: 1 — Count: 1
+- **Anti-pattern:** Working continuously without wrapping until Matthew reminds you
+- **Fix:** Run /cca-wrap at natural stopping points (after completing a major task chain)
+- **First seen:** 2026-03-25 (S161)
+
+### Anthropic features that burn tokens — standing policy — Severity: 2 — Count: 1
+- **Anti-pattern:** Opting into Anthropic features that charge tokens for things CCA hooks do for free
+- **Fix:** Never enable Auto Mode (Sonnet classifier per tool call). Our hook-based guards are zero-cost and deterministic.
+- **Context:** Auto Mode uses Sonnet 4.6 classifier on every tool call, charges tokens. CCA hooks: <50ms, zero tokens.
+- **First seen:** 2026-03-25 (S161)
+- **Files:** Any settings.json or permission mode configuration
+
+### Kalshi API has no trader attribution — Severity: 1 — Count: 1
+- Orderbook: aggregate bids only (price + quantity). No trader IDs, no individual orders.
+- Trades: public tape with ticker/price/quantity/timestamp. No buyer/seller identity.
+- Portfolio endpoints: YOUR data only (authenticated).
+- MT-42 copytrading NOT feasible on Kalshi. Reframe as order flow signal detection.
+- First seen: 2026-03-25 (S161)
