@@ -961,7 +961,7 @@
   }
 }
 
-// Group: Active
+// Group: Active (condensed — compact rows with progress + status one-liner)
 #if data.master_tasks_active.len() > 0 {
   v(3mm)
   text(size: 12pt, weight: "bold", fill: black)[Active]
@@ -969,11 +969,50 @@
   text(size: 8pt, fill: light)[#data.master_tasks_active.len() tasks in progress]
   v(3mm)
   for task in data.master_tasks_active {
-    task-card(task)
+    box(
+      width: 100%,
+      stroke: (left: 3pt + blue, rest: 0.5pt + faint),
+      radius: (right: 4pt),
+      inset: (x: 10pt, y: 7pt),
+      fill: white,
+    )[
+      // Row 1: ID, name, badge, test count
+      #grid(
+        columns: (auto, 1fr, auto, auto),
+        column-gutter: 6pt,
+        align: (left, left, right, right),
+        text(size: 8pt, font: "Menlo", fill: light)[#task.id],
+        text(size: 9.5pt, weight: "bold", fill: black)[#task.name],
+        if task.keys().contains("test_count") and task.test_count > 0 {
+          text(size: 7.5pt, fill: green)[#sym.checkmark #task.test_count tests]
+        },
+        status-badge("In Progress", blue),
+      )
+      // Row 2: Phase progress (if has phases)
+      #if task.keys().contains("total_phases") and task.total_phases > 0 {
+        v(2mm)
+        grid(
+          columns: (auto, 1fr, auto),
+          column-gutter: 6pt,
+          align: (left, center, right),
+          text(size: 7pt, fill: light)[Phase],
+          progress-bar(task.phases_done, task.total_phases, bar-color: blue),
+          text(size: 7pt, weight: "bold", fill: dark)[#task.phases_done#sym.slash#task.total_phases],
+        )
+      }
+      // Row 3: Status one-liner + next action (if any)
+      #v(1.5mm)
+      #text(size: 8pt, fill: mid)[#task.status]
+      #if task.keys().contains("needs") and task.needs != "" {
+        h(6pt)
+        text(size: 7.5pt, fill: blue, weight: "semibold")[Next: #task.needs]
+      }
+    ]
+    v(2.5pt)
   }
 }
 
-// Group: Pending (not started + blocked)
+// Group: Pending (condensed — one-line per task, similar to completed)
 #if data.master_tasks_pending.len() > 0 {
   v(3mm)
   text(size: 12pt, weight: "bold", fill: black)[Pending & Blocked]
@@ -981,7 +1020,34 @@
   text(size: 8pt, fill: light)[#data.master_tasks_pending.len() tasks awaiting start or unblocked]
   v(3mm)
   for task in data.master_tasks_pending {
-    task-card(task)
+    let (badge-label, badge-color) = if task.category == "blocked" {
+      ("Blocked", red)
+    } else {
+      ("Not Started", light)
+    }
+    box(
+      width: 100%,
+      stroke: (left: 3pt + badge-color, rest: 0.5pt + faint),
+      radius: (right: 4pt),
+      inset: (x: 10pt, y: 6pt),
+      fill: white,
+    )[
+      #grid(
+        columns: (auto, 1fr, auto),
+        column-gutter: 8pt,
+        align: (left, left, right),
+        text(size: 8pt, font: "Menlo", fill: light)[#task.id],
+        text(size: 9pt, weight: "semibold", fill: dark)[#task.name],
+        status-badge(badge-label, badge-color),
+      )
+      #if task.keys().contains("needs") and task.needs != "" {
+        v(1mm)
+        text(size: 7.5pt, fill: if task.category == "blocked" { red } else { mid })[
+          #if task.category == "blocked" [Blocked: ] else [Needs: ]#task.needs
+        ]
+      }
+    ]
+    v(2pt)
   }
 }
 
