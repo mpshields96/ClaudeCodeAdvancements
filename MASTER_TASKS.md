@@ -1604,11 +1604,11 @@ See `CCA_PRIME_DIRECTIVE.md`.
 **What:** Auto-propose new MTs from intelligence findings. Currently, BUILD verdicts in FINDINGS_LOG.md require manual promotion to MTs. This system auto-detects unaddressed BUILD findings and proposes new MTs.
 
 **Phases:**
-- Phase 1: Scan FINDINGS_LOG.md for BUILD verdicts not yet covered by existing MTs. Score by recency, community signal (upvotes), and frontier relevance.
-- Phase 2: Auto-generate MT proposals with name, description, technical path, and estimated phases. Save to `mt_proposals.jsonl`.
-- Phase 3: Surface proposals in /cca-init briefing and priority_picker. Matthew approves or skips.
+- Phase 1 COMPLETE (S160): Scan FINDINGS_LOG.md for BUILD verdicts not yet covered by existing MTs. Score by recency, community signal (upvotes), and frontier relevance. mt_originator.py (22 tests).
+- Phase 2 COMPLETE (S163): Cluster scoring, MASTER_TASKS.md append, /cca-init briefing integration (31 tests in test_mt_originator_phase2.py).
+- Phase 3 COMPLETE (S163): Surface proposals in /cca-init briefing and priority_picker. Wired into slim_init.py via run_mt_proposals() and run_mt_extensions().
 
-**Status:** Phase 1 COMPLETE (S160). mt_originator.py built (22 tests). Phase 2-3 remaining.
+**Status:** COMPLETE (S160-S163). All 3 phases delivered. 53 tests total.
 
 ---
 
