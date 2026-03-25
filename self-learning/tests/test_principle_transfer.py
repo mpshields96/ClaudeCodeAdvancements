@@ -460,5 +460,284 @@ class TestTransferScoreCalculation(unittest.TestCase):
         self.assertEqual(actual, 1.0)
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# MT-49 Phase 2: Active Transfer — Proposals + Acceptance Tracking
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class TestTransferProposal(unittest.TestCase):
+    """TransferProposal dataclass and serialization."""
+
+    def test_proposal_creation(self):
+        from principle_transfer import TransferProposal
+        p = TransferProposal(
+            proposal_id="tp_00000001",
+            principle_id="prin_abc12345",
+            principle_text="Test first, then code",
+            source_domain="code_quality",
+            target_domain="trading_execution",
+            transfer_score=0.56,
+            status="proposed",
+            proposed_at="2026-03-25T10:00:00Z",
+            resolved_at=None,
+            reason="High score in code_quality, good affinity to trading_execution",
+        )
+        self.assertEqual(p.status, "proposed")
+        self.assertIsNone(p.resolved_at)
+
+    def test_proposal_to_dict(self):
+        from principle_transfer import TransferProposal
+        p = TransferProposal(
+            proposal_id="tp_00000001",
+            principle_id="prin_abc12345",
+            principle_text="Test first",
+            source_domain="code_quality",
+            target_domain="trading_execution",
+            transfer_score=0.56,
+            status="proposed",
+            proposed_at="2026-03-25T10:00:00Z",
+            resolved_at=None,
+            reason="test",
+        )
+        d = p.to_dict()
+        self.assertEqual(d["proposal_id"], "tp_00000001")
+        self.assertEqual(d["status"], "proposed")
+        self.assertIn("transfer_score", d)
+
+    def test_proposal_valid_statuses(self):
+        from principle_transfer import PROPOSAL_STATUSES
+        self.assertIn("proposed", PROPOSAL_STATUSES)
+        self.assertIn("accepted", PROPOSAL_STATUSES)
+        self.assertIn("rejected", PROPOSAL_STATUSES)
+
+
+class TestProposalStore(unittest.TestCase):
+    """JSONL-based proposal persistence."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.store_path = os.path.join(self.tmp, "transfer_proposals.jsonl")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_save_proposal(self):
+        from principle_transfer import TransferProposal, save_proposal
+        p = TransferProposal(
+            proposal_id="tp_00000001",
+            principle_id="prin_abc12345",
+            principle_text="Test first",
+            source_domain="code_quality",
+            target_domain="trading_execution",
+            transfer_score=0.56,
+            status="proposed",
+            proposed_at="2026-03-25T10:00:00Z",
+            resolved_at=None,
+            reason="test",
+        )
+        save_proposal(p, self.store_path)
+        self.assertTrue(os.path.exists(self.store_path))
+        with open(self.store_path) as f:
+            lines = f.readlines()
+        self.assertEqual(len(lines), 1)
+        data = json.loads(lines[0])
+        self.assertEqual(data["proposal_id"], "tp_00000001")
+
+    def test_load_proposals(self):
+        from principle_transfer import TransferProposal, save_proposal, load_proposals
+        p1 = TransferProposal(
+            proposal_id="tp_00000001", principle_id="prin_aaa",
+            principle_text="A", source_domain="code_quality",
+            target_domain="trading_execution", transfer_score=0.5,
+            status="proposed", proposed_at="2026-03-25T10:00:00Z",
+            resolved_at=None, reason="test",
+        )
+        p2 = TransferProposal(
+            proposal_id="tp_00000002", principle_id="prin_bbb",
+            principle_text="B", source_domain="general",
+            target_domain="cca_operations", transfer_score=0.4,
+            status="accepted", proposed_at="2026-03-25T10:00:00Z",
+            resolved_at="2026-03-25T11:00:00Z", reason="test2",
+        )
+        save_proposal(p1, self.store_path)
+        save_proposal(p2, self.store_path)
+        proposals = load_proposals(self.store_path)
+        self.assertEqual(len(proposals), 2)
+        self.assertEqual(proposals[0].status, "proposed")
+        self.assertEqual(proposals[1].status, "accepted")
+
+    def test_load_empty_file(self):
+        from principle_transfer import load_proposals
+        proposals = load_proposals(self.store_path)
+        self.assertEqual(proposals, [])
+
+    def test_update_proposal_status(self):
+        from principle_transfer import (
+            TransferProposal, save_proposal, load_proposals, update_proposal_status,
+        )
+        p = TransferProposal(
+            proposal_id="tp_00000001", principle_id="prin_aaa",
+            principle_text="A", source_domain="code_quality",
+            target_domain="trading_execution", transfer_score=0.5,
+            status="proposed", proposed_at="2026-03-25T10:00:00Z",
+            resolved_at=None, reason="test",
+        )
+        save_proposal(p, self.store_path)
+        update_proposal_status("tp_00000001", "accepted", self.store_path)
+        proposals = load_proposals(self.store_path)
+        self.assertEqual(proposals[0].status, "accepted")
+        self.assertIsNotNone(proposals[0].resolved_at)
+
+    def test_update_nonexistent_proposal_raises(self):
+        from principle_transfer import update_proposal_status
+        with self.assertRaises(KeyError):
+            update_proposal_status("tp_nonexistent", "accepted", self.store_path)
+
+
+class TestAutoPropose(unittest.TestCase):
+    """Automated proposal generation with deduplication."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.principles_path = os.path.join(self.tmp, "principles.jsonl")
+        self.proposals_path = os.path.join(self.tmp, "transfer_proposals.jsonl")
+        # Create some test principles
+        self._seed_principles()
+
+    def _seed_principles(self):
+        """Create principles that should generate transfer candidates."""
+        # High-scoring code_quality principle with enough usages
+        # score = (success+1)/(usage+2) = 9/12 = 0.75
+        p1 = Principle(
+            id="prin_test0001",
+            text="Always write tests before implementation",
+            source_domain="code_quality",
+            applicable_domains=["code_quality"],
+            usage_count=10,
+            success_count=8,
+            pruned=False,
+            created_at="2026-03-01T00:00:00Z",
+            updated_at="2026-03-25T00:00:00Z",
+        )
+        # High-scoring trading principle
+        # score = (11)/(14) = 0.786
+        p2 = Principle(
+            id="prin_test0002",
+            text="Paper trade before going live with new strategy",
+            source_domain="trading_research",
+            applicable_domains=["trading_research"],
+            usage_count=12,
+            success_count=10,
+            pruned=False,
+            created_at="2026-03-01T00:00:00Z",
+            updated_at="2026-03-25T00:00:00Z",
+        )
+        with open(self.principles_path, "w") as f:
+            f.write(json.dumps(p1.__dict__) + "\n")
+            f.write(json.dumps(p2.__dict__) + "\n")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_propose_generates_proposals(self):
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        proposals = pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        self.assertGreater(len(proposals), 0)
+        for p in proposals:
+            self.assertEqual(p.status, "proposed")
+
+    def test_propose_saves_to_store(self):
+        from principle_transfer import load_proposals
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        stored = load_proposals(self.proposals_path)
+        self.assertGreater(len(stored), 0)
+
+    def test_propose_deduplicates(self):
+        """Running propose twice should not create duplicate proposals."""
+        from principle_transfer import load_proposals
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        first = pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        second = pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        self.assertEqual(len(second), 0, "Second run should find no new proposals")
+        stored = load_proposals(self.proposals_path)
+        self.assertEqual(len(stored), len(first))
+
+    def test_propose_skips_already_accepted(self):
+        """If a transfer was already accepted, don't re-propose it."""
+        from principle_transfer import (
+            TransferProposal, save_proposal, load_proposals,
+        )
+        # Pre-populate with an accepted proposal
+        existing = TransferProposal(
+            proposal_id="tp_existing01",
+            principle_id="prin_test0001",
+            principle_text="Always write tests before implementation",
+            source_domain="code_quality",
+            target_domain="session_management",
+            transfer_score=0.5,
+            status="accepted",
+            proposed_at="2026-03-24T00:00:00Z",
+            resolved_at="2026-03-24T12:00:00Z",
+            reason="test",
+        )
+        save_proposal(existing, self.proposals_path)
+
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        new_proposals = pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        # Should not re-propose prin_test0001 -> session_management
+        for p in new_proposals:
+            if p.principle_id == "prin_test0001" and p.target_domain == "session_management":
+                self.fail("Should not re-propose an accepted transfer")
+
+    def test_propose_limits_count(self):
+        """propose_transfers respects max_proposals parameter."""
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        proposals = pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+            max_proposals=2,
+        )
+        self.assertLessEqual(len(proposals), 2)
+
+    def test_proposal_ids_are_unique(self):
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        proposals = pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        ids = [p.proposal_id for p in proposals]
+        self.assertEqual(len(ids), len(set(ids)), "Proposal IDs must be unique")
+
+    def test_pending_proposals_summary(self):
+        """pending_summary returns count and top proposals."""
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        summary = pt.pending_summary(proposals_path=self.proposals_path)
+        self.assertIn("pending", summary)
+        self.assertGreater(summary["pending"], 0)
+        self.assertIn("top", summary)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -35,8 +35,10 @@ Zero external dependencies. Stdlib only.
 
 import json
 import os
+import secrets
 import sys
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -152,6 +154,113 @@ class TransferCandidate:
             "transfer_score": round(self.transfer_score, 4),
             "reason": self.reason,
         }
+
+
+# ── MT-49 Phase 2: Active Transfer Proposals ─────────────────────────────
+
+PROPOSAL_STATUSES = {"proposed", "accepted", "rejected"}
+
+PROPOSALS_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "transfer_proposals.jsonl"
+)
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _gen_proposal_id() -> str:
+    return "tp_" + secrets.token_hex(4)
+
+
+@dataclass
+class TransferProposal:
+    """A proposed principle transfer with acceptance tracking."""
+    proposal_id: str
+    principle_id: str
+    principle_text: str
+    source_domain: str
+    target_domain: str
+    transfer_score: float
+    status: str  # proposed | accepted | rejected
+    proposed_at: str
+    resolved_at: Optional[str]
+    reason: str
+
+    def to_dict(self) -> dict:
+        return {
+            "proposal_id": self.proposal_id,
+            "principle_id": self.principle_id,
+            "principle_text": self.principle_text,
+            "source_domain": self.source_domain,
+            "target_domain": self.target_domain,
+            "transfer_score": round(self.transfer_score, 4),
+            "status": self.status,
+            "proposed_at": self.proposed_at,
+            "resolved_at": self.resolved_at,
+            "reason": self.reason,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "TransferProposal":
+        return cls(
+            proposal_id=d["proposal_id"],
+            principle_id=d["principle_id"],
+            principle_text=d["principle_text"],
+            source_domain=d["source_domain"],
+            target_domain=d["target_domain"],
+            transfer_score=d["transfer_score"],
+            status=d["status"],
+            proposed_at=d["proposed_at"],
+            resolved_at=d.get("resolved_at"),
+            reason=d.get("reason", ""),
+        )
+
+
+def save_proposal(proposal: TransferProposal, path: Optional[str] = None) -> None:
+    """Append a proposal to the JSONL store."""
+    path = path or PROPOSALS_PATH
+    with open(path, "a") as f:
+        f.write(json.dumps(proposal.to_dict()) + "\n")
+
+
+def load_proposals(path: Optional[str] = None) -> List[TransferProposal]:
+    """Load all proposals from the JSONL store."""
+    path = path or PROPOSALS_PATH
+    if not os.path.exists(path):
+        return []
+    proposals = []
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                proposals.append(TransferProposal.from_dict(json.loads(line)))
+    return proposals
+
+
+def update_proposal_status(
+    proposal_id: str, new_status: str, path: Optional[str] = None
+) -> TransferProposal:
+    """Update a proposal's status. Rewrites the store."""
+    if new_status not in PROPOSAL_STATUSES:
+        raise ValueError(f"Invalid status: {new_status}")
+    path = path or PROPOSALS_PATH
+    proposals = load_proposals(path)
+    found = None
+    for p in proposals:
+        if p.proposal_id == proposal_id:
+            p.status = new_status
+            if new_status in ("accepted", "rejected"):
+                p.resolved_at = _now_iso()
+            found = p
+            break
+    if found is None:
+        raise KeyError(f"Proposal not found: {proposal_id}")
+    # Rewrite store
+    with open(path, "w") as f:
+        for p in proposals:
+            f.write(json.dumps(p.to_dict()) + "\n")
+    return found
 
 
 class PrincipleTransfer:
@@ -285,6 +394,75 @@ class PrincipleTransfer:
 
         return p
 
+    def propose_transfers(
+        self,
+        principles_path: Optional[str] = None,
+        proposals_path: Optional[str] = None,
+        max_proposals: int = 10,
+    ) -> List[TransferProposal]:
+        """
+        Auto-scan all domains, create proposals for new transfer opportunities.
+
+        Deduplicates against existing proposals (any status).
+        Returns only newly created proposals.
+        """
+        proposals_path = proposals_path or PROPOSALS_PATH
+
+        # Load existing proposals to dedup
+        existing = load_proposals(proposals_path)
+        existing_keys = {
+            (p.principle_id, p.target_domain) for p in existing
+        }
+
+        # Scan all domains for candidates
+        all_candidates = self.scan_all_domains(principles_path=principles_path)
+
+        new_proposals = []
+        for domain, candidates in sorted(all_candidates.items()):
+            for c in candidates:
+                if len(new_proposals) >= max_proposals:
+                    break
+                key = (c.principle_id, c.target_domain)
+                if key in existing_keys:
+                    continue
+                proposal = TransferProposal(
+                    proposal_id=_gen_proposal_id(),
+                    principle_id=c.principle_id,
+                    principle_text=c.principle_text,
+                    source_domain=c.source_domain,
+                    target_domain=c.target_domain,
+                    transfer_score=c.transfer_score,
+                    status="proposed",
+                    proposed_at=_now_iso(),
+                    resolved_at=None,
+                    reason=c.reason,
+                )
+                save_proposal(proposal, proposals_path)
+                new_proposals.append(proposal)
+                existing_keys.add(key)
+            if len(new_proposals) >= max_proposals:
+                break
+
+        return new_proposals
+
+    def pending_summary(
+        self, proposals_path: Optional[str] = None
+    ) -> dict:
+        """Return summary of pending proposals."""
+        proposals_path = proposals_path or PROPOSALS_PATH
+        proposals = load_proposals(proposals_path)
+        pending = [p for p in proposals if p.status == "proposed"]
+        accepted = [p for p in proposals if p.status == "accepted"]
+        rejected = [p for p in proposals if p.status == "rejected"]
+        top = sorted(pending, key=lambda p: p.transfer_score, reverse=True)[:5]
+        return {
+            "pending": len(pending),
+            "accepted": len(accepted),
+            "rejected": len(rejected),
+            "total": len(proposals),
+            "top": [p.to_dict() for p in top],
+        }
+
     def scan_all_domains(
         self,
         principles_path: Optional[str] = None,
@@ -332,6 +510,20 @@ def main():
     # affinity
     aff_p = sub.add_parser("affinity", help="Show affinity matrix")
 
+    # propose (MT-49 Phase 2)
+    prop_p = sub.add_parser("propose", help="Auto-propose transfers (deduped)")
+    prop_p.add_argument("--max", type=int, default=10, help="Max proposals to create")
+    prop_p.add_argument("--min-score", type=float, default=0.65)
+
+    # review (MT-49 Phase 2)
+    rev_p = sub.add_parser("review", help="Show pending proposals")
+
+    # accept/reject (MT-49 Phase 2)
+    acc_p = sub.add_parser("accept", help="Accept a proposal")
+    acc_p.add_argument("proposal_id", help="Proposal ID to accept")
+    rej_p = sub.add_parser("reject", help="Reject a proposal")
+    rej_p.add_argument("proposal_id", help="Proposal ID to reject")
+
     args = parser.parse_args()
 
     if args.cmd == "scan":
@@ -375,6 +567,46 @@ def main():
             targets = sorted(affinities.items(), key=lambda x: -x[1])
             top3 = ", ".join(f"{t}={s:.2f}" for t, s in targets[:3])
             print(f"  {source}: {top3}")
+
+    elif args.cmd == "propose":
+        pt = PrincipleTransfer(min_principle_score=args.min_score)
+        proposals = pt.propose_transfers(max_proposals=args.max)
+        if not proposals:
+            print("No new transfer proposals (all candidates already proposed).")
+        else:
+            print(f"Created {len(proposals)} new proposals:")
+            for p in proposals:
+                print(f"  [{p.transfer_score:.2f}] {p.principle_text[:50]}")
+                print(f"    {p.source_domain} -> {p.target_domain} ({p.proposal_id})")
+
+    elif args.cmd == "review":
+        pt = PrincipleTransfer()
+        summary = pt.pending_summary()
+        print(f"Proposals: {summary['pending']} pending, "
+              f"{summary['accepted']} accepted, {summary['rejected']} rejected")
+        if summary["top"]:
+            print("\nTop pending:")
+            for p in summary["top"]:
+                print(f"  [{p['transfer_score']:.2f}] {p['principle_text'][:50]}")
+                print(f"    {p['source_domain']} -> {p['target_domain']} ({p['proposal_id']})")
+
+    elif args.cmd == "accept":
+        try:
+            p = update_proposal_status(args.proposal_id, "accepted")
+            pt = PrincipleTransfer()
+            pt.apply_transfer(p.principle_id, p.target_domain)
+            print(f"Accepted and applied: {p.principle_text[:60]} -> {p.target_domain}")
+        except (KeyError, ValueError) as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    elif args.cmd == "reject":
+        try:
+            p = update_proposal_status(args.proposal_id, "rejected")
+            print(f"Rejected: {p.principle_text[:60]} -> {p.target_domain}")
+        except (KeyError, ValueError) as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
 
     else:
         parser.print_help()
