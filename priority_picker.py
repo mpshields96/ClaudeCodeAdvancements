@@ -963,13 +963,37 @@ class PriorityPicker:
     def init_briefing(self) -> str:
         """Generate priority briefing for /cca-init.
 
-        Combines stagnation alert + top picks into concise init output.
+        Combines dust alerts + stagnation + top picks + overdue recurring.
         """
         lines = []
+
+        # Dust alert (top 3 dustiest items)
+        dusty_growth = sorted(
+            [t for t in self.growth_tasks() if t.sessions_since_touch >= 20],
+            key=lambda t: self.growth_score(t), reverse=True
+        )[:3]
+        if dusty_growth:
+            lines.append("DUST ALERT (growth MTs neglected 20+ sessions):")
+            for t in dusty_growth:
+                lines.append(
+                    f"  MT-{t.mt_id}: {t.name} — {t.sessions_since_touch} sessions, "
+                    f"score={self.growth_score(t):.1f}"
+                )
+            lines.append("")
+
+        # Overdue recurring tasks
+        overdue = [rt for rt in self.recurring_tasks if rt.is_overdue]
+        if overdue:
+            lines.append("OVERDUE RECURRING:")
+            for rt in overdue:
+                lines.append(f"  {rt.name} — {rt.days_stale}d stale")
+            lines.append("")
+
         alert = self.stagnation_alert()
         if alert:
             lines.append(alert)
             lines.append("")
+
         top = self.pick_next(3)
         if top:
             lines.append("PRIORITY RANKING:")
