@@ -435,5 +435,38 @@ class TestConstants(unittest.TestCase):
         self.assertIn("SESSION_STATE.md", _ALWAYS_ALLOWED_NAMES)
 
 
+class TestQuietMode(TestMainHookIntegration):
+    """Test SPEC_GUARD_QUIET=1 suppresses all warnings."""
+
+    def test_quiet_mode_suppresses_warning(self):
+        """With SPEC_GUARD_QUIET=1, no additionalContext is injected."""
+        stdout, rc = self._run_hook(
+            {
+                "hook_event_name": "PreToolUse",
+                "tool_name": "Write",
+                "tool_input": {"file_path": "/tmp/module.py"},
+                "cwd": "/tmp",
+            },
+            env_override={"SPEC_GUARD_QUIET": "1"},
+        )
+        self.assertEqual(rc, 0)
+        self.assertEqual(stdout, "")
+
+    def test_quiet_mode_zero_does_not_suppress(self):
+        """SPEC_GUARD_QUIET=0 does NOT suppress — warnings still fire."""
+        stdout, rc = self._run_hook(
+            {
+                "hook_event_name": "PreToolUse",
+                "tool_name": "Write",
+                "tool_input": {"file_path": "/tmp/module.py"},
+                "cwd": "/tmp",
+            },
+            env_override={"SPEC_GUARD_QUIET": "0"},
+        )
+        self.assertEqual(rc, 0)
+        # Should produce a spec-guard warning (no spec in /tmp)
+        self.assertIn("spec-guard", stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

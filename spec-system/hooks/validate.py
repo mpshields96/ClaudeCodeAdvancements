@@ -253,6 +253,11 @@ def main() -> None:
     if hook_input.get("hook_event_name") != "PreToolUse":
         sys.exit(0)
 
+    # Quiet mode: suppress all spec-guard warnings during autonomous sessions.
+    # Saves ~50-100 tokens per Write/Edit call when running /cca-auto or similar.
+    if os.environ.get("SPEC_GUARD_QUIET") == "1":
+        sys.exit(0)
+
     tool_name = hook_input.get("tool_name", "")
     tool_input = hook_input.get("tool_input", {})
     cwd = hook_input.get("cwd", "")
