@@ -675,10 +675,10 @@
   text(size: 9pt, fill: light)[Frontier data not available.]
 }
 
-#pagebreak()
+#pagebreak(weak: true)
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PAGES 5-6: MODULE DEEP-DIVES
+// MODULE DEEP-DIVES
 // ═══════════════════════════════════════════════════════════════════════════
 
 #section-header("Module Deep-Dives", accent: teal, lbl: "sec-modules")
@@ -796,10 +796,10 @@
   module-card(mod)
 }
 
-#pagebreak()
+#pagebreak(weak: true)
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PAGES 7-9: MASTER TASKS (expanded with phase progress + gaps)
+// MASTER TASKS
 // ═══════════════════════════════════════════════════════════════════════════
 
 #section-header("Master Tasks", accent: indigo, lbl: "sec-tasks")
@@ -1050,7 +1050,7 @@
   }
 }
 
-#pagebreak()
+#pagebreak(weak: true)
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PRIORITY QUEUE
@@ -1380,7 +1380,7 @@
   )
 }
 
-#pagebreak()
+#pagebreak(weak: true)
 
 // ═══════════════════════════════════════════════════════════════════════════
 // RISKS, BLOCKERS & NEXT PRIORITIES
