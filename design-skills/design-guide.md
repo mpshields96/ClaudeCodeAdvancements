@@ -6,13 +6,17 @@ All CCA visual output (reports, dashboards, presentations) follows this guide.
 
 ## Color Palette
 
+All CCA visual output uses ONE palette. Typst templates, SVG charts, HTML dashboards,
+and the website all share these exact values. See chart_generator.py CCA_COLORS.
+
 | Role | Hex | Usage |
 |------|-----|-------|
 | Primary | #1a1a2e | Headers, titles, body text |
-| Accent | #0f3460 | Section headers, borders |
+| Accent | #0f3460 | Section headers, borders, interactive elements |
 | Highlight | #e94560 | Warnings, critical items, key metrics |
 | Success | #16c79a | Passing tests, completed items |
 | Muted | #6b7280 | Secondary text, captions, metadata |
+| Warning | #f59e0b | Caution, medium-priority items |
 | Background | #ffffff | Page background |
 | Surface | #f8f9fa | Card/section backgrounds |
 | Border | #e5e7eb | Table borders, dividers |

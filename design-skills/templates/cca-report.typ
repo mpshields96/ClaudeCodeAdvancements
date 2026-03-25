@@ -2,21 +2,20 @@
 // Visual upgrade: accent bars, improved data density, growth callouts
 // Usage: typst compile --root / --input data=/path/to/report.json cca-report.typ output.pdf
 
-// ─── Color Palette ─────────────────────────────────────────────────────────
-#let black = rgb("#1c1c1e")
+// ─── Color Palette (synced with design-guide.md + chart_generator.py) ──────
+#let black = rgb("#1a1a2e")
 #let dark = rgb("#3a3a3c")
 #let mid = rgb("#636366")
-#let light = rgb("#8e8e93")
-#let faint = rgb("#d1d1d6")
-#let wash = rgb("#f2f2f7")
+#let light = rgb("#6b7280")
+#let faint = rgb("#e5e7eb")
+#let wash = rgb("#f8f9fa")
 #let white = rgb("#ffffff")
-#let blue = rgb("#007aff")
-#let green = rgb("#34c759")
-#let orange = rgb("#ff9500")
-#let red = rgb("#ff3b30")
-#let purple = rgb("#af52de")
+#let blue = rgb("#0f3460")
+#let green = rgb("#16c79a")
+#let orange = rgb("#f59e0b")
+#let red = rgb("#e94560")
 #let teal = rgb("#5ac8fa")
-#let indigo = rgb("#5856d6")
+#let indigo = rgb("#0f3460")
 
 // ─── Data Loading ──────────────────────────────────────────────────────────
 #let data = if sys.inputs.keys().contains("data") {
@@ -1157,7 +1156,7 @@
         ("BUILD", data.intelligence.build, green),
         ("ADAPT", data.intelligence.adapt, blue),
         ("REFERENCE", data.intelligence.reference, mid),
-        ("PERSONAL", data.intelligence.reference_personal, purple),
+        ("PERSONAL", data.intelligence.reference_personal, orange),
         ("SKIP", data.intelligence.skip, light),
       )
       for (label, count, color) in verdicts {
@@ -1458,7 +1457,7 @@
   v(3mm)
 
   for criticism in data.criticisms {
-    let severity-color = if criticism.severity == "blocker" { red } else if criticism.severity == "gap" { orange } else if criticism.severity == "limitation" { purple } else if criticism.severity == "debt" { indigo } else { mid }
+    let severity-color = if criticism.severity == "blocker" { red } else if criticism.severity == "gap" { orange } else if criticism.severity == "limitation" { mid } else if criticism.severity == "debt" { blue } else { mid }
 
     box(
       width: 100%,
