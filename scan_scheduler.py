@@ -127,6 +127,32 @@ class ScanScheduler:
             priority=policy["priority"],
         )
 
+    def should_auto_scan(self) -> dict:
+        """Check if an auto-scan should be triggered. Returns dict for easy consumption.
+
+        Returns:
+            {"should_scan": bool, "top_target": str|None, "stale_count": int, "all_targets": list[str]}
+        """
+        rec = self.recommend()
+        return {
+            "should_scan": rec.action == "SCAN_NOW",
+            "top_target": rec.top_target,
+            "stale_count": len(rec.stale_subs),
+            "all_targets": [s.slug for s in rec.stale_subs],
+        }
+
+    def scan_command(self, slug: str, limit: int = 25, period: str = "week") -> str:
+        """Generate the shell command to scan a subreddit.
+
+        Returns the full command string ready for subprocess or os.system().
+        """
+        fetcher = os.path.join(SCRIPT_DIR, "reddit-intelligence", "nuclear_fetcher.py")
+        findings = os.path.join(SCRIPT_DIR, "FINDINGS_LOG.md")
+        return (
+            f"python3 {fetcher} {slug} {limit} {period} "
+            f"--classify --hot --rising --dedup {findings}"
+        )
+
     def recommend(self) -> ScanRecommendation:
         staleness_list = []
         for slug, policy in SCAN_POLICIES.items():

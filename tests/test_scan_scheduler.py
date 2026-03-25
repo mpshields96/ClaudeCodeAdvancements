@@ -150,5 +150,54 @@ class TestScanSchedulerFromRegistry(unittest.TestCase):
         self.assertEqual(rec.action, "SCAN_NOW")
 
 
+class TestAutoTrigger(unittest.TestCase):
+    """Tests for Phase 3: auto-trigger integration."""
+
+    def test_should_auto_scan_when_stale(self):
+        data = make_registry_data({"claudecode": 5, "claudeai": 1, "vibecoding": 1})
+        sched = ScanScheduler(registry_data=data)
+        result = sched.should_auto_scan()
+        self.assertTrue(result["should_scan"])
+        self.assertEqual(result["top_target"], "claudecode")
+        self.assertGreater(result["stale_count"], 0)
+
+    def test_should_not_auto_scan_when_fresh(self):
+        data = make_registry_data({"claudecode": 1, "claudeai": 1, "vibecoding": 1})
+        sched = ScanScheduler(registry_data=data)
+        result = sched.should_auto_scan()
+        self.assertFalse(result["should_scan"])
+        self.assertIsNone(result["top_target"])
+
+    def test_scan_command_for_sub(self):
+        sched = ScanScheduler(registry_data={})
+        cmd = sched.scan_command("claudecode")
+        self.assertIn("nuclear_fetcher.py", cmd)
+        self.assertIn("claudecode", cmd)
+        self.assertIn("--classify", cmd)
+        self.assertIn("--dedup", cmd)
+
+    def test_scan_command_includes_hot_rising(self):
+        sched = ScanScheduler(registry_data={})
+        cmd = sched.scan_command("claudeai")
+        self.assertIn("--hot", cmd)
+        self.assertIn("--rising", cmd)
+
+    def test_all_stale_targets_returns_ordered_list(self):
+        data = make_registry_data({"claudecode": 10, "claudeai": 8, "vibecoding": 7})
+        sched = ScanScheduler(registry_data=data)
+        result = sched.should_auto_scan()
+        self.assertTrue(result["should_scan"])
+        self.assertIsInstance(result["all_targets"], list)
+        self.assertGreater(len(result["all_targets"]), 1)
+
+    def test_should_auto_scan_returns_slugs(self):
+        data = make_registry_data({"claudecode": 10})
+        sched = ScanScheduler(registry_data=data)
+        result = sched.should_auto_scan()
+        self.assertIn("all_targets", result)
+        for target in result["all_targets"]:
+            self.assertIsInstance(target, str)
+
+
 if __name__ == "__main__":
     unittest.main()
