@@ -3,6 +3,26 @@
 
 ---
 
+## Session 168 — 2026-03-26
+
+**What changed:**
+- REQ-040 DELIVERED: `self-learning/monte_carlo_simulator.py` — Monte Carlo bankroll simulator with DB bridge
+- `self-learning/tests/test_monte_carlo_simulator.py` — 50 tests (BetDistribution, SimulationResult, MonteCarloSimulator, SyntheticBetGenerator, from_db, edge cases)
+- Cross-chat: REQ-034 (integration plan), REQ-035 (daily_sniper analysis), REQ-036 (CLV design), REQ-037 (maker feasibility), REQ-038 (confirmed done), REQ-039 (maker_sniper spec)
+
+**Why:**
+- REQ-040 was URGENT standing directive pushed multiple sessions — Monte Carlo simulator needed for bankroll risk management
+- Cross-chat backlog of 7 requests accumulated — all answered this session
+- REQ-035 uncovered critical Kelly math issue: daily_sniper at 93c entry has NEGATIVE Kelly fraction
+
+**Tests:** ~9473/~9473 passing (242 suites)
+
+**Lessons:**
+- DB bridge (from_db) adds major value — real data parameterization vs manual params gives much more actionable results
+- Clearing cross-chat backlog in batch is efficient — all requests share context so answering in sequence is faster than one-per-session
+
+---
+
 ## Session 167 — 2026-03-26
 
 **What changed:**

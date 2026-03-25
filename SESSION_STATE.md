@@ -3,28 +3,29 @@
 
 ---
 
-## Current State (as of Session 167 — 2026-03-26)
+## Current State (as of Session 168 — 2026-03-26)
 
-**Phase:** Session 167 COMPLETE. MT-32 Phase 7 COMPLETE. Grade: A.
+**Phase:** Session 168 COMPLETE. REQ-040 DELIVERED. All cross-chat backlog cleared. Grade: A.
 
-**What was done this session (S167):**
-- MT-32 Phase 7 COMPLETE: Figures wired into all 3 output pipelines:
-  - slide_generator.py: build_chart_slide() for SVG chart embedding in decks + cca-slides.typ template update
-  - dashboard_generator.py: _render_summary_figure() multi-panel figure using figure_generator, wired into _render_charts()
-  - website_generator.py: figures field added to LandingPage with XSS-safe figure-section rendering
-  - collect_slides_from_project() now auto-generates summary figure chart slide via ReportChartGenerator
-- 30 new tests in test_figure_integration.py (9393 -> 9423), 1 new suite (240 -> 241)
+**What was done this session (S168):**
+- REQ-040 COMPLETE: `self-learning/monte_carlo_simulator.py` — Monte Carlo bankroll simulator
+  - BetDistribution (parametric + empirical bootstrap + from_db())
+  - MonteCarloSimulator (path simulation, ruin/target probability, scenario + sensitivity analysis)
+  - SyntheticBetGenerator (multi-strategy, volume proportions, bootstrap)
+  - CLI: --from-db --strategy --sensitivity --scenarios --json
+  - DB bridge: reads polybot.db read-only, auto-detects bankroll + daily volume
+  - Live validation: sniper 93.6% WR, 96.7% target probability $186->$250, 1.5% ruin
+- 50 new tests in test_monte_carlo_simulator.py (9423 -> 9473), 1 new suite (241 -> 242)
 - 2 commits, no regressions
-- CCA status report generated (425 KB, 27 pages)
-- Cross-chat checked: REQ-040 (Monte Carlo) still outstanding
-- **Tests**: ~241 suites, ~9423 tests passing. All green.
+- Cross-chat backlog CLEARED: REQ-034 (integration plan), REQ-035 (daily_sniper analysis with Kelly math finding), REQ-036 (CLV schema design), REQ-037 (maker feasibility — confirmed API support), REQ-038 (already implemented S164), REQ-039 (maker_sniper architecture spec)
+- **Tests**: ~242 suites, ~9473 tests passing. All green.
 
 **Next:**
-1. REQ-040: Monte Carlo bankroll simulator (URGENT — pushed multiple sessions)
-2. economics_sniper_v1 validation (April 8 CPI data)
-3. MakerSniperStrategy implementation (Kalshi monitoring chat builds from REQ-039 spec)
-4. REQ-035 response: daily_sniper interim analysis (Wilson CI, sizing recommendation)
-5. Ongoing cross-chat coordination (check POLYBOT_TO_CCA.md each session)
+1. economics_sniper_v1 validation (April 8 CPI data — approaching)
+2. MakerSniperStrategy implementation (Kalshi builds from REQ-039 spec delivered this session)
+3. CCA-internal MT advancement (MT-32 Phase 8+, MT-41 Phase 5+, or new MT)
+4. Ongoing cross-chat coordination (all current REQs answered)
+5. CLV tracking implementation (REQ-036 spec delivered, monitoring chat implements)
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
