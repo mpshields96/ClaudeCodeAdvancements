@@ -582,39 +582,57 @@ class CCADataCollector:
     # ── Risks ───────────────────────────────────────────────────────────
 
     def collect_risks(self):
-        """Extract risks and blockers."""
+        """Extract risks and blockers dynamically from MASTER_TASKS.md."""
         risks = []
         content = self._read_file("MASTER_TASKS.md")
 
-        # Check for blocked tasks
-        if "Blocked" in content or "BLOCKED" in content:
-            blocked_match = re.search(
-                r"MT-\d+.*?Blocked.*?(?:\*\*Status:\*\*\s*)(.+?)$",
-                content,
-                re.MULTILINE | re.DOTALL,
-            )
-            if blocked_match:
-                risks.append({
-                    "title": "MT-1 Maestro Visual Grid UI",
-                    "severity": "blocker",
-                    "description": "Blocked on macOS 15.6 beta SDK crash. Tauri/React app crashes on launch.",
-                    "mitigation": "Using tmux + dev-start script as workaround. Waiting for stable macOS release.",
-                })
+        # Dynamically find blocked MTs
+        for m in re.finditer(
+            r"^## (MT-\d+):\s*(.+?)$(.+?)(?=^## MT-|\Z)",
+            content, re.MULTILINE | re.DOTALL
+        ):
+            mt_id = m.group(1)
+            mt_name = m.group(2).strip()
+            body = m.group(3)
+            status_m = re.search(r"\*\*Status:\*\*\s*(.+?)$", body, re.MULTILINE)
+            if status_m:
+                status = status_m.group(1).strip()
+                if "BLOCKED" in status.upper() or "Blocked" in status:
+                    # Extract the reason
+                    reason = status.replace("**", "").strip()
+                    if len(reason) > 150:
+                        reason = reason[:147] + "..."
+                    risks.append({
+                        "title": f"{mt_id} {mt_name}",
+                        "severity": "blocker",
+                        "description": reason,
+                        "mitigation": "",
+                    })
 
-        # Standard known risks
-        risks.append({
-            "title": "Semantic Scholar Rate Limiting",
-            "severity": "risk",
-            "description": "429 errors at 1.5s delay between queries for academic paper scanning.",
-            "mitigation": "Increased to 3s delay with exponential backoff.",
-        })
+        # Check for stagnating MTs from priority table
+        stag_count = 0
+        for row_m in re.finditer(r"\|\s*\d+\s*\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|\s*(-[\d.]+)\s*\|", content):
+            stag_val = float(row_m.group(1))
+            if stag_val < 0:
+                stag_count += 1
+        if stag_count > 0:
+            risks.append({
+                "title": f"{stag_count} MTs stagnating",
+                "severity": "risk",
+                "description": f"{stag_count} active tasks have negative stagnation scores — no progress in recent sessions.",
+                "mitigation": "Review priority picker output. Consider deprioritizing or archiving stalled work.",
+            })
 
-        risks.append({
-            "title": "Context Burn from File-Writing Hooks",
-            "severity": "debt",
-            "description": "compact_anchor.py writes trigger system-reminder context consumption.",
-            "mitigation": "Writes limited to every 10 turns, files kept small.",
-        })
+        # Check LEARNINGS.md for severity-3 patterns (operational risks)
+        learnings = self._read_file("LEARNINGS.md")
+        sev3_count = learnings.count("Severity: 3") if learnings else 0
+        if sev3_count > 0:
+            risks.append({
+                "title": f"{sev3_count} severity-3 learnings active",
+                "severity": "debt",
+                "description": "High-severity patterns requiring ongoing vigilance across all sessions.",
+                "mitigation": "Encoded in global rules. Auto-enforced by hooks where possible.",
+            })
 
         return risks
 
