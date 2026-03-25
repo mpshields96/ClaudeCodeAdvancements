@@ -71,10 +71,11 @@
 - DEFAULT_WINDOW 200K→1M across meter.py, post_compact.py, compact_anchor.py, statusline.py
 - Commit 59c42ff
 
-### C5. MT-37 UBER [DONE S178 — Phase 1 partial, areas 4-10 STILL PENDING]
-- MT37_RESEARCH.md created: 745 lines, areas 1-3 complete (MPT, Factor Models, Risk Parity)
-- 15 papers synthesized, 7 more areas pending (momentum, behavioral, tax-loss, etc.)
-- Commit 58eef2f. **Continue areas 4-10 in future sessions.**
+### C5. MT-37 UBER [Areas 1-7 DONE S178+S179 — Areas 8-10 STILL PENDING]
+- MT37_RESEARCH.md: 1196 lines, areas 1-7 complete, 30 papers synthesized
+- S178: Areas 1-3 (MPT, Factor Models, Risk Parity) — 745 lines, 15 papers
+- S179: Areas 4-7 (Momentum & Value, Behavioral Finance, TLH, Retirement) — +451 lines, +15 papers
+- **Remaining:** Area 8 (Kelly Criterion), Area 9 (Index Investing), Area 10 (Alt Risk Premia)
 
 ### C6. Nuclear Reddit/GitHub Discovery Tools [IN PROGRESS S179]
 - Build subreddit_discoverer.py: domain-based subreddit discovery (find subs we're NOT tracking)
@@ -91,7 +92,8 @@
 - [x] Kalshi MAX_LOSS audit: all 11 loop functions verified safe, delivery written to CCA_TO_POLYBOT.md
 - [x] subreddit_discoverer.py built (25 tests) — domain-based subreddit discovery
 - [x] github_scanner.py discover command added (16 tests) — domain-based repo discovery
-- [ ] MT-37 areas 4-10 (continuation from S178)
+- [x] MT-37 areas 4-7 (Momentum, Behavioral, TLH, Retirement — 451 lines, 15 papers)
+- [ ] MT-37 areas 8-10 (Kelly, Index, Alt Risk Premia — still pending)
 - [ ] Wire discovery tools into nuclear scan pipelines
 
 ### S178
