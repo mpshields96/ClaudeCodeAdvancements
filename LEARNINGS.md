@@ -652,3 +652,21 @@
 - **Fix:** Scope assertions to the relevant section (e.g., split on "## RECENT COMMITS" first)
 - **First seen:** 2026-03-25 (S175)
 - **Files:** tests/test_handoff_generator.py
+
+### /model command only works in Terminal.app CLI, not desktop Electron app — Severity: 2 — Count: 1
+- **Anti-pattern:** Typing `/model claude-opus-4-6[1m]` in the desktop Claude.app Code tab
+- **Fix:** Model selection in desktop Electron app must be done through the UI, not CLI commands. CCA does NOT touch model selection — Matthew sets manually (S161 reaffirmed). In Terminal.app CLI sessions, `/model` works normally.
+- **First seen:** 2026-03-25 (S175)
+- **Files:** autoloop_trigger.py, desktop_automator.py, CLAUDE.md
+
+### TODAYS_TASKS.md overrides priority_picker for daily task selection — Severity: 2 — Count: 1
+- **Anti-pattern:** Using priority_picker or MASTER_TASKS to select next task when TODAYS_TASKS.md has uncompleted items
+- **Fix:** Always read TODAYS_TASKS.md FIRST. Work ALL TODO items there before falling through to priority_picker. Matthew updates this file daily — follow it, don't second-guess it. Wired into cca-init, cca-auto, cca-auto-desktop, cca-wrap, slim_init, resume_generator, CLAUDE.md.
+- **First seen:** 2026-03-25 (S178)
+- **Files:** TODAYS_TASKS.md, CLAUDE.md, cca-init.md, cca-auto.md, slim_init.py
+
+### Background agents lost on context compaction — recovery costs tokens — Severity: 1 — Count: 1
+- **Anti-pattern:** Spawning 3+ background agents that take >5 min each while also doing foreground work that grows context toward compaction
+- **Fix:** Either (a) do foreground-only work and wait for agents, or (b) spawn agents and do minimal foreground work to avoid triggering compaction. If compaction kills agents, re-run them — budget for the re-run cost.
+- **First seen:** 2026-03-25 (S178)
+- **Files:** N/A (general workflow pattern)

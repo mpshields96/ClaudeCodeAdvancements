@@ -3,34 +3,30 @@
 
 ---
 
-## Current State (as of Session 177 — 2026-03-25)
+## Current State (as of Session 178 — 2026-03-25)
 
-**Phase:** Session 177 COMPLETE. REQ-042 sizing implementation + AG-10 worktree guard + 1M recalibration. Grade: A.
+**Phase:** Session 178 COMPLETE. All TODAYS_TASKS.md items completed + TODAYS_TASKS directive wired into CCA ecosystem. Grade: A.
 
-**What was done this session (S177):**
-- **REQ-042 implementation in polybot** (commit 784bdc5):
-  - `sizing.py`: Added `max_loss_usd` param (DEFAULT_MAX_LOSS_USD=$7.50) and `kelly_scale` param (0-1 Bayesian multiplier)
-  - `main.py`: All 5 `calculate_size()` call sites wired with max_loss + kelly_scale
-  - `test_sizing.py`: 25 new tests (max_loss cap, kelly_scale, regressions)
-  - Zero regressions across 1902 polybot tests
-- **Kelly ramp schedule analysis** delivered to CCA_TO_POLYBOT.md:
-  - Wilson 95% CI at n=1028: [94.17%, 96.69%]
-  - Current $10 HARD_MAX = ~1.15x quarter-Kelly (safe, no change needed)
-  - Kelly negative at 95c+ NO-side — should be auto-skipped
-  - Ramp: $12@200 clean bets, $14@300, $15@500, then let compounding work
-- **AG-10: worktree_guard.py** (commit 8edadbc, 265 LOC, 29 tests):
-  - Detects Agent Teams worktree context, enforces delegate isolation
-  - Cross-worktree writes blocked, shared state warned, destructive git blocked
-- **Context monitor 1M recalibration** (commit 59c42ff):
-  - DEFAULT_WINDOW 200K→1M across meter.py, post_compact.py, compact_anchor.py, statusline.py
-  - Adaptive quality ceilings (250K/400K/600K) already in place
-- **MT-26 assessed**: 7 modules NOT dead (used by signal_pipeline), correctly deferred
-- **TODAYS_TASKS.md**: Created cross-session task tracking for today
-- 4 CCA commits + 1 polybot commit, 54 new tests (9750→9779 CCA + 25 polybot), zero regressions
-- **Tests**: 251 suites, 9779 tests passing
+**What was done this session (S178):**
+- **AG-10 worktree_guard wired as live PreToolUse hook** (commit 80ef51a):
+  - hook_output() method + main() stdin/stdout entry point (13 new tests, 42 total)
+  - Added to .claude/settings.local.json as PreToolUse hook
+- **TODAYS_TASKS.md directive** wired into ALL CCA session files (10+ files, commits 80ef51a-891a5a6):
+  - CLAUDE.md: Task Priority section added
+  - cca-init.md, cca-auto.md, cca-auto-desktop.md, cca-wrap.md: TODAYS_TASKS.md checks first
+  - slim_init.py: scan_todays_tasks() shows daily tasks in briefing (5 new tests)
+  - resume_generator.py: TODAYS_TASKS.md reminder in autoloop prompts
+  - SESSION_STATE.md: "Next: SEE TODAYS_TASKS.md"
+- **Cross-chat delivery** (CCA_TO_POLYBOT.md): post-guard clean bet counter spec + 95c guard consolidation
+- **C1 MT-26 assessment**: NOT dead code — 7-stage signal pipeline (2,559 LOC, 256 tests). KEEP all.
+- **C3 memsearch research**: Markdown+FTS5 hybrid is evolution path (P0/P1/P2 defined, ~750 LOC total)
+- **C5 MT-37 Phase 1**: MT37_RESEARCH.md created (745 lines, areas 1-3 of 10, 15 papers). Commit 58eef2f.
+- 6 CCA commits, 18 new tests (9779→9797), zero regressions
+- **Tests**: 251 suites, 9797 tests passing
 
 **Next: SEE TODAYS_TASKS.md** — authoritative daily task list (Matthew directive S178).
 Work ALL TODO items there first. Only use priority_picker/MASTER_TASKS after ALL are done.
+Currently all S178 items DONE — next session should check for new items or fall through to priority_picker.
 
 **Matthew directives (carried forward):**
 - **TODAYS_TASKS.md is the daily driver** — all CCA sessions follow it (S178 permanent)
@@ -39,6 +35,14 @@ Work ALL TODO items there first. Only use priority_picker/MASTER_TASKS after ALL
 - Peak/off-peak token budgeting UNIVERSAL (MT-38)
 - Autoloop ENABLED
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 177 — 2026-03-25)
+
+**Phase:** Session 177 COMPLETE. REQ-042 sizing implementation + AG-10 worktree guard + 1M recalibration. Grade: A.
+
+**What was done (S177):** REQ-042 in polybot (MAX_LOSS=$7.50 + kelly_scale, 25 tests, all 5 main.py call sites). AG-10 worktree_guard.py (265 LOC, 29 tests). Context monitor 1M recalibration. 4 CCA commits + 1 polybot, 54 new tests (9779 CCA + 25 polybot).
 
 ---
 

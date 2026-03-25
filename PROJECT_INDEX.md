@@ -220,6 +220,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 - `BATCH_ANALYSIS_S62.md` — Batch trace analysis of 10 recent sessions (avg 73.0, retry rate down to 40%)
 - `research/SENIOR_DEV_AGENT_RESEARCH.md` — S70: Nuclear-level research for Senior Dev Agent MT (11 verified papers, 5 tools, industry standards, MVP architecture)
+- `research/MT37_RESEARCH.md` — MT-37 UBER Phase 1: Academic foundation (areas 1-3 of 10: MPT, Factor Models, Risk Parity). 745 lines, 15 papers synthesized. (S178)
 
 ---
 

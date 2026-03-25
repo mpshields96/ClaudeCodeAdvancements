@@ -3,6 +3,34 @@
 
 ---
 
+## Session 178 — 2026-03-25
+
+**What changed:**
+- `agent-guard/worktree_guard.py` — Added hook_output() + main() for live PreToolUse hook integration (13 new tests)
+- `.claude/settings.local.json` — Wired worktree_guard as PreToolUse hook
+- `CLAUDE.md` — Added Task Priority section (TODAYS_TASKS.md directive, Matthew S178)
+- `.claude/commands/cca-init.md` — TODAYS_TASKS.md check as primary task source
+- `.claude/commands/cca-auto.md` — TODAYS_TASKS.md first, priority_picker secondary
+- `.claude/commands/cca-auto-desktop.md` — Same TODAYS_TASKS.md-first pattern
+- `.claude/commands/cca-wrap.md` — Resume prompt references TODAYS_TASKS.md
+- `slim_init.py` — Added scan_todays_tasks() with 5 new tests
+- `resume_generator.py` — TODAYS_TASKS.md reminder in autoloop prompts
+- `TODAYS_TASKS.md` — All C1/C3/C5 items marked DONE
+- `self-learning/research/MT37_RESEARCH.md` — Phase 1 areas 1-3 (745 lines, 15 papers)
+
+**Why:**
+- Matthew directive S178: TODAYS_TASKS.md must be authoritative daily task list for ALL CCA sessions
+- Remaining TODO items (C1 dead code, C3 memsearch, C5 UBER) needed completion
+- AG-10 needed live hook integration (was code-only, not wired)
+
+**Tests:** 251/251 suites, 9797/9797 passing (18 new tests)
+
+**Lessons:**
+- TODAYS_TASKS.md > priority_picker for daily work (Matthew's intent is daily task focus, not global prioritization)
+- MT-26 modules are NOT dead code — 7-stage signal pipeline with 256 tests. "Wire into production" not "remove"
+
+---
+
 ## Session 177 — 2026-03-25
 
 **What changed:**
