@@ -29,6 +29,12 @@ from chart_generator import (
     TreemapChart,
     render_svg,
 )
+from figure_generator import (
+    Figure,
+    FigurePanel,
+    render_figure,
+    save_figure,
+)
 
 
 class ReportChartGenerator:
@@ -490,6 +496,8 @@ class ReportChartGenerator:
                 "learning_apf_trend": self.learning_apf_trend(data),
                 "learning_domain_distribution": self.learning_domain_distribution(data),
             })
+        # Summary figure (MT-32 Phase 7)
+        charts["summary_figure"] = self.generate_summary_figure(data)
         # Replace empty "No data" charts with a minimal invisible SVG
         # so Typst embed-chart() calls don't error on missing files
         _invisible = '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"/>'
@@ -513,6 +521,91 @@ class ReportChartGenerator:
             paths[name] = path
 
         return paths
+
+    # ── Multi-panel figures (MT-32 Phase 7) ─────────────────────────────
+
+    def generate_summary_figure(self, data):
+        """Generate a multi-panel summary figure combining key charts.
+
+        Creates a 2-column figure with:
+          (a) Tests per module (horizontal bar)
+          (b) Intelligence verdicts (donut) or MT status (bar)
+
+        Returns SVG string.
+        """
+        panels = []
+
+        # Panel (a): Tests per module
+        modules = data.get("modules", [])
+        if modules and any(m.get("tests", 0) > 0 for m in modules):
+            sorted_mods = sorted(modules, key=lambda m: m.get("tests", 0), reverse=True)
+            items = [(m["name"], m["tests"]) for m in sorted_mods[:8]]
+            chart_a = HorizontalBarChart(items, title="Tests per Module", show_values=True)
+        else:
+            chart_a = BarChart(data=[("No data", 0)], title="Tests per Module")
+        panels.append(FigurePanel(chart=chart_a, label="a"))
+
+        # Panel (b): MT status or intelligence
+        mt_tasks = data.get("master_tasks", [])
+        if mt_tasks:
+            active = [t for t in mt_tasks if t.get("completion", 0) < 100][:6]
+            if active:
+                items_b = [(t.get("id", "?"), t.get("completion", 0)) for t in active]
+                chart_b = BarChart(data=items_b, title="Active MT Progress (%)")
+            else:
+                chart_b = BarChart(data=[("All complete", 100)], title="MT Progress")
+        else:
+            intel = data.get("intelligence", {})
+            verdicts = intel.get("verdicts", {})
+            if verdicts:
+                colors = {
+                    "BUILD": CCA_COLORS["success"],
+                    "ADAPT": CCA_COLORS["accent"],
+                    "REFERENCE": CCA_COLORS["warning"],
+                    "SKIP": CCA_COLORS["muted"],
+                }
+                donut_data = [
+                    (k, v, colors.get(k, CCA_COLORS["muted"]))
+                    for k, v in verdicts.items() if v > 0
+                ]
+                chart_b = DonutChart(
+                    data=donut_data,
+                    title="Intelligence Verdicts",
+                    center_text=str(intel.get("findings_total", "")),
+                )
+            else:
+                chart_b = BarChart(data=[("No data", 0)], title="Status")
+        panels.append(FigurePanel(chart=chart_b, label="b"))
+
+        session = data.get("session", "?")
+        if isinstance(session, dict):
+            session_num = session.get("number", "?")
+        else:
+            session_num = session
+        title = f"Project Overview — S{session_num}"
+
+        fig = Figure(panels=panels, cols=2, title=title)
+        return render_figure(fig)
+
+    def save_summary_figure(self, data, filename="summary_figure.svg"):
+        """Generate and save summary figure to output_dir.
+
+        Args:
+            data: Report data dict.
+            filename: Output filename (default: summary_figure.svg).
+
+        Returns:
+            Path to saved file.
+        """
+        if not self.output_dir:
+            raise ValueError("output_dir must be set to save figures")
+
+        os.makedirs(self.output_dir, exist_ok=True)
+        svg = self.generate_summary_figure(data)
+        path = os.path.join(self.output_dir, filename)
+        with open(path, "w") as f:
+            f.write(svg)
+        return path
 
     # ── Helpers ──────────────────────────────────────────────────────────
 
