@@ -425,5 +425,84 @@ class TestEdgeCases(unittest.TestCase):
         self.assertIn("newly available", text)
 
 
+class TestReportDifferTypstAlignment(unittest.TestCase):
+    """Verify diff output field names match Typst template expectations (MT-48)."""
+
+    def setUp(self):
+        self.differ = ReportDiffer()
+        self.old = {
+            "date": "2026-03-20", "session": 120,
+            "summary": {"total_tests": 7500, "total_loc": 38000, "git_commits": 480,
+                         "completed_tasks": 10, "total_findings": 180, "total_delivered": 130,
+                         "test_suites": 190, "source_loc": 23000, "test_loc": 15000,
+                         "source_files": 85, "test_files": 55, "total_papers": 12,
+                         "in_progress_tasks": 9},
+            "modules": [], "master_tasks_complete": [], "master_tasks_active": [],
+            "master_tasks_pending": [],
+            "kalshi_analytics": {"available": True,
+                                 "summary": {"total_pnl_usd": 30.0, "win_rate_pct": 58.0}},
+            "learning_intelligence": {"available": True,
+                                      "journal": {"total_entries": 300},
+                                      "apf": {"current_apf": 20.5}},
+        }
+        self.new = {
+            "date": "2026-03-22", "session": 122,
+            "summary": {"total_tests": 7870, "total_loc": 40000, "git_commits": 500,
+                         "completed_tasks": 12, "total_findings": 200, "total_delivered": 150,
+                         "test_suites": 199, "source_loc": 25000, "test_loc": 15000,
+                         "source_files": 90, "test_files": 60, "total_papers": 15,
+                         "in_progress_tasks": 8},
+            "modules": [], "master_tasks_complete": [], "master_tasks_active": [],
+            "master_tasks_pending": [],
+            "kalshi_analytics": {"available": True,
+                                 "summary": {"total_pnl_usd": 45.5, "win_rate_pct": 62.5}},
+            "learning_intelligence": {"available": True,
+                                      "journal": {"total_entries": 335},
+                                      "apf": {"current_apf": 22.7}},
+        }
+
+    def test_kalshi_diff_uses_pnl_delta_field(self):
+        """Typst template references kc.pnl_delta (not pnl_delta_usd)."""
+        diff = self.differ.diff_reports(self.old, self.new)
+        kc = diff["kalshi_changes"]
+        self.assertIn("pnl_delta", kc)
+        self.assertAlmostEqual(kc["pnl_delta"], 15.5, places=1)
+
+    def test_kalshi_diff_uses_win_rate_delta_field(self):
+        """Typst template references kc.win_rate_delta (not trades_delta)."""
+        diff = self.differ.diff_reports(self.old, self.new)
+        kc = diff["kalshi_changes"]
+        self.assertIn("win_rate_delta", kc)
+        self.assertAlmostEqual(kc["win_rate_delta"], 4.5, places=1)
+
+    def test_summary_changes_have_delta_field(self):
+        """Typst template accesses entry.delta for each summary change."""
+        diff = self.differ.diff_reports(self.old, self.new)
+        for key, entry in diff["summary_changes"].items():
+            self.assertIn("delta", entry, f"{key} missing delta field")
+            self.assertIn("old", entry, f"{key} missing old field")
+            self.assertIn("new", entry, f"{key} missing new field")
+
+    def test_sessions_has_old_new_fields(self):
+        """Typst template accesses sessions.old and sessions.new."""
+        diff = self.differ.diff_reports(self.old, self.new)
+        s = diff["sessions"]
+        self.assertEqual(s["old"], 120)
+        self.assertEqual(s["new"], 122)
+
+    def test_mt_changes_has_newly_completed(self):
+        """Typst template iterates mt_changes.newly_completed."""
+        diff = self.differ.diff_reports(self.old, self.new)
+        self.assertIn("newly_completed", diff["mt_changes"])
+        self.assertIsInstance(diff["mt_changes"]["newly_completed"], list)
+
+    def test_learning_diff_has_apf_delta(self):
+        """Learning changes include apf_delta for trend display."""
+        diff = self.differ.diff_reports(self.old, self.new)
+        lc = diff["learning_changes"]
+        self.assertIn("apf_delta", lc)
+        self.assertAlmostEqual(lc["apf_delta"], 2.2, places=1)
+
+
 if __name__ == "__main__":
     unittest.main()

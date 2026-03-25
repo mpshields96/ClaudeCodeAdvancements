@@ -1180,7 +1180,7 @@ class CCADataCollector:
         learning_data = learning_collector.collect_all()
 
         return {
-            "title": "ClaudeCodeAdvancements",
+            "title": "Claude Code Advancements",
             "subtitle": "Comprehensive Project Report",
             "date": date.today().isoformat(),
             "session": session,

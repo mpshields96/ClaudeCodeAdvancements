@@ -183,7 +183,7 @@
     #text(size: 8pt, fill: light, tracking: 2.5pt, weight: "semibold")[PROJECT STATUS REPORT]
   ]
   #v(6mm)
-  #text(size: 32pt, weight: "bold", fill: black, tracking: -0.5pt)[ClaudeCode Advancements]
+  #text(size: 32pt, weight: "bold", fill: black, tracking: -0.5pt)[#data.title]
   #v(8mm)
   // Accent-colored divider instead of gray
   #line(length: 36mm, stroke: 1pt + blue)
@@ -492,13 +492,14 @@
       // Kalshi P&L change
       if data.report_diff.keys().contains("kalshi_changes") and data.report_diff.kalshi_changes != none {
         let kc = data.report_diff.kalshi_changes
-        if kc.keys().contains("pnl_delta_usd") and kc.pnl_delta_usd != 0 {
+        if kc.keys().contains("pnl_delta") and kc.pnl_delta != none and kc.pnl_delta != 0 {
           v(2mm)
-          let sign = if kc.pnl_delta_usd > 0 { "+" } else { "" }
-          let color = if kc.pnl_delta_usd > 0 { green } else { red }
-          text(size: 8pt, fill: color, weight: "semibold")[Kalshi P&L: #sign\$#str(calc.round(kc.pnl_delta_usd, digits: 2))]
-          if kc.keys().contains("trades_delta") and kc.trades_delta != 0 {
-            text(size: 7.5pt, fill: light)[ (+#str(kc.trades_delta) trades)]
+          let sign = if kc.pnl_delta > 0 { "+" } else { "" }
+          let color = if kc.pnl_delta > 0 { green } else { red }
+          text(size: 8pt, fill: color, weight: "semibold")[Kalshi P&L: #sign\$#str(calc.round(kc.pnl_delta, digits: 2))]
+          if kc.keys().contains("win_rate_delta") and kc.win_rate_delta != none and kc.win_rate_delta != 0 {
+            let wr_sign = if kc.win_rate_delta > 0 { "+" } else { "" }
+            text(size: 7.5pt, fill: light)[ (WR: #wr_sign#str(calc.round(kc.win_rate_delta, digits: 1))pp)]
           }
         }
       }
@@ -965,58 +966,39 @@
       width: 100%,
       stroke: (left: 3pt + blue, rest: 0.5pt + faint),
       radius: (right: 4pt),
-      inset: (x: 10pt, y: 7pt),
+      inset: (x: 8pt, y: 5pt),
       fill: white,
     )[
-      // Row 1: ID, name, badge, test count
+      // Row 1: ID, name, phase progress, badge
       #grid(
         columns: (auto, 1fr, auto, auto),
-        column-gutter: 6pt,
+        column-gutter: 5pt,
         align: (left, left, right, right),
-        text(size: 8pt, font: "Menlo", fill: light)[#task.id],
-        text(size: 9.5pt, weight: "bold", fill: black)[#task.name],
+        text(size: 7.5pt, font: "Menlo", fill: light)[#task.id],
+        text(size: 9pt, weight: "bold", fill: black)[#task.name],
         if task.keys().contains("test_count") and task.test_count > 0 {
-          text(size: 7.5pt, fill: green)[#sym.checkmark #task.test_count tests]
+          text(size: 7pt, fill: green)[#sym.checkmark #task.test_count]
         },
-        status-badge("In Progress", blue),
+        if task.keys().contains("total_phases") and task.total_phases > 0 {
+          text(size: 7pt, weight: "bold", fill: dark)[#task.phases_done#sym.slash#task.total_phases]
+        } else {
+          status-badge("Active", blue)
+        },
       )
-      // Row 2: Phase progress (if has phases)
+      // Phase bar (compact)
       #if task.keys().contains("total_phases") and task.total_phases > 0 {
-        v(2mm)
-        grid(
-          columns: (auto, 1fr, auto),
-          column-gutter: 6pt,
-          align: (left, center, right),
-          text(size: 7pt, fill: light)[Phase],
-          progress-bar(task.phases_done, task.total_phases, bar-color: blue),
-          text(size: 7pt, weight: "bold", fill: dark)[#task.phases_done#sym.slash#task.total_phases],
-        )
-      }
-      // Row 3: Description / why it matters
-      #if task.keys().contains("why_it_matters") and task.why_it_matters != "" {
         v(1.5mm)
-        text(size: 8pt, fill: mid)[#task.why_it_matters]
+        progress-bar(task.phases_done, task.total_phases, bar-color: blue, height: 3pt)
       }
-      // Row 4: Key deliverables so far
-      #if task.keys().contains("delivered") and task.delivered.len() > 0 {
-        v(1mm)
-        text(size: 7.5pt, weight: "semibold", fill: dark)[Delivered: ]
-        text(size: 7.5pt, fill: mid)[
-          #task.delivered.slice(0, calc.min(5, task.delivered.len())).join(" · ")
-        ]
-      }
-      // Row 5: Status + remaining work + next action
-      #v(1.5mm)
-      #text(size: 8pt, fill: mid)[#task.status]
-      #if task.keys().contains("remaining") and task.remaining.len() > 0 {
-        v(1mm)
-        text(size: 7.5pt, fill: blue)[Remaining: #task.remaining.join(" · ")]
-      } else if task.keys().contains("needs") and task.needs != "" {
-        h(6pt)
-        text(size: 7.5pt, fill: blue, weight: "semibold")[Next: #task.needs]
+      // Status + next (single line)
+      #v(1mm)
+      #text(size: 7.5pt, fill: mid)[#task.status]
+      #if task.keys().contains("needs") and task.needs != "" {
+        h(4pt)
+        text(size: 7pt, fill: blue, weight: "semibold")[#sym.arrow.r #task.needs]
       }
     ]
-    v(2.5pt)
+    v(2pt)
   }
 }
 
