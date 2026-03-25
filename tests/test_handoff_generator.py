@@ -313,7 +313,10 @@ class TestGenerateHandoff(unittest.TestCase):
         summary = self._make_summary(test_count=0, suite_count=0)
         config = HandoffConfig(current_session=116)
         content = generate_handoff(config, summary)
-        self.assertNotIn("0 tests", content)
+        # Check that "0 tests" doesn't appear in the success criteria / resume section
+        # (git log in RECENT COMMITS may contain "tests" in commit messages — that's fine)
+        sections_before_commits = content.split("## RECENT COMMITS")[0] if "## RECENT COMMITS" in content else content
+        self.assertNotIn("0 tests", sections_before_commits)
 
     def test_2chat_layout_no_kalshi(self):
         config = HandoffConfig(current_session=116, mode="2chat")
