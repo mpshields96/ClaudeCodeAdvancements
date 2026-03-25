@@ -3,24 +3,55 @@
 
 ---
 
-## Current State (as of Session 155 — 2026-03-24)
+## Current State (as of Session 159 — 2026-03-24)
 
-**Phase:** Session 155 COMPLETE. MT-38 Phase 3 (peak-hour agent blocking), timezone fix, K2 delivery, REQ-4+5 closed, spec-guard quiet mode, Reddit review. 4 commits. Grade: A.
+**Phase:** Session 159 COMPLETE. Report overhaul (Matthew feedback), MT-38 Phase 4, Kalshi cross-chat REQ-034/035
 
-**What was done this session (S155):**
-- **MT-38 Phase 3: PreToolUse peak-hour agent blocking hook** — Blocks Agent tool spawns during PEAK (8AM-2PM ET), warns during SHOULDER, allows during OFF-PEAK. Uses token_budget.py get_budget(). 31 tests. Wired into settings.local.json.
-- **MT-38 timezone fix** — token_budget.py was using machine CT time, now converts to ET via zoneinfo. Brief output shows "ET" explicitly.
-- **K2 economics sniper expansion delivery** — KXGDP recommended as first target (208k vol, quarterly, FLB confirmed). Detailed build plan for gdp_sniper.py. E-value rolling window: N=50 recommended (~10% false alarm rate, 6-hour detection latency).
-- **Kalshi REQ-4 CLOSED** — Overnight sizing: 0.7x Kelly for 00-08 UTC, 0.5x for 08-09 UTC (worst hour). Structural basis delivered with citations.
-- **Kalshi REQ-5 CLOSED** — Leaderboard analysis: crypto 15-min = best retail edge (structural FLB), economics = #2 (K2), FOMC = too arbed, politics = dormant.
-- **Spec-guard quiet mode** — SPEC_GUARD_QUIET=1 env var suppresses additionalContext on every Write/Edit during auto sessions. Saves ~50-100 tokens per tool call. +2 tests (58 total in validate suite).
-- **Reddit review** — "Claude Suddenly Eating Up Your Usage" (98pts). Audited our 21 hooks: 12 subprocess spawns per tool call, ~280ms total, no runaway token issues. Hooks are clean.
-- **Tests**: 212+ suites passing. All green.
+**What was done this session (S159):**
+- MT-38 Phase 4: Peak-aware autoloop scheduling — cooldown/model adjust by time window (16 tests, e1b5469)
+- Report round 1: MT descriptions restored for all groups, frontier chart removed, research outcomes path fixed (b9ddae9)
+- Report overhaul: 5 fluff charts removed, ACTION items in Honest Assessment, Self-Learning metrics enhanced, Architecture Decisions card layout (5b0127e)
+- Kalshi REQ-034: Monte Carlo + synthetic integration plan delivered
+- Kalshi REQ-035: Daily sniper paper analysis (10/10 wins, Wilson CI, sizing recs)
+- Model fix: confirmed Opus 4.6 = Opus 4.6 (1M context) same model, CCA doesn't touch it
+- **Tests**: 223 suites, 8959 tests passing. All green.
 
-**Next (from TODAYS_TASKS.md):**
-1. **MT-32 remaining** — MT section condensing in report
+**Next:**
+1. Continue Kalshi cross-chat coordination
+2. K2 follow-up when economics_sniper.py ready for review
+3. MT-36 Phase 5: Session efficiency dashboard
+4. Further report improvements (user wants "much better" overall)
+
+**Matthew directives:**
+- 50%+ time on Kalshi bot work (higher priority)
+- Peak/off-peak token budgeting UNIVERSAL (MT-38)
+- Set SPEC_GUARD_QUIET=1 during /cca-auto to reduce token waste
+- Autoloop ENABLED — CCA does NOT touch model selection, Matthew sets manually
+- CCA report is DAILY, end-of-day only
+- All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 156 — 2026-03-24)
+
+**Phase:** Session 156 COMPLETE. MT-32 report condensing + integer axes, MT-33 report content (5 fixes), cross-chat dedup + K2 answers. 8 commits. Grade: B+.
+
+**What was done this session (S156):**
+- **MT-32: Report template condensing** — Active MTs now compact rows (progress bar + status one-liner) instead of full task cards. Pending MTs condensed to one-line rows. Saves ~2 pages with 7+ active MTs.
+- **MT-32: Integer Y-axis labels** — Bar, stacked area, grouped bar charts now force integer ticks when all data values are whole numbers (no more 1.75, 3.5 labels).
+- **MT-33: Priorities parser fix** — Handles `1. **bold** — detail` markdown format (was only matching `(1)...(2)...`).
+- **MT-33: Dynamic Kalshi criticism** — Replaced static "read-only" text with data-driven check of `~/.cca-research-outcomes.jsonl`.
+- **MT-33: Phase progress correction** — Cross-references priority table Comp% column from MASTER_TASKS.md for accurate phase completion.
+- **MT-33: Test count extraction** — Falls back to scanning full task body for `(\d+) tests?` patterns.
+- **MT-33: Dynamic risk detection** — Finds blocked MTs, stagnating MTs, severity-3 learnings instead of hardcoded risks.
+- **Cross-chat dedup** — Added 24h deduplication to `send_message()`. Cleaned queue: 219→19 messages (200 paper digest dupes removed).
+- **K2 delivery** — Answered 5 economics sniper questions via CCA_TO_POLYBOT.md.
+- **Tests**: 223 suites, 8959 tests passing. All green.
+
+**Next:**
+1. **Optimize wrap time** — Matthew flagged wrap is too long. Reduce overhead without quality loss.
 2. **Continue Kalshi cross-chat coordination** — check for new requests
-3. **K2 follow-up** — if Kalshi chat builds gdp_sniper.py, assist with code review
+3. **K2 follow-up** — assist with gdp_sniper.py code review if built
 4. Read TODAYS_TASKS.md for full task list
 
 **Matthew directives:**
@@ -29,7 +60,16 @@
 - Peak/off-peak token budgeting UNIVERSAL (MT-38)
 - Set SPEC_GUARD_QUIET=1 during /cca-auto to reduce token waste
 - Autoloop ENABLED and firing
+- **CCA report as task reference (S156):** Read latest CCA_STATUS_REPORT JSON when deciding next tasks or priorities. Report content informs task selection. Applies to all CCA chats.
+- **/cca-report is DAILY, end-of-day only (S156):** Generate report ONCE per day, at end of last session. NOT every chat. Read existing report JSON for task decisions — don't regenerate.
+- **Optimize session overhead (S156):** Wrap/init time should be minimized without quality loss. Applies to CCA and Kalshi chats.
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+## Previous State (Session 155 — 2026-03-24)
+
+**What was done this session (S155):**
+- MT-38 Phase 3 (peak-hour agent blocking), timezone fix, K2 delivery, REQ-4+5 closed, spec-guard quiet mode. 4 commits. Grade: A.
 
 ---
 

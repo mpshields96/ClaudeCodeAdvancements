@@ -128,6 +128,15 @@
 
 ---
 
+### Ambiguous user negation = user wants to change course — Severity: 1 — Count: 1
+- **Anti-pattern:** Interpreting "no /cca-wrap now" as "don't run /cca-wrap" when user meant "no [to continuing], run /cca-wrap now". Same with "No stop" meaning "No, stop [working]" not "No, don't stop".
+- **Fix:** When user says "no [action]" in response to your continuing work, default to: they want to stop current activity and do the action. Parse "no X now" as "no, X now".
+- **First seen:** 2026-03-24 (Session 156)
+- **Last seen:** 2026-03-24
+- **Files:** instruction following in all sessions
+
+---
+
 ### Self-learning loops plateau at mechanical optimization — Severity: 1 — Count: 1
 - **Anti-pattern:** Expecting self-learning to improve architectural judgment or strategic decisions through log analysis alone
 - **Fix:** Design self-learning for bounded parameter tuning (thresholds, filters, batch sizes) and use it to free the human for judgment calls. Don't chase unbounded self-improvement.

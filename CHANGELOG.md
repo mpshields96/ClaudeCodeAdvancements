@@ -3,6 +3,50 @@
 
 ---
 
+## Session 159 — 2026-03-24
+
+**What changed:**
+- `token_budget.py`: Added `get_autoloop_settings()` API for peak-aware autoloop scheduling (MT-38 Phase 4)
+- `cca_autoloop.py`: Integrated peak-aware cooldown + model override during PEAK hours
+- `autoloop_trigger.py`: Added peak context logging to trigger audit trail
+- `design-skills/report_generator.py`: Added ACTION items to all Honest Assessment criticisms, fixed research outcomes path, added WHY_IT_MATTERS for 20+ MTs
+- `design-skills/templates/cca-report.typ`: Removed 5 fluff charts, enhanced Self-Learning section with big metrics + Research ROI pipeline, card-based Architecture Decisions, ACTION callout boxes in Honest Assessment
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md`: REQ-034 (Monte Carlo integration) + REQ-035 (daily sniper analysis) responses
+
+**Why:**
+- Matthew feedback: report was "uninspired", charts were "fluff", honest assessment needed actionable items
+- MT-38 Phase 4: autoloop should adjust behavior based on peak/off-peak hours
+- Kalshi cross-chat: 2 pending requests needed responses
+
+**Tests:** 8,959/8,959 passing (223 suites)
+
+**Lessons:**
+- Opus 4.6 and Opus 4.6 (1M context) are the same model — context window is the only difference
+- When user says "simplest cleanest solution," propose the simplest option first
+
+---
+
+## Session 156 — 2026-03-24
+
+**What changed:**
+- `design-skills/templates/cca-report.typ`: Condensed active MT section (compact rows with progress bar + status one-liner) and pending MT section (one-line rows). Saves ~2 pages.
+- `design-skills/chart_generator.py`: Integer Y-axis labels for bar, stacked area, grouped bar charts when all values are whole numbers.
+- `design-skills/report_generator.py`: 5 fixes — priorities parser markdown format, dynamic Kalshi criticism from research outcomes, phase progress from Comp% column, test count extraction from task body, dynamic risk detection (blocked MTs, stagnation, severity-3 learnings).
+- `cross_chat_queue.py`: 24h deduplication in `send_message()`. Cleaned 200 duplicate paper digest messages.
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md`: 2 deliveries — REQ-027 status + 5 economics sniper questions answered.
+
+**Why:**
+- MT-32: Report was too verbose with 7+ active MTs. Chart axes showed decimals for integer data.
+- MT-33: Report content had stale/inaccurate data (wrong phase progress, missing test counts, hardcoded risks).
+- Cross-chat queue was polluted with 200 duplicate messages from paper digest automation.
+
+**Tests:** 223/223 passing (8959 total)
+
+**Lessons:**
+- When user says "no /cca-wrap now" they mean "no [to continuing], run /cca-wrap now" — default to interpreting ambiguous negations as the user wanting to change course.
+
+---
+
 ## Session 143 — 2026-03-23
 
 **What changed:**
@@ -2326,5 +2370,24 @@ CLI chat 2:
 **Lessons:**
 - Background agent results must be persisted to disk immediately — session interruptions can lose context
 - Peak/off-peak awareness prevents wasteful usage during high-demand windows
+
+---
+
+## Session 158 — 2026-03-24
+
+**What changed:**
+- C2: Typst template color palette synced with design-guide + chart SVGs
+- Wrap optimization: doc_updater.py (25 tests) replaces 3-4 Read/Edit cycles
+- C2: Report whitespace reduction via weak pagebreaks
+- MT-32/36/38 status corrected in priority_picker + MASTER_TASKS
+- Cross-chat: Signal pipeline gap flagged to Kalshi chat
+
+**Why:**
+- C2 color sync + whitespace fix, wrap optimization (doc_updater.py), MT status updates, cross-chat delivery
+
+**Tests:** 8984/8984 passing (224 suites)
+
+**Lessons:**
+- Explored principle_registry integration before checking data volume (only 3 trading principles)
 
 ---

@@ -8,6 +8,7 @@
 - **50%+ time on Kalshi bot work** (higher priority)
 - Remaining time on CCA improvements
 - Frequent comms with Kalshi main chat (starting now)
+- **CCA report as task reference (S156):** Read latest CCA_STATUS_REPORT JSON when deciding next tasks. Report content informs priorities — not just SESSION_STATE. All CCA chats.
 
 ---
 

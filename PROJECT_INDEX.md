@@ -41,7 +41,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) | 1381 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~8888 tests (~221 suites). All must pass before any work.**
+**Total: ~8959 tests (~223 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -271,3 +271,8 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 | `/cca-report` | Generate professional PDF status report |
 | `/cca-dashboard` | Generate interactive HTML dashboard |
 | `/browse-url <url>` | Read any URL (no analysis) |
+
+
+### Added in S158
+- `doc_updater.py` — Batch doc updates for /cca-wrap optimization (25 tests, S158)
+- `tests/test_doc_updater.py` — Tests for doc_updater.py (S158)

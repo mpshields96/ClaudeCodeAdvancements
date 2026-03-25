@@ -1,4 +1,4 @@
-Run /cca-init. Last session was S157 on 2026-03-24.
-Completed: Init/wrap optimization (parallel test runner for init — 2s smoke vs 110s serial), autoloop model string cleanup. S156: MT-32 condensing, MT-33 content fixes, cross-chat dedup, K2 answers.
-Next: Continue Kalshi cross-chat coordination. K2 follow-up. Check TODAYS_TASKS.md for full task list. 50%+ time on Kalshi work per Matthew directive. CCA report as task reference (read JSON, don't regenerate). /cca-report is DAILY end-of-day only.
-Tests: 223/223 suites passing (8959 total). Autoloop ENABLED. Peak/off-peak budgeting ACTIVE.
+Run /cca-init. Last session was 159 on 2026-03-24. WHAT WAS DONE: Session 159 COMPLETE. Report overhaul (5 fluff charts removed, ACTION items in Honest Assessment, Self-Learning enhanced, Architecture Decisions card layout), MT-38 Phase 4 peak-aware autoloop, Kalshi REQ-034/035 answered. 3 commits. Grade: B+. Git: wrap files uncommitted. NEXT: 1. Continue Kalshi cross-chat coordination
+2. K2 follow-up when economics_sniper.py ready for review
+3. MT-36 Phase 5: Session efficiency dashboard
+4. Further report improvements (user wants "much better" overall). Run /cca-auto for autonomous work.
