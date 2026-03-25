@@ -3,6 +3,28 @@
 
 ---
 
+## Session 166 — 2026-03-25
+
+**What changed:**
+- MT-32 Phase 6: `design-skills/figure_generator.py` — multi-panel figure composer (grid layout, panel labels, captions, annotations). 41 tests.
+- MT-32 Phase 6: Preset layouts — `quick_figure()`, `comparison_figure()`, `dashboard_figure()`. 21 tests.
+- MT-32 Phase 7: `generate_summary_figure()` + `save_summary_figure()` in `report_charts.py`. Wired into `generate_all()`. 13 tests.
+- REQ-039 delivered: MakerSniperStrategy architecture design
+- REQ-033 delivered: NO@91-92c statistical analysis (DO NOT GUARD)
+- Fixed existing test count expectations in `test_report_generator.py`
+
+**Why:**
+- MT-32 Phase 6 is the figure generation pillar — publication-quality multi-panel figures
+- Phase 7 integrates figures into the report pipeline so /cca-report auto-generates overview figures
+- REQ-039/033 serve the 50%+ Kalshi directive
+
+**Tests:** 9393/9393 passing (240 suites)
+
+**Lessons:**
+- When adding new outputs to generate_all(), check existing tests that assert on chart count
+
+---
+
 ## Session 164 — 2026-03-25
 
 **What changed:**

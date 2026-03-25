@@ -3,25 +3,26 @@
 
 ---
 
-## Current State (as of Session 165 — 2026-03-25)
+## Current State (as of Session 166 — 2026-03-25)
 
-**Phase:** Session 165 COMPLETE. MT-32 Phase 5, MT-33 Phase 6, MT-41 Phase 4. Grade: A.
+**Phase:** Session 166 COMPLETE. MT-32 Phase 6 + Phase 7. Grade: A.
 
-**What was done this session (S165):**
-- MT-32 Phase 5 COMPLETE: Dashboard v2 interactive enhancements — responsive tablet (768px), auto-refresh (--refresh N), keyboard shortcuts (/ and Escape), print styles, embedded JSON data export, accessibility (aria-labels, scope, role). 27 tests in test_dashboard_phase5.py.
-- MT-33 Phase 6 COMPLETE: Report chart pipeline hardening — learning chart tests (event_types, apf_trend, domain_distribution), combined Kalshi+learning pipeline, empty/partial/missing data resilience, save_all file verification. 27 tests in test_report_charts_phase6.py.
-- MT-41 Phase 4 COMPLETE: --extend-existing flag for mt_originator.py — proposes new phases for active AND completed MTs based on BUILD findings. PhaseExtension dataclass, score_extension(), find_phase_extensions(), format_extension_briefing(), MT_NAMES map. 18 tests in test_mt_originator_extend.py.
-- MT-41 wiring: Phase extensions integrated into /cca-init briefing via slim_init.py run_mt_extensions(). 7 tests added to test_slim_init.py.
-- Cross-chat: REQ-040 confirmed already delivered (all 3 files in polymarket-bot). Updated CCA_TO_POLYBOT.md.
-- 4 commits, 79 new tests added (9239 -> 9318), 3 new suites (234 -> 237)
-- **Tests**: ~237 suites, ~9318 tests passing. All green.
+**What was done this session (S166):**
+- MT-32 Phase 6 COMPLETE: figure_generator.py — multi-panel figure composer with grid layout (auto cols), panel labels (a,b,c), captions, figure titles, 3 annotation types (TextAnnotation, ArrowAnnotation, HighlightAnnotation). 41 tests in test_figure_generator.py.
+- MT-32 Phase 6 extension: Preset layouts — quick_figure(), comparison_figure(), dashboard_figure() convenience functions. 21 tests in test_figure_presets.py.
+- MT-32 Phase 7 started: generate_summary_figure() and save_summary_figure() wired into ReportChartGenerator.generate_all(). 2-panel overview (tests per module + active MT progress) auto-included in /cca-report pipeline. 13 tests in test_report_figures.py.
+- REQ-039 DELIVERED: MakerSniperStrategy architecture design (post_only+expiry, 1c spread offset, 50% fill rate base, 50-fill paper gate, taker fallback)
+- REQ-033 DELIVERED: NO@91-92c statistical analysis (p=0.46/0.50, DO NOT GUARD, need n>=84-159 for significance)
+- Fixed 2 existing test expectations for new summary_figure in generate_all
+- 4 commits, 75 new tests added (9318 -> 9393), 3 new suites (237 -> 240)
+- **Tests**: ~240 suites, ~9393 tests passing. All green.
 
 **Next:**
-1. MT-32 Phase 6: Figure/image generation pipeline (multi-panel, annotation, export)
-2. MT-32 Phase 7: Integration — all pillars feeding into reports, dashboards, slides
-3. economics_sniper_v1 validation (April 8 CPI data)
-4. MakerSniperStrategy implementation (Kalshi monitoring chat builds from REQ-039 spec)
-5. Ongoing cross-chat coordination (check POLYBOT_TO_CCA.md each session)
+1. MT-32 Phase 7 continued: Wire figures into slides, dashboard, website pipelines
+2. economics_sniper_v1 validation (April 8 CPI data)
+3. MakerSniperStrategy implementation (Kalshi monitoring chat builds from REQ-039 spec)
+4. Ongoing cross-chat coordination (check POLYBOT_TO_CCA.md each session)
+5. REQ-035 response: daily_sniper interim analysis (Wilson CI, sizing recommendation)
 
 **Matthew directives:**
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
@@ -31,6 +32,14 @@
 - Autoloop ENABLED — run /cca-wrap at natural stopping points, not when Matthew reminds
 - CCA and Kalshi chats should have automated feedback loop (S161 directive, IMPLEMENTED S162)
 - All previous directives still active (Two Pillars, cross-chat comms, polybot full access)
+
+---
+
+## Previous State (Session 165 — 2026-03-25)
+
+**Phase:** Session 165 COMPLETE. MT-32 Phase 5, MT-33 Phase 6, MT-41 Phase 4. Grade: A.
+
+**What was done (S165):** MT-32 Phase 5 (Dashboard v2 interactive, 27 tests). MT-33 Phase 6 (report chart hardening, 27 tests). MT-41 Phase 4 (--extend-existing, 18 tests). 4 commits, 79 new tests. 237 suites, 9318 tests.
 
 ---
 

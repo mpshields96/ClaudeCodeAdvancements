@@ -1,5 +1,5 @@
 # Project Index: ClaudeCodeAdvancements
-# Last updated: 2026-03-24 (Session 160)
+# Last updated: 2026-03-25 (Session 166)
 # Read this FIRST each session for fast orientation (~150 lines)
 
 ---
@@ -41,7 +41,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) | 1381 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~9239 tests (~234 suites). All must pass before any work.**
+**Total: ~9393 tests (~240 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -127,6 +127,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `report_differ.py` — MT-33 Phase 6: Structured diff between two report sidecars (test growth, MT transitions, Kalshi P&L, APF). 30 tests (S123).
 - `report_sidecar.py` — MT-33 Phase 5: JSON export alongside PDF (extract, save, load, find_latest). S134.
 - `MT33_DATA_MAPPING.md` — Schema mapping, SQL queries, chart-to-data design doc (S122).
+- `figure_generator.py` — MT-32 Phase 6: Multi-panel figure composer (grid layout, panel labels, captions, 3 annotation types, presets). 62 tests (S166).
 
 **root/** — Loop hardening + coordination
 - `resume_generator.py` — cca-loop hardening: auto-generate SESSION_RESUME.md from SESSION_STATE when stale (17 tests)
