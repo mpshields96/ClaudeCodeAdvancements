@@ -325,6 +325,158 @@ class TestSeedFromJournal(unittest.TestCase):
             self.assertGreater(len(lines), 0)
 
 
+class TestSessionAwareSeeding(unittest.TestCase):
+    """Test that seeding functions thread session numbers to principles."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.principles_path = os.path.join(self.tmpdir, "principles.jsonl")
+        self.md_path = os.path.join(self.tmpdir, "LEARNINGS.md")
+        with open(self.md_path, "w") as f:
+            f.write("""# Learnings
+
+---
+
+### Always commit wrap files — Severity: 2 — Count: 2
+- **Anti-pattern:** Leaving wrap files uncommitted
+- **Fix:** Commit SESSION_STATE at session end
+- **First seen:** 2026-02-19
+- **Last seen:** 2026-03-15
+- **Files:** session state files
+
+---
+""")
+        self.journal_path = os.path.join(self.tmpdir, "journal.jsonl")
+        entries = [
+            {"event_type": "pain", "description": "Edit retry on structured file", "domain": "cca_operations", "timestamp": "2026-03-01T00:00:00Z"},
+            {"event_type": "pain", "description": "Edit retry on structured file", "domain": "cca_operations", "timestamp": "2026-03-02T00:00:00Z"},
+            {"event_type": "pain", "description": "Edit retry on structured file", "domain": "cca_operations", "timestamp": "2026-03-03T00:00:00Z"},
+        ]
+        with open(self.journal_path, "w") as f:
+            for e in entries:
+                f.write(json.dumps(e) + "\n")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir)
+
+    def _read_principles(self):
+        if not os.path.exists(self.principles_path):
+            return []
+        with open(self.principles_path) as f:
+            return [json.loads(line) for line in f if line.strip()]
+
+    def test_seed_learnings_with_session(self):
+        """Seeding from learnings with session= sets created_session and last_used_session."""
+        seed_principles_from_learnings(
+            self.md_path, principles_path=self.principles_path, session=150
+        )
+        principles = self._read_principles()
+        self.assertGreater(len(principles), 0)
+        for p in principles:
+            self.assertEqual(p["created_session"], 150)
+            self.assertEqual(p["last_used_session"], 150)
+
+    def test_seed_learnings_default_session_zero(self):
+        """Without session= arg, defaults to 0 (backwards compatible)."""
+        seed_principles_from_learnings(
+            self.md_path, principles_path=self.principles_path
+        )
+        principles = self._read_principles()
+        self.assertGreater(len(principles), 0)
+        for p in principles:
+            self.assertEqual(p["created_session"], 0)
+
+    def test_seed_journal_with_session(self):
+        """Seeding from journal with session= sets created_session."""
+        seed_principles_from_journal(
+            self.journal_path, principles_path=self.principles_path, session=160
+        )
+        principles = self._read_principles()
+        for p in principles:
+            self.assertEqual(p["created_session"], 160)
+            self.assertEqual(p["last_used_session"], 160)
+
+    def test_seed_findings_with_session(self):
+        """Seeding from findings with session= sets created_session."""
+        from principle_seeder import seed_principles_from_findings
+        findings_path = os.path.join(self.tmpdir, "FINDINGS_LOG.md")
+        with open(findings_path, "w") as f:
+            # Use the actual FINDINGS_LOG line format: [date] [VERDICT] [frontier] title — url
+            f.write("[2026-03-20] [BUILD] [Memory] Cool Memory Tool (80pts) — https://example.com/tool\n")
+        seed_principles_from_findings(
+            findings_path=findings_path,
+            principles_path=self.principles_path,
+            session=170,
+            min_points=0,
+        )
+        principles = self._read_principles()
+        self.assertGreater(len(principles), 0, "Expected at least one principle seeded from findings")
+        for p in principles:
+            self.assertEqual(p["created_session"], 170)
+            self.assertEqual(p["last_used_session"], 170)
+
+
+class TestBackfillSessions(unittest.TestCase):
+    """Test backfill_sessions() to fix existing session-0 principles."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.principles_path = os.path.join(self.tmpdir, "principles.jsonl")
+        # Write some session-0 principles
+        principles = [
+            {"id": "prin_aaa", "text": "Test 1", "created_session": 0, "last_used_session": 0,
+             "source_domain": "general", "applicable_domains": ["general"],
+             "success_count": 3, "usage_count": 3, "score": 0.5,
+             "created_at": "2026-03-24T00:00:00Z", "updated_at": "2026-03-24T00:00:00Z",
+             "pruned": False, "source_context": "Seeded"},
+            {"id": "prin_bbb", "text": "Test 2", "created_session": 150, "last_used_session": 150,
+             "source_domain": "general", "applicable_domains": ["general"],
+             "success_count": 1, "usage_count": 1, "score": 0.5,
+             "created_at": "2026-03-25T00:00:00Z", "updated_at": "2026-03-25T00:00:00Z",
+             "pruned": False, "source_context": "Manual"},
+        ]
+        with open(self.principles_path, "w") as f:
+            for p in principles:
+                f.write(json.dumps(p) + "\n")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir)
+
+    def _read_principles(self):
+        with open(self.principles_path) as f:
+            return [json.loads(line) for line in f if line.strip()]
+
+    def test_backfill_updates_session_zero(self):
+        from principle_seeder import backfill_sessions
+        count = backfill_sessions(self.principles_path, session=168)
+        self.assertEqual(count, 1)  # Only prin_aaa had session 0
+        principles = self._read_principles()
+        aaa = [p for p in principles if p["id"] == "prin_aaa"][0]
+        self.assertEqual(aaa["created_session"], 168)
+        self.assertEqual(aaa["last_used_session"], 168)
+
+    def test_backfill_skips_nonzero_session(self):
+        from principle_seeder import backfill_sessions
+        backfill_sessions(self.principles_path, session=168)
+        principles = self._read_principles()
+        bbb = [p for p in principles if p["id"] == "prin_bbb"][0]
+        self.assertEqual(bbb["created_session"], 150)  # Unchanged
+        self.assertEqual(bbb["last_used_session"], 150)
+
+    def test_backfill_returns_count(self):
+        from principle_seeder import backfill_sessions
+        count = backfill_sessions(self.principles_path, session=168)
+        self.assertEqual(count, 1)
+
+    def test_backfill_idempotent(self):
+        from principle_seeder import backfill_sessions
+        backfill_sessions(self.principles_path, session=168)
+        count2 = backfill_sessions(self.principles_path, session=170)
+        self.assertEqual(count2, 0)  # Already fixed
+
+
 class TestCLI(unittest.TestCase):
     """Test CLI interface."""
 

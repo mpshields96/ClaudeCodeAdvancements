@@ -242,6 +242,7 @@ def seed_principles_from_learnings(
     learnings_path: str = DEFAULT_LEARNINGS_PATH,
     principles_path: str = DEFAULT_PRINCIPLES_PATH,
     min_severity: int = 1,
+    session: int = 0,
 ) -> list:
     """Seed principle registry from LEARNINGS.md.
 
@@ -269,7 +270,7 @@ def seed_principles_from_learnings(
             text=text,
             source_domain=domain,
             applicable_domains=applicable,
-            session=0,
+            session=session,
             source_context=f"Seeded from LEARNINGS.md (severity={learning.severity}, count={learning.count})",
             path=principles_path,
         )
@@ -378,6 +379,7 @@ def extract_journal_patterns(entries: list) -> list:
 def seed_principles_from_journal(
     journal_path: str = DEFAULT_JOURNAL_PATH,
     principles_path: str = DEFAULT_PRINCIPLES_PATH,
+    session: int = 0,
 ) -> list:
     """Seed principle registry from journal pattern analysis.
 
@@ -417,7 +419,7 @@ def seed_principles_from_journal(
             text=text,
             source_domain=domain,
             applicable_domains=applicable,
-            session=0,
+            session=session,
             source_context=f"Seeded from journal patterns (type={pattern['type']}, count={pattern['count']})",
             path=principles_path,
         )
@@ -548,6 +550,7 @@ def seed_principles_from_findings(
     findings_path: str = DEFAULT_FINDINGS_PATH,
     principles_path: str = DEFAULT_PRINCIPLES_PATH,
     min_points: int = 50,
+    session: int = 0,
 ) -> list:
     """Seed principle registry from FINDINGS_LOG.md BUILD/ADAPT verdicts.
 
@@ -592,7 +595,7 @@ def seed_principles_from_findings(
             text=text,
             source_domain=domain,
             applicable_domains=applicable,
-            session=0,
+            session=session,
             source_context=f"Seeded from FINDINGS_LOG.md ({finding['verdict']}, {finding['points']}pts, {finding['date']})",
             path=principles_path,
         )
@@ -616,16 +619,18 @@ def seed_all(
     principles_path: str = DEFAULT_PRINCIPLES_PATH,
     min_severity: int = 1,
     min_points: int = 50,
+    session: int = 0,
 ) -> dict:
     """Seed from learnings, journal, and findings. Returns summary."""
     learnings_results = seed_principles_from_learnings(
-        learnings_path, principles_path, min_severity
+        learnings_path, principles_path, min_severity, session=session
     )
-    journal_results = seed_principles_from_journal(journal_path, principles_path)
+    journal_results = seed_principles_from_journal(journal_path, principles_path, session=session)
     findings_results = seed_principles_from_findings(
         findings_path=findings_path,
         principles_path=principles_path,
         min_points=min_points,
+        session=session,
     )
 
     return {
@@ -637,6 +642,33 @@ def seed_all(
         "journal_details": journal_results,
         "findings_details": findings_results,
     }
+
+
+def backfill_sessions(
+    principles_path: str = DEFAULT_PRINCIPLES_PATH,
+    session: int = 0,
+) -> int:
+    """Fix existing principles that have created_session=0.
+
+    Sets both created_session and last_used_session to the given session number.
+    Only updates principles where created_session is currently 0.
+    Returns count of updated principles.
+    """
+    principles = _load_principles(principles_path)
+    updated = 0
+    for p in principles.values():
+        if p.created_session == 0:
+            p.created_session = session
+            p.last_used_session = session
+            updated += 1
+
+    if updated > 0:
+        # Rewrite the file with updated principles
+        with open(principles_path, "w") as f:
+            for p in principles.values():
+                f.write(json.dumps(p.__dict__) + "\n")
+
+    return updated
 
 
 def get_status(principles_path: str = DEFAULT_PRINCIPLES_PATH) -> dict:
