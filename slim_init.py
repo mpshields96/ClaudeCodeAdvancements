@@ -249,6 +249,30 @@ def run_mt_extensions() -> dict:
         return {"extensions": [], "count": 0, "raw": "", "error": "Timeout"}
 
 
+def run_outcomes_enricher() -> dict:
+    """Run outcomes_enricher.py enrich to add missing REQ entries (idempotent)."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "outcomes_enricher.py"), "enrich"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            return {"enriched": 0}
+
+        # Parse "Added N entries to ..."
+        m = re.search(r"Added\s+(\d+)\s+entries?", output)
+        enriched = int(m.group(1)) if m else 0
+
+        return {"enriched": enriched, "raw": output}
+    except subprocess.TimeoutExpired:
+        return {"enriched": 0, "error": "Timeout: outcomes_enricher exceeded 15 seconds"}
+
+
 def run_transfer_proposals() -> dict:
     """Run principle_transfer.py propose + review for active transfer proposals."""
     try:
@@ -447,6 +471,8 @@ def format_summary(summary: dict) -> str:
         lines.append(f"  Recalibration: {summary['recal_decayed']}/{summary.get('recal_total', 0)} principles decayed (staleness)")
     if summary.get("roi_resolved", 0) > 0:
         lines.append(f"  Research ROI: {summary['roi_resolved']}/{summary.get('roi_total', 0)} deliveries resolved")
+    if summary.get("enriched_count", 0) > 0:
+        lines.append(f"  Enriched: {summary['enriched_count']} new REQ entries added to outcomes")
     if summary.get("blockers"):
         lines.append("  BLOCKERS:")
         for b in summary["blockers"]:
@@ -503,6 +529,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3.11: Research ROI (MT-49 Phase 5 — delivery resolution)
     roi = run_research_roi()
 
+    # Step 3.12: Outcomes enricher (MT-49 Phase 5 — auto-enrich missing REQs)
+    enricher = run_outcomes_enricher()
+
     # Step 4: Session timeline (last 5 sessions)
     timeline = run_timeline(5)
 
@@ -532,6 +561,8 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if roi.get("resolved", 0) > 0:
         summary["roi_resolved"] = roi["resolved"]
         summary["roi_total"] = roi["total"]
+    if enricher.get("enriched", 0) > 0:
+        summary["enriched_count"] = enricher["enriched"]
 
     return summary
 

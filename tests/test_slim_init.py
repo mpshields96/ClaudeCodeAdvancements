@@ -1133,5 +1133,161 @@ class TestResearchROI(unittest.TestCase):
         self.assertNotIn("roi_resolved", result)
 
 
+class TestRunOutcomesEnricher(unittest.TestCase):
+    """Test outcomes_enricher wiring into slim_init."""
+
+    @patch("slim_init.subprocess.run")
+    def test_run_outcomes_enricher_success(self, mock_run):
+        from slim_init import run_outcomes_enricher
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Added 3 entries to self-learning/research_outcomes.jsonl",
+            stderr="",
+        )
+        result = run_outcomes_enricher()
+        self.assertEqual(result["enriched"], 3)
+
+    @patch("slim_init.subprocess.run")
+    def test_run_outcomes_enricher_zero_added(self, mock_run):
+        from slim_init import run_outcomes_enricher
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Added 0 entries to self-learning/research_outcomes.jsonl",
+            stderr="",
+        )
+        result = run_outcomes_enricher()
+        self.assertEqual(result["enriched"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_run_outcomes_enricher_timeout(self, mock_run):
+        import subprocess
+        from slim_init import run_outcomes_enricher
+        mock_run.side_effect = subprocess.TimeoutExpired("cmd", 15)
+        result = run_outcomes_enricher()
+        self.assertEqual(result["enriched"], 0)
+        self.assertIn("error", result)
+
+    @patch("slim_init.subprocess.run")
+    def test_run_outcomes_enricher_failure(self, mock_run):
+        from slim_init import run_outcomes_enricher
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="File not found")
+        result = run_outcomes_enricher()
+        self.assertEqual(result["enriched"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_run_outcomes_enricher_missing_file_graceful(self, mock_run):
+        from slim_init import run_outcomes_enricher
+        mock_run.return_value = MagicMock(
+            returncode=1,
+            stdout="",
+            stderr="Error: /Users/matthewshields/.claude/cross-chat/CCA_TO_POLYBOT.md not found",
+        )
+        result = run_outcomes_enricher()
+        self.assertEqual(result["enriched"], 0)
+
+
+class TestSummaryIncludesEnricher(unittest.TestCase):
+    """Test that enricher results appear in formatted summary."""
+
+    def test_enriched_shows_in_summary(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S175",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-49",
+            "enriched_count": 3,
+        }
+        text = format_summary(summary)
+        self.assertIn("Enriched", text)
+        self.assertIn("3", text)
+
+    def test_zero_enriched_omits_from_summary(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S175",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-49",
+        }
+        text = format_summary(summary)
+        self.assertNotIn("Enriched", text)
+
+
+class TestSlimInitIncludesEnricher(unittest.TestCase):
+    """Test that run_slim_init includes outcomes_enricher."""
+
+    @patch("slim_init.run_outcomes_enricher")
+    @patch("slim_init.run_recalibration")
+    @patch("slim_init.run_principle_discoverer")
+    @patch("slim_init.run_transfer_proposals")
+    @patch("slim_init.run_meta_learning")
+    @patch("slim_init.run_mt_extensions")
+    @patch("slim_init.run_mt_proposals")
+    @patch("slim_init.run_principle_seeder")
+    @patch("slim_init.run_timeline")
+    @patch("slim_init.run_priority")
+    @patch("slim_init.run_smoke")
+    @patch("slim_init.run_research_roi")
+    @patch("slim_init.Path.read_text")
+    def test_full_init_includes_enricher(self, mock_read, mock_roi, mock_smoke, mock_priority,
+                                          mock_timeline, mock_seeder, mock_proposals,
+                                          mock_extensions, mock_meta, mock_transfer,
+                                          mock_discoverer, mock_recal, mock_enricher):
+        from slim_init import run_slim_init
+        mock_read.return_value = "## Current State (as of Session 175 — 2026-03-25)"
+        mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
+        mock_priority.return_value = {"top_pick": "MT-49", "raw": "output"}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
+        mock_seeder.return_value = {"seeded": 0}
+        mock_proposals.return_value = {"count": 0, "proposals": [], "raw": ""}
+        mock_extensions.return_value = {"count": 0, "extensions": [], "raw": ""}
+        mock_meta.return_value = {"status": "HEALTHY", "brief": ""}
+        mock_transfer.return_value = {"pending": 0}
+        mock_discoverer.return_value = {"discovered": 0, "raw": ""}
+        mock_recal.return_value = {"decayed": 0, "total": 122}
+        mock_roi.return_value = {"total": 60, "resolved": 8}
+        mock_enricher.return_value = {"enriched": 5}
+
+        result = run_slim_init()
+        mock_enricher.assert_called_once()
+        self.assertEqual(result.get("enriched_count"), 5)
+
+    @patch("slim_init.run_outcomes_enricher")
+    @patch("slim_init.run_recalibration")
+    @patch("slim_init.run_principle_discoverer")
+    @patch("slim_init.run_transfer_proposals")
+    @patch("slim_init.run_meta_learning")
+    @patch("slim_init.run_mt_extensions")
+    @patch("slim_init.run_mt_proposals")
+    @patch("slim_init.run_principle_seeder")
+    @patch("slim_init.run_timeline")
+    @patch("slim_init.run_priority")
+    @patch("slim_init.run_smoke")
+    @patch("slim_init.run_research_roi")
+    @patch("slim_init.Path.read_text")
+    def test_full_init_zero_enriched_omits_key(self, mock_read, mock_roi, mock_smoke, mock_priority,
+                                                mock_timeline, mock_seeder, mock_proposals,
+                                                mock_extensions, mock_meta, mock_transfer,
+                                                mock_discoverer, mock_recal, mock_enricher):
+        from slim_init import run_slim_init
+        mock_read.return_value = "## Current State (as of Session 175 — 2026-03-25)"
+        mock_smoke.return_value = {"passed": True, "suites_passed": 10, "suites_total": 10}
+        mock_priority.return_value = {"top_pick": "MT-49", "raw": "output"}
+        mock_timeline.return_value = {"raw": "", "session_count": 0}
+        mock_seeder.return_value = {"seeded": 0}
+        mock_proposals.return_value = {"count": 0, "proposals": [], "raw": ""}
+        mock_extensions.return_value = {"count": 0, "extensions": [], "raw": ""}
+        mock_meta.return_value = {"status": "HEALTHY", "brief": ""}
+        mock_transfer.return_value = {"pending": 0}
+        mock_discoverer.return_value = {"discovered": 0, "raw": ""}
+        mock_recal.return_value = {"decayed": 0, "total": 122}
+        mock_roi.return_value = {"total": 60, "resolved": 0}
+        mock_enricher.return_value = {"enriched": 0}
+
+        result = run_slim_init()
+        self.assertNotIn("enriched_count", result)
+
+
 if __name__ == "__main__":
     unittest.main()
