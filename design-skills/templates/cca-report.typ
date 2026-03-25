@@ -184,9 +184,7 @@
     #text(size: 8pt, fill: light, tracking: 2.5pt, weight: "semibold")[PROJECT STATUS REPORT]
   ]
   #v(6mm)
-  #text(size: 38pt, weight: "bold", fill: black, tracking: -0.5pt)[Claude Code]
-  #v(-2mm)
-  #text(size: 38pt, weight: "bold", fill: black, tracking: -0.5pt)[Advancements]
+  #text(size: 32pt, weight: "bold", fill: black, tracking: -0.5pt)[ClaudeCode Advancements]
   #v(8mm)
   // Accent-colored divider instead of gray
   #line(length: 36mm, stroke: 1pt + blue)
