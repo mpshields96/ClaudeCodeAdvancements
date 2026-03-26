@@ -53,6 +53,13 @@ class TestAtomicQueueWrites(unittest.TestCase):
     def test_save_queue_no_temp_files_left(self):
         """Atomic write should not leave temp files after success."""
         dir_path = os.path.dirname(self.path)
+        # Clean pre-existing stale temp files from other processes
+        for f in os.listdir(dir_path):
+            if f.startswith(".cca_queue_") and f.endswith(".tmp"):
+                try:
+                    os.unlink(os.path.join(dir_path, f))
+                except OSError:
+                    pass
         msgs = [{"id": "test_1", "subject": "A"}]
         ciq._save_queue(msgs, self.path)
         # Check for leftover .tmp files in the directory
