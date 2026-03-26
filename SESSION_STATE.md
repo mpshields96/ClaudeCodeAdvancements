@@ -3,26 +3,18 @@
 
 ---
 
-## Current State (as of Session 193 — 2026-03-26)
+## Current State (as of Session 194 — 2026-03-26)
 
-**Phase:** Session 193 COMPLETE. Crown jewel focus: MT-28 trade seeder bridge, MT-0 bet advisor API, priority picker fix (GROWTH items now surface in pick_next). 3 Kalshi deliveries (REQ-54 sizing, REQ-55 market discovery). Token pacing directive.
+**Phase:** Session 194 IN PROGRESS. PEAK hours (60% budget). MT-49 Phase 2 active transfer shipped. REQ-56 sports game sniper research delivered.
 
-**What was done this session (S193):**
-- **principle_seeder.py:** Trade reflector → principle seeder bridge (MT-28 growth). `seed_principles_from_trades()`, `proposal_to_principle_text()`, `TRADE_PATTERN_DOMAIN` mapping 5 patterns to domains. `seed-trades` CLI command. 10 new tests in TestTradeSeeder.
-- **principle_registry.py:** `get_bet_advice()` API (MT-0 growth). Takes market/direction/price, returns relevant principles + confidence_modifier [-0.5, +0.5] + warnings. Keyword matching for crypto/weather/economic markets. `advise` CLI command. 12 new tests.
-- **priority_picker.py:** Fixed `pick_next()` to use `full_ranking()` instead of `ranked()` only. GROWTH items (MT-28=16, MT-0=18) now surface alongside active MTs. Root cause of MT-32 over-focus fixed.
-- **report_charts.py:** ParetoChart + GaugeChart wired into pipeline. `module_tests_pareto()` (80/20 analysis) + `test_pass_gauge()` (speedometer). 14 new tests. 14 base charts total.
-- **cca-report.typ:** 23 chart embeds (was 15). 8 new chart slots added.
-- **token_budget.py:** PEAK 60%, SHOULDER 80% with dual-chat pacing note.
-- **Kalshi REQ-54:** Monte Carlo sizing (5000 sims). No bet size meets <5% floor breach at $40. Recommended: keep $7.50, add 15-min cooldown + 3-loss circuit breaker.
-- **Kalshi REQ-55:** Non-crypto market discovery. Weather + economics + daily crypto = diversification stack targeting $16-35/day combined.
-- **Token pacing directive:** Formalized in peak-offpeak-budgeting.md. Dual-chat = 50% each, 90% target by 4h30m.
-- **Matthew directive S193:** 5-day timer delay logged in MATTHEW_DIRECTIVES.md.
+**What was done this session (S194):**
+- **principle_transfer.py:** MT-49 Phase 2 active transfer — `auto_accept_transfers()` (threshold-based auto-acceptance), `record_transfer_outcome()` (validated/reverted status tracking), `run_active_transfer_cycle()` (propose + auto-accept orchestrator). Extended `PROPOSAL_STATUSES` with "validated" and "reverted". 10 new tests (59 total in suite).
+- **REQ-56 delivery:** Sports game sniper research for Kalshi chat. FLB verified for live sports markets (4 academic papers: Whelan 2024, Peel 2016, Management Science 2023, Skinner/Princeton 2022). ESPN API recommended for game state (free, no auth, covers NBA/NHL/MLB/NFL). 90c+ = late game confirmed. Diversification value quantified (8-14 additional daily opportunities). Implementation plan in 2 phases.
 
-**Tests:** 10,446 total (271 suites). +35 new. 0 regressions (2 pre-existing in autoloop model test).
-**Commits:** 5 this session.
+**Tests:** 10,456 total (271 suites). +10 new. 0 regressions.
+**Commits:** 1 this session.
 
-**Next:** (1) MT-49 Phase 2: active transfer — implement auto_accept_transfers(), record_transfer_outcome(), run_active_transfer_cycle() in principle_transfer.py (tests designed in S193, reverted to keep green). (2) Kalshi cross-chat follow-up on REQ-54/55 implementation. (3) MT-41: Synthetic MT origination Phase 2 (score proposals with community signals). (4) MT-53 Phase 2 (pokemon-agent install). (5) MAST paper full read.
+**Next:** (1) MT-32 Visual Excellence next phase. (2) MT-53 Phase 2 (pokemon-agent install). (3) MAST paper full read. (4) Check for new Kalshi REQs. (5) MT-37 Phase 3 (portfolio data module).
 
 **What was done this session (S192):**
 
