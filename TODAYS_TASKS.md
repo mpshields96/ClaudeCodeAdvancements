@@ -133,6 +133,30 @@
 - Extend mt_originator.py with intelligence-driven origination
 - Logged as MT-52 in MASTER_TASKS.md
 
+### E9. Typst Color Token Cleanup [DONE S182]
+- 4 new semantic tokens (tint-warm, warm-border, warm-label, warm-body) + 8 orphan replacements
+- Zero orphan hex values remain in template body
+
+### E10. Kalshi Pending Requests — Political Markets Probe
+- POLYBOT_TO_CCA.md REQUEST 1 (PENDING): Probe Kalshi political markets (KXPRES/KXELECTION/KXCONGRESS)
+- Research: what 1-week+ political markets at 70-90c with >500 volume exist?
+- Research: settlement structure, WR on historical 90c+ favorites
+- This is Pillar 3 expansion — structural basis needed before any build
+
+### E11. Kalshi Pending Requests — Overnight/Time-of-Day Research
+- POLYBOT_TO_CCA.md REQUEST 4 (OPEN/URGENT): Academic evidence for time-of-day crypto effects
+- Research: intraday volatility patterns, FLB by UTC window, drift signal degradation overnight
+- DB shows: sniper SLEEP WR=92.3% PnL=-0.158 vs DAY WR=93.9% PnL=+0.470
+- Need: verified papers with DOI/arXiv on crypto prediction market time-of-day
+
+### E12. MT-52 Phase 1: Build Synthetic Origination Engine
+- Extend mt_originator.py to auto-propose new MTs/phases from:
+  (a) FINDINGS_LOG.md BUILD verdicts (intelligence-driven)
+  (b) MASTER_TASKS.md stalled/completed MTs (expansion-driven)
+  (c) Cross-chat patterns (Kalshi data-driven)
+- TDD: tests first, then build
+- This is the engine that keeps CCA growing autonomously
+
 ---
 
 ## COMPLETED TODAY (all sessions)

@@ -19,16 +19,20 @@
 #let indigo = rgb("#0f3460")
 
 // Semantic tint tokens (light backgrounds for callout/status blocks)
-#let tint-blue = rgb("#eff6ff")       // Info backgrounds, section highlights
-#let tint-red = rgb("#fff1f0")        // Blocked/error item backgrounds
-#let tint-green = rgb("#f0fdf4")      // Profitable/positive status backgrounds
-#let tint-orange = rgb("#fff7ed")     // Non-profitable/caution backgrounds
+#let tint-blue = tint-blue       // Info backgrounds, section highlights
+#let tint-red = tint-red        // Blocked/error item backgrounds
+#let tint-green = tint-green      // Profitable/positive status backgrounds
+#let tint-orange = tint-orange     // Non-profitable/caution backgrounds
+#let tint-warm = tint-warm       // Warm parchment callout backgrounds
+#let warm-border = warm-border     // Warm gold callout left border
+#let warm-label = warm-label      // Warm muted callout label text
+#let warm-body = warm-body       // Warm dark callout body text
 
 // Callout box tokens (warm earth tones for "why it matters" blocks)
-#let callout-bg = rgb("#f8f7f4")      // Callout background
-#let callout-border = rgb("#d4c5a0")  // Callout left border
-#let callout-label = rgb("#8b7e66")   // Callout label text
-#let callout-body = rgb("#5c5344")    // Callout body text
+#let callout-bg = tint-warm      // Callout background
+#let callout-border = warm-border  // Callout left border
+#let callout-label = warm-label   // Callout label text
+#let callout-body = warm-body    // Callout body text
 
 // ─── Data Loading ──────────────────────────────────────────────────────────
 #let data = if sys.inputs.keys().contains("data") {
@@ -762,7 +766,7 @@
     // What's next
     #if mod.keys().contains("next") and mod.next != "" {
       v(2mm)
-      box(fill: rgb("#eff6ff"), radius: 3pt, inset: (x: 8pt, y: 4pt), width: 100%)[
+      box(fill: tint-blue, radius: 3pt, inset: (x: 8pt, y: 4pt), width: 100%)[
         #text(size: 7pt, fill: blue, weight: "semibold")[NEXT: ]
         #text(size: 7.5pt, fill: dark)[#mod.next]
       ]
@@ -772,13 +776,13 @@
     #if mod.keys().contains("why_it_matters") and mod.why_it_matters != "" {
       v(2mm)
       box(
-        fill: rgb("#f8f7f4"),
+        fill: tint-warm,
         radius: 3pt, inset: (x: 6pt, y: 4pt), width: 100%,
-        stroke: (left: 2pt + rgb("#d4c5a0"), rest: none),
+        stroke: (left: 2pt + warm-border, rest: none),
       )[
-        #text(size: 6.5pt, fill: rgb("#8b7e66"), weight: "semibold", tracking: 0.5pt)[WHY THIS MATTERS]
+        #text(size: 6.5pt, fill: warm-label, weight: "semibold", tracking: 0.5pt)[WHY THIS MATTERS]
         #h(4pt)
-        #text(size: 7.5pt, fill: rgb("#5c5344"))[#mod.why_it_matters]
+        #text(size: 7.5pt, fill: warm-body)[#mod.why_it_matters]
       ]
     }
   ]
@@ -897,7 +901,7 @@
     #if task.keys().contains("needs") and task.needs != "" {
       v(2mm)
       box(
-        fill: if task.category == "blocked" { rgb("#fff1f0") } else { rgb("#eff6ff") },
+        fill: if task.category == "blocked" { tint-red } else { tint-blue },
         radius: 3pt, inset: (x: 6pt, y: 4pt), width: 100%,
       )[
         #text(size: 7pt,
@@ -912,13 +916,13 @@
     #if task.keys().contains("why_it_matters") and task.why_it_matters != "" {
       v(2mm)
       box(
-        fill: rgb("#f8f7f4"),
+        fill: tint-warm,
         radius: 3pt, inset: (x: 6pt, y: 4pt), width: 100%,
-        stroke: (left: 2pt + rgb("#d4c5a0"), rest: none),
+        stroke: (left: 2pt + warm-border, rest: none),
       )[
-        #text(size: 6.5pt, fill: rgb("#8b7e66"), weight: "semibold", tracking: 0.5pt)[WHY THIS MATTERS]
+        #text(size: 6.5pt, fill: warm-label, weight: "semibold", tracking: 0.5pt)[WHY THIS MATTERS]
         #h(4pt)
-        #text(size: 7.5pt, fill: rgb("#5c5344"))[#task.why_it_matters]
+        #text(size: 7.5pt, fill: warm-body)[#task.why_it_matters]
       ]
     }
   ]
@@ -1227,7 +1231,7 @@
     #if sl.keys().contains("research_deliveries") and sl.research_deliveries > 0 {
       v(2mm)
       box(
-        fill: if sl.research_profitable > 0 { rgb("#f0fdf4") } else { rgb("#fff7ed") },
+        fill: if sl.research_profitable > 0 { tint-green } else { tint-orange },
         radius: 3pt, inset: (x: 6pt, y: 4pt), width: 100%,
         stroke: (left: 2pt + if sl.research_profitable > 0 { green } else { orange }, rest: none),
       )[
@@ -1518,7 +1522,7 @@
       #if criticism.keys().contains("action") and criticism.action != "" {
         v(2mm)
         box(
-          fill: rgb("#eff6ff"),
+          fill: tint-blue,
           radius: 3pt, inset: (x: 6pt, y: 4pt), width: 100%,
         )[
           #text(size: 7pt, fill: blue, weight: "semibold")[ACTION: ]
