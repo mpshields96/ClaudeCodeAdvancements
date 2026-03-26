@@ -27,6 +27,7 @@ Chart types:
     BoxPlot           — box-and-whisker for distribution comparison (median, IQR, outliers)
     HistogramChart    — frequency distribution from raw values (auto-binning, Sturges' rule)
     ViolinPlot        — KDE-based distribution shape with embedded quartile lines
+    CalibrationPlot   — predicted vs actual probability (calibration curve, FLB analysis)
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -716,6 +717,46 @@ class ViolinPlot:
     width: int = 500
     height: int = 400
     color: str = ""
+
+
+@dataclass
+class CalibrationPlot:
+    """Calibration curve — predicted probability vs actual outcome rate.
+
+    Publication-quality chart for evaluating prediction markets (FLB analysis),
+    probability model assessment, and Brier score visualization. Shows how well
+    predicted probabilities match observed frequencies.
+
+    Each bin is (predicted_prob, actual_rate, sample_size). The diagonal line
+    represents perfect calibration. Points above the diagonal indicate
+    underconfidence; below indicates overconfidence.
+
+    Supports multi-series for per-asset comparison (e.g., BTC vs SOL vs ETH).
+
+    Args:
+        bins: [(predicted, actual, n), ...] — primary series data points
+        title: Chart title
+        x_label: X-axis label (default: "Predicted Probability")
+        y_label: Y-axis label (default: "Actual Win Rate")
+        show_diagonal: Draw perfect calibration line (default True)
+        show_sample_sizes: Label each point with n=N (default True)
+        point_radius: Base radius for data points (default 5.0)
+        color: Point color for primary series (default: CCA accent)
+        series_name: Name for primary series (used in legend with extra_series)
+        extra_series: [("name", [(pred, actual, n), ...], "color"), ...]
+    """
+    bins: list  # [(predicted, actual, n), ...]
+    title: str = ""
+    x_label: str = "Predicted Probability"
+    y_label: str = "Actual Win Rate"
+    width: int = 500
+    height: int = 400
+    show_diagonal: bool = True
+    show_sample_sizes: bool = True
+    point_radius: float = 5.0
+    color: str = ""
+    series_name: str = ""
+    extra_series: list = field(default_factory=list)  # [("name", [(p,a,n),...], "color"), ...]
 
 
 # ---------------------------------------------------------------------------
@@ -3133,6 +3174,123 @@ def _render_violin_plot(chart: ViolinPlot) -> str:
 # Public API
 # ---------------------------------------------------------------------------
 
+def _render_calibration_plot(chart: CalibrationPlot) -> str:
+    """Render a calibration curve (predicted vs actual probability)."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.bins:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 50
+    margin_left = 60
+    margin_right = 20
+    has_legend = chart.series_name and chart.extra_series
+    if has_legend:
+        margin_right = 100
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    # Gridlines (0.0 to 1.0 in 0.2 steps)
+    for i in range(6):
+        frac = i / 5.0
+        x = margin_left + frac * plot_w
+        y = margin_top + plot_h - frac * plot_h
+        # Horizontal gridline
+        parts.append(_line(margin_left, y, margin_left + plot_w, y,
+                           CCA_COLORS["border"], 0.5))
+        # Vertical gridline
+        parts.append(_line(x, margin_top, x, margin_top + plot_h,
+                           CCA_COLORS["border"], 0.5))
+        # X-axis tick labels
+        parts.append(_text(x, margin_top + plot_h + 16,
+                           f"{frac:.1f}", font_size=9,
+                           fill=CCA_COLORS["muted"]))
+        # Y-axis tick labels
+        parts.append(_text(margin_left - 8, y + 4,
+                           f"{frac:.1f}", font_size=9,
+                           fill=CCA_COLORS["muted"], anchor="end"))
+
+    # Axis labels
+    parts.append(_text(margin_left + plot_w / 2, chart.height - 8,
+                       chart.x_label, font_size=10,
+                       fill=CCA_COLORS["muted"]))
+    parts.append(_text(14, margin_top + plot_h / 2, chart.y_label,
+                       font_size=10, fill=CCA_COLORS["muted"],
+                       transform=f"rotate(-90, 14, {margin_top + plot_h / 2})"))
+
+    # Plot border
+    parts.append(_line(margin_left, margin_top, margin_left, margin_top + plot_h,
+                       CCA_COLORS["primary"], 1))
+    parts.append(_line(margin_left, margin_top + plot_h,
+                       margin_left + plot_w, margin_top + plot_h,
+                       CCA_COLORS["primary"], 1))
+
+    # Perfect calibration diagonal (dashed)
+    if chart.show_diagonal:
+        x1 = margin_left
+        y1 = margin_top + plot_h
+        x2 = margin_left + plot_w
+        y2 = margin_top
+        parts.append(
+            f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+            f'stroke="{CCA_COLORS["muted"]}" stroke-width="1" '
+            f'stroke-dasharray="6,4" opacity="0.6"/>'
+        )
+
+    # Helper to map data coords to SVG
+    def to_svg(pred, actual):
+        sx = margin_left + pred * plot_w
+        sy = margin_top + plot_h - actual * plot_h
+        return sx, sy
+
+    # Render a series of bins
+    def render_series(bins, color, show_sizes):
+        for pred, actual, n in bins:
+            sx, sy = to_svg(pred, actual)
+            r = chart.point_radius
+            parts.append(_circle(sx, sy, r, color))
+            if show_sizes and n is not None:
+                parts.append(_text(sx, sy - r - 4, f"n={n}",
+                                   font_size=8, fill=CCA_COLORS["muted"]))
+
+    # Primary series
+    primary_color = chart.color or CCA_COLORS["accent"]
+    render_series(chart.bins, primary_color, chart.show_sample_sizes)
+
+    # Extra series
+    for series_name, series_bins, series_color in chart.extra_series:
+        render_series(series_bins, series_color, chart.show_sample_sizes)
+
+    # Legend (only when multi-series)
+    if has_legend:
+        legend_x = margin_left + plot_w + 10
+        legend_y = margin_top + 10
+        # Primary
+        parts.append(_circle(legend_x + 5, legend_y, 4, primary_color))
+        parts.append(_text(legend_x + 14, legend_y + 4,
+                           chart.series_name, font_size=9))
+        # Extra
+        for i, (sname, _, scolor) in enumerate(chart.extra_series):
+            ly = legend_y + (i + 1) * 18
+            parts.append(_circle(legend_x + 5, ly, 4, scolor))
+            parts.append(_text(legend_x + 14, ly + 4,
+                               sname, font_size=9))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 def render_svg(chart) -> str:
     """Render any chart object to an SVG string."""
     if isinstance(chart, BarChart):
@@ -3177,6 +3335,8 @@ def render_svg(chart) -> str:
         return _render_histogram_chart(chart)
     elif isinstance(chart, ViolinPlot):
         return _render_violin_plot(chart)
+    elif isinstance(chart, CalibrationPlot):
+        return _render_calibration_plot(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 
