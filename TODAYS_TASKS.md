@@ -143,19 +143,42 @@
 - Research: settlement structure, WR on historical 90c+ favorites
 - This is Pillar 3 expansion — structural basis needed before any build
 
-### E11. Kalshi Pending Requests — Overnight/Time-of-Day Research
+### E11. Kalshi Pending Requests — Overnight/Time-of-Day Research [DONE S182]
 - POLYBOT_TO_CCA.md REQUEST 4 (OPEN/URGENT): Academic evidence for time-of-day crypto effects
-- Research: intraday volatility patterns, FLB by UTC window, drift signal degradation overnight
-- DB shows: sniper SLEEP WR=92.3% PnL=-0.158 vs DAY WR=93.9% PnL=+0.470
-- Need: verified papers with DOI/arXiv on crypto prediction market time-of-day
+- 3 verified papers delivered to CCA_TO_POLYBOT.md:
+  (1) Brauneis et al 2024 (DOI:10.1007/s11156-024-01304-1): volatility/illiquidity peaks 16-17 UTC
+  (2) Hansen et al 2024 (arXiv:2109.12142): systematic periodicity growing stronger
+  (3) Amberdata: 87% depth variation, 03-05 UTC = deep liquidity trough
+- Structural basis CONFIRMED for 08:xx block, KXSOL 03/05:xx blocks, overnight underperformance
 
-### E12. MT-52 Phase 1: Build Synthetic Origination Engine
-- Extend mt_originator.py to auto-propose new MTs/phases from:
-  (a) FINDINGS_LOG.md BUILD verdicts (intelligence-driven)
-  (b) MASTER_TASKS.md stalled/completed MTs (expansion-driven)
-  (c) Cross-chat patterns (Kalshi data-driven)
-- TDD: tests first, then build
-- This is the engine that keeps CCA growing autonomously
+### E12. MT-52 Phase 1: Build Synthetic Origination Engine [DONE S182]
+- Built 3-source intelligence engine: ADAPT verdicts + stalled MTs + cross-chat requests
+- New types: MTStatus, CrossChatRequest, OriginationReport
+- 26 new tests, all pass. Live run: 56 actionable items found.
+- CLI: `python3 mt_originator.py --unified`
+
+### E13. Chart.js Interactive Dashboard Bridge [DONE S182]
+- chartjs_bridge.py: converts CCA chart data into Chart.js config objects
+- 4 chart types: bar, line, donut, stacked bar
+- 21 new tests, all pass
+- Built from S181 BUILD finding (intelligence-driven per MATTHEW_DIRECTIVES.md)
+
+### E14. MT-37 Phase 2 Architecture Design [DONE S182]
+- MT37_ARCHITECTURE.md: 10-module system design using 42-paper foundation
+- 5 layers: Data Input → Construction → Sizing/Risk → Tax/Withdrawal → Output
+- Advisory-only (no trade execution), BL+RP allocation, half-Kelly sizing
+- ~2,550 LOC, ~260 tests estimated across Phases 3-12
+
+### E15. MT Expansion Audit [DONE S182]
+- Ran origination engine against live data: 56 actionable items
+- 18 stalled MTs identified (3 blocked by externals, 3 superseded, 12 actionable)
+- 3 ADAPT extensions for existing MTs (MT-0, MT-22)
+- REQ-4 answered, REQ-8/9 queued for next session
+
+### E16. Cross-Chat Deep Dive
+- Ongoing — check POLYBOT_TO_CCA.md for all pending requests
+- REQ-8 (multi-parameter loss analysis) and REQ-9 (non-stationarity) still URGENT
+- REQ-10-25 need triage — many may be resolved or superseded by newer data
 
 ---
 
