@@ -493,6 +493,49 @@ def run_research_roi() -> dict:
         return {"total": 0, "resolved": 0, "error": "Timeout or parse error"}
 
 
+def run_session_metrics() -> dict:
+    """Run session_metrics.py for session-over-session trends."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "session_metrics.py"), "--json"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        if proc.returncode != 0 or not proc.stdout.strip():
+            return {"total_sessions": 0}
+
+        report = json.loads(proc.stdout)
+        # Build briefing text inline
+        briefing_parts = []
+        ts = report.get("total_sessions", 0)
+        if ts == 0:
+            return {"total_sessions": 0}
+
+        gt = report.get("grade_trend", {})
+        if gt.get("direction") != "insufficient_data":
+            briefing_parts.append(f"grades {gt['direction']}")
+        tv = report.get("test_velocity_trend", {})
+        if tv.get("direction") != "insufficient_data":
+            briefing_parts.append(f"test velocity {tv['direction']}")
+
+        brief = f"{ts} sessions tracked"
+        if briefing_parts:
+            brief += f" — {', '.join(briefing_parts)}"
+
+        pc = report.get("principle_count", {})
+        return {
+            "total_sessions": ts,
+            "brief": brief,
+            "active_principles": pc.get("active", 0),
+            "report": report,
+        }
+    except (subprocess.TimeoutExpired, json.JSONDecodeError):
+        return {"total_sessions": 0}
+
+
 def run_reflect_brief() -> dict:
     """Run reflect.py --brief for journal pattern analysis (deferred from wrap step 7)."""
     try:
@@ -616,6 +659,8 @@ def format_summary(summary: dict) -> str:
         lines.append(f"    (Read MATTHEW_DIRECTIVES.md — perpetual inspiration log)")
     if summary.get("reflect_patterns", 0) > 0:
         lines.append(f"  Reflect: {summary['reflect_patterns']} patterns — {summary.get('reflect_brief', '')}")
+    if summary.get("session_metrics_brief"):
+        lines.append(f"  Metrics: {summary['session_metrics_brief']}")
     if summary.get("blockers"):
         lines.append("  BLOCKERS:")
         for b in summary["blockers"]:
@@ -689,6 +734,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3.14: Reflect brief (deferred wrap step 7 — journal pattern analysis)
     reflect = run_reflect_brief()
 
+    # Step 3.15: Session metrics (MT-49 Phase 6 — session-over-session trends)
+    session_metrics = run_session_metrics()
+
     # Step 4: Session timeline (last 5 sessions)
     timeline = run_timeline(5)
 
@@ -732,6 +780,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if reflect.get("patterns", 0) > 0:
         summary["reflect_patterns"] = reflect["patterns"]
         summary["reflect_brief"] = reflect.get("brief", "")
+    if session_metrics.get("total_sessions", 0) > 0:
+        summary["session_metrics_brief"] = session_metrics["brief"]
+        summary["session_metrics_sessions"] = session_metrics["total_sessions"]
 
     # Step 5.1: Matthew Directives (S181 — perpetual inspiration log)
     directives = scan_directives()
