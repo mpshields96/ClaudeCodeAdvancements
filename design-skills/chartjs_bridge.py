@@ -225,6 +225,80 @@ def stacked_bar_config(
     return ChartJSConfig(chart_type="bar", data=data, options=options)
 
 
+def scatter_chart_config(
+    points: list[dict],
+    title: Optional[str] = None,
+    x_label: Optional[str] = None,
+    y_label: Optional[str] = None,
+    color: Optional[str] = None,
+) -> ChartJSConfig:
+    """Generate a scatter plot chart configuration.
+
+    Args:
+        points: [{"x": float, "y": float, "label": str (optional)}, ...]
+        title: Optional chart title
+        x_label: Optional x-axis label
+        y_label: Optional y-axis label
+        color: Optional point color. Defaults to CCA primary.
+    """
+    color = color or CCA_CHART_COLORS[0]
+
+    data = {
+        "datasets": [{
+            "data": [{"x": p["x"], "y": p["y"]} for p in points],
+            "backgroundColor": color,
+            "pointRadius": 5,
+            "pointHoverRadius": 7,
+        }],
+    }
+
+    options = _base_options(title)
+    options["scales"] = {}
+    if x_label:
+        options["scales"]["x"] = {"title": {"display": True, "text": x_label}}
+    if y_label:
+        options["scales"]["y"] = {"title": {"display": True, "text": y_label}}
+    options.setdefault("plugins", {})["legend"] = {"display": False}
+    options.setdefault("plugins", {})["tooltip"] = {
+        "callbacks": {},
+    }
+
+    return ChartJSConfig(chart_type="scatter", data=data, options=options)
+
+
+def horizontal_bar_config(
+    labels: list[str],
+    values: list[float],
+    title: Optional[str] = None,
+    colors: Optional[list[str]] = None,
+) -> ChartJSConfig:
+    """Generate a horizontal bar chart configuration.
+
+    Args:
+        labels: Y-axis category labels
+        values: Bar values
+        title: Optional chart title
+        colors: Optional colors per bar. Defaults to CCA palette.
+    """
+    if colors is None:
+        colors = _default_colors(len(labels))
+
+    data = {
+        "labels": labels,
+        "datasets": [{
+            "data": values,
+            "backgroundColor": colors,
+            "borderRadius": 3,
+        }],
+    }
+
+    options = _base_options(title)
+    options["indexAxis"] = "y"
+    options.setdefault("plugins", {})["legend"] = {"display": False}
+
+    return ChartJSConfig(chart_type="bar", data=data, options=options)
+
+
 def render_chartjs_canvas(
     chart_id: str,
     width: int = 400,

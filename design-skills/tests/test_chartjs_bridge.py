@@ -15,8 +15,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from chartjs_bridge import (
     ChartJSConfig,
     bar_chart_config,
+    horizontal_bar_config,
     line_chart_config,
     donut_chart_config,
+    scatter_chart_config,
     stacked_bar_config,
     render_chartjs_script,
     render_chartjs_canvas,
@@ -209,6 +211,71 @@ class TestChartJSConfig(unittest.TestCase):
         d = config.to_dict()
         self.assertEqual(d["type"], "line")
         self.assertTrue(d["options"]["responsive"])
+
+
+class TestScatterChartConfig(unittest.TestCase):
+    """Scatter plot configuration generation."""
+
+    def test_basic_scatter(self):
+        points = [{"x": 1.0, "y": 2.0}, {"x": 3.0, "y": 4.0}]
+        config = scatter_chart_config(points, title="Test Scatter")
+        d = config.to_dict()
+        self.assertEqual(d["type"], "scatter")
+        self.assertEqual(len(d["data"]["datasets"][0]["data"]), 2)
+
+    def test_scatter_with_axis_labels(self):
+        points = [{"x": 90.0, "y": 0.05}]
+        config = scatter_chart_config(points, x_label="Win Rate", y_label="Alpha")
+        d = config.to_dict()
+        self.assertEqual(d["options"]["scales"]["x"]["title"]["text"], "Win Rate")
+        self.assertEqual(d["options"]["scales"]["y"]["title"]["text"], "Alpha")
+
+    def test_scatter_custom_color(self):
+        points = [{"x": 1, "y": 1}]
+        config = scatter_chart_config(points, color="#ff0000")
+        d = config.to_dict()
+        self.assertEqual(d["data"]["datasets"][0]["backgroundColor"], "#ff0000")
+
+    def test_scatter_no_legend(self):
+        config = scatter_chart_config([{"x": 1, "y": 1}])
+        d = config.to_dict()
+        self.assertFalse(d["options"]["plugins"]["legend"]["display"])
+
+    def test_scatter_serializable(self):
+        config = scatter_chart_config([{"x": 1.5, "y": 2.5}], title="Test")
+        j = config.to_json()
+        parsed = json.loads(j)
+        self.assertEqual(parsed["type"], "scatter")
+
+
+class TestHorizontalBarConfig(unittest.TestCase):
+    """Horizontal bar chart configuration generation."""
+
+    def test_basic_horizontal(self):
+        config = horizontal_bar_config(
+            labels=["A", "B", "C"], values=[10, 20, 30], title="Test H-Bar",
+        )
+        d = config.to_dict()
+        self.assertEqual(d["type"], "bar")
+        self.assertEqual(d["options"]["indexAxis"], "y")
+
+    def test_horizontal_has_data(self):
+        config = horizontal_bar_config(labels=["X"], values=[42])
+        d = config.to_dict()
+        self.assertEqual(d["data"]["datasets"][0]["data"], [42])
+
+    def test_horizontal_custom_colors(self):
+        config = horizontal_bar_config(
+            labels=["A", "B"], values=[1, 2], colors=["#aaa", "#bbb"],
+        )
+        d = config.to_dict()
+        self.assertEqual(d["data"]["datasets"][0]["backgroundColor"], ["#aaa", "#bbb"])
+
+    def test_horizontal_serializable(self):
+        config = horizontal_bar_config(labels=["A"], values=[1])
+        j = config.to_json()
+        parsed = json.loads(j)
+        self.assertEqual(parsed["options"]["indexAxis"], "y")
 
 
 if __name__ == "__main__":
