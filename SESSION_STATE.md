@@ -3,38 +3,66 @@
 
 ---
 
-## Current State (as of Session 182 — 2026-03-25)
+## Current State (as of Session 184 — 2026-03-26)
 
-**Phase:** Session 182 COMPLETE. MT-52 origination engine, Chart.js bridge, MT-37 Phase 2 architecture, Kalshi REQ-4 delivery, MT expansion audit. Grade: A.
+**Phase:** Session 184 IN PROGRESS. Autoloop model fix, massive $15-25/day strategy delivery, MT-37 Phase 3 complete, REQ-25 Phase 2 delivered.
 
-**What was done this session (S182):**
-- **MT-52 Phase 1: Synthetic origination engine** (commit 63d0850):
-  - 3 new intelligence sources: ADAPT findings, stalled MT detection, cross-chat requests
-  - New types: MTStatus, CrossChatRequest, OriginationReport
-  - CLI: `--unified` flag, `--json` output
-  - 26 new tests, live run: 56 actionable items found
-- **E2: Chart.js bridge for interactive dashboards** (commit fde1fe4):
-  - chartjs_bridge.py: 4 chart types (bar, line, donut, stacked bar)
-  - HTML render helpers, CDN tag, CCA color palette synced
-  - 21 new tests, all pass
-  - Built from S181 BUILD finding (intelligence-driven)
-- **E1: MT-37 Phase 2 architecture design** (commit d88575b):
-  - MT37_ARCHITECTURE.md: 10-module UBER system using 42-paper foundation
-  - 5 layers, advisory-only, BL+RP allocation, half-Kelly, behavioral guardrails
-  - ~2,550 LOC / ~260 tests estimated for Phases 3-12
-- **E3: Kalshi cross-chat delivery — REQ-4 overnight research**:
-  - 3 verified papers on intraday crypto volatility (Brauneis 2024, Hansen 2024, Amberdata)
-  - Structural basis CONFIRMED for 08:xx block, KXSOL 03/05:xx, overnight sniper underperformance
-  - Written to CCA_TO_POLYBOT.md
-- **E4: MT expansion audit**: 56 actionable items from origination engine
-  - 18 stalled MTs, 3 ADAPT extensions, 3 unresolved URGENT Kalshi requests
-- **E9: Typst color token cleanup** (commit 2f76862): 4 new tokens, 8 orphan replacements, zero raw hex in body
-- **TODAYS_TASKS.md**: expanded with E9-E16
+**What was done this session (S184):**
+- **Autoloop Opus 1M model fix:**
+  - Added `"model": "opus[1m]"` to project settings.local.json (reliable, no slash command needed)
+  - Removed broken `/model` paste step from autoloop_trigger.py (TUI picker can't be pasted)
+  - Tests updated: 22/22 pass
+- **$15-25/Day Strategy Delivery (Q1-Q6 — CRITICAL):**
+  - Q1: FLB research — Becker (2026) 72.1M Kalshi trades. Taker edge 0% at 95c, +1.60% at 75c
+  - Q1b: MAKER STRATEGY — makers earn +1.12% avg, ZERO fees on limit orders. Game-changer.
+  - Q2: Kalshi 60-85c markets (KXBTCD, KXCPI, KXFED, KXUNRATE)
+  - Q3: Volume path — 25-35 bets/day at maker pricing = $17.50-24.50/day
+  - Q4: Monte Carlo (10K sims each): Scenario B (85c floor) = $31.50/day median, 0% ruin
+  - Q5: Economics sniper validated by Federal Reserve study (outperforms Bloomberg consensus)
+  - Q6: 4-phase architecture: maker conversion → lower floor → volume → economics
+  - All academic sources VERIFIED with real URLs
+- **E10: Political Markets Probe (REQ-1):**
+  - House 84c Dem, Senate 51/49 toss-up
+  - Verdict: NOT suitable for daily sniper (long-dated, capital locked)
+  - Deferred until bankroll > $500
+- **MT-37 Phase 3 COMPLETE — portfolio_loader.py:**
+  - Holding + Portfolio dataclasses, CSV/JSON/dict loaders
+  - Brokerage export compatibility (header aliases, $,comma stripping)
+  - 37 tests, CLI mode
+- **REQ-25 Phase 2 — Kalshi API Orderbook + Maker Orders:**
+  - Full API specs: GET /markets/{ticker}/orderbook, POST /portfolio/orders
+  - Implementation recipe: get_orderbook(), place_maker_order(), check_fill(), fallback
+  - post_only=true guarantees maker status + zero fees
+  - Code snippets ready for copy-paste into live.py
 
-**Next:** (1) Wire origination engine into /cca-init briefing (auto-implement advancement tip). (2) REQ-8/9 Kalshi research. (3) Wire Chart.js bridge into dashboard_generator.py. (4) E16 cross-chat deep dive triage. (5) MT-37 Phase 3 (portfolio_loader.py).
-- 7 commits, 47 new tests (9898 total), zero regressions
+**Next:** (1) Continue $15-25/day support — help Kalshi chat implement maker orders. (2) MT-37 Phase 4 (market_data.py). (3) Any pending POLYBOT_TO_CCA requests.
+
+**What was done this session (S183):**
+- **Origination engine wired into /cca-init** (slim_init.py):
+  - `run_unified_origination()` calls `mt_originator.py --unified` at init
+  - Shows "Origination: N actionable items" in briefing
+  - 8 new tests (TestRunUnifiedOrigination, TestSummaryIncludesUnifiedOrigination, TestSlimInitIncludesUnifiedOrigination)
+- **Chart.js bridge wired into dashboard_generator.py**:
+  - Interactive charts opt-in (`--interactive` flag, `interactive=False` default)
+  - CDN only included when interactive=True and charts exist
+  - Self-contained mode preserved for default renders
+- **Autoloop /model command restored** (autoloop_trigger.py):
+  - Initially removed (thought redundant), but desktop app defaults to regular Opus 4.6, NOT 1M
+  - Restored MODEL_COMMAND + step 3.5 with non-fatal fallback if model switch fails
+  - Tests: send_prompt call_count=2 (model + prompt)
+- **REQ-8 delivery (XRP structural mechanism)**: 3 verified papers (Easley et al., XRP volatility forecasting, Asian session liquidity), meta-labeling features
+- **REQ-9 delivery (non-stationarity)**: 5 verified papers (HMM crypto, Bayesian MCMC, GMM-VAR, FLB stability, regime-switching)
+- **REQ-10-25 triage**: 10 requests closed, 4 still open, 6 answered
+- **REQ-22 bug fix**: strategy_health_scorer win detection (result==side instead of result=="yes")
+- **REQ-25 new edge candidates**: 3 proposals (OBI, early-window 70-85c, economics lag)
+- **S183b $15-25/day directive**: Logged verbatim to MATTHEW_DIRECTIVES.md + updated KALSHI_PRIME_DIRECTIVE.md + RESEARCH_PRIME_DIRECTIVE.md + urgent CCA_TO_POLYBOT.md delivery
+- **Extended test fix**: Added `side` field to all test helpers in test_strategy_health_scorer_extended.py
+
+**Next:** (1) $15-25/day research & development — THIS IS THE TOP PRIORITY (5-day clock, deadline 2026-03-30). (2) MT-37 Phase 3 (portfolio_loader.py). (3) REQ-25 Phase 2: probe Kalshi API for orderbook data.
+- 3 commits, 8+ new tests (9906 total), zero regressions
 
 **Matthew directives (carried forward):**
+- **$15-25/DAY TARGET — 5-DAY CLOCK (S183b, non-negotiable)**: Achieve and sustain $15-25 USD/day by 2026-03-30. $100 bankroll, no new capital. Full carte blanche on strategy. ALL future chats FORBIDDEN from forgetting.
 - TODAYS_TASKS.md is the daily driver — all CCA sessions follow it (S178 permanent)
 - MATTHEW_DIRECTIVES.md — read at session init, perpetual inspiration log (S181 permanent)
 - 50%+ time on Kalshi bot work (higher priority) — S161 explicit
@@ -45,6 +73,7 @@
 - Don't use sub-agents for research writing — write directly (S179 lesson)
 - Write Reddit verdicts immediately after reading, don't batch (S181 lesson)
 - Stitch API key stored in env var (Matthew directive S182)
+- Auto-implement advancement tips, don't just list them (S182 directive)
 
 ---
 
