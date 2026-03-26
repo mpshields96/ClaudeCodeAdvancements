@@ -1563,5 +1563,81 @@ class TestSlimInitIncludesUnifiedOrigination(unittest.TestCase):
             os.unlink(path)
 
 
+class TestRunReflectBrief(unittest.TestCase):
+    """Test run_reflect_brief() — surfaces journal pattern analysis at init."""
+
+    @patch("subprocess.run")
+    def test_parses_pattern_count(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="CCA Self-Learning: 346 entries, 4 patterns detected. general accounts for 81%",
+            stderr="",
+        )
+        from slim_init import run_reflect_brief
+        result = run_reflect_brief()
+        self.assertEqual(result["patterns"], 4)
+        self.assertEqual(result["entries"], 346)
+        self.assertIn("brief", result)
+
+    @patch("subprocess.run")
+    def test_returns_zero_on_failure(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="", stderr="Error"
+        )
+        from slim_init import run_reflect_brief
+        result = run_reflect_brief()
+        self.assertEqual(result["patterns"], 0)
+
+    @patch("subprocess.run")
+    def test_handles_timeout(self, mock_run):
+        import subprocess
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd="reflect", timeout=30)
+        from slim_init import run_reflect_brief
+        result = run_reflect_brief()
+        self.assertEqual(result["patterns"], 0)
+        self.assertIn("error", result)
+
+    @patch("subprocess.run")
+    def test_includes_brief_text(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="CCA Self-Learning: 100 entries, 2 patterns detected. Transfer opportunity: foo",
+            stderr="",
+        )
+        from slim_init import run_reflect_brief
+        result = run_reflect_brief()
+        self.assertIn("Transfer opportunity", result["brief"])
+
+
+class TestReflectInSummary(unittest.TestCase):
+    """Test that reflect brief output appears in formatted summary."""
+
+    def test_format_shows_reflect_patterns(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S189",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-1",
+            "blockers": [],
+            "reflect_patterns": 4,
+            "reflect_brief": "general 81% of entries; Transfer opportunity: foo → bar",
+        }
+        output = format_summary(summary)
+        self.assertIn("Reflect: 4 patterns", output)
+
+    def test_format_hides_reflect_when_zero(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S189",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-1",
+            "blockers": [],
+        }
+        output = format_summary(summary)
+        self.assertNotIn("Reflect", output)
+
+
 if __name__ == "__main__":
     unittest.main()

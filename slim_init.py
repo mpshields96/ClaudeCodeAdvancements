@@ -493,6 +493,31 @@ def run_research_roi() -> dict:
         return {"total": 0, "resolved": 0, "error": "Timeout or parse error"}
 
 
+def run_reflect_brief() -> dict:
+    """Run reflect.py --brief for journal pattern analysis (deferred from wrap step 7)."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "reflect.py"), "--brief"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            return {"patterns": 0, "entries": 0, "brief": ""}
+
+        # Parse "N entries, M patterns detected"
+        m = re.search(r"(\d+)\s+entries?,\s*(\d+)\s+patterns?\s+detected", output)
+        entries = int(m.group(1)) if m else 0
+        patterns = int(m.group(2)) if m else 0
+
+        return {"patterns": patterns, "entries": entries, "brief": output}
+    except subprocess.TimeoutExpired:
+        return {"patterns": 0, "entries": 0, "brief": "", "error": "Timeout: reflect exceeded 30 seconds"}
+
+
 def run_timeline(n: int = 5) -> dict:
     """Run session_timeline.py recent N for quick history."""
     try:
@@ -589,6 +614,8 @@ def format_summary(summary: dict) -> str:
     if summary.get("directive_latest"):
         lines.append(f"  Directive: {summary['directive_session']} — {summary['directive_latest']}")
         lines.append(f"    (Read MATTHEW_DIRECTIVES.md — perpetual inspiration log)")
+    if summary.get("reflect_patterns", 0) > 0:
+        lines.append(f"  Reflect: {summary['reflect_patterns']} patterns — {summary.get('reflect_brief', '')}")
     if summary.get("blockers"):
         lines.append("  BLOCKERS:")
         for b in summary["blockers"]:
@@ -659,6 +686,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3.13: Predictive recommendations (MT-28 Phase 5 — pre-session principle ranking)
     predictions = run_predictive_recommendations(session_num=state.get("session_num", 0))
 
+    # Step 3.14: Reflect brief (deferred wrap step 7 — journal pattern analysis)
+    reflect = run_reflect_brief()
+
     # Step 4: Session timeline (last 5 sessions)
     timeline = run_timeline(5)
 
@@ -699,6 +729,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if predictions.get("recommendations", 0) > 0:
         summary["predictions_count"] = predictions["recommendations"]
         summary["predictions_brief"] = predictions.get("brief", "")
+    if reflect.get("patterns", 0) > 0:
+        summary["reflect_patterns"] = reflect["patterns"]
+        summary["reflect_brief"] = reflect.get("brief", "")
 
     # Step 5.1: Matthew Directives (S181 — perpetual inspiration log)
     directives = scan_directives()
