@@ -3,18 +3,22 @@
 
 ---
 
-## Current State (as of Session 194 — 2026-03-26)
+## Current State (as of Session 195 — 2026-03-26)
 
-**Phase:** Session 194 IN PROGRESS. PEAK hours (60% budget). MT-49 Phase 2 active transfer shipped. REQ-56 sports game sniper research delivered.
+**Phase:** Session 195 COMPLETE. OFF-PEAK (100% budget). MT-49 Phase 6 shipped. MT-37 Layers 3-4 complete (4 new modules). 2x promo ending prep done.
 
-**What was done this session (S194):**
-- **principle_transfer.py:** MT-49 Phase 2 active transfer — `auto_accept_transfers()` (threshold-based auto-acceptance), `record_transfer_outcome()` (validated/reverted status tracking), `run_active_transfer_cycle()` (propose + auto-accept orchestrator). Extended `PROPOSAL_STATUSES` with "validated" and "reverted". 10 new tests (59 total in suite).
-- **REQ-56 delivery:** Sports game sniper research for Kalshi chat. FLB verified for live sports markets (4 academic papers: Whelan 2024, Peel 2016, Management Science 2023, Skinner/Princeton 2022). ESPN API recommended for game state (free, no auth, covers NBA/NHL/MLB/NFL). 90c+ = late game confirmed. Diversification value quantified (8-14 additional daily opportunities). Implementation plan in 2 phases.
+**What was done this session (S195):**
+- **session_metrics.py (MT-49 Phase 6):** Session-over-session trend tracking — grade trends, test velocity, learnings/session, APF trends, win/pain ratios. Linear regression trend classifier. Delta-based test velocity derivation. Wired into slim_init.py Step 3.15. 37 new tests.
+- **kelly_sizer.py (MT-37 Layer 3):** Fractional Kelly criterion with confidence scaling. Full Kelly, half-Kelly (default), multi-asset portfolio sizing with 1/N capping. SizingResult dataclass. 20 new tests.
+- **risk_monitor.py (MT-37 Layer 3):** DrawdownTracker (peak-to-trough, GREEN/YELLOW/RED/CRITICAL at 5%/15%/30%), VolatilityMonitor (rolling annualized vol, log returns), RiskDashboard (combined summary + alerts). 22 new tests.
+- **tax_harvester.py (MT-37 Layer 4):** TLH scanner — TLHCandidate (unrealized loss, holding period, estimated savings), WashSaleTracker (30-day rule), TaxHarvester (scan + summary). Constantinides 1983, Berkin & Ye 2003. 23 new tests.
+- **withdrawal_planner.py (MT-37 Layer 4):** Safe withdrawal rate planning — Bengen 4% rule, CAPE-adjusted rate (Kitces 2008), Guyton-Klinger guardrails (CUT/MAINTAIN/RAISE). WithdrawalPlan dataclass. 20 new tests.
+- **2x promo ending prep:** Updated learnings.md (EXPIRING status), peak-offpeak-budgeting.md (post-promo section), CCA_TO_POLYBOT.md (URGENT alert to Kalshi), project_2x_token_promotion.md memory.
 
-**Tests:** 10,456 total (271 suites). +10 new. 0 regressions.
-**Commits:** 1 this session.
+**Tests:** 10,578 total (276 suites). +122 new. 0 regressions.
+**Commits:** 6 this session.
 
-**Next:** (1) MT-32 Visual Excellence next phase. (2) MT-53 Phase 2 (pokemon-agent install). (3) MAST paper full read. (4) Check for new Kalshi REQs. (5) MT-37 Phase 3 (portfolio data module).
+**Next:** (1) MT-37 Layer 5 — rebalance_advisor.py, portfolio_report.py, behavioral_guard.py. (2) MT-53 Phase 2 (pokemon-agent install). (3) MAST paper full read. (4) Check for new Kalshi REQs. (5) MT-32 Visual Excellence next phase.
 
 **What was done this session (S192):**
 

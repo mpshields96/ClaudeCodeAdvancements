@@ -3,6 +3,28 @@
 
 ---
 
+## Session 195 — 2026-03-26
+
+**What changed:**
+- `self-learning/session_metrics.py` — MT-49 Phase 6: session-over-session trend tracking (grade, test velocity, learnings, APF, win/pain). Wired into slim_init.py Step 3.15. 37 tests.
+- `self-learning/kelly_sizer.py` — MT-37 Layer 3: fractional Kelly criterion with confidence scaling, multi-asset portfolio sizing. 20 tests.
+- `self-learning/risk_monitor.py` — MT-37 Layer 3: drawdown tracker, rolling volatility, combined risk dashboard with GREEN/YELLOW/RED/CRITICAL alerts. 22 tests.
+- `self-learning/tax_harvester.py` — MT-37 Layer 4: TLH scanner with wash sale tracking, estimated savings. 23 tests.
+- `self-learning/withdrawal_planner.py` — MT-37 Layer 4: CAPE-adjusted SWR with Guyton-Klinger guardrails. 20 tests.
+- Updated 3 global config files + cross-chat alert for 2x token promo ending March 28.
+
+**Why:**
+- MT-49 Phase 6 closes the session metrics gap — can now track improvement trends across 120+ sessions
+- MT-37 Layers 3-4 complete the UBER investment research system's core computation modules
+- 2x promo ending requires both CCA and Kalshi ecosystems to prepare for reduced off-peak capacity
+
+**Tests:** 10,578/10,578 passing (276 suites). +122 new.
+
+**Lessons:**
+- APF values in journal.jsonl have mixed semantics (0.222 percentage vs 25.2 non-percentage) — filter to 0-1 range only
+
+---
+
 ## Session 193 — 2026-03-26
 
 **What changed:**
