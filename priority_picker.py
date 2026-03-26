@@ -885,8 +885,27 @@ class PriorityPicker:
         return sorted(pool, key=lambda t: t.improved_score, reverse=True)
 
     def pick_next(self, count: int = 1, include_blocked: bool = False) -> list[MasterTask]:
-        """Pick the top N tasks to work on."""
-        return self.ranked(include_blocked)[:count]
+        """Pick the top N tasks to work on.
+
+        Uses full_ranking() to include GROWTH items that outscore active MTs.
+        Returns MasterTask objects for active/growth items (skips directives/recurring).
+        """
+        full = self.full_ranking()
+        result = []
+        task_lookup = {t.mt_id: t for t in self.tasks}
+        for item in full:
+            if len(result) >= count:
+                break
+            if item["type"] in ("mt", "growth"):
+                # Extract MT ID from name like "MT-28: ..."
+                mt_match = re.search(r"MT-(\d+)", item["name"])
+                if mt_match:
+                    mt_id = int(mt_match.group(1))
+                    task = task_lookup.get(mt_id)
+                    if task and task not in result:
+                        if include_blocked or task.status != TaskStatus.BLOCKED:
+                            result.append(task)
+        return result
 
     def stagnating(self) -> list[MasterTask]:
         """Tasks that have been at cap and untouched for 10+ sessions."""

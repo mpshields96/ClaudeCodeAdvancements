@@ -191,8 +191,14 @@ class TestPriorityPicker(unittest.TestCase):
         picker = PriorityPicker(current_session=98)
         top = picker.pick_next(1)
         self.assertEqual(len(top), 1)
-        ranked = picker.ranked()
-        self.assertEqual(top[0].mt_id, ranked[0].mt_id)
+        # pick_next uses full_ranking (active + growth unified)
+        full = picker.full_ranking()
+        mt_items = [i for i in full if i["type"] in ("mt", "growth")]
+        if mt_items:
+            import re as _re
+            mt_match = _re.search(r"MT-(\d+)", mt_items[0]["name"])
+            if mt_match:
+                self.assertEqual(top[0].mt_id, int(mt_match.group(1)))
 
     def test_pick_next_count(self):
         picker = PriorityPicker(current_session=100)
