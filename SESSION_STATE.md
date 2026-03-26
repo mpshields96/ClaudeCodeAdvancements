@@ -3,22 +3,28 @@
 
 ---
 
-## Current State (as of Session 192 — 2026-03-27)
+## Current State (as of Session 193 — 2026-03-26)
 
-**Phase:** Session 192 COMPLETE. MT-32 Visual Excellence: 5 new SVG chart types (Bullet, Slope, Lollipop, Dumbbell, Pareto), full E2E pipeline wiring, 2 new Chart.js types (bubble, radar). REQ-53 Kalshi delivery. MT expansion audit.
+**Phase:** Session 193 COMPLETE. Crown jewel focus: MT-28 trade seeder bridge, MT-0 bet advisor API, priority picker fix (GROWTH items now surface in pick_next). 3 Kalshi deliveries (REQ-54 sizing, REQ-55 market discovery). Token pacing directive.
+
+**What was done this session (S193):**
+- **principle_seeder.py:** Trade reflector → principle seeder bridge (MT-28 growth). `seed_principles_from_trades()`, `proposal_to_principle_text()`, `TRADE_PATTERN_DOMAIN` mapping 5 patterns to domains. `seed-trades` CLI command. 10 new tests in TestTradeSeeder.
+- **principle_registry.py:** `get_bet_advice()` API (MT-0 growth). Takes market/direction/price, returns relevant principles + confidence_modifier [-0.5, +0.5] + warnings. Keyword matching for crypto/weather/economic markets. `advise` CLI command. 12 new tests.
+- **priority_picker.py:** Fixed `pick_next()` to use `full_ranking()` instead of `ranked()` only. GROWTH items (MT-28=16, MT-0=18) now surface alongside active MTs. Root cause of MT-32 over-focus fixed.
+- **report_charts.py:** ParetoChart + GaugeChart wired into pipeline. `module_tests_pareto()` (80/20 analysis) + `test_pass_gauge()` (speedometer). 14 new tests. 14 base charts total.
+- **cca-report.typ:** 23 chart embeds (was 15). 8 new chart slots added.
+- **token_budget.py:** PEAK 60%, SHOULDER 80% with dual-chat pacing note.
+- **Kalshi REQ-54:** Monte Carlo sizing (5000 sims). No bet size meets <5% floor breach at $40. Recommended: keep $7.50, add 15-min cooldown + 3-loss circuit breaker.
+- **Kalshi REQ-55:** Non-crypto market discovery. Weather + economics + daily crypto = diversification stack targeting $16-35/day combined.
+- **Token pacing directive:** Formalized in peak-offpeak-budgeting.md. Dual-chat = 50% each, 90% target by 4h30m.
+- **Matthew directive S193:** 5-day timer delay logged in MATTHEW_DIRECTIVES.md.
+
+**Tests:** 10,446 total (271 suites). +35 new. 0 regressions (2 pre-existing in autoloop model test).
+**Commits:** 5 this session.
+
+**Next:** (1) MT-49 Phase 2: active transfer — implement auto_accept_transfers(), record_transfer_outcome(), run_active_transfer_cycle() in principle_transfer.py (tests designed in S193, reverted to keep green). (2) Kalshi cross-chat follow-up on REQ-54/55 implementation. (3) MT-41: Synthetic MT origination Phase 2 (score proposals with community signals). (4) MT-53 Phase 2 (pokemon-agent install). (5) MAST paper full read.
 
 **What was done this session (S192):**
-- **chart_generator.py:** BulletChart (25th) — Stephen Few bullet graph for KPI dashboards. SlopeChart (26th) — before/after slopegraph. LollipopChart (27th) — horizontal stem+circle for ranked categories. DumbbellChart (28th) — horizontal paired dots for range comparison. ParetoChart (29th) — bar + cumulative line for 80/20 analysis. 75 new tests across 3 test files.
-- **report_charts.py:** 5 new chart methods — kalshi_bankroll_bullet, kalshi_guard_slope, module_tests_lollipop, kalshi_wr_dumbbell, all wired into generate_all(). 13 Kalshi chart types + 12 base charts.
-- **kalshi_data_collector.py:** 3 new collector methods — chart_bankroll_bullet, chart_guard_slope, chart_wr_dumbbell. Full E2E DB->collector->report->SVG pipeline.
-- **chartjs_bridge.py:** bubble_chart_config + radar_chart_config. 8 Chart.js types total. 14 new tests.
-- **REQ-53 delivery:** ETH@94c NOT significant (p=0.175, Wilson CI lower=89.1% < 94% BE). BTC@94c divergence is noise. Vol-adjusted FLB effect confirmed (BTC>ETH>SOL EV = inverse of volatility). Soft expand ETH to 95c with n=100 review gate.
-- **MT expansion audit:** 58 actionable items. REQ-8/9 already answered. Landscape well-covered.
-
-**Tests:** 10,411 total (271 suites). +89 new. 0 regressions.
-**Commits:** 7 this session.
-
-**Next:** (1) MT-32: more chart types or design token work. (2) Wire ParetoChart into report pipeline. (3) Kalshi cross-chat (check for new REQs). (4) MT-53 Phase 2 (pokemon-agent install). (5) MAST paper full read. (6) CeTZ-Plot Typst-native charting (top ADAPT finding).
 
 **What was done this session (S191):**
 - **hivemind_session_validator.py:** Wired worker_verifier into coordinator via `validate_with_verification()`. Combines queue validation + output verification. `_combine_verdicts()` logic: queue FAIL always wins, output REJECT/REVIEW downgrades to REVIEW. 17 new integration tests.

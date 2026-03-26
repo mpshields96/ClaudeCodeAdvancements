@@ -3,6 +3,30 @@
 
 ---
 
+## Session 193 — 2026-03-26
+
+**What changed:**
+- `principle_seeder.py` — Trade reflector → principle seeder bridge: `seed_principles_from_trades()`, `TRADE_PATTERN_DOMAIN`, `seed-trades` CLI (MT-28 growth)
+- `principle_registry.py` — `get_bet_advice()` API: market-context principle scoring, confidence modifier, keyword matching (MT-0 growth)
+- `priority_picker.py` — `pick_next()` now uses `full_ranking()` to include GROWTH items. Fixed MT-32 over-focus bug.
+- `report_charts.py` — ParetoChart + GaugeChart wired: `module_tests_pareto()`, `test_pass_gauge()`. 14 base charts.
+- `cca-report.typ` — 23 chart embeds (was 15)
+- `token_budget.py` — PEAK 60%, SHOULDER 80%, dual-chat pacing note
+- `peak-offpeak-budgeting.md` — Dual-chat pacing rule: 50% each, checkpoint table
+- 3 Kalshi deliveries: REQ-54 Monte Carlo sizing + circuit breaker, REQ-55 non-crypto market discovery, bet advisor API
+
+**Why:**
+- Matthew directive: stop harping on MT-32, work on crown jewels (MT-28, MT-0, MT-10)
+- 5-day mandate prep: Kalshi bot needs sizing analysis, diversification strategy, and principle-based guidance
+- Priority picker was hiding GROWTH items (score 14-18) behind active items (score 8)
+
+**Tests:** 10,446/10,446 passing (271 suites, 2 pre-existing autoloop failures)
+
+**Lessons:**
+- `pick_next()` using only `active_tasks()` was the root cause of MT-32 over-focus — now fixed systemically
+
+---
+
 ## Session 191 — 2026-03-26
 
 **What changed:**

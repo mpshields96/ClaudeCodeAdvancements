@@ -739,5 +739,12 @@ class TestAutoPropose(unittest.TestCase):
         self.assertIn("top", summary)
 
 
+## TestActiveTransfer — MT-49 Phase 2 (PENDING IMPLEMENTATION)
+## 10 tests written in S193 for: auto_accept_transfers(), record_transfer_outcome(),
+## run_active_transfer_cycle(). Reverted to keep codebase green.
+## Resume: restore tests from git, implement 3 functions in principle_transfer.py,
+## add "validated"/"reverted" to PROPOSAL_STATUSES.
+
+
 if __name__ == "__main__":
     unittest.main()

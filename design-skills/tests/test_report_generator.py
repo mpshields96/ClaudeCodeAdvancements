@@ -361,8 +361,8 @@ class TestChartIntegration(unittest.TestCase):
             "frontiers": [{"name": "Memory", "tests": 340}],
         }
         charts = gen.generate_all(data)
-        self.assertEqual(len(charts), 12)
-        expected = {"module_tests", "intelligence", "mt_status", "loc_distribution", "mt_progress", "frontier_status", "module_loc_treemap", "test_density_scatter", "module_composition", "coverage_ratio", "module_tests_lollipop", "summary_figure"}
+        self.assertEqual(len(charts), 14)
+        expected = {"module_tests", "intelligence", "mt_status", "loc_distribution", "mt_progress", "frontier_status", "module_loc_treemap", "test_density_scatter", "module_composition", "coverage_ratio", "module_tests_lollipop", "summary_figure", "module_tests_pareto", "test_pass_gauge"}
         self.assertEqual(set(charts.keys()), expected)
         for name, svg in charts.items():
             self.assertIn("<svg", svg, f"Chart {name} is not valid SVG")
@@ -380,7 +380,7 @@ class TestChartIntegration(unittest.TestCase):
                 "frontiers": [{"name": "F1", "tests": 100}],
             }
             paths = gen.save_all(data)
-            self.assertEqual(len(paths), 12)
+            self.assertEqual(len(paths), 14)
             for name, path in paths.items():
                 self.assertTrue(os.path.exists(path))
                 with open(path) as f:
