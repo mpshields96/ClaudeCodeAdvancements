@@ -32,6 +32,8 @@ Chart types:
     ForestPlot        — confidence interval display for statistical meta-analysis
     BulletChart       — Stephen Few bullet graph for KPI dashboards (actual vs target + ranges)
     SlopeChart        — before/after slopegraph for paired comparison
+    LollipopChart     — horizontal stem + circle for ranked category display
+    DumbbellChart     — horizontal paired dots with connecting line for range comparison
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -857,6 +859,55 @@ class SlopeChart:
     right_label: str = "After"
     title: str = ""
     width: int = 400
+    height: int = 300
+
+
+@dataclass
+class LollipopChart:
+    """Horizontal lollipop chart — stem + circle for ranked category data.
+
+    Cleaner alternative to horizontal bar charts, especially when values
+    vary widely. Each item shows a thin line (stem) from the baseline to
+    a circle (head) at the value position.
+
+    Args:
+        data: [(label, value), ...] — items to display (sorted descending by default)
+        title: Chart title
+        color: Dot/stem color (default: CCA accent)
+        dot_radius: Circle radius in px
+        show_values: Display value labels next to dots
+    """
+    data: list  # [(label, value), ...]
+    title: str = ""
+    color: str = ""
+    dot_radius: int = 6
+    show_values: bool = False
+    width: int = 500
+    height: int = 300
+
+
+@dataclass
+class DumbbellChart:
+    """Dumbbell chart — horizontal range comparison with paired dots.
+
+    Shows two values per row connected by a line. Each endpoint is a circle.
+    Color indicates direction: green if right > left (improvement),
+    red if right < left (regression).
+
+    Useful for min/max ranges, before/after comparisons, confidence intervals,
+    or any paired value display where horizontal layout is preferred.
+
+    Args:
+        data: [(label, left_value, right_value), ...]
+        left_label: Header for left/start values
+        right_label: Header for right/end values
+        title: Chart title
+    """
+    data: list  # [(label, left_value, right_value), ...]
+    left_label: str = "Start"
+    right_label: str = "End"
+    title: str = ""
+    width: int = 500
     height: int = 300
 
 
@@ -3603,6 +3654,138 @@ def _render_forest_plot(chart: ForestPlot) -> str:
     return "".join(parts)
 
 
+def _render_lollipop_chart(chart: LollipopChart) -> str:
+    """Render a horizontal lollipop chart (stem + circle) to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    color = chart.color or CCA_COLORS["accent"]
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 15
+    label_w = 110
+    value_w = 50 if chart.show_values else 10
+    plot_x = label_w + 10
+    plot_w = chart.width - plot_x - value_w - 10
+    plot_h = chart.height - margin_top - margin_bottom
+    n = len(chart.data)
+    row_h = plot_h / n if n > 0 else plot_h
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, fill=CCA_COLORS["primary"],
+                           font_weight="600"))
+
+    max_val = max(v for _, v in chart.data) if chart.data else 1
+    if max_val == 0:
+        max_val = 1
+
+    def val_to_x(v):
+        return plot_x + (v / max_val) * plot_w
+
+    for i, (label, value) in enumerate(chart.data):
+        cy = margin_top + (i + 0.5) * row_h
+        vx = val_to_x(value)
+
+        # Label
+        parts.append(_text(label_w, cy + 4, _abbreviate_label(label, 14),
+                           font_size=10, fill=CCA_COLORS["primary"], anchor="end"))
+
+        # Stem line
+        parts.append(_line(plot_x, cy, vx, cy, color, 1.5))
+
+        # Dot
+        parts.append(_circle(vx, cy, chart.dot_radius, color))
+
+        # Value label
+        if chart.show_values:
+            val_text = str(int(value)) if value == int(value) else f"{value:.1f}"
+            parts.append(_text(vx + chart.dot_radius + 5, cy + 4, val_text,
+                               font_size=9, fill=CCA_COLORS["muted"], anchor="start"))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
+def _render_dumbbell_chart(chart: DumbbellChart) -> str:
+    """Render a horizontal dumbbell chart (paired dots + connecting line) to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    margin_top = 50 if chart.title else 30
+    margin_bottom = 20
+    label_w = 80
+    plot_x = label_w + 15
+    plot_w = chart.width - plot_x - 30
+    plot_h = chart.height - margin_top - margin_bottom
+    n = len(chart.data)
+    row_h = plot_h / n if n > 0 else plot_h
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, fill=CCA_COLORS["primary"],
+                           font_weight="600"))
+
+    # Determine X scale from all values
+    all_vals = []
+    for _label, left, right in chart.data:
+        all_vals.extend([left, right])
+    min_val = min(all_vals)
+    max_val = max(all_vals)
+    val_range = max_val - min_val if max_val != min_val else 1.0
+    padding = val_range * 0.05
+
+    def val_to_x(v):
+        return plot_x + ((v - min_val + padding) / (val_range + 2 * padding)) * plot_w
+
+    # Column headers
+    parts.append(_text(plot_x, margin_top - 8, chart.left_label,
+                        font_size=10, fill=CCA_COLORS["muted"], anchor="start"))
+    parts.append(_text(plot_x + plot_w, margin_top - 8, chart.right_label,
+                        font_size=10, fill=CCA_COLORS["muted"], anchor="end"))
+
+    dot_r = 5
+    for i, (label, left_val, right_val) in enumerate(chart.data):
+        cy = margin_top + (i + 0.5) * row_h
+        lx = val_to_x(left_val)
+        rx = val_to_x(right_val)
+
+        # Color by direction
+        if right_val > left_val:
+            color = CCA_COLORS["success"]
+        elif right_val < left_val:
+            color = CCA_COLORS["highlight"]
+        else:
+            color = CCA_COLORS["muted"]
+
+        # Label
+        parts.append(_text(label_w, cy + 4, _abbreviate_label(label, 10),
+                           font_size=10, fill=CCA_COLORS["primary"], anchor="end"))
+
+        # Connecting line
+        parts.append(_line(lx, cy, rx, cy, color, 2))
+
+        # Endpoint circles
+        parts.append(_circle(lx, cy, dot_r, color))
+        parts.append(_circle(rx, cy, dot_r, color))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 def _render_bullet_chart(chart: BulletChart) -> str:
     """Render a Stephen Few bullet graph to SVG."""
     parts = [_svg_header(chart.width, chart.height)]
@@ -3814,6 +3997,10 @@ def render_svg(chart) -> str:
         return _render_bullet_chart(chart)
     elif isinstance(chart, SlopeChart):
         return _render_slope_chart(chart)
+    elif isinstance(chart, LollipopChart):
+        return _render_lollipop_chart(chart)
+    elif isinstance(chart, DumbbellChart):
+        return _render_dumbbell_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 
