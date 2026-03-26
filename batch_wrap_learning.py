@@ -47,6 +47,8 @@ DEFAULT_JOURNAL_PATH = os.path.join(SCRIPT_DIR, "self-learning", "journal.jsonl"
 DEFAULT_WRAP_PATH = os.path.join(SCRIPT_DIR, "wrap_assessments.jsonl")
 DEFAULT_TIP_PATH = os.path.join(SCRIPT_DIR, "tip_tracker_data.jsonl")
 DEFAULT_OUTCOME_PATH = os.path.join(SCRIPT_DIR, "session_outcomes.jsonl")
+DEFAULT_FEEDBACK_LOG = os.path.join(SCRIPT_DIR, "self-learning", "feedback_log.jsonl")
+DEFAULT_PRINCIPLES_PATH = os.path.join(SCRIPT_DIR, "self-learning", "principles.jsonl")
 
 VALID_GRADES = {"A", "B", "C", "D"}
 VALID_OUTCOMES = {"success", "partial", "failure"}
@@ -130,12 +132,79 @@ def _append_jsonl(path: str, entry: dict) -> None:
         f.write(json.dumps(entry, separators=(",", ":")) + "\n")
 
 
+def _outcome_feedback_roi(feedback_log_path: str) -> dict:
+    """Load outcome feedback ROI summary from feedback log JSONL.
+
+    Reads the feedback_log directly (no import needed) to avoid
+    circular dependency on outcome_feedback.py.
+    """
+    events = []
+    if os.path.exists(feedback_log_path):
+        with open(feedback_log_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    events.append(json.loads(line))
+
+    profitable = sum(1 for e in events if e.get("outcome") == "profitable")
+    unprofitable = sum(1 for e in events if e.get("outcome") == "unprofitable")
+    total_profit = sum(e.get("profit_cents", 0) for e in events)
+    all_pids = set()
+    for e in events:
+        all_pids.update(e.get("principle_ids", []))
+
+    return {
+        "total_feedback_events": len(events),
+        "profitable_count": profitable,
+        "unprofitable_count": unprofitable,
+        "total_profit_cents": total_profit,
+        "principles_updated": len(all_pids),
+        "win_rate": (profitable / len(events)) if events else 0.0,
+    }
+
+
+def _sentinel_bridge_stats(principles_path: str) -> dict:
+    """Load sentinel bridge stats from principles JSONL.
+
+    Reads principles directly (no import needed) to count sentinel-sourced
+    and counter-principles without importing the full registry.
+    """
+    principles = []
+    if os.path.exists(principles_path):
+        with open(principles_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    principles.append(json.loads(line))
+
+    # Deduplicate by id (latest entry wins, same as principle_registry)
+    by_id = {}
+    for p in principles:
+        pid = p.get("id", "")
+        if pid:
+            by_id[pid] = p
+
+    total = len(by_id)
+    counter = sum(1 for p in by_id.values()
+                  if p.get("text", "").startswith("Avoid:"))
+    sentinel = sum(1 for p in by_id.values()
+                   if "sentinel" in (p.get("source_context", "") or ""))
+
+    return {
+        "total_principles": total,
+        "counter_principles": counter,
+        "sentinel_sourced": sentinel,
+    }
+
+
 def run_batch(
     batch: WrapBatch,
     journal_path: str = DEFAULT_JOURNAL_PATH,
     wrap_path: str = DEFAULT_WRAP_PATH,
     tip_path: str = DEFAULT_TIP_PATH,
     outcome_path: str = DEFAULT_OUTCOME_PATH,
+    feedback_log_path: str = DEFAULT_FEEDBACK_LOG,
+    principles_path: str = DEFAULT_PRINCIPLES_PATH,
 ) -> BatchResult:
     """Execute all wrap self-learning writes in a single batch.
 
@@ -247,6 +316,39 @@ def run_batch(
             result.record("principle_seeding", False, f"import: {e}")
     except Exception as e:
         result.record("principle_seeding", False, str(e))
+
+    # 8. Outcome feedback ROI summary (surfaces research→profit loop)
+    try:
+        roi = _outcome_feedback_roi(feedback_log_path)
+        _append_jsonl(journal_path, {
+            "event_type": "feedback_roi",
+            "session": batch.session_id,
+            "total_feedback_events": roi.get("total_feedback_events", 0),
+            "profitable_count": roi.get("profitable_count", 0),
+            "unprofitable_count": roi.get("unprofitable_count", 0),
+            "total_profit_cents": roi.get("total_profit_cents", 0),
+            "win_rate": roi.get("win_rate", 0.0),
+            "principles_updated": roi.get("principles_updated", 0),
+            "timestamp": now,
+        })
+        result.record("outcome_feedback_roi", True)
+    except Exception as e:
+        result.record("outcome_feedback_roi", False, str(e))
+
+    # 9. Sentinel bridge stats (surfaces mutation→principle loop)
+    try:
+        stats = _sentinel_bridge_stats(principles_path)
+        _append_jsonl(journal_path, {
+            "event_type": "sentinel_stats",
+            "session": batch.session_id,
+            "total_principles": stats.get("total_principles", 0),
+            "counter_principles": stats.get("counter_principles", 0),
+            "sentinel_sourced": stats.get("sentinel_sourced", 0),
+            "timestamp": now,
+        })
+        result.record("sentinel_bridge_stats", True)
+    except Exception as e:
+        result.record("sentinel_bridge_stats", False, str(e))
 
     return result
 

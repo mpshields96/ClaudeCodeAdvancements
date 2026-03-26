@@ -149,8 +149,8 @@ class TestRunBatch(unittest.TestCase):
                              outcome_path=os.path.join(tmpdir, "outcomes.jsonl"))
             with open(journal_path) as f:
                 lines = f.readlines()
-            # 1 session_outcome + 2 wins + 1 loss = 4 entries
-            self.assertEqual(len(lines), 4)
+            # 1 session_outcome + 2 wins + 1 loss + 1 feedback_roi + 1 sentinel_stats = 6
+            self.assertEqual(len(lines), 6)
             types = [json.loads(l)["event_type"] for l in lines]
             self.assertEqual(types.count("win"), 2)
             self.assertEqual(types.count("pain"), 1)
@@ -246,7 +246,214 @@ class TestRunBatch(unittest.TestCase):
                              outcome_path=os.path.join(tmpdir, "outcomes.jsonl"))
             with open(journal_path) as f:
                 lines = f.readlines()
-            self.assertEqual(len(lines), 1)  # Just session_outcome
+            # session_outcome + feedback_roi + sentinel_stats = 3
+            self.assertEqual(len(lines), 3)
+
+
+class TestOutcomeFeedbackIntegration(unittest.TestCase):
+    """Test step 8: outcome_feedback ROI summary logged to journal."""
+
+    def test_roi_summary_logged_to_journal(self):
+        """Step 8 should log a feedback_roi event to journal."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            journal_path = os.path.join(tmpdir, "journal.jsonl")
+            # Create a minimal feedback_log so roi_summary returns data
+            feedback_log = os.path.join(tmpdir, "feedback_log.jsonl")
+            with open(feedback_log, "w") as f:
+                f.write(json.dumps({
+                    "delivery_id": "d-test1",
+                    "outcome": "profitable",
+                    "principle_ids": ["p1"],
+                    "profit_cents": 500,
+                    "timestamp": "2026-03-26T00:00:00Z",
+                    "skipped_principles": [],
+                }) + "\n")
+
+            batch = WrapBatch(
+                session_id=189, grade="A",
+                wins=["Test"], losses=[],
+                outcome="success", summary="test",
+                domain="general", tests_added=0, tests_total=500,
+                tips=[],
+            )
+            result = run_batch(
+                batch,
+                journal_path=journal_path,
+                wrap_path=os.path.join(tmpdir, "wrap.jsonl"),
+                tip_path=os.path.join(tmpdir, "tips.jsonl"),
+                outcome_path=os.path.join(tmpdir, "outcomes.jsonl"),
+                feedback_log_path=feedback_log,
+            )
+            # Should have recorded the step
+            step_names = [s[0] for s in result._step_results]
+            self.assertIn("outcome_feedback_roi", step_names)
+
+            # Journal should have a feedback_roi event
+            with open(journal_path) as f:
+                lines = f.readlines()
+            roi_entries = [json.loads(l) for l in lines
+                          if json.loads(l).get("event_type") == "feedback_roi"]
+            self.assertEqual(len(roi_entries), 1)
+            self.assertIn("total_profit_cents", roi_entries[0])
+            self.assertEqual(roi_entries[0]["total_profit_cents"], 500)
+
+    def test_roi_summary_empty_feedback_log(self):
+        """Step 8 should succeed gracefully with no feedback data."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            journal_path = os.path.join(tmpdir, "journal.jsonl")
+            batch = WrapBatch(
+                session_id=189, grade="A",
+                wins=[], losses=[],
+                outcome="success", summary="test",
+                domain="general", tests_added=0, tests_total=500,
+                tips=[],
+            )
+            result = run_batch(
+                batch,
+                journal_path=journal_path,
+                wrap_path=os.path.join(tmpdir, "wrap.jsonl"),
+                tip_path=os.path.join(tmpdir, "tips.jsonl"),
+                outcome_path=os.path.join(tmpdir, "outcomes.jsonl"),
+                feedback_log_path=os.path.join(tmpdir, "nonexistent_feedback.jsonl"),
+            )
+            step_names = [s[0] for s in result._step_results]
+            self.assertIn("outcome_feedback_roi", step_names)
+            # Should succeed even with missing file
+            roi_steps = [(n, ok) for n, ok in result._step_results
+                        if n == "outcome_feedback_roi"]
+            self.assertTrue(roi_steps[0][1])  # success=True
+
+    def test_roi_summary_includes_win_rate(self):
+        """ROI journal entry should include win_rate field."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            journal_path = os.path.join(tmpdir, "journal.jsonl")
+            feedback_log = os.path.join(tmpdir, "feedback_log.jsonl")
+            with open(feedback_log, "w") as f:
+                f.write(json.dumps({
+                    "delivery_id": "d-1", "outcome": "profitable",
+                    "principle_ids": [], "profit_cents": 100,
+                    "timestamp": "2026-01-01T00:00:00Z",
+                    "skipped_principles": [],
+                }) + "\n")
+                f.write(json.dumps({
+                    "delivery_id": "d-2", "outcome": "unprofitable",
+                    "principle_ids": [], "profit_cents": -50,
+                    "timestamp": "2026-01-01T00:00:00Z",
+                    "skipped_principles": [],
+                }) + "\n")
+
+            batch = WrapBatch(
+                session_id=189, grade="B",
+                wins=[], losses=[],
+                outcome="success", summary="test",
+                domain="general", tests_added=0, tests_total=500,
+                tips=[],
+            )
+            result = run_batch(
+                batch,
+                journal_path=journal_path,
+                wrap_path=os.path.join(tmpdir, "wrap.jsonl"),
+                tip_path=os.path.join(tmpdir, "tips.jsonl"),
+                outcome_path=os.path.join(tmpdir, "outcomes.jsonl"),
+                feedback_log_path=feedback_log,
+            )
+            with open(journal_path) as f:
+                lines = f.readlines()
+            roi_entries = [json.loads(l) for l in lines
+                          if json.loads(l).get("event_type") == "feedback_roi"]
+            self.assertEqual(len(roi_entries), 1)
+            self.assertAlmostEqual(roi_entries[0]["win_rate"], 0.5)
+            self.assertEqual(roi_entries[0]["total_profit_cents"], 50)
+
+
+class TestSentinelBridgeIntegration(unittest.TestCase):
+    """Test step 9: sentinel_bridge stats logged to journal."""
+
+    def test_sentinel_stats_logged_to_journal(self):
+        """Step 9 should log sentinel_stats event to journal."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            journal_path = os.path.join(tmpdir, "journal.jsonl")
+            principles_path = os.path.join(tmpdir, "principles.jsonl")
+            # Write an empty principles file
+            with open(principles_path, "w") as f:
+                pass
+
+            batch = WrapBatch(
+                session_id=189, grade="A",
+                wins=[], losses=[],
+                outcome="success", summary="test",
+                domain="general", tests_added=0, tests_total=500,
+                tips=[],
+            )
+            result = run_batch(
+                batch,
+                journal_path=journal_path,
+                wrap_path=os.path.join(tmpdir, "wrap.jsonl"),
+                tip_path=os.path.join(tmpdir, "tips.jsonl"),
+                outcome_path=os.path.join(tmpdir, "outcomes.jsonl"),
+                principles_path=principles_path,
+            )
+            step_names = [s[0] for s in result._step_results]
+            self.assertIn("sentinel_bridge_stats", step_names)
+
+    def test_sentinel_stats_graceful_on_missing_principles(self):
+        """Step 9 should succeed even with no principles file."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            journal_path = os.path.join(tmpdir, "journal.jsonl")
+            batch = WrapBatch(
+                session_id=189, grade="A",
+                wins=[], losses=[],
+                outcome="success", summary="test",
+                domain="general", tests_added=0, tests_total=500,
+                tips=[],
+            )
+            result = run_batch(
+                batch,
+                journal_path=journal_path,
+                wrap_path=os.path.join(tmpdir, "wrap.jsonl"),
+                tip_path=os.path.join(tmpdir, "tips.jsonl"),
+                outcome_path=os.path.join(tmpdir, "outcomes.jsonl"),
+                principles_path=os.path.join(tmpdir, "no_principles.jsonl"),
+            )
+            step_names = [s[0] for s in result._step_results]
+            self.assertIn("sentinel_bridge_stats", step_names)
+            # Should succeed (graceful degradation)
+            sentinel_steps = [(n, ok) for n, ok in result._step_results
+                             if n == "sentinel_bridge_stats"]
+            self.assertTrue(sentinel_steps[0][1])
+
+    def test_sentinel_stats_journal_entry_structure(self):
+        """Sentinel stats journal entry should have expected fields."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            journal_path = os.path.join(tmpdir, "journal.jsonl")
+            principles_path = os.path.join(tmpdir, "principles.jsonl")
+            with open(principles_path, "w") as f:
+                pass  # empty
+
+            batch = WrapBatch(
+                session_id=189, grade="A",
+                wins=[], losses=[],
+                outcome="success", summary="test",
+                domain="general", tests_added=0, tests_total=500,
+                tips=[],
+            )
+            result = run_batch(
+                batch,
+                journal_path=journal_path,
+                wrap_path=os.path.join(tmpdir, "wrap.jsonl"),
+                tip_path=os.path.join(tmpdir, "tips.jsonl"),
+                outcome_path=os.path.join(tmpdir, "outcomes.jsonl"),
+                principles_path=principles_path,
+            )
+            with open(journal_path) as f:
+                lines = f.readlines()
+            sentinel_entries = [json.loads(l) for l in lines
+                               if json.loads(l).get("event_type") == "sentinel_stats"]
+            self.assertEqual(len(sentinel_entries), 1)
+            entry = sentinel_entries[0]
+            self.assertIn("total_principles", entry)
+            self.assertIn("sentinel_sourced", entry)
+            self.assertEqual(entry["session"], 189)
 
 
 if __name__ == "__main__":
