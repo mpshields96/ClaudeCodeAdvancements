@@ -700,3 +700,19 @@ Source: GitHub trending, web search, HN discussion, blog posts.
 - **Action:** Add to /cca-nuclear-github scan list. Re-scan monthly for new additions.
 - **Verdict:** REFERENCE — ongoing intelligence source, not a single tool to build
 
+
+### Finding 187-1: 1M Context Window Burns Subscription Limits 5x Faster
+- **Source:** r/claude — u/BraxbroWasTaken (50pts) — 2026-03-26
+- **URL:** https://www.reddit.com/r/claude/comments/1s3vsm5/anthropic_broke_your_limits_with_the_1m_context/
+- **What:** Detailed analysis of why Anthropic's 1M context window (GA March 13, 2026) is eating subscription limits. Key mechanism: 5x bigger token payloads per turn, cache expiry (1h idle) causes massive re-cache at 1.25-2x per token, and quality degrades at large context. Env var CLAUDE_CODE_DISABLE_1M_CONTEXT=1 disables it.
+- **CCA relevance:** Frontier 3 (context-monitor). Directly validates our adaptive thresholds work and the decision to revert DEFAULT_WINDOW from 1M to 200K.
+- **Action:** Reverted all context-monitor defaults to 200K. Adaptive thresholds remain as safety net.
+- **Verdict:** REFERENCE — validates existing CCA architecture, informed S187 revert decision
+
+### Finding 187-2: Claude Code Hidden Token Overhead Measurement
+- **Source:** r/ClaudeCode — u/wirelesshealth (47pts) — 2026-03-26
+- **URL:** https://www.reddit.com/r/ClaudeCode/comments/1s3xjn4/i_measured_claude_codes_hidden_token_overhead/
+- **What:** Rigorous measurement of CC v2.1.84 overhead: 16K tokens in empty dir, 23K in real project. Built-in tools = ~10K (63%), core system prompt ~2.8K (17%), skills ~1.5K (9%), MCP catalog ~1K (6%). Per-turn trace showed minimal quota drain for simple coding (4 turns stayed at 3%). MCP servers and plugins amplify overhead significantly.
+- **CCA relevance:** Frontier 3 + Frontier 5. Our overhead_tracker.py already measures CCA=49K (3x baseline, consistent with this finding given our 14+ hooks + MCP servers). Confirms MCP/plugin count is the main driver of overhead variation.
+- **Action:** No immediate code change needed — validates our overhead_tracker.py measurements.
+- **Verdict:** REFERENCE — validates CCA overhead measurement infrastructure
