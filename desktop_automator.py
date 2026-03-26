@@ -57,7 +57,7 @@ NEW_SESSION_BTN_Y_OFFSET = 60   # from window top edge to button center (39+60=9
 # Model selector button geometry (bottom-right of Code tab input area, S186)
 # The model button shows current model name (e.g. "Opus 4.6 (1M context) v").
 # Position is relative to window edges. Needs live calibration if UI changes.
-MODEL_BTN_X_FROM_RIGHT = 135    # points from window right edge to button center
+MODEL_BTN_X_FROM_RIGHT = 100    # points from window right edge to button center (calibrated S186)
 MODEL_BTN_Y_FROM_BOTTOM = 33    # points from window bottom edge to button center
 
 # Model dropdown option offsets (relative to button, negative = upward)
@@ -125,6 +125,21 @@ _kCGHIDEventTap = 0
 _kCGEventSourceStateCombinedSessionState = 0
 # CGEventType for "any input" — kCGAnyInputEventType
 _kCGAnyInputEventType = 0xFFFFFFFF
+_kCGEventMouseMoved = 5
+
+
+def cg_move_to(x: float, y: float) -> bool:
+    """Move mouse cursor to (x, y) WITHOUT clicking. For calibration."""
+    cg = _get_cg()
+    if cg is None:
+        return False
+    point = _CGPoint(x, y)
+    move = cg.CGEventCreateMouseEvent(None, _kCGEventMouseMoved, point, 0)
+    if not move:
+        return False
+    cg.CGEventPost(_kCGHIDEventTap, move)
+    cg.CFRelease(move)
+    return True
 
 
 def cg_click_at(x: float, y: float) -> bool:
@@ -1066,6 +1081,29 @@ if __name__ == "__main__":
         da_dry = DesktopAutomator(dry_run=True, activate_delay=0)
         result = da_dry.run_loop_iteration(prompt)
         print(json.dumps(result, indent=2))
+
+    elif cmd == "calibrate-model":
+        # Move cursor to model button position (no click) for visual verification.
+        # Usage: python3 desktop_automator.py calibrate-model [X_FROM_RIGHT]
+        x_override = int(sys.argv[2]) if len(sys.argv) > 2 else None
+        geom = da.get_window_geometry()
+        if geom is None:
+            print("ERROR: Could not get Claude window geometry.")
+            sys.exit(1)
+        win_x, win_y, win_w, win_h = geom
+        x_from_right = x_override if x_override else MODEL_BTN_X_FROM_RIGHT
+        btn_x = win_x + win_w - x_from_right
+        btn_y = win_y + win_h - MODEL_BTN_Y_FROM_BOTTOM
+        print(f"Window: {win_w}x{win_h} at ({win_x},{win_y})")
+        print(f"Model button: X_FROM_RIGHT={x_from_right}, Y_FROM_BOTTOM={MODEL_BTN_Y_FROM_BOTTOM}")
+        print(f"Moving cursor to ({btn_x}, {btn_y}) — look at where the cursor lands!")
+        print(f"  If too far LEFT:  decrease X_FROM_RIGHT (try {x_from_right - 10})")
+        print(f"  If too far RIGHT: increase X_FROM_RIGHT (try {x_from_right + 10})")
+        ok = cg_move_to(btn_x, btn_y)
+        if ok:
+            print(f"Cursor moved. Is it on the model button?")
+        else:
+            print("ERROR: Could not move cursor (CoreGraphics failed).")
 
     else:
         print(f"Unknown command: {cmd}")

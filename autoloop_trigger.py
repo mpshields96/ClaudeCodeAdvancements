@@ -190,21 +190,12 @@ def trigger_next_session(dry_run: bool = False) -> bool:
         time.sleep(wait_time)
     _log("step_3_wait", {"seconds": wait_time})
 
-    # Step 3.5: Set model to Opus 4.6 1M context via UI dropdown (S186)
-    # Desktop Electron app does NOT reliably pick up project settings.local.json
-    # model setting. Previously used /model command as text — but that pollutes
-    # the chat history and names every session "Update model to Claude Opus 4.6".
-    # Now uses CoreGraphics coordinate clicks on the model dropdown button instead.
-    # Matthew directive (S186): change model via UI in new session, not via /model.
-    if not automator.set_model_via_ui("opus-4-6-1m"):
-        _log("model_set_failed", {"reason": "ui_click_failed"})
-        print("WARNING: Could not set model via UI — proceeding with default.")
-        # Non-fatal: continue even if model set fails
-    else:
-        _log("step_3_5_model", {"status": "ok", "method": "ui_dropdown"})
-        # Brief wait for model switch to register
-        if not dry_run:
-            time.sleep(0.5)
+    # Step 3.5: Model selection DISABLED (S186)
+    # UI coordinate click approach needs Retina scaling calibration.
+    # Desktop app retains model setting across sessions — manual change if needed.
+    # TODO: Fix with accessibility-based element targeting (AXUIElement) instead
+    # of fragile coordinate math. See Finding 186-3 (HCOM) for patterns.
+    _log("step_3_5_model", {"status": "skipped", "reason": "calibration_needed"})
 
     # Step 4+5: Paste prompt and send (Cmd+Return)
     if not automator.send_prompt(prompt):

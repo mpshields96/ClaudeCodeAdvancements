@@ -102,12 +102,11 @@ class TestTriggerNextSession(unittest.TestCase):
                 mock_da.activate_claude.assert_called_once()
                 mock_da.ensure_code_tab.assert_called_once()
                 mock_da.new_conversation.assert_called_once()
-                # Model set via UI dropdown (S186), then prompt sent
-                mock_da.set_model_via_ui.assert_called_once_with("opus-4-6-1m")
+                # Model selection disabled (S186 — needs calibration)
+                mock_da.set_model_via_ui.assert_not_called()
                 mock_da.send_prompt.assert_called_once()
-                # Prompt should contain resume content, not /model command
+                # Prompt should contain resume content
                 prompt_arg = mock_da.send_prompt.call_args[0][0]
-                self.assertNotIn("/model", prompt_arg)
                 self.assertIn("Resume content", prompt_arg)
         finally:
             os.unlink(path)
@@ -222,7 +221,6 @@ class TestTriggerNextSession(unittest.TestCase):
         mock_da.ensure_code_tab.side_effect = lambda: (call_order.append("code_tab"), True)[1]
         mock_da.new_conversation.side_effect = lambda: (call_order.append("new_conv"), True)[1]
         mock_da.send_prompt.side_effect = lambda p: (call_order.append("send"), True)[1]
-        mock_da.set_model_via_ui.side_effect = lambda m: (call_order.append("set_model"), True)[1]
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write("Resume")
@@ -231,8 +229,8 @@ class TestTriggerNextSession(unittest.TestCase):
             with patch.object(autoloop_trigger, "RESUME_FILE", path), \
                  patch.object(autoloop_trigger, "AUDIT_LOG", "/dev/null"):
                 autoloop_trigger.trigger_next_session(dry_run=True)
-                # S186: model set via UI, then prompt sent (no /model command)
-                self.assertEqual(call_order, ["activate", "code_tab", "new_conv", "set_model", "send"])
+                # S186: model selection disabled, just activate→code_tab→new_conv→send
+                self.assertEqual(call_order, ["activate", "code_tab", "new_conv", "send"])
         finally:
             os.unlink(path)
 
