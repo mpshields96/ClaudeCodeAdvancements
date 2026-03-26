@@ -18,6 +18,7 @@ from chart_generator import (
     AreaChart,
     BarChart,
     BoxPlot,
+    CalibrationPlot,
     CCA_COLORS,
     DonutChart,
     HistogramChart,
@@ -402,6 +403,36 @@ class ReportChartGenerator:
         chart = AreaChart(items, title="Bankroll ($)", color=CCA_COLORS["primary"])
         return render_svg(chart)
 
+    def kalshi_calibration(self, data):
+        """CalibrationPlot: predicted probability vs actual win rate (FLB analysis).
+
+        Expects kalshi_analytics.charts.calibration with:
+          bins: [(predicted, actual, n), ...]
+          extra_series: [{"name": str, "bins": [...], "color": str}, ...] (optional)
+        """
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Calibration Curve")
+        cal_data = kalshi.get("charts", {}).get("calibration", {})
+        bins = cal_data.get("bins", [])
+        if not bins:
+            return self._empty_chart("Calibration Curve")
+        # Convert list-of-lists to list-of-tuples
+        bins = [(b[0], b[1], b[2]) for b in bins]
+        extra = []
+        for s in cal_data.get("extra_series", []):
+            s_bins = [(b[0], b[1], b[2]) for b in s.get("bins", [])]
+            extra.append((s["name"], s_bins, s.get("color", CCA_COLORS["highlight"])))
+        chart = CalibrationPlot(
+            bins=bins,
+            title="Price Calibration (FLB)",
+            series_name=cal_data.get("series_name", ""),
+            extra_series=extra,
+            x_label="Contract Price",
+            y_label="Actual Win Rate",
+        )
+        return render_svg(chart)
+
     # ── Self-learning charts (MT-33 Phase 5) ────────────────────────────
 
     def learning_event_types(self, data):
@@ -488,6 +519,7 @@ class ReportChartGenerator:
                 "kalshi_winrate_vs_profit": self.kalshi_winrate_vs_profit(data),
                 "kalshi_trade_volume": self.kalshi_trade_volume(data),
                 "kalshi_bankroll": self.kalshi_bankroll(data),
+                "kalshi_calibration": self.kalshi_calibration(data),
             })
         # Self-learning charts (MT-33 Phase 5) — only if data available
         if data.get("learning_intelligence", {}).get("available"):

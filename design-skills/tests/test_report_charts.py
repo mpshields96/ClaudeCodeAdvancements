@@ -436,10 +436,30 @@ class TestKalshiCharts(unittest.TestCase):
         svg = self.gen.kalshi_bankroll(self.kalshi_data)
         self.assertIn("<svg", svg)
 
+    def test_calibration_returns_svg(self):
+        """Calibration chart renders with FLB bins."""
+        self.kalshi_data["kalshi_analytics"]["charts"]["calibration"] = {
+            "bins": [[0.90, 0.93, 100], [0.92, 0.95, 80], [0.95, 0.97, 50]],
+            "series_name": "BTC",
+            "extra_series": [
+                {"name": "SOL", "bins": [[0.90, 0.88, 30]], "color": "#e94560"},
+            ],
+        }
+        svg = self.gen.kalshi_calibration(self.kalshi_data)
+        self.assertIn("<svg", svg)
+        self.assertIn("Calibration", svg)
+        self.assertIn("BTC", svg)
+        self.assertIn("SOL", svg)
+
+    def test_calibration_no_data(self):
+        svg = self.gen.kalshi_calibration(self.kalshi_data)
+        # No calibration key in charts → empty chart
+        self.assertIn("No data", svg)
+
     def test_generate_all_includes_kalshi(self):
         charts = self.gen.generate_all(self.kalshi_data)
         kalshi_keys = [k for k in charts if k.startswith("kalshi_")]
-        self.assertEqual(len(kalshi_keys), 7)
+        self.assertEqual(len(kalshi_keys), 8)
 
     def test_generate_all_without_kalshi(self):
         """Without kalshi_analytics, no kalshi charts generated."""
