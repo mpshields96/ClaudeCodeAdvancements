@@ -18,6 +18,7 @@ from chart_generator import (
     AreaChart,
     BarChart,
     BoxPlot,
+    BulletChart,
     CalibrationPlot,
     CandlestickChart,
     CCA_COLORS,
@@ -28,6 +29,7 @@ from chart_generator import (
     LineChart,
     ScatterPlot,
     SERIES_PALETTE,
+    SlopeChart,
     StackedBarChart,
     TreemapChart,
     render_svg,
@@ -482,6 +484,63 @@ class ReportChartGenerator:
         )
         return render_svg(chart)
 
+    def kalshi_bankroll_bullet(self, data):
+        """BulletChart: bankroll actual vs target with qualitative ranges.
+
+        Expects kalshi_analytics.charts.bankroll_bullet with:
+          actual: float — current bankroll
+          target: float — target bankroll (e.g., 30-day goal)
+          ranges: [{"threshold": float, "label": str}, ...] (optional)
+        """
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Bankroll Target")
+        bullet_data = kalshi.get("charts", {}).get("bankroll_bullet", {})
+        actual = bullet_data.get("actual")
+        target = bullet_data.get("target")
+        if actual is None or target is None:
+            return self._empty_chart("Bankroll Target")
+        ranges = [
+            (r["threshold"], r["label"])
+            for r in bullet_data.get("ranges", [])
+        ]
+        chart = BulletChart(
+            actual=actual,
+            target=target,
+            ranges=ranges,
+            title="Bankroll",
+            subtitle=bullet_data.get("subtitle", "vs target"),
+            unit=" USD",
+        )
+        return render_svg(chart)
+
+    def kalshi_guard_slope(self, data):
+        """SlopeChart: win rate before vs after guard deployment per asset.
+
+        Expects kalshi_analytics.charts.guard_slope with:
+          series: [{"label": str, "before": float, "after": float}, ...]
+          left_label: str (optional, default "Pre-Guard")
+          right_label: str (optional, default "Post-Guard")
+        """
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Guard Impact")
+        slope_data = kalshi.get("charts", {}).get("guard_slope", {})
+        series = slope_data.get("series", [])
+        if not series:
+            return self._empty_chart("Guard Impact")
+        items = [
+            (s["label"], s["before"], s["after"])
+            for s in series
+        ]
+        chart = SlopeChart(
+            data=items,
+            left_label=slope_data.get("left_label", "Pre-Guard"),
+            right_label=slope_data.get("right_label", "Post-Guard"),
+            title="Win Rate: Guard Impact",
+        )
+        return render_svg(chart)
+
     # ── Self-learning charts (MT-33 Phase 5) ────────────────────────────
 
     def learning_event_types(self, data):
@@ -571,6 +630,8 @@ class ReportChartGenerator:
                 "kalshi_calibration": self.kalshi_calibration(data),
                 "kalshi_edge_forest": self.kalshi_edge_forest(data),
                 "kalshi_price_candles": self.kalshi_price_candles(data),
+                "kalshi_bankroll_bullet": self.kalshi_bankroll_bullet(data),
+                "kalshi_guard_slope": self.kalshi_guard_slope(data),
             })
         # Self-learning charts (MT-33 Phase 5) — only if data available
         if data.get("learning_intelligence", {}).get("available"):

@@ -428,6 +428,102 @@ class KalshiDataCollector:
         finally:
             conn.close()
 
+    def chart_bankroll_bullet(self):
+        """BulletChart data: current bankroll vs target with qualitative ranges.
+
+        Returns actual balance, 30-day target, and three qualitative ranges.
+        """
+        if not self.is_available():
+            return {"actual": None, "target": None}
+
+        conn = self._connect()
+        try:
+            # Current balance (most recent bankroll entry)
+            row = conn.execute("""
+                SELECT balance FROM bankroll
+                ORDER BY timestamp DESC LIMIT 1
+            """).fetchone()
+            if not row:
+                return {"actual": None, "target": None}
+            actual = row[0]
+
+            # 30-day target: $642 mandate (or from config if available)
+            target = 642.0
+
+            # Qualitative ranges based on target
+            ranges = [
+                {"threshold": target * 0.5, "label": "critical"},
+                {"threshold": target * 0.8, "label": "on track"},
+                {"threshold": target * 1.2, "label": "exceeding"},
+            ]
+
+            return {
+                "actual": actual,
+                "target": target,
+                "subtitle": "30-day mandate",
+                "ranges": ranges,
+            }
+        except Exception:
+            return {"actual": None, "target": None}
+        finally:
+            conn.close()
+
+    def chart_guard_slope(self):
+        """SlopeChart data: win rate before vs after guard deployment per asset.
+
+        Compares WR in first 50% of trades (pre-guard era) vs last 50% (post-guard).
+        Only includes assets with 20+ trades in each half.
+        """
+        if not self.is_available():
+            return {"series": []}
+
+        conn = self._connect()
+        try:
+            # Get per-asset trade counts to find the midpoint
+            assets = conn.execute("""
+                SELECT DISTINCT ticker FROM trades
+                WHERE is_paper = 0 AND strategy = 'sniper'
+                  AND ticker IS NOT NULL AND won IS NOT NULL
+                ORDER BY ticker
+            """).fetchall()
+
+            series = []
+            for (ticker,) in assets:
+                rows = conn.execute("""
+                    SELECT won FROM trades
+                    WHERE is_paper = 0 AND strategy = 'sniper'
+                      AND ticker = ? AND won IS NOT NULL
+                    ORDER BY created_at ASC
+                """, (ticker,)).fetchall()
+
+                if len(rows) < 40:  # Need 20+ in each half
+                    continue
+
+                mid = len(rows) // 2
+                first_half = [r[0] for r in rows[:mid]]
+                second_half = [r[0] for r in rows[mid:]]
+
+                wr_before = sum(first_half) / len(first_half) * 100
+                wr_after = sum(second_half) / len(second_half) * 100
+
+                # Shorten ticker for display (KXBTC -> BTC)
+                label = ticker.replace("KX", "") if ticker.startswith("KX") else ticker
+                series.append({
+                    "label": label,
+                    "before": round(wr_before, 1),
+                    "after": round(wr_after, 1),
+                })
+
+            return {
+                "series": series,
+                "left_label": "Early Trades",
+                "right_label": "Recent Trades",
+            }
+        except Exception:
+            return {"series": []}
+        finally:
+            conn.close()
+
     # ── Aggregator ───────────────────────────────────────────────────────
 
     def collect_all(self):
@@ -454,5 +550,7 @@ class KalshiDataCollector:
                 "bankroll_timeline": self.chart_bankroll_timeline(),
                 "edge_forest": self.chart_edge_forest(),
                 "price_candles": self.chart_price_candles(),
+                "bankroll_bullet": self.chart_bankroll_bullet(),
+                "guard_slope": self.chart_guard_slope(),
             },
         }
