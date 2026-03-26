@@ -247,6 +247,9 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `dca_advisor.py` — MT-37: DCA planner for small recurring investments ($20/week, $50/month). allocate_deposit, rebalance_on_deposit, annual_projection, app recommendations. 18 tests (S196).
 - `correlated_loss_analyzer.py` — REQ-054: Cross-asset loss correlation detector. WindowAnalyzer clusters BTC+ETH losses by time window, coincidence rate vs independence. 20 tests (S196).
 - `market_diversifier.py` — REQ-055: HHI-based cross-market diversification analyzer. AssetClass enum, concentration_risk(), DiversificationAdvisor. 25 tests (S196).
+- `loss_reduction_simulator.py` — REQ-057: Models avg_loss reduction impact on ruin probability. Sweep analysis, 5 named strategies, WR sensitivity, recovery ratios. 25 tests (S197).
+- `strategy_allocator.py` — Multi-strategy capital allocation optimizer. Kelly-criterion proportional allocation, constraints, scenario analysis. 25 tests (S197).
+- `edge_decay_detector.py` — Strategy edge stability monitoring. Rolling window regression, stable/improving/declining detection, WR drop alerts. 19 tests (S197).
 - `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 - `BATCH_ANALYSIS_S62.md` — Batch trace analysis of 10 recent sessions (avg 73.0, retry rate down to 40%)
 - `research/SENIOR_DEV_AGENT_RESEARCH.md` — S70: Nuclear-level research for Senior Dev Agent MT (11 verified papers, 5 tools, industry standards, MVP architecture)

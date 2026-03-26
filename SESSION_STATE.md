@@ -3,9 +3,20 @@
 
 ---
 
-## Current State (as of Session 196 — 2026-03-27)
+## Current State (as of Session 197 — 2026-03-27)
 
-**Phase:** Session 196 COMPLETE. MT-37 UBER system fully built (12 modules, Layers 1-5 + orchestrator + DCA). REQ-054 + REQ-055 delivered to Kalshi.
+**Phase:** Session 197 IN PROGRESS. Kalshi 5-day challenge support: 3 new analytical tools delivered. REQ-057 answered.
+
+**What was done this session (S197):**
+- **loss_reduction_simulator.py (REQ-057):** Models avg_loss reduction impact on ruin probability. Sweep analysis, 5 named strategies (early_exit, tighter_floors, reduced_sizing, portfolio_kelly), WR sensitivity, recovery ratios. Key finding: reducing avg_loss from -$11.39 to -$10.00 nearly eliminates ruin (4.5% → 0.04%). At -$8.00: $23.68/day = 3x self-sustaining. 25 new tests.
+- **strategy_allocator.py:** Multi-strategy capital allocation optimizer. Kelly-criterion-inspired proportional allocation. Filters negative-EV strategies, applies constraints. Scenario analysis at multiple bankroll levels. Current finding: sniper gets 100% (sports still in paper mode). 25 new tests.
+- **edge_decay_detector.py:** Strategy edge stability monitoring via rolling window regression. Detects stable/improving/declining trends. Alert threshold for significant WR drops. Critical for 5-day challenge. 19 new tests.
+- **3 Kalshi deliveries:** REQ-057 response (loss reduction analysis), strategy allocator (proactive), edge decay detector (proactive). All written to CCA_TO_POLYBOT.md.
+
+**Tests:** 10,810 total (286 suites). +69 new. 0 regressions.
+**Commits:** 4 this session.
+
+**Next:** (1) Continue chaining Kalshi analytical tools. (2) MT-53 Phase 2 (pokemon-agent). (3) MT-32 Visual Excellence. (4) MT-37 Phase 2 (FRED API). (5) Agent research (S190 directive).
 
 **What was done this session (S196):**
 - **rebalance_advisor.py (MT-37 Layer 5):** Hybrid threshold+calendar rebalancing. DriftResult, RebalanceAdvisor, BUY/SELL action generation. DeMiguel 2009, Daryanani 2008, Jaconetti 2010. 23 new tests.
