@@ -14,12 +14,14 @@
 - **uber_pipeline.py (MT-37 orchestrator):** Unified pipeline wiring all 10 UBER modules. Single analyze_portfolio() entry point. PortfolioInput, UBERConfig, UBERReport with sections/action_items/summary. 21 new tests.
 - **dca_advisor.py (MT-37 DCA):** Dollar-cost averaging for $20/week or $50/month. allocate_deposit (pro-rata), rebalance_on_deposit (tilt toward underweight), annual_projection (FV annuity), app recommendations (M1 Finance/Fidelity/Schwab/Vanguard). 18 new tests.
 - **Kalshi cross-chat:** REQ-027 delivery written — all 3 components already built (monte_carlo_simulator, fill_rate_simulator, strategy_health_scorer). Closed REQ.
+- **correlated_loss_analyzer.py (REQ-054):** Cross-asset loss correlation detector. WindowAnalyzer, LossCluster, coincidence rate vs independence baseline. Delivered to Kalshi via CCA_TO_POLYBOT.md. 20 new tests.
+- **Kalshi cross-chat:** REQ-027 (Monte Carlo) confirmed COMPLETE. REQ-054 (correlated losses) DELIVERED with code + usage guide.
 - **Matthew context:** Wants UBER for small recurring investments ($20/week or $50/month) via M1 Finance. Memory saved.
 
-**Tests:** 10,686 total (281 suites). +108 new. 0 regressions.
-**Commits:** 7 this session.
+**Tests:** 10,706 total (282 suites). +128 new. 0 regressions.
+**Commits:** 9 this session.
 
-**Next:** (1) MT-53 Phase 2 (pokemon-agent install). (2) MAST paper full read. (3) MT-32 Visual Excellence next phase. (4) REQ-054/055 if Kalshi chat requests. (5) MT expansion audit.
+**Next:** (1) MT-53 Phase 2 (pokemon-agent install). (2) MAST paper full read. (3) MT-32 Visual Excellence next phase. (4) REQ-055 broader market discovery. (5) MT expansion audit.
 
 **What was done this session (S195):**
 - **session_metrics.py (MT-49 Phase 6):** Session-over-session trend tracking — grade trends, test velocity, learnings/session, APF trends, win/pain ratios. Linear regression trend classifier. Delta-based test velocity derivation. Wired into slim_init.py Step 3.15. 37 new tests.
