@@ -549,7 +549,7 @@ def seed_principles_from_findings(
     findings_text: Optional[str] = None,
     findings_path: str = DEFAULT_FINDINGS_PATH,
     principles_path: str = DEFAULT_PRINCIPLES_PATH,
-    min_points: int = 50,
+    min_points: int = 0,
     session: int = 0,
 ) -> list:
     """Seed principle registry from FINDINGS_LOG.md BUILD/ADAPT verdicts.
@@ -618,7 +618,7 @@ def seed_all(
     findings_path: str = DEFAULT_FINDINGS_PATH,
     principles_path: str = DEFAULT_PRINCIPLES_PATH,
     min_severity: int = 1,
-    min_points: int = 50,
+    min_points: int = 0,
     session: int = 0,
 ) -> dict:
     """Seed from learnings, journal, and findings. Returns summary."""
