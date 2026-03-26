@@ -158,7 +158,7 @@ class TransferCandidate:
 
 # ── MT-49 Phase 2: Active Transfer Proposals ─────────────────────────────
 
-PROPOSAL_STATUSES = {"proposed", "accepted", "rejected"}
+PROPOSAL_STATUSES = {"proposed", "accepted", "rejected", "validated", "reverted"}
 
 PROPOSALS_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "transfer_proposals.jsonl"
@@ -261,6 +261,130 @@ def update_proposal_status(
         for p in proposals:
             f.write(json.dumps(p.to_dict()) + "\n")
     return found
+
+
+def auto_accept_transfers(
+    threshold: float = 0.5,
+    proposals_path: Optional[str] = None,
+    principles_path: Optional[str] = None,
+) -> List[TransferProposal]:
+    """
+    Auto-accept pending proposals with transfer_score >= threshold.
+
+    For each accepted proposal, applies the transfer (adds target domain
+    to the principle's applicable_domains).
+
+    Returns list of newly accepted proposals.
+    """
+    proposals_path = proposals_path or PROPOSALS_PATH
+    proposals = load_proposals(proposals_path)
+
+    if principles_path is None:
+        from principle_registry import PRINCIPLES_PATH
+        principles_path = PRINCIPLES_PATH
+
+    accepted = []
+    pt = PrincipleTransfer()
+
+    for p in proposals:
+        if p.status != "proposed":
+            continue
+        if p.transfer_score < threshold:
+            continue
+        p.status = "accepted"
+        p.resolved_at = _now_iso()
+        # Apply the transfer to the principle
+        try:
+            pt.apply_transfer(p.principle_id, p.target_domain, principles_path)
+        except (KeyError, ValueError):
+            pass  # Principle may have been pruned/removed since proposal
+        accepted.append(p)
+
+    # Rewrite store with updated statuses
+    if accepted:
+        with open(proposals_path, "w") as f:
+            for p in proposals:
+                f.write(json.dumps(p.to_dict()) + "\n")
+
+    return accepted
+
+
+def record_transfer_outcome(
+    proposal_id: str,
+    success: bool,
+    proposals_path: Optional[str] = None,
+) -> TransferProposal:
+    """
+    Record the outcome of an accepted transfer.
+
+    success=True -> status becomes "validated"
+    success=False -> status becomes "reverted"
+
+    Raises ValueError if the proposal is not in "accepted" status.
+    """
+    proposals_path = proposals_path or PROPOSALS_PATH
+    proposals = load_proposals(proposals_path)
+
+    found = None
+    for p in proposals:
+        if p.proposal_id == proposal_id:
+            found = p
+            break
+
+    if found is None:
+        raise KeyError(f"Proposal not found: {proposal_id}")
+
+    if found.status != "accepted":
+        raise ValueError(
+            f"Cannot record outcome on proposal with status '{found.status}' "
+            f"(must be 'accepted')"
+        )
+
+    found.status = "validated" if success else "reverted"
+    found.resolved_at = _now_iso()
+
+    # Rewrite store
+    with open(proposals_path, "w") as f:
+        for p in proposals:
+            f.write(json.dumps(p.to_dict()) + "\n")
+
+    return found
+
+
+def run_active_transfer_cycle(
+    principles_path: Optional[str] = None,
+    proposals_path: Optional[str] = None,
+    auto_accept_threshold: float = 0.5,
+    max_proposals: int = 10,
+) -> dict:
+    """
+    Run one active transfer cycle: propose new transfers, auto-accept high-confidence ones.
+
+    Returns summary dict with counts.
+    """
+    proposals_path = proposals_path or PROPOSALS_PATH
+
+    if principles_path is None:
+        from principle_registry import PRINCIPLES_PATH
+        principles_path = PRINCIPLES_PATH
+
+    pt = PrincipleTransfer()
+    new_proposals = pt.propose_transfers(
+        principles_path=principles_path,
+        proposals_path=proposals_path,
+        max_proposals=max_proposals,
+    )
+
+    accepted = auto_accept_transfers(
+        threshold=auto_accept_threshold,
+        proposals_path=proposals_path,
+        principles_path=principles_path,
+    )
+
+    return {
+        "proposed": len(new_proposals),
+        "accepted": len(accepted),
+    }
 
 
 class PrincipleTransfer:

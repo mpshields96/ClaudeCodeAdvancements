@@ -739,11 +739,217 @@ class TestAutoPropose(unittest.TestCase):
         self.assertIn("top", summary)
 
 
-## TestActiveTransfer — MT-49 Phase 2 (PENDING IMPLEMENTATION)
-## 10 tests written in S193 for: auto_accept_transfers(), record_transfer_outcome(),
-## run_active_transfer_cycle(). Reverted to keep codebase green.
-## Resume: restore tests from git, implement 3 functions in principle_transfer.py,
-## add "validated"/"reverted" to PROPOSAL_STATUSES.
+class TestActiveTransfer(unittest.TestCase):
+    """MT-49 Phase 2: Active transfer — auto-accept, outcome tracking, cycle."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.principles_path = os.path.join(self.tmp, "principles.jsonl")
+        self.proposals_path = os.path.join(self.tmp, "transfer_proposals.jsonl")
+        self._seed_principles()
+
+    def _seed_principles(self):
+        """Create principles that generate transfer candidates."""
+        p1 = Principle(
+            id="prin_active01",
+            text="Always validate signals before acting",
+            source_domain="trading_research",
+            applicable_domains=["trading_research"],
+            usage_count=15,
+            success_count=12,
+            pruned=False,
+            created_at="2026-03-01T00:00:00Z",
+            updated_at="2026-03-25T00:00:00Z",
+        )
+        p2 = Principle(
+            id="prin_active02",
+            text="Commit after every passing test",
+            source_domain="code_quality",
+            applicable_domains=["code_quality"],
+            usage_count=20,
+            success_count=18,
+            pruned=False,
+            created_at="2026-03-01T00:00:00Z",
+            updated_at="2026-03-25T00:00:00Z",
+        )
+        with open(self.principles_path, "w") as f:
+            f.write(json.dumps(p1.__dict__) + "\n")
+            f.write(json.dumps(p2.__dict__) + "\n")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_extended_statuses(self):
+        """PROPOSAL_STATUSES includes validated and reverted."""
+        from principle_transfer import PROPOSAL_STATUSES
+        self.assertIn("validated", PROPOSAL_STATUSES)
+        self.assertIn("reverted", PROPOSAL_STATUSES)
+
+    def test_auto_accept_above_threshold(self):
+        """auto_accept_transfers accepts proposals above threshold."""
+        from principle_transfer import auto_accept_transfers, load_proposals
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        accepted = auto_accept_transfers(
+            threshold=0.3,
+            proposals_path=self.proposals_path,
+            principles_path=self.principles_path,
+        )
+        self.assertGreater(len(accepted), 0)
+        for p in accepted:
+            self.assertEqual(p.status, "accepted")
+            self.assertGreaterEqual(p.transfer_score, 0.3)
+
+    def test_auto_accept_skips_below_threshold(self):
+        """auto_accept_transfers does not accept proposals below threshold."""
+        from principle_transfer import auto_accept_transfers, load_proposals
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        accepted = auto_accept_transfers(
+            threshold=99.0,  # impossibly high
+            proposals_path=self.proposals_path,
+            principles_path=self.principles_path,
+        )
+        self.assertEqual(len(accepted), 0)
+
+    def test_auto_accept_applies_transfer(self):
+        """Accepted proposals get their target domain added to the principle."""
+        from principle_transfer import auto_accept_transfers
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        accepted = auto_accept_transfers(
+            threshold=0.3,
+            proposals_path=self.proposals_path,
+            principles_path=self.principles_path,
+        )
+        if accepted:
+            a = accepted[0]
+            principles = _load_principles(self.principles_path)
+            self.assertIn(
+                a.target_domain,
+                principles[a.principle_id].applicable_domains,
+            )
+
+    def test_record_outcome_validated(self):
+        """record_transfer_outcome marks accepted transfer as validated."""
+        from principle_transfer import (
+            auto_accept_transfers, record_transfer_outcome, load_proposals,
+        )
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        accepted = auto_accept_transfers(
+            threshold=0.3,
+            proposals_path=self.proposals_path,
+            principles_path=self.principles_path,
+        )
+        self.assertGreater(len(accepted), 0)
+        result = record_transfer_outcome(
+            accepted[0].proposal_id,
+            success=True,
+            proposals_path=self.proposals_path,
+        )
+        self.assertEqual(result.status, "validated")
+
+    def test_record_outcome_reverted(self):
+        """record_transfer_outcome marks failed transfer as reverted."""
+        from principle_transfer import (
+            auto_accept_transfers, record_transfer_outcome, load_proposals,
+        )
+        pt = PrincipleTransfer(min_principle_score=0.65, min_affinity=0.3, min_usages=5)
+        pt.propose_transfers(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+        )
+        accepted = auto_accept_transfers(
+            threshold=0.3,
+            proposals_path=self.proposals_path,
+            principles_path=self.principles_path,
+        )
+        self.assertGreater(len(accepted), 0)
+        result = record_transfer_outcome(
+            accepted[0].proposal_id,
+            success=False,
+            proposals_path=self.proposals_path,
+        )
+        self.assertEqual(result.status, "reverted")
+
+    def test_record_outcome_on_non_accepted_raises(self):
+        """Cannot record outcome on a proposal that hasn't been accepted."""
+        from principle_transfer import (
+            TransferProposal, save_proposal, record_transfer_outcome,
+        )
+        p = TransferProposal(
+            proposal_id="tp_test0099",
+            principle_id="prin_active01",
+            principle_text="test",
+            source_domain="trading_research",
+            target_domain="general",
+            transfer_score=0.5,
+            status="proposed",
+            proposed_at="2026-03-25T10:00:00Z",
+            resolved_at=None,
+            reason="test",
+        )
+        save_proposal(p, self.proposals_path)
+        with self.assertRaises(ValueError):
+            record_transfer_outcome(
+                "tp_test0099", success=True, proposals_path=self.proposals_path,
+            )
+
+    def test_run_active_transfer_cycle(self):
+        """run_active_transfer_cycle proposes and auto-accepts in one call."""
+        from principle_transfer import run_active_transfer_cycle
+        result = run_active_transfer_cycle(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+            auto_accept_threshold=0.3,
+        )
+        self.assertIn("proposed", result)
+        self.assertIn("accepted", result)
+        self.assertIsInstance(result["proposed"], int)
+        self.assertIsInstance(result["accepted"], int)
+
+    def test_cycle_returns_zero_on_empty_registry(self):
+        """Cycle on empty registry returns zeros without error."""
+        from principle_transfer import run_active_transfer_cycle
+        empty_path = os.path.join(self.tmp, "empty.jsonl")
+        result = run_active_transfer_cycle(
+            principles_path=empty_path,
+            proposals_path=self.proposals_path,
+            auto_accept_threshold=0.5,
+        )
+        self.assertEqual(result["proposed"], 0)
+        self.assertEqual(result["accepted"], 0)
+
+    def test_cycle_idempotent(self):
+        """Running cycle twice doesn't double-propose."""
+        from principle_transfer import run_active_transfer_cycle, load_proposals
+        run_active_transfer_cycle(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+            auto_accept_threshold=0.3,
+        )
+        count_after_first = len(load_proposals(self.proposals_path))
+        run_active_transfer_cycle(
+            principles_path=self.principles_path,
+            proposals_path=self.proposals_path,
+            auto_accept_threshold=0.3,
+        )
+        count_after_second = len(load_proposals(self.proposals_path))
+        self.assertEqual(count_after_first, count_after_second)
 
 
 if __name__ == "__main__":
