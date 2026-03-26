@@ -3,6 +3,31 @@
 
 ---
 
+## Session 190 — 2026-03-26
+
+**What changed:**
+- `self-learning/monte_carlo_simulator.py` — `with_loss_cap()` method on BetDistribution (6 tests)
+- `design-skills/chart_generator.py` — CalibrationPlot: 22nd chart type, FLB calibration curve (26 tests)
+- `design-skills/report_charts.py` — `kalshi_calibration()` wired into generate_all (2 tests)
+- `worker_verifier.py` — Automated worker output verification: tests/regressions/committed checks (20 tests)
+- `research/AGENT_ORCHESTRATION_RESEARCH.md` — 8 frameworks, 3 papers, 4 gaps, 5 validations
+- `MATTHEW_DIRECTIVES.md` — S190 agent/multi-agent/orchestration research directive
+- Cross-chat: Monte Carlo loss cap delivery + REQ-52 asset ceiling analysis
+
+**Why:**
+- Kalshi cross-chat asked for bounded-loss Monte Carlo re-run (ruin 6.2%→0.0%)
+- MT-32 Visual Excellence: CalibrationPlot directly serves FLB analysis discussions
+- S190 Matthew directive: agent research is a priority area
+- MAST paper gap #3 (insufficient verification): worker_verifier closes this for hivemind
+
+**Tests:** 10,252/10,252 passing (266 suites, +54 new)
+
+**Lessons:**
+- `_text()` helper already calls `_escape()` — don't double-escape when passing to it
+- Hardcoded chart counts in tests break when adding new chart types — use `>=` or update all
+
+---
+
 ## Session 189 — 2026-03-26
 
 **What changed:**

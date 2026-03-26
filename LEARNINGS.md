@@ -728,3 +728,10 @@
 - **First seen:** 2026-03-26 (S186)
 - **Last seen:** 2026-03-26
 - **Files:** self-learning/principles.jsonl, self-learning/meta_learning_dashboard.py
+
+### Building without integrating = waste — Severity: 2 — Count: 2
+- **Anti-pattern:** Building self-learning modules with tests but never wiring them into slim_init or batch_wrap_learning
+- **Fix:** Every new module must be wired into at least one active workflow (slim_init, batch_wrap, or a skill) within the same session it's built
+- **First seen:** 2026-03-26 (S186 — 124/133 principles unused)
+- **Last seen:** 2026-03-26 (S188 — 3 fully orphaned modules discovered)
+- **Files:** outcome_feedback.py, sentinel_bridge.py, fill_rate_simulator.py

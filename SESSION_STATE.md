@@ -3,9 +3,24 @@
 
 ---
 
-## Current State (as of Session 189 — 2026-03-26)
+## Current State (as of Session 190 — 2026-03-26)
 
-**Phase:** Session 189 COMPLETE. Grade A. Orphaned tools wired, cross-chat deliveries, MT-53 emulator research, principle seeder fix.
+**Phase:** Session 190 COMPLETE. Grade A. CalibrationPlot, Monte Carlo loss cap, agent research, worker verifier, 2 Kalshi deliveries.
+
+**What was done this session (S190):**
+- **monte_carlo_simulator.py:** Added `with_loss_cap(max_loss_usd)` to BetDistribution. Caps empirical losses for re-running sims with current $7.50 DEFAULT_MAX_LOSS. 6 new tests (56 total). Cross-chat delivery: sniper ruin 6.2%→0.0% with cap.
+- **chart_generator.py:** CalibrationPlot — 22nd chart type. Predicted vs actual probability curve for FLB analysis. Multi-series support (per-asset comparison), diagonal line, sample size labels. 26 new tests.
+- **report_charts.py:** Wired `kalshi_calibration()` into generate_all(). 8th Kalshi chart type. 2 new tests.
+- **REQ-52 delivery:** Asset-specific ceiling analysis. BTC@94c NOT significant (p=0.405, noise). ETH 94-95c safe to soft expand. SOL 93c ceiling correct.
+- **Agent orchestration research:** 8 GitHub frameworks benchmarked, 3 academic papers analyzed (MAST failure taxonomy, collaboration survey, uncertainty propagation). 4 gaps identified in CCA hivemind. Written to research/AGENT_ORCHESTRATION_RESEARCH.md.
+- **worker_verifier.py:** Automated worker output verification (MAST gap #3). Tests pass + no regressions + committed checks. ACCEPT/REVIEW/REJECT verdicts. 20 new tests.
+- **MATTHEW_DIRECTIVES.md:** S190 agent research directive logged.
+- **Memory:** feedback_overnight_autonomy.md + feedback_agent_research_priority.md saved.
+
+**Tests:** 10,252 total (266 suites). +54 new. 0 regressions.
+**Commits:** 5 this session + wrap commit.
+
+**Next:** (1) MT-53 Phase 1 Reddit/GitHub intelligence scan (logged S189, still not run). (2) Continue MT-32 Visual Excellence (more chart types or design tokens). (3) Kalshi cross-chat support. (4) Wire worker_verifier into hivemind coordinator workflow. (5) Read MAST paper fully (1,600 failure traces).
 
 **What was done this session (S189):**
 - **batch_wrap_learning.py:** Added steps 8 (outcome_feedback ROI) and 9 (sentinel_bridge stats). 2 helper functions read JSONL directly to avoid circular imports. 6 new tests (24 total).
