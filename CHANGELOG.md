@@ -3131,3 +3131,23 @@ CLI chat 2:
 - $7.50 max_loss gives only 1.6% probability of hitting $20/day — mathematical impossibility at current sizing.
 
 ---
+
+## Session 192 — 2026-03-27
+
+**What changed:**
+- chart_generator.py: +BulletChart, +SlopeChart, +LollipopChart, +DumbbellChart, +ParetoChart (29 total)
+- report_charts.py: +kalshi_bankroll_bullet, +kalshi_guard_slope, +module_tests_lollipop, +kalshi_wr_dumbbell (13 Kalshi + 12 base)
+- kalshi_data_collector.py: +chart_bankroll_bullet, +chart_guard_slope, +chart_wr_dumbbell
+- chartjs_bridge.py: +bubble_chart_config, +radar_chart_config (8 Chart.js types)
+- CCA_TO_POLYBOT.md: REQ-53 delivery (ETH ceiling + FLB volatility analysis)
+
+**Why:**
+- MT-32 Visual Excellence: expanding chart library for richer /cca-report output
+- REQ-53: Kalshi bot needed statistical validation for ETH ceiling expansion
+
+**Tests:** 10,411/10,411 passing (271 suites, +89 new)
+
+**Lessons:**
+- ParetoChart needs pipeline wiring (built SVG but not report_charts method)
+
+---
