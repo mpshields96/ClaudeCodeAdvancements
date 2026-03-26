@@ -524,6 +524,53 @@ class KalshiDataCollector:
         finally:
             conn.close()
 
+    def chart_wr_dumbbell(self):
+        """DumbbellChart data: per-asset WR range across price buckets.
+
+        For each asset, finds the min and max win rate across price buckets
+        with at least 10 trades. Shows the WR spread per asset.
+        """
+        if not self.is_available():
+            return {"series": []}
+
+        conn = self._connect()
+        try:
+            rows = conn.execute("""
+                SELECT
+                    ticker,
+                    CAST(price_cents AS INTEGER) as bucket,
+                    COUNT(*) as n,
+                    SUM(CASE WHEN won = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*) as wr
+                FROM trades
+                WHERE is_paper = 0 AND strategy = 'sniper'
+                  AND ticker IS NOT NULL AND won IS NOT NULL
+                  AND price_cents IS NOT NULL
+                GROUP BY ticker, bucket
+                HAVING COUNT(*) >= 10
+                ORDER BY ticker, bucket
+            """).fetchall()
+
+            # Group by ticker
+            asset_wrs = {}
+            for ticker, _bucket, _n, wr in rows:
+                asset_wrs.setdefault(ticker, []).append(wr)
+
+            series = []
+            for ticker, wrs in sorted(asset_wrs.items()):
+                if len(wrs) >= 2:
+                    label = ticker.replace("KX", "") if ticker.startswith("KX") else ticker
+                    series.append({
+                        "label": label,
+                        "min_wr": round(min(wrs), 1),
+                        "max_wr": round(max(wrs), 1),
+                    })
+
+            return {"series": series}
+        except Exception:
+            return {"series": []}
+        finally:
+            conn.close()
+
     # ── Aggregator ───────────────────────────────────────────────────────
 
     def collect_all(self):
@@ -552,5 +599,6 @@ class KalshiDataCollector:
                 "price_candles": self.chart_price_candles(),
                 "bankroll_bullet": self.chart_bankroll_bullet(),
                 "guard_slope": self.chart_guard_slope(),
+                "wr_dumbbell": self.chart_wr_dumbbell(),
             },
         }

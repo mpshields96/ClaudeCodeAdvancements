@@ -502,7 +502,7 @@ class TestKalshiCharts(unittest.TestCase):
     def test_generate_all_includes_kalshi(self):
         charts = self.gen.generate_all(self.kalshi_data)
         kalshi_keys = [k for k in charts if k.startswith("kalshi_")]
-        self.assertEqual(len(kalshi_keys), 12)
+        self.assertEqual(len(kalshi_keys), 13)
 
     def test_generate_all_without_kalshi(self):
         """Without kalshi_analytics, no kalshi charts generated."""

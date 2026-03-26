@@ -23,10 +23,12 @@ from chart_generator import (
     CandlestickChart,
     CCA_COLORS,
     DonutChart,
+    DumbbellChart,
     ForestPlot,
     HistogramChart,
     HorizontalBarChart,
     LineChart,
+    LollipopChart,
     ScatterPlot,
     SERIES_PALETTE,
     SlopeChart,
@@ -285,6 +287,39 @@ class ReportChartGenerator:
         items = sorted(event_counts.items(), key=lambda x: x[1], reverse=True)
 
         chart = BarChart(items, title="Hooks per Lifecycle Event", show_values=True)
+        return render_svg(chart)
+
+    def module_tests_lollipop(self, data):
+        """LollipopChart: test counts per module — cleaner alternative to bar chart."""
+        modules = data.get("modules", [])
+        if not modules or all(m.get("tests", 0) == 0 for m in modules):
+            return self._empty_chart("Tests per Module")
+        sorted_mods = sorted(modules, key=lambda m: m.get("tests", 0), reverse=True)
+        items = [(m["name"], m["tests"]) for m in sorted_mods]
+        chart = LollipopChart(items, title="Tests per Module", show_values=True,
+                              color=CCA_COLORS["accent"])
+        return render_svg(chart)
+
+    def kalshi_wr_dumbbell(self, data):
+        """DumbbellChart: per-asset WR range (min bucket WR to max bucket WR).
+
+        Expects kalshi_analytics.charts.wr_dumbbell with:
+          series: [{"label": str, "min_wr": float, "max_wr": float}, ...]
+        """
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("WR Range")
+        db_data = kalshi.get("charts", {}).get("wr_dumbbell", {})
+        series = db_data.get("series", [])
+        if not series:
+            return self._empty_chart("WR Range")
+        items = [(s["label"], s["min_wr"], s["max_wr"]) for s in series]
+        chart = DumbbellChart(
+            data=items,
+            left_label="Min Bucket WR",
+            right_label="Max Bucket WR",
+            title="Win Rate Range by Asset",
+        )
         return render_svg(chart)
 
     # ── Kalshi financial charts (MT-33) ─────────────────────────────────
@@ -610,6 +645,7 @@ class ReportChartGenerator:
             "test_density_scatter": self.test_density_scatter(data),
             "module_composition": self.module_composition(data),
             "coverage_ratio": self.coverage_ratio_chart(data),
+            "module_tests_lollipop": self.module_tests_lollipop(data),
         }
         # Hook coverage chart — only if hooks data available
         if data.get("hooks"):
@@ -632,6 +668,7 @@ class ReportChartGenerator:
                 "kalshi_price_candles": self.kalshi_price_candles(data),
                 "kalshi_bankroll_bullet": self.kalshi_bankroll_bullet(data),
                 "kalshi_guard_slope": self.kalshi_guard_slope(data),
+                "kalshi_wr_dumbbell": self.kalshi_wr_dumbbell(data),
             })
         # Self-learning charts (MT-33 Phase 5) — only if data available
         if data.get("learning_intelligence", {}).get("available"):
