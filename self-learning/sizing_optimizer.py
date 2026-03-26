@@ -38,6 +38,8 @@ Zero external dependencies. Stdlib only.
 import argparse
 import json
 import math
+import os
+import sqlite3
 import sys
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
@@ -207,6 +209,46 @@ def _normal_cdf(x: float) -> float:
     return 0.5 * (1 + math.erf(x / math.sqrt(2)))
 
 
+def _extract_coin(ticker: str) -> str:
+    """Extract coin identifier from Kalshi ticker.
+
+    Examples:
+        KXBTCD-26MAR25-T100.5 -> KXBTC
+        KXETHD-26MAR25-T2000 -> KXETH
+        KXSOLD-26MAR25-T150 -> KXSOL
+    """
+    # Common Kalshi crypto direction tickers
+    for prefix in ("KXBTC", "KXETH", "KXSOL", "KXXRP"):
+        if ticker.startswith(prefix):
+            return prefix
+    # Fallback: take first segment before dash
+    return ticker.split("-")[0] if "-" in ticker else ticker
+
+
+def _merge_profiles(profiles: List[AssetProfile]) -> List[AssetProfile]:
+    """Merge profiles with the same ticker (e.g. multiple KXBTC tickers)."""
+    by_ticker: Dict[str, List[AssetProfile]] = {}
+    for p in profiles:
+        by_ticker.setdefault(p.ticker, []).append(p)
+
+    merged = []
+    for ticker, group in by_ticker.items():
+        total_n = sum(p.n_bets for p in group)
+        if total_n == 0:
+            continue
+        weighted_wr = sum(p.win_rate * p.n_bets for p in group) / total_n
+        weighted_price = sum(p.avg_price * p.n_bets for p in group) / total_n
+        merged.append(
+            AssetProfile(
+                ticker=ticker,
+                n_bets=total_n,
+                win_rate=weighted_wr,
+                avg_price=weighted_price,
+            )
+        )
+    return sorted(merged, key=lambda p: p.ticker)
+
+
 class SizingOptimizer:
     """Portfolio-level bet sizing optimizer."""
 
@@ -231,6 +273,107 @@ class SizingOptimizer:
         self.profiles = profiles or self.DEFAULT_PROFILES
         self.bankroll_usd = bankroll_usd
         self.bets_per_day = bets_per_day
+
+    @classmethod
+    def from_db(
+        cls,
+        db_path: Optional[str] = None,
+        min_price: float = 0.90,
+        max_price: float = 0.93,
+        exclude_coins: Optional[List[str]] = None,
+    ) -> "SizingOptimizer":
+        """Create optimizer from actual polybot trade database.
+
+        Reads settled live trades, groups by coin ticker, computes WR and
+        avg price per asset. Also estimates daily bet volume and bankroll.
+
+        Args:
+            db_path: Path to polybot.db. Defaults to ~/Projects/polymarket-bot/data/polybot.db
+            min_price: Minimum price filter (default 0.90 for 90c+)
+            max_price: Maximum price filter (default 0.93 for <=93c)
+            exclude_coins: Coins to exclude (e.g. ["XRP"])
+        """
+        if db_path is None:
+            db_path = os.path.expanduser(
+                "~/Projects/polymarket-bot/data/polybot.db"
+            )
+
+        if not os.path.exists(db_path):
+            raise FileNotFoundError(f"DB not found: {db_path}")
+
+        exclude_coins = exclude_coins or []
+        conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+        try:
+            # Get per-ticker stats for settled live trades in price range
+            query = """
+                SELECT
+                    ticker,
+                    COUNT(*) as n,
+                    SUM(CASE WHEN result = side THEN 1 ELSE 0 END) as wins,
+                    AVG(yes_price / 100.0) as avg_price
+                FROM trades
+                WHERE is_paper = 0
+                  AND result IS NOT NULL
+                  AND yes_price >= ?
+                  AND yes_price <= ?
+                GROUP BY ticker
+                HAVING n >= 10
+            """
+            rows = conn.execute(
+                query, (int(min_price * 100), int(max_price * 100))
+            ).fetchall()
+
+            profiles = []
+            for ticker, n, wins, avg_price in rows:
+                # Extract coin from ticker (e.g. KXBTCD-26MAR25-... -> KXBTC)
+                coin = _extract_coin(ticker)
+                if coin in exclude_coins:
+                    continue
+                wr = wins / n if n > 0 else 0.0
+                profiles.append(
+                    AssetProfile(
+                        ticker=coin, n_bets=n, win_rate=wr, avg_price=avg_price
+                    )
+                )
+
+            # Merge duplicates (same coin from different tickers)
+            merged = _merge_profiles(profiles)
+
+            # Estimate daily bet volume
+            day_query = """
+                SELECT COUNT(*) as n, date(timestamp, 'unixepoch') as d
+                FROM trades
+                WHERE is_paper = 0 AND result IS NOT NULL
+                  AND yes_price >= ? AND yes_price <= ?
+                GROUP BY d HAVING n > 0
+            """
+            day_rows = conn.execute(
+                day_query, (int(min_price * 100), int(max_price * 100))
+            ).fetchall()
+            if day_rows:
+                daily_counts = [r[0] for r in day_rows]
+                bets_per_day = sum(daily_counts) / len(daily_counts)
+            else:
+                bets_per_day = 31.5
+
+            # Estimate bankroll from most recent balance or use default
+            bankroll = 190.0
+            try:
+                bal_row = conn.execute(
+                    "SELECT balance_cents FROM balance_history ORDER BY timestamp DESC LIMIT 1"
+                ).fetchone()
+                if bal_row:
+                    bankroll = bal_row[0] / 100.0
+            except sqlite3.OperationalError:
+                pass  # Table may not exist
+
+            return cls(
+                profiles=merged if merged else None,
+                bankroll_usd=max(bankroll, 10.0),
+                bets_per_day=max(bets_per_day, 1.0),
+            )
+        finally:
+            conn.close()
 
     def _weighted_ev_sd(self) -> tuple:
         """Compute bet-count-weighted average EV and SD per contract."""
@@ -396,18 +539,33 @@ def main():
     parser.add_argument("--target", type=float, default=15.0, help="Daily target in USD")
     parser.add_argument("--bets-per-day", type=float, default=31.5, help="Expected bets per day")
     parser.add_argument("--assets", nargs="+", help="Assets as TICKER:N:WR:PRICE")
+    parser.add_argument("--from-db", action="store_true", help="Read from polybot trade DB")
+    parser.add_argument("--db-path", help="Path to polybot.db (with --from-db)")
+    parser.add_argument("--exclude", nargs="+", default=[], help="Coins to exclude (e.g. XRP)")
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     args = parser.parse_args()
 
-    profiles = None
-    if args.assets:
-        profiles = [_parse_asset(a) for a in args.assets]
+    if args.from_db:
+        opt = SizingOptimizer.from_db(
+            db_path=args.db_path,
+            exclude_coins=[c.upper() for c in args.exclude],
+        )
+        # Override bankroll/target if explicitly provided
+        if args.bankroll != 190.0:
+            opt.bankroll_usd = args.bankroll
+        if args.bets_per_day != 31.5:
+            opt.bets_per_day = args.bets_per_day
+    else:
+        profiles = None
+        if args.assets:
+            profiles = [_parse_asset(a) for a in args.assets]
 
-    opt = SizingOptimizer(
-        profiles=profiles,
-        bankroll_usd=args.bankroll,
-        bets_per_day=args.bets_per_day,
-    )
+        opt = SizingOptimizer(
+            profiles=profiles,
+            bankroll_usd=args.bankroll,
+            bets_per_day=args.bets_per_day,
+        )
+
     report = opt.generate_report(daily_target=args.target)
 
     if args.json:

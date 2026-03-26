@@ -4,6 +4,7 @@
 import json
 import math
 import os
+import sqlite3
 import sys
 import tempfile
 import unittest
@@ -324,6 +325,157 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         data = json.loads(result.stdout)
         self.assertEqual(len(data["asset_profiles"]), 1)
+
+
+class TestHelpers(unittest.TestCase):
+    """Test _extract_coin and _merge_profiles."""
+
+    def test_extract_coin_btc(self):
+        from sizing_optimizer import _extract_coin
+
+        self.assertEqual(_extract_coin("KXBTCD-26MAR25-T100.5"), "KXBTC")
+
+    def test_extract_coin_eth(self):
+        from sizing_optimizer import _extract_coin
+
+        self.assertEqual(_extract_coin("KXETHD-26MAR25-T2000"), "KXETH")
+
+    def test_extract_coin_sol(self):
+        from sizing_optimizer import _extract_coin
+
+        self.assertEqual(_extract_coin("KXSOLD-26MAR25-T150"), "KXSOL")
+
+    def test_extract_coin_xrp(self):
+        from sizing_optimizer import _extract_coin
+
+        self.assertEqual(_extract_coin("KXXRPD-26MAR25-T0.65"), "KXXRP")
+
+    def test_extract_coin_unknown(self):
+        from sizing_optimizer import _extract_coin
+
+        self.assertEqual(_extract_coin("KXFOO-BAR"), "KXFOO")
+
+    def test_extract_coin_no_dash(self):
+        from sizing_optimizer import _extract_coin
+
+        self.assertEqual(_extract_coin("KXBTC"), "KXBTC")
+
+    def test_merge_profiles_combines(self):
+        from sizing_optimizer import _merge_profiles
+
+        profiles = [
+            AssetProfile("KXBTC", n_bets=100, win_rate=0.96, avg_price=0.91),
+            AssetProfile("KXBTC", n_bets=100, win_rate=0.98, avg_price=0.92),
+        ]
+        merged = _merge_profiles(profiles)
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0].ticker, "KXBTC")
+        self.assertEqual(merged[0].n_bets, 200)
+        self.assertAlmostEqual(merged[0].win_rate, 0.97)
+        self.assertAlmostEqual(merged[0].avg_price, 0.915)
+
+    def test_merge_profiles_preserves_different(self):
+        from sizing_optimizer import _merge_profiles
+
+        profiles = [
+            AssetProfile("KXBTC", n_bets=100, win_rate=0.96, avg_price=0.91),
+            AssetProfile("KXETH", n_bets=80, win_rate=0.95, avg_price=0.92),
+        ]
+        merged = _merge_profiles(profiles)
+        self.assertEqual(len(merged), 2)
+
+
+class TestFromDB(unittest.TestCase):
+    """Test from_db with synthetic SQLite database."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        self.db_path = self.tmp.name
+        self.tmp.close()
+
+        conn = sqlite3.connect(self.db_path)
+        conn.execute("""
+            CREATE TABLE trades (
+                id INTEGER PRIMARY KEY,
+                ticker TEXT,
+                side TEXT,
+                result TEXT,
+                yes_price INTEGER,
+                pnl_cents INTEGER,
+                is_paper INTEGER DEFAULT 0,
+                strategy TEXT,
+                timestamp INTEGER
+            )
+        """)
+
+        import time
+        base_ts = int(time.time()) - 86400 * 5
+
+        # Insert synthetic trades across 5 days
+        trades = []
+        for day in range(5):
+            ts = base_ts + day * 86400
+            for i in range(20):
+                # BTC: 19/20 wins
+                result = "up" if i < 19 else "down"
+                trades.append(
+                    (f"KXBTCD-26MAR25-T100", "up", result, 91, 8 if result == "up" else -91, 0, "expiry_sniper_v1", ts + i * 60)
+                )
+            for i in range(15):
+                # ETH: 14/15 wins
+                result = "up" if i < 14 else "down"
+                trades.append(
+                    (f"KXETHD-26MAR25-T2000", "up", result, 92, 8 if result == "up" else -92, 0, "expiry_sniper_v1", ts + i * 60 + 1200)
+                )
+
+        conn.executemany(
+            "INSERT INTO trades (ticker, side, result, yes_price, pnl_cents, is_paper, strategy, timestamp) VALUES (?,?,?,?,?,?,?,?)",
+            trades,
+        )
+        conn.commit()
+        conn.close()
+
+    def tearDown(self):
+        os.unlink(self.db_path)
+
+    def test_from_db_basic(self):
+        opt = SizingOptimizer.from_db(db_path=self.db_path)
+        self.assertGreater(len(opt.profiles), 0)
+        self.assertGreater(opt.bets_per_day, 0)
+
+    def test_from_db_correct_tickers(self):
+        opt = SizingOptimizer.from_db(db_path=self.db_path)
+        tickers = {p.ticker for p in opt.profiles}
+        self.assertIn("KXBTC", tickers)
+        self.assertIn("KXETH", tickers)
+
+    def test_from_db_win_rates(self):
+        opt = SizingOptimizer.from_db(db_path=self.db_path)
+        btc = [p for p in opt.profiles if p.ticker == "KXBTC"][0]
+        # 19/20 per day * 5 days = 95/100
+        self.assertAlmostEqual(btc.win_rate, 0.95, places=2)
+
+    def test_from_db_exclude_coins(self):
+        opt = SizingOptimizer.from_db(db_path=self.db_path, exclude_coins=["KXETH"])
+        tickers = {p.ticker for p in opt.profiles}
+        self.assertNotIn("KXETH", tickers)
+        self.assertIn("KXBTC", tickers)
+
+    def test_from_db_generates_report(self):
+        opt = SizingOptimizer.from_db(db_path=self.db_path)
+        report = opt.generate_report(daily_target=15.0)
+        self.assertIsInstance(report, SizingReport)
+        self.assertGreater(report.recommended_max_loss, 0)
+
+    def test_from_db_missing_file(self):
+        with self.assertRaises(FileNotFoundError):
+            SizingOptimizer.from_db(db_path="/nonexistent/path.db")
+
+    def test_from_db_bets_per_day_estimate(self):
+        opt = SizingOptimizer.from_db(db_path=self.db_path)
+        # 35 trades/day (20 BTC + 15 ETH)
+        self.assertGreater(opt.bets_per_day, 20)
+        self.assertLess(opt.bets_per_day, 50)
 
 
 if __name__ == "__main__":
