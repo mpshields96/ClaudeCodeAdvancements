@@ -3,9 +3,20 @@
 
 ---
 
-## Current State (as of Session 187 — 2026-03-26)
+## Current State (as of Session 188 — 2026-03-26)
 
-**Phase:** Session 187 COMPLETE. 1M context deprecation (200K revert), self-learning cleanup, session outcome backfill, volume predictor, autoloop model fix.
+**Phase:** Session 188 IN PROGRESS. Kalshi 5-day mandate support (REQ-050/051), sizing_optimizer.py with from_db.
+
+**What was done this session (S188):**
+- **REQ-051 delivery (5-day mandate strategy):** Full Kelly fraction analysis for KXBTC/ETH/SOL. Current $7.50/bet = 1/16 Kelly. P(5-day avg >= $15) = 19.8% at current sizing. Recommended: raise to $10-12.50/bet. Asset-weighted sizing: BTC=$11.74, ETH=$10.84, SOL=$8.36.
+- **REQ-050 delivery (SOL hour analysis):** 09:xx SOL (n=6, EV=-2.205) NOT guard-worthy yet — below n=15 threshold. Structural basis exists (thin SOL liquidity in Asian hours) but insufficient data. Monitor, don't act.
+- **sizing_optimizer.py (47 tests):** Portfolio-level bet sizing optimizer. Per-asset Kelly fractions, daily EV/SD projections, P(5-day avg >= target), optimal max_loss finder, asset-weighted sizing. CLI: --bankroll, --target, --json, --from-db, --exclude. Reads polybot.db directly (read-only).
+- **3 cross-chat deliveries:** REQ-051 Kelly math, REQ-050 SOL hours, sizing_optimizer tool (with from_db update).
+
+**Tests:** 10,098 + 47 new = 10,145 total. 261+ suites.
+**Commits:** 2 this session so far.
+
+**Next:** (1) Continue chaining tasks. (2) Check for more Kalshi requests. (3) Feature-focused CCA coding if time remains.
 
 **What was done this session (S187):**
 - **1M context window → 200K revert** (meter.py, compact_anchor.py, post_compact.py, statusline.py, settings.local.json, desktop_automator.py):

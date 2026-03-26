@@ -81,3 +81,18 @@
 11. **Daily accountability.** Not waiting until Day 5 to check. Progress must be visible every day.
 
 ---
+
+## S188 — 2026-03-26 (The Pokemon Bot Directive)
+
+> I want to be a bot that can play pokemon on my screen while the CCA chat (you) and kalshi bot chat work. Like I'll download an emulator and load up pokemon crystal or pokemon emerald or even a pokemon rom hack from reddit, we build the bot so it doesn't have to continually burn tokens when it's finished, then while I sit here as you the CCA chat works, and kalshi bot works, I watch the bot start the pokemon game start to finish, all the gyms the elite four the rare legendary pokemon and the pokedex all of it. And the bot can be funny and dark toilet humor with names but skilled or learning to raise the best team. I want to enter this as an uber master task.
+
+**Core principles extracted:**
+1. Autonomous Pokemon bot — plays full game start to finish without human input
+2. Runs on an emulator (Crystal, Emerald, or ROM hack) visible on screen
+3. Zero ongoing token cost — standalone after initial build
+4. Parallel operation — runs while CCA and Kalshi chats work
+5. Personality: dark/toilet humor names, skilled team building
+6. Complete playthrough: all gyms, Elite Four, legendaries, Pokedex
+7. UBER-level MT (MT-53) — build when capacity allows
+
+---
