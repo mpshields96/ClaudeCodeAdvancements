@@ -185,6 +185,11 @@
 - Target games: Pokemon Crystal (GBC), Pokemon Emerald (GBA), ROM hacks (TBD)
 - Candidates: pyboy (Python-native GBC), mGBA (Lua scripting, GBA), OpenEmu (macOS native)
 - Key question: which emulator supports BOTH scripting AND adjustable speed on macOS?
+- **Reddit/GitHub intelligence scan:** Search for high-quality AI Pokemon bot projects, frameworks,
+  or guides. Look for existing work we can BUILD on or ADAPT (not rat poison). Check repos with
+  stars, active maintenance, and real scripting APIs. Subreddits: r/pokemon, r/PokemonROMhacks,
+  r/emulation, r/MachineLearning. GitHub: search "pokemon bot emulator", "pokemon ai player",
+  "pyboy pokemon", "mgba scripting pokemon". Apply standard /cca-review verdicts.
 - ROM hacks list coming from Matthew later — log when provided
 - This is an UBER-LEVEL personal fun project, low priority vs Kalshi work
 

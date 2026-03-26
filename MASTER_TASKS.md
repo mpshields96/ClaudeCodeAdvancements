@@ -2056,7 +2056,7 @@ See `CCA_PRIME_DIRECTIVE.md`.
 **Key constraint:** Zero ongoing token cost. The bot is a Python script that drives the emulator directly. Claude builds it, then it runs independently.
 
 **Phases:**
-- Phase 1: Research — emulator scripting APIs (pyboy vs mGBA-lua vs BizHawk), RAM maps for target game
+- Phase 1: Research — emulator scripting APIs (pyboy vs mGBA-lua vs BizHawk), RAM maps for target game, Reddit/GitHub intelligence scan for existing AI Pokemon bot frameworks (non-rat-poison, high-quality only)
 - Phase 2: Core engine — emulator control (input, frame advance, state read), game state parser
 - Phase 3: Navigation — overworld movement, route planning, NPC interaction, menu navigation
 - Phase 4: Battle AI — type chart, damage calc, move selection, switching, item usage, trainer AI adaptation
