@@ -36,6 +36,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from behavioral_guard import BehavioralGuard
+from dca_advisor import DCAFrequency, allocate_deposit, rebalance_on_deposit, annual_projection
 from portfolio_report import portfolio_analytics
 from rebalance_advisor import RebalanceAdvisor
 from risk_monitor import RiskDashboard
@@ -55,6 +56,8 @@ class PortfolioInput:
     target_weights: Dict[str, float]
     days_since_rebalance: int = 0
     portfolio_values: List[float] = field(default_factory=list)
+    dca_amount: float = 0.0  # Recurring deposit amount (0 = no DCA)
+    dca_frequency: str = "WEEKLY"  # WEEKLY, BIWEEKLY, MONTHLY
 
     def current_weights(self) -> Dict[str, float]:
         """Compute current portfolio weights from holdings."""
@@ -202,6 +205,10 @@ class UBERPipeline:
         # 5. Behavioral guard
         sections["behavioral"] = self._run_behavioral(portfolio)
 
+        # 6. DCA plan (if deposit amount configured)
+        if portfolio.dca_amount > 0:
+            sections["dca"] = self._run_dca(portfolio)
+
         return UBERReport(sections=sections, portfolio_value=total_value)
 
     def _run_risk(self, portfolio: PortfolioInput) -> dict:
@@ -299,6 +306,42 @@ class UBERPipeline:
 
         alerts = guard.scan(context)
         return {"alerts": guard.to_dict(alerts), "count": len(alerts)}
+
+    def _run_dca(self, portfolio: PortfolioInput) -> dict:
+        """Run DCA allocation for the next deposit."""
+        try:
+            freq = DCAFrequency(portfolio.dca_frequency)
+        except (ValueError, KeyError):
+            freq = DCAFrequency.WEEKLY
+
+        current_values = {
+            t: h["shares"] * h["current_price"]
+            for t, h in portfolio.holdings.items()
+        }
+
+        # Use rebalance-on-deposit if we have current holdings
+        if current_values and sum(current_values.values()) > 0:
+            allocation = rebalance_on_deposit(
+                current_values, portfolio.target_weights, portfolio.dca_amount,
+            )
+            tilt = True
+        else:
+            allocation = allocate_deposit(portfolio.dca_amount, portfolio.target_weights)
+            tilt = False
+
+        # Project 1, 5, 10 years
+        projections = {}
+        for years in [1, 5, 10]:
+            proj = annual_projection(portfolio.dca_amount, freq, annual_return=0.08, years=years)
+            projections[f"{years}yr"] = proj.to_dict()
+
+        return {
+            "deposit_amount": portfolio.dca_amount,
+            "frequency": freq.value,
+            "allocation": {k: round(v, 2) for k, v in allocation.items()},
+            "rebalance_tilt": tilt,
+            "projections": projections,
+        }
 
 
 def main():

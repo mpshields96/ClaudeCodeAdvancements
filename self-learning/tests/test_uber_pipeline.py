@@ -200,5 +200,82 @@ class TestUBERReport(unittest.TestCase):
         self.assertIsInstance(actions, list)
 
 
+class TestDCAIntegration(unittest.TestCase):
+    """Test DCA integration in the UBER pipeline."""
+
+    def _portfolio_with_dca(self, amount=20.0, freq="WEEKLY"):
+        return PortfolioInput(
+            holdings={
+                "VTI": {"shares": 100, "cost_basis": 180.0, "current_price": 220.0,
+                         "volatility": 0.16, "domestic": True},
+                "BND": {"shares": 200, "cost_basis": 78.0, "current_price": 75.0,
+                         "volatility": 0.04, "domestic": True},
+            },
+            target_weights={"VTI": 0.60, "BND": 0.40},
+            days_since_rebalance=30,
+            portfolio_values=[35000 + i * 20 for i in range(60)],
+            dca_amount=amount,
+            dca_frequency=freq,
+        )
+
+    def test_dca_section_present_when_amount_set(self):
+        pipeline = UBERPipeline()
+        report = pipeline.analyze(self._portfolio_with_dca(20.0))
+        self.assertIn("dca", report.sections)
+
+    def test_dca_section_absent_when_no_amount(self):
+        pipeline = UBERPipeline()
+        port = self._portfolio_with_dca(0.0)
+        report = pipeline.analyze(port)
+        self.assertNotIn("dca", report.sections)
+
+    def test_dca_deposit_amount_matches(self):
+        pipeline = UBERPipeline()
+        report = pipeline.analyze(self._portfolio_with_dca(50.0))
+        self.assertEqual(report.sections["dca"]["deposit_amount"], 50.0)
+
+    def test_dca_frequency_weekly(self):
+        pipeline = UBERPipeline()
+        report = pipeline.analyze(self._portfolio_with_dca(20.0, "WEEKLY"))
+        self.assertEqual(report.sections["dca"]["frequency"], "WEEKLY")
+
+    def test_dca_frequency_monthly(self):
+        pipeline = UBERPipeline()
+        report = pipeline.analyze(self._portfolio_with_dca(50.0, "MONTHLY"))
+        self.assertEqual(report.sections["dca"]["frequency"], "MONTHLY")
+
+    def test_dca_allocation_has_tickers(self):
+        pipeline = UBERPipeline()
+        report = pipeline.analyze(self._portfolio_with_dca(20.0))
+        allocation = report.sections["dca"]["allocation"]
+        self.assertIn("VTI", allocation)
+        self.assertIn("BND", allocation)
+
+    def test_dca_rebalance_tilt_with_holdings(self):
+        pipeline = UBERPipeline()
+        report = pipeline.analyze(self._portfolio_with_dca(20.0))
+        self.assertTrue(report.sections["dca"]["rebalance_tilt"])
+
+    def test_dca_projections_present(self):
+        pipeline = UBERPipeline()
+        report = pipeline.analyze(self._portfolio_with_dca(20.0))
+        projections = report.sections["dca"]["projections"]
+        self.assertIn("1yr", projections)
+        self.assertIn("5yr", projections)
+        self.assertIn("10yr", projections)
+
+    def test_dca_invalid_frequency_defaults_weekly(self):
+        pipeline = UBERPipeline()
+        report = pipeline.analyze(self._portfolio_with_dca(20.0, "INVALID"))
+        self.assertEqual(report.sections["dca"]["frequency"], "WEEKLY")
+
+    def test_dca_allocation_sums_to_deposit(self):
+        pipeline = UBERPipeline()
+        report = pipeline.analyze(self._portfolio_with_dca(100.0))
+        allocation = report.sections["dca"]["allocation"]
+        total = sum(allocation.values())
+        self.assertAlmostEqual(total, 100.0, places=0)
+
+
 if __name__ == "__main__":
     unittest.main()
