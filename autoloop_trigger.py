@@ -190,8 +190,20 @@ def trigger_next_session(dry_run: bool = False) -> bool:
         time.sleep(wait_time)
     _log("step_3_wait", {"seconds": wait_time})
 
-    # Model is set via project settings.local.json ("model": "opus[1m]")
-    # No need for /model command — sessions auto-start on Opus 1M.
+    # Step 3.5: Set model to Opus 4.6 1M context
+    # Desktop Electron app does NOT reliably pick up project settings.local.json
+    # model setting. Must explicitly send /model command with full model name.
+    # /model claude-opus-4-6[1m] works as a text command (no TUI picker).
+    MODEL_COMMAND = "/model claude-opus-4-6[1m]"
+    if not automator.send_prompt(MODEL_COMMAND):
+        _log("model_set_failed", {"reason": "send_failed"})
+        print("WARNING: Could not set model — proceeding with default.")
+        # Non-fatal: continue even if model set fails
+    else:
+        _log("step_3_5_model", {"status": "ok", "model": MODEL_COMMAND})
+        # Wait for model to switch before sending prompt
+        if not dry_run:
+            time.sleep(1.5)
 
     # Step 4+5: Paste prompt and send (Cmd+Return)
     if not automator.send_prompt(prompt):
