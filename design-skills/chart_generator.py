@@ -34,6 +34,7 @@ Chart types:
     SlopeChart        — before/after slopegraph for paired comparison
     LollipopChart     — horizontal stem + circle for ranked category display
     DumbbellChart     — horizontal paired dots with connecting line for range comparison
+    ParetoChart       — combined bar + cumulative line for 80/20 analysis
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -909,6 +910,31 @@ class DumbbellChart:
     title: str = ""
     width: int = 500
     height: int = 300
+
+
+@dataclass
+class ParetoChart:
+    """Pareto chart — combined bar + cumulative line for 80/20 analysis.
+
+    Shows individual values as descending bars (left axis) with a cumulative
+    percentage line overlay (right axis). An 80% threshold line highlights
+    the vital few categories that contribute most of the total.
+
+    Classic quality management tool. Useful for identifying which assets,
+    strategies, or modules contribute most to profit/tests/etc.
+
+    Args:
+        data: [(label, value), ...] — items (will be sorted descending)
+        title: Chart title
+        bar_color: Bar fill color (default: CCA accent)
+        line_color: Cumulative line color (default: CCA highlight)
+    """
+    data: list  # [(label, value), ...]
+    title: str = ""
+    bar_color: str = ""
+    line_color: str = ""
+    width: int = 500
+    height: int = 350
 
 
 # ---------------------------------------------------------------------------
@@ -3654,6 +3680,120 @@ def _render_forest_plot(chart: ForestPlot) -> str:
     return "".join(parts)
 
 
+def _render_pareto_chart(chart: ParetoChart) -> str:
+    """Render a Pareto chart (bars + cumulative line) to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    bar_color = chart.bar_color or CCA_COLORS["accent"]
+    line_color = chart.line_color or CCA_COLORS["highlight"]
+
+    # Sort descending by value
+    sorted_data = sorted(chart.data, key=lambda x: x[1], reverse=True)
+
+    margin_top = 45 if chart.title else 25
+    margin_bottom = 55
+    margin_left = 50
+    margin_right = 45
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, fill=CCA_COLORS["primary"],
+                           font_weight="600"))
+
+    n = len(sorted_data)
+    max_val = sorted_data[0][1] if sorted_data else 1
+    if max_val == 0:
+        max_val = 1
+    total = sum(v for _, v in sorted_data)
+    if total == 0:
+        total = 1
+
+    bar_w = (plot_w / n) * 0.7
+    gap = (plot_w / n) * 0.3
+
+    def val_to_y(v):
+        return margin_top + plot_h - (v / max_val) * plot_h
+
+    def pct_to_y(pct):
+        return margin_top + plot_h - (pct / 100.0) * plot_h
+
+    # Bars
+    for i, (label, value) in enumerate(sorted_data):
+        x = margin_left + i * (bar_w + gap) + gap / 2
+        y = val_to_y(value)
+        h = margin_top + plot_h - y
+        parts.append(_rect(x, y, bar_w, h, bar_color, rx=2))
+
+        # X-axis labels (rotated for readability)
+        label_x = x + bar_w / 2
+        label_y = margin_top + plot_h + 15
+        parts.append(_text(label_x, label_y, _abbreviate_label(label, 12),
+                           font_size=9, fill=CCA_COLORS["muted"],
+                           transform=f"rotate(-30, {label_x:.1f}, {label_y:.1f})",
+                           anchor="end"))
+
+    # 80% threshold line (dashed)
+    y80 = pct_to_y(80)
+    parts.append(
+        f'<line x1="{margin_left:.1f}" y1="{y80:.1f}" '
+        f'x2="{margin_left + plot_w:.1f}" y2="{y80:.1f}" '
+        f'stroke="{CCA_COLORS["muted"]}" stroke-width="1" '
+        f'stroke-dasharray="4,3"/>\n'
+    )
+    parts.append(_text(margin_left + plot_w + 5, y80 + 4, "80%",
+                        font_size=9, fill=CCA_COLORS["muted"], anchor="start"))
+
+    # Cumulative line + dots
+    cumulative = 0.0
+    cum_points = []
+    for i, (_label, value) in enumerate(sorted_data):
+        cumulative += value
+        pct = (cumulative / total) * 100
+        cx = margin_left + i * (bar_w + gap) + gap / 2 + bar_w / 2
+        cy = pct_to_y(pct)
+        cum_points.append((cx, cy))
+
+    # Draw polyline
+    if cum_points:
+        parts.append(_polyline(cum_points, line_color, stroke_width=2))
+
+    # Draw dots and percentage labels
+    for i, (cx, cy) in enumerate(cum_points):
+        parts.append(_circle(cx, cy, 3.5, line_color))
+        cumulative_pct = sum(v for _, v in sorted_data[:i + 1]) / total * 100
+        # Show percentage at key points: first, last, and near 80%
+        if i == 0 or i == len(cum_points) - 1 or abs(cumulative_pct - 80) < 100 / n:
+            parts.append(_text(cx, cy - 8,
+                               f"{cumulative_pct:.0f}%",
+                               font_size=8, fill=line_color))
+
+    # Y-axis (left — values)
+    parts.append(_line(margin_left, margin_top, margin_left,
+                        margin_top + plot_h, CCA_COLORS["border"], 1))
+
+    # Baseline
+    parts.append(_line(margin_left, margin_top + plot_h,
+                        margin_left + plot_w, margin_top + plot_h,
+                        CCA_COLORS["border"], 1))
+
+    # 100% label at top right
+    parts.append(_text(margin_left + plot_w + 5, margin_top + 4, "100%",
+                        font_size=9, fill=CCA_COLORS["muted"], anchor="start"))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 def _render_lollipop_chart(chart: LollipopChart) -> str:
     """Render a horizontal lollipop chart (stem + circle) to SVG."""
     parts = [_svg_header(chart.width, chart.height)]
@@ -4001,6 +4141,8 @@ def render_svg(chart) -> str:
         return _render_lollipop_chart(chart)
     elif isinstance(chart, DumbbellChart):
         return _render_dumbbell_chart(chart)
+    elif isinstance(chart, ParetoChart):
+        return _render_pareto_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 
