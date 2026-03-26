@@ -2876,3 +2876,30 @@ CLI chat 2:
 - Position sizing caps (MAX_LOSS formula) are higher leverage than Kelly adjustments
 
 ---
+
+## Session 182 — 2026-03-25
+
+**What changed:**
+- `mt_originator.py`: MT-52 Phase 1 — intelligence-driven origination engine (3 sources: ADAPT findings, stalled MTs, cross-chat requests). New types: MTStatus, CrossChatRequest, OriginationReport. CLI: `--unified`, `--json`.
+- `design-skills/chartjs_bridge.py`: NEW — Chart.js config generator for interactive HTML dashboards. 4 chart types (bar, line, donut, stacked bar). CCA color palette synced.
+- `self-learning/research/MT37_ARCHITECTURE.md`: NEW — Phase 2 architecture design for UBER wealth management system. 10 modules, 5 layers, ~2,550 LOC estimated.
+- `design-skills/templates/cca-report.typ`: Typst color token cleanup — 4 new semantic tokens, 8 orphan hex values replaced with token refs. Fix: replace_all caught definitions, restored hex values.
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md`: REQ-4 delivery — 3 verified papers on intraday crypto volatility (Brauneis 2024, Hansen 2024, Amberdata). Structural basis confirmed for 08:xx/03:xx/05:xx blocks.
+- `TODAYS_TASKS.md`: Expanded with E9-E16 tracking.
+- `SESSION_STATE.md`: Updated with S182 progress.
+- `tests/test_mt_originator_phase4.py`: NEW — 26 tests for MT-52 origination engine.
+- `design-skills/tests/test_chartjs_bridge.py`: NEW — 21 tests for Chart.js bridge.
+
+**Why:**
+- Matthew's Expansion Directive (S181): "Done" != done forever, expand MTs, use intelligence findings to BUILD
+- S181b Discovery Directive: Nuclear scan tools need synthetic origination
+- TODAYS_TASKS.md E1-E4 open items: MT-37 architecture, Chart.js, cross-chat, expansion audit
+
+**Tests:** 9898/9898 passing (255 suites). +47 new tests.
+
+**Lessons:**
+- replace_all catches token DEFINITIONS too — verify definition lines aren't self-referencing after batch replace
+- Auto-implement advancement tips instead of just listing them (Matthew directive S182)
+- Start with high-impact tasks, not cosmetic cleanup (Matthew corrected mid-session)
+
+---

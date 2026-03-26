@@ -685,3 +685,17 @@
 - **First seen:** 2026-03-25 (S181)
 - **Last seen:** 2026-03-25
 - **Files:** FINDINGS_LOG.md, `/cca-review` workflow
+
+### replace_all catches definition lines — Severity: 2 — Count: 1
+- **Anti-pattern:** Using Edit replace_all on a value like `rgb("#eff6ff")` also replaces it in the line where the token is DEFINED (`#let tint-blue = rgb("#eff6ff")`), creating a circular reference (`#let tint-blue = tint-blue`)
+- **Fix:** After any replace_all on design tokens, verify that definition lines still contain their hex values. Or use targeted edits that skip lines starting with `#let`.
+- **First seen:** 2026-03-25
+- **Last seen:** 2026-03-25
+- **Files:** design-skills/templates/cca-report.typ, any Typst template with token definitions
+
+### Auto-implement advancement tips — Severity: 2 — Count: 1
+- **Anti-pattern:** Listing advancement tips at the end of responses without implementing them
+- **Fix:** If the tip is actionable and within scope, implement it immediately. Don't defer to "next session."
+- **First seen:** 2026-03-25 (Matthew explicit directive S182)
+- **Last seen:** 2026-03-25
+- **Files:** All CCA sessions

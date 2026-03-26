@@ -39,10 +39,10 @@
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 369 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending + discover),14(Phase 3 COMPLETE),15,27(Phase 4 NEEDLE precision),40(Phase 1 scan scheduler) + subreddit_discoverer + url_reader tests | 498 |
 | Self-Learning | `self-learning/` | MT-7,10,12,26(Tier 3+E2E),27(Phase 5),28(COMPLETE),49(Phase 5) + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + predictive_recommender + sentinel_bridge + order_flow_intel + belief_vol_surface + apf_session_tracker + deployment_verifier + principle_seeder + monte_carlo_simulator (REQ-040) + meta_learning_dashboard (MT-49) + principle_discoverer (MT-49 Phase 3) + confidence_recalibrator (MT-49 Phase 4) + research_roi_resolver (MT-49 Phase 5) + fill_rate_simulator (REQ-042) + reflect tests | 2079 |
-| Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) + figure integration (slides/dashboard/website, MT-32 Phase 7) | 1411 |
+| Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) + figure integration (slides/dashboard/website, MT-32 Phase 7) + chartjs_bridge (MT-52/E2, Chart.js interactive charts) | 1432 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~9838 tests (~253 suites). All must pass before any work.**
+**Total: ~9898 tests (~255 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -132,6 +132,11 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `report_sidecar.py` — MT-33 Phase 5: JSON export alongside PDF (extract, save, load, find_latest). S134.
 - `MT33_DATA_MAPPING.md` — Schema mapping, SQL queries, chart-to-data design doc (S122).
 - `figure_generator.py` — MT-32 Phase 6: Multi-panel figure composer (grid layout, panel labels, captions, 3 annotation types, presets). 62 tests (S166).
+- `chartjs_bridge.py` — MT-52/E2: Chart.js config generator for interactive HTML dashboards. 4 chart types, CCA palette, CDN tag. 21 tests (S182).
+
+**self-learning/research/** — Academic research
+- `MT37_RESEARCH.md` — MT-37 Phase 1: 42-paper synthesis across 10 areas (S178-S180)
+- `MT37_ARCHITECTURE.md` — MT-37 Phase 2: UBER system architecture design (10 modules, 5 layers, S182)
 
 **root/** — Loop hardening + coordination
 - `resume_generator.py` — cca-loop hardening: auto-generate SESSION_RESUME.md from SESSION_STATE when stale (17 tests)
