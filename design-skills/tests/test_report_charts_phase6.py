@@ -179,7 +179,7 @@ class TestCombinedPipeline(unittest.TestCase):
         charts = self.gen.generate_all(_full_data())
         kalshi_keys = [k for k in charts if k.startswith("kalshi_")]
         learning_keys = [k for k in charts if k.startswith("learning_")]
-        self.assertEqual(len(kalshi_keys), 8)
+        self.assertEqual(len(kalshi_keys), 10)
         self.assertEqual(len(learning_keys), 3)
 
     def test_generate_all_total_chart_count(self):
@@ -267,7 +267,7 @@ class TestPartialDataResilience(unittest.TestCase):
         charts = self.gen.generate_all(data)
         kalshi_keys = [k for k in charts if k.startswith("kalshi_")]
         learning_keys = [k for k in charts if k.startswith("learning_")]
-        self.assertEqual(len(kalshi_keys), 8)
+        self.assertEqual(len(kalshi_keys), 10)
         self.assertEqual(len(learning_keys), 0)
 
     def test_learning_only(self):
@@ -286,7 +286,7 @@ class TestPartialDataResilience(unittest.TestCase):
         charts = self.gen.generate_all(data)
         # Should still generate 7 kalshi charts (all will be "No data")
         kalshi_keys = [k for k in charts if k.startswith("kalshi_")]
-        self.assertEqual(len(kalshi_keys), 8)
+        self.assertEqual(len(kalshi_keys), 10)
 
     def test_learning_available_but_empty_charts(self):
         """Learning available=True but charts dict is empty."""
@@ -302,7 +302,7 @@ class TestPartialDataResilience(unittest.TestCase):
         del data["kalshi_analytics"]["charts"]["cumulative_pnl"]
         charts = self.gen.generate_all(data)
         kalshi_keys = [k for k in charts if k.startswith("kalshi_")]
-        self.assertEqual(len(kalshi_keys), 8)  # Still generates all 7
+        self.assertEqual(len(kalshi_keys), 10)  # Still generates all 7
 
 
 class TestChartNoDataReplacement(unittest.TestCase):
