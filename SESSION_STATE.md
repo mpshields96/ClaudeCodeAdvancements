@@ -3,9 +3,51 @@
 
 ---
 
-## Current State (as of Session 184 — 2026-03-26)
+## Current State (as of Session 185 — 2026-03-26)
 
-**Phase:** Session 184 IN PROGRESS. Autoloop model fix, massive $15-25/day strategy delivery, MT-37 Phase 3 complete, REQ-25 Phase 2 delivered.
+**Phase:** Session 185 COMPLETE. MT-37 Phases 4-6, overhead tracker, autoloop model fix, 2 cross-chat deliveries, intelligence scan.
+
+**What was done this session (S185):**
+- **MT-37 Phase 4 — market_data.py** (42 tests):
+  PriceRecord, MarketDataResult, MacroData. Returns (simple/log), volatility, beta,
+  factor exposures, correlation matrix. CSV/JSON parsers. CLI.
+- **MT-37 Phase 5 — allocation.py** (28 tests):
+  equal_weight, risk_parity (inverse-vol), black_litterman (market prior + views).
+  Constraint enforcement, rebalance trigger detection.
+- **MT-37 Phase 6 — factor_tilts.py** (26 tests):
+  Value (FF92), momentum (Carhart97), quality (Asness+19), low-vol (Ang+06).
+  Composite tilt with configurable weights, apply_tilts() for weight adjustment.
+- **overhead_tracker.py** (17 tests):
+  Measures CCA's hidden token overhead at startup. CCA = 49K tokens (3x baseline).
+  History tracking, baselines, JSON/compare CLI. Based on r/ClaudeCode methodology.
+- **Autoloop Opus 1M model fix:**
+  Restored `/model claude-opus-4-6[1m]` command in autoloop_trigger.py (non-fatal).
+  Desktop Electron doesn't reliably pick up project settings.local.json model.
+- **Cross-chat delivery: $15-25/day gap analysis:**
+  7-day DB analysis. Current ~$3.55/day. Maker conversion = #1 lever (closes ~60% gap).
+  Specific recommendations: lower maker gate 30→15, dual-mode maker/taker execution.
+- **Cross-chat delivery: MT-51 new market expansion:**
+  Weather markets = top expansion candidate (NWS settlement, model-driven, XGBoost prototype exists).
+  Economics = secondary (CPI/Fed around releases). Sports = SKIP (domain expertise needed).
+- **Intelligence scan:** 2 findings logged. Token overhead methodology (ADAPT), UserPromptSubmit pattern (REFERENCE).
+- **E4 MT Expansion Audit:** Identified 49K overhead as optimization target, weather markets for E7.
+- **Matthew directive captured:** "Do tasks that make you smarter" — prioritize intelligence/efficiency over feature building.
+
+**Next:** (1) Optimize CCA token overhead (49K→target 30K). (2) Continue intelligence scanning. (3) MT-49 self-learning expansion. (4) Kalshi cross-chat support for $15-25/day deadline (2026-03-30).
+
+**Tests:** ~10,056 total (+113 this session). All passing.
+**Commits:** 5 this session + wrap commit.
+
+**Matthew directives (carried forward):**
+- **$15-25/DAY TARGET — 5-DAY CLOCK (S183b, non-negotiable)**: Deadline 2026-03-30. $100 bankroll. Full carte blanche.
+- **TASKS THAT MAKE CCA SMARTER (S185)**: Default to intelligence/efficiency over feature building.
+- TODAYS_TASKS.md is the daily driver (S178 permanent)
+- MATTHEW_DIRECTIVES.md — read at init (S181 permanent)
+- 50%+ time on Kalshi bot work (S161)
+- Peak/off-peak token budgeting (MT-38)
+- Autoloop ENABLED
+
+---
 
 **What was done this session (S184):**
 - **Autoloop Opus 1M model fix:**

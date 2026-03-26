@@ -42,7 +42,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) + figure integration (slides/dashboard/website, MT-32 Phase 7) + chartjs_bridge (MT-52/E2, Chart.js interactive charts) | 1432 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~9943 tests (~256 suites). All must pass before any work.**
+**Total: ~10,056 tests (~260 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -134,6 +134,11 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `figure_generator.py` — MT-32 Phase 6: Multi-panel figure composer (grid layout, panel labels, captions, 3 annotation types, presets). 62 tests (S166).
 - `chartjs_bridge.py` — MT-52/E2: Chart.js config generator for interactive HTML dashboards. 4 chart types, CCA palette, CDN tag. 21 tests (S182).
 
+**self-learning/** — New MT-37 modules (S185)
+- `market_data.py` — MT-37 Phase 4: Returns, volatility, beta, factor exposures, correlation matrix, CSV/JSON parsers. 42 tests (S185).
+- `allocation.py` — MT-37 Phase 5: Equal-weight, risk parity, Black-Litterman allocation. 28 tests (S185).
+- `factor_tilts.py` — MT-37 Phase 6: Value/momentum/quality/low-vol factor overlays. 26 tests (S185).
+
 **self-learning/research/** — Academic research
 - `MT37_RESEARCH.md` — MT-37 Phase 1: 42-paper synthesis across 10 areas (S178-S180)
 - `MT37_ARCHITECTURE.md` — MT-37 Phase 2: UBER system architecture design (10 modules, 5 layers, S182)
@@ -171,6 +176,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `autoloop_trigger.py` — MT-22: CCA-internal autoloop trigger — called by /cca-wrap Step 10 to spawn next session (activate, Code tab, Cmd+N, paste, send). 18 tests (S138)
 - `autoloop_pause.py` — MT-35 Phase 4: Pause/resume/toggle/status CLI for autoloop control. Flag file ~/.cca-autoloop-paused. 19 tests (S152)
 - `token_budget.py` — MT-38: Peak/off-peak token budget detection. get_budget() API, --brief/--json CLI modes. PEAK 60%/SHOULDER 80%/OFF-PEAK 100%. 21 tests (S154)
+- `overhead_tracker.py` — MT-38: Measure CCA startup token overhead. CCA=49K tokens (3x baseline). History, baselines, trend CLI. 17 tests (S185).
 - `desktop_automator.py` — MT-22: AppleScript-based Claude.app control (activate, send, close, CPU idle detection, preflight, Code tab awareness). 85 tests (S132/S136)
 - `desktop_autoloop.py` — MT-22: Self-sustaining desktop loop orchestrator (resume watcher, state tracking, model selection, Code tab awareness). 60 tests (S132/S136)
 - `start_desktop_autoloop.sh` — MT-22: One-command desktop auto-loop launcher (S132)

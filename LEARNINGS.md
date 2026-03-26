@@ -706,3 +706,17 @@
 - **First seen:** 2026-03-25
 - **Last seen:** 2026-03-25
 - **Files:** self-learning/tests/test_strategy_health_scorer_extended.py (missed), self-learning/tests/test_strategy_health_scorer.py (fixed)
+
+### Intelligence tasks over feature building — Severity: 2 — Count: 1
+- **Anti-pattern:** Defaulting to feature-building (MT-37 Phases 4-6) when intelligence/efficiency tasks (E4/E7/E8) have higher impact on CCA's self-improvement
+- **Fix:** At task selection, ask: "Does this make CCA smarter or more efficient?" If no, deprioritize unless Matthew explicitly requests it
+- **First seen:** 2026-03-26
+- **Last seen:** 2026-03-26
+- **Files:** priority_picker.py (should weight intelligence tasks higher)
+
+### Desktop Electron ignores project model setting — Severity: 2 — Count: 2
+- **Anti-pattern:** Assuming project `.claude/settings.local.json` model setting is picked up by desktop Electron app
+- **Fix:** autoloop_trigger.py must explicitly send `/model claude-opus-4-6[1m]` before the work prompt. Non-fatal fallback.
+- **First seen:** 2026-03-26 (S184 removed it, S185 restored it)
+- **Last seen:** 2026-03-26
+- **Files:** autoloop_trigger.py

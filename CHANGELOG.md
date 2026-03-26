@@ -3,6 +3,33 @@
 
 ---
 
+## Session 185 — 2026-03-26
+
+**What changed:**
+- `self-learning/market_data.py` — MT-37 Phase 4: Returns, volatility, beta, factor exposures, correlation matrix, CSV/JSON parsers (42 tests)
+- `self-learning/allocation.py` — MT-37 Phase 5: Equal-weight, risk parity, Black-Litterman allocation engines (28 tests)
+- `self-learning/factor_tilts.py` — MT-37 Phase 6: Value/momentum/quality/low-vol factor overlay system (26 tests)
+- `overhead_tracker.py` — Token overhead measurement tool. CCA = 49K tokens startup (3x baseline). History + trend tracking (17 tests)
+- `autoloop_trigger.py` — Restored `/model claude-opus-4-6[1m]` command. Desktop Electron doesn't pick up project settings model reliably.
+- `CCA_TO_POLYBOT.md` — Two deliveries: $15-25/day gap analysis (maker conversion = #1 lever) + MT-51 weather market expansion
+- `FINDINGS_LOG.md` — 2 new findings (token overhead methodology, UserPromptSubmit pattern)
+
+**Why:**
+- MT-37 Phases 4-6: Building UBER wealth management intelligence modules
+- Overhead tracker: CCA's 49K token overhead is 3x baseline — need to measure to optimize
+- Autoloop fix: Matthew exhausted from manually running /model after every autoloop cycle
+- Cross-chat deliveries: $15-25/day deadline support + new market expansion research
+- Matthew directive mid-session: "Do tasks that make you smarter" — pivoted to E4/E7/E8/E16
+
+**Tests:** ~10,056 total (+113 new). All passing.
+
+**Lessons:**
+- Default to intelligence/efficiency tasks over feature building unless explicitly directed
+- CCA's 49K token overhead is a concrete optimization target (CLAUDE.md, rules, memory all contribute)
+- Weather markets are the top Kalshi expansion candidate (NWS settlement, model-driven edge)
+
+---
+
 ## Session 184 — 2026-03-26
 
 **What changed:**
