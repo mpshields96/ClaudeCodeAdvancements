@@ -21,6 +21,7 @@ from session_outcome_tracker import (
     count_session_commits,
     record_from_session_state,
     trend_report,
+    backfill_from_git,
 )
 
 
@@ -460,6 +461,76 @@ class TestRecordFromSessionState(unittest.TestCase):
         )
         self.assertIsNotNone(outcome)
         self.assertEqual(outcome.session_id, 200)
+
+
+class TestBackfillFromGit(unittest.TestCase):
+    """Tests for backfill_from_git function."""
+
+    @patch("session_outcome_tracker.subprocess.run")
+    def test_backfill_parses_session_prefixes(self, mock_run):
+        mock_run.return_value = type("R", (), {
+            "returncode": 0,
+            "stdout": "abc1230 S50: Build memory store\ndef4560 S50: Add tests (15 new tests)\nabc7890 S51: Fix bug\n"
+        })()
+        results = backfill_from_git()
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0].session_id, 50)
+        self.assertEqual(results[0].commits, 2)
+        self.assertEqual(results[0].tests_added, 15)
+        self.assertEqual(results[1].session_id, 51)
+        self.assertEqual(results[1].commits, 1)
+
+    @patch("session_outcome_tracker.subprocess.run")
+    def test_backfill_empty_log(self, mock_run):
+        mock_run.return_value = type("R", (), {"returncode": 1, "stdout": ""})()
+        results = backfill_from_git()
+        self.assertEqual(results, [])
+
+    @patch("session_outcome_tracker.subprocess.run")
+    def test_backfill_no_session_prefix(self, mock_run):
+        mock_run.return_value = type("R", (), {
+            "returncode": 0,
+            "stdout": "abc123 Initial commit\ndef456 Add README\n"
+        })()
+        results = backfill_from_git()
+        self.assertEqual(results, [])
+
+    @patch("session_outcome_tracker.subprocess.run")
+    def test_backfill_grade_calculation(self, mock_run):
+        # 5+ commits = full commit score (30), completion assumed (40), no tests = 70 = B+
+        lines = "\n".join(f"abc{i:04d} S99: Commit {i}" for i in range(6))
+        mock_run.return_value = type("R", (), {"returncode": 0, "stdout": lines})()
+        results = backfill_from_git()
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].grade, "B+")
+
+    @patch("session_outcome_tracker.subprocess.run")
+    def test_backfill_extracts_test_counts(self, mock_run):
+        mock_run.return_value = type("R", (), {
+            "returncode": 0,
+            "stdout": "abc123 S77: Add 30 new tests for module\ndef456 S77: Fix 10 tests\n"
+        })()
+        results = backfill_from_git()
+        self.assertEqual(results[0].tests_added, 40)
+
+    @patch("session_outcome_tracker.subprocess.run")
+    def test_backfill_deduplicates_task_names(self, mock_run):
+        mock_run.return_value = type("R", (), {
+            "returncode": 0,
+            "stdout": "abc123 S42: Build X\ndef456 S42: Build X\n"
+        })()
+        results = backfill_from_git()
+        self.assertEqual(len(results[0].completed_tasks), 1)
+
+    @patch("session_outcome_tracker.subprocess.run")
+    def test_backfill_sorted_by_session_id(self, mock_run):
+        mock_run.return_value = type("R", (), {
+            "returncode": 0,
+            "stdout": "abc123 S100: Late\ndef456 S50: Early\n"
+        })()
+        results = backfill_from_git()
+        self.assertEqual(results[0].session_id, 50)
+        self.assertEqual(results[1].session_id, 100)
 
 
 if __name__ == "__main__":

@@ -574,6 +574,77 @@ def format_init_briefing(outcomes: list, max_recs: int = 3) -> str:
     return "\n".join(lines)
 
 
+def backfill_from_git(repo_dir: str = ".") -> list:
+    """Reconstruct session outcomes from git log.
+
+    Parses all commits with S<N>: prefix, groups by session, and creates
+    SessionOutcome records with commit counts and extracted task summaries.
+    """
+    result = subprocess.run(
+        ["git", "log", "--oneline", "--all"],
+        capture_output=True, text=True, cwd=repo_dir
+    )
+    if result.returncode != 0:
+        return []
+
+    # Group commits by session number
+    session_commits = defaultdict(list)
+    for line in result.stdout.strip().split("\n"):
+        if not line.strip():
+            continue
+        m = re.match(r"\S+ S(\d+):\s*(.*)", line)
+        if m:
+            sid = int(m.group(1))
+            msg = m.group(2).strip()
+            session_commits[sid].append(msg)
+
+    outcomes = []
+    for sid in sorted(session_commits.keys()):
+        commits = session_commits[sid]
+        # Extract task summaries from commit messages
+        completed = []
+        tests_added = 0
+        for msg in commits:
+            # Clean up commit message for task name
+            task = msg.split(" — ")[0].split(" + ")[0].strip()
+            if task and task not in completed:
+                completed.append(task)
+            # Try to extract test counts from commit messages
+            test_match = re.search(r"(\d+)\s+(?:new\s+)?tests?", msg, re.IGNORECASE)
+            if test_match:
+                tests_added += int(test_match.group(1))
+
+        # Grade based on commits and tests (no planned tasks available for backfill)
+        commit_score = min(len(commits) / 5, 1.0) * 30
+        test_score = min(tests_added / 30, 1.0) * 30
+        completion_score = 40  # Assume full completion for backfill (no planned data)
+        total = completion_score + commit_score + test_score
+
+        if total >= 90:
+            grade = "A+"
+        elif total >= 75:
+            grade = "A"
+        elif total >= 65:
+            grade = "B+"
+        elif total >= 50:
+            grade = "B"
+        elif total >= 30:
+            grade = "C"
+        else:
+            grade = "D"
+
+        outcome = SessionOutcome(
+            session_id=sid,
+            completed_tasks=completed,
+            commits=len(commits),
+            tests_added=tests_added,
+            grade=grade,
+        )
+        outcomes.append(outcome)
+
+    return outcomes
+
+
 def main():
     """CLI interface."""
     if len(sys.argv) < 2:
@@ -706,6 +777,33 @@ def main():
             print(f"  - {t}")
         rate = compute_completion_rate(planned, completed)
         print(f"\nCompletion rate: {rate:.0%}")
+
+    elif cmd == "backfill":
+        # Reconstruct session outcomes from git log for all sessions
+        dry_run = "--dry-run" in sys.argv
+        repo_dir = "."
+        for i, a in enumerate(sys.argv):
+            if a == "--repo" and i + 1 < len(sys.argv):
+                repo_dir = sys.argv[i + 1]
+
+        existing = {o.session_id for o in store.load_all()}
+        results = backfill_from_git(repo_dir=repo_dir)
+
+        new_count = 0
+        skip_count = 0
+        for outcome in results:
+            if outcome.session_id in existing:
+                skip_count += 1
+                continue
+            if not dry_run:
+                store.append(outcome)
+            new_count += 1
+            print(f"  {'[DRY RUN] ' if dry_run else ''}S{outcome.session_id}: "
+                  f"{outcome.commits} commits, grade={outcome.grade}")
+
+        total = store.load_all() if not dry_run else []
+        print(f"\nBackfill: {new_count} new, {skip_count} skipped (already tracked)"
+              f"{f', {len(total)} total' if total else ''}")
 
     else:
         print(f"Unknown command: {cmd}")
