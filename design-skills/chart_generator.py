@@ -30,6 +30,8 @@ Chart types:
     CalibrationPlot   — predicted vs actual probability (calibration curve, FLB analysis)
     CandlestickChart  — OHLC price bars for Kalshi contract price visualization
     ForestPlot        — confidence interval display for statistical meta-analysis
+    BulletChart       — Stephen Few bullet graph for KPI dashboards (actual vs target + ranges)
+    SlopeChart        — before/after slopegraph for paired comparison
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -804,6 +806,58 @@ class CalibrationPlot:
     color: str = ""
     series_name: str = ""
     extra_series: list = field(default_factory=list)  # [("name", [(p,a,n),...], "color"), ...]
+
+
+@dataclass
+class BulletChart:
+    """Bullet graph (Stephen Few) — compact KPI indicator.
+
+    Shows actual value as a bar, target as a vertical marker line,
+    and qualitative ranges as background bands (poor/satisfactory/good).
+    Perfect for bankroll targets, win rate vs break-even, etc.
+
+    Args:
+        actual: Current measured value
+        target: Target/goal value
+        ranges: [(threshold, label), ...] — qualitative range boundaries, ascending.
+                 If empty, auto-generates 3 ranges from 0 to max(actual, target)*1.2.
+        title: Chart title (left side)
+        subtitle: Secondary label below title
+        unit: Value unit suffix (e.g., "%", "USD")
+    """
+    actual: float
+    target: float
+    ranges: list = field(default_factory=list)  # [(threshold, label), ...]
+    title: str = ""
+    subtitle: str = ""
+    unit: str = ""
+    width: int = 500
+    height: int = 80
+
+
+@dataclass
+class SlopeChart:
+    """Slopegraph — before/after paired comparison.
+
+    Shows paired values connected by sloped lines. Each line's color
+    indicates direction: green (success) for increase, red (highlight)
+    for decrease. Values and labels displayed at both endpoints.
+
+    Useful for showing strategy WR before vs after guards, asset
+    performance pre vs post sizing changes, etc.
+
+    Args:
+        data: [(label, left_value, right_value), ...]
+        left_label: Column header for left/before values
+        right_label: Column header for right/after values
+        title: Chart title
+    """
+    data: list  # [(label, left_value, right_value), ...]
+    left_label: str = "Before"
+    right_label: str = "After"
+    title: str = ""
+    width: int = 400
+    height: int = 300
 
 
 # ---------------------------------------------------------------------------
@@ -3549,6 +3603,163 @@ def _render_forest_plot(chart: ForestPlot) -> str:
     return "".join(parts)
 
 
+def _render_bullet_chart(chart: BulletChart) -> str:
+    """Render a Stephen Few bullet graph to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    # Layout
+    label_w = 100
+    bar_x = label_w + 10
+    bar_w = chart.width - bar_x - 20
+    bar_cy = chart.height / 2
+    bar_h = chart.height * 0.35
+
+    # Title / subtitle
+    if chart.title:
+        ty = bar_cy - 2 if not chart.subtitle else bar_cy - 8
+        parts.append(_text(label_w, ty, chart.title, font_size=12,
+                           fill=CCA_COLORS["primary"], anchor="end",
+                           font_weight="600"))
+    if chart.subtitle:
+        parts.append(_text(label_w, bar_cy + 10, chart.subtitle, font_size=9,
+                           fill=CCA_COLORS["muted"], anchor="end"))
+
+    # Determine ranges
+    ranges = chart.ranges
+    if not ranges:
+        max_val = max(chart.actual, chart.target) * 1.2
+        ranges = [
+            (max_val * 0.33, "poor"),
+            (max_val * 0.67, "satisfactory"),
+            (max_val, "good"),
+        ]
+
+    max_range = max(r[0] for r in ranges) if ranges else 100
+    # Ensure max_range covers actual and target
+    max_range = max(max_range, chart.actual, chart.target)
+
+    def val_to_x(v):
+        return bar_x + (v / max_range) * bar_w if max_range > 0 else bar_x
+
+    # Draw qualitative range bands (darkest first, lightest last)
+    range_colors = ["#d1d5db", "#e5e7eb", "#f3f4f6"]  # dark → light gray
+    prev_x = bar_x
+    for i, (threshold, _label) in enumerate(ranges):
+        rx = val_to_x(threshold)
+        color = range_colors[i] if i < len(range_colors) else range_colors[-1]
+        parts.append(_rect(prev_x, bar_cy - bar_h, rx - prev_x, bar_h * 2, color))
+        prev_x = rx
+
+    # Actual value bar (narrow, dark)
+    actual_w = val_to_x(chart.actual) - bar_x
+    actual_h = bar_h * 0.6
+    parts.append(_rect(bar_x, bar_cy - actual_h, max(actual_w, 0),
+                        actual_h * 2, CCA_COLORS["primary"]))
+
+    # Target marker (vertical line)
+    target_x = val_to_x(chart.target)
+    marker_h = bar_h * 1.3
+    parts.append(_line(target_x, bar_cy - marker_h, target_x, bar_cy + marker_h,
+                        CCA_COLORS["highlight"], 2.5))
+
+    # Value label
+    val_text = f"{chart.actual:.1f}" if chart.actual != int(chart.actual) else str(int(chart.actual))
+    if chart.unit:
+        val_text += chart.unit
+    parts.append(_text(bar_x + bar_w + 5, bar_cy + 4, val_text,
+                        font_size=11, fill=CCA_COLORS["primary"], anchor="start"))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
+def _render_slope_chart(chart: SlopeChart) -> str:
+    """Render a slopegraph (before/after paired comparison) to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout
+    margin_top = 50 if chart.title else 30
+    margin_bottom = 20
+    left_col_x = 120
+    right_col_x = chart.width - 120
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, fill=CCA_COLORS["primary"],
+                           font_weight="600"))
+
+    # Column headers
+    parts.append(_text(left_col_x, margin_top - 10, chart.left_label,
+                        font_size=11, fill=CCA_COLORS["muted"], font_weight="600"))
+    parts.append(_text(right_col_x, margin_top - 10, chart.right_label,
+                        font_size=11, fill=CCA_COLORS["muted"], font_weight="600"))
+
+    # Compute Y scale from all values
+    all_vals = []
+    for _label, left, right in chart.data:
+        all_vals.extend([left, right])
+
+    if not all_vals:
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    min_val = min(all_vals)
+    max_val = max(all_vals)
+    val_range = max_val - min_val if max_val != min_val else 1.0
+
+    def val_to_y(v):
+        return margin_top + plot_h - ((v - min_val) / val_range) * plot_h
+
+    # Palette for series
+    palette = SERIES_PALETTE
+
+    for i, (label, left_val, right_val) in enumerate(chart.data):
+        ly = val_to_y(left_val)
+        ry = val_to_y(right_val)
+
+        # Color by direction
+        if right_val > left_val:
+            color = CCA_COLORS["success"]
+        elif right_val < left_val:
+            color = CCA_COLORS["highlight"]
+        else:
+            color = CCA_COLORS["muted"]
+
+        # Connecting line
+        parts.append(_line(left_col_x, ly, right_col_x, ry, color, 2))
+
+        # Endpoint circles
+        parts.append(_circle(left_col_x, ly, 4, color))
+        parts.append(_circle(right_col_x, ry, 4, color))
+
+        # Left value + label
+        left_text = f"{left_val:.1f}" if left_val != int(left_val) else str(int(left_val))
+        parts.append(_text(left_col_x - 50, ly + 4, label,
+                           font_size=10, fill=CCA_COLORS["primary"], anchor="end"))
+        parts.append(_text(left_col_x - 8, ly + 4, left_text,
+                           font_size=10, fill=color, anchor="end"))
+
+        # Right value + label
+        right_text = f"{right_val:.1f}" if right_val != int(right_val) else str(int(right_val))
+        parts.append(_text(right_col_x + 8, ry + 4, right_text,
+                           font_size=10, fill=color, anchor="start"))
+        parts.append(_text(right_col_x + 50, ry + 4, label,
+                           font_size=10, fill=CCA_COLORS["primary"], anchor="start"))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 def render_svg(chart) -> str:
     """Render any chart object to an SVG string."""
     if isinstance(chart, BarChart):
@@ -3599,6 +3810,10 @@ def render_svg(chart) -> str:
         return _render_candlestick_chart(chart)
     elif isinstance(chart, ForestPlot):
         return _render_forest_plot(chart)
+    elif isinstance(chart, BulletChart):
+        return _render_bullet_chart(chart)
+    elif isinstance(chart, SlopeChart):
+        return _render_slope_chart(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 
