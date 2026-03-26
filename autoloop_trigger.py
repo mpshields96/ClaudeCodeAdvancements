@@ -34,7 +34,7 @@ from desktop_automator import DesktopAutomator
 PROJECT_DIR = "/Users/matthewshields/Projects/ClaudeCodeAdvancements"
 RESUME_FILE = os.path.join(PROJECT_DIR, "SESSION_RESUME.md")
 AUDIT_LOG = os.path.expanduser("~/.cca-autoloop-trigger.jsonl")
-MODEL_COMMAND = "/model claude-opus-4-6[1m]"
+# MODEL_COMMAND removed — Matthew directive S183 (not doing anything)
 PROMPT_PREFIX = "/cca-init then review the resume prompt below then /cca-auto\n"
 
 
@@ -190,16 +190,6 @@ def trigger_next_session(dry_run: bool = False) -> bool:
     if wait_time > 0:
         time.sleep(wait_time)
     _log("step_3_wait", {"seconds": wait_time})
-
-    # Step 3.5: Set model to Opus 4.6 (1M context) before sending work prompt.
-    # The Electron app resets model on new sessions — this ensures 1M context.
-    if not automator.send_prompt(MODEL_COMMAND):
-        _log("model_set_failed", {"reason": "send_failed"})
-        print("WARNING: Could not set model — proceeding with default.")
-    else:
-        _log("step_3_5_model", {"status": "ok", "model": MODEL_COMMAND})
-        # Wait for /model command to process (fast — just a config change)
-        time.sleep(1.5)
 
     # Step 4+5: Paste prompt and send (Cmd+Return)
     if not automator.send_prompt(prompt):

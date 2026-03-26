@@ -288,6 +288,45 @@ def run_mt_extensions() -> dict:
         return {"extensions": [], "count": 0, "raw": "", "error": "Timeout"}
 
 
+def run_unified_origination() -> dict:
+    """Run mt_originator.py --unified for MT-52 3-source intelligence briefing.
+
+    Combines: ADAPT findings + stalled MTs + cross-chat requests into one report.
+    This is the comprehensive view wired into /cca-init (S183).
+    """
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "mt_originator.py"), "--unified"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(PROJECT_ROOT),
+        )
+
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            return {"total": 0, "raw": ""}
+
+        # Parse "N actionable items" from summary
+        m = re.search(r"(\d+)\s+actionable\s+items?", output)
+        total = int(m.group(1)) if m else 0
+
+        # Parse section counts
+        adapts = len(re.findall(r"^\s+MT-\d+.*ADAPT", output, re.MULTILINE))
+        stalled = len(re.findall(r"^\s+MT-\d+:.*\[", output, re.MULTILINE))
+        requests = len(re.findall(r"^\s+REQ-\d+:", output, re.MULTILINE))
+
+        return {
+            "total": total,
+            "adapts": adapts,
+            "stalled": stalled,
+            "requests": requests,
+            "raw": output,
+        }
+    except subprocess.TimeoutExpired:
+        return {"total": 0, "raw": "", "error": "Timeout: unified origination exceeded 30 seconds"}
+
+
 def run_outcomes_enricher() -> dict:
     """Run outcomes_enricher.py enrich to add missing REQ entries (idempotent)."""
     try:
@@ -557,6 +596,8 @@ def format_summary(summary: dict) -> str:
 
     if summary.get("mt_proposals_count", 0) > 0:
         lines.append(f"  MT proposals: {summary['mt_proposals_count']} from findings")
+    if summary.get("unified_origination_total", 0) > 0:
+        lines.append(f"  Origination: {summary['unified_origination_total']} actionable items (ADAPT + stalled MTs + cross-chat)")
 
     if summary.get("timeline_raw"):
         lines.append(f"\n  Recent sessions:")
@@ -593,6 +634,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
 
     # Step 3.6: MT phase extensions for existing MTs (MT-41 Phase 4)
     mt_extensions = run_mt_extensions()
+
+    # Step 3.6b: Unified origination (MT-52 — 3-source intelligence, S183)
+    unified = run_unified_origination()
 
     # Step 3.7: Meta-learning health (MT-49)
     meta_learning = run_meta_learning()
@@ -631,6 +675,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if mt_extensions.get("count", 0) > 0:
         summary["mt_extensions_raw"] = mt_extensions["raw"]
         summary["mt_extensions_count"] = mt_extensions["count"]
+    if unified.get("total", 0) > 0:
+        summary["unified_origination_raw"] = unified["raw"]
+        summary["unified_origination_total"] = unified["total"]
     if timeline.get("raw") and timeline.get("session_count", 0) > 0:
         summary["timeline_raw"] = timeline["raw"]
     if meta_learning.get("brief"):

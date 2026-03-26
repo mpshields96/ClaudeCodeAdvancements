@@ -1449,5 +1449,119 @@ class TestSlimInitTodaysTasks(unittest.TestCase):
         self.assertNotIn("after today's tasks", output)
 
 
+class TestRunUnifiedOrigination(unittest.TestCase):
+    """Tests for run_unified_origination() — MT-52 3-source intelligence (S183)."""
+
+    @patch("slim_init.subprocess.run")
+    def test_parses_actionable_count(self, mock_run):
+        from slim_init import run_unified_origination
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="Parsed 100 findings (10 BUILD)\nORIGINATION REPORT — 42 actionable items\n\nADAPT EXTENSIONS (20):\n  MT-0: test\n",
+        )
+        result = run_unified_origination()
+        self.assertEqual(result["total"], 42)
+        self.assertIn("42 actionable", result["raw"])
+
+    @patch("slim_init.subprocess.run")
+    def test_returns_zero_on_failure(self, mock_run):
+        from slim_init import run_unified_origination
+        mock_run.return_value = MagicMock(returncode=1, stdout="")
+        result = run_unified_origination()
+        self.assertEqual(result["total"], 0)
+
+    @patch("slim_init.subprocess.run")
+    def test_handles_timeout(self, mock_run):
+        import subprocess as sp
+        from slim_init import run_unified_origination
+        mock_run.side_effect = sp.TimeoutExpired(cmd="test", timeout=30)
+        result = run_unified_origination()
+        self.assertEqual(result["total"], 0)
+        self.assertIn("Timeout", result.get("error", ""))
+
+    @patch("slim_init.subprocess.run")
+    def test_parses_request_lines(self, mock_run):
+        from slim_init import run_unified_origination
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="ORIGINATION REPORT — 3 actionable items\n\nUNRESOLVED KALSHI REQUESTS (3):\n  REQ-4: Overnight [URGENT]\n  REQ-8: Multi-param [URGENT]\n  REQ-9: Non-stat [URGENT]\n",
+        )
+        result = run_unified_origination()
+        self.assertEqual(result["total"], 3)
+        self.assertEqual(result["requests"], 3)
+
+
+class TestSummaryIncludesUnifiedOrigination(unittest.TestCase):
+    """Tests for format_summary including unified origination line."""
+
+    def test_shows_origination_line_when_present(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S183",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-37",
+            "unified_origination_total": 56,
+        }
+        output = format_summary(summary)
+        self.assertIn("Origination: 56 actionable items", output)
+
+    def test_no_origination_line_when_zero(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S183",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-37",
+            "unified_origination_total": 0,
+        }
+        output = format_summary(summary)
+        self.assertNotIn("Origination", output)
+
+    def test_no_origination_line_when_missing(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S183",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-37",
+        }
+        output = format_summary(summary)
+        self.assertNotIn("Origination", output)
+
+
+class TestSlimInitIncludesUnifiedOrigination(unittest.TestCase):
+    """Tests that run_slim_init wires unified origination into summary."""
+
+    @patch("slim_init.run_unified_origination")
+    @patch("slim_init.run_outcomes_enricher", return_value={"enriched": 0})
+    @patch("slim_init.run_research_roi", return_value={"resolved": 0, "total": 0})
+    @patch("slim_init.run_recalibration", return_value={"decayed": 0, "total": 0})
+    @patch("slim_init.run_principle_discoverer", return_value={"discovered": 0})
+    @patch("slim_init.run_transfer_proposals", return_value={"pending": 0})
+    @patch("slim_init.run_meta_learning", return_value={"brief": ""})
+    @patch("slim_init.run_mt_extensions", return_value={"count": 0})
+    @patch("slim_init.run_mt_proposals", return_value={"count": 0})
+    @patch("slim_init.run_priority", return_value={"raw": "", "top_pick": "MT-1"})
+    @patch("slim_init.run_principle_seeder", return_value={"seeded": 0})
+    @patch("slim_init.run_smoke", return_value={"passed": 10, "failed": 0, "total": 10, "status": "10/10 PASS"})
+    @patch("slim_init.scan_todays_tasks", return_value={"count": 0, "todos": []})
+    @patch("slim_init.run_predictive_recommendations", return_value={"recommendations": 0})
+    @patch("slim_init.run_timeline", return_value={"raw": "", "session_count": 0})
+    @patch("slim_init.scan_directives", return_value={"latest_title": "", "latest_session": ""})
+    def test_includes_unified_in_summary(self, *mocks):
+        from slim_init import run_slim_init
+        # The first mock in the decorator stack (last arg) is run_unified_origination
+        mocks[-1].return_value = {"total": 42, "raw": "ORIGINATION REPORT — 42 actionable items"}
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            f.write("## Current State (as of Session 182 — 2026-03-25)\n")
+            path = f.name
+        try:
+            result = run_slim_init(session_state_path=Path(path))
+            self.assertEqual(result.get("unified_origination_total"), 42)
+        finally:
+            os.unlink(path)
+
+
 if __name__ == "__main__":
     unittest.main()
