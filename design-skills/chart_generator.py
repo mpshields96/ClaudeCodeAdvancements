@@ -790,27 +790,27 @@ def _render_bar_chart(chart: BarChart) -> str:
         if n > 12:
             # Very crowded: -90 degrees, skip every other, truncate
             if i % 2 == 0:
-                display_label = str(label)[:10]
-                parts.append(_text(label_x, label_y, display_label,
+                parts.append(_text(label_x, label_y,
+                                   _abbreviate_label(label, 10),
                                    font_size=8, fill=CCA_COLORS["muted"],
                                    anchor="end",
                                    transform=f"rotate(-90, {label_x}, {label_y})"))
         elif n > 8:
             # Crowded: -90 degrees, all labels, truncate
-            display_label = str(label)[:10]
-            parts.append(_text(label_x, label_y, display_label,
+            parts.append(_text(label_x, label_y,
+                               _abbreviate_label(label, 10),
                                font_size=8, fill=CCA_COLORS["muted"],
                                anchor="end",
                                transform=f"rotate(-90, {label_x}, {label_y})"))
         elif n > 4:
             # Moderate: -45 degrees
-            display_label = str(label)[:12]
-            parts.append(_text(label_x, label_y, display_label,
+            parts.append(_text(label_x, label_y,
+                               _abbreviate_label(label, 12),
                                font_size=9, fill=CCA_COLORS["muted"],
                                anchor="end",
                                transform=f"rotate(-45, {label_x}, {label_y})"))
         else:
-            parts.append(_text(label_x, label_y, str(label),
+            parts.append(_text(label_x, label_y, _abbreviate_label(label, 20),
                                font_size=9, fill=CCA_COLORS["muted"]))
 
         # Value on bar
@@ -1361,24 +1361,25 @@ def _render_stacked_bar_chart(chart: StackedBarChart) -> str:
         if n_categories > 12:
             # Very crowded: -90 degrees, skip every other label
             if cat_idx % 2 == 0:
-                display_label = str(label)[:10]
-                parts.append(_text(label_x, label_y, display_label,
+                parts.append(_text(label_x, label_y,
+                                  _abbreviate_label(label, 10),
                                   font_size=8, fill=CCA_COLORS["muted"], anchor="end",
                                   transform=f"rotate(-90, {label_x}, {label_y})"))
         elif n_categories > 8:
             # Crowded: -90 degrees, all labels
-            display_label = str(label)[:10]
-            parts.append(_text(label_x, label_y, display_label,
+            parts.append(_text(label_x, label_y,
+                              _abbreviate_label(label, 10),
                               font_size=8, fill=CCA_COLORS["muted"], anchor="end",
                               transform=f"rotate(-90, {label_x}, {label_y})"))
         elif n_categories > 4:
             # Moderate: -45 degrees
-            display_label = str(label)[:12]
-            parts.append(_text(label_x, label_y, display_label,
+            parts.append(_text(label_x, label_y,
+                              _abbreviate_label(label, 12),
                               font_size=9, fill=CCA_COLORS["muted"], anchor="end",
                               transform=f"rotate(-45, {label_x}, {label_y})"))
         else:
-            parts.append(_text(label_x, label_y, str(label),
+            parts.append(_text(label_x, label_y,
+                              _abbreviate_label(label, 20),
                               font_size=10, fill=CCA_COLORS["muted"], anchor="middle"))
 
     # Legend
