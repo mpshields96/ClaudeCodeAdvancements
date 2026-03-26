@@ -29,6 +29,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 FINDINGS_LOG_PATH = os.path.join(SCRIPT_DIR, "FINDINGS_LOG.md")
 PROPOSALS_PATH = os.path.join(SCRIPT_DIR, "mt_proposals.jsonl")
 MASTER_TASKS_PATH = os.path.join(SCRIPT_DIR, "MASTER_TASKS.md")
+CROSS_CHAT_PATH = os.path.expanduser("~/.claude/cross-chat/POLYBOT_TO_CCA.md")
 
 # Pattern: [date] [VERDICT] [frontier/tag] title — url
 FINDING_RE = re.compile(
@@ -660,6 +661,309 @@ def save_proposals(proposals: list[MTProposal], path: str = PROPOSALS_PATH) -> N
             f.write(json.dumps(p.to_dict(), separators=(",", ":")) + "\n")
 
 
+# --- MT-52 Phase 1: Intelligence-Driven Origination ---
+
+
+@dataclass
+class MTStatus:
+    """Parsed status of an MT from MASTER_TASKS.md."""
+    mt_id: int
+    name: str
+    status: str  # COMPLETE, PROPOSED, PAUSED, FUTURE, IN_PROGRESS
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass
+class CrossChatRequest:
+    """Parsed request from POLYBOT_TO_CCA.md."""
+    request_id: int
+    title: str
+    status: str  # OPEN, PENDING, RESOLVED, CLOSED, INFO
+    priority: str  # URGENT, NORMAL, BACKGROUND
+    summary: str
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass
+class OriginationReport:
+    """Unified origination report from all 3 intelligence sources."""
+    adapt_extensions: list[PhaseExtension]
+    stalled_mts: list[MTStatus]
+    unresolved_requests: list[CrossChatRequest]
+    new_mt_proposals: list[MTProposal]
+
+    def total_actions(self) -> int:
+        return (len(self.adapt_extensions) + len(self.stalled_mts)
+                + len(self.unresolved_requests) + len(self.new_mt_proposals))
+
+    def summary(self) -> str:
+        lines = [
+            f"ORIGINATION REPORT — {self.total_actions()} actionable items",
+            "",
+        ]
+
+        if self.adapt_extensions:
+            lines.append(f"ADAPT EXTENSIONS ({len(self.adapt_extensions)}):")
+            for ext in self.adapt_extensions[:5]:
+                lines.append(f"  {ext.briefing_line()}")
+            lines.append("")
+
+        if self.stalled_mts:
+            lines.append(f"STALLED/PROPOSED MTs ({len(self.stalled_mts)}):")
+            for mt in self.stalled_mts[:5]:
+                lines.append(f"  MT-{mt.mt_id}: {mt.name} [{mt.status}]")
+            lines.append("")
+
+        if self.unresolved_requests:
+            lines.append(f"UNRESOLVED KALSHI REQUESTS ({len(self.unresolved_requests)}):")
+            for req in self.unresolved_requests[:5]:
+                lines.append(f"  REQ-{req.request_id}: {req.title} [{req.priority}]")
+            lines.append("")
+
+        if self.new_mt_proposals:
+            lines.append(f"NEW MT PROPOSALS ({len(self.new_mt_proposals)}):")
+            for p in self.new_mt_proposals[:5]:
+                lines.append(f"  {p.briefing_line()}")
+            lines.append("")
+
+        if self.total_actions() == 0:
+            lines.append("No actionable items found.")
+
+        return "\n".join(lines)
+
+
+def find_actionable_adapts(findings: list[Finding]) -> list[PhaseExtension]:
+    """Find ADAPT findings that map to existing MTs and propose phase extensions.
+
+    ADAPT findings are actionable — they contain patterns/tools worth integrating
+    into existing MTs. Unlike BUILD (which may need new MTs), ADAPT extends what exists.
+    """
+    if not findings:
+        return []
+
+    adapts = [f for f in findings if f.verdict == "ADAPT"]
+    if not adapts:
+        return []
+
+    coverage = get_existing_mt_coverage()
+    extensions = []
+
+    for f in adapts:
+        search_text = f"{f.title} {f.frontier}".lower()
+
+        for mt_id, keywords in coverage.items():
+            if mt_id >= 100:  # Skip frontier pseudo-IDs
+                continue
+
+            matched_keywords = [kw for kw in keywords if kw in search_text]
+            if not matched_keywords:
+                continue
+
+            match_strength = len(matched_keywords)
+            mt_name = MT_NAMES.get(mt_id, f"MT-{mt_id}")
+            suggested = f"Integrate: {f.title}"
+            ext_score = score_extension(f, match_strength)
+
+            extensions.append(PhaseExtension(
+                mt_id=mt_id,
+                mt_name=mt_name,
+                finding=f,
+                score=ext_score,
+                suggested_phase=suggested,
+            ))
+
+    extensions.sort(key=lambda e: e.score, reverse=True)
+    return extensions
+
+
+# Regex for MT headers: ## MT-N: Title
+_MT_STATUS_RE = re.compile(r'^##\s+MT-(\d+):\s*(.+?)$')
+_STATUS_LINE_RE = re.compile(r'\*\*Status:\*\*\s*(.+)', re.IGNORECASE)
+
+
+def parse_master_tasks_status(text: str) -> list[MTStatus]:
+    """Parse MASTER_TASKS.md to extract MT IDs, names, and statuses."""
+    if not text.strip():
+        return []
+
+    results = []
+    current_id: Optional[int] = None
+    current_name: Optional[str] = None
+
+    for line in text.splitlines():
+        line_stripped = line.strip()
+
+        # Check for MT header
+        m = _MT_STATUS_RE.match(line_stripped)
+        if m:
+            current_id = int(m.group(1))
+            current_name = m.group(2).split("(")[0].strip()
+            continue
+
+        # Check for status line (must follow an MT header)
+        if current_id is not None and current_name is not None:
+            sm = _STATUS_LINE_RE.match(line_stripped)
+            if sm:
+                raw_status = sm.group(1).upper()
+
+                # Classify status
+                if "COMPLETE" in raw_status:
+                    status = "COMPLETE"
+                elif "PROPOSED" in raw_status:
+                    status = "PROPOSED"
+                elif "PAUSED" in raw_status:
+                    status = "PAUSED"
+                elif "FUTURE" in raw_status or "ON HOLD" in raw_status:
+                    status = "FUTURE"
+                elif "PHASE" in raw_status and "NEXT" in raw_status:
+                    status = "IN_PROGRESS"
+                elif "PHASE" in raw_status:
+                    status = "IN_PROGRESS"
+                else:
+                    status = "FUTURE"
+
+                results.append(MTStatus(
+                    mt_id=current_id,
+                    name=current_name,
+                    status=status,
+                ))
+                current_id = None
+                current_name = None
+
+    return results
+
+
+def find_stalled_mts(statuses: list[MTStatus]) -> list[MTStatus]:
+    """Find MTs that are stalled (PAUSED, FUTURE, PROPOSED) and need action."""
+    if not statuses:
+        return []
+
+    stalled_categories = {"PAUSED", "FUTURE", "PROPOSED"}
+    return [s for s in statuses if s.status in stalled_categories]
+
+
+# Cross-chat request parsing
+_REQUEST_HEADER_RE = re.compile(
+    r'^##\s+REQUEST\s+(\d+)\s*[—–-]\s*(.+?)\s*\[STATUS:\s*(\w+)\]',
+    re.IGNORECASE,
+)
+
+_REQ_HEADER_ALT_RE = re.compile(
+    r'^##\s+REQUEST\s+(\d+)\s*[—–-]\s*(.+?)$',
+    re.IGNORECASE,
+)
+
+
+def parse_cross_chat_requests(text: str) -> list[CrossChatRequest]:
+    """Parse POLYBOT_TO_CCA.md for structured requests."""
+    if not text.strip():
+        return []
+
+    results = []
+    current_req: Optional[dict] = None
+    body_lines: list[str] = []
+
+    for line in text.splitlines():
+        line_stripped = line.strip()
+
+        # Try primary pattern: ## REQUEST N — Title [STATUS: X]
+        m = _REQUEST_HEADER_RE.match(line_stripped)
+        if m:
+            # Save previous request
+            if current_req is not None:
+                current_req["summary"] = " ".join(body_lines[:3]).strip()[:200]
+                results.append(CrossChatRequest(**current_req))
+
+            req_id = int(m.group(1))
+            title = m.group(2).strip()
+            status = m.group(3).upper()
+            body_lines = []
+
+            current_req = {
+                "request_id": req_id,
+                "title": title,
+                "status": status,
+                "priority": "NORMAL",
+                "summary": "",
+            }
+            continue
+
+        # Detect priority
+        if current_req is not None:
+            if "URGENT" in line_stripped.upper() and "priority" in line_stripped.lower():
+                current_req["priority"] = "URGENT"
+            elif "BACKGROUND" in line_stripped.upper() and "priority" in line_stripped.lower():
+                current_req["priority"] = "BACKGROUND"
+
+            # Collect body text (non-empty, non-header lines)
+            if line_stripped and not line_stripped.startswith("##"):
+                body_lines.append(line_stripped)
+
+    # Save final request
+    if current_req is not None:
+        current_req["summary"] = " ".join(body_lines[:3]).strip()[:200]
+        results.append(CrossChatRequest(**current_req))
+
+    return results
+
+
+def find_unresolved_requests(requests: list[CrossChatRequest]) -> list[CrossChatRequest]:
+    """Find requests that are still OPEN or PENDING, sorted by priority."""
+    if not requests:
+        return []
+
+    open_statuses = {"OPEN", "PENDING"}
+    unresolved = [r for r in requests if r.status in open_statuses]
+
+    # Sort: URGENT first, then NORMAL, then BACKGROUND
+    priority_order = {"URGENT": 0, "NORMAL": 1, "BACKGROUND": 2}
+    unresolved.sort(key=lambda r: priority_order.get(r.priority, 1))
+
+    return unresolved
+
+
+def unified_origination(
+    findings_text: str = "",
+    master_tasks_text: str = "",
+    cross_chat_text: str = "",
+) -> OriginationReport:
+    """Run all 3 origination sources and produce a unified report.
+
+    Sources:
+    1. FINDINGS_LOG.md — ADAPT findings -> phase extensions for existing MTs
+    2. MASTER_TASKS.md — stalled/proposed MTs -> activation candidates
+    3. POLYBOT_TO_CCA.md — unresolved requests -> research priorities
+
+    Also includes BUILD findings -> new MT proposals (existing Phase 1-3 logic).
+    """
+    # Source 1: ADAPT extensions
+    findings = parse_findings_log(findings_text)
+    adapt_extensions = find_actionable_adapts(findings)
+
+    # Source 2: Stalled MTs
+    statuses = parse_master_tasks_status(master_tasks_text)
+    stalled_mts = find_stalled_mts(statuses)
+
+    # Source 3: Cross-chat unresolved requests
+    requests = parse_cross_chat_requests(cross_chat_text)
+    unresolved = find_unresolved_requests(requests)
+
+    # Also: BUILD -> new MT proposals (existing logic)
+    builds = [f for f in findings if f.verdict == "BUILD"]
+    new_proposals = generate_rich_proposals(builds)
+
+    return OriginationReport(
+        adapt_extensions=adapt_extensions,
+        stalled_mts=stalled_mts,
+        unresolved_requests=unresolved,
+        new_mt_proposals=new_proposals,
+    )
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="MT-41: Synthetic MT Origination")
@@ -669,7 +973,11 @@ def main():
     parser.add_argument("--append", action="store_true", help="Append top proposals to MASTER_TASKS.md")
     parser.add_argument("--extend-existing", action="store_true",
                         help="Propose new phases for existing MTs (active + completed)")
+    parser.add_argument("--unified", action="store_true",
+                        help="MT-52: Run all 3 origination sources (findings + stalled MTs + cross-chat)")
     parser.add_argument("--findings", default=FINDINGS_LOG_PATH, help="Path to FINDINGS_LOG.md")
+    parser.add_argument("--master-tasks", default=MASTER_TASKS_PATH, help="Path to MASTER_TASKS.md")
+    parser.add_argument("--cross-chat", default=CROSS_CHAT_PATH, help="Path to POLYBOT_TO_CCA.md")
     parser.add_argument("--min-score", type=float, default=30.0, help="Minimum score for surfacing")
     parser.add_argument("--top", type=int, default=3, help="Number of top proposals to show")
     args = parser.parse_args()
@@ -679,6 +987,37 @@ def main():
     builds = [f for f in findings if f.verdict == "BUILD"]
 
     print(f"Parsed {len(findings)} findings ({len(builds)} BUILD)")
+
+    # --unified: MT-52 intelligence-driven origination from all 3 sources
+    if args.unified:
+        mt_text = ""
+        if os.path.exists(args.master_tasks):
+            with open(args.master_tasks, "r", encoding="utf-8") as f:
+                mt_text = f.read()
+
+        cc_text = ""
+        if os.path.exists(args.cross_chat):
+            with open(args.cross_chat, "r", encoding="utf-8") as f:
+                cc_text = f.read()
+
+        report = unified_origination(
+            findings_text=text,
+            master_tasks_text=mt_text,
+            cross_chat_text=cc_text,
+        )
+
+        if args.json:
+            out = {
+                "adapt_extensions": [e.to_dict() for e in report.adapt_extensions[:args.top]],
+                "stalled_mts": [s.to_dict() for s in report.stalled_mts],
+                "unresolved_requests": [r.to_dict() for r in report.unresolved_requests[:args.top]],
+                "new_mt_proposals": [p.to_dict() for p in report.new_mt_proposals[:args.top]],
+                "total_actions": report.total_actions(),
+            }
+            print(json.dumps(out, indent=2, default=str))
+        else:
+            print(report.summary())
+        return
 
     # --extend-existing: propose phases for existing MTs
     if args.extend_existing:
