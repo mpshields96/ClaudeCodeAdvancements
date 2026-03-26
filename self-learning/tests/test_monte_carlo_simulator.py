@@ -147,6 +147,54 @@ class TestBetDistribution(unittest.TestCase):
         self.assertGreater(kelly, 0)
         self.assertLess(kelly, 1)  # Fractional
 
+    def test_with_loss_cap_basic(self):
+        """with_loss_cap caps all loss values at the specified maximum."""
+        outcomes = [0.90, 0.90, 0.90, 0.90, -19.0, -25.0]
+        dist = BetDistribution.from_outcomes(outcomes)
+        self.assertAlmostEqual(dist.avg_loss, -22.0, places=1)
+
+        capped = dist.with_loss_cap(7.50)
+        # All losses should be capped at -7.50
+        self.assertAlmostEqual(capped.avg_loss, -7.50, places=2)
+        for v in capped.loss_values:
+            self.assertGreaterEqual(v, -7.50)
+
+    def test_with_loss_cap_preserves_wins(self):
+        """Capping losses does not change win values."""
+        outcomes = [0.90, 0.80, 1.10, -19.0, -5.0]
+        dist = BetDistribution.from_outcomes(outcomes)
+        capped = dist.with_loss_cap(7.50)
+        self.assertEqual(capped.win_values, dist.win_values)
+        self.assertAlmostEqual(capped.win_rate, dist.win_rate)
+
+    def test_with_loss_cap_no_change_if_within(self):
+        """If all losses are already within cap, nothing changes."""
+        outcomes = [0.90, 0.90, -5.0, -3.0]
+        dist = BetDistribution.from_outcomes(outcomes)
+        capped = dist.with_loss_cap(7.50)
+        self.assertEqual(capped.loss_values, dist.loss_values)
+        self.assertAlmostEqual(capped.avg_loss, dist.avg_loss)
+
+    def test_with_loss_cap_recalculates_ev(self):
+        """Capped distribution has higher EV than uncapped."""
+        outcomes = [0.90] * 19 + [-19.0]  # 95% WR, large loss
+        dist = BetDistribution.from_outcomes(outcomes)
+        capped = dist.with_loss_cap(7.50)
+        self.assertGreater(capped.expected_value(), dist.expected_value())
+
+    def test_with_loss_cap_empty_losses(self):
+        """Capping with no losses is a no-op."""
+        dist = BetDistribution.from_outcomes([0.90, 0.80])
+        capped = dist.with_loss_cap(7.50)
+        self.assertEqual(len(capped.loss_values), 0)
+
+    def test_with_loss_cap_preserves_metadata(self):
+        """Capping preserves total_bets, daily_volume."""
+        dist = BetDistribution.from_outcomes([0.90, -20.0], daily_volume=25)
+        capped = dist.with_loss_cap(7.50)
+        self.assertEqual(capped.total_bets, dist.total_bets)
+        self.assertEqual(capped.daily_volume, 25)
+
 
 class TestSimulationResult(unittest.TestCase):
     """Test SimulationResult data container."""

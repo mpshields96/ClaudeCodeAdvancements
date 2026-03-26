@@ -140,3 +140,16 @@
 5. This is a PERMANENT capability, not a one-off task
 
 ---
+
+## S190 — 2026-03-26 (The Agent Research Directive)
+
+> last thing to add to the matthew directive rant we just added, we need more research on reddit/github/academic papers regarding agent use/multi-agent use/orchestrations.
+
+**Core principles extracted:**
+1. Agent use, multi-agent systems, and orchestration patterns are a PRIORITY research area
+2. Research sources: Reddit, GitHub repos, academic papers — all three
+3. This extends the S189b/S189c directives — agent/orchestration knowledge directly serves both CCA (Get More Bodies pillar) and Kalshi (autonomous trading)
+4. Look for: frameworks, patterns, failure modes, coordination protocols, state management across agents
+5. Academic fields: distributed systems, multi-agent reinforcement learning, LLM agent architectures
+
+---

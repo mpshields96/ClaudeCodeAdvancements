@@ -134,6 +134,26 @@ class BetDistribution:
         finally:
             conn.close()
 
+    def with_loss_cap(self, max_loss_usd: float) -> "BetDistribution":
+        """Return a new BetDistribution with losses capped at -max_loss_usd.
+
+        Pre-sizing historical data includes large losses (e.g. -$19).
+        With DEFAULT_MAX_LOSS=$7.50, those can't happen anymore.
+        This method creates a distribution reflecting bounded losses.
+        """
+        cap = -abs(max_loss_usd)
+        capped_losses = [max(v, cap) for v in self.loss_values]
+        avg_loss = statistics.mean(capped_losses) if capped_losses else 0.0
+        return BetDistribution(
+            win_rate=self.win_rate,
+            avg_win=self.avg_win,
+            avg_loss=avg_loss,
+            total_bets=self.total_bets,
+            daily_volume=self.daily_volume,
+            win_values=list(self.win_values),
+            loss_values=capped_losses,
+        )
+
     def expected_value(self) -> float:
         """Expected value of a single bet."""
         return self.win_rate * self.avg_win + (1 - self.win_rate) * self.avg_loss
