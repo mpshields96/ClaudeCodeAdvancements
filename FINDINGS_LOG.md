@@ -513,3 +513,100 @@
 - ADAPT: 3 (30%)
 - REFERENCE: 4 (40%)
 - Actionable (BUILD+ADAPT): 6/10 = 60% — above 40% APF target
+
+---
+
+## S181 Visual/Design Intelligence Scan (2026-03-25)
+
+Focus: UI generation, chart libraries, dashboard tools, design systems, visualization frameworks.
+Source: GitHub trending, web search, HN discussion, blog posts.
+
+### [BUILD] OpenGenerativeUI (CopilotKit) — AI Agent Generates Interactive UI
+- Source: github.com/CopilotKit/OpenGenerativeUI (1K stars)
+- Frontier: MT-32 Pillar 2/4/6
+- Skills-based architecture: modular SKILL.md files loaded on demand (progressive disclosure)
+- Agent generates raw HTML/SVG/Canvas, rendered in sandboxed iframe with ResizeObserver auto-sizing
+- Decision matrix maps user intent to viz tech: Chart.js for charts, Mermaid for diagrams, Three.js for 3D, D3.js for networks
+- CCA adaptation: our chart_generator already does the SVG generation. The decision matrix pattern (22 output types mapped to tech) and skills-based prompt loading are the real wins.
+- ACTION: Implement a visualization decision matrix in report_charts.py — map data shape to optimal chart type automatically
+
+### [BUILD] OpenUI (thesysdev) — Open Standard for Generative UI
+- Source: github.com/thesysdev/openui (2.7K stars, 444 commits)
+- Frontier: MT-32 Pillar 2/7
+- OpenUI Lang: compact streaming-first language for model-generated UI, 67% more efficient than JSON
+- Component-driven prompts: component libraries auto-generate their own system prompts
+- Zod schema type safety between LLM output and UI rendering
+- CCA adaptation: the "component library generates its own system prompt" pattern is powerful. CCA's design-guide.md could auto-generate chart selection prompts.
+- ACTION: Study OpenUI Lang spec for ideas on structured visual output format
+
+### [BUILD] CloudCLI UI (siteboon/claudecodeui) — Multi-Agent Session Dashboard
+- Source: github.com/siteboon/claudecodeui (8.9K stars, v1.26.3 active)
+- Frontier: F4 (Multi-Agent), MT-32 Pillar 6
+- React + Vite + Tailwind + CodeMirror. Auto-discovers all Claude Code sessions from local config.
+- File explorer with syntax highlighting, Git integration, shell terminal, plugin system, MCP config management
+- Supports Claude Code, Cursor CLI, Codex, Gemini-CLI simultaneously
+- CCA adaptation: session auto-discovery + unified dashboard for multiple agent sessions. Our hivemind could benefit from a visual coordinator view.
+- ACTION: Evaluate for potential ADOPT as CCA's session management frontend (MT-47)
+
+### [ADAPT] Claude Interactive Visualizations Pattern — Inline Generative Charts
+- Source: claude.com/blog/claude-builds-visuals, HN discussion (item 47352751)
+- Frontier: MT-32 Pillar 4/6
+- Claude generates HTML with Chart.js inline in conversation. React 18 + Recharts + Tailwind + shadcn/ui for artifacts.
+- Key insight from HN: "show me a widget that..." nudges toward embedded interactive output
+- Limitation: iOS doesn't support viz API yet. Accuracy concerns — polished charts can mask fabricated data.
+- CCA adaptation: our dashboards currently generate static HTML. Adding Chart.js or Recharts for interactive charts (hover, zoom, filter) would be a major upgrade over static SVGs in HTML output.
+- ACTION: Add Chart.js CDN to dashboard_generator.py for interactive charts (hover tooltips, zoom)
+
+### [ADAPT] Kevin Magnan's Claude Code Usage Dashboard — D3.js Single-File Analytics
+- Source: kevinjmagnan.com/2026/01/21/83-days-with-claude-code.html
+- Frontier: F5 (Usage Transparency), MT-32 Pillar 6
+- Single HTML file with D3.js + GSAP animations. Tracks KPIs, daily timeline, model usage donut, hourly heatmap, packed bubble chart for MCP servers
+- Key metric: "105M tokens from cache vs 3M written" — prompt caching is the #1 cost optimizer
+- Node.js script extracts from ~/.claude/ data (stats-cache.json, history.jsonl, todos/, plans/)
+- CCA adaptation: our /cca-dashboard could adopt the D3.js approach for richer interactivity. The data extraction pipeline from ~/.claude/ is already in our context monitor.
+- ACTION: Study the D3.js single-file dashboard pattern for /cca-dashboard v2
+
+### [ADAPT] Atomic Object Claude Code Dashboard — OpenTelemetry Analytics
+- Source: spin.atomicobject.com/claude-code-dashboard/
+- Frontier: F5, MT-32 Pillar 6
+- 20 charts across 6 categories via BetterStack MCP. Tracks cost by model, tool accept/reject rates, cache efficiency, session frequency.
+- Key insight: API costs ~9x subscription cost — subscription is enormous value.
+- Used Claude Code itself to generate dashboard SQL queries via MCP server
+- CCA adaptation: the "agent generates its own dashboard queries" meta-pattern is powerful. Our /cca-report already collects data — adding agent-driven chart selection would be next-level.
+
+### [REFERENCE] svg.py (orsinium-labs) — Type-Safe Python SVG Generation
+- Source: github.com/orsinium-labs/svg.py (386 stars)
+- Frontier: MT-32 Pillar 5
+- Pure Python, zero deps, full SVG 1.1/1.2/2.0/Tiny support, type-safe
+- Class-based API mirrors SVG spec: svg.Circle(cx=30, cy=30, r=20)
+- No chart abstractions — just SVG primitives. Would need chart logic on top.
+- CCA: our string-concat approach works fine for charts. svg.py adds type safety but not capabilities. REFERENCE only — not worth the migration cost.
+
+### [REFERENCE] Pygal — Python SVG Chart Library
+- Source: github.com/Kozea/pygal (2.8K stars, last update Dec 2025)
+- Frontier: MT-32 Pillar 4
+- Dynamic SVG charts with interactivity, Python native, no major deps
+- Supports line, bar, histogram, pie, maps, and more
+- CCA: our chart_generator.py already has 20 chart types with CCA design tokens baked in. Pygal would require restyling. REFERENCE for API design patterns only.
+
+### [REFERENCE] Frappe Charts — Zero-Dep JavaScript SVG Charts
+- Source: github.com/frappe/charts (15.1K stars, last update Apr 2022)
+- Frontier: MT-32 Pillar 4
+- JavaScript, not Python. GitHub-inspired aesthetics. Mixed chart types, annotations, tooltips.
+- CCA: not directly usable (JS not Python) but the simple data API pattern (labels + datasets) and mixed chart type composition are good reference for future chart_generator improvements.
+
+### [REFERENCE] StarVector — AI Foundation Model for SVG Generation
+- Source: github.com/joanrod/star-vector (4.3K stars)
+- Frontier: MT-32 Pillar 5
+- Vision-language model converts images to SVG code. Trained on 2M SVG samples.
+- Works for icons, logos, technical diagrams, graphs — NOT natural images.
+- Heavy deps (torch, transformers). Not practical for CCA's lightweight SVG pipeline.
+- REFERENCE for future: if CCA ever needs image-to-SVG conversion (e.g., screenshot to editable diagram).
+
+### APF Update
+- Findings this scan: 10
+- BUILD: 3 (30%)
+- ADAPT: 3 (30%)
+- REFERENCE: 4 (40%)
+- Actionable (BUILD+ADAPT): 6/10 = 60% — above 40% APF target
+- Top action items: (1) Chart.js interactive dashboards, (2) Visualization decision matrix, (3) CloudCLI evaluation for MT-47

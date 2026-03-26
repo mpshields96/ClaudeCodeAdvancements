@@ -3,6 +3,7 @@
 // Usage: typst compile --root / --input data=/path/to/report.json cca-report.typ output.pdf
 
 // ─── Color Palette (synced with design-guide.md + chart_generator.py) ──────
+// Core tokens
 #let black = rgb("#1a1a2e")
 #let dark = rgb("#3a3a3c")
 #let mid = rgb("#636366")
@@ -16,6 +17,18 @@
 #let red = rgb("#e94560")
 #let teal = rgb("#5ac8fa")
 #let indigo = rgb("#0f3460")
+
+// Semantic tint tokens (light backgrounds for callout/status blocks)
+#let tint-blue = rgb("#eff6ff")       // Info backgrounds, section highlights
+#let tint-red = rgb("#fff1f0")        // Blocked/error item backgrounds
+#let tint-green = rgb("#f0fdf4")      // Profitable/positive status backgrounds
+#let tint-orange = rgb("#fff7ed")     // Non-profitable/caution backgrounds
+
+// Callout box tokens (warm earth tones for "why it matters" blocks)
+#let callout-bg = rgb("#f8f7f4")      // Callout background
+#let callout-border = rgb("#d4c5a0")  // Callout left border
+#let callout-label = rgb("#8b7e66")   // Callout label text
+#let callout-body = rgb("#5c5344")    // Callout body text
 
 // ─── Data Loading ──────────────────────────────────────────────────────────
 #let data = if sys.inputs.keys().contains("data") {
@@ -422,7 +435,7 @@
   v(4mm)
   box(
     width: 100%,
-    fill: rgb("#f0f7ff"),
+    fill: tint-blue,
     stroke: (left: 3pt + blue, rest: 0.5pt + faint),
     radius: (right: 6pt),
     inset: 12pt,
