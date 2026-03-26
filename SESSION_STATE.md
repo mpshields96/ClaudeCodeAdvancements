@@ -11,12 +11,13 @@
 - **rebalance_advisor.py (MT-37 Layer 5):** Hybrid threshold+calendar rebalancing. DriftResult, RebalanceAdvisor, BUY/SELL action generation. DeMiguel 2009, Daryanani 2008, Jaconetti 2010. 23 new tests.
 - **portfolio_report.py (MT-37 Layer 5):** Portfolio analytics — annualized return (CAGR), Sharpe ratio, Sortino ratio, max drawdown, marginal risk attribution. AssetReport + PortfolioReport dataclasses. Sharpe 1966, Sortino & Price 1994. 24 new tests.
 - **behavioral_guard.py (MT-37 Layer 5):** 5 behavioral bias detectors (disposition effect, loss aversion, recency bias, home bias, overconfidence) + BehavioralGuard orchestrator. Kahneman & Tversky 1979, Barber & Odean 2000, French & Poterba 1991. 22 new tests.
+- **uber_pipeline.py (MT-37 orchestrator):** Unified pipeline wiring all 10 UBER modules. Single analyze_portfolio() entry point. PortfolioInput, UBERConfig, UBERReport with sections/action_items/summary. 21 new tests.
 - **Matthew context:** Wants UBER to support small recurring investments ($20/week or $50/month), phone app recommendations (Fidelity, M1 Finance, Schwab). Potential MT-37 DCA/micro-investing phase.
 
-**Tests:** 10,647 total (279 suites). +69 new. 0 regressions.
-**Commits:** 3 this session.
+**Tests:** 10,668 total (280 suites). +90 new. 0 regressions.
+**Commits:** 5 this session.
 
-**Next:** (1) MT-37 integration layer — wire all 10 UBER modules into a unified pipeline. (2) MT-37 DCA mode for small recurring investments. (3) MT-53 Phase 2 (pokemon-agent install). (4) MAST paper full read. (5) Check for new Kalshi REQs.
+**Next:** (1) MT-37 DCA mode for small recurring investments. (2) MT-53 Phase 2 (pokemon-agent install). (3) MAST paper full read. (4) Check for new Kalshi REQs. (5) MT-32 Visual Excellence next phase.
 
 **What was done this session (S195):**
 - **session_metrics.py (MT-49 Phase 6):** Session-over-session trend tracking — grade trends, test velocity, learnings/session, APF trends, win/pain ratios. Linear regression trend classifier. Delta-based test velocity derivation. Wired into slim_init.py Step 3.15. 37 new tests.
