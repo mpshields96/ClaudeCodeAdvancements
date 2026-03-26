@@ -299,6 +299,93 @@ def horizontal_bar_config(
     return ChartJSConfig(chart_type="bar", data=data, options=options)
 
 
+def bubble_chart_config(
+    points: list[dict],
+    title: Optional[str] = None,
+    x_label: Optional[str] = None,
+    y_label: Optional[str] = None,
+    color: Optional[str] = None,
+) -> ChartJSConfig:
+    """Generate a bubble chart configuration.
+
+    Args:
+        points: [{"x": float, "y": float, "r": float}, ...] — r is bubble radius
+        title: Optional chart title
+        x_label: Optional x-axis label
+        y_label: Optional y-axis label
+        color: Optional bubble color. Defaults to CCA primary.
+    """
+    color = color or CCA_CHART_COLORS[0]
+
+    data = {
+        "datasets": [{
+            "data": [{"x": p["x"], "y": p["y"], "r": p["r"]} for p in points],
+            "backgroundColor": color,
+        }],
+    }
+
+    options = _base_options(title)
+    options["scales"] = {}
+    if x_label:
+        options["scales"]["x"] = {"title": {"display": True, "text": x_label}}
+    if y_label:
+        options["scales"]["y"] = {"title": {"display": True, "text": y_label}}
+    options.setdefault("plugins", {})["legend"] = {"display": False}
+
+    return ChartJSConfig(chart_type="bubble", data=data, options=options)
+
+
+def radar_chart_config(
+    labels: list[str],
+    values: list[float],
+    title: Optional[str] = None,
+    color: Optional[str] = None,
+    series_label: str = "",
+    extra_series: Optional[list[dict]] = None,
+) -> ChartJSConfig:
+    """Generate a radar/spider chart configuration.
+
+    Args:
+        labels: Axis labels (one per spoke)
+        values: Values for primary series
+        title: Optional chart title
+        color: Optional primary series color
+        series_label: Label for primary series
+        extra_series: [{"label": str, "values": [...], "color": str (opt)}, ...]
+    """
+    color = color or CCA_CHART_COLORS[0]
+
+    datasets = [{
+        "label": series_label,
+        "data": values,
+        "borderColor": color,
+        "backgroundColor": color + "33",  # 20% opacity
+        "fill": True,
+        "pointRadius": 4,
+    }]
+
+    if extra_series:
+        for i, s in enumerate(extra_series):
+            s_color = s.get("color", CCA_CHART_COLORS[(i + 1) % len(CCA_CHART_COLORS)])
+            datasets.append({
+                "label": s.get("label", f"Series {i + 2}"),
+                "data": s["values"],
+                "borderColor": s_color,
+                "backgroundColor": s_color + "33",
+                "fill": True,
+                "pointRadius": 4,
+            })
+
+    data = {
+        "labels": labels,
+        "datasets": datasets,
+    }
+
+    options = _base_options(title)
+
+    return ChartJSConfig(chart_type="radar", data=data, options=options)
+
+
 def render_chartjs_canvas(
     chart_id: str,
     width: int = 400,

@@ -278,5 +278,142 @@ class TestHorizontalBarConfig(unittest.TestCase):
         self.assertEqual(parsed["options"]["indexAxis"], "y")
 
 
+class TestBubbleChartConfig(unittest.TestCase):
+    """Bubble chart configuration generation."""
+
+    def test_basic_bubble(self):
+        from chartjs_bridge import bubble_chart_config
+        config = bubble_chart_config(
+            points=[
+                {"x": 10, "y": 20, "r": 5},
+                {"x": 30, "y": 40, "r": 10},
+            ],
+            title="Test Density",
+        )
+        d = config.to_dict()
+        self.assertEqual(d["type"], "bubble")
+        self.assertEqual(len(d["data"]["datasets"][0]["data"]), 2)
+
+    def test_bubble_point_structure(self):
+        from chartjs_bridge import bubble_chart_config
+        config = bubble_chart_config(
+            points=[{"x": 1, "y": 2, "r": 3}],
+        )
+        d = config.to_dict()
+        pt = d["data"]["datasets"][0]["data"][0]
+        self.assertEqual(pt["x"], 1)
+        self.assertEqual(pt["y"], 2)
+        self.assertEqual(pt["r"], 3)
+
+    def test_bubble_title(self):
+        from chartjs_bridge import bubble_chart_config
+        config = bubble_chart_config(
+            points=[{"x": 1, "y": 2, "r": 3}],
+            title="My Bubble",
+        )
+        d = config.to_dict()
+        self.assertEqual(
+            d["options"]["plugins"]["title"]["text"], "My Bubble"
+        )
+
+    def test_bubble_axis_labels(self):
+        from chartjs_bridge import bubble_chart_config
+        config = bubble_chart_config(
+            points=[{"x": 1, "y": 2, "r": 3}],
+            x_label="LOC", y_label="Tests",
+        )
+        d = config.to_dict()
+        self.assertEqual(d["options"]["scales"]["x"]["title"]["text"], "LOC")
+        self.assertEqual(d["options"]["scales"]["y"]["title"]["text"], "Tests")
+
+    def test_bubble_custom_color(self):
+        from chartjs_bridge import bubble_chart_config
+        config = bubble_chart_config(
+            points=[{"x": 1, "y": 2, "r": 3}],
+            color="#ff0000",
+        )
+        d = config.to_dict()
+        self.assertEqual(d["data"]["datasets"][0]["backgroundColor"], "#ff0000")
+
+    def test_bubble_serializable(self):
+        from chartjs_bridge import bubble_chart_config
+        config = bubble_chart_config(points=[{"x": 1, "y": 2, "r": 3}])
+        j = config.to_json()
+        parsed = json.loads(j)
+        self.assertEqual(parsed["type"], "bubble")
+
+    def test_bubble_empty_points(self):
+        from chartjs_bridge import bubble_chart_config
+        config = bubble_chart_config(points=[])
+        d = config.to_dict()
+        self.assertEqual(len(d["data"]["datasets"][0]["data"]), 0)
+
+
+class TestRadarChartConfig(unittest.TestCase):
+    """Radar chart configuration generation."""
+
+    def test_basic_radar(self):
+        from chartjs_bridge import radar_chart_config
+        config = radar_chart_config(
+            labels=["Speed", "Power", "Range"],
+            values=[80, 60, 90],
+            title="Performance",
+        )
+        d = config.to_dict()
+        self.assertEqual(d["type"], "radar")
+        self.assertEqual(d["data"]["labels"], ["Speed", "Power", "Range"])
+        self.assertEqual(d["data"]["datasets"][0]["data"], [80, 60, 90])
+
+    def test_radar_title(self):
+        from chartjs_bridge import radar_chart_config
+        config = radar_chart_config(
+            labels=["A", "B"], values=[1, 2], title="My Radar",
+        )
+        d = config.to_dict()
+        self.assertEqual(
+            d["options"]["plugins"]["title"]["text"], "My Radar"
+        )
+
+    def test_radar_fill(self):
+        from chartjs_bridge import radar_chart_config
+        config = radar_chart_config(labels=["A"], values=[1])
+        d = config.to_dict()
+        self.assertTrue(d["data"]["datasets"][0]["fill"])
+
+    def test_radar_custom_color(self):
+        from chartjs_bridge import radar_chart_config
+        config = radar_chart_config(
+            labels=["A"], values=[1], color="#00ff00",
+        )
+        d = config.to_dict()
+        self.assertIn("#00ff00", d["data"]["datasets"][0]["borderColor"])
+
+    def test_radar_multi_series(self):
+        from chartjs_bridge import radar_chart_config
+        config = radar_chart_config(
+            labels=["A", "B", "C"],
+            values=[10, 20, 30],
+            extra_series=[
+                {"label": "S2", "values": [5, 15, 25]},
+            ],
+        )
+        d = config.to_dict()
+        self.assertEqual(len(d["data"]["datasets"]), 2)
+        self.assertEqual(d["data"]["datasets"][1]["data"], [5, 15, 25])
+
+    def test_radar_serializable(self):
+        from chartjs_bridge import radar_chart_config
+        config = radar_chart_config(labels=["A"], values=[1])
+        j = config.to_json()
+        parsed = json.loads(j)
+        self.assertEqual(parsed["type"], "radar")
+
+    def test_radar_empty(self):
+        from chartjs_bridge import radar_chart_config
+        config = radar_chart_config(labels=[], values=[])
+        d = config.to_dict()
+        self.assertEqual(len(d["data"]["labels"]), 0)
+
+
 if __name__ == "__main__":
     unittest.main()
