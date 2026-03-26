@@ -206,6 +206,7 @@ Show learnings from past session outcomes so this session starts smarter:
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 session_outcome_tracker.py backfill 2>/dev/null | tail -1
 python3 session_outcome_tracker.py init-briefing --last 10
 ```
 
