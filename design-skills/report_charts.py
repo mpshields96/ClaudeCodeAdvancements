@@ -435,6 +435,29 @@ class ReportChartGenerator:
         )
         return render_svg(chart)
 
+    def kalshi_price_candles(self, data):
+        """CandlestickChart: OHLC price bars for contract price movement.
+
+        Expects kalshi_analytics.charts.price_candles with:
+          candles: [{"label": str, "open": float, "high": float, "low": float, "close": float}, ...]
+        """
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Price Movement")
+        candle_data = kalshi.get("charts", {}).get("price_candles", {})
+        candles = candle_data.get("candles", [])
+        if not candles:
+            return self._empty_chart("Price Movement")
+        items = [
+            (c["label"], c["open"], c["high"], c["low"], c["close"])
+            for c in candles
+        ]
+        chart = CandlestickChart(
+            data=items,
+            title=candle_data.get("title", "Contract Price Movement"),
+        )
+        return render_svg(chart)
+
     def kalshi_edge_forest(self, data):
         """ForestPlot: per-asset/price alpha with confidence intervals.
 
@@ -547,6 +570,7 @@ class ReportChartGenerator:
                 "kalshi_bankroll": self.kalshi_bankroll(data),
                 "kalshi_calibration": self.kalshi_calibration(data),
                 "kalshi_edge_forest": self.kalshi_edge_forest(data),
+                "kalshi_price_candles": self.kalshi_price_candles(data),
             })
         # Self-learning charts (MT-33 Phase 5) — only if data available
         if data.get("learning_intelligence", {}).get("available"):

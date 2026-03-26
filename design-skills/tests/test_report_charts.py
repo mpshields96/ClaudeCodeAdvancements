@@ -456,6 +456,24 @@ class TestKalshiCharts(unittest.TestCase):
         # No calibration key in charts → empty chart
         self.assertIn("No data", svg)
 
+    def test_price_candles_returns_svg(self):
+        """CandlestickChart renders with OHLC candle data."""
+        self.kalshi_data["kalshi_analytics"]["charts"]["price_candles"] = {
+            "title": "BTC Sniper Prices",
+            "candles": [
+                {"label": "09:00", "open": 92.0, "high": 95.0, "low": 91.0, "close": 94.0},
+                {"label": "10:00", "open": 94.0, "high": 96.0, "low": 93.0, "close": 93.5},
+                {"label": "11:00", "open": 93.5, "high": 94.0, "low": 92.0, "close": 93.8},
+            ],
+        }
+        svg = self.gen.kalshi_price_candles(self.kalshi_data)
+        self.assertIn("<svg", svg)
+        self.assertIn("BTC Sniper Prices", svg)
+
+    def test_price_candles_no_data(self):
+        svg = self.gen.kalshi_price_candles(self.kalshi_data)
+        self.assertIn("No data", svg)
+
     def test_edge_forest_returns_svg(self):
         """ForestPlot renders with per-asset alpha + CI data."""
         self.kalshi_data["kalshi_analytics"]["charts"]["edge_forest"] = {
@@ -484,7 +502,7 @@ class TestKalshiCharts(unittest.TestCase):
     def test_generate_all_includes_kalshi(self):
         charts = self.gen.generate_all(self.kalshi_data)
         kalshi_keys = [k for k in charts if k.startswith("kalshi_")]
-        self.assertEqual(len(kalshi_keys), 9)
+        self.assertEqual(len(kalshi_keys), 10)
 
     def test_generate_all_without_kalshi(self):
         """Without kalshi_analytics, no kalshi charts generated."""
