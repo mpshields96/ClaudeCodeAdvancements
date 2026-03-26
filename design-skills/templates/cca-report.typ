@@ -704,6 +704,13 @@
     embed-chart("module_loc_treemap", width: 100%),
   )
   v(4mm)
+  grid(
+    columns: (1fr, 1fr),
+    column-gutter: 12pt,
+    embed-chart("module_tests_pareto", width: 100%),
+    embed-chart("test_pass_gauge", width: 100%),
+  )
+  v(4mm)
 }
 
 #let module-card(mod) = {
@@ -1316,6 +1323,26 @@
 
     // Chart — row 4: Win Rate vs Profit scatter
     embed-chart("kalshi_winrate_vs_profit", width: 60%)
+
+    v(4mm)
+
+    // Charts — row 5: Edge analysis + WR range (S193)
+    grid(
+      columns: (1fr, 1fr),
+      column-gutter: 12pt,
+      embed-chart("kalshi_edge_forest", width: 100%),
+      embed-chart("kalshi_wr_dumbbell", width: 100%),
+    )
+
+    v(4mm)
+
+    // Charts — row 6: Bankroll bullet + Guard slope (S193)
+    grid(
+      columns: (1fr, 1fr),
+      column-gutter: 12pt,
+      embed-chart("kalshi_bankroll_bullet", width: 100%),
+      embed-chart("kalshi_guard_slope", width: 100%),
+    )
   }
 
   v(4mm)

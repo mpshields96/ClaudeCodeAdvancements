@@ -612,6 +612,90 @@ def seed_principles_from_findings(
     return results
 
 
+# --- Phase: Trade reflector bridge (MT-28 growth, S193) ---
+
+# Pattern type -> domain mapping for trade proposals
+TRADE_PATTERN_DOMAIN = {
+    "win_rate_drift": "trading_execution",
+    "time_of_day_bias": "trading_execution",
+    "streak_anomaly": "trading_research",
+    "edge_erosion": "trading_research",
+    "sizing_inefficiency": "trading_execution",
+}
+
+
+def proposal_to_principle_text(proposal: dict) -> str:
+    """Convert a trade reflector proposal into a principle statement."""
+    pattern = proposal.get("pattern", "unknown")
+    rec = proposal.get("recommendation", "")
+    severity = proposal.get("severity", "info")
+
+    # Truncate long recommendations
+    if len(rec) > 150:
+        rec = rec[:147] + "..."
+
+    prefix = "Trade signal" if severity in ("critical", "warning") else "Trade observation"
+    return f"{prefix} ({pattern}): {rec}"
+
+
+def seed_principles_from_trades(
+    proposals: list,
+    principles_path: str = DEFAULT_PRINCIPLES_PATH,
+    session: int = 0,
+) -> list:
+    """Seed principle registry from trade reflector proposals.
+
+    Args:
+        proposals: List of proposal dicts from TradeReflector.generate_proposals()
+        principles_path: Path to principles.jsonl
+        session: Current session number
+
+    Returns list of dicts describing what was seeded.
+    """
+    if not proposals:
+        return []
+
+    existing = _existing_principle_texts(principles_path)
+    results = []
+
+    for proposal in proposals:
+        text = proposal_to_principle_text(proposal)
+        if text in existing:
+            continue
+
+        pattern = proposal.get("pattern", "unknown")
+        domain = TRADE_PATTERN_DOMAIN.get(pattern, "trading_research")
+        if domain not in VALID_DOMAINS:
+            domain = "trading_research"
+
+        applicable = [domain]
+        if domain != "trading_research":
+            applicable.append("trading_research")
+
+        severity = proposal.get("severity", "info")
+        p_val = proposal.get("evidence", {}).get("p_value", 1.0)
+
+        add_principle(
+            text=text,
+            source_domain=domain,
+            applicable_domains=applicable,
+            session=session,
+            source_context=f"Seeded from trade_reflector ({pattern}, severity={severity}, p={p_val:.4f})",
+            path=principles_path,
+        )
+
+        existing.add(text)
+        results.append({
+            "text": text,
+            "domain": domain,
+            "pattern": pattern,
+            "severity": severity,
+            "source_context": "trade_reflector",
+        })
+
+    return results
+
+
 def seed_all(
     learnings_path: str = DEFAULT_LEARNINGS_PATH,
     journal_path: str = DEFAULT_JOURNAL_PATH,
@@ -620,8 +704,9 @@ def seed_all(
     min_severity: int = 1,
     min_points: int = 0,
     session: int = 0,
+    trade_proposals: Optional[list] = None,
 ) -> dict:
-    """Seed from learnings, journal, and findings. Returns summary."""
+    """Seed from learnings, journal, findings, and optionally trades. Returns summary."""
     learnings_results = seed_principles_from_learnings(
         learnings_path, principles_path, min_severity, session=session
     )
@@ -632,15 +717,23 @@ def seed_all(
         min_points=min_points,
         session=session,
     )
+    trade_results = []
+    if trade_proposals:
+        trade_results = seed_principles_from_trades(
+            trade_proposals, principles_path, session=session
+        )
 
+    total = len(learnings_results) + len(journal_results) + len(findings_results) + len(trade_results)
     return {
         "from_learnings": len(learnings_results),
         "from_journal": len(journal_results),
         "from_findings": len(findings_results),
-        "total_seeded": len(learnings_results) + len(journal_results) + len(findings_results),
+        "from_trades": len(trade_results),
+        "total_seeded": total,
         "learnings_details": learnings_results,
         "journal_details": journal_results,
         "findings_details": findings_results,
+        "trade_details": trade_results,
     }
 
 
@@ -726,12 +819,37 @@ def main():
         for r in results:
             print(f"  [{r['domain']}] {r['text'][:80]}")
 
+    elif cmd == "seed-trades":
+        db_path = None
+        if "--db" in sys.argv:
+            idx = sys.argv.index("--db")
+            if idx + 1 < len(sys.argv):
+                db_path = sys.argv[idx + 1]
+        if not db_path:
+            # Default Kalshi bot DB location
+            db_path = os.path.expanduser("~/Projects/polymarket-bot/kalshi_bot.db")
+        if not os.path.isfile(db_path):
+            print(f"DB not found: {db_path}")
+            sys.exit(1)
+        try:
+            from trade_reflector import TradeReflector
+            with TradeReflector(db_path) as tr:
+                proposals = tr.generate_proposals()
+            results = seed_principles_from_trades(proposals)
+            print(f"Seeded {len(results)} principles from trade reflector")
+            for r in results:
+                print(f"  [{r['domain']}] {r['text'][:80]}")
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+
     elif cmd == "seed-all":
         summary = seed_all()
         print(f"Seeded {summary['total_seeded']} principles total")
         print(f"  From LEARNINGS.md: {summary['from_learnings']}")
         print(f"  From journal: {summary['from_journal']}")
         print(f"  From FINDINGS_LOG: {summary.get('from_findings', 0)}")
+        print(f"  From trades: {summary.get('from_trades', 0)}")
 
     elif cmd == "status":
         status = get_status()

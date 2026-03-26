@@ -39,10 +39,10 @@
 | Usage Dashboard | `usage-dashboard/` | USAGE-1-3 + doc_drift_checker (root fix) + hook_profiler | 369 |
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending + discover),14(Phase 3 COMPLETE),15,27(Phase 4 NEEDLE precision),40(Phase 1 scan scheduler) + subreddit_discoverer + url_reader tests | 498 |
 | Self-Learning | `self-learning/` | MT-7,10,12,26(Tier 3+E2E),27(Phase 5),28(COMPLETE),37(Phase 3),49(Phase 5) + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + predictive_recommender + sentinel_bridge + order_flow_intel + belief_vol_surface + apf_session_tracker + deployment_verifier + principle_seeder + monte_carlo_simulator (REQ-040) + meta_learning_dashboard (MT-49) + principle_discoverer (MT-49 Phase 3) + confidence_recalibrator (MT-49 Phase 4) + research_roi_resolver (MT-49 Phase 5) + fill_rate_simulator (REQ-042) + portfolio_loader (MT-37 Phase 3) + volume_predictor (S187) + reflect tests | 2141 |
-| Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 29 chart types (+Bullet +Slope +Lollipop +Dumbbell +Pareto S192) + consistency audit + report_charts (wired into /cca-report, 13 Kalshi + 12 base charts, +bankroll_bullet +guard_slope +wr_dumbbell +module_tests_lollipop S192) + kalshi_data_collector (13 chart methods S192) + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) + figure integration (slides/dashboard/website, MT-32 Phase 7) + chartjs_bridge (MT-52/E2, 8 Chart.js types +bubble +radar S192) | 1590 |
+| Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 29 chart types + consistency audit + report_charts (wired into /cca-report, 13 Kalshi + 13 base + 3 learning charts, +pareto +gauge S193) + kalshi_data_collector (13 chart methods) + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) + figure integration (MT-32 Phase 7) + chartjs_bridge (MT-52/E2, 8 Chart.js types) | 1604 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE, Agent Orchestration Research (S190), MT-53 Intelligence Scan (S191) | 86 |
 
-**Total: ~10,411 tests (~271 suites). All must pass before any work.**
+**Total: ~10,425 tests (~271 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -122,17 +122,17 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `templates/cca-report.typ` — Status report Typst template
 - `templates/cca-slides.typ` — Presentation slide Typst template
 - `dashboard_generator.py` — Self-contained HTML dashboard generator
-- `chart_generator.py` — SVG chart generation (12 chart types: bar, horizontal bar, line, sparkline, donut, heatmap, stacked bar, area, stacked area, waterfall, radar, gauge)
+- `chart_generator.py` — SVG chart generation (29 chart types incl bar, line, donut, heatmap, scatter, box, histogram, candlestick, forest, calibration, bullet, slope, lollipop, dumbbell, pareto)
 - `website_generator.py` — Landing page + docs page HTML generator (665 LOC)
 - `daily_snapshot.py` — Daily project metric snapshots with diff support (474 LOC, 50 tests)
-- `report_charts.py` — SVG chart generation from report data for Typst embedding (13 chart types incl 7 Kalshi, 43 tests, S117/S122). Wired into /cca-report pipeline — charts auto-generated and embedded in PDF.
+- `report_charts.py` — SVG chart generation from report data for Typst embedding (13 base + 13 Kalshi + 3 learning charts, 102 tests). Wired into /cca-report pipeline — charts auto-generated and embedded in PDF.
 - `kalshi_data_collector.py` — MT-33: Read-only Kalshi bot DB analytics (trades, strategies, P&L, bankroll). 8 chart-ready methods. 48 tests (S122/S123).
 - `learning_data_collector.py` — MT-33: Self-learning intelligence (journal events, APF trend, domain distribution). 3 chart methods. 29 tests (S122/S123).
 - `report_differ.py` — MT-33 Phase 6: Structured diff between two report sidecars (test growth, MT transitions, Kalshi P&L, APF). 30 tests (S123).
 - `report_sidecar.py` — MT-33 Phase 5: JSON export alongside PDF (extract, save, load, find_latest). S134.
 - `MT33_DATA_MAPPING.md` — Schema mapping, SQL queries, chart-to-data design doc (S122).
 - `figure_generator.py` — MT-32 Phase 6: Multi-panel figure composer (grid layout, panel labels, captions, 3 annotation types, presets). 62 tests (S166).
-- `chartjs_bridge.py` — MT-52/E2: Chart.js config generator for interactive HTML dashboards. 4 chart types, CCA palette, CDN tag. 21 tests (S182).
+- `chartjs_bridge.py` — MT-52/E2: Chart.js config generator for interactive HTML dashboards. 8 Chart.js types (bar, line, donut, stacked bar, scatter, horizontal bar, bubble, radar), CCA palette, CDN tag. 21 tests (S192).
 
 **self-learning/** — New MT-37 modules (S185) + Kalshi intelligence toolkit (S188)
 - `market_data.py` — MT-37 Phase 4: Returns, volatility, beta, factor exposures, correlation matrix, CSV/JSON parsers. 42 tests (S185).

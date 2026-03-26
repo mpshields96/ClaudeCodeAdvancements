@@ -688,6 +688,111 @@ class TestTestDistributionChart(unittest.TestCase):
         self.assertNotIn("test_distribution", charts)
 
 
+class TestModuleTestsPareto(unittest.TestCase):
+    """Tests for module_tests_pareto (ParetoChart) — 80/20 test distribution."""
+
+    def setUp(self):
+        from report_charts import ReportChartGenerator
+        self.gen = ReportChartGenerator()
+        self.sample_modules = [
+            {"name": "Self-Learning", "tests": 2141, "loc": 6000},
+            {"name": "Design Skills", "tests": 1590, "loc": 3500},
+            {"name": "Agent Guard", "tests": 1102, "loc": 5000},
+            {"name": "Reddit Intel", "tests": 498, "loc": 2200},
+            {"name": "Context Monitor", "tests": 434, "loc": 2500},
+            {"name": "Usage Dashboard", "tests": 369, "loc": 1800},
+            {"name": "Memory System", "tests": 340, "loc": 2000},
+            {"name": "Spec System", "tests": 205, "loc": 1500},
+        ]
+
+    def test_returns_svg(self):
+        svg = self.gen.module_tests_pareto({"modules": self.sample_modules})
+        self.assertIn("<svg", svg)
+        self.assertIn("</svg>", svg)
+
+    def test_has_title(self):
+        svg = self.gen.module_tests_pareto({"modules": self.sample_modules})
+        self.assertIn("80/20", svg)
+
+    def test_empty_modules(self):
+        svg = self.gen.module_tests_pareto({"modules": []})
+        self.assertIn("No data", svg)
+
+    def test_missing_modules(self):
+        svg = self.gen.module_tests_pareto({})
+        self.assertIn("No data", svg)
+
+    def test_zero_test_modules(self):
+        data = {"modules": [{"name": "Empty", "tests": 0, "loc": 100}]}
+        svg = self.gen.module_tests_pareto(data)
+        self.assertIn("No data", svg)
+
+    def test_single_module(self):
+        data = {"modules": [{"name": "Solo", "tests": 500, "loc": 1000}]}
+        svg = self.gen.module_tests_pareto(data)
+        self.assertIn("<svg", svg)
+
+    def test_generate_all_includes_pareto(self):
+        from report_charts import ReportChartGenerator
+        gen = ReportChartGenerator()
+        data = {
+            "modules": self.sample_modules,
+            "summary": {"source_loc": 25000, "test_loc": 35000},
+            "intelligence": {"findings_total": 0},
+            "master_tasks_complete": [],
+            "master_tasks_active": [],
+            "master_tasks_pending": [],
+            "frontiers": [],
+        }
+        charts = gen.generate_all(data)
+        self.assertIn("module_tests_pareto", charts)
+
+
+class TestTestPassGauge(unittest.TestCase):
+    """Tests for test_pass_gauge (GaugeChart) — test pass rate speedometer."""
+
+    def setUp(self):
+        from report_charts import ReportChartGenerator
+        self.gen = ReportChartGenerator()
+
+    def test_returns_svg(self):
+        data = {"tests": {"total": 10411, "passed": 10411}}
+        svg = self.gen.test_pass_gauge(data)
+        self.assertIn("<svg", svg)
+        self.assertIn("</svg>", svg)
+
+    def test_has_title(self):
+        data = {"tests": {"total": 100, "passed": 95}}
+        svg = self.gen.test_pass_gauge(data)
+        self.assertIn("Pass Rate", svg)
+
+    def test_shows_count_label(self):
+        data = {"tests": {"total": 500, "passed": 490}}
+        svg = self.gen.test_pass_gauge(data)
+        self.assertIn("490/500", svg)
+
+    def test_zero_total(self):
+        data = {"tests": {"total": 0, "passed": 0}}
+        svg = self.gen.test_pass_gauge(data)
+        self.assertIn("No data", svg)
+
+    def test_missing_tests_key(self):
+        svg = self.gen.test_pass_gauge({})
+        self.assertIn("No data", svg)
+
+    def test_all_passing_defaults(self):
+        """If passed not specified, defaults to total (100%)."""
+        data = {"tests": {"total": 200}}
+        svg = self.gen.test_pass_gauge(data)
+        self.assertIn("<svg", svg)
+        self.assertIn("200/200", svg)
+
+    def test_partial_pass_rate(self):
+        data = {"tests": {"total": 100, "passed": 75}}
+        svg = self.gen.test_pass_gauge(data)
+        self.assertIn("<svg", svg)
+
+
 class TestCoverageRatioChart(unittest.TestCase):
     """Tests for test coverage ratio chart (MT-32) — tests per 100 LOC per module."""
 

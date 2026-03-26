@@ -31,8 +31,9 @@ WINDOWS = {
         "rules": [
             "No agent spawns (gsd:plan-phase, parallel workers)",
             "Use gsd:quick exclusively",
-            "Concise responses — 50% shorter than usual",
+            "Concise responses — shorter than usual",
             "Batch reads, skip optional exploration",
+            "Pace across full 5-hour window — both CCA + Kalshi chats share limits",
         ],
     },
     "SHOULDER": {

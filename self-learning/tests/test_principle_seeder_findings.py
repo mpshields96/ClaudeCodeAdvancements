@@ -207,5 +207,123 @@ class TestSeedPrinciplesFromFindings(unittest.TestCase):
             os.unlink(principles_path)
 
 
+class TestTradeSeeder(unittest.TestCase):
+    """Tests for seed_principles_from_trades (MT-28 growth, S193)."""
+
+    def setUp(self):
+        from principle_seeder import seed_principles_from_trades, proposal_to_principle_text
+        self.seed_fn = seed_principles_from_trades
+        self.text_fn = proposal_to_principle_text
+
+    def _make_proposal(self, pattern="win_rate_drift", severity="warning",
+                       recommendation="WR dropped from 95% to 80%", p_value=0.01):
+        return {
+            "pattern": pattern,
+            "severity": severity,
+            "recommendation": recommendation,
+            "action_type": "monitor",
+            "evidence": {"p_value": p_value},
+        }
+
+    def test_proposal_to_principle_text_warning(self):
+        p = self._make_proposal(severity="warning")
+        text = self.text_fn(p)
+        self.assertIn("Trade signal", text)
+        self.assertIn("win_rate_drift", text)
+
+    def test_proposal_to_principle_text_info(self):
+        p = self._make_proposal(severity="info")
+        text = self.text_fn(p)
+        self.assertIn("Trade observation", text)
+
+    def test_proposal_text_truncation(self):
+        long_rec = "A" * 200
+        p = self._make_proposal(recommendation=long_rec)
+        text = self.text_fn(p)
+        self.assertLessEqual(len(text), 250)  # prefix + truncated rec
+
+    def test_seed_empty_proposals(self):
+        with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as f:
+            principles_path = f.name
+        try:
+            results = self.seed_fn([], principles_path=principles_path)
+            self.assertEqual(results, [])
+        finally:
+            os.unlink(principles_path)
+
+    def test_seed_single_proposal(self):
+        with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as f:
+            principles_path = f.name
+        try:
+            proposals = [self._make_proposal()]
+            results = self.seed_fn(proposals, principles_path=principles_path)
+            self.assertEqual(len(results), 1)
+            self.assertEqual(results[0]["domain"], "trading_execution")
+            self.assertEqual(results[0]["pattern"], "win_rate_drift")
+        finally:
+            os.unlink(principles_path)
+
+    def test_seed_deduplicates(self):
+        with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as f:
+            principles_path = f.name
+        try:
+            proposals = [self._make_proposal(), self._make_proposal()]
+            results = self.seed_fn(proposals, principles_path=principles_path)
+            self.assertEqual(len(results), 1)  # second is duplicate
+        finally:
+            os.unlink(principles_path)
+
+    def test_seed_multiple_patterns(self):
+        with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as f:
+            principles_path = f.name
+        try:
+            proposals = [
+                self._make_proposal(pattern="win_rate_drift", recommendation="WR drift detected"),
+                self._make_proposal(pattern="time_of_day_bias", recommendation="Hour 3 UTC is worst"),
+                self._make_proposal(pattern="edge_erosion", recommendation="Edge declining"),
+            ]
+            results = self.seed_fn(proposals, principles_path=principles_path)
+            self.assertEqual(len(results), 3)
+            domains = {r["domain"] for r in results}
+            self.assertIn("trading_execution", domains)
+            self.assertIn("trading_research", domains)
+        finally:
+            os.unlink(principles_path)
+
+    def test_seeded_principles_persist(self):
+        with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as f:
+            principles_path = f.name
+        try:
+            proposals = [self._make_proposal()]
+            self.seed_fn(proposals, principles_path=principles_path)
+            with open(principles_path) as f:
+                lines = [l.strip() for l in f if l.strip()]
+            self.assertEqual(len(lines), 1)
+            p = json.loads(lines[0])
+            self.assertIn("trade_reflector", p.get("source_context", ""))
+        finally:
+            os.unlink(principles_path)
+
+    def test_domain_mapping_sizing(self):
+        p = self._make_proposal(pattern="sizing_inefficiency")
+        with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as f:
+            principles_path = f.name
+        try:
+            results = self.seed_fn([p], principles_path=principles_path)
+            self.assertEqual(results[0]["domain"], "trading_execution")
+        finally:
+            os.unlink(principles_path)
+
+    def test_domain_mapping_unknown_pattern(self):
+        p = self._make_proposal(pattern="unknown_pattern")
+        with tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False) as f:
+            principles_path = f.name
+        try:
+            results = self.seed_fn([p], principles_path=principles_path)
+            self.assertEqual(results[0]["domain"], "trading_research")
+        finally:
+            os.unlink(principles_path)
+
+
 if __name__ == "__main__":
     unittest.main()

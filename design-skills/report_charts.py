@@ -24,11 +24,13 @@ from chart_generator import (
     CCA_COLORS,
     DonutChart,
     DumbbellChart,
+    GaugeChart,
     ForestPlot,
     HistogramChart,
     HorizontalBarChart,
     LineChart,
     LollipopChart,
+    ParetoChart,
     ScatterPlot,
     SERIES_PALETTE,
     SlopeChart,
@@ -298,6 +300,34 @@ class ReportChartGenerator:
         items = [(m["name"], m["tests"]) for m in sorted_mods]
         chart = LollipopChart(items, title="Tests per Module", show_values=True,
                               color=CCA_COLORS["accent"])
+        return render_svg(chart)
+
+    def module_tests_pareto(self, data):
+        """ParetoChart: test counts per module — 80/20 analysis of test distribution."""
+        modules = data.get("modules", [])
+        if not modules or all(m.get("tests", 0) == 0 for m in modules):
+            return self._empty_chart("Test Distribution (Pareto)")
+        sorted_mods = sorted(modules, key=lambda m: m.get("tests", 0), reverse=True)
+        items = [(m["name"], m["tests"]) for m in sorted_mods]
+        chart = ParetoChart(data=items, title="Test Distribution — 80/20 Analysis")
+        return render_svg(chart)
+
+    def test_pass_gauge(self, data):
+        """GaugeChart: test pass rate as a speedometer gauge."""
+        tests = data.get("tests", {})
+        total = tests.get("total", 0)
+        passed = tests.get("passed", total)  # default to total if not specified
+        if total == 0:
+            return self._empty_chart("Test Pass Rate")
+        rate = (passed / total) * 100
+        chart = GaugeChart(
+            value=rate,
+            min_value=0,
+            max_value=100,
+            thresholds=(80.0, 95.0),
+            title="Test Pass Rate",
+            label=f"{passed}/{total}",
+        )
         return render_svg(chart)
 
     def kalshi_wr_dumbbell(self, data):
@@ -646,6 +676,8 @@ class ReportChartGenerator:
             "module_composition": self.module_composition(data),
             "coverage_ratio": self.coverage_ratio_chart(data),
             "module_tests_lollipop": self.module_tests_lollipop(data),
+            "module_tests_pareto": self.module_tests_pareto(data),
+            "test_pass_gauge": self.test_pass_gauge(data),
         }
         # Hook coverage chart — only if hooks data available
         if data.get("hooks"):
