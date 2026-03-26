@@ -42,7 +42,7 @@
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 21 chart types + consistency audit + report_charts (wired into /cca-report, +4 statistical MT-32) + BubbleChart + TreemapChart + SankeyChart + ScatterPlot + BoxPlot + HistogramChart + ViolinPlot + kalshi_data_collector + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) + figure integration (slides/dashboard/website, MT-32 Phase 7) + chartjs_bridge (MT-52/E2, Chart.js interactive charts) | 1432 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE | 86 |
 
-**Total: ~10,098 tests (~261 suites). All must pass before any work.**
+**Total: ~10,186 tests (~264 suites). All must pass before any work.**
 
 Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f ===" && python3 "$f" 2>&1 | tail -1; done`
 
@@ -134,10 +134,13 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `figure_generator.py` — MT-32 Phase 6: Multi-panel figure composer (grid layout, panel labels, captions, 3 annotation types, presets). 62 tests (S166).
 - `chartjs_bridge.py` — MT-52/E2: Chart.js config generator for interactive HTML dashboards. 4 chart types, CCA palette, CDN tag. 21 tests (S182).
 
-**self-learning/** — New MT-37 modules (S185)
+**self-learning/** — New MT-37 modules (S185) + Kalshi intelligence toolkit (S188)
 - `market_data.py` — MT-37 Phase 4: Returns, volatility, beta, factor exposures, correlation matrix, CSV/JSON parsers. 42 tests (S185).
 - `allocation.py` — MT-37 Phase 5: Equal-weight, risk parity, Black-Litterman allocation. 28 tests (S185).
 - `factor_tilts.py` — MT-37 Phase 6: Value/momentum/quality/low-vol factor overlays. 26 tests (S185).
+- `sizing_optimizer.py` — Portfolio-level bet sizing optimizer: Kelly fractions, daily EV/SD, P(target), from_db, asset-weighted sizing. 47 tests (S188).
+- `daily_outlook.py` — Daily P&L outlook predictor: BTC range → volume → EV/SD → verdict. 18 tests (S188).
+- `hour_sizing.py` — Time-of-day sizing adjuster: hourly EV → multiplier schedule. 23 tests (S188).
 
 **self-learning/research/** — Academic research
 - `MT37_RESEARCH.md` — MT-37 Phase 1: 42-paper synthesis across 10 areas (S178-S180)
