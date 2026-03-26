@@ -646,3 +646,25 @@ Source: GitHub trending, web search, HN discussion, blog posts.
 [2026-03-26] [ADAPT] [MT-38 Token Budget + Context Monitor] "Token overhead measurement methodology" (15pts, 94%, 9c, r/ClaudeCode). u/wirelesshealth measured CC v2.1.84 hidden token overhead: 16K empty dir, 23K real project. Tools=10K, project config=7K. KEY: `claude -p --output-format json --no-session-persistence 'hello'` gives exact token counts via cache_creation+cache_read. `--bare` mode + `--tools=''` strips overhead. ADAPT: (1) Build overhead measurement into CCA's init to track our own token bloat across sessions. (2) Consider `--bare` mode for CLI workers that don't need all hooks. (3) Validate CCA's overhead vs this baseline. — https://www.reddit.com/r/ClaudeCode/comments/1s3xjn4/
 
 [2026-03-26] [REFERENCE] [Frontier 1 Memory] "UserPromptSubmit hook intercept pattern" (54pts, 97%, 17c, r/ClaudeCode). SimpleClaude's sc-hooks plugin uses UserPromptSubmit to intercept and block API calls for slash commands that only need side-effects (clipboard, file writes, notifications). CCA already implements this pattern in 5 hooks (skill_activator, skillbook_inject, capture_hook, queue_injector, resurfacer_hook). No novel content. — https://www.reddit.com/r/ClaudeCode/comments/1s3pfio/
+
+## S186 — 2026-03-26 — Intelligence Scan
+
+### Finding 186-1: UserPromptSubmit Hook as "Hidden Runtime" Pattern
+- **URL:** https://www.reddit.com/r/ClaudeCode/comments/1s3pfio/
+- **Score:** 60 pts | 18 comments | r/ClaudeCode
+- **Author:** u/snow_schwartz (SimpleClaude dev)
+- **What:** UserPromptSubmit hook intercepts prompt before API, runs arbitrary code, can block the API call. Enables slash commands that do work without burning a turn.
+- **Repos:** SimpleClaude (sc-hooks), prompt-intercept-pattern, tail-claude-hud (statusline)
+- **CCA already does this:** skill_activator.py, skillbook_inject.py, capture_hook.py, queue_injector.py all use UserPromptSubmit
+- **Verdict:** REFERENCE — validates our architecture, no new capability
+
+### Finding 186-2: Context Hub Supply Chain Attack via CLAUDE.md Poisoning
+- **URL:** https://www.reddit.com/r/ClaudeCode/comments/1s35r49/
+- **Score:** 48 pts | 14 comments | r/ClaudeCode
+- **Author:** u/Big_Status_2433
+- **What:** Poisoned docs in Context Hub inject malicious dependencies. The agent reads the doc, installs the fake package, AND writes it to CLAUDE.md for persistence across sessions. 240 Docker run reproduction. The Register covered it. Context7 patched, Context Hub hasn't.
+- **Repo:** https://github.com/mickmicksh/chub-supply-chain-poc
+- **CCA relevance:** AG-4 (content_scanner) + AG-9 (bash_guard) partially protect against this. Gap: no CLAUDE.md integrity checker that detects suspicious dependency injections.
+- **Action:** Consider AG-11: CLAUDE.md integrity guard — scan for unknown/suspicious package install instructions, MCP server additions from untrusted sources.
+- **Verdict:** ADAPT — real attack vector, enhances Frontier 4
+
