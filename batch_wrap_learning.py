@@ -228,6 +228,26 @@ def run_batch(
     except Exception as e:
         result.record("outcome_tracker", False, str(e))
 
+    # 7. Principle seeding from findings + journal (MT-28 growth)
+    try:
+        from self_learning_imports import seed_all as _seed_all
+        summary = _seed_all(session=batch.session_id)
+        seeded = summary.get("total_seeded", 0)
+        result.record("principle_seeding", True)
+    except ImportError:
+        # Fallback: try direct import
+        try:
+            import sys as _sys
+            import os as _os
+            _sys.path.insert(0, _os.path.join(_os.path.dirname(__file__), "self-learning"))
+            from principle_seeder import seed_all as _seed_all_direct
+            summary = _seed_all_direct(session=batch.session_id)
+            result.record("principle_seeding", True)
+        except Exception as e:
+            result.record("principle_seeding", False, f"import: {e}")
+    except Exception as e:
+        result.record("principle_seeding", False, str(e))
+
     return result
 
 
