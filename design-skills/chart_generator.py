@@ -135,6 +135,26 @@ def _polyline(points: list, stroke: str, stroke_width: float = 2,
             f'stroke-linejoin="round" stroke-linecap="round"/>\n')
 
 
+def _format_tick_value(val: float, all_integer: bool) -> str:
+    """Format a y-axis tick value for display.
+
+    When all_integer is True (max_val is a whole number), format as integers.
+    Otherwise use one decimal place for fractional values.
+    Used by all chart types for consistent y-axis label formatting.
+    """
+    if all_integer:
+        return str(int(val)) if val == int(val) else str(int(round(val)))
+    return str(int(val)) if val == int(val) else f"{val:.1f}"
+
+
+def _abbreviate_label(label: str, max_len: int) -> str:
+    """Truncate a label to max_len characters, adding ellipsis if needed."""
+    label = str(label)
+    if len(label) <= max_len:
+        return label
+    return label[:max_len - 1] + "\u2026"
+
+
 def _lerp_color(color_a: str, color_b: str, t: float) -> str:
     """Interpolate between two hex colors. t=0 → color_a, t=1 → color_b."""
     t = max(0.0, min(1.0, t))
@@ -741,11 +761,8 @@ def _render_bar_chart(chart: BarChart) -> str:
         val = max_val * i / 4
         parts.append(_line(margin_left, y, margin_left + plot_w, y,
                            CCA_COLORS["border"], 0.5))
-        if all_integer:
-            label_str = str(int(val))
-        else:
-            label_str = str(int(val)) if val == int(val) else f"{val:.1f}"
-        parts.append(_text(margin_left - 8, y + 4, label_str,
+        parts.append(_text(margin_left - 8, y + 4,
+                           _format_tick_value(val, all_integer),
                            font_size=9, fill=CCA_COLORS["muted"],
                            anchor="end"))
 
@@ -899,12 +916,14 @@ def _render_line_chart(chart: LineChart) -> str:
         max_val = 1
 
     # Y-axis gridlines
+    all_integer_line = max_val == int(max_val)
     for i in range(5):
         y = margin_top + plot_h - (plot_h * i / 4)
-        val = int(max_val * i / 4)
+        val = max_val * i / 4
         parts.append(_line(margin_left, y, margin_left + plot_w, y,
                            CCA_COLORS["border"], 0.5))
-        parts.append(_text(margin_left - 8, y + 4, str(val),
+        parts.append(_text(margin_left - 8, y + 4,
+                           _format_tick_value(val, all_integer_line),
                            font_size=9, fill=CCA_COLORS["muted"],
                            anchor="end"))
 
@@ -1187,18 +1206,14 @@ def _render_area_chart(chart: AreaChart) -> str:
         max_val = 1
 
     # Y-axis gridlines
-    # Force integer display when max is a whole number
     all_int_bar = max_val == int(max_val)
     for i in range(5):
         y = margin_top + plot_h - (plot_h * i / 4)
         val = max_val * i / 4
-        if all_int_bar:
-            label = str(int(val)) if val == int(val) else str(int(round(val)))
-        else:
-            label = str(int(val)) if val == int(val) else f"{val:.1f}"
         parts.append(_line(margin_left, y, margin_left + plot_w, y,
                           CCA_COLORS["border"], 0.5))
-        parts.append(_text(margin_left - 8, y + 4, label,
+        parts.append(_text(margin_left - 8, y + 4,
+                          _format_tick_value(val, all_int_bar),
                           font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
 
     # Y-axis label
@@ -1312,11 +1327,8 @@ def _render_stacked_bar_chart(chart: StackedBarChart) -> str:
         y = plot_y + plot_h - (plot_h * i / n_ticks)
         parts.append(_line(plot_x, y, plot_x + plot_w, y,
                           stroke=CCA_COLORS["border"]))
-        if all_integer:
-            label = str(int(val))
-        else:
-            label = str(int(val)) if val == int(val) else f"{val:.1f}"
-        parts.append(_text(plot_x - 8, y + 4, label,
+        parts.append(_text(plot_x - 8, y + 4,
+                          _format_tick_value(val, all_integer),
                           font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
 
     # Bars
@@ -1461,11 +1473,8 @@ def _render_stacked_area_chart(chart: StackedAreaChart) -> str:
         y = py(val)
         parts.append(_line(margin_left, y, margin_left + plot_w, y,
                           CCA_COLORS["border"], 0.5))
-        if all_integer:
-            label = str(int(val)) if val == int(val) else str(int(round(val)))
-        else:
-            label = str(int(val)) if val == int(val) else f"{val:.1f}"
-        parts.append(_text(margin_left - 8, y + 4, label,
+        parts.append(_text(margin_left - 8, y + 4,
+                          _format_tick_value(val, all_integer),
                           font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
 
     # Draw series from top-to-bottom so lower series are painted over higher ones
@@ -1580,11 +1589,8 @@ def _render_grouped_bar_chart(chart: GroupedBarChart) -> str:
         y = margin_top + plot_h - (plot_h * i / 4)
         parts.append(_line(margin_left, y, margin_left + plot_w, y,
                           CCA_COLORS["border"], 0.5))
-        if all_integer_g:
-            label = str(int(val)) if val == int(val) else str(int(round(val)))
-        else:
-            label = str(int(val)) if val == int(val) else f"{val:.1f}"
-        parts.append(_text(margin_left - 8, y + 4, label,
+        parts.append(_text(margin_left - 8, y + 4,
+                          _format_tick_value(val, all_integer_g),
                           font_size=9, fill=CCA_COLORS["muted"], anchor="end"))
 
     # Grouped bars

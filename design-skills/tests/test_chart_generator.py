@@ -20,6 +20,8 @@ from chart_generator import (
     CCA_COLORS,
     render_svg,
     save_svg,
+    _format_tick_value,
+    _abbreviate_label,
 )
 
 
@@ -305,6 +307,75 @@ class TestSaveSVG(unittest.TestCase):
                 ET.parse(f)  # Should not raise
         finally:
             os.unlink(path)
+
+
+class TestFormatTickValue(unittest.TestCase):
+    """Test the shared y-axis tick formatter (MT-48)."""
+
+    def test_integer_mode_whole_number(self):
+        self.assertEqual(_format_tick_value(100.0, True), "100")
+
+    def test_integer_mode_fractional_rounds(self):
+        # 400 * 1/4 = 100.0, 400 * 3/4 = 300.0 — always exact for /4 ticks
+        self.assertEqual(_format_tick_value(300.0, True), "300")
+
+    def test_integer_mode_non_exact_quarter(self):
+        # e.g. max_val=7, tick at 7*1/4 = 1.75 -> rounds to 2
+        result = _format_tick_value(1.75, True)
+        self.assertEqual(result, "2")
+
+    def test_float_mode_whole_number(self):
+        self.assertEqual(_format_tick_value(5.0, False), "5")
+
+    def test_float_mode_fractional(self):
+        self.assertEqual(_format_tick_value(2.5, False), "2.5")
+
+    def test_zero(self):
+        self.assertEqual(_format_tick_value(0.0, True), "0")
+        self.assertEqual(_format_tick_value(0.0, False), "0")
+
+
+class TestAbbreviateLabel(unittest.TestCase):
+    """Test smart label truncation (MT-48)."""
+
+    def test_short_label_unchanged(self):
+        self.assertEqual(_abbreviate_label("MT-7", 10), "MT-7")
+
+    def test_exact_length_unchanged(self):
+        self.assertEqual(_abbreviate_label("1234567890", 10), "1234567890")
+
+    def test_long_label_truncated_with_ellipsis(self):
+        result = _abbreviate_label("Very Long Label Name", 10)
+        self.assertEqual(len(result), 10)
+        self.assertTrue(result.endswith("\u2026"))
+
+    def test_non_string_input(self):
+        self.assertEqual(_abbreviate_label(42, 10), "42")
+
+    def test_empty_string(self):
+        self.assertEqual(_abbreviate_label("", 10), "")
+
+
+class TestLineChartIntegerYAxis(unittest.TestCase):
+    """Test that LineChart uses integer y-axis ticks for integer data (MT-48)."""
+
+    def test_integer_data_no_decimal_ticks(self):
+        data = [("A", 100), ("B", 200), ("C", 400)]
+        chart = LineChart(data, title="Integer Test")
+        svg = render_svg(chart)
+        # Should NOT contain decimal ticks like "100.0" or "200.0"
+        self.assertNotIn(">100.0<", svg)
+        self.assertNotIn(">200.0<", svg)
+        # Should contain clean integer ticks
+        self.assertIn(">100<", svg)
+        self.assertIn(">200<", svg)
+
+    def test_bar_chart_integer_ticks(self):
+        data = [("X", 50), ("Y", 100)]
+        chart = BarChart(data, title="Bar Int Test")
+        svg = render_svg(chart)
+        self.assertNotIn(">50.0<", svg)
+        self.assertIn(">50<", svg)
 
 
 if __name__ == "__main__":
