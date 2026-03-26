@@ -313,6 +313,121 @@ class KalshiDataCollector:
             "values": [h["balance_usd"] for h in history],
         }
 
+    def chart_edge_forest(self):
+        """ForestPlot data: per-asset/price alpha with Wilson CI.
+
+        Groups sniper trades by ticker prefix (asset) + price_cents bucket.
+        Computes win rate alpha vs break-even, with Wilson score CI.
+        """
+        if not self.is_available():
+            return {"studies": []}
+
+        conn = self._connect()
+        try:
+            # Extract asset from ticker (e.g. KXBTCD-26MAR10-T22 -> BTC)
+            rows = conn.execute("""
+                SELECT
+                    CASE
+                        WHEN ticker LIKE 'KXBTC%' THEN 'BTC'
+                        WHEN ticker LIKE 'KXETH%' THEN 'ETH'
+                        WHEN ticker LIKE 'KXSOL%' THEN 'SOL'
+                        WHEN ticker LIKE 'KXXRP%' THEN 'XRP'
+                        ELSE SUBSTR(ticker, 3, 3)
+                    END as asset,
+                    price_cents as price,
+                    COUNT(*) as n,
+                    SUM(CASE WHEN pnl_cents > 0 THEN 1 ELSE 0 END) as wins
+                FROM trades
+                WHERE is_paper = 0 AND pnl_cents IS NOT NULL
+                  AND strategy = 'sniper'
+                  AND price_cents IS NOT NULL
+                GROUP BY asset, price_cents
+                HAVING COUNT(*) >= 10
+                ORDER BY asset, price_cents
+            """).fetchall()
+
+            studies = []
+            import math
+            z = 1.96  # 95% CI
+            for asset, price_c, n, wins in rows:
+                price = price_c / 100.0
+                wr = wins / n
+                be = price  # break-even = contract price
+                alpha = wr - be
+
+                # Wilson score interval for win rate
+                denom = 1 + z * z / n
+                center = (wr + z * z / (2 * n)) / denom
+                margin = z * math.sqrt((wr * (1 - wr) + z * z / (4 * n)) / n) / denom
+                ci_lower = center - margin - be
+                ci_upper = center + margin - be
+
+                label = f"{asset} {price_c}c"
+                studies.append({
+                    "label": label,
+                    "estimate": round(alpha, 4),
+                    "ci_lower": round(ci_lower, 4),
+                    "ci_upper": round(ci_upper, 4),
+                })
+
+            return {"studies": studies}
+        except Exception:
+            return {"studies": []}
+        finally:
+            conn.close()
+
+    def chart_price_candles(self):
+        """CandlestickChart data: daily OHLC of sniper contract prices.
+
+        Aggregates sniper bet prices into daily candles showing price range.
+        Uses price_cents column and datetime(created_at, 'unixepoch') for grouping.
+        """
+        if not self.is_available():
+            return {"candles": []}
+
+        conn = self._connect()
+        try:
+            rows = conn.execute("""
+                SELECT
+                    DATE(created_at, 'unixepoch') as day,
+                    MIN(price_cents) as low,
+                    MAX(price_cents) as high,
+                    (SELECT price_cents FROM trades t2
+                     WHERE t2.is_paper = 0 AND t2.strategy = 'sniper'
+                       AND t2.price_cents IS NOT NULL
+                       AND DATE(t2.created_at, 'unixepoch') = DATE(t1.created_at, 'unixepoch')
+                     ORDER BY t2.created_at ASC LIMIT 1) as open_p,
+                    (SELECT price_cents FROM trades t2
+                     WHERE t2.is_paper = 0 AND t2.strategy = 'sniper'
+                       AND t2.price_cents IS NOT NULL
+                       AND DATE(t2.created_at, 'unixepoch') = DATE(t1.created_at, 'unixepoch')
+                     ORDER BY t2.created_at DESC LIMIT 1) as close_p
+                FROM trades t1
+                WHERE is_paper = 0 AND strategy = 'sniper'
+                  AND price_cents IS NOT NULL AND created_at IS NOT NULL
+                GROUP BY DATE(created_at, 'unixepoch')
+                HAVING COUNT(*) >= 3
+                ORDER BY day DESC
+                LIMIT 30
+            """).fetchall()
+
+            candles = []
+            for day, low, high, open_p, close_p in reversed(rows):
+                if all(v is not None for v in (low, high, open_p, close_p)):
+                    candles.append({
+                        "label": day[-5:] if day else "",  # MM-DD
+                        "open": open_p / 100.0,
+                        "high": high / 100.0,
+                        "low": low / 100.0,
+                        "close": close_p / 100.0,
+                    })
+
+            return {"title": "Sniper Contract Prices (Daily)", "candles": candles}
+        except Exception:
+            return {"candles": []}
+        finally:
+            conn.close()
+
     # ── Aggregator ───────────────────────────────────────────────────────
 
     def collect_all(self):
@@ -337,5 +452,7 @@ class KalshiDataCollector:
                 "winrate_vs_profit": self.chart_winrate_vs_profit(),
                 "trade_volume": self.chart_trade_volume(),
                 "bankroll_timeline": self.chart_bankroll_timeline(),
+                "edge_forest": self.chart_edge_forest(),
+                "price_candles": self.chart_price_candles(),
             },
         }

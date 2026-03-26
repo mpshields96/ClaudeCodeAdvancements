@@ -400,6 +400,136 @@ class TestChartData(unittest.TestCase):
         self.assertGreater(len(data["values"]), 0)
 
 
+class TestEdgeForestChart(unittest.TestCase):
+    """Test ForestPlot data generation for per-asset alpha with Wilson CI."""
+
+    def setUp(self):
+        self.tmpfile = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        _create_test_db(self.tmpfile.name)
+        self.conn = sqlite3.connect(self.tmpfile.name)
+        # Insert 15 BTC sniper trades at 93c (all wins = strong edge)
+        for i in range(15):
+            _insert_trade(self.conn, _ts("2026-03-15") + i * 60,
+                          "KXBTCD-26MAR15-T22", "sniper", 0, 93, 1, "yes", 700)
+        # Insert 12 ETH sniper trades at 93c (10 wins, 2 losses)
+        for i in range(12):
+            result = "yes" if i < 10 else "no"
+            pnl = 700 if i < 10 else -9300
+            _insert_trade(self.conn, _ts("2026-03-15") + 1000 + i * 60,
+                          "KXETHD-26MAR15-T22", "sniper", 0, 93, 1, result, pnl)
+        self.conn.commit()
+        self.collector = KalshiDataCollector(self.tmpfile.name)
+
+    def tearDown(self):
+        self.conn.close()
+        os.unlink(self.tmpfile.name)
+
+    def test_returns_studies_list(self):
+        data = self.collector.chart_edge_forest()
+        self.assertIn("studies", data)
+        self.assertIsInstance(data["studies"], list)
+
+    def test_studies_have_required_keys(self):
+        data = self.collector.chart_edge_forest()
+        for s in data["studies"]:
+            self.assertIn("label", s)
+            self.assertIn("estimate", s)
+            self.assertIn("ci_lower", s)
+            self.assertIn("ci_upper", s)
+
+    def test_ci_lower_less_than_upper(self):
+        data = self.collector.chart_edge_forest()
+        for s in data["studies"]:
+            self.assertLess(s["ci_lower"], s["ci_upper"])
+
+    def test_filters_below_minimum_n(self):
+        """Only groups with n >= 10 should appear."""
+        data = self.collector.chart_edge_forest()
+        # BTC has 15, ETH has 12 — both should appear
+        self.assertEqual(len(data["studies"]), 2)
+
+    def test_empty_returns_empty(self):
+        empty_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        _create_test_db(empty_file.name)
+        c = KalshiDataCollector(empty_file.name)
+        data = c.chart_edge_forest()
+        self.assertEqual(data["studies"], [])
+        os.unlink(empty_file.name)
+
+
+class TestPriceCandlesChart(unittest.TestCase):
+    """Test CandlestickChart data generation for daily OHLC."""
+
+    def setUp(self):
+        self.tmpfile = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        _create_test_db(self.tmpfile.name)
+        self.conn = sqlite3.connect(self.tmpfile.name)
+        # Insert 5 sniper trades on same day with different prices
+        base = _ts("2026-03-15")
+        prices = [91, 93, 95, 92, 94]  # open=91, high=95, low=91, close=94
+        for i, p in enumerate(prices):
+            _insert_trade(self.conn, base + i * 300,
+                          f"KXBTCD-26MAR15-T{20+i}", "sniper", 0, p, 1, "yes", 700)
+        self.conn.commit()
+        self.collector = KalshiDataCollector(self.tmpfile.name)
+
+    def tearDown(self):
+        self.conn.close()
+        os.unlink(self.tmpfile.name)
+
+    def test_returns_candles_list(self):
+        data = self.collector.chart_price_candles()
+        self.assertIn("candles", data)
+        self.assertIsInstance(data["candles"], list)
+
+    def test_candles_have_required_keys(self):
+        data = self.collector.chart_price_candles()
+        for c in data["candles"]:
+            self.assertIn("label", c)
+            self.assertIn("open", c)
+            self.assertIn("high", c)
+            self.assertIn("low", c)
+            self.assertIn("close", c)
+
+    def test_high_gte_low(self):
+        data = self.collector.chart_price_candles()
+        for c in data["candles"]:
+            self.assertGreaterEqual(c["high"], c["low"])
+
+    def test_ohlc_values_correct(self):
+        """First trade = open (91c), max = high (95c), min = low (91c), last = close (94c)."""
+        data = self.collector.chart_price_candles()
+        self.assertEqual(len(data["candles"]), 1)
+        c = data["candles"][0]
+        self.assertAlmostEqual(c["open"], 0.91, places=2)
+        self.assertAlmostEqual(c["high"], 0.95, places=2)
+        self.assertAlmostEqual(c["low"], 0.91, places=2)
+        self.assertAlmostEqual(c["close"], 0.94, places=2)
+
+    def test_has_title(self):
+        data = self.collector.chart_price_candles()
+        self.assertIn("title", data)
+
+    def test_filters_days_with_few_trades(self):
+        """Days with < 3 trades should be excluded."""
+        # Add a day with only 2 trades
+        base2 = _ts("2026-03-16")
+        _insert_trade(self.conn, base2, "KXBTCD-26MAR16-T20", "sniper", 0, 92, 1, "yes", 800)
+        _insert_trade(self.conn, base2 + 60, "KXBTCD-26MAR16-T21", "sniper", 0, 93, 1, "yes", 700)
+        self.conn.commit()
+        data = self.collector.chart_price_candles()
+        # Should still be 1 candle (3/15 has 5, 3/16 has 2 — filtered)
+        self.assertEqual(len(data["candles"]), 1)
+
+    def test_empty_returns_empty(self):
+        empty_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        _create_test_db(empty_file.name)
+        c = KalshiDataCollector(empty_file.name)
+        data = c.chart_price_candles()
+        self.assertEqual(data["candles"], [])
+        os.unlink(empty_file.name)
+
+
 class TestEmptyDB(unittest.TestCase):
     """Test graceful handling of empty database."""
 
@@ -470,6 +600,8 @@ class TestCollectAll(unittest.TestCase):
         self.assertIn("winrate_vs_profit", charts)
         self.assertIn("trade_volume", charts)
         self.assertIn("bankroll_timeline", charts)
+        self.assertIn("edge_forest", charts)
+        self.assertIn("price_candles", charts)
 
     def test_collect_all_serializable(self):
         data = self.collector.collect_all()
