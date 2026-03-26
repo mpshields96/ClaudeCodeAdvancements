@@ -3,6 +3,30 @@
 
 ---
 
+## Session 184 — 2026-03-26
+
+**What changed:**
+- `autoloop_trigger.py` — Removed broken `/model` TUI paste step. Model now set via settings.
+- `.claude/settings.local.json` — Added `"model": "opus[1m]"` for reliable 1M context on autoloop sessions.
+- `tests/test_autoloop_trigger.py` — Updated assertions: send_prompt call_count 2→1.
+- `self-learning/portfolio_loader.py` — NEW: MT-37 Phase 3. CSV/JSON/dict parser for portfolio holdings. Holding + Portfolio dataclasses, brokerage export compatibility. 37 tests.
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md` — CRITICAL $15-25/day strategy delivery (Q1-Q6 answers), political markets probe (REQ-1), Kalshi API orderbook + maker order recipe (REQ-25 Phase 2).
+
+**Why:**
+- Opus 1M model config was broken — autoloop sessions were NOT running on 1M context
+- $15-25/day target is Day 0 of 5-day clock (Matthew directive S183b)
+- Becker (2026) paper: taker edge at 95c = 0%, maker edge = +1.12%, zero fees on limit orders
+- MT-37 progressing through implementation phases (Phase 3 of 12)
+
+**Tests:** ~9943 passing (37 new: portfolio_loader)
+
+**Lessons:**
+- `/model` slash command is an interactive TUI picker — cannot be automated via clipboard paste
+- Use settings.json `"model"` field for reliable model selection in automated workflows
+- Kalshi maker orders (post_only=true) have ZERO fees — this is the key insight for profitability
+
+---
+
 ## Session 181 — 2026-03-25
 
 **What changed:**
@@ -2901,5 +2925,31 @@ CLI chat 2:
 - replace_all catches token DEFINITIONS too — verify definition lines aren't self-referencing after batch replace
 - Auto-implement advancement tips instead of just listing them (Matthew directive S182)
 - Start with high-impact tasks, not cosmetic cleanup (Matthew corrected mid-session)
+
+---
+
+## Session 183 — 2026-03-25
+
+**What changed:**
+- `slim_init.py`: Wired origination engine into /cca-init — `run_unified_origination()` calls mt_originator.py --unified, shows actionable items in briefing. 8 new tests.
+- `design-skills/dashboard_generator.py`: Chart.js bridge wired in — interactive charts opt-in (`--interactive`), CDN only when interactive=True. Self-contained mode preserved.
+- `autoloop_trigger.py`: Restored `/model claude-opus-4-6[1m]` command — desktop app defaults to regular Opus, NOT 1M. Non-fatal fallback if switch fails. 2 test updates.
+- `self-learning/strategy_health_scorer.py`: REQ-22 bug fix — win detection changed from `result=="yes"` to `result==side` (was miscounting NO-side bets).
+- `self-learning/tests/test_strategy_health_scorer.py`: Updated tests for boolean outcomes + side field.
+- `self-learning/tests/test_strategy_health_scorer_extended.py`: Added `side` field to all test helpers (follow-up fix).
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md`: REQ-8 (3 papers), REQ-9 (5 papers), REQ-10-25 triage (10 closed), REQ-25 (3 new edge candidates), $15-25/day urgent directive delivery.
+- `MATTHEW_DIRECTIVES.md`: S183 CCA-Kalshi Symbiosis entry + S183b $15-25/day Ultimatum (verbatim).
+- `KALSHI_PRIME_DIRECTIVE.md`: Financial targets updated with 5-day clock ($15-25/day by 2026-03-30).
+- `polymarket-bot/.planning/RESEARCH_PRIME_DIRECTIVE.md`: Immediate target added.
+
+**Why:**
+- TODAYS_TASKS: wire origination into init, REQ-8/9 research, Chart.js wiring, cross-chat triage
+- Matthew S183b directive: $15-25/day within 5 days, $100 bankroll, full carte blanche on strategy
+
+**Tests:** 9906/9906 passing (255 suites). +8 new tests this session.
+
+**Lessons:**
+- When fixing a function's interface (result=="yes" → result==side), grep ALL test files that use it — not just the primary test file. The extended test suite was missed in the initial fix.
+- /model command in autoloop was dead weight — always verify commands actually work before keeping them.
 
 ---

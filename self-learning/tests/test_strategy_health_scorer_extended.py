@@ -43,6 +43,7 @@ def _make_settled(strategy: str, results: list[str], pnl_per_win=1.50, pnl_per_l
         {
             "strategy": strategy,
             "result": r,
+            "side": "yes",
             "pnl_usd": pnl_per_win if r == "yes" else pnl_per_loss,
             "timestamp": 1000 + i * 3600,
         }
@@ -58,6 +59,7 @@ def _make_paper_trades(strategy: str, n: int, win_pct=0.6) -> list[dict]:
         trades.append({
             "strategy": strategy,
             "result": result,
+            "side": "yes",
             "pnl_usd": 1.50 if result == "yes" else -1.00,
             "timestamp": 1000 + i * 3600,
             "is_paper": True,
@@ -75,6 +77,7 @@ def _make_live_trades(strategy: str, n: int, win_pct=0.5) -> list[dict]:
         trades.append({
             "strategy": strategy,
             "result": result,
+            "side": "yes",
             "pnl_usd": 1.50 if result == "yes" else -1.00,
             "timestamp": 1000 + i * 3600,
             "is_paper": False,
@@ -298,6 +301,7 @@ class TestPaperLiveTradeSeparation(unittest.TestCase):
         # No is_paper field — should be included in live_only scoring
         trades = [
             {"strategy": "no_flag", "result": "yes" if i % 2 == 0 else "no",
+             "side": "yes",
              "pnl_usd": 1.50 if i % 2 == 0 else -1.00, "timestamp": 1000 + i * 3600}
             for i in range(MIN_SAMPLE_SIZE + 5)
         ]

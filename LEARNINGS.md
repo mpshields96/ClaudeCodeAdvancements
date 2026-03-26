@@ -699,3 +699,10 @@
 - **First seen:** 2026-03-25 (Matthew explicit directive S182)
 - **Last seen:** 2026-03-25
 - **Files:** All CCA sessions
+
+### Fix ALL test files when changing function interface — Severity: 1 — Count: 1
+- **Anti-pattern:** Fixing primary test file but missing extended/secondary test files that use the same helpers
+- **Fix:** After changing any function signature or behavior, `grep -r` for ALL callers across test files before declaring fix complete
+- **First seen:** 2026-03-25
+- **Last seen:** 2026-03-25
+- **Files:** self-learning/tests/test_strategy_health_scorer_extended.py (missed), self-learning/tests/test_strategy_health_scorer.py (fixed)

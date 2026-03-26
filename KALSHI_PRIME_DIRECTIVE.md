@@ -77,10 +77,20 @@ USE the sniper bets and Bayesian model + PERFECT them + GROW beyond them with mo
 
 ## Financial Targets
 
+**IMMEDIATE (5-Day Clock — Matthew directive S183b, 2026-03-25):**
+- **$15-25 USD/day achieved and SUSTAINED within 5 days** (Day 0 = 2026-03-25, deadline = 2026-03-30)
+- Starting bankroll: $100. NO additional capital. EVER. The bot grows it or it doesn't.
+- Full carte blanche on strategy: bet types, bet sizes, markets — everything is on the table
+- Same snipers + different bet size is NOT the answer — the strategy itself may need fundamental change
+- Daily accountability required — progress visible every day, not just at deadline
+- CCA authorized to research and develop whatever is needed to solve this
+- ALL future Kalshi chats are FORBIDDEN from forgetting this target
+
+**LONGER-TERM (unchanged):**
 1. **SELF-SUSTAINING:** ~250 USD/month to cover Claude Max20 subscription
 2. **COMPOUNDING PASSIVE INCOME:** A few hundred USD/month and growing
 
-The prime directive is to become self-sustaining first, then compound.
+The immediate priority is hitting $15-25/day. Everything else is secondary until this is achieved.
 
 ---
 
