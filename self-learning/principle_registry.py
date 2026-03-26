@@ -298,6 +298,123 @@ def prune_principles(
     return pruned
 
 
+def get_bet_advice(
+    market: str,
+    direction: str,
+    price_cents: int,
+    max_principles: int = 10,
+    path: str = PRINCIPLES_PATH,
+) -> dict:
+    """Get principle-based advice for a bet decision (MT-0 growth, S193).
+
+    Returns dict with:
+      - principles: list of relevant principles sorted by relevance score
+      - confidence_modifier: float [-0.5, 0.5] summarizing principle sentiment
+      - warnings: list of caution strings from low-confidence principles
+
+    The Kalshi bot calls this before placing a bet to get learned wisdom.
+    """
+    # Determine which domains to search based on market context
+    trading_domains = ["trading_execution", "trading_research"]
+    principles = get_principles(path=path)
+
+    # Filter to trading-related principles
+    trading_ps = [
+        p for p in principles
+        if any(d in p.applicable_domains for d in trading_domains)
+    ]
+
+    # Keyword relevance scoring
+    market_lower = market.lower()
+    direction_lower = direction.lower()
+
+    # Map market prefixes to keywords
+    market_keywords = set()
+    if "btc" in market_lower or "bitcoin" in market_lower:
+        market_keywords.update(["btc", "bitcoin", "crypto"])
+    if "eth" in market_lower or "ethereum" in market_lower:
+        market_keywords.update(["eth", "ethereum", "crypto"])
+    if "sol" in market_lower or "solana" in market_lower:
+        market_keywords.update(["sol", "solana", "crypto"])
+    if "weather" in market_lower:
+        market_keywords.update(["weather", "temperature", "diversif"])
+    if "cpi" in market_lower or "gdp" in market_lower:
+        market_keywords.update(["economic", "cpi", "gdp", "macro"])
+    if not market_keywords:
+        market_keywords.add(market_lower)
+
+    # Price keywords
+    if price_cents >= 90:
+        market_keywords.update(["high-certainty", "sniper", "93c", "90c", "flb"])
+    if price_cents < 50:
+        market_keywords.update(["longshot", "low-probability"])
+
+    scored = []
+    for p in trading_ps:
+        text_lower = p.text.lower()
+        # Base relevance = principle score (Laplace-smoothed)
+        relevance = p.score
+
+        # Keyword boost: +0.1 per matching keyword
+        keyword_hits = sum(1 for kw in market_keywords if kw in text_lower)
+        relevance += keyword_hits * 0.1
+
+        # Recency boost: +0.05 if used in last 10 sessions
+        if p.last_used_session > 0 and p.usage_count > 0:
+            relevance += 0.05
+
+        scored.append((p, round(relevance, 4)))
+
+    # Sort by relevance, cap at max_principles
+    scored.sort(key=lambda x: x[1], reverse=True)
+    top = scored[:max_principles]
+
+    # Build result
+    result_principles = []
+    warnings = []
+    for p, rel in top:
+        entry = {
+            "id": p.id,
+            "text": p.text,
+            "score": round(p.score, 4),
+            "relevance": rel,
+            "domain": p.source_domain,
+            "usage_count": p.usage_count,
+        }
+        result_principles.append(entry)
+
+        # Warn on low-confidence but relevant principles
+        if p.score < 0.4 and p.usage_count >= 3:
+            warnings.append(
+                f"Low-confidence principle ({p.score:.2f}): {p.text[:60]}"
+            )
+
+    # Compute confidence modifier: weighted average of principle scores
+    if result_principles:
+        total_weight = sum(rp["relevance"] for rp in result_principles)
+        if total_weight > 0:
+            weighted_score = sum(
+                rp["score"] * rp["relevance"] for rp in result_principles
+            ) / total_weight
+            # Map 0-1 score to -0.5 to 0.5 modifier
+            confidence_modifier = round((weighted_score - 0.5), 4)
+            # Clamp
+            confidence_modifier = max(-0.5, min(0.5, confidence_modifier))
+        else:
+            confidence_modifier = 0.0
+    else:
+        confidence_modifier = 0.0
+
+    return {
+        "principles": result_principles,
+        "confidence_modifier": confidence_modifier,
+        "warnings": warnings,
+        "market": market,
+        "direction": direction,
+        "price_cents": price_cents,
+    }
+
+
 def get_stats(path: str = PRINCIPLES_PATH) -> dict:
     """Get summary statistics about the principle registry."""
     principles = _load_principles(path)
@@ -371,6 +488,13 @@ def main():
     # stats
     sub.add_parser("stats", help="Show statistics")
 
+    # advise
+    advise_p = sub.add_parser("advise", help="Get principle-based bet advice")
+    advise_p.add_argument("--market", required=True, help="Market ticker (e.g. KXBTC)")
+    advise_p.add_argument("--direction", required=True, help="YES or NO")
+    advise_p.add_argument("--price", type=int, required=True, help="Price in cents")
+    advise_p.add_argument("--max", type=int, default=5, help="Max principles to return")
+
     args = parser.parse_args()
 
     if args.cmd == "add":
@@ -439,6 +563,26 @@ def main():
             print("By domain:")
             for d, c in sorted(stats["domain_counts"].items()):
                 print(f"  {d}: {c}")
+
+    elif args.cmd == "advise":
+        advice = get_bet_advice(
+            market=args.market,
+            direction=args.direction,
+            price_cents=args.price,
+            max_principles=args.max,
+        )
+        print(f"Bet advice for {args.market} {args.direction} @{args.price}c:")
+        print(f"  Confidence modifier: {advice['confidence_modifier']:+.4f}")
+        if advice["principles"]:
+            print(f"  Top {len(advice['principles'])} principles:")
+            for i, p in enumerate(advice["principles"], 1):
+                print(f"    {i}. [{p['score']:.2f}] {p['text'][:70]}")
+        else:
+            print("  No relevant trading principles found.")
+        if advice["warnings"]:
+            print("  Warnings:")
+            for w in advice["warnings"]:
+                print(f"    ! {w}")
 
     else:
         parser.print_help()

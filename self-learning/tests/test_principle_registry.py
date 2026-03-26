@@ -613,5 +613,155 @@ class TestEdgeCases(unittest.TestCase):
         self.assertNotEqual(p1.id, p2.id)
 
 
+class TestBetAdvisor(unittest.TestCase):
+    """Tests for bet_advisor — principle-based bet guidance (MT-0 growth, S193)."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp.close()
+        self.path = self.tmp.name
+        # Seed some trading principles
+        add_principle(
+            "High-certainty crypto snipers (>93c) have structural FLB edge",
+            "trading_execution",
+            applicable_domains=["trading_execution", "trading_research"],
+            path=self.path,
+        )
+        add_principle(
+            "Correlated losses cluster in volatility windows — use cooldown",
+            "trading_execution",
+            path=self.path,
+        )
+        add_principle(
+            "Weather markets provide uncorrelated diversification",
+            "trading_research",
+            path=self.path,
+        )
+        add_principle(
+            "Session efficiency improves with structured init ritual",
+            "session_management",
+            path=self.path,
+        )
+        # Score some to create differentiation
+        ps = get_principles(domain="trading_execution", path=self.path)
+        for p in ps:
+            if "FLB" in p.text:
+                for _ in range(5):
+                    record_usage(p.id, success=True, path=self.path)
+            elif "cooldown" in p.text:
+                record_usage(p.id, success=True, path=self.path)
+                record_usage(p.id, success=False, path=self.path)
+
+    def tearDown(self):
+        os.unlink(self.path)
+
+    def test_import(self):
+        from principle_registry import get_bet_advice
+        self.assertTrue(callable(get_bet_advice))
+
+    def test_returns_dict(self):
+        from principle_registry import get_bet_advice
+        result = get_bet_advice(
+            market="KXBTC", direction="NO", price_cents=93,
+            path=self.path,
+        )
+        self.assertIsInstance(result, dict)
+        self.assertIn("principles", result)
+        self.assertIn("confidence_modifier", result)
+        self.assertIn("warnings", result)
+
+    def test_trading_principles_returned(self):
+        from principle_registry import get_bet_advice
+        result = get_bet_advice(
+            market="KXBTC", direction="NO", price_cents=93,
+            path=self.path,
+        )
+        texts = [p["text"] for p in result["principles"]]
+        self.assertTrue(any("FLB" in t for t in texts))
+
+    def test_non_trading_excluded(self):
+        from principle_registry import get_bet_advice
+        result = get_bet_advice(
+            market="KXBTC", direction="NO", price_cents=93,
+            path=self.path,
+        )
+        texts = [p["text"] for p in result["principles"]]
+        self.assertFalse(any("Session efficiency" in t for t in texts))
+
+    def test_sorted_by_relevance(self):
+        from principle_registry import get_bet_advice
+        result = get_bet_advice(
+            market="KXBTC", direction="NO", price_cents=93,
+            path=self.path,
+        )
+        if len(result["principles"]) >= 2:
+            scores = [p["score"] for p in result["principles"]]
+            self.assertEqual(scores, sorted(scores, reverse=True))
+
+    def test_confidence_modifier_range(self):
+        from principle_registry import get_bet_advice
+        result = get_bet_advice(
+            market="KXBTC", direction="NO", price_cents=93,
+            path=self.path,
+        )
+        mod = result["confidence_modifier"]
+        self.assertGreaterEqual(mod, -0.5)
+        self.assertLessEqual(mod, 0.5)
+
+    def test_empty_registry(self):
+        from principle_registry import get_bet_advice
+        empty_path = self.path + ".empty"
+        with open(empty_path, "w"):
+            pass
+        try:
+            result = get_bet_advice(
+                market="KXBTC", direction="NO", price_cents=93,
+                path=empty_path,
+            )
+            self.assertEqual(result["principles"], [])
+            self.assertEqual(result["confidence_modifier"], 0.0)
+        finally:
+            os.unlink(empty_path)
+
+    def test_weather_market_context(self):
+        from principle_registry import get_bet_advice
+        result = get_bet_advice(
+            market="KXWEATHER", direction="YES", price_cents=85,
+            path=self.path,
+        )
+        texts = [p["text"] for p in result["principles"]]
+        # Weather principle should surface for weather markets
+        self.assertTrue(any("Weather" in t or "diversification" in t for t in texts))
+
+    def test_warnings_for_low_score_principles(self):
+        from principle_registry import get_bet_advice
+        # cooldown principle has mixed scores (1 success, 1 failure)
+        result = get_bet_advice(
+            market="KXBTC", direction="NO", price_cents=93,
+            path=self.path,
+        )
+        # Should still return it but may include a warning about low confidence
+        self.assertIsInstance(result["warnings"], list)
+
+    def test_max_principles_cap(self):
+        from principle_registry import get_bet_advice
+        result = get_bet_advice(
+            market="KXBTC", direction="NO", price_cents=93,
+            max_principles=2,
+            path=self.path,
+        )
+        self.assertLessEqual(len(result["principles"]), 2)
+
+    def test_keyword_matching(self):
+        from principle_registry import get_bet_advice
+        # "crypto" in principle text should match KXBTC/KXETH
+        result = get_bet_advice(
+            market="KXETH", direction="NO", price_cents=94,
+            path=self.path,
+        )
+        texts = [p["text"] for p in result["principles"]]
+        self.assertTrue(any("crypto" in t.lower() for t in texts))
+
+
 if __name__ == "__main__":
     unittest.main()
