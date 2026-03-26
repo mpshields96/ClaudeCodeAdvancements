@@ -28,6 +28,8 @@ Chart types:
     HistogramChart    — frequency distribution from raw values (auto-binning, Sturges' rule)
     ViolinPlot        — KDE-based distribution shape with embedded quartile lines
     CalibrationPlot   — predicted vs actual probability (calibration curve, FLB analysis)
+    CandlestickChart  — OHLC price bars for Kalshi contract price visualization
+    ForestPlot        — confidence interval display for statistical meta-analysis
 
 Usage:
     from chart_generator import BarChart, render_svg, save_svg
@@ -717,6 +719,51 @@ class ViolinPlot:
     width: int = 500
     height: int = 400
     color: str = ""
+
+
+@dataclass
+@dataclass
+class CandlestickChart:
+    """OHLC candlestick chart for price movement visualization.
+
+    Each candle shows open/high/low/close for a time period. Bullish candles
+    (close > open) use success color, bearish (close < open) use highlight,
+    doji (close == open) use muted.
+
+    Directly useful for Kalshi contract price visualization.
+
+    Args:
+        data: [(label, open, high, low, close), ...]
+        title: Chart title
+    """
+    data: list  # [(label, open, high, low, close), ...]
+    title: str = ""
+    width: int = 500
+    height: int = 400
+
+
+@dataclass
+class ForestPlot:
+    """Forest plot — confidence interval display for statistical meta-analysis.
+
+    Shows point estimates with confidence intervals as horizontal lines.
+    A vertical reference line (default at 0) helps identify significant effects.
+    Colors: positive estimate = success, negative = highlight, CI spanning
+    reference = muted (inconclusive).
+
+    Useful for displaying calibration analysis results, edge estimates per
+    asset/price bucket, or any comparison of effect sizes.
+
+    Args:
+        data: [(label, estimate, ci_lower, ci_upper), ...]
+        title: Chart title
+        reference_value: Where to draw the vertical reference line (default 0)
+    """
+    data: list  # [(label, estimate, ci_lower, ci_upper), ...]
+    title: str = ""
+    width: int = 500
+    height: int = 400
+    reference_value: float = 0.0
 
 
 @dataclass
@@ -3291,6 +3338,217 @@ def _render_calibration_plot(chart: CalibrationPlot) -> str:
     return "".join(parts)
 
 
+def _render_candlestick_chart(chart: CandlestickChart) -> str:
+    """Render an OHLC candlestick chart to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 50
+    margin_left = 60
+    margin_right = 20
+    plot_w = chart.width - margin_left - margin_right
+    plot_h = chart.height - margin_top - margin_bottom
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    # Price range
+    all_highs = [h for _, _, h, _, _ in chart.data]
+    all_lows = [l for _, _, _, l, _ in chart.data]
+    price_max = max(all_highs)
+    price_min = min(all_lows)
+    price_range = price_max - price_min
+    if price_range == 0:
+        price_range = 1.0
+    # Add 5% padding
+    price_max += price_range * 0.05
+    price_min -= price_range * 0.05
+    price_range = price_max - price_min
+
+    # Y-axis gridlines (5 lines)
+    for i in range(6):
+        frac = i / 5.0
+        y = margin_top + plot_h - frac * plot_h
+        val = price_min + frac * price_range
+        parts.append(_line(margin_left, y, margin_left + plot_w, y,
+                           CCA_COLORS["border"], 0.5))
+        parts.append(_text(margin_left - 8, y + 4,
+                           f"{val:.1f}", font_size=9,
+                           fill=CCA_COLORS["muted"], anchor="end"))
+
+    # Axes
+    parts.append(_line(margin_left, margin_top, margin_left, margin_top + plot_h,
+                       CCA_COLORS["primary"], 1))
+    parts.append(_line(margin_left, margin_top + plot_h,
+                       margin_left + plot_w, margin_top + plot_h,
+                       CCA_COLORS["primary"], 1))
+
+    # Candles
+    n = len(chart.data)
+    candle_spacing = plot_w / n
+    candle_w = max(4, candle_spacing * 0.6)
+
+    def price_to_y(price):
+        return margin_top + plot_h - ((price - price_min) / price_range) * plot_h
+
+    for i, (label, open_p, high, low, close) in enumerate(chart.data):
+        cx = margin_left + (i + 0.5) * candle_spacing
+
+        # Determine color
+        if close > open_p:
+            color = CCA_COLORS["success"]
+        elif close < open_p:
+            color = CCA_COLORS["highlight"]
+        else:
+            color = CCA_COLORS["muted"]
+
+        # Wick (high-low line)
+        wick_y1 = price_to_y(high)
+        wick_y2 = price_to_y(low)
+        parts.append(_line(cx, wick_y1, cx, wick_y2, color, 1.5))
+
+        # Body (open-close rect)
+        body_top = price_to_y(max(open_p, close))
+        body_bottom = price_to_y(min(open_p, close))
+        body_h = max(1, body_bottom - body_top)  # min 1px for doji
+        parts.append(_rect(cx - candle_w / 2, body_top, candle_w, body_h, color))
+
+        # X-axis label
+        parts.append(_text(cx, margin_top + plot_h + 16,
+                           _abbreviate_label(str(label), 8),
+                           font_size=9, fill=CCA_COLORS["muted"]))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
+def _render_forest_plot(chart: ForestPlot) -> str:
+    """Render a forest plot (confidence intervals) to SVG."""
+    parts = [_svg_header(chart.width, chart.height)]
+    parts.append(_rect(0, 0, chart.width, chart.height, CCA_COLORS["background"]))
+
+    if not chart.data:
+        parts.append(_text(chart.width / 2, chart.height / 2, "No data",
+                           font_size=14, fill=CCA_COLORS["muted"]))
+        parts.append(_svg_footer())
+        return "".join(parts)
+
+    # Layout
+    margin_top = 40 if chart.title else 20
+    margin_bottom = 40
+    label_width = 120
+    margin_left = label_width + 20
+    margin_right = 30
+    plot_w = chart.width - margin_left - margin_right
+    n = len(chart.data)
+    row_height = min(30, (chart.height - margin_top - margin_bottom) / max(n, 1))
+    plot_h = row_height * n
+
+    # Title
+    if chart.title:
+        parts.append(_text(chart.width / 2, 24, chart.title,
+                           font_size=14, font_weight="bold"))
+
+    # Data range
+    all_lowers = [ci_l for _, _, ci_l, _ in chart.data]
+    all_uppers = [ci_u for _, _, _, ci_u in chart.data]
+    data_min = min(min(all_lowers), chart.reference_value)
+    data_max = max(max(all_uppers), chart.reference_value)
+    data_range = data_max - data_min
+    if data_range == 0:
+        data_range = 1.0
+    # Add 10% padding
+    data_min -= data_range * 0.1
+    data_max += data_range * 0.1
+    data_range = data_max - data_min
+
+    def val_to_x(val):
+        return margin_left + ((val - data_min) / data_range) * plot_w
+
+    # X-axis gridlines + ticks (5 ticks)
+    for i in range(6):
+        frac = i / 5.0
+        val = data_min + frac * data_range
+        x = margin_left + frac * plot_w
+        parts.append(_line(x, margin_top, x, margin_top + plot_h,
+                           CCA_COLORS["border"], 0.5))
+        parts.append(_text(x, margin_top + plot_h + 16,
+                           f"{val:.3f}", font_size=8,
+                           fill=CCA_COLORS["muted"]))
+
+    # Reference line (dashed vertical)
+    ref_x = val_to_x(chart.reference_value)
+    parts.append(
+        f'<line x1="{ref_x:.1f}" y1="{margin_top:.1f}" '
+        f'x2="{ref_x:.1f}" y2="{margin_top + plot_h:.1f}" '
+        f'stroke="{CCA_COLORS["primary"]}" stroke-width="1.5" '
+        f'stroke-dasharray="6,4"/>\n'
+    )
+
+    # Horizontal axis
+    parts.append(_line(margin_left, margin_top + plot_h,
+                       margin_left + plot_w, margin_top + plot_h,
+                       CCA_COLORS["primary"], 1))
+
+    # Studies
+    ref = chart.reference_value
+    for i, (label, estimate, ci_lower, ci_upper) in enumerate(chart.data):
+        cy = margin_top + (i + 0.5) * row_height
+
+        # Determine color based on CI vs reference
+        if ci_lower > ref:
+            color = CCA_COLORS["success"]  # Entirely positive
+        elif ci_upper < ref:
+            color = CCA_COLORS["highlight"]  # Entirely negative
+        else:
+            color = CCA_COLORS["muted"]  # CI spans reference = inconclusive
+
+        # Label
+        parts.append(_text(margin_left - 8, cy + 4,
+                           _abbreviate_label(str(label), 15),
+                           font_size=10, fill=CCA_COLORS["primary"],
+                           anchor="end"))
+
+        # CI line (horizontal)
+        x_low = val_to_x(ci_lower)
+        x_high = val_to_x(ci_upper)
+        parts.append(_line(x_low, cy, x_high, cy, color, 2))
+
+        # CI end caps
+        cap_h = 6
+        parts.append(_line(x_low, cy - cap_h / 2, x_low, cy + cap_h / 2, color, 1.5))
+        parts.append(_line(x_high, cy - cap_h / 2, x_high, cy + cap_h / 2, color, 1.5))
+
+        # Estimate diamond (rotated rect)
+        ex = val_to_x(estimate)
+        diamond_size = 4
+        parts.append(
+            f'<rect x="{ex - diamond_size:.1f}" y="{cy - diamond_size:.1f}" '
+            f'width="{diamond_size * 2}" height="{diamond_size * 2}" '
+            f'fill="{color}" '
+            f'transform="rotate(45, {ex:.1f}, {cy:.1f})"/>\n'
+        )
+
+        # Alternating row background for readability
+        if i % 2 == 0:
+            parts.insert(-4, _rect(margin_left, cy - row_height / 2,
+                                   plot_w, row_height,
+                                   CCA_COLORS["surface"]))
+
+    parts.append(_svg_footer())
+    return "".join(parts)
+
+
 def render_svg(chart) -> str:
     """Render any chart object to an SVG string."""
     if isinstance(chart, BarChart):
@@ -3337,6 +3595,10 @@ def render_svg(chart) -> str:
         return _render_violin_plot(chart)
     elif isinstance(chart, CalibrationPlot):
         return _render_calibration_plot(chart)
+    elif isinstance(chart, CandlestickChart):
+        return _render_candlestick_chart(chart)
+    elif isinstance(chart, ForestPlot):
+        return _render_forest_plot(chart)
     else:
         raise TypeError(f"Unknown chart type: {type(chart)}")
 
