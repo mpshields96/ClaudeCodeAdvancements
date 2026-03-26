@@ -2064,6 +2064,10 @@ See `CCA_PRIME_DIRECTIVE.md`.
 - Phase 6: Progression logic — gym order, HM management, story triggers, legendary encounters
 - Phase 7: Personality — name generator, commentary log, screenshot captures at milestones
 - Phase 8: Polish — Pokedex completion, rare encounters, shiny hunting (optional), speed optimization
+- Phase 9: Data logging + self-learning — JSONL event log of every battle outcome, team evolution,
+  route timing, death/wipe count, item usage efficiency. Cross-run analysis: which team comps beat
+  which gyms fastest, optimal catch order, route efficiency scores. Feeds back into battle AI and
+  team builder for subsequent playthroughs/ROM hacks. Standard practice in game AI research.
 
 **Estimated scope:** UBER-LEVEL (10-15+ sessions). Multi-session build spread across low-priority windows.
 
@@ -2072,5 +2076,7 @@ See `CCA_PRIME_DIRECTIVE.md`.
 - Battle AI optimization parallels Kalshi bet sizing optimization
 - Navigation/pathfinding is transferable infrastructure
 - Fun project that Matthew can watch while serious work happens in parallel
+- Phase 9 data logging mirrors CCA's own self-learning pipeline (journal → reflect → improve)
+- Cross-run optimization data is genuinely useful for AI game completion research
 
 **Status:** IDEA LOGGED (S188, expanded S189). Matthew approved as UBER-LEVEL MT. Phase 1 research: find the right macOS emulator with speed control + scripting API. ROM hacks list TBD.
