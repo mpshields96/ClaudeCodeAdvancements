@@ -2032,15 +2032,21 @@ See `CCA_PRIME_DIRECTIVE.md`.
 
 **Source:** Matthew directive (S188, 2026-03-26) — "I want to be a bot that can play Pokemon on my screen while CCA and Kalshi bot work. Start to finish, all gyms, elite four, legendary Pokemon, Pokedex. Funny dark toilet humor names but skilled team. Once built, it doesn't burn tokens."
 
-**What Matthew wants:** A standalone Pokemon bot that plays through an entire game (Crystal, Emerald, or a ROM hack) autonomously on an emulator while Matthew watches. CCA and Kalshi chats work in parallel. The bot must:
+**What Matthew wants:** A standalone Pokemon bot that plays through entire games autonomously on a macOS emulator while Matthew watches. CCA and Kalshi chats work in parallel. The bot must:
 1. Play start to finish: all 8 gyms, Elite Four, champion, post-game legendaries
 2. Build an optimal team with strategic type coverage
 3. Name Pokemon with dark/toilet humor
 4. Complete as much Pokedex as practical
 5. Run WITHOUT burning Claude tokens after initial build — standalone executable
+6. Support x1.5 or x2 speed in the emulator settings so Matthew can watch at pace
+
+**Target games (Matthew directive S189):**
+- Pokemon Crystal (GBC) — Gen 2 classic
+- Pokemon Emerald (GBA) — Gen 3 classic
+- ROM hacks (TBD — Matthew will specify which ones later)
 
 **Architecture (preliminary):**
-- **Emulator:** mGBA (Lua scripting) or BizHawk (Lua/C#) or pyboy (Python-native GB/GBC emulator)
+- **Emulator:** Must run on macOS. Candidates: mGBA (Lua scripting, GBA), BizHawk (Lua/C#), pyboy (Python-native GB/GBC), OpenEmu (macOS native, multi-system)
 - **Memory reading:** Direct RAM access for game state (no screen OCR needed)
 - **Battle AI:** Type effectiveness matrix, move power calculation, switch logic, item usage
 - **Navigation:** Pre-mapped routes with pathfinding (A* on tile grid)
@@ -2067,4 +2073,4 @@ See `CCA_PRIME_DIRECTIVE.md`.
 - Navigation/pathfinding is transferable infrastructure
 - Fun project that Matthew can watch while serious work happens in parallel
 
-**Status:** IDEA LOGGED (S188). Matthew approved as UBER-LEVEL MT. Research phase when capacity allows.
+**Status:** IDEA LOGGED (S188, expanded S189). Matthew approved as UBER-LEVEL MT. Phase 1 research: find the right macOS emulator with speed control + scripting API. ROM hacks list TBD.

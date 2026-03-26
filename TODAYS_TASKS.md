@@ -180,6 +180,14 @@
 - REQ-8 (multi-parameter loss analysis) and REQ-9 (non-stationarity) still URGENT
 - REQ-10-25 need triage — many may be resolved or superseded by newer data
 
+### E17. MT-53 Pokemon Autonomous Bot — Phase 1 Research (Matthew directive S189)
+- Find the right macOS emulator with speed control (x1.5 or x2) AND scripting API
+- Target games: Pokemon Crystal (GBC), Pokemon Emerald (GBA), ROM hacks (TBD)
+- Candidates: pyboy (Python-native GBC), mGBA (Lua scripting, GBA), OpenEmu (macOS native)
+- Key question: which emulator supports BOTH scripting AND adjustable speed on macOS?
+- ROM hacks list coming from Matthew later — log when provided
+- This is an UBER-LEVEL personal fun project, low priority vs Kalshi work
+
 ---
 
 ## COMPLETED TODAY (all sessions)

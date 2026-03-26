@@ -96,3 +96,16 @@
 7. UBER-level MT (MT-53) — build when capacity allows
 
 ---
+
+## S189 — 2026-03-26 (Pokemon Emulator Expansion)
+
+> Want to do pokemon crystal/pokemon emerald/and pokemon rom hacks that I'll say later but to work on the right macOS emulator and can x2 speed in the emulator settings or x1.5 speed in the emulator and I can watch it play while CCA and kalshi bot chats work.
+
+**Core principles extracted:**
+1. Specific games: Pokemon Crystal (GBC), Pokemon Emerald (GBA), ROM hacks (TBD)
+2. macOS emulator required — must support speed adjustment (x1.5 or x2)
+3. Matthew watches it play — entertainment alongside productive work
+4. ROM hacks list coming later — log when provided
+5. Phase 1 priority: find the right emulator with scripting API + speed control
+
+---
