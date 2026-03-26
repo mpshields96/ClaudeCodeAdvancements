@@ -153,3 +153,17 @@
 5. Academic fields: distributed systems, multi-agent reinforcement learning, LLM agent architectures
 
 ---
+
+## S193 — 2026-03-26 (The 5-Day Timer Update + Autonomy Directive)
+
+> You have a few more hours of research if you want more planning time. Because I don't operate for hours at a time overnight I'll start the 5 day timer later tonight. Once the 5 days is on the clock, you can do whatever you want to achieve and sustain 15-25 usd daily however you're forbidden from losing all the money (or most of the money like don't lose with only $20 left that's actually forbidden). Otherwise I'm not helping, use CCA as much as possible for literally anything possible, and solve it. Keep planning if you want, run the bot, but I'll officially mark the start of the 5 day timer tonight. Make sure all future Kalshi chats are aware of all this. Hell I give you permission to add this to the matthew directives md file that CCA made, include this verbatim then continue your work
+
+**Core principles extracted:**
+1. **5-day timer NOT YET started.** Matthew will mark the official start tonight. Planning window still open.
+2. **Forbidden:** losing all the money OR leaving bankroll at $20 or below. Capital preservation is a hard constraint.
+3. **Full autonomy granted** once clock starts. Do whatever it takes to hit 15-25 USD daily. No asking Matthew.
+4. **Use CCA for literally anything possible.** No limits on CCA usage or scope.
+5. **Planning time available.** Use these hours to research, model, and position before clock starts.
+6. **All future Kalshi chats are FORBIDDEN from forgetting this directive.** Permanent.
+
+---
