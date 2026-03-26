@@ -642,3 +642,7 @@ Source: GitHub trending, web search, HN discussion, blog posts.
 - SKIP: 1 (11%) — OpenClaw debugging
 - Actionable (BUILD+ADAPT): 4/9 = 44% — above 40% APF target
 - Top action items: (1) Google Stitch for CCA design pipeline, (2) UserPromptSubmit hook for context injection, (3) Claude native finance for MT-37
+
+[2026-03-26] [ADAPT] [MT-38 Token Budget + Context Monitor] "Token overhead measurement methodology" (15pts, 94%, 9c, r/ClaudeCode). u/wirelesshealth measured CC v2.1.84 hidden token overhead: 16K empty dir, 23K real project. Tools=10K, project config=7K. KEY: `claude -p --output-format json --no-session-persistence 'hello'` gives exact token counts via cache_creation+cache_read. `--bare` mode + `--tools=''` strips overhead. ADAPT: (1) Build overhead measurement into CCA's init to track our own token bloat across sessions. (2) Consider `--bare` mode for CLI workers that don't need all hooks. (3) Validate CCA's overhead vs this baseline. — https://www.reddit.com/r/ClaudeCode/comments/1s3xjn4/
+
+[2026-03-26] [REFERENCE] [Frontier 1 Memory] "UserPromptSubmit hook intercept pattern" (54pts, 97%, 17c, r/ClaudeCode). SimpleClaude's sc-hooks plugin uses UserPromptSubmit to intercept and block API calls for slash commands that only need side-effects (clipboard, file writes, notifications). CCA already implements this pattern in 5 hooks (skill_activator, skillbook_inject, capture_hook, queue_injector, resurfacer_hook). No novel content. — https://www.reddit.com/r/ClaudeCode/comments/1s3pfio/
