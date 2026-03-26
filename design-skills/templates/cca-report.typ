@@ -19,14 +19,14 @@
 #let indigo = rgb("#0f3460")
 
 // Semantic tint tokens (light backgrounds for callout/status blocks)
-#let tint-blue = tint-blue       // Info backgrounds, section highlights
-#let tint-red = tint-red        // Blocked/error item backgrounds
-#let tint-green = tint-green      // Profitable/positive status backgrounds
-#let tint-orange = tint-orange     // Non-profitable/caution backgrounds
-#let tint-warm = tint-warm       // Warm parchment callout backgrounds
-#let warm-border = warm-border     // Warm gold callout left border
-#let warm-label = warm-label      // Warm muted callout label text
-#let warm-body = warm-body       // Warm dark callout body text
+#let tint-blue = rgb("#eff6ff")       // Info backgrounds, section highlights
+#let tint-red = rgb("#fff1f0")        // Blocked/error item backgrounds
+#let tint-green = rgb("#f0fdf4")      // Profitable/positive status backgrounds
+#let tint-orange = rgb("#fff7ed")     // Non-profitable/caution backgrounds
+#let tint-warm = rgb("#f8f7f4")       // Warm parchment callout backgrounds
+#let warm-border = rgb("#d4c5a0")     // Warm gold callout left border
+#let warm-label = rgb("#8b7e66")      // Warm muted callout label text
+#let warm-body = rgb("#5c5344")       // Warm dark callout body text
 
 // Callout box tokens (warm earth tones for "why it matters" blocks)
 #let callout-bg = tint-warm      // Callout background
