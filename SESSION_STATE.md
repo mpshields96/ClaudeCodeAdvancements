@@ -3,9 +3,21 @@
 
 ---
 
-## Current State (as of Session 191 — 2026-03-26)
+## Current State (as of Session 192 — 2026-03-27)
 
-**Phase:** Session 191 COMPLETE. Grade A. Worker_verifier integration, 2 new chart types (Candlestick + ForestPlot) with full E2E pipeline, MT-53 intelligence scan, chartjs_bridge expansion.
+**Phase:** Session 192 IN PROGRESS. MT-32 Visual Excellence: 4 new chart types (BulletChart, SlopeChart, LollipopChart, DumbbellChart) with full E2E pipeline wiring. REQ-53 Kalshi cross-chat delivery. MT expansion audit.
+
+**What was done this session (S192):**
+- **chart_generator.py:** BulletChart (25th) — Stephen Few bullet graph for KPI dashboards (actual bar, target marker, qualitative range bands). SlopeChart (26th) — before/after slopegraph with direction-colored lines. LollipopChart (27th) — horizontal stem+circle for ranked categories. DumbbellChart (28th) — horizontal paired dots for range comparison. 60 new tests across 2 test files.
+- **report_charts.py:** 5 new chart methods — kalshi_bankroll_bullet (BulletChart), kalshi_guard_slope (SlopeChart), module_tests_lollipop (LollipopChart), kalshi_wr_dumbbell (DumbbellChart), plus all wired into generate_all(). 13 Kalshi chart types + 12 base charts.
+- **kalshi_data_collector.py:** 3 new collector methods — chart_bankroll_bullet (balance vs mandate target), chart_guard_slope (early vs recent WR per asset), chart_wr_dumbbell (min/max WR across price buckets). Full E2E pipeline.
+- **REQ-53 delivery:** ETH@94c NOT significant (p=0.175, Wilson CI lower=89.1% < 94% BE). BTC@94c divergence is noise (n=23 too small). FLB+volatility analysis: BTC>ETH>SOL EV ranking is inverse of volatility — vol-adjusted FLB effect confirmed. Recommendation: soft expand ETH to 95c with n=100 review gate.
+- **MT expansion audit:** Ran mt_originator.py — 58 actionable items. REQ-8/9 already answered. Landscape well-covered.
+
+**Tests:** 10,382 total (270 suites). +60 new. 0 regressions.
+**Commits:** 4 this session.
+
+**Next:** (1) MT-32: more chart types or design token work. (2) Kalshi cross-chat (check for new REQs). (3) MT-53 Phase 2 (pokemon-agent install). (4) MAST paper full read. (5) MT expansion — consider CeTZ-Plot Typst-native charting (top ADAPT finding).
 
 **What was done this session (S191):**
 - **hivemind_session_validator.py:** Wired worker_verifier into coordinator via `validate_with_verification()`. Combines queue validation + output verification. `_combine_verdicts()` logic: queue FAIL always wins, output REJECT/REVIEW downgrades to REVIEW. 17 new integration tests.
