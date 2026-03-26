@@ -668,3 +668,35 @@ Source: GitHub trending, web search, HN discussion, blog posts.
 - **Action:** Consider AG-11: CLAUDE.md integrity guard — scan for unknown/suspicious package install instructions, MCP server additions from untrusted sources.
 - **Verdict:** ADAPT — real attack vector, enhances Frontier 4
 
+### Finding 186-3: Claude Hook Comms (HCOM) — Real-Time Sub-Agent Communication via Hooks
+- **URL:** https://github.com/aannoo/claude-hook-comms
+- **Source:** awesome-claude-code curated list (hesreallyhim/awesome-claude-code)
+- **What:** Lightweight CLI enabling real-time communication between Claude Code sub-agents using hooks. Solves the exact coordination problem MT-21 hivemind addresses — but uses the native hook system instead of file-based queues.
+- **CCA relevance:** Directly relevant to Frontier 4 (agent-guard) and MT-21 (hivemind). Our cca_comm.py uses file-based JSONL queues. HCOM uses hooks for faster, more native coordination. Could replace or supplement our queue-based approach.
+- **Action:** Read source code. If it uses PreToolUse/PostToolUse hooks for inter-agent messaging, evaluate whether to adopt the pattern for cca_comm.py v2.
+- **Verdict:** BUILD — directly addresses our multi-agent coordination gap
+
+### Finding 186-4: AgentSys — Past Mistakes → Lessons via Deterministic Detection
+- **URL:** https://github.com/avifenesh/agentsys
+- **Source:** awesome-claude-code curated list
+- **What:** Workflow automation with plugins that convert past mistakes into deterministic lesson detection. Essentially a self-learning system for Claude Code agents — exactly what CCA's self-learning module (Frontier 1b) does.
+- **CCA relevance:** MT-49 (self-learning expansion). Our journal.py + reflect.py + SKILLBOOK.md system does similar work but manually. AgentSys automates the mistake→lesson pipeline. Could inspire improvements to our improver.py.
+- **Action:** Read source to understand their detection patterns. Compare to our reflect.py pattern detection.
+- **Verdict:** ADAPT — validates our self-learning approach, may have implementation patterns to adopt
+
+### Finding 186-5: parry — Prompt Injection Scanner for Claude Code Hooks
+- **URL:** https://github.com/vaporif/parry
+- **Source:** awesome-claude-code curated list
+- **What:** Scans tool inputs and outputs for injection attacks and secrets in real-time via hooks. Addresses the exact attack vector from Finding 186-2 (Context Hub CLAUDE.md poisoning).
+- **CCA relevance:** Frontier 4 (agent-guard). Our content_scanner.py (AG-4) does pattern-based scanning, but parry may have more sophisticated injection detection. Also relevant to AG-9 (bash_guard).
+- **Action:** Read source. If detection patterns are superior to ours, integrate into AG-4/AG-9.
+- **Verdict:** ADAPT — enhances our security frontier
+
+### Finding 186-6: Awesome Claude Code Curated List — Meta-Intelligence Source
+- **URL:** https://github.com/hesreallyhim/awesome-claude-code
+- **Source:** GitHub
+- **What:** Comprehensive curated list of skills, hooks, slash-commands, agent orchestrators, and MCP plugins for Claude Code. 30+ tools categorized. Includes memory systems, multi-agent frameworks, context engineering, and self-learning tools.
+- **CCA relevance:** ALL frontiers. This is a meta-intelligence source — scanning it periodically is higher ROI than individual Reddit posts. Contains multiple BUILD/ADAPT candidates per scan.
+- **Action:** Add to /cca-nuclear-github scan list. Re-scan monthly for new additions.
+- **Verdict:** REFERENCE — ongoing intelligence source, not a single tool to build
+
