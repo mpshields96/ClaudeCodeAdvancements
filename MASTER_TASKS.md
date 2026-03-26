@@ -1513,7 +1513,15 @@ See `CCA_PRIME_DIRECTIVE.md`.
 
 **Rigor standard (same as Kalshi):** structural basis + math validation + 20yr backtest + statistical significance. No exceptions.
 
-**Status:** UBER-LEVEL DOCUMENTED (S169). Full spec in MT37_INVESTMENT_RESEARCH_UBER.md. Phase 1 (research) not yet started. Long-term, research-first. Do NOT start building until Phase 1 research is complete.
+**Status:** LAYERS 1-5 COMPLETE (S193-S196). 12 modules, ~250 tests, 0 regressions.
+- Phase 1 COMPLETE (S178-180): MT37_RESEARCH.md — 1762 lines, 42 papers synthesized across 10 areas
+- Layer 1 (S193): asset_screener.py (ETF universe), portfolio_constructor.py (3-fund/60-40/All-Weather/factor-tilt)
+- Layer 2 (S193): monte_carlo_projections.py (retirement sims), macro_dashboard.py (FRED regime detection)
+- Layer 3 (S195): kelly_sizer.py (fractional Kelly), risk_monitor.py (drawdown + vol alerts)
+- Layer 4 (S195): tax_harvester.py (TLH + wash sale), withdrawal_planner.py (SWR + CAPE + Guyton-Klinger)
+- Layer 5 (S196): rebalance_advisor.py (hybrid threshold+calendar), portfolio_report.py (Sharpe/Sortino/drawdown), behavioral_guard.py (5 bias detectors)
+- Orchestrator (S196): uber_pipeline.py (unified entry point), dca_advisor.py ($20/week recurring investing)
+- **Next:** Phase 2 (data pipeline — FRED API, ETF universe builder) or Phase 6 (wire into MT-32 reports)
 
 ---
 

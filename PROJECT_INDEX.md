@@ -243,9 +243,10 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `rebalance_advisor.py` — MT-37 Layer 5: Hybrid threshold+calendar rebalancing. DriftResult, RebalanceAdvisor, BUY/SELL actions. 23 tests (S196).
 - `portfolio_report.py` — MT-37 Layer 5: Portfolio analytics (Sharpe, Sortino, max drawdown, risk attribution). 24 tests (S196).
 - `behavioral_guard.py` — MT-37 Layer 5: 5 behavioral bias detectors (disposition, loss aversion, recency, home bias, overconfidence). 22 tests (S196).
-- `uber_pipeline.py` — MT-37 UBER orchestrator: chains all 10 modules into single analyze_portfolio(). PortfolioInput, UBERConfig, UBERReport. 21 tests (S196).
+- `uber_pipeline.py` — MT-37 UBER orchestrator: chains all 10 modules into single analyze_portfolio(). PortfolioInput, UBERConfig, UBERReport. 31 tests (S196).
 - `dca_advisor.py` — MT-37: DCA planner for small recurring investments ($20/week, $50/month). allocate_deposit, rebalance_on_deposit, annual_projection, app recommendations. 18 tests (S196).
 - `correlated_loss_analyzer.py` — REQ-054: Cross-asset loss correlation detector. WindowAnalyzer clusters BTC+ETH losses by time window, coincidence rate vs independence. 20 tests (S196).
+- `market_diversifier.py` — REQ-055: HHI-based cross-market diversification analyzer. AssetClass enum, concentration_risk(), DiversificationAdvisor. 25 tests (S196).
 - `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 - `BATCH_ANALYSIS_S62.md` — Batch trace analysis of 10 recent sessions (avg 73.0, retry rate down to 40%)
 - `research/SENIOR_DEV_AGENT_RESEARCH.md` — S70: Nuclear-level research for Senior Dev Agent MT (11 verified papers, 5 tools, industry standards, MVP architecture)

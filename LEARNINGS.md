@@ -735,3 +735,21 @@
 - **First seen:** 2026-03-26 (S186 — 124/133 principles unused)
 - **Last seen:** 2026-03-26 (S188 — 3 fully orphaned modules discovered)
 - **Files:** outcome_feedback.py, sentinel_bridge.py, fill_rate_simulator.py
+
+---
+
+### Check comms + priority_picker BEFORE first task — Severity: 2 — Count: 2
+- **Anti-pattern:** Diving into work immediately without checking cca_comm.py inbox or running priority_picker.py. Results in working on stale priorities and missing Kalshi requests.
+- **Fix:** At start of every /cca-auto task cycle: (1) `python3 cca_comm.py inbox`, (2) `python3 priority_picker.py pick`, (3) check POLYBOT_TO_CCA.md. Only then start work.
+- **First seen:** 2026-03-26 (S196 — Matthew had to correct mid-session)
+- **Last seen:** 2026-03-27 (S196)
+- **Files:** /cca-auto workflow
+
+---
+
+### MASTER_TASKS.md status drift — Severity: 1 — Count: 1
+- **Anti-pattern:** MT-37 status said "Phase 1 not yet started" when Layers 1-5 were fully built (12 modules, ~250 tests). Doc wasn't updated across sessions.
+- **Fix:** At wrap time, verify MASTER_TASKS.md status for any MT worked on this session matches reality.
+- **First seen:** 2026-03-27 (S196)
+- **Last seen:** 2026-03-27 (S196)
+- **Files:** MASTER_TASKS.md

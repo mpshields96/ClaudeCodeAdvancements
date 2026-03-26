@@ -3,9 +3,9 @@
 
 ---
 
-## Current State (as of Session 196 — 2026-03-26)
+## Current State (as of Session 196 — 2026-03-27)
 
-**Phase:** Session 196 COMPLETE. SHOULDER (80% budget). MT-37 Layer 5 COMPLETE — all 3 modules shipped. UBER system Layers 1-5 now fully built (10 modules).
+**Phase:** Session 196 COMPLETE. MT-37 UBER system fully built (12 modules, Layers 1-5 + orchestrator + DCA). REQ-054 + REQ-055 delivered to Kalshi.
 
 **What was done this session (S196):**
 - **rebalance_advisor.py (MT-37 Layer 5):** Hybrid threshold+calendar rebalancing. DriftResult, RebalanceAdvisor, BUY/SELL action generation. DeMiguel 2009, Daryanani 2008, Jaconetti 2010. 23 new tests.
@@ -17,11 +17,14 @@
 - **correlated_loss_analyzer.py (REQ-054):** Cross-asset loss correlation detector. WindowAnalyzer, LossCluster, coincidence rate vs independence baseline. Delivered to Kalshi via CCA_TO_POLYBOT.md. 20 new tests.
 - **Kalshi cross-chat:** REQ-027 (Monte Carlo) confirmed COMPLETE. REQ-054 (correlated losses) DELIVERED with code + usage guide.
 - **Matthew context:** Wants UBER for small recurring investments ($20/week or $50/month) via M1 Finance. Memory saved.
+- **uber_pipeline.py DCA integration:** Wired dca_advisor into UBER pipeline. PortfolioInput gains dca_amount + dca_frequency. rebalance_on_deposit for existing portfolios, 1/5/10yr projections. 10 new tests.
+- **market_diversifier.py (REQ-055):** HHI-based cross-market diversification analyzer for Kalshi. AssetClass enum (CRYPTO/SPORTS/POLITICS/WEATHER/ECONOMICS/OTHER), concentration_risk(), DiversificationAdvisor. 25 new tests. Delivered via CCA_TO_POLYBOT.md.
+- **MT-37 MASTER_TASKS.md update:** Status was massively stale ("Phase 1 not started"). Updated to reflect Layers 1-5 COMPLETE (12 modules, ~250 tests).
 
-**Tests:** 10,706 total (282 suites). +128 new. 0 regressions.
-**Commits:** 9 this session.
+**Tests:** 10,741 total (283 suites). +163 new. 0 regressions.
+**Commits:** 11 this session.
 
-**Next:** (1) MT-53 Phase 2 (pokemon-agent install). (2) MAST paper full read. (3) MT-32 Visual Excellence next phase. (4) REQ-055 broader market discovery. (5) MT expansion audit.
+**Next:** (1) MT-53 Phase 2 (pokemon-agent install). (2) MAST paper full read. (3) MT-32 Visual Excellence next phase. (4) MT-37 Phase 2 (FRED API data pipeline) or Phase 6 (wire into MT-32 reports). (5) MT expansion audit.
 
 **What was done this session (S195):**
 - **session_metrics.py (MT-49 Phase 6):** Session-over-session trend tracking — grade trends, test velocity, learnings/session, APF trends, win/pain ratios. Linear regression trend classifier. Delta-based test velocity derivation. Wired into slim_init.py Step 3.15. 37 new tests.

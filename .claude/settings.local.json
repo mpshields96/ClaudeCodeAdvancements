@@ -1,5 +1,4 @@
 {
-  "model": "opus[1m]",
   "permissions": {
     "allow": [
       "Bash(*)",
@@ -53,9 +52,11 @@
       "WebFetch(domain:www.jbecker.dev)",
       "WebFetch(domain:www.dlnews.com)",
       "WebFetch(domain:navnoorbawa.substack.com)",
-      "WebFetch(domain:www.karlwhelan.com)"
+      "WebFetch(domain:www.karlwhelan.com)",
+      "WebFetch(domain:docs.kalshi.com)"
     ]
   },
+  "model": "opus",
   "hooks": {
     "PostToolUse": [
       {

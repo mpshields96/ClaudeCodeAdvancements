@@ -3,6 +3,32 @@
 
 ---
 
+## Session 196 — 2026-03-27
+
+**What changed:**
+- `self-learning/rebalance_advisor.py` — MT-37 Layer 5: hybrid threshold+calendar rebalancing. 23 tests.
+- `self-learning/portfolio_report.py` — MT-37 Layer 5: Sharpe/Sortino/drawdown/risk attribution. 24 tests.
+- `self-learning/behavioral_guard.py` — MT-37 Layer 5: 5 behavioral bias detectors. 22 tests.
+- `self-learning/uber_pipeline.py` — MT-37 orchestrator: unified pipeline + DCA integration. 31 tests.
+- `self-learning/dca_advisor.py` — DCA for $20/week recurring investing. 18 tests.
+- `self-learning/correlated_loss_analyzer.py` — REQ-054: cross-asset loss correlation. 20 tests.
+- `self-learning/market_diversifier.py` — REQ-055: HHI-based market diversification. 25 tests.
+- `MASTER_TASKS.md` — MT-37 status updated from stale to current (Layers 1-5 COMPLETE).
+
+**Why:**
+- MT-37 Layer 5 completes the UBER investment research system (12 modules total)
+- Matthew requested small recurring investment support ($20/week via M1 Finance)
+- Kalshi REQ-054 (correlated losses) and REQ-055 (diversification) both addressed
+- All 4 pending Kalshi REQs now closed/delivered
+
+**Tests:** 10,741/10,741 passing (283 suites). +163 new.
+
+**Lessons:**
+- Check comms + run priority_picker BEFORE starting first task, not after being reminded
+- MASTER_TASKS.md status can drift badly — verify at wrap time
+
+---
+
 ## Session 195 — 2026-03-26
 
 **What changed:**
