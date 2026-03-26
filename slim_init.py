@@ -31,6 +31,7 @@ from session_id import normalize as normalize_session_id
 PROJECT_ROOT = Path(__file__).resolve().parent
 SESSION_STATE_PATH = PROJECT_ROOT / "SESSION_STATE.md"
 TODAYS_TASKS_PATH = PROJECT_ROOT / "TODAYS_TASKS.md"
+DIRECTIVES_PATH = PROJECT_ROOT / "MATTHEW_DIRECTIVES.md"
 
 INIT_STEPS = ["smoke", "priority", "summary"]
 
@@ -143,6 +144,25 @@ def scan_todays_tasks() -> dict:
                 task = line.strip().lstrip("#").strip()
                 result["todos"].append(task)
         result["count"] = len(result["todos"])
+    except Exception:
+        pass
+    return result
+
+
+def scan_directives() -> dict:
+    """Scan MATTHEW_DIRECTIVES.md for the latest directive (S181 — perpetual log)."""
+    result: dict = {"latest_title": "", "latest_session": ""}
+    if not DIRECTIVES_PATH.exists():
+        return result
+    try:
+        content = DIRECTIVES_PATH.read_text()
+        # Find the most recent "## SN —" header
+        import re
+        headers = re.findall(r"^## (S\d+) — .+ \((.+)\)$", content, re.MULTILINE)
+        if headers:
+            last = headers[-1]
+            result["latest_session"] = last[0]
+            result["latest_title"] = last[1]
     except Exception:
         pass
     return result
@@ -527,6 +547,9 @@ def format_summary(summary: dict) -> str:
         lines.append(f"  Enriched: {summary['enriched_count']} new REQ entries added to outcomes")
     if summary.get("predictions_count", 0) > 0:
         lines.append(f"  Predictions: {summary['predictions_count']} principle recommendations")
+    if summary.get("directive_latest"):
+        lines.append(f"  Directive: {summary['directive_session']} — {summary['directive_latest']}")
+        lines.append(f"    (Read MATTHEW_DIRECTIVES.md — perpetual inspiration log)")
     if summary.get("blockers"):
         lines.append("  BLOCKERS:")
         for b in summary["blockers"]:
@@ -629,6 +652,12 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if predictions.get("recommendations", 0) > 0:
         summary["predictions_count"] = predictions["recommendations"]
         summary["predictions_brief"] = predictions.get("brief", "")
+
+    # Step 5.1: Matthew Directives (S181 — perpetual inspiration log)
+    directives = scan_directives()
+    if directives.get("latest_title"):
+        summary["directive_latest"] = directives["latest_title"]
+        summary["directive_session"] = directives["latest_session"]
 
     return summary
 

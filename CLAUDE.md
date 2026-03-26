@@ -184,9 +184,10 @@ day to day. Follow it, don't second-guess it, don't skip items for "higher prior
 1. Read `PROJECT_INDEX.md` — fast module overview
 2. Read `SESSION_STATE.md` — exact current state
 3. Read `TODAYS_TASKS.md` — **authoritative daily task list (work these first)**
-4. Read `CLAUDE.md` (this file) — rules
-5. Run smoke tests for the module you're working on
-6. State what you're building today before touching any file
+4. Read `MATTHEW_DIRECTIVES.md` — **perpetual inspiration log (Matthew's verbatim directives)**
+5. Read `CLAUDE.md` (this file) — rules
+6. Run smoke tests for the module you're working on
+7. State what you're building today before touching any file
 
 ### Ending a Session
 1. Update `SESSION_STATE.md` — what was done, what's next

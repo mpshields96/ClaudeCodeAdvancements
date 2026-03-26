@@ -86,6 +86,38 @@
 
 ---
 
+## NEW TASKS (Matthew directive, S181 — The Expansion Directive)
+
+### E1. MT-37 Phase 2: Architecture Design
+- Phase 1 (research) is DONE but MT-37 has MUCH more to do
+- Phase 2: Design the architecture for a wealth management intelligence system
+- Use the 42-paper synthesis in MT37_RESEARCH.md as foundation
+- This is not "done" — this is just getting started
+
+### E2. C6 Expansion: Act on Intelligence Findings
+- S181 scan found 3 BUILD-rated tools. Act on them:
+- **Chart.js integration** into dashboard_generator.py for interactive dashboards (~200 LOC)
+- **Visualization decision matrix** from OpenGenerativeUI pattern — auto-map data shape to chart type
+- **CloudCLI UI evaluation** (8.9K stars) for MT-47 external tool pipeline
+
+### E3. Ongoing Kalshi Cross-Chat
+- Kalshi work is NEVER finished (Matthew explicit)
+- Check POLYBOT_TO_CCA.md every cycle
+- Proactively identify new edges, guard improvements, strategy enhancements
+- Write deliveries without being asked
+
+### E4. MT Expansion Audit
+- Review completed/stalled MTs for expansion opportunities
+- Don't be satisfied with "done" — ask "can this be better?"
+- Use synthetic MT origination (mt_originator.py) to auto-propose new phases
+- Use intelligence findings (FINDINGS_LOG.md BUILD items) to generate new work
+- North stars: (1) make CCA smarter, (2) make Kalshi bot more profitable
+
+### E5. Reddit Links Review
+- Matthew has Reddit links to drop — review with /cca-review when provided
+
+---
+
 ## COMPLETED TODAY (all sessions)
 
 ### S179
