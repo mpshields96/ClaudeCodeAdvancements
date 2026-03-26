@@ -113,8 +113,25 @@
 - Use intelligence findings (FINDINGS_LOG.md BUILD items) to generate new work
 - North stars: (1) make CCA smarter, (2) make Kalshi bot more profitable
 
-### E5. Reddit Links Review
-- Matthew has Reddit links to drop — review with /cca-review when provided
+### E5. Reddit Links Review [DONE S181]
+- Matthew dropped 9 Reddit links — all reviewed with /cca-review verdicts
+- 1 BUILD (Google Stitch design pipeline), 3 ADAPT, 3 REFERENCE, 1 REFERENCE-PERSONAL, 1 SKIP
+- All verdicts written to FINDINGS_LOG.md
+
+### E6. MT-50: Kalshi Copytrade Bot Research (S181b directive)
+- Two paths: (a) copytrade top Kalshi bettors, (b) mirror Polymarket whales → bet on Kalshi
+- Requires significant R&D: API access, account identification, market mapping, TOS compliance
+- Logged as UBER-LEVEL MT-50 in MASTER_TASKS.md
+
+### E7. MT-51: New Kalshi Market Expansion (S181b directive)
+- Crypto is NOT the only profitable market — research new categories aggressively
+- Weather, economic data, political events, company events, etc.
+- Logged as MT-51 in MASTER_TASKS.md
+
+### E8. MT-52: Nuclear Synthetic Origination (S181b directive)
+- Nuclear scan tools should auto-propose MTs/phases from BUILD findings
+- Extend mt_originator.py with intelligence-driven origination
+- Logged as MT-52 in MASTER_TASKS.md
 
 ---
 

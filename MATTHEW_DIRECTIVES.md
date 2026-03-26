@@ -20,3 +20,15 @@
 8. Kalshi work is NEVER finished. Cross-chat coordination is ONGOING. Always.
 
 ---
+
+## S181b — 2026-03-25 (The Discovery & New Markets Directive)
+
+> Also new uber level master task or I should say promotion, the cca nuclear tool for reddit and github research and discovery, I want a synthetic origination component built in and by that I mean intelligent scanning and autonomous discovery on your part in reddit and github focused on improving CCA and Kalshi bot or ANY of our MTs. Also another MT or promotion of current MT is discovering and originating our own way of developing a copytrade bot for Kalshi to be able to copytrade the top bettors on Kalshi, OR a way to copytrade Polymarket top accounts/right bots and be able to bet on Kalshi and essentially copytrade via tracking Polymarket accounts to bet on Kalshi. This requires significant research and development. Also. I don't believe that crypto is the only truly profitable market on Kalshi, that's insane. Also requires significant research and development towards targetting new markets. Makes sense?
+
+**Core principles extracted:**
+1. Nuclear scan tools should have SYNTHETIC ORIGINATION built in — don't just find stuff, autonomously propose MTs/phases from what's found
+2. Copytrade research: two paths — (a) copytrade top Kalshi bettors directly, (b) track Polymarket whale accounts and mirror their bets on Kalshi
+3. Crypto is NOT the only profitable market on Kalshi — research new market categories aggressively
+4. These are UBER-level research tasks requiring significant R&D, not quick fixes
+
+---

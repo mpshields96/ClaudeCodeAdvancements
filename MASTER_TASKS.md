@@ -1914,3 +1914,114 @@ See `CCA_PRIME_DIRECTIVE.md`.
 **Rigor standard:** Same as everything else — structural basis, math validation, measured outcomes. No "I think this makes us smarter" — prove it with data.
 
 **Status:** UBER-LEVEL DOCUMENTED (S169). Permanent MT — no completion date. Existing infrastructure is strong. Focus on meta-learning and automated principle discovery as first priorities.
+
+---
+
+## MT-50: Kalshi Copytrade Bot Research (UBER-LEVEL)
+
+**Classification:** UBER-LEVEL MASTER TASK — Copytrade/Mirror Trading for Kalshi
+**Source:** Matthew S181b directive (The Discovery & New Markets Directive, 2026-03-25)
+**Elevated:** S181 — Matthew explicit: "discovering and originating our own way of developing a copytrade bot"
+
+**What Matthew wants:** Two research paths for copy trading on Kalshi:
+1. **Path A — Kalshi Direct Copytrade:** Track and mirror the top bettors on Kalshi. Identify consistent winners, analyze their bet patterns, timing, market selection, and position sizing. Build a system to detect their trades and mirror them with appropriate delay and sizing adjustments.
+2. **Path B — Polymarket Whale Mirroring:** Track top accounts and known profitable bots on Polymarket. Map Polymarket markets to equivalent Kalshi markets. When a Polymarket whale takes a position, mirror it on Kalshi. Cross-platform arbitrage of information advantage.
+
+**Why this is UBER-LEVEL:** This is a fundamentally new edge source — social/behavioral rather than statistical. Requires significant R&D: API access research, account identification, trade detection latency, market mapping, legal/TOS analysis, position sizing for mirrored trades.
+
+**Technical research areas:**
+- Kalshi API: can we see other users' positions or trade flow? Public leaderboard data?
+- Polymarket API: public wallet addresses, on-chain trade data, whale wallet identification
+- Market mapping: automated matching of Kalshi events to Polymarket events
+- Latency analysis: how fast must mirror trades execute to capture edge?
+- Position sizing: fractional Kelly on mirrored trades (lower confidence than original signal)
+- TOS compliance: is copy trading allowed on both platforms?
+- Historical validation: backtest on known top performers if historical data available
+
+**Phases:**
+- Phase 1: API and data access research — what data is available on both platforms?
+- Phase 2: Top performer identification — who are the consistent winners?
+- Phase 3: Market mapping engine — automated Kalshi ↔ Polymarket event matching
+- Phase 4: Mirror trade execution — latency-optimized trade mirroring
+- Phase 5: Backtesting and validation — historical edge measurement
+- Phase 6: Live deployment with conservative sizing
+
+**Relationship to existing MTs:**
+- MT-0 (Kalshi Self-Learning) — copytrade signals feed into self-learning as a new edge source
+- MT-37 (Investment Research) — copytrade is a behavioral finance edge (Pillar 4: Behavioral)
+
+**Status:** RESEARCH PHASE. S181b directive documented. No implementation yet.
+
+---
+
+## MT-51: Kalshi New Market Expansion Research
+
+**Classification:** HIGH-PRIORITY RESEARCH — Expanding Beyond Crypto Markets
+**Source:** Matthew S181b directive (2026-03-25): "I don't believe that crypto is the only truly profitable market on Kalshi, that's insane."
+**Elevated:** S181 — Matthew explicit
+
+**What Matthew wants:** Aggressive research into non-crypto Kalshi market categories to find new profitable edges. The current bot focuses on crypto drift bets, but Kalshi has many market categories. Matthew's conviction: there are profitable opportunities in other categories that haven't been explored.
+
+**Market categories to research:**
+- Weather events (temperature, precipitation thresholds)
+- Economic data releases (CPI, jobs, GDP, Fed rate decisions)
+- Political events (elections, policy, congressional votes)
+- Sports (game outcomes, player props — if structurally different from traditional sports betting)
+- Entertainment (awards, box office)
+- Company events (earnings beats, layoffs, product launches)
+- Regulatory events (FDA approvals, SEC actions)
+
+**Research methodology per category:**
+1. Market structure analysis: how do contracts work? Binary yes/no? Range?
+2. Edge identification: what structural advantages exist? Information asymmetry? Model-able fundamentals?
+3. Data availability: what free/paid data sources feed predictions?
+4. Historical performance: backtest with available data
+5. Competition analysis: how sophisticated are existing bettors?
+6. Liquidity analysis: are markets liquid enough for meaningful positions?
+7. Profitability modeling: expected edge × liquidity × frequency = revenue potential
+
+**Rigor standard:** Same as MT-0 — structural basis + math validation + DB backtest + p-value. No "feels profitable" — prove it with data.
+
+**Phases:**
+- Phase 1: Market category survey — catalog all Kalshi categories, rank by research priority
+- Phase 2: Deep-dive top 3 categories — full research methodology per category
+- Phase 3: Prototype strategies — build testable strategies for promising categories
+- Phase 4: Backtest and validate — historical performance measurement
+- Phase 5: Live pilot — small positions in validated new markets
+
+**Relationship to existing MTs:**
+- MT-0 (Kalshi Self-Learning) — new market strategies plug into the same self-learning infrastructure
+- MT-50 (Copytrade) — copytrade data may reveal which non-crypto markets top bettors target
+
+**Status:** RESEARCH PHASE. S181b directive documented. No implementation yet.
+
+---
+
+## MT-52: Nuclear Scan Synthetic Origination
+
+**Classification:** HIGH — Autonomous MT/Phase Generation from Intelligence Findings
+**Source:** Matthew S181b directive (2026-03-25): "I want a synthetic origination component built in"
+**Elevated:** S181 — Matthew explicit: "intelligent scanning and autonomous discovery on your part"
+
+**What Matthew wants:** The nuclear scan tools (/cca-nuclear-daily, /cca-nuclear-github) should not just FIND things — they should autonomously PROPOSE new MTs, phases, or improvements based on what they find. Currently the pipeline is: scan → log findings → human reviews → human decides action. The new pipeline should be: scan → log findings → auto-generate MT/phase proposals → human approves/rejects.
+
+**Technical design:**
+- After each scan completes, run a synthesis pass over BUILD-rated findings
+- For each BUILD finding, generate a structured proposal: {title, frontier_mapping, effort_estimate, expected_impact, proposed_mt_or_phase, dependencies}
+- Write proposals to a new file: SYNTHETIC_PROPOSALS.md (append-only)
+- mt_originator.py already exists — extend it with intelligence-driven origination (currently it only does gap analysis)
+- Integration point: /cca-nuclear-daily and /cca-nuclear-github add a "Synthetic Origination" phase after scanning
+
+**Existing infrastructure to build on:**
+- mt_originator.py: gap analysis + MT proposal generation
+- FINDINGS_LOG.md: all intelligence findings with verdicts
+- /cca-nuclear-daily: daily subreddit scan pipeline
+- /cca-nuclear-github: GitHub trending scan pipeline
+
+**Phases:**
+- Phase 1: Extend mt_originator.py with findings-driven proposal generation
+- Phase 2: Wire synthesis pass into nuclear scan commands
+- Phase 3: Create SYNTHETIC_PROPOSALS.md with review workflow
+- Phase 4: Auto-proposal to MASTER_TASKS.md (with human approval gate)
+
+**Status:** DOCUMENTED. S181b directive. mt_originator.py exists but needs extension.
