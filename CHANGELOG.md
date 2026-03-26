@@ -3,6 +3,34 @@
 
 ---
 
+## Session 181 — 2026-03-25
+
+**What changed:**
+- `design-skills/chart_generator.py` — Extracted `_format_tick_value()` and `_abbreviate_label()` shared helpers. Refactored 6 chart types to use them. Fixed LineChart integer y-axis.
+- `design-skills/tests/test_chart_generator.py` — 13 new tests in 3 classes (55 total)
+- `design-skills/templates/cca-report.typ` — Defined 8 semantic tint tokens (tint-blue, tint-red, tint-green, tint-orange, callout-bg/border/label/body). Partial orphan replacement.
+- `FINDINGS_LOG.md` — S181 Visual/Design Intelligence Scan (10 findings) + 9 Reddit link verdicts
+- `MATTHEW_DIRECTIVES.md` — NEW: perpetual append-only inspiration log (S181 Expansion Directive + S181b Discovery Directive)
+- `slim_init.py` — Added scan_directives() integration for session startup
+- `CLAUDE.md` — Added MATTHEW_DIRECTIVES.md to session startup checklist
+- `TODAYS_TASKS.md` — Added expansion tasks E1-E5 and S181b directive tasks
+- `MASTER_TASKS.md` — MT-50 (copytrade bot), MT-51 (new Kalshi markets), MT-52 (nuclear origination) proposed
+
+**Why:**
+- MT-48 visual polish: integer y-axis bug and label overlap across chart types
+- Matthew redirect: stop incremental polish, scan for exponential upgrades (Reddit/GitHub intelligence)
+- Matthew S181 Expansion Directive: create infrastructure for perpetual improvement logging
+- Matthew S181b: research copytrade bots, new Kalshi markets, nuclear synthetic origination
+- 9 Reddit links dropped for /cca-review analysis
+
+**Tests:** 9851/9851 passing (223 suites, 13 new tests)
+
+**Lessons:**
+- Context compaction kills Reddit verdict quality. Write verdicts immediately after reading each link, never batch 9 reads then try to recall from compacted memory.
+- Session pivoted 4 times (chart polish → intelligence scan → directives → Reddit links). Each pivot was user-directed and correct, but scattered depth.
+
+---
+
 ## Session 180 — 2026-03-25
 
 **What changed:**

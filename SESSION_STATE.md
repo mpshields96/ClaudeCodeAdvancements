@@ -3,7 +3,55 @@
 
 ---
 
-## Current State (as of Session 180 — 2026-03-25)
+## Current State (as of Session 181 — 2026-03-25)
+
+**Phase:** Session 181 COMPLETE. MT-48 chart helpers, visual intelligence scan, MATTHEW_DIRECTIVES.md, Reddit verdicts. Grade: B.
+
+**What was done this session (S181):**
+- **MT-48 chart visual polish** (commits 966d984, 5a6182e):
+  - Extracted shared `_format_tick_value()` helper for integer-aware y-axis formatting
+  - Extracted shared `_abbreviate_label()` helper for label truncation with Unicode ellipsis
+  - Fixed LineChart y-axis (was crude `int()`, now uses shared helper)
+  - Refactored 6 chart types (Bar, Area, StackedBar, StackedArea, GroupedBar, Line) to use shared helpers
+  - 13 new tests in 3 classes (TestFormatTickValue, TestAbbreviateLabel, TestLineChartIntegerYAxis)
+- **Visual/design intelligence scan** (commit a973041):
+  - 10 findings logged to FINDINGS_LOG.md (3 BUILD, 3 ADAPT, 4 REFERENCE)
+  - Key findings: OpenGenerativeUI, OpenUI, CloudCLI UI, Claude interactive viz architecture
+  - 8 semantic tint tokens defined in cca-report.typ (partial replacement — 1 of 8+ orphans replaced)
+- **MATTHEW_DIRECTIVES.md** (commit 53b8e7f):
+  - NEW file: perpetual append-only log of Matthew's verbatim directives
+  - S181 "The Expansion Directive" — done != done forever, expand MTs continuously
+  - Wired into slim_init.py scan_directives() for session startup briefing
+  - Added as Step 4 in CLAUDE.md session startup checklist
+  - 5 expansion tasks (E1-E5) added to TODAYS_TASKS.md
+- **S181b Discovery & New Markets Directive** (commit 8211953):
+  - Nuclear tools need synthetic origination, copytrade bot research, new Kalshi markets
+  - 9 Reddit links read and verdicts written to FINDINGS_LOG.md
+  - New MTs proposed: MT-50 (copytrade bot), MT-51 (new Kalshi markets), MT-52 (nuclear origination)
+- 5 commits, 13 new tests (9851 total), zero regressions
+
+**Next:** Priority tasks for next session:
+- Re-do Reddit verdicts at full depth (S181 verdicts were thin due to context compaction)
+- Finish Typst color token replacement (7 remaining orphan hex values in template body)
+- E1: MT-37 Phase 2 architecture design
+- E2: Act on intelligence findings (Chart.js, viz matrix, CloudCLI)
+- E3: Ongoing Kalshi cross-chat deliveries
+
+**Matthew directives (carried forward):**
+- **TODAYS_TASKS.md is the daily driver** — all CCA sessions follow it (S178 permanent)
+- **MATTHEW_DIRECTIVES.md** — read at session init, perpetual inspiration log (S181 permanent)
+- 50%+ time on Kalshi bot work (higher priority) — S161 explicit
+- "Done" != done forever — continuously expand/improve MTs (S181 Expansion Directive)
+- Nuclear tools need synthetic MT origination (S181b)
+- Research copytrade bots and new Kalshi markets (S181b)
+- Peak/off-peak token budgeting UNIVERSAL (MT-38)
+- Autoloop ENABLED
+- Don't use sub-agents for research writing — write directly (S179 lesson)
+- Write Reddit verdicts immediately after reading, don't batch (S181 lesson)
+
+---
+
+## Previous State (Session 180 — 2026-03-25)
 
 **Phase:** Session 180 COMPLETE. MT-37 Phase 1 finished, nuclear pipeline wiring, Kalshi deliveries. Grade: A.
 

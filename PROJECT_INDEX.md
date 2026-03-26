@@ -19,6 +19,7 @@
 | Senior Dev gap analysis (MT-20) | `SENIOR_DEV_GAP_ANALYSIS.md` |
 | Hivemind phased rollout (MT-21) | `HIVEMIND_ROLLOUT.md` |
 | **CCA Prime Directive (S134)** | `CCA_PRIME_DIRECTIVE.md` |
+| **Matthew Directives log (S181)** | `MATTHEW_DIRECTIVES.md` |
 
 **Mission:** Build validated advancements for Claude Code users. CCA is part of the Kalshi bot ecosystem (S134).
 **Two Pillars (CCA_PRIME_DIRECTIVE.md):** (1) Get Smarter — self-learning/evolution. (2) Get More Bodies — automation/multi-chat.

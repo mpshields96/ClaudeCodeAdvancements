@@ -676,3 +676,12 @@
 - **Fix:** Write research content directly in the main session. Agents are for code exploration and multi-file code tasks, not prose writing. Direct writing is 5-10x more token-efficient for text content.
 - **First seen:** 2026-03-25 (S179)
 - **Files:** N/A (general workflow pattern)
+
+---
+
+### Write Reddit verdicts immediately after reading — don't batch — Severity: 1 — Count: 1
+- **Anti-pattern:** Reading 9 Reddit links sequentially, then trying to write all verdicts from memory. Context compaction wiped the granular detail, producing skeleton-thin verdicts.
+- **Fix:** After reading each Reddit link, write the verdict to FINDINGS_LOG.md immediately before reading the next link. Never batch reads and hope memory survives compaction.
+- **First seen:** 2026-03-25 (S181)
+- **Last seen:** 2026-03-25
+- **Files:** FINDINGS_LOG.md, `/cca-review` workflow
