@@ -102,7 +102,7 @@ class TestTriggerNextSession(unittest.TestCase):
                 mock_da.activate_claude.assert_called_once()
                 mock_da.ensure_code_tab.assert_called_once()
                 mock_da.new_conversation.assert_called_once()
-                # Called once: work prompt only (model command removed S183)
+                # Called once: work prompt only (model set via settings.local.json)
                 self.assertEqual(mock_da.send_prompt.call_count, 1)
         finally:
             os.unlink(path)
@@ -225,7 +225,7 @@ class TestTriggerNextSession(unittest.TestCase):
             with patch.object(autoloop_trigger, "RESUME_FILE", path), \
                  patch.object(autoloop_trigger, "AUDIT_LOG", "/dev/null"):
                 autoloop_trigger.trigger_next_session(dry_run=True)
-                # send called once: work prompt only (model command removed S183)
+                # send called once: work prompt only (model set via settings.local.json)
                 self.assertEqual(call_order, ["activate", "code_tab", "new_conv", "send"])
         finally:
             os.unlink(path)

@@ -34,7 +34,6 @@ from desktop_automator import DesktopAutomator
 PROJECT_DIR = "/Users/matthewshields/Projects/ClaudeCodeAdvancements"
 RESUME_FILE = os.path.join(PROJECT_DIR, "SESSION_RESUME.md")
 AUDIT_LOG = os.path.expanduser("~/.cca-autoloop-trigger.jsonl")
-# MODEL_COMMAND removed — Matthew directive S183 (not doing anything)
 PROMPT_PREFIX = "/cca-init then review the resume prompt below then /cca-auto\n"
 
 
@@ -190,6 +189,9 @@ def trigger_next_session(dry_run: bool = False) -> bool:
     if wait_time > 0:
         time.sleep(wait_time)
     _log("step_3_wait", {"seconds": wait_time})
+
+    # Model is set via project settings.local.json ("model": "opus[1m]")
+    # No need for /model command — sessions auto-start on Opus 1M.
 
     # Step 4+5: Paste prompt and send (Cmd+Return)
     if not automator.send_prompt(prompt):
