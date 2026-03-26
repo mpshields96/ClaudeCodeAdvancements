@@ -109,3 +109,34 @@
 5. Phase 1 priority: find the right emulator with scripting API + speed control
 
 ---
+
+## S189b — 2026-03-26 (The Perpetual Usefulness Directive)
+
+> it's always useful to help kalshi bot, or to enhance self-learning, or to enhance synthetic origination of MTs and phases to also objectively evolve and get smarter and more financially profitable, academic research into various fields are also always useful (finance, marketing, economics, mathematics, statistics, coding, computer science, quantum mechanisms applied to finances/betting/investments, investments/stocks themselves, AI, and AI-assisted fields such as investing/stocks/coding/development). Log this briefly as a matthew directive verbatim
+
+**Core principles extracted:**
+1. Kalshi bot help is ALWAYS useful — never deprioritize it
+2. Self-learning enhancement is ALWAYS useful — continuous improvement engine
+3. Synthetic MT/phase origination is ALWAYS useful — autonomous evolution
+4. Academic research across these fields is ALWAYS useful:
+   - Finance, marketing, economics, mathematics, statistics
+   - Coding, computer science
+   - Quantum mechanisms applied to finance/betting/investments
+   - Investments/stocks
+   - AI and AI-assisted fields (investing, stocks, coding, development)
+5. The north star remains: objectively evolve, get smarter, get more financially profitable
+
+---
+
+## S189c — 2026-03-26 (The GitHub Scrubbing Directive)
+
+> also to that matthew directive becoming a high-quality github scrabber (avoid rat poison) for discovery and self-learning and useful tools and enhancements objectively beneficial to our goals
+
+**Core principles extracted:**
+1. CCA should become a high-quality GitHub scrubber — systematic, not ad-hoc
+2. Rat poison avoidance remains paramount — quality over quantity
+3. GitHub scrubbing serves: discovery, self-learning, useful tools, enhancements
+4. All findings must be objectively beneficial to CCA/Kalshi goals
+5. This is a PERMANENT capability, not a one-off task
+
+---

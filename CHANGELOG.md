@@ -3,6 +3,32 @@
 
 ---
 
+## Session 189 — 2026-03-26
+
+**What changed:**
+- `batch_wrap_learning.py` — Added steps 8 (outcome_feedback ROI) and 9 (sentinel_bridge stats) with 2 JSONL-reading helpers
+- `slim_init.py` — Added `run_reflect_brief()` as step 3.14 (subprocess to reflect.py --brief)
+- `self-learning/principle_seeder.py` — Fixed min_points 50→0 (was filtering 97% of entries)
+- `research/MT53_EMULATOR_RESEARCH.md` — NEW: emulator comparison (PyBoy + mGBA recommendation)
+- `MATTHEW_DIRECTIVES.md` — Added S189 (Pokemon emulator) + S189b (perpetual usefulness)
+- `TODAYS_TASKS.md` — Added E17 (MT-53 Pokemon), marked E10 DONE
+- `MASTER_TASKS.md` — MT-53 expanded (games, phases, Phase 9 data logging)
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md` — 4 deliveries (REQ-17, REQ-16, REQ-8 SPRT, fill_rate_simulator)
+
+**Why:**
+- Orphaned tools (outcome_feedback, sentinel_bridge) had no callers — now integrated into batch_wrap self-learning loop
+- reflect --brief was built but never wired into session startup
+- Principle seeder threshold was too high, blocking 97% of intelligence findings from seeding
+- MT-53 Pokemon bot emulator research per Matthew directive S188/S189
+
+**Tests:** 10,198/10,198 passing (264 suites, +12 this session)
+
+**Lessons:**
+- JSONL direct-read helpers avoid circular import chains when wiring into batch_wrap
+- min_points defaults should match actual data distribution (most findings lack explicit scores)
+
+---
+
 ## Session 187 — 2026-03-26
 
 **What changed:**
@@ -3032,5 +3058,29 @@ CLI chat 2:
 **Lessons:**
 - SPRT is the right tool for evaluating trading guard evidence — gives clear "inconclusive/reject/accept" rather than ambiguous p-values. XRP bad hours: Lambda=0.82, needs ~50 more bets to resolve.
 - 124/133 principles in the registry have never been used. Seeding without integration = waste. Next step is pruning and connecting to the session workflow.
+
+---
+
+## Session 188 — 2026-03-26
+
+**What changed:**
+- `self-learning/sizing_optimizer.py`: Portfolio-level Kelly sizing optimizer with from_db(), asset-weighted sizing, P(target) math. 47 tests.
+- `self-learning/daily_outlook.py`: Volume prediction → sizing chain with sweep/verdict. 18 tests.
+- `self-learning/hour_sizing.py`: Time-of-day EV multiplier schedule from REQ-051 data. 23 tests.
+- `batch_wrap_learning.py`: Wired principle seeding (MT-28) into step 7 of run_batch().
+- `MASTER_TASKS.md`: Added MT-53 Pokemon Autonomous Bot (UBER-LEVEL).
+- `MATTHEW_DIRECTIVES.md`: S188 Pokemon Bot Directive + $20-25/day target update.
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md`: 7 deliveries (REQ-051 Kelly, REQ-050 SOL, sizing tool, from_db, daily outlook, hour sizing, bounded-loss reanalysis).
+
+**Why:**
+- Kalshi 5-day mandate ($20-25/day by 2026-03-30): needed mathematical proof of optimal bet size
+- MT-28 growth: principle seeding should run automatically at wrap, not require manual invocation
+- Matthew directive: MT-53 Pokemon bot as creative/fun UBER-level autonomous project
+
+**Tests:** 10,186/10,186 passing (264 suites). +88 new tests.
+
+**Lessons:**
+- 3 orphaned modules (outcome_feedback, sentinel_bridge, fill_rate_simulator) built & tested but never wired into workflows. Building without integrating = waste. Next session should wire these in.
+- $7.50 max_loss gives only 1.6% probability of hitting $20/day — mathematical impossibility at current sizing.
 
 ---

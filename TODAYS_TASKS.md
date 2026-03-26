@@ -137,11 +137,11 @@
 - 4 new semantic tokens (tint-warm, warm-border, warm-label, warm-body) + 8 orphan replacements
 - Zero orphan hex values remain in template body
 
-### E10. Kalshi Pending Requests — Political Markets Probe
-- POLYBOT_TO_CCA.md REQUEST 1 (PENDING): Probe Kalshi political markets (KXPRES/KXELECTION/KXCONGRESS)
-- Research: what 1-week+ political markets at 70-90c with >500 volume exist?
-- Research: settlement structure, WR on historical 90c+ favorites
-- This is Pillar 3 expansion — structural basis needed before any build
+### E10. Kalshi Pending Requests — Political Markets Probe [DONE S184 — DEFERRED]
+- POLYBOT_TO_CCA.md REQUEST 1: Probed KXPRES/KXELECTION/KXCONGRESS
+- S184 verdict: NOT suitable for daily sniper (long-dated, capital locked)
+- House 84c Dem, Senate toss-up — wrong structure for 15M sniper
+- Deferred until bankroll > $500 and dedicated political strategy is designed
 
 ### E11. Kalshi Pending Requests — Overnight/Time-of-Day Research [DONE S182]
 - POLYBOT_TO_CCA.md REQUEST 4 (OPEN/URGENT): Academic evidence for time-of-day crypto effects

@@ -3,20 +3,38 @@
 
 ---
 
-## Current State (as of Session 188 — 2026-03-26)
+## Current State (as of Session 189 — 2026-03-26)
 
-**Phase:** Session 188 IN PROGRESS. Kalshi 5-day mandate support (REQ-050/051), sizing_optimizer.py with from_db.
+**Phase:** Session 189 COMPLETE. Grade A. Orphaned tools wired, cross-chat deliveries, MT-53 emulator research, principle seeder fix.
+
+**What was done this session (S189):**
+- **batch_wrap_learning.py:** Added steps 8 (outcome_feedback ROI) and 9 (sentinel_bridge stats). 2 helper functions read JSONL directly to avoid circular imports. 6 new tests (24 total).
+- **slim_init.py:** Added `run_reflect_brief()` as step 3.14 — subprocess call to reflect.py --brief with regex parsing. 6 new tests (114 total).
+- **principle_seeder.py:** Fixed min_points threshold 50→0. Was filtering 97% of FINDINGS_LOG entries. Now seeds 37 principles vs 1 previously.
+- **4 cross-chat deliveries:** REQ-17 earnings markets (SKIP), REQ-16 BTC/ETH/SOL health (Whelan paper + FLB analysis), REQ-8 XRP SPRT (lambda=-3.731, edge NOT confirmed), fill_rate_simulator tool.
+- **MT-53 Pokemon bot:** Emulator research complete — PyBoy (Crystal) + mGBA (Emerald). research/MT53_EMULATOR_RESEARCH.md created. Phase 9 (data logging/self-learning) added.
+- **E10 political markets probe:** DEFERRED — wrong structure for 15M sniper (long-dated, capital locked).
+- **MATTHEW_DIRECTIVES.md:** Added S189 (Pokemon emulator expansion) + S189b (perpetual usefulness directive).
+
+**Tests:** 10,198 total (264 suites). 0 regressions.
+**Commits:** 8 this session + wrap commit.
+
+**Next:** (1) MT-32 Visual Excellence Phase 6 (figure/image generation pipeline). (2) Continue Kalshi cross-chat support. (3) MT-53 Phase 1 Reddit/GitHub intelligence scan (logged, not yet run). (4) Check TODAYS_TASKS.md for updated priorities.
 
 **What was done this session (S188):**
-- **REQ-051 delivery (5-day mandate strategy):** Full Kelly fraction analysis for KXBTC/ETH/SOL. Current $7.50/bet = 1/16 Kelly. P(5-day avg >= $15) = 19.8% at current sizing. Recommended: raise to $10-12.50/bet. Asset-weighted sizing: BTC=$11.74, ETH=$10.84, SOL=$8.36.
-- **REQ-050 delivery (SOL hour analysis):** 09:xx SOL (n=6, EV=-2.205) NOT guard-worthy yet — below n=15 threshold. Structural basis exists (thin SOL liquidity in Asian hours) but insufficient data. Monitor, don't act.
 - **sizing_optimizer.py (47 tests):** Portfolio-level bet sizing optimizer. Per-asset Kelly fractions, daily EV/SD projections, P(5-day avg >= target), optimal max_loss finder, asset-weighted sizing. CLI: --bankroll, --target, --json, --from-db, --exclude. Reads polybot.db directly (read-only).
-- **3 cross-chat deliveries:** REQ-051 Kelly math, REQ-050 SOL hours, sizing_optimizer tool (with from_db update).
+- **daily_outlook.py (18 tests):** Chains volume prediction (BTC range → bet count) with sizing math. Sweep bet sizes, LIKELY/POSSIBLE/UNLIKELY verdicts. Default target: $20/day.
+- **hour_sizing.py (23 tests):** Time-of-day EV multiplier schedule from REQ-051 data (441 bets, 90-93c non-XRP). Best hours get 1.3-1.5x, negative EV hours get 0.5x, hour 8 blocked.
+- **batch_wrap_learning.py:** Wired principle seeding (MT-28 growth) into step 7 of run_batch().
+- **7 cross-chat deliveries:** REQ-051 Kelly math, REQ-050 SOL hours, sizing_optimizer tool, from_db update, daily_outlook, hour_sizing, bounded-loss reanalysis ($12.50 recommendation).
+- **MT-53 Pokemon bot:** Logged as UBER-level MT in MASTER_TASKS + MATTHEW_DIRECTIVES.
+- **Orphaned tools audit:** Identified 3 fully orphaned modules (outcome_feedback, sentinel_bridge, fill_rate_simulator) and 2 semi-orphaned (pattern_registry, volume_predictor).
+- **90% token budget directive:** Saved to memory (Matthew explicit S188).
 
-**Tests:** 10,098 + 47 new = 10,145 total. 261+ suites.
-**Commits:** 2 this session so far.
+**Tests:** 10,186 total (264 suites). 0 regressions.
+**Commits:** 9 this session + wrap commit.
 
-**Next:** (1) Continue chaining tasks. (2) Check for more Kalshi requests. (3) Feature-focused CCA coding if time remains.
+**Next:** (1) Wire orphaned tools into workflows (outcome_feedback → batch_wrap, reflect --brief → slim_init). (2) E10 political markets probe still open. (3) Continue Kalshi cross-chat. (4) Check TODAYS_TASKS.md for updated priorities.
 
 **What was done this session (S187):**
 - **1M context window → 200K revert** (meter.py, compact_anchor.py, post_compact.py, statusline.py, settings.local.json, desktop_automator.py):
