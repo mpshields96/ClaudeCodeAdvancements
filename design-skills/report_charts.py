@@ -19,8 +19,10 @@ from chart_generator import (
     BarChart,
     BoxPlot,
     CalibrationPlot,
+    CandlestickChart,
     CCA_COLORS,
     DonutChart,
+    ForestPlot,
     HistogramChart,
     HorizontalBarChart,
     LineChart,
@@ -433,6 +435,30 @@ class ReportChartGenerator:
         )
         return render_svg(chart)
 
+    def kalshi_edge_forest(self, data):
+        """ForestPlot: per-asset/price alpha with confidence intervals.
+
+        Expects kalshi_analytics.charts.edge_forest with:
+          studies: [{"label": str, "estimate": float, "ci_lower": float, "ci_upper": float}, ...]
+        """
+        kalshi = data.get("kalshi_analytics", {})
+        if not kalshi.get("available"):
+            return self._empty_chart("Edge Analysis")
+        forest_data = kalshi.get("charts", {}).get("edge_forest", {})
+        studies = forest_data.get("studies", [])
+        if not studies:
+            return self._empty_chart("Edge Analysis")
+        items = [
+            (s["label"], s["estimate"], s["ci_lower"], s["ci_upper"])
+            for s in studies
+        ]
+        chart = ForestPlot(
+            data=items,
+            title="Alpha by Asset/Price Bucket",
+            reference_value=0.0,
+        )
+        return render_svg(chart)
+
     # ── Self-learning charts (MT-33 Phase 5) ────────────────────────────
 
     def learning_event_types(self, data):
@@ -520,6 +546,7 @@ class ReportChartGenerator:
                 "kalshi_trade_volume": self.kalshi_trade_volume(data),
                 "kalshi_bankroll": self.kalshi_bankroll(data),
                 "kalshi_calibration": self.kalshi_calibration(data),
+                "kalshi_edge_forest": self.kalshi_edge_forest(data),
             })
         # Self-learning charts (MT-33 Phase 5) — only if data available
         if data.get("learning_intelligence", {}).get("available"):

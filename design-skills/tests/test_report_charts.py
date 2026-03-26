@@ -456,10 +456,35 @@ class TestKalshiCharts(unittest.TestCase):
         # No calibration key in charts → empty chart
         self.assertIn("No data", svg)
 
+    def test_edge_forest_returns_svg(self):
+        """ForestPlot renders with per-asset alpha + CI data."""
+        self.kalshi_data["kalshi_analytics"]["charts"]["edge_forest"] = {
+            "studies": [
+                {"label": "BTC 93c", "estimate": 0.028, "ci_lower": 0.005, "ci_upper": 0.051},
+                {"label": "ETH 93c", "estimate": 0.029, "ci_lower": 0.008, "ci_upper": 0.050},
+                {"label": "SOL 93c", "estimate": 0.021, "ci_lower": -0.003, "ci_upper": 0.045},
+                {"label": "BTC 94c", "estimate": -0.027, "ci_lower": -0.076, "ci_upper": 0.022},
+            ],
+        }
+        svg = self.gen.kalshi_edge_forest(self.kalshi_data)
+        self.assertIn("<svg", svg)
+        self.assertIn("Alpha by Asset", svg)
+        self.assertIn("BTC 93c", svg)
+        self.assertIn("SOL 93c", svg)
+
+    def test_edge_forest_no_data(self):
+        svg = self.gen.kalshi_edge_forest(self.kalshi_data)
+        self.assertIn("No data", svg)
+
+    def test_edge_forest_not_available(self):
+        data = {"kalshi_analytics": {"available": False}}
+        svg = self.gen.kalshi_edge_forest(data)
+        self.assertIn("No data", svg)
+
     def test_generate_all_includes_kalshi(self):
         charts = self.gen.generate_all(self.kalshi_data)
         kalshi_keys = [k for k in charts if k.startswith("kalshi_")]
-        self.assertEqual(len(kalshi_keys), 8)
+        self.assertEqual(len(kalshi_keys), 9)
 
     def test_generate_all_without_kalshi(self):
         """Without kalshi_analytics, no kalshi charts generated."""
