@@ -3,40 +3,34 @@
 
 ---
 
-## Current State (as of Session 186 — 2026-03-26)
+## Current State (as of Session 187 — 2026-03-26)
 
-**Phase:** Session 186 COMPLETE. Autoloop UI model fix, CLAUDE.md trim, ALL 5 pending Kalshi requests answered, 4 intelligence findings.
+**Phase:** Session 187 COMPLETE. 1M context deprecation (200K revert), self-learning cleanup, session outcome backfill, volume predictor, autoloop model fix.
 
-**What was done this session (S186):**
-- **Autoloop model selection via UI dropdown** (desktop_automator.py, autoloop_trigger.py, 10 new tests):
-  CoreGraphics coordinate clicks on model dropdown button instead of /model text command.
-  Fixes session naming pollution ("Update model to Claude Opus 4.6" in every sidebar entry).
-  Matthew directive S186: change model via UI in new session, not via /model.
-- **CLAUDE.md trimmed** from 396→168 lines (57% reduction, ~3,050 tokens saved per session):
-  Removed Desktop Autoloop section (94→3 lines), Project Structure tree, redundant scope sections.
-- **5 cross-chat deliveries** (cleared ALL pending POLYBOT_TO_CCA requests):
-  - REQ-1/E10: Political markets probe — SKIP (no 15-min series, event-outcome only)
-  - REQ-5: Leaderboard analysis — Sports=$81M/day, Crypto=$20.5M, Econ=$2M, Tech/Sci +1637% YoY
-  - REQ-8: Multi-parameter loss (SPRT Lambda=0.82, p=0.123, INCONCLUSIVE — DO NOT add XRP guard yet)
-    Full 13-feature meta-labeling list for Dim 9 classifier (Lopez de Prado framework)
-  - REQ-9: Non-stationarity (6 verified HMM papers, 4-phase implementation: features→labeling→HMM→adaptive)
-  - REQ-048 addendum: Monte Carlo validation, strategy architecture, $15/day = 65-75% confidence
-- **4 intelligence findings** from awesome-claude-code scan:
-  HCOM (BUILD — hook-based inter-agent comms), AgentSys (ADAPT — mistake→lesson automation),
-  parry (ADAPT — prompt injection scanner), awesome-claude-code list (REFERENCE — meta-source)
-- **MEMORY.md cleanup**: 5 stale entries removed, feedback_model_ui_not_command.md created
-- **Meta-learning dashboard run**: 133 principles (124 never used), 8 session outcomes tracked.
-  Key gap: principle system seeded but never integrated into feedback loop.
+**What was done this session (S187):**
+- **1M context window → 200K revert** (meter.py, compact_anchor.py, post_compact.py, statusline.py, settings.local.json, desktop_automator.py):
+  1M burns subscription limits ~5x faster due to larger token payloads per turn.
+  Cache expiry after 1h idle causes re-cache at 1.25-2x per token (massive spike).
+  Added `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` to ~/.zshrc. All defaults now 200K.
+- **Self-learning principle pruning** (principles.jsonl): 136→14 entries (removed 122 with usage_count=0 that weren't safety-critical). Kept 10 with real usage + 4 with severity=3 or safety keywords.
+- **Session outcome backfill** (session_outcome_tracker.py): New `backfill_from_git()` parses git log for S<N>: prefixed commits. Tracked sessions: 8→125. Wired into /cca-init.
+- **Volume predictor** (self-learning/volume_predictor.py): Predicts daily sniper bet count from BTC 24h range. Bands: LOW/MEDIUM/HIGH. Weekend+macro multipliers. 25 tests.
+- **Journal cleanup** (journal.jsonl): 1488→310 events (removed 1178 compaction events = 79% noise).
+- **Autoloop model default**: opus-4-6-1m → opus-4-6 in MODEL_OPTION_OFFSETS and set_model_via_ui() default.
+- **Test regressions fixed**: 200K default assertion, stale .tmp file cleanup.
+- **3 Kalshi cross-chat deliveries**: 200K context revert notice, REQ-049 Q1-Q4 answers, volume predictor tool.
+- **2 FINDINGS_LOG entries**: Finding 187-1 (1M context limits), Finding 187-2 (hidden overhead measurement).
 
-**Next:** (1) MT-49 self-learning: principle pruning (124/133 never used — noise reduction). (2) Build code modules (heavy research session, next should be code-focused). (3) Continue intelligence scanning. (4) Kalshi cross-chat — all requests answered, monitor for new ones. (5) Session outcome tracker gap (only 8/186 sessions tracked).
+**Next:** (1) Continue Kalshi cross-chat support (monitor for new requests). (2) Intelligence scanning. (3) Build code modules — session was mostly cleanup/infra, next should be feature-focused. (4) Check TODAYS_TASKS.md for Matthew's priorities.
 
-**Tests:** 10,066 total (+10 this session). 260/260 suites passing.
-**Commits:** 4 this session + wrap commit.
+**Tests:** 10,098 total (+32 this session). 261/261 suites passing.
+**Commits:** 7 this session + wrap commit.
 
 **Matthew directives (carried forward):**
 - **$15-25/DAY TARGET — 5-DAY CLOCK (S183b, non-negotiable)**: Deadline 2026-03-30. $100 bankroll. Full carte blanche.
 - **TASKS THAT MAKE CCA SMARTER (S185)**: Default to intelligence/efficiency over feature building.
 - **MODEL VIA UI NOT COMMAND (S186)**: Autoloop must set model via UI dropdown, not /model text.
+- **DITCH 1M CONTEXT (S187)**: Use standard Opus 4.6 (200K), not opus[1m]. Env var set.
 - TODAYS_TASKS.md is the daily driver (S178 permanent)
 - MATTHEW_DIRECTIVES.md — read at init (S181 permanent)
 - 50%+ time on Kalshi bot work (S161)

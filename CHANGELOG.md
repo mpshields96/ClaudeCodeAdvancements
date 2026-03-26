@@ -3,6 +3,35 @@
 
 ---
 
+## Session 187 — 2026-03-26
+
+**What changed:**
+- `context-monitor/hooks/meter.py`, `compact_anchor.py`, `post_compact.py`, `statusline.py` — DEFAULT_WINDOW 1M→200K
+- `.claude/settings.local.json` — model `opus[1m]` → `opus`
+- `desktop_automator.py` — MODEL_OPTION_OFFSETS default `opus-4-6-1m` → `opus-4-6`, set_model_via_ui() default updated
+- `~/.zshrc` — added `CLAUDE_CODE_DISABLE_1M_CONTEXT=1`
+- `self-learning/principles.jsonl` — pruned 136→14 entries (removed unused, kept safety+active)
+- `session_outcome_tracker.py` — new `backfill_from_git()` function, `backfill` CLI command (8→125 sessions)
+- `self-learning/volume_predictor.py` (NEW) — BTC range → sniper bet volume predictor (25 tests)
+- `self-learning/journal.jsonl` — cleaned 1488→310 events (removed compaction noise)
+- `context-monitor/tests/test_post_compact_extended.py` — renamed test, assertion 1M→200K
+- `tests/test_phase2_hardening.py` — stale .tmp file cleanup in setUp
+- `.claude/commands/cca-init.md` — wired session_outcome_tracker backfill into init
+
+**Why:**
+- 1M context burns subscription limits ~5x faster (Reddit community reports + measured)
+- Self-learning principles were 92% noise (124/136 unused) — cluttered without contributing
+- Session outcome tracking had massive gap (8/186 → 125/186 via git log backfill)
+- Journal was 79% compaction event noise — cleaned for signal
+
+**Tests:** 10,098/10,098 passing (261 suites)
+
+**Lessons:**
+- 1M context window is counterproductive for subscription-limited users — cache expiry after 1h idle causes re-cache at 1.25-2x per token
+- Hidden token overhead: 16K in empty dir, 23K in real projects (built-in tools = 63%)
+
+---
+
 ## Session 185 — 2026-03-26
 
 **What changed:**
