@@ -2025,3 +2025,46 @@ See `CCA_PRIME_DIRECTIVE.md`.
 - Phase 4: Auto-proposal to MASTER_TASKS.md (with human approval gate)
 
 **Status:** DOCUMENTED. S181b directive. mt_originator.py exists but needs extension.
+
+---
+
+## MT-53: Pokemon Autonomous Bot (UBER-LEVEL — Personal/Fun)
+
+**Source:** Matthew directive (S188, 2026-03-26) — "I want to be a bot that can play Pokemon on my screen while CCA and Kalshi bot work. Start to finish, all gyms, elite four, legendary Pokemon, Pokedex. Funny dark toilet humor names but skilled team. Once built, it doesn't burn tokens."
+
+**What Matthew wants:** A standalone Pokemon bot that plays through an entire game (Crystal, Emerald, or a ROM hack) autonomously on an emulator while Matthew watches. CCA and Kalshi chats work in parallel. The bot must:
+1. Play start to finish: all 8 gyms, Elite Four, champion, post-game legendaries
+2. Build an optimal team with strategic type coverage
+3. Name Pokemon with dark/toilet humor
+4. Complete as much Pokedex as practical
+5. Run WITHOUT burning Claude tokens after initial build — standalone executable
+
+**Architecture (preliminary):**
+- **Emulator:** mGBA (Lua scripting) or BizHawk (Lua/C#) or pyboy (Python-native GB/GBC emulator)
+- **Memory reading:** Direct RAM access for game state (no screen OCR needed)
+- **Battle AI:** Type effectiveness matrix, move power calculation, switch logic, item usage
+- **Navigation:** Pre-mapped routes with pathfinding (A* on tile grid)
+- **Team builder:** Optimization under constraints (type coverage, stat totals, move pools)
+- **Personality module:** Name generator with dark humor + commentary logger
+
+**Key constraint:** Zero ongoing token cost. The bot is a Python script that drives the emulator directly. Claude builds it, then it runs independently.
+
+**Phases:**
+- Phase 1: Research — emulator scripting APIs (pyboy vs mGBA-lua vs BizHawk), RAM maps for target game
+- Phase 2: Core engine — emulator control (input, frame advance, state read), game state parser
+- Phase 3: Navigation — overworld movement, route planning, NPC interaction, menu navigation
+- Phase 4: Battle AI — type chart, damage calc, move selection, switching, item usage, trainer AI adaptation
+- Phase 5: Team builder — optimal team composition, EV training (if gen 3+), move tutors, evolution tracking
+- Phase 6: Progression logic — gym order, HM management, story triggers, legendary encounters
+- Phase 7: Personality — name generator, commentary log, screenshot captures at milestones
+- Phase 8: Polish — Pokedex completion, rare encounters, shiny hunting (optional), speed optimization
+
+**Estimated scope:** UBER-LEVEL (10-15+ sessions). Multi-session build spread across low-priority windows.
+
+**Relationship to CCA:**
+- Tests autonomous agent capabilities in complex environments
+- Battle AI optimization parallels Kalshi bet sizing optimization
+- Navigation/pathfinding is transferable infrastructure
+- Fun project that Matthew can watch while serious work happens in parallel
+
+**Status:** IDEA LOGGED (S188). Matthew approved as UBER-LEVEL MT. Research phase when capacity allows.
