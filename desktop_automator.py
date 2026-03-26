@@ -55,7 +55,7 @@ NEW_SESSION_BTN_X_OFFSET = 70   # from window left edge to button center
 NEW_SESSION_BTN_Y_OFFSET = 60   # from window top edge to button center (39+60=99)
 
 # Model selector button geometry (bottom-right of Code tab input area, S186)
-# The model button shows current model name (e.g. "Opus 4.6 (1M context) v").
+# The model button shows current model name (e.g. "Opus 4.6 v").
 # Position is relative to window edges. Needs live calibration if UI changes.
 MODEL_BTN_X_FROM_RIGHT = 100    # points from window right edge to button center (calibrated S186)
 MODEL_BTN_Y_FROM_BOTTOM = 33    # points from window bottom edge to button center
@@ -65,8 +65,8 @@ MODEL_BTN_Y_FROM_BOTTOM = 33    # points from window bottom edge to button cente
 # Each option is approximately 36px tall. Order may vary — calibrate if needed.
 # These are Y offsets from the model button center to each option center.
 MODEL_OPTION_OFFSETS = {
-    "opus-4-6-1m": -40,    # "Opus 4.6 (1M context)" — target for autoloop
-    "opus-4-6": -76,       # "Opus 4.6"
+    "opus-4-6": -40,       # "Opus 4.6" — target for autoloop
+    "opus-4-6-1m": -76,    # "Opus 4.6 (1M context)" — deprecated, kept for reference
     "sonnet-4-6": -112,    # "Sonnet 4.6"
     "haiku-4-5": -148,     # "Haiku 4.5"
 }
@@ -850,7 +850,7 @@ class DesktopAutomator:
             time.sleep(0.3)
         return ok
 
-    def set_model_via_ui(self, model_key: str = "opus-4-6-1m") -> bool:
+    def set_model_via_ui(self, model_key: str = "opus-4-6") -> bool:
         """Set the model via UI dropdown click (no /model command needed).
 
         Steps:
@@ -860,7 +860,7 @@ class DesktopAutomator:
 
         Args:
             model_key: Key from MODEL_OPTION_OFFSETS dict.
-                       Default "opus-4-6-1m" = Opus 4.6 (1M context).
+                       Default "opus-4-6" = Opus 4.6 (standard 200K context).
 
         Returns True if all clicks posted successfully.
         Note: Coordinate offsets may need live calibration (S186).
