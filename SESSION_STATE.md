@@ -3,9 +3,22 @@
 
 ---
 
-## Current State (as of Session 190 — 2026-03-26)
+## Current State (as of Session 191 — 2026-03-26)
 
-**Phase:** Session 190 COMPLETE. Grade A. CalibrationPlot, Monte Carlo loss cap, agent research, worker verifier, 2 Kalshi deliveries.
+**Phase:** Session 191 COMPLETE. Grade A. Worker_verifier integration, 2 new chart types (Candlestick + ForestPlot) with full E2E pipeline, MT-53 intelligence scan, chartjs_bridge expansion.
+
+**What was done this session (S191):**
+- **hivemind_session_validator.py:** Wired worker_verifier into coordinator via `validate_with_verification()`. Combines queue validation + output verification. `_combine_verdicts()` logic: queue FAIL always wins, output REJECT/REVIEW downgrades to REVIEW. 17 new integration tests.
+- **chart_generator.py:** CandlestickChart (23rd) — OHLC price bars for Kalshi contract visualization. ForestPlot (24th) — confidence interval display for statistical meta-analysis. Bullish/bearish/doji coloring, wicks, CI lines, reference line, diamond markers. 27 new tests.
+- **report_charts.py:** Wired `kalshi_edge_forest()` (ForestPlot, per-asset alpha + Wilson CI) and `kalshi_price_candles()` (CandlestickChart, daily OHLC). 10 Kalshi chart types total. 5 new tests.
+- **kalshi_data_collector.py:** `chart_edge_forest()` — groups sniper trades by ticker/price, computes Wilson CI alpha. `chart_price_candles()` — daily OHLC from price_cents. Full E2E: DB -> collector -> report_charts -> SVG. 12 new tests (60 total).
+- **chartjs_bridge.py:** Added `scatter_chart_config()` and `horizontal_bar_config()`. 6 interactive chart types total. 9 new tests (30 total).
+- **MT-53 Phase 1:** Reddit/GitHub intelligence scan complete. 14 projects analyzed. 4 BUILD (pokemon-agent, PyBoy, PyGBA, PokemonRedExperiments). Key finding: NousResearch pokemon-agent REST API decouples emulator from AI brain. Written to research/MT53_INTELLIGENCE_SCAN.md.
+
+**Tests:** 10,322 total (268 suites). +70 new. 0 regressions.
+**Commits:** 8 this session.
+
+**Next:** (1) MT-32 Visual Excellence: more chart types or Pillar 1 report enhancements. (2) Read MAST paper fully (1,600 failure traces). (3) Kalshi cross-chat support (check for new REQs). (4) MT-53 Phase 2: install pokemon-agent + test with Crystal ROM. (5) MT expansion audit (E4 from TODAYS_TASKS).
 
 **What was done this session (S190):**
 - **monte_carlo_simulator.py:** Added `with_loss_cap(max_loss_usd)` to BetDistribution. Caps empirical losses for re-running sims with current $7.50 DEFAULT_MAX_LOSS. 6 new tests (56 total). Cross-chat delivery: sniper ruin 6.2%→0.0% with cap.
