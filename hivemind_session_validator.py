@@ -34,6 +34,7 @@ import os
 from datetime import datetime, timezone
 
 from session_id import normalize as normalize_session_id, extract_number
+from worker_verifier import verify_worker_output
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_LOG_PATH = os.path.join(SCRIPT_DIR, "hivemind_sessions.jsonl")
@@ -223,6 +224,94 @@ def format_for_init(path: str = DEFAULT_LOG_PATH) -> str:
         pass
 
     return " — ".join(parts)
+
+
+def _combine_verdicts(queue_verdict: str, output_verdict: str) -> str:
+    """Combine queue validation verdict with output verification verdict.
+
+    Priority order (worst wins):
+        FAIL > REVIEW > PASS_WITH_WARNINGS > ACCEPT/PASS
+
+    Rules:
+        - Queue FAIL always wins (no task = nothing to verify)
+        - Output REJECT/REVIEW downgrades queue PASS to REVIEW
+        - Output ERROR treated as REVIEW (graceful degradation)
+        - Queue PASS_WITH_WARNINGS preserved if output is ACCEPT
+    """
+    if queue_verdict == "FAIL":
+        return "FAIL"
+
+    if output_verdict in ("REJECT", "REVIEW", "ERROR"):
+        return "REVIEW"
+
+    if queue_verdict == "PASS_WITH_WARNINGS":
+        return "PASS_WITH_WARNINGS"
+
+    # Queue PASS + output ACCEPT
+    return "ACCEPT"
+
+
+def validate_with_verification(
+    worker_id: str,
+    queue_path: str = DEFAULT_QUEUE_PATH,
+    skip_verification: bool = False,
+    test_command: str = "python3 parallel_test_runner.py --quick --workers 8",
+    before_count: int | None = None,
+    after_count: int | None = None,
+    timeout: int = 120,
+) -> dict:
+    """Combined queue validation + output verification.
+
+    Runs validate_session() for queue-level checks, then optionally runs
+    verify_worker_output() for code quality checks. Combines both verdicts.
+
+    Args:
+        worker_id: Worker chat ID (e.g. "cli1")
+        queue_path: Path to internal queue JSONL
+        skip_verification: If True, skip output verification (queue only)
+        test_command: Command to run tests
+        before_count: Test count before worker changes
+        after_count: Test count after worker changes
+        timeout: Test command timeout in seconds
+
+    Returns:
+        Combined result dict with verdict, queue details, and output details.
+    """
+    # Step 1: Queue validation
+    queue_result = validate_session(worker_id, queue_path=queue_path)
+
+    if skip_verification:
+        return queue_result
+
+    # Step 2: Output verification
+    try:
+        output_result = verify_worker_output(
+            test_command=test_command,
+            before_count=before_count,
+            after_count=after_count,
+            timeout=timeout,
+        )
+        output_verdict = output_result["verdict"]
+        output_failures = output_result.get("failures", [])
+        output_error = None
+    except Exception as e:
+        output_verdict = "ERROR"
+        output_failures = []
+        output_error = str(e)
+        output_result = {"verdict": "ERROR", "results": []}
+
+    # Step 3: Combine verdicts
+    combined = _combine_verdicts(queue_result["verdict"], output_verdict)
+
+    result = {**queue_result}
+    result["verdict"] = combined
+    result["output_verdict"] = output_verdict
+    result["output_failures"] = output_failures
+    if output_error:
+        result["output_error"] = output_error
+    result["output_results"] = output_result.get("results", [])
+
+    return result
 
 
 def _load_queue(path: str) -> list[dict]:
