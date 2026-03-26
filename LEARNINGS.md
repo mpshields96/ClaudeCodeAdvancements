@@ -714,9 +714,17 @@
 - **Last seen:** 2026-03-26
 - **Files:** priority_picker.py (should weight intelligence tasks higher)
 
-### Desktop Electron ignores project model setting — Severity: 2 — Count: 2
+### Desktop Electron ignores project model setting — Severity: 2 — Count: 3
 - **Anti-pattern:** Assuming project `.claude/settings.local.json` model setting is picked up by desktop Electron app
-- **Fix:** autoloop_trigger.py must explicitly send `/model claude-opus-4-6[1m]` before the work prompt. Non-fatal fallback.
-- **First seen:** 2026-03-26 (S184 removed it, S185 restored it)
+- **Fix:** autoloop_trigger.py must set model via UI dropdown click (CoreGraphics coordinates), NOT via /model text command. Text command pollutes chat names and wastes a prompt turn.
+- **First seen:** 2026-03-26 (S184 removed it, S185 restored /model, S186 replaced with UI click)
 - **Last seen:** 2026-03-26
-- **Files:** autoloop_trigger.py
+- **Files:** autoloop_trigger.py, desktop_automator.py
+- **Promoted:** 2026-03-26 -> feedback_model_ui_not_command.md (memory)
+
+### Principle registry needs integration not just seeding — Severity: 1 — Count: 1
+- **Anti-pattern:** Seeding 133 principles into principles.jsonl but never connecting them to the session workflow. 124/133 have usage_count=0.
+- **Fix:** Principles need to be surfaced during session work (e.g., relevant principles shown before starting a task) and usage tracked when they're applied. Prune unused principles after 50+ sessions of inactivity.
+- **First seen:** 2026-03-26 (S186)
+- **Last seen:** 2026-03-26
+- **Files:** self-learning/principles.jsonl, self-learning/meta_learning_dashboard.py

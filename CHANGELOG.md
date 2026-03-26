@@ -2980,3 +2980,28 @@ CLI chat 2:
 - /model command in autoloop was dead weight — always verify commands actually work before keeping them.
 
 ---
+
+## Session 186 — 2026-03-26
+
+**What changed:**
+- `desktop_automator.py`: Added CoreGraphics model button coordinates + `set_model_via_ui()` method
+- `autoloop_trigger.py`: Replaced `/model` text command with UI dropdown click (Step 3.5)
+- `tests/test_desktop_automator.py`: +10 tests (TestModelButtonCoordinates, TestSetModelViaUI)
+- `tests/test_autoloop_trigger.py`: Updated 2 tests for new model selection flow
+- `CLAUDE.md`: Trimmed from 396→168 lines (57% reduction, ~3,050 tokens saved)
+- `FINDINGS_LOG.md`: +6 findings (186-1 through 186-6)
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md`: 5 deliveries (REQ-1, REQ-5, REQ-8, REQ-9, REQ-048 addendum)
+
+**Why:**
+- Matthew S186 directive: model must be set via UI dropdown, not /model text command (polluting session names)
+- TODAYS_TASKS: E10 political markets probe, E3 cross-chat coordination, E16 deep dive REQ-8/9
+- Token overhead optimization: CLAUDE.md was largest single contributor after system overhead
+- Intelligence scanning: awesome-claude-code repo yielded 4 actionable findings
+
+**Tests:** 10,066/10,066 passing (260 suites). +10 new tests this session.
+
+**Lessons:**
+- SPRT is the right tool for evaluating trading guard evidence — gives clear "inconclusive/reject/accept" rather than ambiguous p-values. XRP bad hours: Lambda=0.82, needs ~50 more bets to resolve.
+- 124/133 principles in the registry have never been used. Seeding without integration = waste. Next step is pruning and connecting to the session workflow.
+
+---

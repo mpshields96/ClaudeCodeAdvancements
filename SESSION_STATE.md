@@ -3,44 +3,40 @@
 
 ---
 
-## Current State (as of Session 185 — 2026-03-26)
+## Current State (as of Session 186 — 2026-03-26)
 
-**Phase:** Session 185 COMPLETE. MT-37 Phases 4-6, overhead tracker, autoloop model fix, 2 cross-chat deliveries, intelligence scan.
+**Phase:** Session 186 COMPLETE. Autoloop UI model fix, CLAUDE.md trim, ALL 5 pending Kalshi requests answered, 4 intelligence findings.
 
-**What was done this session (S185):**
-- **MT-37 Phase 4 — market_data.py** (42 tests):
-  PriceRecord, MarketDataResult, MacroData. Returns (simple/log), volatility, beta,
-  factor exposures, correlation matrix. CSV/JSON parsers. CLI.
-- **MT-37 Phase 5 — allocation.py** (28 tests):
-  equal_weight, risk_parity (inverse-vol), black_litterman (market prior + views).
-  Constraint enforcement, rebalance trigger detection.
-- **MT-37 Phase 6 — factor_tilts.py** (26 tests):
-  Value (FF92), momentum (Carhart97), quality (Asness+19), low-vol (Ang+06).
-  Composite tilt with configurable weights, apply_tilts() for weight adjustment.
-- **overhead_tracker.py** (17 tests):
-  Measures CCA's hidden token overhead at startup. CCA = 49K tokens (3x baseline).
-  History tracking, baselines, JSON/compare CLI. Based on r/ClaudeCode methodology.
-- **Autoloop Opus 1M model fix:**
-  Restored `/model claude-opus-4-6[1m]` command in autoloop_trigger.py (non-fatal).
-  Desktop Electron doesn't reliably pick up project settings.local.json model.
-- **Cross-chat delivery: $15-25/day gap analysis:**
-  7-day DB analysis. Current ~$3.55/day. Maker conversion = #1 lever (closes ~60% gap).
-  Specific recommendations: lower maker gate 30→15, dual-mode maker/taker execution.
-- **Cross-chat delivery: MT-51 new market expansion:**
-  Weather markets = top expansion candidate (NWS settlement, model-driven, XGBoost prototype exists).
-  Economics = secondary (CPI/Fed around releases). Sports = SKIP (domain expertise needed).
-- **Intelligence scan:** 2 findings logged. Token overhead methodology (ADAPT), UserPromptSubmit pattern (REFERENCE).
-- **E4 MT Expansion Audit:** Identified 49K overhead as optimization target, weather markets for E7.
-- **Matthew directive captured:** "Do tasks that make you smarter" — prioritize intelligence/efficiency over feature building.
+**What was done this session (S186):**
+- **Autoloop model selection via UI dropdown** (desktop_automator.py, autoloop_trigger.py, 10 new tests):
+  CoreGraphics coordinate clicks on model dropdown button instead of /model text command.
+  Fixes session naming pollution ("Update model to Claude Opus 4.6" in every sidebar entry).
+  Matthew directive S186: change model via UI in new session, not via /model.
+- **CLAUDE.md trimmed** from 396→168 lines (57% reduction, ~3,050 tokens saved per session):
+  Removed Desktop Autoloop section (94→3 lines), Project Structure tree, redundant scope sections.
+- **5 cross-chat deliveries** (cleared ALL pending POLYBOT_TO_CCA requests):
+  - REQ-1/E10: Political markets probe — SKIP (no 15-min series, event-outcome only)
+  - REQ-5: Leaderboard analysis — Sports=$81M/day, Crypto=$20.5M, Econ=$2M, Tech/Sci +1637% YoY
+  - REQ-8: Multi-parameter loss (SPRT Lambda=0.82, p=0.123, INCONCLUSIVE — DO NOT add XRP guard yet)
+    Full 13-feature meta-labeling list for Dim 9 classifier (Lopez de Prado framework)
+  - REQ-9: Non-stationarity (6 verified HMM papers, 4-phase implementation: features→labeling→HMM→adaptive)
+  - REQ-048 addendum: Monte Carlo validation, strategy architecture, $15/day = 65-75% confidence
+- **4 intelligence findings** from awesome-claude-code scan:
+  HCOM (BUILD — hook-based inter-agent comms), AgentSys (ADAPT — mistake→lesson automation),
+  parry (ADAPT — prompt injection scanner), awesome-claude-code list (REFERENCE — meta-source)
+- **MEMORY.md cleanup**: 5 stale entries removed, feedback_model_ui_not_command.md created
+- **Meta-learning dashboard run**: 133 principles (124 never used), 8 session outcomes tracked.
+  Key gap: principle system seeded but never integrated into feedback loop.
 
-**Next:** (1) Optimize CCA token overhead (49K→target 30K). (2) Continue intelligence scanning. (3) MT-49 self-learning expansion. (4) Kalshi cross-chat support for $15-25/day deadline (2026-03-30).
+**Next:** (1) MT-49 self-learning: principle pruning (124/133 never used — noise reduction). (2) Build code modules (heavy research session, next should be code-focused). (3) Continue intelligence scanning. (4) Kalshi cross-chat — all requests answered, monitor for new ones. (5) Session outcome tracker gap (only 8/186 sessions tracked).
 
-**Tests:** ~10,056 total (+113 this session). All passing.
-**Commits:** 5 this session + wrap commit.
+**Tests:** 10,066 total (+10 this session). 260/260 suites passing.
+**Commits:** 4 this session + wrap commit.
 
 **Matthew directives (carried forward):**
 - **$15-25/DAY TARGET — 5-DAY CLOCK (S183b, non-negotiable)**: Deadline 2026-03-30. $100 bankroll. Full carte blanche.
 - **TASKS THAT MAKE CCA SMARTER (S185)**: Default to intelligence/efficiency over feature building.
+- **MODEL VIA UI NOT COMMAND (S186)**: Autoloop must set model via UI dropdown, not /model text.
 - TODAYS_TASKS.md is the daily driver (S178 permanent)
 - MATTHEW_DIRECTIVES.md — read at init (S181 permanent)
 - 50%+ time on Kalshi bot work (S161)
