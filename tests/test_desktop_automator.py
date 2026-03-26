@@ -1220,5 +1220,83 @@ class TestWaitForIdle(unittest.TestCase):
             self.assertTrue(result)
 
 
+class TestModelButtonCoordinates(unittest.TestCase):
+    """Test model selector button coordinate calculation."""
+
+    def test_dry_run_returns_fallback(self):
+        da = DesktopAutomator(dry_run=True)
+        coords = da.get_model_button_coordinates()
+        self.assertIsNotNone(coords)
+        self.assertEqual(len(coords), 2)
+
+    def test_coordinates_from_window_geometry(self):
+        da = DesktopAutomator(dry_run=True)
+        with patch.object(da, "get_window_geometry", return_value=(0, 0, 1000, 800)):
+            coords = da.get_model_button_coordinates()
+            x, y = coords
+            # Should be near bottom-right
+            self.assertGreater(x, 800)
+            self.assertGreater(y, 700)
+
+    def test_returns_none_without_geometry(self):
+        da = DesktopAutomator(dry_run=False)
+        with patch.object(da, "get_window_geometry", return_value=None):
+            coords = da.get_model_button_coordinates()
+            self.assertIsNone(coords)
+
+
+class TestSetModelViaUI(unittest.TestCase):
+    """Test model selection via UI dropdown click (S186)."""
+
+    def test_dry_run_success(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            result = da.set_model_via_ui("opus-4-6-1m")
+            self.assertTrue(result)
+
+    def test_unknown_model_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            result = da.set_model_via_ui("unknown-model")
+            self.assertFalse(result)
+
+    def test_wrong_app_frontmost_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            with patch.object(da, "get_frontmost_app", return_value="Safari"):
+                result = da.set_model_via_ui("opus-4-6-1m")
+                self.assertFalse(result)
+
+    def test_button_click_failure_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            with patch.object(da, "click_model_button", return_value=False):
+                result = da.set_model_via_ui("opus-4-6-1m")
+                self.assertFalse(result)
+
+    def test_all_model_keys_accepted(self):
+        from desktop_automator import MODEL_OPTION_OFFSETS
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            for key in MODEL_OPTION_OFFSETS:
+                result = da.set_model_via_ui(key)
+                self.assertTrue(result, f"Model key {key} should be accepted")
+
+    def test_logs_model_selection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            da.set_model_via_ui("opus-4-6-1m")
+            with open(da.audit_log) as f:
+                entries = [json.loads(l) for l in f if l.strip()]
+            events = [e["event"] for e in entries]
+            self.assertIn("set_model_dry_run", events)
+
+    def test_default_model_is_opus_1m(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            da = DesktopAutomator(audit_log=Path(tmp) / "a.jsonl", dry_run=True)
+            result = da.set_model_via_ui()
+            self.assertTrue(result)
+
+
 if __name__ == "__main__":
     unittest.main()

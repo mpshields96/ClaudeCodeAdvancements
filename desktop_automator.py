@@ -54,6 +54,23 @@ TAB_OFFSETS = {"Chat": -65, "Cowork": 0, "Code": 65}
 NEW_SESSION_BTN_X_OFFSET = 70   # from window left edge to button center
 NEW_SESSION_BTN_Y_OFFSET = 60   # from window top edge to button center (39+60=99)
 
+# Model selector button geometry (bottom-right of Code tab input area, S186)
+# The model button shows current model name (e.g. "Opus 4.6 (1M context) v").
+# Position is relative to window edges. Needs live calibration if UI changes.
+MODEL_BTN_X_FROM_RIGHT = 135    # points from window right edge to button center
+MODEL_BTN_Y_FROM_BOTTOM = 33    # points from window bottom edge to button center
+
+# Model dropdown option offsets (relative to button, negative = upward)
+# When the dropdown opens, options are listed vertically above the button.
+# Each option is approximately 36px tall. Order may vary — calibrate if needed.
+# These are Y offsets from the model button center to each option center.
+MODEL_OPTION_OFFSETS = {
+    "opus-4-6-1m": -40,    # "Opus 4.6 (1M context)" — target for autoloop
+    "opus-4-6": -76,       # "Opus 4.6"
+    "sonnet-4-6": -112,    # "Sonnet 4.6"
+    "haiku-4-5": -148,     # "Haiku 4.5"
+}
+
 
 # --- CoreGraphics mouse click (ctypes) ---
 
@@ -778,6 +795,107 @@ class DesktopAutomator:
             "x": x, "y": y, "success": ok,
             "method": "CoreGraphics",
         })
+        return ok
+
+    def get_model_button_coordinates(self) -> Optional[Tuple[float, float]]:
+        """Calculate screen coordinates for the model selector button.
+
+        The model button is at the bottom-right of the Code tab input area.
+        Returns (x, y) screen coordinates in points, or None on error.
+        """
+        geom = self.get_window_geometry()
+        if geom is None:
+            if self.dry_run:
+                return (900.0, 750.0)
+            return None
+
+        win_x, win_y, win_w, win_h = geom
+        btn_x = win_x + win_w - MODEL_BTN_X_FROM_RIGHT
+        btn_y = win_y + win_h - MODEL_BTN_Y_FROM_BOTTOM
+        return (btn_x, btn_y)
+
+    def click_model_button(self) -> bool:
+        """Click the model selector button to open the dropdown.
+
+        Returns True if the click was posted successfully.
+        """
+        coords = self.get_model_button_coordinates()
+        if coords is None:
+            self._log("click_model_button_failed", {"reason": "no_coordinates"})
+            return False
+
+        x, y = coords
+        if self.dry_run:
+            self._log("click_model_button_dry_run", {"x": x, "y": y})
+            return True
+
+        ok = cg_click_at(x, y)
+        self._log("click_model_button", {"x": x, "y": y, "success": ok})
+        if ok:
+            time.sleep(0.3)
+        return ok
+
+    def set_model_via_ui(self, model_key: str = "opus-4-6-1m") -> bool:
+        """Set the model via UI dropdown click (no /model command needed).
+
+        Steps:
+        1. Click model selector button to open dropdown
+        2. Wait for dropdown to appear
+        3. Click the target model option by coordinate offset
+
+        Args:
+            model_key: Key from MODEL_OPTION_OFFSETS dict.
+                       Default "opus-4-6-1m" = Opus 4.6 (1M context).
+
+        Returns True if all clicks posted successfully.
+        Note: Coordinate offsets may need live calibration (S186).
+        """
+        if model_key not in MODEL_OPTION_OFFSETS:
+            self._log("set_model_failed", {"reason": f"unknown_model: {model_key}"})
+            return False
+
+        # Safety: verify Claude is frontmost
+        frontmost = self.get_frontmost_app()
+        if APP_NAME.lower() not in frontmost.lower():
+            self._log("set_model_failed", {"reason": f"wrong_app: {frontmost}"})
+            return False
+
+        # Step 1: Click model button to open dropdown
+        if not self.click_model_button():
+            self._log("set_model_failed", {"reason": "button_click_failed"})
+            return False
+
+        # Step 2: Wait for dropdown to appear
+        if not self.dry_run:
+            time.sleep(0.5)
+
+        # Step 3: Click the target model option
+        btn_coords = self.get_model_button_coordinates()
+        if btn_coords is None:
+            self._log("set_model_failed", {"reason": "no_coordinates_for_option"})
+            return False
+
+        btn_x, btn_y = btn_coords
+        offset_y = MODEL_OPTION_OFFSETS[model_key]
+        target_x = btn_x
+        target_y = btn_y + offset_y
+
+        if self.dry_run:
+            self._log("set_model_dry_run", {
+                "model": model_key, "x": target_x, "y": target_y,
+                "offset_y": offset_y,
+            })
+            return True
+
+        ok = cg_click_at(target_x, target_y)
+        self._log("set_model_click", {
+            "model": model_key, "x": target_x, "y": target_y,
+            "offset_y": offset_y, "success": ok,
+        })
+
+        if ok:
+            time.sleep(0.5)  # Wait for model to switch
+
         return ok
 
     def new_conversation(self) -> bool:
