@@ -46,6 +46,7 @@ def _make_trades(strategy, n, win_pct=0.6, pnl_per_win=1.50, pnl_per_loss=-1.00,
         trades.append({
             "strategy": strategy,
             "result": result,
+            "side": "yes",
             "pnl_usd": pnl,
             "timestamp": 1000 + i * 3600,
             "price_cents": 60,
@@ -61,15 +62,15 @@ def _make_streak_trades(strategy, wins_before, losses, wins_after):
     trades = []
     idx = 0
     for _ in range(wins_before):
-        trades.append({"strategy": strategy, "result": "yes", "pnl_usd": 1.50,
+        trades.append({"strategy": strategy, "result": "yes", "side": "yes", "pnl_usd": 1.50,
                         "timestamp": 1000 + idx * 3600})
         idx += 1
     for _ in range(losses):
-        trades.append({"strategy": strategy, "result": "no", "pnl_usd": -1.00,
+        trades.append({"strategy": strategy, "result": "no", "side": "yes", "pnl_usd": -1.00,
                         "timestamp": 1000 + idx * 3600})
         idx += 1
     for _ in range(wins_after):
-        trades.append({"strategy": strategy, "result": "yes", "pnl_usd": 1.50,
+        trades.append({"strategy": strategy, "result": "yes", "side": "yes", "pnl_usd": 1.50,
                         "timestamp": 1000 + idx * 3600})
         idx += 1
     return trades
@@ -146,16 +147,16 @@ class TestComputeLossStreak(unittest.TestCase):
 
     def test_no_losses(self):
         from strategy_health_scorer import _compute_loss_streak
-        self.assertEqual(_compute_loss_streak(["yes", "yes", "yes"]), 0)
+        self.assertEqual(_compute_loss_streak([True, True, True]), 0)
 
     def test_all_losses(self):
         from strategy_health_scorer import _compute_loss_streak
-        self.assertEqual(_compute_loss_streak(["no", "no", "no"]), 3)
+        self.assertEqual(_compute_loss_streak([False, False, False]), 3)
 
     def test_mixed_pattern(self):
         from strategy_health_scorer import _compute_loss_streak
-        results = ["yes", "no", "no", "no", "yes", "no", "no"]
-        self.assertEqual(_compute_loss_streak(results), 3)
+        outcomes = [True, False, False, False, True, False, False]
+        self.assertEqual(_compute_loss_streak(outcomes), 3)
 
     def test_empty_list(self):
         from strategy_health_scorer import _compute_loss_streak
@@ -163,7 +164,7 @@ class TestComputeLossStreak(unittest.TestCase):
 
     def test_single_loss(self):
         from strategy_health_scorer import _compute_loss_streak
-        self.assertEqual(_compute_loss_streak(["no"]), 1)
+        self.assertEqual(_compute_loss_streak([False]), 1)
 
 
 class TestComputeRecentWinRate(unittest.TestCase):
@@ -171,18 +172,18 @@ class TestComputeRecentWinRate(unittest.TestCase):
 
     def test_returns_none_below_window(self):
         from strategy_health_scorer import _compute_recent_win_rate
-        self.assertIsNone(_compute_recent_win_rate(["yes"] * 10, window=20))
+        self.assertIsNone(_compute_recent_win_rate([True] * 10, window=20))
 
     def test_computes_last_n(self):
         from strategy_health_scorer import _compute_recent_win_rate
-        results = ["yes"] * 30 + ["no"] * 20  # Last 20 are all losses
-        wr = _compute_recent_win_rate(results, window=20)
+        outcomes = [True] * 30 + [False] * 20  # Last 20 are all losses
+        wr = _compute_recent_win_rate(outcomes, window=20)
         self.assertEqual(wr, 0.0)
 
     def test_all_wins_recent(self):
         from strategy_health_scorer import _compute_recent_win_rate
-        results = ["no"] * 10 + ["yes"] * 20
-        wr = _compute_recent_win_rate(results, window=20)
+        outcomes = [False] * 10 + [True] * 20
+        wr = _compute_recent_win_rate(outcomes, window=20)
         self.assertEqual(wr, 1.0)
 
 

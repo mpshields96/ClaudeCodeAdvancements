@@ -58,12 +58,12 @@ class StrategyVerdict:
     lifetime_win_rate: float = 0.0
 
 
-def _compute_loss_streak(results: list[str]) -> int:
-    """Compute maximum consecutive loss streak from settled results."""
+def _compute_loss_streak(outcomes: list[bool]) -> int:
+    """Compute maximum consecutive loss streak from win/loss booleans."""
     max_streak = 0
     current_streak = 0
-    for r in results:
-        if r != "yes":
+    for won in outcomes:
+        if not won:
             current_streak += 1
             max_streak = max(max_streak, current_streak)
         else:
@@ -71,12 +71,12 @@ def _compute_loss_streak(results: list[str]) -> int:
     return max_streak
 
 
-def _compute_recent_win_rate(results: list[str], window: int = 20) -> float | None:
+def _compute_recent_win_rate(outcomes: list[bool], window: int = 20) -> float | None:
     """Win rate of last N settled trades. Returns None if < window trades."""
-    if len(results) < window:
+    if len(outcomes) < window:
         return None
-    recent = results[-window:]
-    return sum(1 for r in recent if r == "yes") / len(recent)
+    recent = outcomes[-window:]
+    return sum(1 for w in recent if w) / len(recent)
 
 
 def score_strategy(strategy: str, trades: list[dict]) -> StrategyVerdict:
@@ -105,14 +105,14 @@ def score_strategy(strategy: str, trades: list[dict]) -> StrategyVerdict:
         return verdict
 
     # Compute metrics
-    wins = sum(1 for t in settled if t.get("result") == "yes")
+    wins = sum(1 for t in settled if t.get("result") == t.get("side"))
     win_rate = wins / n_settled
     pnl = sum(t.get("pnl_usd", 0) or 0 for t in trades)
     profit_per_trade = pnl / n_settled if n_settled > 0 else 0
 
-    settled_results = [t.get("result", "no") for t in settled]
-    max_loss_streak = _compute_loss_streak(settled_results)
-    recent_wr = _compute_recent_win_rate(settled_results)
+    outcomes = [t.get("result") == t.get("side") for t in settled]
+    max_loss_streak = _compute_loss_streak(outcomes)
+    recent_wr = _compute_recent_win_rate(outcomes)
 
     verdict.wins = wins
     verdict.win_rate = round(win_rate, 4)
