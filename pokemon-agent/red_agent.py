@@ -129,7 +129,8 @@ class RedAgent(CrystalAgent):
         enemy = state.battle.enemy
         is_wild = state.battle.is_wild
 
-        action = choose_action(state.party, enemy, is_wild=is_wild)
+        action = choose_action(state.party, enemy, is_wild=is_wild,
+                               items=state.items)
         buttons = action_to_buttons(action)
 
         # Assess enemy threat for logging

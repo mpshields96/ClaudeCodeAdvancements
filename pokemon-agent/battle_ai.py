@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from game_state import Move, Party, Pokemon
+from game_state import Item, Move, Party, Pokemon
 
 # ── Gen 1 Type Effectiveness ────────────────────────────────────────────
 # Keys: (attack_type, defend_type) -> multiplier
@@ -156,22 +156,71 @@ def assess_threat(enemy: Pokemon, defender: Pokemon) -> dict:
     }
 
 
-def choose_action(party: Party, enemy: Pokemon, is_wild: bool = True) -> dict:
+POTION_HEAL = {
+    0x13: 20,   # Potion
+    0x12: 50,   # Super Potion
+    0x11: 200,  # Hyper Potion
+    0x10: 999,  # Max Potion (full heal)
+    0x0F: 999,  # Full Restore (full heal + status)
+}
+
+
+def best_potion(items: List[Item], hp_missing: int) -> Optional[Item]:
+    """Pick the best potion to use given HP missing.
+
+    Prefers the smallest potion that heals enough, to avoid waste.
+    Returns None if no potions available.
+    """
+    potions = []
+    for item in items:
+        heal = POTION_HEAL.get(item.item_id)
+        if heal is not None and item.quantity > 0:
+            potions.append((heal, item))
+
+    if not potions:
+        return None
+
+    # Sort by heal amount ascending — pick smallest that covers the gap
+    potions.sort(key=lambda x: x[0])
+    for heal, item in potions:
+        if heal >= hp_missing:
+            return item
+
+    # No potion covers the full gap — use the strongest available
+    return potions[-1][1]
+
+
+def choose_action(party: Party, enemy: Pokemon, is_wild: bool = True,
+                  items: Optional[List[Item]] = None) -> dict:
     """Choose the best battle action given party and enemy state.
 
     Returns a dict:
         {"type": "fight", "move_index": int, "reason": str}
         {"type": "run", "reason": str}
+        {"type": "item", "item_id": int, "item_name": str, "reason": str}
 
     Logic:
-    1. Score each of the lead Pokemon's moves
-    2. Pick the highest-scoring move
-    3. If no usable damaging moves and wild: run
-    4. If no usable damaging moves and trainer: use move index 0 (struggle)
+    1. If HP critical and potions available: use potion
+    2. Score each of the lead Pokemon's moves
+    3. Pick the highest-scoring move
+    4. If no usable damaging moves and wild: run
+    5. If no usable damaging moves and trainer: use move index 0 (struggle)
     """
     lead = party.lead()
     if lead is None or lead.is_fainted():
         return {"type": "run", "reason": "no usable pokemon"}
+
+    # Potion use: heal when HP is critical (<25%) and we have potions
+    if items and lead.hp_pct() < 0.25 and not lead.is_fainted():
+        hp_missing = lead.hp_max - lead.hp
+        potion = best_potion(items, hp_missing)
+        if potion is not None:
+            return {
+                "type": "item",
+                "item_id": potion.item_id,
+                "item_name": potion.name,
+                "reason": f"heal {lead.species} at {lead.hp_pct():.0%} HP with {potion.name}",
+            }
 
     # Threat-based flee: run from dangerous wild Pokemon when HP is low
     if is_wild and enemy.moves:
@@ -232,6 +281,14 @@ def action_to_buttons(action: dict) -> List[str]:
     if action["type"] == "run":
         # Select RUN: down then right from FIGHT, then A
         return ["down", "right", "a"]
+
+    if action["type"] == "item":
+        # Select ITEM: right from FIGHT, then A
+        # Item bag opens — first item is usually selected, press A to use
+        # Note: this navigates to the item menu. Actual item selection
+        # in the bag requires scrolling which depends on bag position.
+        # For now, use the first potion found (usually near top of bag).
+        return ["right", "a", "a"]
 
     if action["type"] == "fight":
         idx = action["move_index"]

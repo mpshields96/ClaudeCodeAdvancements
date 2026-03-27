@@ -9,7 +9,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from game_state import Pokemon, Move, BattleState, Party
+from game_state import Item, Pokemon, Move, BattleState, Party
 
 
 class TestTypeEffectiveness(unittest.TestCase):
@@ -361,6 +361,101 @@ class TestThreatBasedFleeing(unittest.TestCase):
         party = Party(pokemon=[lead])
         action = choose_action(party, enemy, is_wild=True)
         self.assertEqual(action["type"], "run")
+
+
+class TestBestPotion(unittest.TestCase):
+    """Test potion selection logic."""
+
+    def test_picks_smallest_sufficient(self):
+        from battle_ai import best_potion
+        items = [
+            Item(0x13, "POTION", 3),         # heals 20
+            Item(0x12, "SUPER POTION", 2),   # heals 50
+            Item(0x11, "HYPER POTION", 1),   # heals 200
+        ]
+        # Need 30 HP — Super Potion is smallest that covers it
+        result = best_potion(items, 30)
+        self.assertEqual(result.name, "SUPER POTION")
+
+    def test_picks_strongest_when_none_covers(self):
+        from battle_ai import best_potion
+        items = [
+            Item(0x13, "POTION", 3),         # heals 20
+            Item(0x12, "SUPER POTION", 2),   # heals 50
+        ]
+        # Need 100 HP — nothing covers it, use strongest
+        result = best_potion(items, 100)
+        self.assertEqual(result.name, "SUPER POTION")
+
+    def test_returns_none_with_no_potions(self):
+        from battle_ai import best_potion
+        items = [Item(0x04, "POKE BALL", 5)]
+        result = best_potion(items, 30)
+        self.assertIsNone(result)
+
+    def test_returns_none_with_empty_items(self):
+        from battle_ai import best_potion
+        result = best_potion([], 30)
+        self.assertIsNone(result)
+
+    def test_skips_zero_quantity(self):
+        from battle_ai import best_potion
+        items = [Item(0x13, "POTION", 0)]
+        result = best_potion(items, 10)
+        self.assertIsNone(result)
+
+
+class TestPotionUseInBattle(unittest.TestCase):
+    """Test that choose_action uses potions when HP is critical."""
+
+    def _make_move(self, name, move_type, power, pp=35, pp_max=35, accuracy=100):
+        return Move(name=name, move_type=move_type, power=power,
+                    accuracy=accuracy, pp=pp, pp_max=pp_max)
+
+    def _make_pokemon(self, species, types, level=10, hp=30, hp_max=30, moves=None):
+        return Pokemon(
+            species=species, nickname=species, level=level,
+            hp=hp, hp_max=hp_max, attack=20, defense=15,
+            speed=20, sp_attack=20, sp_defense=15,
+            pokemon_type=types, moves=moves or [],
+        )
+
+    def test_use_potion_at_critical_hp(self):
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Charmander", ["Fire"], hp=5, hp_max=30, moves=our_moves)
+        enemy = self._make_pokemon("Rattata", ["Normal"])
+        party = Party(pokemon=[lead])
+        items = [Item(0x13, "POTION", 3)]
+        action = choose_action(party, enemy, is_wild=False, items=items)
+        self.assertEqual(action["type"], "item")
+        self.assertEqual(action["item_name"], "POTION")
+
+    def test_no_potion_at_healthy_hp(self):
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Charmander", ["Fire"], hp=25, hp_max=30, moves=our_moves)
+        enemy = self._make_pokemon("Rattata", ["Normal"])
+        party = Party(pokemon=[lead])
+        items = [Item(0x13, "POTION", 3)]
+        action = choose_action(party, enemy, is_wild=False, items=items)
+        self.assertEqual(action["type"], "fight")
+
+    def test_no_potion_without_items(self):
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Charmander", ["Fire"], hp=5, hp_max=30, moves=our_moves)
+        enemy = self._make_pokemon("Rattata", ["Normal"])
+        party = Party(pokemon=[lead])
+        action = choose_action(party, enemy, is_wild=False, items=None)
+        self.assertEqual(action["type"], "fight")
+
+    def test_item_buttons(self):
+        from battle_ai import action_to_buttons
+        action = {"type": "item", "item_id": 0x13, "item_name": "POTION"}
+        buttons = action_to_buttons(action)
+        self.assertIsInstance(buttons, list)
+        self.assertIn("right", buttons)  # Navigate to ITEM in menu
 
 
 if __name__ == "__main__":
