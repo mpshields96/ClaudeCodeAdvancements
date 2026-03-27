@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import List, Optional
 
 from emulator_control import EmulatorControl
+from move_data import get_move_data
 from game_state import (
     Badges,
     BattleState,
@@ -416,21 +417,32 @@ class MemoryReaderRed:
             if type2_id != type1_id:
                 types.append(TYPE_NAMES.get(type2_id, "???"))
 
-            # Moves
+            # Moves (with full data from move_data.py)
             moves = []
             for j in range(4):
                 move_id = self._mem(addr + OFF_MOVE1 + j)
                 pp = self._mem(addr + OFF_PP1 + j)
                 if move_id != 0:
                     move_name = MOVE_NAMES.get(move_id, f"Move_{move_id}")
+                    mdata = get_move_data(move_id)
+                    if mdata:
+                        move_type = mdata["type"]
+                        power = mdata["power"]
+                        accuracy = mdata["accuracy"]
+                        category = mdata["category"]
+                    else:
+                        move_type = "Normal"
+                        power = 0
+                        accuracy = 100
+                        category = "physical"
                     moves.append(Move(
                         name=move_name,
-                        move_type="Normal",  # Simplified — would need full move data table
-                        power=0,
-                        accuracy=100,
+                        move_type=move_type,
+                        power=power,
+                        accuracy=accuracy,
                         pp=pp,
                         pp_max=pp,  # Approximation
-                        category="physical",
+                        category=category,
                     ))
 
             # Nickname
