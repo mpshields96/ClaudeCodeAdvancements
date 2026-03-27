@@ -422,6 +422,11 @@ class MemoryReaderRed:
             special = (self._mem(addr + OFF_SPECIAL_HI) << 8) + self._mem(addr + OFF_SPECIAL_LO)
             status = decode_status(self._mem(addr + OFF_STATUS))
 
+            # Experience (3 bytes, big-endian)
+            xp = ((self._mem(addr + OFF_EXP_HI) << 16)
+                  + (self._mem(addr + OFF_EXP_MID) << 8)
+                  + self._mem(addr + OFF_EXP_LO))
+
             # Types — prefer RAM, fall back to static species table
             type1_id = self._mem(addr + OFF_TYPE1)
             type2_id = self._mem(addr + OFF_TYPE2)
@@ -482,6 +487,7 @@ class MemoryReaderRed:
                 moves=moves,
                 status=status,
                 held_item="",  # Gen 1: no held items
+                xp=xp,
             ))
 
         return Party(pokemon=pokemon_list)

@@ -73,6 +73,7 @@ class Pokemon:
     moves: List[Move] = field(default_factory=list)  # up to 4
     status: str = "healthy"  # healthy, poisoned, paralyzed, asleep, burned, frozen
     held_item: str = ""
+    xp: int = 0  # Total experience points
 
     def hp_pct(self) -> float:
         if self.hp_max == 0:

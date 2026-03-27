@@ -175,5 +175,47 @@ class TestEnemyTypeFallback(unittest.TestCase):
         self.assertEqual(state.battle.enemy.pokemon_type, ["Grass", "Poison"])
 
 
+class TestPartyXPReading(unittest.TestCase):
+    """Test party Pokemon XP reading from RAM."""
+
+    def test_xp_read_basic(self):
+        emu = EmulatorControl.mock(ram_size=0x10000)
+        _setup_battle(emu)
+        base = mrr.PARTY_BASE_ADDRS[0]
+        # Set XP to 1000 (0x0003E8)
+        emu.write_byte(base + mrr.OFF_EXP_HI, 0x00)
+        emu.write_byte(base + mrr.OFF_EXP_MID, 0x03)
+        emu.write_byte(base + mrr.OFF_EXP_LO, 0xE8)
+        reader = mrr.MemoryReaderRed(emu)
+        state = reader.read_game_state()
+        self.assertEqual(state.party.pokemon[0].xp, 1000)
+
+    def test_xp_zero(self):
+        emu = EmulatorControl.mock(ram_size=0x10000)
+        _setup_battle(emu)
+        reader = mrr.MemoryReaderRed(emu)
+        state = reader.read_game_state()
+        self.assertEqual(state.party.pokemon[0].xp, 0)
+
+    def test_xp_large_value(self):
+        emu = EmulatorControl.mock(ram_size=0x10000)
+        _setup_battle(emu)
+        base = mrr.PARTY_BASE_ADDRS[0]
+        # Set XP to 100000 (0x0186A0)
+        emu.write_byte(base + mrr.OFF_EXP_HI, 0x01)
+        emu.write_byte(base + mrr.OFF_EXP_MID, 0x86)
+        emu.write_byte(base + mrr.OFF_EXP_LO, 0xA0)
+        reader = mrr.MemoryReaderRed(emu)
+        state = reader.read_game_state()
+        self.assertEqual(state.party.pokemon[0].xp, 100000)
+
+    def test_xp_in_pokemon_dataclass(self):
+        from game_state import Pokemon
+        p = Pokemon(species="Test", nickname="Test", level=5,
+                    hp=20, hp_max=20, attack=10, defense=10,
+                    speed=10, sp_attack=10, sp_defense=10, xp=500)
+        self.assertEqual(p.xp, 500)
+
+
 if __name__ == "__main__":
     unittest.main()
