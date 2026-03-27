@@ -359,3 +359,8 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `self-learning/tests/test_window_frequency_estimator.py` (S198)
 - `self-learning/tests/test_mandate_dashboard.py` (S198)
 - `self-learning/tests/test_signal_threshold_analyzer.py` (S198)
+
+
+### Added in S200
+- `pokemon-agent/emulator_control.py` (S200)
+- `pokemon-agent/memory_reader.py` (S200)

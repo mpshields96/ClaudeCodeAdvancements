@@ -1,0 +1,5036 @@
+{
+  "title": "ClaudeCodeAdvancements",
+  "subtitle": "Comprehensive Project Report",
+  "date": "2026-03-25",
+  "session": 166,
+  "executive_summary": "ClaudeCodeAdvancements is a research and development project building validated tools, hooks, and systems for Claude Code users and AI-assisted development workflows. Launched 2026-02-19 with 166 development sessions completed. All five original research frontiers are production-complete with 9,393 automated tests across 9 modules. The project has expanded into 40 master-level tasks covering autonomous intelligence gathering, self-learning loops, academic research integration, and professional design output. Zero external Python dependencies.",
+  "summary": {
+    "total_tests": 9393,
+    "passing_tests": 9393,
+    "test_suites": 240,
+    "total_modules": 9,
+    "total_findings": 412,
+    "total_papers": 1242,
+    "master_tasks": 40,
+    "completed_tasks": 9,
+    "in_progress_tasks": 25,
+    "not_started_tasks": 5,
+    "blocked_tasks": 1,
+    "source_files": 169,
+    "test_files": 241,
+    "source_loc": 68494,
+    "test_loc": 99401,
+    "total_loc": 167895,
+    "git_commits": 982,
+    "project_age_days": 34,
+    "live_hooks": 18,
+    "total_delivered": 70
+  },
+  "modules": [
+    {
+      "name": "Memory System",
+      "path": "memory-system/",
+      "status": "ACTIVE",
+      "tests": 340,
+      "loc": 1758,
+      "files": 4,
+      "description": "Persistent cross-session memory. Captures decisions, preferences, and context across Claude Code sessions using hooks and MCP.",
+      "components": [
+        "Capture hook (PostToolUse + Stop)",
+        "MCP retrieval server",
+        "CLI viewer (stats, search, list)",
+        "Compaction-resistant handoff",
+        "8-char hex ID schema"
+      ],
+      "next": "",
+      "why_it_matters": "Means Claude remembers your preferences and past decisions across sessions \u2014 no more re-explaining context every time you start a new chat."
+    },
+    {
+      "name": "Spec System",
+      "path": "spec-system/",
+      "status": "ACTIVE",
+      "tests": 205,
+      "loc": 1191,
+      "files": 4,
+      "description": "Spec-driven development workflow. Enforces requirements > design > tasks > implement sequence with approval gates.",
+      "components": [
+        "/spec:requirements interview scaffold",
+        "/spec:design architecture generator",
+        "/spec:tasks atomic decomposer",
+        "/spec:design-review (4 expert personas)",
+        "PreToolUse spec validator hook",
+        "UserPromptSubmit auto-activation"
+      ],
+      "next": "",
+      "why_it_matters": "Forces Claude to plan before coding. You get a reviewable blueprint (requirements, design, tasks) instead of spaghetti code from vague prompts."
+    },
+    {
+      "name": "Context Monitor",
+      "path": "context-monitor/",
+      "status": "ACTIVE",
+      "tests": 434,
+      "loc": 2871,
+      "files": 10,
+      "description": "Context health monitoring with adaptive thresholds. Tracks token usage, warns at quality ceilings, blocks exit at critical levels.",
+      "components": [
+        "PostToolUse token meter",
+        "PreToolUse threshold alert",
+        "Stop hook auto-handoff",
+        "Compact anchor (every 10 turns)",
+        "Automatic session wrap trigger",
+        "Session pacer (2-3h autonomous runs)"
+      ],
+      "next": "",
+      "why_it_matters": "Warns you when Claude's memory is getting full so it doesn't silently start forgetting instructions mid-session. Prevents the 'why did it ignore my rules?' problem."
+    },
+    {
+      "name": "Agent Guard",
+      "path": "agent-guard/",
+      "status": "ACTIVE",
+      "tests": 1073,
+      "loc": 6196,
+      "files": 21,
+      "description": "Multi-agent safety, conflict prevention, and Senior Dev code review. Guards credentials, network ports, dangerous paths, and provides automated quality scoring on every write.",
+      "components": [
+        "Mobile approver (ntfy.sh push)",
+        "Credential extraction guard",
+        "Network/port exposure guard",
+        "Content scanner (9 threat categories)",
+        "Path validator (LIVE in hooks)",
+        "Session guard (slop detection)",
+        "File ownership manifest",
+        "Edit retry guard (LIVE in hooks)",
+        "Bash command safety guard (LIVE in hooks)",
+        "SATD detector (TODO/FIXME/HACK markers)",
+        "PR effort scorer (1-5 scale)",
+        "Code quality scorer (0-100, A-F)",
+        "False positive filter",
+        "Review classifier (6 categories)",
+        "Tech debt tracker (trend analysis)",
+        "ADR reader (architecture decision discovery)",
+        "Senior Dev orchestrator hook (LIVE)"
+      ],
+      "next": "",
+      "why_it_matters": "Stops Claude from accidentally deleting files, exposing API keys, or breaking your computer when running autonomously overnight."
+    },
+    {
+      "name": "Usage Dashboard",
+      "path": "usage-dashboard/",
+      "status": "ACTIVE",
+      "tests": 369,
+      "loc": 3030,
+      "files": 7,
+      "description": "Token and cost transparency. CLI counter, OpenTelemetry receiver, cost alerts, and structural completeness checker.",
+      "components": [
+        "Token counter CLI",
+        "OTLP HTTP/JSON receiver",
+        "PreToolUse cost alert hook",
+        "/arewedone completeness checker"
+      ],
+      "next": "",
+      "why_it_matters": "Shows you exactly how many tokens and dollars each session costs, so you can spot waste and stay within your Max subscription limits."
+    },
+    {
+      "name": "Reddit Intelligence",
+      "path": "reddit-intelligence/",
+      "status": "COMPLETE",
+      "tests": 457,
+      "loc": 3983,
+      "files": 7,
+      "description": "Community signal research. Discovers tools, patterns, and pain points from Reddit and GitHub to drive development priorities.",
+      "components": [
+        "Reddit reader (posts + all comments)",
+        "Autonomous scan pipeline",
+        "GitHub repo evaluator",
+        "Sandboxed repo tester",
+        "Subreddit profile registry (10 profiles)"
+      ],
+      "next": "",
+      "why_it_matters": "Automatically finds the best new tools, tips, and techniques from Reddit so you don't have to scroll through hundreds of posts yourself."
+    },
+    {
+      "name": "Self-Learning",
+      "path": "self-learning/",
+      "status": "COMPLETE",
+      "tests": 1885,
+      "loc": 15860,
+      "files": 39,
+      "description": "Cross-session improvement through structured observation, pattern detection, autonomous proposals, and research ROI tracking.",
+      "components": [
+        "JSONL event journal",
+        "Pattern reflector + strategy engine",
+        "Trace analyzer (4 detectors)",
+        "YoYo improvement loop",
+        "Sentinel adaptive mutation",
+        "Academic paper scanner",
+        "Findings resurfacer",
+        "Skillbook injection hook (LIVE)",
+        "Overnight detector (time-stratified analysis)",
+        "Research outcomes ROI tracker",
+        "Trade reflector (5 pattern detectors)"
+      ],
+      "next": "",
+      "why_it_matters": "Makes your Kalshi bot smarter over time by analyzing what worked and what didn't. The bot learns from its own wins and losses instead of repeating mistakes."
+    },
+    {
+      "name": "Design Skills",
+      "path": "design-skills/",
+      "status": "ACTIVE",
+      "tests": 1381,
+      "loc": 10662,
+      "files": 17,
+      "description": "Professional visual output. Typst-based PDF reports, slides, HTML dashboards, SVG charts, website generation, and daily project snapshots.",
+      "components": [
+        "Report generator (Typst pipeline)",
+        "Slide generator (16:9 PDF)",
+        "Dashboard generator (HTML)",
+        "Chart generator (SVG)",
+        "Website generator (landing + docs)",
+        "Daily snapshot engine (metric diffs)",
+        "Design guide + visual language"
+      ],
+      "next": "",
+      "why_it_matters": "Generates professional PDF reports and charts automatically \u2014 no manual formatting. One command gives you a polished status overview you could show anyone."
+    },
+    {
+      "name": "Research",
+      "path": "research/",
+      "status": "COMPLETE",
+      "tests": 86,
+      "loc": 1397,
+      "files": 3,
+      "description": "R&D tools and experimental capabilities including iOS project generation and Xcode build wrapper.",
+      "components": [
+        "iOS project generator (SwiftUI)",
+        "Xcode build wrapper"
+      ],
+      "next": "",
+      "why_it_matters": "R&D sandbox for experimental features. Things get prototyped here before becoming real modules \u2014 keeps the main codebase clean."
+    }
+  ],
+  "master_tasks_complete": [
+    {
+      "id": "MT-2",
+      "name": "Mermaid Architecture Diagrams in Spec System",
+      "status": "COMPLETE (Session 19). Mermaid diagram requirement added to spec:design at lines 34 and 109.",
+      "category": "complete",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 1,
+      "total_phases": 1,
+      "source": "https://www.reddit.com/r/ClaudeCode/comments/1rek0y9/",
+      "test_count": 0,
+      "why_it_matters": "Auto-generates architecture diagrams in the spec workflow. See the design visually before writing code."
+    },
+    {
+      "id": "MT-3",
+      "name": "Virtual Design Team Plugin",
+      "status": "COMPLETE (Session 21). `/spec:design-review` command created with 4 expert personas (UX, Security, Performance, Maintainability). Consolidated review with APPROVE/REVISE/REDESIGN verdict.",
+      "category": "complete",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 1,
+      "total_phases": 1,
+      "source": "https://www.reddit.com/r/ClaudeCode/comments/1rppl4w/",
+      "test_count": 0,
+      "why_it_matters": "Multiple AI personas (backend, frontend, security) review designs from different expert perspectives."
+    },
+    {
+      "id": "MT-4",
+      "name": "Frontend Design Excellence via Design Vocabulary",
+      "status": "COMPLETE (Session 21). Section 1b \"Design References\" added to spec:design \u2014 optional for UI features, includes reference UIs, design vocabulary, layout pattern, color constraints. Asks user once if no preferences specified.",
+      "category": "complete",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 1,
+      "total_phases": 1,
+      "source": "https://www.reddit.com/r/ClaudeCode/comments/1p8qz7v/",
+      "test_count": 0,
+      "why_it_matters": "Gives Claude a professional design vocabulary so UI recommendations use real design principles, not vague suggestions."
+    },
+    {
+      "id": "MT-6",
+      "name": "On-Demand Subreddit Scanner",
+      "status": "COMPLETE (Session 27). Delivered:",
+      "category": "complete",
+      "delivered": [
+        "profiles.py: 10 builtin subreddit profiles (4 domains: claude/trading/dev/res...",
+        "--profile and --quick flags added to nuclear_fetcher.py"
+      ],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 1,
+      "total_phases": 1,
+      "source": "",
+      "test_count": 43,
+      "why_it_matters": "Scan any subreddit on demand for Claude Code relevant posts. The 'nuclear' option for deep intelligence sweeps."
+    },
+    {
+      "id": "MT-7",
+      "name": "Programmatic Trace Analysis for Self-Learning",
+      "status": "COMPLETE (Session 26). Delivered:",
+      "category": "complete",
+      "delivered": [
+        "self-learning/trace_analyzer.py: TranscriptEntry, TranscriptSession, RetryDet..."
+      ],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 1,
+      "total_phases": 1,
+      "source": "https://www.reddit.com/r/ClaudeCode/comments/1rvhqgc/",
+      "test_count": 50,
+      "why_it_matters": "Finds patterns in how Claude wastes tokens (retries, unnecessary reads) so sessions run faster and cheaper."
+    },
+    {
+      "id": "MT-20",
+      "name": "Senior Developer Agent",
+      "status": "COMPLETE (S71-S83). All 10 gaps closed + E2E validated 10/10 with real API (claude-haiku-4-5-20251001, S83).",
+      "category": "complete",
+      "delivered": [],
+      "needs": "DONE. MT-20 is feature-complete. Converge with MT-21 Hivemind Phase 1.",
+      "remaining": [
+        "Phase 6: Hook output rewrite \u2014 natural language advice (S78) DONE",
+        "Phase 7: /senior-review skill \u2014 APPROVE/CONDITIONAL/RETHINK verdicts (S78) DONE",
+        "Phase 8: Interactive CLI chat \u2014 REPL + LLMClient + Anthropic API (S79-S80) DONE",
+        "Phase 9: Architectural coherence \u2014 module structure, patterns, imports, rules (S78-S79..."
+      ],
+      "phases_done": 0,
+      "total_phases": 9,
+      "source": "",
+      "test_count": 890,
+      "why_it_matters": "An automated code reviewer that catches bugs, tech debt, and design issues before they become problems. Like having a senior engineer on call 24/7."
+    },
+    {
+      "id": "MT-22",
+      "name": "Autonomous 1-Hour Loop",
+      "status": "COMPLETE \u2014 VALIDATED BY USAGE (S161).",
+      "category": "complete",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 0,
+      "total_phases": 1,
+      "source": "",
+      "test_count": 66,
+      "why_it_matters": "Makes the whole system run without you. Sessions start, do work, wrap up, and hand off to the next session automatically."
+    },
+    {
+      "id": "MT-26",
+      "name": "Financial Intelligence Engine",
+      "status": "- Research COMPLETE (S104-105): MT26_FINANCIAL_INTEL_RESEARCH.md \u2014 papers, data sources, repos, 3-tier plan",
+      "category": "complete",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 2,
+      "total_phases": 2,
+      "source": "",
+      "test_count": 43,
+      "why_it_matters": "Financial intelligence tools for the Kalshi bot: regime detection, calibration analysis, order flow. Directly improves bet quality."
+    },
+    {
+      "id": "MT-29",
+      "name": "Cowork + Claude Pro Bridge Hivemind",
+      "status": "Research COMPLETE (S114). Verdict: SKIP. Cowork adds no value over our hivemind for dev workflows. No Pro\u2194Code bridge exists. Local MCP bugs (GitHub #23424). See MT29_COWORK_RESEARCH.md.",
+      "category": "complete",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 1,
+      "total_phases": 1,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Bridge between Claude Pro web Cowork mode and Claude Code CLI for hivemind coordination across interfaces."
+    }
+  ],
+  "master_tasks_active": [
+    {
+      "id": "MT-0",
+      "name": "Kalshi Bot Self-Learning Integration",
+      "status": "COMPLETE (Phase 1: S21, Phase 2: deployed via polymarket-bot monitoring chat).",
+      "category": "active",
+      "delivered": [
+        "Phase 1 (CCA): 6 event types, trading metrics, 4 pattern detectors, 24 tests",
+        "Phase 2 (Polybot): Deployed via different implementation path (DB-direct vs J...",
+        "kalshi_self_learning.py (916 LOC): Bucket stats, Wilson CI, CUSUM, learning p...",
+        "trade_reflector.py (791 LOC): Trade pattern analysis, 5 detectors",
+        "calibration_bias.py (426 LOC): Systematic mispricing detection",
+        "dynamic_kelly.py (341 LOC): Per-bucket optimal sizing",
+        "strategy_health_scorer.py (296 LOC): HEALTHY/MONITOR/PAUSE/KILL verdicts",
+        "overnight_detector.py (497 LOC): Time-stratified analysis"
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 1: S21, Phase 2: deployed via polymarket-bot monitoring chat)."
+      ],
+      "phases_done": 0,
+      "total_phases": 2,
+      "source": "",
+      "test_count": 24,
+      "why_it_matters": "The single most important task: making the Kalshi bot learn from its own trading results. Every dollar of improvement here compounds over time."
+    },
+    {
+      "id": "MT-1",
+      "name": "Maestro-Style Visual Grid UI",
+      "status": "MOSTLY SELF-RESOLVED (S96). Multiple tools now exist:",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 0,
+      "total_phases": 0,
+      "source": "https://www.reddit.com/r/ClaudeCode/comments/1qq2lur/",
+      "test_count": 0,
+      "why_it_matters": "Visual grid dashboard showing all active sessions, system status, and task progress at a glance \u2014 like a mission control center."
+    },
+    {
+      "id": "MT-9",
+      "name": "Autonomous Cross-Subreddit Intelligence Gathering",
+      "status": "Phase 2 COMPLETE (Session 31). Delivered:",
+      "category": "active",
+      "delivered": [
+        "autonomous_scanner.py: ScanPrioritizer (staleness + yield + diversity scoring...",
+        "execute_scan(): End-to-end pipeline \u2014 fetch \u2192 filter \u2192 dedup \u2192 classify \u2192 rec...",
+        "ScanResult dataclass with to_dict/save_json for structured output.",
+        "/cca-nuclear autonomous mode: auto-picks highest-priority sub via scanner.",
+        "Phase 3: Supervised trial \u2014 run with Matthew monitoring for 3 sessions."
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 3: Supervised trial \u2014 run with Matthew monitoring for 3 sessions."
+      ],
+      "phases_done": 1,
+      "total_phases": 3,
+      "source": "",
+      "test_count": 54,
+      "why_it_matters": "Automates Reddit scanning so high-value posts get flagged without you having to check manually."
+    },
+    {
+      "id": "MT-10",
+      "name": "YoYo-Pattern Continuous Self-Learning and Self-Building",
+      "status": "Phase 1 COMPLETE (Session 28), QualityGate added (Session 29), E2E validated (Session 29).",
+      "category": "active",
+      "delivered": [
+        "improver.py: ImprovementProposal lifecycle, ImprovementStore (JSONL), Proposa...",
+        "QualityGate: Geometric mean anti-gaming (Nash 1950 / sentrux pattern). Preven...",
+        "Phase 2 COMPLETE (Sessions 42-44): 5/5 validation sessions, 36 transcripts an...",
+        "Phase 3: Two tracks: (A) Graduate self-learning to Kalshi bot (requires cross..."
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 3: Two tracks: (A) Graduate self-learning to Kalshi bot (requires cross-project ..."
+      ],
+      "phases_done": 2,
+      "total_phases": 3,
+      "source": "",
+      "test_count": 64,
+      "why_it_matters": "The 'get smarter each session' engine. Tracks what strategies work and surfaces the best ones automatically."
+    },
+    {
+      "id": "MT-11",
+      "name": "Autonomous GitHub Repository Intelligence",
+      "status": "Phase 2 COMPLETE (Session 83). Delivered:",
+      "category": "active",
+      "delivered": [
+        "github_scanner.py: RepoMetadata (from GitHub API), RepoEvaluator (0-100 scori...",
+        "fetch_trending(): GitHub search API with date filters to approximate trending...",
+        "_build_trending_query(): configurable language, days, min_stars filters.",
+        "TrendingScanner class: per-language scanning, trending history JSONL log, CCA...",
+        "Phase 3: Wire trending scanner into MT-9 autonomous pipeline for scheduled runs."
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 3: Wire trending scanner into MT-9 autonomous pipeline for scheduled runs."
+      ],
+      "phases_done": 1,
+      "total_phases": 3,
+      "source": "",
+      "test_count": 62,
+      "why_it_matters": "Scans GitHub trending repos for tools, techniques, and patterns that could improve CCA or the Kalshi bot."
+    },
+    {
+      "id": "MT-12",
+      "name": "Academic Research Paper Integration",
+      "status": "Phase 4 COMPLETE (Session 101). Delivered:",
+      "category": "active",
+      "delivered": [
+        "self-learning/paper_scanner.py: Semantic Scholar + arXiv API integration, 7 C...",
+        "self-learning/paper_digest.py: Kalshi/CCA digest generator with cross-chat br...",
+        "Phase 1 (S38): Live API validated, first paper logged",
+        "Phase 2: Ran across 4 domains, increased delay to 3s (429 rate limit)",
+        "Phase 3 (S100): paper_digest.py built, expanded prediction/statistics queries...",
+        "Phase 4 (S101): Expanded scans across prediction, statistics, trading_systems...",
+        "Phase 5 (S102): Implemented confidence calibrator from ConfTuner (Li et al., ...",
+        "Phase 6 (S102): Built hit_rate_tracker.py (32 tests). Computes APF from FINDI..."
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 2: Ran across 4 domains, increased delay to 3s (429 rate limit)"
+      ],
+      "phases_done": 1,
+      "total_phases": 6,
+      "source": "",
+      "test_count": 89,
+      "why_it_matters": "Finds relevant academic papers (trading math, AI research) and summarizes them so you get the insights without reading 30-page PDFs."
+    },
+    {
+      "id": "MT-13",
+      "name": "iOS App Development Capability",
+      "status": "Phase 2 COMPLETE (Session 49). Delivered:",
+      "category": "active",
+      "delivered": [
+        "ios_project_gen.py: Generates complete Xcode projects from CLI (SwiftUI + tes...",
+        "xcode_build.py: Python xcodebuild wrapper (build, clean, test, scheme/simulat...",
+        "Phase 3: Build first real app (Kalshi mobile dashboard) or install SwiftUI Ag..."
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 3: Build first real app (Kalshi mobile dashboard) or install SwiftUI Agent Skill"
+      ],
+      "phases_done": 1,
+      "total_phases": 3,
+      "source": "",
+      "test_count": 57,
+      "why_it_matters": "Generate complete Xcode projects with Swift code and tests from Claude. Prototype iOS apps without manual setup."
+    },
+    {
+      "id": "MT-14",
+      "name": "Autonomous Re-Scanning of Previously Scanned Subreddits",
+      "status": "Phase 1 COMPLETE (Session 35). Delivered:",
+      "category": "active",
+      "delivered": [
+        "rescan_sub() method on AutonomousScanner: delta-scanning with timestamp filte...",
+        "get_stale_subs() helper for identifying overdue subs",
+        "Phase 2: Run rescan on a real stale sub, validate delta filtering works. Phas..."
+      ],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 2,
+      "total_phases": 3,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Re-scans previously visited subreddits to catch new posts and updates since last scan. Keeps intelligence fresh."
+    },
+    {
+      "id": "MT-17",
+      "name": "UI/Design Excellence and Professional Report Generation",
+      "status": "Phase 1 COMPLETE (Session 41). Delivered:",
+      "category": "active",
+      "delivered": [
+        "design-skills/ module with CLAUDE.md, design-guide.md (color palette, typogra...",
+        "design-skills/report_generator.py \u2014 CCADataCollector + ReportRenderer + CLI (...",
+        "design-skills/templates/cca-report.typ \u2014 Professional status report template",
+        "/cca-report slash command for one-command PDF generation",
+        "Phase 2 COMPLETE (Session 47): slide_generator.py + /cca-slides command (25 t...",
+        "Phase 3 COMPLETE (Session 48): dashboard_generator.py + /cca-dashboard comman...",
+        "Phase 4 COMPLETE (Session 49): chart_generator.py \u2014 pure SVG chart generation...",
+        "Phase 5: Website templates \u2014 landing pages, documentation sites"
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 5: Website templates - landing pages, documentation sites",
+        "Phase 5: Website templates \u2014 landing pages, documentation sites"
+      ],
+      "phases_done": 4,
+      "total_phases": 5,
+      "source": "",
+      "test_count": 42,
+      "why_it_matters": "One-command professional reports. Instead of explaining project status verbally, just generate a PDF."
+    },
+    {
+      "id": "MT-21",
+      "name": "Hivemind Multi-Chat Coordination",
+      "status": "Infrastructure COMPLETE. Phase 1 validation IN PROGRESS (S86).",
+      "category": "active",
+      "delivered": [],
+      "needs": "1-3 more validation tests, then Phase 1 gate assessment.",
+      "remaining": [
+        "Phase 1: Validated 2-chat (Desktop + 1 CLI), 3-5 sessions, must pass all gates",
+        "Phase 2: Hardened 2-chat with complex tasks, 3-5 sessions",
+        "Phase 3: 3-chat operation (Desktop + 2 CLI), only after Phase 2 gate passes"
+      ],
+      "phases_done": 5,
+      "total_phases": 8,
+      "source": "",
+      "test_count": 69,
+      "why_it_matters": "Lets multiple Claude sessions work in parallel on different tasks \u2014 like having a small dev team instead of one assistant."
+    },
+    {
+      "id": "MT-23",
+      "name": "Mobile Remote Control v2",
+      "status": "EXTERNALLY RESOLVED (S112). Claude Code Channels shipped March 20, 2026.",
+      "category": "active",
+      "delivered": [],
+      "needs": "Install Telegram channel plugin and test with Kalshi bot session.",
+      "remaining": [
+        "Install Telegram channel plugin and test with Kalshi bot session."
+      ],
+      "phases_done": 1,
+      "total_phases": 0,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Mobile control v2 via Telegram/Discord. Richer interface than push notifications \u2014 send commands, receive status updates."
+    },
+    {
+      "id": "MT-24",
+      "name": "Visualization & Graphics Engine",
+      "status": "Phase 1 COMPLETE (S111) \u2014 `trading_chart.py` (5 SVG chart types: PnL curve, win rate, strategy matrix, drawdown, heatmap). 41 tests.",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 1,
+      "total_phases": 1,
+      "source": "",
+      "test_count": 41,
+      "why_it_matters": "SVG chart engine with 20+ chart types. Powers all data visualization across reports, dashboards, and presentations."
+    },
+    {
+      "id": "MT-27",
+      "name": "CCA Nuclear v2",
+      "status": "Phases 1-5 COMPLETE.",
+      "category": "active",
+      "delivered": [
+        "Phase 1: APF analysis \u2014 \"Other\" category dropped from 124/335 (37%) to 0/335 ...",
+        "Phase 2: classify_post HAY expansion \u2014 28 new sentiment/opinion HAY keywords ...",
+        "Phase 3: apf_checkpoint() function + scan report integration. 6 new tests.",
+        "Phase 4 (S129/S132): 3-tier NEEDLE precision improvement. Split keywords into...",
+        "Phase 5 (S115): apf_session_tracker.py \u2014 per-session APF trend tracking. Appe..."
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 1: APF analysis \u2014 \"Other\" category dropped from 124/335 (37%) to 0/335 (0%). Exp...",
+        "Phase 2: classify_post HAY expansion \u2014 28 new sentiment/opinion HAY keywords (vibe cod...",
+        "Phase 3: apf_checkpoint() function + scan report integration. 6 new tests."
+      ],
+      "phases_done": 0,
+      "total_phases": 5,
+      "source": "",
+      "test_count": 27,
+      "why_it_matters": "Smarter Reddit scanning with less noise. Better signal-to-noise means fewer irrelevant posts cluttering your review."
+    },
+    {
+      "id": "MT-28",
+      "name": "Self-Learning v2",
+      "status": "COMPLETED (S111). All 6 phases done:",
+      "category": "active",
+      "delivered": [
+        "Phase 1: principle_registry.py (73 tests) \u2014 Laplace-scored principles by domain",
+        "Phase 2: pattern_registry.py + detectors.py (42 tests) \u2014 Plugin detector arch...",
+        "Phase 3: principle_transfer.py (34 tests) \u2014 Cross-domain affinity-based transfer",
+        "Phase 4: outcome_feedback.py (16 tests) \u2014 Research outcomes \u2192 principle scoring",
+        "Phase 5: predictive_recommender.py (40 tests) \u2014 Pre-session ranked recommenda...",
+        "Phase 6: sentinel_bridge.py (30 tests) \u2014 SentinelMutator \u2192 principle registry..."
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 1: principle_registry.py (73 tests) \u2014 Laplace-scored principles by domain",
+        "Phase 2: pattern_registry.py + detectors.py (42 tests) \u2014 Plugin detector architecture",
+        "Phase 3: principle_transfer.py (34 tests) \u2014 Cross-domain affinity-based transfer",
+        "Phase 4: outcome_feedback.py (16 tests) \u2014 Research outcomes \u2192 principle scoring",
+        "Phase 5: predictive_recommender.py (40 tests) \u2014 Pre-session ranked recommendations"
+      ],
+      "phases_done": 0,
+      "total_phases": 6,
+      "source": "",
+      "test_count": 73,
+      "why_it_matters": "Self-learning v2: the bot doesn't just track results, it evolves its own principles about what works. Adaptive strategy, not static rules."
+    },
+    {
+      "id": "MT-30",
+      "name": "Session Daemon",
+      "status": "Phase 8 COMPLETE (S128). S129: +preflight command, +rich --status with audit log, +AUTOLOOP_SETUP.md. Ready for live supervised dry run.",
+      "category": "active",
+      "delivered": [
+        "Phase 2 (S111): session_registry.py (60 tests) + tmux_manager.py (40 tests)",
+        "Phase 3 (S112): session_daemon.py \u2014 poll loop, health checking, spawn/restart...",
+        "Phase 4 (S113): Integration tests \u2014 lifecycle, peak transitions, crash recove...",
+        "Phase 5 (S113): Hardening \u2014 _mark_exhausted_sessions FAILED state fix, log ro...",
+        "Phase 6 (S126): cca_autoloop.py \u2014 reads SESSION_RESUME.md, spawns claude, loo...",
+        "start_autoloop.sh \u2014 one-command tmux launcher",
+        "session_daemon_cca_only.json \u2014 CCA-only daemon config (1 session max)",
+        "Phase 7 (S127): Desktop mode + model alternation (85 tests)"
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 2: session_registry.py + tmux_manager.py (building blocks)",
+        "Phase 3: session_daemon.py (poll loop, health checking, spawn/restart)",
+        "Phase 4: Integration testing (dry run with 2 sessions)",
+        "Phase 5: Hardening (max restart limits, PID file, log rotation)"
+      ],
+      "phases_done": 1,
+      "total_phases": 8,
+      "source": "",
+      "test_count": 116,
+      "why_it_matters": "Auto-start and manage all your Claude sessions from one command. No more manually opening 3 terminal windows."
+    },
+    {
+      "id": "MT-31",
+      "name": "Gemini Pro Integration",
+      "status": "S125 E2E validation: Gemini Flash WORKS via @rlabs-inc/gemini-mcp (v0.8.1). Pro UNAVAILABLE \u2014 Google One gives web app Pro access only, not API access. API Pro requires separate Google Cloud billing. Matthew directive: Flash only (Option 1). Scope narrowed to Gemini Flash integration.",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 0,
+      "total_phases": 0,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Use Google's Gemini Pro for visual/design tasks where it excels, while Claude handles the code. Best of both models."
+    },
+    {
+      "id": "MT-32",
+      "name": "Visual Excellence & Design Engineering",
+      "status": "NEW (S118). Phase 1 starting \u2014 report_charts.py integration + research scan.",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [
+        "Phase 2: Advanced chart types (interactive, animated, publication-quality statistical ...",
+        "Phase 3: Design system v2 (design tokens, lint rules, cross-format consistency)",
+        "Phase 4: UI component library (reusable patterns for Claude Code web outputs)",
+        "Phase 5: Dashboard v2 (interactive, real-time, responsive, themeable)",
+        "Phase 6: Figure/image generation pipeline (multi-panel, annotation, export)"
+      ],
+      "phases_done": 1,
+      "total_phases": 7,
+      "source": "",
+      "test_count": 890,
+      "why_it_matters": "Makes all visual output (reports, charts, dashboards) look professional. Design quality you'd expect from a real product."
+    },
+    {
+      "id": "MT-33",
+      "name": "Strategic Intelligence Report",
+      "status": "Unknown",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [
+        "Phase 1: Deep dive research \u2014 what metrics matter, what data is available, what charts...",
+        "Phase 2: Data collection layer \u2014 SQL queries, data transformers, schema mapping",
+        "Phase 3: Report section templates \u2014 Typst layouts for each pillar",
+        "Phase 4: Chart integration \u2014 wire real data into chart_generator.py chart types",
+        "Phase 5: Self-reference hook \u2014 JSON export, report diffing, chat-parseable format"
+      ],
+      "phases_done": 3,
+      "total_phases": 6,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Combines Kalshi trading data, self-learning intelligence, and research outcomes into one strategic report. Answers: is the bot getting smarter and more profitable?"
+    },
+    {
+      "id": "MT-34",
+      "name": "Medical AI Tool \u2014 OpenEvidence Replacement",
+      "status": "IDEA LOGGED \u2014 Matthew needs more time to refine the concept. Do NOT start building until Matthew gives the green light.",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 1,
+      "total_phases": 0,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Medical AI research tool for provider-grade clinical decision support. Uses same research rigor as Kalshi bot \u2014 academic evidence first, no speculation."
+    },
+    {
+      "id": "MT-35",
+      "name": "Background Autoloop \u2014 Non-Intrusive Desktop Loop",
+      "status": "- Phase 1 COMPLETE (S142): save/restore frontmost app around autoloop trigger (~3-5s takeover)",
+      "category": "active",
+      "delivered": [
+        "Phase 1 COMPLETE (S142): save/restore frontmost app around autoloop trigger (...",
+        "Phase 2 COMPLETE (S143): idle detection via CoreGraphics CGEventSourceSeconds...",
+        "Phase 3 COMPLETE (S144): ntfy.sh loop health notifications. notify_loop_healt...",
+        "Phase 4: TODO \u2014 keyboard shortcut to pause/resume loop"
+      ],
+      "needs": "",
+      "remaining": [
+        "Phase 4: Keyboard shortcut to pause/resume loop without killing it",
+        "Phase 4: TODO \u2014 keyboard shortcut to pause/resume loop"
+      ],
+      "phases_done": 3,
+      "total_phases": 4,
+      "source": "",
+      "test_count": 23,
+      "why_it_matters": "Makes the autoloop unobtrusive \u2014 runs in the background, pauses when you're active, resumes when idle. The system works FOR you, not against you."
+    },
+    {
+      "id": "MT-37",
+      "name": "AI-Driven Investment Research & Portfolio Intelligence",
+      "status": "IDEA LOGGED (S148) \u2014 Long-term, research-first. Do NOT start building until Phase 1 research is complete. No rush \u2014 Matthew directive.",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [
+        "Phase 1: Deep academic research survey \u2014 produce RESEARCH.md with literature review, m...",
+        "Phase 2: Data pipeline \u2014 FRED API integration, ETF universe builder, basic factor load...",
+        "Phase 3: Portfolio constructor \u2014 implement 3-5 allocation strategies with backtest fra...",
+        "Phase 4: Risk analysis toolkit \u2014 VaR/CVaR, Monte Carlo, stress testing",
+        "Phase 5: Tax optimization layer \u2014 asset location, TLH simulation"
+      ],
+      "phases_done": 0,
+      "total_phases": 7,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Long-term investment research engine \u2014 ETF analysis, portfolio construction, factor models. Same rigor as Kalshi: academic basis + backtesting + math validation."
+    },
+    {
+      "id": "MT-38",
+      "name": "Peak/Off-Peak Token Budget System",
+      "status": "Phase 1-3 COMPLETE (S154-S155). Rule active globally. token_budget.py built (21 tests, S154). Peak-hour agent blocking hook active (S155). Phase 4 (autoloop scheduling) remaining.",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [
+        "Phase 2: ** Build `token_budget.py` utility that:",
+        "Phase 3: ** Hook integration \u2014 PreToolUse hook that warns/blocks expensive operations ...",
+        "Phase 4: ** Autoloop scheduling \u2014 autoloop prefers off-peak windows, defers heavy task..."
+      ],
+      "phases_done": 0,
+      "total_phases": 4,
+      "source": "",
+      "test_count": 21,
+      "why_it_matters": "Rate limit awareness \u2014 automatically adjusts token usage based on time of day. Heavy work at night, light work during peak hours. Prevents rate limit hits."
+    },
+    {
+      "id": "MT-39",
+      "name": "Priority Picker Overhaul \u2014 Dust Detection",
+      "status": "Phase 1 COMPLETE (S160). 93 existing tests still pass. `python3 priority_picker.py dust` now shows 15 dusty MTs.",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [
+        "Phase 2: Wire dust report into /cca-init briefing \u2014 auto-surface dusty MTs at session ...",
+        "Phase 3: Auto-archive policy \u2014 MTs blocked 100+ sessions with no self-resolution note ..."
+      ],
+      "phases_done": 1,
+      "total_phases": 3,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": ""
+    },
+    {
+      "id": "MT-40",
+      "name": "Automated Nuclear Scanning Loop",
+      "status": "Phase 1-2 COMPLETE (S160). Phase 3-4 remaining.",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [
+        "Phase 3: Auto-trigger nuclear scan when top_target stale (not yet wired into /cca-auto)",
+        "Phase 4: Results auto-feed into MT-41 (synthetic origination)"
+      ],
+      "phases_done": 2,
+      "total_phases": 4,
+      "source": "",
+      "test_count": 17,
+      "why_it_matters": ""
+    },
+    {
+      "id": "MT-41",
+      "name": "Synthetic MT Origination",
+      "status": "Phase 1 COMPLETE (S160). mt_originator.py built (22 tests). Phase 2-3 remaining.",
+      "category": "active",
+      "delivered": [],
+      "needs": "",
+      "remaining": [
+        "Phase 2: Auto-generate MT proposals with name, description, technical path, and estima...",
+        "Phase 3: Surface proposals in /cca-init briefing and priority_picker. Matthew approves..."
+      ],
+      "phases_done": 1,
+      "total_phases": 3,
+      "source": "",
+      "test_count": 22,
+      "why_it_matters": ""
+    }
+  ],
+  "master_tasks_pending": [
+    {
+      "id": "MT-5",
+      "name": "Claude Pro \u2194 Claude Code Bridge",
+      "status": "Future task. Needs research on Claude Pro's current integration options.",
+      "category": "not_started",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 0,
+      "total_phases": 0,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Bridges Claude Pro web chat with Claude Code CLI sessions. Share context and continue conversations across interfaces."
+    },
+    {
+      "id": "MT-8",
+      "name": "iPhone Remote Control Perfection",
+      "status": "Not started. Needs r/ClaudeCode + r/ClaudeAI research sweep for remote control posts.",
+      "category": "not_started",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 0,
+      "total_phases": 0,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Control Claude Code sessions from your iPhone. Approve, reject, or steer work while away from your desk."
+    },
+    {
+      "id": "MT-18",
+      "name": "Academic Writing Workspace",
+      "status": "Not started. ClaudePrism repo: github.com/delibae/claude-prism. Session 39 created this task.",
+      "category": "not_started",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 1,
+      "total_phases": 0,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Academic writing workspace \u2014 structured paper composition with citation management. Professional research output."
+    },
+    {
+      "id": "MT-19",
+      "name": "Local LLM Fine-Tuning Capability",
+      "status": "Not started. Long-term exploration. Unsloth repo: github.com/unslothai/unsloth.",
+      "category": "not_started",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 0,
+      "total_phases": 0,
+      "source": "https://www.reddit.com/r/LocalLLaMA/comments/1rw9jmf/",
+      "test_count": 0,
+      "why_it_matters": "Fine-tune local LLMs on CCA data. Long-term goal: specialized models trained on your specific workflows."
+    },
+    {
+      "id": "MT-25",
+      "name": "Presentation Generator",
+      "status": "NOT STARTED. BLOCKED on style samples from Matthew.",
+      "category": "blocked",
+      "delivered": [],
+      "needs": "",
+      "remaining": [],
+      "phases_done": 0,
+      "total_phases": 0,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Generate presentation slides matching Matthew's preferred style. One command from data to polished deck."
+    },
+    {
+      "id": "MT-36",
+      "name": "Session Efficiency Optimizer \u2014 Quality-Preserving Speed",
+      "status": "NOT STARTED \u2014 created S143 per Matthew directive.",
+      "category": "not_started",
+      "delivered": [],
+      "needs": "",
+      "remaining": [
+        "Phase 1: Instrumentation \u2014 time every major step in init/wrap/auto, produce per-sessio...",
+        "Phase 2: Analysis \u2014 identify top 3 time sinks, propose optimizations with quality impa...",
+        "Phase 3: Implement quick wins \u2014 parallel test runs, incremental testing, cached reads,...",
+        "Phase 4: Kalshi session optimization \u2014 apply same analysis to polybot sessions",
+        "Phase 5: Dashboard \u2014 track efficiency metrics, quality metrics, and their correlation ..."
+      ],
+      "phases_done": 0,
+      "total_phases": 5,
+      "source": "",
+      "test_count": 0,
+      "why_it_matters": "Measures and optimizes session overhead (init, wrap, tests) without cutting quality. Every second saved on overhead is a second spent shipping code."
+    }
+  ],
+  "hooks": [
+    {
+      "event": "PostToolUse",
+      "matcher": "*",
+      "file": "meter.py",
+      "purpose": "Token counter"
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "*",
+      "file": "compact_anchor.py",
+      "purpose": "Context anchor writes"
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "*",
+      "file": "senior_dev_hook.py",
+      "purpose": "SATD + effort + quality scoring"
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "*",
+      "file": "queue_hook.py",
+      "purpose": "Cross-chat queue context"
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": "*",
+      "file": "alert.py",
+      "purpose": "Warn/block at red/critical"
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": "*",
+      "file": "cost_alert.py",
+      "purpose": "Cost threshold warning"
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": "*",
+      "file": "path_validator.py",
+      "purpose": "Dangerous path detection"
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": "*",
+      "file": "edit_guard.py",
+      "purpose": "Edit retry prevention"
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": "*",
+      "file": "validate.py",
+      "purpose": "Spec guard + plan compliance"
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": "Bash",
+      "file": "credential_guard.py",
+      "purpose": "Credential extraction guard"
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": "Bash",
+      "file": "bash_guard.py",
+      "purpose": "Command safety (network, packages, system)"
+    },
+    {
+      "event": "UserPromptSubmit",
+      "matcher": "*",
+      "file": "skill_activator.py",
+      "purpose": "Spec auto-activation"
+    },
+    {
+      "event": "UserPromptSubmit",
+      "matcher": "*",
+      "file": "skillbook_inject.py",
+      "purpose": "Strategy injection"
+    },
+    {
+      "event": "UserPromptSubmit",
+      "matcher": "*",
+      "file": "capture_hook.py",
+      "purpose": "Real-time memory capture"
+    },
+    {
+      "event": "UserPromptSubmit",
+      "matcher": "*",
+      "file": "queue_hook.py",
+      "purpose": "Cross-chat queue injection"
+    },
+    {
+      "event": "Stop",
+      "matcher": "*",
+      "file": "auto_handoff.py",
+      "purpose": "Block exit at critical"
+    },
+    {
+      "event": "Stop",
+      "matcher": "*",
+      "file": "capture_hook.py",
+      "purpose": "Session-end memory capture"
+    },
+    {
+      "event": "PostCompact",
+      "matcher": "*",
+      "file": "post_compact.py",
+      "purpose": "Recovery + journal logging"
+    }
+  ],
+  "intelligence": {
+    "findings_total": 412,
+    "build": 27,
+    "adapt": 61,
+    "reference": 267,
+    "reference_personal": 0,
+    "skip": 57,
+    "other": 0,
+    "subreddits_scanned": 7,
+    "github_repos_evaluated": 30
+  },
+  "self_learning": {
+    "principles_total": 122,
+    "principles_avg_score": 0.5,
+    "sentinel_rate": "0%",
+    "journal_sessions": 119,
+    "journal_wins": 79,
+    "journal_pains": 57,
+    "papers_logged": 1242,
+    "research_deliveries": 46,
+    "research_implemented": 0,
+    "research_profitable": 0,
+    "research_profit_cents": 0
+  },
+  "risks": [
+    {
+      "title": "MT-25 Presentation Generator (Matthew's Style)",
+      "severity": "blocker",
+      "description": "NOT STARTED. BLOCKED on style samples from Matthew.",
+      "mitigation": ""
+    },
+    {
+      "title": "2 MTs stagnating",
+      "severity": "risk",
+      "description": "2 active tasks have negative stagnation scores \u2014 no progress in recent sessions.",
+      "mitigation": "Review priority picker output. Consider deprioritizing or archiving stalled work."
+    },
+    {
+      "title": "5 severity-3 learnings active",
+      "severity": "debt",
+      "description": "High-severity patterns requiring ongoing vigilance across all sessions.",
+      "mitigation": "Encoded in global rules. Auto-enforced by hooks where possible."
+    }
+  ],
+  "next_priorities": [
+    {
+      "title": "MT-32 Phase 7 continued",
+      "detail": "Wire figures into slides, dashboard, website pipelines"
+    },
+    {
+      "title": "economics_sniper_v1 validation (April 8 CPI data)",
+      "detail": ""
+    },
+    {
+      "title": "MakerSniperStrategy implementation (Kalshi monitoring chat builds from REQ-039 spec)",
+      "detail": ""
+    },
+    {
+      "title": "Ongoing cross-chat coordination (check POLYBOT_TO_CCA.md each session)",
+      "detail": ""
+    },
+    {
+      "title": "REQ-035 response",
+      "detail": "daily_sniper interim analysis (Wilson CI, sizing recommendation)"
+    }
+  ],
+  "architecture_decisions": [
+    {
+      "decision": "Local-first storage",
+      "rationale": "User owns all data, no cloud dependency"
+    },
+    {
+      "decision": "Stdlib-first (no pip)",
+      "rationale": "Zero dependency management overhead"
+    },
+    {
+      "decision": "Hook-based delivery",
+      "rationale": "Native Claude Code integration points"
+    },
+    {
+      "decision": "Adaptive context thresholds",
+      "rationale": "Fixed percentages break at 1M windows"
+    },
+    {
+      "decision": "JSONL for all logging",
+      "rationale": "Append-only, grep-friendly, no corruption risk"
+    },
+    {
+      "decision": "QualityGate geometric mean",
+      "rationale": "Prevents Goodhart's Law gaming of metrics"
+    },
+    {
+      "decision": "Whitelist-first phishing detection",
+      "rationale": "Zero false positives on legitimate domains"
+    },
+    {
+      "decision": "Typst over WeasyPrint",
+      "rationale": "Single binary, millisecond compile, JSON-native"
+    }
+  ],
+  "session_highlights": [],
+  "frontiers": [
+    {
+      "number": 1,
+      "name": "Persistent Cross-Session Memory",
+      "impact": "CRITICAL",
+      "description": "Every session starts from zero \u2014 this gives Claude a brain that persists.",
+      "status": "ACTIVE",
+      "tests": 340,
+      "loc": 1758
+    },
+    {
+      "number": 2,
+      "name": "Spec-Driven Development",
+      "impact": "HIGH",
+      "description": "Unstructured prompting produces poor architecture. Enforce requirements > design > tasks > implement.",
+      "status": "ACTIVE",
+      "tests": 205,
+      "loc": 1191
+    },
+    {
+      "number": 3,
+      "name": "Context Health Monitor",
+      "impact": "HIGH",
+      "description": "Context rot causes silent output degradation. Monitor, warn, and auto-handoff.",
+      "status": "ACTIVE",
+      "tests": 434,
+      "loc": 2871
+    },
+    {
+      "number": 4,
+      "name": "Multi-Agent Conflict Guard",
+      "impact": "HIGH",
+      "description": "Parallel agents overwrite each other. Guard credentials, paths, and system modifications.",
+      "status": "ACTIVE",
+      "tests": 1073,
+      "loc": 6196
+    },
+    {
+      "number": 5,
+      "name": "Usage Transparency Dashboard",
+      "impact": "MEDIUM",
+      "description": "No real-time token/cost visibility. Counter, alerts, and structural completeness.",
+      "status": "ACTIVE",
+      "tests": 369,
+      "loc": 3030
+    }
+  ],
+  "priority_queue": [
+    {
+      "rank": "1",
+      "id": "MT-21",
+      "name": "Hivemind coordination",
+      "base": "8",
+      "score": 10.0,
+      "next_phase": "Phase 2 PASSED (6th). Phase 3 = 3-chat"
+    },
+    {
+      "rank": "2",
+      "id": "MT-33",
+      "name": "Strategic Intelligence Report",
+      "base": "9",
+      "score": 10.0,
+      "next_phase": "Phase 4-6: chart integration, self-reference, hardening. kalshi_data_collector + learning_data_collector + report_differ built (S122-S123)."
+    },
+    {
+      "rank": "3",
+      "id": "MT-23",
+      "name": "Mobile Remote Control v2",
+      "base": "8",
+      "score": 9.0,
+      "next_phase": "Research: evaluate Telegram/Discord channels MCP"
+    },
+    {
+      "rank": "4",
+      "id": "MT-26",
+      "name": "Financial Intelligence Engine",
+      "base": "7",
+      "score": 8.0,
+      "next_phase": "CCA scope COMPLETE. Tier 3 Phase 2 deferred (needs numpy). 79 pipeline tests."
+    },
+    {
+      "rank": "5",
+      "id": "MT-32",
+      "name": "Visual Excellence & Design Engineering",
+      "base": "8",
+      "score": 8.0,
+      "next_phase": "Phase 2+: nuclear scan, Kalshi charts, consistency. report_charts wired (S117)."
+    },
+    {
+      "rank": "\u2014",
+      "id": "MT-34",
+      "name": "Medical AI (OpenEvidence replacement)",
+      "base": "6",
+      "score": 6.0,
+      "next_phase": "BLOCKED: Matthew refining concept. Do not start."
+    },
+    {
+      "rank": "8",
+      "id": "MT-29",
+      "name": "Cowork + Pro Bridge Hivemind",
+      "base": "5",
+      "score": 5.0,
+      "next_phase": "Research: evaluate Cowork, bridge Pro\u2194Code"
+    },
+    {
+      "rank": "9",
+      "id": "MT-18",
+      "name": "Academic writing",
+      "base": "4",
+      "score": 7.0,
+      "next_phase": "Research: install/evaluate ClaudePrism"
+    },
+    {
+      "rank": "10",
+      "id": "MT-13",
+      "name": "iOS/macOS app dev",
+      "base": "4",
+      "score": 7.0,
+      "next_phase": "Phase 3: first real app"
+    }
+  ],
+  "daily_diff": null,
+  "report_diff": {
+    "sessions": {
+      "old": 159,
+      "new": 166,
+      "old_date": "2026-03-24",
+      "new_date": "2026-03-25"
+    },
+    "summary_changes": {
+      "total_tests": {
+        "old": 8959,
+        "new": 9393,
+        "delta": 434
+      },
+      "test_suites": {
+        "old": 223,
+        "new": 240,
+        "delta": 17
+      },
+      "total_loc": {
+        "old": 159087,
+        "new": 167895,
+        "delta": 8808
+      },
+      "source_loc": {
+        "old": 64556,
+        "new": 68494,
+        "delta": 3938
+      },
+      "test_loc": {
+        "old": 94531,
+        "new": 99401,
+        "delta": 4870
+      },
+      "git_commits": {
+        "old": 936,
+        "new": 982,
+        "delta": 46
+      },
+      "source_files": {
+        "old": 161,
+        "new": 169,
+        "delta": 8
+      },
+      "test_files": {
+        "old": 224,
+        "new": 241,
+        "delta": 17
+      },
+      "total_findings": {
+        "old": 398,
+        "new": 412,
+        "delta": 14
+      },
+      "total_papers": {
+        "old": 1242,
+        "new": 1242,
+        "delta": 0
+      },
+      "total_delivered": {
+        "old": 70,
+        "new": 70,
+        "delta": 0
+      },
+      "completed_tasks": {
+        "old": 8,
+        "new": 9,
+        "delta": 1
+      },
+      "in_progress_tasks": {
+        "old": 23,
+        "new": 25,
+        "delta": 2
+      }
+    },
+    "module_changes": [
+      {
+        "name": "Agent Guard",
+        "tests_old": 1073,
+        "tests_new": 1073,
+        "tests_delta": 0,
+        "loc_old": 6196,
+        "loc_new": 6196,
+        "loc_delta": 0,
+        "is_new": false
+      },
+      {
+        "name": "Context Monitor",
+        "tests_old": 434,
+        "tests_new": 434,
+        "tests_delta": 0,
+        "loc_old": 2871,
+        "loc_new": 2871,
+        "loc_delta": 0,
+        "is_new": false
+      },
+      {
+        "name": "Design Skills",
+        "tests_old": 1381,
+        "tests_new": 1381,
+        "tests_delta": 0,
+        "loc_old": 9413,
+        "loc_new": 10662,
+        "loc_delta": 1249,
+        "is_new": false
+      },
+      {
+        "name": "Memory System",
+        "tests_old": 340,
+        "tests_new": 340,
+        "tests_delta": 0,
+        "loc_old": 1758,
+        "loc_new": 1758,
+        "loc_delta": 0,
+        "is_new": false
+      },
+      {
+        "name": "Reddit Intelligence",
+        "tests_old": 440,
+        "tests_new": 457,
+        "tests_delta": 17,
+        "loc_old": 3983,
+        "loc_new": 3983,
+        "loc_delta": 0,
+        "is_new": false
+      },
+      {
+        "name": "Research",
+        "tests_old": 86,
+        "tests_new": 86,
+        "tests_delta": 0,
+        "loc_old": 1397,
+        "loc_new": 1397,
+        "loc_delta": 0,
+        "is_new": false
+      },
+      {
+        "name": "Self-Learning",
+        "tests_old": 1885,
+        "tests_new": 1885,
+        "tests_delta": 0,
+        "loc_old": 15666,
+        "loc_new": 15860,
+        "loc_delta": 194,
+        "is_new": false
+      },
+      {
+        "name": "Spec System",
+        "tests_old": 205,
+        "tests_new": 205,
+        "tests_delta": 0,
+        "loc_old": 1191,
+        "loc_new": 1191,
+        "loc_delta": 0,
+        "is_new": false
+      },
+      {
+        "name": "Usage Dashboard",
+        "tests_old": 369,
+        "tests_new": 369,
+        "tests_delta": 0,
+        "loc_old": 3030,
+        "loc_new": 3030,
+        "loc_delta": 0,
+        "is_new": false
+      }
+    ],
+    "mt_changes": {
+      "newly_completed": [
+        {
+          "id": "MT-22",
+          "name": "Autonomous 1-Hour Loop",
+          "status": "GATE PASSED (S99) for CLI auto-loop. Now pivoting to DESKTOP ELECTRON APP automation (Matthew S130/S132 directive \u2014 #1 priority, equal to YoYo).",
+          "category": "active",
+          "delivered": [],
+          "needs": "",
+          "remaining": [],
+          "phases_done": 3,
+          "total_phases": 3,
+          "source": "",
+          "test_count": 66,
+          "why_it_matters": "Makes the whole system run without you. Sessions start, do work, wrap up, and hand off to the next session automatically."
+        }
+      ],
+      "newly_active": [
+        {
+          "id": "MT-39",
+          "name": "Priority Picker Overhaul \u2014 Dust Detection",
+          "status": "Phase 1 COMPLETE (S160). 93 existing tests still pass. `python3 priority_picker.py dust` now shows 15 dusty MTs.",
+          "category": "active",
+          "delivered": [],
+          "needs": "",
+          "remaining": [
+            "Phase 2: Wire dust report into /cca-init briefing \u2014 auto-surface dusty MTs at session ...",
+            "Phase 3: Auto-archive policy \u2014 MTs blocked 100+ sessions with no self-resolution note ..."
+          ],
+          "phases_done": 1,
+          "total_phases": 3,
+          "source": "",
+          "test_count": 0,
+          "why_it_matters": ""
+        },
+        {
+          "id": "MT-40",
+          "name": "Automated Nuclear Scanning Loop",
+          "status": "Phase 1-2 COMPLETE (S160). Phase 3-4 remaining.",
+          "category": "active",
+          "delivered": [],
+          "needs": "",
+          "remaining": [
+            "Phase 3: Auto-trigger nuclear scan when top_target stale (not yet wired into /cca-auto)",
+            "Phase 4: Results auto-feed into MT-41 (synthetic origination)"
+          ],
+          "phases_done": 2,
+          "total_phases": 4,
+          "source": "",
+          "test_count": 17,
+          "why_it_matters": ""
+        },
+        {
+          "id": "MT-41",
+          "name": "Synthetic MT Origination",
+          "status": "Phase 1 COMPLETE (S160). mt_originator.py built (22 tests). Phase 2-3 remaining.",
+          "category": "active",
+          "delivered": [],
+          "needs": "",
+          "remaining": [
+            "Phase 2: Auto-generate MT proposals with name, description, technical path, and estima...",
+            "Phase 3: Surface proposals in /cca-init briefing and priority_picker. Matthew approves..."
+          ],
+          "phases_done": 1,
+          "total_phases": 3,
+          "source": "",
+          "test_count": 22,
+          "why_it_matters": ""
+        }
+      ],
+      "completed_delta": 1
+    },
+    "kalshi_changes": {
+      "pnl_delta": 8.4,
+      "win_rate_delta": 0.2,
+      "became_available": false
+    },
+    "learning_changes": {
+      "apf_delta": 0.0,
+      "journal_delta": 116,
+      "became_available": false
+    }
+  },
+  "criticisms": [
+    {
+      "title": "13 master tasks stalled at Phase 1",
+      "severity": "gap",
+      "detail": "MT-0, MT-9, MT-11, MT-12, MT-13, MT-27, MT-28, MT-30, MT-32, MT-37, MT-38, MT-39, MT-41 \u2014 started but no subsequent phases shipped. Risk of scope sprawl without depth.",
+      "action": "Pick one stalled MT and advance it to Phase 2 this week. Suggested: MT-0 (oldest)."
+    },
+    {
+      "title": "Single-developer project with no external users",
+      "severity": "limitation",
+      "detail": "All tooling built for one developer. No community testing, no feedback loop from other Claude Code users. Limits validation of 'community-demanded' features.",
+      "action": "Consider publishing 1-2 standalone tools (e.g. context monitor, memory system) as open-source to get external feedback."
+    },
+    {
+      "title": "High test count (6,230) may overstate coverage",
+      "severity": "nuance",
+      "detail": "Average 56 tests per source file. Many test trivial properties (dict keys, return types). Integration test coverage across modules is limited to 1 suite.",
+      "action": "Add 3-5 cross-module integration tests that exercise real workflows (e.g. memory capture \u2192 retrieval, context alert \u2192 handoff)."
+    },
+    {
+      "title": "1 task(s) blocked with no resolution timeline",
+      "severity": "blocker",
+      "detail": "MT-25: Presentation Generator",
+      "action": "Review each blocked MT: either unblock with a workaround, rescope to remove the blocker, or archive if no longer relevant."
+    },
+    {
+      "title": "CI/CD pipeline exists but unverified",
+      "severity": "nuance",
+      "detail": "GitHub Actions workflow defined but no evidence of runs in git history. All testing is local-only.",
+      "action": "Push to GitHub and verify the Actions workflow runs. Fix any failures. Add status badge to README."
+    }
+  ],
+  "kalshi_analytics": {
+    "available": true,
+    "db_path": "/Users/matthewshields/Projects/polymarket-bot/data/polybot.db",
+    "summary": {
+      "total_live_trades": 1342,
+      "total_paper_trades": 6259,
+      "settled_trades": 1330,
+      "unsettled_trades": 12,
+      "wins": 1088,
+      "losses": 242,
+      "total_pnl_usd": 29.99,
+      "win_rate_pct": 81.8,
+      "first_trade_date": "2026-02-28 21:46:39",
+      "last_trade_date": "2026-03-25 06:09:52"
+    },
+    "strategies": [
+      {
+        "strategy": "expiry_sniper_v1",
+        "trade_count": 970,
+        "wins": 906,
+        "losses": 62,
+        "win_rate_pct": 93.6,
+        "total_pnl_usd": 105.8,
+        "avg_pnl_usd": 0.11
+      },
+      {
+        "strategy": "btc_lag",
+        "trade_count": 1,
+        "wins": 1,
+        "losses": 0,
+        "win_rate_pct": 100.0,
+        "total_pnl_usd": 3.5,
+        "avg_pnl_usd": 3.5
+      },
+      {
+        "strategy": "btc_lag_v1",
+        "trade_count": 1,
+        "wins": 1,
+        "losses": 0,
+        "win_rate_pct": 100.0,
+        "total_pnl_usd": 0.57,
+        "avg_pnl_usd": 0.57
+      },
+      {
+        "strategy": "daily_sniper_v1",
+        "trade_count": 18,
+        "wins": 7,
+        "losses": 1,
+        "win_rate_pct": 87.5,
+        "total_pnl_usd": -0.39,
+        "avg_pnl_usd": -0.05
+      },
+      {
+        "strategy": "xrp_drift_v1",
+        "trade_count": 51,
+        "wins": 24,
+        "losses": 27,
+        "win_rate_pct": 47.1,
+        "total_pnl_usd": -3.8,
+        "avg_pnl_usd": -0.07
+      },
+      {
+        "strategy": "eth_lag_v1",
+        "trade_count": 3,
+        "wins": 1,
+        "losses": 2,
+        "win_rate_pct": 33.3,
+        "total_pnl_usd": -6.53,
+        "avg_pnl_usd": -2.18
+      },
+      {
+        "strategy": "btc_drift_v1",
+        "trade_count": 80,
+        "wins": 40,
+        "losses": 40,
+        "win_rate_pct": 50.0,
+        "total_pnl_usd": -9.53,
+        "avg_pnl_usd": -0.12
+      },
+      {
+        "strategy": "sol_drift_v1",
+        "trade_count": 45,
+        "wins": 30,
+        "losses": 15,
+        "win_rate_pct": 66.7,
+        "total_pnl_usd": -14.08,
+        "avg_pnl_usd": -0.31
+      },
+      {
+        "strategy": "eth_orderbook_imbalance_v1",
+        "trade_count": 15,
+        "wins": 5,
+        "losses": 10,
+        "win_rate_pct": 33.3,
+        "total_pnl_usd": -18.2,
+        "avg_pnl_usd": -1.21
+      },
+      {
+        "strategy": "eth_drift_v1",
+        "trade_count": 158,
+        "wins": 73,
+        "losses": 85,
+        "win_rate_pct": 46.2,
+        "total_pnl_usd": -27.35,
+        "avg_pnl_usd": -0.17
+      }
+    ],
+    "daily_pnl": [
+      {
+        "date": "2026-02-28",
+        "pnl_usd": 12.86,
+        "cumulative_pnl_usd": 12.86,
+        "trade_count": 5,
+        "wins": 3
+      },
+      {
+        "date": "2026-03-01",
+        "pnl_usd": -31.71,
+        "cumulative_pnl_usd": -18.85,
+        "trade_count": 16,
+        "wins": 5
+      },
+      {
+        "date": "2026-03-09",
+        "pnl_usd": 3.51,
+        "cumulative_pnl_usd": -15.34,
+        "trade_count": 57,
+        "wins": 36
+      },
+      {
+        "date": "2026-03-10",
+        "pnl_usd": -30.18,
+        "cumulative_pnl_usd": -45.52,
+        "trade_count": 38,
+        "wins": 12
+      },
+      {
+        "date": "2026-03-11",
+        "pnl_usd": 26.08,
+        "cumulative_pnl_usd": -19.44,
+        "trade_count": 78,
+        "wins": 48
+      },
+      {
+        "date": "2026-03-12",
+        "pnl_usd": -15.15,
+        "cumulative_pnl_usd": -34.59,
+        "trade_count": 11,
+        "wins": 4
+      },
+      {
+        "date": "2026-03-13",
+        "pnl_usd": -9.22,
+        "cumulative_pnl_usd": -43.81,
+        "trade_count": 58,
+        "wins": 46
+      },
+      {
+        "date": "2026-03-14",
+        "pnl_usd": 60.88,
+        "cumulative_pnl_usd": 17.07,
+        "trade_count": 160,
+        "wins": 140
+      },
+      {
+        "date": "2026-03-15",
+        "pnl_usd": -62.07,
+        "cumulative_pnl_usd": -45.0,
+        "trade_count": 193,
+        "wins": 178
+      },
+      {
+        "date": "2026-03-16",
+        "pnl_usd": 110.68,
+        "cumulative_pnl_usd": 65.68,
+        "trade_count": 163,
+        "wins": 150
+      },
+      {
+        "date": "2026-03-17",
+        "pnl_usd": -76.73,
+        "cumulative_pnl_usd": -11.05,
+        "trade_count": 178,
+        "wins": 140
+      },
+      {
+        "date": "2026-03-18",
+        "pnl_usd": 35.17,
+        "cumulative_pnl_usd": 24.12,
+        "trade_count": 104,
+        "wins": 85
+      },
+      {
+        "date": "2026-03-19",
+        "pnl_usd": -7.85,
+        "cumulative_pnl_usd": 16.27,
+        "trade_count": 74,
+        "wins": 60
+      },
+      {
+        "date": "2026-03-20",
+        "pnl_usd": -3.15,
+        "cumulative_pnl_usd": 13.12,
+        "trade_count": 14,
+        "wins": 13
+      },
+      {
+        "date": "2026-03-21",
+        "pnl_usd": 10.92,
+        "cumulative_pnl_usd": 24.04,
+        "trade_count": 8,
+        "wins": 8
+      },
+      {
+        "date": "2026-03-22",
+        "pnl_usd": -24.38,
+        "cumulative_pnl_usd": -0.34,
+        "trade_count": 35,
+        "wins": 29
+      },
+      {
+        "date": "2026-03-23",
+        "pnl_usd": -14.48,
+        "cumulative_pnl_usd": -14.82,
+        "trade_count": 39,
+        "wins": 35
+      },
+      {
+        "date": "2026-03-24",
+        "pnl_usd": 39.03,
+        "cumulative_pnl_usd": 24.21,
+        "trade_count": 67,
+        "wins": 66
+      },
+      {
+        "date": "2026-03-25",
+        "pnl_usd": 5.78,
+        "cumulative_pnl_usd": 29.99,
+        "trade_count": 32,
+        "wins": 30
+      }
+    ],
+    "bankroll": [
+      {
+        "timestamp": 1772083391.8265731,
+        "datetime": "2026-02-26 05:23",
+        "balance_usd": 0.0
+      },
+      {
+        "timestamp": 1772307387.912886,
+        "datetime": "2026-02-28 19:36",
+        "balance_usd": 75.0
+      },
+      {
+        "timestamp": 1772313323.5498781,
+        "datetime": "2026-02-28 21:15",
+        "balance_usd": 75.0
+      },
+      {
+        "timestamp": 1772315057.727933,
+        "datetime": "2026-02-28 21:44",
+        "balance_usd": 75.0
+      },
+      {
+        "timestamp": 1772316274.845239,
+        "datetime": "2026-02-28 22:04",
+        "balance_usd": 78.51
+      },
+      {
+        "timestamp": 1772319010.917964,
+        "datetime": "2026-02-28 22:50",
+        "balance_usd": 99.08
+      },
+      {
+        "timestamp": 1772325079.8148391,
+        "datetime": "2026-03-01 00:31",
+        "balance_usd": 125.17
+      },
+      {
+        "timestamp": 1772330644.7784011,
+        "datetime": "2026-03-01 02:04",
+        "balance_usd": 88.54
+      },
+      {
+        "timestamp": 1772355215.531988,
+        "datetime": "2026-03-01 08:53",
+        "balance_usd": 95.37
+      },
+      {
+        "timestamp": 1772380525.956608,
+        "datetime": "2026-03-01 15:55",
+        "balance_usd": 95.37
+      },
+      {
+        "timestamp": 1772385231.676724,
+        "datetime": "2026-03-01 17:13",
+        "balance_usd": 87.72
+      },
+      {
+        "timestamp": 1772390465.547263,
+        "datetime": "2026-03-01 18:41",
+        "balance_usd": 79.76
+      },
+      {
+        "timestamp": 1772395816.768337,
+        "datetime": "2026-03-01 20:10",
+        "balance_usd": 79.76
+      },
+      {
+        "timestamp": 1772400967.718603,
+        "datetime": "2026-03-01 21:36",
+        "balance_usd": 79.76
+      },
+      {
+        "timestamp": 1772413874.835285,
+        "datetime": "2026-03-02 01:11",
+        "balance_usd": 79.76
+      },
+      {
+        "timestamp": 1772995456.845071,
+        "datetime": "2026-03-08 18:44",
+        "balance_usd": 79.76
+      },
+      {
+        "timestamp": 1773000402.00654,
+        "datetime": "2026-03-08 20:06",
+        "balance_usd": 79.76
+      },
+      {
+        "timestamp": 1773012651.083607,
+        "datetime": "2026-03-08 23:30",
+        "balance_usd": 79.76
+      },
+      {
+        "timestamp": 1773017448.545332,
+        "datetime": "2026-03-09 00:50",
+        "balance_usd": 79.45
+      },
+      {
+        "timestamp": 1773026804.5559418,
+        "datetime": "2026-03-09 03:26",
+        "balance_usd": 79.07
+      },
+      {
+        "timestamp": 1773031583.101559,
+        "datetime": "2026-03-09 04:46",
+        "balance_usd": 83.32
+      },
+      {
+        "timestamp": 1773036221.108151,
+        "datetime": "2026-03-09 06:03",
+        "balance_usd": 85.28
+      },
+      {
+        "timestamp": 1773056510.926263,
+        "datetime": "2026-03-09 11:41",
+        "balance_usd": 83.51
+      },
+      {
+        "timestamp": 1773064444.506724,
+        "datetime": "2026-03-09 13:54",
+        "balance_usd": 82.18
+      },
+      {
+        "timestamp": 1773069156.1349068,
+        "datetime": "2026-03-09 15:12",
+        "balance_usd": 80.73
+      },
+      {
+        "timestamp": 1773098137.669034,
+        "datetime": "2026-03-09 23:15",
+        "balance_usd": 84.41
+      },
+      {
+        "timestamp": 1773102673.973015,
+        "datetime": "2026-03-10 00:31",
+        "balance_usd": 82.88
+      },
+      {
+        "timestamp": 1773106941.411403,
+        "datetime": "2026-03-10 01:42",
+        "balance_usd": 82.83
+      },
+      {
+        "timestamp": 1773111212.6938,
+        "datetime": "2026-03-10 02:53",
+        "balance_usd": 82.39
+      },
+      {
+        "timestamp": 1773114825.846088,
+        "datetime": "2026-03-10 03:53",
+        "balance_usd": 83.57
+      },
+      {
+        "timestamp": 1773118847.331986,
+        "datetime": "2026-03-10 05:00",
+        "balance_usd": 78.87
+      },
+      {
+        "timestamp": 1773122837.11873,
+        "datetime": "2026-03-10 06:07",
+        "balance_usd": 77.13
+      },
+      {
+        "timestamp": 1773127031.152042,
+        "datetime": "2026-03-10 07:17",
+        "balance_usd": 79.11
+      },
+      {
+        "timestamp": 1773131896.116381,
+        "datetime": "2026-03-10 08:38",
+        "balance_usd": 66.99
+      },
+      {
+        "timestamp": 1773141420.585268,
+        "datetime": "2026-03-10 11:17",
+        "balance_usd": 65.77
+      },
+      {
+        "timestamp": 1773148806.481262,
+        "datetime": "2026-03-10 13:20",
+        "balance_usd": 57.83
+      },
+      {
+        "timestamp": 1773175195.302527,
+        "datetime": "2026-03-10 20:39",
+        "balance_usd": 57.83
+      },
+      {
+        "timestamp": 1773180232.5628421,
+        "datetime": "2026-03-10 22:03",
+        "balance_usd": 56.7
+      },
+      {
+        "timestamp": 1773184390.099665,
+        "datetime": "2026-03-10 23:13",
+        "balance_usd": 56.7
+      },
+      {
+        "timestamp": 1773188621.5374,
+        "datetime": "2026-03-11 00:23",
+        "balance_usd": 51.64
+      },
+      {
+        "timestamp": 1773192463.7228868,
+        "datetime": "2026-03-11 01:27",
+        "balance_usd": 50.81
+      },
+      {
+        "timestamp": 1773196157.060651,
+        "datetime": "2026-03-11 02:29",
+        "balance_usd": 50.17
+      },
+      {
+        "timestamp": 1773200306.3892632,
+        "datetime": "2026-03-11 03:38",
+        "balance_usd": 52.72
+      },
+      {
+        "timestamp": 1773204055.396136,
+        "datetime": "2026-03-11 04:40",
+        "balance_usd": 50.66
+      },
+      {
+        "timestamp": 1773208290.009822,
+        "datetime": "2026-03-11 05:51",
+        "balance_usd": 48.93
+      },
+      {
+        "timestamp": 1773212534.9032562,
+        "datetime": "2026-03-11 07:02",
+        "balance_usd": 46.42
+      },
+      {
+        "timestamp": 1773216578.93265,
+        "datetime": "2026-03-11 08:09",
+        "balance_usd": 53.28
+      },
+      {
+        "timestamp": 1773220784.965204,
+        "datetime": "2026-03-11 09:19",
+        "balance_usd": 48.33
+      },
+      {
+        "timestamp": 1773225039.3815308,
+        "datetime": "2026-03-11 10:30",
+        "balance_usd": 47.61
+      },
+      {
+        "timestamp": 1773229076.618602,
+        "datetime": "2026-03-11 11:37",
+        "balance_usd": 52.18
+      },
+      {
+        "timestamp": 1773239722.2853918,
+        "datetime": "2026-03-11 14:35",
+        "balance_usd": 55.03
+      },
+      {
+        "timestamp": 1773244351.415733,
+        "datetime": "2026-03-11 15:52",
+        "balance_usd": 105.97
+      },
+      {
+        "timestamp": 1773248175.690654,
+        "datetime": "2026-03-11 16:56",
+        "balance_usd": 122.12
+      },
+      {
+        "timestamp": 1773252478.295302,
+        "datetime": "2026-03-11 18:07",
+        "balance_usd": 123.41
+      },
+      {
+        "timestamp": 1773257079.783604,
+        "datetime": "2026-03-11 19:24",
+        "balance_usd": 112.46
+      },
+      {
+        "timestamp": 1773260994.285438,
+        "datetime": "2026-03-11 20:29",
+        "balance_usd": 128.35
+      },
+      {
+        "timestamp": 1773270706.28509,
+        "datetime": "2026-03-11 23:11",
+        "balance_usd": 130.79
+      },
+      {
+        "timestamp": 1773274965.054666,
+        "datetime": "2026-03-12 00:22",
+        "balance_usd": 121.21
+      },
+      {
+        "timestamp": 1773278963.642786,
+        "datetime": "2026-03-12 01:29",
+        "balance_usd": 130.99
+      },
+      {
+        "timestamp": 1773283037.024002,
+        "datetime": "2026-03-12 02:37",
+        "balance_usd": 124.51
+      },
+      {
+        "timestamp": 1773287295.1664698,
+        "datetime": "2026-03-12 03:48",
+        "balance_usd": 124.51
+      },
+      {
+        "timestamp": 1773291323.1826408,
+        "datetime": "2026-03-12 04:55",
+        "balance_usd": 114.51
+      },
+      {
+        "timestamp": 1773295339.1129532,
+        "datetime": "2026-03-12 06:02",
+        "balance_usd": 109.79
+      },
+      {
+        "timestamp": 1773299566.437796,
+        "datetime": "2026-03-12 07:12",
+        "balance_usd": 109.79
+      },
+      {
+        "timestamp": 1773303781.038743,
+        "datetime": "2026-03-12 08:23",
+        "balance_usd": 109.79
+      },
+      {
+        "timestamp": 1773307745.197105,
+        "datetime": "2026-03-12 09:29",
+        "balance_usd": 109.79
+      },
+      {
+        "timestamp": 1773312013.146533,
+        "datetime": "2026-03-12 10:40",
+        "balance_usd": 109.79
+      },
+      {
+        "timestamp": 1773316267.535855,
+        "datetime": "2026-03-12 11:51",
+        "balance_usd": 109.92
+      },
+      {
+        "timestamp": 1773357216.410572,
+        "datetime": "2026-03-12 23:13",
+        "balance_usd": 109.94
+      },
+      {
+        "timestamp": 1773361255.6436381,
+        "datetime": "2026-03-13 00:20",
+        "balance_usd": 101.4
+      },
+      {
+        "timestamp": 1773367035.345373,
+        "datetime": "2026-03-13 01:57",
+        "balance_usd": 111.67
+      },
+      {
+        "timestamp": 1773370802.643838,
+        "datetime": "2026-03-13 03:00",
+        "balance_usd": 103.58
+      },
+      {
+        "timestamp": 1773374801.875294,
+        "datetime": "2026-03-13 04:06",
+        "balance_usd": 95.95
+      },
+      {
+        "timestamp": 1773379058.784103,
+        "datetime": "2026-03-13 05:17",
+        "balance_usd": 97.94
+      },
+      {
+        "timestamp": 1773441585.898767,
+        "datetime": "2026-03-13 22:39",
+        "balance_usd": 85.45
+      },
+      {
+        "timestamp": 1773466669.932389,
+        "datetime": "2026-03-14 05:37",
+        "balance_usd": 42.01
+      },
+      {
+        "timestamp": 1773470733.132267,
+        "datetime": "2026-03-14 06:45",
+        "balance_usd": 52.55
+      },
+      {
+        "timestamp": 1773474967.260778,
+        "datetime": "2026-03-14 07:56",
+        "balance_usd": 106.2
+      },
+      {
+        "timestamp": 1773478749.575521,
+        "datetime": "2026-03-14 08:59",
+        "balance_usd": 114.17
+      },
+      {
+        "timestamp": 1773483013.434588,
+        "datetime": "2026-03-14 10:10",
+        "balance_usd": 121.38
+      },
+      {
+        "timestamp": 1773487249.481217,
+        "datetime": "2026-03-14 11:20",
+        "balance_usd": 128.18
+      },
+      {
+        "timestamp": 1773491278.565307,
+        "datetime": "2026-03-14 12:27",
+        "balance_usd": 131.57
+      },
+      {
+        "timestamp": 1773495510.90851,
+        "datetime": "2026-03-14 13:38",
+        "balance_usd": 140.46
+      },
+      {
+        "timestamp": 1773499782.879883,
+        "datetime": "2026-03-14 14:49",
+        "balance_usd": 88.45
+      },
+      {
+        "timestamp": 1773503769.849261,
+        "datetime": "2026-03-14 15:56",
+        "balance_usd": 158.04
+      },
+      {
+        "timestamp": 1773508036.233997,
+        "datetime": "2026-03-14 17:07",
+        "balance_usd": 165.33
+      },
+      {
+        "timestamp": 1773512299.1181812,
+        "datetime": "2026-03-14 18:18",
+        "balance_usd": 155.92
+      },
+      {
+        "timestamp": 1773516284.683576,
+        "datetime": "2026-03-14 19:24",
+        "balance_usd": 157.13
+      },
+      {
+        "timestamp": 1773520554.7697642,
+        "datetime": "2026-03-14 20:35",
+        "balance_usd": 160.12
+      },
+      {
+        "timestamp": 1773527163.454179,
+        "datetime": "2026-03-14 22:26",
+        "balance_usd": 162.71
+      },
+      {
+        "timestamp": 1773532187.321909,
+        "datetime": "2026-03-14 23:49",
+        "balance_usd": 168.26
+      },
+      {
+        "timestamp": 1773538327.2273438,
+        "datetime": "2026-03-15 01:32",
+        "balance_usd": 157.6
+      },
+      {
+        "timestamp": 1773545950.8672588,
+        "datetime": "2026-03-15 03:39",
+        "balance_usd": 165.4
+      },
+      {
+        "timestamp": 1773550150.446134,
+        "datetime": "2026-03-15 04:49",
+        "balance_usd": 173.22
+      },
+      {
+        "timestamp": 1773556623.799528,
+        "datetime": "2026-03-15 06:37",
+        "balance_usd": 142.21
+      },
+      {
+        "timestamp": 1773560594.313977,
+        "datetime": "2026-03-15 07:43",
+        "balance_usd": 130.88
+      },
+      {
+        "timestamp": 1773564658.1927638,
+        "datetime": "2026-03-15 08:50",
+        "balance_usd": 106.35
+      },
+      {
+        "timestamp": 1773568917.4218838,
+        "datetime": "2026-03-15 10:01",
+        "balance_usd": 132.25
+      },
+      {
+        "timestamp": 1773572917.193314,
+        "datetime": "2026-03-15 11:08",
+        "balance_usd": 136.59
+      },
+      {
+        "timestamp": 1773577169.527141,
+        "datetime": "2026-03-15 12:19",
+        "balance_usd": 145.69
+      },
+      {
+        "timestamp": 1773581419.863391,
+        "datetime": "2026-03-15 13:30",
+        "balance_usd": 113.04
+      },
+      {
+        "timestamp": 1773585249.7868748,
+        "datetime": "2026-03-15 14:34",
+        "balance_usd": 120.86
+      },
+      {
+        "timestamp": 1773589369.599839,
+        "datetime": "2026-03-15 15:42",
+        "balance_usd": 95.47
+      },
+      {
+        "timestamp": 1773593371.2789602,
+        "datetime": "2026-03-15 16:49",
+        "balance_usd": 124.72
+      },
+      {
+        "timestamp": 1773597637.260054,
+        "datetime": "2026-03-15 18:00",
+        "balance_usd": 135.82
+      },
+      {
+        "timestamp": 1773607106.0919669,
+        "datetime": "2026-03-15 20:38",
+        "balance_usd": 67.36
+      },
+      {
+        "timestamp": 1773611082.379804,
+        "datetime": "2026-03-15 21:44",
+        "balance_usd": 106.1
+      },
+      {
+        "timestamp": 1773614922.294335,
+        "datetime": "2026-03-15 22:48",
+        "balance_usd": 118.1
+      },
+      {
+        "timestamp": 1773623802.6866298,
+        "datetime": "2026-03-16 01:16",
+        "balance_usd": 113.82
+      },
+      {
+        "timestamp": 1773628297.089225,
+        "datetime": "2026-03-16 02:31",
+        "balance_usd": 121.12
+      },
+      {
+        "timestamp": 1773632324.962207,
+        "datetime": "2026-03-16 03:38",
+        "balance_usd": 97.9
+      },
+      {
+        "timestamp": 1773636581.099932,
+        "datetime": "2026-03-16 04:49",
+        "balance_usd": 148.1
+      },
+      {
+        "timestamp": 1773640565.5525918,
+        "datetime": "2026-03-16 05:56",
+        "balance_usd": 159.94
+      },
+      {
+        "timestamp": 1773644491.484652,
+        "datetime": "2026-03-16 07:01",
+        "balance_usd": 128.56
+      },
+      {
+        "timestamp": 1773648492.814155,
+        "datetime": "2026-03-16 08:08",
+        "balance_usd": 95.02
+      },
+      {
+        "timestamp": 1773652522.7802198,
+        "datetime": "2026-03-16 09:15",
+        "balance_usd": 156.41
+      },
+      {
+        "timestamp": 1773656787.217682,
+        "datetime": "2026-03-16 10:26",
+        "balance_usd": 165.25
+      },
+      {
+        "timestamp": 1773660775.454047,
+        "datetime": "2026-03-16 11:32",
+        "balance_usd": 178.51
+      },
+      {
+        "timestamp": 1773694423.476631,
+        "datetime": "2026-03-16 20:53",
+        "balance_usd": 160.37
+      },
+      {
+        "timestamp": 1773700370.563627,
+        "datetime": "2026-03-16 22:32",
+        "balance_usd": 213.34
+      },
+      {
+        "timestamp": 1773704365.005895,
+        "datetime": "2026-03-16 23:39",
+        "balance_usd": 195.46
+      },
+      {
+        "timestamp": 1773708619.78508,
+        "datetime": "2026-03-17 00:50",
+        "balance_usd": 216.14
+      },
+      {
+        "timestamp": 1773712617.169889,
+        "datetime": "2026-03-17 01:56",
+        "balance_usd": 214.48
+      },
+      {
+        "timestamp": 1773716683.9259598,
+        "datetime": "2026-03-17 03:04",
+        "balance_usd": 204.13
+      },
+      {
+        "timestamp": 1773720834.490737,
+        "datetime": "2026-03-17 04:13",
+        "balance_usd": 153.0
+      },
+      {
+        "timestamp": 1773724575.1921961,
+        "datetime": "2026-03-17 05:16",
+        "balance_usd": 205.07
+      },
+      {
+        "timestamp": 1773728833.30289,
+        "datetime": "2026-03-17 06:27",
+        "balance_usd": 154.85
+      },
+      {
+        "timestamp": 1773733062.917674,
+        "datetime": "2026-03-17 07:37",
+        "balance_usd": 207.0
+      },
+      {
+        "timestamp": 1773736681.582633,
+        "datetime": "2026-03-17 08:38",
+        "balance_usd": 154.07
+      },
+      {
+        "timestamp": 1773740672.284412,
+        "datetime": "2026-03-17 09:44",
+        "balance_usd": 123.71
+      },
+      {
+        "timestamp": 1773744654.055549,
+        "datetime": "2026-03-17 10:50",
+        "balance_usd": 130.24
+      },
+      {
+        "timestamp": 1773748824.334461,
+        "datetime": "2026-03-17 12:00",
+        "balance_usd": 143.38
+      },
+      {
+        "timestamp": 1773775118.654737,
+        "datetime": "2026-03-17 19:18",
+        "balance_usd": 149.38
+      },
+      {
+        "timestamp": 1773779816.2911098,
+        "datetime": "2026-03-17 20:36",
+        "balance_usd": 158.02
+      },
+      {
+        "timestamp": 1773783889.9465358,
+        "datetime": "2026-03-17 21:44",
+        "balance_usd": 142.24
+      },
+      {
+        "timestamp": 1773787893.0059688,
+        "datetime": "2026-03-17 22:51",
+        "balance_usd": 131.82
+      },
+      {
+        "timestamp": 1773792153.925226,
+        "datetime": "2026-03-18 00:02",
+        "balance_usd": 156.88
+      },
+      {
+        "timestamp": 1773796109.488468,
+        "datetime": "2026-03-18 01:08",
+        "balance_usd": 128.19
+      },
+      {
+        "timestamp": 1773800376.814581,
+        "datetime": "2026-03-18 02:19",
+        "balance_usd": 175.89
+      },
+      {
+        "timestamp": 1773804629.780852,
+        "datetime": "2026-03-18 03:30",
+        "balance_usd": 184.77
+      },
+      {
+        "timestamp": 1773808466.196239,
+        "datetime": "2026-03-18 04:34",
+        "balance_usd": 170.83
+      },
+      {
+        "timestamp": 1773812685.832302,
+        "datetime": "2026-03-18 05:44",
+        "balance_usd": 136.3
+      },
+      {
+        "timestamp": 1773816917.613594,
+        "datetime": "2026-03-18 06:55",
+        "balance_usd": 164.97
+      },
+      {
+        "timestamp": 1773820940.8506792,
+        "datetime": "2026-03-18 08:02",
+        "balance_usd": 175.72
+      },
+      {
+        "timestamp": 1773828802.7123892,
+        "datetime": "2026-03-18 10:13",
+        "balance_usd": 178.97
+      },
+      {
+        "timestamp": 1773836194.50559,
+        "datetime": "2026-03-18 12:16",
+        "balance_usd": 185.92
+      },
+      {
+        "timestamp": 1773859007.9673228,
+        "datetime": "2026-03-18 18:36",
+        "balance_usd": 190.79
+      },
+      {
+        "timestamp": 1773862772.087038,
+        "datetime": "2026-03-18 19:39",
+        "balance_usd": 197.77
+      },
+      {
+        "timestamp": 1773869166.76484,
+        "datetime": "2026-03-18 21:26",
+        "balance_usd": 182.93
+      },
+      {
+        "timestamp": 1773875308.7711868,
+        "datetime": "2026-03-18 23:08",
+        "balance_usd": 191.61
+      },
+      {
+        "timestamp": 1773879312.139133,
+        "datetime": "2026-03-19 00:15",
+        "balance_usd": 197.67
+      },
+      {
+        "timestamp": 1773883207.746685,
+        "datetime": "2026-03-19 01:20",
+        "balance_usd": 161.21
+      },
+      {
+        "timestamp": 1773892293.85707,
+        "datetime": "2026-03-19 03:51",
+        "balance_usd": 171.04
+      },
+      {
+        "timestamp": 1773896287.7731168,
+        "datetime": "2026-03-19 04:58",
+        "balance_usd": 157.17
+      },
+      {
+        "timestamp": 1773900281.657623,
+        "datetime": "2026-03-19 06:04",
+        "balance_usd": 162.34
+      },
+      {
+        "timestamp": 1773904499.84863,
+        "datetime": "2026-03-19 07:14",
+        "balance_usd": 162.34
+      },
+      {
+        "timestamp": 1773908704.5941708,
+        "datetime": "2026-03-19 08:25",
+        "balance_usd": 162.34
+      },
+      {
+        "timestamp": 1773912684.799055,
+        "datetime": "2026-03-19 09:31",
+        "balance_usd": 145.13
+      },
+      {
+        "timestamp": 1773916928.647091,
+        "datetime": "2026-03-19 10:42",
+        "balance_usd": 112.98
+      },
+      {
+        "timestamp": 1773921182.698577,
+        "datetime": "2026-03-19 11:53",
+        "balance_usd": 162.36
+      },
+      {
+        "timestamp": 1773943766.558218,
+        "datetime": "2026-03-19 18:09",
+        "balance_usd": 173.01
+      },
+      {
+        "timestamp": 1773948038.671198,
+        "datetime": "2026-03-19 19:20",
+        "balance_usd": 177.18
+      },
+      {
+        "timestamp": 1773964620.3277388,
+        "datetime": "2026-03-19 23:57",
+        "balance_usd": 161.48
+      },
+      {
+        "timestamp": 1773968624.140803,
+        "datetime": "2026-03-20 01:03",
+        "balance_usd": 153.6
+      },
+      {
+        "timestamp": 1773972697.856054,
+        "datetime": "2026-03-20 02:11",
+        "balance_usd": 179.64
+      },
+      {
+        "timestamp": 1774080949.5434492,
+        "datetime": "2026-03-21 08:15",
+        "balance_usd": 183.89
+      },
+      {
+        "timestamp": 1774127812.238864,
+        "datetime": "2026-03-21 21:16",
+        "balance_usd": 188.7
+      },
+      {
+        "timestamp": 1774131990.3991501,
+        "datetime": "2026-03-21 22:26",
+        "balance_usd": 188.7
+      },
+      {
+        "timestamp": 1774135994.147008,
+        "datetime": "2026-03-21 23:33",
+        "balance_usd": 193.0
+      },
+      {
+        "timestamp": 1774140011.179109,
+        "datetime": "2026-03-22 00:40",
+        "balance_usd": 167.92
+      },
+      {
+        "timestamp": 1774144034.403782,
+        "datetime": "2026-03-22 01:47",
+        "balance_usd": 187.3
+      },
+      {
+        "timestamp": 1774147918.421477,
+        "datetime": "2026-03-22 02:51",
+        "balance_usd": 174.83
+      },
+      {
+        "timestamp": 1774152095.902003,
+        "datetime": "2026-03-22 04:01",
+        "balance_usd": 161.11
+      },
+      {
+        "timestamp": 1774232225.8695319,
+        "datetime": "2026-03-23 02:17",
+        "balance_usd": 170.45
+      },
+      {
+        "timestamp": 1774238049.648393,
+        "datetime": "2026-03-23 03:54",
+        "balance_usd": 155.96
+      },
+      {
+        "timestamp": 1774242231.908781,
+        "datetime": "2026-03-23 05:03",
+        "balance_usd": 164.25
+      },
+      {
+        "timestamp": 1774246504.525614,
+        "datetime": "2026-03-23 06:15",
+        "balance_usd": 131.94
+      },
+      {
+        "timestamp": 1774250500.053487,
+        "datetime": "2026-03-23 07:21",
+        "balance_usd": 156.8
+      },
+      {
+        "timestamp": 1774301694.75714,
+        "datetime": "2026-03-23 21:34",
+        "balance_usd": 144.08
+      },
+      {
+        "timestamp": 1774305940.2440882,
+        "datetime": "2026-03-23 22:45",
+        "balance_usd": 172.33
+      },
+      {
+        "timestamp": 1774309931.1963131,
+        "datetime": "2026-03-23 23:52",
+        "balance_usd": 156.25
+      },
+      {
+        "timestamp": 1774314178.496879,
+        "datetime": "2026-03-24 01:02",
+        "balance_usd": 163.79
+      },
+      {
+        "timestamp": 1774318195.8805661,
+        "datetime": "2026-03-24 02:09",
+        "balance_usd": 171.75
+      },
+      {
+        "timestamp": 1774321981.224084,
+        "datetime": "2026-03-24 03:13",
+        "balance_usd": 157.4
+      },
+      {
+        "timestamp": 1774325993.191731,
+        "datetime": "2026-03-24 04:19",
+        "balance_usd": 166.02
+      },
+      {
+        "timestamp": 1774330001.83867,
+        "datetime": "2026-03-24 05:26",
+        "balance_usd": 170.86
+      },
+      {
+        "timestamp": 1774333797.182064,
+        "datetime": "2026-03-24 06:29",
+        "balance_usd": 155.82
+      },
+      {
+        "timestamp": 1774337692.5976572,
+        "datetime": "2026-03-24 07:34",
+        "balance_usd": 178.01
+      },
+      {
+        "timestamp": 1774367747.398528,
+        "datetime": "2026-03-24 15:55",
+        "balance_usd": 180.71
+      },
+      {
+        "timestamp": 1774372008.9302778,
+        "datetime": "2026-03-24 17:06",
+        "balance_usd": 164.99
+      },
+      {
+        "timestamp": 1774376547.370925,
+        "datetime": "2026-03-24 18:22",
+        "balance_usd": 187.35
+      },
+      {
+        "timestamp": 1774383303.365771,
+        "datetime": "2026-03-24 20:15",
+        "balance_usd": 190.19
+      },
+      {
+        "timestamp": 1774387565.458035,
+        "datetime": "2026-03-24 21:26",
+        "balance_usd": 192.46
+      },
+      {
+        "timestamp": 1774391816.067358,
+        "datetime": "2026-03-24 22:36",
+        "balance_usd": 195.0
+      },
+      {
+        "timestamp": 1774395823.6258519,
+        "datetime": "2026-03-24 23:43",
+        "balance_usd": 187.77
+      },
+      {
+        "timestamp": 1774399814.8986912,
+        "datetime": "2026-03-25 00:50",
+        "balance_usd": 203.17
+      },
+      {
+        "timestamp": 1774403828.870023,
+        "datetime": "2026-03-25 01:57",
+        "balance_usd": 185.5
+      },
+      {
+        "timestamp": 1774407913.6394,
+        "datetime": "2026-03-25 03:05",
+        "balance_usd": 199.22
+      },
+      {
+        "timestamp": 1774412143.0996811,
+        "datetime": "2026-03-25 04:15",
+        "balance_usd": 201.52
+      },
+      {
+        "timestamp": 1774416158.360828,
+        "datetime": "2026-03-25 05:22",
+        "balance_usd": 202.0
+      }
+    ],
+    "charts": {
+      "cumulative_pnl": {
+        "labels": [
+          "2026-02-28",
+          "2026-03-01",
+          "2026-03-09",
+          "2026-03-10",
+          "2026-03-11",
+          "2026-03-12",
+          "2026-03-13",
+          "2026-03-14",
+          "2026-03-15",
+          "2026-03-16",
+          "2026-03-17",
+          "2026-03-18",
+          "2026-03-19",
+          "2026-03-20",
+          "2026-03-21",
+          "2026-03-22",
+          "2026-03-23",
+          "2026-03-24",
+          "2026-03-25"
+        ],
+        "values": [
+          12.86,
+          -18.85,
+          -15.34,
+          -45.52,
+          -19.44,
+          -34.59,
+          -43.81,
+          17.07,
+          -45.0,
+          65.68,
+          -11.05,
+          24.12,
+          16.27,
+          13.12,
+          24.04,
+          -0.34,
+          -14.82,
+          24.21,
+          29.99
+        ]
+      },
+      "strategy_winrate": {
+        "labels": [
+          "expiry_sniper_v1",
+          "btc_lag",
+          "btc_lag_v1",
+          "daily_sniper_v1",
+          "xrp_drift_v1",
+          "eth_lag_v1",
+          "btc_drift_v1",
+          "sol_drift_v1",
+          "eth_orderbook_imbalance_v1",
+          "eth_drift_v1"
+        ],
+        "values": [
+          93.6,
+          100.0,
+          100.0,
+          87.5,
+          47.1,
+          33.3,
+          50.0,
+          66.7,
+          33.3,
+          46.2
+        ]
+      },
+      "daily_pnl_histogram": {
+        "values": [
+          12.86,
+          -31.71,
+          3.51,
+          -30.18,
+          26.08,
+          -15.15,
+          -9.22,
+          60.88,
+          -62.07,
+          110.68,
+          -76.73,
+          35.17,
+          -7.85,
+          -3.15,
+          10.92,
+          -24.38,
+          -14.48,
+          39.03,
+          5.78
+        ]
+      },
+      "strategy_pnl_distribution": {
+        "categories": [
+          "btc_drift_v1",
+          "btc_lag",
+          "btc_lag_v1",
+          "daily_sniper_v1",
+          "eth_drift_v1",
+          "eth_lag_v1",
+          "eth_orderbook_imbalance_v1",
+          "expiry_sniper_v1",
+          "sol_drift_v1",
+          "xrp_drift_v1"
+        ],
+        "data_series": [
+          [
+            -4.41,
+            9.75,
+            8.96,
+            -4.94,
+            8.82,
+            3.28,
+            -4.81,
+            -5.0,
+            -4.83,
+            -4.98,
+            -4.76,
+            1.65,
+            -2.9,
+            -4.41,
+            -3.96,
+            -3.85,
+            0.34,
+            0.35,
+            -0.38,
+            0.56,
+            0.64,
+            0.32,
+            -0.5,
+            0.41,
+            0.33,
+            0.48,
+            -0.33,
+            0.46,
+            -0.66,
+            -0.62,
+            0.4,
+            -0.52,
+            0.15,
+            -0.51,
+            0.44,
+            0.6,
+            0.62,
+            -0.43,
+            -0.39,
+            -0.49,
+            0.49,
+            -0.52,
+            -3.43,
+            -4.07,
+            6.3,
+            -3.69,
+            -3.33,
+            -2.36,
+            0.78,
+            -1.92,
+            4.05,
+            2.45,
+            6.05,
+            3.2,
+            0.36,
+            -0.65,
+            0.44,
+            -0.42,
+            -0.55,
+            0.37,
+            -0.46,
+            -0.57,
+            -0.57,
+            0.53,
+            0.51,
+            -0.43,
+            0.58,
+            0.62,
+            0.59,
+            -0.42,
+            0.58,
+            0.63,
+            -0.54,
+            0.58,
+            -0.36,
+            -0.46,
+            0.59,
+            0.48,
+            0.53,
+            -0.37
+          ],
+          [
+            3.5
+          ],
+          [
+            0.57
+          ],
+          [
+            -0.93,
+            0.06,
+            0.09,
+            0.09,
+            0.07,
+            0.09,
+            0.08,
+            0.06
+          ],
+          [
+            0.55,
+            0.47,
+            0.45,
+            -0.64,
+            0.42,
+            0.41,
+            0.49,
+            0.39,
+            -0.37,
+            -0.62,
+            0.42,
+            -0.47,
+            -0.6,
+            0.3,
+            0.36,
+            -0.47,
+            -0.61,
+            0.35,
+            0.41,
+            0.43,
+            -0.5,
+            -0.59,
+            -0.52,
+            0.61,
+            0.57,
+            0.54,
+            0.44,
+            -0.47,
+            -0.37,
+            -0.48,
+            -0.49,
+            1.29,
+            4.41,
+            -2.22,
+            -2.64,
+            1.32,
+            2.6,
+            -2.35,
+            -2.16,
+            0.84,
+            -2.28,
+            1.32,
+            -2.28,
+            1.26,
+            3.48,
+            -2.05,
+            -2.22,
+            -2.52,
+            1.29,
+            1.92,
+            -2.52,
+            3.78,
+            4.41,
+            -2.87,
+            4.13,
+            -2.94,
+            3.36,
+            -2.35,
+            2.8,
+            1.41,
+            -2.87,
+            3.12,
+            8.82,
+            6.05,
+            5.0,
+            -4.95,
+            -4.8,
+            -4.84,
+            -4.68,
+            2.59,
+            -4.8,
+            -4.68,
+            -4.24,
+            5.1,
+            5.94,
+            -4.84,
+            -5.0,
+            7.08,
+            7.8,
+            -5.0,
+            3.08,
+            -4.84,
+            -4.4,
+            -4.94,
+            -4.94,
+            -4.9,
+            -4.73,
+            -4.68,
+            -4.73,
+            0.49,
+            -0.41,
+            0.62,
+            -0.35,
+            -0.47,
+            -0.45,
+            0.58,
+            0.62,
+            0.61,
+            0.45,
+            0.58,
+            -0.45,
+            0.42,
+            0.54,
+            -0.54,
+            -0.41,
+            -0.47,
+            0.42,
+            -0.47,
+            0.39,
+            0.47,
+            0.47,
+            -0.41,
+            -0.4,
+            -0.42,
+            -0.58,
+            0.48,
+            0.44,
+            0.58,
+            0.43,
+            -0.55,
+            0.6,
+            -0.6,
+            -0.36,
+            0.34,
+            -0.36,
+            -0.57,
+            -0.39,
+            0.63,
+            0.52,
+            0.63,
+            -0.36,
+            -0.4,
+            -0.5,
+            -0.42,
+            0.52,
+            -0.54,
+            0.4,
+            -0.51,
+            -0.36,
+            0.6,
+            -0.37,
+            -0.5,
+            -0.38,
+            -0.52,
+            -0.48,
+            -0.44,
+            -0.38,
+            -0.37,
+            0.57,
+            0.63,
+            0.62,
+            0.52,
+            -0.35,
+            -0.44,
+            0.53,
+            -0.46,
+            -0.5,
+            -0.46
+          ],
+          [
+            -4.98,
+            1.25,
+            -2.8
+          ],
+          [
+            4.24,
+            2.52,
+            -3.6,
+            -3.6,
+            -3.0,
+            -2.7,
+            2.46,
+            -3.64,
+            1.9,
+            -3.2,
+            -3.06,
+            -3.0,
+            -2.0,
+            0.76,
+            -2.28
+          ],
+          [
+            0.3,
+            0.1,
+            0.1,
+            0.3,
+            0.35,
+            0.15,
+            0.15,
+            0.1,
+            0.15,
+            0.2,
+            0.45,
+            0.35,
+            0.3,
+            0.2,
+            0.4,
+            0.2,
+            0.35,
+            0.05,
+            0.45,
+            -4.65,
+            0.2,
+            -4.65,
+            0.25,
+            0.25,
+            0.12,
+            0.3,
+            0.2,
+            0.0,
+            0.3,
+            0.45,
+            0.24,
+            0.04,
+            0.2,
+            0.3,
+            0.0,
+            0.4,
+            0.16,
+            0.35,
+            0.2,
+            0.12,
+            0.16,
+            0.7,
+            0.15,
+            0.25,
+            0.28,
+            0.28,
+            0.1,
+            0.0,
+            0.15,
+            0.05,
+            0.05,
+            0.12,
+            0.96,
+            0.75,
+            0.96,
+            0.96,
+            0.6,
+            0.45,
+            0.6,
+            0.13,
+            0.75,
+            0.75,
+            0.84,
+            0.6,
+            0.96,
+            0.9,
+            1.2,
+            0.0,
+            0.56,
+            0.49,
+            0.35,
+            0.49,
+            0.3,
+            0.96,
+            0.75,
+            0.6,
+            -14.4,
+            0.0,
+            0.6,
+            1.28,
+            0.6,
+            0.18,
+            0.45,
+            0.75,
+            0.75,
+            0.6,
+            0.09,
+            1.44,
+            0.56,
+            0.75,
+            0.75,
+            0.12,
+            0.52,
+            0.75,
+            1.12,
+            0.6,
+            0.78,
+            1.44,
+            1.28,
+            0.0,
+            0.33,
+            0.22,
+            0.11,
+            0.33,
+            0.0,
+            0.45,
+            0.3,
+            1.44,
+            0.96,
+            0.75,
+            1.12,
+            0.75,
+            0.12,
+            0.6,
+            0.6,
+            0.3,
+            0.75,
+            0.15,
+            0.15,
+            0.3,
+            0.15,
+            0.75,
+            1.12,
+            0.75,
+            0.7,
+            0.6,
+            0.75,
+            0.96,
+            0.0,
+            0.45,
+            0.75,
+            0.6,
+            0.96,
+            0.3,
+            0.45,
+            0.75,
+            0.6,
+            0.45,
+            0.3,
+            0.6,
+            0.91,
+            0.65,
+            0.0,
+            0.75,
+            0.45,
+            0.3,
+            0.45,
+            0.75,
+            0.96,
+            1.12,
+            2.38,
+            0.6,
+            0.75,
+            0.0,
+            1.12,
+            1.28,
+            0.75,
+            1.28,
+            0.96,
+            0.3,
+            1.12,
+            0.0,
+            0.0,
+            1.12,
+            1.28,
+            1.12,
+            0.45,
+            0.96,
+            0.6,
+            0.3,
+            0.75,
+            0.6,
+            0.96,
+            0.6,
+            -14.85,
+            0.0,
+            0.0,
+            0.3,
+            0.0,
+            0.0,
+            0.15,
+            0.15,
+            0.96,
+            0.45,
+            0.75,
+            0.15,
+            0.45,
+            0.0,
+            0.0,
+            0.96,
+            0.96,
+            0.45,
+            0.6,
+            0.15,
+            0.75,
+            0.45,
+            0.0,
+            0.15,
+            0.15,
+            0.75,
+            0.75,
+            0.15,
+            0.6,
+            0.15,
+            0.0,
+            1.12,
+            0.3,
+            0.15,
+            0.3,
+            -14.72,
+            0.96,
+            0.96,
+            1.12,
+            0.3,
+            0.6,
+            1.28,
+            1.28,
+            0.96,
+            0.6,
+            1.12,
+            0.0,
+            0.96,
+            1.44,
+            0.96,
+            0.6,
+            0.15,
+            1.28,
+            0.6,
+            0.6,
+            0.84,
+            0.4,
+            1.05,
+            1.68,
+            0.4,
+            0.6,
+            0.4,
+            0.84,
+            1.05,
+            -19.2,
+            0.18,
+            1.26,
+            1.05,
+            0.84,
+            0.6,
+            1.05,
+            -18.43,
+            0.19,
+            0.57,
+            0.57,
+            0.4,
+            0.19,
+            0.6,
+            0.2,
+            0.2,
+            0.2,
+            -19.8,
+            1.05,
+            0.76,
+            1.2,
+            1.2,
+            0.95,
+            0.6,
+            1.0,
+            0.4,
+            0.2,
+            0.8,
+            0.2,
+            0.17,
+            1.26,
+            0.17,
+            0.28,
+            0.84,
+            1.05,
+            1.26,
+            0.84,
+            0.2,
+            1.05,
+            0.72,
+            0.9,
+            0.18,
+            0.18,
+            1.47,
+            1.05,
+            1.05,
+            0.12,
+            0.2,
+            0.19,
+            0.84,
+            0.19,
+            0.19,
+            0.19,
+            1.05,
+            -19.74,
+            0.19,
+            0.19,
+            0.19,
+            -18.62,
+            1.89,
+            0.56,
+            1.08,
+            0.17,
+            0.17,
+            0.9,
+            0.48,
+            0.4,
+            0.5,
+            0.6,
+            0.6,
+            0.72,
+            0.48,
+            0.4,
+            0.6,
+            0.72,
+            0.48,
+            0.1,
+            1.43,
+            0.96,
+            0.22,
+            0.55,
+            0.38,
+            1.2,
+            -15.98,
+            0.84,
+            0.85,
+            0.75,
+            1.17,
+            1.08,
+            0.6,
+            1.26,
+            0.9,
+            0.65,
+            0.2,
+            0.36,
+            0.54,
+            0.63,
+            0.81,
+            0.95,
+            1.36,
+            0.96,
+            1.6,
+            1.2,
+            0.98,
+            0.52,
+            1.2,
+            0.85,
+            1.44,
+            0.85,
+            1.26,
+            0.17,
+            0.4,
+            0.4,
+            0.2,
+            0.2,
+            0.2,
+            1.26,
+            0.72,
+            0.84,
+            1.05,
+            0.84,
+            0.11,
+            1.68,
+            1.68,
+            1.6,
+            0.95,
+            1.26,
+            1.47,
+            1.47,
+            1.47,
+            0.2,
+            0.2,
+            0.4,
+            1.6,
+            -19.4,
+            -19.78,
+            1.47,
+            0.56,
+            0.17,
+            0.17,
+            0.6,
+            1.56,
+            0.12,
+            0.91,
+            1.52,
+            1.71,
+            1.33,
+            0.72,
+            1.4,
+            2.31,
+            -18.26,
+            0.5,
+            1.19,
+            0.68,
+            1.44,
+            1.44,
+            0.17,
+            0.34,
+            0.34,
+            0.9,
+            0.72,
+            0.9,
+            0.9,
+            1.33,
+            2.0,
+            0.64,
+            0.18,
+            0.18,
+            0.19,
+            0.38,
+            0.76,
+            0.19,
+            0.48,
+            0.56,
+            0.56,
+            0.4,
+            2.31,
+            2.2,
+            1.9,
+            2.09,
+            0.78,
+            1.47,
+            1.08,
+            1.26,
+            1.47,
+            0.84,
+            0.64,
+            0.84,
+            2.42,
+            1.47,
+            1.26,
+            0.2,
+            0.2,
+            0.84,
+            1.47,
+            1.68,
+            0.84,
+            0.2,
+            0.2,
+            -19.4,
+            1.26,
+            1.05,
+            1.05,
+            0.65,
+            1.47,
+            0.38,
+            0.16,
+            0.16,
+            1.05,
+            1.4,
+            1.44,
+            1.02,
+            0.85,
+            1.98,
+            0.84,
+            0.84,
+            0.84,
+            0.84,
+            1.26,
+            1.05,
+            1.8,
+            1.68,
+            1.47,
+            -19.95,
+            1.68,
+            0.84,
+            1.47,
+            2.2,
+            1.26,
+            0.2,
+            0.2,
+            0.2,
+            1.26,
+            1.68,
+            1.47,
+            1.12,
+            1.26,
+            1.98,
+            0.18,
+            1.4,
+            1.98,
+            1.05,
+            0.84,
+            1.53,
+            0.4,
+            1.26,
+            1.98,
+            1.68,
+            1.47,
+            1.47,
+            1.05,
+            1.26,
+            1.98,
+            0.84,
+            1.05,
+            1.98,
+            1.05,
+            1.05,
+            0.19,
+            0.84,
+            1.26,
+            1.47,
+            1.26,
+            1.05,
+            1.05,
+            1.47,
+            0.2,
+            1.68,
+            1.68,
+            1.26,
+            1.05,
+            1.26,
+            1.68,
+            1.98,
+            0.2,
+            0.2,
+            1.47,
+            0.84,
+            0.84,
+            1.05,
+            0.84,
+            1.26,
+            1.47,
+            0.2,
+            0.84,
+            0.4,
+            0.84,
+            1.05,
+            1.05,
+            1.26,
+            -19.32,
+            0.84,
+            0.84,
+            1.98,
+            1.26,
+            0.4,
+            0.4,
+            1.26,
+            1.05,
+            1.05,
+            0.2,
+            0.2,
+            1.26,
+            0.84,
+            1.26,
+            -19.6,
+            1.68,
+            1.47,
+            0.2,
+            1.47,
+            0.2,
+            1.26,
+            0.84,
+            0.84,
+            0.84,
+            1.26,
+            1.47,
+            0.84,
+            0.84,
+            1.26,
+            1.47,
+            -19.95,
+            1.47,
+            0.2,
+            1.26,
+            1.26,
+            1.68,
+            0.84,
+            1.05,
+            1.26,
+            1.47,
+            1.05,
+            1.47,
+            1.68,
+            1.05,
+            0.84,
+            1.26,
+            1.05,
+            -19.74,
+            0.2,
+            0.2,
+            1.26,
+            2.2,
+            0.84,
+            1.47,
+            1.26,
+            1.68,
+            0.2,
+            1.05,
+            1.98,
+            0.84,
+            0.84,
+            1.05,
+            1.98,
+            1.47,
+            -19.36,
+            -19.53,
+            -19.11,
+            0.2,
+            -19.58,
+            -19.11,
+            0.17,
+            1.71,
+            1.28,
+            0.52,
+            1.52,
+            1.33,
+            0.95,
+            0.65,
+            0.66,
+            0.76,
+            0.95,
+            0.76,
+            0.84,
+            1.2,
+            0.16,
+            1.2,
+            1.2,
+            1.26,
+            1.05,
+            1.26,
+            1.05,
+            1.05,
+            1.33,
+            0.15,
+            1.47,
+            1.8,
+            1.05,
+            0.2,
+            1.26,
+            1.05,
+            1.68,
+            0.84,
+            1.26,
+            0.8,
+            1.47,
+            0.8,
+            1.68,
+            0.84,
+            1.05,
+            1.68,
+            1.26,
+            1.26,
+            1.26,
+            -19.53,
+            1.05,
+            1.26,
+            0.84,
+            1.68,
+            0.84,
+            1.26,
+            1.47,
+            1.05,
+            1.26,
+            0.84,
+            0.84,
+            0.84,
+            0.84,
+            0.84,
+            0.84,
+            1.26,
+            1.47,
+            1.47,
+            1.26,
+            1.47,
+            1.47,
+            1.68,
+            1.26,
+            0.84,
+            1.47,
+            1.05,
+            0.84,
+            1.68,
+            1.26,
+            1.47,
+            1.26,
+            1.26,
+            1.47,
+            1.05,
+            1.05,
+            1.05,
+            1.05,
+            -19.95,
+            1.05,
+            1.68,
+            1.68,
+            -19.53,
+            1.47,
+            0.84,
+            0.84,
+            1.26,
+            1.98,
+            1.47,
+            0.84,
+            0.84,
+            1.26,
+            1.05,
+            1.05,
+            1.26,
+            1.26,
+            1.47,
+            0.84,
+            0.84,
+            1.47,
+            1.47,
+            0.84,
+            1.68,
+            1.98,
+            1.68,
+            1.47,
+            1.05,
+            1.26,
+            1.68,
+            1.26,
+            0.84,
+            1.26,
+            1.47,
+            1.68,
+            1.26,
+            1.05,
+            1.05,
+            -19.74,
+            1.98,
+            1.05,
+            1.26,
+            1.05,
+            0.84,
+            1.98,
+            1.47,
+            1.47,
+            1.47,
+            1.47,
+            1.47,
+            0.84,
+            -19.74,
+            -19.53,
+            1.26,
+            1.68,
+            1.98,
+            1.05,
+            1.47,
+            0.84,
+            1.05,
+            1.05,
+            0.84,
+            0.84,
+            1.98,
+            1.68,
+            1.98,
+            0.84,
+            1.68,
+            1.47,
+            -19.32,
+            1.26,
+            0.84,
+            1.26,
+            -19.53,
+            0.84,
+            1.47,
+            1.4,
+            1.98,
+            1.2,
+            1.47,
+            1.47,
+            1.89,
+            1.05,
+            0.8,
+            1.26,
+            1.26,
+            1.98,
+            1.47,
+            0.84,
+            1.26,
+            1.26,
+            0.84,
+            0.84,
+            1.47,
+            1.98,
+            1.47,
+            0.84,
+            0.84,
+            1.47,
+            1.98,
+            1.26,
+            1.47,
+            1.26,
+            0.84,
+            0.84,
+            1.98,
+            1.47,
+            1.47,
+            1.26,
+            1.68,
+            -19.32,
+            1.26,
+            1.47,
+            0.84,
+            1.68,
+            1.26,
+            1.47,
+            1.26,
+            1.05,
+            1.26,
+            0.84,
+            0.84,
+            1.47,
+            1.05,
+            1.47,
+            1.68,
+            1.26,
+            1.26,
+            1.68,
+            1.05,
+            1.26,
+            1.05,
+            1.68,
+            1.05,
+            1.26,
+            1.98,
+            1.98,
+            1.26,
+            1.05,
+            1.05,
+            1.47,
+            1.26,
+            1.47,
+            -19.74,
+            1.47,
+            0.84,
+            -19.95,
+            0.84,
+            0.84,
+            0.84,
+            1.47,
+            0.84,
+            1.26,
+            1.98,
+            1.68,
+            0.84,
+            1.68,
+            0.84,
+            0.84,
+            1.68,
+            1.47,
+            1.98,
+            1.26,
+            -19.32,
+            1.26,
+            1.68,
+            1.05,
+            1.68,
+            0.84,
+            0.84,
+            1.68,
+            0.84,
+            1.26,
+            1.05,
+            0.84,
+            1.68,
+            1.26,
+            1.26,
+            0.84,
+            -19.95,
+            1.05,
+            1.05,
+            1.98,
+            1.68,
+            1.68,
+            0.84,
+            0.84,
+            1.98,
+            1.26,
+            1.68,
+            0.84,
+            1.47,
+            1.05,
+            1.05,
+            -19.95,
+            1.68,
+            1.26,
+            1.47,
+            0.84,
+            1.47,
+            1.05,
+            1.98,
+            1.47,
+            0.84,
+            1.47,
+            0.84,
+            1.26,
+            1.26,
+            1.05,
+            -19.11,
+            1.98,
+            1.68,
+            1.26,
+            1.05,
+            1.98,
+            0.5,
+            0.7,
+            0.7,
+            0.7,
+            0.5,
+            0.6,
+            0.99,
+            0.6,
+            0.99,
+            0.7,
+            0.8,
+            0.99,
+            0.8,
+            0.6,
+            0.8,
+            0.6,
+            0.7,
+            0.7,
+            0.6,
+            0.5,
+            0.99,
+            0.6,
+            0.6,
+            0.8,
+            0.7,
+            0.6,
+            0.6,
+            0.99,
+            0.6,
+            0.6,
+            0.6,
+            0.99,
+            0.99,
+            0.6,
+            0.7,
+            0.7,
+            0.7,
+            0.6,
+            0.8,
+            0.7,
+            0.8,
+            0.8,
+            0.8,
+            0.5,
+            0.7,
+            0.5,
+            0.7,
+            0.6,
+            0.7,
+            0.7,
+            0.5,
+            0.7,
+            0.99,
+            0.8,
+            0.6,
+            -9.2,
+            0.99,
+            0.6,
+            0.6,
+            0.7,
+            0.6,
+            0.6,
+            0.99,
+            0.5,
+            0.5,
+            0.6,
+            0.6,
+            0.7,
+            0.5,
+            0.8,
+            0.6,
+            0.5
+          ],
+          [
+            0.43,
+            0.33,
+            0.28,
+            0.32,
+            0.32,
+            0.3,
+            0.31,
+            -0.63,
+            0.26,
+            -0.59,
+            0.33,
+            0.49,
+            0.37,
+            -0.59,
+            -0.49,
+            0.41,
+            1.48,
+            1.11,
+            1.44,
+            1.08,
+            1.44,
+            1.11,
+            1.75,
+            -4.72,
+            2.96,
+            4.23,
+            -4.48,
+            4.23,
+            -7.41,
+            -4.84,
+            3.5,
+            5.85,
+            -7.54,
+            6.0,
+            -9.45,
+            7.74,
+            2.59,
+            -9.52,
+            3.2,
+            -2.04,
+            2.28,
+            5.85,
+            -4.8,
+            -9.66,
+            -9.31
+          ],
+          [
+            -0.64,
+            -0.65,
+            -0.56,
+            -0.6,
+            -0.54,
+            0.41,
+            0.5,
+            0.35,
+            -0.65,
+            0.36,
+            0.39,
+            0.55,
+            0.38,
+            0.4,
+            -0.58,
+            -0.57,
+            0.51,
+            0.39,
+            -0.57,
+            -0.59,
+            -0.35,
+            0.43,
+            0.37,
+            0.58,
+            -0.48,
+            0.53,
+            -0.53,
+            -0.58,
+            0.58,
+            0.33,
+            -0.53,
+            0.38,
+            -0.57,
+            -0.54,
+            0.4,
+            -0.53,
+            0.54,
+            -0.6,
+            0.34,
+            -0.53,
+            0.34,
+            0.37,
+            -0.64,
+            0.4,
+            -0.5,
+            -0.39,
+            -0.35,
+            -0.36,
+            -0.38,
+            0.59,
+            -0.41
+          ]
+        ]
+      },
+      "winrate_vs_profit": {
+        "series": [
+          {
+            "name": "Strategies",
+            "data": [
+              {
+                "x": 93.6,
+                "y": 0.11,
+                "label": "expiry_sniper_v1"
+              },
+              {
+                "x": 100.0,
+                "y": 3.5,
+                "label": "btc_lag"
+              },
+              {
+                "x": 100.0,
+                "y": 0.57,
+                "label": "btc_lag_v1"
+              },
+              {
+                "x": 87.5,
+                "y": -0.05,
+                "label": "daily_sniper_v1"
+              },
+              {
+                "x": 47.1,
+                "y": -0.07,
+                "label": "xrp_drift_v1"
+              },
+              {
+                "x": 33.3,
+                "y": -2.18,
+                "label": "eth_lag_v1"
+              },
+              {
+                "x": 50.0,
+                "y": -0.12,
+                "label": "btc_drift_v1"
+              },
+              {
+                "x": 66.7,
+                "y": -0.31,
+                "label": "sol_drift_v1"
+              },
+              {
+                "x": 33.3,
+                "y": -1.21,
+                "label": "eth_orderbook_imbalance_v1"
+              },
+              {
+                "x": 46.2,
+                "y": -0.17,
+                "label": "eth_drift_v1"
+              }
+            ]
+          }
+        ]
+      },
+      "trade_volume": {
+        "labels": [
+          "expiry_sniper_v1",
+          "btc_lag",
+          "btc_lag_v1",
+          "daily_sniper_v1",
+          "xrp_drift_v1",
+          "eth_lag_v1",
+          "btc_drift_v1",
+          "sol_drift_v1",
+          "eth_orderbook_imbalance_v1",
+          "eth_drift_v1"
+        ],
+        "values": [
+          970,
+          1,
+          1,
+          18,
+          51,
+          3,
+          80,
+          45,
+          15,
+          158
+        ]
+      },
+      "bankroll_timeline": {
+        "labels": [
+          "2026-02-26 05:23",
+          "2026-02-28 21:15",
+          "2026-02-28 22:04",
+          "2026-03-01 00:31",
+          "2026-03-01 08:53",
+          "2026-03-01 17:13",
+          "2026-03-01 20:10",
+          "2026-03-02 01:11",
+          "2026-03-08 20:06",
+          "2026-03-08 23:30",
+          "2026-03-09 03:26",
+          "2026-03-09 06:03",
+          "2026-03-09 13:54",
+          "2026-03-10 00:31",
+          "2026-03-10 02:53",
+          "2026-03-10 05:00",
+          "2026-03-10 07:17",
+          "2026-03-10 11:17",
+          "2026-03-10 22:03",
+          "2026-03-11 00:23",
+          "2026-03-11 02:29",
+          "2026-03-11 04:40",
+          "2026-03-11 07:02",
+          "2026-03-11 09:19",
+          "2026-03-11 11:37",
+          "2026-03-11 14:35",
+          "2026-03-11 16:56",
+          "2026-03-11 19:24",
+          "2026-03-11 23:11",
+          "2026-03-12 01:29",
+          "2026-03-12 03:48",
+          "2026-03-12 06:02",
+          "2026-03-12 08:23",
+          "2026-03-12 10:40",
+          "2026-03-13 00:20",
+          "2026-03-13 03:00",
+          "2026-03-13 05:17",
+          "2026-03-14 05:37",
+          "2026-03-14 07:56",
+          "2026-03-14 10:10",
+          "2026-03-14 12:27",
+          "2026-03-14 14:49",
+          "2026-03-14 17:07",
+          "2026-03-14 19:24",
+          "2026-03-14 22:26",
+          "2026-03-15 01:32",
+          "2026-03-15 04:49",
+          "2026-03-15 07:43",
+          "2026-03-15 10:01",
+          "2026-03-15 12:19",
+          "2026-03-15 14:34",
+          "2026-03-15 16:49",
+          "2026-03-15 20:38",
+          "2026-03-15 22:48",
+          "2026-03-16 02:31",
+          "2026-03-16 04:49",
+          "2026-03-16 07:01",
+          "2026-03-16 09:15",
+          "2026-03-16 11:32",
+          "2026-03-16 22:32",
+          "2026-03-17 00:50",
+          "2026-03-17 03:04",
+          "2026-03-17 05:16",
+          "2026-03-17 07:37",
+          "2026-03-17 09:44",
+          "2026-03-17 12:00",
+          "2026-03-17 20:36",
+          "2026-03-17 22:51",
+          "2026-03-18 01:08",
+          "2026-03-18 03:30",
+          "2026-03-18 05:44",
+          "2026-03-18 08:02",
+          "2026-03-18 12:16",
+          "2026-03-18 19:39",
+          "2026-03-18 23:08",
+          "2026-03-19 01:20",
+          "2026-03-19 03:51",
+          "2026-03-19 06:04",
+          "2026-03-19 08:25",
+          "2026-03-19 10:42",
+          "2026-03-19 18:09",
+          "2026-03-19 23:57",
+          "2026-03-20 02:11",
+          "2026-03-21 21:16",
+          "2026-03-21 23:33",
+          "2026-03-22 01:47",
+          "2026-03-22 04:01",
+          "2026-03-23 03:54",
+          "2026-03-23 06:15",
+          "2026-03-23 21:34",
+          "2026-03-23 23:52",
+          "2026-03-24 02:09",
+          "2026-03-24 04:19",
+          "2026-03-24 06:29",
+          "2026-03-24 15:55",
+          "2026-03-24 18:22",
+          "2026-03-24 21:26",
+          "2026-03-24 23:43",
+          "2026-03-25 01:57",
+          "2026-03-25 04:15"
+        ],
+        "values": [
+          0.0,
+          75.0,
+          78.51,
+          125.17,
+          95.37,
+          87.72,
+          79.76,
+          79.76,
+          79.76,
+          79.76,
+          79.07,
+          85.28,
+          82.18,
+          82.88,
+          82.39,
+          78.87,
+          79.11,
+          65.77,
+          56.7,
+          51.64,
+          50.17,
+          50.66,
+          46.42,
+          48.33,
+          52.18,
+          55.03,
+          122.12,
+          112.46,
+          130.79,
+          130.99,
+          124.51,
+          109.79,
+          109.79,
+          109.79,
+          101.4,
+          103.58,
+          97.94,
+          42.01,
+          106.2,
+          121.38,
+          131.57,
+          88.45,
+          165.33,
+          157.13,
+          162.71,
+          157.6,
+          173.22,
+          130.88,
+          132.25,
+          145.69,
+          120.86,
+          124.72,
+          67.36,
+          118.1,
+          121.12,
+          148.1,
+          128.56,
+          156.41,
+          178.51,
+          213.34,
+          216.14,
+          204.13,
+          205.07,
+          207.0,
+          123.71,
+          143.38,
+          158.02,
+          131.82,
+          128.19,
+          184.77,
+          136.3,
+          175.72,
+          185.92,
+          197.77,
+          191.61,
+          161.21,
+          171.04,
+          162.34,
+          162.34,
+          112.98,
+          173.01,
+          161.48,
+          179.64,
+          188.7,
+          193.0,
+          187.3,
+          161.11,
+          155.96,
+          131.94,
+          144.08,
+          156.25,
+          171.75,
+          166.02,
+          155.82,
+          180.71,
+          187.35,
+          192.46,
+          187.77,
+          185.5,
+          201.52
+        ]
+      }
+    }
+  },
+  "learning_intelligence": {
+    "available": true,
+    "journal": {
+      "total_entries": 1259,
+      "event_counts": {
+        "compaction": 987,
+        "session_outcome": 112,
+        "win": 79,
+        "pain": 57,
+        "nuclear_batch": 4,
+        "validation": 3,
+        "review_verdict": 2,
+        "idea": 2,
+        "session_work": 2,
+        "build_shipped": 2,
+        "pattern_detected": 1,
+        "trace_analysis": 1,
+        "review_batch": 1,
+        "session_complete": 1,
+        "analysis": 1,
+        "build": 1,
+        "observation": 1,
+        "session_observation": 1,
+        "todo": 1
+      },
+      "domain_counts": {
+        "context_monitor": 989,
+        "general": 238,
+        "self_learning": 9,
+        "nuclear_scan": 5,
+        "reddit_intelligence": 3,
+        "cca": 2,
+        "agent_guard": 2,
+        "trading": 2,
+        "hivemind": 2,
+        "usage_dashboard": 1,
+        "spec_system": 1,
+        "trace_analysis": 1,
+        "senior_dev_agent": 1,
+        "cca_auto": 1,
+        "agent-guard": 1,
+        "kalshi_monitoring": 1
+      },
+      "first_entry": "2026-03-16T04:18:53Z",
+      "last_entry": "2026-03-25T06:11:49.829857+00:00",
+      "wins": 79,
+      "pains": 57,
+      "win_pain_ratio": 1.39
+    },
+    "apf": {
+      "current_apf": 23.2,
+      "latest_session": "S118",
+      "total_reviewed": 340,
+      "total_build": 22,
+      "total_signal": 79,
+      "apf_change": 0.5,
+      "trend": [
+        {
+          "session": "S117",
+          "apf": 22.7,
+          "total": 335,
+          "build": 21,
+          "signal": 76
+        },
+        {
+          "session": "S118",
+          "apf": 23.2,
+          "total": 340,
+          "build": 22,
+          "signal": 79
+        }
+      ],
+      "frontier_breakdown": [
+        {
+          "frontier": "Agent/Research",
+          "apf": 0.0,
+          "total": 6
+        },
+        {
+          "frontier": "Anthropic/Official",
+          "apf": 0.0,
+          "total": 4
+        },
+        {
+          "frontier": "Cross-Cutting",
+          "apf": 16.7,
+          "total": 12
+        },
+        {
+          "frontier": "Frontier 1: Memory",
+          "apf": 23.5,
+          "total": 51
+        },
+        {
+          "frontier": "Frontier 2: Spec",
+          "apf": 44.2,
+          "total": 43
+        },
+        {
+          "frontier": "Frontier 3: Context",
+          "apf": 37.8,
+          "total": 37
+        },
+        {
+          "frontier": "Frontier 4: Agent Guard",
+          "apf": 48.0,
+          "total": 25
+        },
+        {
+          "frontier": "Frontier 5: Dashboard",
+          "apf": 25.0,
+          "total": 28
+        },
+        {
+          "frontier": "General/NEW",
+          "apf": 15.8,
+          "total": 19
+        },
+        {
+          "frontier": "MT-0 Kalshi",
+          "apf": 0.0,
+          "total": 38
+        },
+        {
+          "frontier": "MT-21 Hivemind",
+          "apf": 25.0,
+          "total": 4
+        },
+        {
+          "frontier": "Other MTs",
+          "apf": 29.6,
+          "total": 27
+        },
+        {
+          "frontier": "Personal/Misc",
+          "apf": 16.7,
+          "total": 6
+        },
+        {
+          "frontier": "Skip/Noise",
+          "apf": 0.0,
+          "total": 40
+        }
+      ]
+    },
+    "charts": {
+      "event_types": {
+        "labels": [
+          "compaction",
+          "session_outcome",
+          "win",
+          "pain",
+          "nuclear_batch",
+          "validation",
+          "review_verdict",
+          "idea",
+          "session_work",
+          "build_shipped",
+          "pattern_detected",
+          "trace_analysis",
+          "review_batch",
+          "session_complete",
+          "analysis",
+          "build",
+          "observation",
+          "session_observation",
+          "todo"
+        ],
+        "values": [
+          987,
+          112,
+          79,
+          57,
+          4,
+          3,
+          2,
+          2,
+          2,
+          2,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "apf_trend": {
+        "labels": [
+          "S117",
+          "S118"
+        ],
+        "values": [
+          22.7,
+          23.2
+        ]
+      },
+      "domain_distribution": {
+        "labels": [
+          "context_monitor",
+          "general",
+          "self_learning",
+          "nuclear_scan",
+          "reddit_intelligence",
+          "cca",
+          "agent_guard",
+          "trading",
+          "hivemind",
+          "usage_dashboard",
+          "spec_system",
+          "trace_analysis",
+          "senior_dev_agent",
+          "cca_auto",
+          "agent-guard",
+          "kalshi_monitoring"
+        ],
+        "values": [
+          989,
+          238,
+          9,
+          5,
+          3,
+          2,
+          2,
+          2,
+          2,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  },
+  "test_file_counts": [
+    31,
+    111,
+    38,
+    39,
+    56,
+    50,
+    40,
+    28,
+    46,
+    40,
+    26,
+    36,
+    49,
+    53,
+    27,
+    30,
+    43,
+    44,
+    61,
+    10,
+    64,
+    26,
+    28,
+    70,
+    27,
+    40,
+    33,
+    19,
+    25,
+    62,
+    28,
+    61,
+    42,
+    36,
+    49,
+    24,
+    15,
+    32,
+    66,
+    42,
+    29,
+    70,
+    39,
+    44,
+    45,
+    42,
+    33,
+    25,
+    25,
+    46,
+    39,
+    25,
+    42,
+    23,
+    22,
+    50,
+    33,
+    66,
+    27,
+    28,
+    31,
+    41,
+    30,
+    21,
+    48,
+    29,
+    81,
+    27,
+    30,
+    13,
+    29,
+    48,
+    20,
+    54,
+    25,
+    41,
+    58,
+    82,
+    112,
+    28,
+    28,
+    92,
+    80,
+    101,
+    62,
+    104,
+    49,
+    43,
+    51,
+    30,
+    40,
+    29,
+    17,
+    27,
+    13,
+    27,
+    43,
+    35,
+    12,
+    30,
+    24,
+    28,
+    32,
+    38,
+    64,
+    86,
+    34,
+    50,
+    30,
+    26,
+    38,
+    16,
+    29,
+    57,
+    35,
+    47,
+    63,
+    14,
+    40,
+    73,
+    26,
+    19,
+    34,
+    61,
+    63,
+    13,
+    21,
+    31,
+    58,
+    49,
+    31,
+    107,
+    26,
+    30,
+    49,
+    30,
+    26,
+    24,
+    25,
+    50,
+    62,
+    47,
+    28,
+    30,
+    38,
+    64,
+    31,
+    25,
+    49,
+    34,
+    10,
+    13,
+    17,
+    19,
+    29,
+    22,
+    24,
+    18,
+    146,
+    39,
+    71,
+    87,
+    31,
+    29,
+    22,
+    15,
+    26,
+    44,
+    60,
+    122,
+    25,
+    32,
+    28,
+    49,
+    50,
+    48,
+    22,
+    20,
+    117,
+    26,
+    17,
+    34,
+    3,
+    22,
+    19,
+    28,
+    21,
+    13,
+    23,
+    54,
+    22,
+    18,
+    31,
+    13,
+    13,
+    31,
+    19,
+    12,
+    22,
+    22,
+    41,
+    24,
+    26,
+    13,
+    93,
+    53,
+    22,
+    19,
+    17,
+    17,
+    23,
+    54,
+    27,
+    32,
+    71,
+    55,
+    29,
+    26,
+    36,
+    43,
+    60,
+    36,
+    42,
+    51,
+    25,
+    29,
+    26,
+    40,
+    32,
+    32,
+    38,
+    26,
+    23,
+    53,
+    39,
+    53,
+    45,
+    55,
+    32,
+    63,
+    44
+  ]
+}
