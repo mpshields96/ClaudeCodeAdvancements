@@ -1,0 +1,7 @@
+interface:
+  display_name: "CCA Desktop Workflow"
+  short_description: "CCA init, auto, wrap, and loop for Codex."
+  default_prompt: "Use $cca-desktop-workflow in init mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements."
+
+policy:
+  allow_implicit_invocation: false

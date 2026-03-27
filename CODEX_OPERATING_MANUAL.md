@@ -126,6 +126,11 @@ inbox/outbox files.
 Codex should mirror the useful parts of CCA's workflow without pretending the
 platform hooks are identical.
 
+Preferred desktop-app entrypoint:
+- Use `$cca-desktop-workflow`
+- Canonical repo source: `codex-skills/cca-desktop-workflow/`
+- See `CODEX_DESKTOP_WORKFLOW.md` for ready-to-paste prompts
+
 Init:
 - Read `AGENTS.md`
 - Read the authoritative state file
@@ -144,6 +149,11 @@ Wrap:
 - Summarize outcome, tests, open issues, and next best step
 - Prepare a short relay message for Matthew / Claude Code when needed
 - Distill durable lessons into `CODEX_LEARNINGS.md` when they are likely to matter again
+
+Autoloop:
+- In Codex desktop, autoloop means one bounded init -> auto -> wrap cycle
+- Do not emulate Claude's CLI respawn loop literally inside the app
+- For recurrence, prefer Codex Automations that run one cycle per trigger
 
 ## Context Reset Guidance
 

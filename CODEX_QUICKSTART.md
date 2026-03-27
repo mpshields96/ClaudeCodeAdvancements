@@ -41,6 +41,18 @@ Push: yes/no
    - Call out open risks or blockers
    - Prepare a short relay message for Claude Code when useful
 
+## Desktop Skill
+
+Codex desktop app equivalent of CCA slash commands:
+- Skill: `$cca-desktop-workflow`
+- Canonical source: `codex-skills/cca-desktop-workflow/`
+
+Quick invocations:
+- `Use $cca-desktop-workflow in init mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.`
+- `Use $cca-desktop-workflow in auto mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.`
+- `Use $cca-desktop-workflow in wrap mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.`
+- `Use $cca-desktop-workflow in autoloop mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.`
+
 ## Codex self-learning
 
 - Read-only study of Claude-built tools, docs, and patterns is encouraged
