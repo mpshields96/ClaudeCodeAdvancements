@@ -3,29 +3,32 @@
 
 ---
 
-## Current State (as of Session 213 — 2026-03-27)
+## Current State (as of Session 214 — 2026-03-27)
 
-**Phase:** Session 213 COMPLETE. MT-53: Merged codex branch, Red/mGBA e2e tests, collision maps + A* navigate action
+**Phase:** Session 214 COMPLETE. MT-53: Warp data for cross-map A*, RedAgent subclass
 
-**What was done this session (S213):**
-- Merged codex/codex-loop-scaffold to main (9 commits, 46 files, 2686 insertions)
-- Red/mGBA e2e bridge tests: 19 new tests covering MemoryReaderRed + TextReaderRed path (42 bridge total)
-- collision_reader_red.py: reads walkability from Pokemon Red RAM (dimensions, tiles, NPC sprites)
-- Navigate action in bridge.py: {"type":"navigate","x":5,"y":3} does A* pathfinding + executes path
-- 14 collision reader tests + 5 navigate action tests
-- **Tests**: 10/10 smoke (540 tests), all green.
+**What was done this session (S214):**
+- warp_data_red.py: 30+ static warps (Pallet Town through Pewter City), 12 map edge connections, RAM warp reader (0xD3AE/0xD3AF). 23 tests.
+- bridge.py: cross-map navigate action with optional map_id param, warps/connections loaded at startup, warp step skipping. 4 new tests (51 total).
+- red_agent.py: RedAgent subclass of CrystalAgent with Red-specific components (MemoryReaderRed, TextReaderRed, CollisionReaderRed, Red gym checkpoints). 14 tests.
+- agent.py: Extracted _screen_detection_addresses() for game-specific RAM overrides.
+- Progress report written to CCA_TO_POLYBOT.md (UPDATE 62) and CLAUDE_TO_CODEX.md (UPDATE 3).
+- **Tests**: 10/10 smoke (540 tests), all green. 2 commits.
 
 **Next:**
-1. Run /pokemon-play end-to-end demo with mGBA + navigate action
-2. Add warp data (doors, stairs) to collision reader for cross-map A*
-3. Build Claude agent loop for Pokemon Red (agent.py wiring)
-4. Get viewer.html showing live gameplay
+1. Run /pokemon-play end-to-end demo with mGBA + navigate + RedAgent
+2. Wire boot_sequence.py for mGBA Red (title -> new game -> name -> exit house)
+3. Get viewer.html showing live gameplay with real mGBA screenshots
+4. Add battle AI for Red (battle decision logic using RAM state)
 
 **Key file paths changed:**
-- `pokemon-agent/collision_reader_red.py` — New: RAM-based collision map reader
-- `pokemon-agent/test_collision_reader_red.py` — 14 tests
-- `pokemon-agent/bridge.py` — navigate action, collision_reader + nav wiring
-- `pokemon-agent/test_bridge.py` — 47 tests (was 23)
+- `pokemon-agent/warp_data_red.py` — New: static warp table + RAM warp reader
+- `pokemon-agent/test_warp_data_red.py` — 23 tests
+- `pokemon-agent/red_agent.py` — New: RedAgent subclass for Pokemon Red
+- `pokemon-agent/test_red_agent.py` — 14 tests
+- `pokemon-agent/bridge.py` — cross-map navigate, warp loading
+- `pokemon-agent/test_bridge.py` — 51 tests (was 47)
+- `pokemon-agent/agent.py` — _screen_detection_addresses() extraction
 
 ---
 
