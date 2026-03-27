@@ -716,3 +716,15 @@ Source: GitHub trending, web search, HN discussion, blog posts.
 - **CCA relevance:** Frontier 3 + Frontier 5. Our overhead_tracker.py already measures CCA=49K (3x baseline, consistent with this finding given our 14+ hooks + MCP servers). Confirms MCP/plugin count is the main driver of overhead variation.
 - **Action:** No immediate code change needed — validates our overhead_tracker.py measurements.
 - **Verdict:** REFERENCE — validates CCA overhead measurement infrastructure
+
+---
+
+### Finding 399 — Agent Teams Official Docs + Multi-Agent Research Scan (S199)
+- **Date:** 2026-03-26
+- **Source:** S190 directive (agent research)
+- **URL:** https://code.claude.com/docs/en/agent-teams
+- **What:** Comprehensive multi-agent research across Anthropic docs, GitHub repos, Azure patterns, and 5 academic papers. Key findings: (1) Agent Teams is official Anthropic multi-agent feature (experimental, v2.1.32+) with shared task list, peer messaging, hooks for quality gates. (2) Leader+workers+shared-task-list is the dominant pattern across all frameworks. (3) 3-5 agents is sweet spot, 5-6 tasks/agent. (4) Multi-agent improves decision quality 80-140x over single-agent for complex tasks (arXiv:2511.15755). (5) Git worktree isolation is standard (CCA AG-10 already does this). (6) ~5% of tasks benefit from multi-agent — most work is better single-agent.
+- **CCA relevance:** Frontier 4 (Agent Guard) + MT-21 (Hivemind). CCA's cca_comm.py predates Agent Teams — evaluate migration. Missing: watchdog/quality gate agent, Group Chat pattern for design reviews, adaptive role assignment. Full analysis in research/S190_AGENT_RESEARCH.md.
+- **Action:** Enable Agent Teams for testing. Evaluate cca_comm.py migration path. Add watchdog agent pattern.
+- **Verdict:** BUILD — directly informs MT-21 hivemind evolution and CCA's multi-agent architecture
+
