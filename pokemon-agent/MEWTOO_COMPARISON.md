@@ -14,28 +14,30 @@ Source: https://github.com/jacobyoby/mewtoo (Pokemon Red, PyBoy)
 | **State read** | Structured dataclasses (GameState) | Dictionary (read_full_game_state) |
 | **Stuck detection** | Self-anchoring counter + failed strategy log | Multi-modal (state+position+action repetition) |
 | **Menu detection** | RAM-based (WINDOW_STACK_SIZE, TEXT_BOX_FLAGS) | RAM-based (CC26 menu type, D730 text box) |
-| **Caching** | None yet | ActionCache (state+screen -> action) |
+| **Caching** | ActionCache LRU (S204) | ActionCache (state+screen -> action) |
 | **Strategy** | LLM decides freely | 3 profiles (balanced/aggressive/conservative) |
 | **OCR** | None (RAM-only) | ocr_enhancer.py (screen text extraction) |
-| **Tests** | 339 (21 real emulator) | 123 |
+| **Movement validation** | MovementValidator (S205) | Movement tracking per direction |
+| **Screen detection** | ScreenDetector (S205) | Blank screen skip |
+| **Diversity** | DiversityChecker (S205) | Action repetition flagging |
+| **Tests** | 437 (21 real emulator) | 123 |
 
-## Key Mewtoo Patterns to Adopt
+## Mewtoo Patterns — ALL ADOPTED (S204-S205)
 
-1. **Action caching** — Cache state->action mappings to skip LLM calls for known situations.
-   CCA doesn't have this yet. Could reduce token burn significantly for repetitive game states
-   (grinding, walking, text dialogs).
+1. **Action caching** (S204) — `action_cache.py` (32 tests). LRU state->action mapping,
+   hit-based expiration, success rate tracking. Skips LLM for known states.
 
-2. **Dialog loop prevention** — After 7+ consecutive A presses, try B. After 10+ identical
-   state steps, aggressive B-pressing. Simple heuristic that prevents common soft-locks.
+2. **Dialog loop prevention** (S204) — In `agent.py` (12 tests). Auto-A for dialog/healing,
+   B-escape after 7+ consecutive A presses. No LLM calls for mechanical text.
 
-3. **Movement validation** — Track failed movement per direction, mark blocked after 3 failures,
-   suggest perpendicular alternatives. Good for maze/obstacle navigation.
+3. **Movement validation** (S205) — `movement_validator.py` (29 tests). Tracks blocked
+   directions after 3 failures, suggests perpendicular alternatives, clears on map change.
 
-4. **Blank screen detection** — Skip LLM entirely on blank/transition screens, send A/START.
-   Saves tokens on transitions that don't need intelligence.
+4. **Blank screen detection** (S205) — `screen_detector.py` (13 tests). Detects transitions
+   via JOY_DISABLED RAM flag, auto-waits. START unstick after 30+ consecutive transitions.
 
-5. **Diversity checking** — If one action exceeds 60% of last 15 actions, suggest alternatives.
-   Complements our stuck detection with a different signal.
+5. **Diversity checking** (S205) — `diversity_checker.py` (13 tests). Flags when one action
+   exceeds 60% of last 15 actions, warns LLM and suggests alternatives.
 
 ## Patterns We Already Handle Better
 
@@ -48,17 +50,17 @@ Source: https://github.com/jacobyoby/mewtoo (Pokemon Red, PyBoy)
 3. **RAM-only state** — No OCR dependency means faster, more reliable state reads.
    Mewtoo's OCR adds latency and error surface.
 
-4. **Test coverage** — 339 tests (21 real emulator) vs 123 tests.
+4. **Test coverage** — 437 tests (21 real emulator) vs 123 tests.
 
 5. **Self-anchoring stuck context** — Our approach gives the LLM explicit history of what
    failed and why, not just "you're stuck, try something different."
 
-## Implementation Priority
+## Implementation Status — ALL COMPLETE
 
-| Pattern | Effort | Impact | Priority |
-|---------|--------|--------|----------|
-| Blank screen skip | Low (10 LOC) | Medium | P0 |
-| Dialog loop prevention | Low (20 LOC) | High | P0 |
-| Action caching | Medium (100 LOC) | High | P1 |
-| Movement validation | Medium (80 LOC) | Medium | P1 |
-| Diversity checking | Low (30 LOC) | Low | P2 |
+| Pattern | File | Tests | Session |
+|---------|------|-------|---------|
+| Dialog loop prevention | agent.py | 12 | S204 |
+| Action caching | action_cache.py | 32 | S204 |
+| Blank screen detection | screen_detector.py | 13 | S205 |
+| Movement validation | movement_validator.py | 29 | S205 |
+| Diversity checking | diversity_checker.py | 13 | S205 |
