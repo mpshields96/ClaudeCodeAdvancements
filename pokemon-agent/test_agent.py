@@ -446,5 +446,146 @@ class TestMessageHistory(unittest.TestCase):
         self.assertIn("tool_use", types)
 
 
+class TestAutoAdvance(unittest.TestCase):
+    """Test dialog auto-advance and escape (mewtoo patterns)."""
+
+    def _set_dialog(self, emu):
+        """Set RAM to DIALOG state: window open + text box flags."""
+        emu.write_byte(0xCF85, 1)  # WINDOW_STACK_SIZE > 0
+        emu.write_byte(0xCF86, 1)  # TEXT_BOX_FLAGS > 0
+
+    def _set_pokemon_center(self, emu):
+        """Set RAM to POKEMON_CENTER state: joypad disabled."""
+        emu.write_byte(0xCFA0, 1)  # JOY_DISABLED > 0
+
+    def _clear_menu_state(self, emu):
+        """Reset to overworld."""
+        emu.write_byte(0xCF85, 0)
+        emu.write_byte(0xCF86, 0)
+        emu.write_byte(0xCFA0, 0)
+        emu.write_byte(0xD100, 0)
+        emu.write_byte(0xD22D, 0)
+
+    def test_dialog_auto_presses_a(self):
+        """In DIALOG state, agent auto-presses A without calling LLM."""
+        agent, llm = _make_agent()
+        self._set_dialog(agent.emulator)
+        result = agent.step()
+        self.assertEqual(llm.call_count, 0)
+        self.assertIn("auto", result.llm_text)
+        self.assertEqual(result.input_tokens, 0)
+
+    def test_pokemon_center_auto_presses_a(self):
+        """In POKEMON_CENTER state, agent auto-presses A."""
+        agent, llm = _make_agent()
+        self._set_pokemon_center(agent.emulator)
+        result = agent.step()
+        self.assertEqual(llm.call_count, 0)
+
+    def test_overworld_calls_llm(self):
+        """In OVERWORLD state, agent calls LLM normally."""
+        agent, llm = _make_agent()
+        self._clear_menu_state(agent.emulator)
+        result = agent.step()
+        self.assertEqual(llm.call_count, 1)
+
+    def test_auto_advance_count_tracked(self):
+        """Auto-advance count increments for each auto step."""
+        agent, llm = _make_agent()
+        self._set_dialog(agent.emulator)
+        agent.step()
+        agent.step()
+        agent.step()
+        self.assertEqual(agent.auto_advance_count, 3)
+        self.assertEqual(llm.call_count, 0)
+
+    def test_dialog_escape_after_threshold(self):
+        """After 7+ auto-A presses in dialog, switch to B."""
+        agent, llm = _make_agent()
+        self._set_dialog(agent.emulator)
+        agent.DIALOG_ESCAPE_THRESHOLD = 3  # Lower for testing
+
+        # First 3 steps: A (auto-advance)
+        for _ in range(3):
+            result = agent.step()
+        self.assertIn("[auto-advance: a]", result.llm_text)
+
+        # 4th step: should press B (escape attempt)
+        result = agent.step()
+        self.assertIn("[auto-advance: b]", result.llm_text)
+
+    def test_b_press_resets_auto_counter(self):
+        """After B escape attempt, consecutive counter resets."""
+        agent, _ = _make_agent()
+        self._set_dialog(agent.emulator)
+        agent.DIALOG_ESCAPE_THRESHOLD = 2
+
+        agent.step()  # a
+        agent.step()  # a
+        self.assertEqual(agent._consecutive_auto_a, 2)
+        agent.step()  # b (escape)
+        self.assertEqual(agent._consecutive_auto_a, 0)
+
+    def test_leaving_dialog_resets_counter(self):
+        """When exiting dialog to overworld, auto counter resets."""
+        agent, _ = _make_agent()
+        self._set_dialog(agent.emulator)
+        agent.step()
+        agent.step()
+        self.assertEqual(agent._consecutive_auto_a, 2)
+
+        # Switch to overworld
+        self._clear_menu_state(agent.emulator)
+        agent.step()  # This calls LLM
+        self.assertEqual(agent._consecutive_auto_a, 0)
+
+    def test_auto_advance_still_increments_step_count(self):
+        """Auto-advance steps still count toward step_count."""
+        agent, _ = _make_agent()
+        self._set_dialog(agent.emulator)
+        agent.step()
+        agent.step()
+        self.assertEqual(agent.step_count, 2)
+
+    def test_auto_advance_fires_callback(self):
+        """Step callbacks fire for auto-advance steps too."""
+        captured = []
+        agent, _ = _make_agent()
+        agent.on_step(lambda r: captured.append(r.step_number))
+        self._set_dialog(agent.emulator)
+        agent.step()
+        agent.step()
+        self.assertEqual(captured, [1, 2])
+
+    def test_mixed_auto_and_llm_steps(self):
+        """Agent transitions between auto and LLM steps correctly."""
+        agent, llm = _make_agent()
+
+        # Step 1: dialog (auto)
+        self._set_dialog(agent.emulator)
+        r1 = agent.step()
+        self.assertEqual(llm.call_count, 0)
+
+        # Step 2: overworld (LLM)
+        self._clear_menu_state(agent.emulator)
+        r2 = agent.step()
+        self.assertEqual(llm.call_count, 1)
+
+        # Step 3: dialog again (auto)
+        self._set_dialog(agent.emulator)
+        r3 = agent.step()
+        self.assertEqual(llm.call_count, 1)  # Still 1 — no new LLM call
+
+    def test_auto_advance_zero_tokens(self):
+        """Auto-advance steps use 0 tokens."""
+        agent, _ = _make_agent()
+        self._set_dialog(agent.emulator)
+        agent.step()
+        agent.step()
+        agent.step()
+        self.assertEqual(agent.total_input_tokens, 0)
+        self.assertEqual(agent.total_output_tokens, 0)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -33,7 +33,7 @@ from config import (
     TEMPERATURE, STATE_DIR, SCREENSHOT_DIR, LOG_DIR,
 )
 from emulator_control import EmulatorControl
-from game_state import GameState, MapPosition
+from game_state import GameState, MapPosition, MenuState
 from memory_reader import MemoryReader
 from prompts import (
     SYSTEM_PROMPT, build_user_message, build_summary_request,
@@ -228,12 +228,84 @@ class CrystalAgent:
         self._last_positions: List[MapPosition] = []
         self._failed_strategies: List[List[str]] = []  # Track button sequences when stuck
 
+        # Auto-advance: skip LLM for mechanical actions (mewtoo pattern)
+        self._consecutive_auto_a: int = 0  # Consecutive auto A-presses
+        self.auto_advance_count: int = 0   # Total auto-advances this session
+        self.DIALOG_ESCAPE_THRESHOLD: int = 7  # After N auto-A, try B to escape
+
         # Callbacks
         self._on_step: Optional[Callable[[StepResult], None]] = None
 
     def on_step(self, callback: Callable[[StepResult], None]) -> None:
         """Register a callback that fires after each step."""
         self._on_step = callback
+
+    def _should_auto_advance(self, state: GameState) -> Optional[str]:
+        """Check if we can skip the LLM and auto-press a button.
+
+        Returns the button to press ("a" or "b") or None if LLM is needed.
+
+        Auto-advance conditions (from mewtoo patterns):
+        - DIALOG state: press A to advance text (no reasoning needed)
+        - POKEMON_CENTER state: press A to advance healing animation
+        - After 7+ consecutive auto-A presses in same state: press B to escape loops
+        """
+        if state.menu_state == MenuState.DIALOG:
+            if self._consecutive_auto_a >= self.DIALOG_ESCAPE_THRESHOLD:
+                return "b"  # Escape dialog loop
+            return "a"  # Advance text
+        if state.menu_state == MenuState.POKEMON_CENTER:
+            return "a"  # Advance healing animation
+
+        # Not an auto-advance situation — reset counter
+        self._consecutive_auto_a = 0
+        return None
+
+    def _auto_advance_step(self, state: GameState, button: str) -> StepResult:
+        """Execute a step without calling the LLM — just press the button.
+
+        This saves tokens for mechanical actions like advancing dialog text
+        or healing animations. The step still counts, still updates position
+        tracking, and still triggers callbacks/saves.
+        """
+        # Press the button
+        self.emulator.press(button)
+
+        # Track auto-advance stats
+        if button == "a":
+            self._consecutive_auto_a += 1
+        elif button == "b":
+            self._consecutive_auto_a = 0  # Reset after B escape attempt
+        self.auto_advance_count += 1
+
+        # Update position tracking (for stuck detection continuity)
+        self._last_positions.append(state.position)
+        max_track = self.stuck_threshold * 2
+        if len(self._last_positions) > max_track:
+            self._last_positions = self._last_positions[-max_track:]
+
+        # Periodic save still runs
+        if self.step_count % self.save_interval == 0:
+            self._save_state()
+
+        result = StepResult(
+            step_number=self.step_count,
+            state=state,
+            llm_text=f"[auto-advance: {button}]",
+            tool_calls=[ToolUse(id="auto", name="press_buttons",
+                                input={"buttons": [button]})],
+            tool_results=[{"pressed": [button], "count": 1, "auto": True}],
+            was_stuck=False,
+            was_summarized=False,
+            input_tokens=0,
+            output_tokens=0,
+        )
+
+        if self._on_step:
+            self._on_step(result)
+
+        logger.info("Step %d: auto-%s (dialog/healing)", self.step_count, button)
+        return result
 
     def step(self) -> StepResult:
         """Execute one agent step: observe -> think -> act.
@@ -244,6 +316,11 @@ class CrystalAgent:
 
         # 1. Read game state from RAM (ground truth)
         state = self.reader.read_game_state()
+
+        # 1.5. Auto-advance check: skip LLM for mechanical actions
+        auto_button = self._should_auto_advance(state)
+        if auto_button is not None:
+            return self._auto_advance_step(state, auto_button)
 
         # 2. Check if stuck
         stuck_turns = self._check_stuck(state.position)
@@ -262,6 +339,9 @@ class CrystalAgent:
             stuck_threshold=self.stuck_threshold,
         )
         self.messages.append(user_msg)
+
+        # Reset auto-advance counter (LLM is being called = not in auto-advance)
+        self._consecutive_auto_a = 0
 
         # 5. Call LLM
         if self.llm is None:
