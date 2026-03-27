@@ -290,13 +290,20 @@ def maybe_checkpoint(prev_state, curr_state, checkpoint_mgr, step: int) -> list[
     return [r.value for r in reasons]
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Pokemon Crystal emulator bridge for Claude Code")
+def build_parser() -> argparse.ArgumentParser:
+    """Build the argument parser for bridge.py."""
+    parser = argparse.ArgumentParser(description="Pokemon emulator bridge for Claude Code")
     parser.add_argument("--rom", default=DEFAULT_ROM, help="ROM path")
     parser.add_argument("--headless", action="store_true", help="No display window")
     parser.add_argument("--speed", type=int, default=1, help="Emulator speed (1=normal, 0=uncapped)")
     parser.add_argument("--load-state", type=str, default=None, help="Load a saved state on boot")
     parser.add_argument("--timeout", type=float, default=30.0, help="Seconds to wait for Claude Code action")
+    parser.add_argument("--no-boot", action="store_true", help="Skip boot sequence for Red games")
+    return parser
+
+
+def main():
+    parser = build_parser()
     args = parser.parse_args()
 
     # Create bridge directory
@@ -369,6 +376,15 @@ def main():
         # Let the game boot (title screen)
         print("Booting game (advancing 300 frames)...")
         emu.tick(300)
+
+        # Run boot sequence for Red games (automate intro to overworld)
+        if game_type == "red" and not args.no_boot:
+            from boot_sequence import run_boot_sequence
+            print("Running boot sequence (automating Pokemon Red intro)...")
+            boot_result = run_boot_sequence(emu, reader)
+            print(f"  Boot: {'SUCCESS' if boot_result['success'] else 'PARTIAL'}")
+            print(f"  Phases: {boot_result['phases_completed']}")
+            print(f"  Position: map {boot_result['final_map']}, {boot_result['final_position']}")
 
     print(f"\nBridge running. Waiting for Claude Code actions in: {BRIDGE_DIR}/")
     print(f"Timeout: {args.timeout}s per step")

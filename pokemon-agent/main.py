@@ -70,34 +70,50 @@ def parse_args(argv=None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def detect_game_type(rom_path: str) -> str:
+    """Detect game type from ROM file extension.
+
+    Returns 'red' for .gb, 'crystal' for .gbc, 'firered' for .gba.
+    Defaults to 'red' for unknown extensions.
+    """
+    rom_lower = rom_path.lower()
+    if rom_lower.endswith(".gbc"):
+        return "crystal"
+    elif rom_lower.endswith(".gba"):
+        return "firered"
+    else:
+        return "red"
+
+
 def main(argv=None) -> int:
-    """Run the Crystal agent."""
+    """Run the Pokemon agent."""
     args = parse_args(argv)
     setup_logging(LOG_DIR, verbose=args.verbose)
-    logger = logging.getLogger("crystal")
+    logger = logging.getLogger("pokemon")
 
     # Check ROM exists
     if not os.path.exists(args.rom):
         logger.error("ROM not found: %s", args.rom)
         print(f"Error: ROM file not found: {args.rom}")
-        print(f"Place your Pokemon Crystal ROM at: {os.path.abspath(args.rom)}")
+        print(f"Place your Pokemon ROM at: {os.path.abspath(args.rom)}")
         return 1
 
     # Create directories
     for d in (STATE_DIR, SCREENSHOT_DIR, LOG_DIR):
         os.makedirs(d, exist_ok=True)
 
+    game_type = detect_game_type(args.rom)
+    logger.info("Detected game type: %s", game_type)
+
     # Initialize emulator
     from emulator_control import EmulatorControl
-    from memory_reader import MemoryReader
-    from agent import CrystalAgent, AnthropicClient
+    from agent import AnthropicClient
 
     logger.info("Loading ROM: %s", args.rom)
     emu = EmulatorControl.from_rom(
         args.rom, headless=args.headless, speed=args.speed,
     )
     emu.set_state_dir(STATE_DIR)
-    reader = MemoryReader(emu)
 
     # Load saved state if requested
     if args.load_state:
@@ -123,12 +139,17 @@ def main(argv=None) -> int:
     else:
         logger.info("Offline mode — no LLM calls")
 
-    # Create agent
-    agent = CrystalAgent(
-        emulator=emu,
-        reader=reader,
-        llm=llm,
-    )
+    # Create game-specific agent
+    if game_type == "red":
+        from red_agent import RedAgent
+        auto_boot = not args.load_state  # Boot only if no saved state
+        agent = RedAgent(emulator=emu, llm=llm, auto_boot=auto_boot)
+        logger.info("RedAgent created (auto_boot=%s)", auto_boot)
+    else:
+        from memory_reader import MemoryReader
+        from agent import CrystalAgent
+        reader = MemoryReader(emu)
+        agent = CrystalAgent(emulator=emu, reader=reader, llm=llm)
 
     # Step callback for live progress
     def on_step(result):

@@ -19,7 +19,10 @@ from __future__ import annotations
 import os
 from typing import Optional
 
+import logging
+
 from agent import CrystalAgent, LLMClient, StepResult
+from boot_sequence import run_boot_sequence
 from checkpoint import CheckpointManager
 from collision_reader_red import CollisionReaderRed
 from config import (
@@ -31,6 +34,8 @@ from navigation import Navigator
 from text_reader_red import TextReaderRed
 from warp_data_red import WARP_TABLE, CONNECTION_TABLE
 import memory_reader_red as mrr
+
+logger = logging.getLogger("red_agent")
 
 
 class RedAgent(CrystalAgent):
@@ -48,6 +53,7 @@ class RedAgent(CrystalAgent):
         max_history: int = MAX_HISTORY,
         save_interval: int = SAVE_INTERVAL,
         stuck_threshold: int = STUCK_THRESHOLD,
+        auto_boot: bool = False,
     ):
         # Build Red-specific components
         reader = MemoryReaderRed(emulator)
@@ -78,6 +84,25 @@ class RedAgent(CrystalAgent):
         # Replace Crystal gym checkpoints with Red gym checkpoints
         self.checkpoint_mgr = CheckpointManager(emulator, state_dir=STATE_DIR)
         self._register_red_gyms()
+
+        # Boot sequence state
+        self.boot_result: Optional[dict] = None
+        if auto_boot:
+            self.boot()
+
+    def boot(self) -> dict:
+        """Run the boot sequence to automate the Pokemon Red intro.
+
+        Clears opening dialog, navigates Red's House, exits to Pallet Town.
+        Stores result in self.boot_result for inspection.
+        """
+        logger.info("Running boot sequence...")
+        self.boot_result = run_boot_sequence(self.emulator, self.reader)
+        if self.boot_result["success"]:
+            logger.info("Boot complete: %s", self.boot_result["phases_completed"])
+        else:
+            logger.warning("Boot partial: %s", self.boot_result["phases_completed"])
+        return self.boot_result
 
     def _register_red_gyms(self) -> None:
         """Register Pokemon Red gym map IDs for auto-checkpointing."""
