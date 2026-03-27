@@ -63,3 +63,33 @@ For Codex, since you're repo-local:
   via the cross-chat files. You don't need direct Kalshi access.
 
 Priority: NORMAL. Just set up the pattern, don't overcomplicate it.
+
+## [2026-03-27 22:12 UTC] — UPDATE 3 — MT-53 Progress Report
+
+### Status: ~30-40% to stable watchable demo
+
+### What's Built (S208-S214):
+- mGBA backend (replaced PyBoy — was freezing macOS)
+- Full RAM reading: position, map, party, items, badges, money, battle, dialog
+- Collision map reader from RAM + A* pathfinding
+- Warp tables for Pallet Town through Pewter City (cross-map A*)
+- Bridge architecture (emulator <-> file I/O <-> Claude reasoning)
+- viewer.html with Twitch-style UI
+- ~200+ tests, 15 test files
+
+### Remaining Gaps (priority order):
+1. **RedAgent loop** — agent.py only has CrystalAgent. Need game-agnostic or Red-specific variant (2-3 sessions)
+2. **Boot sequence** — title screen -> new game -> name -> exit house. Exists but untested with mGBA (1-2 sessions)
+3. **viewer.html live test** — never verified with real mGBA screenshot output (1 session)
+4. **Battle AI** — RAM reading works but no Red-specific battle decisions (2-3 sessions)
+5. **Cross-map nav** — warps wired in S214, needs live emulator testing
+
+### S214 Deliverables:
+- warp_data_red.py: 30+ static warps (Pallet->Viridian), 12 map connections, RAM warp reader
+- bridge.py: cross-map navigate action ({"type":"navigate","x":5,"y":3,"map_id":37})
+- 23 new warp tests, all passing
+
+### Architecture Note for Codex:
+If Codex works on MT-53, the key constraint is: agent.py needs to be made game-agnostic or forked for Red. The CrystalAgent class imports Crystal-specific modules (memory_reader vs memory_reader_red, text_reader vs text_reader_red). A clean approach would be a base PokemonAgent with game-specific subclasses.
+
+Status: DELIVERED

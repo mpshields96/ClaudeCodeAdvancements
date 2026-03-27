@@ -186,15 +186,16 @@ def execute_action(emu, action: dict, nav=None, collision_reader=None) -> dict:
             result = {"executed": "load", "error": str(e)}
 
     elif action_type == "navigate":
-        # A* pathfinding: move to a target tile on the current map
+        # A* pathfinding: move to a target tile, optionally cross-map
         target_x = action.get("x")
         target_y = action.get("y")
+        target_map = action.get("map_id")  # Optional: for cross-map navigation
         if nav is None or collision_reader is None:
             result = {"error": "navigate requires collision_reader (Red games only)"}
         elif target_x is None or target_y is None:
             result = {"error": "navigate requires x and y"}
         else:
-            result = _execute_navigate(emu, nav, collision_reader, target_x, target_y)
+            result = _execute_navigate(emu, nav, collision_reader, target_x, target_y, target_map)
 
     else:
         result = {"error": f"Unknown action type: {action_type}"}
@@ -202,11 +203,13 @@ def execute_action(emu, action: dict, nav=None, collision_reader=None) -> dict:
     return result
 
 
-def _execute_navigate(emu, nav, collision_reader, target_x: int, target_y: int) -> dict:
-    """Execute A* navigation to a target tile.
+def _execute_navigate(emu, nav, collision_reader, target_x: int, target_y: int,
+                      target_map: int = None) -> dict:
+    """Execute A* navigation to a target tile, optionally on a different map.
 
     Builds the collision map from current RAM state, runs A*, and
     executes the resulting path as directional button presses.
+    For cross-map navigation, uses warps and connections loaded at startup.
     """
     from navigation import Navigator
     from game_state import MapPosition
@@ -217,6 +220,10 @@ def _execute_navigate(emu, nav, collision_reader, target_x: int, target_y: int) 
     cur_x = emu.read_byte(mrr.PLAYER_X)
     cur_y = emu.read_byte(mrr.PLAYER_Y)
 
+    # Default target_map to current map (same-map navigation)
+    if target_map is None:
+        target_map = map_id
+
     # Build fresh collision map
     map_data = collision_reader.build_current_map()
     if not nav.has_map(map_id):
@@ -226,7 +233,7 @@ def _execute_navigate(emu, nav, collision_reader, target_x: int, target_y: int) 
         nav._maps[map_id] = map_data
 
     start = MapPosition(map_id=map_id, x=cur_x, y=cur_y)
-    goal = MapPosition(map_id=map_id, x=target_x, y=target_y)
+    goal = MapPosition(map_id=target_map, x=target_x, y=target_y)
 
     path = nav.find_path(start, goal)
     if path is None:
@@ -236,9 +243,11 @@ def _execute_navigate(emu, nav, collision_reader, target_x: int, target_y: int) 
     if len(path) == 0:
         return {"executed": "navigate", "steps": 0, "already_there": True}
 
-    # Execute each step
+    # Execute each step (skip warp markers — warps trigger automatically)
     directions = Navigator.path_to_directions(path)
     for direction in directions:
+        if direction == "warp":
+            continue  # Warp happens when player steps on the tile
         emu.press(direction, hold_frames=8, wait_frames=12)
 
     return {
@@ -328,6 +337,12 @@ def main():
         text_reader = TextReaderRed(emu)
         collision_reader = CollisionReaderRed(emu)
         nav = Navigator()
+        # Load static warps and connections for cross-map A*
+        from warp_data_red import WARP_TABLE, CONNECTION_TABLE
+        for warp in WARP_TABLE:
+            nav.add_warp(warp)
+        for conn in CONNECTION_TABLE:
+            nav.add_connection(conn)
     else:
         from memory_reader import MemoryReader
         from text_reader import TextReader

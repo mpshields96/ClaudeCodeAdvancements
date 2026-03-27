@@ -415,6 +415,72 @@ class TestBridgeNavigateAction(unittest.TestCase):
                 self.assertIn(d, ("up", "down", "left", "right"))
 
 
+class TestBridgeCrossMapNavigate(unittest.TestCase):
+    """Test cross-map navigation using warps loaded at bridge startup."""
+
+    def setUp(self):
+        self.emu = EmulatorControl.mock(ram_size=0x10000)
+        from collision_reader_red import CollisionReaderRed, MAP_HEIGHT, MAP_WIDTH
+        from navigation import Navigator
+        from warp_data_red import WARP_TABLE, CONNECTION_TABLE
+        self.collision_reader = CollisionReaderRed(self.emu)
+        self.nav = Navigator()
+        # Load warps and connections like bridge.py does at startup
+        for warp in WARP_TABLE:
+            self.nav.add_warp(warp)
+        for conn in CONNECTION_TABLE:
+            self.nav.add_connection(conn)
+        # Set up Pallet Town: 10x9 blocks = 20x18 tiles
+        self.emu.write_byte(MAP_HEIGHT, 9)
+        self.emu.write_byte(MAP_WIDTH, 10)
+        self.emu.write_byte(mrr.MAP_ID, 0)
+
+    def test_navigate_with_map_id_param(self):
+        """Navigate action accepts optional map_id for cross-map goals."""
+        # Player at (5, 4) in Pallet Town, near Red's House door
+        self.emu.write_byte(mrr.PLAYER_X, 5)
+        self.emu.write_byte(mrr.PLAYER_Y, 4)
+        # Build map data so Navigator has it
+        map_data = self.collision_reader.build_current_map()
+        self.nav.add_map(map_data)
+        # Add Red's House as a destination map with walkable floors
+        from navigation import MapData, TileType
+        reds_house = MapData(map_id=37, name="Red's House 1F", width=8, height=8)
+        for y in range(8):
+            for x in range(8):
+                reds_house.set_tile(x, y, TileType.FLOOR)
+        self.nav.add_map(reds_house)
+
+        action = {"type": "navigate", "x": 4, "y": 4, "map_id": 37}
+        result = bridge.execute_action(
+            self.emu, action, nav=self.nav, collision_reader=self.collision_reader
+        )
+        self.assertEqual(result["executed"], "navigate")
+        # Should either find a path or report no path (depends on tile walkability)
+        self.assertIn("steps", result)
+
+    def test_navigate_defaults_to_current_map(self):
+        """Without map_id, navigate targets current map (backward compatible)."""
+        self.emu.write_byte(mrr.PLAYER_X, 1)
+        self.emu.write_byte(mrr.PLAYER_Y, 1)
+        action = {"type": "navigate", "x": 3, "y": 1}
+        result = bridge.execute_action(
+            self.emu, action, nav=self.nav, collision_reader=self.collision_reader
+        )
+        self.assertEqual(result["executed"], "navigate")
+
+    def test_warps_loaded_in_navigator(self):
+        """Navigator should have warps loaded from warp_data_red."""
+        self.assertGreater(len(self.nav._warps), 0)
+        self.assertGreater(len(self.nav._connections), 0)
+
+    def test_warp_index_populated(self):
+        """Warp index should have entries for Pallet Town door tiles."""
+        # Pallet Town door to Red's House at (5, 5)
+        key = (0, 5, 5)
+        self.assertIn(key, self.nav._warp_index)
+
+
 class TestMGBABackendImport(unittest.TestCase):
     """Test that mGBA backend class exists and has correct interface."""
 
