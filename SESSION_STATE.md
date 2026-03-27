@@ -3,21 +3,27 @@
 
 ---
 
-## Current State (as of Session 216 — 2026-03-27)
+## Current State (as of Session 217 — 2026-03-27)
 
-**Phase:** Session 216 COMPLETE. MT-53: Battle AI wired into RedAgent.step, Gen 1 move data table, enemy type reading, Kalshi PCT cap analysis
+**Phase:** Session 217 COMPLETE. MT-53: Massive battle AI + data expansion — 7 deliverables, 8 commits
 
-**What was done this session (S216):**
-- Battle AI fully wired — deterministic battles work e2e with type effectiveness
-- Gen 1 move data table (165 moves) replaces hardcoded power=0
-- Kalshi PCT cap analysis delivered (raise 8% to 10%)
-- 5 commits, 22 new tests, 0 regressions
-- **Tests**: 327 suites, 11724 tests passing. All green.
+**What was done this session (S217):**
+- Species-to-type table: 151 Gen 1 Pokemon static type lookup + RAM fallback (species_types.py)
+- Enemy move + stat reading: full move data + attack/defense/speed/special from battle RAM
+- Threat assessment: assess_threat() + threat-based fleeing for wild battles
+- XP reading: 3-byte experience from party struct
+- Item inventory: ITEM_NAMES table, _read_items(), Item dataclass in game_state.py
+- Battle AI potion use: best_potion() smart selection, <25% HP auto-heal
+- Pokeball throw + catch logic: best_pokeball(), should_catch(), catch before fight in wild battles
+- Threat logging in RedAgent battle output
+- 8 commits, 55+ new tests, 0 regressions
+- **Tests**: 28 pokemon-agent suites all pass. All green.
 
 **Next:**
-1. Live emulator testing with real ROM
-2. Agent loop testing through boot + first encounters
-3. Species-to-type table for Pokemon types outside battle
+1. Live emulator testing with real ROM — run bridge.py + viewer.html
+2. Agent loop testing — run RedAgent with offline mode through boot + first encounters
+3. Pokemon switch logic in battle AI (swap to type advantage)
+4. Smarter catch decisions (use stronger balls for rarer/higher-level Pokemon)
 
 ---
 
