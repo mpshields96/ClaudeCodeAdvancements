@@ -39,6 +39,28 @@ class CheckpointReason(Enum):
 # Default cooldown: minimum steps between checkpoints of the same reason
 DEFAULT_COOLDOWN = 10
 
+# Pokemon Crystal gym map IDs (group << 8 | number)
+# Source: pret/pokecrystal maps/
+CRYSTAL_GYM_MAPS = {
+    0x0304: "Violet City Gym (Falkner)",
+    0x0605: "Azalea Town Gym (Bugsy)",
+    0x0709: "Goldenrod City Gym (Whitney)",
+    0x0905: "Ecruteak City Gym (Morty)",
+    0x0A06: "Cianwood City Gym (Chuck)",
+    0x0A04: "Olivine City Gym (Jasmine)",
+    0x0B04: "Mahogany Town Gym (Pryce)",
+    0x0C06: "Blackthorn City Gym (Clair)",
+    # Kanto gyms
+    0x0207: "Pewter City Gym (Brock)",
+    0x0306: "Cerulean City Gym (Misty)",
+    0x0504: "Vermilion City Gym (Lt. Surge)",
+    0x0706: "Celadon City Gym (Erika)",
+    0x0806: "Fuchsia City Gym (Janine)",
+    0x0905: "Saffron City Gym (Sabrina)",
+    0x0103: "Viridian City Gym (Blue)",
+    0x0A03: "Cinnabar Gym (Blaine)",
+}
+
 
 class CheckpointManager:
     """Manages automatic save-state checkpoints.
@@ -69,6 +91,11 @@ class CheckpointManager:
     def register_gym_map(self, map_id: int) -> None:
         """Register a map ID as a gym (triggers GYM_LEADER checkpoints)."""
         self._gym_maps.add(map_id)
+
+    def register_crystal_gyms(self) -> None:
+        """Register all Pokemon Crystal gym map IDs."""
+        for map_id in CRYSTAL_GYM_MAPS:
+            self._gym_maps.add(map_id)
 
     def should_checkpoint(
         self, prev_state: GameState, curr_state: GameState,

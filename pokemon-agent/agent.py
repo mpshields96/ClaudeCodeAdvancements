@@ -255,6 +255,7 @@ class CrystalAgent:
 
         # Checkpoint manager: auto-save before risky actions
         self.checkpoint_mgr = CheckpointManager(emulator, state_dir=STATE_DIR)
+        self.checkpoint_mgr.register_crystal_gyms()
 
         # Text reader: extract on-screen text from RAM
         self.text_reader = TextReader(emulator)
@@ -665,6 +666,8 @@ class CrystalAgent:
             result = self._tool_navigate_to(tool_use.input)
         elif tool_use.name == "wait":
             result = self._tool_wait(tool_use.input)
+        elif tool_use.name == "reload_checkpoint":
+            result = self._tool_reload_checkpoint(tool_use.input)
         else:
             return {"error": f"Unknown tool: {tool_use.name}"}
 
@@ -724,6 +727,26 @@ class CrystalAgent:
         frames = input_data.get("frames", 60)
         self.emulator.tick(frames)
         return {"waited_frames": frames}
+
+    def _tool_reload_checkpoint(self, input_data: dict) -> dict:
+        """Reload the most recent checkpoint."""
+        reason = input_data.get("reason", "unknown")
+        latest = self.checkpoint_mgr.latest_checkpoint()
+        if latest is None:
+            return {"error": "No checkpoint available to reload"}
+
+        try:
+            # Extract the state name from the path
+            name = os.path.basename(latest["path"]).replace(".state", "")
+            self.emulator.load_state(name)
+            logger.info("Reloaded checkpoint step %d: %s", latest["step"], reason)
+            return {
+                "reloaded": True,
+                "checkpoint_step": latest["step"],
+                "reason": reason,
+            }
+        except Exception as e:
+            return {"error": f"Failed to reload: {e}"}
 
     def _verify_action(
         self,

@@ -11,8 +11,8 @@ from tools import (
 class TestToolDefinitions(unittest.TestCase):
     """Validate tool schema structure for Claude API."""
 
-    def test_tools_list_has_3_tools(self):
-        self.assertEqual(len(TOOLS), 3)
+    def test_tools_list_has_4_tools(self):
+        self.assertEqual(len(TOOLS), 4)
 
     def test_all_tools_have_name(self):
         for tool in TOOLS:
@@ -33,7 +33,7 @@ class TestToolDefinitions(unittest.TestCase):
             self.assertIn("properties", schema)
 
     def test_tool_names_match_index(self):
-        self.assertEqual(TOOL_NAMES, frozenset(["press_buttons", "navigate_to", "wait"]))
+        self.assertEqual(TOOL_NAMES, frozenset(["press_buttons", "navigate_to", "wait", "reload_checkpoint"]))
         self.assertEqual(set(TOOL_INDEX.keys()), set(TOOL_NAMES))
 
     def test_press_buttons_schema(self):

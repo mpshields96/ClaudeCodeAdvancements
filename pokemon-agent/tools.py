@@ -97,9 +97,30 @@ WAIT = {
 }
 
 
+RELOAD_CHECKPOINT = {
+    "name": "reload_checkpoint",
+    "description": (
+        "Reload the most recent save-state checkpoint. Use this when: "
+        "your entire party has fainted, you lost a gym leader battle and "
+        "want to retry, or you're in an unrecoverable situation. "
+        "The game will rewind to the last auto-saved checkpoint."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "reason": {
+                "type": "string",
+                "description": "Why you're reloading (for logging).",
+            },
+        },
+        "required": ["reason"],
+    },
+}
+
+
 # ── Tool list for Claude API ─────────────────────────────────────────────────
 
-TOOLS = [PRESS_BUTTONS, NAVIGATE_TO, WAIT]
+TOOLS = [PRESS_BUTTONS, NAVIGATE_TO, WAIT, RELOAD_CHECKPOINT]
 
 # Tool name -> definition lookup
 TOOL_INDEX = {t["name"]: t for t in TOOLS}
