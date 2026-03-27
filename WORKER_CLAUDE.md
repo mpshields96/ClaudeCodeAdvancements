@@ -22,13 +22,13 @@ You DO:
 - Report completion via: `python3 cca_comm.py done "summary of what was done"`
 - Claim scopes before working: `python3 cca_comm.py claim "module/feature" file1.py file2.py`
 - Release scopes when done: `python3 cca_comm.py release "module/feature"`
-- Ask questions via: `python3 cca_comm.py say "question about X" --to desktop`
+- Ask questions via: `python3 cca_comm.py say desktop "question about X"`
 
 ---
 
 ## Session Start Protocol
 
-1. Set your identity: `export CCA_CHAT_ID=cli1` (or cli2)
+1. Set your identity: `export CCA_CHAT_ID=cli1` (or `cli2`; Codex sessions should use `codex`)
 2. Check your inbox: `python3 cca_comm.py inbox`
 3. Read any assigned tasks
 4. Run all tests to verify green baseline
@@ -47,8 +47,8 @@ All communication goes through the queue (cca_internal_queue.jsonl):
 | Claim scope | `python3 cca_comm.py claim "description" file1.py file2.py` |
 | Release scope | `python3 cca_comm.py release "description"` |
 | Report done | `python3 cca_comm.py done "summary"` |
-| Ask question | `python3 cca_comm.py say "message"` |
-| Send status | `python3 cca_comm.py status "what I'm doing"` |
+| Ask question | `python3 cca_comm.py say desktop "message"` |
+| Check queue status | `python3 cca_comm.py status` |
 
 ---
 
@@ -93,7 +93,7 @@ Report findings via queue. Do NOT write code unless explicitly asked.
 
 ## What To Do When Blocked
 
-1. Send a question via queue: `python3 cca_comm.py say "blocked on X because Y"`
+1. Send a question via queue: `python3 cca_comm.py say desktop "blocked on X because Y"`
 2. If no response within 5 minutes, move to any secondary task if one was assigned
 3. If no secondary task, report status and wait
 4. NEVER guess or make assumptions about architectural decisions — ask

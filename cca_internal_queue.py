@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-cca_internal_queue.py — CCA Desktop <-> CCA Terminal Communication Queue
+cca_internal_queue.py — CCA Internal Communication Queue
 
-Problem: Two CCA chats run in parallel (desktop + terminal). Without
+Problem: Multiple CCA chats run in parallel (desktop, workers, and Codex). Without
 coordination, they step on each other's files, duplicate work, or miss
 handoff requests. The CCA-Kalshi cross_chat_queue.py solved the same
 problem for inter-project communication — this steals that technology
@@ -64,6 +64,7 @@ VALID_CHATS = {
     "terminal": "CCA Terminal",
     "cli1": "CCA CLI 1",
     "cli2": "CCA CLI 2",
+    "codex": "Codex",
 }
 
 VALID_PRIORITIES = ["critical", "high", "medium", "low"]
@@ -159,8 +160,8 @@ def send_message(
     Send a message from one CCA chat to another.
 
     Args:
-        sender: Chat ID (desktop, terminal)
-        target: Chat ID (desktop, terminal)
+        sender: Chat ID (desktop, terminal, cli1, cli2, codex)
+        target: Chat ID (desktop, terminal, cli1, cli2, codex)
         subject: Short summary (one line)
         body: Full details
         priority: critical/high/medium/low
@@ -602,7 +603,7 @@ def hivemind_preflight(
     4. Active scope warnings
 
     Args:
-        chat_id: This chat's ID (desktop, cli1, cli2). If empty, reads CCA_CHAT_ID.
+        chat_id: This chat's ID (desktop, terminal, cli1, cli2, codex). If empty, reads CCA_CHAT_ID.
         auto_expire: Whether to auto-release stale scopes (>30 min).
         path: Queue file path.
 

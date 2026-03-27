@@ -16,6 +16,38 @@ Branch: codex/<task-name>
 Push: yes/no
 ```
 
+## Start a new chat when
+
+- We finish a branch or 1-2 substantive tasks
+- I start re-reading the same files or need old context re-pasted
+- The thread accumulates lots of logs, handoffs, or mixed topics
+- You want a clean repo/task handoff with minimal token waste
+- The working context feels muddy; start fresh with repo + task + branch + latest commit
+
+## Codex session ritual
+
+1. Init
+   - Read `AGENTS.md`
+   - Read the authoritative state file
+   - In CCA, read `TODAYS_TASKS.md` when present
+   - Check `git status` / `git log`
+2. Auto
+   - Work in focused loops
+   - Use default reasoning unless I explicitly recommend high
+   - Keep scope narrow, test when practical, commit clearly
+3. Wrap
+   - Summarize what changed
+   - Report tests run and current branch
+   - Call out open risks or blockers
+   - Prepare a short relay message for Claude Code when useful
+
+## Codex self-learning
+
+- Read-only study of Claude-built tools, docs, and patterns is encouraged
+- Distill stable lessons into `CODEX_LEARNINGS.md`
+- Prefer cloning useful patterns into Codex-owned docs/workflows instead of mutating Claude-owned infrastructure
+- Keep the learned rules lightweight, practical, and repo-local
+
 ## Safe commands (always okay)
 
 ```

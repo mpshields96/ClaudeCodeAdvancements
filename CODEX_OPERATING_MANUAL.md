@@ -121,6 +121,56 @@ Do not add a coordination file yet.
 If Phase 2 is ever needed, prefer one append-only `AGENT_LOG.md`, not separate
 inbox/outbox files.
 
+## Codex Init / Auto / Wrap Emulation
+
+Codex should mirror the useful parts of CCA's workflow without pretending the
+platform hooks are identical.
+
+Init:
+- Read `AGENTS.md`
+- Read the authoritative state file
+- In CCA, read `TODAYS_TASKS.md` when present
+- Check `git status` and recent `git log`
+- State repo, reasoning level, risk profile, and file scope before substantive work
+
+Auto:
+- Work in focused loops on one task at a time
+- Prefer default reasoning unless the task justifies high
+- Keep edits narrow, validate with local tests when practical, and use branch-first workflow
+- Use commit messages as durable handoff notes to Claude Code
+
+Wrap:
+- Stop before context gets muddy
+- Summarize outcome, tests, open issues, and next best step
+- Prepare a short relay message for Matthew / Claude Code when needed
+- Distill durable lessons into `CODEX_LEARNINGS.md` when they are likely to matter again
+
+## Context Reset Guidance
+
+Start a fresh Codex chat when:
+- a branch or substantive task is complete
+- the conversation has mixed multiple repos or goals
+- large logs or long pasted context are crowding out the active task
+- Codex starts needing old context re-pasted
+- Matthew wants a clean handoff with repo + task + branch + latest commit
+
+Default heuristic:
+- stay in the current chat for one focused task or one branch
+- start a new chat when the work meaningfully changes direction
+
+## Self-Learning Emulation
+
+Codex cannot replicate Claude Code's full hook/memory stack from inside a
+session, but it can emulate the valuable parts locally:
+
+- Study Claude-built repo tools and docs in read-only mode
+- Reuse patterns that are objectively helpful
+- Capture stable lessons in Codex-owned docs
+- Favor small, durable heuristics over giant memory dumps
+
+`CODEX_LEARNINGS.md` is the local reference for durable Codex-specific lessons,
+workflow heuristics, and recurring gotchas worth reusing across sessions.
+
 ## Role Split
 
 Claude Code owns:
@@ -216,4 +266,3 @@ High-value use cases:
 Lower-value use cases:
 - Recreating Claude-specific hook ecosystems from scratch unless assigned
 - Owning long-running project memory/state infrastructure
-

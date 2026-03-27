@@ -3471,3 +3471,22 @@ CLI chat 2:
 - None significant
 
 ---
+
+## Session 212 — 2026-03-27
+
+**What changed:**
+- Built mGBA 0.10.5 from source on Apple Silicon - no more freezing
+- TextReaderRed with 12 tests wired into bridge.py
+- Kalshi PCT cap analysis delivered (UPDATE 61, +25% revenue)
+- Codex bidirectional comms established
+
+**Why:**
+- mGBA backend (ditched PyBoy), TextReaderRed, Kalshi PCT analysis, Codex comms
+
+**Tests:** 11546/11546 passing (317 suites)
+
+**Lessons:**
+- Tried pip install mgba before source build
+- Should have pivoted from PyBoy earlier
+
+---

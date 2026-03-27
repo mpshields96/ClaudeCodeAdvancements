@@ -3,24 +3,52 @@
 
 ---
 
-## Current State (as of Session 211 — 2026-03-27)
+## Current State (as of Session 212 — 2026-03-27)
 
-**Phase:** Session 211 COMPLETE. MT-53: Fixed menu detection, verified boot navigation with real ROM, working viewer.html, Codex safe approvals
+**Phase:** Session 212 COMPLETE. mGBA backend (ditched PyBoy), TextReaderRed, Kalshi PCT analysis, Codex comms
 
-**What was done this session (S211):**
-- Fixed menu state detection (JOY_DISABLED bit 5 vs stale TEXTBOX_ID)
-- Verified boot_sequence navigates 2F->1F->Pallet Town in 19 steps with real ROM
-- viewer.html fully working with auto-polling
-- Codex safe approvals: QUICKSTART.md + operating manual update
-- **Tests**: 316 suites, 11530 tests passing. All green.
+**What was done this session (S212):**
+- Built mGBA 0.10.5 from source on Apple Silicon - no more freezing
+- TextReaderRed with 12 tests wired into bridge.py
+- Kalshi PCT cap analysis delivered (UPDATE 61, +25% revenue)
+- Codex bidirectional comms established
+- **Tests**: 317 suites, 11546 tests passing. All green.
 
 **Next:**
-1. Port A* pathfinding from reference repos
-2. Test boot from cold ROM (title screen -> overworld)
-3. Wire Claude agent loop to bridge
+1. Merge codex branch to main
+2. Test bridge.py end-to-end with mGBA
+3. Wire collision maps for A* in live play
+4. Run /pokemon-play demo
 
 ---
 
+## Previous State (Session 212 — 2026-03-27)
+
+**Phase:** Session 212 COMPLETE. MT-53: mGBA backend (ditched PyBoy), TextReaderRed, Kalshi PCT analysis, Codex comms.
+
+**What was done this session (S212):**
+- EMULATOR SWAP: Ditched PyBoy (freezes macOS). Built mGBA 0.10.5 from source, Apple Silicon arm64. MGBABackend in emulator_control.py. 42 tests pass. ROM loads, frames, buttons, RAM, screenshots all verified.
+- TextReaderRed: Pokemon Red dialog from tilemap buffer (0xC3A0-0xC507). 12 tests. Wired into bridge.py.
+- Kalshi: PCT cap analysis delivered (UPDATE 61). Recommend 8%->10% (+25% revenue).
+- Codex comms: CLAUDE_TO_CODEX.md created. Bidirectional protocol established.
+- Branch: codex/codex-loop-scaffold (4 commits total: 1 Codex + 3 Claude Code S212)
+
+**Next:**
+1. Merge codex/codex-loop-scaffold -> main
+2. Test full bridge.py with mGBA backend (boot -> title -> gameplay)
+3. Wire collision map extraction from mGBA RAM for A* in live play
+4. Run /pokemon-play end-to-end demo with mGBA
+
+**Key file paths changed:**
+- `pokemon-agent/emulator_control.py` — MGBABackend added, from_rom defaults to mGBA
+- `pokemon-agent/mgba_bindings/` — mGBA Python bindings (built from source)
+- `pokemon-agent/text_reader_red.py` — New: dialog reader for Pokemon Red
+- `pokemon-agent/test_text_reader_red.py` — 12 tests for text reader
+- `pokemon-agent/bridge.py:236-238` — TextReaderRed wired in for Red ROMs
+- `CLAUDE_TO_CODEX.md` — New: Claude Code -> Codex comms outbox
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md` — UPDATE 61: PCT cap analysis
+
+---
 ## Previous State (Session 211 — 2026-03-27)
 
 **Phase:** Session 211 COMPLETE. MT-53: Real ROM validation + viewer working + Codex safe approvals

@@ -31,6 +31,10 @@ class TestDetectChatId(unittest.TestCase):
         with patch.dict(os.environ, {"CCA_CHAT_ID": "cli2"}):
             self.assertEqual(cca_comm.detect_chat_id(), "cli2")
 
+    def test_env_var_codex(self):
+        with patch.dict(os.environ, {"CCA_CHAT_ID": "codex"}):
+            self.assertEqual(cca_comm.detect_chat_id(), "codex")
+
     def test_invalid_env_var_falls_back(self):
         with patch.dict(os.environ, {"CCA_CHAT_ID": "bogus"}):
             self.assertEqual(cca_comm.detect_chat_id(), "desktop")
@@ -153,12 +157,13 @@ class TestClaim(unittest.TestCase):
     def test_claim_sends_to_all_others(self):
         cca_comm.cmd_claim(["cca-loop"])
         msgs = ciq._load_queue(self.path)
-        # desktop -> cli1, cli2, terminal (3 others)
-        self.assertEqual(len(msgs), 3)
+        # desktop -> cli1, cli2, terminal, codex (4 others)
+        self.assertEqual(len(msgs), 4)
         targets = {m["target"] for m in msgs}
         self.assertNotIn("desktop", targets)
         self.assertIn("cli1", targets)
         self.assertIn("cli2", targets)
+        self.assertIn("codex", targets)
         for m in msgs:
             self.assertEqual(m["category"], "scope_claim")
 
@@ -179,7 +184,7 @@ class TestRelease(unittest.TestCase):
     def test_release_sends_to_all_others(self):
         cca_comm.cmd_release(["cca-loop"])
         msgs = ciq._load_queue(self.path)
-        self.assertEqual(len(msgs), 3)
+        self.assertEqual(len(msgs), 4)
         for m in msgs:
             self.assertEqual(m["category"], "scope_release")
         targets = {m["target"] for m in msgs}
@@ -252,7 +257,7 @@ class TestBroadcast(unittest.TestCase):
     def test_broadcast_sends_to_all_others(self):
         cca_comm.cmd_broadcast(["wrap", "time"])
         msgs = ciq._load_queue(self.path)
-        self.assertEqual(len(msgs), 3)  # cli1, cli2, terminal
+        self.assertEqual(len(msgs), 4)  # cli1, cli2, terminal, codex
         targets = {m["target"] for m in msgs}
         self.assertNotIn("desktop", targets)
 
@@ -529,6 +534,7 @@ class TestCrossProjectRouting(unittest.TestCase):
         all_targets = cca_comm.all_valid_targets()
         self.assertIn("desktop", all_targets)
         self.assertIn("cli1", all_targets)
+        self.assertIn("codex", all_targets)
         self.assertIn("km", all_targets)
         self.assertIn("kr", all_targets)
 
