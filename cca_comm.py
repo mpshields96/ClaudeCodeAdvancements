@@ -35,7 +35,7 @@ import cca_internal_queue as ciq
 import cross_chat_queue as ccq
 
 
-ALL_CHAT_IDS = ["desktop", "cli1", "cli2", "terminal"]
+ALL_CHAT_IDS = ["desktop", "cli1", "cli2", "terminal", "codex"]
 
 # Kalshi chat IDs — routed through cross_chat_queue instead of internal queue
 KALSHI_CHAT_IDS = {"km", "kr"}
@@ -80,8 +80,8 @@ def detect_chat_id() -> str:
     if tmux_pane or term_program in ("Apple_Terminal", "iTerm.app", "iTerm2"):
         # We're in a terminal but don't know which CLI worker
         print(
-            "WARNING: CCA_CHAT_ID not set. Cannot determine if you are cli1 or cli2.\n"
-            "  Set it with: export CCA_CHAT_ID=cli1  (or cli2)\n"
+            "WARNING: CCA_CHAT_ID not set. Cannot determine which CCA identity you are.\n"
+            "  Set it with: export CCA_CHAT_ID=cli1  (or cli2 / codex)\n"
             "  Or specify target: python3 cca_comm.py inbox cli1\n",
             file=sys.stderr,
         )
@@ -468,7 +468,7 @@ def main():
         print("  broadcast <msg>         Send to all other chats")
         print("  context [n]             Show recent commits, scopes, queue stats")
         print()
-        print("Set CCA_CHAT_ID env var to identify yourself (desktop/cli1/cli2)")
+        print("Set CCA_CHAT_ID env var to identify yourself (desktop/cli1/cli2/terminal/codex)")
         print(f"Current: {detect_chat_id()}")
         sys.exit(1)
 

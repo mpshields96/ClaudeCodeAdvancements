@@ -299,15 +299,15 @@ class TestMainCLI(QueueTestCase):
 class TestScopeDedup(QueueTestCase):
     """Test that broadcast scope claims are deduplicated.
 
-    S86 bug: cmd_claim sends to 3 targets (cli1, cli2, terminal).
+    S86 bug: cmd_claim sends to all other chats.
     get_active_scopes was counting each as a separate scope.
     Fixed with (sender, subject) dedup.
     """
 
     def test_broadcast_claim_counted_once(self):
-        """A claim broadcast to 3 targets should show as 1 active scope."""
+        """A claim broadcast to all other chats should show as 1 active scope."""
         # Simulate what cmd_claim does: sends to all other chats
-        for target in ["cli1", "cli2", "terminal"]:
+        for target in ["cli1", "cli2", "terminal", "codex"]:
             ciq.send_message("desktop", target, "agent-guard/",
                             category="scope_claim", files=["agent-guard/"],
                             path=self.path)
@@ -808,8 +808,8 @@ class TestClaimWithFiles(QueueTestCase):
     def test_claim_with_files(self):
         cca_comm.cmd_claim(["agent-guard", "agent-guard/bash_guard.py,agent-guard/path_validator.py"])
         msgs = ciq._load_queue(self.path)
-        # Should have sent to 3 other chats
-        self.assertEqual(len(msgs), 3)
+        # Should have sent to 4 other chats
+        self.assertEqual(len(msgs), 4)
         for m in msgs:
             self.assertEqual(m["files"], ["agent-guard/bash_guard.py", "agent-guard/path_validator.py"])
             self.assertEqual(m["category"], "scope_claim")
@@ -818,7 +818,7 @@ class TestClaimWithFiles(QueueTestCase):
     def test_claim_without_files(self):
         cca_comm.cmd_claim(["agent-guard"])
         msgs = ciq._load_queue(self.path)
-        self.assertEqual(len(msgs), 3)
+        self.assertEqual(len(msgs), 4)
         for m in msgs:
             # When no files specified, send_message doesn't add "files" key
             # (empty list is falsy, so `if files:` skips it)
@@ -872,22 +872,23 @@ class TestBroadcastCommand(QueueTestCase):
 
     @patch.dict(os.environ, {"CCA_CHAT_ID": "cli1"})
     def test_broadcast_from_worker(self):
-        """Worker broadcast should go to desktop, cli2, and terminal (3 targets)."""
+        """Worker broadcast should go to desktop, cli2, terminal, and codex."""
         cca_comm.cmd_broadcast(["wrap", "time"])
         msgs = ciq._load_queue(self.path)
-        self.assertEqual(len(msgs), 3)
+        self.assertEqual(len(msgs), 4)
         targets = {m["target"] for m in msgs}
         self.assertNotIn("cli1", targets)  # shouldn't send to self
         self.assertIn("desktop", targets)
         self.assertIn("cli2", targets)
         self.assertIn("terminal", targets)
+        self.assertIn("codex", targets)
 
     @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
     def test_broadcast_prints_count(self):
         f = io.StringIO()
         with redirect_stdout(f):
             cca_comm.cmd_broadcast(["test", "msg"])
-        self.assertIn("3 chats", f.getvalue())
+        self.assertIn("4 chats", f.getvalue())
 
 
 # ============================================================================
@@ -1342,13 +1343,14 @@ class TestMessageIdUniqueness(QueueTestCase):
     def test_ids_from_different_senders_unique(self):
         """Same subject from different senders should have unique IDs."""
         ids = set()
-        for sender in ["desktop", "cli1", "cli2", "terminal"]:
-            for target in ["desktop", "cli1", "cli2", "terminal"]:
+        chats = ["desktop", "cli1", "cli2", "terminal", "codex"]
+        for sender in chats:
+            for target in chats:
                 if sender != target:
                     msg = ciq.send_message(sender, target, "same-subject", path=self.path)
                     ids.add(msg["id"])
-        # 4 senders * 3 targets each = 12 unique messages
-        self.assertEqual(len(ids), 12)
+        # 5 senders * 4 targets each = 20 unique messages
+        self.assertEqual(len(ids), 20)
 
 
 # ============================================================================
@@ -1399,10 +1401,10 @@ class TestStaleExpiryWithDedup(QueueTestCase):
     """Test expire_stale_scopes interacts correctly with broadcast dedup."""
 
     def test_expire_broadcast_claim(self):
-        """A broadcast scope claim (3 messages) should expire as one scope."""
+        """A broadcast scope claim should expire as one scope."""
         old_time = (datetime.now(timezone.utc) - timedelta(minutes=45)).isoformat()
-        # Simulate broadcast claim: same sender, same subject, 3 targets
-        for target in ["cli1", "cli2", "terminal"]:
+        # Simulate broadcast claim: same sender, same subject, all other targets
+        for target in ["cli1", "cli2", "terminal", "codex"]:
             msg = {
                 "id": f"cca_old_{target}",
                 "sender": "desktop",

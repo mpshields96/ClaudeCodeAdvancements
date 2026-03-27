@@ -64,6 +64,7 @@ VALID_CHATS = {
     "terminal": "CCA Terminal",
     "cli1": "CCA CLI 1",
     "cli2": "CCA CLI 2",
+    "codex": "Codex",
 }
 
 VALID_PRIORITIES = ["critical", "high", "medium", "low"]

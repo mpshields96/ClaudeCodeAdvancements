@@ -486,12 +486,13 @@ class TestMakeId(unittest.TestCase):
 
 
 class TestValidConstants(unittest.TestCase):
-    def test_valid_chats_has_four(self):
-        self.assertEqual(len(ciq.VALID_CHATS), 4)
+    def test_valid_chats_has_five(self):
+        self.assertEqual(len(ciq.VALID_CHATS), 5)
         self.assertIn("desktop", ciq.VALID_CHATS)
         self.assertIn("terminal", ciq.VALID_CHATS)
         self.assertIn("cli1", ciq.VALID_CHATS)
         self.assertIn("cli2", ciq.VALID_CHATS)
+        self.assertIn("codex", ciq.VALID_CHATS)
 
     def test_valid_priorities(self):
         self.assertEqual(ciq.VALID_PRIORITIES, ["critical", "high", "medium", "low"])

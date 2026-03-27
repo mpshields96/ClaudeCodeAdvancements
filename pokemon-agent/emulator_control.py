@@ -1,7 +1,7 @@
-"""Emulator control abstraction for Pokemon Crystal.
+"""Emulator control abstraction for Pokemon games.
 
 Provides a clean interface for button input, frame advance, and RAM reads.
-Backend: PyBoy (Game Boy / Game Boy Color emulator, pip install pyboy).
+Backends: mGBA (default, recommended) or PyBoy (legacy fallback).
 
 The EmulatorControl class abstracts raw emulator operations so the decision
 engine never touches PyBoy directly. This makes it possible to swap backends
@@ -17,7 +17,7 @@ Usage:
     emu.save_state("before_gym")
     emu.close()
 
-Stdlib + pyboy only. No other external dependencies.
+Stdlib + mgba (built from source). PyBoy available as fallback.
 """
 from __future__ import annotations
 
@@ -145,6 +145,125 @@ class PyBoyBackend:
         self._pyboy.stop()
 
 
+# ── mGBA backend ─────────────────────────────────────────────────────────────
+
+
+class MGBABackend:
+    """mGBA-based emulator backend for Game Boy / GBC / GBA.
+
+    Built from source (mgba 0.10.5). Does not freeze on macOS Apple Silicon
+    unlike PyBoy. Supports headless operation and direct RAM access.
+    """
+
+    def __init__(self, rom_path: str, headless: bool = True, speed: int = 0):
+        import sys
+        # Add mgba_bindings to path if needed
+        bindings_dir = os.path.join(os.path.dirname(__file__), "mgba_bindings")
+        if os.path.exists(bindings_dir):
+            parent = os.path.dirname(bindings_dir)
+            if parent not in sys.path:
+                sys.path.insert(0, parent)
+
+        try:
+            import mgba_bindings as mgba_mod
+            import mgba_bindings.core
+            import mgba_bindings.log
+            import mgba_bindings.image
+            from mgba_bindings._pylib import ffi, lib as mgba_lib
+        except ImportError:
+            # Try system-installed mgba
+            import mgba.core as mgba_core_mod
+            import mgba.log
+            import mgba.image
+            from mgba._pylib import ffi, lib as mgba_lib
+            mgba_mod = __import__("mgba")
+
+        if not os.path.exists(rom_path):
+            raise FileNotFoundError(f"ROM not found: {rom_path}")
+
+        # Silence mGBA logging
+        if hasattr(mgba_mod, 'log'):
+            mgba_mod.log.silence()
+
+        # Load ROM
+        self._core = mgba_mod.core.load_path(rom_path)
+        if self._core is None:
+            raise RuntimeError(f"mGBA failed to load ROM: {rom_path}")
+
+        self._core.autoload_save()
+        self._core.reset()
+
+        # Set up video buffer for screenshots
+        w, h = self._core.desired_video_dimensions()
+        self._width = w
+        self._height = h
+        self._video = mgba_mod.image.Image(w, h)
+        self._core.set_video_buffer(self._video)
+        self._core.reset()
+
+        self._ffi = ffi
+        self._lib = mgba_lib
+        self._mgba = mgba_mod
+
+        # Key mapping for mGBA
+        self._key_map = {
+            "a": mgba_lib.GBA_KEY_A,
+            "b": mgba_lib.GBA_KEY_B,
+            "start": mgba_lib.GBA_KEY_START,
+            "select": mgba_lib.GBA_KEY_SELECT,
+            "up": mgba_lib.GBA_KEY_UP,
+            "down": mgba_lib.GBA_KEY_DOWN,
+            "left": mgba_lib.GBA_KEY_LEFT,
+            "right": mgba_lib.GBA_KEY_RIGHT,
+        }
+
+    def press(self, button: str) -> None:
+        btn = self._key_map.get(button.lower())
+        if btn is None:
+            raise ValueError(f"Unknown button: {button}")
+        self._core.add_keys(btn)
+
+    def release(self, button: str) -> None:
+        btn = self._key_map.get(button.lower())
+        if btn is None:
+            raise ValueError(f"Unknown button: {button}")
+        self._core.clear_keys(btn)
+
+    def tick(self, frames: int = 1) -> None:
+        for _ in range(frames):
+            self._core.run_frame()
+
+    def read_byte(self, address: int) -> int:
+        return self._core.memory.u8[address]
+
+    def read_bytes(self, address: int, length: int) -> bytes:
+        return bytes(self._core.memory.u8[address + i] for i in range(length))
+
+    def write_byte(self, address: int, value: int) -> None:
+        self._core.memory.u8[address] = value
+
+    def save_state(self, path: str) -> None:
+        state = self._core.save_raw_state()
+        with open(path, "wb") as f:
+            f.write(bytes(state))
+
+    def load_state(self, path: str) -> None:
+        with open(path, "rb") as f:
+            state = f.read()
+        self._core.load_raw_state(state)
+
+    def screenshot(self, path: str) -> None:
+        try:
+            pil_img = self._video.to_pil().convert("RGB")
+            pil_img.save(path)
+        except Exception:
+            pass  # Screenshot is optional
+
+    def close(self) -> None:
+        if self._core:
+            self._core = None
+
+
 # ── Mock backend (for testing without PyBoy/ROM) ────────────────────────────
 
 
@@ -235,10 +354,20 @@ class EmulatorControl:
         self._state_dir = ""
 
     @classmethod
-    def from_rom(cls, rom_path: str, headless: bool = False, speed: int = 0) -> "EmulatorControl":
-        """Create from a ROM file using PyBoy backend."""
-        backend = PyBoyBackend(rom_path, headless=headless, speed=speed)
-        return cls(backend)
+    def from_rom(cls, rom_path: str, headless: bool = True, speed: int = 0,
+                 backend: str = "mgba") -> "EmulatorControl":
+        """Create from a ROM file. Default backend: mGBA (stable on macOS).
+
+        Args:
+            backend: "mgba" (default, recommended) or "pyboy" (legacy fallback).
+        """
+        if backend == "mgba":
+            b = MGBABackend(rom_path, headless=headless, speed=speed)
+        elif backend == "pyboy":
+            b = PyBoyBackend(rom_path, headless=headless, speed=speed)
+        else:
+            raise ValueError(f"Unknown backend: {backend}. Use 'mgba' or 'pyboy'.")
+        return cls(b)
 
     @classmethod
     def mock(cls, ram_size: int = 0x10000) -> "EmulatorControl":
