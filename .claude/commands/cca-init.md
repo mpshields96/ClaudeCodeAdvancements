@@ -46,9 +46,15 @@ python3 slim_init.py
 This runs: SESSION_STATE parse + 10-suite smoke test + priority_picker recommend.
 
 If slim_init.py outputs READY:
-1. Skip to Step 3.5 (reset pacer)
-2. Include the priority_picker output in the briefing
-3. Proceed to Step 5 (briefing)
+1. **SKIP Steps 1 through 3** — slim_init already ran smoke tests, priority picker,
+   todays_tasks scan, MT proposals, meta-learning, timeline, etc. Do NOT re-run them.
+2. **SKIP Steps 2.5 through 2.95** — cross-chat comms, wrap trend, timeline, todays_tasks,
+   MT proposals, session outcomes are ALL handled by slim_init's output. Do NOT duplicate.
+3. **SKIP Step 3** (resurfacer) — informational only, not worth the context cost.
+4. Go directly to Step 3.5 (reset pacer) → Step 4 (git status) → Step 4.5 (chat detector)
+   → Step 4.9 (close timer) → Step 5 (briefing using slim_init output).
+5. The cross-chat check (Step 2.5) is the ONE exception — run it only if the resume prompt
+   mentions pending Kalshi requests. Otherwise skip it too.
 
 **Fall through to full mode ONLY when:**
 - slim_init.py reports BLOCKED (smoke test failed)

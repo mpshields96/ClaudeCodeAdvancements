@@ -797,11 +797,12 @@ if __name__ == "__main__":
     args = sys.argv[1:]
 
     if not args or args[0] not in ("--json", "orient", "smoke", "priority"):
-        # Full slim init
+        # Full slim init — compact output to minimize context consumption
         result = run_slim_init()
         if "--json" in args:
             print(json.dumps(result, indent=2))
-        else:
+        elif "--verbose" in args:
+            # Legacy verbose mode — dumps raw priority/proposals/extensions
             print(format_summary(result))
             if result.get("priority_raw"):
                 print(f"\n{result['priority_raw']}")
@@ -809,6 +810,24 @@ if __name__ == "__main__":
                 print(f"\n{result['mt_proposals_raw']}")
             if result.get("mt_extensions_raw"):
                 print(f"\n{result['mt_extensions_raw']}")
+        else:
+            # Default: compact mode — summary only, no raw dumps
+            print(format_summary(result))
+            # Show top pick detail (1 line) and top MT proposal (1 line) only
+            if result.get("mt_proposals_raw"):
+                lines = result["mt_proposals_raw"].strip().split("\n")
+                top_lines = [l for l in lines if l.strip().startswith("[")]
+                if top_lines:
+                    print(f"\nMT PROPOSALS ({len(top_lines)} above score 30.0):\n")
+                    for tl in top_lines[:3]:
+                        print(f"  {tl.strip()}")
+            if result.get("mt_extensions_raw"):
+                lines = result["mt_extensions_raw"].strip().split("\n")
+                ext_lines = [l for l in lines if l.strip().startswith("[") or l.strip().startswith("MT-")]
+                if ext_lines:
+                    print(f"\nPHASE EXTENSIONS ({len(ext_lines)} proposals for existing MTs):\n")
+                    for el in ext_lines[:3]:
+                        print(f"  {el.strip()}")
     elif args[0] == "--json":
         result = run_slim_init()
         print(json.dumps(result, indent=2))
