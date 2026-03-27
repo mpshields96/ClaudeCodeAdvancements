@@ -3324,3 +3324,21 @@ CLI chat 2:
 - Test runner picks up .venv numpy tests as failures — needs exclude path fix
 
 ---
+
+## Session 204 — 2026-03-27
+
+**What changed:**
+- Phase 5: 21 real emulator integration tests (PyBoy + ROM)
+- Dialog auto-advance + B-escape (12 tests)
+- Action cache LRU state->action mapping (32 tests)
+- Mewtoo architecture comparison with adoption priorities
+
+**Why:**
+- MT-53 Phase 5 real emulator tests + mewtoo patterns (auto-advance + action cache)
+
+**Tests:** 11403/11403 passing (309 suites)
+
+**Lessons:**
+- None — clean session
+
+---

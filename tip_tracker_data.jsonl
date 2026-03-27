@@ -9,3 +9,4 @@
 {"tip":"Orchestrated workflow beats pure agent loop for cheaper models","source":"cca-desktop","session":"S201","timestamp":"2026-03-27T04:19:57.411779Z"}
 {"tip":"PokeAgent Challenge (NeurIPS 2025) is the benchmark for Pokemon LLM agents \u2014 standardized speedrunning eval framework","source":"cca-desktop","session":"S203","timestamp":"2026-03-27T05:00:19.223064Z"}
 {"tip":"Self-anchoring counter: present a models own failed strategy as another AIs to overcome anchoring bias","source":"cca-desktop","session":"S203","timestamp":"2026-03-27T05:00:19.223064Z"}
+{"tip":"Action cache + auto-advance combo means near-zero tokens through dialog-heavy sections","source":"cca-desktop","session":"S204","timestamp":"2026-03-27T05:20:20.131903Z"}

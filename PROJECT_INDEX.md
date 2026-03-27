@@ -386,3 +386,10 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `pokemon-agent/test_integration.py` (S203)
 - `research/mt53/ACADEMIC_PAPERS.md` (S203)
 - `pokemon-agent/.gitignore` (S203)
+
+
+### Added in S204
+- `pokemon-agent/action_cache.py` (S204)
+- `pokemon-agent/test_action_cache.py` (S204)
+- `pokemon-agent/test_real_emulator.py` (S204)
+- `pokemon-agent/MEWTOO_COMPARISON.md` (S204)
