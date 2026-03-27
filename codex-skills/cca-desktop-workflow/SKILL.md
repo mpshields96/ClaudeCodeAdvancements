@@ -30,6 +30,21 @@ Good prompts:
 - `Use $cca-desktop-workflow in wrap mode and close out this CCA session.`
 - `Use $cca-desktop-workflow in autoloop mode for one bounded autonomous CCA cycle.`
 
+Short in-chat prompts are also valid and should be interpreted the same way:
+- `CCA init`
+- `CCA auto`
+- `CCA wrap`
+- `CCA autoloop`
+
+Optional short forms with scope:
+- `CCA auto on MT-53`
+- `CCA autoloop on Pokemon viewer testing`
+- `CCA wrap this CCA session`
+
+When these short prompts are used in Codex desktop chat, treat them as invoking
+this skill for the CCA repo with the matching mode, even if the user does not
+repeat the full repo path.
+
 ## Init Mode
 
 When invoked in `init` mode:

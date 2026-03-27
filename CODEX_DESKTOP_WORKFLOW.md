@@ -27,6 +27,23 @@ The recommended setup is a symlink from the home skill directory to the repo cop
 | `/cca-wrap-desktop` | `Use $cca-desktop-workflow in wrap mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.` |
 | autoloop | `Use $cca-desktop-workflow in autoloop mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.` |
 
+## Short In-Chat Commands
+
+Inside Codex desktop chat, use these short forms as the normal CCA workflow commands:
+
+- `CCA init`
+- `CCA auto`
+- `CCA wrap`
+- `CCA autoloop`
+
+Scoped examples:
+
+- `CCA auto on MT-53`
+- `CCA autoloop on Pokemon viewer testing`
+- `CCA wrap this session`
+
+These are chat conventions, not built-in slash commands. They should be treated as shorthand for invoking `$cca-desktop-workflow` on the CCA repo.
+
 ## Ready-To-Paste Prompts
 
 ### Init

@@ -53,6 +53,12 @@ Quick invocations:
 - `Use $cca-desktop-workflow in wrap mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.`
 - `Use $cca-desktop-workflow in autoloop mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.`
 
+Short in-chat equivalents:
+- `CCA init`
+- `CCA auto`
+- `CCA wrap`
+- `CCA autoloop`
+
 Wrap command:
 - `python3 codex_wrap.py`
 - `python3 codex_wrap.py --write CODEX_WRAP_PROMPT.md`
