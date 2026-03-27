@@ -22,7 +22,7 @@ from typing import Optional
 import logging
 
 from agent import CrystalAgent, LLMClient, StepResult
-from battle_ai import choose_action, action_to_buttons
+from battle_ai import assess_threat, choose_action, action_to_buttons
 from boot_sequence import run_boot_sequence
 from checkpoint import CheckpointManager
 from collision_reader_red import CollisionReaderRed
@@ -132,9 +132,13 @@ class RedAgent(CrystalAgent):
         action = choose_action(state.party, enemy, is_wild=is_wild)
         buttons = action_to_buttons(action)
 
-        logger.info("Battle AI: %s vs %s Lv%d — %s: %s",
-                     state.party.lead().species if state.party.lead() else "???",
-                     enemy.species, enemy.level,
+        # Assess enemy threat for logging
+        lead = state.party.lead()
+        threat = assess_threat(enemy, lead) if lead else {"level": "unknown"}
+
+        logger.info("Battle AI: %s vs %s Lv%d (threat:%s) — %s: %s",
+                     lead.species if lead else "???",
+                     enemy.species, enemy.level, threat["level"],
                      action["type"], action.get("reason", ""))
 
         for button in buttons:
