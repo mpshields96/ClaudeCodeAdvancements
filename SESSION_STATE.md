@@ -5,24 +5,25 @@
 
 ## Current State (as of Session 204 — 2026-03-27)
 
-**Phase:** Session 204 IN PROGRESS. MT-53 Phase 5 complete + mewtoo patterns adopted.
+**Phase:** Session 204 COMPLETE. MT-53 Phase 5 + mewtoo patterns (auto-advance + action cache).
 
 **What was done this session (S204):**
 - Added .venv/venv to test runner exclude (parallel_test_runner.py + init_cache.py)
 - MT-53 Phase 5: 21 real emulator integration tests (PyBoy + ROM, graceful skip without)
   - EmulatorControl boot, tick, buttons, RAM reads, save/load state
   - MemoryReader game state from real RAM
-  - Agent 5-step run with real emulator
-  - Title screen navigation, rapid state reads
+  - Agent 5-step run with real emulator, title screen navigation, rapid state reads
 - Mewtoo architecture comparison (MEWTOO_COMPARISON.md): patterns to adopt + our advantages
-- Dialog auto-advance + escape (12 new tests): skip LLM for mechanical A-presses in dialog/healing, B-escape after 7+ consecutive
-- **Tests**: 10 smoke suites passing (540 tests). 48 agent tests + 21 real emu tests.
-- **Commits**: 4 this session.
+- Dialog auto-advance + escape (12 new tests): skip LLM for dialog/healing, B-escape after 7+
+- Action cache (action_cache.py, 32 new tests): LRU state->action mapping, skips LLM for known states, disabled when stuck, hit-based expiration, success rate tracking
+- **Tests**: 10 smoke suites (540), 53 agent, 27 cache, 16 integration, 21 real emu = all passing
+- **Commits**: 6 this session.
 
 **Next:**
-1. MT-53: Implement action caching (P1 from mewtoo comparison — ~100 LOC, high impact)
-2. MT-53: Movement validation — track blocked directions after 3 failures (P1)
-3. MT-53: Wire agent to main.py for real gameplay run
+1. MT-53: Movement validation — track blocked directions after 3 failures (P1 from mewtoo)
+2. MT-53: Wire agent to main.py for real gameplay run (the big one — first actual play session)
+3. MT-53: Consider save-state checkpointing before risky actions (battles, gyms)
+4. Cross-chat: check Kalshi comms
 4. Cross-chat: check Kalshi comms
 
 ---
