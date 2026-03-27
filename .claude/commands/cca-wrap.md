@@ -2,6 +2,24 @@
 
 Run the full session wrap ritual. Fully autonomous — no confirmation needed at any step.
 
+## CRITICAL PATH (never skip these — S200 fix)
+
+Steps are split into CRITICAL and OPTIONAL. If context is running low, skip OPTIONAL
+steps but NEVER skip CRITICAL ones. If you cannot complete even the critical path,
+**say so explicitly** ("Context too low for full wrap — running critical path only")
+and run ONLY these steps in order:
+
+1. **Step 1** — Run tests (verify nothing broke)
+2. **Steps 3-5** — Batch doc update (SESSION_STATE, CHANGELOG, TODAYS_TASKS)
+3. **Step 6 SLIM** — batch_wrap_learning.py (journal + assessment in one call)
+4. **Step 9** — Resume prompt + SESSION_RESUME.md (autoloop signal)
+5. **Step 10** — Autoloop trigger (FINAL — must always fire)
+
+OPTIONAL steps (skip under low context): 1.5, 1.7, 1.8, 2, 2.5, 6b-6h, 7, 7.5, 8, 8.5, 8.9, 9.5
+
+**NEVER silently skip steps.** If you skip anything, state what you skipped and why.
+The S199 bug was Claude silently dropping steps 6-10. That must never happen again.
+
 ---
 
 ## Step 0.5 — Start wrap timer (MT-36)
