@@ -22,6 +22,7 @@ from typing import Optional
 import logging
 
 from agent import CrystalAgent, LLMClient, StepResult
+from battle_ai import choose_action, action_to_buttons
 from boot_sequence import run_boot_sequence
 from checkpoint import CheckpointManager
 from collision_reader_red import CollisionReaderRed
@@ -103,6 +104,44 @@ class RedAgent(CrystalAgent):
         else:
             logger.warning("Boot partial: %s", self.boot_result["phases_completed"])
         return self.boot_result
+
+    def try_battle_ai(self) -> Optional[StepResult]:
+        """If in battle, use deterministic battle AI instead of LLM.
+
+        Returns a StepResult if battle AI handled the step, or None if
+        not in battle (letting the normal step flow continue).
+        """
+        state = self.reader.read_game_state()
+        if not state.battle.in_battle or state.battle.enemy is None:
+            return None
+
+        enemy = state.battle.enemy
+        is_wild = state.battle.is_wild
+
+        action = choose_action(state.party, enemy, is_wild=is_wild)
+        buttons = action_to_buttons(action)
+
+        logger.info("Battle AI: %s vs %s Lv%d — %s: %s",
+                     state.party.lead().species if state.party.lead() else "???",
+                     enemy.species, enemy.level,
+                     action["type"], action.get("reason", ""))
+
+        for button in buttons:
+            if button in ("up", "down", "left", "right"):
+                self.emulator.press(button, hold_frames=4, wait_frames=8)
+            else:
+                self.emulator.press(button, hold_frames=4, wait_frames=12)
+
+        self.step_count += 1
+        self.auto_advance_count += 1
+
+        return StepResult(
+            step_number=self.step_count,
+            state=state,
+            llm_text=f"[battle_ai: {action['type']} — {action.get('reason', '')}]",
+            tool_calls=[],
+            tool_results=[{"auto": True, "battle_ai": True}],
+        )
 
     def _register_red_gyms(self) -> None:
         """Register Pokemon Red gym map IDs for auto-checkpointing."""
