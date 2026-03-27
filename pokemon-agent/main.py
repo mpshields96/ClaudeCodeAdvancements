@@ -135,15 +135,26 @@ def main(argv=None) -> int:
         pos = result.state.position
         badges = result.state.badges.count()
         party_size = result.state.party.size()
-        stuck_marker = " [STUCK]" if result.was_stuck else ""
-        summary_marker = " [SUMMARIZED]" if result.was_summarized else ""
+        markers = []
+        if result.was_stuck:
+            markers.append("STUCK")
+        if result.was_summarized:
+            markers.append("SUMMARIZED")
+        # Detect auto-advance and cache hits from tool results
+        for tr in result.tool_results:
+            if isinstance(tr, dict):
+                if tr.get("auto"):
+                    markers.append("AUTO")
+                if tr.get("cached"):
+                    markers.append(f"CACHED({agent.action_cache.hit_rate()*100:.0f}%)")
+        marker_str = " [" + ", ".join(markers) + "]" if markers else ""
         print(
             f"Step {result.step_number}: "
             f"Map {pos.map_id} ({pos.x},{pos.y}) | "
             f"Badges: {badges}/8 | "
             f"Party: {party_size} | "
             f"Tokens: {result.input_tokens}+{result.output_tokens}"
-            f"{stuck_marker}{summary_marker}"
+            f"{marker_str}"
         )
 
     agent.on_step(on_step)
@@ -165,6 +176,8 @@ def main(argv=None) -> int:
     finally:
         elapsed = time.time() - start_time
         usage = agent.token_usage
+        mv_stats = agent.movement_validator.stats()
+        cache_stats = agent.action_cache.stats()
         logger.info(
             "Done. Steps: %d, Time: %.1fs, Tokens: %d in + %d out = %d total",
             usage["steps"], elapsed,
@@ -174,6 +187,10 @@ def main(argv=None) -> int:
         print(f"\nSession complete: {usage['steps']} steps in {elapsed:.1f}s")
         print(f"Tokens: {usage['total_tokens']:,} total "
               f"({usage['input_tokens']:,} in + {usage['output_tokens']:,} out)")
+        print(f"Auto-advances: {agent.auto_advance_count} | "
+              f"Cache: {cache_stats.get('hits', 0)} hits, "
+              f"{cache_stats.get('size', 0)} entries | "
+              f"Blocked dirs: {mv_stats['blocked_directions']}")
         emu.close()
 
     return 0

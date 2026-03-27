@@ -73,12 +73,15 @@ class TestAgentConstruction(unittest.TestCase):
         self.assertEqual(agent.step_count, 0)
         self.assertEqual(len(agent.messages), 0)
 
-    def test_no_llm_raises(self):
+    def test_no_llm_offline_fallback(self):
+        """Without LLM, agent falls back to offline mode (press A)."""
         emu = _setup_mock_emu()
         reader = MemoryReader(emu)
         agent = CrystalAgent(emulator=emu, reader=reader, llm=None)
-        with self.assertRaises(RuntimeError):
-            agent.step()
+        result = agent.step()
+        self.assertEqual(result.llm_text, "[offline: press a]")
+        self.assertEqual(result.input_tokens, 0)
+        self.assertEqual(result.output_tokens, 0)
 
     def test_token_usage_initial(self):
         agent, _ = _make_agent()

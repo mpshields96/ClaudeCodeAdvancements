@@ -426,9 +426,17 @@ class CrystalAgent:
         # Reset auto-advance counter (LLM is being called = not in auto-advance)
         self._consecutive_auto_a = 0
 
-        # 5. Call LLM
+        # 5. Call LLM (or fallback to random input in offline mode)
         if self.llm is None:
-            raise RuntimeError("No LLM client configured. Set agent.llm or pass to constructor.")
+            # Offline mode: press A to advance (title screen, dialogs, etc.)
+            self.emulator.press("a")
+            self.messages.pop()  # Remove the user message we just added
+            return StepResult(
+                step_number=self.step_count, state=state,
+                llm_text="[offline: press a]",
+                tool_calls=[ToolUse(id="offline", name="press_buttons", input={"buttons": ["a"]})],
+                tool_results=[{"pressed": ["a"], "count": 1, "offline": True}],
+            )
 
         response = self.llm.create_message(
             model=MODEL_NAME,
