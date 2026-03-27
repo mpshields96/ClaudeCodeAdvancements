@@ -77,7 +77,7 @@ def _find_test_files() -> list[Path]:
     """Find all test_*.py files in the project."""
     files = []
     for root, dirs, filenames in os.walk(PROJECT_ROOT):
-        dirs[:] = [d for d in dirs if d not in ("__pycache__", ".git", "node_modules")]
+        dirs[:] = [d for d in dirs if d not in ("__pycache__", ".git", "node_modules", ".planning", ".venv", "venv")]
         for f in filenames:
             if f.startswith("test_") and f.endswith(".py"):
                 files.append(Path(root) / f)
