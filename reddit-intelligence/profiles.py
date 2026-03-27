@@ -226,6 +226,47 @@ BUILTIN_PROFILES = {
         domain="research",
         needle_ratio_cap=0.5,
     ),
+    # Pokemon AI — goldmine for MT-53 (Matthew directive S200)
+    "claudeplayspokemon": SubredditProfile(
+        subreddit="ClaudePlaysPokemon",
+        min_score=5,
+        timeframe="all",
+        limit=100,
+        extra_needle_keywords=[
+            "pokemon", "harness", "emulator", "pyboy", "ram", "memory",
+            "battle", "ai", "agent", "crystal", "red", "bot", "play",
+            "automation", "screenshot", "vision", "strategy",
+        ],
+        domain="research",
+        needle_ratio_cap=0.8,
+    ),
+    # Prediction markets intelligence — for Kalshi bot (S200)
+    "predictionsmarkets": SubredditProfile(
+        subreddit="PredictionsMarkets",
+        min_score=10,
+        timeframe="month",
+        limit=75,
+        extra_needle_keywords=[
+            "strategy", "edge", "kalshi", "polymarket", "bot", "automated",
+            "probability", "model", "profit", "signal", "arbitrage",
+            "bet", "win rate", "kelly", "bankroll",
+        ],
+        domain="trading",
+        needle_ratio_cap=0.5,
+    ),
+    # Game AI — for MT-53 Pokemon bot research
+    "gameai": SubredditProfile(
+        subreddit="gameai",
+        min_score=10,
+        timeframe="month",
+        limit=75,
+        extra_needle_keywords=[
+            "pokemon", "agent", "reinforcement", "emulator", "game",
+            "bot", "ai", "play", "autonomous", "decision", "strategy",
+        ],
+        domain="research",
+        needle_ratio_cap=0.5,
+    ),
 }
 
 
