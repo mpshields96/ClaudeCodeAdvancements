@@ -5,19 +5,21 @@
 
 ## Current State (as of Session 199 — 2026-03-26)
 
-**Phase:** Session 199 COMPLETE. Research + code: S190 agent research, MT-53 Phase 1, mandate_monitor, Kalshi cross-chat update.
+**Phase:** Session 199 COMPLETE. Research + code: S190 agent research, MT-53 Phase 1+2 start, mandate_monitor, peak budgeting fix, Kalshi cross-chat update.
 
 **What was done this session (S199):**
-- **S190 Agent Research:** Comprehensive multi-agent scan — Anthropic Agent Teams docs, 7 GitHub repos, Azure patterns, 5 academic papers. Full analysis: research/S190_AGENT_RESEARCH.md. Key: Agent Teams is official multi-agent feature, leader+workers+shared-task-list is dominant pattern, 80-140x quality improvement for complex tasks.
-- **MT-53 Phase 1 COMPLETE:** Pokemon emulator research — evaluated 4 emulators, 5 AI bot projects. Verdict: PyBoy (GBC/Crystal), mGBA (GBA/Emerald), rules-based engine (not LLM). Full analysis: research/MT53_POKEMON_RESEARCH.md.
-- **mandate_monitor.py (40 tests):** Cross-session mandate progress tracker. Persistent JSONL, trajectory analysis, pace verdicts, trend detection. Delivered to Kalshi via CCA_TO_POLYBOT.md.
-- **Kalshi cross-chat update:** Answered 3 pending mandate questions + delivered mandate_monitor. Comms were 6 days stale — updated.
-- **Tests**: 295 suites, 10997 tests (+40 new). 0 regressions.
+- **S190 Agent Research:** Comprehensive multi-agent scan — Anthropic Agent Teams docs, 7 GitHub repos, Azure patterns, 5 academic papers. Full analysis: research/S190_AGENT_RESEARCH.md. Key: Agent Teams is official multi-agent feature, leader+workers+shared-task-list is dominant pattern.
+- **MT-53 Phase 1 COMPLETE:** Pokemon emulator research — PyBoy (GBC/Crystal), mGBA (GBA/Emerald), rules-based engine. Full analysis: research/MT53_POKEMON_RESEARCH.md.
+- **MT-53 Phase 2 STARTED:** game_state.py (43 tests) — Move, Pokemon, Party, MapPosition, BattleState, Badges, GameState dataclasses. In pokemon-agent/ directory.
+- **mandate_monitor.py (40 tests):** Cross-session mandate tracker. Delivered to Kalshi.
+- **Kalshi cross-chat update:** Answered 3 pending mandate questions. Comms were 6 days stale — fixed.
+- **Peak budgeting update:** Simplified to 40-50% peak (8AM-2PM ET), 100% off-peak. Shoulder window removed.
+- **Tests**: ~11,040 total (+83 new: 40 mandate_monitor + 43 game_state). 0 regressions.
 
-**Commits:** 5 this session.
+**Commits:** 7 this session.
 
 **Next:**
-1. MT-53 Phase 2 (emulator_control.py + state_reader.py using PyBoy)
+1. MT-53 Phase 2 continue (emulator_control.py + state_reader.py — need PyBoy installed)
 2. MT-32 Visual Excellence next phase
 3. MT-37 Phase 2 (FRED API data pipeline)
 4. Agent Teams integration testing (enable + test with CCA dual-chat)
