@@ -13,3 +13,4 @@
 {"tip":"Test token savings with a 50-step live run to measure auto-advance/cache/transition skip efficiency","source":"cca-desktop","session":"S205","timestamp":"2026-03-27T05:47:59.475022Z"}
 {"tip":"Claude Code bridge pattern means bot costs 0 beyond Max sub","source":"cca-desktop","session":"S206","timestamp":"2026-03-27T06:05:52.493453Z"}
 {"tip":"mGBA with Lua scripting may be more stable than PyBoy on macOS","source":"cca-desktop","session":"S206","timestamp":"2026-03-27T06:05:52.493453Z"}
+{"tip":"Research existing implementations before building from scratch","source":"cca-desktop","session":"S207","timestamp":"2026-03-27T06:41:18.137454Z"}

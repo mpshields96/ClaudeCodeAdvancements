@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pokemon Crystal — Live Viewer</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #111; color: #eee; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; height: 100vh; }
+h1 { font-size: 18px; margin: 12px 0 8px; color: #7bf; }
+#screen { image-rendering: pixelated; border: 3px solid #444; width: 480px; height: 432px; background: #000; }
+#state { margin: 10px; font-size: 13px; max-width: 500px; white-space: pre-wrap; color: #aaa; text-align: left; }
+#step { color: #7f7; font-size: 14px; margin: 4px; }
+</style>
+</head>
+<body>
+<h1>POKEMON CRYSTAL — LIVE</h1>
+<div id="step">Connecting...</div>
+<img id="screen" src="" alt="Game Screen" />
+<pre id="state">Waiting for bridge...</pre>
+<script>
+const img = document.getElementById('screen');
+const stateEl = document.getElementById('state');
+const stepEl = document.getElementById('step');
+let lastStep = -1;
+
+async function refresh() {
+  try {
+    // Bust cache with timestamp
+    const t = Date.now();
+    img.src = 'bridge_io/screenshot.png?' + t;
+
+    const resp = await fetch('bridge_io/state.json?' + t);
+    if (resp.ok) {
+      const s = await resp.json();
+      if (s.step !== lastStep) {
+        lastStep = s.step;
+        stepEl.textContent = 'Step ' + s.step + ' | Map ' + (s.position.map_name || s.position.map_id) + ' (' + s.position.x + ',' + s.position.y + ')';
+        let party = '';
+        if (s.party && s.party.length > 0) {
+          party = s.party.map(p => p.species + ' Lv' + p.level + ' HP:' + p.hp + '/' + p.hp_max).join('\n');
+        } else {
+          party = '(no pokemon yet)';
+        }
+        let info = 'Badges: ' + s.badges + ' | Money: $' + s.money + '\n';
+        if (s.battle) info += 'BATTLE: vs ' + s.battle.enemy_species + ' Lv' + s.battle.enemy_level + '\n';
+        if (s.text_on_screen) info += 'Text: ' + s.text_on_screen + '\n';
+        info += '\nParty:\n' + party;
+        stateEl.textContent = info;
+      }
+    }
+  } catch(e) {}
+}
+
+setInterval(refresh, 800);
+refresh();
+</script>
+</body>
+</html>

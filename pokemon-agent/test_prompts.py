@@ -57,9 +57,9 @@ class TestSystemPrompt(unittest.TestCase):
     def test_prompt_has_stuck_advice(self):
         self.assertIn("stuck", SYSTEM_PROMPT.lower())
 
-    def test_prompt_has_encouragement(self):
-        # S201 agent finding: models blackpill without encouragement
-        self.assertIn("doing great", SYSTEM_PROMPT.lower())
+    def test_prompt_has_personality(self):
+        # S207: dark comedy personality (Jeselnik/Burnham/Mulaney)
+        self.assertIn("personality", SYSTEM_PROMPT.lower())
 
     def test_prompt_mentions_tools(self):
         self.assertIn("press_buttons", SYSTEM_PROMPT)

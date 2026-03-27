@@ -3377,3 +3377,23 @@ CLI chat 2:
 - PyBoy freezes on macOS — need alternative backend
 
 ---
+
+## Session 207 — 2026-03-27
+
+**What changed:**
+- PyBoy headless works on macOS
+- Crystal intro automated, save state at New Bark Town
+- Dark comedy personality added to SYSTEM_PROMPT
+- Comprehensive S207_HANDOFF.md written
+
+**Why:**
+- MT-53: PyBoy headless confirmed, Crystal intro automated, state saved, dark comedy personality added, but multiple bugs left undiagnosed
+
+**Tests:** 11514/11514 passing (315 suites)
+
+**Lessons:**
+- Rushed without research, left RAM address bug and movement bug undiagnosed
+- Never verified web viewer end-to-end
+- Never researched r/ClaudePlaysPokemon
+
+---

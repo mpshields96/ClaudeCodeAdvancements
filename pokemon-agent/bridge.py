@@ -224,10 +224,12 @@ def main():
     if args.load_state:
         print(f"Loading state: {args.load_state}")
         emu.load_state(args.load_state)
-
-    # Let the game boot (title screen)
-    print("Booting game (advancing 300 frames)...")
-    emu.tick(300)
+        # Just stabilize after load — don't run full boot sequence
+        emu.tick(30)
+    else:
+        # Let the game boot (title screen)
+        print("Booting game (advancing 300 frames)...")
+        emu.tick(300)
 
     print(f"\nBridge running. Waiting for Claude Code actions in: {BRIDGE_DIR}/")
     print(f"Timeout: {args.timeout}s per step")

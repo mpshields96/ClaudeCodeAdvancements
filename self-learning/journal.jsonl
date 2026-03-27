@@ -597,3 +597,16 @@
 {"event_type":"pain","session":206,"domain":"general","notes":"PyBoy freezes on macOS","timestamp":"2026-03-27T06:05:52.493453Z"}
 {"event_type":"feedback_roi","session":206,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T06:05:52.493453Z"}
 {"event_type":"sentinel_stats","session":206,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T06:05:52.493453Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T06:06:41.992187+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T06:06:42.016339+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T06:40:01.017191+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T06:40:01.047190+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":207,"domain":"general","outcome":"partial","notes":"MT-53 partial: emulator runs but bugs undiagnosed, need research first","timestamp":"2026-03-27T06:41:18.137454Z"}
+{"event_type":"win","session":207,"domain":"general","notes":"PyBoy headless works on macOS","timestamp":"2026-03-27T06:41:18.137454Z"}
+{"event_type":"win","session":207,"domain":"general","notes":"Crystal intro automated and state saved","timestamp":"2026-03-27T06:41:18.137454Z"}
+{"event_type":"win","session":207,"domain":"general","notes":"S207_HANDOFF.md with full bug inventory","timestamp":"2026-03-27T06:41:18.137454Z"}
+{"event_type":"pain","session":207,"domain":"general","notes":"Rushed without research","timestamp":"2026-03-27T06:41:18.137454Z"}
+{"event_type":"pain","session":207,"domain":"general","notes":"Left RAM and movement bugs undiagnosed","timestamp":"2026-03-27T06:41:18.137454Z"}
+{"event_type":"pain","session":207,"domain":"general","notes":"Never verified viewer end-to-end","timestamp":"2026-03-27T06:41:18.137454Z"}
+{"event_type":"feedback_roi","session":207,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T06:41:18.137454Z"}
+{"event_type":"sentinel_stats","session":207,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T06:41:18.137454Z"}
