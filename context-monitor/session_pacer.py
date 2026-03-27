@@ -33,10 +33,20 @@ Usage as library:
 Usage as CLI:
     python3 session_pacer.py check                    # Check pacing decision
     python3 session_pacer.py check --json             # JSON output
+    python3 session_pacer.py check --wrap-at 80       # Override wrap threshold to 80%
     python3 session_pacer.py start "Task name"        # Record task start
     python3 session_pacer.py complete "Task" --commit abc1234
     python3 session_pacer.py status                   # Show session status
     python3 session_pacer.py reset                    # Reset for new session
+
+Wrap threshold priority (highest wins):
+    1. --wrap-at CLI flag
+    2. CCA_WRAP_THRESHOLD_PCT env var
+    3. Default: 70%
+
+When wrap_threshold_pct is set above the default red zone (70%), the pacer
+will NOT trigger wrap_now until context exceeds that threshold. This ensures
+user's explicit "wrap at X%" directive always wins over zone-based defaults.
 
 Stdlib only. No external dependencies.
 """
@@ -160,6 +170,8 @@ class SessionState:
 _DEFAULT_CONTEXT_STATE = str(Path.home() / ".claude-context-health.json")
 _DEFAULT_WRAP_STATE = str(Path.home() / ".cca-wrap-state.json")
 _DEFAULT_WRAP_BUFFER = 15  # minutes before max duration to trigger wrap_soon
+_DEFAULT_WRAP_THRESHOLD_PCT = 70  # context % to trigger wrap_now
+_DEFAULT_WRAP_SOON_PCT = 50  # context % to trigger wrap_soon (with time condition)
 
 
 class SessionPacer:
@@ -177,10 +189,26 @@ class SessionPacer:
         wrap_state_path: str = None,
         max_duration_minutes: int = _DEFAULT_MAX_DURATION,
         wrap_buffer_minutes: int = _DEFAULT_WRAP_BUFFER,
+        wrap_threshold_pct: float = None,
     ):
         self.context_state_path = context_state_path or _DEFAULT_CONTEXT_STATE
         self.wrap_state_path = wrap_state_path or _DEFAULT_WRAP_STATE
         self.wrap_buffer_minutes = wrap_buffer_minutes
+
+        # Resolve wrap threshold: CLI arg > env var > default
+        # This ensures user's explicit "wrap at X%" always wins.
+        if wrap_threshold_pct is not None:
+            self.wrap_threshold_pct = float(wrap_threshold_pct)
+        else:
+            env_val = os.environ.get("CCA_WRAP_THRESHOLD_PCT")
+            if env_val is not None:
+                self.wrap_threshold_pct = float(env_val)
+            else:
+                self.wrap_threshold_pct = _DEFAULT_WRAP_THRESHOLD_PCT
+
+        # wrap_soon triggers at a proportional point below the wrap threshold
+        # (default: 10% below wrap_threshold, floored at 50%)
+        self.wrap_soon_pct = max(_DEFAULT_WRAP_SOON_PCT, self.wrap_threshold_pct - 10)
 
         # Load or create session state
         sp = state_path or _DEFAULT_STATE_PATH
@@ -233,12 +261,15 @@ class SessionPacer:
         """
         Check all pacing signals and return a decision.
 
+        Uses configurable wrap_threshold_pct instead of hardcoded zone names.
+        This ensures user's explicit "wrap at X%" always wins over defaults.
+
         Priority order:
-        1. Context critical/red → WRAP_NOW
+        1. Context >= wrap_threshold_pct → WRAP_NOW
         2. Time exceeded → WRAP_NOW
         3. Compaction count >= 2 → WRAP_NOW
         4. Time approaching limit → WRAP_SOON
-        5. Yellow zone + past 2/3 duration → WRAP_SOON
+        5. Context >= wrap_soon_pct + past 2/3 duration → WRAP_SOON
         6. Otherwise → CONTINUE
         """
         ctx = self._read_context_health()
@@ -259,12 +290,12 @@ class SessionPacer:
 
         # ── WRAP_NOW triggers ──
 
-        # 1. Context red or critical
-        if zone in ("red", "critical"):
+        # 1. Context at or above wrap threshold (percentage-based, not zone-based)
+        if pct >= self.wrap_threshold_pct:
             decision.action = "wrap_now"
             decision.should_wrap = True
             decision.reason = (
-                f"Context in {zone} zone ({pct:.0f}%). "
+                f"Context at {pct:.0f}% (wrap threshold: {self.wrap_threshold_pct:.0f}%). "
                 f"Wrap immediately to preserve quality."
             )
             return decision
@@ -301,12 +332,13 @@ class SessionPacer:
             )
             return decision
 
-        # 5. Yellow zone + past 2/3 of duration
+        # 5. Context approaching threshold + past 2/3 of duration
         two_thirds = self.max_duration_minutes * 2 / 3
-        if zone == "yellow" and elapsed > two_thirds:
+        if pct >= self.wrap_soon_pct and elapsed > two_thirds:
             decision.action = "wrap_soon"
             decision.reason = (
-                f"Context yellow ({pct:.0f}%) and {elapsed:.0f} min elapsed "
+                f"Context at {pct:.0f}% (warn threshold: {self.wrap_soon_pct:.0f}%) "
+                f"and {elapsed:.0f} min elapsed "
                 f"(past 2/3 of {self.max_duration_minutes} min). "
                 f"Finish current task, then wrap."
             )
@@ -335,6 +367,7 @@ def cli_main(args: list = None):
             "  --context-state PATH  Context health file\n"
             "  --wrap-state PATH     Wrap state file\n"
             "  --max-duration MIN    Max session duration (default: 120)\n"
+            "  --wrap-at PCT         Context % to trigger wrap (default: 70, env: CCA_WRAP_THRESHOLD_PCT)\n"
             "  --json                Output as JSON (check command)\n"
             "  --commit HASH         Commit hash (complete command)"
         )
@@ -347,6 +380,7 @@ def cli_main(args: list = None):
     context_state_path = None
     wrap_state_path = None
     max_duration = _DEFAULT_MAX_DURATION
+    wrap_at = None
     json_output = False
     commit_hash = None
     positional = []
@@ -365,6 +399,9 @@ def cli_main(args: list = None):
         elif args[i] == "--max-duration" and i + 1 < len(args):
             max_duration = int(args[i + 1])
             i += 2
+        elif args[i] == "--wrap-at" and i + 1 < len(args):
+            wrap_at = float(args[i + 1])
+            i += 2
         elif args[i] == "--json":
             json_output = True
             i += 1
@@ -380,6 +417,7 @@ def cli_main(args: list = None):
         context_state_path=context_state_path,
         wrap_state_path=wrap_state_path,
         max_duration_minutes=max_duration,
+        wrap_threshold_pct=wrap_at,
     )
 
     if cmd == "check":
@@ -429,6 +467,8 @@ def cli_main(args: list = None):
               f"({remaining:.0f}m remaining)")
         print(f"Tasks: {completed}/{total} completed")
         print(f"Context: {ctx.get('zone', 'unknown')} ({ctx.get('pct', 0):.0f}%)")
+        print(f"Wrap threshold: {pacer.wrap_threshold_pct:.0f}% "
+              f"(warn at {pacer.wrap_soon_pct:.0f}%)")
         if pacer.state.tasks:
             print("\nTask log:")
             for t in pacer.state.tasks:

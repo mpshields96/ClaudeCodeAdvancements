@@ -270,20 +270,21 @@ class TestSessionPacerExtended(unittest.TestCase):
         self.assertEqual(decision.action, "wrap_now")
 
     def test_yellow_exactly_at_two_thirds_boundary(self):
-        """Yellow zone exactly at 2/3 of duration: wrap_soon expected."""
-        self._write_context("yellow", 55.0)
+        """Context at wrap_soon threshold + past 2/3 of duration: wrap_soon expected."""
+        # wrap_soon_pct defaults to max(50, 70-10) = 60, so use 62%
+        self._write_context("yellow", 62.0)
         pacer = self._make_pacer(max_duration=120)
         # exactly 80 minutes = 2/3 of 120
         pacer.state.started_at = (
             datetime.now(timezone.utc) - timedelta(minutes=81)
         ).isoformat()
         decision = pacer.check()
-        # Just past 2/3 of 120 min AND yellow → wrap_soon
+        # Just past 2/3 of 120 min AND above wrap_soon_pct → wrap_soon
         self.assertEqual(decision.action, "wrap_soon")
 
     def test_yellow_below_two_thirds_continues(self):
-        """Yellow zone but early in session → continue."""
-        self._write_context("yellow", 55.0)
+        """Context above warn threshold but early in session → continue."""
+        self._write_context("yellow", 62.0)
         pacer = self._make_pacer(max_duration=120)
         # 30 minutes = well below 2/3 of 120
         pacer.state.started_at = (

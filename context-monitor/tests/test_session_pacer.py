@@ -193,13 +193,23 @@ class TestSessionPacer(unittest.TestCase):
         self.assertFalse(decision.should_wrap)
 
     def test_red_zone_wraps(self):
-        """Red zone context triggers wrap_now."""
+        """Context above wrap threshold triggers wrap_now."""
         self._write_context_health(zone="red", pct=75.0)
         pacer = self._make_pacer()
         decision = pacer.check()
         self.assertEqual(decision.action, "wrap_now")
         self.assertTrue(decision.should_wrap)
-        self.assertIn("red", decision.reason.lower())
+        self.assertIn("75%", decision.reason)
+
+    def test_configurable_wrap_threshold(self):
+        """User override of wrap threshold is respected."""
+        self._write_context_health(zone="red", pct=71.0)
+        # Default threshold (70%) — should wrap
+        pacer_default = self._make_pacer()
+        self.assertEqual(pacer_default.check().action, "wrap_now")
+        # User sets 80% — should NOT wrap at 71%
+        pacer_override = self._make_pacer(wrap_threshold_pct=80)
+        self.assertEqual(pacer_override.check().action, "continue")
 
     def test_critical_zone_wraps(self):
         """Critical zone triggers wrap_now with critical urgency."""
