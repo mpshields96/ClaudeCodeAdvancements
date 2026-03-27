@@ -515,3 +515,20 @@
 {"event_type":"pain","session":200,"domain":"general","notes":"Background agents still running at wrap","timestamp":"2026-03-27T03:43:46.987155Z"}
 {"event_type":"feedback_roi","session":200,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T03:43:46.987155Z"}
 {"event_type":"sentinel_stats","session":200,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T03:43:46.987155Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T03:45:17.800511+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T03:45:17.822705+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T03:46:52.726638+00:00","session_id":"c89443f8-55a7-45af-bdfc-8030d58cdd19","trigger":"auto","pre_zone":"green","pre_pct":26.8,"pre_turns":29,"compact_summary_len":13759,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T03:47:03.394085+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T03:47:03.415927+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T04:09:13.757336+00:00","session_id":"d0bb604b-c6b2-475a-a6bd-dd9f0b46844e","trigger":"auto","pre_zone":"red","pre_pct":83.5,"pre_turns":259,"compact_summary_len":16057,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T04:19:31.339337+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T04:19:31.364834+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":201,"domain":"reddit_intelligence","outcome":"success","notes":"Full subreddit absorption for MT-53 Pokemon Crystal bot","timestamp":"2026-03-27T04:19:57.411779Z"}
+{"event_type":"win","session":201,"domain":"reddit_intelligence","notes":"397-post subreddit scan with scanner tool","timestamp":"2026-03-27T04:19:57.411779Z"}
+{"event_type":"win","session":201,"domain":"reddit_intelligence","notes":"78KB verbatim agent outputs preserved","timestamp":"2026-03-27T04:19:57.411779Z"}
+{"event_type":"win","session":201,"domain":"reddit_intelligence","notes":"Complete Opus 4.6 performance intel","timestamp":"2026-03-27T04:19:57.411779Z"}
+{"event_type":"win","session":201,"domain":"reddit_intelligence","notes":"Findings 404-406 logged","timestamp":"2026-03-27T04:19:57.411779Z"}
+{"event_type":"pain","session":201,"domain":"reddit_intelligence","notes":"Context ran out before Crystal agent build","timestamp":"2026-03-27T04:19:57.411779Z"}
+{"event_type":"pain","session":201,"domain":"reddit_intelligence","notes":"Background agents completed post-wrap","timestamp":"2026-03-27T04:19:57.411779Z"}
+{"event_type":"feedback_roi","session":201,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T04:19:57.411779Z"}
+{"event_type":"sentinel_stats","session":201,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T04:19:57.411779Z"}

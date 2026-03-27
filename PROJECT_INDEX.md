@@ -364,3 +364,10 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S200
 - `pokemon-agent/emulator_control.py` (S200)
 - `pokemon-agent/memory_reader.py` (S200)
+
+
+### Added in S201
+- `research/mt53/OPUS46_PERFORMANCE_INTEL.md` (S201)
+- `research/mt53/AGENT_OUTPUTS_VERBATIM.md` (S201)
+- `reddit-intelligence/subreddit_scanner.py` (S201)
+- `reddit-intelligence/test_subreddit_scanner.py` (S201)
