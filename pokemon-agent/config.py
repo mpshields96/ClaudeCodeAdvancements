@@ -22,6 +22,8 @@ TICKS_AFTER_BUTTON = 8     # Frames to wait after releasing
 
 STUCK_THRESHOLD = 10       # Same location for N steps = stuck
 STUCK_FORCE_NEW = True     # Force model to try something new when stuck
+STUCK_STRATEGY_MEMORY = 5  # Track last N failed strategies for anonymized replay
+STUCK_ENCOURAGE_LEVELS = 3 # Number of escalating encouragement levels
 
 # ── Navigation ───────────────────────────────────────────────────────────────
 

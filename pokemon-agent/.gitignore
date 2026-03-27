@@ -1,0 +1,4 @@
+*.gbc
+*.gbc.ram
+*.gbc.rtc
+.venv/

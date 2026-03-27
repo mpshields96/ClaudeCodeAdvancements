@@ -289,5 +289,180 @@ class TestEncodeScreenshot(unittest.TestCase):
         self.assertEqual(result, "")
 
 
+class TestStuckContextFormatting(unittest.TestCase):
+    """Test enhanced stuck detection: self-anchoring counter + encouragement."""
+
+    def test_format_stuck_context_empty(self):
+        """No failed strategies produces no anonymized section."""
+        from prompts import format_stuck_context
+        result = format_stuck_context([], stuck_turns=5)
+        self.assertNotIn("previous AI", result)
+
+    def test_format_stuck_context_anonymizes(self):
+        """Failed strategies are presented as 'another AI' attempts."""
+        from prompts import format_stuck_context
+        strategies = [["right", "right", "right"], ["a", "a", "start"]]
+        result = format_stuck_context(strategies, stuck_turns=10)
+        self.assertIn("previous AI", result)
+        # Should mention the button sequences
+        self.assertIn("right", result)
+        self.assertIn("start", result)
+
+    def test_format_stuck_context_limits_strategies(self):
+        """Only last N strategies are shown (not unlimited)."""
+        from prompts import format_stuck_context
+        strategies = [["a"]] * 20  # Way more than limit
+        result = format_stuck_context(strategies, stuck_turns=15)
+        # Should not include all 20
+        count = result.count("previous AI") if "previous AI" in result else result.count("AI tried")
+        self.assertLessEqual(count, 5)
+
+    def test_format_stuck_context_includes_turn_count(self):
+        """Stuck context mentions how many turns stuck."""
+        from prompts import format_stuck_context
+        strategies = [["up", "up"]]
+        result = format_stuck_context(strategies, stuck_turns=12)
+        self.assertIn("12", result)
+
+    def test_get_encouragement_level_1(self):
+        """Low stuck count gets mild encouragement."""
+        from prompts import get_encouragement
+        msg = get_encouragement(stuck_turns=10)
+        self.assertIsInstance(msg, str)
+        self.assertGreater(len(msg), 0)
+
+    def test_get_encouragement_level_2(self):
+        """Medium stuck count gets stronger encouragement."""
+        from prompts import get_encouragement
+        msg1 = get_encouragement(stuck_turns=10)
+        msg2 = get_encouragement(stuck_turns=20)
+        # Level 2 should be different from level 1
+        self.assertNotEqual(msg1, msg2)
+
+    def test_get_encouragement_level_3(self):
+        """High stuck count gets strongest encouragement."""
+        from prompts import get_encouragement
+        msg2 = get_encouragement(stuck_turns=20)
+        msg3 = get_encouragement(stuck_turns=30)
+        # Level 3 should be different from level 2
+        self.assertNotEqual(msg2, msg3)
+
+    def test_get_encouragement_caps_at_level_3(self):
+        """Very high stuck count still returns level 3 (no crash)."""
+        from prompts import get_encouragement
+        msg = get_encouragement(stuck_turns=100)
+        self.assertIsInstance(msg, str)
+        self.assertGreater(len(msg), 0)
+
+    def test_build_stuck_message_integrates_context(self):
+        """build_stuck_message combines prompt + context + encouragement."""
+        from prompts import build_stuck_message
+        strategies = [["down", "down", "a"]]
+        result = build_stuck_message(stuck_turns=15, failed_strategies=strategies)
+        # Should have stuck warning
+        self.assertIn("STUCK", result)
+        # Should have anonymized strategy
+        self.assertIn("down", result)
+        # Should have encouragement
+        self.assertGreater(len(result), 100)
+
+    def test_build_stuck_message_no_strategies(self):
+        """build_stuck_message works with empty strategy list."""
+        from prompts import build_stuck_message
+        result = build_stuck_message(stuck_turns=10, failed_strategies=[])
+        self.assertIn("STUCK", result)
+
+    def test_build_user_message_uses_stuck_context(self):
+        """build_user_message passes failed strategies when stuck."""
+        from prompts import build_user_message
+        state = _make_game_state()
+        msg = build_user_message(
+            state=state,
+            stuck_turns=10,
+            step_number=50,
+            failed_strategies=[["right", "right"]],
+        )
+        text = msg["content"][-1]["text"]
+        self.assertIn("STUCK", text)
+
+
+class TestAgentStrategyTracking(unittest.TestCase):
+    """Test that CrystalAgent tracks failed strategies for stuck detection."""
+
+    def test_agent_tracks_strategies(self):
+        """Agent should accumulate pressed button sequences."""
+        from agent import CrystalAgent, MockLLMClient, LLMResponse, ToolUse
+        from emulator_control import EmulatorControl
+        from memory_reader import MemoryReader
+
+        emu = EmulatorControl.mock()
+        emu.write_byte(0xDCD7, 1)
+        emu.write_byte(0xDCDF + 0, 155)
+        emu.write_byte(0xDCDF + 31, 10)
+        emu.write_byte(0xDCDF + 34, 0)
+        emu.write_byte(0xDCDF + 35, 30)
+        emu.write_byte(0xDCDF + 36, 0)
+        emu.write_byte(0xDCDF + 37, 30)
+        emu.write_byte(0xDCDF + 2, 33)
+        emu.write_byte(0xDCB5, 3)
+        emu.write_byte(0xDCB6, 1)
+        emu.write_byte(0xDCB8, 5)
+        emu.write_byte(0xDCB7, 4)
+
+        reader = MemoryReader(emu)
+        # Need threshold+1 steps at same position to be "stuck" and track strategies
+        # Use stuck_threshold=3 so we hit stuck on step 3
+        responses = []
+        for i in range(5):
+            responses.append(LLMResponse(
+                text=f"step {i}", tool_uses=[
+                    ToolUse(id=f"t{i}", name="press_buttons",
+                            input={"buttons": ["right", "right"]})
+                ],
+            ))
+        llm = MockLLMClient(responses=responses)
+        agent = CrystalAgent(emulator=emu, reader=reader, llm=llm, stuck_threshold=3)
+
+        # Run enough steps to trigger stuck (position never changes in mock)
+        for _ in range(5):
+            agent.step()
+
+        # Agent should have tracked button sequences once stuck
+        self.assertTrue(hasattr(agent, '_failed_strategies'))
+        self.assertGreaterEqual(len(agent._failed_strategies), 1)
+
+    def test_strategy_memory_limited(self):
+        """Agent should only keep last N strategies."""
+        from agent import CrystalAgent, MockLLMClient, LLMResponse, ToolUse
+        from emulator_control import EmulatorControl
+        from memory_reader import MemoryReader
+
+        emu = EmulatorControl.mock()
+        emu.write_byte(0xDCD7, 1)
+        emu.write_byte(0xDCDF + 0, 155)
+        emu.write_byte(0xDCDF + 31, 10)
+        emu.write_byte(0xDCDF + 34, 0)
+        emu.write_byte(0xDCDF + 35, 30)
+        emu.write_byte(0xDCDF + 36, 0)
+        emu.write_byte(0xDCDF + 37, 30)
+        emu.write_byte(0xDCDF + 2, 33)
+        emu.write_byte(0xDCB5, 3)
+        emu.write_byte(0xDCB6, 1)
+        emu.write_byte(0xDCB8, 5)
+        emu.write_byte(0xDCB7, 4)
+
+        reader = MemoryReader(emu)
+        llm = MockLLMClient()  # Default responses
+        agent = CrystalAgent(emulator=emu, reader=reader, llm=llm, stuck_threshold=5)
+
+        # Run many steps (all same position = stuck)
+        for _ in range(15):
+            agent.step()
+
+        # Should be capped
+        from config import STUCK_STRATEGY_MEMORY
+        self.assertLessEqual(len(agent._failed_strategies), STUCK_STRATEGY_MEMORY)
+
+
 if __name__ == "__main__":
     unittest.main()

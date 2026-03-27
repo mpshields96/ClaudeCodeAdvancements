@@ -14,6 +14,7 @@ from __future__ import annotations
 import base64
 from typing import List, Optional
 
+from config import STUCK_STRATEGY_MEMORY, STUCK_ENCOURAGE_LEVELS
 from game_state import BattleState, GameState, MapPosition, Party
 
 
@@ -78,6 +79,88 @@ DO NOT repeat what you've been doing. Try something COMPLETELY different:
 - If you've been fighting, try running or using a different Pokemon
 
 What you were doing is NOT WORKING. Change your approach NOW."""
+
+
+# ── Encouragement levels (anti-blackpilling, S201 Agent 3) ──────────────────
+
+ENCOURAGEMENT_LEVELS = [
+    # Level 1: mild (threshold to 2x threshold)
+    "Try a different approach — you've got this. Exploration is part of the game.",
+    # Level 2: moderate (2x to 3x threshold)
+    "This is a tricky section, but persistence pays off. Think about what's different "
+    "about this area. Is there a door, NPC, or item you haven't interacted with?",
+    # Level 3: strong (3x+ threshold)
+    "This is one of the hardest parts of the game — even experienced players get stuck here. "
+    "Try something you haven't tried at all: check your bag for usable items, talk to every "
+    "NPC, or backtrack to the last Pokemon Center and approach from a different direction.",
+]
+
+
+def get_encouragement(stuck_turns: int, threshold: int = 10) -> str:
+    """Return escalating encouragement based on how long stuck.
+
+    Level 1: threshold to 2x threshold
+    Level 2: 2x to 3x threshold
+    Level 3: 3x+ threshold (capped here)
+    """
+    if threshold <= 0:
+        threshold = 10
+    ratio = stuck_turns / threshold
+    if ratio >= 3:
+        level = 2  # 0-indexed
+    elif ratio >= 2:
+        level = 1
+    else:
+        level = 0
+    return ENCOURAGEMENT_LEVELS[min(level, len(ENCOURAGEMENT_LEVELS) - 1)]
+
+
+def format_stuck_context(
+    failed_strategies: list[list[str]],
+    stuck_turns: int,
+) -> str:
+    """Format failed strategies as anonymized 'another AI' attempts.
+
+    This leverages the self-anchoring bias (S201 Agent 8): models are less
+    likely to repeat a strategy if told 'another AI' tried it and failed,
+    vs being shown their own previous attempt.
+    """
+    if not failed_strategies:
+        return ""
+
+    # Only show last N strategies
+    recent = failed_strategies[-STUCK_STRATEGY_MEMORY:]
+
+    lines = [f"\nYou've been stuck for {stuck_turns} turns. Here's what hasn't worked:"]
+    for i, buttons in enumerate(recent, 1):
+        btn_str = ", ".join(buttons[:10])  # Cap display length
+        if len(buttons) > 10:
+            btn_str += f" ... ({len(buttons)} total)"
+        lines.append(f"- A previous AI tried: [{btn_str}] — it did NOT work.")
+
+    lines.append("\nWhat would YOU try instead? Think of something none of these approaches cover.")
+    return "\n".join(lines)
+
+
+def build_stuck_message(
+    stuck_turns: int,
+    failed_strategies: list[list[str]] | None = None,
+    threshold: int = 10,
+) -> str:
+    """Build the complete stuck injection: base prompt + context + encouragement.
+
+    This replaces the simple STUCK_PROMPT.format() for enhanced stuck detection.
+    """
+    parts = [STUCK_PROMPT.format(turns=stuck_turns)]
+
+    # Add anonymized failed strategy context
+    if failed_strategies:
+        parts.append(format_stuck_context(failed_strategies, stuck_turns))
+
+    # Add escalating encouragement
+    parts.append("\n" + get_encouragement(stuck_turns, threshold))
+
+    return "\n".join(parts)
 
 
 # ── Message formatting ───────────────────────────────────────────────────────
@@ -148,6 +231,8 @@ def build_user_message(
     screenshot_b64: Optional[str] = None,
     stuck_turns: int = 0,
     step_number: int = 0,
+    failed_strategies: list[list[str]] | None = None,
+    stuck_threshold: int = 10,
 ) -> dict:
     """Build a user message with game state + optional screenshot.
 
@@ -169,9 +254,13 @@ def build_user_message(
     # Game state text
     state_text = format_game_state(state)
 
-    # Add stuck warning if applicable
+    # Add stuck warning if applicable (enhanced with self-anchoring counter)
     if stuck_turns > 0:
-        state_text += "\n\n" + STUCK_PROMPT.format(turns=stuck_turns)
+        state_text += "\n\n" + build_stuck_message(
+            stuck_turns=stuck_turns,
+            failed_strategies=failed_strategies or [],
+            threshold=stuck_threshold,
+        )
 
     # Step counter for context
     state_text = f"[Step {step_number}]\n{state_text}"

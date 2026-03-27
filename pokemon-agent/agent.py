@@ -29,6 +29,7 @@ from typing import Any, Callable, Dict, List, Optional, Protocol
 from config import (
     MAX_HISTORY, MAX_TOKENS, MODEL_NAME, SAVE_INTERVAL,
     SCREENSHOT_UPSCALE, STUCK_THRESHOLD, STUCK_FORCE_NEW,
+    STUCK_STRATEGY_MEMORY,
     TEMPERATURE, STATE_DIR, SCREENSHOT_DIR, LOG_DIR,
 )
 from emulator_control import EmulatorControl
@@ -225,6 +226,7 @@ class CrystalAgent:
 
         # Stuck detection
         self._last_positions: List[MapPosition] = []
+        self._failed_strategies: List[List[str]] = []  # Track button sequences when stuck
 
         # Callbacks
         self._on_step: Optional[Callable[[StepResult], None]] = None
@@ -250,11 +252,14 @@ class CrystalAgent:
         screenshot_b64 = self._capture_screenshot()
 
         # 4. Build user message
+        is_stuck = stuck_turns >= self.stuck_threshold
         user_msg = build_user_message(
             state=state,
             screenshot_b64=screenshot_b64,
-            stuck_turns=stuck_turns if stuck_turns >= self.stuck_threshold else 0,
+            stuck_turns=stuck_turns if is_stuck else 0,
             step_number=self.step_count,
+            failed_strategies=self._failed_strategies if is_stuck else None,
+            stuck_threshold=self.stuck_threshold,
         )
         self.messages.append(user_msg)
 
@@ -278,11 +283,20 @@ class CrystalAgent:
         assistant_msg = self._response_to_message(response)
         self.messages.append(assistant_msg)
 
-        # 7. Execute tool calls
+        # 7. Execute tool calls + track strategies for stuck detection
         tool_results = []
         for tool_use in response.tool_uses:
             result = self._execute_tool(tool_use)
             tool_results.append(result)
+
+            # Track button sequences as potential failed strategies
+            if tool_use.name == "press_buttons" and is_stuck:
+                buttons = tool_use.input.get("buttons", [])
+                if buttons:
+                    self._failed_strategies.append(buttons)
+                    # Cap strategy memory
+                    if len(self._failed_strategies) > STUCK_STRATEGY_MEMORY:
+                        self._failed_strategies = self._failed_strategies[-STUCK_STRATEGY_MEMORY:]
 
             # Add tool result to message history
             self.messages.append({
