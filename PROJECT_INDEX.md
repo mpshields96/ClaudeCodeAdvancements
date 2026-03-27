@@ -40,6 +40,7 @@
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending + discover),14(Phase 3 COMPLETE),15,27(Phase 4 NEEDLE precision),40(Phase 1 scan scheduler) + subreddit_discoverer + url_reader tests | 498 |
 | Self-Learning | `self-learning/` | MT-7,10,12,26(Tier 3+E2E),27(Phase 5),28(COMPLETE),37(Layer 5 COMPLETE + uber_pipeline + dca_advisor),49(Phase 6) + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + predictive_recommender + sentinel_bridge + order_flow_intel + belief_vol_surface + apf_session_tracker + deployment_verifier + principle_seeder + monte_carlo_simulator (REQ-040) + meta_learning_dashboard (MT-49) + principle_discoverer (MT-49 Phase 3) + confidence_recalibrator (MT-49 Phase 4) + research_roi_resolver (MT-49 Phase 5) + fill_rate_simulator (REQ-042) + portfolio_loader (MT-37 Phase 3) + session_metrics (MT-49 Phase 6) + kelly_sizer (MT-37 Layer 3) + risk_monitor (MT-37 Layer 3) + tax_harvester (MT-37 Layer 4) + withdrawal_planner (MT-37 Layer 4) + rebalance_advisor (MT-37 Layer 5) + portfolio_report (MT-37 Layer 5) + behavioral_guard (MT-37 Layer 5) + uber_pipeline (MT-37 orchestrator) + dca_advisor (MT-37 DCA) + correlated_loss_analyzer (REQ-054) + volume_predictor (S187) + reflect tests | 2391 |
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 29 chart types + consistency audit + report_charts (wired into /cca-report, 13 Kalshi + 13 base + 3 learning charts, +pareto +gauge S193) + kalshi_data_collector (13 chart methods) + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) + figure integration (MT-32 Phase 7) + chartjs_bridge (MT-52/E2, 8 Chart.js types) | 1604 |
+| Pokemon Agent | `pokemon-agent/` | MT-53 Phase 3 COMPLETE — emulator_control + memory_reader + game_state + navigation + config + tools + prompts + agent + main | 272 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE, S190 Agent Research (multi-agent/orchestration), MT-53 Pokemon Research (emulator+frameworks), MT-53 Intelligence Scan (S191) | 86 |
 
 **Total: ~10,706 tests (~282 suites). All must pass before any work.**
@@ -371,3 +372,11 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `research/mt53/AGENT_OUTPUTS_VERBATIM.md` (S201)
 - `reddit-intelligence/subreddit_scanner.py` (S201)
 - `reddit-intelligence/test_subreddit_scanner.py` (S201)
+
+
+### Added in S202
+- `pokemon-agent/config.py` — Agent configuration constants (S202, 10 tests)
+- `pokemon-agent/tools.py` — Claude API tool definitions + validation (S202, 24 tests)
+- `pokemon-agent/prompts.py` — System prompt, state formatting, stuck detection (S202, 40 tests)
+- `pokemon-agent/agent.py` — Core agent loop, MockLLM, summarization (S202, 31 tests)
+- `pokemon-agent/main.py` — CLI entry point with --headless/--offline (S202, 9 tests)
