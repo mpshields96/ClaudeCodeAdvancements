@@ -3,22 +3,29 @@
 
 ---
 
-## Current State (as of Session 212 — 2026-03-27)
+## Current State (as of Session 213 — 2026-03-27)
 
-**Phase:** Session 212 COMPLETE. mGBA backend (ditched PyBoy), TextReaderRed, Kalshi PCT analysis, Codex comms
+**Phase:** Session 213 COMPLETE. MT-53: Merged codex branch, Red/mGBA e2e tests, collision maps + A* navigate action
 
-**What was done this session (S212):**
-- Built mGBA 0.10.5 from source on Apple Silicon - no more freezing
-- TextReaderRed with 12 tests wired into bridge.py
-- Kalshi PCT cap analysis delivered (UPDATE 61, +25% revenue)
-- Codex bidirectional comms established
-- **Tests**: 317 suites, 11546 tests passing. All green.
+**What was done this session (S213):**
+- Merged codex/codex-loop-scaffold to main (9 commits, 46 files, 2686 insertions)
+- Red/mGBA e2e bridge tests: 19 new tests covering MemoryReaderRed + TextReaderRed path (42 bridge total)
+- collision_reader_red.py: reads walkability from Pokemon Red RAM (dimensions, tiles, NPC sprites)
+- Navigate action in bridge.py: {"type":"navigate","x":5,"y":3} does A* pathfinding + executes path
+- 14 collision reader tests + 5 navigate action tests
+- **Tests**: 10/10 smoke (540 tests), all green.
 
 **Next:**
-1. Merge codex branch to main
-2. Test bridge.py end-to-end with mGBA
-3. Wire collision maps for A* in live play
-4. Run /pokemon-play demo
+1. Run /pokemon-play end-to-end demo with mGBA + navigate action
+2. Add warp data (doors, stairs) to collision reader for cross-map A*
+3. Build Claude agent loop for Pokemon Red (agent.py wiring)
+4. Get viewer.html showing live gameplay
+
+**Key file paths changed:**
+- `pokemon-agent/collision_reader_red.py` — New: RAM-based collision map reader
+- `pokemon-agent/test_collision_reader_red.py` — 14 tests
+- `pokemon-agent/bridge.py` — navigate action, collision_reader + nav wiring
+- `pokemon-agent/test_bridge.py` — 47 tests (was 23)
 
 ---
 
