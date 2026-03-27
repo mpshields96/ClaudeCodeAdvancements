@@ -346,3 +346,16 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S164
 - `design-skills/consistency_checker.py` — MT-32 Phase 4: Cross-format design consistency auditor. Scans generator source for orphan colors, token drift, font mismatches. 22 tests.
 - `tests/test_polybot_comm_learning.py` — REQ-038: Tests for polybot_comm.py send_outcome_report + parse_research_priorities. 13 tests.
+
+
+### Added in S198
+- `self-learning/mandate_tracker.py` (S198)
+- `self-learning/kelly_optimizer.py` (S198)
+- `self-learning/window_frequency_estimator.py` (S198)
+- `self-learning/mandate_dashboard.py` (S198)
+- `self-learning/signal_threshold_analyzer.py` (S198)
+- `self-learning/tests/test_mandate_tracker.py` (S198)
+- `self-learning/tests/test_kelly_optimizer.py` (S198)
+- `self-learning/tests/test_window_frequency_estimator.py` (S198)
+- `self-learning/tests/test_mandate_dashboard.py` (S198)
+- `self-learning/tests/test_signal_threshold_analyzer.py` (S198)

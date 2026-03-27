@@ -1,0 +1,5 @@
+{"tip":"Test tip","source":"cca-desktop","session":"S999","timestamp":"2026-03-24T06:12:21.321730Z"}
+{"tip":"Use doc_updater.py in wrap to batch all doc updates in one call","source":"cca-desktop","session":"S158","timestamp":"2026-03-25T02:02:02.616483Z"}
+{"tip":"Wire outcome_feedback into batch_wrap next session","source":"cca-desktop","session":"S188","timestamp":"2026-03-26T07:57:43.798992Z"}
+{"tip":"Verify /cca-auto loaded project version by checking for session pacer in prompt","source":"cca-desktop","session":"S198","timestamp":"2026-03-27T00:43:09.912563Z"}
+{"tip":"Signal threshold analyzer needs real DB calibration data for accurate projections","source":"cca-desktop","session":"S198","timestamp":"2026-03-27T00:43:09.912563Z"}

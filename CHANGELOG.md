@@ -3251,3 +3251,21 @@ CLI chat 2:
 - ParetoChart needs pipeline wiring (built SVG but not report_charts method)
 
 ---
+
+## Session 198 — 2026-03-26
+
+**What changed:**
+- 5 mandate tools (91 tests): mandate_tracker, kelly_optimizer, window_frequency_estimator, mandate_dashboard, signal_threshold_analyzer
+- Fixed 6 stale global CCA commands shadowing project versions — root cause of broken cca-auto
+- 6 Kalshi deliveries: REQ-58 analysis + 5 tool deliveries
+
+**Why:**
+- Built 5 mandate monitoring tools (91 tests) for Kalshi 5-day mandate. Fixed critical global command shadowing bug.
+
+**Tests:** 10957/10957 passing (295 suites)
+
+**Lessons:**
+- Two agent spawns at ~190K tokens for market research
+- No CCA-internal work (MT-53, MT-32) — mandate consumed full session
+
+---
