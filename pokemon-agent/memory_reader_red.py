@@ -16,6 +16,7 @@ from typing import List, Optional
 
 from emulator_control import EmulatorControl
 from move_data import get_move_data
+from species_types import get_species_types
 from game_state import (
     Badges,
     BattleState,
@@ -412,12 +413,18 @@ class MemoryReaderRed:
             special = (self._mem(addr + OFF_SPECIAL_HI) << 8) + self._mem(addr + OFF_SPECIAL_LO)
             status = decode_status(self._mem(addr + OFF_STATUS))
 
-            # Types
+            # Types — prefer RAM, fall back to static species table
             type1_id = self._mem(addr + OFF_TYPE1)
             type2_id = self._mem(addr + OFF_TYPE2)
-            types = [TYPE_NAMES.get(type1_id, "???")]
-            if type2_id != type1_id:
-                types.append(TYPE_NAMES.get(type2_id, "???"))
+            type1 = TYPE_NAMES.get(type1_id)
+            type2 = TYPE_NAMES.get(type2_id)
+            if type1 is not None:
+                types = [type1]
+                if type2 is not None and type2_id != type1_id:
+                    types.append(type2)
+            else:
+                # RAM types not populated — use static table
+                types = get_species_types(species_id) or ["???"]
 
             # Moves (with full data from move_data.py)
             moves = []
@@ -483,12 +490,17 @@ class MemoryReaderRed:
         enemy_level = self._mem(ENEMY_MON_LEVEL)
         enemy_status = decode_status(self._mem(ENEMY_MON_STATUS))
 
-        # Enemy types from battle RAM
+        # Enemy types — prefer battle RAM, fall back to static species table
         enemy_type1_id = self._mem(ENEMY_MON_TYPE1)
         enemy_type2_id = self._mem(ENEMY_MON_TYPE2)
-        enemy_types = [TYPE_NAMES.get(enemy_type1_id, "???")]
-        if enemy_type2_id != enemy_type1_id:
-            enemy_types.append(TYPE_NAMES.get(enemy_type2_id, "???"))
+        et1 = TYPE_NAMES.get(enemy_type1_id)
+        et2 = TYPE_NAMES.get(enemy_type2_id)
+        if et1 is not None:
+            enemy_types = [et1]
+            if et2 is not None and enemy_type2_id != enemy_type1_id:
+                enemy_types.append(et2)
+        else:
+            enemy_types = get_species_types(enemy_species_id) or ["???"]
 
         enemy = Pokemon(
             species=enemy_name,
