@@ -84,21 +84,21 @@ body {
 </div>
 
 <script>
-const img = document.getElementById('screen');
-const stepInfo = document.getElementById('step-info');
-const location = document.getElementById('location');
-const badgesDisplay = document.getElementById('badges-display');
-const moneyDisplay = document.getElementById('money');
-const menuState = document.getElementById('menu-state');
-const partyList = document.getElementById('party-list');
-const battleInfo = document.getElementById('battle-info');
-const textDisplay = document.getElementById('text-display');
-const playTime = document.getElementById('play-time');
-const refreshStatus = document.getElementById('refresh-status');
-const liveBadge = document.getElementById('live-badge');
+var img = document.getElementById('screen');
+var stepInfo = document.getElementById('step-info');
+var locationEl = document.getElementById('location');
+var badgesDisplay = document.getElementById('badges-display');
+var moneyDisplay = document.getElementById('money');
+var menuState = document.getElementById('menu-state');
+var partyList = document.getElementById('party-list');
+var battleInfo = document.getElementById('battle-info');
+var textDisplay = document.getElementById('text-display');
+var playTime = document.getElementById('play-time');
+var refreshStatus = document.getElementById('refresh-status');
+var liveBadge = document.getElementById('live-badge');
 
-let lastStep = -1;
-let missedPolls = 0;
+var lastStep = -1;
+var missedPolls = 0;
 
 function hpClass(hp, max) {
   const pct = max > 0 ? hp / max : 0;
@@ -128,7 +128,7 @@ async function refresh() {
 
     // Overlay
     const mapName = s.position.map_name || ('Map ' + (s.position.map_group || '?') + ':' + (s.position.map_number || '?'));
-    location.textContent = mapName + ' (' + s.position.x + ',' + s.position.y + ')';
+    locationEl.textContent = mapName + ' (' + s.position.x + ',' + s.position.y + ')';
     badgesDisplay.textContent = s.badges + ' badge' + (s.badges !== 1 ? 's' : '');
     moneyDisplay.textContent = '$' + (s.money || 0).toLocaleString();
     menuState.textContent = s.menu_state || 'overworld';

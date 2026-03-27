@@ -1,14 +1,16 @@
 {
-  "step": 2,
+  "step": 1,
   "position": {
     "map_id": 0,
-    "map_name": "Map 0",
-    "x": 0,
-    "y": 0
+    "map_group": 0,
+    "map_number": 0,
+    "map_name": "PALLET TOWN",
+    "x": 4,
+    "y": 8
   },
   "menu_state": "overworld",
   "badges": 0,
-  "money": 0,
+  "money": 3000,
   "party": [],
   "battle": null,
   "text_on_screen": "",

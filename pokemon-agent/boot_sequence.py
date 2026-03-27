@@ -37,23 +37,19 @@ MAP_REDS_HOUSE_1F = 37
 MAP_PALLET_TOWN = 0
 MAP_OAKS_LAB = 40
 
-# ── Red House 2F layout ───────────────────────────────────────────────────
-# The player starts at (3, 6) facing down.
-# Stairs down to 1F are at approximately (7, 0) — top-right area.
-# But in Pokemon Red, you walk onto the staircase tile to go down.
-# Staircase position in Red's House 2F: (7, 0)
+# ── Red House 2F layout (verified S211) ──────────────────────────────────
+# Player starts at (3, 6). Stairs trigger at (7, 1) when stepping right.
+# Walkable area verified by exhaustive movement scan:
+#   - x=3..5 walkable at row 6 (blocked at x=6)
+#   - x=5 walkable rows 1..6 (blocked at row 0)
+#   - x=6..7 walkable at rows 1+
+#   - Stepping right from (6,1) to (7,1) triggers map transition to 1F
+# Path: right 2 to (5,6), up 5 to (5,1), right 2 → stairs at (7,1)
 #
-# Simplified walkable grid (from S209):
-#   Row 0: [wall] [wall] [wall] [wall] [wall] [wall] [wall] [STAIR]
-#   Row 1: [wall] [PC]   [ ]   [ ]   [ ]   [TV]  [ ]   [ ]
-#   Row 2: [wall] [ ]    [ ]   [ ]   [ ]   [ ]   [ ]   [ ]
-#   Row 3: [wall] [ ]    [ ]   [BED] [BED] [ ]   [ ]   [ ]
-#   Row 4: [wall] [ ]    [ ]   [BED] [BED] [ ]   [ ]   [ ]
-#   Row 5: [wall] [ ]    [ ]   [ ]   [ ]   [ ]   [ ]   [ ]
-#   Row 6: [wall] [ ]    [ ]   [START][ ]  [ ]   [ ]   [ ]
-#
-# Player starts at (3, 6). Stairs at (7, 0).
-# Path: right 4, up 6 → arrives at stairs.
+# ── Red House 1F layout (verified S211) ──────────────────────────────────
+# Enter from stairs at (7, 1). Door mat at x=2 or x=3, y=7.
+# Stepping down from (2,7) or (3,7) exits to Pallet Town (map 0).
+# Path: down 6 to (7,7), left 5 to (2,7), down → exit
 
 
 def clear_dialog(emu, presses: int = 20, hold: int = 4, wait: int = 16) -> None:
@@ -225,29 +221,26 @@ def run_boot_sequence(emu, reader) -> dict:
         logger.info("Phase 2: Navigating to stairs in Red's House 2F...")
         logger.info("  Current position: (%d, %d)", pos.x, pos.y)
 
-        # Path from (3,6) to stairs area.
-        # In Pokemon Red, Red's House 2F stairs are at (7, 0).
-        # Navigate right then up.
-        navigate_to(emu, reader, target_x=7, target_y=1)
+        # Verified path (S211): right 2 to (5,6), up 5 to (5,1), right 2
+        # Column 6+ is blocked at row 6, so go up first then across.
+        navigate_to(emu, reader, target_x=5, target_y=pos.y)  # right to x=5
+        navigate_to(emu, reader, target_x=5, target_y=1)      # up to row 1
+        navigate_to(emu, reader, target_x=7, target_y=1)      # right to stairs
 
-        # Step onto stairs (one more step up)
-        emu.press("up", hold_frames=10, wait_frames=120)
-        emu.tick(60)
-
-        # Wait for map transition to 1F
-        if wait_for_map(emu, reader, MAP_REDS_HOUSE_1F, max_ticks=300):
+        # Check if stepping to (7,1) already triggered transition
+        state = reader.read_game_state()
+        if state.position.map_id == MAP_REDS_HOUSE_1F:
             result["phases_completed"].append("stairs_to_1f")
             logger.info("Phase 2 complete: arrived at Red's House 1F")
         else:
-            # Maybe stairs are at a different position — try stepping on adjacent tiles
-            logger.info("Phase 2: Stairs didn't trigger, trying adjacent positions...")
-            for attempt_x, attempt_y in [(7, 0), (6, 0), (7, 1)]:
-                navigate_to(emu, reader, target_x=attempt_x, target_y=attempt_y)
-                emu.tick(120)
-                state = reader.read_game_state()
-                if state.position.map_id == MAP_REDS_HOUSE_1F:
-                    result["phases_completed"].append("stairs_to_1f")
-                    break
+            # Try stepping up onto stair tile
+            emu.press("up", hold_frames=10, wait_frames=120)
+            emu.tick(60)
+            if wait_for_map(emu, reader, MAP_REDS_HOUSE_1F, max_ticks=300):
+                result["phases_completed"].append("stairs_to_1f")
+                logger.info("Phase 2 complete: arrived at Red's House 1F")
+            else:
+                logger.warning("Phase 2: Stairs didn't trigger")
     elif pos.map_id == MAP_REDS_HOUSE_1F:
         logger.info("Phase 2: Already on 1F, skipping stairs navigation")
         result["phases_completed"].append("stairs_skipped")
@@ -264,9 +257,10 @@ def run_boot_sequence(emu, reader) -> dict:
         if state.menu_state.value == "dialog":
             clear_dialog_until_overworld(emu, reader, max_presses=30)
 
-        # Red's House 1F exit is at the door mat: approximately (2-3, 7)
-        # The door is at the bottom of the room.
-        navigate_to(emu, reader, target_x=3, target_y=7)
+        # Verified path (S211): door mat at x=2-3, y=7. Step down to exit.
+        # Enter from stairs at (7,1). Go down to row 7, left to x=3, down.
+        navigate_to(emu, reader, target_x=pos.x, target_y=7)  # down first
+        navigate_to(emu, reader, target_x=3, target_y=7)       # left to door
 
         # Step down to exit
         emu.press("down", hold_frames=10, wait_frames=120)
@@ -276,15 +270,13 @@ def run_boot_sequence(emu, reader) -> dict:
             result["phases_completed"].append("exit_house")
             logger.info("Phase 3 complete: arrived at Pallet Town")
         else:
-            # Try doormat positions
-            for dx, dy in [(2, 7), (3, 7), (4, 7)]:
-                navigate_to(emu, reader, target_x=dx, target_y=dy)
-                emu.press("down", hold_frames=10, wait_frames=120)
-                emu.tick(120)
-                state = reader.read_game_state()
-                if state.position.map_id == MAP_PALLET_TOWN:
-                    result["phases_completed"].append("exit_house")
-                    break
+            # Try the other door tile
+            navigate_to(emu, reader, target_x=2, target_y=7)
+            emu.press("down", hold_frames=10, wait_frames=120)
+            emu.tick(120)
+            state = reader.read_game_state()
+            if state.position.map_id == MAP_PALLET_TOWN:
+                result["phases_completed"].append("exit_house")
 
     # ── Phase 4: Walk to Oak's Lab ────────────────────────────────────────
     state = reader.read_game_state()

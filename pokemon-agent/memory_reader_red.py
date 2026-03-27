@@ -487,14 +487,18 @@ class MemoryReaderRed:
         )
 
     def _read_menu_state(self) -> MenuState:
-        """Detect current menu/dialog state from RAM flags."""
-        textbox = self._mem(TEXTBOX_ID)
+        """Detect current menu/dialog state from RAM flags.
+
+        Uses JOY_DISABLED bit 5 (0x20) as primary dialog indicator per pokered
+        disassembly and reference repos. TEXTBOX_ID (0xD125) retains stale
+        values after dialog ends and is unreliable for active-dialog detection.
+        """
         joy_disabled = self._mem(JOY_DISABLED)
         battle_mode = self._mem(BATTLE_MODE)
 
         if battle_mode != 0:
             return MenuState.BATTLE
-        if textbox != 0 or (joy_disabled & 1):
+        if joy_disabled & 0x20:
             return MenuState.DIALOG
         return MenuState.OVERWORLD
 
