@@ -239,6 +239,7 @@ def build_user_message(
     step_number: int = 0,
     failed_strategies: list[list[str]] | None = None,
     stuck_threshold: int = 10,
+    blocked_directions: str = "",
 ) -> dict:
     """Build a user message with game state + optional screenshot.
 
@@ -259,6 +260,10 @@ def build_user_message(
 
     # Game state text
     state_text = format_game_state(state)
+
+    # Add blocked direction warning if applicable (mewtoo pattern)
+    if blocked_directions:
+        state_text += f"\n\n{blocked_directions}"
 
     # Add stuck warning if applicable (enhanced with self-anchoring counter)
     if stuck_turns > 0:

@@ -33,6 +33,7 @@ from config import (
     STUCK_STRATEGY_MEMORY,
     TEMPERATURE, STATE_DIR, SCREENSHOT_DIR, LOG_DIR,
 )
+from movement_validator import MovementValidator
 from emulator_control import EmulatorControl
 from game_state import GameState, MapPosition, MenuState
 from memory_reader import MemoryReader
@@ -238,6 +239,10 @@ class CrystalAgent:
         self.action_cache = ActionCache()
         self._last_cache_key: Optional[str] = None  # For outcome tracking
 
+        # Movement validation: track blocked directions (mewtoo pattern)
+        self.movement_validator = MovementValidator()
+        self._last_map_id: Optional[int] = None  # For map change detection
+
         # Callbacks
         self._on_step: Optional[Callable[[StepResult], None]] = None
 
@@ -383,6 +388,11 @@ class CrystalAgent:
         # 1. Read game state from RAM (ground truth)
         state = self.reader.read_game_state()
 
+        # 1.1. Map change detection — clear stale movement data
+        if self._last_map_id is not None and state.position.map_id != self._last_map_id:
+            self.movement_validator.on_map_change(self._last_map_id, state.position.map_id)
+        self._last_map_id = state.position.map_id
+
         # 1.5. Auto-advance check: skip LLM for mechanical actions
         auto_button = self._should_auto_advance(state)
         if auto_button is not None:
@@ -401,6 +411,7 @@ class CrystalAgent:
 
         # 3. Capture screenshot (if emulator supports it)
         screenshot_b64 = self._capture_screenshot()
+        blocked_info = self.movement_validator.format_for_prompt(state.position)
         user_msg = build_user_message(
             state=state,
             screenshot_b64=screenshot_b64,
@@ -408,6 +419,7 @@ class CrystalAgent:
             step_number=self.step_count,
             failed_strategies=self._failed_strategies if is_stuck else None,
             stuck_threshold=self.stuck_threshold,
+            blocked_directions=blocked_info,
         )
         self.messages.append(user_msg)
 
@@ -670,12 +682,25 @@ class CrystalAgent:
             has_direction = any(b in direction_buttons for b in buttons)
 
             if has_direction:
+                # Track movement success/failure per direction
+                for b in buttons:
+                    if b in direction_buttons:
+                        self.movement_validator.verify_movement(
+                            pre_state.position, post_state.position, b
+                        )
+
                 # If we pressed direction buttons, position should change
                 # (unless blocked by a wall, which is normal)
                 moved = (pre_state.position != post_state.position)
                 if not moved and len(buttons) >= 3:
-                    return {"warning": "pressed_directions_but_didnt_move",
-                            "position": f"({post_state.position.x},{post_state.position.y})"}
+                    blocked_info = self.movement_validator.format_for_prompt(
+                        pre_state.position
+                    )
+                    warning = {"warning": "pressed_directions_but_didnt_move",
+                               "position": f"({post_state.position.x},{post_state.position.y})"}
+                    if blocked_info:
+                        warning["blocked"] = blocked_info
+                    return warning
 
             # Check if battle state changed (entered or exited battle)
             if pre_state.battle.in_battle != post_state.battle.in_battle:
