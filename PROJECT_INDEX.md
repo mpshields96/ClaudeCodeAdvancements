@@ -393,3 +393,9 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `pokemon-agent/test_action_cache.py` (S204)
 - `pokemon-agent/test_real_emulator.py` (S204)
 - `pokemon-agent/MEWTOO_COMPARISON.md` (S204)
+
+
+### Added in S205
+- `pokemon-agent/movement_validator.py` (S205)
+- `pokemon-agent/screen_detector.py` (S205)
+- `pokemon-agent/diversity_checker.py` (S205)

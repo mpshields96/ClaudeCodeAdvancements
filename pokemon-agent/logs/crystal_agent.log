@@ -1,0 +1,24 @@
+2026-03-27 00:28:14,089 [INFO] crystal: Loading ROM: pokemon_crystal.gbc
+2026-03-27 00:28:24,772 [INFO] crystal: Loading ROM: pokemon_crystal.gbc
+2026-03-27 00:28:24,991 [INFO] crystal: Offline mode — no LLM calls
+2026-03-27 00:28:24,991 [INFO] crystal: Starting agent for 5 steps
+2026-03-27 00:28:25,000 [ERROR] crystal: Agent error: No LLM client configured. Set agent.llm or pass to constructor.
+Traceback (most recent call last):
+  File "/Users/matthewshields/Projects/ClaudeCodeAdvancements/pokemon-agent/main.py", line 167, in main
+    results = agent.run(num_steps=args.steps)
+  File "/Users/matthewshields/Projects/ClaudeCodeAdvancements/pokemon-agent/agent.py", line 518, in run
+    result = self.step()
+  File "/Users/matthewshields/Projects/ClaudeCodeAdvancements/pokemon-agent/agent.py", line 431, in step
+    raise RuntimeError("No LLM client configured. Set agent.llm or pass to constructor.")
+RuntimeError: No LLM client configured. Set agent.llm or pass to constructor.
+2026-03-27 00:28:25,016 [INFO] agent: Saved state: states/crystal_step_1.state
+2026-03-27 00:28:25,017 [INFO] crystal: Done. Steps: 1, Time: 0.0s, Tokens: 0 in + 0 out = 0 total
+2026-03-27 00:28:49,060 [INFO] crystal: Loading ROM: pokemon_crystal.gbc
+2026-03-27 00:28:49,211 [INFO] crystal: Offline mode — no LLM calls
+2026-03-27 00:28:49,211 [INFO] crystal: Starting agent for 5 steps
+2026-03-27 00:28:49,219 [INFO] agent: Step 1: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 00:28:49,221 [INFO] agent: Step 2: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 00:28:49,224 [INFO] agent: Step 3: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 00:28:49,226 [INFO] agent: Step 4: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 00:28:49,229 [INFO] agent: Step 5: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 00:28:49,229 [INFO] crystal: Done. Steps: 5, Time: 0.0s, Tokens: 0 in + 0 out = 0 total

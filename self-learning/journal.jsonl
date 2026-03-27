@@ -573,3 +573,16 @@
 {"event_type":"pain","session":204,"domain":"general","notes":"None","timestamp":"2026-03-27T05:20:20.131903Z"}
 {"event_type":"feedback_roi","session":204,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T05:20:20.131903Z"}
 {"event_type":"sentinel_stats","session":204,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T05:20:20.131903Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T05:21:27.473616+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T05:21:27.495595+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"timestamp":"2026-03-27T05:29:46Z","event_type":"win","domain":"general","metrics":{},"learnings":[],"strategy_version":"v1","notes":"S150 mandate sizing: KELLY_FRACTION 0.25\u21920.85, ABSOLUTE_MAX 15\u219225 USD, DEFAULT_MAX_LOSS 8\u219222 USD \u2014 all tests still pass; daily_sniper raised 1\u21925 USD cap under ABSOLUTE FREEDOM DIRECTIVE (SPRT lambda=+3.833 confirmed)"}
+{"timestamp":"2026-03-27T05:29:46Z","event_type":"pain","domain":"general","metrics":{},"learnings":[],"strategy_version":"v1","notes":"Bot froze silently for ~5 hours (00:27-05:27 UTC) \u2014 PID alive in ps but no log output. Pattern: frozen process doesn't show up in ps grep but bot.pid still exists. Always check log recency, not just ps."}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T05:46:12.070378+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T05:46:12.095253+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":205,"domain":"general","outcome":"success","notes":"All 5 mewtoo patterns adopted, main.py gameplay ready, 437 pokemon-agent tests","timestamp":"2026-03-27T05:47:59.475022Z"}
+{"event_type":"win","session":205,"domain":"general","notes":"All 5 mewtoo patterns adopted","timestamp":"2026-03-27T05:47:59.475022Z"}
+{"event_type":"win","session":205,"domain":"general","notes":"main.py gameplay ready with offline fallback","timestamp":"2026-03-27T05:47:59.475022Z"}
+{"event_type":"win","session":205,"domain":"general","notes":"Cross-chat UPDATE 60 delivered","timestamp":"2026-03-27T05:47:59.475022Z"}
+{"event_type":"pain","session":205,"domain":"general","notes":"None significant","timestamp":"2026-03-27T05:47:59.475022Z"}
+{"event_type":"feedback_roi","session":205,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T05:47:59.475022Z"}
+{"event_type":"sentinel_stats","session":205,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T05:47:59.475022Z"}

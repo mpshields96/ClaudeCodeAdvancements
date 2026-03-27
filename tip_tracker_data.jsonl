@@ -10,3 +10,4 @@
 {"tip":"PokeAgent Challenge (NeurIPS 2025) is the benchmark for Pokemon LLM agents \u2014 standardized speedrunning eval framework","source":"cca-desktop","session":"S203","timestamp":"2026-03-27T05:00:19.223064Z"}
 {"tip":"Self-anchoring counter: present a models own failed strategy as another AIs to overcome anchoring bias","source":"cca-desktop","session":"S203","timestamp":"2026-03-27T05:00:19.223064Z"}
 {"tip":"Action cache + auto-advance combo means near-zero tokens through dialog-heavy sections","source":"cca-desktop","session":"S204","timestamp":"2026-03-27T05:20:20.131903Z"}
+{"tip":"Test token savings with a 50-step live run to measure auto-advance/cache/transition skip efficiency","source":"cca-desktop","session":"S205","timestamp":"2026-03-27T05:47:59.475022Z"}
