@@ -1,6 +1,6 @@
 """Hivemind Phase 1 validation — verify detect_chat_id env var behavior.
 
-Tests that detect_chat_id correctly reads CCA_CHAT_ID for cli1, cli2, and desktop.
+Tests that detect_chat_id correctly reads CCA_CHAT_ID for internal CCA identities.
 """
 
 import os
@@ -41,6 +41,13 @@ class TestDetectChatId(unittest.TestCase):
             import cca_comm
             result = cca_comm.detect_chat_id()
         self.assertEqual(result, "desktop")
+
+    def test_codex_env_var(self):
+        """CCA_CHAT_ID=codex must return 'codex'."""
+        with patch.dict(os.environ, {"CCA_CHAT_ID": "codex"}, clear=False):
+            import cca_comm
+            result = cca_comm.detect_chat_id()
+        self.assertEqual(result, "codex")
 
 
 if __name__ == "__main__":
