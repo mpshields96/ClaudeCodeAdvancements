@@ -1,7 +1,79 @@
 # MT-53 Phase 1 Research: Pokemon Autonomous Bot
 
-**Date:** 2026-03-26 (S199)
+**Date:** 2026-03-26 (S199), updated 2026-03-27 (S209)
 **Directive:** Matthew S188/S189 — autonomous Pokemon bot on macOS emulator
+
+---
+
+## 0. Architecture to Steal (GPT Plays Pokemon FireRed — clad3815)
+
+**Source:** github.com/clad3815/gpt-play-pokemon-firered (73 stars, CC BY-NC 4.0)
+**Cloned to:** `pokemon-agent/reference_repos/gpt-play-pokemon-firered/`
+
+### 4-Layer Architecture
+```
+mGBA + Lua socket ──► Python FastAPI bridge ──► Node.js AI agent ──► WebSocket dashboard
+   (emulator)            (memory reader)         (decision loop)      (live monitoring)
+```
+
+**Our adaptation for Pokemon Red on PyBoy:**
+```
+PyBoy (Python) ──► bridge.py (memory reader + FastAPI) ──► agent.py (Claude AI loop) ──► viewer.html
+```
+
+### Tool Set (what the AI agent can do)
+| Tool | Purpose | Our equivalent |
+|------|---------|----------------|
+| `key_press` | Directional + A/B/Start/Select | bridge.py button_press |
+| `a_until_end_of_dialog` | Spam A to clear all dialog | Need to build |
+| `path_to_location` | A* pathfinding with collision map | Need to build |
+| `add_marker` / `delete_marker` | Map annotations (doors, NPCs, shops) | Need to build |
+| `write_memory` / `delete_memory` | Persistent strategic notes | Need to build |
+| `update_objectives` | Quest log with WHY/HOW/WHAT | Need to build |
+| `restart_console` | Reload last save | PyBoy save state |
+| `execute_action` | Wrapper to perform actions | Need to build |
+
+### Pathfinding System (456-line prompt)
+- Emoji-based minimap grid sent to AI as markdown table
+- Collision tiles: walls, water, ledges, NPCs, doors, teleporters
+- Cost weighting: ground=1, grass=25, unexplored=50
+- Two-pass A*: strict collision first, then simulation passes for interactive obstacles
+- Priority order: trees → boulders → water → NPCs → doors → teleporters
+- Ledge mechanics: one-way + 1 displacement
+- Warp safety: avoid stepping on doors/stairs unless destination
+
+### Memory System
+- `memory.json` — long-term observations and lessons
+- `objectives.json` — quest log with rationale
+- `markers.json` — map waypoints (doors, NPCs, connections)
+- `history.json` — action/conversation history
+- `progress_steps.json` — game milestones
+- Boss dossiers after each fight (team, moves, weaknesses, winning line)
+
+### Game Loop
+```
+while True:
+    game_state = fetch_game_data()     # RAM: position, team, inventory, map
+    minimap = render_minimap()          # Emoji grid with collision data
+    prompt = build_prompt(game_state, memory, objectives, minimap)
+    response = call_ai(prompt)          # Claude API call
+    tool_calls = parse_response(response)
+    execute_tools(tool_calls)           # Button presses, memory writes, etc.
+```
+
+### Key Insights from Community
+- Context window fills fast (150-200K tokens causes hallucination loops in Gemini)
+- Better notes = better play (notepad is the key differentiator)
+- Self-criticism prompt helps recover from errors
+- NPC marker reconciliation (track moving NPCs)
+- Fog of war tracking per map (explored vs unexplored tiles)
+
+### PokeAgent Speedrun (NeurIPS — sethkarten/pokeagent-speedrun)
+- **Subagent architecture:** battler, gym_puzzle, reflect, summarize, verify
+- **Multi-VLM support:** OpenAI, Anthropic, Google, OpenRouter
+- **SLAM-style exploration** instructions for unknown maps
+- **Trajectory optimization:** refine prompts based on recent gameplay
+- **Porymap integration:** decompiled map data for accurate collision
 
 ---
 
@@ -220,6 +292,46 @@ Phase 2 (Core Engine) should build:
 4. Tests for all three modules
 
 Estimated: ~400 LOC + ~150 LOC tests. One session.
+
+---
+
+## 6. S208 Findings — Implementation Reality Check (2026-03-27)
+
+S199 research was theoretical. S206-S208 built and tested the actual system. Key learnings:
+
+### What Worked
+- PyBoy headless on macOS ARM64 — no issues, up to 395x speed
+- RAM addresses from pret/pokecrystal are 100% correct for our use case
+- File-based IPC (bridge.py <-> Claude Code) is clean and zero-cost
+- Save state system works perfectly (save/load/screenshot)
+- Crystal intro can be fully automated (300 frames + button sequence)
+
+### What Didn't Work / Needed Fixing
+- **SDL2 window freezes** when PyBoy launched from Claude Code background process. Fix: headless mode only, use web viewer.
+- **Map ID "bug"** was a misunderstanding. `(group << 8) | number` = composite ID. S207 compared against raw group byte. Fix: store group + number separately on MapPosition.
+- **Movement not working** after state load. Cause: dialog/text box stuck from save state capture point. Fix: mash B+A after loading state to clear UI, increase post-action tick from 12 to 20 frames.
+- **S199 said rules-based, Matthew changed to Claude Code as brain.** /pokemon-play slash command = Claude reads state, reasons, writes action. Bridge executes. Zero API cost (Max subscription). This is NOT the API pattern other bots use.
+
+### Architecture Divergence from S199 Plan
+S199 recommended rules-based decision engine. Actual architecture:
+- **Brain:** Claude Code via /pokemon-play slash command (NOT API, NOT rules-based)
+- **Body:** bridge.py (headless PyBoy, file-based state/action exchange)
+- **Eyes:** viewer.html (Twitch-style browser viewer, 500ms polling)
+- **Memory:** state.json + screenshot.png in bridge_io/
+
+### Key Repos Confirmed Useful
+- `davidhershey/ClaudePlaysPokemonStarter` — 3-file starter, progressive summarization pattern
+- `pret/pokecrystal` — RAM map source, authoritative
+- `NousResearch/pokemon-agent` — missing Crystal reader, we fill this gap
+- `cicero225/llm_pokemon_scaffold` — collision maps, meta-critique ideas for later
+
+### Still Needed (Future Sessions)
+- Progressive summarization for long /pokemon-play sessions
+- A* pathfinding (can borrow from NousResearch or cicero225)
+- Walkability overlay on screenshots (official stream does red/cyan tiles)
+- 2x screenshot upscale before sending to Claude
+- Full spec-driven development (/spec:requirements) for brain logic
+- Senior dev review once core loop verified
 
 ---
 

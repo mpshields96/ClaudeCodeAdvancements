@@ -180,18 +180,13 @@
 - REQ-8 (multi-parameter loss analysis) and REQ-9 (non-stationarity) still URGENT
 - REQ-10-25 need triage — many may be resolved or superseded by newer data
 
-### E17. MT-53 Pokemon Autonomous Bot — Phase 1 Research (Matthew directive S189)
-- Find the right macOS emulator with speed control (x1.5 or x2) AND scripting API
-- Target games: Pokemon Crystal (GBC), Pokemon Emerald (GBA), ROM hacks (TBD)
-- Candidates: pyboy (Python-native GBC), mGBA (Lua scripting, GBA), OpenEmu (macOS native)
-- Key question: which emulator supports BOTH scripting AND adjustable speed on macOS?
-- **Reddit/GitHub intelligence scan:** Search for high-quality AI Pokemon bot projects, frameworks,
-  or guides. Look for existing work we can BUILD on or ADAPT (not rat poison). Check repos with
-  stars, active maintenance, and real scripting APIs. Subreddits: r/pokemon, r/PokemonROMhacks,
-  r/emulation, r/MachineLearning. GitHub: search "pokemon bot emulator", "pokemon ai player",
-  "pyboy pokemon", "mgba scripting pokemon". Apply standard /cca-review verdicts.
-- ROM hacks list coming from Matthew later — log when provided
-- This is an UBER-LEVEL personal fun project, low priority vs Kalshi work
+### E17. MT-53 Pokemon Autonomous Bot [IN PROGRESS S208-S209]
+- S208: Cloned 4 reference repos, built memory_reader_red.py, agent_memory.py, expanded tools.py (4→10)
+- S209: Fixed movement bug (SNES dialog was blocking input), verified PyBoy movement works
+- **STILL TODO:** Boot automation script (name char, clear dialogs, exit Red House to Pallet Town)
+- **STILL TODO:** Get viewer.html showing live gameplay
+- **STILL TODO:** Port A* pathfinding from reference repos
+- **STILL TODO:** Build Claude agent loop for Pokemon Red
 
 ---
 

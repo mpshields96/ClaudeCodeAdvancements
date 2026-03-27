@@ -1,56 +1,192 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Pokemon Crystal — Live Viewer</title>
+<title>Pokemon Red — LIVE</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #111; color: #eee; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; height: 100vh; }
-h1 { font-size: 18px; margin: 12px 0 8px; color: #7bf; }
-#screen { image-rendering: pixelated; border: 3px solid #444; width: 480px; height: 432px; background: #000; }
-#state { margin: 10px; font-size: 13px; max-width: 500px; white-space: pre-wrap; color: #aaa; text-align: left; }
-#step { color: #7f7; font-size: 14px; margin: 4px; }
+body {
+  background: #0e0e10; color: #efeff1; font-family: 'Inter', 'Segoe UI', sans-serif;
+  display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+}
+.header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; width: 100%; max-width: 720px;
+}
+.live-dot { width: 8px; height: 8px; background: #e91916; border-radius: 50%; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+.title { font-size: 16px; font-weight: 700; }
+.live-badge { background: #e91916; color: #fff; font-size: 11px; font-weight: 700; padding: 1px 5px; border-radius: 3px; }
+.step-info { margin-left: auto; font-size: 13px; color: #adadb8; }
+
+.game-frame {
+  background: #18181b; border: 2px solid #2f2f35; border-radius: 8px;
+  padding: 8px; width: 496px;
+}
+#screen {
+  image-rendering: pixelated; width: 480px; height: 432px;
+  background: #000; display: block; border-radius: 4px;
+}
+.overlay {
+  display: flex; gap: 16px; padding: 8px 4px 2px; font-size: 12px; color: #adadb8;
+}
+.overlay .loc { color: #bf94ff; font-weight: 600; }
+.overlay .badges { color: #ffb31a; }
+
+.panel {
+  width: 496px; margin-top: 8px; padding: 10px 12px;
+  background: #18181b; border: 1px solid #2f2f35; border-radius: 8px;
+  font-size: 12px; font-family: 'Courier New', monospace; color: #c8c8d0;
+}
+.panel .section-title { color: #bf94ff; font-weight: 700; margin-bottom: 4px; }
+.party-mon { display: flex; justify-content: space-between; padding: 2px 0; }
+.party-mon .name { color: #efeff1; }
+.party-mon .hp-good { color: #00e676; }
+.party-mon .hp-warn { color: #ffb31a; }
+.party-mon .hp-crit { color: #e91916; }
+.battle-alert { color: #e91916; font-weight: 700; padding: 4px 0; }
+.text-line { color: #7bf; font-style: italic; }
+.status-bar {
+  width: 496px; margin-top: 6px; padding: 6px 12px;
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: #636369;
+}
 </style>
 </head>
 <body>
-<h1>POKEMON CRYSTAL — LIVE</h1>
-<div id="step">Connecting...</div>
-<img id="screen" src="" alt="Game Screen" />
-<pre id="state">Waiting for bridge...</pre>
+
+<div class="header">
+  <div class="live-dot"></div>
+  <span class="title">Pokemon Red</span>
+  <span class="live-badge" id="live-badge">LIVE</span>
+  <span class="step-info" id="step-info">Connecting...</span>
+</div>
+
+<div class="game-frame">
+  <img id="screen" src="" alt="Game Screen" />
+  <div class="overlay">
+    <span class="loc" id="location">---</span>
+    <span class="badges" id="badges-display">0 badges</span>
+    <span id="money">$0</span>
+    <span style="margin-left:auto" id="menu-state">overworld</span>
+  </div>
+</div>
+
+<div class="panel" id="info-panel">
+  <div class="section-title">PARTY</div>
+  <div id="party-list">(no pokemon yet)</div>
+  <div id="battle-info"></div>
+  <div id="text-display"></div>
+</div>
+
+<div class="status-bar">
+  <span id="play-time">0:00</span>
+  <span id="refresh-status">polling...</span>
+</div>
+
 <script>
 const img = document.getElementById('screen');
-const stateEl = document.getElementById('state');
-const stepEl = document.getElementById('step');
+const stepInfo = document.getElementById('step-info');
+const location = document.getElementById('location');
+const badgesDisplay = document.getElementById('badges-display');
+const moneyDisplay = document.getElementById('money');
+const menuState = document.getElementById('menu-state');
+const partyList = document.getElementById('party-list');
+const battleInfo = document.getElementById('battle-info');
+const textDisplay = document.getElementById('text-display');
+const playTime = document.getElementById('play-time');
+const refreshStatus = document.getElementById('refresh-status');
+const liveBadge = document.getElementById('live-badge');
+
 let lastStep = -1;
+let missedPolls = 0;
+
+function hpClass(hp, max) {
+  const pct = max > 0 ? hp / max : 0;
+  if (pct > 0.5) return 'hp-good';
+  if (pct > 0.2) return 'hp-warn';
+  return 'hp-crit';
+}
 
 async function refresh() {
   try {
-    // Bust cache with timestamp
     const t = Date.now();
+    const resp = await fetch('bridge_io/state.json?' + t);
+    if (!resp.ok) { missedPolls++; updateLive(); return; }
+
+    const s = await resp.json();
+    missedPolls = 0;
+    updateLive();
+
+    // Always update screenshot (even if step unchanged, screen may have changed)
     img.src = 'bridge_io/screenshot.png?' + t;
 
-    const resp = await fetch('bridge_io/state.json?' + t);
-    if (resp.ok) {
-      const s = await resp.json();
-      if (s.step !== lastStep) {
-        lastStep = s.step;
-        stepEl.textContent = 'Step ' + s.step + ' | Map ' + (s.position.map_name || s.position.map_id) + ' (' + s.position.x + ',' + s.position.y + ')';
-        let party = '';
-        if (s.party && s.party.length > 0) {
-          party = s.party.map(p => p.species + ' Lv' + p.level + ' HP:' + p.hp + '/' + p.hp_max).join('\n');
-        } else {
-          party = '(no pokemon yet)';
-        }
-        let info = 'Badges: ' + s.badges + ' | Money: $' + s.money + '\n';
-        if (s.battle) info += 'BATTLE: vs ' + s.battle.enemy_species + ' Lv' + s.battle.enemy_level + '\n';
-        if (s.text_on_screen) info += 'Text: ' + s.text_on_screen + '\n';
-        info += '\nParty:\n' + party;
-        stateEl.textContent = info;
-      }
+    if (s.step === lastStep) return;
+    lastStep = s.step;
+
+    // Header
+    stepInfo.textContent = 'Step ' + s.step;
+
+    // Overlay
+    const mapName = s.position.map_name || ('Map ' + (s.position.map_group || '?') + ':' + (s.position.map_number || '?'));
+    location.textContent = mapName + ' (' + s.position.x + ',' + s.position.y + ')';
+    badgesDisplay.textContent = s.badges + ' badge' + (s.badges !== 1 ? 's' : '');
+    moneyDisplay.textContent = '$' + (s.money || 0).toLocaleString();
+    menuState.textContent = s.menu_state || 'overworld';
+
+    // Party
+    if (s.party && s.party.length > 0) {
+      partyList.innerHTML = s.party.map(p => {
+        const cls = hpClass(p.hp, p.hp_max);
+        const moves = p.moves ? p.moves.map(m => m.name).join(', ') : '';
+        return '<div class="party-mon"><span class="name">' + p.species +
+          ' Lv' + p.level + '</span><span class="' + cls + '">' +
+          p.hp + '/' + p.hp_max + ' HP</span></div>';
+      }).join('');
+    } else {
+      partyList.textContent = '(no pokemon yet)';
     }
-  } catch(e) {}
+
+    // Battle
+    if (s.battle) {
+      battleInfo.innerHTML = '<div class="battle-alert">BATTLE: vs ' +
+        s.battle.enemy_species + ' Lv' + s.battle.enemy_level +
+        ' (HP: ' + s.battle.enemy_hp + '/' + s.battle.enemy_hp_max + ')</div>';
+    } else {
+      battleInfo.innerHTML = '';
+    }
+
+    // Text
+    if (s.text_on_screen) {
+      textDisplay.innerHTML = '<div class="text-line">"' + s.text_on_screen + '"</div>';
+    } else {
+      textDisplay.innerHTML = '';
+    }
+
+    // Play time
+    const mins = s.play_time_minutes || 0;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    playTime.textContent = h + ':' + String(m).padStart(2, '0') + ' played';
+
+  } catch(e) {
+    missedPolls++;
+    updateLive();
+  }
 }
 
-setInterval(refresh, 800);
+function updateLive() {
+  if (missedPolls > 5) {
+    liveBadge.textContent = 'OFFLINE';
+    liveBadge.style.background = '#636369';
+    refreshStatus.textContent = 'bridge not responding';
+  } else {
+    liveBadge.textContent = 'LIVE';
+    liveBadge.style.background = '#e91916';
+    refreshStatus.textContent = 'polling...';
+  }
+}
+
+setInterval(refresh, 500);
 refresh();
 </script>
 </body>

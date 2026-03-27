@@ -247,13 +247,16 @@ class EmulatorControl:
 
     # ── Basic operations ──
 
-    def press(self, button: str, hold_frames: int = 4, wait_frames: int = 8) -> None:
+    def press(self, button: str, hold_frames: int = 10, wait_frames: int = 120) -> None:
         """Press and release a button with timing.
 
         Args:
             button: Button name (a, b, start, select, up, down, left, right).
-            hold_frames: Frames to hold the button (default 4 = ~67ms).
-            wait_frames: Frames to wait after release (default 8 = ~133ms).
+            hold_frames: Frames to hold the button (default 10 — matches
+                ClaudePlaysPokemonStarter proven timing).
+            wait_frames: Frames to wait after release (default 120 — critical
+                for Pokemon Red/Crystal to process movement. The official
+                starter uses 120. Values <120 cause missed inputs).
         """
         self._backend.press(button)
         self._backend.tick(hold_frames)

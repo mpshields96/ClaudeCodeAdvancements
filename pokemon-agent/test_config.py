@@ -41,7 +41,7 @@ class TestConfig(unittest.TestCase):
 
     def test_default_rom_path(self):
         from config import DEFAULT_ROM
-        self.assertTrue(DEFAULT_ROM.endswith(".gbc"))
+        self.assertTrue(DEFAULT_ROM.endswith(".gb") or DEFAULT_ROM.endswith(".gbc"))
 
     def test_all_dirs_are_strings(self):
         from config import STATE_DIR, SCREENSHOT_DIR, LOG_DIR

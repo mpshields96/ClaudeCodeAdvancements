@@ -1,20 +1,28 @@
-"""Tool definitions for the Crystal agent.
+"""Tool definitions for the Pokemon agent.
 
-Minimal tool surface — 2 core tools + 1 utility. Let Opus 4.6 reason
-through menus and battles via button presses rather than building
-elaborate tool chains.
+Full tool surface stolen from GPT Plays Pokemon FireRed (clad3815) +
+PokeAgent (sethkarten). Gives Claude the same capabilities:
+- press_buttons: direct Game Boy input
+- mash_a: spam A to clear dialog (a_until_end_of_dialog equivalent)
+- navigate_to: A* pathfinding
+- write_memory / delete_memory: persistent strategic notes
+- add_marker / delete_marker: map annotations
+- update_objectives: quest log management
+- wait: advance emulator frames
+- reload_checkpoint: reload save state
 
 These are Anthropic API tool definitions (JSON Schema format).
 """
 
-# ── Tool definitions for Claude API ──────────────────────────────────────────
+# ── Core input tools ─────────────────────────────────────────────────────
 
 PRESS_BUTTONS = {
     "name": "press_buttons",
     "description": (
         "Press Game Boy buttons in sequence. Each button is pressed and released "
-        "with appropriate timing. Use this for all direct input: movement, menus, "
-        "battles, text advancement, and dialog choices."
+        "with appropriate timing. Use this for: movement (short distances), "
+        "menu navigation, battle commands, and dialog choices. "
+        "For clearing long dialog, use mash_a instead."
     ),
     "input_schema": {
         "type": "object",
@@ -47,6 +55,28 @@ PRESS_BUTTONS = {
     },
 }
 
+MASH_A = {
+    "name": "mash_a",
+    "description": (
+        "Rapidly press A to advance through all current dialog and text. "
+        "Equivalent to GPT harness 'a_until_end_of_dialog'. Use when: "
+        "an NPC is talking, a sign is being read, battle text is scrolling, "
+        "or any multi-line text box needs clearing. Presses A repeatedly "
+        "until no more text is detected. Much faster than pressing A manually."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "max_presses": {
+                "type": "integer",
+                "description": "Maximum A presses before stopping. Default: 20.",
+                "default": 20,
+            },
+        },
+        "required": [],
+    },
+}
+
 NAVIGATE_TO = {
     "name": "navigate_to",
     "description": (
@@ -54,7 +84,9 @@ NAVIGATE_TO = {
         "The agent will automatically find and walk the shortest path, "
         "avoiding walls and obstacles. Only works on the current map — "
         "use press_buttons to enter doors or change maps. "
-        "Coordinates are in the current map's tile grid (from RAM state)."
+        "Use exact target coordinates (the position of the door/NPC/item), "
+        "not a tile in front of it. For long distances or when you keep "
+        "failing to reach a destination with press_buttons."
     ),
     "input_schema": {
         "type": "object",
@@ -71,6 +103,160 @@ NAVIGATE_TO = {
         "required": ["x", "y"],
     },
 }
+
+# ── Memory tools (from GPT FireRed harness) ──────────────────────────────
+
+WRITE_MEMORY = {
+    "name": "write_memory",
+    "description": (
+        "Save a persistent note for future reference. Use for strategic "
+        "knowledge that the game state doesn't track: tips from mistakes "
+        "(prefix with 'tips_'), puzzle solutions, boss dossiers (team, moves, "
+        "weaknesses, winning strategy), PC Pokemon, route connections, "
+        "shop inventories. Do NOT store raw game data (HP, money, etc.) — "
+        "that comes from RAM automatically."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "key": {
+                "type": "string",
+                "description": (
+                    "Memory key. Use descriptive prefixes: "
+                    "'tips_' for lessons, 'boss_' for boss dossiers, "
+                    "'pc_' for PC Pokemon, 'route_' for connections."
+                ),
+            },
+            "value": {
+                "type": "string",
+                "description": "The information to remember.",
+            },
+        },
+        "required": ["key", "value"],
+    },
+}
+
+DELETE_MEMORY = {
+    "name": "delete_memory",
+    "description": (
+        "Delete a memory entry that is no longer needed or is outdated."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "key": {
+                "type": "string",
+                "description": "The memory key to delete.",
+            },
+        },
+        "required": ["key"],
+    },
+}
+
+# ── Marker tools (from GPT FireRed harness) ──────────────────────────────
+
+ADD_MARKER = {
+    "name": "add_marker",
+    "description": (
+        "Place a marker on the current map for future reference. Use for: "
+        "doors (and where they lead), ladders/stairs, important NPCs, "
+        "shops, Pokemon Centers, items on the ground, route exits, "
+        "and map connections. Markers help you navigate back to places."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "x": {
+                "type": "integer",
+                "description": "X coordinate to mark.",
+            },
+            "y": {
+                "type": "integer",
+                "description": "Y coordinate to mark.",
+            },
+            "label": {
+                "type": "string",
+                "description": (
+                    "Description of what's here. Examples: "
+                    "'Door to Route 1', 'Nurse Joy', 'Potion on ground', "
+                    "'Gym Leader Brock', 'Exit to Viridian City'."
+                ),
+            },
+            "marker_type": {
+                "type": "string",
+                "enum": ["door", "npc", "shop", "pokecenter", "gym",
+                         "item", "exit", "stairs", "poi"],
+                "description": "Type of marker. Default: poi (point of interest).",
+                "default": "poi",
+            },
+        },
+        "required": ["x", "y", "label"],
+    },
+}
+
+DELETE_MARKER = {
+    "name": "delete_marker",
+    "description": "Remove a marker from the current map.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "x": {
+                "type": "integer",
+                "description": "X coordinate of marker to remove.",
+            },
+            "y": {
+                "type": "integer",
+                "description": "Y coordinate of marker to remove.",
+            },
+        },
+        "required": ["x", "y"],
+    },
+}
+
+# ── Objectives tool (from GPT FireRed harness) ──────────────────────────
+
+UPDATE_OBJECTIVES = {
+    "name": "update_objectives",
+    "description": (
+        "Update the quest log with current goals. Each objective should "
+        "include WHY it matters and HOW you'll do it. Use for medium/long "
+        "term goals like 'Defeat Brock' or 'Get to Cerulean City', not "
+        "micro-actions like 'Walk 3 tiles up'. Call this when your goals "
+        "change: after earning a badge, clearing a dungeon, or deciding "
+        "on a new plan."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "objectives": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "description": {
+                            "type": "string",
+                            "description": "What to do.",
+                        },
+                        "rationale": {
+                            "type": "string",
+                            "description": "Why it matters and how to do it.",
+                        },
+                        "status": {
+                            "type": "string",
+                            "enum": ["active", "completed", "abandoned"],
+                            "default": "active",
+                        },
+                    },
+                    "required": ["description"],
+                },
+                "description": "Full list of current objectives (replaces previous).",
+            },
+        },
+        "required": ["objectives"],
+    },
+}
+
+# ── Utility tools ────────────────────────────────────────────────────────
 
 WAIT = {
     "name": "wait",
@@ -96,7 +282,6 @@ WAIT = {
     },
 }
 
-
 RELOAD_CHECKPOINT = {
     "name": "reload_checkpoint",
     "description": (
@@ -118,9 +303,20 @@ RELOAD_CHECKPOINT = {
 }
 
 
-# ── Tool list for Claude API ─────────────────────────────────────────────────
+# ── Tool list for Claude API ─────────────────────────────────────────────
 
-TOOLS = [PRESS_BUTTONS, NAVIGATE_TO, WAIT, RELOAD_CHECKPOINT]
+TOOLS = [
+    PRESS_BUTTONS,
+    MASH_A,
+    NAVIGATE_TO,
+    WRITE_MEMORY,
+    DELETE_MEMORY,
+    ADD_MARKER,
+    DELETE_MARKER,
+    UPDATE_OBJECTIVES,
+    WAIT,
+    RELOAD_CHECKPOINT,
+]
 
 # Tool name -> definition lookup
 TOOL_INDEX = {t["name"]: t for t in TOOLS}
@@ -157,16 +353,23 @@ def validate_tool_call(name: str, input_data: dict) -> tuple:
                 return False, f"Invalid button: {b}"
 
     # Validate coordinates
-    if name == "navigate_to":
+    if name in ("navigate_to", "add_marker", "delete_marker"):
         for coord in ("x", "y"):
-            val = input_data.get(coord)
-            if not isinstance(val, int):
-                return False, f"{coord} must be an integer"
+            if coord in required or coord in input_data:
+                val = input_data.get(coord)
+                if val is not None and not isinstance(val, int):
+                    return False, f"{coord} must be an integer"
 
     # Validate frames
     if name == "wait":
         frames = input_data.get("frames", 60)
         if not isinstance(frames, int) or frames < 0:
             return False, "frames must be a non-negative integer"
+
+    # Validate memory key
+    if name in ("write_memory", "delete_memory"):
+        key = input_data.get("key", "")
+        if not isinstance(key, str) or not key.strip():
+            return False, "key must be a non-empty string"
 
     return True, ""

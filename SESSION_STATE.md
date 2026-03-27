@@ -3,7 +3,24 @@
 
 ---
 
-## Current State (as of Session 208 — 2026-03-27)
+## Current State (as of Session 209 — 2026-03-27)
+
+**Phase:** Session 209 COMPLETE. MT-53: Fixed movement bug (dialog blocking), verified PyBoy movement works, mapped Red House 2F walkable grid
+
+**What was done this session (S209):**
+- Fixed movement bug — root cause was uncleared SNES dialog blocking all input
+- Verified PyBoy movement works (hold=10 wait=120) after clearing all dialogs
+- Fixed 3 outdated pokemon-agent tests (config, main, tools)
+- **Tests**: 315 suites, 11514 tests passing. All green.
+
+**Next:**
+1. Boot automation script: name character, clear ALL dialogs, navigate out of Red House
+2. Get viewer.html showing live Pokemon Red gameplay
+3. Port A* pathfinding from reference repos
+
+---
+
+## Previous State (Session 208 — 2026-03-27)
 
 **Phase:** Session 208 COMPLETE. MT-53: Cloned 4 reference repos, created RESEARCH.md, diagnosed bugs, fixed memory_reader and bridge
 
@@ -20,7 +37,6 @@
 3. Port A* pathfinding from starter
 
 ---
-
 ## Previous State (Session 207 — 2026-03-27)
 
 **Phase:** Session 207 COMPLETE. MT-53: PyBoy headless confirmed, Crystal intro automated, state saved, dark comedy personality added, but multiple bugs left undiagnosed

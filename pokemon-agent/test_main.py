@@ -11,7 +11,7 @@ class TestParseArgs(unittest.TestCase):
 
     def test_defaults(self):
         args = parse_args([])
-        self.assertEqual(args.rom, "pokemon_crystal.gbc")
+        self.assertEqual(args.rom, "pokemon_red.gb")
         self.assertEqual(args.steps, 1000)
         self.assertFalse(args.headless)
         self.assertEqual(args.speed, 0)

@@ -5,6 +5,8 @@ Claude Code can read. Claude Code acts as the brain (via slash command),
 reads the state, and writes actions. This script picks up those actions
 and executes them. Zero API cost — uses your Max subscription.
 
+Supports: Pokemon Red (.gb), Pokemon Crystal (.gbc)
+
 Architecture:
     bridge.py (this)          <-->  Claude Code session
     - Runs PyBoy emulator            - Reads state.json
@@ -17,7 +19,7 @@ Architecture:
 Usage:
     # Terminal 1: Start the emulator bridge
     cd pokemon-agent
-    python3 bridge.py --rom pokemon_crystal.gbc
+    python3 bridge.py --rom pokemon_red.gb
 
     # Terminal 2 (Claude Code): Run the brain
     /pokemon-play
@@ -215,17 +217,35 @@ def main():
 
     # Boot emulator
     from emulator_control import EmulatorControl
-    from memory_reader import MemoryReader
-    from text_reader import TextReader
     from checkpoint import CheckpointManager
 
-    print(f"Loading ROM: {args.rom}")
+    # Detect ROM type from file extension
+    rom_lower = args.rom.lower()
+    if rom_lower.endswith(".gb"):
+        game_type = "red"
+    elif rom_lower.endswith(".gbc"):
+        game_type = "crystal"
+    else:
+        game_type = "red"  # Default
+
+    print(f"Loading ROM: {args.rom} (detected: {game_type})")
     emu = EmulatorControl.from_rom(args.rom, headless=args.headless, speed=args.speed)
     emu.set_state_dir(STATE_DIR)
-    reader = MemoryReader(emu)
-    text_reader = TextReader(emu)
+
+    # Use the right memory reader for the game
+    if game_type == "red":
+        from memory_reader_red import MemoryReaderRed
+        reader = MemoryReaderRed(emu)
+        text_reader = None  # Red text reader not yet built
+    else:
+        from memory_reader import MemoryReader
+        from text_reader import TextReader
+        reader = MemoryReader(emu)
+        text_reader = TextReader(emu)
+
     checkpoint_mgr = CheckpointManager(emu, state_dir=STATE_DIR)
-    checkpoint_mgr.register_crystal_gyms()
+    if game_type == "crystal":
+        checkpoint_mgr.register_crystal_gyms()
 
     if args.load_state:
         print(f"Loading state: {args.load_state}")

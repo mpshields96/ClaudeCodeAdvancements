@@ -13,3 +13,9 @@ research/findings/
 .cca-init-benchmarks.jsonl
 .cca-stagnation-log.jsonl
 .cca-trial-results.jsonl
+pokemon-agent/*.gb
+pokemon-agent/*.gba
+pokemon-agent/*.gb.ram
+pokemon-agent/states/*.png
+pokemon-agent/states/*.state
+pokemon-agent/reference_repos/

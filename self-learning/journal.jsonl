@@ -628,3 +628,18 @@
 {"event_type":"pain","session":208,"domain":"general","notes":"No end-to-end verification","timestamp":"2026-03-27T07:22:20.192432Z"}
 {"event_type":"feedback_roi","session":208,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T07:22:20.192432Z"}
 {"event_type":"sentinel_stats","session":208,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T07:22:20.192432Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:23:45.487787+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:23:45.509335+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:47:05.742595+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:47:05.780571+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:48:06.273056+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:48:06.309951+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":209,"domain":"general","outcome":"partial","notes":"MT-53: Fixed movement bug (dialog blocking), verified PyBoy movement, mapped Red House 2F","timestamp":"2026-03-27T07:49:23.812269Z"}
+{"event_type":"win","session":209,"domain":"general","notes":"Fixed movement bug \u2014 SNES dialog was blocking all input","timestamp":"2026-03-27T07:49:23.812269Z"}
+{"event_type":"win","session":209,"domain":"general","notes":"Verified PyBoy movement works with hold=10 wait=120 after clearing dialogs","timestamp":"2026-03-27T07:49:23.812269Z"}
+{"event_type":"win","session":209,"domain":"general","notes":"Fixed 3 outdated pokemon-agent tests","timestamp":"2026-03-27T07:49:23.812269Z"}
+{"event_type":"pain","session":209,"domain":"general","notes":"Spent most of session debugging dialog-blocked movement","timestamp":"2026-03-27T07:49:23.812269Z"}
+{"event_type":"pain","session":209,"domain":"general","notes":"Crystal save state incompatible with Red (CGB mode mismatch)","timestamp":"2026-03-27T07:49:23.812269Z"}
+{"event_type":"pain","session":209,"domain":"general","notes":"Did not achieve viewer.html live demo","timestamp":"2026-03-27T07:49:23.812269Z"}
+{"event_type":"feedback_roi","session":209,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T07:49:23.812269Z"}
+{"event_type":"sentinel_stats","session":209,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T07:49:23.812269Z"}

@@ -1,7 +1,7 @@
-"""Pokemon Crystal agent configuration.
+"""Pokemon agent configuration.
 
-Central configuration for the Crystal bot. All tunable parameters live here.
-No external dependencies.
+Central configuration for the Pokemon bot. Supports Red, Crystal, and FireRed.
+All tunable parameters live here. No external dependencies.
 """
 
 # ── Model configuration ──────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ OFFLINE_MODE = False
 
 # ── File paths (relative to pokemon-agent/) ──────────────────────────────────
 
-DEFAULT_ROM = "pokemon_crystal.gbc"
+DEFAULT_ROM = "pokemon_red.gb"
 STATE_DIR = "states"       # Directory for save states
 SCREENSHOT_DIR = "screenshots"  # Directory for screenshots
 LOG_DIR = "logs"           # Directory for agent logs

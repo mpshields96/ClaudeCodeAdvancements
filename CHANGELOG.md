@@ -3416,3 +3416,22 @@ CLI chat 2:
 - No end-to-end emulator verification
 
 ---
+
+## Session 209 — 2026-03-27
+
+**What changed:**
+- Fixed movement bug — root cause was uncleared SNES dialog blocking all input
+- Verified PyBoy movement works (hold=10 wait=120) after clearing all dialogs
+- Fixed 3 outdated pokemon-agent tests (config, main, tools)
+
+**Why:**
+- MT-53: Fixed movement bug (dialog blocking), verified PyBoy movement works, mapped Red House 2F walkable grid
+
+**Tests:** 11514/11514 passing (315 suites)
+
+**Lessons:**
+- Spent most of session debugging dialog-blocked movement
+- Crystal save state incompatible with Red (CGB mismatch)
+- Did not get past Red House 2F or show viewer.html live
+
+---
