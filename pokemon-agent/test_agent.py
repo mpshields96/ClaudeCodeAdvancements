@@ -267,6 +267,117 @@ class TestSummarization(unittest.TestCase):
         self.assertEqual(llm.call_count, 3)
 
 
+class TestPostActionVerification(unittest.TestCase):
+    """Test post-action RAM verification (Phase 4 Step 1)."""
+
+    def test_direction_press_no_move_warns(self):
+        """If we press 3+ direction buttons and don't move, verification warns."""
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[ToolUse(id="t1", name="press_buttons",
+                               input={"buttons": ["right", "right", "right"]})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        # Position stays the same (mock emulator doesn't actually move)
+        result = agent.step()
+        tool_result = result.tool_results[0]
+        self.assertIn("verification", tool_result)
+        self.assertEqual(tool_result["verification"]["warning"],
+                         "pressed_directions_but_didnt_move")
+
+    def test_single_direction_no_warn(self):
+        """Single direction press doesn't trigger warning (normal wall bumps)."""
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[ToolUse(id="t1", name="press_buttons",
+                               input={"buttons": ["right"]})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        tool_result = result.tool_results[0]
+        # Should NOT have a direction-didn't-move warning for single press
+        if "verification" in tool_result:
+            self.assertNotEqual(
+                tool_result["verification"].get("warning"),
+                "pressed_directions_but_didnt_move",
+            )
+
+    def test_non_direction_press_no_move_check(self):
+        """Pressing A/B doesn't check for position change."""
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[ToolUse(id="t1", name="press_buttons",
+                               input={"buttons": ["a", "a", "a"]})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        tool_result = result.tool_results[0]
+        # No direction-related warning
+        if "verification" in tool_result:
+            self.assertNotEqual(
+                tool_result["verification"].get("warning"),
+                "pressed_directions_but_didnt_move",
+            )
+
+    def test_battle_start_detected(self):
+        """Verify battle start is detected via verification."""
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[ToolUse(id="t1", name="press_buttons",
+                               input={"buttons": ["a"]})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+
+        # Simulate battle starting: set battle mode AFTER tool execution
+        # We need to hook into the emulator to change state during execution
+        original_press = agent.emulator.press
+        call_count = [0]
+        def press_with_battle(button, **kwargs):
+            original_press(button, **kwargs)
+            call_count[0] += 1
+            if call_count[0] == 1:
+                # After first button press, "enter battle"
+                agent.emulator.write_byte(0xD22D, 1)  # BATTLE_MODE = wild
+                agent.emulator.write_byte(0xD206, 19)  # Enemy = Rattata
+                agent.emulator.write_byte(0xD213, 3)   # Enemy level 3
+                agent.emulator.write_byte(0xD214, 0)
+                agent.emulator.write_byte(0xD215, 15)  # Enemy HP 15
+                agent.emulator.write_byte(0xD216, 0)
+                agent.emulator.write_byte(0xD217, 15)  # Enemy max HP 15
+        agent.emulator.press = press_with_battle
+
+        result = agent.step()
+        tool_result = result.tool_results[0]
+        self.assertIn("verification", tool_result)
+        self.assertEqual(tool_result["verification"]["event"], "battle_started")
+        self.assertEqual(tool_result["verification"]["type"], "wild")
+
+    def test_wait_no_verification(self):
+        """Wait tool should not produce verification output."""
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[ToolUse(id="t1", name="wait",
+                               input={"frames": 30})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        tool_result = result.tool_results[0]
+        self.assertNotIn("verification", tool_result)
+
+    def test_error_result_skips_verification(self):
+        """Tool errors should not trigger verification."""
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[ToolUse(id="t1", name="press_buttons",
+                               input={"buttons": []})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        tool_result = result.tool_results[0]
+        self.assertIn("error", tool_result)
+        self.assertNotIn("verification", tool_result)
+
+
 class TestRun(unittest.TestCase):
     """Test multi-step execution."""
 

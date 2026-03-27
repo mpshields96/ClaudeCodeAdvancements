@@ -390,19 +390,35 @@ class CrystalAgent:
         return {"role": "assistant", "content": content}
 
     def _execute_tool(self, tool_use: ToolUse) -> dict:
-        """Execute a tool call and return the result."""
+        """Execute a tool call and return the result.
+
+        Includes post-action verification: reads RAM after execution to
+        confirm the action took effect. This catches frozen game states
+        and failed navigations (Gemini Crystal lesson: "HALLUCINATION CHECK").
+        """
         valid, error = validate_tool_call(tool_use.name, tool_use.input)
         if not valid:
             return {"error": error}
 
+        # Capture pre-action state for verification
+        pre_state = self.reader.read_game_state()
+
         if tool_use.name == "press_buttons":
-            return self._tool_press_buttons(tool_use.input)
+            result = self._tool_press_buttons(tool_use.input)
         elif tool_use.name == "navigate_to":
-            return self._tool_navigate_to(tool_use.input)
+            result = self._tool_navigate_to(tool_use.input)
         elif tool_use.name == "wait":
-            return self._tool_wait(tool_use.input)
+            result = self._tool_wait(tool_use.input)
         else:
             return {"error": f"Unknown tool: {tool_use.name}"}
+
+        # Post-action verification
+        verification = self._verify_action(tool_use.name, tool_use.input,
+                                            pre_state, result)
+        if verification:
+            result["verification"] = verification
+
+        return result
 
     def _tool_press_buttons(self, input_data: dict) -> dict:
         """Execute press_buttons tool."""
@@ -452,6 +468,70 @@ class CrystalAgent:
         frames = input_data.get("frames", 60)
         self.emulator.tick(frames)
         return {"waited_frames": frames}
+
+    def _verify_action(
+        self,
+        tool_name: str,
+        input_data: dict,
+        pre_state: GameState,
+        result: dict,
+    ) -> Optional[dict]:
+        """Post-action verification: check that the action took effect.
+
+        Returns a verification dict if there's something notable, or None.
+        Inspired by Gemini's self-discovered rule: "HALLUCINATION CHECK system."
+        """
+        if "error" in result:
+            return None  # Already failed, no verification needed
+
+        try:
+            post_state = self.reader.read_game_state()
+        except Exception:
+            return None  # Can't verify if RAM read fails
+
+        if tool_name == "press_buttons":
+            # Check if game state changed at all after button presses
+            buttons = input_data.get("buttons", [])
+            direction_buttons = {"up", "down", "left", "right"}
+            has_direction = any(b in direction_buttons for b in buttons)
+
+            if has_direction:
+                # If we pressed direction buttons, position should change
+                # (unless blocked by a wall, which is normal)
+                moved = (pre_state.position != post_state.position)
+                if not moved and len(buttons) >= 3:
+                    return {"warning": "pressed_directions_but_didnt_move",
+                            "position": f"({post_state.position.x},{post_state.position.y})"}
+
+            # Check if battle state changed (entered or exited battle)
+            if pre_state.battle.in_battle != post_state.battle.in_battle:
+                if post_state.battle.in_battle:
+                    enemy = post_state.battle.enemy
+                    enemy_info = f"{enemy.species} Lv{enemy.level}" if enemy else "unknown"
+                    return {"event": "battle_started",
+                            "type": post_state.battle.battle_type(),
+                            "enemy": enemy_info}
+                else:
+                    return {"event": "battle_ended"}
+
+        elif tool_name == "navigate_to":
+            target_x = input_data["x"]
+            target_y = input_data["y"]
+            actual_x = post_state.position.x
+            actual_y = post_state.position.y
+
+            # Check if we actually reached the target (± 1 tile tolerance)
+            dx = abs(actual_x - target_x)
+            dy = abs(actual_y - target_y)
+            if dx > 1 or dy > 1:
+                return {"warning": "navigation_missed_target",
+                        "target": f"({target_x},{target_y})",
+                        "actual": f"({actual_x},{actual_y})",
+                        "distance": dx + dy}
+            elif dx == 0 and dy == 0:
+                return {"verified": "at_target"}
+
+        return None
 
     def _summarize(self) -> None:
         """Summarize conversation history to free up context."""
