@@ -50,7 +50,11 @@ def _setup_crystal_emu():
 
 
 def _make_agent(emu=None, responses=None, max_history=60, stuck_threshold=5):
-    """Create agent with mock emulator and LLM."""
+    """Create agent with mock emulator and LLM.
+
+    Action cache disabled (max_size=0) so integration tests that expect
+    LLM calls every step aren't broken by caching.
+    """
     if emu is None:
         emu = _setup_crystal_emu()
     reader = MemoryReader(emu)
@@ -59,6 +63,8 @@ def _make_agent(emu=None, responses=None, max_history=60, stuck_threshold=5):
         emulator=emu, reader=reader, llm=llm,
         max_history=max_history, stuck_threshold=stuck_threshold,
     )
+    from action_cache import ActionCache
+    agent.action_cache = ActionCache(max_size=0)
     return agent, llm, emu
 
 

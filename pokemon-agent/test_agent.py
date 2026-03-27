@@ -43,8 +43,13 @@ def _setup_mock_emu():
     return emu
 
 
-def _make_agent(llm_responses=None, max_history=60, stuck_threshold=10):
-    """Create a CrystalAgent with mock emulator and LLM."""
+def _make_agent(llm_responses=None, max_history=60, stuck_threshold=10, cache_size=0):
+    """Create a CrystalAgent with mock emulator and LLM.
+
+    cache_size=0 disables action caching by default in tests so existing
+    tests that expect LLM calls on every step aren't broken by the cache.
+    Tests that specifically test caching should pass cache_size > 0.
+    """
     emu = _setup_mock_emu()
     reader = MemoryReader(emu)
     llm = MockLLMClient(responses=llm_responses)
@@ -55,6 +60,8 @@ def _make_agent(llm_responses=None, max_history=60, stuck_threshold=10):
         max_history=max_history,
         stuck_threshold=stuck_threshold,
     )
+    from action_cache import ActionCache
+    agent.action_cache = ActionCache(max_size=cache_size)
     return agent, llm
 
 
@@ -444,6 +451,53 @@ class TestMessageHistory(unittest.TestCase):
         types = {block["type"] for block in content}
         self.assertIn("text", types)
         self.assertIn("tool_use", types)
+
+
+class TestActionCacheIntegration(unittest.TestCase):
+    """Test action cache integration with the agent loop."""
+
+    def test_cache_skips_llm_on_repeat_state(self):
+        """Second step at same state uses cache, skips LLM."""
+        agent, llm = _make_agent(cache_size=256)
+        agent.step()  # LLM call -> caches action
+        self.assertEqual(llm.call_count, 1)
+        agent.step()  # Same state -> cache hit
+        self.assertEqual(llm.call_count, 1)  # No new LLM call
+
+    def test_cache_disabled_when_stuck(self):
+        """When stuck, cache is bypassed for fresh LLM reasoning."""
+        agent, llm = _make_agent(cache_size=256, stuck_threshold=2)
+        agent.step()  # LLM call 1
+        agent.step()  # Cache hit (not stuck yet since threshold=2)
+        agent.step()  # Now stuck (3 steps same position) -> LLM call
+        self.assertGreater(llm.call_count, 1)
+
+    def test_cache_reports_zero_tokens(self):
+        """Cached steps report 0 input/output tokens."""
+        agent, _ = _make_agent(cache_size=256)
+        agent.step()  # LLM call
+        result = agent.step()  # Cache hit
+        self.assertEqual(result.input_tokens, 0)
+        self.assertEqual(result.output_tokens, 0)
+
+    def test_cache_stats_accessible(self):
+        """Cache stats are accessible from agent."""
+        agent, _ = _make_agent(cache_size=256)
+        agent.step()
+        agent.step()
+        stats = agent.action_cache.stats()
+        self.assertIn("hit_rate", stats)
+        self.assertGreater(stats["total_hits"], 0)
+
+    def test_different_positions_no_cache_hit(self):
+        """Different positions produce different cache keys -> no hit."""
+        agent, llm = _make_agent(cache_size=256)
+        agent.step()  # Position (5,4)
+        self.assertEqual(llm.call_count, 1)
+        # Move to new position
+        agent.emulator.write_byte(0xDCB8, 8)  # x=8
+        agent.step()  # Different position -> cache miss -> LLM call
+        self.assertEqual(llm.call_count, 2)
 
 
 class TestAutoAdvance(unittest.TestCase):

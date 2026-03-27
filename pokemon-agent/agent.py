@@ -26,6 +26,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Protocol
 
+from action_cache import ActionCache
 from config import (
     MAX_HISTORY, MAX_TOKENS, MODEL_NAME, SAVE_INTERVAL,
     SCREENSHOT_UPSCALE, STUCK_THRESHOLD, STUCK_FORCE_NEW,
@@ -233,6 +234,10 @@ class CrystalAgent:
         self.auto_advance_count: int = 0   # Total auto-advances this session
         self.DIALOG_ESCAPE_THRESHOLD: int = 7  # After N auto-A, try B to escape
 
+        # Action cache: skip LLM for previously successful actions
+        self.action_cache = ActionCache()
+        self._last_cache_key: Optional[str] = None  # For outcome tracking
+
         # Callbacks
         self._on_step: Optional[Callable[[StepResult], None]] = None
 
@@ -307,6 +312,67 @@ class CrystalAgent:
         logger.info("Step %d: auto-%s (dialog/healing)", self.step_count, button)
         return result
 
+    def _state_cache_key(self, state: GameState) -> str:
+        """Build a cache key from the current game state."""
+        return self.action_cache.make_key(
+            menu_state=state.menu_state.value,
+            map_id=state.position.map_id,
+            x=state.position.x,
+            y=state.position.y,
+            in_battle=state.battle.in_battle,
+            battle_type=state.battle.battle_type(),
+        )
+
+    def _cached_action_step(self, state: GameState, buttons: List[str], cache_key: str) -> StepResult:
+        """Execute a cached action without calling the LLM.
+
+        Records the outcome (state change) so the cache can expire bad entries.
+        """
+        # Record pre-action state for outcome tracking
+        pre_position = state.position
+
+        # Execute the cached buttons
+        for button in buttons:
+            self.emulator.press(button)
+
+        # Check if action had effect (position changed)
+        post_state = self.reader.read_game_state()
+        state_changed = (pre_position != post_state.position or
+                         state.battle.in_battle != post_state.battle.in_battle or
+                         state.menu_state != post_state.menu_state)
+        self.action_cache.record_outcome(cache_key, state_changed)
+
+        # Update position tracking
+        self._last_positions.append(state.position)
+        max_track = self.stuck_threshold * 2
+        if len(self._last_positions) > max_track:
+            self._last_positions = self._last_positions[-max_track:]
+
+        # Periodic save
+        if self.step_count % self.save_interval == 0:
+            self._save_state()
+
+        result = StepResult(
+            step_number=self.step_count,
+            state=state,
+            llm_text=f"[cached: {','.join(buttons)}]",
+            tool_calls=[ToolUse(id="cache", name="press_buttons",
+                                input={"buttons": buttons})],
+            tool_results=[{"pressed": buttons, "count": len(buttons), "cached": True}],
+            was_stuck=False,
+            was_summarized=False,
+            input_tokens=0,
+            output_tokens=0,
+        )
+
+        if self._on_step:
+            self._on_step(result)
+
+        logger.info("Step %d: cached [%s] (hit_rate=%.1f%%)",
+                     self.step_count, ",".join(buttons),
+                     self.action_cache.hit_rate() * 100)
+        return result
+
     def step(self) -> StepResult:
         """Execute one agent step: observe -> think -> act.
 
@@ -324,12 +390,17 @@ class CrystalAgent:
 
         # 2. Check if stuck
         stuck_turns = self._check_stuck(state.position)
+        is_stuck = stuck_turns >= self.stuck_threshold
+
+        # 2.5. Action cache lookup (skip when stuck — need fresh LLM reasoning)
+        if not is_stuck:
+            cache_key = self._state_cache_key(state)
+            cached_buttons = self.action_cache.get(cache_key)
+            if cached_buttons is not None:
+                return self._cached_action_step(state, cached_buttons, cache_key)
 
         # 3. Capture screenshot (if emulator supports it)
         screenshot_b64 = self._capture_screenshot()
-
-        # 4. Build user message
-        is_stuck = stuck_turns >= self.stuck_threshold
         user_msg = build_user_message(
             state=state,
             screenshot_b64=screenshot_b64,
@@ -387,6 +458,15 @@ class CrystalAgent:
                     "content": json.dumps(result),
                 }],
             })
+
+        # 7.5. Cache successful LLM actions for future reuse
+        if not is_stuck:
+            for tool_use in response.tool_uses:
+                if tool_use.name == "press_buttons":
+                    buttons = tool_use.input.get("buttons", [])
+                    if buttons:
+                        cache_key = self._state_cache_key(state)
+                        self.action_cache.put(cache_key, buttons)
 
         # 8. Check summarization threshold
         was_summarized = False
