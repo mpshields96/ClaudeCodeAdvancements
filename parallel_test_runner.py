@@ -61,7 +61,7 @@ def discover_test_files(root: str) -> list[str]:
     test_files = []
     for dirpath, _dirnames, filenames in os.walk(root):
         # Skip __pycache__, .git, node_modules
-        if any(skip in dirpath for skip in ("__pycache__", ".git", "node_modules", ".planning", ".venv", "venv")):
+        if any(skip in dirpath for skip in ("__pycache__", ".git", "node_modules", ".planning", ".venv", "venv", "reference_repos")):
             continue
         for f in sorted(filenames):
             if f.startswith("test_") and f.endswith(".py"):

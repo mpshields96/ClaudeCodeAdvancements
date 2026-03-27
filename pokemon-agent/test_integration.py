@@ -158,29 +158,27 @@ class TestBattleTransitions(unittest.TestCase):
 class TestMenuStateTransitions(unittest.TestCase):
     """Test menu state detection across agent steps."""
 
-    def test_overworld_to_dialog(self):
-        """Agent detects dialog opening."""
+    def test_window_flags_are_overworld_in_crystal(self):
+        """Window/text flags unreliable in Crystal — always overworld (S208)."""
         agent, _, emu = _make_agent()
 
         r1 = agent.step()
         self.assertEqual(r1.state.menu_state, MenuState.OVERWORLD)
 
-        emu.write_byte(WINDOW_STACK_SIZE, 1)
-        emu.write_byte(TEXT_BOX_FLAGS, 1)
+        emu.write_byte(WINDOW_STACK_SIZE, 10)
+        emu.write_byte(TEXT_BOX_FLAGS, 190)
         r2 = agent.step()
-        self.assertEqual(r2.state.menu_state, MenuState.DIALOG)
+        self.assertEqual(r2.state.menu_state, MenuState.OVERWORLD)
 
-    def test_dialog_to_overworld(self):
-        """Agent detects dialog closing."""
+    def test_battle_reliably_detected(self):
+        """Battle mode overrides unreliable flags."""
         agent, _, emu = _make_agent()
 
-        emu.write_byte(WINDOW_STACK_SIZE, 1)
-        emu.write_byte(TEXT_BOX_FLAGS, 1)
+        emu.write_byte(BATTLE_MODE, 1)
         r1 = agent.step()
-        self.assertEqual(r1.state.menu_state, MenuState.DIALOG)
+        self.assertEqual(r1.state.menu_state, MenuState.BATTLE)
 
-        emu.write_byte(WINDOW_STACK_SIZE, 0)
-        emu.write_byte(TEXT_BOX_FLAGS, 0)
+        emu.write_byte(BATTLE_MODE, 0)
         r2 = agent.step()
         self.assertEqual(r2.state.menu_state, MenuState.OVERWORLD)
 

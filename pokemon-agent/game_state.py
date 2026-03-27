@@ -129,7 +129,9 @@ class Party:
 @dataclass
 class MapPosition:
     """Player position on the overworld map."""
-    map_id: int
+    map_id: int  # Composite: (map_group << 8) | map_number
+    map_group: int = 0  # Raw map group byte from 0xDCB5
+    map_number: int = 0  # Raw map number byte from 0xDCB6
     map_name: str = ""
     x: int = 0
     y: int = 0

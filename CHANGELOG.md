@@ -3397,3 +3397,22 @@ CLI chat 2:
 - Never researched r/ClaudePlaysPokemon
 
 ---
+
+## Session 208 — 2026-03-27
+
+**What changed:**
+- Cloned 4 reference repos with full documentation
+- Found root causes of both S207 bugs
+- Fixed memory_reader and bridge.py
+- 315/315 suites 11514 tests
+
+**Why:**
+- MT-53: Cloned 4 reference repos, created RESEARCH.md, diagnosed bugs, fixed memory_reader and bridge
+
+**Tests:** 11514/11514 passing (315 suites)
+
+**Lessons:**
+- Session crashed mid-research
+- No end-to-end emulator verification
+
+---

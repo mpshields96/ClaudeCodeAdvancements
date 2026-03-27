@@ -610,3 +610,21 @@
 {"event_type":"pain","session":207,"domain":"general","notes":"Never verified viewer end-to-end","timestamp":"2026-03-27T06:41:18.137454Z"}
 {"event_type":"feedback_roi","session":207,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T06:41:18.137454Z"}
 {"event_type":"sentinel_stats","session":207,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T06:41:18.137454Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T06:43:17.376583+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T06:43:17.397166+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:11:47.693437+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:11:47.721927+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:17:07.012720+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:17:07.042384+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:18:29.521376+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:18:29.556717+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:21:26.223875+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:21:26.265745+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":208,"domain":"general","outcome":"success","notes":"MT-53: Research-first approach, cloned repos, diagnosed bugs, fixed code, tests pass","timestamp":"2026-03-27T07:22:20.192432Z"}
+{"event_type":"win","session":208,"domain":"general","notes":"Cloned 4 reference repos","timestamp":"2026-03-27T07:22:20.192432Z"}
+{"event_type":"win","session":208,"domain":"general","notes":"Diagnosed S207 bugs with evidence","timestamp":"2026-03-27T07:22:20.192432Z"}
+{"event_type":"win","session":208,"domain":"general","notes":"Fixed memory_reader and bridge","timestamp":"2026-03-27T07:22:20.192432Z"}
+{"event_type":"pain","session":208,"domain":"general","notes":"Session crashed mid-research agent","timestamp":"2026-03-27T07:22:20.192432Z"}
+{"event_type":"pain","session":208,"domain":"general","notes":"No end-to-end verification","timestamp":"2026-03-27T07:22:20.192432Z"}
+{"event_type":"feedback_roi","session":208,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T07:22:20.192432Z"}
+{"event_type":"sentinel_stats","session":208,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T07:22:20.192432Z"}

@@ -330,9 +330,15 @@ class MemoryReader:
         map_number = self._emu.read_byte(MAP_NUMBER)
         x = self._emu.read_byte(PLAYER_X)
         y = self._emu.read_byte(PLAYER_Y)
-        # Combine group + number into a single map ID
+        # Composite ID for unique map identification
         map_id = (map_group << 8) | map_number
-        return MapPosition(map_id=map_id, x=x, y=y)
+        return MapPosition(
+            map_id=map_id,
+            map_group=map_group,
+            map_number=map_number,
+            x=x,
+            y=y,
+        )
 
     def read_battle_state(self) -> BattleState:
         """Read current battle state."""
@@ -392,32 +398,24 @@ class MemoryReader:
     def read_menu_state(self) -> MenuState:
         """Detect current UI mode from RAM flags.
 
-        Priority: battle > shop > dialog > menu > overworld.
-        Uses multiple RAM flags since no single address covers all states.
+        Priority: battle > shop > overworld (default).
+
+        Note: WINDOW_STACK_SIZE (0xCF85), TEXT_BOX_FLAGS (0xCF86), and
+        JOY_DISABLED (0xCFA0) have non-zero values during normal Crystal
+        overworld gameplay. They cannot reliably distinguish dialog/menu
+        from overworld. Only battle mode is reliably detectable from RAM.
         """
-        # Battle takes priority (already tracked, but include for completeness)
         battle_mode = self._emu.read_byte(BATTLE_MODE)
         if battle_mode > 0:
             return MenuState.BATTLE
 
-        # Shop detection
+        # Shop detection — mart pointer is reliable
         mart_ptr = self._emu.read_byte(MART_POINTER)
         if mart_ptr > 0:
             return MenuState.SHOP
 
-        # Joypad disabled = healing animation or cutscene
-        joy_disabled = self._emu.read_byte(JOY_DISABLED)
-        if joy_disabled > 0:
-            return MenuState.POKEMON_CENTER
-
-        # Window/text box open = dialog or menu
-        window_stack = self._emu.read_byte(WINDOW_STACK_SIZE)
-        if window_stack > 0:
-            text_flags = self._emu.read_byte(TEXT_BOX_FLAGS)
-            if text_flags > 0:
-                return MenuState.DIALOG
-            return MenuState.MENU
-
+        # Default to overworld — unreliable flags removed (S208 finding:
+        # JOY_DISABLED=146 and WINDOW_STACK=10 are normal overworld values)
         return MenuState.OVERWORLD
 
     def read_game_state(self) -> GameState:

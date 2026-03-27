@@ -430,25 +430,25 @@ class TestMenuStateDetection(unittest.TestCase):
         state = self.reader.read_menu_state()
         self.assertEqual(state, MenuState.SHOP)
 
-    def test_healing_detected(self):
-        """JOY_DISABLED > 0 = pokemon center healing."""
-        self.emu.write_byte(JOY_DISABLED, 1)
+    def test_joy_disabled_is_overworld_in_crystal(self):
+        """JOY_DISABLED has non-zero values during normal Crystal overworld (S208 finding)."""
+        self.emu.write_byte(JOY_DISABLED, 146)  # Normal Crystal overworld value
         state = self.reader.read_menu_state()
-        self.assertEqual(state, MenuState.POKEMON_CENTER)
+        self.assertEqual(state, MenuState.OVERWORLD)
 
-    def test_dialog_detected(self):
-        """Window open + text flags = dialog."""
-        self.emu.write_byte(WINDOW_STACK_SIZE, 1)
-        self.emu.write_byte(TEXT_BOX_FLAGS, 1)
+    def test_window_stack_is_overworld_in_crystal(self):
+        """WINDOW_STACK_SIZE has non-zero values during normal Crystal overworld (S208 finding)."""
+        self.emu.write_byte(WINDOW_STACK_SIZE, 10)
+        self.emu.write_byte(TEXT_BOX_FLAGS, 190)
         state = self.reader.read_menu_state()
-        self.assertEqual(state, MenuState.DIALOG)
+        self.assertEqual(state, MenuState.OVERWORLD)
 
-    def test_menu_detected(self):
-        """Window open + no text flags = menu."""
+    def test_window_stack_alone_is_overworld(self):
+        """Window stack alone does not trigger menu — unreliable in Crystal."""
         self.emu.write_byte(WINDOW_STACK_SIZE, 1)
         self.emu.write_byte(TEXT_BOX_FLAGS, 0)
         state = self.reader.read_menu_state()
-        self.assertEqual(state, MenuState.MENU)
+        self.assertEqual(state, MenuState.OVERWORLD)
 
     def test_battle_takes_priority_over_shop(self):
         """Battle mode overrides shop flag."""
@@ -470,13 +470,13 @@ class TestMenuStateDetection(unittest.TestCase):
         state = self.reader.read_game_state()
         self.assertEqual(state.menu_state, MenuState.OVERWORLD)
 
-    def test_game_state_menu_in_dialog(self):
-        """read_game_state picks up dialog state."""
+    def test_game_state_window_flags_are_overworld(self):
+        """read_game_state returns overworld even with window flags set (S208 Crystal fix)."""
         self.emu.write_byte(PARTY_COUNT, 0)
         self.emu.write_byte(WINDOW_STACK_SIZE, 2)
         self.emu.write_byte(TEXT_BOX_FLAGS, 1)
         state = self.reader.read_game_state()
-        self.assertEqual(state.menu_state, MenuState.DIALOG)
+        self.assertEqual(state.menu_state, MenuState.OVERWORLD)
 
 
 if __name__ == "__main__":

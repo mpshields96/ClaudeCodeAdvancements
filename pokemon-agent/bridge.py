@@ -93,7 +93,9 @@ def write_state(reader, emu, step: int, text_reader=None) -> dict:
         "step": step,
         "position": {
             "map_id": state.position.map_id,
-            "map_name": state.position.map_name or f"Map {state.position.map_id}",
+            "map_group": state.position.map_group,
+            "map_number": state.position.map_number,
+            "map_name": state.position.map_name or f"Map {state.position.map_group}:{state.position.map_number}",
             "x": state.position.x,
             "y": state.position.y,
         },
@@ -149,7 +151,11 @@ def execute_action(emu, action: dict) -> dict:
         buttons = action.get("buttons", ["a"])
         for button in buttons:
             if button in ("a", "b", "start", "select", "up", "down", "left", "right"):
-                emu.press(button)
+                # Directional buttons need longer hold for Crystal to register movement
+                if button in ("up", "down", "left", "right"):
+                    emu.press(button, hold_frames=8, wait_frames=12)
+                else:
+                    emu.press(button, hold_frames=4, wait_frames=12)
         result = {"executed": "press_buttons", "buttons": buttons}
 
     elif action_type == "wait":
@@ -224,8 +230,15 @@ def main():
     if args.load_state:
         print(f"Loading state: {args.load_state}")
         emu.load_state(args.load_state)
-        # Just stabilize after load — don't run full boot sequence
+        # Stabilize after load — tick to let game settle, then clear any dialog
         emu.tick(30)
+        # Mash B+A to clear any stuck dialog/text boxes from save state
+        for _ in range(5):
+            emu.press("b", hold_frames=4, wait_frames=8)
+        for _ in range(3):
+            emu.press("a", hold_frames=4, wait_frames=8)
+        emu.tick(30)
+        print("  State loaded, dialog cleared.")
     else:
         # Let the game boot (title screen)
         print("Booting game (advancing 300 frames)...")
@@ -289,8 +302,8 @@ def main():
             # Log
             log_step(step, state_dict, action, result)
 
-            # Small delay for game to process
-            emu.tick(12)
+            # Let game process movement animation (16 frames for a step)
+            emu.tick(20)
 
     except KeyboardInterrupt:
         print("\nInterrupted.")
