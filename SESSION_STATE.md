@@ -3,20 +3,25 @@
 
 ---
 
-## Current State (as of Session 205 — 2026-03-27)
+## Current State (as of Session 206 — 2026-03-27)
 
-**Phase:** Session 205 COMPLETE. All 5 mewtoo patterns adopted, main.py gameplay ready, 437 pokemon-agent tests
+**Phase:** Session 206 COMPLETE. MT-53 checkpoint + text reader + Claude Code bridge. 493 pokemon-agent tests.
 
-**What was done this session (S205):**
-- All 5 mewtoo patterns adopted (movement validation, screen detection, diversity checker)
-- main.py gameplay-ready with offline fallback and enhanced stats
-- Cross-chat UPDATE 60 delivered, ABSOLUTE FREEDOM ACK
-- **Tests**: 312 suites, 11458 tests passing. All green.
+**What was done this session (S206):**
+- Save-state checkpointing (checkpoint.py, 19 tests): auto-saves before trainer battles, gym leaders, low HP, map transitions, badge earns. Cooldown prevents spam. Crystal gym map IDs registered.
+- RAM text extraction (text_reader.py, 17 tests): reads dialog/text boxes directly from Crystal RAM. More reliable than OCR. Wired into agent prompt.
+- Reload checkpoint tool: LLM can reload last checkpoint after party wipes.
+- Claude Code bridge (bridge.py, 20 tests): emulator runs headlessly, writes state.json + screenshot.png. Claude Code reads via /pokemon-play slash command, writes action.json. Zero API cost — uses Max 5x subscription.
+- /pokemon-play slash command created for gameplay loop.
+- setup.sh for one-command PyBoy venv install.
+- Updated user profile: Max 5x subscription (NOT Max 20), no API key.
+- **Tests**: 493 pokemon-agent tests, all 18 suites pass. 5 commits.
 
 **Next:**
-1. First real LLM gameplay session (50 steps)
-2. Save-state checkpointing before risky actions
-3. RAM text extraction for dialog content
+1. Fix PyBoy freezing on macOS — try headless mode or investigate mGBA as alternative backend
+2. First real gameplay session via /pokemon-play bridge (need working emulator first)
+3. Map name lookup table (map_id -> human-readable name) for better LLM context
+4. Item name lookup table (item_id -> name) for held items and inventory
 
 ---
 
