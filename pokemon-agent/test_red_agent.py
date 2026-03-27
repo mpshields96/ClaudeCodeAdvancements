@@ -239,5 +239,98 @@ class TestRedAgentBattleAIWiring(unittest.TestCase):
             self.assertIn("battle_ai", r.llm_text)
 
 
+class TestBattleAIEndToEnd(unittest.TestCase):
+    """End-to-end battle AI tests simulating realistic early-game scenarios."""
+
+    def _setup_battle(self, party_species, party_level, party_moves,
+                      party_type1, party_type2,
+                      enemy_species_id, enemy_level, enemy_type1, enemy_type2):
+        """Set up a realistic battle scenario in mock RAM."""
+        from red_agent import RedAgent
+        emu = EmulatorControl.mock(ram_size=0x10000)
+        emu.write_byte(mrr.MAP_ID, 12)  # Route 1
+        emu.write_byte(mrr.PLAYER_X, 5)
+        emu.write_byte(mrr.PLAYER_Y, 5)
+        emu.write_byte(mrr.PARTY_COUNT, 1)
+        base = mrr.PARTY_BASE_ADDRS[0]
+        emu.write_byte(base + mrr.OFF_SPECIES, party_species)
+        emu.write_byte(base + mrr.OFF_LEVEL, party_level)
+        emu.write_byte(base + mrr.OFF_HP_LO, 40)
+        emu.write_byte(base + mrr.OFF_MAX_HP_LO, 40)
+        emu.write_byte(base + mrr.OFF_TYPE1, party_type1)
+        emu.write_byte(base + mrr.OFF_TYPE2, party_type2)
+        for i, (move_id, pp) in enumerate(party_moves):
+            emu.write_byte(base + mrr.OFF_MOVE1 + i, move_id)
+            emu.write_byte(base + mrr.OFF_PP1 + i, pp)
+        # Wild battle
+        emu.write_byte(mrr.BATTLE_MODE, 1)
+        emu.write_byte(mrr.ENEMY_MON_SPECIES, enemy_species_id)
+        emu.write_byte(mrr.ENEMY_MON_HP_LO, 20)
+        emu.write_byte(mrr.ENEMY_MON_MAX_HP_LO, 20)
+        emu.write_byte(mrr.ENEMY_MON_LEVEL, enemy_level)
+        emu.write_byte(mrr.ENEMY_MON_TYPE1, enemy_type1)
+        emu.write_byte(mrr.ENEMY_MON_TYPE2, enemy_type2)
+        return RedAgent(emulator=emu), emu
+
+    def test_charmander_vs_pidgey_uses_scratch(self):
+        """Charmander (Scratch+Growl) vs Pidgey should pick Scratch."""
+        agent, _ = self._setup_battle(
+            party_species=0xB0, party_level=5,
+            party_moves=[(0x0A, 35), (0x2D, 40)],  # Scratch, Growl
+            party_type1=0x14, party_type2=0x14,     # Fire/Fire
+            enemy_species_id=0x24, enemy_level=3,   # Pidgey
+            enemy_type1=0x00, enemy_type2=0x02,     # Normal/Flying
+        )
+        result = agent.step()
+        self.assertIn("battle_ai", result.llm_text)
+        # Should pick fight (Scratch has power), not run
+        self.assertNotIn("run", result.llm_text.lower())
+
+    def test_squirtle_vs_geodude_picks_water_gun(self):
+        """Squirtle (Tackle+Water Gun) vs Geodude should prefer Water Gun (super effective)."""
+        agent, _ = self._setup_battle(
+            party_species=0xB1, party_level=8,
+            party_moves=[(0x21, 35), (0x37, 25)],  # Tackle, Water Gun
+            party_type1=0x15, party_type2=0x15,     # Water/Water
+            enemy_species_id=0xA9, enemy_level=7,   # Geodude
+            enemy_type1=0x05, enemy_type2=0x04,     # Rock/Ground
+        )
+        result = agent.step()
+        self.assertIn("battle_ai", result.llm_text)
+        # Water Gun is 4x effective vs Rock/Ground — should be chosen
+        self.assertIn("WATER GUN", result.llm_text)
+
+    def test_no_pp_forces_run(self):
+        """With all moves at 0 PP in a wild battle, should run."""
+        agent, _ = self._setup_battle(
+            party_species=0xB0, party_level=5,
+            party_moves=[(0x0A, 0), (0x2D, 0)],    # Scratch 0PP, Growl 0PP
+            party_type1=0x14, party_type2=0x14,
+            enemy_species_id=0x24, enemy_level=3,
+            enemy_type1=0x00, enemy_type2=0x02,
+        )
+        result = agent.step()
+        self.assertIn("battle_ai", result.llm_text)
+        self.assertIn("run", result.llm_text.lower())
+
+    def test_battle_then_overworld(self):
+        """After battle ends (BATTLE_MODE=0), step should use normal flow."""
+        agent, emu = self._setup_battle(
+            party_species=0xB0, party_level=5,
+            party_moves=[(0x0A, 35)],
+            party_type1=0x14, party_type2=0x14,
+            enemy_species_id=0x24, enemy_level=3,
+            enemy_type1=0x00, enemy_type2=0x02,
+        )
+        # Step 1: in battle
+        r1 = agent.step()
+        self.assertIn("battle_ai", r1.llm_text)
+        # End battle
+        emu.write_byte(mrr.BATTLE_MODE, 0)
+        # Step 2: back to overworld
+        r2 = agent.step()
+        self.assertNotIn("battle_ai", r2.llm_text)
+
+
 if __name__ == "__main__":
     unittest.main()
