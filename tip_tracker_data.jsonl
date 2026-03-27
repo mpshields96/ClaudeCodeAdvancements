@@ -19,3 +19,5 @@
 {"tip":"Use git branch --show-current before committing to verify you are on the expected branch","source":"cca-desktop","session":"S211","timestamp":"2026-03-27T21:14:34.834376Z"}
 {"tip":"Port A* pathfinding from reference_repos/pokemon-agent for outdoor map navigation","source":"cca-desktop","session":"S211","timestamp":"2026-03-27T21:31:16.138261Z"}
 {"tip":"JOY_DISABLED bit 5 at 0xD730 is the reliable dialog detector for Pokemon Red","source":"cca-desktop","session":"S211","timestamp":"2026-03-27T21:31:16.138261Z"}
+{"tip":"Websocket viewer would enable remote watching (~50 LOC)","source":"cca-desktop","session":"S212","timestamp":"2026-03-27T21:56:18.111418Z"}
+{"tip":"After 2 failures on same tool, pivot to alternative","source":"cca-desktop","session":"S212","timestamp":"2026-03-27T21:56:18.111418Z"}

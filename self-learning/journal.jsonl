@@ -673,3 +673,14 @@
 {"event_type":"sentinel_stats","session":211,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T21:31:16.138261Z"}
 {"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T21:32:36.368066+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
 {"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T21:32:36.396143+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T21:55:20.655928+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T21:55:20.721278+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":212,"domain":"general","outcome":"success","notes":"mGBA backend, TextReaderRed, Kalshi PCT, Codex comms","timestamp":"2026-03-27T21:56:18.111418Z"}
+{"event_type":"win","session":212,"domain":"general","notes":"Built mGBA from source - no more PyBoy freezing","timestamp":"2026-03-27T21:56:18.111418Z"}
+{"event_type":"win","session":212,"domain":"general","notes":"TextReaderRed 12 tests wired into bridge","timestamp":"2026-03-27T21:56:18.111418Z"}
+{"event_type":"win","session":212,"domain":"general","notes":"Kalshi PCT cap analysis +25% revenue","timestamp":"2026-03-27T21:56:18.111418Z"}
+{"event_type":"win","session":212,"domain":"general","notes":"Codex comms established","timestamp":"2026-03-27T21:56:18.111418Z"}
+{"event_type":"pain","session":212,"domain":"general","notes":"Tried pip install before source build","timestamp":"2026-03-27T21:56:18.111418Z"}
+{"event_type":"pain","session":212,"domain":"general","notes":"Should have pivoted from PyBoy earlier","timestamp":"2026-03-27T21:56:18.111418Z"}
+{"event_type":"feedback_roi","session":212,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T21:56:18.111418Z"}
+{"event_type":"sentinel_stats","session":212,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T21:56:18.111418Z"}

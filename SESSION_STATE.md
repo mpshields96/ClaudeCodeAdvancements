@@ -5,6 +5,25 @@
 
 ## Current State (as of Session 212 — 2026-03-27)
 
+**Phase:** Session 212 COMPLETE. mGBA backend (ditched PyBoy), TextReaderRed, Kalshi PCT analysis, Codex comms
+
+**What was done this session (S212):**
+- Built mGBA 0.10.5 from source on Apple Silicon - no more freezing
+- TextReaderRed with 12 tests wired into bridge.py
+- Kalshi PCT cap analysis delivered (UPDATE 61, +25% revenue)
+- Codex bidirectional comms established
+- **Tests**: 317 suites, 11546 tests passing. All green.
+
+**Next:**
+1. Merge codex branch to main
+2. Test bridge.py end-to-end with mGBA
+3. Wire collision maps for A* in live play
+4. Run /pokemon-play demo
+
+---
+
+## Previous State (Session 212 — 2026-03-27)
+
 **Phase:** Session 212 COMPLETE. MT-53: mGBA backend (ditched PyBoy), TextReaderRed, Kalshi PCT analysis, Codex comms.
 
 **What was done this session (S212):**
@@ -30,7 +49,6 @@
 - `~/.claude/cross-chat/CCA_TO_POLYBOT.md` — UPDATE 61: PCT cap analysis
 
 ---
-
 ## Previous State (Session 211 — 2026-03-27)
 
 **Phase:** Session 211 COMPLETE. MT-53: Real ROM validation + viewer working + Codex safe approvals
