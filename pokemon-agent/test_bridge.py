@@ -4,12 +4,14 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest.mock import Mock
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 from emulator_control import EmulatorControl
 from memory_reader import MemoryReader, PARTY_COUNT, PARTY_DATA_START, OFF_SPECIES, OFF_LEVEL, OFF_HP_HI, OFF_HP_LO, OFF_HP_MAX_HI, OFF_HP_MAX_LO, MAP_GROUP, MAP_NUMBER, PLAYER_X, PLAYER_Y
 from text_reader import TextReader
+from checkpoint import CheckpointReason
 import bridge
 
 
@@ -164,6 +166,42 @@ class TestBridgeLog(unittest.TestCase):
         with open(bridge.LOG_FILE) as f:
             entry = json.loads(f.readline())
         self.assertEqual(entry["step"], 1)
+
+
+class TestBridgeCheckpointing(unittest.TestCase):
+    """Checkpoint transitions should compare real previous and current states."""
+
+    def test_first_state_never_checkpoints(self):
+        mgr = Mock()
+        reasons = bridge.maybe_checkpoint(None, object(), mgr, step=1)
+        self.assertEqual(reasons, [])
+        mgr.should_checkpoint.assert_not_called()
+        mgr.save_checkpoint.assert_not_called()
+
+    def test_checkpoint_uses_previous_and_current_state(self):
+        prev_state = object()
+        curr_state = object()
+        mgr = Mock()
+        mgr.should_checkpoint.return_value = [CheckpointReason.MAP_TRANSITION]
+
+        reasons = bridge.maybe_checkpoint(prev_state, curr_state, mgr, step=7)
+
+        self.assertEqual(reasons, ["map_transition"])
+        mgr.should_checkpoint.assert_called_once_with(
+            prev_state,
+            curr_state,
+            current_step=7,
+        )
+        mgr.save_checkpoint.assert_called_once()
+
+    def test_no_reasons_skips_save(self):
+        mgr = Mock()
+        mgr.should_checkpoint.return_value = []
+
+        reasons = bridge.maybe_checkpoint(object(), object(), mgr, step=3)
+
+        self.assertEqual(reasons, [])
+        mgr.save_checkpoint.assert_not_called()
 
 
 if __name__ == "__main__":

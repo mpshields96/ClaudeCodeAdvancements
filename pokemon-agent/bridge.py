@@ -197,6 +197,24 @@ def log_step(step: int, state: dict, action: dict, result: dict):
         f.write(json.dumps(entry) + "\n")
 
 
+def maybe_checkpoint(prev_state, curr_state, checkpoint_mgr, step: int) -> list[str]:
+    """Check for checkpoint-worthy transitions and save if needed.
+
+    Returns the string values of any triggered checkpoint reasons.
+    """
+    if prev_state is None:
+        return []
+
+    reasons = checkpoint_mgr.should_checkpoint(
+        prev_state,
+        curr_state,
+        current_step=step,
+    )
+    if reasons:
+        checkpoint_mgr.save_checkpoint(step=step, reasons=reasons)
+    return [r.value for r in reasons]
+
+
 def main():
     parser = argparse.ArgumentParser(description="Pokemon Crystal emulator bridge for Claude Code")
     parser.add_argument("--rom", default=DEFAULT_ROM, help="ROM path")
@@ -235,8 +253,9 @@ def main():
     # Use the right memory reader for the game
     if game_type == "red":
         from memory_reader_red import MemoryReaderRed
+        from text_reader_red import TextReaderRed
         reader = MemoryReaderRed(emu)
-        text_reader = None  # Red text reader not yet built
+        text_reader = TextReaderRed(emu)
     else:
         from memory_reader import MemoryReader
         from text_reader import TextReader
@@ -269,7 +288,7 @@ def main():
     print("To stop: create a .stop file or Ctrl+C\n")
 
     step = 0
-    prev_state = None
+    prev_gs = None
 
     try:
         while True:
@@ -284,16 +303,11 @@ def main():
             state_dict = write_state(reader, emu, step, text_reader)
 
             # Checkpoint check
-            if prev_state is not None:
-                curr_gs = reader.read_game_state()
-                from game_state import GameState
-                prev_gs = reader.read_game_state()  # Approximate
-                reasons = checkpoint_mgr.should_checkpoint(prev_gs, curr_gs, current_step=step)
-                if reasons:
-                    checkpoint_mgr.save_checkpoint(step=step, reasons=reasons)
-                    print(f"  [Checkpoint: {[r.value for r in reasons]}]")
-
-            prev_state = state_dict
+            curr_gs = reader.read_game_state()
+            reason_names = maybe_checkpoint(prev_gs, curr_gs, checkpoint_mgr, step)
+            if reason_names:
+                print(f"  [Checkpoint: {reason_names}]")
+            prev_gs = curr_gs
 
             # Print status
             pos = state_dict["position"]
