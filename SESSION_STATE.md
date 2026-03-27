@@ -3,20 +3,30 @@
 
 ---
 
-## Current State (as of Session 210 — 2026-03-27)
+## Current State (as of Session 211 — 2026-03-27)
 
-**Phase:** Session 210 COMPLETE. Codex onboarded as second agent + MT-53 boot sequence automation
+**Phase:** Session 211 COMPLETE. MT-53: Real ROM validation + viewer working + Codex safe approvals
 
-**What was done this session (S210):**
-- Codex fully onboarded: AGENTS.md both repos, bridge prompt, operating manual, ChatGPT custom instructions
-- MT-53 boot_sequence.py with 16 tests: dialog clearing, grid nav, map transitions
-- Cross-chat: Kalshi notified, Codex-Kalshi comms request written
-- **Tests**: 10 suites, 540 tests passing. All green.
+**What was done this session (S211):**
+- Fixed _read_menu_state in memory_reader_red.py: use JOY_DISABLED bit 5 (0x20) not TEXTBOX_ID (was always "dialog", now correctly "overworld"). Verified via pokered disassembly + reference repos.
+- Verified boot_sequence.py with real Pokemon Red ROM: navigates 2F->1F->Pallet Town in 19 clean steps (was 60+ with failures before path fix).
+- Mapped exact walkable tiles: 2F stairs at (7,1) via (5,6)->(5,1)->(7,1), 1F door at x=2-3 y=7.
+- viewer.html fully working: auto-polls bridge_io/state.json + screenshot.png, shows live game state. Fixed JS scope issues (const->var, location->locationEl).
+- Created CODEX_QUICKSTART.md (both repos) + added Safe Approvals Reference to CODEX_OPERATING_MANUAL.md per Matthew's request.
+- Saved pallet_town_start.state for future sessions.
+- **Tests**: 10 suites, 540 tests passing. All green. Commits: 5451c04, 1c09fe6.
 
 **Next:**
-1. Test boot_sequence.py with real ROM
-2. Get viewer.html showing live gameplay
-3. Port A* pathfinding
+1. Port A* pathfinding from reference repos (outdoor maps with obstacles)
+2. Test boot_sequence from cold ROM boot (title screen -> name -> intro -> overworld)
+3. Run bridge.py + viewer.html as live gameplay demo
+4. Start wiring Claude Code agent loop (/pokemon-play) to bridge
+
+**Key file paths changed:**
+- `pokemon-agent/memory_reader_red.py:489-500` — menu state detection fix
+- `pokemon-agent/boot_sequence.py:40-56` — verified room layouts
+- `pokemon-agent/boot_sequence.py:220-250` — verified navigation paths
+- `pokemon-agent/viewer.html:87-99` — JS scope fixes
 
 ---
 
