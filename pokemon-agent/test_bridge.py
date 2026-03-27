@@ -14,6 +14,10 @@ from text_reader import TextReader
 from checkpoint import CheckpointReason
 import bridge
 
+# Red-specific imports for e2e mGBA path tests
+import memory_reader_red as mrr
+from text_reader_red import TextReaderRed
+
 
 class TestBridgeStateWrite(unittest.TestCase):
     """Test state.json writing."""
@@ -202,6 +206,189 @@ class TestBridgeCheckpointing(unittest.TestCase):
 
         self.assertEqual(reasons, [])
         mgr.save_checkpoint.assert_not_called()
+
+
+class TestBridgeRedStateWrite(unittest.TestCase):
+    """Test bridge.write_state with Pokemon Red readers (mGBA backend path).
+
+    Exercises the same bridge functions as Crystal tests but with
+    MemoryReaderRed + TextReaderRed using Gen 1 RAM layout.
+    """
+
+    def setUp(self):
+        self.emu = EmulatorControl.mock()
+        self.reader = mrr.MemoryReaderRed(self.emu)
+        self.text_reader = TextReaderRed(self.emu)
+        self.tmpdir = tempfile.mkdtemp()
+        bridge.BRIDGE_DIR = self.tmpdir
+        bridge.STATE_FILE = os.path.join(self.tmpdir, "state.json")
+        bridge.SCREENSHOT_FILE = os.path.join(self.tmpdir, "screenshot.png")
+        bridge.READY_FILE = os.path.join(self.tmpdir, ".ready")
+
+        # Set up a Charmander in Gen 1 RAM layout
+        self.emu.write_byte(mrr.PARTY_COUNT, 1)
+        base = mrr.PARTY_BASE_ADDRS[0]
+        self.emu.write_byte(base + mrr.OFF_SPECIES, 0xB0)  # Charmander
+        self.emu.write_byte(base + mrr.OFF_LEVEL, 5)
+        self.emu.write_byte(base + mrr.OFF_HP_HI, 0)
+        self.emu.write_byte(base + mrr.OFF_HP_LO, 20)
+        self.emu.write_byte(base + mrr.OFF_MAX_HP_HI, 0)
+        self.emu.write_byte(base + mrr.OFF_MAX_HP_LO, 20)
+        self.emu.write_byte(base + mrr.OFF_MOVE1, 0x0A)  # SCRATCH
+        self.emu.write_byte(base + mrr.OFF_PP1, 35)
+        self.emu.write_byte(base + mrr.OFF_MOVE2, 0x2D)  # GROWL
+        self.emu.write_byte(base + mrr.OFF_PP2, 40)
+        # Set position — Pallet Town
+        self.emu.write_byte(mrr.MAP_ID, 0)  # PALLET TOWN
+        self.emu.write_byte(mrr.PLAYER_X, 3)
+        self.emu.write_byte(mrr.PLAYER_Y, 4)
+
+    def test_write_state_creates_json(self):
+        state = bridge.write_state(self.reader, self.emu, step=1, text_reader=self.text_reader)
+        self.assertTrue(os.path.exists(bridge.STATE_FILE))
+        with open(bridge.STATE_FILE) as f:
+            data = json.load(f)
+        self.assertEqual(data["step"], 1)
+
+    def test_state_has_charmander(self):
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertEqual(len(state["party"]), 1)
+        self.assertEqual(state["party"][0]["species"], "CHARMANDER")
+        self.assertEqual(state["party"][0]["level"], 5)
+        self.assertEqual(state["party"][0]["hp"], 20)
+        self.assertEqual(state["party"][0]["hp_max"], 20)
+
+    def test_state_has_red_position(self):
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertEqual(state["position"]["x"], 3)
+        self.assertEqual(state["position"]["y"], 4)
+        self.assertEqual(state["position"]["map_name"], "PALLET TOWN")
+        # Red uses flat map IDs (map_group=0)
+        self.assertEqual(state["position"]["map_group"], 0)
+
+    def test_state_has_moves(self):
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        moves = state["party"][0]["moves"]
+        self.assertEqual(len(moves), 2)
+        self.assertEqual(moves[0]["name"], "SCRATCH")
+        self.assertEqual(moves[0]["pp"], 35)
+        self.assertEqual(moves[1]["name"], "GROWL")
+
+    def test_state_no_battle(self):
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertIsNone(state["battle"])
+
+    def test_state_battle_wild(self):
+        """Test that wild battle state reads correctly."""
+        self.emu.write_byte(mrr.BATTLE_MODE, 1)  # Wild battle
+        self.emu.write_byte(mrr.ENEMY_MON_SPECIES, 0xA5)  # RATTATA
+        self.emu.write_byte(mrr.ENEMY_MON_LEVEL, 3)
+        self.emu.write_byte(mrr.ENEMY_MON_HP_HI, 0)
+        self.emu.write_byte(mrr.ENEMY_MON_HP_LO, 12)
+        self.emu.write_byte(mrr.ENEMY_MON_MAX_HP_HI, 0)
+        self.emu.write_byte(mrr.ENEMY_MON_MAX_HP_LO, 12)
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertIsNotNone(state["battle"])
+        self.assertEqual(state["battle"]["type"], "wild")
+        self.assertEqual(state["battle"]["enemy_species"], "RATTATA")
+        self.assertEqual(state["battle"]["enemy_level"], 3)
+
+    def test_state_badges_empty(self):
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertEqual(state["badges"], 0)
+
+    def test_state_badges_boulder(self):
+        self.emu.write_byte(mrr.BADGES_ADDR, 0x01)  # Boulder Badge
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertEqual(state["badges"], 1)
+
+    def test_state_money_bcd(self):
+        """Test BCD money decoding."""
+        # Set money to $3000 — BCD: 0x03, 0x00, 0x00
+        self.emu.write_byte(mrr.MONEY_ADDR, 0x00)
+        self.emu.write_byte(mrr.MONEY_ADDR + 1, 0x30)
+        self.emu.write_byte(mrr.MONEY_ADDR + 2, 0x00)
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertEqual(state["money"], 3000)
+
+    def test_text_reader_no_dialog(self):
+        """TextReaderRed returns empty when no dialog active."""
+        state = bridge.write_state(self.reader, self.emu, step=1, text_reader=self.text_reader)
+        # No dialog flags set, should be empty
+        self.assertEqual(state["text_on_screen"], "")
+
+    def test_menu_state_overworld(self):
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertEqual(state["menu_state"], "overworld")
+
+    def test_menu_state_battle(self):
+        self.emu.write_byte(mrr.BATTLE_MODE, 1)
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertEqual(state["menu_state"], "battle")
+
+    def test_menu_state_dialog(self):
+        self.emu.write_byte(mrr.JOY_DISABLED, 0x20)  # Bit 5 set
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertEqual(state["menu_state"], "dialog")
+
+    def test_ready_file_created(self):
+        bridge.write_state(self.reader, self.emu, step=1, text_reader=self.text_reader)
+        self.assertTrue(os.path.exists(bridge.READY_FILE))
+
+    def test_full_party_six_pokemon(self):
+        """Test reading a full 6-pokemon party."""
+        self.emu.write_byte(mrr.PARTY_COUNT, 6)
+        species = [0xB0, 0x24, 0xA5, 0x54, 0x6C, 0x7B]  # Charmander, Pidgey, Rattata, Pikachu, Zubat, Caterpie
+        for i, sp in enumerate(species):
+            base = mrr.PARTY_BASE_ADDRS[i]
+            self.emu.write_byte(base + mrr.OFF_SPECIES, sp)
+            self.emu.write_byte(base + mrr.OFF_LEVEL, 5 + i)
+            self.emu.write_byte(base + mrr.OFF_HP_LO, 20)
+            self.emu.write_byte(base + mrr.OFF_MAX_HP_LO, 20)
+        state = bridge.write_state(self.reader, self.emu, step=1)
+        self.assertEqual(len(state["party"]), 6)
+        self.assertEqual(state["party"][0]["species"], "CHARMANDER")
+        self.assertEqual(state["party"][3]["species"], "PIKACHU")
+
+    def test_execute_direction_movement(self):
+        """Test that directional movement executes through bridge."""
+        action = {"type": "press_buttons", "buttons": ["up", "right", "down", "left"]}
+        result = bridge.execute_action(self.emu, action)
+        self.assertEqual(result["executed"], "press_buttons")
+        self.assertEqual(result["buttons"], ["up", "right", "down", "left"])
+
+
+class TestMGBABackendImport(unittest.TestCase):
+    """Test that mGBA backend class exists and has correct interface."""
+
+    def test_mgba_backend_class_exists(self):
+        from emulator_control import MGBABackend
+        self.assertTrue(hasattr(MGBABackend, 'press'))
+        self.assertTrue(hasattr(MGBABackend, 'release'))
+        self.assertTrue(hasattr(MGBABackend, 'tick'))
+        self.assertTrue(hasattr(MGBABackend, 'read_byte'))
+        self.assertTrue(hasattr(MGBABackend, 'read_bytes'))
+        self.assertTrue(hasattr(MGBABackend, 'write_byte'))
+        self.assertTrue(hasattr(MGBABackend, 'save_state'))
+        self.assertTrue(hasattr(MGBABackend, 'load_state'))
+        self.assertTrue(hasattr(MGBABackend, 'screenshot'))
+        self.assertTrue(hasattr(MGBABackend, 'close'))
+
+    def test_from_rom_default_backend_is_mgba(self):
+        """Verify from_rom defaults to mGBA backend."""
+        from emulator_control import EmulatorControl
+        import inspect
+        sig = inspect.signature(EmulatorControl.from_rom)
+        self.assertEqual(sig.parameters['backend'].default, 'mgba')
+
+    def test_mock_backend_used_for_testing(self):
+        """Verify mock backend works as stand-in for mGBA."""
+        emu = EmulatorControl.mock()
+        emu.write_byte(0x1000, 42)
+        self.assertEqual(emu.read_byte(0x1000), 42)
+        emu.press("a")
+        emu.tick(10)
+        emu.close()
 
 
 if __name__ == "__main__":
