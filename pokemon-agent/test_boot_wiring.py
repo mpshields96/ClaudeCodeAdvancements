@@ -147,5 +147,45 @@ class TestBridgeBootIntegration(unittest.TestCase):
         self.assertFalse(args.no_boot)
 
 
+class TestBridgeViewerServer(unittest.TestCase):
+    """Test bridge.py viewer HTTP server."""
+
+    def test_bridge_has_serve_port_option(self):
+        """bridge.py should accept --port flag for viewer server."""
+        import bridge
+        parser = bridge.build_parser()
+        args = parser.parse_args(["--rom", "pokemon_red.gb", "--port", "8765"])
+        self.assertEqual(args.port, 8765)
+
+    def test_bridge_default_port(self):
+        """Default port should be 8000."""
+        import bridge
+        parser = bridge.build_parser()
+        args = parser.parse_args(["--rom", "pokemon_red.gb"])
+        self.assertEqual(args.port, 8000)
+
+    def test_bridge_no_serve_flag(self):
+        """--no-serve should disable the viewer server."""
+        import bridge
+        parser = bridge.build_parser()
+        args = parser.parse_args(["--rom", "pokemon_red.gb", "--no-serve"])
+        self.assertTrue(args.no_serve)
+
+    def test_start_viewer_server_function_exists(self):
+        """start_viewer_server should be importable."""
+        from bridge import start_viewer_server
+        self.assertTrue(callable(start_viewer_server))
+
+    def test_start_viewer_server_returns_thread(self):
+        """start_viewer_server should return a daemon thread."""
+        import threading
+        from bridge import start_viewer_server
+        server_thread = start_viewer_server(port=0)  # port=0 picks random
+        self.assertIsInstance(server_thread, threading.Thread)
+        self.assertTrue(server_thread.daemon)
+        # Thread should be alive
+        self.assertTrue(server_thread.is_alive())
+
+
 if __name__ == "__main__":
     unittest.main()

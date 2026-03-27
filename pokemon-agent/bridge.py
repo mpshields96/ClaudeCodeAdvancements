@@ -35,9 +35,11 @@ Stdlib + pyboy only.
 from __future__ import annotations
 
 import argparse
+import http.server
 import json
 import os
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -290,6 +292,41 @@ def maybe_checkpoint(prev_state, curr_state, checkpoint_mgr, step: int) -> list[
     return [r.value for r in reasons]
 
 
+def start_viewer_server(port: int = 8000) -> threading.Thread:
+    """Start a background HTTP server to serve viewer.html and bridge_io/.
+
+    Serves from the pokemon-agent/ directory so both viewer.html and
+    bridge_io/ are accessible. No-cache headers ensure live data.
+
+    Args:
+        port: Port to serve on. Use 0 for a random available port.
+
+    Returns:
+        The daemon thread running the server.
+    """
+    serve_dir = os.path.dirname(__file__) or "."
+
+    class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=serve_dir, **kwargs)
+
+        def end_headers(self):
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            super().end_headers()
+
+        def log_message(self, format, *args):
+            pass  # Silence request logs
+
+    server = http.server.HTTPServer(("127.0.0.1", port), NoCacheHandler)
+    actual_port = server.server_address[1]
+
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    thread.actual_port = actual_port  # Store for callers to read
+    return thread
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser for bridge.py."""
     parser = argparse.ArgumentParser(description="Pokemon emulator bridge for Claude Code")
@@ -299,6 +336,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--load-state", type=str, default=None, help="Load a saved state on boot")
     parser.add_argument("--timeout", type=float, default=30.0, help="Seconds to wait for Claude Code action")
     parser.add_argument("--no-boot", action="store_true", help="Skip boot sequence for Red games")
+    parser.add_argument("--port", type=int, default=8000, help="Viewer HTTP server port (default: 8000)")
+    parser.add_argument("--no-serve", action="store_true", help="Disable viewer HTTP server")
     return parser
 
 
@@ -386,7 +425,14 @@ def main():
             print(f"  Phases: {boot_result['phases_completed']}")
             print(f"  Position: map {boot_result['final_map']}, {boot_result['final_position']}")
 
-    print(f"\nBridge running. Waiting for Claude Code actions in: {BRIDGE_DIR}/")
+    # Start viewer HTTP server
+    if not args.no_serve:
+        server_thread = start_viewer_server(port=args.port)
+        print(f"\nViewer live at: http://127.0.0.1:{server_thread.actual_port}/viewer.html")
+    else:
+        print("\nViewer server disabled (--no-serve)")
+
+    print(f"Bridge running. Waiting for Claude Code actions in: {BRIDGE_DIR}/")
     print(f"Timeout: {args.timeout}s per step")
     print("To stop: create a .stop file or Ctrl+C\n")
 
