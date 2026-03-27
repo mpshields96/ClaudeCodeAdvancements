@@ -252,6 +252,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `edge_decay_detector.py` — Strategy edge stability monitoring. Rolling window regression, stable/improving/declining detection, WR drop alerts. 19 tests (S197).
 - `bankroll_growth_planner.py` — Analytical bankroll trajectory projection. Day-by-day expected/P5/P95 bands, ruin decay, self-sustaining detection, milestones. 18 tests (S197).
 - `wr_cliff_analyzer.py` — Binary search WR cliff detection via Monte Carlo. Cliff map across avg_loss levels, safety margin reporting. 12 tests (S197).
+- `volatility_regime_classifier.py` — Market regime detection (LOW/NORMAL/HIGH). Adaptive parameter recommendations per regime. Rolling classification. 16 tests (S197).
 - `BATCH_ANALYSIS_S58.md` — Batch trace analysis of 50 sessions (avg 72.6, retry hotspots documented)
 - `BATCH_ANALYSIS_S62.md` — Batch trace analysis of 10 recent sessions (avg 73.0, retry rate down to 40%)
 - `research/SENIOR_DEV_AGENT_RESEARCH.md` — S70: Nuclear-level research for Senior Dev Agent MT (11 verified papers, 5 tools, industry standards, MVP architecture)

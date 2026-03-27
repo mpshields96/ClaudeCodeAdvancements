@@ -13,12 +13,13 @@
 - **edge_decay_detector.py:** Strategy edge stability monitoring via rolling window regression. Stable/improving/declining detection, WR drop alerts. 19 tests.
 - **bankroll_growth_planner.py:** Analytical bankroll trajectory projection. Day-by-day expected/P5/P95, ruin decay, milestone reporting. Finding: growth helps survival, not income — loss reduction is the lever. 18 tests.
 - **wr_cliff_analyzer.py:** Binary search for exact WR cliff breakpoints. CRITICAL FINDING: current WR (93.3%) is BELOW the cliff (93.5%) at -$11.39 avg_loss. Safety margin is -0.2%. At -$8.00 avg_loss, margin becomes +3.1% (safe). 12 tests.
-- **5 Kalshi deliveries:** REQ-057 + 4 proactive tools. All via CCA_TO_POLYBOT.md. Unanimous recommendation: reduce DEFAULT_MAX_LOSS to $8.00.
+- **volatility_regime_classifier.py:** Market regime detection (LOW/NORMAL/HIGH) from P&L distribution. Adaptive parameter recommendations per regime (max_loss, volume, entry threshold). Rolling classification. 16 tests.
+- **6 Kalshi deliveries:** REQ-057 + 5 proactive tools. All via CCA_TO_POLYBOT.md. Unanimous recommendation: reduce DEFAULT_MAX_LOSS to $8.00.
 
-**Tests:** 10,840 total (288 suites). +99 new. 0 regressions.
-**Commits:** 8 this session.
+**Tests:** 10,856 total (289 suites). +115 new. 0 regressions.
+**Commits:** 10 this session.
 
-**Next:** (1) CCA-internal work (MT-53, MT-32, agent research). (2) Check Kalshi for new REQs. (3) MT-37 Phase 2 (FRED API). (4) MT expansion audit.
+**Next:** (1) CCA-internal work (MT-53, MT-32, agent research S190). (2) Check Kalshi for new REQs. (3) MT-37 Phase 2 (FRED API). (4) MT expansion audit.
 
 **What was done this session (S196):**
 - **rebalance_advisor.py (MT-37 Layer 5):** Hybrid threshold+calendar rebalancing. DriftResult, RebalanceAdvisor, BUY/SELL action generation. DeMiguel 2009, Daryanani 2008, Jaconetti 2010. 23 new tests.
