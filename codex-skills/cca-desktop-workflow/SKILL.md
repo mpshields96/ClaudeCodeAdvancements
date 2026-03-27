@@ -78,6 +78,10 @@ When invoked in `wrap` mode:
 
 Do not mutate Claude-owned state files unless explicitly assigned.
 
+To generate a ready-to-paste wrap command from live repo state, run:
+- `python3 codex_wrap.py`
+- `python3 codex_wrap.py --write CODEX_WRAP_PROMPT.md`
+
 ## Autoloop Mode
 
 Codex desktop app autoloop should be adapted, not copied literally.
@@ -125,3 +129,4 @@ For Codex-side grounding:
 - `CODEX_OPERATING_MANUAL.md`
 - `CODEX_QUICKSTART.md`
 - `CODEX_BRIDGE_PROMPT.md`
+- `codex_wrap.py`

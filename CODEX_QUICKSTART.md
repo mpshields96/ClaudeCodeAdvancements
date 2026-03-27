@@ -53,6 +53,10 @@ Quick invocations:
 - `Use $cca-desktop-workflow in wrap mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.`
 - `Use $cca-desktop-workflow in autoloop mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.`
 
+Wrap command:
+- `python3 codex_wrap.py`
+- `python3 codex_wrap.py --write CODEX_WRAP_PROMPT.md`
+
 ## Codex self-learning
 
 - Read-only study of Claude-built tools, docs, and patterns is encouraged

@@ -51,6 +51,13 @@ Use $cca-desktop-workflow in wrap mode for /Users/matthewshields/Projects/Claude
 Run the relevant validation, summarize the outcome, commit if ready, and send any needed note directly through CCA comms.
 ```
 
+Repo-local wrap command:
+
+```bash
+python3 codex_wrap.py
+python3 codex_wrap.py --write CODEX_WRAP_PROMPT.md
+```
+
 ### Autoloop
 
 ```text
