@@ -34,6 +34,7 @@ from config import (
     TEMPERATURE, STATE_DIR, SCREENSHOT_DIR, LOG_DIR,
 )
 from movement_validator import MovementValidator
+from diversity_checker import DiversityChecker
 from screen_detector import ScreenDetector, ScreenState
 from emulator_control import EmulatorControl
 from game_state import GameState, MapPosition, MenuState
@@ -247,6 +248,9 @@ class CrystalAgent:
         # Screen transition detection: skip LLM on blank/transition screens
         self.screen_detector = ScreenDetector()
 
+        # Action diversity: flag repetitive button presses (mewtoo pattern)
+        self.diversity_checker = DiversityChecker()
+
         # Callbacks
         self._on_step: Optional[Callable[[StepResult], None]] = None
 
@@ -435,6 +439,11 @@ class CrystalAgent:
         # 3. Capture screenshot (if emulator supports it)
         screenshot_b64 = self._capture_screenshot()
         blocked_info = self.movement_validator.format_for_prompt(state.position)
+        diversity_info = self.diversity_checker.format_for_prompt()
+        if blocked_info and diversity_info:
+            blocked_info = blocked_info + " " + diversity_info
+        elif diversity_info:
+            blocked_info = diversity_info
         user_msg = build_user_message(
             state=state,
             screenshot_b64=screenshot_b64,
@@ -483,12 +492,15 @@ class CrystalAgent:
             result = self._execute_tool(tool_use)
             tool_results.append(result)
 
-            # Track button sequences as potential failed strategies
-            if tool_use.name == "press_buttons" and is_stuck:
+            # Track button sequences for stuck detection + diversity
+            if tool_use.name == "press_buttons":
                 buttons = tool_use.input.get("buttons", [])
-                if buttons:
+                # Record each button for diversity tracking
+                for b in buttons:
+                    self.diversity_checker.record(b)
+                # Track failed strategies when stuck
+                if is_stuck and buttons:
                     self._failed_strategies.append(buttons)
-                    # Cap strategy memory
                     if len(self._failed_strategies) > STUCK_STRATEGY_MEMORY:
                         self._failed_strategies = self._failed_strategies[-STUCK_STRATEGY_MEMORY:]
 
