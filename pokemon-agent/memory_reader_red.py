@@ -96,6 +96,15 @@ ENEMY_MON_MAX_HP_LO = 0xCFF5
 ENEMY_MON_STATUS = 0xCFE9
 ENEMY_MON_TYPE1 = 0xCFEA     # Type 1 (uses TYPE_NAMES mapping)
 ENEMY_MON_TYPE2 = 0xCFEB     # Type 2
+ENEMY_MON_MOVE1 = 0xCFED     # Enemy move IDs (4 consecutive bytes)
+ENEMY_MON_ATTACK_HI = 0xCFF6
+ENEMY_MON_ATTACK_LO = 0xCFF7
+ENEMY_MON_DEFENSE_HI = 0xCFF8
+ENEMY_MON_DEFENSE_LO = 0xCFF9
+ENEMY_MON_SPEED_HI = 0xCFFA
+ENEMY_MON_SPEED_LO = 0xCFFB
+ENEMY_MON_SPECIAL_HI = 0xCFFC
+ENEMY_MON_SPECIAL_LO = 0xCFFD
 
 # Menu / Dialog
 TEXTBOX_ID = 0xD125        # 0 = no text box
@@ -502,14 +511,51 @@ class MemoryReaderRed:
         else:
             enemy_types = get_species_types(enemy_species_id) or ["???"]
 
+        # Enemy stats from battle RAM
+        enemy_attack = (self._mem(ENEMY_MON_ATTACK_HI) << 8) + self._mem(ENEMY_MON_ATTACK_LO)
+        enemy_defense = (self._mem(ENEMY_MON_DEFENSE_HI) << 8) + self._mem(ENEMY_MON_DEFENSE_LO)
+        enemy_speed = (self._mem(ENEMY_MON_SPEED_HI) << 8) + self._mem(ENEMY_MON_SPEED_LO)
+        enemy_special = (self._mem(ENEMY_MON_SPECIAL_HI) << 8) + self._mem(ENEMY_MON_SPECIAL_LO)
+
+        # Enemy moves from battle RAM (IDs only — PP not available for enemy)
+        enemy_moves = []
+        for j in range(4):
+            move_id = self._mem(ENEMY_MON_MOVE1 + j)
+            if move_id != 0:
+                move_name = MOVE_NAMES.get(move_id, f"Move_{move_id}")
+                mdata = get_move_data(move_id)
+                if mdata:
+                    enemy_moves.append(Move(
+                        name=move_name,
+                        move_type=mdata["type"],
+                        power=mdata["power"],
+                        accuracy=mdata["accuracy"],
+                        pp=99,      # Enemy PP unknown — assume available
+                        pp_max=99,
+                        category=mdata["category"],
+                    ))
+                else:
+                    enemy_moves.append(Move(
+                        name=move_name,
+                        move_type="Normal",
+                        power=0, accuracy=100,
+                        pp=99, pp_max=99,
+                        category="physical",
+                    ))
+
         enemy = Pokemon(
             species=enemy_name,
             nickname=enemy_name,
             level=enemy_level,
             hp=enemy_hp,
             hp_max=enemy_max_hp,
-            attack=0, defense=0, speed=0, sp_attack=0, sp_defense=0,
+            attack=enemy_attack,
+            defense=enemy_defense,
+            speed=enemy_speed,
+            sp_attack=enemy_special,
+            sp_defense=enemy_special,
             pokemon_type=enemy_types,
+            moves=enemy_moves,
             status=enemy_status,
         )
 
