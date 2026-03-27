@@ -93,6 +93,8 @@ ENEMY_MON_LEVEL = 0xCFF3
 ENEMY_MON_MAX_HP_HI = 0xCFF4
 ENEMY_MON_MAX_HP_LO = 0xCFF5
 ENEMY_MON_STATUS = 0xCFE9
+ENEMY_MON_TYPE1 = 0xCFEA     # Type 1 (uses TYPE_NAMES mapping)
+ENEMY_MON_TYPE2 = 0xCFEB     # Type 2
 
 # Menu / Dialog
 TEXTBOX_ID = 0xD125        # 0 = no text box
@@ -481,6 +483,13 @@ class MemoryReaderRed:
         enemy_level = self._mem(ENEMY_MON_LEVEL)
         enemy_status = decode_status(self._mem(ENEMY_MON_STATUS))
 
+        # Enemy types from battle RAM
+        enemy_type1_id = self._mem(ENEMY_MON_TYPE1)
+        enemy_type2_id = self._mem(ENEMY_MON_TYPE2)
+        enemy_types = [TYPE_NAMES.get(enemy_type1_id, "???")]
+        if enemy_type2_id != enemy_type1_id:
+            enemy_types.append(TYPE_NAMES.get(enemy_type2_id, "???"))
+
         enemy = Pokemon(
             species=enemy_name,
             nickname=enemy_name,
@@ -488,6 +497,7 @@ class MemoryReaderRed:
             hp=enemy_hp,
             hp_max=enemy_max_hp,
             attack=0, defense=0, speed=0, sp_attack=0, sp_defense=0,
+            pokemon_type=enemy_types,
             status=enemy_status,
         )
 

@@ -219,6 +219,15 @@ class TestRedAgentBattleAIWiring(unittest.TestCase):
         agent.step()
         self.assertEqual(agent.step_count, 2)
 
+    def test_enemy_has_type_in_battle(self):
+        """Enemy Pokemon should have type data read from RAM."""
+        agent, emu = self._make_battle_agent()
+        # Set enemy type bytes (Normal=0x00, Flying=0x02)
+        emu.write_byte(mrr.ENEMY_MON_TYPE1, 0x00)  # Normal
+        emu.write_byte(mrr.ENEMY_MON_TYPE2, 0x02)  # Flying
+        result = agent.step()
+        self.assertTrue(len(result.state.battle.enemy.pokemon_type) > 0)
+
     def test_battle_ai_multiple_steps(self):
         """Multiple battle AI steps should all work."""
         agent, emu = self._make_battle_agent()
