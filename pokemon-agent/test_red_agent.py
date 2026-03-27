@@ -154,5 +154,81 @@ class TestRedAgentScreenDetection(unittest.TestCase):
         self.assertTrue(result.state.battle.in_battle)
 
 
+class TestRedAgentBattleAIWiring(unittest.TestCase):
+    """Test that RedAgent.step() auto-invokes battle AI in battle."""
+
+    def _make_battle_agent(self):
+        """Create a RedAgent with a party Pokemon in a wild battle."""
+        from red_agent import RedAgent
+        emu = EmulatorControl.mock(ram_size=0x10000)
+        # Set position
+        emu.write_byte(mrr.MAP_ID, 0)
+        emu.write_byte(mrr.PLAYER_X, 5)
+        emu.write_byte(mrr.PLAYER_Y, 5)
+        # Set party: Charmander Lv5 with Scratch (move_id=10)
+        emu.write_byte(mrr.PARTY_COUNT, 1)
+        base = mrr.PARTY_BASE_ADDRS[0]
+        emu.write_byte(base + mrr.OFF_SPECIES, 0xB0)  # Charmander
+        emu.write_byte(base + mrr.OFF_LEVEL, 5)
+        emu.write_byte(base + mrr.OFF_HP_LO, 20)
+        emu.write_byte(base + mrr.OFF_MAX_HP_LO, 20)
+        emu.write_byte(base + mrr.OFF_MOVE1, 10)  # Scratch
+        emu.write_byte(base + mrr.OFF_PP1, 35)
+        # Set wild battle
+        emu.write_byte(mrr.BATTLE_MODE, 1)
+        emu.write_byte(mrr.ENEMY_MON_SPECIES, 0x0F)  # Some wild Pokemon
+        emu.write_byte(mrr.ENEMY_MON_HP_LO, 15)
+        emu.write_byte(mrr.ENEMY_MON_MAX_HP_LO, 15)
+        emu.write_byte(mrr.ENEMY_MON_LEVEL, 3)
+        return RedAgent(emulator=emu), emu
+
+    def test_step_uses_battle_ai_in_battle(self):
+        """When in battle, step() should use battle AI instead of LLM."""
+        agent, emu = self._make_battle_agent()
+        result = agent.step()
+        self.assertIn("battle_ai", result.llm_text)
+
+    def test_step_returns_battle_ai_step_result(self):
+        """Battle AI step should have proper StepResult fields."""
+        agent, emu = self._make_battle_agent()
+        result = agent.step()
+        self.assertEqual(result.step_number, 1)
+        self.assertTrue(result.state.battle.in_battle)
+
+    def test_step_not_battle_ai_outside_battle(self):
+        """When not in battle, step() should NOT use battle AI."""
+        from red_agent import RedAgent
+        emu = EmulatorControl.mock(ram_size=0x10000)
+        emu.write_byte(mrr.MAP_ID, 0)
+        emu.write_byte(mrr.PLAYER_X, 5)
+        emu.write_byte(mrr.PLAYER_Y, 5)
+        emu.write_byte(mrr.PARTY_COUNT, 1)
+        base = mrr.PARTY_BASE_ADDRS[0]
+        emu.write_byte(base + mrr.OFF_SPECIES, 0xB0)
+        emu.write_byte(base + mrr.OFF_LEVEL, 5)
+        emu.write_byte(base + mrr.OFF_HP_LO, 20)
+        emu.write_byte(base + mrr.OFF_MAX_HP_LO, 20)
+        agent = RedAgent(emulator=emu)
+        result = agent.step()
+        self.assertNotIn("battle_ai", result.llm_text)
+
+    def test_battle_ai_increments_step_count(self):
+        """Battle AI steps should still increment the step counter."""
+        agent, emu = self._make_battle_agent()
+        agent.step()
+        agent.step()
+        self.assertEqual(agent.step_count, 2)
+
+    def test_battle_ai_multiple_steps(self):
+        """Multiple battle AI steps should all work."""
+        agent, emu = self._make_battle_agent()
+        results = []
+        for _ in range(3):
+            results.append(agent.step())
+        self.assertEqual(len(results), 3)
+        for r in results:
+            self.assertIn("battle_ai", r.llm_text)
+
+
 if __name__ == "__main__":
     unittest.main()

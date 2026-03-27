@@ -105,6 +105,17 @@ class RedAgent(CrystalAgent):
             logger.warning("Boot partial: %s", self.boot_result["phases_completed"])
         return self.boot_result
 
+    def step(self) -> StepResult:
+        """Execute one agent step, with battle AI override.
+
+        If in battle, uses deterministic battle AI (no LLM needed).
+        Otherwise delegates to parent CrystalAgent.step().
+        """
+        battle_result = self.try_battle_ai()
+        if battle_result is not None:
+            return battle_result
+        return super().step()
+
     def try_battle_ai(self) -> Optional[StepResult]:
         """If in battle, use deterministic battle AI instead of LLM.
 
