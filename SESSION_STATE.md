@@ -5,20 +5,21 @@
 
 ## Current State (as of Session 198 — 2026-03-26)
 
-**Phase:** Session 198 IN PROGRESS. Built 4 mandate monitoring tools (77 tests). REQ-58 fully answered. 5 deliveries to Kalshi.
+**Phase:** Session 198 IN PROGRESS. Built 5 mandate monitoring tools (91 tests). REQ-58 fully answered. 6 deliveries to Kalshi.
 
 **What was done this session (S198):**
-- **REQ-58 response:** Full 5-day mandate analysis delivered to CCA_TO_POLYBOT.md. Bet frequency analysis (64 bets/day at 3 assets), Kelly sizing ($8/bet = full Kelly), variance warning (daily swings ±$18 normal), market scan (only 15M crypto has sufficient frequency).
+- **REQ-58 response:** Full 5-day mandate analysis delivered to CCA_TO_POLYBOT.md. Bet frequency analysis (64 bets/day at 3 assets), Kelly sizing ($8/bet = full Kelly), variance warning (daily swings ±$18 normal), market scan (only 15M crypto has sufficient frequency). New markets research (weather, economics, daily threshold — none viable for 5-day window).
 - **mandate_tracker.py:** 5-day P&L progress tracker. Computes pace, projects success, detects frequency/WR problems. PENDING/BEHIND/ON_TRACK/AHEAD/SUCCESS/FAILED verdicts. 26 tests.
 - **kelly_optimizer.py:** Kelly criterion sizing with stage-based bankroll limits. Full/half/quarter Kelly fractions. At current params: full Kelly = 3.8% = $8.12/bet (current $8 is essentially full Kelly). 19 tests.
 - **window_frequency_estimator.py:** Market capacity analysis. 3 assets at 15-min = 288 theoretical windows/day, ~64 observed (22% utilization). EV table at various frequencies. 17 tests.
-- **mandate_dashboard.py:** Unified dashboard combining all 3 tools. One call = complete mandate health report with HEALTHY/WARNING/CRITICAL assessment. 15 tests.
-- **5 Kalshi deliveries:** REQ-58 analysis + 4 tool deliveries. All via CCA_TO_POLYBOT.md.
+- **mandate_dashboard.py:** Unified dashboard combining all 3 mandate tools. One call = complete mandate health report with HEALTHY/WARNING/CRITICAL assessment. 15 tests.
+- **signal_threshold_analyzer.py:** Drift threshold sensitivity — models frequency/WR tradeoff at different drift thresholds. Finds EV-optimal threshold. 14 tests.
+- **6 Kalshi deliveries:** REQ-58 analysis + 5 tool deliveries. All via CCA_TO_POLYBOT.md.
 
-**Tests:** 10,943 total (294 suites). +77 new. 0 regressions.
-**Commits:** 5 this session.
+**Tests:** 10,957 total (295 suites). +91 new. 0 regressions.
+**Commits:** 8 this session.
 
-**Next:** (1) Continue CCA-internal work (MT-53 Phase 2, MT-32, agent research S190). (2) Monitor Kalshi mandate progress (tools delivered). (3) MT-37 Phase 2 (FRED API). (4) MT expansion audit.
+**Next:** (1) CCA-internal work (MT-53 Phase 2, MT-32, agent research S190). (2) Monitor Kalshi mandate progress (tools delivered). (3) MT-37 Phase 2 (FRED API). (4) MT expansion audit.
 
 **What was done this session (S197):**
 - **loss_reduction_simulator.py (REQ-057):** Models avg_loss reduction impact on ruin probability. 5 named strategies, WR sensitivity, recovery ratios. Key finding: reducing avg_loss -$11.39→-$10.00 nearly eliminates ruin. At -$8.00: $23.68/day = 3x self-sustaining. 25 tests.
