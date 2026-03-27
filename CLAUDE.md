@@ -36,6 +36,15 @@ Full rules: `~/.claude/rules/cca-polybot-coordination.md`
 
 ---
 
+## MT-53 STEAL CODE — WORK SMARTER NOT HARDER (S218 — Matthew directive, PERMANENT)
+
+**MT-53 Pokemon Bot: Port code from cloned reference repos and GPT Plays Pokemon livefeed. Don't rewrite from scratch.** The reference repos were cloned for a reason. Read them, extract what works, adapt to our Crystal build. Writing 1000 LOC from scratch when a working implementation is already cloned locally is objectively dumb.
+
+Sources: pokemon-agent/references/ (cloned repos), https://gpt-plays-pokemon.clad3815.dev/firered/livefeed
+Reference: MATTHEW_DIRECTIVES.md S218 for full verbatim directive.
+
+---
+
 ## Architecture Principles
 
 - **One file = one job.** No multi-responsibility modules.

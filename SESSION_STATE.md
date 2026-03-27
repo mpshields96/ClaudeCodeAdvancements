@@ -13,11 +13,17 @@
 - Battle AI now makes tactical decisions: heal, catch, flee on threat, fight with type effectiveness
 - **Tests**: 329 suites, 11780 tests passing. All green.
 
+**CRITICAL DIRECTIVE (S218 — Matthew explicit, MT-53 POKEMON ONLY, PERMANENT):**
+**MT-53: STEAL CODE FROM REFERENCE REPOS. WORK SMARTER NOT HARDER.**
+- Port code from cloned repos (pokemon-agent/references/), don't rewrite from scratch
+- GPT Plays Pokemon livefeed: https://gpt-plays-pokemon.clad3815.dev/firered/livefeed — steal architecture
+- See MATTHEW_DIRECTIVES.md S218 for the full verbatim directive.
+
 **Next:**
-1. Live emulator testing with real ROM
-2. Agent loop test through boot + first encounters
-3. Pokemon switch logic in battle AI
-4. Smarter catch decisions for rare Pokemon
+1. STEAL code from reference repos for MT-53 (memory maps, pathfinding, agent loops)
+2. Live emulator testing with real ROM
+3. Kalshi strategy pivot analysis (URGENT cross-chat — bot is stopped)
+4. Agent loop test through boot + first encounters
 
 ---
 

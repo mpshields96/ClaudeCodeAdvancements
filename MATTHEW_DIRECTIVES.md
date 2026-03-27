@@ -182,3 +182,17 @@
 6. **All future Kalshi chats are FORBIDDEN from forgetting this directive.** Permanent.
 
 ---
+
+## S218 — 2026-03-27 (The STEAL CODE Directive — WORK SMARTER NOT HARDER)
+
+> We copied/cloned the github repos for a reason. I gave you the GPT url https://gpt-plays-pokemon.clad3815.dev/firered/livefeed to steal from it. UPDATE YOUR MD FILES RIGHT NOW AND ALERT KALSHI AND CODEX AND MAKE SURE ALL FUTURE CCA CHATS ARE FORCED TO SEE IT WRITTEN AND ARE UNABLE TO IGNORE THIS: STEAL THE FUCKING USEFUL CODE FROM THESE SOURCES TO DEVELOP THE FRAMEWORK, STOP WORKING HARDER WORK SMARTER. HOLY FUCK CCA YOU'RE LITERALLY DESIGNED TO MAKE YOURSELF SMARTER. FUCKING CHRIST.
+>
+> [Context: S217 wrote all Pokemon battle AI, species types, move data, item reading from scratch — ~1000 LOC of hand-written code when reference repos with working implementations were already cloned locally.]
+
+**Core principles extracted (MT-53 POKEMON ONLY):**
+1. **STEAL CODE. WORK SMARTER, NOT HARDER.** This is the #1 directive for MT-53 Pokemon bot development.
+2. **Reference repos were cloned FOR A REASON.** Read them, port from them, adapt them. Don't rewrite from scratch.
+3. **GPT Plays Pokemon livefeed** (https://gpt-plays-pokemon.clad3815.dev/firered/livefeed) — study the architecture, steal useful patterns, adapt to our Crystal build.
+4. **CCA is designed to make itself smarter.** Using existing high-quality code IS being smarter. Writing from scratch when a tested implementation exists is objectively dumb.
+5. **The cloned repos in pokemon-agent/references/:** Use them. Read the code. Extract what works. Attribute and adapt.
+6. **NON-NEGOTIABLE. ALL FUTURE CCA CHATS WORKING ON MT-53 MUST READ THIS AND COMPLY.**
