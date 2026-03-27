@@ -3,20 +3,25 @@
 
 ---
 
-## Current State (as of Session 215 — 2026-03-27)
+## Current State (as of Session 216 — 2026-03-27)
 
-**Phase:** Session 215 COMPLETE. MT-53: boot_sequence wiring, viewer HTTP server, battle AI for Pokemon Red
+**Phase:** Session 216 COMPLETE. MT-53: battle AI fully wired + move data table + enemy types
 
-**What was done this session (S215):**
-- Shipped all 3 resume prompt items: boot wiring, viewer server, battle AI
-- 49 new tests, 0 regressions, 11693 total passing
-- 3 commits in 6 min — tight focused session
-- **Tests**: 325 suites, 11693 tests passing. All green.
+**What was done this session (S216):**
+- Wired try_battle_ai() into RedAgent.step() override — battle AI auto-invokes in battles
+- Created move_data.py: complete Gen 1 move table (165 moves, types/power/accuracy/category)
+- Wired move data into memory_reader_red.py — moves now have real stats instead of power=0
+- Added enemy type reading from battle RAM (ENEMY_MON_TYPE1/TYPE2) — type effectiveness works
+- Kalshi cross-chat: PCT cap analysis delivered (raise 8%->10%, risk-of-ruin framework)
+- 22 new tests, 0 regressions, 26 pokemon-agent suites all pass
+- 4 commits
+- **Tests**: 26 pokemon-agent suites passing. All green.
 
 **Next:**
-1. Wire try_battle_ai into RedAgent.step override
-2. Live emulator testing with real ROM
-3. Agent loop testing through boot + first encounters
+1. Live emulator testing with real ROM — run bridge.py + viewer.html
+2. Agent loop testing — run RedAgent with offline mode through boot + first encounters
+3. Species-to-type table (so Pokemon have types even outside battle)
+4. Enemy move reading from battle RAM (for smarter AI decisions)
 
 ---
 

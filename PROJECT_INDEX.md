@@ -447,4 +447,6 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S215
 - `pokemon-agent/battle_ai.py` (S215)
 - `pokemon-agent/test_battle_ai.py` (S215)
+- `pokemon-agent/move_data.py` (S216) — Gen 1 move table (165 moves: type, power, accuracy, category)
+- `pokemon-agent/test_move_data.py` (S216)
 - `pokemon-agent/test_boot_wiring.py` (S215)
