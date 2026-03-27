@@ -97,6 +97,14 @@ class Pokemon:
 
 
 @dataclass
+class Item:
+    """An item in the player's bag."""
+    item_id: int
+    name: str
+    quantity: int
+
+
+@dataclass
 class Party:
     """The player's party (up to 6 Pokemon)."""
     pokemon: List[Pokemon] = field(default_factory=list)
@@ -190,6 +198,7 @@ class GameState:
     battle: BattleState = field(default_factory=BattleState)
     badges: Badges = field(default_factory=Badges)
     money: int = 0
+    items: List[Item] = field(default_factory=list)
     play_time_minutes: int = 0
     step_count: int = 0
     menu_state: MenuState = MenuState.OVERWORLD

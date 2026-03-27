@@ -21,6 +21,7 @@ from game_state import (
     Badges,
     BattleState,
     GameState,
+    Item,
     MapPosition,
     MenuState,
     Move,
@@ -324,6 +325,39 @@ TYPE_NAMES = {
     0x18: "Psychic", 0x19: "Ice", 0x1A: "Dragon",
 }
 
+# ── Gen 1 item names (gameplay-relevant subset) ──────────────────────
+
+ITEM_NAMES = {
+    0x01: "MASTER BALL", 0x02: "ULTRA BALL", 0x03: "GREAT BALL", 0x04: "POKE BALL",
+    0x06: "BICYCLE", 0x09: "MOON STONE", 0x0A: "ANTIDOTE",
+    0x0B: "BURN HEAL", 0x0C: "ICE HEAL", 0x0D: "AWAKENING",
+    0x0E: "PARLYZ HEAL", 0x0F: "FULL RESTORE", 0x10: "MAX POTION",
+    0x11: "HYPER POTION", 0x12: "SUPER POTION", 0x13: "POTION",
+    0x14: "BOULDERBADGE", 0x15: "CASCADEBADGE", 0x16: "THUNDERBADGE",
+    0x17: "RAINBOWBADGE", 0x18: "SOULBADGE", 0x19: "MARSHBADGE",
+    0x1A: "VOLCANOBADGE", 0x1B: "EARTHBADGE",
+    0x1D: "ESCAPE ROPE", 0x1E: "REPEL",
+    0x20: "OLD AMBER", 0x21: "FIRE STONE", 0x22: "THUNDER STONE",
+    0x23: "WATER STONE", 0x24: "HP UP", 0x25: "PROTEIN",
+    0x26: "IRON", 0x27: "CARBOS", 0x28: "CALCIUM",
+    0x29: "RARE CANDY", 0x2A: "DOME FOSSIL", 0x2B: "HELIX FOSSIL",
+    0x2C: "SECRET KEY", 0x2E: "BIKE VOUCHER",
+    0x2F: "X ACCURACY", 0x30: "LEAF STONE", 0x31: "CARD KEY",
+    0x32: "NUGGET", 0x34: "POKE DOLL",
+    0x35: "FULL HEAL", 0x36: "REVIVE", 0x37: "MAX REVIVE",
+    0x38: "GUARD SPEC", 0x39: "SUPER REPEL", 0x3A: "MAX REPEL",
+    0x3B: "DIRE HIT", 0x3F: "FRESH WATER", 0x40: "SODA POP",
+    0x41: "LEMONADE", 0x42: "S.S. TICKET", 0x43: "GOLD TEETH",
+    0x44: "X ATTACK", 0x45: "X DEFEND", 0x46: "X SPEED",
+    0x47: "X SPECIAL", 0x48: "COIN CASE", 0x49: "OAKS PARCEL",
+    0x4A: "ITEMFINDER", 0x4B: "SILPH SCOPE", 0x4C: "POKE FLUTE",
+    0x4D: "LIFT KEY", 0x4E: "EXP. ALL", 0x4F: "OLD ROD",
+    0x50: "GOOD ROD", 0x51: "SUPER ROD", 0x52: "PP UP",
+    0x53: "ETHER", 0x54: "MAX ETHER", 0x55: "ELIXIR", 0x56: "MAX ELIXIR",
+    # TM/HMs start at 0xC9
+    0xC4: "HM01", 0xC5: "HM02", 0xC6: "HM03", 0xC7: "HM04", 0xC8: "HM05",
+}
+
 # ── Status conditions ─────────────────────────────────────────────────────
 
 def decode_status(status_byte: int) -> str:
@@ -594,6 +628,19 @@ class MemoryReaderRed:
         minutes = self._mem(PLAY_TIME_MINUTES)
         return hours * 60 + minutes
 
+    def _read_items(self) -> list:
+        """Read bag inventory — pairs of (item_id, quantity)."""
+        count = min(self._mem(ITEM_COUNT), 20)  # Max 20 item slots
+        items = []
+        for i in range(count):
+            item_id = self._mem(ITEM_START + i * 2)
+            quantity = self._mem(ITEM_START + i * 2 + 1)
+            if item_id == 0xFF or item_id == 0:  # Terminator or empty
+                break
+            name = ITEM_NAMES.get(item_id, f"Item_{item_id:02X}")
+            items.append(Item(item_id=item_id, name=name, quantity=quantity))
+        return items
+
     def read_game_state(self) -> GameState:
         """Read complete game state from RAM."""
         return GameState(
@@ -602,6 +649,7 @@ class MemoryReaderRed:
             battle=self._read_battle(),
             badges=self._read_badges(),
             money=self._read_money(),
+            items=self._read_items(),
             play_time_minutes=self._read_play_time(),
             menu_state=self._read_menu_state(),
         )

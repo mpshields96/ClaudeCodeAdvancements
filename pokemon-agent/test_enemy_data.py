@@ -175,6 +175,66 @@ class TestEnemyTypeFallback(unittest.TestCase):
         self.assertEqual(state.battle.enemy.pokemon_type, ["Grass", "Poison"])
 
 
+class TestItemReading(unittest.TestCase):
+    """Test bag inventory reading from RAM."""
+
+    def test_read_items_basic(self):
+        emu = EmulatorControl.mock(ram_size=0x10000)
+        _setup_battle(emu)
+        # Set 2 items: Potion x3, Poke Ball x5
+        emu.write_byte(mrr.ITEM_COUNT, 2)
+        emu.write_byte(mrr.ITEM_START, 0x13)      # Potion
+        emu.write_byte(mrr.ITEM_START + 1, 3)      # qty
+        emu.write_byte(mrr.ITEM_START + 2, 0x04)   # Poke Ball
+        emu.write_byte(mrr.ITEM_START + 3, 5)      # qty
+        reader = mrr.MemoryReaderRed(emu)
+        state = reader.read_game_state()
+        self.assertEqual(len(state.items), 2)
+        self.assertEqual(state.items[0].name, "POTION")
+        self.assertEqual(state.items[0].quantity, 3)
+        self.assertEqual(state.items[1].name, "POKE BALL")
+        self.assertEqual(state.items[1].quantity, 5)
+
+    def test_read_items_empty(self):
+        emu = EmulatorControl.mock(ram_size=0x10000)
+        _setup_battle(emu)
+        emu.write_byte(mrr.ITEM_COUNT, 0)
+        reader = mrr.MemoryReaderRed(emu)
+        state = reader.read_game_state()
+        self.assertEqual(len(state.items), 0)
+
+    def test_read_items_unknown_id(self):
+        emu = EmulatorControl.mock(ram_size=0x10000)
+        _setup_battle(emu)
+        emu.write_byte(mrr.ITEM_COUNT, 1)
+        emu.write_byte(mrr.ITEM_START, 0xFE)       # Unknown item
+        emu.write_byte(mrr.ITEM_START + 1, 1)
+        reader = mrr.MemoryReaderRed(emu)
+        state = reader.read_game_state()
+        self.assertEqual(len(state.items), 1)
+        self.assertTrue(state.items[0].name.startswith("Item_"))
+
+    def test_read_items_terminator(self):
+        """0xFF item ID should stop reading."""
+        emu = EmulatorControl.mock(ram_size=0x10000)
+        _setup_battle(emu)
+        emu.write_byte(mrr.ITEM_COUNT, 3)
+        emu.write_byte(mrr.ITEM_START, 0x13)       # Potion
+        emu.write_byte(mrr.ITEM_START + 1, 2)
+        emu.write_byte(mrr.ITEM_START + 2, 0xFF)   # Terminator
+        emu.write_byte(mrr.ITEM_START + 3, 0)
+        reader = mrr.MemoryReaderRed(emu)
+        state = reader.read_game_state()
+        self.assertEqual(len(state.items), 1)
+
+    def test_item_dataclass(self):
+        from game_state import Item
+        i = Item(item_id=0x13, name="POTION", quantity=3)
+        self.assertEqual(i.item_id, 0x13)
+        self.assertEqual(i.name, "POTION")
+        self.assertEqual(i.quantity, 3)
+
+
 class TestPartyXPReading(unittest.TestCase):
     """Test party Pokemon XP reading from RAM."""
 
