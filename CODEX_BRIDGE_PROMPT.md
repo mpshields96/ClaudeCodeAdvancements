@@ -215,6 +215,48 @@ When starting a Codex session on either repo:
 
 ---
 
+## GitHub Access
+
+Both repos are private. Codex accesses them two ways:
+
+**Local CLI mode (your MacBook):** Uses your existing Git credentials. No setup needed —
+if `git pull` works in Terminal, Codex CLI can read/write the repos.
+
+**Cloud/sandbox mode (Codex App at codex.openai.com):** Requires connecting GitHub to
+your ChatGPT account:
+1. Go to chatgpt.com → Settings → Connected Apps → GitHub
+2. Authorize the OAuth app for your `mpshields96` account
+3. Grant access to both private repos: `ClaudeCodeAdvancements` and `polymarket-bot`
+
+Both repos are at:
+- `https://github.com/mpshields96/ClaudeCodeAdvancements.git`
+- `https://github.com/mpshields96/polymarket-bot.git`
+
+**CRITICAL: Never commit .env files, API keys, or credentials.** Both repos have
+sensitive config (Kalshi RSA keys, Binance API keys, Polymarket Ed25519 keys) in
+`.env` and `config.yaml` files that are gitignored. These stay LOCAL. Codex cloud
+sandbox does NOT need access to credentials — it works on code, not live trading.
+
+---
+
+## Codex-Specific Configuration
+
+Create `~/.codex/config.toml` on your Mac:
+
+```toml
+# Codex CLI config for Matthew's dual-agent setup
+preferred_auth_method = "chatgpt"
+
+[tools]
+web_search = true
+```
+
+Codex also supports MCP servers in config.toml — the same protocol Claude Code uses.
+Your current MCP servers (Gemini, Supabase, Playwright, Context7, GitHub) can be
+ported by adding their STDIO configs to `[mcp_servers]` sections in config.toml.
+
+---
+
 ## AGENTS.md Setup
 
 For Codex to use this context automatically, create these files:
