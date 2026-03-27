@@ -435,3 +435,10 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S213
 - `pokemon-agent/collision_reader_red.py` (S213) — RAM-based collision map reader for A* pathfinding
 - `pokemon-agent/test_collision_reader_red.py` (S213) — 14 tests
+
+
+### Added in S214
+- `pokemon-agent/warp_data_red.py` (S214)
+- `pokemon-agent/test_warp_data_red.py` (S214)
+- `pokemon-agent/red_agent.py` (S214)
+- `pokemon-agent/test_red_agent.py` (S214)

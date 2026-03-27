@@ -5,6 +5,23 @@
 
 ## Current State (as of Session 214 — 2026-03-27)
 
+**Phase:** Session 214 COMPLETE. MT-53: Warp data for cross-map A* + RedAgent subclass for Pokemon Red agent loop
+
+**What was done this session (S214):**
+- warp_data_red.py: 30+ static warps, 12 connections, RAM reader, cross-map navigate
+- RedAgent subclass with Red-specific components (14 tests)
+- Cross-chat comms to Kalshi + Codex
+- **Tests**: 321 suites, 11635 tests passing. All green.
+
+**Next:**
+1. Wire boot_sequence for mGBA Red
+2. Get viewer.html live with real mGBA
+3. Add battle AI for Red
+
+---
+
+## Previous State (Session 214 — 2026-03-27)
+
 **Phase:** Session 214 COMPLETE. MT-53: Warp data for cross-map A*, RedAgent subclass
 
 **What was done this session (S214):**
@@ -31,7 +48,6 @@
 - `pokemon-agent/agent.py` — _screen_detection_addresses() extraction
 
 ---
-
 ## Previous State (Session 212 — 2026-03-27)
 
 **Phase:** Session 212 COMPLETE. MT-53: mGBA backend (ditched PyBoy), TextReaderRed, Kalshi PCT analysis, Codex comms.

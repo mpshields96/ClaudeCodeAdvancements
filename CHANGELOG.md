@@ -3490,3 +3490,20 @@ CLI chat 2:
 - Should have pivoted from PyBoy earlier
 
 ---
+
+## Session 214 — 2026-03-27
+
+**What changed:**
+- warp_data_red.py: 30+ static warps, 12 connections, RAM reader, cross-map navigate
+- RedAgent subclass with Red-specific components (14 tests)
+- Cross-chat comms to Kalshi + Codex
+
+**Why:**
+- MT-53: Warp data for cross-map A* + RedAgent subclass for Pokemon Red agent loop
+
+**Tests:** 11635/11635 passing (321 suites)
+
+**Lessons:**
+- None
+
+---

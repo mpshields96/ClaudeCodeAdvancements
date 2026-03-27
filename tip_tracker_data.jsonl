@@ -21,3 +21,5 @@
 {"tip":"JOY_DISABLED bit 5 at 0xD730 is the reliable dialog detector for Pokemon Red","source":"cca-desktop","session":"S211","timestamp":"2026-03-27T21:31:16.138261Z"}
 {"tip":"Websocket viewer would enable remote watching (~50 LOC)","source":"cca-desktop","session":"S212","timestamp":"2026-03-27T21:56:18.111418Z"}
 {"tip":"After 2 failures on same tool, pivot to alternative","source":"cca-desktop","session":"S212","timestamp":"2026-03-27T21:56:18.111418Z"}
+{"tip":"RedAgent can run offline (no LLM) for boot sequence testing","source":"cca-desktop","session":"S214","timestamp":"2026-03-27T22:44:23.973036Z"}
+{"tip":"Warp direction markers in A* paths need skipping during execution","source":"cca-desktop","session":"S214","timestamp":"2026-03-27T22:44:23.973036Z"}
