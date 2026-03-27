@@ -5,18 +5,20 @@
 
 ## Current State (as of Session 197 — 2026-03-27)
 
-**Phase:** Session 197 IN PROGRESS. Kalshi 5-day challenge support: 3 new analytical tools delivered. REQ-057 answered.
+**Phase:** Session 197 IN PROGRESS. Kalshi 5-day challenge: 5 analytical tools built + CRITICAL finding (negative safety margin).
 
 **What was done this session (S197):**
-- **loss_reduction_simulator.py (REQ-057):** Models avg_loss reduction impact on ruin probability. Sweep analysis, 5 named strategies (early_exit, tighter_floors, reduced_sizing, portfolio_kelly), WR sensitivity, recovery ratios. Key finding: reducing avg_loss from -$11.39 to -$10.00 nearly eliminates ruin (4.5% → 0.04%). At -$8.00: $23.68/day = 3x self-sustaining. 25 new tests.
-- **strategy_allocator.py:** Multi-strategy capital allocation optimizer. Kelly-criterion-inspired proportional allocation. Filters negative-EV strategies, applies constraints. Scenario analysis at multiple bankroll levels. Current finding: sniper gets 100% (sports still in paper mode). 25 new tests.
-- **edge_decay_detector.py:** Strategy edge stability monitoring via rolling window regression. Detects stable/improving/declining trends. Alert threshold for significant WR drops. Critical for 5-day challenge. 19 new tests.
-- **3 Kalshi deliveries:** REQ-057 response (loss reduction analysis), strategy allocator (proactive), edge decay detector (proactive). All written to CCA_TO_POLYBOT.md.
+- **loss_reduction_simulator.py (REQ-057):** Models avg_loss reduction impact on ruin probability. 5 named strategies, WR sensitivity, recovery ratios. Key finding: reducing avg_loss -$11.39→-$10.00 nearly eliminates ruin. At -$8.00: $23.68/day = 3x self-sustaining. 25 tests.
+- **strategy_allocator.py:** Multi-strategy capital allocation optimizer. Kelly-criterion proportional allocation, constraints, scenario analysis. Sniper gets 100% (sports in paper mode). 25 tests.
+- **edge_decay_detector.py:** Strategy edge stability monitoring via rolling window regression. Stable/improving/declining detection, WR drop alerts. 19 tests.
+- **bankroll_growth_planner.py:** Analytical bankroll trajectory projection. Day-by-day expected/P5/P95, ruin decay, milestone reporting. Finding: growth helps survival, not income — loss reduction is the lever. 18 tests.
+- **wr_cliff_analyzer.py:** Binary search for exact WR cliff breakpoints. CRITICAL FINDING: current WR (93.3%) is BELOW the cliff (93.5%) at -$11.39 avg_loss. Safety margin is -0.2%. At -$8.00 avg_loss, margin becomes +3.1% (safe). 12 tests.
+- **5 Kalshi deliveries:** REQ-057 + 4 proactive tools. All via CCA_TO_POLYBOT.md. Unanimous recommendation: reduce DEFAULT_MAX_LOSS to $8.00.
 
-**Tests:** 10,810 total (286 suites). +69 new. 0 regressions.
-**Commits:** 4 this session.
+**Tests:** 10,840 total (288 suites). +99 new. 0 regressions.
+**Commits:** 8 this session.
 
-**Next:** (1) Continue chaining Kalshi analytical tools. (2) MT-53 Phase 2 (pokemon-agent). (3) MT-32 Visual Excellence. (4) MT-37 Phase 2 (FRED API). (5) Agent research (S190 directive).
+**Next:** (1) CCA-internal work (MT-53, MT-32, agent research). (2) Check Kalshi for new REQs. (3) MT-37 Phase 2 (FRED API). (4) MT expansion audit.
 
 **What was done this session (S196):**
 - **rebalance_advisor.py (MT-37 Layer 5):** Hybrid threshold+calendar rebalancing. DriftResult, RebalanceAdvisor, BUY/SELL action generation. DeMiguel 2009, Daryanani 2008, Jaconetti 2010. 23 new tests.
