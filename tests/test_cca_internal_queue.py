@@ -508,7 +508,7 @@ class TestValidConstants(unittest.TestCase):
 
 
 class TestHivemindMultiChat(unittest.TestCase):
-    """Tests for 3-chat hivemind support (desktop, cli1, cli2)."""
+    """Tests for multi-chat hivemind support across internal CCA identities."""
 
     def setUp(self):
         self.tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
