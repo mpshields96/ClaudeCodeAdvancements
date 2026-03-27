@@ -15,7 +15,7 @@ import base64
 from typing import List, Optional
 
 from config import STUCK_STRATEGY_MEMORY, STUCK_ENCOURAGE_LEVELS
-from game_state import BattleState, GameState, MapPosition, Party
+from game_state import BattleState, GameState, MapPosition, MenuState, Party
 
 
 # ── System prompt ────────────────────────────────────────────────────────────
@@ -177,6 +177,12 @@ def format_game_state(state: GameState) -> str:
     pos = state.position
     lines.append(f"Location: Map {pos.map_id} ({pos.map_name or 'unknown'}), "
                  f"X={pos.x}, Y={pos.y}")
+
+    # Menu/UI state
+    if state.menu_state != MenuState.OVERWORLD:
+        lines.append(f"UI Mode: {state.menu_state.value.upper()}")
+    else:
+        lines.append("UI Mode: overworld (free movement)")
 
     # Badges
     badge_count = state.badges.count()

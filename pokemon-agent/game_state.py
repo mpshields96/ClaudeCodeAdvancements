@@ -8,7 +8,24 @@ Usage:
     from game_state import Pokemon, Party, GameState, BattleState, MapPosition
 """
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import List, Optional
+
+
+class MenuState(Enum):
+    """Current game UI mode detected from RAM flags.
+
+    The agent needs to know what screen it's on to make appropriate decisions.
+    Overworld = free movement. Battle handled separately. Menu/dialog/shop
+    require specific button sequences to navigate.
+    """
+    OVERWORLD = "overworld"
+    MENU = "menu"             # Start menu or submenu open
+    DIALOG = "dialog"         # NPC dialog / text box active
+    BATTLE = "battle"         # In battle (also tracked by BattleState)
+    SHOP = "shop"             # Mart / buy-sell screen
+    POKEMON_CENTER = "pokemon_center"  # Healing animation
+    UNKNOWN = "unknown"
 
 
 # Pokemon Crystal type chart (18 types)
@@ -172,6 +189,7 @@ class GameState:
     money: int = 0
     play_time_minutes: int = 0
     step_count: int = 0
+    menu_state: MenuState = MenuState.OVERWORLD
 
     def is_in_battle(self) -> bool:
         return self.battle.in_battle

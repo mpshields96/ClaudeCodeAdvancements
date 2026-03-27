@@ -29,6 +29,7 @@ from game_state import (
     BattleState,
     GameState,
     MapPosition,
+    MenuState,
     Move,
     Party,
     Pokemon,
@@ -104,6 +105,13 @@ PLAY_TIME_MINUTES = 0xD4C6  # 1 byte
 
 # Step counter
 STEP_COUNT = 0xD4C7  # 1 byte (wraps at 256)
+
+# Menu / UI state detection
+# Source: pret/pokecrystal wram.asm
+WINDOW_STACK_SIZE = 0xCF85  # >0 when a text/menu window is open
+TEXT_BOX_FLAGS = 0xCF86      # Text box state flags
+MART_POINTER = 0xD100        # Non-zero when in mart/shop
+JOY_DISABLED = 0xCFA0        # Joypad disable flags (set during transitions/healing)
 
 
 # ── Character encoding (Pokemon text → ASCII) ───────────────────────────────
@@ -381,6 +389,37 @@ class MemoryReader:
         minutes = self._emu.read_byte(PLAY_TIME_MINUTES)
         return hours * 60 + minutes
 
+    def read_menu_state(self) -> MenuState:
+        """Detect current UI mode from RAM flags.
+
+        Priority: battle > shop > dialog > menu > overworld.
+        Uses multiple RAM flags since no single address covers all states.
+        """
+        # Battle takes priority (already tracked, but include for completeness)
+        battle_mode = self._emu.read_byte(BATTLE_MODE)
+        if battle_mode > 0:
+            return MenuState.BATTLE
+
+        # Shop detection
+        mart_ptr = self._emu.read_byte(MART_POINTER)
+        if mart_ptr > 0:
+            return MenuState.SHOP
+
+        # Joypad disabled = healing animation or cutscene
+        joy_disabled = self._emu.read_byte(JOY_DISABLED)
+        if joy_disabled > 0:
+            return MenuState.POKEMON_CENTER
+
+        # Window/text box open = dialog or menu
+        window_stack = self._emu.read_byte(WINDOW_STACK_SIZE)
+        if window_stack > 0:
+            text_flags = self._emu.read_byte(TEXT_BOX_FLAGS)
+            if text_flags > 0:
+                return MenuState.DIALOG
+            return MenuState.MENU
+
+        return MenuState.OVERWORLD
+
     def read_game_state(self) -> GameState:
         """Read complete game state snapshot from RAM."""
         return GameState(
@@ -391,4 +430,5 @@ class MemoryReader:
             money=self.read_money(),
             play_time_minutes=self.read_play_time_minutes(),
             step_count=self._emu.read_byte(STEP_COUNT),
+            menu_state=self.read_menu_state(),
         )

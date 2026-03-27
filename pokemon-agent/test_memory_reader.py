@@ -6,7 +6,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(__file__))
 
 from emulator_control import EmulatorControl
-from game_state import Badges, BattleState, GameState, MapPosition, Party, Pokemon
+from game_state import Badges, BattleState, GameState, MapPosition, MenuState, Party, Pokemon
 from memory_reader import (
     BATTLE_MODE,
     ENEMY_MON_HP_HI,
@@ -17,8 +17,10 @@ from memory_reader import (
     ENEMY_MON_SPECIES,
     ENEMY_MON_STATUS,
     JOHTO_BADGES,
+    JOY_DISABLED,
     MAP_GROUP,
     MAP_NUMBER,
+    MART_POINTER,
     MONEY_ADDR,
     PARTY_COUNT,
     PARTY_DATA_START,
@@ -28,6 +30,8 @@ from memory_reader import (
     PLAY_TIME_HOURS,
     PLAY_TIME_MINUTES,
     PLAYER_X,
+    TEXT_BOX_FLAGS,
+    WINDOW_STACK_SIZE,
     PLAYER_Y,
     STEP_COUNT,
     MemoryReader,
@@ -394,6 +398,85 @@ class TestMemoryReaderFullState(unittest.TestCase):
         self.assertIsInstance(state.money, int)
         self.assertIsInstance(state.play_time_minutes, int)
         self.assertIsInstance(state.step_count, int)
+
+
+class TestMenuStateDetection(unittest.TestCase):
+    """Test menu/UI state detection from RAM."""
+
+    def setUp(self):
+        self.emu = EmulatorControl.mock()
+        self.reader = MemoryReader(self.emu)
+
+    def test_overworld_default(self):
+        """All flags zero = overworld."""
+        state = self.reader.read_menu_state()
+        self.assertEqual(state, MenuState.OVERWORLD)
+
+    def test_battle_detected(self):
+        """BATTLE_MODE > 0 = battle."""
+        self.emu.write_byte(BATTLE_MODE, 1)
+        state = self.reader.read_menu_state()
+        self.assertEqual(state, MenuState.BATTLE)
+
+    def test_trainer_battle_detected(self):
+        """BATTLE_MODE = 2 = trainer battle."""
+        self.emu.write_byte(BATTLE_MODE, 2)
+        state = self.reader.read_menu_state()
+        self.assertEqual(state, MenuState.BATTLE)
+
+    def test_shop_detected(self):
+        """MART_POINTER > 0 = shop."""
+        self.emu.write_byte(MART_POINTER, 5)
+        state = self.reader.read_menu_state()
+        self.assertEqual(state, MenuState.SHOP)
+
+    def test_healing_detected(self):
+        """JOY_DISABLED > 0 = pokemon center healing."""
+        self.emu.write_byte(JOY_DISABLED, 1)
+        state = self.reader.read_menu_state()
+        self.assertEqual(state, MenuState.POKEMON_CENTER)
+
+    def test_dialog_detected(self):
+        """Window open + text flags = dialog."""
+        self.emu.write_byte(WINDOW_STACK_SIZE, 1)
+        self.emu.write_byte(TEXT_BOX_FLAGS, 1)
+        state = self.reader.read_menu_state()
+        self.assertEqual(state, MenuState.DIALOG)
+
+    def test_menu_detected(self):
+        """Window open + no text flags = menu."""
+        self.emu.write_byte(WINDOW_STACK_SIZE, 1)
+        self.emu.write_byte(TEXT_BOX_FLAGS, 0)
+        state = self.reader.read_menu_state()
+        self.assertEqual(state, MenuState.MENU)
+
+    def test_battle_takes_priority_over_shop(self):
+        """Battle mode overrides shop flag."""
+        self.emu.write_byte(BATTLE_MODE, 1)
+        self.emu.write_byte(MART_POINTER, 5)
+        state = self.reader.read_menu_state()
+        self.assertEqual(state, MenuState.BATTLE)
+
+    def test_shop_takes_priority_over_menu(self):
+        """Shop overrides window/menu flags."""
+        self.emu.write_byte(MART_POINTER, 3)
+        self.emu.write_byte(WINDOW_STACK_SIZE, 1)
+        state = self.reader.read_menu_state()
+        self.assertEqual(state, MenuState.SHOP)
+
+    def test_game_state_includes_menu(self):
+        """read_game_state includes menu_state field."""
+        self.emu.write_byte(PARTY_COUNT, 0)
+        state = self.reader.read_game_state()
+        self.assertEqual(state.menu_state, MenuState.OVERWORLD)
+
+    def test_game_state_menu_in_dialog(self):
+        """read_game_state picks up dialog state."""
+        self.emu.write_byte(PARTY_COUNT, 0)
+        self.emu.write_byte(WINDOW_STACK_SIZE, 2)
+        self.emu.write_byte(TEXT_BOX_FLAGS, 1)
+        state = self.reader.read_game_state()
+        self.assertEqual(state.menu_state, MenuState.DIALOG)
 
 
 if __name__ == "__main__":
