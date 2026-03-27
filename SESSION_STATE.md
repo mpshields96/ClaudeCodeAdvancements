@@ -5,6 +5,24 @@
 
 ## Current State (as of Session 216 — 2026-03-27)
 
+**Phase:** Session 216 COMPLETE. MT-53: Battle AI wired into RedAgent.step, Gen 1 move data table, enemy type reading, Kalshi PCT cap analysis
+
+**What was done this session (S216):**
+- Battle AI fully wired — deterministic battles work e2e with type effectiveness
+- Gen 1 move data table (165 moves) replaces hardcoded power=0
+- Kalshi PCT cap analysis delivered (raise 8% to 10%)
+- 5 commits, 22 new tests, 0 regressions
+- **Tests**: 327 suites, 11724 tests passing. All green.
+
+**Next:**
+1. Live emulator testing with real ROM
+2. Agent loop testing through boot + first encounters
+3. Species-to-type table for Pokemon types outside battle
+
+---
+
+## Previous State (Session 216 — 2026-03-27)
+
 **Phase:** Session 216 COMPLETE. MT-53: battle AI fully wired + move data table + enemy types
 
 **What was done this session (S216):**
@@ -24,7 +42,6 @@
 4. Enemy move reading from battle RAM (for smarter AI decisions)
 
 ---
-
 ## Previous State (Session 215 — 2026-03-27)
 
 **Phase:** Session 215 COMPLETE. MT-53: All three resume prompt items delivered — boot wiring, viewer server, battle AI.

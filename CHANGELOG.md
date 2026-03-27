@@ -3524,3 +3524,21 @@ CLI chat 2:
 - None — clean session
 
 ---
+
+## Session 216 — 2026-03-27
+
+**What changed:**
+- Battle AI fully wired — deterministic battles work e2e with type effectiveness
+- Gen 1 move data table (165 moves) replaces hardcoded power=0
+- Kalshi PCT cap analysis delivered (raise 8% to 10%)
+- 5 commits, 22 new tests, 0 regressions
+
+**Why:**
+- MT-53: Battle AI wired into RedAgent.step, Gen 1 move data table, enemy type reading, Kalshi PCT cap analysis
+
+**Tests:** 11724/11724 passing (327 suites)
+
+**Lessons:**
+- No live emulator testing yet — still untested with real ROM
+
+---
