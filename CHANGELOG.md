@@ -3,6 +3,34 @@
 
 ---
 
+## Session 197 — 2026-03-26
+
+**What changed:**
+- `self-learning/loss_reduction_simulator.py` — REQ-057 avg_loss reduction modeling (25 tests)
+- `self-learning/strategy_allocator.py` — Kelly-criterion multi-strategy allocation (25 tests)
+- `self-learning/edge_decay_detector.py` — rolling window edge stability detection (19 tests)
+- `self-learning/bankroll_growth_planner.py` — CLT bankroll trajectory projection (18 tests)
+- `self-learning/wr_cliff_analyzer.py` — binary search ruin cliff detection (12 tests)
+- `self-learning/volatility_regime_classifier.py` — LOW/NORMAL/HIGH regime classification (16 tests)
+- `self-learning/risk_dashboard_runner.py` — unified runner for all 7 tools (10 tests)
+- 7 deliveries appended to `~/.claude/cross-chat/CCA_TO_POLYBOT.md`
+- `MATTHEW_DIRECTIVES.md` — S197 5-day timer officially started entry
+
+**Why:**
+- Kalshi bot 5-day challenge demands tooling for quantitative risk analysis
+- REQ-057 from Kalshi chat needed loss reduction impact modeling
+- CRITICAL discovery: WR is below ruin cliff at current avg_loss (-0.2% safety margin)
+- All 7 tools converge on $8 max_loss as the single most important lever
+
+**Tests:** 10,866/10,866 passing (290 suites, +125 new)
+
+**Lessons:**
+- Zero-variance data (all identical PnL values) breaks vol percentile ranking — needs special case
+- Ascending sweep loops need careful direction handling (start < end with positive step)
+- 93% WR with small windows produces noisy regression slopes — accept "declining" as valid
+
+---
+
 ## Session 196 — 2026-03-27
 
 **What changed:**

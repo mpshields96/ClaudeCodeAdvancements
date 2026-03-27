@@ -3,9 +3,9 @@
 
 ---
 
-## Current State (as of Session 197 — 2026-03-27)
+## Current State (as of Session 197 — 2026-03-26)
 
-**Phase:** Session 197 IN PROGRESS. Kalshi 5-day challenge: 5 analytical tools built + CRITICAL finding (negative safety margin).
+**Phase:** Session 197 COMPLETE. Grade A. Built 7 Kalshi analytical modules (125 tests). 5-day timer officially started.
 
 **What was done this session (S197):**
 - **loss_reduction_simulator.py (REQ-057):** Models avg_loss reduction impact on ruin probability. 5 named strategies, WR sensitivity, recovery ratios. Key finding: reducing avg_loss -$11.39→-$10.00 nearly eliminates ruin. At -$8.00: $23.68/day = 3x self-sustaining. 25 tests.
@@ -16,11 +16,12 @@
 - **volatility_regime_classifier.py:** Market regime detection (LOW/NORMAL/HIGH) from P&L distribution. Adaptive parameter recommendations per regime (max_loss, volume, entry threshold). Rolling classification. 16 tests.
 - **risk_dashboard_runner.py:** Unified runner for all 7 analytical tools. Single run() call produces complete JSON report with health status (HEALTHY/WARNING/CRITICAL), safety margin, regime-adaptive max_loss recommendation. 10 tests.
 - **7 Kalshi deliveries:** REQ-057 + 6 proactive tools + unified runner. All via CCA_TO_POLYBOT.md. Unanimous recommendation: reduce DEFAULT_MAX_LOSS to $8.00.
+- **5-day timer logged:** MATTHEW_DIRECTIVES.md S197 entry. Timer started 2026-03-26 ~7PM ET, deadline 2026-03-31 ~7PM ET.
 
 **Tests:** 10,866 total (290 suites). +125 new. 0 regressions.
-**Commits:** 12 this session.
+**Commits:** 13 this session.
 
-**Next:** (1) CCA-internal work (MT-53, MT-32, agent research S190). (2) Check Kalshi for new REQs. (3) MT-37 Phase 2 (FRED API). (4) MT expansion audit.
+**Next:** (1) CCA-internal work (MT-53 Phase 2, MT-32, agent research S190). (2) Check Kalshi for new REQs — 5-day timer is live. (3) MT-37 Phase 2 (FRED API). (4) MT expansion audit. (5) Research new markets/edges for Kalshi per S197 directive.
 
 **What was done this session (S196):**
 - **rebalance_advisor.py (MT-37 Layer 5):** Hybrid threshold+calendar rebalancing. DriftResult, RebalanceAdvisor, BUY/SELL action generation. DeMiguel 2009, Daryanani 2008, Jaconetti 2010. 23 new tests.
