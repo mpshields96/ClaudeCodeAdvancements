@@ -3,20 +3,23 @@
 
 ---
 
-## Current State (as of Session 214 — 2026-03-27)
+## Current State (as of Session 215 — 2026-03-27)
 
-**Phase:** Session 214 COMPLETE. MT-53: Warp data for cross-map A* + RedAgent subclass for Pokemon Red agent loop
+**Phase:** Session 215 COMPLETE. MT-53: All three resume prompt items delivered — boot wiring, viewer server, battle AI.
 
-**What was done this session (S214):**
-- warp_data_red.py: 30+ static warps, 12 connections, RAM reader, cross-map navigate
-- RedAgent subclass with Red-specific components (14 tests)
-- Cross-chat comms to Kalshi + Codex
-- **Tests**: 321 suites, 11635 tests passing. All green.
+**What was done this session (S215):**
+- boot_sequence wired into RedAgent (auto_boot param + boot() method), main.py (RedAgent for .gb ROMs), bridge.py (auto-boot for Red games). 12 tests.
+- viewer HTTP server added to bridge.py — threaded server with no-cache headers, --port/--no-serve flags. Opens viewer.html at http://127.0.0.1:8000/viewer.html. 5 tests.
+- battle_ai.py: Gen 1 type effectiveness chart, move scoring (power * effectiveness * accuracy), deterministic action selection, button mapping. RedAgent.try_battle_ai() for LLM-free battles. 20 tests.
+- detect_game_type() added to main.py for ROM extension detection
+- 3 commits, 49 new tests, all passing
+- **Tests**: All pokemon-agent tests passing (564+ across 25 test files)
 
 **Next:**
-1. Wire boot_sequence for mGBA Red
-2. Get viewer.html live with real mGBA
-3. Add battle AI for Red
+1. Wire try_battle_ai() into RedAgent.step() override (currently available but not auto-called)
+2. Live emulator testing — run bridge.py + viewer.html with real ROM
+3. Agent loop testing — run RedAgent with offline mode through boot + first encounters
+4. Cross-map navigation live testing (warps wired S214)
 
 ---
 
