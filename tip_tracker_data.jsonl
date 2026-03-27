@@ -7,3 +7,5 @@
 {"tip":"r/ClaudePlaysPokemon is the best MT-53 research source \u2014 scan it deeply","source":"cca-desktop","session":"S200","timestamp":"2026-03-27T03:43:46.987155Z"}
 {"tip":"Self-anchoring countermeasure: present model own wrong answer as from another AI","source":"cca-desktop","session":"S201","timestamp":"2026-03-27T04:19:57.411779Z"}
 {"tip":"Orchestrated workflow beats pure agent loop for cheaper models","source":"cca-desktop","session":"S201","timestamp":"2026-03-27T04:19:57.411779Z"}
+{"tip":"PokeAgent Challenge (NeurIPS 2025) is the benchmark for Pokemon LLM agents \u2014 standardized speedrunning eval framework","source":"cca-desktop","session":"S203","timestamp":"2026-03-27T05:00:19.223064Z"}
+{"tip":"Self-anchoring counter: present a models own failed strategy as another AIs to overcome anchoring bias","source":"cca-desktop","session":"S203","timestamp":"2026-03-27T05:00:19.223064Z"}

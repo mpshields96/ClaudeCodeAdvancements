@@ -380,3 +380,9 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `pokemon-agent/prompts.py` — System prompt, state formatting, stuck detection (S202, 40 tests)
 - `pokemon-agent/agent.py` — Core agent loop, MockLLM, summarization (S202, 31 tests)
 - `pokemon-agent/main.py` — CLI entry point with --headless/--offline (S202, 9 tests)
+
+
+### Added in S203
+- `pokemon-agent/test_integration.py` (S203)
+- `research/mt53/ACADEMIC_PAPERS.md` (S203)
+- `pokemon-agent/.gitignore` (S203)

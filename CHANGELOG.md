@@ -3307,3 +3307,20 @@ CLI chat 2:
 - Background agents completed after session wrapped — had to scramble to save outputs
 
 ---
+
+## Session 203 — 2026-03-26
+
+**What changed:**
+- Phase 4 Steps 2-4 all done: self-anchoring counter, menu state RAM, integration tests (40 new)
+- Academic papers: PokeAgent NeurIPS + PokeChamp ICML + architecture comparison
+- Helped Matthew install PyBoy + ROM — verified working
+
+**Why:**
+- MT-53 Phase 4 Steps 2-4 complete + academic paper research + PyBoy ROM verified
+
+**Tests:** 318/318 passing (10 suites)
+
+**Lessons:**
+- Test runner picks up .venv numpy tests as failures — needs exclude path fix
+
+---
