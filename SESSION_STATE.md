@@ -5,6 +5,24 @@
 
 ## Current State (as of Session 217 — 2026-03-27)
 
+**Phase:** Session 217 COMPLETE. MT-53: 7 deliverables — species types, enemy moves/stats, threat assessment, XP, items, potion healing, pokeball catch
+
+**What was done this session (S217):**
+- 7 MT-53 deliverables: species-to-type table, enemy move+stat reading, threat assessment+flee logic, XP reading, item inventory, potion use, pokeball catch
+- 55+ new tests, 329 suites/11780 tests all pass, zero regressions
+- Battle AI now makes tactical decisions: heal, catch, flee on threat, fight with type effectiveness
+- **Tests**: 329 suites, 11780 tests passing. All green.
+
+**Next:**
+1. Live emulator testing with real ROM
+2. Agent loop test through boot + first encounters
+3. Pokemon switch logic in battle AI
+4. Smarter catch decisions for rare Pokemon
+
+---
+
+## Previous State (Session 217 — 2026-03-27)
+
 **Phase:** Session 217 COMPLETE. MT-53: Massive battle AI + data expansion — 7 deliverables, 8 commits
 
 **What was done this session (S217):**
@@ -26,7 +44,6 @@
 4. Smarter catch decisions (use stronger balls for rarer/higher-level Pokemon)
 
 ---
-
 ## Previous State (Session 216 — 2026-03-27)
 
 **Phase:** Session 216 COMPLETE. MT-53: battle AI fully wired + move data table + enemy types

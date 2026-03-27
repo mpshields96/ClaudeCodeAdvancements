@@ -3542,3 +3542,20 @@ CLI chat 2:
 - No live emulator testing yet — still untested with real ROM
 
 ---
+
+## Session 217 — 2026-03-27
+
+**What changed:**
+- 7 MT-53 deliverables: species-to-type table, enemy move+stat reading, threat assessment+flee logic, XP reading, item inventory, potion use, pokeball catch
+- 55+ new tests, 329 suites/11780 tests all pass, zero regressions
+- Battle AI now makes tactical decisions: heal, catch, flee on threat, fight with type effectiveness
+
+**Why:**
+- MT-53: 7 deliverables — species types, enemy moves/stats, threat assessment, XP, items, potion healing, pokeball catch
+
+**Tests:** 11780/11780 passing (329 suites)
+
+**Lessons:**
+- No live emulator testing yet (deferred to interactive session)
+
+---
