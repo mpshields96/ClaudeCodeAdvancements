@@ -740,3 +740,63 @@ Source: GitHub trending, web search, HN discussion, blog posts.
 - **Action:** Phase 2: build emulator_control.py + state_reader.py + game_state.py using PyBoy. Install PyBoy (`pip install pyboy`).
 - **Verdict:** BUILD — clear path to implementation with proven tools
 
+---
+
+### Finding 401 — r/ClaudePlaysPokemon Intelligence (S200 URL Reviews)
+- **Date:** 2026-03-26
+- **Source:** r/ClaudePlaysPokemon (Matthew direct order: "Steal everything useful")
+- **URL:** https://www.reddit.com/r/ClaudePlaysPokemon/
+- **What:** Official goldmine subreddit for MT-53. Multiple posts about AI Pokemon bots using Claude, GPT-4, Gemini. Key insights:
+  1. **Weak/zero harness is respected** — the community values AI playing with minimal scaffolding
+  2. **Crystal is under-explored** — most work focuses on Red/FireRed. Crystal is our opening.
+  3. **RAM reading > screenshot LLM** — direct memory access is faster, cheaper, more reliable
+  4. **Game knowledge databases** — several posts discuss building Pokemon knowledge bases for AI agents
+  5. **Cheating debate** — community split on save states, speed-up, memory injection. Matthew is "iffy on cheating" — focus on legitimate AI play.
+- **CCA relevance:** MT-53 direct. Crystal gap = our differentiator. Zero-harness approach aligns with community values AND with Matthew's preference.
+- **Action:** Added to profiles.py (min_score=5, timeframe=all, limit=100). Run /cca-nuclear for deep scan.
+- **Verdict:** BUILD — primary intelligence source for MT-53
+
+### Finding 402 — Offline Claude Code Preparedness (S200)
+- **Date:** 2026-03-26
+- **Source:** r/ClaudeCode post about running Claude locally
+- **URL:** Various r/ClaudeCode posts
+- **What:** Options for running Claude Code or alternatives offline: Ollama (local LLM server, supports many models), llama.cpp (raw inference), Aider (open-source AI coding tool that works with local models), Continue.dev (VS Code extension for local LLMs). Key finding: local models lag Claude significantly for complex multi-file work but handle single-file tasks adequately.
+- **CCA relevance:** Strategic preparedness per Matthew directive: "I want to be prepared for when Anthropic screws us harder because limits will go down in time, subsidies will run out."
+- **Action:** Track local LLM options. When reviewing alternatives, verdict should be REFERENCE or BUILD, never SKIP.
+- **Verdict:** REFERENCE — strategic preparedness, not immediate build
+
+### Finding 403 — Agent Orchestration: Task Dependency Graph as #1 Gap (S200)
+- **Date:** 2026-03-26
+- **Source:** Multi-source agent research (Anthropic docs, GitHub, Azure, academic papers)
+- **What:** Cross-referencing all agent orchestration patterns reveals CCA's #1 gap is task dependency graph — preventing workers from starting tasks whose prerequisites haven't completed. Second gap: watchdog/quality agent that monitors other agents' outputs. Both are standard in production multi-agent systems.
+- **CCA relevance:** MT-21 (Hivemind) direct. cca_comm.py has no dependency tracking — workers can start any task regardless of prereqs. Adding a DAG-based task scheduler would prevent wasted work.
+- **Action:** Build task_dependency_graph.py for MT-21 next phase.
+- **Verdict:** BUILD — addresses the highest-priority multi-agent gap
+
+
+### Finding 404 — AgentMon League: Competitive LLM Pokemon Tournament (S200)
+- **Date:** 2026-03-26
+- **Source:** r/ClaudePlaysPokemon + GitHub
+- **URL:** https://www.reddit.com/r/ClaudePlaysPokemon/
+- **What:** Community discussion of competitive LLM Pokemon tournaments — multiple models (Claude, GPT, Gemini) competing on the same game with different harnesses. Key: harness quality matters as much or more than model quality for game completion. GPT-5.1 beat Red fastest (~138h) but had a 7000+ word prompt and ROM optimizations.
+- **CCA relevance:** MT-53 competitive intelligence. Our minimal-harness approach with full RAM reading is a unique position in the ecosystem.
+- **Action:** Documented in research/mt53/OPUS46_PERFORMANCE_INTEL.md
+- **Verdict:** REFERENCE — informs MT-53 design decisions
+
+### Finding 405 — Opus 4.6 Pokemon Red Performance: 7-10x Faster Than 4.5 (S201)
+- **Date:** 2026-03-26
+- **Source:** r/ClaudePlaysPokemon community tracking (u/doubleunplussed, u/reasonosaur, u/ApexHawke)
+- **URL:** https://www.reddit.com/r/ClaudePlaysPokemon/comments/1r4y5yp/
+- **What:** Hard data from live stream: Opus 4.6 reached Victory Road in ~30K steps vs ~206K for 4.5. Exited Mt. Moon in 21 min (3,043 steps). Safari Zone solved in 13 attempts (vs 41). Key behavioral improvements: less likely to loop, tries new things when stuck, buys items strategically, less rigid.
+- **CCA relevance:** MT-53 direct. Opus 4.6's improvements validate the minimal-harness approach — stronger model needs LESS scaffolding. Our Crystal bot should leverage these behavioral improvements.
+- **Action:** Full performance data captured in research/mt53/OPUS46_PERFORMANCE_INTEL.md
+- **Verdict:** BUILD — primary evidence that our approach will work
+
+### Finding 406 — LLM Pokemon Failure Modes: Sticky False Assumptions + DIG Habit (S201)
+- **Date:** 2026-03-26
+- **Source:** r/ClaudePlaysPokemon deep comment analysis (u/ChezMere, u/ApexHawke, u/doubleunplussed)
+- **URL:** Multiple threads in r/ClaudePlaysPokemon
+- **What:** Even Opus 4.6 has critical failure modes: (1) false assumptions are "sticky" — takes hundreds of retries to abandon wrong hypothesis, (2) DIG escape habit resets dungeon puzzle progress, (3) can't balance two goals simultaneously (train vs progress), (4) boulder puzzles solved by brute force not understanding, (5) "inhuman patience" without systematic plan commitment.
+- **CCA relevance:** MT-53 direct. These failure modes inform our system prompt design: stuck detection threshold, anti-DIG guards in puzzles, priority ordering for dual goals, spatial puzzle assistance.
+- **Action:** Failure modes → design decisions captured in OPUS46_PERFORMANCE_INTEL.md Section 8
+- **Verdict:** ADAPT — apply community-discovered failure patterns to our Crystal bot design

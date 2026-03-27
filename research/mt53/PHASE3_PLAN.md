@@ -275,3 +275,39 @@ if __name__ == "__main__":
 5. **No deferred maintenance** — No knowledge base to maintain = no maintenance problem.
 6. **Summarization preserves team + location** — Summary prompt is specific.
 7. **Day/night awareness** — Memory reader provides time of day from RAM.
+
+---
+
+## Opus 4.6 Intelligence (S201 Deep Subreddit Absorption)
+
+### Performance Data (from r/ClaudePlaysPokemon live tracking)
+- Opus 4.6 is **7-10x faster** than 4.5 on Pokemon Red (same harness lineage)
+- Reached Victory Road in ~30K steps (vs ~206K for 4.5)
+- Exited Mt. Moon in 21 min / 3,043 steps
+- Safari Zone: 13 attempts (vs 41 for 4.5)
+- **Full data:** research/mt53/OPUS46_PERFORMANCE_INTEL.md
+
+### Failure Modes Still Present in 4.6 (MUST address in Crystal bot)
+1. **Sticky false assumptions** — Once committed to wrong hypothesis, retries hundreds of times
+   → Stuck detection threshold (10 steps) must FORCE strategy change, not suggest
+2. **DIG escape habit** — Digs out of dungeons, resetting puzzle progress
+   → Anti-DIG guard: track if dungeon has active puzzle state, warn before digging
+3. **Can't balance two goals** — "Train Pokemon" vs "Progress through dungeon" overloads it
+   → Priority ordering in system prompt: "Progress > Training unless HP < 50% or level gap > 5"
+4. **Brute-force puzzles** — Solves boulder puzzles by trying every tile, not understanding
+   → For Crystal: Ice Path puzzle is the hardest challenge, may need spatial hints
+5. **Forgets solutions** — After DIG/exit, doesn't remember how it solved a puzzle
+   → RAM reading advantage: we read game state, not Claude's notes about it
+
+### Harness Debate Resolution (for our design)
+Community split: "scaffolding > model intelligence" vs "minimal harness proves more."
+**Our position:** Minimal harness (2 tools) BUT with full RAM reading as ground truth.
+This is the stream's approach + our unfair advantage. Not "cheating" — giving the model
+accurate data instead of making it hallucinate from screenshots.
+
+### What Makes 4.6 Better (behavioral, from community)
+- Less likely to get stuck in hallucination loops
+- Tries new things when stuck (more exploratory)
+- Buys items strategically (potions, pokeballs, repels)
+- Less rigid thinking overall
+- These improvements VALIDATE minimal harness — stronger model needs LESS scaffolding
