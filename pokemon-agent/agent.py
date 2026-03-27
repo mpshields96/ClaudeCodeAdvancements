@@ -34,6 +34,7 @@ from config import (
     TEMPERATURE, STATE_DIR, SCREENSHOT_DIR, LOG_DIR,
 )
 from movement_validator import MovementValidator
+from screen_detector import ScreenDetector, ScreenState
 from emulator_control import EmulatorControl
 from game_state import GameState, MapPosition, MenuState
 from memory_reader import MemoryReader
@@ -243,6 +244,9 @@ class CrystalAgent:
         self.movement_validator = MovementValidator()
         self._last_map_id: Optional[int] = None  # For map change detection
 
+        # Screen transition detection: skip LLM on blank/transition screens
+        self.screen_detector = ScreenDetector()
+
         # Callbacks
         self._on_step: Optional[Callable[[StepResult], None]] = None
 
@@ -397,6 +401,25 @@ class CrystalAgent:
         auto_button = self._should_auto_advance(state)
         if auto_button is not None:
             return self._auto_advance_step(state, auto_button)
+
+        # 1.7. Screen transition detection: skip LLM on blank/transition screens
+        from memory_reader import JOY_DISABLED, BATTLE_MODE, WINDOW_STACK_SIZE
+        joy_disabled = self.emulator.read_byte(JOY_DISABLED)
+        battle_mode = self.emulator.read_byte(BATTLE_MODE)
+        window_stack = self.emulator.read_byte(WINDOW_STACK_SIZE)
+        screen_state = self.screen_detector.classify(joy_disabled, battle_mode, window_stack)
+        self.screen_detector.update(screen_state)
+        if screen_state != ScreenState.ACTIVE:
+            action = self.screen_detector.recommended_action(screen_state)
+            if action == "wait":
+                self.emulator.tick(12)  # Wait ~200ms for transition to finish
+            elif action == "start":
+                self.emulator.press("start")  # Try to unstick long transitions
+            return StepResult(
+                step_number=self.step_count, state=state,
+                llm_text=f"[transition: {action}]",
+                tool_calls=[], tool_results=[],
+            )
 
         # 2. Check if stuck
         stuck_turns = self._check_stuck(state.position)
