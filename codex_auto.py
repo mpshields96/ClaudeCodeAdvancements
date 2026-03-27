@@ -55,9 +55,15 @@ def _format_lines(items: list[str]) -> list[str]:
     return [f"- {item}" for item in items]
 
 
-def build_auto_prompt(root: str, snapshot: InitSnapshot, task_override: str | None = None) -> str:
+def build_auto_prompt(
+    root: str,
+    snapshot: InitSnapshot,
+    task_override: str | None = None,
+    max_deliverables: int = 1,
+) -> str:
     task, source = pick_auto_task(snapshot, task_override=task_override)
     reasoning_level = suggest_reasoning_level(task)
+    deliverable_word = "deliverable" if max_deliverables == 1 else "deliverables"
 
     lines = [
         f"Use $cca-desktop-workflow in auto mode for {root}.",
@@ -67,7 +73,7 @@ def build_auto_prompt(root: str, snapshot: InitSnapshot, task_override: str | No
         f"- Selected task: {task}",
         f"- Task source: {source}",
         f"- Suggested reasoning level: {reasoning_level}",
-        "- Stop after 1 meaningful deliverable, then re-check tasks/comms before continuing.",
+        f"- Stop after {max_deliverables} meaningful {deliverable_word}, then re-check tasks/comms before continuing.",
         "",
         "Start-of-loop validation:",
         f"- {snapshot.validation.summary or 'No validation output.'}",

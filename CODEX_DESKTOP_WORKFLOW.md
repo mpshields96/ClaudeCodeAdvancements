@@ -36,12 +36,27 @@ Use $cca-desktop-workflow in init mode for /Users/matthewshields/Projects/Claude
 Goal: orient, verify branch/state, and prepare the next high-value task.
 ```
 
+Repo-local init command:
+
+```bash
+python3 codex_init.py
+python3 codex_init.py --write CODEX_INIT_PROMPT.md
+```
+
 ### Auto
 
 ```text
 Use $cca-desktop-workflow in auto mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.
 Stay in CCA only. Pick the next highest-value task, work autonomously, test when practical, and commit clearly.
 Use CCA internal comms directly when coordination matters.
+```
+
+Repo-local auto command:
+
+```bash
+python3 codex_auto.py
+python3 codex_auto.py --task "Build codex_autoloop.py"
+python3 codex_auto.py --write CODEX_AUTO_PROMPT.md
 ```
 
 ### Wrap
@@ -64,6 +79,14 @@ python3 codex_wrap.py --write CODEX_WRAP_PROMPT.md
 Use $cca-desktop-workflow in autoloop mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.
 Run one bounded autonomous cycle: init, execute up to 2 meaningful tasks, then wrap.
 Do not use Matthew as the messenger if CCA comms can carry the handoff.
+```
+
+Repo-local autoloop command:
+
+```bash
+python3 codex_autoloop.py
+python3 codex_autoloop.py --task "Build codex_autoloop.py"
+python3 codex_autoloop.py --max-deliverables 2 --write CODEX_AUTOLOOP_PROMPT.md
 ```
 
 ## Codex-Specific Difference

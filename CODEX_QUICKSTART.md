@@ -57,6 +57,12 @@ Wrap command:
 - `python3 codex_wrap.py`
 - `python3 codex_wrap.py --write CODEX_WRAP_PROMPT.md`
 
+Repo-local Codex command helpers:
+- `python3 codex_init.py`
+- `python3 codex_auto.py`
+- `python3 codex_autoloop.py`
+- `python3 codex_autoloop.py --max-deliverables 2`
+
 ## Codex self-learning
 
 - Read-only study of Claude-built tools, docs, and patterns is encouraged
