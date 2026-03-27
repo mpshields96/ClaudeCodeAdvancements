@@ -16,3 +16,4 @@
 {"tip":"Research existing implementations before building from scratch","source":"cca-desktop","session":"S207","timestamp":"2026-03-27T06:41:18.137454Z"}
 {"tip":"Reference repos before building from scratch \u2014 hours of debugging avoided","source":"cca-desktop","session":"S208","timestamp":"2026-03-27T07:22:20.192432Z"}
 {"tip":"When Pokemon character wont move check wJoyIgnore and wd730 flags first then mash A to clear any dialog before assuming timing is wrong","source":"cca-desktop","session":"S209","timestamp":"2026-03-27T07:49:23.812269Z"}
+{"tip":"Use git branch --show-current before committing to verify you are on the expected branch","source":"cca-desktop","session":"S211","timestamp":"2026-03-27T21:14:34.834376Z"}

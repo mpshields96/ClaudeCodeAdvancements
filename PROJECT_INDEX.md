@@ -413,3 +413,10 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `pokemon-agent/viewer.html` (S207)
 - `pokemon-agent/S207_HANDOFF.md` (S207)
 - `.claude/launch.json` (S207)
+
+
+### Added in S210
+- `pokemon-agent/boot_sequence.py` (S210)
+- `pokemon-agent/test_boot_sequence.py` (S210)
+- `CODEX_BRIDGE_PROMPT.md` (S210)
+- `CODEX_OPERATING_MANUAL.md` (S210)

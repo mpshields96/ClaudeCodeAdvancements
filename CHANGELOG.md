@@ -3435,3 +3435,21 @@ CLI chat 2:
 - Did not get past Red House 2F or show viewer.html live
 
 ---
+
+## Session 210 — 2026-03-27
+
+**What changed:**
+- Codex fully onboarded: AGENTS.md both repos, bridge prompt, operating manual, ChatGPT custom instructions
+- MT-53 boot_sequence.py with 16 tests: dialog clearing, grid nav, map transitions
+- Cross-chat: Kalshi notified, Codex-Kalshi comms request written
+
+**Why:**
+- Codex onboarded as second agent + MT-53 boot sequence automation
+
+**Tests:** 540/540 passing (10 suites)
+
+**Lessons:**
+- Most session on Codex setup relay, not code
+- Committed to wrong branch, fixed with cherry-pick
+
+---

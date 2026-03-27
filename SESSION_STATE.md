@@ -3,7 +3,24 @@
 
 ---
 
-## Current State (as of Session 209 — 2026-03-27)
+## Current State (as of Session 210 — 2026-03-27)
+
+**Phase:** Session 210 COMPLETE. Codex onboarded as second agent + MT-53 boot sequence automation
+
+**What was done this session (S210):**
+- Codex fully onboarded: AGENTS.md both repos, bridge prompt, operating manual, ChatGPT custom instructions
+- MT-53 boot_sequence.py with 16 tests: dialog clearing, grid nav, map transitions
+- Cross-chat: Kalshi notified, Codex-Kalshi comms request written
+- **Tests**: 10 suites, 540 tests passing. All green.
+
+**Next:**
+1. Test boot_sequence.py with real ROM
+2. Get viewer.html showing live gameplay
+3. Port A* pathfinding
+
+---
+
+## Previous State (Session 209 — 2026-03-27)
 
 **Phase:** Session 209 COMPLETE. MT-53: Fixed movement bug (dialog blocking), verified PyBoy movement works, mapped Red House 2F walkable grid
 
@@ -19,7 +36,6 @@
 3. Port A* pathfinding from reference repos
 
 ---
-
 ## Previous State (Session 208 — 2026-03-27)
 
 **Phase:** Session 208 COMPLETE. MT-53: Cloned 4 reference repos, created RESEARCH.md, diagnosed bugs, fixed memory_reader and bridge
