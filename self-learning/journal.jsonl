@@ -708,3 +708,17 @@
 {"event_type":"pain","session":214,"domain":"general","notes":"None","timestamp":"2026-03-27T22:44:23.973036Z"}
 {"event_type":"feedback_roi","session":214,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T22:44:23.973036Z"}
 {"event_type":"sentinel_stats","session":214,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T22:44:23.973036Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T22:45:43.347760+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T22:45:43.374369+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T22:51:44.721882+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T22:51:44.749251+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T22:53:24.106140+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T22:53:24.132506+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T22:55:52.458527+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T22:55:52.498323+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":215,"domain":"general","outcome":"success","notes":"MT-53: boot wiring, viewer HTTP server, battle AI for Pokemon Red","timestamp":"2026-03-27T22:56:45.687187Z"}
+{"event_type":"win","session":215,"domain":"general","notes":"Shipped all 3 resume prompt items","timestamp":"2026-03-27T22:56:45.687187Z"}
+{"event_type":"win","session":215,"domain":"general","notes":"49 new tests, 0 regressions","timestamp":"2026-03-27T22:56:45.687187Z"}
+{"event_type":"pain","session":215,"domain":"general","notes":"None \u2014 clean session","timestamp":"2026-03-27T22:56:45.687187Z"}
+{"event_type":"feedback_roi","session":215,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T22:56:45.687187Z"}
+{"event_type":"sentinel_stats","session":215,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T22:56:45.687187Z"}

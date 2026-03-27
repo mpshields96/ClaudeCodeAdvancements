@@ -5,6 +5,23 @@
 
 ## Current State (as of Session 215 — 2026-03-27)
 
+**Phase:** Session 215 COMPLETE. MT-53: boot_sequence wiring, viewer HTTP server, battle AI for Pokemon Red
+
+**What was done this session (S215):**
+- Shipped all 3 resume prompt items: boot wiring, viewer server, battle AI
+- 49 new tests, 0 regressions, 11693 total passing
+- 3 commits in 6 min — tight focused session
+- **Tests**: 325 suites, 11693 tests passing. All green.
+
+**Next:**
+1. Wire try_battle_ai into RedAgent.step override
+2. Live emulator testing with real ROM
+3. Agent loop testing through boot + first encounters
+
+---
+
+## Previous State (Session 215 — 2026-03-27)
+
 **Phase:** Session 215 COMPLETE. MT-53: All three resume prompt items delivered — boot wiring, viewer server, battle AI.
 
 **What was done this session (S215):**
@@ -22,7 +39,6 @@
 4. Cross-map navigation live testing (warps wired S214)
 
 ---
-
 ## Previous State (Session 214 — 2026-03-27)
 
 **Phase:** Session 214 COMPLETE. MT-53: Warp data for cross-map A*, RedAgent subclass

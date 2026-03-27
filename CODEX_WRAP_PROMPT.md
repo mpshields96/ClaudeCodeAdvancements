@@ -1,24 +1,18 @@
 Use $cca-desktop-workflow in wrap mode for /Users/matthewshields/Projects/ClaudeCodeAdvancements.
-Current branch: codex/codex-desktop-autoloop.
+Current branch: main.
 
 Substantive git changes to account for:
-- [ M] CODEX_DESKTOP_WORKFLOW.md
-- [ M] CODEX_QUICKSTART.md
-- [ M] codex-skills/cca-desktop-workflow/SKILL.md
-- [??] CODEX_WRAP_PROMPT.md
-- [??] codex_wrap.py
-- [??] tests/test_codex_wrap.py
+- [ M] SESSION_RESUME.md
 
-Runtime/session artifacts to ignore unless explicitly asked:
+Runtime/generated session artifacts to ignore unless explicitly asked:
 - [ M] .queue_hook_last_check
-- [ M] .session_pids/desktop.pid
-- [ M] cca_internal_queue.jsonl
-- [ M] self-learning/journal.jsonl
+- [ D] .session_pids/desktop.pid
+- [ M] session_timings.jsonl
 
 Recent commits for context:
-- aad0aff S214: Add warp data + cross-map A* navigation for Pokemon Red (MT-53)
-- 7bf4ccf S213: Update session state and project index
-- b2b9aed S213: Wire collision maps for A* pathfinding in live play (MT-53)
+- 1a52288 S214: Wrap — docs, self-learning, project index
+- 5ee284a S214: Update session state and project index
+- 8387d70 S214: Add RedAgent subclass for Pokemon Red agent loop (MT-53)
 
 Wrap checklist:
 1. Run the most relevant validation for the substantive changes.

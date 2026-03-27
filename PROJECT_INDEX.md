@@ -442,3 +442,9 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `pokemon-agent/test_warp_data_red.py` (S214)
 - `pokemon-agent/red_agent.py` (S214)
 - `pokemon-agent/test_red_agent.py` (S214)
+
+
+### Added in S215
+- `pokemon-agent/battle_ai.py` (S215)
+- `pokemon-agent/test_battle_ai.py` (S215)
+- `pokemon-agent/test_boot_wiring.py` (S215)
