@@ -358,6 +358,63 @@ class TestBridgeRedStateWrite(unittest.TestCase):
         self.assertEqual(result["buttons"], ["up", "right", "down", "left"])
 
 
+class TestBridgeNavigateAction(unittest.TestCase):
+    """Test the navigate action type using A* pathfinding."""
+
+    def setUp(self):
+        self.emu = EmulatorControl.mock(ram_size=0x10000)
+        from collision_reader_red import CollisionReaderRed, MAP_HEIGHT, MAP_WIDTH
+        from navigation import Navigator
+        self.collision_reader = CollisionReaderRed(self.emu)
+        self.nav = Navigator()
+        # Set up a 4x4 tile map (2x2 blocks)
+        self.emu.write_byte(MAP_HEIGHT, 2)
+        self.emu.write_byte(MAP_WIDTH, 2)
+        self.emu.write_byte(mrr.MAP_ID, 0)
+        # Player at (1, 1)
+        self.emu.write_byte(mrr.PLAYER_X, 1)
+        self.emu.write_byte(mrr.PLAYER_Y, 1)
+
+    def test_navigate_finds_path(self):
+        action = {"type": "navigate", "x": 3, "y": 1}
+        result = bridge.execute_action(
+            self.emu, action, nav=self.nav, collision_reader=self.collision_reader
+        )
+        self.assertEqual(result["executed"], "navigate")
+        self.assertIn("steps", result)
+        self.assertGreater(result["steps"], 0)
+        self.assertEqual(result["to"], (3, 1))
+
+    def test_navigate_already_there(self):
+        action = {"type": "navigate", "x": 1, "y": 1}
+        result = bridge.execute_action(
+            self.emu, action, nav=self.nav, collision_reader=self.collision_reader
+        )
+        self.assertEqual(result["executed"], "navigate")
+        self.assertTrue(result.get("already_there"))
+
+    def test_navigate_missing_coords(self):
+        action = {"type": "navigate"}
+        result = bridge.execute_action(
+            self.emu, action, nav=self.nav, collision_reader=self.collision_reader
+        )
+        self.assertIn("error", result)
+
+    def test_navigate_without_collision_reader(self):
+        action = {"type": "navigate", "x": 3, "y": 1}
+        result = bridge.execute_action(self.emu, action)
+        self.assertIn("error", result)
+
+    def test_navigate_returns_path_directions(self):
+        action = {"type": "navigate", "x": 3, "y": 1}
+        result = bridge.execute_action(
+            self.emu, action, nav=self.nav, collision_reader=self.collision_reader
+        )
+        if result.get("path"):
+            for d in result["path"]:
+                self.assertIn(d, ("up", "down", "left", "right"))
+
+
 class TestMGBABackendImport(unittest.TestCase):
     """Test that mGBA backend class exists and has correct interface."""
 

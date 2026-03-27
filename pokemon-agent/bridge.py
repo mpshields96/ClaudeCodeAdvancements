@@ -144,8 +144,15 @@ def read_action() -> dict | None:
         return None
 
 
-def execute_action(emu, action: dict) -> dict:
-    """Execute an action from Claude Code on the emulator."""
+def execute_action(emu, action: dict, nav=None, collision_reader=None) -> dict:
+    """Execute an action from Claude Code on the emulator.
+
+    Args:
+        emu: EmulatorControl instance.
+        action: Action dict from Claude Code.
+        nav: Optional Navigator for A* pathfinding (Red games).
+        collision_reader: Optional CollisionReaderRed for building maps.
+    """
     action_type = action.get("type", "press_buttons")
     result = {}
 
@@ -178,10 +185,69 @@ def execute_action(emu, action: dict) -> dict:
         except Exception as e:
             result = {"executed": "load", "error": str(e)}
 
+    elif action_type == "navigate":
+        # A* pathfinding: move to a target tile on the current map
+        target_x = action.get("x")
+        target_y = action.get("y")
+        if nav is None or collision_reader is None:
+            result = {"error": "navigate requires collision_reader (Red games only)"}
+        elif target_x is None or target_y is None:
+            result = {"error": "navigate requires x and y"}
+        else:
+            result = _execute_navigate(emu, nav, collision_reader, target_x, target_y)
+
     else:
         result = {"error": f"Unknown action type: {action_type}"}
 
     return result
+
+
+def _execute_navigate(emu, nav, collision_reader, target_x: int, target_y: int) -> dict:
+    """Execute A* navigation to a target tile.
+
+    Builds the collision map from current RAM state, runs A*, and
+    executes the resulting path as directional button presses.
+    """
+    from navigation import Navigator
+    from game_state import MapPosition
+    import memory_reader_red as mrr
+
+    # Read current position
+    map_id = emu.read_byte(mrr.MAP_ID)
+    cur_x = emu.read_byte(mrr.PLAYER_X)
+    cur_y = emu.read_byte(mrr.PLAYER_Y)
+
+    # Build fresh collision map
+    map_data = collision_reader.build_current_map()
+    if not nav.has_map(map_id):
+        nav.add_map(map_data)
+    else:
+        # Replace with fresh data (NPCs may have moved)
+        nav._maps[map_id] = map_data
+
+    start = MapPosition(map_id=map_id, x=cur_x, y=cur_y)
+    goal = MapPosition(map_id=map_id, x=target_x, y=target_y)
+
+    path = nav.find_path(start, goal)
+    if path is None:
+        return {"executed": "navigate", "error": "no path found",
+                "from": (cur_x, cur_y), "to": (target_x, target_y)}
+
+    if len(path) == 0:
+        return {"executed": "navigate", "steps": 0, "already_there": True}
+
+    # Execute each step
+    directions = Navigator.path_to_directions(path)
+    for direction in directions:
+        emu.press(direction, hold_frames=8, wait_frames=12)
+
+    return {
+        "executed": "navigate",
+        "steps": len(directions),
+        "path": directions,
+        "from": (cur_x, cur_y),
+        "to": (target_x, target_y),
+    }
 
 
 def log_step(step: int, state: dict, action: dict, result: dict):
@@ -251,11 +317,17 @@ def main():
     emu.set_state_dir(STATE_DIR)
 
     # Use the right memory reader for the game
+    collision_reader = None
+    nav = None
     if game_type == "red":
         from memory_reader_red import MemoryReaderRed
         from text_reader_red import TextReaderRed
+        from collision_reader_red import CollisionReaderRed
+        from navigation import Navigator
         reader = MemoryReaderRed(emu)
         text_reader = TextReaderRed(emu)
+        collision_reader = CollisionReaderRed(emu)
+        nav = Navigator()
     else:
         from memory_reader import MemoryReader
         from text_reader import TextReader
@@ -329,7 +401,7 @@ def main():
                 action = {"type": "press_buttons", "buttons": ["a"]}
 
             # Execute
-            result = execute_action(emu, action)
+            result = execute_action(emu, action, nav=nav, collision_reader=collision_reader)
             buttons = action.get("buttons", [])
             print(f"  -> {action.get('type', '?')}: {buttons if buttons else action} | {result}")
 
