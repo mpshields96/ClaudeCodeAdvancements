@@ -1,0 +1,339 @@
+"""Tests for agent.py — Crystal agent core loop."""
+import unittest
+import os
+import sys
+
+from emulator_control import EmulatorControl
+from game_state import (
+    Badges, BattleState, GameState, MapPosition, Move, Party, Pokemon,
+)
+from memory_reader import MemoryReader
+from agent import (
+    CrystalAgent, MockLLMClient, LLMResponse, ToolUse, StepResult,
+)
+
+
+def _make_pokemon(species="Cyndaquil", level=10, hp=30, hp_max=30):
+    return Pokemon(
+        species=species, nickname=species, level=level,
+        hp=hp, hp_max=hp_max,
+        attack=30, defense=25, speed=35, sp_attack=40, sp_defense=30,
+        moves=[Move(name="Tackle", move_type="Normal", power=40,
+                     accuracy=100, pp=35, pp_max=35)],
+    )
+
+
+def _setup_mock_emu():
+    """Create a mock emulator with basic Crystal RAM state."""
+    emu = EmulatorControl.mock()
+    # Set up party: 1 Cyndaquil
+    emu.write_byte(0xDCD7, 1)  # party count
+    emu.write_byte(0xDCDF + 0, 155)  # species = Cyndaquil
+    emu.write_byte(0xDCDF + 31, 10)  # level
+    emu.write_byte(0xDCDF + 34, 0)   # HP high
+    emu.write_byte(0xDCDF + 35, 30)  # HP low
+    emu.write_byte(0xDCDF + 36, 0)   # max HP high
+    emu.write_byte(0xDCDF + 37, 30)  # max HP low
+    emu.write_byte(0xDCDF + 2, 33)   # move1 = Tackle
+    # Position: map group 3, map 1, x=5, y=4
+    emu.write_byte(0xDCB5, 3)
+    emu.write_byte(0xDCB6, 1)
+    emu.write_byte(0xDCB8, 5)
+    emu.write_byte(0xDCB7, 4)
+    return emu
+
+
+def _make_agent(llm_responses=None, max_history=60, stuck_threshold=10):
+    """Create a CrystalAgent with mock emulator and LLM."""
+    emu = _setup_mock_emu()
+    reader = MemoryReader(emu)
+    llm = MockLLMClient(responses=llm_responses)
+    agent = CrystalAgent(
+        emulator=emu,
+        reader=reader,
+        llm=llm,
+        max_history=max_history,
+        stuck_threshold=stuck_threshold,
+    )
+    return agent, llm
+
+
+class TestAgentConstruction(unittest.TestCase):
+    """Test agent initialization."""
+
+    def test_create_agent(self):
+        agent, _ = _make_agent()
+        self.assertEqual(agent.step_count, 0)
+        self.assertEqual(len(agent.messages), 0)
+
+    def test_no_llm_raises(self):
+        emu = _setup_mock_emu()
+        reader = MemoryReader(emu)
+        agent = CrystalAgent(emulator=emu, reader=reader, llm=None)
+        with self.assertRaises(RuntimeError):
+            agent.step()
+
+    def test_token_usage_initial(self):
+        agent, _ = _make_agent()
+        usage = agent.token_usage
+        self.assertEqual(usage["input_tokens"], 0)
+        self.assertEqual(usage["output_tokens"], 0)
+        self.assertEqual(usage["steps"], 0)
+
+
+class TestAgentStep(unittest.TestCase):
+    """Test single step execution."""
+
+    def test_step_returns_result(self):
+        agent, _ = _make_agent()
+        result = agent.step()
+        self.assertIsInstance(result, StepResult)
+        self.assertEqual(result.step_number, 1)
+
+    def test_step_increments_count(self):
+        agent, _ = _make_agent()
+        agent.step()
+        self.assertEqual(agent.step_count, 1)
+        agent.step()
+        self.assertEqual(agent.step_count, 2)
+
+    def test_step_reads_game_state(self):
+        agent, _ = _make_agent()
+        result = agent.step()
+        # Should have read the mock RAM
+        self.assertIsNotNone(result.state)
+        self.assertEqual(result.state.party.size(), 1)
+
+    def test_step_calls_llm(self):
+        agent, llm = _make_agent()
+        agent.step()
+        self.assertEqual(llm.call_count, 1)
+
+    def test_step_passes_system_prompt(self):
+        agent, llm = _make_agent()
+        agent.step()
+        self.assertIn("Pokemon Crystal", llm.last_system)
+
+    def test_step_adds_messages(self):
+        agent, _ = _make_agent()
+        agent.step()
+        # Should have: user msg + assistant msg + tool result msg
+        self.assertGreaterEqual(len(agent.messages), 2)
+
+    def test_step_executes_tool_call(self):
+        responses = [LLMResponse(
+            text="Pressing A.",
+            tool_uses=[ToolUse(id="t1", name="press_buttons",
+                               input={"buttons": ["a"]})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        self.assertEqual(len(result.tool_calls), 1)
+        self.assertEqual(result.tool_calls[0].name, "press_buttons")
+
+    def test_step_result_has_tool_results(self):
+        responses = [LLMResponse(
+            text="Moving right.",
+            tool_uses=[ToolUse(id="t1", name="press_buttons",
+                               input={"buttons": ["right", "right"]})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        self.assertEqual(len(result.tool_results), 1)
+        self.assertEqual(result.tool_results[0]["count"], 2)
+
+    def test_step_with_no_tool_calls(self):
+        responses = [LLMResponse(text="Just thinking...", tool_uses=[])]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        self.assertEqual(len(result.tool_calls), 0)
+        self.assertEqual(len(result.tool_results), 0)
+
+
+class TestToolExecution(unittest.TestCase):
+    """Test tool call routing and execution."""
+
+    def test_press_buttons_executes(self):
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[ToolUse(id="t1", name="press_buttons",
+                               input={"buttons": ["a", "b", "start"]})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        self.assertEqual(result.tool_results[0]["count"], 3)
+
+    def test_wait_executes(self):
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[ToolUse(id="t1", name="wait",
+                               input={"frames": 60})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        self.assertEqual(result.tool_results[0]["waited_frames"], 60)
+
+    def test_invalid_tool_returns_error(self):
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[ToolUse(id="t1", name="press_buttons",
+                               input={"buttons": []})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        self.assertIn("error", result.tool_results[0])
+
+    def test_navigate_without_navigator_returns_error(self):
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[ToolUse(id="t1", name="navigate_to",
+                               input={"x": 5, "y": 3})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        # No navigator set
+        result = agent.step()
+        self.assertIn("error", result.tool_results[0])
+
+    def test_multiple_tool_calls(self):
+        responses = [LLMResponse(
+            text="test",
+            tool_uses=[
+                ToolUse(id="t1", name="press_buttons", input={"buttons": ["a"]}),
+                ToolUse(id="t2", name="wait", input={"frames": 30}),
+            ],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        result = agent.step()
+        self.assertEqual(len(result.tool_results), 2)
+
+
+class TestStuckDetection(unittest.TestCase):
+    """Test stuck detection based on position tracking."""
+
+    def test_not_stuck_initially(self):
+        agent, _ = _make_agent(stuck_threshold=3)
+        result = agent.step()
+        self.assertFalse(result.was_stuck)
+
+    def test_stuck_after_threshold(self):
+        agent, _ = _make_agent(stuck_threshold=3)
+        # Same position for 3+ steps
+        for _ in range(2):
+            agent.step()
+        result = agent.step()
+        self.assertTrue(result.was_stuck)
+
+    def test_not_stuck_if_position_changes(self):
+        agent, _ = _make_agent(stuck_threshold=5)
+        agent.step()
+        # Change position in RAM
+        agent.emulator.write_byte(0xDCB8, 6)  # X = 6
+        agent.step()
+        agent.emulator.write_byte(0xDCB8, 7)  # X = 7
+        result = agent.step()
+        self.assertFalse(result.was_stuck)
+
+
+class TestSummarization(unittest.TestCase):
+    """Test conversation summarization."""
+
+    def test_no_summarization_below_threshold(self):
+        agent, llm = _make_agent(max_history=100)
+        result = agent.step()
+        self.assertFalse(result.was_summarized)
+
+    def test_summarization_at_threshold(self):
+        # Low threshold to trigger quickly
+        agent, llm = _make_agent(max_history=4)
+        # Each step adds ~3 messages (user + assistant + tool_result)
+        # So 2 steps = ~6 messages, triggers summarization
+        agent.step()
+        result = agent.step()
+        self.assertTrue(result.was_summarized)
+
+    def test_summarization_reduces_messages(self):
+        agent, llm = _make_agent(max_history=4)
+        agent.step()
+        agent.step()  # triggers summarization
+        # After summarization, messages should be reset to 2 (summary + ack)
+        # But then the step adds more. Should be much less than 8+.
+        self.assertLess(len(agent.messages), 8)
+
+    def test_summarization_calls_llm_extra(self):
+        agent, llm = _make_agent(max_history=4)
+        agent.step()
+        agent.step()  # triggers summarization
+        # 2 step calls + 1 summarization call = 3
+        self.assertEqual(llm.call_count, 3)
+
+
+class TestRun(unittest.TestCase):
+    """Test multi-step execution."""
+
+    def test_run_returns_results(self):
+        agent, _ = _make_agent()
+        results = agent.run(num_steps=3)
+        self.assertEqual(len(results), 3)
+
+    def test_run_increments_steps(self):
+        agent, _ = _make_agent()
+        agent.run(num_steps=5)
+        self.assertEqual(agent.step_count, 5)
+
+    def test_run_tracks_tokens(self):
+        agent, _ = _make_agent()
+        agent.run(num_steps=3)
+        usage = agent.token_usage
+        self.assertEqual(usage["steps"], 3)
+
+
+class TestCallback(unittest.TestCase):
+    """Test step callback."""
+
+    def test_on_step_fires(self):
+        results_captured = []
+        agent, _ = _make_agent()
+        agent.on_step(lambda r: results_captured.append(r))
+        agent.step()
+        self.assertEqual(len(results_captured), 1)
+        self.assertIsInstance(results_captured[0], StepResult)
+
+    def test_on_step_fires_each_step(self):
+        count = [0]
+        agent, _ = _make_agent()
+        agent.on_step(lambda r: count.__setitem__(0, count[0] + 1))
+        agent.run(num_steps=3)
+        self.assertEqual(count[0], 3)
+
+
+class TestMessageHistory(unittest.TestCase):
+    """Test message history management."""
+
+    def test_messages_grow_with_steps(self):
+        agent, _ = _make_agent(max_history=100)
+        agent.step()
+        count1 = len(agent.messages)
+        agent.step()
+        count2 = len(agent.messages)
+        self.assertGreater(count2, count1)
+
+    def test_assistant_message_format(self):
+        responses = [LLMResponse(
+            text="Thinking about next move.",
+            tool_uses=[ToolUse(id="t1", name="press_buttons",
+                               input={"buttons": ["a"]})],
+        )]
+        agent, _ = _make_agent(llm_responses=responses)
+        agent.step()
+        # Find assistant message
+        assistant_msgs = [m for m in agent.messages if m["role"] == "assistant"]
+        self.assertGreater(len(assistant_msgs), 0)
+        content = assistant_msgs[0]["content"]
+        # Should have text + tool_use blocks
+        types = {block["type"] for block in content}
+        self.assertIn("text", types)
+        self.assertIn("tool_use", types)
+
+
+if __name__ == "__main__":
+    unittest.main()

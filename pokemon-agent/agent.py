@@ -1,0 +1,511 @@
+"""Pokemon Crystal autonomous agent — core loop.
+
+Connects emulator (RAM reading + screenshots) to Opus 4.6 (reasoning + tool use).
+This is the heart of the system. Minimal harness, maximum model reasoning.
+
+Design (from PHASE3_PLAN.md):
+1. Read game state from RAM (ground truth)
+2. Capture screenshot (upscaled 2x)
+3. Send state + screenshot to Opus 4.6
+4. Opus responds with reasoning + tool call
+5. Execute tool call
+6. Check for summarization threshold
+7. Save state periodically
+Repeat.
+
+The agent works offline except for the LLM API call. Emulator, RAM reading,
+navigation, and state management all run locally.
+"""
+from __future__ import annotations
+
+import io
+import json
+import logging
+import os
+import time
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, List, Optional, Protocol
+
+from config import (
+    MAX_HISTORY, MAX_TOKENS, MODEL_NAME, SAVE_INTERVAL,
+    SCREENSHOT_UPSCALE, STUCK_THRESHOLD, STUCK_FORCE_NEW,
+    TEMPERATURE, STATE_DIR, SCREENSHOT_DIR, LOG_DIR,
+)
+from emulator_control import EmulatorControl
+from game_state import GameState, MapPosition
+from memory_reader import MemoryReader
+from prompts import (
+    SYSTEM_PROMPT, build_user_message, build_summary_request,
+    encode_screenshot_b64,
+)
+from tools import TOOLS, validate_tool_call
+
+logger = logging.getLogger(__name__)
+
+
+# ── LLM client protocol (for testability) ───────────────────────────────────
+
+class LLMClient(Protocol):
+    """Protocol for LLM API calls. Real impl uses Anthropic SDK."""
+
+    def create_message(
+        self,
+        model: str,
+        max_tokens: int,
+        system: str,
+        messages: list,
+        tools: list,
+        temperature: float,
+    ) -> "LLMResponse": ...
+
+
+@dataclass
+class ToolUse:
+    """A tool call from the LLM response."""
+    id: str
+    name: str
+    input: dict
+
+
+@dataclass
+class LLMResponse:
+    """Parsed LLM response."""
+    text: str = ""
+    tool_uses: List[ToolUse] = field(default_factory=list)
+    stop_reason: str = "end_turn"
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+
+# ── Anthropic SDK wrapper ───────────────────────────────────────────────────
+
+class AnthropicClient:
+    """Real LLM client using Anthropic SDK."""
+
+    def __init__(self):
+        try:
+            from anthropic import Anthropic
+        except ImportError:
+            raise ImportError("anthropic not installed. Run: pip install anthropic")
+        self._client = Anthropic()
+
+    def create_message(
+        self,
+        model: str,
+        max_tokens: int,
+        system: str,
+        messages: list,
+        tools: list,
+        temperature: float,
+    ) -> LLMResponse:
+        response = self._client.messages.create(
+            model=model,
+            max_tokens=max_tokens,
+            system=system,
+            messages=messages,
+            tools=tools,
+            temperature=temperature,
+        )
+
+        text_parts = []
+        tool_uses = []
+
+        for block in response.content:
+            if block.type == "text":
+                text_parts.append(block.text)
+            elif block.type == "tool_use":
+                tool_uses.append(ToolUse(
+                    id=block.id,
+                    name=block.name,
+                    input=block.input,
+                ))
+
+        return LLMResponse(
+            text="\n".join(text_parts),
+            tool_uses=tool_uses,
+            stop_reason=response.stop_reason,
+            input_tokens=response.usage.input_tokens,
+            output_tokens=response.usage.output_tokens,
+        )
+
+
+# ── Mock LLM client (for testing) ──────────────────────────────────────────
+
+class MockLLMClient:
+    """Mock LLM for testing without API calls."""
+
+    def __init__(self, responses: Optional[List[LLMResponse]] = None):
+        self._responses = list(responses or [])
+        self._call_count = 0
+        self.last_messages: list = []
+        self.last_system: str = ""
+
+    def add_response(self, response: LLMResponse) -> None:
+        self._responses.append(response)
+
+    def create_message(
+        self,
+        model: str,
+        max_tokens: int,
+        system: str,
+        messages: list,
+        tools: list,
+        temperature: float,
+    ) -> LLMResponse:
+        self.last_messages = messages
+        self.last_system = system
+
+        if self._call_count < len(self._responses):
+            resp = self._responses[self._call_count]
+        else:
+            # Default: press A
+            resp = LLMResponse(
+                text="I'll press A to continue.",
+                tool_uses=[ToolUse(id="test_1", name="press_buttons",
+                                   input={"buttons": ["a"]})],
+            )
+
+        self._call_count += 1
+        return resp
+
+    @property
+    def call_count(self) -> int:
+        return self._call_count
+
+
+# ── Agent step result ───────────────────────────────────────────────────────
+
+@dataclass
+class StepResult:
+    """Result of one agent step."""
+    step_number: int
+    state: GameState
+    llm_text: str = ""
+    tool_calls: List[ToolUse] = field(default_factory=list)
+    tool_results: List[dict] = field(default_factory=list)
+    was_stuck: bool = False
+    was_summarized: bool = False
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+
+# ── Crystal Agent ───────────────────────────────────────────────────────────
+
+class CrystalAgent:
+    """Autonomous Pokemon Crystal agent.
+
+    Connects PyBoy emulator to Opus 4.6 via a minimal tool interface.
+    RAM reading provides ground truth. Screenshots provide visual context.
+    The model reasons and acts through tool calls.
+    """
+
+    def __init__(
+        self,
+        emulator: EmulatorControl,
+        reader: MemoryReader,
+        llm: Optional[LLMClient] = None,
+        navigator=None,
+        max_history: int = MAX_HISTORY,
+        save_interval: int = SAVE_INTERVAL,
+        stuck_threshold: int = STUCK_THRESHOLD,
+    ):
+        self.emulator = emulator
+        self.reader = reader
+        self.llm = llm
+        self.navigator = navigator
+        self.max_history = max_history
+        self.save_interval = save_interval
+        self.stuck_threshold = stuck_threshold
+
+        # Conversation state
+        self.messages: List[dict] = []
+        self.step_count: int = 0
+        self.total_input_tokens: int = 0
+        self.total_output_tokens: int = 0
+
+        # Stuck detection
+        self._last_positions: List[MapPosition] = []
+
+        # Callbacks
+        self._on_step: Optional[Callable[[StepResult], None]] = None
+
+    def on_step(self, callback: Callable[[StepResult], None]) -> None:
+        """Register a callback that fires after each step."""
+        self._on_step = callback
+
+    def step(self) -> StepResult:
+        """Execute one agent step: observe -> think -> act.
+
+        Returns a StepResult with all the details.
+        """
+        self.step_count += 1
+
+        # 1. Read game state from RAM (ground truth)
+        state = self.reader.read_game_state()
+
+        # 2. Check if stuck
+        stuck_turns = self._check_stuck(state.position)
+
+        # 3. Capture screenshot (if emulator supports it)
+        screenshot_b64 = self._capture_screenshot()
+
+        # 4. Build user message
+        user_msg = build_user_message(
+            state=state,
+            screenshot_b64=screenshot_b64,
+            stuck_turns=stuck_turns if stuck_turns >= self.stuck_threshold else 0,
+            step_number=self.step_count,
+        )
+        self.messages.append(user_msg)
+
+        # 5. Call LLM
+        if self.llm is None:
+            raise RuntimeError("No LLM client configured. Set agent.llm or pass to constructor.")
+
+        response = self.llm.create_message(
+            model=MODEL_NAME,
+            max_tokens=MAX_TOKENS,
+            system=SYSTEM_PROMPT,
+            messages=self.messages,
+            tools=TOOLS,
+            temperature=TEMPERATURE,
+        )
+
+        self.total_input_tokens += response.input_tokens
+        self.total_output_tokens += response.output_tokens
+
+        # 6. Add assistant response to history
+        assistant_msg = self._response_to_message(response)
+        self.messages.append(assistant_msg)
+
+        # 7. Execute tool calls
+        tool_results = []
+        for tool_use in response.tool_uses:
+            result = self._execute_tool(tool_use)
+            tool_results.append(result)
+
+            # Add tool result to message history
+            self.messages.append({
+                "role": "user",
+                "content": [{
+                    "type": "tool_result",
+                    "tool_use_id": tool_use.id,
+                    "content": json.dumps(result),
+                }],
+            })
+
+        # 8. Check summarization threshold
+        was_summarized = False
+        if len(self.messages) >= self.max_history:
+            self._summarize()
+            was_summarized = True
+
+        # 9. Periodic save
+        if self.step_count % self.save_interval == 0:
+            self._save_state()
+
+        # Build result
+        result = StepResult(
+            step_number=self.step_count,
+            state=state,
+            llm_text=response.text,
+            tool_calls=response.tool_uses,
+            tool_results=tool_results,
+            was_stuck=(stuck_turns >= self.stuck_threshold),
+            was_summarized=was_summarized,
+            input_tokens=response.input_tokens,
+            output_tokens=response.output_tokens,
+        )
+
+        if self._on_step:
+            self._on_step(result)
+
+        return result
+
+    def run(self, num_steps: int = 1000) -> List[StepResult]:
+        """Run the agent for N steps.
+
+        Returns list of step results.
+        """
+        results = []
+        for _ in range(num_steps):
+            result = self.step()
+            results.append(result)
+            logger.info(
+                "Step %d: %s | Tokens: %d in, %d out",
+                result.step_number, result.llm_text[:80],
+                result.input_tokens, result.output_tokens,
+            )
+        return results
+
+    # ── Internal methods ──
+
+    def _check_stuck(self, position: MapPosition) -> int:
+        """Track position history and return how many consecutive steps at same location."""
+        self._last_positions.append(position)
+
+        # Only keep last N positions
+        max_track = self.stuck_threshold * 2
+        if len(self._last_positions) > max_track:
+            self._last_positions = self._last_positions[-max_track:]
+
+        # Count consecutive same-position steps from the end
+        count = 0
+        for pos in reversed(self._last_positions):
+            if pos == position:
+                count += 1
+            else:
+                break
+
+        return count
+
+    def _capture_screenshot(self) -> Optional[str]:
+        """Capture and encode a screenshot, or None if unavailable."""
+        try:
+            # Save to an in-memory buffer
+            tmp_path = "/tmp/crystal_screenshot.png"
+            self.emulator.screenshot("crystal_screenshot")
+            # Read it back and encode
+            path = self.emulator._state_path("crystal_screenshot", ext=".png")
+            if os.path.exists(path):
+                with open(path, "rb") as f:
+                    data = f.read()
+                return encode_screenshot_b64(data)
+        except Exception as e:
+            logger.debug("Screenshot failed: %s", e)
+        return None
+
+    def _response_to_message(self, response: LLMResponse) -> dict:
+        """Convert LLM response to assistant message format."""
+        content = []
+        if response.text:
+            content.append({"type": "text", "text": response.text})
+        for tool_use in response.tool_uses:
+            content.append({
+                "type": "tool_use",
+                "id": tool_use.id,
+                "name": tool_use.name,
+                "input": tool_use.input,
+            })
+        return {"role": "assistant", "content": content}
+
+    def _execute_tool(self, tool_use: ToolUse) -> dict:
+        """Execute a tool call and return the result."""
+        valid, error = validate_tool_call(tool_use.name, tool_use.input)
+        if not valid:
+            return {"error": error}
+
+        if tool_use.name == "press_buttons":
+            return self._tool_press_buttons(tool_use.input)
+        elif tool_use.name == "navigate_to":
+            return self._tool_navigate_to(tool_use.input)
+        elif tool_use.name == "wait":
+            return self._tool_wait(tool_use.input)
+        else:
+            return {"error": f"Unknown tool: {tool_use.name}"}
+
+    def _tool_press_buttons(self, input_data: dict) -> dict:
+        """Execute press_buttons tool."""
+        buttons = input_data["buttons"]
+        for button in buttons:
+            self.emulator.press(button)
+
+        # Extra wait if requested
+        wait_frames = input_data.get("wait_frames", 0)
+        if wait_frames > 0:
+            self.emulator.tick(wait_frames)
+
+        return {"pressed": buttons, "count": len(buttons)}
+
+    def _tool_navigate_to(self, input_data: dict) -> dict:
+        """Execute navigate_to tool using A* pathfinding."""
+        target_x = input_data["x"]
+        target_y = input_data["y"]
+
+        if self.navigator is None:
+            return {"error": "Navigator not available"}
+
+        # Get current position
+        position = self.reader.read_position()
+        target = MapPosition(map_id=position.map_id, x=target_x, y=target_y)
+
+        # Find path
+        path = self.navigator.find_path(position, target)
+        if path is None:
+            return {"error": f"No path found from ({position.x},{position.y}) to ({target_x},{target_y})"}
+
+        if len(path) == 0:
+            return {"already_at_target": True, "x": target_x, "y": target_y}
+
+        # Execute path
+        for step in path:
+            if step.direction in ("up", "down", "left", "right"):
+                self.emulator.move(step.direction)
+
+        return {
+            "navigated_to": {"x": target_x, "y": target_y},
+            "steps": len(path),
+        }
+
+    def _tool_wait(self, input_data: dict) -> dict:
+        """Execute wait tool."""
+        frames = input_data.get("frames", 60)
+        self.emulator.tick(frames)
+        return {"waited_frames": frames}
+
+    def _summarize(self) -> None:
+        """Summarize conversation history to free up context."""
+        if self.llm is None:
+            return
+
+        # Ask the model to summarize
+        summary_messages = list(self.messages)
+        summary_messages.append(build_summary_request())
+
+        response = self.llm.create_message(
+            model=MODEL_NAME,
+            max_tokens=MAX_TOKENS,
+            system=SYSTEM_PROMPT,
+            messages=summary_messages,
+            tools=[],  # No tools during summarization
+            temperature=TEMPERATURE,
+        )
+
+        self.total_input_tokens += response.input_tokens
+        self.total_output_tokens += response.output_tokens
+
+        # Replace history with just the summary
+        summary_text = response.text or "Summary unavailable."
+        self.messages = [{
+            "role": "user",
+            "content": [{
+                "type": "text",
+                "text": f"[CONVERSATION SUMMARY — replacing {len(self.messages)} messages]\n\n{summary_text}",
+            }],
+        }, {
+            "role": "assistant",
+            "content": [{"type": "text", "text": "Understood. I'll continue from this summary."}],
+        }]
+
+        logger.info("Summarized %d messages into summary", len(summary_messages))
+
+    def _save_state(self) -> None:
+        """Save emulator state to disk."""
+        try:
+            os.makedirs(STATE_DIR, exist_ok=True)
+            name = f"crystal_step_{self.step_count}"
+            path = self.emulator.save_state(name)
+            logger.info("Saved state: %s", path)
+        except Exception as e:
+            logger.warning("Failed to save state: %s", e)
+
+    @property
+    def token_usage(self) -> dict:
+        """Get total token usage stats."""
+        return {
+            "input_tokens": self.total_input_tokens,
+            "output_tokens": self.total_output_tokens,
+            "total_tokens": self.total_input_tokens + self.total_output_tokens,
+            "steps": self.step_count,
+            "messages": len(self.messages),
+        }
