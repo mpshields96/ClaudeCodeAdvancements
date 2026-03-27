@@ -113,6 +113,49 @@ def score_move(move: Move, enemy: Pokemon) -> float:
     return move.power * effectiveness * accuracy_factor
 
 
+def assess_threat(enemy: Pokemon, defender: Pokemon) -> dict:
+    """Assess how threatening an enemy is to our Pokemon.
+
+    Scores each enemy move against the defender's types.
+    Returns a dict with threat level and best enemy move info.
+
+    Threat levels:
+        "low"    — best enemy move effectiveness <= 1.0
+        "medium" — best enemy move is super effective (2.0x)
+        "high"   — best enemy move is 4x effective (dual weakness)
+    """
+    if not enemy.moves:
+        return {"level": "unknown", "best_move": None, "best_score": 0.0}
+
+    best_score = 0.0
+    best_move = None
+    for move in enemy.moves:
+        if move.power <= 0:
+            continue
+        s = score_move(move, defender)
+        if s > best_score:
+            best_score = s
+            best_move = move
+
+    if best_move is None:
+        return {"level": "low", "best_move": None, "best_score": 0.0}
+
+    eff = _full_type_multiplier(best_move.move_type, defender.pokemon_type)
+    if eff >= 4.0:
+        level = "high"
+    elif eff >= 2.0:
+        level = "medium"
+    else:
+        level = "low"
+
+    return {
+        "level": level,
+        "best_move": best_move.name,
+        "best_score": best_score,
+        "effectiveness": eff,
+    }
+
+
 def choose_action(party: Party, enemy: Pokemon, is_wild: bool = True) -> dict:
     """Choose the best battle action given party and enemy state.
 
@@ -129,6 +172,16 @@ def choose_action(party: Party, enemy: Pokemon, is_wild: bool = True) -> dict:
     lead = party.lead()
     if lead is None or lead.is_fainted():
         return {"type": "run", "reason": "no usable pokemon"}
+
+    # Threat-based flee: run from dangerous wild Pokemon when HP is low
+    if is_wild and enemy.moves:
+        threat = assess_threat(enemy, lead)
+        if threat["level"] == "high" and lead.hp_pct() < 0.5:
+            return {"type": "run",
+                    "reason": f"high threat ({threat['best_move']}) at {lead.hp_pct():.0%} HP"}
+        if threat["level"] == "medium" and lead.hp_pct() < 0.25:
+            return {"type": "run",
+                    "reason": f"medium threat ({threat['best_move']}) at {lead.hp_pct():.0%} HP"}
 
     # Score all moves
     scored = []

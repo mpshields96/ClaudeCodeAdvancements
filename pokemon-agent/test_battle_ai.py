@@ -244,5 +244,124 @@ class TestRedAgentBattleAI(unittest.TestCase):
         self.assertTrue(hasattr(RedAgent, 'try_battle_ai'))
 
 
+class TestThreatAssessment(unittest.TestCase):
+    """Test enemy threat assessment."""
+
+    def _make_move(self, name, move_type, power, pp=35, pp_max=35, accuracy=100):
+        return Move(name=name, move_type=move_type, power=power,
+                    accuracy=accuracy, pp=pp, pp_max=pp_max)
+
+    def _make_pokemon(self, species, types, level=10, hp=30, hp_max=30, moves=None):
+        return Pokemon(
+            species=species, nickname=species, level=level,
+            hp=hp, hp_max=hp_max, attack=20, defense=15,
+            speed=20, sp_attack=20, sp_defense=15,
+            pokemon_type=types, moves=moves or [],
+        )
+
+    def test_high_threat_4x_weakness(self):
+        from battle_ai import assess_threat
+        # Water move vs Ground/Rock (4x effective)
+        enemy = self._make_pokemon("Blastoise", ["Water"],
+                                   moves=[self._make_move("Surf", "Water", 95)])
+        defender = self._make_pokemon("Golem", ["Rock", "Ground"])
+        threat = assess_threat(enemy, defender)
+        self.assertEqual(threat["level"], "high")
+
+    def test_medium_threat_2x_weakness(self):
+        from battle_ai import assess_threat
+        enemy = self._make_pokemon("Charmander", ["Fire"],
+                                   moves=[self._make_move("Ember", "Fire", 40)])
+        defender = self._make_pokemon("Bulbasaur", ["Grass", "Poison"])
+        threat = assess_threat(enemy, defender)
+        self.assertEqual(threat["level"], "medium")
+
+    def test_low_threat_neutral(self):
+        from battle_ai import assess_threat
+        enemy = self._make_pokemon("Rattata", ["Normal"],
+                                   moves=[self._make_move("Tackle", "Normal", 40)])
+        defender = self._make_pokemon("Pidgey", ["Normal", "Flying"])
+        threat = assess_threat(enemy, defender)
+        self.assertEqual(threat["level"], "low")
+
+    def test_unknown_threat_no_moves(self):
+        from battle_ai import assess_threat
+        enemy = self._make_pokemon("Rattata", ["Normal"], moves=[])
+        defender = self._make_pokemon("Pidgey", ["Normal", "Flying"])
+        threat = assess_threat(enemy, defender)
+        self.assertEqual(threat["level"], "unknown")
+
+    def test_threat_includes_best_move(self):
+        from battle_ai import assess_threat
+        enemy = self._make_pokemon("Charmander", ["Fire"],
+                                   moves=[self._make_move("Ember", "Fire", 40),
+                                          self._make_move("Scratch", "Normal", 40)])
+        defender = self._make_pokemon("Bulbasaur", ["Grass", "Poison"])
+        threat = assess_threat(enemy, defender)
+        self.assertEqual(threat["best_move"], "Ember")
+
+
+class TestThreatBasedFleeing(unittest.TestCase):
+    """Test that choose_action flees from dangerous wild encounters."""
+
+    def _make_move(self, name, move_type, power, pp=35, pp_max=35, accuracy=100):
+        return Move(name=name, move_type=move_type, power=power,
+                    accuracy=accuracy, pp=pp, pp_max=pp_max)
+
+    def _make_pokemon(self, species, types, level=10, hp=30, hp_max=30, moves=None):
+        return Pokemon(
+            species=species, nickname=species, level=level,
+            hp=hp, hp_max=hp_max, attack=20, defense=15,
+            speed=20, sp_attack=20, sp_defense=15,
+            pokemon_type=types, moves=moves or [],
+        )
+
+    def test_flee_high_threat_low_hp(self):
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Golem", ["Rock", "Ground"],
+                                  hp=10, hp_max=30, moves=our_moves)
+        enemy = self._make_pokemon("Blastoise", ["Water"],
+                                   moves=[self._make_move("Surf", "Water", 95)])
+        party = Party(pokemon=[lead])
+        action = choose_action(party, enemy, is_wild=True)
+        self.assertEqual(action["type"], "run")
+
+    def test_fight_high_threat_full_hp(self):
+        """Don't flee if HP is high enough."""
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Golem", ["Rock", "Ground"],
+                                  hp=30, hp_max=30, moves=our_moves)
+        enemy = self._make_pokemon("Blastoise", ["Water"],
+                                   moves=[self._make_move("Surf", "Water", 95)])
+        party = Party(pokemon=[lead])
+        action = choose_action(party, enemy, is_wild=True)
+        self.assertEqual(action["type"], "fight")
+
+    def test_no_flee_from_trainers(self):
+        """Never flee trainer battles regardless of threat."""
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Golem", ["Rock", "Ground"],
+                                  hp=5, hp_max=30, moves=our_moves)
+        enemy = self._make_pokemon("Blastoise", ["Water"],
+                                   moves=[self._make_move("Surf", "Water", 95)])
+        party = Party(pokemon=[lead])
+        action = choose_action(party, enemy, is_wild=False)
+        self.assertEqual(action["type"], "fight")
+
+    def test_flee_medium_threat_very_low_hp(self):
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Bulbasaur", ["Grass", "Poison"],
+                                  hp=5, hp_max=30, moves=our_moves)
+        enemy = self._make_pokemon("Charmander", ["Fire"],
+                                   moves=[self._make_move("Ember", "Fire", 40)])
+        party = Party(pokemon=[lead])
+        action = choose_action(party, enemy, is_wild=True)
+        self.assertEqual(action["type"], "run")
+
+
 if __name__ == "__main__":
     unittest.main()
