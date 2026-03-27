@@ -399,3 +399,11 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `pokemon-agent/movement_validator.py` (S205)
 - `pokemon-agent/screen_detector.py` (S205)
 - `pokemon-agent/diversity_checker.py` (S205)
+
+
+### Added in S206
+- `pokemon-agent/checkpoint.py` (S206)
+- `pokemon-agent/text_reader.py` (S206)
+- `pokemon-agent/bridge.py` (S206)
+- `pokemon-agent/setup.sh` (S206)
+- `.claude/commands/pokemon-play.md` (S206)

@@ -586,3 +586,14 @@
 {"event_type":"pain","session":205,"domain":"general","notes":"None significant","timestamp":"2026-03-27T05:47:59.475022Z"}
 {"event_type":"feedback_roi","session":205,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T05:47:59.475022Z"}
 {"event_type":"sentinel_stats","session":205,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T05:47:59.475022Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T05:49:02.901032+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T05:49:02.925214+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T06:05:12.922575+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T06:05:12.953923+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":206,"domain":"general","outcome":"success","notes":"MT-53 checkpoint, text reader, Claude Code bridge. 493 pokemon-agent tests, 6 commits.","timestamp":"2026-03-27T06:05:52.493453Z"}
+{"event_type":"win","session":206,"domain":"general","notes":"Save-state checkpointing 19 tests","timestamp":"2026-03-27T06:05:52.493453Z"}
+{"event_type":"win","session":206,"domain":"general","notes":"RAM text extraction 17 tests","timestamp":"2026-03-27T06:05:52.493453Z"}
+{"event_type":"win","session":206,"domain":"general","notes":"Claude Code bridge 20 tests zero API cost","timestamp":"2026-03-27T06:05:52.493453Z"}
+{"event_type":"pain","session":206,"domain":"general","notes":"PyBoy freezes on macOS","timestamp":"2026-03-27T06:05:52.493453Z"}
+{"event_type":"feedback_roi","session":206,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T06:05:52.493453Z"}
+{"event_type":"sentinel_stats","session":206,"total_principles":179,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T06:05:52.493453Z"}

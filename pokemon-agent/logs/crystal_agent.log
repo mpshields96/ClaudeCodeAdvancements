@@ -22,3 +22,4 @@ RuntimeError: No LLM client configured. Set agent.llm or pass to constructor.
 2026-03-27 00:28:49,226 [INFO] agent: Step 4: [offline: press a] | Tokens: 0 in, 0 out
 2026-03-27 00:28:49,229 [INFO] agent: Step 5: [offline: press a] | Tokens: 0 in, 0 out
 2026-03-27 00:28:49,229 [INFO] crystal: Done. Steps: 5, Time: 0.0s, Tokens: 0 in + 0 out = 0 total
+2026-03-27 00:58:10,956 [INFO] crystal: Loading ROM: pokemon_crystal.gbc

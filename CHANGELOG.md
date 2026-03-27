@@ -3359,3 +3359,21 @@ CLI chat 2:
 - None significant
 
 ---
+
+## Session 206 — 2026-03-27
+
+**What changed:**
+- Save-state checkpointing (19 tests)
+- RAM text extraction (17 tests)
+- Claude Code bridge + /pokemon-play (20 tests)
+- Reload checkpoint tool + gym map registry
+
+**Why:**
+- MT-53 checkpoint + text reader + Claude Code bridge. 493 pokemon-agent tests.
+
+**Tests:** 11514/11514 passing (315 suites)
+
+**Lessons:**
+- PyBoy freezes on macOS — need alternative backend
+
+---

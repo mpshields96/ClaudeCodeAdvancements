@@ -8,6 +8,24 @@
 **Phase:** Session 206 COMPLETE. MT-53 checkpoint + text reader + Claude Code bridge. 493 pokemon-agent tests.
 
 **What was done this session (S206):**
+- Save-state checkpointing (19 tests)
+- RAM text extraction (17 tests)
+- Claude Code bridge + /pokemon-play (20 tests)
+- Reload checkpoint tool + gym map registry
+- **Tests**: 315 suites, 11514 tests passing. All green.
+
+**Next:**
+1. Fix PyBoy macOS freeze (headless or mGBA)
+2. First real gameplay via /pokemon-play
+3. Map name lookup table
+
+---
+
+## Previous State (Session 206 — 2026-03-27)
+
+**Phase:** Session 206 COMPLETE. MT-53 checkpoint + text reader + Claude Code bridge. 493 pokemon-agent tests.
+
+**What was done this session (S206):**
 - Save-state checkpointing (checkpoint.py, 19 tests): auto-saves before trainer battles, gym leaders, low HP, map transitions, badge earns. Cooldown prevents spam. Crystal gym map IDs registered.
 - RAM text extraction (text_reader.py, 17 tests): reads dialog/text boxes directly from Crystal RAM. More reliable than OCR. Wired into agent prompt.
 - Reload checkpoint tool: LLM can reload last checkpoint after party wipes.
@@ -24,7 +42,6 @@
 4. Item name lookup table (item_id -> name) for held items and inventory
 
 ---
-
 ## Previous State (Session 205 — 2026-03-27)
 
 **Phase:** Session 205 COMPLETE. MT-53 all 5 mewtoo patterns adopted + main.py gameplay ready.

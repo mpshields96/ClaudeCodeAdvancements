@@ -1,0 +1,16 @@
+{
+  "step": 2,
+  "position": {
+    "map_id": 0,
+    "map_name": "Map 0",
+    "x": 0,
+    "y": 0
+  },
+  "menu_state": "overworld",
+  "badges": 0,
+  "money": 0,
+  "party": [],
+  "battle": null,
+  "text_on_screen": "",
+  "play_time_minutes": 0
+}
