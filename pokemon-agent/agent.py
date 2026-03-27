@@ -276,6 +276,18 @@ class CrystalAgent:
         """Register a callback that fires after each step."""
         self._on_step = callback
 
+    def _screen_detection_addresses(self) -> dict:
+        """Return RAM addresses for screen transition detection.
+
+        Override in subclasses for different games (e.g., RedAgent).
+        """
+        from memory_reader import JOY_DISABLED, BATTLE_MODE, WINDOW_STACK_SIZE
+        return {
+            "joy_disabled": JOY_DISABLED,
+            "battle_mode": BATTLE_MODE,
+            "window_stack": WINDOW_STACK_SIZE,
+        }
+
     def _should_auto_advance(self, state: GameState) -> Optional[str]:
         """Check if we can skip the LLM and auto-press a button.
 
@@ -438,10 +450,10 @@ class CrystalAgent:
             return self._auto_advance_step(state, auto_button)
 
         # 1.7. Screen transition detection: skip LLM on blank/transition screens
-        from memory_reader import JOY_DISABLED, BATTLE_MODE, WINDOW_STACK_SIZE
-        joy_disabled = self.emulator.read_byte(JOY_DISABLED)
-        battle_mode = self.emulator.read_byte(BATTLE_MODE)
-        window_stack = self.emulator.read_byte(WINDOW_STACK_SIZE)
+        screen_addrs = self._screen_detection_addresses()
+        joy_disabled = self.emulator.read_byte(screen_addrs["joy_disabled"])
+        battle_mode = self.emulator.read_byte(screen_addrs["battle_mode"])
+        window_stack = self.emulator.read_byte(screen_addrs["window_stack"])
         screen_state = self.screen_detector.classify(joy_disabled, battle_mode, window_stack)
         self.screen_detector.update(screen_state)
         if screen_state != ScreenState.ACTIVE:
