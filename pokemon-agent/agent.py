@@ -28,6 +28,7 @@ from typing import Any, Callable, Dict, List, Optional, Protocol
 
 from action_cache import ActionCache
 from checkpoint import CheckpointManager
+from text_reader import TextReader
 from config import (
     MAX_HISTORY, MAX_TOKENS, MODEL_NAME, SAVE_INTERVAL,
     SCREENSHOT_UPSCALE, STUCK_THRESHOLD, STUCK_FORCE_NEW,
@@ -255,6 +256,9 @@ class CrystalAgent:
         # Checkpoint manager: auto-save before risky actions
         self.checkpoint_mgr = CheckpointManager(emulator, state_dir=STATE_DIR)
 
+        # Text reader: extract on-screen text from RAM
+        self.text_reader = TextReader(emulator)
+
         # Previous state for checkpoint comparisons
         self._prev_state: Optional[GameState] = None
 
@@ -464,6 +468,8 @@ class CrystalAgent:
             blocked_info = blocked_info + " " + diversity_info
         elif diversity_info:
             blocked_info = diversity_info
+        # 3.5. Read on-screen text from RAM (more reliable than OCR)
+        text_context = self.text_reader.format_for_prompt()
         user_msg = build_user_message(
             state=state,
             screenshot_b64=screenshot_b64,
@@ -472,6 +478,7 @@ class CrystalAgent:
             failed_strategies=self._failed_strategies if is_stuck else None,
             stuck_threshold=self.stuck_threshold,
             blocked_directions=blocked_info,
+            text_context=text_context,
         )
         self.messages.append(user_msg)
 

@@ -240,6 +240,7 @@ def build_user_message(
     failed_strategies: list[list[str]] | None = None,
     stuck_threshold: int = 10,
     blocked_directions: str = "",
+    text_context: str = "",
 ) -> dict:
     """Build a user message with game state + optional screenshot.
 
@@ -260,6 +261,10 @@ def build_user_message(
 
     # Game state text
     state_text = format_game_state(state)
+
+    # Add RAM text context (dialog, signs, menus — more reliable than OCR)
+    if text_context:
+        state_text += f"\n\nON-SCREEN TEXT (from RAM): {text_context}"
 
     # Add blocked direction warning if applicable (mewtoo pattern)
     if blocked_directions:
