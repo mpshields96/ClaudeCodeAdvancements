@@ -165,6 +165,44 @@ Codex should:
 - Avoid turning every exchange into a long procedural lecture
 - Optimize for useful execution, not prompt perfection
 
+## Safe Approvals Reference
+
+### Permanently Safe (auto-approve these)
+
+| Command | Why safe |
+|---------|----------|
+| `git status` | Read-only |
+| `git diff` | Read-only |
+| `git log` | Read-only |
+| `git checkout <branch>` | Local branch switch |
+| `git add <specific file>` | Staging only |
+| `git commit -m "..."` | Local commit |
+| `git push` | Standard push (no force) |
+| `python3 -m pytest` | Test runner |
+| `python3 parallel_test_runner.py` | CCA test runner |
+
+### Never Auto-Approve (always block or ask Matthew)
+
+| Command pattern | Risk |
+|-----------------|------|
+| Arbitrary `python3 <script>` | Unknown execution |
+| Arbitrary `bash` | Unknown execution |
+| `pip install` / package installs | Dependency risk |
+| `git reset --hard` | Destroys uncommitted work |
+| `git push --force` | Destroys remote history |
+| `git branch -D` | Destroys branches |
+| `rm -rf` / mass delete | Destroys files |
+| Anything with `.env`, keys, secrets | Credential exposure |
+| Anything touching live trading | Financial risk |
+| `--dangerously-skip-permissions` | Safety bypass |
+
+### Grey Area (use judgment, prefer asking)
+
+- `python3 <known project script>` with known arguments — okay if in scope
+- `git stash` — safe but ask if unsure about stash state
+- File creation in assigned scope — okay
+- File creation outside scope — ask first
+
 ## Best Uses of Codex
 
 High-value use cases:
