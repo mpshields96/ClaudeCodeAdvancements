@@ -2087,4 +2087,4 @@ See `CCA_PRIME_DIRECTIVE.md`.
 - Phase 9 data logging mirrors CCA's own self-learning pipeline (journal → reflect → improve)
 - Cross-run optimization data is genuinely useful for AI game completion research
 
-**Status:** IDEA LOGGED (S188, expanded S189). Matthew approved as UBER-LEVEL MT. Phase 1 research: find the right macOS emulator with speed control + scripting API. ROM hacks list TBD.
+**Status:** Phase 1 COMPLETE (S199). Research: research/MT53_POKEMON_RESEARCH.md. Verdict: PyBoy for GBC (Crystal + ROM hacks), mGBA + mGBA-http for GBA (Emerald). Rules-based engine (not LLM — Matthew: "doesn't burn tokens"). Key reference: llm_pokemon_scaffold (PyBoy + Claude function calling). Phase 2 next: emulator_control.py + state_reader.py + game_state.py. ROM hacks list TBD from Matthew.
