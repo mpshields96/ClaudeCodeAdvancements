@@ -3,21 +3,31 @@
 
 ---
 
-## Current State (as of Session 204 — 2026-03-27)
+## Current State (as of Session 205 — 2026-03-27)
 
-**Phase:** Session 204 COMPLETE. MT-53 Phase 5 real emulator tests + mewtoo patterns (auto-advance + action cache)
+**Phase:** Session 205 COMPLETE. MT-53 all 5 mewtoo patterns adopted + main.py gameplay ready.
 
-**What was done this session (S204):**
-- Phase 5: 21 real emulator integration tests (PyBoy + ROM)
-- Dialog auto-advance + B-escape (12 tests)
-- Action cache LRU state->action mapping (32 tests)
-- Mewtoo architecture comparison with adoption priorities
-- **Tests**: 309 suites, 11403 tests passing. All green.
+**What was done this session (S205):**
+- Movement validation (movement_validator.py, 29 tests): tracks blocked directions after 3 failures, suggests perpendicular alternatives, auto-clears on map change
+- main.py gameplay ready: offline fallback mode, enhanced step output (auto-advance/cache/blocked stats), verified ROM boots and runs 5 steps headless
+- Screen transition detection (screen_detector.py, 13 tests): skips LLM on blank/transition screens via JOY_DISABLED RAM flag, auto-waits during fades/transitions, START unstick after 30+ consecutive
+- Action diversity checker (diversity_checker.py, 13 tests): flags when one action > 60% of last 15, warns LLM and suggests alternatives
+- Cross-chat Kalshi comms: UPDATE 60 delivered, ABSOLUTE FREEDOM directive acknowledged, P&L pipeline audit re-raised (3rd time)
+- **Tests**: 437 pokemon-agent tests passing. All green.
+- **Commits**: 4 this session.
+
+**All 5 mewtoo patterns now adopted:**
+1. Action caching (S204) -- DONE
+2. Dialog loop prevention (S204) -- DONE
+3. Movement validation (S205) -- DONE
+4. Blank screen detection (S205) -- DONE
+5. Diversity checking (S205) -- DONE
 
 **Next:**
-1. MT-53 movement validation (P1)
-2. Wire main.py for first real gameplay run
-3. Cross-chat Kalshi comms
+1. MT-53: First real gameplay session with LLM (python3 main.py --rom pokemon_crystal.gbc --steps 50)
+2. MT-53: Save-state checkpointing before risky actions (battles, gyms)
+3. MT-53: Consider OCR-free text extraction from RAM for dialog content
+4. Cross-chat: check if Kalshi responded to P&L pipeline audit question
 
 ---
 
