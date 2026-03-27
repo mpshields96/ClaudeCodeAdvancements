@@ -29,6 +29,7 @@ from typing import Any, Callable, Dict, List, Optional, Protocol
 from action_cache import ActionCache
 from checkpoint import CheckpointManager
 from text_reader import TextReader
+from agent_memory import AgentMemory, MapMarkers, Objectives
 from config import (
     MAX_HISTORY, MAX_TOKENS, MODEL_NAME, SAVE_INTERVAL,
     SCREENSHOT_UPSCALE, STUCK_THRESHOLD, STUCK_FORCE_NEW,
@@ -259,6 +260,11 @@ class CrystalAgent:
 
         # Text reader: extract on-screen text from RAM
         self.text_reader = TextReader(emulator)
+
+        # Persistent memory/tool state
+        self.agent_memory = AgentMemory()
+        self.map_markers = MapMarkers()
+        self.objectives = Objectives()
 
         # Previous state for checkpoint comparisons
         self._prev_state: Optional[GameState] = None
@@ -668,6 +674,16 @@ class CrystalAgent:
             result = self._tool_wait(tool_use.input)
         elif tool_use.name == "reload_checkpoint":
             result = self._tool_reload_checkpoint(tool_use.input)
+        elif tool_use.name == "write_memory":
+            result = self._tool_write_memory(tool_use.input)
+        elif tool_use.name == "delete_memory":
+            result = self._tool_delete_memory(tool_use.input)
+        elif tool_use.name == "add_marker":
+            result = self._tool_add_marker(tool_use.input, pre_state)
+        elif tool_use.name == "delete_marker":
+            result = self._tool_delete_marker(tool_use.input, pre_state)
+        elif tool_use.name == "update_objectives":
+            result = self._tool_update_objectives(tool_use.input)
         else:
             return {"error": f"Unknown tool: {tool_use.name}"}
 
@@ -747,6 +763,83 @@ class CrystalAgent:
             }
         except Exception as e:
             return {"error": f"Failed to reload: {e}"}
+
+    def _tool_write_memory(self, input_data: dict) -> dict:
+        """Persist a strategic memory note."""
+        key = input_data["key"]
+        value = input_data["value"]
+        message = self.agent_memory.write(key, value)
+        return {"memory_written": key, "message": message}
+
+    def _tool_delete_memory(self, input_data: dict) -> dict:
+        """Delete a strategic memory note."""
+        key = input_data["key"]
+        message = self.agent_memory.delete(key)
+        deleted = "not found" not in message.lower()
+        return {"memory_deleted": deleted, "key": key, "message": message}
+
+    def _tool_add_marker(self, input_data: dict, state: GameState) -> dict:
+        """Add a marker on the current map."""
+        x = input_data["x"]
+        y = input_data["y"]
+        label = input_data["label"]
+        marker_type = input_data.get("marker_type", "poi")
+        map_id = state.position.map_id
+        message = self.map_markers.add(map_id, x, y, label, marker_type)
+        return {
+            "marker_added": True,
+            "map_id": map_id,
+            "x": x,
+            "y": y,
+            "label": label,
+            "marker_type": marker_type,
+            "message": message,
+        }
+
+    def _tool_delete_marker(self, input_data: dict, state: GameState) -> dict:
+        """Delete a marker on the current map."""
+        x = input_data["x"]
+        y = input_data["y"]
+        map_id = state.position.map_id
+        message = self.map_markers.delete(map_id, x, y)
+        deleted = "no marker" not in message.lower()
+        return {
+            "marker_deleted": deleted,
+            "map_id": map_id,
+            "x": x,
+            "y": y,
+            "message": message,
+        }
+
+    def _tool_update_objectives(self, input_data: dict) -> dict:
+        """Replace the current objective list."""
+        objectives = input_data.get("objectives", [])
+        if not isinstance(objectives, list):
+            return {"error": "objectives must be a list"}
+
+        normalized = []
+        for item in objectives:
+            if not isinstance(item, dict):
+                return {"error": "each objective must be an object"}
+            description = item.get("description", "")
+            if not isinstance(description, str) or not description.strip():
+                return {"error": "each objective needs a non-empty description"}
+            rationale = item.get("rationale", "")
+            status = item.get("status", "active")
+            if status not in {"active", "completed", "abandoned"}:
+                return {"error": f"invalid objective status: {status}"}
+            normalized.append({
+                "description": description,
+                "rationale": rationale if isinstance(rationale, str) else "",
+                "status": status,
+            })
+
+        message = self.objectives.update(normalized)
+        return {
+            "objectives_updated": len(normalized),
+            "active_objectives": self.objectives.count_active(),
+            "message": message,
+        }
 
     def _verify_action(
         self,

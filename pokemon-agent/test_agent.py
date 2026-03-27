@@ -2,12 +2,14 @@
 import unittest
 import os
 import sys
+import tempfile
 
 from emulator_control import EmulatorControl
 from game_state import (
     Badges, BattleState, GameState, MapPosition, Move, Party, Pokemon,
 )
 from memory_reader import MemoryReader
+from agent_memory import AgentMemory, MapMarkers, Objectives
 from agent import (
     CrystalAgent, MockLLMClient, LLMResponse, ToolUse, StepResult,
 )
@@ -663,3 +665,87 @@ class TestAutoAdvance(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestPersistentToolExecution(unittest.TestCase):
+    """Persistent tool execution uses the existing agent_memory subsystem."""
+
+    def _make_agent_with_temp_storage(self):
+        agent, _ = _make_agent()
+        tmpdir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmpdir.cleanup)
+        agent.agent_memory = AgentMemory(path=os.path.join(tmpdir.name, "memory.json"))
+        agent.map_markers = MapMarkers(path=os.path.join(tmpdir.name, "markers.json"))
+        agent.objectives = Objectives(path=os.path.join(tmpdir.name, "objectives.json"))
+        return agent
+
+    def test_write_memory_executes(self):
+        agent = self._make_agent_with_temp_storage()
+        result = agent._execute_tool(ToolUse(
+            id="t1",
+            name="write_memory",
+            input={"key": "tips_intro", "value": "Clear dialog before moving"},
+        ))
+        self.assertEqual(result["memory_written"], "tips_intro")
+        self.assertEqual(
+            agent.agent_memory.read_all()["tips_intro"],
+            "Clear dialog before moving",
+        )
+
+    def test_delete_memory_executes(self):
+        agent = self._make_agent_with_temp_storage()
+        agent.agent_memory.write("tips_intro", "Clear dialog before moving")
+        result = agent._execute_tool(ToolUse(
+            id="t2",
+            name="delete_memory",
+            input={"key": "tips_intro"},
+        ))
+        self.assertTrue(result["memory_deleted"])
+        self.assertNotIn("tips_intro", agent.agent_memory.read_all())
+
+    def test_add_marker_uses_current_map(self):
+        agent = self._make_agent_with_temp_storage()
+        result = agent._execute_tool(ToolUse(
+            id="t3",
+            name="add_marker",
+            input={"x": 7, "y": 0, "label": "Stairs", "marker_type": "stairs"},
+        ))
+        current_map = agent.reader.read_game_state().position.map_id
+        self.assertTrue(result["marker_added"])
+        self.assertEqual(result["map_id"], current_map)
+        markers = agent.map_markers.get_for_map(current_map)
+        self.assertIn("7_0", markers)
+        self.assertEqual(markers["7_0"]["label"], "Stairs")
+
+    def test_delete_marker_uses_current_map(self):
+        agent = self._make_agent_with_temp_storage()
+        current_map = agent.reader.read_game_state().position.map_id
+        agent.map_markers.add(current_map, 7, 0, "Stairs", "stairs")
+        result = agent._execute_tool(ToolUse(
+            id="t4",
+            name="delete_marker",
+            input={"x": 7, "y": 0},
+        ))
+        self.assertTrue(result["marker_deleted"])
+        self.assertEqual(agent.map_markers.get_for_map(current_map), {})
+
+    def test_update_objectives_executes(self):
+        agent = self._make_agent_with_temp_storage()
+        result = agent._execute_tool(ToolUse(
+            id="t5",
+            name="update_objectives",
+            input={"objectives": [
+                {
+                    "description": "Leave Red's House",
+                    "rationale": "Reach the overworld so the real run can begin",
+                    "status": "active",
+                },
+                {
+                    "description": "Talk to Oak",
+                    "status": "completed",
+                },
+            ]},
+        ))
+        self.assertEqual(result["objectives_updated"], 2)
+        self.assertEqual(result["active_objectives"], 1)
+        self.assertEqual(agent.objectives.active()[0]["description"], "Leave Red's House")
