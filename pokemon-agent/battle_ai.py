@@ -113,6 +113,40 @@ def score_move(move: Move, enemy: Pokemon) -> float:
     return move.power * effectiveness * accuracy_factor
 
 
+POKEBALL_IDS = {0x01: "MASTER BALL", 0x02: "ULTRA BALL",
+                 0x03: "GREAT BALL", 0x04: "POKE BALL"}
+# Catch rate bonus (higher = better). Master Ball is auto-catch.
+POKEBALL_POWER = {0x01: 255, 0x02: 200, 0x03: 150, 0x04: 100}
+
+
+def best_pokeball(items: List[Item]) -> Optional[Item]:
+    """Pick the best available pokeball, preferring weaker balls first.
+
+    Uses weakest ball that works — save Ultra/Master balls for rare Pokemon.
+    Returns None if no balls available.
+    """
+    balls = []
+    for item in items:
+        if item.item_id in POKEBALL_IDS and item.quantity > 0:
+            balls.append((POKEBALL_POWER[item.item_id], item))
+    if not balls:
+        return None
+    # Sort by power ascending — use weakest first
+    balls.sort(key=lambda x: x[0])
+    return balls[0][1]
+
+
+def should_catch(enemy: Pokemon, party_size: int) -> bool:
+    """Decide whether to try catching a wild Pokemon.
+
+    Criteria:
+    - Party has room (<6 Pokemon), OR
+    - Enemy is higher level than our average (worth catching)
+    Always returns False for now if party is full.
+    """
+    return party_size < 6
+
+
 def assess_threat(enemy: Pokemon, defender: Pokemon) -> dict:
     """Assess how threatening an enemy is to our Pokemon.
 
@@ -220,6 +254,17 @@ def choose_action(party: Party, enemy: Pokemon, is_wild: bool = True,
                 "item_id": potion.item_id,
                 "item_name": potion.name,
                 "reason": f"heal {lead.species} at {lead.hp_pct():.0%} HP with {potion.name}",
+            }
+
+    # Catch attempt: try to catch wild Pokemon if we have balls and room
+    if is_wild and items and should_catch(enemy, party.size()):
+        ball = best_pokeball(items)
+        if ball is not None:
+            return {
+                "type": "item",
+                "item_id": ball.item_id,
+                "item_name": ball.name,
+                "reason": f"catch {enemy.species} Lv{enemy.level} with {ball.name}",
             }
 
     # Threat-based flee: run from dangerous wild Pokemon when HP is low

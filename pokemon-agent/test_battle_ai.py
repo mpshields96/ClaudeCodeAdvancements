@@ -458,5 +458,101 @@ class TestPotionUseInBattle(unittest.TestCase):
         self.assertIn("right", buttons)  # Navigate to ITEM in menu
 
 
+class TestBestPokeball(unittest.TestCase):
+    """Test pokeball selection logic."""
+
+    def test_picks_weakest_first(self):
+        from battle_ai import best_pokeball
+        items = [
+            Item(0x02, "ULTRA BALL", 2),
+            Item(0x04, "POKE BALL", 5),
+            Item(0x03, "GREAT BALL", 3),
+        ]
+        result = best_pokeball(items)
+        self.assertEqual(result.name, "POKE BALL")
+
+    def test_returns_none_with_no_balls(self):
+        from battle_ai import best_pokeball
+        items = [Item(0x13, "POTION", 3)]
+        result = best_pokeball(items)
+        self.assertIsNone(result)
+
+    def test_skips_zero_quantity(self):
+        from battle_ai import best_pokeball
+        items = [Item(0x04, "POKE BALL", 0), Item(0x03, "GREAT BALL", 2)]
+        result = best_pokeball(items)
+        self.assertEqual(result.name, "GREAT BALL")
+
+
+class TestCatchLogic(unittest.TestCase):
+    """Test catch attempt in wild battles."""
+
+    def _make_move(self, name, move_type, power, pp=35, pp_max=35, accuracy=100):
+        return Move(name=name, move_type=move_type, power=power,
+                    accuracy=accuracy, pp=pp, pp_max=pp_max)
+
+    def _make_pokemon(self, species, types, level=10, hp=30, hp_max=30, moves=None):
+        return Pokemon(
+            species=species, nickname=species, level=level,
+            hp=hp, hp_max=hp_max, attack=20, defense=15,
+            speed=20, sp_attack=20, sp_defense=15,
+            pokemon_type=types, moves=moves or [],
+        )
+
+    def test_catch_wild_with_room(self):
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Charmander", ["Fire"], moves=our_moves)
+        enemy = self._make_pokemon("Pidgey", ["Normal", "Flying"])
+        party = Party(pokemon=[lead])  # 1 Pokemon = room for 5 more
+        items = [Item(0x04, "POKE BALL", 5)]
+        action = choose_action(party, enemy, is_wild=True, items=items)
+        self.assertEqual(action["type"], "item")
+        self.assertIn("catch", action["reason"])
+
+    def test_no_catch_without_balls(self):
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Charmander", ["Fire"], moves=our_moves)
+        enemy = self._make_pokemon("Pidgey", ["Normal", "Flying"])
+        party = Party(pokemon=[lead])
+        items = [Item(0x13, "POTION", 3)]  # No balls
+        action = choose_action(party, enemy, is_wild=True, items=items)
+        self.assertEqual(action["type"], "fight")
+
+    def test_no_catch_trainer_battle(self):
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Charmander", ["Fire"], moves=our_moves)
+        enemy = self._make_pokemon("Pidgey", ["Normal", "Flying"])
+        party = Party(pokemon=[lead])
+        items = [Item(0x04, "POKE BALL", 5)]
+        action = choose_action(party, enemy, is_wild=False, items=items)
+        self.assertEqual(action["type"], "fight")  # Can't catch trainer Pokemon
+
+    def test_no_catch_full_party(self):
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        mons = [self._make_pokemon(f"Mon{i}", ["Normal"], moves=our_moves) for i in range(6)]
+        enemy = self._make_pokemon("Pidgey", ["Normal", "Flying"])
+        party = Party(pokemon=mons)  # Full party
+        items = [Item(0x04, "POKE BALL", 5)]
+        action = choose_action(party, enemy, is_wild=True, items=items)
+        self.assertNotEqual(action.get("reason", ""), "catch")  # Should fight, not catch
+
+    def test_potion_before_catch_when_critical(self):
+        """Healing takes priority over catching when HP is critical."""
+        from battle_ai import choose_action
+        our_moves = [self._make_move("Tackle", "Normal", 40)]
+        lead = self._make_pokemon("Charmander", ["Fire"], hp=3, hp_max=30, moves=our_moves)
+        enemy = self._make_pokemon("Pidgey", ["Normal", "Flying"])
+        party = Party(pokemon=[lead])
+        items = [Item(0x04, "POKE BALL", 5), Item(0x13, "POTION", 2)]
+        action = choose_action(party, enemy, is_wild=True, items=items)
+        # Should heal first (potion check is before catch check)
+        self.assertEqual(action["type"], "item")
+        self.assertIn("heal", action["reason"])
+
+
 if __name__ == "__main__":
     unittest.main()
