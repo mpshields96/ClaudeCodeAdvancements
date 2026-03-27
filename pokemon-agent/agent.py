@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Protocol
 
 from action_cache import ActionCache
+from checkpoint import CheckpointManager
 from config import (
     MAX_HISTORY, MAX_TOKENS, MODEL_NAME, SAVE_INTERVAL,
     SCREENSHOT_UPSCALE, STUCK_THRESHOLD, STUCK_FORCE_NEW,
@@ -251,6 +252,12 @@ class CrystalAgent:
         # Action diversity: flag repetitive button presses (mewtoo pattern)
         self.diversity_checker = DiversityChecker()
 
+        # Checkpoint manager: auto-save before risky actions
+        self.checkpoint_mgr = CheckpointManager(emulator, state_dir=STATE_DIR)
+
+        # Previous state for checkpoint comparisons
+        self._prev_state: Optional[GameState] = None
+
         # Callbacks
         self._on_step: Optional[Callable[[StepResult], None]] = None
 
@@ -395,6 +402,19 @@ class CrystalAgent:
 
         # 1. Read game state from RAM (ground truth)
         state = self.reader.read_game_state()
+
+        # 1.05. Checkpoint check: auto-save before risky actions
+        if self._prev_state is not None:
+            reasons = self.checkpoint_mgr.should_checkpoint(
+                self._prev_state, state, current_step=self.step_count,
+            )
+            if reasons:
+                self.checkpoint_mgr.save_checkpoint(
+                    step=self.step_count, reasons=reasons,
+                )
+                logger.info("Checkpoint saved: %s",
+                            [r.value for r in reasons])
+        self._prev_state = state
 
         # 1.1. Map change detection — clear stale movement data
         if self._last_map_id is not None and state.position.map_id != self._last_map_id:
