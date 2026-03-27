@@ -1,0 +1,1 @@
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T07:41:04.302318+00:00","session_id":"87cac667-cd86-42a3-9fd9-a2918a8fff95","trigger":"auto","pre_zone":"unknown","pre_pct":0.0,"pre_turns":0,"compact_summary_len":12028,"compaction_count":1}

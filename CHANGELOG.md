@@ -3453,3 +3453,21 @@ CLI chat 2:
 - Committed to wrong branch, fixed with cherry-pick
 
 ---
+
+## Session 211 — 2026-03-27
+
+**What changed:**
+- Fixed menu state detection (JOY_DISABLED bit 5 vs stale TEXTBOX_ID)
+- Verified boot_sequence navigates 2F->1F->Pallet Town in 19 steps with real ROM
+- viewer.html fully working with auto-polling
+- Codex safe approvals: QUICKSTART.md + operating manual update
+
+**Why:**
+- MT-53: Fixed menu detection, verified boot navigation with real ROM, working viewer.html, Codex safe approvals
+
+**Tests:** 11530/11530 passing (316 suites)
+
+**Lessons:**
+- None significant
+
+---

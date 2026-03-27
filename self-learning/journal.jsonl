@@ -657,3 +657,17 @@
 {"event_type":"pain","session":211,"domain":"general","notes":"Session split between Codex setup and Pokemon work reduced depth on both","timestamp":"2026-03-27T21:14:34.834376Z"}
 {"event_type":"feedback_roi","session":211,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T21:14:34.834376Z"}
 {"event_type":"sentinel_stats","session":211,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T21:14:34.834376Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T21:15:29.607134+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T21:15:29.635460+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T21:25:36.907124+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T21:25:36.931008+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T21:30:17.844669+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T21:30:17.883960+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":211,"domain":"general","outcome":"success","notes":"MT-53: Fixed menu detection, verified boot navigation, working viewer, Codex approvals","timestamp":"2026-03-27T21:31:16.138261Z"}
+{"event_type":"win","session":211,"domain":"general","notes":"Fixed menu state detection bug","timestamp":"2026-03-27T21:31:16.138261Z"}
+{"event_type":"win","session":211,"domain":"general","notes":"Verified boot_sequence with real ROM","timestamp":"2026-03-27T21:31:16.138261Z"}
+{"event_type":"win","session":211,"domain":"general","notes":"viewer.html auto-polling working","timestamp":"2026-03-27T21:31:16.138261Z"}
+{"event_type":"win","session":211,"domain":"general","notes":"Codex safe approvals setup","timestamp":"2026-03-27T21:31:16.138261Z"}
+{"event_type":"pain","session":211,"domain":"general","notes":"None significant","timestamp":"2026-03-27T21:31:16.138261Z"}
+{"event_type":"feedback_roi","session":211,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T21:31:16.138261Z"}
+{"event_type":"sentinel_stats","session":211,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T21:31:16.138261Z"}

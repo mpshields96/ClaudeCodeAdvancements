@@ -5,6 +5,24 @@
 
 ## Current State (as of Session 211 — 2026-03-27)
 
+**Phase:** Session 211 COMPLETE. MT-53: Fixed menu detection, verified boot navigation with real ROM, working viewer.html, Codex safe approvals
+
+**What was done this session (S211):**
+- Fixed menu state detection (JOY_DISABLED bit 5 vs stale TEXTBOX_ID)
+- Verified boot_sequence navigates 2F->1F->Pallet Town in 19 steps with real ROM
+- viewer.html fully working with auto-polling
+- Codex safe approvals: QUICKSTART.md + operating manual update
+- **Tests**: 316 suites, 11530 tests passing. All green.
+
+**Next:**
+1. Port A* pathfinding from reference repos
+2. Test boot from cold ROM (title screen -> overworld)
+3. Wire Claude agent loop to bridge
+
+---
+
+## Previous State (Session 211 — 2026-03-27)
+
 **Phase:** Session 211 COMPLETE. MT-53: Real ROM validation + viewer working + Codex safe approvals
 
 **What was done this session (S211):**
@@ -29,7 +47,6 @@
 - `pokemon-agent/viewer.html:87-99` — JS scope fixes
 
 ---
-
 ## Previous State (Session 209 — 2026-03-27)
 
 **Phase:** Session 209 COMPLETE. MT-53: Fixed movement bug (dialog blocking), verified PyBoy movement works, mapped Red House 2F walkable grid

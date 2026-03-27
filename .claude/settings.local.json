@@ -53,7 +53,8 @@
       "WebFetch(domain:www.dlnews.com)",
       "WebFetch(domain:navnoorbawa.substack.com)",
       "WebFetch(domain:www.karlwhelan.com)",
-      "WebFetch(domain:docs.kalshi.com)"
+      "WebFetch(domain:docs.kalshi.com)",
+      "mcp__Claude_Preview__preview_start"
     ]
   },
   "model": "opus",
