@@ -21,43 +21,23 @@ import sys
 from dataclasses import dataclass, asdict
 from typing import Optional
 
-# --- Canonical CCA palette (from design-guide.md) ---
+import design_tokens
 
-CCA_PALETTE = {
-    "primary": "#1a1a2e",
-    "accent": "#0f3460",
-    "highlight": "#e94560",
-    "success": "#16c79a",
-    "warning": "#f59e0b",
-    "muted": "#6b7280",
-    "bg": "#ffffff",
-    "surface": "#f8f9fa",
-    "border": "#e5e7eb",
-}
+# --- Import canonical tokens, extend with linter-specific values ---
 
-# Chart series colors (approved for multi-series data viz)
-SERIES_COLORS = [
-    "#0f3460",  # Series 1: Deep blue
-    "#e94560",  # Series 2: Rose
-    "#16c79a",  # Series 3: Teal
-    "#f59e0b",  # Series 4: Amber
-    "#6b7280",  # Series 5: Slate
-    "#8b5cf6",  # Series 6: Violet (sparingly)
-    "#06b6d4",  # Series 7: Cyan
-    "#84cc16",  # Series 8: Lime
-]
+CCA_PALETTE = design_tokens.CCA_PALETTE
+SERIES_COLORS = design_tokens.SERIES_COLORS
+ANTI_SLOP_COLORS = design_tokens.ANTI_SLOP_COLORS
 
-# Dark mode palette (GitHub-inspired dark theme for dashboards)
+# Linter extends the canonical dark palette with extra dashboard-specific colors
 DARK_PALETTE = {
-    "dark_bg": "#0d1117",
-    "dark_text": "#e6edf3",
-    "dark_surface": "#161b22",
-    "dark_border": "#30363d",
+    **design_tokens.DARK_PALETTE,
     "dark_muted": "#8b949e",
     "dark_accent": "#388bfd",
     "dark_highlight": "#f85149",
     "dark_success": "#3fb950",
     "dark_warning": "#d29922",
+    "dark_text": "#e6edf3",
 }
 
 # Common safe colors that should never trigger violations
@@ -75,25 +55,9 @@ ALL_APPROVED_COLORS = (
     | SAFE_COLORS
 )
 
-# Anti-slop: colors that signal AI-generated defaults
-ANTI_SLOP_COLORS = [
-    "#6c5ce7",  # Purple (common AI default)
-    "#4f46e5",  # Indigo-600 (Tailwind default)
-    "#6366f1",  # Indigo-500
-    "#7c3aed",  # Violet-600
-    "#8b5cf6",  # NOTE: This is series 6 — allowed in SERIES but flagged if used as primary bg
-    "#a855f7",  # Purple-500
-    "#9333ea",  # Purple-600
-    "#6d28d9",  # Violet-700
-    "#4338ca",  # Indigo-700
-    "#818cf8",  # Indigo-400
-]
-
-# Approved font families
-APPROVED_FONTS = {
-    "source sans 3", "source sans pro", "source code pro",
-    "helvetica neue", "helvetica", "arial", "sans-serif", "monospace",
-    "serif", "system-ui",
+# Approved font families (extends canonical list with linter-specific extras)
+APPROVED_FONTS = set(design_tokens.APPROVED_FONTS) | {
+    "source sans pro", "helvetica", "monospace", "serif", "system-ui",
 }
 
 # Tailwind anti-patterns
