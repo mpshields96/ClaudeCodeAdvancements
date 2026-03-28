@@ -511,3 +511,8 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S225
 - `pokemon-agent/gemini_client.py` (S225)
 - `pokemon-agent/tests/test_gemini_client.py` (S225)
+
+
+### Added in S228
+- `self-learning/wrap_summary.py` (S228)
+- `tests/test_confidence_recalibrator.py` (S228)

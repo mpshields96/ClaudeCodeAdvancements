@@ -3,7 +3,41 @@
 
 ---
 
-## Current State (as of Session 226 — 2026-03-28)
+## Current State (as of Session 228 — 2026-03-28)
+
+**Phase:** Session 228 COMPLETE. MT-49 Phase 4 (confidence recalibration apply), dashboard dedup fix, wrap_summary.py, REQ-17 delivery
+
+**What was done this session (S228):**
+- MT-49 Phase 4: apply_recalibration() with checkpoint + wrap wiring, 15 tests
+- Fixed meta_learning_dashboard dedup bug (353->186 principles, avg score 0.52->0.68)
+- Built wrap_summary.py unified MT-49 health snapshot wired into batch_wrap_learning
+- Delivered REQ-17 political series research as UPDATE 74 to Kalshi bot
+- **Tests**: 335 suites, 11913 tests passing. All green.
+
+**Next:**
+1. Fix priority_picker.py to skip COMPLETE MTs in MASTER_TASKS
+2. MT-49 Phase 5: close meta-learning loop (research ROI resolver improvements)
+3. CLI Phase 2: Codex migration
+
+---
+
+## Previous State (Session 228 — 2026-03-28)
+
+**Phase:** Session 228 COMPLETE. Audited MT-49 self-learning infrastructure, identified dashboard dedup bug and meta-learning loop gaps
+
+**What was done this session (S228):**
+- Verified REQ-17 political series delivery already complete
+- Audited full MT-49 infrastructure — found dashboard principle count inflation bug
+- Identified meta-learning loop gap: 0% improvement implementation rate
+- **Tests**: 334 suites, 11898 tests passing. All green.
+
+**Next:**
+1. Fix meta_learning_dashboard.py dedup bug (PrincipleAnalyzer uses raw lines not deduplicated)
+2. Build wrap-summary command integrating meta_tracker + recalibrator + discoverer
+3. Continue MT-49 Phase 5: close the meta-learning loop
+
+---
+## Previous State (Session 226 — 2026-03-28)
 
 **Phase:** Session 226 COMPLETE. CLI autoloop migration Phase 1 — CCA terminal support with pipefail fix
 
@@ -20,7 +54,6 @@
 3. Phase 3 Kalshi CLI autoloop
 
 ---
-
 ## Previous State (Session 226 — 2026-03-28)
 
 **Phase:** Session 226 IN PROGRESS. CLI autoloop migration — Phase 1 (CCA) COMPLETE.

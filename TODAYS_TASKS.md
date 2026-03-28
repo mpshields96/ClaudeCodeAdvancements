@@ -10,12 +10,15 @@
 Reason: Physical strain/overheating on MacBook from running multiple Electron apps.
 Order: (1) CCA first, (2) Codex second, (3) Kalshi third.
 
-### Phase 1: CCA CLI Autoloop [IN PROGRESS S226]
-- [TODO] Fix autoloop_trigger.py for CLI mode (CCA_AUTOLOOP_CLI env var)
-- [TODO] Fix autoloop_stop_hook.py for CLI mode
-- [TODO] Set env var in start_autoloop.sh and cca_autoloop.py
-- [TODO] Run tests, dry-run, verify 100% clean
-- [TODO] Write CLI_AUTOLOOP_MIGRATION.md with exact steps
+### Phase 1: CCA CLI Autoloop [DONE S227 — VERIFIED]
+- [DONE S226] Fix autoloop_trigger.py for CLI mode (CCA_AUTOLOOP_CLI env var)
+- [DONE S226] Fix autoloop_stop_hook.py for CLI mode
+- [DONE S226] Set env var in start_autoloop.sh and cca_autoloop.py
+- [DONE S227] Run tests, dry-run, verify 100% clean — 334/334 suites, 11898 tests
+- [DONE S226] Write CLI_AUTOLOOP_MIGRATION.md with exact steps
+- [DONE S227] Verify pipefail fix (0342d81) — COUNT=0, no crash under set -euo pipefail
+- [DONE S227] Verify all 3 S226 commits — code review clean, logic correct
+- [DONE S227] Preflight simulation — all checks pass, ready for live launch
 
 ### Phase 2: Codex CLI Migration [PENDING]
 - Migrate Codex desktop app usage to CLI terminal

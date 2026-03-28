@@ -3723,3 +3723,39 @@ CLI chat 2:
 - High context before successful launch
 
 ---
+
+## Session 228 — 2026-03-28
+
+**What changed:**
+- Verified REQ-17 political series delivery already complete
+- Audited full MT-49 infrastructure — found dashboard principle count inflation bug
+- Identified meta-learning loop gap: 0% improvement implementation rate
+
+**Why:**
+- Audited MT-49 self-learning infrastructure, identified dashboard dedup bug and meta-learning loop gaps
+
+**Tests:** 11898/11898 passing (334 suites)
+
+**Lessons:**
+- Short session — CLI handoff context limited autonomous work
+- Analysis-only, no code shipped
+
+---
+
+## Session 228 — 2026-03-28
+
+**What changed:**
+- MT-49 Phase 4: apply_recalibration() with checkpoint + wrap wiring, 15 tests
+- Fixed meta_learning_dashboard dedup bug (353->186 principles, avg score 0.52->0.68)
+- Built wrap_summary.py unified MT-49 health snapshot wired into batch_wrap_learning
+- Delivered REQ-17 political series research as UPDATE 74 to Kalshi bot
+
+**Why:**
+- MT-49 Phase 4 (confidence recalibration apply), dashboard dedup fix, wrap_summary.py, REQ-17 delivery
+
+**Tests:** 11913/11913 passing (335 suites)
+
+**Lessons:**
+- Priority picker surfaces completed MTs as stagnating (MT-0, MT-10, MT-28, MT-41)
+
+---

@@ -40,3 +40,8 @@
 {"tip":"Stub providers enable full pipeline testing without API keys","source":"cca-desktop","session":"S224","timestamp":"2026-03-28T03:17:55.871946Z"}
 {"tip":"Binomial confidence intervals via Rule of Three are fast to compute without scipy","source":"cca-desktop","session":"S225","timestamp":"2026-03-28T03:40:31.070813Z"}
 {"tip":"Evidence-boosted confidence scoring helps auto-discovery systems bridge the gap between statistical significance and practical utility","source":"cca-desktop","session":"S225","timestamp":"2026-03-28T03:40:31.070813Z"}
+{"tip":"CLI autoloop is lighter than Electron \u2014 saves 400-700MB RAM per chat","source":"cca-desktop","session":"S226","timestamp":"2026-03-28T16:09:41.363083Z"}
+{"tip":"bracket trick [c]laude prevents grep self-matching in process tables","source":"cca-desktop","session":"S226","timestamp":"2026-03-28T16:09:41.363083Z"}
+{"tip":"meta_learning_dashboard.py PrincipleAnalyzer counts raw JSONL lines including duplicates \u2014 use deduplicated load for accurate metrics","source":"cca-desktop","session":"S228","timestamp":"2026-03-28T16:30:10.544756Z"}
+{"tip":"apply_recalibration() can now be run standalone with --dry-run to preview score changes without committing","source":"cca-desktop","session":"S228","timestamp":"2026-03-28T16:55:59.649439Z"}
+{"tip":"meta_learning_dashboard now shows accurate 186 principle count with correct avg scores","source":"cca-desktop","session":"S228","timestamp":"2026-03-28T16:55:59.649439Z"}
