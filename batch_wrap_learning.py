@@ -369,6 +369,31 @@ def run_batch(
     except Exception as e:
         result.record("meta_tracker_snapshot", False, str(e))
 
+    # 11. Auto-accept high-confidence principle transfers (MT-49 Phase 2)
+    try:
+        sys.path.insert(0, os.path.join(SCRIPT_DIR, "self-learning"))
+        from principle_transfer import PrincipleTransfer
+        pt = PrincipleTransfer()
+        # First propose new transfers, then auto-accept high-scoring ones
+        new_proposals = pt.propose_transfers(max_proposals=5)
+        accepted = pt.auto_accept(min_score=0.60)
+        if new_proposals or accepted:
+            _append_jsonl(journal_path, {
+                "event_type": "principle_transfer",
+                "session": batch.session_id,
+                "new_proposals": len(new_proposals),
+                "auto_accepted": len(accepted),
+                "accepted_details": [
+                    {"id": p.proposal_id, "score": p.transfer_score,
+                     "from": p.source_domain, "to": p.target_domain}
+                    for p in accepted
+                ],
+                "timestamp": now,
+            })
+        result.record("principle_transfer", True)
+    except Exception as e:
+        result.record("principle_transfer", False, str(e))
+
     return result
 
 
