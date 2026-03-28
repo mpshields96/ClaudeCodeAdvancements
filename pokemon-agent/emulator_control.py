@@ -399,9 +399,19 @@ class EmulatorControl:
         return path
 
     def load_state(self, name: str) -> None:
-        """Load a previously saved emulator state."""
-        path = self._state_path(name)
-        self._backend.load_state(path)
+        """Load a previously saved emulator state.
+
+        Accepts either a bare name (e.g. "playable_newbark") which gets
+        resolved via _state_path, or a full/relative path (e.g.
+        "states/playable_newbark.state") which is used directly.
+        """
+        # If it looks like a path (has directory separator or .state extension),
+        # use it directly instead of going through _state_path
+        if os.sep in name or name.endswith(".state"):
+            self._backend.load_state(name)
+        else:
+            path = self._state_path(name)
+            self._backend.load_state(path)
 
     def screenshot(self, name: str) -> str:
         """Take a screenshot. Returns the path."""

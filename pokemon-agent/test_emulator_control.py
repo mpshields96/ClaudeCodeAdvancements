@@ -293,6 +293,47 @@ class TestContextManager(unittest.TestCase):
         self.assertTrue(emu._backend.is_closed)
 
 
+class TestLoadStatePaths(unittest.TestCase):
+    """Test load_state handles both bare names and full paths."""
+
+    def test_load_state_bare_name(self):
+        """Bare name goes through _state_path (existing behavior)."""
+        emu = EmulatorControl.mock()
+        emu.write_byte(0x100, 42)
+        emu.save_state("test_bare")
+        emu.write_byte(0x100, 0)
+        emu.load_state("test_bare")
+        self.assertEqual(emu.read_byte(0x100), 42)
+        emu.close()
+
+    def test_load_state_with_extension(self):
+        """Name ending in .state is used directly (no double extension)."""
+        emu = EmulatorControl.mock()
+        with tempfile.TemporaryDirectory() as td:
+            emu.set_state_dir(td)
+            # Save normally
+            emu.write_byte(0x100, 77)
+            path = emu.save_state("direct_test")
+            # Load via full path with .state extension
+            emu.write_byte(0x100, 0)
+            emu.load_state(path)  # e.g. "/tmp/xxx/direct_test.state"
+            self.assertEqual(emu.read_byte(0x100), 77)
+        emu.close()
+
+    def test_load_state_with_separator(self):
+        """Path with directory separator is used directly."""
+        emu = EmulatorControl.mock()
+        with tempfile.TemporaryDirectory() as td:
+            emu.set_state_dir(td)
+            emu.write_byte(0x100, 55)
+            path = emu.save_state("sep_test")
+            emu.write_byte(0x100, 0)
+            # Pass path that contains os.sep
+            emu.load_state(path)
+            self.assertEqual(emu.read_byte(0x100), 55)
+        emu.close()
+
+
 class TestConstants(unittest.TestCase):
     """Test module-level constants."""
 

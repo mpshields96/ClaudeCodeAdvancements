@@ -1,9 +1,12 @@
 # MT-53: Pokemon Crystal Bot — Status & Observations
 
-## Current State (S221 — 2026-03-27)
+## Current State (S222 — 2026-03-27)
 
 ### What Works
 - **mGBA backend**: Fully wired, ROM boots, RAM reads verified. PyBoy is BANNED.
+- **Agent loop wired to mGBA**: main.py creates CrystalAgent, connects to emulator + LLM. Offline mode verified (30 steps in 0.6s).
+- **Playable save state**: `crystal_playable` — New Bark Town with Cyndaquil Lv5. Created by `setup_crystal_state.py`.
+- **Starter injection**: RAM-write approach bypasses menu navigation entirely. All 3 starters supported (Cyndaquil, Totodile, Chikorita).
 - **Map IDs verified**: All 4 intro maps confirmed via RAM + pret/pokecrystal source:
   - Player's House 2F: (24, 7)
   - Player's House 1F: (24, 6)
@@ -14,43 +17,49 @@
   - 1F door: tiles (6, 7) and (7, 7) — navigate there, press DOWN
   - Elm's Lab door in New Bark: (6, 3) — navigate to (6, 4), press UP
   - Player's House door in New Bark: (13, 5)
-- **MAP_NAMES table fixed**: Group 24 was mapped to Kanto cities (wrong), now correct MapGroup_NewBark
-- **Offline testing**: 50+ steps in 0.4s, 0 API tokens
-- **Tests**: 21 boot crystal + 33 crystal data + 48 memory reader = 102 tests passing
-- **Dependencies**: cffi + cached-property installed for mgba_bindings
+- **load_state path handling**: Accepts both bare names ("crystal_playable") and full paths ("states/crystal_playable.state")
+- **Tests**: 10 setup + 45 emulator_control + 21 boot + 33 crystal data + 48 memory reader = 157 tests
 
-### What's Blocking "Play for 15-20 Minutes"
-1. **Mom's 1F scripted event**: Clock setting + Pokegear requires specific menu navigation, not just A-mashing. Inconsistent with brute force. **Solution**: Save a state AFTER this event manually, or teach the boot sequence to handle menu interactions.
-2. **Agent loop not connected to mGBA**: main.py structure exists but needs backend wiring.
-3. **Starter selection**: Requires walking to Pokeball table and interacting — LLM agent should handle this.
+### How to Play (S222 — copy-paste ready)
+```bash
+cd pokemon-agent
 
-### Key Observation (S221 — IMPORTANT FOR FUTURE CHATS)
-**The "run first, build while playing" approach (S219 Matthew directive) is correct but the boot sequence is harder than expected.** The practical path is:
-- Create ONE good save state past the intro manually (or with enough brute-force retries)
-- Load from that state every time
-- Focus all effort on the AGENT LOOP, not boot sequence perfection
-- The bot will get stuck, that's fine — fix what actually breaks during gameplay
-- Matthew wants 15-20 minute play sessions, not perfection. Fun brain rot project.
-- **Stop over-engineering the boot sequence.**
+# Create save state (only needed once, or after ROM changes)
+python3 setup_crystal_state.py
+
+# Play offline (no API cost, presses A every step)
+python3 main.py --rom pokemon_crystal.gbc --load-state crystal_playable --steps 100 --offline
+
+# Play with LLM (requires ANTHROPIC_API_KEY)
+python3 main.py --rom pokemon_crystal.gbc --load-state crystal_playable --steps 50
+
+# Choose a different starter
+python3 setup_crystal_state.py --starter totodile
+```
 
 ### Save States Available
-- `states/after_crystal_boot.state` — Player's House 2F, dialog may be active
-- `states/playable_start.state` — Player's House 1F at (5, 7), one step from exit
-- `states/playable_newbark.state` — Elm's Lab at (4, 4), dialog cleared (mislabeled)
-- `states/playable_with_starter.state` — Elm's Lab at (4, 6), no starter yet
+- `states/crystal_playable.state` — **PRIMARY** — New Bark Town, Cyndaquil Lv5, movement verified
+- `states/playable_start.state` — Player's House 1F at (5, 7), movement works, no party
+- `states/playable_newbark.state` — Elm's Lab at (4, 4), movement BLOCKED (script state)
+- `states/after_crystal_boot.state` — Player's House 2F, movement works, no party
+
+### Known Issues
+- **Headless screenshots**: Come back black after state loads (video buffer issue). Not blocking — agent works from RAM state, not screenshots.
+- **Some save states have stuck movement**: Elm's Lab states (playable_newbark, playable_with_starter) have scripted events that block joypad. Use `playable_start` or `crystal_playable` as base.
+- **No wild encounters yet**: Need to walk into grass routes (Route 29 east of New Bark) to trigger battles.
 
 ### Next Steps (Priority Order)
-1. **Get a post-intro save state**: Either manually play through intro once, or retry brute-force
-2. **Wire agent loop to mGBA**: Connect main.py → emulator_control → mgba_bindings
-3. **Let it play**: `python3 main.py --rom pokemon_crystal.gbc --load-state playable_newbark --steps 500`
-4. **Fix what breaks**: Stuck detection, type chart, navigation — all during gameplay
+1. **Run with LLM**: `python3 main.py --rom pokemon_crystal.gbc --load-state crystal_playable --steps 50` — first real play session
+2. **Fix what breaks**: Stuck detection, battle handling, navigation — all during gameplay
+3. **Route 29 exploration**: Walk east to encounter wild Pokemon, test battle AI
+4. **Screenshot fix**: Investigate video buffer refresh after state load
 
 ### Technical Notes
-- mGBA bindings are at `pokemon-agent/mgba_bindings/` (built from source, 0.10.5)
-- Crystal RAM addresses: MAP_GROUP=0xDCB5, MAP_NUMBER=0xDCB6, X=0xDCB8, Y=0xDCB7
-- pret/pokecrystal is the authoritative source for map data, warp coords, NPC positions
-- Headless screenshots come back black after state loads (video buffer issue) — not blocking
-- Mom's scripted event on 1F involves: clock setting (menu with AM/PM, hour, minute), Pokegear delivery, Elm introduction speech. Requires ~500+ A/down presses with specific menu timing.
+- mGBA bindings at `pokemon-agent/mgba_bindings/` (built from source, 0.10.5)
+- Crystal RAM: MAP_GROUP=0xDCB5, MAP_NUMBER=0xDCB6, X=0xDCB8, Y=0xDCB7
+- Party RAM: PARTY_COUNT=0xDCD7, PARTY_DATA=0xDCDF (48 bytes/mon)
+- `setup_crystal_state.py` handles state creation reproducibly
+- pret/pokecrystal is authoritative for map data, warp coords, NPC positions
 
 ### Matthew's Directive
 This is a **fun brain rot project**. Not mission-critical. The bot should play for 15-20 minutes, address issues, restart. Learn through playing. Don't over-engineer.
