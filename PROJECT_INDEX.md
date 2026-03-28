@@ -506,3 +506,8 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S224
 - `polymarket-bot/scripts/domain_knowledge_scanner.py` (S224)
 - `polymarket-bot/scripts/test_domain_knowledge_scanner.py` (S224)
+
+
+### Added in S225
+- `pokemon-agent/gemini_client.py` (S225)
+- `pokemon-agent/tests/test_gemini_client.py` (S225)

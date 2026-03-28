@@ -9,6 +9,7 @@ import os
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -139,6 +140,25 @@ class TestTask(unittest.TestCase):
         unread = ciq.get_unread("cli1", self.path)
         self.assertEqual(len(unread), 1)
         self.assertIn("fresh task", unread[0]["subject"])
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_task_clears_stale_messages_before_assigning(self):
+        """Old unread messages are acked without crashing before the new task is sent."""
+        stale = ciq.send_message(
+            "desktop", "cli1", "stale task",
+            priority="high", category="handoff", path=self.path,
+        )
+        msgs = ciq._load_queue(self.path)
+        msgs[0]["created_at"] = (datetime.now(timezone.utc) - timedelta(hours=3)).isoformat()
+        ciq._save_queue(msgs, self.path)
+
+        cca_comm.cmd_task(["cli1", "replacement", "task"])
+
+        msgs = ciq._load_queue(self.path)
+        stale_msg = next(m for m in msgs if m["id"] == stale["id"])
+        new_msg = next(m for m in msgs if m["subject"] == "replacement task")
+        self.assertEqual(stale_msg["status"], "read")
+        self.assertEqual(new_msg["status"], "unread")
 
 
 class TestClaim(unittest.TestCase):

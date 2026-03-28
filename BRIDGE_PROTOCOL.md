@@ -54,6 +54,18 @@ CCA is responsible for relay when a message should propagate across lanes:
 
 Relay can be concise, but it must be explicit. Silence is not a relay.
 
+### Codex Dual-Notify Rule
+
+When Codex changes the Kalshi bot repo (`/Users/matthewshields/Projects/polymarket-bot/`):
+
+- Codex notifies CCA directly
+- Codex notifies Kalshi directly
+- Codex leaves a durable note in `CODEX_TO_CLAUDE.md`
+
+This is a standing rule for all Codex chats working on Kalshi-bot code or docs.
+Do not rely on one recipient to forward it later. Dual notification is required
+because the change affects both coordination lanes operationally.
+
 ## Session-Start Requirements
 
 ### CCA

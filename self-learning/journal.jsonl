@@ -876,3 +876,16 @@
 {"event_type":"feedback_roi","session":224,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T03:17:55.871946Z"}
 {"event_type":"sentinel_stats","session":224,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T03:17:55.871946Z"}
 {"event_type":"meta_learning_health","session":224,"health_score":0.829,"total_principles":15,"active_principles":13,"zombie_principles":2,"timestamp":"2026-03-28T03:17:55.871946Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T03:19:15.538141+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T03:19:15.561002+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T03:39:10.487749+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T03:39:10.528058+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":225,"domain":"general","outcome":"success","notes":"4 deliverables: Kalshi analysis, self-learning improvement, Gemini LLM backend, scanner verification","timestamp":"2026-03-28T03:40:31.070813Z"}
+{"event_type":"win","session":225,"domain":"general","notes":"REQ-61 statistical analysis delivered (UPDATE 72)","timestamp":"2026-03-28T03:40:31.070813Z"}
+{"event_type":"win","session":225,"domain":"general","notes":"MT-49 Phase 3: discoverer 0->5 auto-registered principles","timestamp":"2026-03-28T03:40:31.070813Z"}
+{"event_type":"win","session":225,"domain":"general","notes":"MT-53 Gemini backend with 12 tests","timestamp":"2026-03-28T03:40:31.070813Z"}
+{"event_type":"win","session":225,"domain":"general","notes":"Scanner dry-run verified 107 markets","timestamp":"2026-03-28T03:40:31.070813Z"}
+{"event_type":"pain","session":225,"domain":"general","notes":"None","timestamp":"2026-03-28T03:40:31.070813Z"}
+{"event_type":"feedback_roi","session":225,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T03:40:31.070813Z"}
+{"event_type":"sentinel_stats","session":225,"total_principles":186,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T03:40:31.070813Z"}
+{"event_type":"meta_learning_health","session":225,"health_score":0.659,"total_principles":20,"active_principles":13,"zombie_principles":7,"timestamp":"2026-03-28T03:40:31.070813Z"}

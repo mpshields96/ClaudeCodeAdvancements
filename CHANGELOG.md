@@ -3685,3 +3685,21 @@ CLI chat 2:
 - Matthew had to repeat no-API-key info
 
 ---
+
+## Session 225 — 2026-03-27
+
+**What changed:**
+- REQ-61 delivered: binomial CIs, FLB theory, sports game sample sizes (UPDATE 72)
+- MT-49 Phase 3: principle_discoverer now auto-registers (0->5 principles, 36 tests)
+- MT-53: Gemini backend built (12 tests), google-generativeai installed, --backend flag
+- domain_knowledge_scanner --dry-run verified (107 markets, UPDATE 73)
+
+**Why:**
+- REQ-61 statistical analysis, MT-49 Phase 3 discoverer improvements, MT-53 Gemini backend, scanner dry-run verified
+
+**Tests:** 11889/11889 passing (334 suites)
+
+**Lessons:**
+- None significant
+
+---

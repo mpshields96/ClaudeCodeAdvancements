@@ -121,6 +121,13 @@ Repo-local bridge files:
 - `CLAUDE_TO_CODEX.md` for Claude Code -> Codex notes
 - `CODEX_TO_CLAUDE.md` for Codex -> Claude Code durable notes
 
+Dual-notify rule for Kalshi-bot changes:
+- If Codex changes `/Users/matthewshields/Projects/polymarket-bot/`, Codex must notify both CCA and Kalshi.
+- Immediate visibility: send a CCA queue note to desktop and a Kalshi relay note (`km` and/or `kr`) via `cca_comm.py`.
+- Durable visibility: append the outcome to `CODEX_TO_CLAUDE.md` so CCA can replay it on future init/wrap.
+- Do this for code changes, bug fixes, parameter-safe hardening, and any other repo edits that materially affect Kalshi behavior or operator understanding.
+- Do not assume CCA will relay later. Dual notification is the default, not a special case.
+
 ## Codex Init / Auto / Wrap Emulation
 
 Codex should mirror the useful parts of CCA's workflow without pretending the
@@ -144,12 +151,14 @@ Auto:
 - Prefer default reasoning unless the task justifies high
 - Keep edits narrow, validate with local tests when practical, and use branch-first workflow
 - Use commit messages as durable handoff notes to Claude Code
+- If work changes the Kalshi bot, notify both CCA and Kalshi before moving on
 
 Wrap:
 - Stop before context gets muddy
 - Summarize outcome, tests, open issues, and next best step
 - Prepare a short relay message for Matthew / Claude Code when needed
 - Distill durable lessons into `CODEX_LEARNINGS.md` when they are likely to matter again
+- For Kalshi-bot changes, confirm both CCA and Kalshi were notified, not just one lane
 
 Autoloop:
 - In Codex desktop, autoloop means one bounded init -> auto -> wrap cycle

@@ -5,6 +5,24 @@
 
 ## Current State (as of Session 225 — 2026-03-27)
 
+**Phase:** Session 225 COMPLETE. REQ-61 statistical analysis, MT-49 Phase 3 discoverer improvements, MT-53 Gemini backend, scanner dry-run verified
+
+**What was done this session (S225):**
+- REQ-61 delivered: binomial CIs, FLB theory, sports game sample sizes (UPDATE 72)
+- MT-49 Phase 3: principle_discoverer now auto-registers (0->5 principles, 36 tests)
+- MT-53: Gemini backend built (12 tests), google-generativeai installed, --backend flag
+- domain_knowledge_scanner --dry-run verified (107 markets, UPDATE 73)
+- **Tests**: 334 suites, 11889 tests passing. All green.
+
+**Next:**
+1. MT-53: Test Gemini backend with real API
+2. Kalshi: Build --provider gemini for scanner
+3. MT-49: Confidence recalibration phase
+
+---
+
+## Previous State (Session 225 — 2026-03-27)
+
 **Phase:** Session 225 IN PROGRESS. REQ-61 analysis + MT-49 Phase 3 discoverer + MT-53 Gemini backend + scanner dry-run
 
 **What was done this session (S225):**
@@ -21,7 +39,6 @@
 4. Priority picker: MT-49 further phases (confidence recalibration, research ROI tracking)
 
 ---
-
 ## Previous State (Session 224 — 2026-03-27)
 
 **Phase:** Session 224 COMPLETE. MT-53 model flag + Kalshi domain_knowledge_scanner + MT-49 Phase 2 auto-accept + wrap wiring

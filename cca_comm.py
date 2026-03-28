@@ -163,7 +163,7 @@ def cmd_task(args):
     stale_old = [m for m in stale if m.get("created_at", "9999") < cutoff]
     if stale_old:
         for m in stale_old:
-            ciq.acknowledge(m["id"], target, _qpath())
+            ciq.acknowledge(m["id"], _qpath())
         print(f"Cleared {len(stale_old)} stale message(s) from {_target_name(target)} inbox.")
     ciq.send_message(me, target, task, priority="high", category="handoff", path=_qpath())
     print(f"Task assigned to {_target_name(target)}: {task}")

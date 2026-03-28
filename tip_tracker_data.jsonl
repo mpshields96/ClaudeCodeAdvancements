@@ -38,3 +38,5 @@
 {"tip":"meta_tracker.py can prune zombie principles programmatically \u2014 run MetaTracker().prune_zombies(dry_run=False) when health drops below 0.5","source":"cca-desktop","session":"S223","timestamp":"2026-03-28T02:58:14.248960Z"}
 {"tip":"Check feedback memories for hard constraints before writing external-service code","source":"cca-desktop","session":"S224","timestamp":"2026-03-28T03:17:55.871946Z"}
 {"tip":"Stub providers enable full pipeline testing without API keys","source":"cca-desktop","session":"S224","timestamp":"2026-03-28T03:17:55.871946Z"}
+{"tip":"Binomial confidence intervals via Rule of Three are fast to compute without scipy","source":"cca-desktop","session":"S225","timestamp":"2026-03-28T03:40:31.070813Z"}
+{"tip":"Evidence-boosted confidence scoring helps auto-discovery systems bridge the gap between statistical significance and practical utility","source":"cca-desktop","session":"S225","timestamp":"2026-03-28T03:40:31.070813Z"}
