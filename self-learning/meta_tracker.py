@@ -47,8 +47,11 @@ def _load_principles(path):
             try:
                 data = json.loads(line)
                 pid = data.get("id", "")
-                if pid and not data.get("pruned", False):
-                    principles[pid] = data
+                if pid:
+                    if data.get("pruned", False):
+                        principles.pop(pid, None)
+                    else:
+                        principles[pid] = data
             except (json.JSONDecodeError, TypeError):
                 continue
     return principles
@@ -159,6 +162,38 @@ class MetaTracker:
         zombies.sort(key=lambda z: z["sessions_stale"], reverse=True)
         return zombies[:limit]
 
+    def prune_zombies(self, current_session=0, min_stale_sessions=50, dry_run=True):
+        """Mark zombie principles as pruned. Conservative: only prunes 50+ session zombies.
+
+        Uses append-only writes to the principles JSONL (same as principle_registry).
+        Returns list of pruned principle dicts.
+        """
+        zombies = self.list_zombies(current_session=current_session, limit=500)
+        # Only prune the oldest zombies (50+ sessions stale by default)
+        targets = [z for z in zombies if z["sessions_stale"] >= min_stale_sessions]
+
+        if dry_run or not targets:
+            return targets
+
+        # Load full principle data for the targets we'll prune
+        principles = _load_principles(self.principles_path)
+        pruned_entries = []
+        for z in targets:
+            pid = z["id"]
+            if pid in principles:
+                p = principles[pid]
+                p["pruned"] = True
+                p["updated_at"] = datetime.now(timezone.utc).isoformat()
+                pruned_entries.append(p)
+
+        # Append pruned versions (append-only — latest version wins on reload)
+        if pruned_entries:
+            with open(self.principles_path, "a") as f:
+                for entry in pruned_entries:
+                    f.write(json.dumps(entry) + "\n")
+
+        return targets
+
     def snapshot(self, session=0):
         """Record a point-in-time snapshot of meta-learning health."""
         health = self.health(current_session=session)
@@ -235,6 +270,7 @@ def main():
     sub.add_parser("snapshot", help="Record health snapshot")
     sub.add_parser("trend", help="Show health trend")
     sub.add_parser("init-briefing", help="One-line briefing")
+    sub.add_parser("prune-zombies", help="Prune stale zombie principles")
 
     args = parser.parse_args()
     mt = MetaTracker(args.principles_path, args.snapshots_path)
@@ -273,6 +309,19 @@ def main():
 
     elif args.command == "init-briefing":
         print(mt.init_briefing(current_session=args.session))
+
+    elif args.command == "prune-zombies":
+        # Dry-run by default; pass --limit 0 to actually prune (via --limit flag)
+        # Actually: use a simple heuristic — dry_run unless user explicitly passes --limit > 0
+        # For safety, always dry-run from CLI. Programmatic callers use the class directly.
+        targets = mt.prune_zombies(current_session=args.session,
+                                   min_stale_sessions=50, dry_run=True)
+        print(f"Zombie Prune (DRY RUN): {len(targets)} principles eligible (50+ sessions stale)")
+        for t in targets[:10]:
+            print(f"  [{t['sessions_stale']}s stale] {t['id']} ({t['domain']}): {t['text'][:60]}")
+        if len(targets) > 10:
+            print(f"  ... and {len(targets) - 10} more")
+        print("To actually prune, call MetaTracker.prune_zombies(dry_run=False) programmatically.")
 
     else:
         parser.print_help()

@@ -283,6 +283,74 @@ class TestMetaTrackerCLI(unittest.TestCase):
         self.assertTrue(os.path.exists(self.snapshots_path))
 
 
+class TestMetaTrackerPruning(unittest.TestCase):
+    """Test zombie principle pruning."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+        self.principles_path = os.path.join(self.tmpdir, "principles.jsonl")
+        self.snapshots_path = os.path.join(self.tmpdir, "meta_snapshots.jsonl")
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _write_principles(self, principles):
+        with open(self.principles_path, "w") as f:
+            for p in principles:
+                f.write(json.dumps(p) + "\n")
+
+    def test_dry_run_doesnt_modify(self):
+        """Dry run should not modify the principles file."""
+        from meta_tracker import MetaTracker
+        principles = [
+            _make_principle("prin_old", "Old zombie", "general",
+                            usage=0, created_session=100),
+        ]
+        self._write_principles(principles)
+        original_size = os.path.getsize(self.principles_path)
+        mt = MetaTracker(self.principles_path, self.snapshots_path)
+        targets = mt.prune_zombies(current_session=200, min_stale_sessions=50, dry_run=True)
+        self.assertEqual(len(targets), 1)
+        self.assertEqual(os.path.getsize(self.principles_path), original_size)
+
+    def test_actual_prune_marks_pruned(self):
+        """Actual prune should append pruned=True entries."""
+        from meta_tracker import MetaTracker
+        principles = [
+            _make_principle("prin_old", "Old zombie", "general",
+                            usage=0, created_session=100),
+            _make_principle("prin_active", "Active one", "cca_operations",
+                            usage=5, success=4, created_session=100, last_used=190),
+        ]
+        self._write_principles(principles)
+        mt = MetaTracker(self.principles_path, self.snapshots_path)
+        pruned = mt.prune_zombies(current_session=200, min_stale_sessions=50, dry_run=False)
+        self.assertEqual(len(pruned), 1)
+        self.assertEqual(pruned[0]["id"], "prin_old")
+
+        # Verify the pruned principle is no longer loaded (pruned=True filtered out)
+        remaining = mt._principles()
+        self.assertNotIn("prin_old", remaining)
+        self.assertIn("prin_active", remaining)
+
+    def test_respects_min_stale_sessions(self):
+        """Only prune principles older than min_stale_sessions."""
+        from meta_tracker import MetaTracker
+        principles = [
+            _make_principle("prin_40s", "40 sessions stale", "general",
+                            usage=0, created_session=160),
+            _make_principle("prin_80s", "80 sessions stale", "general",
+                            usage=0, created_session=120),
+        ]
+        self._write_principles(principles)
+        mt = MetaTracker(self.principles_path, self.snapshots_path)
+        targets = mt.prune_zombies(current_session=200, min_stale_sessions=50, dry_run=True)
+        target_ids = [t["id"] for t in targets]
+        self.assertIn("prin_80s", target_ids)
+        self.assertNotIn("prin_40s", target_ids)
+
+
 class TestMetaTrackerBriefing(unittest.TestCase):
     """Test the init-briefing output format."""
 
