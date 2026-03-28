@@ -3703,3 +3703,23 @@ CLI chat 2:
 - None significant
 
 ---
+
+## Session 226 — 2026-03-28
+
+**What changed:**
+- CLI mode detection in trigger+stop hook (9 new tests)
+- CLI_AUTOLOOP_MIGRATION.md guide written
+- Cross-chat Kalshi+Codex notified
+- pipefail bug found and fixed in start_autoloop.sh
+
+**Why:**
+- CLI autoloop migration Phase 1 — CCA terminal support with pipefail fix
+
+**Tests:** 11898/11898 passing (334 suites)
+
+**Lessons:**
+- Could not launch CLI autoloop from within desktop session (TTY + pipefail issues)
+- Opened 4+ stale Terminal windows debugging
+- High context before successful launch
+
+---

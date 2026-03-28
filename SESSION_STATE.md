@@ -5,6 +5,24 @@
 
 ## Current State (as of Session 226 — 2026-03-28)
 
+**Phase:** Session 226 COMPLETE. CLI autoloop migration Phase 1 — CCA terminal support with pipefail fix
+
+**What was done this session (S226):**
+- CLI mode detection in trigger+stop hook (9 new tests)
+- CLI_AUTOLOOP_MIGRATION.md guide written
+- Cross-chat Kalshi+Codex notified
+- pipefail bug found and fixed in start_autoloop.sh
+- **Tests**: 334 suites, 11898 tests passing. All green.
+
+**Next:**
+1. Verify pipefail fix (0342d81) and launch CLI autoloop
+2. Phase 2 Codex CLI migration
+3. Phase 3 Kalshi CLI autoloop
+
+---
+
+## Previous State (Session 226 — 2026-03-28)
+
 **Phase:** Session 226 IN PROGRESS. CLI autoloop migration — Phase 1 (CCA) COMPLETE.
 
 **What was done this session (S226):**
@@ -32,7 +50,6 @@ See CLI_AUTOLOOP_MIGRATION.md for complete instructions.
 4. MT-49: Confidence recalibration phase
 
 ---
-
 ## Previous State (Session 225 — 2026-03-27)
 
 **Phase:** Session 225 IN PROGRESS. REQ-61 analysis + MT-49 Phase 3 discoverer + MT-53 Gemini backend + scanner dry-run

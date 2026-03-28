@@ -3,59 +3,63 @@
 ## Start Here
 Run /cca-init. This is the S226 handoff.
 
-## URGENT: CLI AUTOLOOP MIGRATION — VERIFY AND COMPLETE
+## URGENT: CLI AUTOLOOP MIGRATION — VERIFY AND LAUNCH
 
-S226 built CLI autoloop support but the LAST COMMIT (0342d81) was made at high context
-and Matthew does NOT trust it. The next chat MUST:
+S226 built CLI autoloop support. The LAST COMMIT (0342d81) was made at high context.
+Matthew DOES NOT TRUST high-context work. You MUST verify before trusting it.
 
-1. **READ AND VERIFY every change from S226** — 3 commits:
-   - c3d85d8: CLI mode detection in autoloop_trigger.py + autoloop_stop_hook.py
-   - 278dd75: Session state updates
-   - 0342d81: Fix pipefail crash in start_autoloop.sh (HIGH CONTEXT — VERIFY THIS)
+### Step 1: Verify the pipefail fix
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+bash -euo pipefail -c '
+CCA_CLI_COUNT=$(ps ax -o command 2>/dev/null | grep -c "[c]laude --dangerously-skip.*[C]laudeCodeAdvancements" || true)
+echo "COUNT=$CCA_CLI_COUNT"
+'
+```
+Expected: COUNT=0, no crash. If it crashes, the fix is wrong — debug and re-fix.
 
-2. **Test the pipefail fix specifically:**
-   ```bash
-   bash -euo pipefail -c '
-   CCA_CLI_COUNT=$(ps ax -o command 2>/dev/null | grep -c "[c]laude --dangerously-skip.*[C]laudeCodeAdvancements" || true)
-   echo "COUNT=$CCA_CLI_COUNT"
-   '
-   ```
-   Expected: COUNT=0, no crash.
+### Step 2: Launch CLI autoloop in a LIVE Terminal.app window
+```bash
+/Users/matthewshields/Projects/ClaudeCodeAdvancements/start_autoloop.sh
+```
+Use the FULL PATH because Terminal opens in home dir by default.
+Verify: the loop banner prints, then `claude` spawns with the resume prompt.
+You should see `/cca-init` running in the output.
 
-3. **Launch the CLI autoloop in Terminal.app and verify it actually spawns claude:**
-   ```bash
-   /Users/matthewshields/Projects/ClaudeCodeAdvancements/start_autoloop.sh
-   ```
-   The S226 session could NOT successfully launch — the pipefail bug killed it.
-   After the fix, verify the loop starts AND spawns a claude session.
+### Step 3: DO NOT disrupt the Kalshi chat
+There is an ACTIVE Kalshi session running in Terminal.app right now.
+When launching CCA autoloop, open a NEW Terminal window — do not run in the Kalshi window.
+Check: `ps ax | grep "claude.*dangerously-skip" | grep -v grep` to see existing sessions.
 
-4. **Close stale Terminal windows** — S226 opened 4+ Terminal windows trying to debug.
-   Close windows 72, 226, 236, 240 if still open.
+### Step 4: Close stale Terminal windows from S226
+S226 opened 4+ Terminal windows while debugging. IDs were 72, 226, 236, 240.
+Close any that are still open and empty/errored.
 
-## What Was Built (S226)
-- autoloop_trigger.py: is_cli_mode() — skips AppleScript when CCA_AUTOLOOP_CLI=1
-- autoloop_stop_hook.py: is_cli_mode() — skips desktop trigger when CCA_AUTOLOOP_CLI=1
-- start_autoloop.sh: exports CCA_AUTOLOOP_CLI=1, fixed pipefail bug
+### Step 5: Dedupe old CCA desktop chats
+Once the new CLI chat is fully live and continuing CCA work, Matthew wants
+old CCA desktop app chats closed/deduped. Only keep the one active CLI session.
+
+## What S226 Built
+- autoloop_trigger.py: is_cli_mode() skips AppleScript when CCA_AUTOLOOP_CLI=1
+- autoloop_stop_hook.py: is_cli_mode() skips desktop trigger when CCA_AUTOLOOP_CLI=1
+- start_autoloop.sh: exports CCA_AUTOLOOP_CLI=1, fixed pipefail bug (0342d81)
 - cca_autoloop.py: sets CCA_AUTOLOOP_CLI=1 in subprocess env
 - 9 new CLI mode tests (tests/test_autoloop_stop_hook.py)
 - CLI_AUTOLOOP_MIGRATION.md: complete setup guide
+- 4 commits: c3d85d8, 278dd75, 0342d81, e1358bc
 
-## What Still Needs Done
-- VERIFY 0342d81 commit is correct (Matthew doesn't trust high-context work)
-- Successfully launch CLI autoloop in Terminal.app (not achieved in S226)
-- Once CCA CLI verified: Phase 2 (Codex CLI migration), Phase 3 (Kalshi CLI autoloop)
+## After CCA CLI is Verified
+- Phase 2: Codex CLI migration (Codex notified via CLAUDE_TO_CODEX.md)
+- Phase 3: Kalshi CLI autoloop (Kalshi notified via CCA_TO_POLYBOT.md)
+- Then resume normal CCA work: MT-53 Gemini backend, MT-49 confidence recal
 
 ## Matthew Directive (S226)
 - ALL chats migrating from desktop Electron to CLI terminal (MacBook thermal relief)
 - Full permission to execute terminal commands
-- CLI_AUTOLOOP_MIGRATION.md has setup guide
-- Cross-chat: Kalshi + Codex notified via bridge files
-- Memory saved: feedback_cli_migration_permission.md + project_cli_migration_s226.md
+- DO NOT interrupt/disrupt Kalshi chat in Terminal.app
+- Dedupe old CCA chats once new CLI chat is live
+- Memory: feedback_cli_migration_permission.md + project_cli_migration_s226.md
+- TODAYS_TASKS.md: CLI migration is #1 priority
 
 ## Tests
-334 suites, 11898 tests passing. Git: 3 commits ahead of S225.
-
-## Coordination
-- CCA->Kalshi: CLI migration directive NOTIFIED
-- CCA->Codex: ACK 6 — CLI migration status sent
-- TODAYS_TASKS.md: CLI migration is #1 priority
+334 suites, 11898 tests passing. Git: 4 commits from S226.
