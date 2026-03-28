@@ -143,7 +143,7 @@ Expected output: all PASS. If any FAIL, fix before launching.
 
 | File | Change |
 |------|--------|
-| `autoloop_trigger.py` | Added `is_cli_mode()` — skips AppleScript in CLI mode |
+| `autoloop_trigger.py` | Added `is_cli_mode()` — writes breadcrumb only in CLI mode; outer loop handles chaining |
 | `autoloop_stop_hook.py` | Added `is_cli_mode()` — skips trigger fire in CLI mode |
 | `start_autoloop.sh` | Sets `CCA_AUTOLOOP_CLI=1` before spawning claude |
 | `cca_autoloop.py` | Sets `CCA_AUTOLOOP_CLI=1` in subprocess env |

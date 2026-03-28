@@ -452,13 +452,14 @@ class TestTriggerCLIMode(unittest.TestCase):
                     self.assertTrue(os.path.exists(breadcrumb))
 
     def test_trigger_cli_mode_no_applescript(self):
-        """In CLI mode, trigger never imports or uses DesktopAutomator."""
+        """In CLI mode, trigger does not attempt Terminal/AppleScript chaining."""
         with patch.dict(os.environ, {"CCA_AUTOLOOP_CLI": "1"}):
             with patch.object(self.mod, "AUDIT_LOG", os.path.join(tempfile.mkdtemp(), "audit.jsonl")):
                 with patch("os.path.expanduser", return_value=os.path.join(tempfile.mkdtemp(), "fired")):
-                    # If DesktopAutomator were used, it would fail — this proves it's not
-                    result = self.mod.trigger_next_session(dry_run=False)
-                    self.assertTrue(result)
+                    with patch("subprocess.run") as mock_run:
+                        result = self.mod.trigger_next_session(dry_run=False)
+                        self.assertTrue(result)
+                        mock_run.assert_not_called()
 
 
 if __name__ == "__main__":

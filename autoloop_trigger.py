@@ -116,7 +116,7 @@ def trigger_next_session(dry_run: bool = False) -> bool:
 
     Returns True if all steps succeeded.
     """
-    # CLI mode: spawn a new Terminal.app window, then close old one
+    # CLI mode: outer loop owns session chaining, so just mark success.
     if is_cli_mode():
         _log("trigger_cli_mode", {"dry_run": dry_run})
         breadcrumb_path = os.path.expanduser("~/.cca-autoloop-fired")
@@ -127,34 +127,10 @@ def trigger_next_session(dry_run: bool = False) -> bool:
             pass
 
         if dry_run:
-            print("CLI autoloop mode — DRY RUN. Would open new Terminal window and close old.")
+            print("CLI autoloop mode — DRY RUN. Outer loop will handle the next session.")
             return True
 
-        import subprocess
-        project_dir = os.path.dirname(os.path.abspath(__file__))
-
-        # AppleScript: open new Terminal window with start_autoloop.sh,
-        # then close the OLD window (the one running this session)
-        applescript = f'''
-        tell application "Terminal"
-            -- Remember the current (old) window
-            set oldWindow to front window
-
-            -- Open new window with the autoloop script (S229: always use Opus for CCA)
-            do script "cd {project_dir} && MODEL_STRATEGY=opus-primary bash start_autoloop.sh"
-
-            -- Close the old window (kills old shell + old claude session)
-            delay 2
-            close oldWindow
-        end tell
-        '''
-        try:
-            subprocess.run(["osascript", "-e", applescript],
-                           capture_output=True, timeout=15)
-            print("CLI autoloop: New Terminal window opened. Old window closing.")
-        except Exception as e:
-            print(f"CLI autoloop: Terminal spawn failed ({e}). Use start_autoloop.sh manually.")
-
+        print("CLI autoloop mode — outer loop will handle the next session.")
         return True
 
     # Log peak/off-peak context (MT-38 Phase 4)
