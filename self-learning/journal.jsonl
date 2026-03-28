@@ -792,3 +792,15 @@
 {"event_type":"pain","session":219,"domain":"general","notes":"Battle AI callback bug introduced then caught during wrap","timestamp":"2026-03-28T00:22:26.235120Z"}
 {"event_type":"feedback_roi","session":219,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T00:22:26.235120Z"}
 {"event_type":"sentinel_stats","session":219,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T00:22:26.235120Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:23:24.842174+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:23:24.863950+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:40:37.488093+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:40:37.514156+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":220,"domain":"general","outcome":"success","notes":"Kalshi URGENT strategy pivot + MT-53 mGBA migration + Crystal boot tuning","timestamp":"2026-03-28T00:41:08.852452Z"}
+{"event_type":"win","session":220,"domain":"general","notes":"URGENT Kalshi pivot \u2014 flagged banned markets, recommended KXBTCD","timestamp":"2026-03-28T00:41:08.852452Z"}
+{"event_type":"win","session":220,"domain":"general","notes":"PyBoy removal + mGBA migration (11 files)","timestamp":"2026-03-28T00:41:08.852452Z"}
+{"event_type":"win","session":220,"domain":"general","notes":"Crystal boot tuned for mGBA","timestamp":"2026-03-28T00:41:08.852452Z"}
+{"event_type":"win","session":220,"domain":"general","notes":"4 commits 4 tasks 16 minutes","timestamp":"2026-03-28T00:41:08.852452Z"}
+{"event_type":"pain","session":220,"domain":"general","notes":"Crystal stairs transition unfinished","timestamp":"2026-03-28T00:41:08.852452Z"}
+{"event_type":"feedback_roi","session":220,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T00:41:08.852452Z"}
+{"event_type":"sentinel_stats","session":220,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T00:41:08.852452Z"}

@@ -29,3 +29,5 @@
 {"tip":"Port complete data tables from reference repos before writing custom code \u2014 860 LOC in one commit vs weeks of hand-building","source":"cca-desktop","session":"S218","timestamp":"2026-03-28T00:02:00.355625Z"}
 {"tip":"mgba-py core.memory gives direct RAM access \u2014 same API shape as PyBoy","source":"cca-desktop","session":"S219","timestamp":"2026-03-28T00:22:26.235120Z"}
 {"tip":"Run --offline --steps 500 to validate emulator+RAM without API cost","source":"cca-desktop","session":"S219","timestamp":"2026-03-28T00:22:26.235120Z"}
+{"tip":"mGBA bindings need cffi+cached_property in venv \u2014 add to setup.sh","source":"cca-desktop","session":"S220","timestamp":"2026-03-28T00:41:08.852452Z"}
+{"tip":"Crystal intro takes ~9000 frames \u2014 use chunked cycle approach with early break","source":"cca-desktop","session":"S220","timestamp":"2026-03-28T00:41:08.852452Z"}

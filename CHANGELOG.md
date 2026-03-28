@@ -3595,3 +3595,21 @@ CLI chat 2:
 - Battle AI callback bug introduced then caught
 
 ---
+
+## Session 220 — 2026-03-27
+
+**What changed:**
+- URGENT Kalshi pivot analysis — flagged banned markets, recommended KXBTCD threshold
+- Complete PyBoy removal + mGBA migration (11 files, -139/+44 LOC)
+- Crystal boot sequence tuned — verified map IDs, game boots to Player's House 2F
+- 4 commits, 4 tasks in 16 minutes
+
+**Why:**
+- Kalshi URGENT strategy pivot + MT-53 mGBA migration + Crystal boot tuning
+
+**Tests:** 540/540 passing (10 suites)
+
+**Lessons:**
+- Crystal stairs transition needs remaining map ID verification
+
+---

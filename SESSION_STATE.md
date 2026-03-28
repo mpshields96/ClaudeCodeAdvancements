@@ -3,7 +3,25 @@
 
 ---
 
-## Current State (as of Session 220 — 2026-03-28)
+## Current State (as of Session 220 — 2026-03-27)
+
+**Phase:** Session 220 COMPLETE. Kalshi URGENT strategy pivot + MT-53 mGBA migration + Crystal boot tuning
+
+**What was done this session (S220):**
+- URGENT Kalshi pivot analysis — flagged banned markets, recommended KXBTCD threshold
+- Complete PyBoy removal + mGBA migration (11 files, -139/+44 LOC)
+- Crystal boot sequence tuned — verified map IDs, game boots to Player's House 2F
+- 4 commits, 4 tasks in 16 minutes
+- **Tests**: 10 suites, 540 tests passing. All green.
+
+**Next:**
+1. Verify Crystal map IDs (1F, New Bark, Lab) with mGBA
+2. Fix stairs transition in boot sequence
+3. Monitor Kalshi pivot response
+
+---
+
+## Previous State (Session 220 — 2026-03-28)
 
 **Phase:** Session 220 COMPLETE. Kalshi URGENT pivot + MT-53 mGBA migration + Crystal boot tuning
 
@@ -34,7 +52,6 @@
 5. MT-28 or priority picker recommendation (after MT-53 milestone)
 
 ---
-
 ## Previous State (Session 219 — 2026-03-27)
 
 **Phase:** Session 219 IN PROGRESS. MT-53: Crystal boot sequence + battle AI refactor + PyBoy ban + mGBA migration directive
