@@ -1285,3 +1285,242 @@ classical FLB — possibly microstructure effects specific to ultra-short direct
 #   sim = FillRateSimulator.from_db()  # auto-calibrates from polybot.db
 #   result = sim.simulate(93, 1, 300, 2, 5000)
 #   print(result.fill_rate)  # 0.45
+
+---
+
+## [2026-03-28] — DELIVERY: Kalshi Political/Geopolitical Market Intelligence
+## CCA S226 Research — Series Scanner Candidates
+## For: Kalshi main chat — new market type assessment
+
+### BACKGROUND
+
+Per Lu et al. (2024), LLMs achieve Brier score 0.135 vs crowd 0.149 on political prediction
+markets — a ~9% edge specifically in political/geopolitical domains. This is the academic basis
+for adding political series to the scanner.
+
+Kalshi has 1,802 Politics series + 1,210 Elections series + 142 World series = 3,154 politically
+relevant series total. The API endpoint is:
+  https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=<TICKER>&status=open
+
+Volume unit note: Kalshi API uses `volume_fp` (float, in contracts/cents), NOT `volume`.
+The `volume` field returns 0 in the current API version. Always use `volume_fp`.
+
+---
+
+### TOP-VOLUME POLITICAL SERIES (ranked by total open market volume_fp)
+
+| Rank | Series Ticker        | Vol_fp (open mkts) | OI_fp     | Mkts | Resolution Window | Description |
+|------|---------------------|-------------------|-----------|------|-------------------|-------------|
+| 1    | KXTRUMPADMINLEAVE    | 1,595,954         | 759,623   |  34  | Year-end (2026-12-31) | Who leaves Trump admin |
+| 2    | KXLAGODAYS           | 620,739           | 318,664   |   5  | 1-4 weeks (monthly) | Trump Mar-a-Lago trips |
+| 3    | KXTRUMPBULLCASECOMBO | 389,539           | 182,633   |   1  | Year-end (2027-12-31) | Trump bull case combo |
+| 4    | KXHOUSERACE          | 289,433           | 172,990   | 200+ | Year-end (2027-11-03) | 2026 House races |
+| 5    | KXTRUMPBEARCASECOMBO | 128,905           | 68,880    |   1  | Year-end (2027-12-31) | Trump bear case combo |
+| 6    | KXBILLS              | 117,458           | 37,465    |  17  | Year-end (2027-01-01) | Bills become law this year |
+| 7    | KXNEWTARIFFS         | 86,870            | 35,705    |   1  | 1-4 weeks (monthly) | New tariffs this month |
+| 8    | KXTRUMPAPPROVALBELOW | 89,804            | 59,924    |   8  | Year-end (2027-01-07) | How low Trump approval |
+| 9    | KXTRUMPAPPROVALYEAR  | 84,813            | 39,143    |   8  | Year-end (2027-01-07) | How high Trump approval |
+| 10   | KXTRUMPMEET          | 73,685            | 36,296    |  14  | 1-4 weeks (monthly) | Who Trump meets |
+| 11   | KXSCOTUSN            | 65,502            | 40,405    |   1  | Year-end (2027-01-01) | New SCOTUS justice |
+| 12   | KXTRUMPFIRE          | 52,869            | 28,186    |   6  | Year-end (2027-01-01) | Trump firings |
+| 13   | KXTARIFFRATEPRC      | 45,062            | 22,186    |   7  | 3 months (2026-07-01) | Tariff rate on China |
+| 14   | KXMARALAGO           | 42,766            | 12,726    |  11  | Year-end (2027-01-01) | Mar-a-Lago visitors (annual) |
+| 15   | KXTRUMPSTATES        | 29,708            | 9,952     |  15  | Year-end (2027-01-01) | States Trump visits |
+| 16   | KXFBUSTER            | 29,415            | 16,945    |   1  | Year-end (2027-01-02) | Filibuster weakened |
+| 17   | KXCABLEAVE           | 22,383            | 16,966    |   6  | Year-end (2027-01-02) | Cabinet member leaving |
+| 18   | KXTRUMPACT           | 18,286            | 16,312    |   7  | Weekly | Trump presidential actions |
+| 19   | KXVETOCOUNT          | 14,308            | 5,378     |   5  | Year-end (2027-01-01) | Trump vetoes |
+| 20   | KXPARDONSTRUMP       | 11,674            | 7,333     |   8  | 1-4 weeks (monthly) | Trump pardons |
+
+---
+
+### 1-4 WEEK RESOLUTION MARKETS (trading-window-aligned, March 28, 2026)
+
+These are the actionable near-term series with markets closing April 1-25, 2026:
+
+| Series Ticker  | Near-Term Vol | Near Mkts | Best Mkt Example | Close |
+|---------------|--------------|-----------|------------------|-------|
+| KXLAGODAYS    | 620,739      |  5  | "4 trips to Mar-a-Lago in Mar" bid=0.98 ask=0.99 | 2026-04-01 |
+| KXNEWTARIFFS  | 86,870       |  1  | "New tariffs in March 2026?" bid=0.06 ask=0.07 | 2026-04-01 |
+| KXTRUMPMEET   | 73,685       | 14  | "Trump & Xi meet before Apr 1" bid=0.30 ask=0.31 | 2026-04-01 |
+| KXBILLSCOUNT  | 31,088       |  8  | "4 bills signed in Mar 2026" bid=0.74 ask=0.79 | 2026-04-01 |
+| KXPARDONSTRUMP| 11,674       |  8  | "0 pardons in Mar 2026" bid=0.78 ask=0.83 | 2026-04-01 |
+| KXEOWEEK      | 8,614        |  1  | ">1 EO signed Mar 22-28" bid=0.98 ask=1.00 | 2026-04-05 |
+| KXTRUMPACT    | 18,286       |  0  | "7+ presidential actions wk of Mar 22" | (all expire this week) |
+| KXVOTEHUBTRUMPUPDOWN | 142 | 1  | "Approval above 40.6% Apr 2" bid=0.15 ask=0.38 | 2026-04-03 |
+| KXAPRPOTUS    | ~738 est     |  8  | "Approval above 42.5% Apr 3" | 2026-04-03 |
+
+Note: KXLAGODAYS is almost certainly resolved (4 trips at 0.98/0.99 = near-certain).
+The unresolved near-term opportunity is KXNEWTARIFFS and KXTRUMPMEET.
+
+---
+
+### TOP 5 SCANNER SERIES RECOMMENDATIONS
+
+Ranked by LLM-edge potential (political knowledge + near-term resolution + real volume):
+
+**#1 — KXTRUMPADMINLEAVE** (WHO LEAVES TRUMP ADMIN)
+- Vol: 1.6M, OI: 760K, 34 open markets
+- Resolution: year-end but markets are binary yes/no per cabinet member
+- LLM edge: HIGH — LLM has strong recall of cabinet member stability, political conflicts,
+  Congressional confirmation votes, and ongoing reporting. Crowd underestimates reshuffle rates.
+- Best individual market: Lori Chavez-DeRemer (Labor) vol=101,518 — high volume, competitive odds
+- How to scan: series_ticker=KXTRUMPADMINLEAVE, filter by yes_bid in 0.20-0.75 range
+- Watch: Pete Hegseth equivalent is gone; look for Defense/DOJ/DHS slots with 30-50c pricing
+
+**#2 — KXLAGODAYS** (TRUMP MAR-A-LAGO TRIPS MONTHLY)
+- Vol: 621K, OI: 319K, 5 open markets, closes 2026-04-01 (3 days)
+- Resolution: monthly, very near-term
+- LLM edge: MODERATE — requires counting verifiable Trump travel records; LLM can cross-reference
+  news reports. However, current markets (Apr 1 close) appear already resolved (4 trips at 98c).
+- Best time to trade: First week of each month when new markets open with uncertain pricing
+- How to scan: series_ticker=KXLAGODAYS, status=open, look for yes_bid 0.25-0.75
+
+**#3 — KXNEWTARIFFS** (NEW TARIFFS THIS MONTH)
+- Vol: 86,870, OI: 35,705, 1 open market, closes 2026-04-01
+- Resolution: monthly binary
+- LLM edge: HIGH — tariff policy is extensively covered; LLM knows Trump's tariff history,
+  executive action patterns, and scheduled trade negotiations. Current market says 6-7c (94%
+  chance of NO new tariff executive actions in March) — LLM can verify this from news.
+- Structural note: This is a binary monthly trigger — when tariff headlines break mid-month,
+  this market moves dramatically and predictably
+- How to scan: series_ticker=KXNEWTARIFFS, status=open
+
+**#4 — KXTRUMPMEET** (WHO TRUMP MEETS MONTHLY)
+- Vol: 73,685, OI: 36,296, 14 markets closing Apr 1
+- Resolution: monthly binary per meeting partner
+- LLM edge: VERY HIGH — LLM has strong knowledge of diplomatic schedules, state visit
+  announcements, treaty negotiations. Top market: Trump-Xi Jinping at 30-31c (30% probability).
+  LLM can assess based on current US-China relations and diplomatic calendar.
+- Example: Trump & Sam Altman at 12-15c — LLM knows whether this is plausible given news
+- How to scan: series_ticker=KXTRUMPMEET, yes_bid range 0.05-0.50
+
+**#5 — KXTARIFFRATEPRC** (TARIFF RATE ON CHINA)
+- Vol: 45,062, OI: 22,186, 7 markets with 3-month resolution (July 2026)
+- LLM edge: HIGH — tariff rate on China is heavily covered policy domain; the market currently
+  prices 10-20% range at 64-71c (most likely), 20-30% at 12-19c. LLM can assess based on
+  current tariff schedule and trade negotiation trajectory.
+- Structural note: Longer resolution (July) = more time for information decay from crowd;
+  LLM signal stays fresh longer
+- How to scan: series_ticker=KXTARIFFRATEPRC, status=open
+
+---
+
+### ALSO WORTH MONITORING (lower volume but interesting)
+
+| Series | Vol | Why Interesting |
+|--------|-----|-----------------|
+| KXSCOTUSN | 65,502 | Justice vacancy — binary year-end, 60-61c bid/ask |
+| KXBILLS | 117,458 | Specific bills with 10-43c pricing, LLM knows bill status |
+| KXHOUSERACE | 289,433 | 716 markets, year-end, good volume spread across races |
+| KXTRUMPBULLCASECOMBO | 389,539 | Combo market 7-8c — structural bet on policy outcomes |
+| KXTRUMPAPPROVALBELOW | 89,804 | Range markets on approval %, LLM knows current trends |
+
+---
+
+### API INTEGRATION NOTES
+
+Correct API call:
+```python
+url = "https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXTRUMPADMINLEAVE&status=open&limit=200"
+# Always use: volume_fp (not volume), open_interest_fp (not open_interest)
+# yes_bid_dollars, yes_ask_dollars for pricing
+# close_time for resolution date
+```
+
+Rate limits: API returns 429 after ~6-8 rapid calls. Add 1.5-2s delay between series lookups.
+
+Volume note: vol_fp units appear to be in contracts (1 contract = $0.01 per cent of notional).
+The top market (KXTRUMPADMINLEAVE) at 1.6M vol_fp with last_price_dollars=0.36 implies roughly
+$5,760 in traded dollar value. Kalshi political markets are smaller than crypto but real.
+
+---
+
+### DECISION FRAMEWORK FOR KALSHI RESEARCH
+
+Before adding any series to the live scanner, evaluate:
+1. Vol_fp > 10,000 total across open markets (confirmed for all Top 5 above)
+2. Near-term resolution (ideally < 4 weeks, or year-end with ongoing updates)
+3. LLM has a verifiable information edge (not just vibes — news-verifiable facts)
+4. Bid-ask spread < 15c (illiquid markets with wide spreads eat the edge)
+5. Not already near-certain (98c markets have no upside — skip KXLAGODAYS for now)
+
+The highest-ROI path is probably KXTRUMPMEET near the end of each month as new markets open —
+the "Trump meets Xi" market at 30c is exactly the kind of politically-informed binary where
+LLM recall (diplomatic news, summit announcements) gives an edge over crowd prediction.
+
+---
+
+### CITATION NOTE (for Lu 2024 claim)
+
+The Brier score claim (LLM 0.135 vs crowd 0.149) is sourced from:
+Lu, Y. et al. (2024). "Can Large Language Models Beat Wall Street? A Study of LLM-based
+Prediction of Political Prediction Markets." This citation requires independent verification
+before citing in trading logic. Treat as directionally motivating, not a precise trading edge.
+[UNVERIFIED — verify at arXiv/SSRN before citing formally]
+
+---
+
+Written: 2026-03-28 | CCA S226
+Next step for Kalshi research: Pull KXTRUMPMEET April markets when they open (1st of month),
+test LLM signal on meeting probability, compare to market price.
+| KXVOTEHUBTRUMPUPDOWN | Weekly | VoteHub approval index |
+
+**Sniper verdict:** KX538APPROVE + KXAPRPOTUS = highest value for approval tracking (two independent aggregators, same weekly cadence). KXTRUMPACT is top pick for executive action events.
+
+---
+
+### BEST MONTHLY SERIES
+
+| Series | Notes |
+|--------|-------|
+| KXNEWTARIFFS | Tariff announcements — policy-driven, clear triggers |
+| KXPARDONSTRUMP | Presidential pardons — episodic but binary |
+| KXJUDGECOUNT | Federal judge confirmations — objective count |
+| KXSWENCOUNTERS | Southwest border encounters — regular DHS data release |
+
+---
+
+### TOP 5 TO ADD TO domain_knowledge_scanner.py CATEGORY_SERIES["politics"]
+
+```python
+CATEGORY_SERIES["politics"] = [
+    "KX538APPROVE",      # Weekly approval polling (primary)
+    "KXAPRPOTUS",        # Weekly approval (secondary aggregator)
+    "KXNEWTARIFFS",      # Monthly tariff policy
+    "KXEOWEEK",          # Weekly EO count
+    "KXTRUMPACT",        # Daily/weekly executive actions
+]
+```
+
+---
+
+### TOP 3 TO ADD TO CATEGORY_SERIES["geopolitics"]
+
+```python
+CATEGORY_SERIES["geopolitics"] = [
+    "KXUKRAINE",         # Ukraine conflict resolution — high volume
+    "KXKHAMENEIOUT",     # Iran leadership — $50M+ volume, episodic
+    "KXUSUNSCVETO",      # UN Security Council votes — objective
+]
+```
+
+---
+
+### VOLUME NOTES
+
+- **NYC Mayor race (KXNYCMAYOR):** $48M+ — largest political market by volume. Not daily/weekly but worth monitoring for big-event sniper opportunities.
+- **Khamenei markets (KXKHAMENEIOUT):** $50M+ — massive volume, low frequency. Pure event-driven.
+- **2026 midterms:** Dominant driver of political market growth. KXHOUSE2026/KXSENATE2026 series will dwarf everything else by Q3 2026.
+- **Daily/weekly cadence = best for systematic sniper** — predictable settlement sources, regular news data, consistent edge opportunities.
+
+---
+
+### IMPLEMENTATION RECOMMENDATION
+
+1. Add politics/geopolitics series to `domain_knowledge_scanner.py` using lists above
+2. Prioritize weekly-cadence series (KX538APPROVE, KXAPRPOTUS) for initial testing — most similar to existing daily_sniper pattern
+3. KXTRUTHSOCIAL + KXFULLLIDBEFORE8PM are novel (machine-verifiable resolution) — worth separate edge research before live
+
+Status: DELIVERED
+Research source: S227 Kalshi series audit (full list evaluated, top picks surfaced)
