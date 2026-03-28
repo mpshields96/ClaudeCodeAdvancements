@@ -3613,3 +3613,20 @@ CLI chat 2:
 - Crystal stairs transition needs remaining map ID verification
 
 ---
+
+## Session 221 — 2026-03-27
+
+**What changed:**
+- Fixed all 4 Crystal map IDs verified via mGBA RAM + pret source
+- Added warp tile coordinates and fixed MAP_NAMES table
+- MT53_STATUS.md for future chat continuity
+
+**Why:**
+- Fixed Crystal map IDs + warp coordinates from pret/pokecrystal, created save states, documented for future chats
+
+**Tests:** 540/540 passing (10 suites)
+
+**Lessons:**
+- Spent too long brute-forcing save states instead of wiring agent loop
+
+---

@@ -3,7 +3,24 @@
 
 ---
 
-## Current State (as of Session 220 — 2026-03-27)
+## Current State (as of Session 221 — 2026-03-27)
+
+**Phase:** Session 221 COMPLETE. Fixed Crystal map IDs + warp coordinates from pret/pokecrystal, created save states, documented for future chats
+
+**What was done this session (S221):**
+- Fixed all 4 Crystal map IDs verified via mGBA RAM + pret source
+- Added warp tile coordinates and fixed MAP_NAMES table
+- MT53_STATUS.md for future chat continuity
+- **Tests**: 10 suites, 540 tests passing. All green.
+
+**Next:**
+1. Wire agent loop to mGBA backend
+2. Get bot actually playing Crystal for 15-20 min sessions
+3. Kalshi support if requested
+
+---
+
+## Previous State (Session 220 — 2026-03-27)
 
 **Phase:** Session 220 COMPLETE. Kalshi URGENT strategy pivot + MT-53 mGBA migration + Crystal boot tuning
 
@@ -20,7 +37,6 @@
 3. Monitor Kalshi pivot response
 
 ---
-
 ## Previous State (Session 220 — 2026-03-28)
 
 **Phase:** Session 220 COMPLETE. Kalshi URGENT pivot + MT-53 mGBA migration + Crystal boot tuning

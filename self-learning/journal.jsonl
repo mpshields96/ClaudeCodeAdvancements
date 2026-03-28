@@ -804,3 +804,13 @@
 {"event_type":"pain","session":220,"domain":"general","notes":"Crystal stairs transition unfinished","timestamp":"2026-03-28T00:41:08.852452Z"}
 {"event_type":"feedback_roi","session":220,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T00:41:08.852452Z"}
 {"event_type":"sentinel_stats","session":220,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T00:41:08.852452Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:42:06.311591+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:42:06.335692+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T01:23:47.255352+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T01:23:47.301578+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":221,"domain":"general","outcome":"success","notes":"MT-53 map verification + documentation session","timestamp":"2026-03-28T01:24:47.636751Z"}
+{"event_type":"win","session":221,"domain":"general","notes":"Fixed all 4 Crystal map IDs from pret/pokecrystal source","timestamp":"2026-03-28T01:24:47.636751Z"}
+{"event_type":"win","session":221,"domain":"general","notes":"Warp coordinates verified, MT53_STATUS.md for future chats","timestamp":"2026-03-28T01:24:47.636751Z"}
+{"event_type":"pain","session":221,"domain":"general","notes":"Over-engineered boot sequence brute-forcing instead of wiring agent loop","timestamp":"2026-03-28T01:24:47.636751Z"}
+{"event_type":"feedback_roi","session":221,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T01:24:47.636751Z"}
+{"event_type":"sentinel_stats","session":221,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T01:24:47.636751Z"}

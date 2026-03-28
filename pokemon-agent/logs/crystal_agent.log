@@ -23,3 +23,62 @@ RuntimeError: No LLM client configured. Set agent.llm or pass to constructor.
 2026-03-27 00:28:49,229 [INFO] agent: Step 5: [offline: press a] | Tokens: 0 in, 0 out
 2026-03-27 00:28:49,229 [INFO] crystal: Done. Steps: 5, Time: 0.0s, Tokens: 0 in + 0 out = 0 total
 2026-03-27 00:58:10,956 [INFO] crystal: Loading ROM: pokemon_crystal.gbc
+2026-03-27 19:34:06,962 [INFO] pokemon: Detected game type: crystal
+2026-03-27 19:34:06,971 [INFO] pokemon: Loading ROM: pokemon_crystal.gbc
+2026-03-27 19:34:07,013 [INFO] pokemon: Offline mode — no LLM calls
+2026-03-27 19:34:07,013 [INFO] pokemon: Running Crystal boot sequence...
+2026-03-27 19:34:07,013 [INFO] boot_crystal: Boot start: map_id=0, pos=(255,0), menu=shop
+2026-03-27 19:34:07,013 [INFO] boot_crystal: Crystal boot complete: {'success': False, 'final_map': 0, 'final_position': (255, 0), 'phases_completed': []}
+2026-03-27 19:34:07,013 [WARNING] pokemon: Crystal boot partial: []
+2026-03-27 19:34:07,013 [INFO] pokemon: Starting agent for 50 steps
+2026-03-27 19:34:07,036 [INFO] agent: Step 1: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,053 [INFO] agent: Step 2: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,070 [INFO] agent: Step 3: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,087 [INFO] agent: Step 4: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,089 [INFO] agent: Step 5: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,091 [INFO] agent: Step 6: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,092 [INFO] agent: Step 7: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,094 [INFO] agent: Step 8: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,095 [INFO] agent: Step 9: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,097 [INFO] agent: Step 10: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,098 [INFO] agent: Step 11: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,100 [INFO] agent: Step 12: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,101 [INFO] agent: Step 13: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,103 [INFO] agent: Step 14: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,105 [INFO] agent: Step 15: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,106 [INFO] agent: Step 16: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,108 [INFO] agent: Step 17: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,110 [INFO] agent: Step 18: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,111 [INFO] agent: Step 19: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,113 [INFO] agent: Step 20: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,114 [INFO] agent: Step 21: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,116 [INFO] agent: Step 22: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,117 [INFO] agent: Step 23: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,119 [INFO] agent: Step 24: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,120 [INFO] agent: Step 25: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,122 [INFO] agent: Step 26: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,124 [INFO] agent: Step 27: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,125 [INFO] agent: Step 28: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,127 [INFO] agent: Step 29: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,128 [INFO] agent: Step 30: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,129 [INFO] agent: Step 31: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,131 [INFO] agent: Step 32: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,132 [INFO] agent: Step 33: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,148 [INFO] agent: Step 34: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,163 [INFO] agent: Step 35: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,177 [INFO] agent: Step 36: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,192 [INFO] agent: Step 37: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,207 [INFO] agent: Step 38: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,222 [INFO] agent: Step 39: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,237 [INFO] agent: Step 40: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,251 [INFO] agent: Step 41: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,265 [INFO] agent: Step 42: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,280 [INFO] agent: Step 43: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,295 [INFO] agent: Step 44: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,310 [INFO] agent: Step 45: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,324 [INFO] agent: Step 46: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,339 [INFO] agent: Step 47: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,354 [INFO] agent: Step 48: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,369 [INFO] agent: Step 49: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,383 [INFO] agent: Step 50: [transition: start] | Tokens: 0 in, 0 out
+2026-03-27 19:34:07,384 [INFO] pokemon: Done. Steps: 50, Time: 0.4s, Tokens: 0 in + 0 out = 0 total
