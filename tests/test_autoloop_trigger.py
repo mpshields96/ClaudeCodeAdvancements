@@ -81,7 +81,16 @@ class TestCheckReadiness(unittest.TestCase):
 
 
 class TestTriggerNextSession(unittest.TestCase):
-    """Test the main trigger function."""
+    """Test the main trigger function (desktop path)."""
+
+    def setUp(self):
+        self._orig_cli = os.environ.pop("CCA_AUTOLOOP_CLI", None)
+
+    def tearDown(self):
+        if self._orig_cli is not None:
+            os.environ["CCA_AUTOLOOP_CLI"] = self._orig_cli
+        else:
+            os.environ.pop("CCA_AUTOLOOP_CLI", None)
 
     @patch("autoloop_trigger.DesktopAutomator")
     def test_full_success_flow(self, MockDA):
@@ -238,6 +247,15 @@ class TestTriggerNextSession(unittest.TestCase):
 class TestAuditLogging(unittest.TestCase):
     """Test audit log entries."""
 
+    def setUp(self):
+        self._orig_cli = os.environ.pop("CCA_AUTOLOOP_CLI", None)
+
+    def tearDown(self):
+        if self._orig_cli is not None:
+            os.environ["CCA_AUTOLOOP_CLI"] = self._orig_cli
+        else:
+            os.environ.pop("CCA_AUTOLOOP_CLI", None)
+
     @patch("autoloop_trigger.DesktopAutomator")
     def test_logs_trigger_start(self, MockDA):
         mock_da = MockDA.return_value
@@ -286,6 +304,15 @@ class TestAuditLogging(unittest.TestCase):
 
 class TestIdleIntegration(unittest.TestCase):
     """Test MT-35 Phase 2 idle detection in autoloop trigger."""
+
+    def setUp(self):
+        self._orig_cli = os.environ.pop("CCA_AUTOLOOP_CLI", None)
+
+    def tearDown(self):
+        if self._orig_cli is not None:
+            os.environ["CCA_AUTOLOOP_CLI"] = self._orig_cli
+        else:
+            os.environ.pop("CCA_AUTOLOOP_CLI", None)
 
     def test_idle_wait_called_before_activate(self):
         """wait_for_idle is called before save_frontmost_app."""

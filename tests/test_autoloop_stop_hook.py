@@ -248,11 +248,26 @@ class TestFireTrigger(unittest.TestCase):
 
 
 class TestHookMain(unittest.TestCase):
-    """Test the main hook entry point (reads stdin JSON, outputs JSON)."""
+    """Test the main hook entry point (reads stdin JSON, outputs JSON).
+
+    These tests exercise the desktop mode path (should_trigger -> fire_trigger).
+    CCA_AUTOLOOP_CLI must be cleared to prevent the CLI shortcut path.
+    """
 
     def setUp(self):
         import autoloop_stop_hook
         self.mod = autoloop_stop_hook
+        self._orig_cli = os.environ.pop("CCA_AUTOLOOP_CLI", None)
+        # Patch is_cca_session so process_hook doesn't bail early
+        self._cca_patcher = patch.object(self.mod, "is_cca_session", return_value=True)
+        self._cca_patcher.start()
+
+    def tearDown(self):
+        self._cca_patcher.stop()
+        if self._orig_cli is not None:
+            os.environ["CCA_AUTOLOOP_CLI"] = self._orig_cli
+        else:
+            os.environ.pop("CCA_AUTOLOOP_CLI", None)
 
     def test_outputs_valid_json(self):
         """Hook must output valid JSON to stdout."""
