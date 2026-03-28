@@ -27,3 +27,5 @@
 {"tip":"Battle AI has no switch/item logic \u2014 add choose_switch for low HP in trainer battles","source":"cca-desktop","session":"S216","timestamp":"2026-03-27T23:12:11.126160Z"}
 {"tip":"Use static data tables as RAM fallback \u2014 defensive coding for emulator state that may not be populated yet","source":"cca-desktop","session":"S217","timestamp":"2026-03-27T23:34:38.485150Z"}
 {"tip":"Port complete data tables from reference repos before writing custom code \u2014 860 LOC in one commit vs weeks of hand-building","source":"cca-desktop","session":"S218","timestamp":"2026-03-28T00:02:00.355625Z"}
+{"tip":"mgba-py core.memory gives direct RAM access \u2014 same API shape as PyBoy","source":"cca-desktop","session":"S219","timestamp":"2026-03-28T00:22:26.235120Z"}
+{"tip":"Run --offline --steps 500 to validate emulator+RAM without API cost","source":"cca-desktop","session":"S219","timestamp":"2026-03-28T00:22:26.235120Z"}

@@ -773,3 +773,22 @@
 {"event_type":"pain","session":218,"domain":"general","notes":"No agent architecture ported from GPT livefeed yet","timestamp":"2026-03-28T00:02:00.355625Z"}
 {"event_type":"feedback_roi","session":218,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T00:02:00.355625Z"}
 {"event_type":"sentinel_stats","session":218,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T00:02:00.355625Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:02:49.709905+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:02:49.731791+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:08:20.555884+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:08:20.581741+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:18:29.931526+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:18:29.955668+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:19:50.483791+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:19:50.524181+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:20:38.569155+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:20:38.609155+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":219,"domain":"general","outcome":"success","notes":"MT-53 Crystal boot sequence + battle AI refactor + PyBoy ban + mGBA migration documentation","timestamp":"2026-03-28T00:22:26.235120Z"}
+{"event_type":"win","session":219,"domain":"general","notes":"Crystal boot sequence with 20 tests","timestamp":"2026-03-28T00:22:26.235120Z"}
+{"event_type":"win","session":219,"domain":"general","notes":"Battle AI refactored to base class","timestamp":"2026-03-28T00:22:26.235120Z"}
+{"event_type":"win","session":219,"domain":"general","notes":"PyBoy banned and mGBA migration documented","timestamp":"2026-03-28T00:22:26.235120Z"}
+{"event_type":"win","session":219,"domain":"general","notes":"Run-first strategy adopted","timestamp":"2026-03-28T00:22:26.235120Z"}
+{"event_type":"pain","session":219,"domain":"general","notes":"No mGBA backend implementation yet","timestamp":"2026-03-28T00:22:26.235120Z"}
+{"event_type":"pain","session":219,"domain":"general","notes":"Battle AI callback bug introduced then caught during wrap","timestamp":"2026-03-28T00:22:26.235120Z"}
+{"event_type":"feedback_roi","session":219,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T00:22:26.235120Z"}
+{"event_type":"sentinel_stats","session":219,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T00:22:26.235120Z"}

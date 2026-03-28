@@ -3576,3 +3576,22 @@ CLI chat 2:
 - No agent architecture ported yet from GPT livefeed
 
 ---
+
+## Session 219 — 2026-03-27
+
+**What changed:**
+- Crystal boot sequence (boot_sequence_crystal.py, 20 tests)
+- Battle AI lifted to CrystalAgent base class
+- PyBoy banned, mGBA migration documented across all files
+- Run-first-build-while-playing strategy adopted
+
+**Why:**
+- Crystal boot sequence + battle AI refactor + PyBoy ban + mGBA migration docs
+
+**Tests:** 11834/11834 passing (331 suites)
+
+**Lessons:**
+- No mGBA backend implementation yet
+- Battle AI callback bug introduced then caught
+
+---
