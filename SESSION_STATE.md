@@ -3,21 +3,25 @@
 
 ---
 
-## Current State (as of Session 223 — 2026-03-27)
+## Current State (as of Session 224 — 2026-03-27)
 
-**Phase:** Session 223 COMPLETE. MT-49 Phase 1: meta_tracker.py + zombie prune (health 0.21->0.83) + Kalshi REQ-61 + Codex 3-way ACK
+**Phase:** Session 224 COMPLETE. MT-53 model flag + Kalshi domain_knowledge_scanner + MT-49 Phase 2 auto-accept + wrap wiring
 
-**What was done this session (S223):**
-- MT-49 meta_tracker.py: health scoring, zombie detection, trend tracking (16 tests)
-- Zombie prune: 166/181 dead principles removed, health 0.21->0.83
-- Kalshi REQ-61: FLB hour analysis + sports game calibration + YES/NO direction bug flag
-- Codex 3-way hub ACK written
-- **Tests**: 333 suites, 11867 tests passing. All green.
+**What was done this session (S224):**
+- MT-53: Added --model CLI flag to agent, installed anthropic SDK in venv, verified offline loop. LLM play blocked — NO Anthropic API key available (permanent constraint, saved to memory).
+- Kalshi: Built domain_knowledge_scanner.py (polybot commits 725a723, ae284f9). Scans politics/economics/geopolitics markets, LLM probability estimation, edge detection. 22 tests. --provider stub mode works without API key.
+- MT-49 Phase 2: Added auto_accept() to principle_transfer.py. High-confidence transfers (score >= 0.60) auto-applied. First transfer executed: session_management -> cca_operations. 59 tests passing.
+- MT-49 wiring: Auto-accept + propose now runs in batch_wrap_learning step 11 (every /cca-wrap). 9/9 batch steps OK.
+- Codex ACK 5: 3-way hub bridge explicit acknowledgment written.
+- Cross-chat Update 71: domain_knowledge_scanner delivery to Kalshi.
+- Memory saved: feedback_no_anthropic_api_key.md — never write code depending on ANTHROPIC_API_KEY.
+- **Tests**: 10/10 smoke + 62 agent + 22 scanner + 59 transfer = all green.
+- **Commits**: 5 (a6811e7, 725a723, ae284f9, 49f91c0, f047eb7)
 
 **Next:**
-1. MT-53: First LLM play session
-2. Kalshi: domain_knowledge_scanner.py implementation
-3. MT-49 Phase 2: Active principle transfer
+1. MT-53: Redesign LLM backend — use Gemini MCP or build smarter offline heuristic agent (no API key)
+2. Kalshi: Test domain_knowledge_scanner --dry-run against live API
+3. Priority picker: check for stagnated MTs
 
 ---
 
