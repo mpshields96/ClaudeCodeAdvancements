@@ -762,3 +762,14 @@
 {"event_type":"pain","session":217,"domain":"general","notes":"No live emulator testing","timestamp":"2026-03-27T23:34:38.485150Z"}
 {"event_type":"feedback_roi","session":217,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-27T23:34:38.485150Z"}
 {"event_type":"sentinel_stats","session":217,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-27T23:34:38.485150Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T23:35:36.639031+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-27T23:35:36.681376+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:01:03.442111+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T00:01:03.465985+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":218,"domain":"general","outcome":"success","notes":"S218: STEAL CODE directive + Kalshi pivot + crystal_data port","timestamp":"2026-03-28T00:02:00.355625Z"}
+{"event_type":"win","session":218,"domain":"general","notes":"STEAL CODE directive permanently written","timestamp":"2026-03-28T00:02:00.355625Z"}
+{"event_type":"win","session":218,"domain":"general","notes":"URGENT Kalshi strategy pivot delivered","timestamp":"2026-03-28T00:02:00.355625Z"}
+{"event_type":"win","session":218,"domain":"general","notes":"crystal_data.py ported from reference repos (251 species/moves/items)","timestamp":"2026-03-28T00:02:00.355625Z"}
+{"event_type":"pain","session":218,"domain":"general","notes":"No agent architecture ported from GPT livefeed yet","timestamp":"2026-03-28T00:02:00.355625Z"}
+{"event_type":"feedback_roi","session":218,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T00:02:00.355625Z"}
+{"event_type":"sentinel_stats","session":218,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T00:02:00.355625Z"}

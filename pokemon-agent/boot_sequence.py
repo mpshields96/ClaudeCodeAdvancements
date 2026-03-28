@@ -225,16 +225,16 @@ def run_boot_sequence(emu, reader) -> dict:
         # Column 6+ is blocked at row 6, so go up first then across.
         navigate_to(emu, reader, target_x=5, target_y=pos.y)  # right to x=5
         navigate_to(emu, reader, target_x=5, target_y=1)      # up to row 1
-        navigate_to(emu, reader, target_x=7, target_y=1)      # right to stairs
+        navigate_to(emu, reader, target_x=6, target_y=1)      # right to pre-stairs tile
 
-        # Check if stepping to (7,1) already triggered transition
+        # Check if the pathing already triggered the transition
         state = reader.read_game_state()
         if state.position.map_id == MAP_REDS_HOUSE_1F:
             result["phases_completed"].append("stairs_to_1f")
             logger.info("Phase 2 complete: arrived at Red's House 1F")
         else:
-            # Try stepping up onto stair tile
-            emu.press("up", hold_frames=10, wait_frames=120)
+            # Real Red validation: the stairs trigger by stepping right onto (7,1).
+            emu.press("right", hold_frames=10, wait_frames=120)
             emu.tick(60)
             if wait_for_map(emu, reader, MAP_REDS_HOUSE_1F, max_ticks=300):
                 result["phases_completed"].append("stairs_to_1f")

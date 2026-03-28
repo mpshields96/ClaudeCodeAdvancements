@@ -3559,3 +3559,20 @@ CLI chat 2:
 - No live emulator testing yet (deferred to interactive session)
 
 ---
+
+## Session 218 — 2026-03-27
+
+**What changed:**
+- STEAL CODE directive written permanently (MT-53 scoped)
+- URGENT Kalshi strategy pivot delivered (eth_orderbook_imbalance recommended)
+- crystal_data.py ported: 251 species, 251 moves, items, maps, type chart
+
+**Why:**
+- S218: STEAL CODE directive + Kalshi strategy pivot + crystal_data port from reference repos
+
+**Tests:** 11814/11814 passing (330 suites)
+
+**Lessons:**
+- No agent architecture ported yet from GPT livefeed
+
+---

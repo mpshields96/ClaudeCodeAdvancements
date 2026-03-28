@@ -1,12 +1,12 @@
 {
-  "step": 1,
+  "step": 43,
   "position": {
-    "map_id": 0,
+    "map_id": 38,
     "map_group": 0,
-    "map_number": 0,
-    "map_name": "PALLET TOWN",
-    "x": 4,
-    "y": 8
+    "map_number": 38,
+    "map_name": "REDS HOUSE 2F",
+    "x": 3,
+    "y": 6
   },
   "menu_state": "overworld",
   "badges": 0,

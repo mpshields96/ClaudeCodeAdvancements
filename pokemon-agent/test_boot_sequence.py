@@ -239,7 +239,7 @@ class TestRunBootSequence(unittest.TestCase):
         reader._dialog_clears_after = 5
 
         # Register transitions
-        reader.register_transition(7, 0, MAP_REDS_HOUSE_1F, "REDS HOUSE 1F", 7, 1)
+        reader.register_transition(7, 1, MAP_REDS_HOUSE_1F, "REDS HOUSE 1F", 7, 1)
         reader.register_transition(3, 8, MAP_PALLET_TOWN, "PALLET TOWN", 3, 3)
 
         emu = HookableEmulatorControl(backend, reader)
@@ -248,6 +248,33 @@ class TestRunBootSequence(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertIn("opening_dialog", result["phases_completed"])
 
+    def test_stairs_retry_uses_right_not_up(self):
+        """When 2F stairs need an extra nudge, the retry should press right.
+
+        Real Red validation shows the stairs trigger by stepping right onto
+        the stair tile, not by pressing up after reaching row 1.
+        """
+        backend = MockBackend()
+        reader = MockReaderForBoot()
+        reader.set_position(6, 1, map_id=MAP_REDS_HOUSE_2F, map_name="REDS HOUSE 2F")
+        reader.set_menu_state(MenuState.OVERWORLD)
+
+        pressed = []
+
+        class RetryAwareEmu(HookableEmulatorControl):
+            def press(self, button: str, hold_frames: int = 10, wait_frames: int = 120):
+                pressed.append(button)
+                if button == "right" and reader._state.position.map_id == MAP_REDS_HOUSE_2F:
+                    reader.set_map(MAP_REDS_HOUSE_1F, "REDS HOUSE 1F", 7, 1)
+                    return
+                super().press(button, hold_frames, wait_frames)
+
+        emu = RetryAwareEmu(backend, reader)
+        result = run_boot_sequence(emu, reader)
+
+        self.assertIn("stairs_to_1f", result["phases_completed"])
+        self.assertIn("right", pressed)
+
     def test_boot_already_in_overworld(self):
         """Test when dialog is already cleared."""
         backend = MockBackend()
@@ -255,7 +282,7 @@ class TestRunBootSequence(unittest.TestCase):
         reader.set_position(3, 6, map_id=MAP_REDS_HOUSE_2F, map_name="REDS HOUSE 2F")
         reader.set_menu_state(MenuState.OVERWORLD)
 
-        reader.register_transition(7, 0, MAP_REDS_HOUSE_1F, "REDS HOUSE 1F", 7, 1)
+        reader.register_transition(7, 1, MAP_REDS_HOUSE_1F, "REDS HOUSE 1F", 7, 1)
 
         emu = HookableEmulatorControl(backend, reader)
         result = run_boot_sequence(emu, reader)

@@ -3,7 +3,24 @@
 
 ---
 
-## Current State (as of Session 217 — 2026-03-27)
+## Current State (as of Session 218 — 2026-03-27)
+
+**Phase:** Session 218 COMPLETE. S218: STEAL CODE directive + Kalshi strategy pivot + crystal_data port from reference repos
+
+**What was done this session (S218):**
+- STEAL CODE directive written permanently (MT-53 scoped)
+- URGENT Kalshi strategy pivot delivered (eth_orderbook_imbalance recommended)
+- crystal_data.py ported: 251 species, 251 moves, items, maps, type chart
+- **Tests**: 330 suites, 11814 tests passing. All green.
+
+**Next:**
+1. Port agent loop patterns from GPT/reference repos
+2. Live emulator testing with real ROM
+3. Continue Kalshi cross-chat (monitor pivot results)
+
+---
+
+## Previous State (Session 217 — 2026-03-27)
 
 **Phase:** Session 217 COMPLETE. MT-53: 7 deliverables — species types, enemy moves/stats, threat assessment, XP, items, potion healing, pokeball catch
 
@@ -26,7 +43,6 @@
 4. Agent loop test through boot + first encounters
 
 ---
-
 ## Previous State (Session 217 — 2026-03-27)
 
 **Phase:** Session 217 COMPLETE. MT-53: Massive battle AI + data expansion — 7 deliverables, 8 commits
