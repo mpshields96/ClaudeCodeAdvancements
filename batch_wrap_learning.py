@@ -394,6 +394,27 @@ def run_batch(
     except Exception as e:
         result.record("principle_transfer", False, str(e))
 
+    # 12. Confidence recalibration — apply Bayesian staleness decay (MT-49 Phase 4)
+    try:
+        from confidence_recalibrator import apply_recalibration, DEFAULT_CHECKPOINT_PATH
+        recal = apply_recalibration(
+            current_session=batch.session_id,
+            checkpoint_path=DEFAULT_CHECKPOINT_PATH,
+            min_gap=10,
+        )
+        if recal["applied"] > 0:
+            _append_jsonl(journal_path, {
+                "event_type": "confidence_recalibration",
+                "session": batch.session_id,
+                "applied": recal["applied"],
+                "skipped": recal["skipped"],
+                "reason": recal["reason"],
+                "timestamp": now,
+            })
+        result.record("confidence_recalibration", True)
+    except Exception as e:
+        result.record("confidence_recalibration", False, str(e))
+
     return result
 
 
