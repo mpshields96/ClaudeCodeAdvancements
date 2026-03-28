@@ -516,3 +516,9 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S228
 - `self-learning/wrap_summary.py` (S228)
 - `tests/test_confidence_recalibrator.py` (S228)
+
+
+### Added in S231
+- `design-skills/design_tokens.py` — MT-32 Phase 3: Canonical design token module. Single source of truth for CCA colors, fonts, spacing, typography. Exports CSS, Typst, Python dict. 25 tests.
+- `tests/test_launcher_aliases.py` — Validates cc/cca/ccbot shell aliases in ~/.zshrc. 10 tests.
+- `LAUNCHER_ALIASES.md` — Usage reference for cc/cca/ccbot launcher aliases.
