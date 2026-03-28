@@ -1,6 +1,6 @@
 """Claude Code bridge — runs the emulator and communicates via files.
 
-This script runs PyBoy headlessly and exposes game state via files that
+This script runs mGBA headlessly and exposes game state via files that
 Claude Code can read. Claude Code acts as the brain (via slash command),
 reads the state, and writes actions. This script picks up those actions
 and executes them. Zero API cost — uses your Max subscription.
@@ -9,7 +9,7 @@ Supports: Pokemon Red (.gb), Pokemon Crystal (.gbc)
 
 Architecture:
     bridge.py (this)          <-->  Claude Code session
-    - Runs PyBoy emulator            - Reads state.json
+    - Runs mGBA emulator             - Reads state.json
     - Writes state.json               - Reads screenshot.png
     - Writes screenshot.png            - Writes action.json
     - Reads action.json                - Reasons about game
@@ -30,7 +30,7 @@ Files (in pokemon-agent/bridge_io/):
     action.json     - Next action from Claude Code
     log.jsonl       - Step-by-step history
 
-Stdlib + pyboy only.
+Stdlib + mgba-py only.
 """
 from __future__ import annotations
 

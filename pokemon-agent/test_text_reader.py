@@ -4,7 +4,7 @@ Pokemon Crystal stores text in a tilemap buffer and a separate text buffer.
 The text_reader module extracts readable text from these RAM locations so
 the LLM gets text context alongside (or instead of) screenshots.
 
-Uses MockBackend so no ROM/PyBoy needed.
+Uses MockBackend so no ROM needed.
 """
 import os
 import sys

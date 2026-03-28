@@ -2,17 +2,16 @@
 
 ## S208 Research (2026-03-27)
 
-### Emulator Choice: PyBoy is Universal
-Every LLM Pokemon bot uses PyBoy. No exceptions found:
+### Emulator Choice: mGBA (S219 — PyBoy BANNED)
+Most LLM Pokemon bots use PyBoy, but it freezes on macOS Apple Silicon:
 - ClaudePlaysPokemon (official Anthropic stream) — PyBoy, Pokemon Red
 - NousResearch/pokemon-agent — PyBoy + PyGBA, Red/Blue/Yellow (Crystal planned)
 - cicero225/llm_pokemon_scaffold — PyBoy, Red
-- papercomputeco/pokemon — PyBoy headless, Red
-- waylaidwanderer/gemini-plays-pokemon-public — PyBoy, Crystal (Gemini, failed at badge 8)
 
-**Eliminated alternatives:** BizHawk (no macOS), OpenEmu (no scripting API), RetroArch (no RAM read API). For GBA: mGBA with Lua.
-
-**Our choice is correct.** PyBoy headless confirmed working on macOS ARM64 at up to 395x speed.
+**PyBoy BANNED (S219 Matthew directive).** Freezes on macOS ARM64 during headless operation.
+**We use mGBA** (mgba-py bindings). Supports GB/GBC/GBA — one backend for all ROMs.
+Built from source (mgba 0.10.5), confirmed working headless on macOS ARM64.
+Dependencies: cffi, cached_property (installed in venv).
 
 ### RAM Addresses: Verified Correct
 Our `memory_reader.py` addresses match pret/pokecrystal (authoritative disassembly). Key addresses:

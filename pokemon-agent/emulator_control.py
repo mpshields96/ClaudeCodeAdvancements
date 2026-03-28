@@ -3,10 +3,6 @@
 Provides a clean interface for button input, frame advance, and RAM reads.
 Backend: mGBA (mgba-py bindings). Supports GB/GBC/GBA — one backend for all ROMs.
 
-**PyBoy is BANNED (S219 Matthew directive). Do not use or recommend PyBoy.**
-The PyBoyBackend class below is LEGACY CODE pending removal. Use MGBABackend
-or MockBackend only. The mGBA backend is the priority implementation target.
-
 The EmulatorControl class abstracts raw emulator operations so the agent
 never touches the emulator library directly. This makes it possible to
 swap backends or run in headless mode for testing.
@@ -14,14 +10,14 @@ swap backends or run in headless mode for testing.
 Usage:
     from emulator_control import EmulatorControl
 
-    emu = EmulatorControl("pokemon_crystal.gbc")
+    emu = EmulatorControl.from_rom("pokemon_crystal.gbc")
     emu.press("a")
     emu.tick(60)  # advance 60 frames (~1 second)
     value = emu.read_byte(0xD163)  # read RAM
     emu.save_state("before_gym")
     emu.close()
 
-Stdlib + mgba-py. PyBoy backend is BANNED — do not use.
+Stdlib + mgba-py only.
 """
 from __future__ import annotations
 
@@ -53,7 +49,7 @@ DIRECTIONS = {"up", "down", "left", "right"}
 
 
 class EmulatorBackend(Protocol):
-    """Protocol for emulator backends. PyBoy is the default implementation."""
+    """Protocol for emulator backends. mGBA is the default implementation."""
 
     def press(self, button: str) -> None: ...
     def release(self, button: str) -> None: ...
@@ -67,88 +63,6 @@ class EmulatorBackend(Protocol):
     def close(self) -> None: ...
 
 
-# ── PyBoy backend ───────────────────────────────────────────────────────────
-
-
-class PyBoyBackend:
-    """PyBoy-based emulator backend for Game Boy / Game Boy Color."""
-
-    def __init__(self, rom_path: str, headless: bool = False, speed: int = 0):
-        """Initialize PyBoy with a ROM.
-
-        Args:
-            rom_path: Path to .gb or .gbc ROM file.
-            headless: Run without display (for testing/CI).
-            speed: 0 = uncapped, 1 = normal, N = Nx speed.
-        """
-        try:
-            from pyboy import PyBoy
-        except ImportError:
-            raise ImportError(
-                "PyBoy not installed. Run: pip install pyboy"
-            )
-
-        if not os.path.exists(rom_path):
-            raise FileNotFoundError(f"ROM not found: {rom_path}")
-
-        window = "null" if headless else "SDL2"
-        self._pyboy = PyBoy(rom_path, window=window)
-        if speed > 0:
-            self._pyboy.set_emulation_speed(speed)
-        else:
-            self._pyboy.set_emulation_speed(0)  # uncapped
-
-        self._button_map = {
-            "a": "a",
-            "b": "b",
-            "start": "start",
-            "select": "select",
-            "up": "up",
-            "down": "down",
-            "left": "left",
-            "right": "right",
-        }
-
-    def press(self, button: str) -> None:
-        btn = self._button_map.get(button.lower())
-        if btn is None:
-            raise ValueError(f"Unknown button: {button}")
-        self._pyboy.button_press(btn)
-
-    def release(self, button: str) -> None:
-        btn = self._button_map.get(button.lower())
-        if btn is None:
-            raise ValueError(f"Unknown button: {button}")
-        self._pyboy.button_release(btn)
-
-    def tick(self, frames: int = 1) -> None:
-        for _ in range(frames):
-            self._pyboy.tick(count=1, render=True)
-
-    def read_byte(self, address: int) -> int:
-        return self._pyboy.memory[address]
-
-    def read_bytes(self, address: int, length: int) -> bytes:
-        return bytes(self._pyboy.memory[address + i] for i in range(length))
-
-    def write_byte(self, address: int, value: int) -> None:
-        self._pyboy.memory[address] = value
-
-    def save_state(self, path: str) -> None:
-        with open(path, "wb") as f:
-            self._pyboy.save_state(f)
-
-    def load_state(self, path: str) -> None:
-        with open(path, "rb") as f:
-            self._pyboy.load_state(f)
-
-    def screenshot(self, path: str) -> None:
-        self._pyboy.screen.image.save(path)
-
-    def close(self) -> None:
-        self._pyboy.stop()
-
-
 # ── mGBA backend ─────────────────────────────────────────────────────────────
 
 
@@ -156,7 +70,7 @@ class MGBABackend:
     """mGBA-based emulator backend for Game Boy / GBC / GBA.
 
     Built from source (mgba 0.10.5). Does not freeze on macOS Apple Silicon
-    unlike PyBoy. Supports headless operation and direct RAM access.
+    Supports headless operation and direct RAM access.
     """
 
     def __init__(self, rom_path: str, headless: bool = True, speed: int = 0):
@@ -268,7 +182,7 @@ class MGBABackend:
             self._core = None
 
 
-# ── Mock backend (for testing without PyBoy/ROM) ────────────────────────────
+# ── Mock backend (for testing without ROM) ───────────────────────────────────
 
 
 class MockBackend:
@@ -348,7 +262,7 @@ class InputSequence:
 class EmulatorControl:
     """High-level emulator control for Pokemon bot.
 
-    Wraps a backend (PyBoy or Mock) with convenience methods for
+    Wraps a backend (mGBA or Mock) with convenience methods for
     common Pokemon operations: menu navigation, text advancing,
     directional movement, and state management.
     """
@@ -358,19 +272,9 @@ class EmulatorControl:
         self._state_dir = ""
 
     @classmethod
-    def from_rom(cls, rom_path: str, headless: bool = True, speed: int = 0,
-                 backend: str = "mgba") -> "EmulatorControl":
-        """Create from a ROM file. Default backend: mGBA (stable on macOS).
-
-        Args:
-            backend: "mgba" (default, recommended) or "pyboy" (legacy fallback).
-        """
-        if backend == "mgba":
-            b = MGBABackend(rom_path, headless=headless, speed=speed)
-        elif backend == "pyboy":
-            b = PyBoyBackend(rom_path, headless=headless, speed=speed)
-        else:
-            raise ValueError(f"Unknown backend: {backend}. Use 'mgba' or 'pyboy'.")
+    def from_rom(cls, rom_path: str, headless: bool = True, speed: int = 0) -> "EmulatorControl":
+        """Create from a ROM file using mGBA backend."""
+        b = MGBABackend(rom_path, headless=headless, speed=speed)
         return cls(b)
 
     @classmethod

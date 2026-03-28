@@ -12,10 +12,10 @@ if [ ! -d "venv" ]; then
     python3 -m venv venv
 fi
 
-# Activate and install
+# Activate and install mGBA dependencies
 source venv/bin/activate
-echo "Installing PyBoy..."
-pip install pyboy
+echo "Installing mGBA dependencies (cffi, cached_property)..."
+pip install cffi cached_property
 
 echo ""
 echo "Done! To play:"

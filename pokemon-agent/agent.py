@@ -202,7 +202,7 @@ class StepResult:
 class CrystalAgent:
     """Autonomous Pokemon Crystal agent.
 
-    Connects PyBoy emulator to Opus 4.6 via a minimal tool interface.
+    Connects mGBA emulator to Opus 4.6 via a minimal tool interface.
     RAM reading provides ground truth. Screenshots provide visual context.
     The model reasons and acts through tool calls.
     """

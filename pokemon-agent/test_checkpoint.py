@@ -6,7 +6,7 @@ The checkpoint system auto-saves emulator state before:
 - Badge attempts (gym leader fights)
 - Map transitions to dangerous areas
 
-Uses MockBackend so no ROM/PyBoy needed.
+Uses MockBackend so no ROM needed.
 """
 import os
 import sys

@@ -1,21 +1,22 @@
 """Phase 5: Real emulator integration tests.
 
-Tests the full stack against a real PyBoy emulator with the Pokemon Crystal ROM.
+Tests the full stack against a real mGBA emulator with the Pokemon Crystal ROM.
 These tests verify that our abstractions (EmulatorControl, MemoryReader, Agent)
 work correctly with real emulator state, not just mocks.
 
 Requirements:
-- PyBoy installed (pip install pyboy)
+- mgba_bindings directory with compiled mGBA Python bindings
+- cffi + cached_property installed in the venv
 - pokemon_crystal.gbc ROM in this directory
 
-Tests are skipped automatically if PyBoy or ROM is unavailable, so they
+Tests are skipped automatically if mGBA or ROM is unavailable, so they
 never break CI or the smoke test suite.
 
 Usage:
-    # Run with the venv that has PyBoy:
-    .venv/bin/python3 test_real_emulator.py
+    # Run with the venv that has mGBA deps:
+    ./venv/bin/python3 test_real_emulator.py
 
-    # Skips gracefully if pyboy not installed:
+    # Skips gracefully if mGBA not available:
     python3 test_real_emulator.py
 """
 import os
@@ -31,14 +32,15 @@ ROM_PATH = os.path.join(os.path.dirname(__file__), "pokemon_crystal.gbc")
 HAS_ROM = os.path.exists(ROM_PATH)
 
 try:
-    import pyboy  # noqa: F401
-    HAS_PYBOY = True
+    import mgba_bindings  # noqa: F401
+    import mgba_bindings.core  # noqa: F401
+    HAS_MGBA = True
 except ImportError:
-    HAS_PYBOY = False
+    HAS_MGBA = False
 
 SKIP_REASON = None
-if not HAS_PYBOY:
-    SKIP_REASON = "PyBoy not installed"
+if not HAS_MGBA:
+    SKIP_REASON = "mGBA bindings not available (need cffi + mgba_bindings)"
 elif not HAS_ROM:
     SKIP_REASON = "pokemon_crystal.gbc not found"
 
@@ -50,9 +52,9 @@ def requires_emulator(cls_or_func):
     return cls_or_func
 
 
-# ── Imports that need PyBoy (guarded) ───────────────────────────────────────
+# ── Imports that need mGBA (guarded) ────────────────────────────────────────
 
-if HAS_PYBOY and HAS_ROM:
+if HAS_MGBA and HAS_ROM:
     from emulator_control import EmulatorControl
     from memory_reader import (
         MemoryReader, PARTY_COUNT, PLAYER_X, PLAYER_Y,
@@ -62,7 +64,7 @@ if HAS_PYBOY and HAS_ROM:
     from game_state import MenuState
 
 
-# ── Test: EmulatorControl with real PyBoy ───────────────────────────────────
+# ── Test: EmulatorControl with real mGBA ────────────────────────────────────
 
 
 @requires_emulator
@@ -272,7 +274,7 @@ class TestTitleScreenNavigation(unittest.TestCase):
 
 @requires_emulator
 class TestAgentWithRealEmulator(unittest.TestCase):
-    """Test the agent loop with a real emulator (MockLLM, real PyBoy)."""
+    """Test the agent loop with a real emulator (MockLLM, real mGBA)."""
 
     def setUp(self):
         self.emu = EmulatorControl.from_rom(ROM_PATH, headless=True, speed=0)

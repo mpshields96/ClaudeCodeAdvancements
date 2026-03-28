@@ -17,7 +17,7 @@ Usage:
     from boot_sequence import run_boot_sequence
     run_boot_sequence(emu, reader)
 
-Stdlib + pyboy only.
+Stdlib + mgba-py only.
 """
 from __future__ import annotations
 

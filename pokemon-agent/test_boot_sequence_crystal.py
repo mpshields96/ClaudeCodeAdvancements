@@ -1,7 +1,7 @@
 """Tests for boot_sequence_crystal.py — Pokemon Crystal intro automation.
 
 Tests the deterministic Crystal boot sequence logic using MockBackend.
-No ROM or PyBoy needed.
+No ROM needed.
 
 Crystal intro sequence:
 1. Title screen → New Game

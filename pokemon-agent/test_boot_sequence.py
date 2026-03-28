@@ -1,7 +1,7 @@
 """Tests for boot_sequence.py — Pokemon Red intro automation.
 
 Tests the deterministic boot sequence logic using MockBackend.
-No ROM or PyBoy needed.
+No ROM needed.
 """
 import unittest
 import sys
