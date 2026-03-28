@@ -3,7 +3,37 @@
 
 ---
 
-## Current State (as of Session 218 — 2026-03-27)
+## Current State (as of Session 219 — 2026-03-27)
+
+**Phase:** Session 219 IN PROGRESS. MT-53: Crystal boot sequence + battle AI refactor + PyBoy ban + mGBA migration directive
+
+**What was done this session (S219):**
+- Crystal boot sequence (boot_sequence_crystal.py): automates title → Elm's Lab, 20 tests
+- Wired Crystal boot into main.py (runs on fresh ROM launch)
+- Lifted battle AI from RedAgent into CrystalAgent base class (both games get deterministic battles now)
+- **PyBoy BANNED** — Matthew explicit directive. mGBA is the new backend.
+- **"Run first, build while playing"** strategy adopted — don't build to 100% before running
+- MT-53 progress report: ~35% complete (all infrastructure built, missing warp data + live testing + game completion logic)
+- Cross-chat update written to CCA_TO_POLYBOT.md
+- 3 commits: 6ea9587, 64bdf9d, b518b71
+- **Tests**: 332 suites, all passing. Zero regressions.
+
+**CRITICAL DIRECTIVES (S219 — Matthew explicit, PERMANENT):**
+- **PyBoy is BANNED.** Use mGBA (mgba-py). Do not recommend or reference PyBoy.
+- **Run first, build while playing.** Get the bot running ASAP with mGBA, fix issues during gameplay. The bot playing IS the development process.
+
+**Next (priority order):**
+1. **Implement mGBA backend** in emulator_control.py (replace PyBoy backend)
+2. **Rip out all PyBoy references** from pokemon-agent/ files
+3. **Offline test run:** `python3 main.py --rom pokemon_crystal.gbc --offline --steps 500`
+4. Fix whatever breaks during offline run (coordinate validation, RAM addresses)
+5. Connect LLM and run 50 steps with API to tune prompts
+6. Build Crystal warp/connection tables for cross-map navigation
+7. Continue Kalshi cross-chat (monitor pivot results)
+
+---
+
+## Previous State (Session 218 — 2026-03-27)
 
 **Phase:** Session 218 COMPLETE. S218: STEAL CODE directive + Kalshi strategy pivot + crystal_data port from reference repos
 
@@ -12,11 +42,6 @@
 - URGENT Kalshi strategy pivot delivered (eth_orderbook_imbalance recommended)
 - crystal_data.py ported: 251 species, 251 moves, items, maps, type chart
 - **Tests**: 330 suites, 11814 tests passing. All green.
-
-**Next:**
-1. Port agent loop patterns from GPT/reference repos
-2. Live emulator testing with real ROM
-3. Continue Kalshi cross-chat (monitor pivot results)
 
 ---
 

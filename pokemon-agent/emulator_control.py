@@ -1,11 +1,15 @@
 """Emulator control abstraction for Pokemon games.
 
 Provides a clean interface for button input, frame advance, and RAM reads.
-Backends: mGBA (default, recommended) or PyBoy (legacy fallback).
+Backend: mGBA (mgba-py bindings). Supports GB/GBC/GBA — one backend for all ROMs.
 
-The EmulatorControl class abstracts raw emulator operations so the decision
-engine never touches PyBoy directly. This makes it possible to swap backends
-(e.g., mGBA) or run in headless mode for testing.
+**PyBoy is BANNED (S219 Matthew directive). Do not use or recommend PyBoy.**
+The PyBoyBackend class below is LEGACY CODE pending removal. Use MGBABackend
+or MockBackend only. The mGBA backend is the priority implementation target.
+
+The EmulatorControl class abstracts raw emulator operations so the agent
+never touches the emulator library directly. This makes it possible to
+swap backends or run in headless mode for testing.
 
 Usage:
     from emulator_control import EmulatorControl
@@ -17,7 +21,7 @@ Usage:
     emu.save_state("before_gym")
     emu.close()
 
-Stdlib + mgba (built from source). PyBoy available as fallback.
+Stdlib + mgba-py. PyBoy backend is BANNED — do not use.
 """
 from __future__ import annotations
 

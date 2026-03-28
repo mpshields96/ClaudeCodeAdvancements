@@ -40,7 +40,7 @@
 | Reddit Intelligence | `reddit-intelligence/` | MT-6,9(Phase 3 COMPLETE),11(Phase 3 autonomous trending + discover),14(Phase 3 COMPLETE),15,27(Phase 4 NEEDLE precision),40(Phase 1 scan scheduler) + subreddit_discoverer + url_reader tests | 498 |
 | Self-Learning | `self-learning/` | MT-7,10,12,26(Tier 3+E2E),27(Phase 5),28(COMPLETE),37(Layer 5 COMPLETE + uber_pipeline + dca_advisor),49(Phase 6) + Sentinel + Resurfacer + Resurfacer Hook + Overnight Detector + micro_reflect + ROI Tracker + Trade Reflector + Strategy Health Scorer + principle_registry + pattern_registry + detectors + regime_detector + calibration_bias + cross_platform_signal + principle_transfer + dynamic_kelly + macro_regime + fear_greed_filter + signal_pipeline + outcome_feedback + predictive_recommender + sentinel_bridge + order_flow_intel + belief_vol_surface + apf_session_tracker + deployment_verifier + principle_seeder + monte_carlo_simulator (REQ-040) + meta_learning_dashboard (MT-49) + principle_discoverer (MT-49 Phase 3) + confidence_recalibrator (MT-49 Phase 4) + research_roi_resolver (MT-49 Phase 5) + fill_rate_simulator (REQ-042) + portfolio_loader (MT-37 Phase 3) + session_metrics (MT-49 Phase 6) + kelly_sizer (MT-37 Layer 3) + risk_monitor (MT-37 Layer 3) + tax_harvester (MT-37 Layer 4) + withdrawal_planner (MT-37 Layer 4) + rebalance_advisor (MT-37 Layer 5) + portfolio_report (MT-37 Layer 5) + behavioral_guard (MT-37 Layer 5) + uber_pipeline (MT-37 orchestrator) + dca_advisor (MT-37 DCA) + correlated_loss_analyzer (REQ-054) + volume_predictor (S187) + reflect tests | 2391 |
 | Design Skills | `design-skills/` | MT-17 Phase 5 + daily snapshots + trading_chart (MT-24) + 29 chart types + consistency audit + report_charts (wired into /cca-report, 13 Kalshi + 13 base + 3 learning charts, +pareto +gauge S193) + kalshi_data_collector (13 chart methods) + learning_data_collector + report_sidecar + report_differ (MT-33) + Dashboard v2 (dark mode, sortable, search, collapsible) + figure integration (MT-32 Phase 7) + chartjs_bridge (MT-52/E2, 8 Chart.js types) | 1604 |
-| Pokemon Agent | `pokemon-agent/` | MT-53 Phase 3 COMPLETE — emulator_control + memory_reader + game_state + navigation + config + tools + prompts + agent + main | 272 |
+| Pokemon Agent | `pokemon-agent/` | MT-53 ~35% — emulator_control + memory_reader(Crystal+Red) + game_state + navigation + config + tools + prompts + agent + main + battle_ai + boot_sequence(Red+Crystal) + crystal_data(251 species/moves). **PyBoy BANNED (S219) — migrate to mGBA.** Run first, build while playing. | 292 |
 | Research | `research/` | Reddit scout, MT-8/MT-13 Phase 2 COMPLETE, S190 Agent Research (multi-agent/orchestration), MT-53 Pokemon Research (emulator+frameworks), MT-53 Intelligence Scan (S191) | 86 |
 
 **Total: ~10,706 tests (~282 suites). All must pass before any work.**
@@ -142,6 +142,25 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `sizing_optimizer.py` — Portfolio-level bet sizing optimizer: Kelly fractions, daily EV/SD, P(target), from_db, asset-weighted sizing. 47 tests (S188).
 - `daily_outlook.py` — Daily P&L outlook predictor: BTC range → volume → EV/SD → verdict. 18 tests (S188).
 - `hour_sizing.py` — Time-of-day sizing adjuster: hourly EV → multiplier schedule. 23 tests (S188).
+
+**pokemon-agent/** — MT-53 Autonomous Pokemon Crystal bot (~35% complete, S219)
+- `agent.py` — Core CrystalAgent: step loop, auto-advance, action cache, stuck detection, battle AI, LLM integration (989 LOC)
+- `emulator_control.py` — Emulator abstraction (swappable backends). **PyBoy backend exists but is BANNED — needs mGBA replacement**
+- `memory_reader.py` — Crystal RAM addresses + state reading (party, battle, badges, position)
+- `memory_reader_red.py` — Red-specific RAM addresses
+- `crystal_data.py` — Complete data tables: 251 species, 251 moves, items, maps, type chart (S218 STEAL CODE)
+- `game_state.py` — Dataclasses: GameState, MapPosition, MenuState, Party, Pokemon, BattleState, Badges
+- `battle_ai.py` — Deterministic battle decisions: type effectiveness, heal/catch/flee/fight (Gen 1 chart, needs Gen 2 update)
+- `boot_sequence.py` — Red intro automation (title → Oak's Lab)
+- `boot_sequence_crystal.py` — Crystal intro automation (title → Elm's Lab, S219)
+- `red_agent.py` — Red subclass with Red-specific components
+- `navigation.py` — A* pathfinding (Red warps only, Crystal warps TODO)
+- `main.py` — Entry point: ROM detection, agent creation, boot sequence, step loop
+- `config.py` — Model, token limits, directories, thresholds
+- `tools.py` — LLM tool definitions (press_buttons, navigate_to, wait, checkpoint, memory, markers, objectives)
+- `prompts.py` — System prompt + user message builder for Opus
+- **30 test suites, ~500+ tests**
+- **PRIORITY: Implement mGBA backend, then offline test run with real Crystal ROM**
 
 **self-learning/research/** — Academic research
 - `MT37_RESEARCH.md` — MT-37 Phase 1: 42-paper synthesis across 10 areas (S178-S180)

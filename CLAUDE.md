@@ -43,6 +43,21 @@ Full rules: `~/.claude/rules/cca-polybot-coordination.md`
 Sources: pokemon-agent/references/ (cloned repos), https://gpt-plays-pokemon.clad3815.dev/firered/livefeed
 Reference: MATTHEW_DIRECTIVES.md S218 for full verbatim directive.
 
+## MT-53 EMULATOR RULES (S219 — Matthew directive, PERMANENT)
+
+**PyBoy is BANNED.** Do not use, install, recommend, or reference PyBoy. Period.
+Use **mGBA** (mgba-py bindings) as the emulator backend. mGBA supports GB/GBC/GBA — one backend for all ROM types.
+
+**RUN FIRST, BUILD WHILE PLAYING (S219 — Matthew directive):**
+Do NOT try to build the bot to 100% completion before running it. The bot learns by playing.
+1. Get the emulator running with mGBA backend
+2. Validate boot sequence + RAM reading with `--offline` mode (no API cost)
+3. Connect LLM and let it play — fix what actually breaks
+4. The action cache, stuck detection, and movement validator adapt in real-time
+5. Build remaining features (gym routing, team building, etc.) WHILE the bot plays
+
+The bot playing IS the development process, not a reward at the end of it.
+
 ---
 
 ## Architecture Principles
@@ -170,6 +185,7 @@ Critical: ALWAYS Cmd+N for new session, ALWAYS verify Code tab, NEVER paste into
 - **Credential regex for Anthropic keys:** Pattern must include hyphens — `sk-[A-Za-z0-9\-]{20,}` not `sk-[A-Za-z0-9]{20,}`. Keys contain `sk-ant-api03-...`.
 - **Memory ID suffix:** 8 hex chars minimum. 3-char suffix produced collisions at 100 rapid-fire creates.
 - **Commit every task:** Never close a session with uncommitted deliverables. Sessions 7-15 accumulated 80+ untracked files. Commit when tests pass.
+- **PyBoy is BANNED:** Do not use PyBoy for MT-53 Pokemon bot. Use mGBA (mgba-py). Matthew explicit directive S219.
 - **Claude Island auto-hooks:** Do NOT launch while other CC sessions are active — it auto-installs global hooks into `~/.claude/hooks/`.
 - **PROJECT_INDEX.md Edit retries:** Always Read PROJECT_INDEX.md (and SESSION_STATE.md) before editing. These structured table files cause Edit failures in 68% of sessions (25/37) when the old_string doesn't exactly match. Read costs ~500 tokens, saves ~2000 in retry loops.
 - **GitHub repo:** `https://github.com/mpshields96/ClaudeCodeAdvancements`
