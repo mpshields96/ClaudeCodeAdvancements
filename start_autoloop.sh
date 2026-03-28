@@ -38,7 +38,8 @@ MAX_CONSECUTIVE_SHORT=3
 RATE_LIMIT_COOLDOWN=300  # 5 minutes on rate limit
 
 # Model alternation: round-robin | opus-primary | sonnet-primary
-MODEL_STRATEGY=${MODEL_STRATEGY:-round-robin}
+# S229 Matthew directive: CCA always uses Opus 4.6
+MODEL_STRATEGY=${MODEL_STRATEGY:-opus-primary}
 
 # State tracking
 iteration=0

@@ -140,8 +140,8 @@ def trigger_next_session(dry_run: bool = False) -> bool:
             -- Remember the current (old) window
             set oldWindow to front window
 
-            -- Open new window with the autoloop script
-            do script "cd {project_dir} && bash start_autoloop.sh"
+            -- Open new window with the autoloop script (S229: always use Opus for CCA)
+            do script "cd {project_dir} && MODEL_STRATEGY=opus-primary bash start_autoloop.sh"
 
             -- Close the old window (kills old shell + old claude session)
             delay 2
