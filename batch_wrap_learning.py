@@ -457,6 +457,16 @@ def main():
 
     result = run_batch(batch)
     print(result.summary())
+
+    # MT-49 unified health snapshot
+    try:
+        sys.path.insert(0, os.path.join(SCRIPT_DIR, "self-learning"))
+        from wrap_summary import build_summary, format_summary
+        snap = build_summary(batch.session_id)
+        print(format_summary(snap))
+    except Exception:
+        pass  # Non-blocking — wrap continues even if snapshot fails
+
     if not result.all_ok:
         sys.exit(1)
 
