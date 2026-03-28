@@ -416,6 +416,51 @@ class CrystalAgent:
                      self.action_cache.hit_rate() * 100)
         return result
 
+    def try_battle_ai(self, state: GameState) -> Optional[StepResult]:
+        """If in battle, use deterministic battle AI instead of LLM.
+
+        Saves tokens for routine wild encounters. Returns a StepResult
+        if battle AI handled the step, or None to fall through to LLM.
+        """
+        if not state.battle.in_battle or state.battle.enemy is None:
+            return None
+
+        try:
+            from battle_ai import assess_threat, choose_action, action_to_buttons
+        except ImportError:
+            return None  # battle_ai not available
+
+        enemy = state.battle.enemy
+        is_wild = state.battle.is_wild
+
+        action = choose_action(state.party, enemy, is_wild=is_wild,
+                               items=state.items)
+        buttons = action_to_buttons(action)
+
+        lead = state.party.lead()
+        threat = assess_threat(enemy, lead) if lead else {"level": "unknown"}
+
+        logger.info("Battle AI: %s vs %s Lv%d (threat:%s) — %s: %s",
+                     lead.species if lead else "???",
+                     enemy.species, enemy.level, threat["level"],
+                     action["type"], action.get("reason", ""))
+
+        for button in buttons:
+            if button in ("up", "down", "left", "right"):
+                self.emulator.press(button, hold_frames=4, wait_frames=8)
+            else:
+                self.emulator.press(button, hold_frames=4, wait_frames=12)
+
+        self.auto_advance_count += 1
+
+        return StepResult(
+            step_number=self.step_count,
+            state=state,
+            llm_text=f"[battle_ai: {action['type']} — {action.get('reason', '')}]",
+            tool_calls=[],
+            tool_results=[{"auto": True, "battle_ai": True}],
+        )
+
     def step(self) -> StepResult:
         """Execute one agent step: observe -> think -> act.
 
@@ -425,6 +470,11 @@ class CrystalAgent:
 
         # 1. Read game state from RAM (ground truth)
         state = self.reader.read_game_state()
+
+        # 1.01. Battle AI: use deterministic moves for routine battles
+        battle_result = self.try_battle_ai(state)
+        if battle_result is not None:
+            return battle_result
 
         # 1.05. Checkpoint check: auto-save before risky actions
         if self._prev_state is not None:

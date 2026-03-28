@@ -205,7 +205,8 @@ class TestRedAgentBattleAI(unittest.TestCase):
         emu.write_byte(mrr.BATTLE_MODE, 0)  # Not in battle
 
         agent = RedAgent(emulator=emu)
-        result = agent.try_battle_ai()
+        state = agent.reader.read_game_state()
+        result = agent.try_battle_ai(state)
         self.assertIsNone(result)
 
     def test_try_battle_ai_returns_step_in_battle(self):
@@ -235,7 +236,8 @@ class TestRedAgentBattleAI(unittest.TestCase):
         emu.write_byte(mrr.ENEMY_MON_MAX_HP_LO, 12)
 
         agent = RedAgent(emulator=emu)
-        result = agent.try_battle_ai()
+        state = agent.reader.read_game_state()
+        result = agent.try_battle_ai(state)
         self.assertIsNotNone(result)
         self.assertIn("battle_ai", result.llm_text)
 

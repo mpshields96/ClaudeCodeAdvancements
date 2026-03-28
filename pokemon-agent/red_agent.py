@@ -21,8 +21,7 @@ from typing import Optional
 
 import logging
 
-from agent import CrystalAgent, LLMClient, StepResult
-from battle_ai import assess_threat, choose_action, action_to_buttons
+from agent import CrystalAgent, LLMClient
 from boot_sequence import run_boot_sequence
 from checkpoint import CheckpointManager
 from collision_reader_red import CollisionReaderRed
@@ -104,60 +103,6 @@ class RedAgent(CrystalAgent):
         else:
             logger.warning("Boot partial: %s", self.boot_result["phases_completed"])
         return self.boot_result
-
-    def step(self) -> StepResult:
-        """Execute one agent step, with battle AI override.
-
-        If in battle, uses deterministic battle AI (no LLM needed).
-        Otherwise delegates to parent CrystalAgent.step().
-        """
-        battle_result = self.try_battle_ai()
-        if battle_result is not None:
-            return battle_result
-        return super().step()
-
-    def try_battle_ai(self) -> Optional[StepResult]:
-        """If in battle, use deterministic battle AI instead of LLM.
-
-        Returns a StepResult if battle AI handled the step, or None if
-        not in battle (letting the normal step flow continue).
-        """
-        state = self.reader.read_game_state()
-        if not state.battle.in_battle or state.battle.enemy is None:
-            return None
-
-        enemy = state.battle.enemy
-        is_wild = state.battle.is_wild
-
-        action = choose_action(state.party, enemy, is_wild=is_wild,
-                               items=state.items)
-        buttons = action_to_buttons(action)
-
-        # Assess enemy threat for logging
-        lead = state.party.lead()
-        threat = assess_threat(enemy, lead) if lead else {"level": "unknown"}
-
-        logger.info("Battle AI: %s vs %s Lv%d (threat:%s) — %s: %s",
-                     lead.species if lead else "???",
-                     enemy.species, enemy.level, threat["level"],
-                     action["type"], action.get("reason", ""))
-
-        for button in buttons:
-            if button in ("up", "down", "left", "right"):
-                self.emulator.press(button, hold_frames=4, wait_frames=8)
-            else:
-                self.emulator.press(button, hold_frames=4, wait_frames=12)
-
-        self.step_count += 1
-        self.auto_advance_count += 1
-
-        return StepResult(
-            step_number=self.step_count,
-            state=state,
-            llm_text=f"[battle_ai: {action['type']} — {action.get('reason', '')}]",
-            tool_calls=[],
-            tool_results=[{"auto": True, "battle_ai": True}],
-        )
 
     def _register_red_gyms(self) -> None:
         """Register Pokemon Red gym map IDs for auto-checkpointing."""
