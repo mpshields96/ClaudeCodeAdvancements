@@ -3,7 +3,27 @@
 
 ---
 
-## Current State (as of Session 222 — 2026-03-27)
+## Current State (as of Session 223 — 2026-03-27)
+
+**Phase:** Session 223 COMPLETE. MT-49 Phase 1 (Meta-Learning Tracker) + zombie prune + Kalshi REQ-61 + Codex 3-way hub ACK
+
+**What was done this session (S223):**
+- MT-49 Phase 1: Built meta_tracker.py — measures principle usage, zombie detection, health scoring
+- MT-49: Wired meta_tracker into slim_init (auto-reports at every init) + batch_wrap_learning (snapshot every wrap)
+- MT-49: Executed zombie prune — 166/181 principles pruned (93% dead weight). Health: 0.21 -> 0.83
+- Kalshi REQ-61 (Update 70): Daily sniper hour analysis (FLB supports all-hours) + sports game calibration (N=2 insufficient, flagged YES/NO direction bug)
+- Codex ACK 4: Explicit 3-way hub bridge acknowledgment
+- **Tests**: 16 new (meta_tracker), 540 total passing. All green.
+- **Commits**: 5 (0e4e8e4, b620d24, 5c4de70, c8dde87, 25caeea, 350380a)
+
+**Next:**
+1. MT-53: First LLM play session
+2. Kalshi: domain_knowledge_scanner.py implementation
+3. MT-49: Active principle transfer (Phase 2) — make principle_transfer.py propose cross-domain automatically
+
+---
+
+## Previous State (Session 222 — 2026-03-27)
 
 **Phase:** Session 222 COMPLETE. MT-53 playable Crystal state + 3 Kalshi cross-chat research deliveries (REQ-16B, REQ-60, REQ-16C)
 
@@ -13,11 +33,6 @@
 - Kalshi REQ-60 (Update 68): Tier 1 strategy architecture with open-source bot refs, phased implementation plan
 - Kalshi REQ-16C (Update 69): Agentic-rd-sandbox surgical assessment — 3 extractable components, lower edge threshold
 - **Tests**: 12 suites, 560 tests passing. All green.
-
-**Next:**
-1. Wire 3-way comms hub (CCA-Codex-Kalshi)
-2. MT-53: First LLM play session
-3. Kalshi: domain_knowledge_scanner.py implementation
 
 ---
 
