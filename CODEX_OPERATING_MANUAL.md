@@ -139,6 +139,7 @@ Preferred desktop-app entrypoint:
 - See `CODEX_DESKTOP_WORKFLOW.md` for ready-to-paste prompts
 
 Init:
+- Verify the active repo root is the canonical CCA repo before substantive work
 - Read `AGENTS.md`
 - Read the authoritative state file
 - In CCA, read `TODAYS_TASKS.md` when present

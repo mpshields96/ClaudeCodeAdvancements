@@ -15,7 +15,9 @@ from codex_init import (
     SessionSummary,
     ValidationSummary,
     build_init_prompt,
+    looks_like_cca_repo,
     main,
+    normalize_cli_root,
     parse_claude_to_codex,
     parse_codex_inbox,
     parse_session_state,
@@ -138,6 +140,23 @@ class TestValidation(unittest.TestCase):
         self.assertEqual(result.mode, "smoke")
         self.assertIn("10/10", result.summary)
         self.assertEqual(mock_run.call_count, 2)
+
+
+class TestRootNormalization(unittest.TestCase):
+    def test_detects_repo_sentinels(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for name in ("AGENTS.md", "SESSION_STATE.md", "PROJECT_INDEX.md"):
+                with open(os.path.join(tmpdir, name), "w", encoding="utf-8") as handle:
+                    handle.write("x")
+            self.assertTrue(looks_like_cca_repo(tmpdir))
+
+    def test_normalize_cli_root_falls_back_to_canonical_for_invalid_root(self):
+        root, notice = normalize_cli_root(
+            "/tmp/not-cca",
+            canonical_root="/Users/matthewshields/Projects/ClaudeCodeAdvancements",
+        )
+        self.assertEqual(root, "/Users/matthewshields/Projects/ClaudeCodeAdvancements")
+        self.assertIn("not a valid CCA repo", notice)
 
 
 class TestBuildInitPrompt(unittest.TestCase):

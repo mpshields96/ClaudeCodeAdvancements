@@ -44,6 +44,10 @@ Scoped examples:
 
 These are chat conventions, not built-in slash commands. They should be treated as shorthand for invoking `$cca-desktop-workflow` on the CCA repo.
 
+Repo guard:
+- If Codex opens in some other folder, do not use that cwd as the CCA work repo.
+- Re-anchor the session to `/Users/matthewshields/Projects/ClaudeCodeAdvancements` before checking git state or editing files.
+
 ## Ready-To-Paste Prompts
 
 ### Init

@@ -79,8 +79,10 @@ class TestBuildAutoPrompt(unittest.TestCase):
 
 
 class TestCLI(unittest.TestCase):
+    @patch("codex_auto.normalize_cli_root")
     @patch("codex_auto.collect_snapshot")
-    def test_main_prints_prompt(self, mock_collect):
+    def test_main_prints_prompt(self, mock_collect, mock_normalize):
+        mock_normalize.return_value = ("/tmp/repo", None)
         mock_collect.return_value = InitSnapshot(
             branch="main",
             substantive=[],
@@ -98,8 +100,10 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertTrue(mock_write.called)
 
+    @patch("codex_auto.normalize_cli_root")
     @patch("codex_auto.collect_snapshot")
-    def test_main_writes_file(self, mock_collect):
+    def test_main_writes_file(self, mock_collect, mock_normalize):
+        mock_normalize.return_value = ("/tmp/repo", None)
         mock_collect.return_value = InitSnapshot(
             branch="main",
             substantive=[],

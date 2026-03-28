@@ -22,6 +22,7 @@ from codex_init import (
     GitStatusEntry,
     InitSnapshot,
     collect_snapshot,
+    normalize_cli_root,
     suggest_reasoning_level,
 )
 
@@ -120,7 +121,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    root = os.path.abspath(os.path.expanduser(args.root))
+    root, override_notice = normalize_cli_root(args.root)
+    if override_notice:
+        print(override_notice, file=sys.stderr)
     snapshot = collect_snapshot(root)
     prompt = build_auto_prompt(root, snapshot, task_override=args.task)
 

@@ -20,6 +20,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from codex_init import normalize_cli_root
+
 
 DEFAULT_REPO_ROOT = os.path.expanduser("~/Projects/ClaudeCodeAdvancements")
 DEFAULT_OUTPUT_FILE = "CODEX_WRAP_PROMPT.md"
@@ -154,7 +156,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    root = os.path.abspath(os.path.expanduser(args.root))
+    root, override_notice = normalize_cli_root(args.root, canonical_root=DEFAULT_REPO_ROOT)
+    if override_notice:
+        print(override_notice, file=sys.stderr)
     snapshot = collect_snapshot(root)
     prompt = build_wrap_prompt(root, snapshot)
 

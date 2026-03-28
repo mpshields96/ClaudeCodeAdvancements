@@ -22,7 +22,7 @@ import os
 import sys
 
 from codex_auto import build_auto_prompt
-from codex_init import DEFAULT_REPO_ROOT, build_init_prompt, collect_snapshot
+from codex_init import DEFAULT_REPO_ROOT, build_init_prompt, collect_snapshot, normalize_cli_root
 from codex_wrap import build_wrap_prompt, collect_snapshot as collect_wrap_snapshot
 
 
@@ -100,7 +100,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    root = os.path.abspath(os.path.expanduser(args.root))
+    root, override_notice = normalize_cli_root(args.root)
+    if override_notice:
+        print(override_notice, file=sys.stderr)
     snapshot = collect_snapshot(root)
     prompt = build_autoloop_prompt(
         root,

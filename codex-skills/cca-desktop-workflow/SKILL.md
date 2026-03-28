@@ -8,6 +8,10 @@ description: Use when working in /Users/matthewshields/Projects/ClaudeCodeAdvanc
 Use this skill only for the CCA repo:
 - `/Users/matthewshields/Projects/ClaudeCodeAdvancements`
 
+If Codex opens the chat in some other folder, do not treat that cwd as the
+working repo. Re-anchor git checks, file reads, and edits to
+`/Users/matthewshields/Projects/ClaudeCodeAdvancements` before substantive work.
+
 This skill is the Codex desktop-app analogue of CCA's Claude slash commands:
 - `/cca-init`
 - `/cca-auto-desktop`
@@ -48,16 +52,17 @@ repeat the full repo path.
 ## Init Mode
 
 When invoked in `init` mode:
-1. Read `AGENTS.md`.
-2. Read `SESSION_STATE.md`.
-3. Read `TODAYS_TASKS.md` when present.
-4. Read Codex-side docs if relevant:
+1. Verify the active repo root is `/Users/matthewshields/Projects/ClaudeCodeAdvancements`; if not, say so and switch to that repo before continuing.
+2. Read `AGENTS.md`.
+3. Read `SESSION_STATE.md`.
+4. Read `TODAYS_TASKS.md` when present.
+5. Read Codex-side docs if relevant:
    - `CODEX_OPERATING_MANUAL.md`
    - `CODEX_QUICKSTART.md`
    - `CLAUDE_TO_CODEX.md`
-5. Check `git status --short` and recent `git log --oneline`.
-6. Check `cca_comm.py inbox` or the internal queue when the task involves coordination.
-7. Run a reasonable baseline validation for the assigned scope.
+6. Check `git status --short` and recent `git log --oneline`.
+7. Check `cca_comm.py inbox` or the internal queue when the task involves coordination.
+8. Run a reasonable baseline validation for the assigned scope.
 
 Init mode should end with a compact briefing:
 - current branch

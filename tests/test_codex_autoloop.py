@@ -68,9 +68,11 @@ class TestBuildAutoLoopPrompt(unittest.TestCase):
 
 
 class TestCLI(unittest.TestCase):
+    @patch("codex_autoloop.normalize_cli_root")
     @patch("codex_autoloop.collect_wrap_snapshot")
     @patch("codex_autoloop.collect_snapshot")
-    def test_main_prints_prompt(self, mock_collect, mock_wrap_collect):
+    def test_main_prints_prompt(self, mock_collect, mock_wrap_collect, mock_normalize):
+        mock_normalize.return_value = ("/tmp/repo", None)
         mock_collect.return_value = _snapshot()
         mock_wrap_collect.return_value = type(
             "WrapSnapshot",
@@ -82,9 +84,11 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertTrue(mock_write.called)
 
+    @patch("codex_autoloop.normalize_cli_root")
     @patch("codex_autoloop.collect_wrap_snapshot")
     @patch("codex_autoloop.collect_snapshot")
-    def test_main_writes_file(self, mock_collect, mock_wrap_collect):
+    def test_main_writes_file(self, mock_collect, mock_wrap_collect, mock_normalize):
+        mock_normalize.return_value = ("/tmp/repo", None)
         mock_collect.return_value = _snapshot()
         mock_wrap_collect.return_value = type(
             "WrapSnapshot",

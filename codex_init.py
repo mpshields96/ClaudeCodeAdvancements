@@ -24,6 +24,11 @@ from resume_generator import build_handoff_snapshot, summarize_snapshot_for_init
 
 DEFAULT_REPO_ROOT = os.path.expanduser("~/Projects/ClaudeCodeAdvancements")
 DEFAULT_OUTPUT_FILE = "CODEX_INIT_PROMPT.md"
+CANONICAL_SENTINELS = (
+    "AGENTS.md",
+    "SESSION_STATE.md",
+    "PROJECT_INDEX.md",
+)
 
 RUNTIME_PREFIXES = (
     ".session_pids/",
@@ -111,6 +116,31 @@ def _run_python(root: str, *args: str) -> subprocess.CompletedProcess[str]:
         text=True,
         timeout=60,
     )
+
+
+def looks_like_cca_repo(root: str) -> bool:
+    return all(os.path.exists(os.path.join(root, marker)) for marker in CANONICAL_SENTINELS)
+
+
+def normalize_cli_root(root: str, canonical_root: str = DEFAULT_REPO_ROOT) -> tuple[str, str | None]:
+    requested = os.path.abspath(os.path.expanduser(root))
+    canonical = os.path.abspath(os.path.expanduser(canonical_root))
+
+    if requested == canonical:
+        return canonical, None
+
+    if os.path.exists(canonical):
+        if not looks_like_cca_repo(requested):
+            return canonical, (
+                f"Requested root {requested} is not a valid CCA repo. "
+                f"Using canonical root {canonical} instead."
+            )
+        return canonical, (
+            f"Requested root {requested} is not the canonical shared CCA repo. "
+            f"Using {canonical} instead."
+        )
+
+    return requested, None
 
 
 def parse_git_status(output: str) -> list[GitStatusEntry]:
@@ -391,7 +421,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    root = os.path.abspath(os.path.expanduser(args.root))
+    root, override_notice = normalize_cli_root(args.root)
+    if override_notice:
+        print(override_notice, file=sys.stderr)
     snapshot = collect_snapshot(root)
     prompt = build_init_prompt(root, snapshot)
 
