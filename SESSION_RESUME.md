@@ -8,12 +8,12 @@ Run /cca-auto after init only if you want autonomous continuation.
 ## Repo State
 - Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
 - Last wrapped session: S228 (2026-03-28)
-- Phase: Session 228 COMPLETE. Audited MT-49 self-learning infrastructure, identified dashboard dedup bug and meta-learning loop gaps
+- Phase: Session 228 COMPLETE. MT-49 Phase 4 (confidence recalibration apply), dashboard dedup fix, wrap_summary.py, REQ-17 delivery
 
 ## Immediate Priorities
-1. Fix meta_learning_dashboard.py dedup bug (PrincipleAnalyzer uses raw lines not deduplicated)
-2. Build wrap-summary command integrating meta_tracker + recalibrator + discoverer
-3. Continue MT-49 Phase 5: close the meta-learning loop
+1. Fix priority_picker.py to skip COMPLETE MTs in MASTER_TASKS
+2. MT-49 Phase 5: close meta-learning loop (research ROI resolver improvements)
+3. CLI Phase 2: Codex migration
 
 ## Today's Tasks
 - No remaining [TODO] items found in TODAYS_TASKS.md.
