@@ -71,7 +71,56 @@ def parse_args(argv=None) -> argparse.Namespace:
         "--model", type=str, default=None,
         help="Override LLM model name (e.g. claude-haiku-4-5-20251001). Default: config.py MODEL_NAME.",
     )
+    parser.add_argument(
+        "--backend", type=str, default="anthropic",
+        choices=["anthropic", "gemini", "auto"],
+        help="LLM backend: anthropic (default), gemini (free tier), auto (try gemini then anthropic).",
+    )
     return parser.parse_args(argv)
+
+
+def _init_llm(backend: str, logger):
+    """Initialize LLM client based on backend choice.
+
+    Args:
+        backend: 'anthropic', 'gemini', or 'auto'
+        logger: Logger instance
+
+    Returns:
+        LLM client or None on failure.
+    """
+    backends_to_try = []
+    if backend == "auto":
+        backends_to_try = ["gemini", "anthropic"]
+    else:
+        backends_to_try = [backend]
+
+    for name in backends_to_try:
+        try:
+            if name == "gemini":
+                from gemini_client import GeminiClient
+                client = GeminiClient()
+                logger.info("Gemini client initialized (free tier)")
+                return client
+            else:
+                from agent import AnthropicClient
+                client = AnthropicClient()
+                logger.info("Anthropic client initialized")
+                return client
+        except ImportError as e:
+            logger.warning("Backend %s unavailable: %s", name, e)
+            if backend != "auto":
+                print(f"Error: {e}")
+                return None
+        except (ValueError, Exception) as e:
+            logger.warning("Backend %s failed: %s", name, e)
+            if backend != "auto":
+                print(f"Error: {e}")
+                return None
+
+    logger.error("No LLM backend available. Install google-generativeai or anthropic.")
+    print("Error: No LLM backend available. Set GEMINI_API_KEY or ANTHROPIC_API_KEY.")
+    return None
 
 
 def detect_game_type(rom_path: str) -> str:
@@ -111,7 +160,6 @@ def main(argv=None) -> int:
 
     # Initialize emulator
     from emulator_control import EmulatorControl
-    from agent import AnthropicClient
 
     logger.info("Loading ROM: %s", args.rom)
     emu = EmulatorControl.from_rom(
@@ -127,17 +175,8 @@ def main(argv=None) -> int:
     # Initialize LLM
     llm = None
     if not args.offline:
-        try:
-            llm = AnthropicClient()
-            logger.info("Anthropic client initialized")
-        except ImportError:
-            logger.error("anthropic SDK not installed. Run: pip install anthropic")
-            print("Error: pip install anthropic")
-            emu.close()
-            return 1
-        except Exception as e:
-            logger.error("Failed to init Anthropic client: %s", e)
-            print(f"Error: {e}")
+        llm = _init_llm(args.backend, logger)
+        if llm is None:
             emu.close()
             return 1
     else:
