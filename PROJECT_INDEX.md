@@ -501,3 +501,8 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `self-learning/meta_tracker.py` (S223)
 - `self-learning/meta_snapshots.jsonl` (S223)
 - `tests/test_meta_tracker.py` (S223)
+
+
+### Added in S224
+- `polymarket-bot/scripts/domain_knowledge_scanner.py` (S224)
+- `polymarket-bot/scripts/test_domain_knowledge_scanner.py` (S224)

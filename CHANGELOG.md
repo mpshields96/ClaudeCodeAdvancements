@@ -3666,3 +3666,22 @@ CLI chat 2:
 - None
 
 ---
+
+## Session 224 — 2026-03-27
+
+**What changed:**
+- MT-53: --model CLI flag, SDK install, offline loop verified (62 tests)
+- Kalshi: domain_knowledge_scanner.py with stub provider (22 tests)
+- MT-49 Phase 2: auto_accept + batch_wrap wiring (59 tests)
+- Memory: no-API-key constraint saved permanently
+
+**Why:**
+- MT-53 model flag + Kalshi domain_knowledge_scanner + MT-49 Phase 2 auto-accept + wrap wiring
+
+**Tests:** 11867/11867 passing (333 suites)
+
+**Lessons:**
+- Tried LLM play session before checking API key constraint
+- Matthew had to repeat no-API-key info
+
+---

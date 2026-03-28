@@ -8,6 +8,24 @@
 **Phase:** Session 224 COMPLETE. MT-53 model flag + Kalshi domain_knowledge_scanner + MT-49 Phase 2 auto-accept + wrap wiring
 
 **What was done this session (S224):**
+- MT-53: --model CLI flag, SDK install, offline loop verified (62 tests)
+- Kalshi: domain_knowledge_scanner.py with stub provider (22 tests)
+- MT-49 Phase 2: auto_accept + batch_wrap wiring (59 tests)
+- Memory: no-API-key constraint saved permanently
+- **Tests**: 333 suites, 11867 tests passing. All green.
+
+**Next:**
+1. MT-53: Redesign LLM backend without API key
+2. Kalshi: Test domain_knowledge_scanner --dry-run
+3. Priority picker: check stagnated MTs
+
+---
+
+## Previous State (Session 224 — 2026-03-27)
+
+**Phase:** Session 224 COMPLETE. MT-53 model flag + Kalshi domain_knowledge_scanner + MT-49 Phase 2 auto-accept + wrap wiring
+
+**What was done this session (S224):**
 - MT-53: Added --model CLI flag to agent, installed anthropic SDK in venv, verified offline loop. LLM play blocked — NO Anthropic API key available (permanent constraint, saved to memory).
 - Kalshi: Built domain_knowledge_scanner.py (polybot commits 725a723, ae284f9). Scans politics/economics/geopolitics markets, LLM probability estimation, edge detection. 22 tests. --provider stub mode works without API key.
 - MT-49 Phase 2: Added auto_accept() to principle_transfer.py. High-confidence transfers (score >= 0.60) auto-applied. First transfer executed: session_management -> cca_operations. 59 tests passing.
@@ -24,7 +42,6 @@
 3. Priority picker: check for stagnated MTs
 
 ---
-
 ## Previous State (Session 223 — 2026-03-27)
 
 **Phase:** Session 223 COMPLETE. MT-49 Phase 1 (Meta-Learning Tracker) + zombie prune + Kalshi REQ-61 + Codex 3-way hub ACK

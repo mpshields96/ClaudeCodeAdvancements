@@ -852,3 +852,27 @@
 {"event_type":"feedback_roi","session":223,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T02:58:14.248960Z"}
 {"event_type":"sentinel_stats","session":223,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T02:58:14.248960Z"}
 {"event_type":"meta_learning_health","session":223,"health_score":0.829,"total_principles":15,"active_principles":13,"zombie_principles":2,"timestamp":"2026-03-28T02:58:14.248960Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T02:59:12.254031+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T02:59:12.279891+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":0,"domain":"general","outcome":"test","notes":"test run","timestamp":"2026-03-28T03:15:29.364200Z"}
+{"event_type":"win","session":0,"domain":"general","notes":"test","timestamp":"2026-03-28T03:15:29.364200Z"}
+{"event_type":"feedback_roi","session":0,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T03:15:29.364200Z"}
+{"event_type":"sentinel_stats","session":0,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T03:15:29.364200Z"}
+{"event_type":"meta_learning_health","session":0,"health_score":0.869,"total_principles":15,"active_principles":13,"zombie_principles":0,"timestamp":"2026-03-28T03:15:29.364200Z"}
+{"event_type":"session_outcome","session":0,"domain":"general","outcome":"test","notes":"test run","timestamp":"2026-03-28T03:15:45.372750Z"}
+{"event_type":"win","session":0,"domain":"general","notes":"test","timestamp":"2026-03-28T03:15:45.372750Z"}
+{"event_type":"feedback_roi","session":0,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T03:15:45.372750Z"}
+{"event_type":"sentinel_stats","session":0,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T03:15:45.372750Z"}
+{"event_type":"meta_learning_health","session":0,"health_score":0.869,"total_principles":15,"active_principles":13,"zombie_principles":0,"timestamp":"2026-03-28T03:15:45.372750Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T03:16:57.399532+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T03:16:57.445741+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":224,"domain":"general","outcome":"success","notes":"4 tasks: MT-53 model flag, Kalshi scanner, MT-49 auto-accept, wrap wiring","timestamp":"2026-03-28T03:17:55.871946Z"}
+{"event_type":"win","session":224,"domain":"general","notes":"MT-53 model flag + SDK install + offline verified","timestamp":"2026-03-28T03:17:55.871946Z"}
+{"event_type":"win","session":224,"domain":"general","notes":"Kalshi domain_knowledge_scanner 22 tests","timestamp":"2026-03-28T03:17:55.871946Z"}
+{"event_type":"win","session":224,"domain":"general","notes":"MT-49 auto_accept + wrap wiring 59 tests","timestamp":"2026-03-28T03:17:55.871946Z"}
+{"event_type":"win","session":224,"domain":"general","notes":"No-API-key memory saved","timestamp":"2026-03-28T03:17:55.871946Z"}
+{"event_type":"pain","session":224,"domain":"general","notes":"Tried LLM play before checking API key constraint","timestamp":"2026-03-28T03:17:55.871946Z"}
+{"event_type":"pain","session":224,"domain":"general","notes":"Matthew repeated no-API-key info","timestamp":"2026-03-28T03:17:55.871946Z"}
+{"event_type":"feedback_roi","session":224,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T03:17:55.871946Z"}
+{"event_type":"sentinel_stats","session":224,"total_principles":181,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T03:17:55.871946Z"}
+{"event_type":"meta_learning_health","session":224,"health_score":0.829,"total_principles":15,"active_principles":13,"zombie_principles":2,"timestamp":"2026-03-28T03:17:55.871946Z"}
