@@ -48,30 +48,19 @@ import math
 import os
 from dataclasses import dataclass, field
 
+import design_tokens
+
 # ---------------------------------------------------------------------------
-# CCA Design Language colors (from design-guide.md)
+# CCA Design Language colors (sourced from canonical design_tokens)
 # ---------------------------------------------------------------------------
 
 CCA_COLORS = {
-    "primary": "#1a1a2e",
-    "accent": "#0f3460",
-    "highlight": "#e94560",
-    "success": "#16c79a",
-    "muted": "#6b7280",
-    "background": "#ffffff",
-    "surface": "#f8f9fa",
-    "border": "#e5e7eb",
-    "warning": "#f59e0b",
+    **design_tokens.CCA_PALETTE,
+    "background": design_tokens.CCA_PALETTE["bg"],  # alias for chart code
 }
 
 # Chart series palette (accent first, then distinguishable colors)
-SERIES_PALETTE = [
-    CCA_COLORS["accent"],
-    CCA_COLORS["highlight"],
-    CCA_COLORS["success"],
-    CCA_COLORS["warning"],
-    CCA_COLORS["muted"],
-]
+SERIES_PALETTE = design_tokens.SERIES_COLORS[:5]
 
 SVG_NS = "http://www.w3.org/2000/svg"
 
