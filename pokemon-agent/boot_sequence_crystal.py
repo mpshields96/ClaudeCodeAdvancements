@@ -11,11 +11,15 @@ Handles the deterministic Crystal intro without LLM calls:
 Adapted from boot_sequence.py (Red) using the STEAL CODE pattern (S218).
 Crystal uses map group:number addressing instead of single map IDs.
 
-Map IDs (group, number) — from pret/pokecrystal:
-- (3, 4): Player's House 2F — wake up here
-- (3, 3): Player's House 1F — Mom is here
-- (3, 1): New Bark Town — starting town
-- (3, 2): Elm's Lab — get starter
+Map IDs (group, number) — from pret/pokecrystal maps.asm (MapGroup_NewBark = 24):
+- (24, 7): Player's House 2F — wake up here (verified S220 RAM + S221 source)
+- (24, 6): Player's House 1F — Mom is here (verified S221 RAM via stair warp)
+- (24, 4): New Bark Town — starting town (verified S221 pret/pokecrystal source)
+- (24, 5): Elm's Lab — get starter (verified S221 pret/pokecrystal source)
+
+Warp tiles (from pret/pokecrystal map .asm files):
+- 2F stairs: (7, 0) → 1F at (9, 0)
+- 1F door: (6, 7) and (7, 7) → New Bark Town
 
 Usage:
     from boot_sequence_crystal import run_crystal_boot_sequence
@@ -34,14 +38,19 @@ logger = logging.getLogger("boot_crystal")
 
 
 # ── Crystal intro map IDs (group, number) ────────────────────────────────────
-# Source: verified empirically with mGBA + pokemon_crystal.gbc ROM (S220).
-# These may differ from pret/pokecrystal constants due to ROM version differences.
-# Values confirmed by booting, navigating, and reading RAM at 0xDCB5/0xDCB6.
+# Source: pret/pokecrystal maps.asm (MapGroup_NewBark = group 24)
+# Verified empirically: 2F and 1F confirmed via mGBA RAM reads (S220-S221).
+# 4 (NewBarkTown) and 5 (ElmsLab) confirmed from pret/pokecrystal source.
 
-MAP_PLAYERS_HOUSE_2F = (24, 7)  # Player starts here — bedroom (verified S220)
-MAP_PLAYERS_HOUSE_1F = (3, 3)   # Downstairs — Mom (TODO: verify with mGBA)
-MAP_NEW_BARK_TOWN = (3, 1)      # Starting town (TODO: verify with mGBA)
-MAP_ELMS_LAB = (3, 2)           # Professor Elm's lab (TODO: verify with mGBA)
+MAP_PLAYERS_HOUSE_2F = (24, 7)  # Player starts here — bedroom (RAM verified S220+S221)
+MAP_PLAYERS_HOUSE_1F = (24, 6)  # Downstairs — Mom (RAM verified S221 via stair warp)
+MAP_NEW_BARK_TOWN = (24, 4)     # Starting town (pret/pokecrystal source verified S221)
+MAP_ELMS_LAB = (24, 5)          # Professor Elm's lab (pret/pokecrystal source verified S221)
+
+# Warp tile coordinates (from pret/pokecrystal map .asm files, verified S221)
+STAIRS_2F_TILE = (7, 0)         # Step onto this tile in 2F to warp to 1F
+STAIRS_1F_ARRIVE = (9, 0)       # Arrival position in 1F from stairs
+DOOR_1F_TILES = [(6, 7), (7, 7)]  # Step onto either to exit to New Bark Town
 
 
 def _encode_map(group: int, number: int) -> int:
@@ -246,25 +255,29 @@ def run_crystal_boot_sequence(emu, reader) -> dict:
             result["phases_completed"].append("opening_dialog_skipped")
 
         # ── Phase 2: Navigate to stairs ──────────────────────────────────
-        # Crystal Player's House 2F layout:
-        # Player wakes up at approximately (4, 4). Stairs at (7, 1).
-        # Path: right to x=5, up to y=1, right to stairs
+        # Crystal Player's House 2F layout (from pret/pokecrystal):
+        # Player wakes up at approximately (3, 3). Stairs warp at (7, 0).
+        # Path: navigate to (7, 1) then press UP to step onto stair warp.
         logger.info("Phase 2: Navigating to stairs in Player's House 2F...")
         state = reader.read_game_state()
         pos = state.position
 
-        navigate_crystal(emu, reader, target_x=5, target_y=pos.y)
-        navigate_crystal(emu, reader, target_x=5, target_y=1)
-        navigate_crystal(emu, reader, target_x=7, target_y=1)
+        # Navigate to one tile below the stairs warp
+        stair_x, stair_y = STAIRS_2F_TILE
+        navigate_crystal(emu, reader, target_x=stair_x, target_y=stair_y + 1)
 
-        # Check if transition already happened
+        # Step UP onto the stair warp tile
+        emu.press("up", hold_frames=10, wait_frames=120)
+        emu.tick(120)
+
+        # Check if transition happened
         state = reader.read_game_state()
         if _map_matches(state.position.map_id, MAP_PLAYERS_HOUSE_1F):
             result["phases_completed"].append("stairs_to_1f")
         else:
-            # Try stepping right onto stairs tile
-            emu.press("right", hold_frames=10, wait_frames=120)
-            emu.tick(60)
+            # Retry with longer wait
+            emu.press("up", hold_frames=10, wait_frames=180)
+            emu.tick(180)
             if wait_for_map_crystal(emu, reader, MAP_PLAYERS_HOUSE_1F):
                 result["phases_completed"].append("stairs_to_1f")
             else:
@@ -277,24 +290,32 @@ def run_crystal_boot_sequence(emu, reader) -> dict:
     if _map_matches(pos.map_id, MAP_PLAYERS_HOUSE_1F):
         logger.info("Phase 3: In Player's House 1F, navigating to exit...")
 
-        # Clear Mom's dialog if present
-        if state.menu_state == MenuState.DIALOG:
-            clear_dialog_until_overworld_crystal(emu, reader, max_presses=30)
+        # Clear Mom's dialog — Crystal 1F has extensive scripted events:
+        # clock setting, Pokegear, Elm introduction. Need many presses.
+        # Mix A presses with down+A to navigate clock/time menus.
+        for _round in range(8):
+            for _ in range(40):
+                emu.press("a", hold_frames=4, wait_frames=12)
+            for _ in range(3):
+                emu.press("down", hold_frames=4, wait_frames=8)
+                emu.press("a", hold_frames=4, wait_frames=12)
+        emu.tick(120)
 
-        # Crystal House 1F: enter from stairs at top, door mat at bottom
-        # Navigate down and to the door
-        navigate_crystal(emu, reader, target_x=pos.x, target_y=7)
-        navigate_crystal(emu, reader, target_x=3, target_y=7)
+        # Navigate to door — door warp tiles at (6,7) and (7,7)
+        # Arrive from stairs at (9, 0), need to reach door area
+        door_x, door_y = DOOR_1F_TILES[0]  # (6, 7)
+        navigate_crystal(emu, reader, target_x=door_x, target_y=door_y - 1)
 
-        # Step down to exit
+        # Step DOWN onto the door warp tile
         emu.press("down", hold_frames=10, wait_frames=120)
-        emu.tick(60)
+        emu.tick(120)
 
         if wait_for_map_crystal(emu, reader, MAP_NEW_BARK_TOWN):
             result["phases_completed"].append("exit_house")
         else:
-            # Try adjacent door tile
-            navigate_crystal(emu, reader, target_x=2, target_y=7)
+            # Try second door tile (7, 7)
+            door_x2, door_y2 = DOOR_1F_TILES[1]
+            navigate_crystal(emu, reader, target_x=door_x2, target_y=door_y2 - 1)
             emu.press("down", hold_frames=10, wait_frames=120)
             emu.tick(120)
             state = reader.read_game_state()
@@ -318,12 +339,12 @@ def run_crystal_boot_sequence(emu, reader) -> dict:
         if state.menu_state == MenuState.DIALOG:
             clear_dialog_until_overworld_crystal(emu, reader, max_presses=30)
 
-        # In Crystal, Elm's Lab is left of Player's House.
-        # Approximate coordinates: Lab door around (4, 4) in New Bark.
-        # Player exits house roughly at center of town.
-        navigate_crystal(emu, reader, target_x=4, target_y=6)
+        # Elm's Lab door is at (6, 3) in New Bark Town (pret/pokecrystal).
+        # Player exits house at roughly (13, 5). Navigate left to lab.
+        # Navigate to one tile below the lab door, then step up.
+        navigate_crystal(emu, reader, target_x=6, target_y=4)
 
-        # Try entering the lab door (step up into it)
+        # Step UP onto the lab door warp tile at (6, 3)
         emu.press("up", hold_frames=10, wait_frames=120)
         emu.tick(120)
 
@@ -331,10 +352,9 @@ def run_crystal_boot_sequence(emu, reader) -> dict:
         if _map_matches(state.position.map_id, MAP_ELMS_LAB):
             result["phases_completed"].append("enter_elms_lab")
         else:
-            # Lab might be at slightly different coordinates
-            # Try a few adjacent tiles
-            for try_x in [3, 5, 4]:
-                navigate_crystal(emu, reader, target_x=try_x, target_y=5)
+            # Retry from slightly different positions
+            for try_x in [5, 7, 6]:
+                navigate_crystal(emu, reader, target_x=try_x, target_y=4)
                 emu.press("up", hold_frames=10, wait_frames=120)
                 emu.tick(120)
                 state = reader.read_game_state()

@@ -12,11 +12,11 @@ Crystal intro sequence:
 6. Elm's Lab: get starter Pokemon (Cyndaquil/Totodile/Chikorita)
 7. Exit to Route 29
 
-Map IDs (group, number):
-- Player's House 2F: (3, 4)
-- Player's House 1F: (3, 3)
-- New Bark Town: (3, 1)
-- Elm's Lab: (3, 2)
+Map IDs (group, number) — from pret/pokecrystal MapGroup_NewBark (group 24):
+- Player's House 2F: (24, 7)
+- Player's House 1F: (24, 6)
+- New Bark Town: (24, 4)
+- Elm's Lab: (24, 5)
 """
 import unittest
 import sys
@@ -35,6 +35,9 @@ from boot_sequence_crystal import (
     MAP_PLAYERS_HOUSE_1F,
     MAP_NEW_BARK_TOWN,
     MAP_ELMS_LAB,
+    STAIRS_2F_TILE,
+    STAIRS_1F_ARRIVE,
+    DOOR_1F_TILES,
 )
 
 
@@ -47,7 +50,7 @@ class MockReaderForCrystalBoot:
     def __init__(self):
         self._state = GameState(
             position=MapPosition(
-                map_id=self._encode_map(3, 4),  # Player's House 2F
+                map_id=self._encode_map(24, 7),  # Player's House 2F
                 map_name="Player's House 2F",
                 x=4, y=4,
             ),
@@ -107,17 +110,25 @@ class TestMapConstants(unittest.TestCase):
             self.assertEqual(len(const), 2)
 
     def test_map_groups_valid(self):
-        """All intro maps have valid group numbers."""
-        # Player's House 2F is group 24 (verified S220 with mGBA)
-        # Other maps still need mGBA verification (TODO)
-        self.assertEqual(MAP_PLAYERS_HOUSE_2F[0], 24)
-        self.assertIsInstance(MAP_PLAYERS_HOUSE_1F[0], int)
-        self.assertIsInstance(MAP_NEW_BARK_TOWN[0], int)
-        self.assertIsInstance(MAP_ELMS_LAB[0], int)
+        """All intro maps are in group 24 (MapGroup_NewBark)."""
+        for const in [MAP_PLAYERS_HOUSE_2F, MAP_PLAYERS_HOUSE_1F,
+                       MAP_NEW_BARK_TOWN, MAP_ELMS_LAB]:
+            self.assertEqual(const[0], 24, f"{const} should be in group 24")
 
     def test_specific_map_ids(self):
-        """Map IDs match mGBA-verified values."""
-        self.assertEqual(MAP_PLAYERS_HOUSE_2F, (24, 7))  # Verified S220
+        """Map IDs match pret/pokecrystal + mGBA-verified values."""
+        self.assertEqual(MAP_PLAYERS_HOUSE_2F, (24, 7))
+        self.assertEqual(MAP_PLAYERS_HOUSE_1F, (24, 6))
+        self.assertEqual(MAP_NEW_BARK_TOWN, (24, 4))
+        self.assertEqual(MAP_ELMS_LAB, (24, 5))
+
+    def test_warp_tile_constants(self):
+        """Warp tile coordinates from pret/pokecrystal source."""
+        self.assertEqual(STAIRS_2F_TILE, (7, 0))
+        self.assertEqual(STAIRS_1F_ARRIVE, (9, 0))
+        self.assertEqual(len(DOOR_1F_TILES), 2)
+        self.assertIn((6, 7), DOOR_1F_TILES)
+        self.assertIn((7, 7), DOOR_1F_TILES)
 
 
 class TestClearDialogCrystal(unittest.TestCase):
@@ -181,7 +192,7 @@ class TestWaitForMapCrystal(unittest.TestCase):
 
     def test_already_on_target_map(self):
         """If already on target map, return True immediately."""
-        target = (3, 1)  # New Bark Town
+        target = (24, 4)  # New Bark Town
         self.reader.set_position(5, 5, map_id=target[0] * 256 + target[1])
         result = wait_for_map_crystal(self.emu, self.reader, target)
         self.assertTrue(result)
@@ -189,7 +200,7 @@ class TestWaitForMapCrystal(unittest.TestCase):
     def test_timeout_returns_false(self):
         """If map never changes, should return False after timeout."""
         self.reader.set_position(5, 5, map_id=999)
-        result = wait_for_map_crystal(self.emu, self.reader, (3, 1), max_ticks=50)
+        result = wait_for_map_crystal(self.emu, self.reader, (24, 4), max_ticks=50)
         self.assertFalse(result)
 
 
@@ -225,7 +236,7 @@ class TestRunCrystalBootSequence(unittest.TestCase):
 
     def test_starts_from_overworld_skips_dialog(self):
         """When already in overworld, should skip dialog clearing."""
-        map_id = 3 * 256 + 4  # Player's House 2F
+        map_id = 24 * 256 + 7  # Player's House 2F
         self.reader.set_position(4, 4, map_id=map_id, map_name="Player's House 2F")
         self.reader.set_menu_state(MenuState.OVERWORLD)
         result = run_crystal_boot_sequence(self.emu, self.reader)
@@ -246,7 +257,7 @@ class TestRunCrystalBootSequence(unittest.TestCase):
 
     def test_already_in_elms_lab(self):
         """If already in Elm's Lab, should mark early phases as skipped."""
-        map_id = 3 * 256 + 2  # Elm's Lab
+        map_id = 24 * 256 + 5  # Elm's Lab
         self.reader.set_position(5, 5, map_id=map_id, map_name="Elm's Lab")
         self.reader.set_menu_state(MenuState.OVERWORLD)
         result = run_crystal_boot_sequence(self.emu, self.reader)
@@ -255,7 +266,7 @@ class TestRunCrystalBootSequence(unittest.TestCase):
 
     def test_new_bark_town_skips_house(self):
         """If starting in New Bark Town, should skip house navigation."""
-        map_id = 3 * 256 + 1  # New Bark Town
+        map_id = 24 * 256 + 4  # New Bark Town
         self.reader.set_position(5, 5, map_id=map_id, map_name="New Bark Town")
         self.reader.set_menu_state(MenuState.OVERWORLD)
         result = run_crystal_boot_sequence(self.emu, self.reader)
@@ -280,7 +291,7 @@ class TestBootSequenceEdgeCases(unittest.TestCase):
 
     def test_dialog_with_pokemon_center_state(self):
         """Should handle POKEMON_CENTER menu state without crash."""
-        map_id = 3 * 256 + 4  # Player's House 2F
+        map_id = 24 * 256 + 7  # Player's House 2F
         self.reader.set_position(4, 4, map_id=map_id)
         self.reader.set_menu_state(MenuState.POKEMON_CENTER)
         result = run_crystal_boot_sequence(self.emu, self.reader)

@@ -573,18 +573,20 @@ MAP_NAMES: Dict[Tuple[int, int], str] = {
     (14, 6): "Ice Path 1F",
     (14, 7): "Whirl Islands",
     (14, 8): "Mt. Silver",
-    # Towns (overworld)
-    (24, 1): "Pallet Town",
-    (24, 2): "Viridian City",
-    (24, 3): "Pewter City",
-    (24, 4): "Cerulean City",
-    (24, 5): "Lavender Town",
-    (24, 6): "Vermilion City",
-    (24, 7): "Celadon City",
-    (24, 8): "Fuchsia City",
-    (24, 9): "Cinnabar Island",
-    (24, 10): "Indigo Plateau",
-    (24, 11): "Saffron City",
+    # Group 24 — MapGroup_NewBark (from pret/pokecrystal maps.asm, verified S221)
+    (24, 1): "Route 26",
+    (24, 2): "Route 27",
+    (24, 3): "Route 29",
+    (24, 4): "New Bark Town",
+    (24, 5): "Elm's Lab",
+    (24, 6): "Player's House 1F",
+    (24, 7): "Player's House 2F",
+    (24, 8): "Player's Neighbor's House",
+    (24, 9): "Elm's House",
+    (24, 10): "Route 26 Heal House",
+    (24, 11): "Day of Week Siblings House",
+    (24, 12): "Route 27 Sandstorm House",
+    (24, 13): "Route 29 Route 46 Gate",
 }
 
 
