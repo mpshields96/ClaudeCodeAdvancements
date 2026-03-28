@@ -679,7 +679,19 @@ def format_summary(summary: dict) -> str:
     if summary.get("recal_decayed", 0) > 0:
         lines.append(f"  Recalibration: {summary['recal_decayed']}/{summary.get('recal_total', 0)} principles decayed (staleness)")
     if summary.get("roi_resolved", 0) > 0:
-        lines.append(f"  Research ROI: {summary['roi_resolved']}/{summary.get('roi_total', 0)} deliveries resolved")
+        by_status = summary.get("roi_by_status", {})
+        impl = by_status.get("implemented", 0)
+        sent = by_status.get("sent_confirmed", 0)
+        ackd = by_status.get("acknowledged", 0)
+        parts = []
+        if impl:
+            parts.append(f"{impl} impl")
+        if sent:
+            parts.append(f"{sent} sent")
+        if ackd:
+            parts.append(f"{ackd} ack")
+        detail = f" ({', '.join(parts)})" if parts else ""
+        lines.append(f"  Research ROI: {summary['roi_resolved']}/{summary.get('roi_total', 0)} deliveries resolved{detail}")
     if summary.get("enriched_count", 0) > 0:
         lines.append(f"  Enriched: {summary['enriched_count']} new REQ entries added to outcomes")
     if summary.get("predictions_count", 0) > 0:
@@ -815,6 +827,7 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if roi.get("resolved", 0) > 0:
         summary["roi_resolved"] = roi["resolved"]
         summary["roi_total"] = roi["total"]
+        summary["roi_by_status"] = roi.get("by_status", {})
     if enricher.get("enriched", 0) > 0:
         summary["enriched_count"] = enricher["enriched"]
     if predictions.get("recommendations", 0) > 0:
