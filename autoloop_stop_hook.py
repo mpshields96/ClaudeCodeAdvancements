@@ -177,14 +177,32 @@ def fire_trigger(dry_run: bool = False) -> bool:
         return False
 
 
+def is_cli_mode() -> bool:
+    """Detect if running under CLI autoloop (outer loop handles session chaining).
+
+    When CCA_AUTOLOOP_CLI=1 is set, the outer loop (start_autoloop.sh or
+    cca_autoloop.py) handles spawning the next session. The stop hook
+    should NOT fire the desktop trigger — it's unnecessary and would fail.
+    """
+    return os.environ.get("CCA_AUTOLOOP_CLI") == "1"
+
+
 def process_hook(hook_input: str) -> str:
     """Process the Stop hook event.
 
     Reads hook input JSON, decides whether to fire trigger, and returns
     a JSON response. Stop hooks should NEVER block — always allow exit.
+
+    In CLI mode (CCA_AUTOLOOP_CLI=1): skips trigger entirely — outer loop
+    handles session chaining. Just writes breadcrumb for consistency.
     """
     # Check if this is a CCA session
     if not is_cca_session():
+        return json.dumps({})
+
+    # CLI mode: outer loop handles chaining, skip desktop trigger
+    if is_cli_mode():
+        write_breadcrumb()
         return json.dumps({})
 
     if should_trigger():

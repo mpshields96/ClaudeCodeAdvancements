@@ -89,9 +89,24 @@ def check_readiness() -> dict:
     return checks
 
 
+def is_cli_mode() -> bool:
+    """Detect if running under CLI autoloop (outer loop handles session chaining).
+
+    When CCA_AUTOLOOP_CLI=1 is set by start_autoloop.sh or cca_autoloop.py,
+    the desktop trigger is unnecessary — the outer loop reads SESSION_RESUME.md
+    and spawns the next claude process directly. In CLI mode, we just write
+    the breadcrumb to prevent double-fire and exit cleanly.
+    """
+    return os.environ.get("CCA_AUTOLOOP_CLI") == "1"
+
+
 def trigger_next_session(dry_run: bool = False) -> bool:
     """Trigger the next CCA session.
 
+    In CLI mode (CCA_AUTOLOOP_CLI=1): writes breadcrumb and returns True.
+    The outer loop (start_autoloop.sh / cca_autoloop.py) handles chaining.
+
+    In Desktop mode: uses AppleScript to control Claude.app.
     Steps (matching CLAUDE.md Desktop Autoloop Workflow):
     1. Verify Code tab is active
     2. Click "+ New session" (Cmd+N)
@@ -101,6 +116,18 @@ def trigger_next_session(dry_run: bool = False) -> bool:
 
     Returns True if all steps succeeded.
     """
+    # CLI mode: outer loop handles session chaining — just write breadcrumb
+    if is_cli_mode():
+        _log("trigger_cli_mode", {"dry_run": dry_run})
+        breadcrumb_path = os.path.expanduser("~/.cca-autoloop-fired")
+        try:
+            with open(breadcrumb_path, "w") as f:
+                f.write(str(time.time()))
+        except OSError:
+            pass
+        print("CLI autoloop mode — outer loop handles session chaining. Breadcrumb written.")
+        return True
+
     # Log peak/off-peak context (MT-38 Phase 4)
     peak_info = {}
     try:

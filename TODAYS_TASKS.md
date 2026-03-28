@@ -1,13 +1,34 @@
-# CCA Tasks for 2026-03-25
-# Created: S177. Read by ALL subsequent CCA chats today.
+# CCA Tasks for 2026-03-28
+# Updated: S226. Read by ALL subsequent CCA chats today.
 # This file persists across sessions so nothing gets forgotten.
 
 ---
 
+## URGENT: FULL CLI MIGRATION (Matthew directive, S226 — TOP PRIORITY)
+
+**ALL chats must migrate from desktop Electron apps to CLI terminal.**
+Reason: Physical strain/overheating on MacBook from running multiple Electron apps.
+Order: (1) CCA first, (2) Codex second, (3) Kalshi third.
+
+### Phase 1: CCA CLI Autoloop [IN PROGRESS S226]
+- [TODO] Fix autoloop_trigger.py for CLI mode (CCA_AUTOLOOP_CLI env var)
+- [TODO] Fix autoloop_stop_hook.py for CLI mode
+- [TODO] Set env var in start_autoloop.sh and cca_autoloop.py
+- [TODO] Run tests, dry-run, verify 100% clean
+- [TODO] Write CLI_AUTOLOOP_MIGRATION.md with exact steps
+
+### Phase 2: Codex CLI Migration [PENDING]
+- Migrate Codex desktop app usage to CLI terminal
+- Verify Codex autoloop works in CLI
+
+### Phase 3: Kalshi CLI Autoloop [PENDING]
+- Perfect Kalshi chat's own autoloop in CLI
+- Verify session chaining works
+
+---
+
 ## Priority Allocation (Matthew directive)
-- **50%+ time on Kalshi bot work** (higher priority)
-- Remaining time on CCA improvements
-- Frequent comms with Kalshi main chat
+- **CLI MIGRATION IS #1 PRIORITY** until all 3 phases complete
 - Peak/off-peak budgeting UNIVERSAL (MT-38)
 
 ## IMPORTANT NOTES FOR ALL CCA CHATS (Matthew directive, S179)

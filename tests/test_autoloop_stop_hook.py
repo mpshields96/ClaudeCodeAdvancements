@@ -357,5 +357,94 @@ class TestCCAProjectDetection(unittest.TestCase):
             self.assertTrue(self.mod.is_cca_session())
 
 
+class TestCLIModeDetection(unittest.TestCase):
+    """Test CLI mode detection for stop hook and trigger."""
+
+    def setUp(self):
+        import autoloop_stop_hook
+        self.mod = autoloop_stop_hook
+
+    def test_cli_mode_enabled(self):
+        """When CCA_AUTOLOOP_CLI=1, is_cli_mode returns True."""
+        with patch.dict(os.environ, {"CCA_AUTOLOOP_CLI": "1"}):
+            self.assertTrue(self.mod.is_cli_mode())
+
+    def test_cli_mode_disabled(self):
+        """When CCA_AUTOLOOP_CLI is not set, is_cli_mode returns False."""
+        env = os.environ.copy()
+        env.pop("CCA_AUTOLOOP_CLI", None)
+        with patch.dict(os.environ, env, clear=True):
+            self.assertFalse(self.mod.is_cli_mode())
+
+    def test_cli_mode_wrong_value(self):
+        """When CCA_AUTOLOOP_CLI is set but not '1', is_cli_mode returns False."""
+        with patch.dict(os.environ, {"CCA_AUTOLOOP_CLI": "0"}):
+            self.assertFalse(self.mod.is_cli_mode())
+
+    def test_process_hook_cli_mode_skips_trigger(self):
+        """In CLI mode, process_hook writes breadcrumb but does NOT fire trigger."""
+        with patch.dict(os.environ, {"CCA_AUTOLOOP_CLI": "1"}):
+            with patch.object(self.mod, "is_cca_session", return_value=True):
+                with patch.object(self.mod, "write_breadcrumb") as mock_bc:
+                    with patch.object(self.mod, "fire_trigger") as mock_fire:
+                        result = self.mod.process_hook("{}")
+                        mock_bc.assert_called_once()
+                        mock_fire.assert_not_called()
+                        # Should return valid JSON, never block
+                        self.assertEqual(json.loads(result), {})
+
+    def test_process_hook_desktop_mode_fires_trigger(self):
+        """Without CLI mode, process_hook fires trigger when conditions met."""
+        env = os.environ.copy()
+        env.pop("CCA_AUTOLOOP_CLI", None)
+        with patch.dict(os.environ, env, clear=True):
+            with patch.object(self.mod, "is_cca_session", return_value=True):
+                with patch.object(self.mod, "should_trigger", return_value=True):
+                    with patch.object(self.mod, "fire_trigger", return_value=True) as mock_fire:
+                        with patch.object(self.mod, "write_breadcrumb"):
+                            result = self.mod.process_hook("{}")
+                            mock_fire.assert_called_once()
+                            self.assertEqual(json.loads(result), {})
+
+
+class TestTriggerCLIMode(unittest.TestCase):
+    """Test CLI mode detection in autoloop_trigger.py."""
+
+    def setUp(self):
+        import autoloop_trigger
+        self.mod = autoloop_trigger
+
+    def test_is_cli_mode_enabled(self):
+        """When CCA_AUTOLOOP_CLI=1, is_cli_mode returns True."""
+        with patch.dict(os.environ, {"CCA_AUTOLOOP_CLI": "1"}):
+            self.assertTrue(self.mod.is_cli_mode())
+
+    def test_is_cli_mode_disabled(self):
+        """When CCA_AUTOLOOP_CLI is not set, is_cli_mode returns False."""
+        env = os.environ.copy()
+        env.pop("CCA_AUTOLOOP_CLI", None)
+        with patch.dict(os.environ, env, clear=True):
+            self.assertFalse(self.mod.is_cli_mode())
+
+    def test_trigger_cli_mode_writes_breadcrumb(self):
+        """In CLI mode, trigger writes breadcrumb and returns True without desktop automation."""
+        with patch.dict(os.environ, {"CCA_AUTOLOOP_CLI": "1"}):
+            breadcrumb = os.path.join(tempfile.mkdtemp(), "fired")
+            with patch.object(self.mod, "AUDIT_LOG", os.path.join(tempfile.mkdtemp(), "audit.jsonl")):
+                with patch("os.path.expanduser", return_value=breadcrumb):
+                    result = self.mod.trigger_next_session(dry_run=False)
+                    self.assertTrue(result)
+                    self.assertTrue(os.path.exists(breadcrumb))
+
+    def test_trigger_cli_mode_no_applescript(self):
+        """In CLI mode, trigger never imports or uses DesktopAutomator."""
+        with patch.dict(os.environ, {"CCA_AUTOLOOP_CLI": "1"}):
+            with patch.object(self.mod, "AUDIT_LOG", os.path.join(tempfile.mkdtemp(), "audit.jsonl")):
+                with patch("os.path.expanduser", return_value=os.path.join(tempfile.mkdtemp(), "fired")):
+                    # If DesktopAutomator were used, it would fail — this proves it's not
+                    result = self.mod.trigger_next_session(dry_run=False)
+                    self.assertTrue(result)
+
+
 if __name__ == "__main__":
     unittest.main()

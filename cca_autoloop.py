@@ -922,6 +922,7 @@ class AutoLoopRunner:
             # Foreground mode: spawn claude as subprocess
             env = os.environ.copy()
             env.pop("ANTHROPIC_API_KEY", None)  # Always use Max subscription
+            env["CCA_AUTOLOOP_CLI"] = "1"  # Signal CLI mode to trigger/stop hook
 
             try:
                 result = subprocess.run(

@@ -50,6 +50,9 @@ consecutive_short=0
 # Ensure Max subscription auth (not API key credits)
 unset ANTHROPIC_API_KEY
 
+# Signal CLI mode to autoloop_trigger.py and stop hook — outer loop handles chaining
+export CCA_AUTOLOOP_CLI=1
+
 cd "$PROJECT_DIR"
 
 # ---------------------------------------------------------------------------
