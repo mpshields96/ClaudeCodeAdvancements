@@ -33,29 +33,17 @@ import os
 from dataclasses import dataclass, field
 from typing import Optional
 
-# Import design language from chart_generator
+# Import design language from canonical source
 try:
     from chart_generator import CCA_COLORS, SERIES_PALETTE
 except ImportError:
-    # Fallback if imported standalone
+    # Fallback: build from design_tokens if chart_generator unavailable
+    import design_tokens
     CCA_COLORS = {
-        "primary": "#1a1a2e",
-        "accent": "#0f3460",
-        "highlight": "#e94560",
-        "success": "#16c79a",
-        "muted": "#6b7280",
-        "background": "#ffffff",
-        "surface": "#f8f9fa",
-        "border": "#e5e7eb",
-        "warning": "#f59e0b",
+        **design_tokens.CCA_PALETTE,
+        "background": design_tokens.CCA_PALETTE["bg"],
     }
-    SERIES_PALETTE = [
-        CCA_COLORS["accent"],
-        CCA_COLORS["highlight"],
-        CCA_COLORS["success"],
-        CCA_COLORS["warning"],
-        CCA_COLORS["muted"],
-    ]
+    SERIES_PALETTE = design_tokens.SERIES_COLORS[:5]
 
 # Trading-specific colors
 TRADE_COLORS = {

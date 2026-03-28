@@ -34,17 +34,13 @@ from pathlib import Path
 from typing import List, Optional
 
 
-# ── Design tokens (from design-guide.md) ─────────────────────────────────────
+# ── Design tokens (from canonical design_tokens module) ──────────────────────
+
+import design_tokens
 
 COLORS = {
-    "primary":    "#1a1a2e",
-    "accent":     "#0f3460",
-    "highlight":  "#e94560",
-    "success":    "#16c79a",
-    "muted":      "#6b7280",
-    "background": "#ffffff",
-    "surface":    "#f8f9fa",
-    "border":     "#e5e7eb",
+    **design_tokens.CCA_PALETTE,
+    "background": design_tokens.CCA_PALETTE["bg"],
 }
 
 FONTS = {
