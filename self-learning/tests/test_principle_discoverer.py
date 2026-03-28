@@ -394,5 +394,169 @@ class TestPrincipleDiscoverer(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
 
+class TestEffectiveConfidence(unittest.TestCase):
+    """Tests for evidence-boosted confidence scoring."""
+
+    def test_high_evidence_boosts_confidence(self):
+        """A hotspot with n=18 but raw conf=0.18 should get boosted above 0.4."""
+        d = PrincipleDiscoverer(
+            project_root=tempfile.mkdtemp(),
+            principles_path=os.path.join(tempfile.mkdtemp(), "p.jsonl"),
+        )
+        pattern = CommitPattern(
+            pattern_type="hotspot",
+            description="hot.py is a churn hotspot",
+            evidence_count=18,
+            confidence=0.18,
+        )
+        eff = d._effective_confidence(pattern)
+        self.assertGreaterEqual(eff, 0.4, f"n=18 should boost 0.18 above 0.4, got {eff:.2f}")
+
+    def test_low_evidence_no_boost(self):
+        """Patterns with n<4 get no evidence boost."""
+        d = PrincipleDiscoverer(
+            project_root=tempfile.mkdtemp(),
+            principles_path=os.path.join(tempfile.mkdtemp(), "p.jsonl"),
+        )
+        pattern = CommitPattern(
+            pattern_type="coupling",
+            description="weak coupling",
+            evidence_count=2,
+            confidence=0.15,
+        )
+        eff = d._effective_confidence(pattern)
+        self.assertAlmostEqual(eff, 0.15)
+
+    def test_moderate_evidence_moderate_boost(self):
+        """n=8 should give a moderate boost (+0.1)."""
+        d = PrincipleDiscoverer(
+            project_root=tempfile.mkdtemp(),
+            principles_path=os.path.join(tempfile.mkdtemp(), "p.jsonl"),
+        )
+        pattern = CommitPattern(
+            pattern_type="coupling",
+            description="moderate coupling",
+            evidence_count=8,
+            confidence=0.20,
+        )
+        eff = d._effective_confidence(pattern)
+        # boost = 0.12 * log2(8/4) = 0.12 * 1 = 0.12, so eff = 0.32
+        self.assertAlmostEqual(eff, 0.32, places=2)
+
+    def test_evidence_boost_registers_principle(self):
+        """A pattern below raw min_confidence but above effective should register."""
+        tmpdir = tempfile.mkdtemp()
+        principles_path = os.path.join(tmpdir, "p.jsonl")
+        d = PrincipleDiscoverer(
+            project_root=tmpdir,
+            principles_path=principles_path,
+            min_confidence=0.4,
+        )
+        pattern = CommitPattern(
+            pattern_type="hotspot",
+            description="frequently_modified.py is a churn hotspot",
+            evidence_count=16,
+            confidence=0.20,
+        )
+        count = d._register_patterns([pattern])
+        self.assertEqual(count, 1, "High-evidence pattern should register despite low raw confidence")
+        import shutil
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+class TestWrapCommitFilter(unittest.TestCase):
+    """Tests for filtering wrap commits from large_commit detection."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def test_wrap_commits_excluded_from_large_commit(self):
+        """Wrap commits (S224: Wrap — ...) should NOT trigger large_commit patterns."""
+        d = GitPatternDiscoverer(project_root=self.tmpdir)
+        commits = [
+            {"hash": "abc", "message": "S224: Wrap — docs, self-learning, session tracking",
+             "files": list(f"f{i}.py" for i in range(20)), "date": "2026-03-27"},
+            {"hash": "def", "message": "S223: Wrap — docs, self-learning, session tracking",
+             "files": list(f"g{i}.py" for i in range(15)), "date": "2026-03-26"},
+        ]
+        patterns = d._detect_session_size(commits)
+        self.assertEqual(len(patterns), 0, "Wrap commits should be filtered out")
+
+    def test_non_wrap_large_commits_still_detected(self):
+        """Non-wrap large commits should still be flagged."""
+        d = GitPatternDiscoverer(project_root=self.tmpdir)
+        commits = [
+            {"hash": "xyz", "message": "S224: Add big feature with many files",
+             "files": list(f"f{i}.py" for i in range(15)), "date": "2026-03-27"},
+        ]
+        patterns = d._detect_session_size(commits)
+        self.assertGreater(len(patterns), 0, "Non-wrap large commits should be detected")
+
+    def test_wrap_pattern_variants(self):
+        """Various wrap commit message formats should all be filtered."""
+        d = GitPatternDiscoverer(project_root=self.tmpdir)
+        wrap_messages = [
+            "S224: Wrap — docs, self-learning, session tracking",
+            "S200: Session wrap — docs, memory, learning",
+            "S205: Session wrap — 5 deliverables, 11458 tests",
+            "S198: Wrap — 5 mandate tools (91 tests), global cleanup",
+        ]
+        for msg in wrap_messages:
+            commits = [{"hash": "a", "message": msg,
+                       "files": list(f"f{i}.py" for i in range(15)), "date": "2026-03-27"}]
+            patterns = d._detect_session_size(commits)
+            self.assertEqual(len(patterns), 0, f"Should filter: {msg}")
+
+
+class TestImprovedCouplingConfidence(unittest.TestCase):
+    """Tests for improved coupling confidence scoring."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def test_coupling_uses_jaccard_similarity(self):
+        """Coupling confidence should use Jaccard index: co_occur / (a_count + b_count - co_occur)."""
+        d = GitPatternDiscoverer(project_root=self.tmpdir, min_coupling_count=2)
+        # a.py appears in 5 commits, b.py in 4, together in 3
+        commits = [
+            {"hash": "1", "message": "m", "files": ["a.py", "b.py"], "date": "2026-03-20"},
+            {"hash": "2", "message": "m", "files": ["a.py", "b.py"], "date": "2026-03-20"},
+            {"hash": "3", "message": "m", "files": ["a.py", "b.py"], "date": "2026-03-20"},
+            {"hash": "4", "message": "m", "files": ["a.py"], "date": "2026-03-21"},
+            {"hash": "5", "message": "m", "files": ["a.py", "b.py", "c.py"], "date": "2026-03-21"},
+        ]
+        patterns = d._detect_coupling(commits)
+        ab = [p for p in patterns if "a.py" in p.description and "b.py" in p.description]
+        self.assertGreater(len(ab), 0)
+        # Jaccard: 4 / (5 + 5 - 4) = 0.667 — should be > 0.4 threshold
+        self.assertGreaterEqual(ab[0].clamped_confidence, 0.4)
+
+    def test_low_coupling_below_threshold(self):
+        """Files that rarely co-occur relative to their individual frequency should have low confidence."""
+        d = GitPatternDiscoverer(project_root=self.tmpdir, min_coupling_count=3)
+        # a.py in 10 commits, b.py in 10, together in 3 -- Jaccard = 3/17 = 0.18
+        commits = []
+        for i in range(10):
+            commits.append({"hash": str(i), "message": "m", "files": ["a.py"], "date": "2026-03-20"})
+        for i in range(10, 20):
+            commits.append({"hash": str(i), "message": "m", "files": ["b.py"], "date": "2026-03-20"})
+        # Add 3 co-occurrences
+        for i in range(20, 23):
+            commits.append({"hash": str(i), "message": "m", "files": ["a.py", "b.py"], "date": "2026-03-20"})
+        patterns = d._detect_coupling(commits)
+        ab = [p for p in patterns if "a.py" in p.description and "b.py" in p.description]
+        if ab:
+            # Jaccard: 3 / (13 + 13 - 3) = 3/23 = 0.13 — low
+            self.assertLess(ab[0].clamped_confidence, 0.4)
+
+
 if __name__ == "__main__":
     unittest.main()

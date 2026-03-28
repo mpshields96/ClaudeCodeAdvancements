@@ -15,6 +15,7 @@ Stdlib only. No external dependencies.
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from collections import Counter
@@ -167,8 +168,9 @@ class GitPatternDiscoverer:
             if count >= self.min_coupling_count:
                 total_a = sum(1 for c in commits if a in c["files"])
                 total_b = sum(1 for c in commits if b in c["files"])
-                max_individual = max(total_a, total_b, 1)
-                confidence = count / max_individual
+                # Jaccard similarity: co-occurrences / union
+                union = total_a + total_b - count
+                confidence = count / max(union, 1)
 
                 a_short = os.path.basename(a)
                 b_short = os.path.basename(b)
@@ -176,7 +178,7 @@ class GitPatternDiscoverer:
                     pattern_type="coupling",
                     description=(
                         f"{a_short} and {b_short} are tightly coupled — "
-                        f"changed together in {count}/{max_individual} commits. "
+                        f"changed together in {count}/{union} commits (Jaccard={confidence:.0%}). "
                         f"When modifying {a}, check if {b} also needs updates."
                     ),
                     evidence_count=count,
@@ -216,12 +218,15 @@ class GitPatternDiscoverer:
                 ))
         return patterns
 
+    # Wrap commits are expected to be large — filter them from large_commit detection
+    WRAP_PATTERN = re.compile(r"S\d+:?\s*(Session\s+)?[Ww]rap\b")
+
     def _detect_session_size(self, commits: list) -> list:
-        """Detect sessions with unusually large commits."""
+        """Detect sessions with unusually large commits (excluding wrap commits)."""
         patterns = []
         for commit in commits:
             file_count = len(commit["files"])
-            if file_count >= 12:
+            if file_count >= 12 and not self.WRAP_PATTERN.search(commit.get("message", "")):
                 patterns.append(CommitPattern(
                     pattern_type="large_commit",
                     description=(
@@ -384,7 +389,9 @@ class PrincipleDiscoverer:
                 "patterns": [
                     {"type": p.pattern_type, "desc": p.description[:80],
                      "confidence": round(p.clamped_confidence, 2),
-                     "evidence": p.evidence_count}
+                     "eff_confidence": round(self._effective_confidence(p), 2),
+                     "evidence": p.evidence_count,
+                     "would_register": self._effective_confidence(p) >= self.min_confidence}
                     for p in patterns
                 ],
             }
@@ -396,6 +403,23 @@ class PrincipleDiscoverer:
             "skipped": len(patterns) - registered,
         }
 
+    @staticmethod
+    def _effective_confidence(pattern) -> float:
+        """Compute effective confidence with evidence boost.
+
+        High-evidence patterns get a boost even if raw confidence is low.
+        E.g., a hotspot appearing in 18/200 commits has raw conf=0.18 but
+        18 appearances is strong evidence — boost to cross the threshold.
+        """
+        base = pattern.clamped_confidence
+        n = pattern.evidence_count
+        # Logarithmic evidence boost: +0.12 per doubling above n=4
+        if n >= 4:
+            import math
+            boost = 0.12 * math.log2(n / 4)
+            return min(base + boost, 1.0)
+        return base
+
     def _register_patterns(self, patterns: list) -> int:
         """Register patterns as principles. Returns count of newly registered."""
         existing = _load_principles(self.principles_path)
@@ -403,7 +427,7 @@ class PrincipleDiscoverer:
 
         count = 0
         for pattern in patterns:
-            if pattern.clamped_confidence < self.min_confidence:
+            if self._effective_confidence(pattern) < self.min_confidence:
                 continue
 
             text = pattern.to_principle_text()
@@ -473,7 +497,8 @@ def main():
         if args.dry_run and result.get("patterns"):
             print("\nCandidate patterns:")
             for p in result["patterns"]:
-                print(f"  [{p['type']}] {p['desc']} (conf={p['confidence']}, n={p['evidence']})")
+                reg = " [REGISTER]" if p.get("would_register") else ""
+                print(f"  [{p['type']}] {p['desc']} (conf={p['confidence']}, eff={p.get('eff_confidence', p['confidence'])}, n={p['evidence']}){reg}")
 
     elif args.command == "status":
         principles_path = args.principles_path or DEFAULT_PRINCIPLES_PATH
@@ -485,15 +510,13 @@ def main():
             by_type = Counter()
             for p in auto:
                 ctx = p.source_context
-                if "coupling" in ctx:
-                    by_type["coupling"] += 1
-                elif "hotspot" in ctx:
-                    by_type["hotspot"] += 1
-                elif "recurring_pain" in ctx:
-                    by_type["recurring_pain"] += 1
-                elif "recurring_win" in ctx:
-                    by_type["recurring_win"] += 1
-                else:
+                matched = False
+                for ptype in ["coupling", "hotspot", "large_commit", "recurring_pain", "recurring_win"]:
+                    if ptype in ctx:
+                        by_type[ptype] += 1
+                        matched = True
+                        break
+                if not matched:
                     by_type["other"] += 1
             for t, c in by_type.most_common():
                 print(f"  {t}: {c}")
