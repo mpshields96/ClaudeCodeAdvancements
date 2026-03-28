@@ -903,6 +903,10 @@ class PriorityPicker:
                     mt_id = int(mt_match.group(1))
                     task = task_lookup.get(mt_id)
                     if task and task not in result:
+                        # Never surface COMPLETED tasks as next work items.
+                        # Growth opportunities are shown via DUST ALERT in init_briefing.
+                        if task.status == TaskStatus.COMPLETED:
+                            continue
                         if include_blocked or task.status != TaskStatus.BLOCKED:
                             result.append(task)
         return result

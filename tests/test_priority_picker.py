@@ -191,14 +191,22 @@ class TestPriorityPicker(unittest.TestCase):
         picker = PriorityPicker(current_session=98)
         top = picker.pick_next(1)
         self.assertEqual(len(top), 1)
-        # pick_next uses full_ranking (active + growth unified)
+        # pick_next skips COMPLETED tasks — find first non-COMPLETED mt/growth item
         full = picker.full_ranking()
-        mt_items = [i for i in full if i["type"] in ("mt", "growth")]
-        if mt_items:
-            import re as _re
-            mt_match = _re.search(r"MT-(\d+)", mt_items[0]["name"])
-            if mt_match:
-                self.assertEqual(top[0].mt_id, int(mt_match.group(1)))
+        task_lookup = {t.mt_id: t for t in picker.tasks}
+        import re as _re
+        expected_id = None
+        for item in full:
+            if item["type"] in ("mt", "growth"):
+                mt_match = _re.search(r"MT-(\d+)", item["name"])
+                if mt_match:
+                    mt_id = int(mt_match.group(1))
+                    task = task_lookup.get(mt_id)
+                    if task and task.status != TaskStatus.COMPLETED:
+                        expected_id = mt_id
+                        break
+        if expected_id is not None:
+            self.assertEqual(top[0].mt_id, expected_id)
 
     def test_pick_next_count(self):
         picker = PriorityPicker(current_session=100)
@@ -787,6 +795,42 @@ class TestFullRecommend(unittest.TestCase):
         self.assertIn("OVERDUE", rec)
         self.assertIn("ACTIVE", rec)
         self.assertIn("GROWTH", rec)
+
+
+class TestPickNextSkipsCompleted(unittest.TestCase):
+    """pick_next must never return COMPLETED tasks."""
+
+    def test_pick_next_excludes_completed(self):
+        picker = PriorityPicker(current_session=229)
+        picks = picker.pick_next(20)
+        for t in picks:
+            self.assertNotEqual(
+                t.status,
+                TaskStatus.COMPLETED,
+                f"pick_next returned COMPLETED task MT-{t.mt_id}: {t.name}",
+            )
+
+    def test_pick_next_only_returns_active_or_blocked(self):
+        picker = PriorityPicker(current_session=229)
+        picks_with_blocked = picker.pick_next(20, include_blocked=True)
+        allowed = {TaskStatus.ACTIVE, TaskStatus.BLOCKED}
+        for t in picks_with_blocked:
+            self.assertIn(
+                t.status,
+                allowed,
+                f"pick_next (include_blocked=True) returned task with status={t.status}: MT-{t.mt_id}",
+            )
+
+    def test_init_briefing_top_picks_excludes_completed(self):
+        picker = PriorityPicker(current_session=229)
+        # Extract top picks used internally by init_briefing
+        top = picker.pick_next(3)
+        for t in top:
+            self.assertNotEqual(
+                t.status,
+                TaskStatus.COMPLETED,
+                f"init_briefing top pick is COMPLETED: MT-{t.mt_id}",
+            )
 
 
 if __name__ == "__main__":
