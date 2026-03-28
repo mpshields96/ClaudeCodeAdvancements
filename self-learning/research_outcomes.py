@@ -39,12 +39,13 @@ VALID_CATEGORIES = [
 ]
 
 VALID_STATUSES = [
-    "delivered",       # CCA wrote it to bridge files
-    "acknowledged",    # Kalshi chat confirmed receipt
-    "implemented",     # Code was built from this research
-    "rejected",        # Kalshi chat decided not to implement
-    "profitable",      # Implementation produced net profit
-    "unprofitable",    # Implementation lost money
+    "delivered",        # CCA wrote it to outcomes tracker
+    "sent_confirmed",   # Confirmed written to CCA_TO_POLYBOT.md cross-chat file
+    "acknowledged",     # Kalshi chat confirmed receipt
+    "implemented",      # Code was built from this research
+    "rejected",         # Kalshi chat decided not to implement
+    "profitable",       # Implementation produced net profit
+    "unprofitable",     # Implementation lost money
 ]
 
 

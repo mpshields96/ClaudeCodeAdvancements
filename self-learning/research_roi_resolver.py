@@ -33,12 +33,13 @@ PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
 DEFAULT_OUTCOMES_PATH = os.path.join(SCRIPT_DIR, "research_outcomes.jsonl")
 DEFAULT_ACK_PATH = os.path.expanduser("~/.claude/cross-chat/DELIVERY_ACK.md")
+DEFAULT_CCA_TO_POLYBOT_PATH = os.path.expanduser("~/.claude/cross-chat/CCA_TO_POLYBOT.md")
 
 # Patterns for parsing DELIVERY_ACK.md
 # Matches: ## [date] — ACK REQ-NNN STATUS (session)
 ACK_HEADER_RE = re.compile(
     r"##\s+\[?(\d{4}-\d{2}-\d{2}[^]]*)\]?\s*[—-]+\s*ACK\s+"
-    r"(?:REQ-(\d+)\s+)?(IMPLEMENTED|PARTIAL|REJECTED|REVIEWED|NOTED)"
+    r"(?:REQ-(\d+)\s+)?(IMPLEMENTED|PARTIAL|REJECTED|REVIEWED|NOTED|ACKNOWLEDGED)"
     r"(?:\s*\(?(S\d+)\)?)?",
     re.IGNORECASE,
 )
@@ -56,6 +57,17 @@ LEGACY_ACK_RE = re.compile(
 # Matches: ### REQ-NNN through REQ-MMM | IMPLEMENTED | ...
 BATCH_ACK_RE = re.compile(
     r"###\s+REQ-(\d+)\s+through\s+REQ-(\d+)\s*\|\s*(IMPLEMENTED|PARTIAL|REJECTED)",
+    re.IGNORECASE,
+)
+
+
+# Matches UPDATE or DELIVERY entries in CCA_TO_POLYBOT.md that reference a REQ-ID.
+# Examples:
+#   ## [2026-03-28 04:10 UTC] — UPDATE 71 — REQ-60: domain_knowledge_scanner.py DELIVERED
+#   ## [2026-03-27 01:20 UTC] — DELIVERY — REQ-58 RESPONSE: 5-DAY MANDATE ANALYSIS
+CCA_UPDATE_RE = re.compile(
+    r"##\s+\[?(\d{4}-\d{2}-\d{2}[^\]]*)\]?\s*[—-]+\s*(?:UPDATE\s+\d+|DELIVERY)\s*[—-]+\s*"
+    r"(REQ-(\d+)[A-Z]?)",
     re.IGNORECASE,
 )
 
@@ -383,12 +395,69 @@ def roi_by_principle(feedback_entries: List[dict]) -> Dict[str, dict]:
     return dict(principles)
 
 
+def scan_cca_to_polybot(text: str) -> List[dict]:
+    """Parse CCA_TO_POLYBOT.md for UPDATE/DELIVERY entries that reference REQ-IDs.
+
+    Returns a list of dicts: {req_id, date, delivered}
+    where delivered=True means the entry body or header contains "DELIVERED".
+
+    Deduplication: if the same REQ-ID appears in multiple UPDATE entries,
+    the latest one wins (preserves "delivered" flag if any entry has it).
+    """
+    if not text:
+        return []
+
+    # Collect all UPDATE/DELIVERY entries per REQ-ID
+    # We need to know the body of each entry to check for "DELIVERED"
+    # Strategy: split on the UPDATE/DELIVERY headers, then match each chunk
+    seen: Dict[str, dict] = {}  # req_id -> best entry
+
+    # Split text into chunks per ## header
+    chunks = re.split(r"(?=^## )", text, flags=re.MULTILINE)
+
+    for chunk in chunks:
+        m = CCA_UPDATE_RE.match(chunk.strip())
+        if not m:
+            continue
+        date_str = m.group(1).strip()
+        req_raw = m.group(2).upper()  # e.g. "REQ-60" or "REQ-016C"
+        # Normalize: strip trailing letter suffix for matching (REQ-016C -> REQ-016)
+        # but keep the full form for output so caller can decide
+        req_num = m.group(3)  # just the digits
+        # Canonical form: REQ-NNN (zero-padded to 3+ digits if < 100)
+        num = int(req_num)
+        canonical = f"REQ-{num:03d}" if num < 100 else f"REQ-{num}"
+
+        # Treat as delivered if: body/header contains "DELIVERED", OR the section
+        # type is "DELIVERY" (not just an UPDATE) — both mean it was sent.
+        is_delivery_section = bool(re.search(
+            r"[—-]+\s*DELIVERY\s*[—-]+", chunk.split("\n")[0], re.IGNORECASE
+        ))
+        delivered = is_delivery_section or bool(
+            re.search(r"\bDELIVERED\b", chunk, re.IGNORECASE)
+        )
+
+        existing = seen.get(canonical)
+        if existing is None:
+            seen[canonical] = {"req_id": canonical, "date": date_str, "delivered": delivered}
+        else:
+            # Latest wins; preserve "delivered" if any entry had it
+            seen[canonical] = {
+                "req_id": canonical,
+                "date": date_str,
+                "delivered": delivered or existing["delivered"],
+            }
+
+    return list(seen.values())
+
+
 class ROIResolver:
     """Full ROI resolver pipeline.
 
-    Combines two resolution sources:
+    Combines three resolution sources:
     1. DELIVERY_ACK.md parsing (manual acknowledgments from monitoring chat)
     2. Kalshi bot git commit scanning (automated implementation detection)
+    3. CCA_TO_POLYBOT.md scanning (confirmed cross-chat sends)
     """
 
     def __init__(
@@ -396,35 +465,55 @@ class ROIResolver:
         outcomes_path: str = DEFAULT_OUTCOMES_PATH,
         ack_path: str = DEFAULT_ACK_PATH,
         kalshi_repo_path: Optional[str] = None,
+        cca_to_polybot_path: str = DEFAULT_CCA_TO_POLYBOT_PATH,
     ):
         self.outcomes_path = outcomes_path
         self.ack_path = ack_path
+        self.cca_to_polybot_path = cca_to_polybot_path
         self.kalshi_repo_path = kalshi_repo_path or os.path.expanduser(
             "~/Projects/polymarket-bot"
         )
+
+    def _read_ack_text(self) -> str:
+        """Read DELIVERY_ACK.md. Separated for testability."""
+        if os.path.exists(self.ack_path):
+            with open(self.ack_path) as f:
+                return f.read()
+        return ""
+
+    def _read_cca_text(self) -> str:
+        """Read CCA_TO_POLYBOT.md. Separated for testability."""
+        if os.path.exists(self.cca_to_polybot_path):
+            with open(self.cca_to_polybot_path) as f:
+                return f.read()
+        return ""
 
     def run(self) -> dict:
         """Run the full resolve + ROI pipeline. Returns JSON-serializable report."""
         # Load
         deliveries = _load_outcomes(self.outcomes_path)
-        ack_text = ""
-        if os.path.exists(self.ack_path):
-            with open(self.ack_path) as f:
-                ack_text = f.read()
 
         # Source 1: Parse & resolve from DELIVERY_ACK.md
-        acks = parse_delivery_acks(ack_text)
+        acks = parse_delivery_acks(self._read_ack_text())
         updates = resolve_deliveries(acks, self.outcomes_path)
 
         # Source 2: Scan Kalshi bot git commits for REQ implementations
         commit_updates = self._scan_commits()
 
-        # Merge: commit_updates fill gaps not covered by ACK-based resolution
+        # Source 3: Scan CCA_TO_POLYBOT.md for cross-chat delivery evidence
+        cca_updates = self._scan_cca_to_polybot()
+
+        # Merge all sources: higher-confidence sources take precedence.
+        # Priority: ACK (explicit) > commit (automated) > CCA cross-chat (send evidence)
         resolved_delivery_ids = {u["delivery_id"] for u in updates}
         for cu in commit_updates:
             if cu["delivery_id"] not in resolved_delivery_ids:
                 updates.append(cu)
                 resolved_delivery_ids.add(cu["delivery_id"])
+        for cc in cca_updates:
+            if cc["delivery_id"] not in resolved_delivery_ids:
+                updates.append(cc)
+                resolved_delivery_ids.add(cc["delivery_id"])
 
         # Apply updates to delivery copies for ROI calculation
         delivery_map = {d["delivery_id"]: dict(d) for d in deliveries}
@@ -460,6 +549,50 @@ class ROIResolver:
             return match_commits_to_outcomes(commits, self.outcomes_path)
         except (ImportError, Exception):
             return []
+
+    def _scan_cca_to_polybot(self) -> List[dict]:
+        """Scan CCA_TO_POLYBOT.md for UPDATE/DELIVERY entries as delivery evidence.
+
+        Returns update records for outcomes whose req_id appears in a CCA→Polybot
+        UPDATE entry. Status is "sent_confirmed" (stronger than "delivered" but
+        weaker than "acknowledged" — we know it was sent, not that it was actioned).
+        """
+        cca_text = self._read_cca_text()
+        if not cca_text:
+            return []
+
+        sent_entries = scan_cca_to_polybot(cca_text)
+        if not sent_entries:
+            return []
+
+        # Build lookup: canonical req_id -> entry
+        sent_by_req = {e["req_id"]: e for e in sent_entries}
+
+        deliveries = _load_outcomes(self.outcomes_path)
+        updates = []
+        for d in deliveries:
+            req_id = d.get("req_id")
+            if not req_id:
+                continue
+            # Normalize to canonical form for lookup
+            m = re.match(r"REQ-(\d+)", req_id, re.IGNORECASE)
+            if not m:
+                continue
+            num = int(m.group(1))
+            canonical = f"REQ-{num:03d}" if num < 100 else f"REQ-{num}"
+            if canonical not in sent_by_req:
+                continue
+            entry = sent_by_req[canonical]
+            updates.append({
+                "delivery_id": d["delivery_id"],
+                "old_status": d.get("status", "delivered"),
+                "new_status": "sent_confirmed",
+                "matched_by": "cca_cross_chat",
+                "match_score": 1.0,
+                "ack_date": entry["date"],
+            })
+
+        return updates
 
 
 def main():
