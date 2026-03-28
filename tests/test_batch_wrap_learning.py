@@ -149,8 +149,8 @@ class TestRunBatch(unittest.TestCase):
                              outcome_path=os.path.join(tmpdir, "outcomes.jsonl"))
             with open(journal_path) as f:
                 lines = f.readlines()
-            # 1 session_outcome + 2 wins + 1 loss + 1 feedback_roi + 1 sentinel_stats = 6
-            self.assertEqual(len(lines), 6)
+            # 1 session_outcome + 2 wins + 1 loss + 1 feedback_roi + 1 sentinel_stats + 1 meta_tracker = 7
+            self.assertEqual(len(lines), 7)
             types = [json.loads(l)["event_type"] for l in lines]
             self.assertEqual(types.count("win"), 2)
             self.assertEqual(types.count("pain"), 1)
@@ -246,8 +246,8 @@ class TestRunBatch(unittest.TestCase):
                              outcome_path=os.path.join(tmpdir, "outcomes.jsonl"))
             with open(journal_path) as f:
                 lines = f.readlines()
-            # session_outcome + feedback_roi + sentinel_stats = 3
-            self.assertEqual(len(lines), 3)
+            # session_outcome + feedback_roi + sentinel_stats + meta_tracker = 4
+            self.assertEqual(len(lines), 4)
 
 
 class TestOutcomeFeedbackIntegration(unittest.TestCase):

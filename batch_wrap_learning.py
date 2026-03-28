@@ -350,6 +350,25 @@ def run_batch(
     except Exception as e:
         result.record("sentinel_bridge_stats", False, str(e))
 
+    # 10. Meta-tracker snapshot (MT-49 Phase 1 — track meta-learning health over time)
+    try:
+        sys.path.insert(0, os.path.join(SCRIPT_DIR, "self-learning"))
+        from meta_tracker import MetaTracker
+        mt = MetaTracker()
+        snap = mt.snapshot(session=batch.session_id)
+        _append_jsonl(journal_path, {
+            "event_type": "meta_learning_health",
+            "session": batch.session_id,
+            "health_score": snap.get("health_score", 0),
+            "total_principles": snap.get("total", 0),
+            "active_principles": snap.get("active", 0),
+            "zombie_principles": snap.get("zombies", 0),
+            "timestamp": now,
+        })
+        result.record("meta_tracker_snapshot", True)
+    except Exception as e:
+        result.record("meta_tracker_snapshot", False, str(e))
+
     return result
 
 
