@@ -3,7 +3,25 @@
 
 ---
 
-## Current State (as of Session 228 — 2026-03-28)
+## Current State (as of Session 229 — 2026-03-28)
+
+**Phase:** Session 229 COMPLETE. Fixed priority_picker COMPLETE MT bug, MT-49 Phase 5 ROI resolver (11->22/79 resolved), CCA autoloop always Opus 4.6
+
+**What was done this session (S229):**
+- priority_picker.py: COMPLETE MTs no longer appear as top picks (3 new tests, 96 total)
+- MT-49 Phase 5: scan_cca_to_polybot() as 3rd ROI source, resolution 11->22/79 (29 new tests)
+- CCA autoloop fixed to always use Opus 4.6 via MODEL_STRATEGY=opus-primary
+- slim_init ROI display now shows impl/sent/ack status breakdown
+- **Tests**: 334 suites, 11945 tests passing. All green.
+
+**Next:**
+1. Fix CCA_AUTOLOOP_CLI env leak in test_autoloop_trigger.py + test_autoloop_stop_hook.py
+2. MT-32 Phase 6: design system v2 (design tokens, lint rules)
+3. CLI Phase 2: Codex migration (when Matthew directs)
+
+---
+
+## Previous State (Session 228 — 2026-03-28)
 
 **Phase:** Session 228 COMPLETE. MT-49 Phase 4 (confidence recalibration apply), dashboard dedup fix, wrap_summary.py, REQ-17 delivery
 
@@ -20,7 +38,6 @@
 3. CLI Phase 2: Codex migration
 
 ---
-
 ## Previous State (Session 228 — 2026-03-28)
 
 **Phase:** Session 228 COMPLETE. Audited MT-49 self-learning infrastructure, identified dashboard dedup bug and meta-learning loop gaps

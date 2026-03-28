@@ -45,3 +45,4 @@
 {"tip":"meta_learning_dashboard.py PrincipleAnalyzer counts raw JSONL lines including duplicates \u2014 use deduplicated load for accurate metrics","source":"cca-desktop","session":"S228","timestamp":"2026-03-28T16:30:10.544756Z"}
 {"tip":"apply_recalibration() can now be run standalone with --dry-run to preview score changes without committing","source":"cca-desktop","session":"S228","timestamp":"2026-03-28T16:55:59.649439Z"}
 {"tip":"meta_learning_dashboard now shows accurate 186 principle count with correct avg scores","source":"cca-desktop","session":"S228","timestamp":"2026-03-28T16:55:59.649439Z"}
+{"tip":"Fix env var leaks in tests: use unittest.mock.patch.dict to isolate CCA_AUTOLOOP_CLI=1 from autoloop test suites","source":"cca-desktop","session":"S229","timestamp":"2026-03-28T18:43:15.143690Z"}

@@ -3759,3 +3759,21 @@ CLI chat 2:
 - Priority picker surfaces completed MTs as stagnating (MT-0, MT-10, MT-28, MT-41)
 
 ---
+
+## Session 229 — 2026-03-28
+
+**What changed:**
+- priority_picker.py: COMPLETE MTs no longer appear as top picks (3 new tests, 96 total)
+- MT-49 Phase 5: scan_cca_to_polybot() as 3rd ROI source, resolution 11->22/79 (29 new tests)
+- CCA autoloop fixed to always use Opus 4.6 via MODEL_STRATEGY=opus-primary
+- slim_init ROI display now shows impl/sent/ack status breakdown
+
+**Why:**
+- Fixed priority_picker COMPLETE MT bug, MT-49 Phase 5 ROI resolver (11->22/79 resolved), CCA autoloop always Opus 4.6
+
+**Tests:** 11945/11945 passing (334 suites)
+
+**Lessons:**
+- Pre-existing test failures in autoloop suites (CCA_AUTOLOOP_CLI=1 env leak into tests)
+
+---
