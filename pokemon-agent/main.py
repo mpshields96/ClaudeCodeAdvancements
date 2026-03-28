@@ -151,6 +151,16 @@ def main(argv=None) -> int:
         reader = MemoryReader(emu)
         agent = CrystalAgent(emulator=emu, reader=reader, llm=llm)
 
+        # Run Crystal boot sequence if starting from fresh ROM
+        if not args.load_state:
+            from boot_sequence_crystal import run_crystal_boot_sequence
+            logger.info("Running Crystal boot sequence...")
+            boot_result = run_crystal_boot_sequence(emu, reader)
+            if boot_result["success"]:
+                logger.info("Crystal boot complete: %s", boot_result["phases_completed"])
+            else:
+                logger.warning("Crystal boot partial: %s", boot_result["phases_completed"])
+
     # Step callback for live progress
     def on_step(result):
         pos = result.state.position
