@@ -14,7 +14,7 @@
 - Launcher aliases: cc/cca/ccbot with model split (Opus/Sonnet) in ~/.zshrc (10 tests)
 - Cross-chat UPDATE 77: KXETHD expansion analysis delivered to Kalshi
 - Codex-first requirement LIFTED (Matthew directive) — CCA resumes direct implementation
-- **Tests**: All design-skills suites green. 543 smoke passing.
+- **Tests**: 338 suites, 11982 tests passing. All green. (+37 new tests from S229's 11945).
 
 **Next:**
 1. MT-32 Phase 4: UI component library (reusable patterns for web outputs)
