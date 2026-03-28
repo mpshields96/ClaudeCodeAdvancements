@@ -67,6 +67,10 @@ def parse_args(argv=None) -> argparse.Namespace:
         "--offline", action="store_true",
         help="Offline mode: run emulator without LLM calls (for testing).",
     )
+    parser.add_argument(
+        "--model", type=str, default=None,
+        help="Override LLM model name (e.g. claude-haiku-4-5-20251001). Default: config.py MODEL_NAME.",
+    )
     return parser.parse_args(argv)
 
 
@@ -149,7 +153,10 @@ def main(argv=None) -> int:
         from memory_reader import MemoryReader
         from agent import CrystalAgent
         reader = MemoryReader(emu)
-        agent = CrystalAgent(emulator=emu, reader=reader, llm=llm)
+        agent_kwargs = dict(emulator=emu, reader=reader, llm=llm)
+        if args.model:
+            agent_kwargs["model_name"] = args.model
+        agent = CrystalAgent(**agent_kwargs)
 
         # Run Crystal boot sequence if starting from fresh ROM
         if not args.load_state:

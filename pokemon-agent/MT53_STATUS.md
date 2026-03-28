@@ -1,6 +1,20 @@
 # MT-53: Pokemon Crystal Bot — Status & Observations
 
-## Current State (S222 — 2026-03-27)
+## Current State (S224 — 2026-03-27)
+
+### S224 Updates
+- **--model CLI flag added**: `--model claude-haiku-4-5-20251001` overrides config.py MODEL_NAME
+- **anthropic SDK installed** in pokemon-agent/venv (v0.86.0)
+- **Offline mode verified**: 10 steps in 0.2s, emulator + state load working
+- **LLM session BLOCKED**: No ANTHROPIC_API_KEY in shell environment. Set it before running:
+  ```bash
+  export ANTHROPIC_API_KEY="sk-ant-..."
+  cd pokemon-agent
+  ./venv/bin/python3 main.py --rom pokemon_crystal.gbc --load-state crystal_playable --steps 20 --model claude-haiku-4-5-20251001
+  ```
+- **Cost note**: Haiku recommended for initial play sessions (~100x cheaper than Opus per step)
+
+## Previous State (S222 — 2026-03-27)
 
 ### What Works
 - **mGBA backend**: Fully wired, ROM boots, RAM reads verified. PyBoy is BANNED.

@@ -216,6 +216,7 @@ class CrystalAgent:
         max_history: int = MAX_HISTORY,
         save_interval: int = SAVE_INTERVAL,
         stuck_threshold: int = STUCK_THRESHOLD,
+        model_name: str = MODEL_NAME,
     ):
         self.emulator = emulator
         self.reader = reader
@@ -224,6 +225,7 @@ class CrystalAgent:
         self.max_history = max_history
         self.save_interval = save_interval
         self.stuck_threshold = stuck_threshold
+        self.model_name = model_name
 
         # Conversation state
         self.messages: List[dict] = []
@@ -572,7 +574,7 @@ class CrystalAgent:
             )
 
         response = self.llm.create_message(
-            model=MODEL_NAME,
+            model=self.model_name,
             max_tokens=MAX_TOKENS,
             system=SYSTEM_PROMPT,
             messages=self.messages,
@@ -995,7 +997,7 @@ class CrystalAgent:
         summary_messages.append(build_summary_request())
 
         response = self.llm.create_message(
-            model=MODEL_NAME,
+            model=self.model_name,
             max_tokens=MAX_TOKENS,
             system=SYSTEM_PROMPT,
             messages=summary_messages,
