@@ -7,26 +7,35 @@ Run /cca-auto after init only if you want autonomous continuation.
 
 ## Repo State
 - Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
-- Last wrapped session: S225 (2026-03-27)
-- Phase: Session 225 COMPLETE. REQ-61 statistical analysis, MT-49 Phase 3 discoverer improvements, MT-53 Gemini backend, scanner dry-run verified
+- Last wrapped session: S226 (2026-03-28)
+- Phase: Session 226 — CLI autoloop migration Phase 1 (CCA) COMPLETE
+
+## CRITICAL — CLI MIGRATION DIRECTIVE (Matthew S226)
+ALL chats migrating from desktop Electron to CLI terminal (MacBook thermal relief).
+- Phase 1 (CCA): DONE — autoloop_trigger.py + stop hook + start_autoloop.sh all CLI-aware
+- Phase 2 (Codex): PENDING — awaiting Matthew's go-ahead
+- Phase 3 (Kalshi): PENDING
+- CCA has FULL PERMISSION to run in CLI terminal mode
+- Launch: `./start_autoloop.sh` or `python3 cca_autoloop.py start`
+- Docs: CLI_AUTOLOOP_MIGRATION.md
+
+If this session was spawned by the CLI autoloop, CCA_AUTOLOOP_CLI=1 is set.
+The autoloop trigger and stop hook will skip desktop AppleScript accordingly.
 
 ## Immediate Priorities
-1. MT-53: Test Gemini backend with real API
-2. Kalshi: Build --provider gemini for scanner
-3. MT-49: Confidence recalibration phase
+1. Continue CLI migration Phases 2-3 when Matthew directs
+2. MT-53: Test Gemini backend with real API
+3. Kalshi: Build --provider gemini for scanner
+4. MT-49: Confidence recalibration phase
 
 ## Today's Tasks
-- No remaining [TODO] items found in TODAYS_TASKS.md.
+- CLI migration is #1 priority per TODAYS_TASKS.md
+- Phase 1 (CCA) complete. Phase 2 (Codex) and Phase 3 (Kalshi) pending.
 
 ## Coordination
-- Claude->Codex: [2026-03-27 22:12 UTC] — UPDATE 3 — MT-53 Progress Report
-- Claude->Codex: [2026-03-28 03:50 UTC] — ACK 4 — 3-Way Hub Bridge Acknowledgment
-- Codex->CCA: [2026-03-28 03:27 UTC] — STATUS UPDATE — Dual-Notify Rule Codified
-- Codex->CCA: [2026-03-28 04:01 UTC] — BUGFIX — `cca_comm.py task` Stale Inbox Cleanup
-- CCA->Kalshi: [2026-03-28 02:20 UTC] — UPDATE 72 — REQ-61: Statistical Analysis DELIVERED
-- CCA->Kalshi: [2026-03-28 02:37 UTC] — UPDATE 73 — REQ-60: domain_knowledge_scanner --dry-run VERIFIED
+- CCA->Kalshi: [2026-03-28 15:00 UTC] — CLI migration directive NOTIFIED
+- CCA->Codex: [2026-03-28 15:30 UTC] — ACK 6 — CLI migration status
 - Check `python3 cca_comm.py inbox` if this session is part of CCA hivemind work.
 
 ## Fresh-Chat Rule
 Typing only /cca-init in a new chat should be enough. Use this handoff as the authoritative continuation context after init.
-

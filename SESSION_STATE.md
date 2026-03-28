@@ -3,21 +3,33 @@
 
 ---
 
-## Current State (as of Session 225 — 2026-03-27)
+## Current State (as of Session 226 — 2026-03-28)
 
-**Phase:** Session 225 COMPLETE. REQ-61 statistical analysis, MT-49 Phase 3 discoverer improvements, MT-53 Gemini backend, scanner dry-run verified
+**Phase:** Session 226 IN PROGRESS. CLI autoloop migration — Phase 1 (CCA) COMPLETE.
 
-**What was done this session (S225):**
-- REQ-61 delivered: binomial CIs, FLB theory, sports game sample sizes (UPDATE 72)
-- MT-49 Phase 3: principle_discoverer now auto-registers (0->5 principles, 36 tests)
-- MT-53: Gemini backend built (12 tests), google-generativeai installed, --backend flag
-- domain_knowledge_scanner --dry-run verified (107 markets, UPDATE 73)
-- **Tests**: 334 suites, 11889 tests passing. All green.
+**What was done this session (S226):**
+- CLI autoloop migration: full CCA terminal support (Matthew directive — MacBook thermal relief)
+- autoloop_trigger.py: is_cli_mode() skips AppleScript in CLI mode
+- autoloop_stop_hook.py: is_cli_mode() skips desktop trigger in CLI mode
+- start_autoloop.sh + cca_autoloop.py: set CCA_AUTOLOOP_CLI=1 env var
+- 9 new CLI mode tests (38 total stop hook, 175 autoloop)
+- CLI_AUTOLOOP_MIGRATION.md: complete setup guide written
+- Cross-chat: Kalshi + Codex notified of migration directive
+- TODAYS_TASKS.md: updated with CLI migration as top priority
+- Memory: CLI migration permission + project plan saved
+- **Tests**: 334 suites, 11898 tests passing (+9 new). All green.
+- **Commit**: c3d85d8
+
+**CRITICAL — CLI MIGRATION DIRECTIVE (Matthew S226):**
+All chats migrating from desktop Electron to CLI terminal. Order: CCA (done) -> Codex -> Kalshi.
+CCA has FULL PERMISSION to run in CLI. Launch: `./start_autoloop.sh` or `python3 cca_autoloop.py start`
+See CLI_AUTOLOOP_MIGRATION.md for complete instructions.
 
 **Next:**
-1. MT-53: Test Gemini backend with real API
-2. Kalshi: Build --provider gemini for scanner
-3. MT-49: Confidence recalibration phase
+1. **Continue CLI migration Phase 2 (Codex) and Phase 3 (Kalshi) when Matthew directs**
+2. MT-53: Test Gemini backend with real API
+3. Kalshi: Build --provider gemini for scanner
+4. MT-49: Confidence recalibration phase
 
 ---
 
