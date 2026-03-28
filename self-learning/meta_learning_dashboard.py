@@ -42,6 +42,21 @@ def _load_jsonl(filepath: str) -> list[dict]:
     return entries
 
 
+def _load_jsonl_dedup(filepath: str) -> list[dict]:
+    """Load a JSONL file with latest-wins deduplication on the 'id' field.
+
+    principles.jsonl is append-only: the same principle ID may appear multiple
+    times as it gets updated. This returns only the latest version of each entry,
+    matching the semantics of principle_registry._load_principles().
+    """
+    seen: dict[str, dict] = {}
+    for entry in _load_jsonl(filepath):
+        key = entry.get("id")
+        if key:
+            seen[key] = entry  # later entries overwrite earlier ones
+    return list(seen.values())
+
+
 def _laplace_score(success: int, total: int) -> float:
     """Laplace-smoothed success rate: (s+1)/(n+2)."""
     return (success + 1) / (total + 2)
@@ -51,7 +66,7 @@ class PrincipleAnalyzer:
     """Analyze principle registry effectiveness."""
 
     def __init__(self, filepath: str):
-        self._entries = _load_jsonl(filepath)
+        self._entries = _load_jsonl_dedup(filepath)
 
     @property
     def total_principles(self) -> int:
