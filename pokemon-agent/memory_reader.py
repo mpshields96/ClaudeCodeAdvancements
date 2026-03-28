@@ -140,67 +140,14 @@ CHAR_MAP = {
 }
 
 
-# ── Species index → name (partial, Crystal Pokedex order) ───────────────────
+# ── Data tables (complete — ported from reference repos, S218) ────────────────
+# All 251 species, 251 moves, Crystal items, map names, move data
+# Source: crystal_data.py (ported from pokemon-agent reference repo + Gen 2 extension)
 
-# This covers the first 50 + common encounters. Full table would be 251 entries.
-SPECIES_NAMES = {
-    0: "(none)",
-    1: "Bulbasaur", 2: "Ivysaur", 3: "Venusaur",
-    4: "Charmander", 5: "Charmeleon", 6: "Charizard",
-    7: "Squirtle", 8: "Wartortle", 9: "Blastoise",
-    152: "Chikorita", 153: "Bayleef", 154: "Meganium",
-    155: "Cyndaquil", 156: "Quilava", 157: "Typhlosion",
-    158: "Totodile", 159: "Croconaw", 160: "Feraligatr",
-    # Common Crystal encounters
-    16: "Pidgey", 17: "Pidgeotto", 18: "Pidgeot",
-    19: "Rattata", 20: "Raticate",
-    21: "Spearow", 22: "Fearow",
-    25: "Pikachu", 26: "Raichu",
-    41: "Zubat", 42: "Golbat", 169: "Crobat",
-    74: "Geodude", 75: "Graveler", 76: "Golem",
-    92: "Gastly", 93: "Haunter", 94: "Gengar",
-    133: "Eevee", 134: "Vaporeon", 135: "Jolteon", 136: "Flareon",
-    196: "Espeon", 197: "Umbreon",
-    243: "Raikou", 244: "Entei", 245: "Suicune",
-    249: "Lugia", 250: "Ho-Oh", 251: "Celebi",
-}
-
-# Move index → name (partial)
-MOVE_NAMES = {
-    0: "(none)",
-    1: "Pound", 5: "Mega Punch", 6: "Pay Day",
-    10: "Scratch", 13: "Razor Wind", 15: "Cut",
-    16: "Gust", 17: "Wing Attack",
-    33: "Tackle", 34: "Body Slam",
-    36: "Take Down", 38: "Double-Edge",
-    45: "Growl", 52: "Ember", 53: "Flamethrower",
-    55: "Water Gun", 56: "Hydro Pump", 57: "Surf",
-    58: "Ice Beam", 59: "Blizzard",
-    63: "Hyper Beam",
-    64: "Peck", 65: "Drill Peck",
-    75: "Razor Leaf",
-    76: "Solar Beam",
-    85: "Thunderbolt", 87: "Thunder",
-    89: "Earthquake",
-    92: "Toxic",
-    94: "Psychic",
-    104: "Double Team",
-    113: "Light Screen", 115: "Reflect",
-    126: "Fire Blast",
-    129: "Swift",
-    133: "Amnesia",
-    135: "Soft-Boiled",
-    182: "Protect",
-    188: "Sludge Bomb",
-    200: "Outrage",
-    205: "Rollout",
-    214: "Sleep Talk",
-    216: "Return",
-    237: "Hidden Power",
-    240: "Rain Dance",
-    241: "Sunny Day",
-    247: "Shadow Ball",
-}
+from crystal_data import (
+    SPECIES_NAMES, MOVE_NAMES, MOVE_DATA, ITEM_NAMES, TYPE_NAMES,
+    MAP_NAMES, get_move_info, get_map_name,
+)
 
 
 # ── Status condition decoding ────────────────────────────────────────────────
@@ -280,11 +227,11 @@ class MemoryReader:
         # Status
         status = decode_status(self._emu.read_byte(base + OFF_STATUS))
 
-        # Held item (index only for now)
+        # Held item (full name from crystal_data — ported S218)
         held_item_id = self._emu.read_byte(base + OFF_HELD_ITEM)
-        held_item = f"item#{held_item_id}" if held_item_id > 0 else ""
+        held_item = ITEM_NAMES.get(held_item_id, f"item#{held_item_id}") if held_item_id > 0 else ""
 
-        # Moves
+        # Moves (with full data from crystal_data — ported S218)
         moves = []
         pp_base = PARTY_PP_START + (slot * PARTY_PP_MON_SIZE)
         for i in range(4):
@@ -292,14 +239,15 @@ class MemoryReader:
             if move_id == 0:
                 continue
             pp = self._emu.read_byte(pp_base + i) & 0x3F  # lower 6 bits = current PP
-            move_name = MOVE_NAMES.get(move_id, f"move#{move_id}")
+            name, mtype, power, acc, cat = get_move_info(move_id)
             moves.append(Move(
-                name=move_name,
-                move_type="Normal",  # type lookup would need full move table
-                power=0,  # power lookup would need full move table
-                accuracy=100,
+                name=name,
+                move_type=mtype,
+                power=power,
+                accuracy=acc,
                 pp=pp,
-                pp_max=pp,  # max PP needs move table too
+                pp_max=pp,
+                category=cat,
             ))
 
         return Pokemon(
@@ -325,7 +273,7 @@ class MemoryReader:
         return Party(pokemon=pokemon)
 
     def read_position(self) -> MapPosition:
-        """Read player map position."""
+        """Read player map position (with map name from crystal_data)."""
         map_group = self._emu.read_byte(MAP_GROUP)
         map_number = self._emu.read_byte(MAP_NUMBER)
         x = self._emu.read_byte(PLAYER_X)
@@ -338,6 +286,7 @@ class MemoryReader:
             map_number=map_number,
             x=x,
             y=y,
+            map_name=get_map_name(map_group, map_number),
         )
 
     def read_battle_state(self) -> BattleState:

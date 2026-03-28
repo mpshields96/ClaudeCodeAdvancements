@@ -191,7 +191,7 @@ class TestMemoryReaderParty(unittest.TestCase):
         base = PARTY_DATA_START
         self.emu.write_byte(base + OFF_HELD_ITEM, 77)
         mon = self.reader.read_pokemon(0)
-        self.assertEqual(mon.held_item, "item#77")
+        self.assertEqual(mon.held_item, "Sharp Beak")  # item 77 in Crystal
 
     def test_pokemon_no_held_item(self):
         self.emu.write_byte(PARTY_COUNT, 1)
