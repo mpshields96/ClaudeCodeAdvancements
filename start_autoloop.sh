@@ -247,7 +247,9 @@ if [ "$DESKTOP_MODE" = true ]; then
 fi
 
 # Pre-flight: check no other CCA CLI sessions running
-CCA_CLI_COUNT=$(ps ax -o command 2>/dev/null | grep "claude.*dangerously-skip" | grep -i "cca\|ClaudeCodeAdvancements" | grep -v grep | wc -l | tr -d ' ')
+# grep returns exit 1 on no match, which kills the script under set -euo pipefail.
+# [C] bracket trick prevents grep from matching itself in the process table.
+CCA_CLI_COUNT=$(ps ax -o command 2>/dev/null | grep -c "[c]laude --dangerously-skip.*[C]laudeCodeAdvancements" || true)
 if [ "$CCA_CLI_COUNT" -gt 0 ]; then
     echo "BLOCKED: $CCA_CLI_COUNT CCA CLI session(s) already running."
     echo "Only one CCA session at a time to avoid rate limit burn."
