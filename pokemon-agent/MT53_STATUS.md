@@ -6,13 +6,8 @@
 - **--model CLI flag added**: `--model claude-haiku-4-5-20251001` overrides config.py MODEL_NAME
 - **anthropic SDK installed** in pokemon-agent/venv (v0.86.0)
 - **Offline mode verified**: 10 steps in 0.2s, emulator + state load working
-- **LLM session BLOCKED**: No ANTHROPIC_API_KEY in shell environment. Set it before running:
-  ```bash
-  export ANTHROPIC_API_KEY="sk-ant-..."
-  cd pokemon-agent
-  ./venv/bin/python3 main.py --rom pokemon_crystal.gbc --load-state crystal_playable --steps 20 --model claude-haiku-4-5-20251001
-  ```
-- **Cost note**: Haiku recommended for initial play sessions (~100x cheaper than Opus per step)
+- **LLM session BLOCKED**: No Anthropic API key available (Matthew confirmed — never assume one exists). Agent loop needs redesign to use an alternative LLM backend (e.g., Gemini via MCP, local model, or Claude Code integration).
+- **Next step**: Either (a) add Gemini/alternative LLM backend, or (b) build a smarter offline heuristic agent that doesn't need an LLM
 
 ## Previous State (S222 — 2026-03-27)
 

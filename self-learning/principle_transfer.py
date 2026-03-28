@@ -518,6 +518,50 @@ class PrincipleTransfer:
 
         return p
 
+    def auto_accept(
+        self,
+        min_score: float = 0.60,
+        proposals_path: Optional[str] = None,
+        principles_path: Optional[str] = None,
+    ) -> List[TransferProposal]:
+        """Auto-accept pending proposals above the score threshold.
+
+        Phase 2 of MT-49: instead of proposals sitting indefinitely,
+        high-confidence transfers get applied automatically at wrap time.
+        Lower-scoring proposals remain pending for manual review.
+
+        Returns list of accepted proposals.
+        """
+        proposals_path = proposals_path or PROPOSALS_PATH
+        proposals = load_proposals(proposals_path)
+        pending = [p for p in proposals if p.status == "proposed"]
+
+        accepted = []
+        for p in sorted(pending, key=lambda x: x.transfer_score, reverse=True):
+            if p.transfer_score < min_score:
+                continue
+            try:
+                self.apply_transfer(
+                    p.principle_id, p.target_domain,
+                    principles_path=principles_path,
+                )
+                update_proposal_status(
+                    p.proposal_id, "accepted",
+                    path=proposals_path,
+                )
+                accepted.append(p)
+            except (KeyError, ValueError):
+                # Principle may have been deleted; reject the proposal
+                try:
+                    update_proposal_status(
+                        p.proposal_id, "rejected",
+                        path=proposals_path,
+                    )
+                except (KeyError, ValueError):
+                    pass
+
+        return accepted
+
     def propose_transfers(
         self,
         principles_path: Optional[str] = None,
@@ -639,6 +683,11 @@ def main():
     prop_p.add_argument("--max", type=int, default=10, help="Max proposals to create")
     prop_p.add_argument("--min-score", type=float, default=0.65)
 
+    # auto-accept (MT-49 Phase 2)
+    auto_p = sub.add_parser("auto-accept", help="Auto-accept proposals above score threshold")
+    auto_p.add_argument("--min-score", type=float, default=0.60,
+                        help="Minimum transfer score to auto-accept (default: 0.60)")
+
     # review (MT-49 Phase 2)
     rev_p = sub.add_parser("review", help="Show pending proposals")
 
@@ -731,6 +780,17 @@ def main():
         except (KeyError, ValueError) as e:
             print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)
+
+    elif args.cmd == "auto-accept":
+        pt = PrincipleTransfer(min_principle_score=args.min_score)
+        accepted = pt.auto_accept(min_score=args.min_score)
+        if not accepted:
+            print(f"No proposals above {args.min_score:.2f} to auto-accept.")
+        else:
+            print(f"Auto-accepted {len(accepted)} transfers:")
+            for p in accepted:
+                print(f"  [{p.transfer_score:.2f}] {p.principle_text[:50]}")
+                print(f"    {p.source_domain} -> {p.target_domain}")
 
     else:
         parser.print_help()
