@@ -54,25 +54,12 @@ except ImportError:
     CHARTJS_AVAILABLE = False
 
 # Import canonical design tokens
-try:
-    from design_linter import CCA_PALETTE, DARK_PALETTE
-except ImportError:
-    CCA_PALETTE = {}
-    DARK_PALETTE = {}
-
-
-# ── Design tokens from design_linter.py (canonical source) ───────────────────
+import design_tokens
+from design_linter import DARK_PALETTE
 
 COLORS = {
-    "primary": CCA_PALETTE.get("primary", "#1a1a2e"),
-    "accent": CCA_PALETTE.get("accent", "#0f3460"),
-    "highlight": CCA_PALETTE.get("highlight", "#e94560"),
-    "success": CCA_PALETTE.get("success", "#16c79a"),
-    "muted": CCA_PALETTE.get("muted", "#6b7280"),
-    "background": CCA_PALETTE.get("bg", "#ffffff"),
-    "surface": CCA_PALETTE.get("surface", "#f8f9fa"),
-    "border": CCA_PALETTE.get("border", "#e5e7eb"),
-    "warning": CCA_PALETTE.get("warning", "#f59e0b"),
+    **design_tokens.CCA_PALETTE,
+    "background": design_tokens.CCA_PALETTE["bg"],
 }
 
 
