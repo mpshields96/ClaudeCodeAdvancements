@@ -116,7 +116,7 @@ def trigger_next_session(dry_run: bool = False) -> bool:
 
     Returns True if all steps succeeded.
     """
-    # CLI mode: outer loop handles session chaining — just write breadcrumb
+    # CLI mode: spawn a new Terminal.app window, then close old one
     if is_cli_mode():
         _log("trigger_cli_mode", {"dry_run": dry_run})
         breadcrumb_path = os.path.expanduser("~/.cca-autoloop-fired")
@@ -125,7 +125,36 @@ def trigger_next_session(dry_run: bool = False) -> bool:
                 f.write(str(time.time()))
         except OSError:
             pass
-        print("CLI autoloop mode — outer loop handles session chaining. Breadcrumb written.")
+
+        if dry_run:
+            print("CLI autoloop mode — DRY RUN. Would open new Terminal window and close old.")
+            return True
+
+        import subprocess
+        project_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # AppleScript: open new Terminal window with start_autoloop.sh,
+        # then close the OLD window (the one running this session)
+        applescript = f'''
+        tell application "Terminal"
+            -- Remember the current (old) window
+            set oldWindow to front window
+
+            -- Open new window with the autoloop script
+            do script "cd {project_dir} && bash start_autoloop.sh"
+
+            -- Close the old window (kills old shell + old claude session)
+            delay 2
+            close oldWindow
+        end tell
+        '''
+        try:
+            subprocess.run(["osascript", "-e", applescript],
+                           capture_output=True, timeout=15)
+            print("CLI autoloop: New Terminal window opened. Old window closing.")
+        except Exception as e:
+            print(f"CLI autoloop: Terminal spawn failed ({e}). Use start_autoloop.sh manually.")
+
         return True
 
     # Log peak/off-peak context (MT-38 Phase 4)
