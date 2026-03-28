@@ -22,17 +22,9 @@ from typing import Optional
 # Chart.js CDN — pinned to v4.4 for stability
 CHARTJS_CDN_URL = "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
 
-# CCA color palette (synced with design-guide.md)
-CCA_CHART_COLORS = [
-    "#0f3460",  # blue (primary)
-    "#16c79a",  # green (success)
-    "#f59e0b",  # orange (warning)
-    "#e94560",  # red (highlight)
-    "#5ac8fa",  # teal
-    "#636366",  # mid grey
-    "#8b5cf6",  # purple
-    "#ec4899",  # pink
-]
+# CCA color palette (from canonical design_tokens)
+import design_tokens
+CCA_CHART_COLORS = design_tokens.SERIES_COLORS
 
 
 @dataclass
