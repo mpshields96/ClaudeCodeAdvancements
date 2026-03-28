@@ -3,7 +3,27 @@
 
 ---
 
-## Current State (as of Session 229 — 2026-03-28)
+## Current State (as of Session 231 — 2026-03-28)
+
+**Phase:** Session 231 IN PROGRESS. MT-32 Phase 3 design token consolidation complete. Launcher aliases shipped. Cross-chat KXETHD analysis delivered.
+
+**What was done this session (S231):**
+- MT-32 Phase 3: design_tokens.py — canonical token module (25 tests), wired into all 5 consumers:
+  - design_linter.py (31 tests), chart_generator.py (21 suites), trading_chart.py (41 tests),
+  - website_generator.py (140 tests), dashboard_generator.py (154 tests)
+- Launcher aliases: cc/cca/ccbot with model split (Opus/Sonnet) in ~/.zshrc (10 tests)
+- Cross-chat UPDATE 77: KXETHD expansion analysis delivered to Kalshi
+- Codex-first requirement LIFTED (Matthew directive) — CCA resumes direct implementation
+- **Tests**: All design-skills suites green. 543 smoke passing.
+
+**Next:**
+1. MT-32 Phase 4: UI component library (reusable patterns for web outputs)
+2. Continue cross-chat coordination (monitor POLYBOT_TO_CCA.md)
+3. Priority picker next: MT-33 (Strategic Intelligence Report) or MT-23 (Mobile Control)
+
+---
+
+## Previous State (Session 229 — 2026-03-28)
 
 **Phase:** Session 229 COMPLETE. Fixed priority_picker COMPLETE MT bug, MT-49 Phase 5 ROI resolver (11->22/79 resolved), CCA autoloop always Opus 4.6
 
