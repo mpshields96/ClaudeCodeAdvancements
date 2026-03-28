@@ -26,6 +26,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from resume_generator import build_handoff_snapshot, summarize_snapshot_for_init
 from session_id import normalize as normalize_session_id
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -263,6 +264,33 @@ def run_meta_learning() -> dict:
         return {"status": status, "brief": output}
     except subprocess.TimeoutExpired:
         return {"status": "", "brief": "", "error": "Timeout: meta_learning_dashboard exceeded 30 seconds"}
+
+
+def run_meta_tracker(session_num: int = 0) -> dict:
+    """Run meta_tracker.py for principle usage/zombie tracking (MT-49 Phase 1)."""
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "meta_tracker.py"),
+             "--session", str(session_num), "init-briefing"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(PROJECT_ROOT),
+        )
+        output = proc.stdout.strip()
+        if proc.returncode != 0 or not output:
+            return {"brief": "", "error": proc.stderr.strip() or "meta_tracker failed"}
+
+        # Also record a snapshot for trend tracking
+        subprocess.run(
+            ["python3", str(PROJECT_ROOT / "self-learning" / "meta_tracker.py"),
+             "--session", str(session_num), "snapshot"],
+            capture_output=True, text=True, timeout=10, cwd=str(PROJECT_ROOT),
+        )
+
+        return {"brief": output}
+    except subprocess.TimeoutExpired:
+        return {"brief": "", "error": "Timeout: meta_tracker exceeded 15 seconds"}
 
 
 def run_mt_extensions() -> dict:
@@ -633,6 +661,8 @@ def format_summary(summary: dict) -> str:
 
     if summary.get("meta_learning_brief"):
         lines.append(f"  {summary['meta_learning_brief']}")
+    if summary.get("meta_tracker_brief"):
+        lines.append(f"  {summary['meta_tracker_brief']}")
     if summary.get("principles_seeded", 0) > 0:
         lines.append(f"  Principles seeded: {summary['principles_seeded']} new")
     if summary.get("cached_test_count"):
@@ -657,6 +687,14 @@ def format_summary(summary: dict) -> str:
     if summary.get("directive_latest"):
         lines.append(f"  Directive: {summary['directive_session']} — {summary['directive_latest']}")
         lines.append(f"    (Read MATTHEW_DIRECTIVES.md — perpetual inspiration log)")
+    if summary.get("handoff_priorities"):
+        lines.append("  Next-chat handoff:")
+        for item in summary["handoff_priorities"]:
+            lines.append(f"    - {item}")
+    if summary.get("handoff_coordination"):
+        lines.append("  Coordination cues:")
+        for item in summary["handoff_coordination"]:
+            lines.append(f"    - {item}")
     if summary.get("reflect_patterns", 0) > 0:
         lines.append(f"  Reflect: {summary['reflect_patterns']} patterns — {summary.get('reflect_brief', '')}")
     if summary.get("session_metrics_brief"):
@@ -713,6 +751,9 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     # Step 3.7: Meta-learning health (MT-49)
     meta_learning = run_meta_learning()
 
+    # Step 3.7b: Meta-tracker (MT-49 Phase 1 — zombie/usage tracking + snapshot)
+    meta_tracker = run_meta_tracker(session_num=state.get("session_num", 0) + 1)
+
     # Step 3.8: Transfer proposals (MT-49 Phase 2 — auto-propose)
     transfer = run_transfer_proposals()
 
@@ -760,6 +801,8 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
         summary["timeline_raw"] = timeline["raw"]
     if meta_learning.get("brief"):
         summary["meta_learning_brief"] = meta_learning["brief"]
+    if meta_tracker.get("brief"):
+        summary["meta_tracker_brief"] = meta_tracker["brief"]
     if transfer.get("pending", 0) > 0:
         summary["transfer_pending"] = transfer["pending"]
         summary["transfer_top"] = transfer.get("top_text", "")
@@ -789,6 +832,16 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if directives.get("latest_title"):
         summary["directive_latest"] = directives["latest_title"]
         summary["directive_session"] = directives["latest_session"]
+
+    # Step 5.2: Full next-chat handoff cues (written by /cca-wrap into SESSION_RESUME.md)
+    handoff_resume_path = session_state_path.parent / "SESSION_RESUME.md"
+    if handoff_resume_path.exists():
+        handoff_snapshot = build_handoff_snapshot(str(session_state_path.parent))
+        handoff_summary = summarize_snapshot_for_init(handoff_snapshot, max_priorities=3, max_coordination=2)
+        if handoff_summary.get("top_priorities"):
+            summary["handoff_priorities"] = handoff_summary["top_priorities"]
+        if handoff_summary.get("coordination"):
+            summary["handoff_coordination"] = handoff_summary["coordination"]
 
     return summary
 
