@@ -5,28 +5,33 @@
 
 ## Current State (as of Session 220 — 2026-03-28)
 
-**Phase:** Session 220 IN PROGRESS. Kalshi URGENT strategy pivot + MT-53 mGBA migration
+**Phase:** Session 220 COMPLETE. Kalshi URGENT pivot + MT-53 mGBA migration + Crystal boot tuning
 
 **What was done this session (S220):**
 - URGENT cross-chat delivery: Kalshi strategy pivot analysis (UPDATE 65)
-  - Flagged orderbook imbalance strategies are on BANNED 15-min markets
-  - Recommended KXBTCD daily threshold as primary pivot (symmetric payoffs, N(d2) model ready)
+  - Flagged orderbook imbalance strategies are on BANNED 15-min markets (KXBTC15M/KXETH15M)
+  - Recommended KXBTCD daily threshold as primary pivot (symmetric payoffs at 50c, N(d2) model ready)
   - Weather graduation check + economics paper accumulation as secondary paths
   - Full payoff structure analysis (90c+ asymmetry vs 50c symmetric)
 - MT-53: Complete PyBoy removal + mGBA migration (11 files, -139/+44 LOC)
   - Removed PyBoyBackend class (~80 LOC), updated all docstrings across 11 files
   - setup.sh now installs cffi+cached_property instead of pyboy
-  - 115 mock tests + 21 real emulator tests pass with mGBA
-- MT-53: Offline Crystal ROM test run PASSES
-  - mGBA boots Crystal ROM, agent loop runs 50 steps in 0.4s, 0 API tokens
-  - Boot sequence needs tuning (doesn't advance past title screen yet)
-- **Tests**: 136 pokemon-agent tests passing
-- **Commits**: 5baf276 (cross-chat), acdfeeb (mGBA migration)
+  - mGBA bindings import verified, real ROM loading confirmed
+- MT-53: Offline Crystal ROM test — mGBA boots + runs 50 steps in 0.4s, 0 API tokens
+- MT-53: Crystal boot sequence tuned for mGBA
+  - Empirically found Crystal intro needs ~9000 frames (chunked cycle approach)
+  - Verified map IDs: Player's House 2F = (24, 7) not (3, 4) — RAM at 0xDCB5/0xDCB6
+  - Boot now successfully enters game and navigates Player's House 2F
+  - Stairs transition needs further work (1F/Town/Lab map IDs need mGBA verification)
+- **Tests**: 136+ pokemon-agent tests passing (79 mock + 21 real emulator + 36 other)
+- **Commits**: 5baf276, acdfeeb, 85ff602, 51f1146 (4 commits)
 
 **Next:**
-1. MT-53: Tune Crystal boot sequence to advance through intro with mGBA frame timing
-2. MT-53: Run longer offline test (500+ steps) to verify gameplay loop
-3. Continue Kalshi cross-chat (monitor pivot response)
+1. MT-53: Verify remaining Crystal map IDs with mGBA (Player's House 1F, New Bark Town, Elm's Lab)
+2. MT-53: Fix stairs transition in boot sequence (navigate to correct warp tile)
+3. MT-53: Run longer offline test (500+ steps) to verify full gameplay loop
+4. Kalshi: Monitor pivot response, follow up on KXBTCD threshold strategy implementation
+5. MT-28 or priority picker recommendation (after MT-53 milestone)
 
 ---
 
