@@ -3,21 +3,22 @@
 
 ---
 
-## Current State (as of Session 224 — 2026-03-27)
+## Current State (as of Session 225 — 2026-03-27)
 
-**Phase:** Session 224 COMPLETE. MT-53 model flag + Kalshi domain_knowledge_scanner + MT-49 Phase 2 auto-accept + wrap wiring
+**Phase:** Session 225 IN PROGRESS. REQ-61 analysis + MT-49 Phase 3 discoverer + MT-53 Gemini backend + scanner dry-run
 
-**What was done this session (S224):**
-- MT-53: --model CLI flag, SDK install, offline loop verified (62 tests)
-- Kalshi: domain_knowledge_scanner.py with stub provider (22 tests)
-- MT-49 Phase 2: auto_accept + batch_wrap wiring (59 tests)
-- Memory: no-API-key constraint saved permanently
-- **Tests**: 333 suites, 11867 tests passing. All green.
+**What was done this session (S225):**
+- REQ-61: Statistical analysis delivered to Kalshi (UPDATE 72) — binomial CIs, FLB theory, sports game sample sizes
+- MT-49 Phase 3: Improved principle_discoverer.py — wrap commit filter, Jaccard coupling, evidence boost. 0→5 auto-discovered principles. 36 tests.
+- MT-53: Built gemini_client.py — Gemini 2.5 Flash backend for Pokemon agent. --backend gemini/auto flag. 12 tests. GEMINI_API_KEY confirmed available.
+- Kalshi: domain_knowledge_scanner.py --dry-run verified (107 markets found). CWD fix documented. UPDATE 73 delivered.
+- **Commits**: 2 (8348d93, 3603703)
 
 **Next:**
-1. MT-53: Redesign LLM backend without API key
-2. Kalshi: Test domain_knowledge_scanner --dry-run
-3. Priority picker: check stagnated MTs
+1. MT-53: Install google-generativeai in Pokemon venv, test with real Gemini API
+2. Kalshi: Build --provider gemini for domain_knowledge_scanner (free-tier LLM estimation)
+3. MT-49: Run principle_discoverer in non-dry-run mode during wrap to accumulate principles
+4. Priority picker: MT-49 further phases (confidence recalibration, research ROI tracking)
 
 ---
 
