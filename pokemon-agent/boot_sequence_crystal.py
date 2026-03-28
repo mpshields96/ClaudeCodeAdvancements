@@ -34,12 +34,14 @@ logger = logging.getLogger("boot_crystal")
 
 
 # ── Crystal intro map IDs (group, number) ────────────────────────────────────
-# Source: pret/pokecrystal constants/map_constants.asm
+# Source: verified empirically with mGBA + pokemon_crystal.gbc ROM (S220).
+# These may differ from pret/pokecrystal constants due to ROM version differences.
+# Values confirmed by booting, navigating, and reading RAM at 0xDCB5/0xDCB6.
 
-MAP_PLAYERS_HOUSE_2F = (3, 4)   # Player starts here — bedroom
-MAP_PLAYERS_HOUSE_1F = (3, 3)   # Downstairs — Mom
-MAP_NEW_BARK_TOWN = (3, 1)      # Starting town
-MAP_ELMS_LAB = (3, 2)           # Professor Elm's lab — get starter
+MAP_PLAYERS_HOUSE_2F = (24, 7)  # Player starts here — bedroom (verified S220)
+MAP_PLAYERS_HOUSE_1F = (3, 3)   # Downstairs — Mom (TODO: verify with mGBA)
+MAP_NEW_BARK_TOWN = (3, 1)      # Starting town (TODO: verify with mGBA)
+MAP_ELMS_LAB = (3, 2)           # Professor Elm's lab (TODO: verify with mGBA)
 
 
 def _encode_map(group: int, number: int) -> int:
@@ -195,13 +197,32 @@ def run_crystal_boot_sequence(emu, reader) -> dict:
     logger.info("Boot start: map_id=%d, pos=(%d,%d), menu=%s",
                 pos.map_id, pos.x, pos.y, state.menu_state.value)
 
-    # Title screen detection: map 0, position (0,0)
-    if pos.map_id == 0 and pos.x == 0 and pos.y == 0:
-        logger.info("Phase 0: Title screen detected, mashing through...")
-        # Title → language select → New Game → name entry → intro cutscene
-        # Crystal has more title screens than Red
-        clear_dialog_crystal(emu, presses=40, wait=20)
-        emu.tick(180)  # Wait for game to load after title
+    # Title screen detection: map_id 0 = not in any game map yet.
+    # mGBA may initialize position RAM to (255, 0) or (0, 0) — either way,
+    # map_id 0 means we're at the title/intro screen.
+    if pos.map_id == 0:
+        logger.info("Phase 0: Title screen detected (map=0), booting through intro...")
+        # Crystal intro is VERY long (~9000 frames empirically verified S220):
+        # 1. Game Boy boot logo (~150 frames)
+        # 2. Game Freak logo (~400 frames)
+        # 3. Crystal Suicune animation (~2000 frames)
+        # 4. Title screen (waits for A press)
+        # 5. New Game / Continue menu
+        # 6. Time/day setting
+        # 7. Player name selection (default CHRIS)
+        # 8. Opening cutscene + Mom dialog
+        # 9. Wake up in Player's House 2F
+        # Strategy: alternate between frame advances and A mashing in chunks
+        for cycle in range(6):
+            emu.tick(600)
+            for _ in range(30):
+                emu.press("a", hold_frames=4, wait_frames=30)
+            # Check if we've entered the game
+            state = reader.read_game_state()
+            if state.position.map_id != 0:
+                logger.info("Phase 0: Entered game at cycle %d, map=%d",
+                            cycle, state.position.map_id)
+                break
         result["phases_completed"].append("title_screen")
 
     # ── Phase 1: Clear opening dialog (Player's House 2F) ────────────────
