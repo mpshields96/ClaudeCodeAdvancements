@@ -453,13 +453,18 @@ class CrystalAgent:
 
         self.auto_advance_count += 1
 
-        return StepResult(
+        result = StepResult(
             step_number=self.step_count,
             state=state,
             llm_text=f"[battle_ai: {action['type']} — {action.get('reason', '')}]",
             tool_calls=[],
             tool_results=[{"auto": True, "battle_ai": True}],
         )
+
+        if self._on_step:
+            self._on_step(result)
+
+        return result
 
     def step(self) -> StepResult:
         """Execute one agent step: observe -> think -> act.
