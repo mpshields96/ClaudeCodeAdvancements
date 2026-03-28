@@ -3,21 +3,22 @@
 
 ---
 
-## Current State (as of Session 219 — 2026-03-27)
+## Current State (as of Session 220 — 2026-03-28)
 
-**Phase:** Session 219 COMPLETE. Crystal boot sequence + battle AI refactor + PyBoy ban + mGBA migration docs
+**Phase:** Session 220 IN PROGRESS. Kalshi URGENT strategy pivot + MT-53 mGBA migration
 
-**What was done this session (S219):**
-- Crystal boot sequence (boot_sequence_crystal.py, 20 tests)
-- Battle AI lifted to CrystalAgent base class
-- PyBoy banned, mGBA migration documented across all files
-- Run-first-build-while-playing strategy adopted
-- **Tests**: 331 suites, 11834 tests passing. All green.
+**What was done this session (S220):**
+- URGENT cross-chat delivery: Kalshi strategy pivot analysis (UPDATE 65)
+  - Flagged orderbook imbalance strategies are on BANNED 15-min markets
+  - Recommended KXBTCD daily threshold as primary pivot (symmetric payoffs, N(d2) model ready)
+  - Weather graduation check + economics paper accumulation as secondary paths
+  - Full payoff structure analysis (90c+ asymmetry vs 50c symmetric)
+- **Tests**: 10/10 smoke pass
 
 **Next:**
-1. Implement mGBA backend in emulator_control.py
-2. Rip out PyBoy references
-3. Offline test run with real Crystal ROM
+1. MT-53: Implement mGBA backend in emulator_control.py
+2. MT-53: Rip out PyBoy references
+3. MT-53: Offline test run with real Crystal ROM
 
 ---
 
