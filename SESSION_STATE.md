@@ -3,7 +3,25 @@
 
 ---
 
-## Current State (as of Session 221 — 2026-03-27)
+## Current State (as of Session 222 — 2026-03-27)
+
+**Phase:** Session 222 COMPLETE. MT-53 playable Crystal state + 3 Kalshi cross-chat research deliveries (REQ-16B, REQ-60, REQ-16C)
+
+**What was done this session (S222):**
+- MT-53: Playable Crystal state with Cyndaquil Lv5 in New Bark Town, load_state path fix, setup_crystal_state.py (13 new tests)
+- Kalshi REQ-16B (Update 67): Informed prediction edge research — 40x inefficiency gap domain vs numeric markets
+- Kalshi REQ-60 (Update 68): Tier 1 strategy architecture with open-source bot refs, phased implementation plan
+- Kalshi REQ-16C (Update 69): Agentic-rd-sandbox surgical assessment — 3 extractable components, lower edge threshold
+- **Tests**: 12 suites, 560 tests passing. All green.
+
+**Next:**
+1. Wire 3-way comms hub (CCA-Codex-Kalshi)
+2. MT-53: First LLM play session
+3. Kalshi: domain_knowledge_scanner.py implementation
+
+---
+
+## Previous State (Session 221 — 2026-03-27)
 
 **Phase:** Session 221 COMPLETE. Fixed Crystal map IDs + warp coordinates from pret/pokecrystal, created save states, documented for future chats
 
@@ -19,7 +37,6 @@
 3. Kalshi support if requested
 
 ---
-
 ## Previous State (Session 220 — 2026-03-27)
 
 **Phase:** Session 220 COMPLETE. Kalshi URGENT strategy pivot + MT-53 mGBA migration + Crystal boot tuning

@@ -497,12 +497,15 @@ class TestMGBABackendImport(unittest.TestCase):
         self.assertTrue(hasattr(MGBABackend, 'screenshot'))
         self.assertTrue(hasattr(MGBABackend, 'close'))
 
-    def test_from_rom_default_backend_is_mgba(self):
-        """Verify from_rom defaults to mGBA backend."""
+    def test_from_rom_creates_mgba_backend(self):
+        """Verify from_rom uses MGBABackend (no backend parameter — hardcoded)."""
         from emulator_control import EmulatorControl
         import inspect
         sig = inspect.signature(EmulatorControl.from_rom)
-        self.assertEqual(sig.parameters['backend'].default, 'mgba')
+        # from_rom takes rom_path, headless, speed — no backend parameter
+        # It always uses MGBABackend internally
+        self.assertIn('rom_path', sig.parameters)
+        self.assertNotIn('backend', sig.parameters)  # Hardcoded to mGBA
 
     def test_mock_backend_used_for_testing(self):
         """Verify mock backend works as stand-in for mGBA."""

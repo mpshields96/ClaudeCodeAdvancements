@@ -490,3 +490,8 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S219
 - `pokemon-agent/boot_sequence_crystal.py` (S219)
 - `pokemon-agent/test_boot_sequence_crystal.py` (S219)
+
+
+### Added in S222
+- `pokemon-agent/setup_crystal_state.py` (S222)
+- `pokemon-agent/test_setup_crystal_state.py` (S222)

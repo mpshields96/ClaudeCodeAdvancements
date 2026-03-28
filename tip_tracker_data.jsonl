@@ -32,3 +32,6 @@
 {"tip":"mGBA bindings need cffi+cached_property in venv \u2014 add to setup.sh","source":"cca-desktop","session":"S220","timestamp":"2026-03-28T00:41:08.852452Z"}
 {"tip":"Crystal intro takes ~9000 frames \u2014 use chunked cycle approach with early break","source":"cca-desktop","session":"S220","timestamp":"2026-03-28T00:41:08.852452Z"}
 {"tip":"pret/pokecrystal .asm map files are authoritative for warp coords and NPC positions","source":"cca-desktop","session":"S221","timestamp":"2026-03-28T01:24:47.636751Z"}
+{"tip":"Becker microstructure dataset (72M Kalshi trades) for market category priors","source":"cca-desktop","session":"S222","timestamp":"2026-03-28T02:43:06.293750Z"}
+{"tip":"ryanfrigo/kalshi-ai-trading-bot is closest open-source reference for LLM forecaster","source":"cca-desktop","session":"S222","timestamp":"2026-03-28T02:43:06.293750Z"}
+{"tip":"std_dev from consensus_fair_prob is a free confidence filter for sports bets","source":"cca-desktop","session":"S222","timestamp":"2026-03-28T02:43:06.293750Z"}
