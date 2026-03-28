@@ -46,3 +46,5 @@
 {"tip":"apply_recalibration() can now be run standalone with --dry-run to preview score changes without committing","source":"cca-desktop","session":"S228","timestamp":"2026-03-28T16:55:59.649439Z"}
 {"tip":"meta_learning_dashboard now shows accurate 186 principle count with correct avg scores","source":"cca-desktop","session":"S228","timestamp":"2026-03-28T16:55:59.649439Z"}
 {"tip":"Fix env var leaks in tests: use unittest.mock.patch.dict to isolate CCA_AUTOLOOP_CLI=1 from autoloop test suites","source":"cca-desktop","session":"S229","timestamp":"2026-03-28T18:43:15.143690Z"}
+{"tip":"design_tokens exports (CSS/Typst/Python dict) make adding new output formats trivial","source":"cca-desktop","session":"S231","timestamp":"2026-03-28T20:50:30.384887Z"}
+{"tip":"cca alias enforces Opus 4.6 at launch \u2014 no env vars needed","source":"cca-desktop","session":"S231","timestamp":"2026-03-28T20:50:30.384887Z"}

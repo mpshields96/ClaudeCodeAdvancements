@@ -3777,3 +3777,21 @@ CLI chat 2:
 - Pre-existing test failures in autoloop suites (CCA_AUTOLOOP_CLI=1 env leak into tests)
 
 ---
+
+## Session 231 — 2026-03-28
+
+**What changed:**
+- MT-32 Phase 3 COMPLETE: design_tokens.py canonical module wired into all 6 consumers
+- Launcher aliases cc/cca/ccbot with model split shipped (10 tests)
+- Cross-chat UPDATE 77 KXETHD expansion analysis delivered
+
+**Why:**
+- MT-32 Phase 3 design token consolidation, launcher aliases, cross-chat KXETHD analysis
+
+**Tests:** 11982/11982 passing (338 suites)
+
+**Lessons:**
+- Autoloop self-chaining gap — could not auto-chain from standalone cca terminal
+- Brief dashboard test break from missing DARK_PALETTE import (fixed same task)
+
+---

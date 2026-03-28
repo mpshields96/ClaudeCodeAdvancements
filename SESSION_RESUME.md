@@ -2,44 +2,37 @@
 
 ## Start Here
 Run /cca-init.
-This file is the full next-chat handoff written at end of S231 (2026-03-28).
+This file is the full next-chat handoff written by /cca-wrap, so a fresh chat should not need Matthew to restate context.
 Run /cca-auto after init only if you want autonomous continuation.
 
 ## Repo State
 - Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
-- Last session: S231 (2026-03-28)
-- Tests: 338 suites, 11982 tests — all green
-- 11 commits this session, all pushed to main
+- Last wrapped session: S231 (2026-03-28)
+- Phase: Session 231 COMPLETE. MT-32 Phase 3 design token consolidation, launcher aliases, cross-chat KXETHD analysis
 
-## What Was Done (S231)
-- MT-32 Phase 3 COMPLETE: design_tokens.py canonical module (25 tests), wired into all 6 consumers (design_linter, chart_generator, chartjs_bridge, dashboard_generator, website_generator, trading_chart)
-- Launcher aliases: cc/cca/ccbot with model split in ~/.zshrc (10 tests). `cca`=Opus, `ccbot`=Sonnet
-- Cross-chat UPDATE 77: KXETHD expansion analysis delivered to Kalshi bot
-- MASTER_TASKS updated: MT-32 at 25%, Phases 1-3 done
-
-## Key Changes Since S230
-- Codex-first requirement LIFTED (Matthew directive S231) — CCA resumes direct implementation
-- CLI autoloop self-chaining gap identified: `cca` alias can't auto-start next session. Request sent to Codex (CLAUDE_TO_CODEX.md). `bash start_autoloop.sh` still works as outer loop.
+## Operating Mode (Matthew directive, end of S231)
+Matthew is manually launching CCA chats via `cca` in terminal. No autoloop.
+CCA's job: help Kalshi chat with whatever it needs AND do normal CCA tasks.
+Codex-first requirement LIFTED — CCA implements directly again.
+Autoloop self-chaining is a background task for Codex — not urgent.
 
 ## Immediate Priorities
 1. Help Kalshi chat with whatever it needs (cross-chat support, research, deliveries)
-2. Normal CCA work: MT-32 Phase 4, MT-33, or whatever priority picker recommends
-3. Autoloop self-chaining: Codex has a pending request (CLAUDE_TO_CODEX.md) — check for response but this is NOT the top priority
+2. MT-32 Phase 4: UI component library
+3. Check Codex autoloop self-chaining response (background — not urgent)
 
-## Operating Mode (Matthew directive, end of S231)
-Matthew is manually launching CCA chats via `cca` in terminal for now. No autoloop.
-CCA's job: help Kalshi chat with whatever it needs AND do normal CCA tasks.
-Autoloop self-chaining is a background task for Codex — not urgent.
-
-## Standing Directives
-- CCA implements directly (Codex-first lifted)
-- Model split: CCA=Opus 4.6 (`cca` alias), Kalshi=Sonnet 4.6 (`ccbot` alias)
-- CCA autoloop: ONE terminal, no AppleScript in CLI mode, never touch Kalshi
+## Today's Tasks
+- No remaining [TODO] items found in TODAYS_TASKS.md.
 
 ## Coordination
-- CCA->Codex: [2026-03-28 23:45 UTC] — REQUEST — Autoloop self-chaining from inside a chat
-- CCA->Kalshi: [2026-03-28 23:30 UTC] — UPDATE 77 — KXETHD Expansion Analysis
-- Kalshi->CCA: REQ-62 (KXETHD expansion) — ANSWERED in UPDATE 77
+- Claude->Codex: [2026-03-27 22:12 UTC] — UPDATE 3 — MT-53 Progress Report
+- Claude->Codex: [2026-03-28 03:50 UTC] — ACK 4 — 3-Way Hub Bridge Acknowledgment
+- Codex->CCA: [2026-03-28 19:20 UTC] — HARDENING — Codex Helper Commands Re-Anchor To Canonical CCA Repo
+- Codex->CCA: [2026-03-28 20:35 UTC] — STATUS UPDATE — Autoloop Truth Table For Next Chat
+- CCA->Kalshi: [2026-03-28 19:30 UTC] — UPDATE 76 — Session S229 Summary
+- CCA->Kalshi: [2026-03-28 23:30 UTC] — UPDATE 77 — REQ-62: KXETHD Expansion Analysis
+- Check `python3 cca_comm.py inbox` if this session is part of CCA hivemind work.
 
 ## Fresh-Chat Rule
 Typing only /cca-init in a new chat should be enough. Use this handoff as the authoritative continuation context after init.
+

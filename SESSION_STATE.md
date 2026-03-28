@@ -5,6 +5,23 @@
 
 ## Current State (as of Session 231 — 2026-03-28)
 
+**Phase:** Session 231 COMPLETE. MT-32 Phase 3 design token consolidation, launcher aliases, cross-chat KXETHD analysis
+
+**What was done this session (S231):**
+- MT-32 Phase 3 COMPLETE: design_tokens.py canonical module wired into all 6 consumers
+- Launcher aliases cc/cca/ccbot with model split shipped (10 tests)
+- Cross-chat UPDATE 77 KXETHD expansion analysis delivered
+- **Tests**: 338 suites, 11982 tests passing. All green.
+
+**Next:**
+1. Help Kalshi chat with whatever it needs
+2. MT-32 Phase 4: UI component library
+3. Check Codex autoloop self-chaining response
+
+---
+
+## Previous State (Session 231 — 2026-03-28)
+
 **Phase:** Session 231 IN PROGRESS. MT-32 Phase 3 design token consolidation complete. Launcher aliases shipped. Cross-chat KXETHD analysis delivered.
 
 **What was done this session (S231):**
@@ -22,7 +39,6 @@
 3. Priority picker next: MT-33 (Strategic Intelligence Report) or MT-23 (Mobile Control)
 
 ---
-
 ## Previous State (Session 229 — 2026-03-28)
 
 **Phase:** Session 229 COMPLETE. Fixed priority_picker COMPLETE MT bug, MT-49 Phase 5 ROI resolver (11->22/79 resolved), CCA autoloop always Opus 4.6
