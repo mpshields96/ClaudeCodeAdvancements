@@ -119,19 +119,20 @@ class TestResumeGenerator(unittest.TestCase):
         result = self.gen.generate()
         self.assertIn("cca-init", result)
 
-    def test_generates_cca_auto_instruction(self):
+    def test_mentions_cca_auto_as_optional_follow_up(self):
         result = self.gen.generate()
         self.assertIn("cca-auto", result)
 
-    def test_output_is_under_500_chars(self):
+    def test_output_is_under_4000_chars(self):
         result = self.gen.generate()
-        self.assertLess(len(result), 500)
+        self.assertLess(len(result), 4000)
 
-    def test_output_is_single_paragraph(self):
+    def test_output_is_structured_markdown(self):
         result = self.gen.generate()
-        # Should be short, concise — not a multi-page document
-        lines = [l for l in result.splitlines() if l.strip()]
-        self.assertLessEqual(len(lines), 10)
+        self.assertIn("# NEXT CHAT HANDOFF", result)
+        self.assertIn("## Start Here", result)
+        self.assertIn("## Immediate Priorities", result)
+        self.assertIn("## Coordination", result)
 
     def test_extracts_session_number(self):
         self._write("SESSION_STATE.md", """## Current State (as of Session 99 — 2026-03-20)
@@ -139,6 +140,45 @@ class TestResumeGenerator(unittest.TestCase):
 """)
         result = self.gen.generate()
         self.assertIn("99", result)
+
+    def test_includes_todays_tasks_when_present(self):
+        self._write("TODAYS_TASKS.md", """### C1. Tighten handoff flow [TODO]
+### C2. Ignore done task [DONE]
+### C3. Wire Codex bridge [TODO]
+""")
+        result = self.gen.generate()
+        self.assertIn("C1. Tighten handoff flow", result)
+        self.assertIn("C3. Wire Codex bridge", result)
+
+    def test_includes_coordination_headings_when_available(self):
+        claude_to_codex = self._write(
+            "CLAUDE_TO_CODEX_TEST.md",
+            "## [2026-03-27 22:12 UTC] — UPDATE 3 — MT-53 Progress Report\nBody\n",
+        )
+        codex_to_claude = self._write(
+            "CODEX_TO_CLAUDE_TEST.md",
+            "## [2026-03-27 22:20 UTC] — STATUS UPDATE — Codex Bridge Online\nBody\n",
+        )
+        cca_to_polybot = self._write(
+            "CCA_TO_POLYBOT_TEST.md",
+            "## [2026-03-27 22:25 UTC] — RESPONSE — Responding to: REQ-999\nBody\n",
+        )
+        polybot_to_cca = self._write(
+            "POLYBOT_TO_CCA_TEST.md",
+            "## [2026-03-26 18:00 UTC] — REQUEST 1 — Political Markets Volume Probe\nBody\n",
+        )
+        gen = ResumeGenerator(
+            cca_root=self.tmpdir,
+            claude_to_codex_path=claude_to_codex,
+            codex_to_claude_path=codex_to_claude,
+            cca_to_polybot_path=cca_to_polybot,
+            polybot_to_cca_path=polybot_to_cca,
+        )
+        result = gen.generate()
+        self.assertIn("Claude->Codex", result)
+        self.assertIn("Codex->CCA", result)
+        self.assertIn("CCA->Kalshi", result)
+        self.assertIn("Kalshi->CCA", result)
 
 
 class TestGenerateResumeFn(unittest.TestCase):

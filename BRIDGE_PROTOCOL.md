@@ -1,70 +1,130 @@
-# Cross-Chat Bridge Protocol — CCA <-> Kalshi
+# 3-Way Bridge Protocol — CCA Hub <-> Codex <-> Kalshi
 # Created: S107 (2026-03-21)
-# Status: DEFINED — ready for Phase 4 dry run
+# Updated: S217 (2026-03-27)
+# Status: ACTIVE HUB MODEL
 
 ---
 
-## Architecture
+## Topology
 
-Two bridge files enable bidirectional communication between CCA and Kalshi chats:
+CCA is the authoritative router/hub.
 
-| File | Writer | Reader | Location |
-|------|--------|--------|----------|
-| `CCA_TO_POLYBOT.md` | CCA desktop | Kalshi research | Both projects (CCA is authoritative) |
-| `POLYBOT_TO_CCA.md` | Kalshi chat | CCA desktop | polymarket-bot project |
+Codex and Kalshi do not need a direct file lane yet. The supported production
+topology is:
 
-## CCA -> Kalshi Flow
+1. CCA <-> Codex via repo-local bridge files
+2. CCA <-> Kalshi via `~/.claude/cross-chat/` bridge files
+3. CCA relays anything important across lanes so no context stays trapped
 
-1. CCA desktop writes research, task briefs, or papers to `CCA_TO_POLYBOT.md`
-2. The polymarket-bot copy should be kept in sync (manual copy or bridge script)
-3. Kalshi chat reads at session start (mandated by polymarket-bot CLAUDE.md line 574)
-4. Kalshi acts on the deliveries (implements, evaluates, reports back)
+This keeps one source of operational truth while still enabling durable
+bidirectional communication with both external chats.
 
-## Kalshi -> CCA Flow (RETURN CHANNEL)
+## Bridge Files
 
-1. Kalshi chat creates/appends to `POLYBOT_TO_CCA.md` in polymarket-bot project
-2. CCA reads it at session start via READ-ONLY permission
-3. Format: timestamped entries, newest first
+| Lane | File | Writer | Reader | Location |
+|------|------|--------|--------|----------|
+| CCA -> Codex | `CLAUDE_TO_CODEX.md` | CCA / Claude Code | Codex | CCA repo |
+| Codex -> CCA | `CODEX_TO_CLAUDE.md` | Codex | CCA / Claude Code | CCA repo |
+| CCA -> Kalshi | `CCA_TO_POLYBOT.md` | CCA / Claude Code | Kalshi chats | `~/.claude/cross-chat/` |
+| Kalshi -> CCA | `POLYBOT_TO_CCA.md` | Kalshi chats | CCA / Claude Code | `~/.claude/cross-chat/` |
 
-### POLYBOT_TO_CCA.md Expected Format
+## Routing Rules
 
-```markdown
-# Kalshi -> CCA: Return Channel
-# Kalshi chat appends here. CCA reads at session start.
+### CCA <-> Codex
 
-## [DATE] — [TOPIC]
-**From:** Kalshi [main|research]
-**Status:** [REQUEST|REPORT|QUESTION]
+1. CCA writes requests, directives, and durable context to `CLAUDE_TO_CODEX.md`
+2. Codex reads it at session start
+3. Codex writes durable outcomes, risks, or relay-worthy notes to `CODEX_TO_CLAUDE.md`
+4. CCA reads `CODEX_TO_CLAUDE.md` at session start and during wrap review
 
-[Content here]
+### CCA <-> Kalshi
 
----
-```
+1. CCA writes research findings, task briefs, and directives to `CCA_TO_POLYBOT.md`
+2. Kalshi reads it at session start
+3. Kalshi writes requests, status, and findings to `POLYBOT_TO_CCA.md`
+4. CCA reads `POLYBOT_TO_CCA.md` at session start
 
-## Sync Issues Identified (S107)
+### Cross-Lane Relay
 
-1. **Two copies of CCA_TO_POLYBOT.md**: CCA version is 47.7K, polybot version is 9.2K.
-   The CCA version is authoritative (it has the full analytics framework).
-   The polybot copy appears stale — may need manual sync.
+CCA is responsible for relay when a message should propagate across lanes:
 
-2. **No return channel exists yet**: POLYBOT_TO_CCA.md must be created by the Kalshi chat
-   on its first session. CCA cannot create it (READ-ONLY for polymarket-bot).
+- Codex result relevant to trading or research -> relay to Kalshi
+- Kalshi finding relevant to implementation or architecture -> relay to Codex
+- Shared operational risk -> relay to both
 
-3. **No periodic polling**: Current protocol is "read at session start" only.
-   For real-time coordination, would need a polling mechanism — but this is
-   fine for Phase 4 (session-start reads are sufficient).
+Relay can be concise, but it must be explicit. Silence is not a relay.
 
-## Phase 4 Dry Run Checklist
+## Session-Start Requirements
 
-- [ ] CCA desktop writes a test message to CCA_TO_POLYBOT.md (append a "BRIDGE TEST" section)
-- [ ] Kalshi chat reads CCA_TO_POLYBOT.md from polymarket-bot (verify it has the test message)
-- [ ] Kalshi chat creates POLYBOT_TO_CCA.md with an acknowledgment
-- [ ] CCA desktop reads POLYBOT_TO_CCA.md from polymarket-bot (READ-ONLY)
-- [ ] Round-trip confirmed — both directions work
+### CCA
+
+CCA init/wrap should treat these as mandatory coordination context:
+- `CLAUDE_TO_CODEX.md`
+- `CODEX_TO_CLAUDE.md`
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md`
+- `~/.claude/cross-chat/POLYBOT_TO_CCA.md`
+
+### Codex
+
+Codex init should read:
+- `CLAUDE_TO_CODEX.md`
+- `SESSION_RESUME.md`
+- relevant Kalshi bridge notes when the task touches trading coordination
+
+### Kalshi
+
+Kalshi session start should read:
+- `CCA_TO_POLYBOT.md`
+- any relay CCA includes from Codex
+
+## Message Style
+
+All bridge files should be:
+- Append-only
+- Timestamped
+- Concise but actionable
+- Safe for future-session replay
+
+Preferred content:
+- What changed
+- Why it matters
+- What the receiving lane should do next
+- Verification status when relevant
+
+Avoid:
+- Credentials or secrets
+- Raw API keys
+- Long conversational back-and-forth
+- Hidden assumptions with no explicit action request
+
+## Current State
+
+### Working
+
+- `CLAUDE_TO_CODEX.md` exists
+- `CODEX_TO_CLAUDE.md` exists
+- `CCA_TO_POLYBOT.md` exists
+- `POLYBOT_TO_CCA.md` exists
+- `SESSION_RESUME.md` generation now surfaces recent Codex/Kalshi bridge headings
+
+### Still Manual
+
+- CCA is still the manual relay point between Codex and Kalshi
+- No direct Codex <-> Kalshi bridge file exists yet
+- No polling/daemon sync exists across all four bridge files
+
+## Phase-Up Path
+
+If the hub model proves reliable, the next optional upgrade is a direct Codex
+summary lane for Kalshi. Do that only if CCA relay becomes the bottleneck.
+
+Until then, the rule is simple:
+
+CCA stays aware of both external lanes and relays intentionally.
 
 ## Safety
 
-- CCA NEVER writes to polymarket-bot files
-- Kalshi NEVER writes to CCA files
-- All communication through the two bridge files only
-- No credentials, API keys, or financial data in bridge files
+- CCA remains the authority for cross-lane routing
+- Codex should not assume live-trading authority
+- Kalshi should not assume repo-state authority
+- Durable bridge notes should complement, not replace, repo tests and commits

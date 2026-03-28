@@ -162,6 +162,8 @@ class TestBuildInitPrompt(unittest.TestCase):
                 passed=True,
                 summary="Smoke: 10/10 passed",
             ),
+            resume_priorities=["Verify the fresh handoff", "Check Kalshi request queue"],
+            coordination_notes=["Kalshi->CCA: REQUEST 1 — Political Markets Volume Probe"],
         )
         prompt = build_init_prompt("/tmp/repo", snapshot)
         self.assertIn("$cca-desktop-workflow", prompt)
@@ -170,6 +172,8 @@ class TestBuildInitPrompt(unittest.TestCase):
         self.assertIn("Suggested reasoning level", prompt)
         self.assertIn("Immediate next step", prompt)
         self.assertIn("Smoke: 10/10 passed", prompt)
+        self.assertIn("Verify the fresh handoff", prompt)
+        self.assertIn("Political Markets Volume Probe", prompt)
 
 
 class TestCLI(unittest.TestCase):

@@ -5,6 +5,24 @@
 
 ## Current State (as of Session 223 — 2026-03-27)
 
+**Phase:** Session 223 COMPLETE. MT-49 Phase 1: meta_tracker.py + zombie prune (health 0.21->0.83) + Kalshi REQ-61 + Codex 3-way ACK
+
+**What was done this session (S223):**
+- MT-49 meta_tracker.py: health scoring, zombie detection, trend tracking (16 tests)
+- Zombie prune: 166/181 dead principles removed, health 0.21->0.83
+- Kalshi REQ-61: FLB hour analysis + sports game calibration + YES/NO direction bug flag
+- Codex 3-way hub ACK written
+- **Tests**: 333 suites, 11867 tests passing. All green.
+
+**Next:**
+1. MT-53: First LLM play session
+2. Kalshi: domain_knowledge_scanner.py implementation
+3. MT-49 Phase 2: Active principle transfer
+
+---
+
+## Previous State (Session 223 — 2026-03-27)
+
 **Phase:** Session 223 COMPLETE. MT-49 Phase 1 (Meta-Learning Tracker) + zombie prune + Kalshi REQ-61 + Codex 3-way hub ACK
 
 **What was done this session (S223):**
@@ -22,7 +40,6 @@
 3. MT-49: Active principle transfer (Phase 2) — make principle_transfer.py propose cross-domain automatically
 
 ---
-
 ## Previous State (Session 222 — 2026-03-27)
 
 **Phase:** Session 222 COMPLETE. MT-53 playable Crystal state + 3 Kalshi cross-chat research deliveries (REQ-16B, REQ-60, REQ-16C)

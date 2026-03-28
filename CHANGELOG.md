@@ -3648,3 +3648,21 @@ CLI chat 2:
 - Pre-existing test_bridge.py failure (backend param test) — fixed
 
 ---
+
+## Session 223 — 2026-03-27
+
+**What changed:**
+- MT-49 meta_tracker.py: health scoring, zombie detection, trend tracking (16 tests)
+- Zombie prune: 166/181 dead principles removed, health 0.21->0.83
+- Kalshi REQ-61: FLB hour analysis + sports game calibration + YES/NO direction bug flag
+- Codex 3-way hub ACK written
+
+**Why:**
+- MT-49 Phase 1: meta_tracker.py + zombie prune (health 0.21->0.83) + Kalshi REQ-61 + Codex 3-way ACK
+
+**Tests:** 11867/11867 passing (333 suites)
+
+**Lessons:**
+- None
+
+---

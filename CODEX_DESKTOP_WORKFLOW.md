@@ -60,6 +60,9 @@ python3 codex_init.py
 python3 codex_init.py --write CODEX_INIT_PROMPT.md
 ```
 
+`SESSION_RESUME.md` is the full next-chat handoff written by `/cca-wrap`; `CCA init`
+should now be enough to rehydrate the next chat without extra pasted context.
+
 ### Auto
 
 ```text

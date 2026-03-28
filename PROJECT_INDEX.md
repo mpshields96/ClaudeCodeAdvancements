@@ -495,3 +495,9 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S222
 - `pokemon-agent/setup_crystal_state.py` (S222)
 - `pokemon-agent/test_setup_crystal_state.py` (S222)
+
+
+### Added in S223
+- `self-learning/meta_tracker.py` (S223)
+- `self-learning/meta_snapshots.jsonl` (S223)
+- `tests/test_meta_tracker.py` (S223)

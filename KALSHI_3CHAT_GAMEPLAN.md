@@ -23,9 +23,16 @@ Run 3 simultaneous Claude Code chats:
 ### Phase 2: Test Bridge Communication (OFFLINE) — DONE (S107)
 
 - [x] **CCA_TO_POLYBOT.md**: Well-structured (47.7K in CCA, 9.2K stale copy in polybot). Contains full analytics framework + citations. **GAP: polybot copy is stale** — missing S57+ updates (ROI tracking, etc). Needs manual sync before Kalshi chat launch.
-- [x] **POLYBOT_TO_CCA.md**: Does NOT exist in either project. Return channel completely missing. Kalshi chat must create it on first run.
+- [x] **POLYBOT_TO_CCA.md**: Return channel now exists in `~/.claude/cross-chat/`. CCA can read it at session start.
 - [x] **Simulate read**: polymarket-bot CLAUDE.md (line 574) explicitly mandates reading CCA_TO_POLYBOT.md at session start. Protocol is defined. Kalshi chat writes to POLYBOT_TO_CCA.md for return.
-- [x] **Protocol defined**: See `BRIDGE_PROTOCOL.md` (created S107). Covers format, flow, sync issues, and Phase 4 dry run checklist.
+- [x] **Protocol defined**: See `BRIDGE_PROTOCOL.md` (created S107, updated S217). Covers the 3-way hub model: CCA <-> Codex and CCA <-> Kalshi, with CCA as relay/router.
+
+### Phase 2.5: Codex Lane — DONE (S217)
+
+- [x] `CLAUDE_TO_CODEX.md` established as CCA -> Codex durable bridge
+- [x] `CODEX_TO_CLAUDE.md` established as Codex -> CCA durable bridge
+- [x] `SESSION_RESUME.md` now surfaces recent Codex/Kalshi bridge headings so fresh CCA chats start aware of both lanes
+- [x] `BRIDGE_PROTOCOL.md` updated from 2-lane docs to an active 3-way hub model
 
 **Remaining gap**: CCA_TO_POLYBOT.md in polybot project needs manual update (copy from CCA). Matthew should run: `cp CCA_TO_POLYBOT.md ../polymarket-bot/CCA_TO_POLYBOT.md`
 
@@ -87,5 +94,7 @@ Run 3 simultaneous Claude Code chats:
 | `LAUNCH_3CHAT.md` | Copy-paste manual steps |
 | `CCA_TO_POLYBOT.md` | CCA -> Kalshi bridge (CCA writes) |
 | `POLYBOT_TO_CCA.md` | Kalshi -> CCA bridge (Kalshi writes) |
-| `BRIDGE_PROTOCOL.md` | Bidirectional bridge format + sync docs (S107) |
+| `CLAUDE_TO_CODEX.md` | CCA -> Codex bridge (CCA writes) |
+| `CODEX_TO_CLAUDE.md` | Codex -> CCA bridge (Codex writes) |
+| `BRIDGE_PROTOCOL.md` | 3-way hub protocol + routing docs |
 | `cca_comm.py` | Internal CCA queue (desktop <-> worker) |

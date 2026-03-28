@@ -131,7 +131,7 @@ def build_wrap_prompt(root: str, snapshot: WrapSnapshot) -> str:
             "2. Summarize what changed, what passed, and any remaining risks.",
             "3. Commit if there are substantive changes ready to land.",
             "4. Leave runtime/session files alone unless the task explicitly includes them.",
-            "5. If the result matters inside CCA, send a direct queue note from codex to desktop.",
+            "5. If the result matters inside CCA, send a direct queue note from codex to desktop and leave a durable note in CODEX_TO_CLAUDE.md when useful.",
         ]
     )
 

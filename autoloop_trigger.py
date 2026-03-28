@@ -34,7 +34,11 @@ from desktop_automator import DesktopAutomator
 PROJECT_DIR = "/Users/matthewshields/Projects/ClaudeCodeAdvancements"
 RESUME_FILE = os.path.join(PROJECT_DIR, "SESSION_RESUME.md")
 AUDIT_LOG = os.path.expanduser("~/.cca-autoloop-trigger.jsonl")
-PROMPT_PREFIX = "/cca-init then review the resume prompt below then /cca-auto\n"
+PROMPT_PREFIX = (
+    "/cca-init\n\n"
+    "Treat the full next-chat handoff below as the authoritative /cca-wrap context. "
+    "After init completes, continue with /cca-auto.\n\n"
+)
 
 
 def _log(event: str, data: dict = None):

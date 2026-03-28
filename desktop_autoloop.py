@@ -48,7 +48,10 @@ MIN_SESSION_DURATION = 30  # seconds — shorter = something broke
 MAX_CONSECUTIVE_CRASHES = 3
 MAX_CONSECUTIVE_SHORT = 3
 MAX_PROMPT_SIZE = 100_000
-FALLBACK_PROMPT = "Run /cca-init then /cca-auto. No resume prompt was found."
+FALLBACK_PROMPT = (
+    "Run /cca-init. No next-chat handoff was found. "
+    "If you want autonomous continuation after init, run /cca-auto."
+)
 VALID_MODEL_STRATEGIES = ("round-robin", "opus-primary", "sonnet-primary")
 DEFAULT_AUDIT_LOG = os.path.expanduser("~/.cca-desktop-autoloop.jsonl")
 DEFAULT_STATE_FILE = os.path.expanduser("~/.cca-desktop-autoloop-state.json")
@@ -269,7 +272,9 @@ class DesktopAutoLoop:
         """Build the full prompt from resume file."""
         resume = self.watcher.read_resume()
         return (
-            "/cca-init then review the resume prompt below then /cca-auto\n\n"
+            "/cca-init\n\n"
+            "Treat the full next-chat handoff below as the authoritative /cca-wrap context. "
+            "After init completes, continue with /cca-auto.\n\n"
             f"{resume}"
         )
 

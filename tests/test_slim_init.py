@@ -1639,5 +1639,26 @@ class TestReflectInSummary(unittest.TestCase):
         self.assertNotIn("Reflect", output)
 
 
+class TestHandoffInSummary(unittest.TestCase):
+    """Test that next-chat handoff cues appear in formatted summary."""
+
+    def test_format_shows_handoff_priorities_and_coordination(self):
+        from slim_init import format_summary
+        summary = {
+            "ready": True,
+            "last_session_id": "S220",
+            "smoke_status": "10/10 PASS",
+            "top_pick": "MT-53",
+            "blockers": [],
+            "handoff_priorities": ["Verify Crystal map IDs", "Fix stairs transition"],
+            "handoff_coordination": ["Kalshi->CCA: REQUEST 1 — Political Markets Volume Probe"],
+        }
+        output = format_summary(summary)
+        self.assertIn("Next-chat handoff:", output)
+        self.assertIn("Verify Crystal map IDs", output)
+        self.assertIn("Coordination cues:", output)
+        self.assertIn("Political Markets Volume Probe", output)
+
+
 if __name__ == "__main__":
     unittest.main()

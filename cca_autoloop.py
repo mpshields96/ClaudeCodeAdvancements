@@ -63,7 +63,10 @@ MAX_CONSECUTIVE_SHORT = 3
 RATE_LIMIT_COOLDOWN = 300  # 5 minutes pause on rate limit
 RATE_LIMIT_EXIT_CODES = {2, 75}  # claude rate limit exit codes (2=general, 75=tempfail)
 MAX_PROMPT_SIZE = 100_000  # 100KB — beyond this, CLI arg may be rejected
-FALLBACK_PROMPT = "Run /cca-init then /cca-auto. No resume prompt was found."
+FALLBACK_PROMPT = (
+    "Run /cca-init. No next-chat handoff was found. "
+    "If you want autonomous continuation after init, run /cca-auto."
+)
 
 # Model alternation strategies
 VALID_MODEL_STRATEGIES = ("round-robin", "opus-primary", "sonnet-primary")
@@ -263,11 +266,14 @@ def build_claude_command(
     if not resume_prompt.strip():
         resume_prompt = FALLBACK_PROMPT
 
-    # Construct the prompt that mimics Matthew's manual workflow:
-    # /cca-init then review prompt below then /cca-auto
-    # <resume prompt content>
+    # Construct the prompt that mirrors a fresh-chat bootstrap:
+    # /cca-init
+    # <full next-chat handoff from /cca-wrap>
+    # /cca-auto after init
     full_prompt = (
-        "/cca-init then review prompt below then /cca-auto\n\n"
+        "/cca-init\n\n"
+        "Treat the full next-chat handoff below as the authoritative /cca-wrap context. "
+        "After init completes, continue with /cca-auto.\n\n"
         f"{resume_prompt}"
     )
 

@@ -117,9 +117,9 @@ Workflow:
 8. Claude Code reads `git log` and treats commit messages as Codex handoff notes.
 9. If no code change occurs but a conclusion matters, Matthew relays it manually.
 
-Do not add a coordination file yet.
-If Phase 2 is ever needed, prefer one append-only `AGENT_LOG.md`, not separate
-inbox/outbox files.
+Repo-local bridge files:
+- `CLAUDE_TO_CODEX.md` for Claude Code -> Codex notes
+- `CODEX_TO_CLAUDE.md` for Codex -> Claude Code durable notes
 
 ## Codex Init / Auto / Wrap Emulation
 
@@ -135,6 +135,7 @@ Init:
 - Read `AGENTS.md`
 - Read the authoritative state file
 - In CCA, read `TODAYS_TASKS.md` when present
+- Treat `SESSION_RESUME.md` as the full next-chat handoff written by `/cca-wrap`
 - Check `git status` and recent `git log`
 - State repo, reasoning level, risk profile, and file scope before substantive work
 

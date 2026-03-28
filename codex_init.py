@@ -20,6 +20,7 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 
+from resume_generator import build_handoff_snapshot, summarize_snapshot_for_init
 
 DEFAULT_REPO_ROOT = os.path.expanduser("~/Projects/ClaudeCodeAdvancements")
 DEFAULT_OUTPUT_FILE = "CODEX_INIT_PROMPT.md"
@@ -87,6 +88,8 @@ class InitSnapshot:
     unread_count: int
     claude_notes: list[str]
     validation: ValidationSummary
+    resume_priorities: list[str] = field(default_factory=list)
+    coordination_notes: list[str] = field(default_factory=list)
 
 
 def _run_git(root: str, *args: str) -> str:
@@ -285,6 +288,8 @@ def collect_snapshot(root: str) -> InitSnapshot:
     inbox = parse_codex_inbox((inbox_proc.stdout or inbox_proc.stderr).strip())
 
     validation = run_validation(root)
+    handoff_snapshot = build_handoff_snapshot(root)
+    handoff_summary = summarize_snapshot_for_init(handoff_snapshot, max_priorities=3, max_coordination=3)
 
     return InitSnapshot(
         branch=branch,
@@ -297,6 +302,8 @@ def collect_snapshot(root: str) -> InitSnapshot:
         unread_count=inbox.unread_count,
         claude_notes=claude_notes,
         validation=validation,
+        resume_priorities=handoff_summary.get("top_priorities", []),
+        coordination_notes=handoff_summary.get("coordination", []),
     )
 
 
@@ -350,6 +357,12 @@ def build_init_prompt(root: str, snapshot: InitSnapshot) -> str:
         "Latest Claude -> Codex notes:",
         *_format_lines(snapshot.claude_notes),
         "",
+        "Next-chat handoff priorities:",
+        *_format_lines(snapshot.resume_priorities),
+        "",
+        "Cross-agent coordination to keep in view:",
+        *_format_lines(snapshot.coordination_notes),
+        "",
         "Recent commits for context:",
         *_format_lines(snapshot.recent_commits),
         "",
@@ -357,7 +370,7 @@ def build_init_prompt(root: str, snapshot: InitSnapshot) -> str:
         "1. Read AGENTS.md, SESSION_STATE.md, TODAYS_TASKS.md, SESSION_RESUME.md, and CLAUDE_TO_CODEX.md.",
         "2. Respect the runtime/generated files above unless the task explicitly includes them.",
         "3. Prefer today's tasks first; otherwise fall through to the session state's next item.",
-        "4. Use CCA comms directly if coordination matters.",
+        "4. Use CCA comms directly if coordination matters, and check the Kalshi bridge notes when trading coordination is in play.",
     ]
     return "\n".join(lines).strip() + "\n"
 

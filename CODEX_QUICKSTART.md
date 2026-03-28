@@ -30,6 +30,7 @@ Push: yes/no
    - Read `AGENTS.md`
    - Read the authoritative state file
    - In CCA, read `TODAYS_TASKS.md` when present
+   - Treat `SESSION_RESUME.md` as the full next-chat handoff written by `/cca-wrap`
    - Check `git status` / `git log`
 2. Auto
    - Work in focused loops
@@ -62,6 +63,10 @@ Short in-chat equivalents:
 Wrap command:
 - `python3 codex_wrap.py`
 - `python3 codex_wrap.py --write CODEX_WRAP_PROMPT.md`
+
+Bridge files:
+- `CLAUDE_TO_CODEX.md` — Claude Code -> Codex notes
+- `CODEX_TO_CLAUDE.md` — Codex -> Claude Code durable handoff notes
 
 Repo-local Codex command helpers:
 - `python3 codex_init.py`

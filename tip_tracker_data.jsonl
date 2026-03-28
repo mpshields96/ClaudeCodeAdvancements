@@ -35,3 +35,4 @@
 {"tip":"Becker microstructure dataset (72M Kalshi trades) for market category priors","source":"cca-desktop","session":"S222","timestamp":"2026-03-28T02:43:06.293750Z"}
 {"tip":"ryanfrigo/kalshi-ai-trading-bot is closest open-source reference for LLM forecaster","source":"cca-desktop","session":"S222","timestamp":"2026-03-28T02:43:06.293750Z"}
 {"tip":"std_dev from consensus_fair_prob is a free confidence filter for sports bets","source":"cca-desktop","session":"S222","timestamp":"2026-03-28T02:43:06.293750Z"}
+{"tip":"meta_tracker.py can prune zombie principles programmatically \u2014 run MetaTracker().prune_zombies(dry_run=False) when health drops below 0.5","source":"cca-desktop","session":"S223","timestamp":"2026-03-28T02:58:14.248960Z"}

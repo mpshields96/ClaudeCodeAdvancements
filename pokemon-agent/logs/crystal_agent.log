@@ -82,3 +82,55 @@ RuntimeError: No LLM client configured. Set agent.llm or pass to constructor.
 2026-03-27 19:34:07,369 [INFO] agent: Step 49: [transition: start] | Tokens: 0 in, 0 out
 2026-03-27 19:34:07,383 [INFO] agent: Step 50: [transition: start] | Tokens: 0 in, 0 out
 2026-03-27 19:34:07,384 [INFO] pokemon: Done. Steps: 50, Time: 0.4s, Tokens: 0 in + 0 out = 0 total
+2026-03-27 20:29:22,385 [INFO] pokemon: Detected game type: crystal
+2026-03-27 20:29:22,400 [INFO] pokemon: Loading ROM: pokemon_crystal.gbc
+2026-03-27 20:29:22,453 [INFO] pokemon: Loading state: playable_newbark
+2026-03-27 20:29:22,453 [INFO] pokemon: Offline mode — no LLM calls
+2026-03-27 20:29:22,453 [INFO] pokemon: Starting agent for 10 steps
+2026-03-27 20:29:22,492 [INFO] agent: Step 1: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:29:22,515 [INFO] agent: Step 2: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:29:22,534 [INFO] agent: Step 3: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:29:22,559 [INFO] agent: Step 4: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:29:22,584 [INFO] agent: Step 5: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:29:22,587 [INFO] agent: Step 6: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 20:29:22,590 [INFO] agent: Step 7: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 20:29:22,595 [INFO] agent: Step 8: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 20:29:22,598 [INFO] agent: Step 9: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 20:29:22,601 [INFO] agent: Step 10: [transition: wait] | Tokens: 0 in, 0 out
+2026-03-27 20:29:22,601 [INFO] pokemon: Done. Steps: 10, Time: 0.1s, Tokens: 0 in + 0 out = 0 total
+2026-03-27 20:32:58,936 [INFO] pokemon: Detected game type: crystal
+2026-03-27 20:32:58,948 [INFO] pokemon: Loading ROM: pokemon_crystal.gbc
+2026-03-27 20:32:58,998 [INFO] pokemon: Loading state: crystal_playable
+2026-03-27 20:32:58,998 [INFO] pokemon: Offline mode — no LLM calls
+2026-03-27 20:32:58,998 [INFO] pokemon: Starting agent for 30 steps
+2026-03-27 20:32:59,030 [INFO] agent: Step 1: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,052 [INFO] agent: Step 2: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,074 [INFO] agent: Step 3: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,097 [INFO] agent: Step 4: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,118 [INFO] agent: Step 5: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,140 [INFO] agent: Step 6: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,162 [INFO] agent: Step 7: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,181 [INFO] agent: Step 8: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,201 [INFO] agent: Step 9: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,221 [INFO] agent: Step 10: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,240 [INFO] agent: Step 11: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,260 [INFO] agent: Step 12: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,280 [INFO] agent: Step 13: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,299 [INFO] agent: Step 14: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,319 [INFO] agent: Step 15: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,339 [INFO] agent: Step 16: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,359 [INFO] agent: Step 17: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,378 [INFO] agent: Step 18: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,398 [INFO] agent: Step 19: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,418 [INFO] agent: Step 20: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,437 [INFO] agent: Step 21: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,457 [INFO] agent: Step 22: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,477 [INFO] agent: Step 23: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,496 [INFO] agent: Step 24: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,516 [INFO] agent: Step 25: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,535 [INFO] agent: Step 26: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,555 [INFO] agent: Step 27: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,575 [INFO] agent: Step 28: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,595 [INFO] agent: Step 29: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,614 [INFO] agent: Step 30: [offline: press a] | Tokens: 0 in, 0 out
+2026-03-27 20:32:59,614 [INFO] pokemon: Done. Steps: 30, Time: 0.6s, Tokens: 0 in + 0 out = 0 total
