@@ -13,12 +13,20 @@
   - Recommended KXBTCD daily threshold as primary pivot (symmetric payoffs, N(d2) model ready)
   - Weather graduation check + economics paper accumulation as secondary paths
   - Full payoff structure analysis (90c+ asymmetry vs 50c symmetric)
-- **Tests**: 10/10 smoke pass
+- MT-53: Complete PyBoy removal + mGBA migration (11 files, -139/+44 LOC)
+  - Removed PyBoyBackend class (~80 LOC), updated all docstrings across 11 files
+  - setup.sh now installs cffi+cached_property instead of pyboy
+  - 115 mock tests + 21 real emulator tests pass with mGBA
+- MT-53: Offline Crystal ROM test run PASSES
+  - mGBA boots Crystal ROM, agent loop runs 50 steps in 0.4s, 0 API tokens
+  - Boot sequence needs tuning (doesn't advance past title screen yet)
+- **Tests**: 136 pokemon-agent tests passing
+- **Commits**: 5baf276 (cross-chat), acdfeeb (mGBA migration)
 
 **Next:**
-1. MT-53: Implement mGBA backend in emulator_control.py
-2. MT-53: Rip out PyBoy references
-3. MT-53: Offline test run with real Crystal ROM
+1. MT-53: Tune Crystal boot sequence to advance through intro with mGBA frame timing
+2. MT-53: Run longer offline test (500+ steps) to verify gameplay loop
+3. Continue Kalshi cross-chat (monitor pivot response)
 
 ---
 
