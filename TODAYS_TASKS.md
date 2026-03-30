@@ -86,7 +86,7 @@ writes learnings to CLAUDE.md). CCA's Frontier 1 memory system must complement, 
 
 The highest-ROI build remaining. Every token saved here compounds across every future session.
 
-#### 5A. Build batch_wrap_analysis.py [TODO]
+#### 5A. Build batch_wrap_analysis.py [DONE S240]
 **Scope:** Consolidate wrap Steps 6b-6h into a single Python script.
 **Context:** Currently 7 separate optional steps, each with its own bash call and
 context overhead in the wrap command. A single script runs reflect, escalate, validate,
@@ -99,7 +99,7 @@ and evolve in one subprocess call.
 **Expected savings:** ~5,000 tokens per wrap (7 bash blocks → 1)
 **STOP CONDITION:** Script works, tests pass, wrap command updated. Move to 5B.
 
-#### 5B. Trim Wrap Command to Slim-Only [TODO]
+#### 5B. Trim Wrap Command to Slim-Only [DONE S240]
 **Scope:** Move verbose documentation out of the command file into a reference doc.
 **Steps:**
 1. Create `WRAP_REFERENCE.md` with full step explanations (the "why" behind each step)
@@ -108,7 +108,7 @@ and evolve in one subprocess call.
 4. Target: 600 lines → ~250 lines (~1,650 tokens saved on every wrap load)
 **STOP CONDITION:** Wrap command is leaner, reference doc has the details, wrap still works.
 
-#### 5C. Conditional Cross-Chat Step [TODO]
+#### 5C. Conditional Cross-Chat Step [DONE S240]
 **Scope:** Make Step 7.5 (cross-chat coordination) skip if no Kalshi-relevant work.
 **Steps:**
 1. Add check: if session touched no Kalshi-related files/topics, skip the cross-chat write
