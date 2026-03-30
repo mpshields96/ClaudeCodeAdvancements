@@ -15,7 +15,7 @@ and run ONLY these steps in order:
 4. **Step 9** — Resume prompt + SESSION_RESUME.md (autoloop signal)
 5. **Step 10** — Autoloop trigger (FINAL — must always fire)
 
-OPTIONAL steps (skip under low context): 1.5, 1.7, 1.8, 2, 2.5, 6b-6h, 7, 7.5, 8, 8.5, 8.9, 9.5
+OPTIONAL steps (skip under low context): 1.5, 1.7, 1.8, 2, 2.5, 6b-6f, 6g.5-6h, 7, 7.5, 8, 8.5, 8.9, 9.5
 
 **NEVER silently skip steps.** If you skip anything, state what you skipped and why.
 The S199 bug was Claude silently dropping steps 6-10. That must never happen again.
@@ -384,16 +384,6 @@ Update APF if new findings were logged:
 This step makes the Skillbook a living document that evolves every session — like YoYo's
 self-restructuring code, but applied to research intelligence strategies.
 
-### 6g — Structural health check
-
-If the `/arewedone` command is available, run it as a structural health check:
-
-```
-/arewedone
-```
-
-Record the result as pass, warn, or fail. If not available, skip and record "skipped".
-
 ### 6g.5 — Sentinel adaptation cycle
 
 Run the adaptive mutation engine to evolve the self-learning system:
@@ -430,7 +420,6 @@ SESSION LEARNING:
 - Learnings escalated: [list of severity promotions from 6c, or "none"]
 - Skillbook updates: [strategies promoted/demoted/added, or "none"]
 - APF: [current %] ([up/down/stable] from last session)
-- Structural health: [pass/warn/fail/skipped from 6g]
 - Strategy health: [output from 6h — or "skipped"]
 - Sentinel: [mutations/cross-pollinations/gaps from 6g.5 — or "skipped"]
 ```
