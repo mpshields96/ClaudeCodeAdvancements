@@ -35,7 +35,7 @@ then workflow improvements, then learning/evaluation.
 
 Four tasks. Do them in order 4A-4D.
 
-#### 4A. Commit Phase 1 Uncommitted Work [TODO]
+#### 4A. Commit Phase 1 Uncommitted Work [DONE S239]
 **Scope:** Git hygiene — commit everything Phase 1 left behind.
 **Steps:**
 1. `git add .claude/commands/cca-wrap.md` — S236 wrap quick win
@@ -43,7 +43,7 @@ Four tasks. Do them in order 4A-4D.
 3. Commit with message referencing S236+S237 work
 **STOP CONDITION:** One clean commit. Move to 4B.
 
-#### 4B. Verify Environment Variables Are Active [TODO]
+#### 4B. Verify Environment Variables Are Active [DONE S239 — set in .zshrc, takes effect next launch]
 **Scope:** Confirm S236 cache mitigations are live in this session.
 **Steps:**
 1. Run `echo $ENABLE_TOOL_SEARCH` — should be `false` (not `auto`)
@@ -52,7 +52,7 @@ Four tasks. Do them in order 4A-4D.
 4. Confirm loop guard state file exists: `ls ~/.claude-loop-detector.json`
 **STOP CONDITION:** Both vars confirmed or documented as "next launch." Move to 4C.
 
-#### 4C. Smoke Test Loop Guard in Real Usage [TODO]
+#### 4C. Smoke Test Loop Guard in Real Usage [DONE S239 — fires correctly on 3+ similar outputs, no false positives]
 **Scope:** Validate the loop guard actually fires when it should.
 **Steps:**
 1. Run 4 identical bash commands (e.g., `echo "test loop"` four times)
@@ -61,7 +61,7 @@ Four tasks. Do them in order 4A-4D.
 4. If hook isn't firing: verify settings.local.json has the PostToolUse entry
 **STOP CONDITION:** Guard fires correctly OR issue identified and logged. Move to 4D.
 
-#### 4D. Task F: Auto Dream Integration Design [TODO]
+#### 4D. Task F: Auto Dream Integration Design [DONE S239 — memory-system/DREAM_INTEGRATION_DESIGN.md]
 **Scope:** SHORT design note — 1 page max. No code.
 **Context:** `/dream` is Anthropic's native memory consolidation (runs at session end,
 writes learnings to CLAUDE.md). CCA's Frontier 1 memory system must complement, not compete.
