@@ -1,87 +1,177 @@
-# CCA Tasks for 2026-03-30
-# Updated: S235. Read by ALL subsequent CCA chats today.
-# Source: S234+S235 unified Reddit intelligence review (21 posts total across 2 sessions).
-# Matthew approved this plan in S235. Follow it exactly.
+# CCA Tasks — 2026-03-30 (Updated S238)
+# Source: S234-S238 unified plan. Matthew approved in S235, refined in S238.
+# Read by ALL subsequent CCA chats. This is the ONLY task authority.
 
 ---
 
-## TODAY'S PRIORITY: Token Optimization + Research (S235 Plan)
+## PHASE 1: COMPLETED (S236-S238)
 
-Context: S234+S235 reviewed 21 Reddit posts. Three independent reports confirm a cache
-invalidation bug in Claude Code that can 10-20x token costs. Matthew directive: optimize
-token waste (init/wrap), investigate mitigations, gain cost visibility. After that, research
-tools discovered in reviews that could improve CCA infrastructure.
+Tasks A-E from the original S235 plan. All investigation/research/build work done.
+Chats 1-3 executed as planned. See "Completion Archive" at bottom for details.
 
----
+| Task | Session | Status | Output |
+|------|---------|--------|--------|
+| A. Cache Bug Mitigations | S236 | DONE | .zshrc env vars set, findings documented |
+| B. /cca-wrap Token Audit | S236 | DONE | Step 6g removed (~3K saved), 4 proposals documented |
+| C. Rate Limits Statusline | S236 | DONE | Already configured via cship — no changes needed |
+| D. Prism/TurboQuant Research | S237 | DONE | Research doc: memory-system/research/PRISM_TURBOQUANT_RESEARCH.md |
+| E. Loop Detection Guard | S238 | DONE | agent-guard/loop_detector.py + hooks/loop_guard.py, 40 tests, hook wired |
 
-## CHAT 1: Cache Mitigations + Wrap Audit + Statusline (~90 min)
-
-Three tasks, all token-optimization focused. Do them in order A→B→C.
-
-### A. Cache Bug Mitigations [DONE S236]
-**Scope:** Investigate and document. Do NOT decompile binaries or patch runtime.
-**Steps:**
-1. Check installation type: `which claude` — is it standalone binary or npx?
-2. Test adding `"ENABLE_TOOL_SEARCH": "false"` to env in settings.json
-3. Confirm we're NOT using `--resume` (we prefer fresh sessions — verify this is true)
-4. Check if `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` env var is set (it should be)
-5. Document all findings in a short section at bottom of this file
-**STOP CONDITION:** After testing the 2 env vars and documenting, move to B. Do not rabbit-hole.
-**References:** FINDINGS_LOG.md entries #1, #9, #31, #40
-
-### B. /cca-wrap Token Audit [DONE S236]
-**Scope:** Audit and propose. Implement ONLY quick wins (< 20 LOC changes).
-**Steps:**
-1. Read the /cca-wrap command file — measure how many files it reads/writes
-2. Identify the heaviest token consumers in the wrap sequence
-3. Identify any redundant reads (files read that could be skipped or deferred)
-4. Propose optimizations with estimated token savings
-5. Implement quick wins only (e.g., skip unnecessary file reads, reduce output verbosity)
-6. If time permits, audit /cca-init the same way
-**STOP CONDITION:** After proposing optimizations and implementing quick wins, move to C.
-  Do NOT rewrite the entire wrap/init sequence. Heavy refactors become a future MT.
-**Reference:** Matthew S232+S234 directive — init/wrap token waste is IMPERATIVE to optimize
-
-### C. Rate Limits Statusline [DONE S236]
-**Scope:** Enable and configure native CC rate_limits display.
-**Steps:**
-1. Research how to enable `rate_limits` in Claude Code statusline
-2. Configure it in settings.json or settings.local.json
-3. Verify it shows useful information
-4. Document the setting for future sessions
-**STOP CONDITION:** Once enabled and verified, chat is done. Wrap session.
+### Uncommitted work from Phase 1 (must be committed in Chat 4):
+- S236: .claude/commands/cca-wrap.md (Step 6g removal) — modified but never committed
+- S237: memory-system/research/PRISM_TURBOQUANT_RESEARCH.md — untracked, never committed
+- S236 findings in this file — never committed as standalone commit
 
 ---
 
-## CHAT 2: Prism MCP + TurboQuant Research (~60 min)
+## PHASE 2: BUILD + HARDEN (Chats 4-7)
 
-### D. Frontier 1 Memory Evolution Research [DONE S237]
-**Scope:** Pure research. Read paper, evaluate applicability. No code.
-**Steps:**
-1. Read arxiv paper 2504.19874 (Google TurboQuant — ICLR 2026)
-2. Read Prism MCP source: github.com/dcostenco/prism-mcp (focus on turboquant.ts)
-3. Evaluate: does 7-10x vector compression apply to our Frontier 1 memory schema?
-4. Evaluate: Prism's mistake-learning pattern — applicable to self-learning journal?
-5. Evaluate: Auto Dream integration path — how does Prism complement /dream?
-6. Write findings to a research doc (e.g., PRISM_TURBOQUANT_RESEARCH.md)
-**STOP CONDITION:** After writing research doc, wrap session. No implementation.
-**References:** FINDINGS_LOG.md entry #39, also entry #11 (Auto Dream pivot)
+Everything below builds on Phase 1 research. Ordered by ROI: token savings first,
+then workflow improvements, then learning/evaluation.
 
 ---
 
-## CHAT 3: Loop Detection Guard Build (~60 min)
+### CHAT 4: Cleanup + Env Verification + Dream Design (~45 min)
 
-### E. Autonomous Session Loop Detection [DONE S238]
-**Scope:** Build MVP. Embedding-free v1 (string similarity, not vector similarity).
+Four tasks. Do them in order 4A-4D.
+
+#### 4A. Commit Phase 1 Uncommitted Work [TODO]
+**Scope:** Git hygiene — commit everything Phase 1 left behind.
 **Steps:**
-1. Design: compare last N tool outputs for repetition (simple difflib similarity)
-2. Threshold: if 3+ consecutive outputs are >80% similar, flag as loop
-3. Integration point: could be a PostToolUse hook or inline check in /cca-auto
-4. Build the detector module with tests
-5. Wire as a PostToolUse hook (lightweight — just compares recent outputs)
-**STOP CONDITION:** Working hook + tests. Do NOT add embedding infrastructure for v1.
-  Embeddings are a v2 enhancement if v1 proves the concept.
-**References:** FINDINGS_LOG.md entry #38 (Octopoda pattern)
+1. `git add .claude/commands/cca-wrap.md` — S236 wrap quick win
+2. `git add memory-system/research/PRISM_TURBOQUANT_RESEARCH.md` — S237 research
+3. Commit with message referencing S236+S237 work
+**STOP CONDITION:** One clean commit. Move to 4B.
+
+#### 4B. Verify Environment Variables Are Active [TODO]
+**Scope:** Confirm S236 cache mitigations are live in this session.
+**Steps:**
+1. Run `echo $ENABLE_TOOL_SEARCH` — should be `false` (not `auto`)
+2. Run `echo $CLAUDE_CODE_DISABLE_1M_CONTEXT` — should be `1`
+3. If either is wrong: `source ~/.zshrc` or note that it takes effect on next launch
+4. Confirm loop guard state file exists: `ls ~/.claude-loop-detector.json`
+**STOP CONDITION:** Both vars confirmed or documented as "next launch." Move to 4C.
+
+#### 4C. Smoke Test Loop Guard in Real Usage [TODO]
+**Scope:** Validate the loop guard actually fires when it should.
+**Steps:**
+1. Run 4 identical bash commands (e.g., `echo "test loop"` four times)
+2. Check if the hook outputs a LOOP DETECTED warning after the 4th
+3. If no warning: check `~/.claude-loop-detector.json` to see if state is accumulating
+4. If hook isn't firing: verify settings.local.json has the PostToolUse entry
+**STOP CONDITION:** Guard fires correctly OR issue identified and logged. Move to 4D.
+
+#### 4D. Task F: Auto Dream Integration Design [TODO]
+**Scope:** SHORT design note — 1 page max. No code.
+**Context:** `/dream` is Anthropic's native memory consolidation (runs at session end,
+writes learnings to CLAUDE.md). CCA's Frontier 1 memory system must complement, not compete.
+**Steps:**
+1. Read `/dream` docs (official CC docs or test it once to see what it produces)
+2. Answer: What does CCA memory do that /dream doesn't?
+   - Structured types with TTL/confidence scoring
+   - Cross-session FTS5 search
+   - Auto-capture from hooks (not just session-end)
+   - Typed categories (user, feedback, project, reference)
+3. Answer: What does /dream do that CCA memory doesn't?
+   - Native integration (survives compaction, auto-loaded)
+   - Zero configuration
+   - Anthropic maintains it
+4. Write `DREAM_INTEGRATION_DESIGN.md` in memory-system/ — 1 page, clear separation
+**STOP CONDITION:** Design note written and committed. Do NOT build anything.
+**Reference:** FINDINGS_LOG entry #11 (Auto Dream pivot), D research doc
+
+---
+
+### CHAT 5: Wrap/Init Token Optimization Build (~60 min)
+
+The highest-ROI build remaining. Every token saved here compounds across every future session.
+
+#### 5A. Build batch_wrap_analysis.py [TODO]
+**Scope:** Consolidate wrap Steps 6b-6h into a single Python script.
+**Context:** Currently 7 separate optional steps, each with its own bash call and
+context overhead in the wrap command. A single script runs reflect, escalate, validate,
+and evolve in one subprocess call.
+**Steps:**
+1. Read current Steps 6b-6h in .claude/commands/cca-wrap.md
+2. Build `batch_wrap_analysis.py` that runs all 7 analyses and outputs combined results
+3. Write tests
+4. Replace Steps 6b-6h in cca-wrap.md with single `python3 batch_wrap_analysis.py` call
+**Expected savings:** ~5,000 tokens per wrap (7 bash blocks → 1)
+**STOP CONDITION:** Script works, tests pass, wrap command updated. Move to 5B.
+
+#### 5B. Trim Wrap Command to Slim-Only [TODO]
+**Scope:** Move verbose documentation out of the command file into a reference doc.
+**Steps:**
+1. Create `WRAP_REFERENCE.md` with full step explanations (the "why" behind each step)
+2. Reduce cca-wrap.md to code blocks + one-line descriptions only
+3. Remove full-mode instructions (SLIM covers 90% of wraps; full mode in reference only)
+4. Target: 600 lines → ~250 lines (~1,650 tokens saved on every wrap load)
+**STOP CONDITION:** Wrap command is leaner, reference doc has the details, wrap still works.
+
+#### 5C. Conditional Cross-Chat Step [TODO]
+**Scope:** Make Step 7.5 (cross-chat coordination) skip if no Kalshi-relevant work.
+**Steps:**
+1. Add check: if session touched no Kalshi-related files/topics, skip the cross-chat write
+2. ~5 LOC conditional
+**STOP CONDITION:** Implemented and tested.
+
+**Chat 5 target:** Wrap cost drops from ~20K to ~12K tokens (40% reduction).
+
+---
+
+### CHAT 6: Claude Code Guide Study + Paseo Evaluation (~45 min)
+
+Two evaluation/learning tasks that pair well — neither produces CCA code.
+
+#### 6A. Claude-Howto Best Practices Study [TODO]
+**Scope:** Read shanraisshan/claude-code-best-practice repo (25K+ stars, 10 modules).
+This is Matthew's personal learning resource — CCA reads it and produces a gap analysis.
+**Steps:**
+1. Read the repo's module index / table of contents
+2. For each module: summarize what it teaches vs what CCA already does
+3. Flag any gaps — things the guide covers that we DON'T do yet
+4. Prioritize the CLAUDE.md layering section, hooks deep-dive, and MCP server setup
+5. Write a short `CLAUDE_HOWTO_GAP_ANALYSIS.md` — what to focus on, what to skip
+**STOP CONDITION:** Gap analysis written. Do NOT implement anything from it in this chat.
+**Reference:** FINDINGS_LOG entry #5, entry #72. github.com/shanraisshan/claude-code-best-practice
+
+#### 6B. Task G: Paseo Evaluation [TODO]
+**Scope:** Install, test, and evaluate Paseo for mobile Claude Code access.
+**Steps:**
+1. Clone getpaseo/paseo repo
+2. Read architecture docs — understand daemon + WebSocket model
+3. Install and run locally
+4. Test: can you connect to a running CC session from a second device?
+5. Evaluate: latency, reliability, security (E2EE?), mobile UX
+6. Write verdict: ADOPT / DEFER / SKIP with reasoning
+**STOP CONDITION:** Verdict written. Adopt only if it works reliably.
+**Reference:** FINDINGS_LOG entry #67 (Paseo review)
+
+---
+
+### CHAT 7: Mistake-Learning Build + Kalshi Port (~60 min)
+
+#### 7A. Mistake-Learning Pattern from Prism (Task D follow-up) [TODO]
+**Scope:** Build auto-capture of error corrections into self-learning journal.
+**Context:** Prism MCP's mistake-learning pattern: when an agent makes an error and
+then corrects it, the correction is auto-captured and resurfaced as a warning in future
+sessions. This turns reactive debugging into proactive prevention.
+**Steps:**
+1. Design: detect error→correction sequences in tool output
+2. Build: capture module that writes corrections to self-learning/journal.jsonl
+3. Integration: PostToolUse or Stop hook that identifies the pattern
+4. Tests
+**STOP CONDITION:** Working capture + tests. Resurfacing is a separate enhancement.
+**Reference:** S237 research doc (PRISM_TURBOQUANT_RESEARCH.md), FINDINGS_LOG entry #39
+
+#### 7B. Port Improvements to Kalshi Project [TODO]
+**Scope:** Apply CCA workflow improvements to polymarket-bot project.
+**Steps:**
+1. Add loop guard hook to Kalshi project's settings (settings.local.json or project settings)
+2. Verify env vars (ENABLE_TOOL_SEARCH, DISABLE_1M_CONTEXT) apply to Kalshi sessions
+3. Apply any wrap optimizations built in Chat 5 that are project-agnostic
+4. Write CCA_TO_POLYBOT.md delivery noting all changes
+**STOP CONDITION:** Kalshi project has parity with CCA's workflow improvements.
 
 ---
 
@@ -97,116 +187,30 @@ Three tasks, all token-optimization focused. Do them in order A→B→C.
 - Phase 2 (Codex): PENDING — not today's priority
 - Phase 3 (Kalshi): PENDING — not today's priority
 
----
-
-## FUTURE TASKS (discovered in S234+S235, not for today)
-
-- **Paseo evaluation** — mobile CC access, WebSocket agent management (Matthew likes this)
-- **Computer use monitoring** — track token economics, revisit when stable (token cost too high now)
-- **cc2codex bookmark** — LLM diversification tool, revisit if needed
-- **Frontier 1 + Auto Dream integration** — design after Chat 2 research completes
-- **Octopoda deep-dive** — shared knowledge spaces for MT-21 hivemind (after Chat 3 MVP)
-- **Full wrap/init rewrite** — if Chat 1 audit reveals need for major refactor
+### Loop Guard Validation (passive — all autonomous sessions)
+- Loop guard is wired as PostToolUse hook in ~/.claude/settings.local.json
+- Monitor for false positives or missed loops across Chats 4-7
+- If threshold needs tuning, adjust CLAUDE_LOOP_THRESHOLD env var (default: 0.80)
 
 ---
 
-## COMPLETED IN PREVIOUS SESSIONS (compressed archive)
+## DEFERRED (not scheduled, revisit when relevant)
 
-All items from the 2026-03-28 version of this file (S176-S182, E1-E17, K1-K5, C1-C6)
-remain completed. See git history for full details. Key: 338 suites, 11982 tests passing.
+- **TurboQuant vector compression** — only when Frontier 1 hits storage scale problems
+- **Computer use monitoring** — token costs catastrophic, revisit when Anthropic stabilizes pricing
+- **cc2codex** — LLM diversification tool, revisit if needed
+- **Octopoda shared knowledge spaces** — MT-21 hivemind enhancement, after basic hivemind is proven
+- **Loop guard v2 (embeddings)** — only if v1 string similarity proves insufficient
+
+---
+
+## COMPLETION ARCHIVE (Phase 1, S236-S238)
 
 S234: 10 Reddit posts reviewed, cache bugs PSA found, 2 memories created, Kalshi AFML delivery
 S235: 11 Reddit posts reviewed (21 total), unified plan created, this file updated
-S236: Cache bug investigation findings documented below
+S236: Cache bug investigation + wrap audit + statusline check. Findings documented. Quick win (Step 6g removal) implemented.
 S237: TurboQuant + Prism MCP research complete. Written to memory-system/research/PRISM_TURBOQUANT_RESEARCH.md
-S238: Loop Detection Guard v1 built. agent-guard/loop_detector.py (core) + agent-guard/hooks/loop_guard.py (PostToolUse hook). 40 tests passing.
-
----
-
-## S236 CACHE BUG INVESTIGATION FINDINGS
-
-**Installation type:** Standalone binary (Mach-O arm64), v2.1.87. This IS the type affected by
-cache bug #1 (CCH mutation in standalone binary). Not npx.
-
-**ENABLE_TOOL_SEARCH:** Currently `auto` (Claude Code default). Setting to `false` would send
-all tool schemas upfront, preventing cache invalidation when ToolSearch loads mid-conversation.
-Tradeoff: ~2-5K more tokens on first message vs potentially major cache savings. Recommendation:
-set to `false` in .zshrc — we use ToolSearch frequently and each load can invalidate the cache.
-
-**CLAUDE_CODE_DISABLE_1M_CONTEXT:** Already in .zshrc (`export CLAUDE_CODE_DISABLE_1M_CONTEXT=1`)
-but NOT present in current runtime env. This means either: (a) session was launched from a context
-that didn't source .zshrc, or (b) the var was added after this session started. Verified by S234
-research: 1M context degrades quality, shorter cache TTL (1hr Max vs 5min Pro). Keep it set.
-
-**--resume flag:** NOT in use. We prefer fresh sessions. Correct — --resume causes full cache
-miss since v2.1.69 per the Ghidra reverse-engineering report.
-
-**Chat switching:** Each tab/window switch can invalidate the prompt cache. Our multi-chat setup
-(3 chats) means we're taking cache hits on every switch. Mitigation: minimize switching, let
-each chat run its full task before context-switching.
-
-**Recommended env vars for .zshrc:**
-```
-export CLAUDE_CODE_DISABLE_1M_CONTEXT=1  # already present
-export ENABLE_TOOL_SEARCH=false          # ADD THIS — prevents cache invalidation on tool load
-```
-
-**What we CAN'T mitigate:** Bug #1 (standalone binary CCH mutation) requires an Anthropic fix.
-We're on the affected installation type. No user-side workaround exists.
-
-## S236 /CCA-WRAP TOKEN AUDIT
-
-**Command file size:** 612 lines, ~22KB, ~5,517 tokens loaded into context on every /cca-wrap.
-**cca-init for comparison:** 332 lines, ~11.5KB, ~2,883 tokens. Combined lifecycle: ~8,400 tokens.
-
-**Execution cost breakdown:**
-- CRITICAL PATH (Steps 0.5, 1, 2.5, 3-5, 6-SLIM, 6i, 9, 10): ~2,100 tokens
-- OPTIONAL STEPS (all others): ~13,150 tokens
-- FULL WRAP EXECUTION: ~15,250 tokens
-- TOTAL (file + execution): ~20,767 tokens per wrap
-
-**Quick win IMPLEMENTED (S236):**
-- Removed Step 6g (/arewedone skill load): saves ~3,000 tokens per wrap. This step loaded
-  an entire skill command just for a structural status check — not worth it during wrap.
-
-**PROPOSED optimizations for future sessions (not implemented — >20 LOC each):**
-1. **Trim command file comments/docs** (~30% reduction = ~1,650 tokens saved)
-   - Move step explanations to a separate WRAP_REFERENCE.md
-   - Keep only the code blocks and one-line descriptions in the command file
-   - Est: 1 session to rewrite
-
-2. **Consolidate Steps 6b-6h into batch_wrap_analysis.py** (~5,000 tokens saved)
-   - Currently 7 separate optional steps, each with its own bash call and context overhead
-   - A single script could run reflect, escalate, validate, and evolve in one subprocess
-   - Est: 1 session to build + test
-
-3. **Default to SLIM wrap** (already partially done, but command still includes FULL instructions)
-   - Remove full mode instructions from command file, keep only in separate reference
-   - SLIM mode covers 90% of wraps; full mode instructions burn tokens even when skipped
-
-4. **Make Step 7.5 (cross-chat) conditional on changes**
-   - Currently always runs. Could skip if session had no Kalshi-relevant work.
-   - Est: 5 LOC conditional check
-
-**Bottom line:** Current wrap costs ~20K tokens. Critical path alone is ~7,600 tokens
-(file + execution). Proposed optimizations could cut total to ~10-12K tokens — a 40-50% reduction.
-
-## S236 RATE LIMITS STATUSLINE FINDINGS
-
-**Status: ALREADY CONFIGURED.** cship (Mach-O binary at ~/.local/bin/cship) is installed and
-configured in ~/.config/cship.toml with usage_limits module on line 2 of the statusline display.
-
-**Current config (cship.toml):**
-- Line 1: model name + cost + lines added/removed
-- Line 2: context bar (10-char width) + usage limits (5h% + 7d%)
-- Warning thresholds: 70% yellow, 90% red (both 5hr and 7day windows)
-- TTL: 60s (rate limit data refreshes every minute)
-
-**Note:** rate_limits data only appears after the first API response in a session.
-In fresh sessions, the usage_limits section will be blank until the first tool call completes.
-This is expected behavior — cship handles the missing data gracefully.
-
-**No changes needed.** The feature was already active via cship before this investigation.
+S238: Loop Detection Guard v1 built. agent-guard/loop_detector.py + hooks/loop_guard.py. 40 tests. Hook wired globally.
 
 ---
 
@@ -214,8 +218,8 @@ This is expected behavior — cship handles the missing data gracefully.
 - **THIS FILE IS AUTHORITATIVE.** All CCA sessions work on TODO items here until complete.
 - Do NOT use priority_picker or MASTER_TASKS until ALL TODOs here are done.
 - Kalshi bot tasks: deliver via CCA_TO_POLYBOT.md, don't implement in polybot directly.
-- Mark items [DONE SN] as they complete, but NEVER remove them
-- Each subsequent CCA chat reads THIS FILE FIRST to know what to work on
-- Matthew updates this file daily — follow it, don't second-guess it
+- Mark items [DONE SN] as they complete, but NEVER remove them.
+- Each subsequent CCA chat reads THIS FILE FIRST to know what to work on.
+- Matthew updates this file daily — follow it, don't second-guess it.
 - **STOP CONDITIONS are boundaries, not suggestions.** When a stop condition is hit, MOVE ON.
 - **Do NOT engage in autoloop or autowork unless Matthew explicitly requests it.**
