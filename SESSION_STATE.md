@@ -3,7 +3,127 @@
 
 ---
 
-## Current State (as of Session 231 — 2026-03-28)
+## Current State (as of Session 238 — 2026-03-30)
+
+**Phase:** Session 238 COMPLETE. Built loop detection guard v1 (PostToolUse hook + 40 tests) and Phase 2 plan for Chats 4-7
+
+**What was done this session (S238):**
+- Loop detection guard v1: core detector + hook + 40 tests in 0.55s
+- Phase 2 plan written to TODAYS_TASKS.md with stop conditions for Chats 4-7
+- Hook wired globally in settings.local.json
+- **Tests**: 338 suites, 11982 tests passing. All green.
+
+**Next:**
+1. Chat 4: commit Phase 1 gaps, verify env vars, smoke test loop guard, Dream integration design
+2. Chat 5: wrap/init token optimization build (batch_wrap_analysis.py)
+
+---
+
+## Previous State (Session 237 — 2026-03-30)
+
+**Phase:** Session 237 COMPLETE. TurboQuant + Prism MCP research for Frontier 1 memory evolution
+
+**What was done this session (S237):**
+- Complete TurboQuant paper analysis (arxiv 2504.19874, 20 pages)
+- Prism MCP architecture fully mapped
+- Research document written (280 lines, 5 sections)
+- Clear verdicts: TurboQuant=not-yet, mistake-learning=adapt, AutoDream=complement
+- **Tests**: 338 suites, 11982 tests passing. All green.
+
+**Next:**
+1. Chat 3: Task E loop detection guard build
+2. Future: implement Ebbinghaus decay for memory TTL
+
+---
+## Previous State (Session 236 — 2026-03-30)
+
+**Phase:** Session 236 COMPLETE. Chat 1: Cache bug investigation, /cca-wrap token audit (removed Step 6g saving ~3K tokens), rate limits statusline verified
+
+**What was done this session (S236):**
+- All 3 Chat 1 tasks completed (A+B+C)
+- Wrap audit: identified 40-50% token savings path, shipped quick win
+- Applied ENABLE_TOOL_SEARCH=false env var
+- **Tests**: 338 suites, 11982 tests passing. All green.
+
+**Next:**
+1. Chat 2: Prism/TurboQuant research (Task D)
+2. Chat 3: Loop detection guard build (Task E)
+3. Future: implement wrap file trimming for additional 30% savings
+
+---
+## Previous State (Session 235 — 2026-03-30)
+
+**Phase:** Session 235 COMPLETE. Reddit intelligence batch 2 (11 posts) + unified action plan for today
+
+**What was done this session (S235):**
+- Reviewed 11 Reddit posts completing full 21-post batch
+- Built unified 3-chat action plan with stop conditions
+- Rewrote TODAYS_TASKS.md as authoritative daily plan
+- **Tests**: 338 suites, 11982 tests passing. All green.
+
+**Next:**
+1. Chat 1: cache mitigations + wrap audit + statusline
+2. Chat 2: Prism/TurboQuant research
+3. Chat 3: loop detection guard build
+
+---
+## Previous State (Session 235 — 2026-03-30)
+
+**Phase:** Session 235 COMPLETE. Reddit intelligence batch review part 2 (11 posts) + unified action plan.
+
+**What was done this session (S235):**
+- Reviewed 11 Reddit posts (completing Matthew's full batch — 21 total across S234+S235)
+- All 21 verdicts logged to FINDINGS_LOG.md (entries #1-#11 from S234, #31-#42 from S235)
+- Key finds: cache bug triple-confirmed, Prism MCP/TurboQuant (BUILD), Octopoda loop detection, Paseo, computer use
+- Built unified action plan from both sessions' findings
+- Rewrote TODAYS_TASKS.md with 3-chat structured plan (Matthew approved)
+- No autoloop, no autowork — Matthew's explicit directive this session
+- **Tests**: 338 suites, 11982 tests passing (unchanged, no code changes this session).
+
+**Next (per TODAYS_TASKS.md):**
+1. Chat 1: Cache mitigations (A) + /cca-wrap token audit (B) + rate_limits statusline (C)
+2. Chat 2: Prism MCP / TurboQuant research for Frontier 1 memory evolution (D)
+3. Chat 3: Loop detection guard MVP build (E)
+
+---
+## Previous State (Session 234 — 2026-03-30)
+
+**Phase:** Session 234 COMPLETE. Reddit intelligence batch review — 10 posts reviewed, 2 critical memories created, 1 Kalshi cross-chat delivery.
+
+**What was done this session (S234):**
+- Reviewed 10 Reddit posts via /cca-review (all logged to FINDINGS_LOG.md)
+- CRITICAL FIND: Cache bugs PSA — two bugs silently 10-20x API costs (v2.1.69+). Bug 2 affects us on v2.1.87.
+- Created memory: post-promo rate limits worse than pre-promo baseline (universal concern)
+- Created memory: init/wrap token waste optimization IMPERATIVE (Matthew directive)
+- Wrote Kalshi cross-chat delivery: Lopez de Prado AFML findings (IC*sqrt(breadth), left-tail prediction, YES/NO model separation)
+- Matthew has 6-7 more Reddit links to review in next session
+- Matthew's standing concerns: (1) Max 5 plan may not support multi-agent, (2) init/wrap need optimization, (3) need cost/rate-limit visibility
+- **Tests**: 338 suites, 11982 tests passing (cached from S231).
+
+**Next:**
+1. Continue Reddit review batch (6-7 remaining links from Matthew)
+2. Investigate enabling rate_limits statusline for cost visibility
+3. Audit /cca-wrap for token waste (IMPERATIVE — Matthew S234 directive)
+4. Consider cache bug mitigations (prefer fresh sessions over --resume)
+
+---
+## Previous State (Session 233 — 2026-03-29)
+
+**Phase:** Session 232 COMPLETE. Kalshi-exclusive research support session — 9 cross-chat deliveries covering daily sniper edge analysis, new market opportunities, academic validation, and volume predictors
+
+**What was done this session (S232):**
+- 9 cross-chat deliveries (UPDATE 79-87) with actionable Kalshi intelligence
+- Academic validation: CEPR 300K-contract study confirms daily_sniper approach is theoretically optimal
+- Identified strike spread as volume predictor with perfect 4-day correlation
+- Found 3 new edge opportunities: earnings mentions, KXSOLD expansion, weather flip
+- **Tests**: 338 suites, 11982 tests passing. All green.
+
+**Next:**
+1. Monitor bot for earnings mentions implementation
+2. Follow up on KXSOLD expansion delivery
+
+---
+## Previous State (Session 231 — 2026-03-28)
 
 **Phase:** Session 231 COMPLETE. MT-32 Phase 3 design token consolidation, launcher aliases, cross-chat KXETHD analysis
 
@@ -19,7 +139,6 @@
 3. Check Codex autoloop self-chaining response
 
 ---
-
 ## Previous State (Session 231 — 2026-03-28)
 
 **Phase:** Session 231 IN PROGRESS. MT-32 Phase 3 design token consolidation complete. Launcher aliases shipped. Cross-chat KXETHD analysis delivered.

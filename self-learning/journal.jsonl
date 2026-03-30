@@ -1018,3 +1018,85 @@
 {"event_type":"feedback_roi","session":231,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-28T20:50:30.384887Z"}
 {"event_type":"sentinel_stats","session":231,"total_principles":186,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-28T20:50:30.384887Z"}
 {"event_type":"meta_learning_health","session":231,"health_score":0.659,"total_principles":20,"active_principles":13,"zombie_principles":7,"timestamp":"2026-03-28T20:50:30.384887Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T20:58:59.019895+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-28T20:58:59.044345+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"timestamp":"2026-03-29T03:33:12Z","event_type":"win","domain":"general","metrics":{},"learnings":[],"strategy_version":"v1","notes":"Maintained 3hr autonomous monitoring loop with continuous 5-min checks; corrected sniper CST midnight reset timing (06:00 UTC not 00:00 UTC); filed REQ-65 pre-implementation risk check before touching live config; confirmed daily_sniper EDGE CONFIRMED lambda=+15.205 and guard stack clean"}
+{"timestamp":"2026-03-29T03:33:12Z","event_type":"pain","domain":"general","metrics":{},"learnings":[],"strategy_version":"v1","notes":"Sniper reset timing announced wrong (said 27min when was 4hrs) \u2014 miscalculation persisted several cycles before DB query corrected it; context compaction broke monitoring continuity mid-session"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-29T03:33:32.170363+00:00","session_id":"df6c103a-f186-4895-9a10-e077afe9cd0d","trigger":"auto","pre_zone":"red","pre_pct":82.5,"pre_turns":378,"compact_summary_len":9860,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-29T03:33:53.046078+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-29T03:33:53.085832+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":232,"domain":"general","outcome":"success","notes":"Kalshi-exclusive research support session \u2014 9 cross-chat deliveries","timestamp":"2026-03-29T03:34:36.874690Z"}
+{"event_type":"win","session":232,"domain":"general","notes":"9 cross-chat deliveries with actionable Kalshi intelligence","timestamp":"2026-03-29T03:34:36.874690Z"}
+{"event_type":"win","session":232,"domain":"general","notes":"Academic validation of daily_sniper via CEPR study","timestamp":"2026-03-29T03:34:36.874690Z"}
+{"event_type":"win","session":232,"domain":"general","notes":"Strike spread volume predictor discovery","timestamp":"2026-03-29T03:34:36.874690Z"}
+{"event_type":"win","session":232,"domain":"general","notes":"3 new edge opportunities identified","timestamp":"2026-03-29T03:34:36.874690Z"}
+{"event_type":"pain","session":232,"domain":"general","notes":"No code written \u2014 pure research session","timestamp":"2026-03-29T03:34:36.874690Z"}
+{"event_type":"pain","session":232,"domain":"general","notes":"Initial P&L numbers inaccurate","timestamp":"2026-03-29T03:34:36.874690Z"}
+{"event_type":"feedback_roi","session":232,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-29T03:34:36.874690Z"}
+{"event_type":"sentinel_stats","session":232,"total_principles":186,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-29T03:34:36.874690Z"}
+{"event_type":"meta_learning_health","session":232,"health_score":0.659,"total_principles":20,"active_principles":13,"zombie_principles":7,"timestamp":"2026-03-29T03:34:36.874690Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-29T06:18:05.692918+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-29T06:18:05.731872+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":233,"domain":"general","outcome":"partial","notes":"Continuation session from S232 compaction","timestamp":"2026-03-29T06:18:41.449156Z"}
+{"event_type":"win","session":233,"domain":"general","notes":"Clean context continuation from S232","timestamp":"2026-03-29T06:18:41.449156Z"}
+{"event_type":"pain","session":233,"domain":"general","notes":"No new deliverables \u2014 session was context recovery","timestamp":"2026-03-29T06:18:41.449156Z"}
+{"event_type":"feedback_roi","session":233,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-29T06:18:41.449156Z"}
+{"event_type":"sentinel_stats","session":233,"total_principles":186,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-29T06:18:41.449156Z"}
+{"event_type":"meta_learning_health","session":233,"health_score":0.659,"total_principles":20,"active_principles":13,"zombie_principles":7,"timestamp":"2026-03-29T06:18:41.449156Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T18:26:34.473878+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T18:26:34.495804+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T18:36:24.332419+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T18:36:24.356584+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":234,"domain":"reddit_intelligence","outcome":"success","notes":"Reddit intelligence batch review \u2014 10 posts, 2 critical memories, 1 Kalshi cross-chat delivery","timestamp":"2026-03-30T18:36:47.305670Z"}
+{"event_type":"win","session":234,"domain":"reddit_intelligence","notes":"Reviewed 10 Reddit posts with thorough CCA analysis","timestamp":"2026-03-30T18:36:47.305670Z"}
+{"event_type":"win","session":234,"domain":"reddit_intelligence","notes":"Found critical cache bugs PSA (10-20x silent cost inflation)","timestamp":"2026-03-30T18:36:47.305670Z"}
+{"event_type":"win","session":234,"domain":"reddit_intelligence","notes":"Created 2 imperative memories (post-promo limits, init/wrap optimization)","timestamp":"2026-03-30T18:36:47.305670Z"}
+{"event_type":"win","session":234,"domain":"reddit_intelligence","notes":"Wrote Kalshi delivery for Lopez de Prado findings","timestamp":"2026-03-30T18:36:47.305670Z"}
+{"event_type":"pain","session":234,"domain":"reddit_intelligence","notes":"Session was review-only, no code shipped","timestamp":"2026-03-30T18:36:47.305670Z"}
+{"event_type":"feedback_roi","session":234,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-30T18:36:47.305670Z"}
+{"event_type":"sentinel_stats","session":234,"total_principles":186,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-30T18:36:47.305670Z"}
+{"event_type":"meta_learning_health","session":234,"health_score":0.659,"total_principles":20,"active_principles":13,"zombie_principles":7,"timestamp":"2026-03-30T18:36:47.305670Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T19:11:57.493036+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T19:11:57.525508+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":235,"domain":"reddit_intelligence","outcome":"success","notes":"Reddit intelligence batch 2 (11 posts) + unified action plan for today","timestamp":"2026-03-30T19:12:38.347650Z"}
+{"event_type":"win","session":235,"domain":"reddit_intelligence","notes":"Reviewed 11 Reddit posts completing full 21-post batch","timestamp":"2026-03-30T19:12:38.347650Z"}
+{"event_type":"win","session":235,"domain":"reddit_intelligence","notes":"Built unified 3-chat action plan with stop conditions","timestamp":"2026-03-30T19:12:38.347650Z"}
+{"event_type":"win","session":235,"domain":"reddit_intelligence","notes":"Rewrote TODAYS_TASKS.md as authoritative daily plan","timestamp":"2026-03-30T19:12:38.347650Z"}
+{"event_type":"pain","session":235,"domain":"reddit_intelligence","notes":"No code shipped \u2014 pure review and planning session","timestamp":"2026-03-30T19:12:38.347650Z"}
+{"event_type":"feedback_roi","session":235,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-30T19:12:38.347650Z"}
+{"event_type":"sentinel_stats","session":235,"total_principles":187,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-30T19:12:38.347650Z"}
+{"event_type":"meta_learning_health","session":235,"health_score":0.635,"total_principles":21,"active_principles":13,"zombie_principles":8,"timestamp":"2026-03-30T19:12:38.347650Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T19:17:01.962132+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T19:17:01.983382+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T19:32:58.590028+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T19:32:58.623680+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":236,"domain":"general","outcome":"success","notes":"Chat 1: Cache bug mitigations, wrap token audit, rate limits statusline verification","timestamp":"2026-03-30T19:33:56.447566Z"}
+{"event_type":"win","session":236,"domain":"general","notes":"Completed all 3 Chat 1 tasks in one session","timestamp":"2026-03-30T19:33:56.447566Z"}
+{"event_type":"win","session":236,"domain":"general","notes":"Wrap token audit with actionable breakdown and quick win shipped","timestamp":"2026-03-30T19:33:56.447566Z"}
+{"event_type":"win","session":236,"domain":"general","notes":"Applied ENABLE_TOOL_SEARCH=false env var for cache mitigation","timestamp":"2026-03-30T19:33:56.447566Z"}
+{"event_type":"pain","session":236,"domain":"general","notes":"No new code or tests written (investigation session)","timestamp":"2026-03-30T19:33:56.447566Z"}
+{"event_type":"feedback_roi","session":236,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-30T19:33:56.447566Z"}
+{"event_type":"sentinel_stats","session":236,"total_principles":187,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-30T19:33:56.447566Z"}
+{"event_type":"meta_learning_health","session":236,"health_score":0.635,"total_principles":21,"active_principles":13,"zombie_principles":8,"timestamp":"2026-03-30T19:33:56.447566Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T19:52:30.855438+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T19:52:30.897743+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":237,"domain":"general","outcome":"success","notes":"Pure research session: TurboQuant compression + Prism MCP evaluated for Frontier 1 memory evolution","timestamp":"2026-03-30T19:53:47.120386Z"}
+{"event_type":"win","session":237,"domain":"general","notes":"TurboQuant paper fully analyzed (arxiv 2504.19874)","timestamp":"2026-03-30T19:53:47.120386Z"}
+{"event_type":"win","session":237,"domain":"general","notes":"Prism MCP architecture mapped","timestamp":"2026-03-30T19:53:47.120386Z"}
+{"event_type":"win","session":237,"domain":"general","notes":"Research doc written with concrete Frontier 1 recommendations","timestamp":"2026-03-30T19:53:47.120386Z"}
+{"event_type":"win","session":237,"domain":"general","notes":"All TODAYS_TASKS steps completed, stop condition respected","timestamp":"2026-03-30T19:53:47.120386Z"}
+{"event_type":"pain","session":237,"domain":"general","notes":"GitHub raw URLs 404 - needed API endpoint workaround","timestamp":"2026-03-30T19:53:47.120386Z"}
+{"event_type":"feedback_roi","session":237,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-30T19:53:47.120386Z"}
+{"event_type":"sentinel_stats","session":237,"total_principles":187,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-30T19:53:47.120386Z"}
+{"event_type":"meta_learning_health","session":237,"health_score":0.635,"total_principles":21,"active_principles":13,"zombie_principles":8,"timestamp":"2026-03-30T19:53:47.120386Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T19:56:07.427412+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T19:56:07.451524+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":238,"domain":"agent_guard","outcome":"success","notes":"Built loop detection guard v1 and comprehensive Phase 2 forward plan","timestamp":"2026-03-30T21:07:38.998095Z"}
+{"event_type":"win","session":238,"domain":"agent_guard","notes":"Loop detection guard v1: core + hook + 40 tests","timestamp":"2026-03-30T21:07:38.998095Z"}
+{"event_type":"win","session":238,"domain":"agent_guard","notes":"Phase 2 plan with stop conditions for Chats 4-7","timestamp":"2026-03-30T21:07:38.998095Z"}
+{"event_type":"win","session":238,"domain":"agent_guard","notes":"Hook wired globally","timestamp":"2026-03-30T21:07:38.998095Z"}
+{"event_type":"pain","session":238,"domain":"agent_guard","notes":"None significant","timestamp":"2026-03-30T21:07:38.998095Z"}
+{"event_type":"feedback_roi","session":238,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-30T21:07:38.998095Z"}
+{"event_type":"sentinel_stats","session":238,"total_principles":187,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-30T21:07:38.998095Z"}
+{"event_type":"meta_learning_health","session":238,"health_score":0.635,"total_principles":21,"active_principles":13,"zombie_principles":8,"timestamp":"2026-03-30T21:07:38.998095Z"}
+{"event_type":"confidence_recalibration","session":238,"applied":21,"skipped":0,"reason":"ok","timestamp":"2026-03-30T21:07:38.998095Z"}

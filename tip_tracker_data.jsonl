@@ -48,3 +48,20 @@
 {"tip":"Fix env var leaks in tests: use unittest.mock.patch.dict to isolate CCA_AUTOLOOP_CLI=1 from autoloop test suites","source":"cca-desktop","session":"S229","timestamp":"2026-03-28T18:43:15.143690Z"}
 {"tip":"design_tokens exports (CSS/Typst/Python dict) make adding new output formats trivial","source":"cca-desktop","session":"S231","timestamp":"2026-03-28T20:50:30.384887Z"}
 {"tip":"cca alias enforces Opus 4.6 at launch \u2014 no env vars needed","source":"cca-desktop","session":"S231","timestamp":"2026-03-28T20:50:30.384887Z"}
+{"tip":"Strike spread from BTC displacement predicts daily_sniper volume with near-perfect correlation","source":"cca-desktop","session":"S232","timestamp":"2026-03-29T03:34:36.874690Z"}
+{"tip":"Context compaction recovery sessions should immediately pivot to real work via TODAYS_TASKS","source":"cca-desktop","session":"S233","timestamp":"2026-03-29T06:18:41.449156Z"}
+{"tip":"Port cc-diag/test_cache.py cache diagnostic into /cca-init startup sequence","source":"cca-desktop","session":"S234","timestamp":"2026-03-30T18:36:47.305670Z"}
+{"tip":"CLAUDE_CODE_DISABLE_1M_CONTEXT=1 env var is a free safety valve","source":"cca-desktop","session":"S234","timestamp":"2026-03-30T18:36:47.305670Z"}
+{"tip":"Two-session clarification technique: messy thoughts into session A, structured output into session B","source":"cca-desktop","session":"S234","timestamp":"2026-03-30T18:36:47.305670Z"}
+{"tip":"Cache bug mitigations highest ROI item","source":"cca-desktop","session":"S235","timestamp":"2026-03-30T19:12:38.347650Z"}
+{"tip":"Stop conditions prevent session derailment","source":"cca-desktop","session":"S235","timestamp":"2026-03-30T19:12:38.347650Z"}
+{"tip":"TODAYS_TASKS.md is load-bearing infrastructure","source":"cca-desktop","session":"S235","timestamp":"2026-03-30T19:12:38.347650Z"}
+{"tip":"The wrap audit reveals that the command file itself (5.5K tokens) is the single biggest cost \u2014 a slim-wrap.md could save 3K+ tokens per session close","source":"cca-desktop","session":"S236","timestamp":"2026-03-30T19:33:56.447566Z"}
+{"tip":"New sessions launched after adding ENABLE_TOOL_SEARCH=false will avoid cache invalidation on tool schema loads","source":"cca-desktop","session":"S236","timestamp":"2026-03-30T19:33:56.447566Z"}
+{"tip":"Stop conditions are the most underrated planning tool \u2014 80% of session derailments come from investigation tasks that expand indefinitely","source":"cca-desktop","session":"S236","timestamp":"2026-03-30T19:33:56.447566Z"}
+{"tip":"The mistake-learning pattern (Ebbinghaus decay + importance scoring) is the single highest-ROI item from this research","source":"cca-desktop","session":"S237","timestamp":"2026-03-30T19:53:47.120386Z"}
+{"tip":"TurboQuant is near-Shannon-optimal but CCA doesnt need vector compression at ~100 memories","source":"cca-desktop","session":"S237","timestamp":"2026-03-30T19:53:47.120386Z"}
+{"tip":"Use GitHub API content endpoint not raw.githubusercontent.com for fetching source files","source":"cca-desktop","session":"S237","timestamp":"2026-03-30T19:53:47.120386Z"}
+{"tip":"The guard uses ~/.claude-loop-detector.json for state \u2014 run cat to see what it tracks","source":"cca-desktop","session":"S238","timestamp":"2026-03-30T21:07:38.998095Z"}
+{"tip":"Chat 5 is the highest-leverage session \u2014 8K tokens saved per wrap compounds forever","source":"cca-desktop","session":"S238","timestamp":"2026-03-30T21:07:38.998095Z"}
+{"tip":"The mistake-learning pattern from Prism turns reactive debugging into proactive prevention","source":"cca-desktop","session":"S238","timestamp":"2026-03-30T21:07:38.998095Z"}

@@ -528,3 +528,14 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `design-skills/design_tokens.py` (S231)
 - `tests/test_launcher_aliases.py` (S231)
 - `LAUNCHER_ALIASES.md` (S231)
+
+
+### Added in S237
+- `memory-system/research/PRISM_TURBOQUANT_RESEARCH.md` (S237)
+
+
+### Added in S238
+- `agent-guard/loop_detector.py` (S238)
+- `agent-guard/hooks/loop_guard.py` (S238)
+- `agent-guard/tests/test_loop_detector.py` (S238)
+- `agent-guard/tests/test_loop_guard_hook.py` (S238)

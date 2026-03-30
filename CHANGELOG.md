@@ -3795,3 +3795,124 @@ CLI chat 2:
 - Brief dashboard test break from missing DARK_PALETTE import (fixed same task)
 
 ---
+
+## Session 232 — 2026-03-28
+
+**What changed:**
+- 9 cross-chat deliveries (UPDATE 79-87) with actionable Kalshi intelligence
+- Academic validation: CEPR 300K-contract study confirms daily_sniper approach is theoretically optimal
+- Identified strike spread as volume predictor with perfect 4-day correlation
+- Found 3 new edge opportunities: earnings mentions, KXSOLD expansion, weather flip
+
+**Why:**
+- Kalshi-exclusive research support session — 9 cross-chat deliveries covering daily sniper edge analysis, new market opportunities, academic validation, and volume predictors
+
+**Tests:** 11982/11982 passing (338 suites)
+
+**Lessons:**
+- No code written or tests added — pure research session
+- Initial P&L numbers were inaccurate until Matthew corrected
+
+---
+
+## Session 233 — 2026-03-29
+
+**What changed:**
+- Clean context continuation from S232
+
+**Why:**
+- Continuation session from S232 compaction — minimal new work, carried forward Kalshi support context
+
+**Tests:** 11982/11982 passing (338 suites)
+
+**Lessons:**
+- No new deliverables — session was context recovery
+
+---
+
+## Session 234 — 2026-03-30
+
+**What changed:**
+- Reviewed 10 Reddit posts with thorough CCA analysis
+- Found critical cache bugs PSA (10-20x cost inflation)
+- Created 2 imperative memories (post-promo limits, init/wrap optimization)
+- Wrote Kalshi delivery for Lopez de Prado AFML findings
+
+**Why:**
+- Reddit intelligence batch review — 10 posts, 2 critical memories, 1 Kalshi cross-chat delivery
+
+**Tests:** 11982/11982 passing (338 suites)
+
+**Lessons:**
+- Session was review-only, no code shipped
+
+---
+
+## Session 235 — 2026-03-30
+
+**What changed:**
+- Reviewed 11 Reddit posts completing full 21-post batch
+- Built unified 3-chat action plan with stop conditions
+- Rewrote TODAYS_TASKS.md as authoritative daily plan
+
+**Why:**
+- Reddit intelligence batch 2 (11 posts) + unified action plan for today
+
+**Tests:** 11982/11982 passing (338 suites)
+
+**Lessons:**
+- No code shipped — pure review and planning session
+
+---
+
+## Session 236 — 2026-03-30
+
+**What changed:**
+- All 3 Chat 1 tasks completed (A+B+C)
+- Wrap audit: identified 40-50% token savings path, shipped quick win
+- Applied ENABLE_TOOL_SEARCH=false env var
+
+**Why:**
+- Chat 1: Cache bug investigation, /cca-wrap token audit (removed Step 6g saving ~3K tokens), rate limits statusline verified
+
+**Tests:** 11982/11982 passing (338 suites)
+
+**Lessons:**
+- No new code/tests (investigation session by design)
+
+---
+
+## Session 237 — 2026-03-30
+
+**What changed:**
+- Complete TurboQuant paper analysis (arxiv 2504.19874, 20 pages)
+- Prism MCP architecture fully mapped
+- Research document written (280 lines, 5 sections)
+- Clear verdicts: TurboQuant=not-yet, mistake-learning=adapt, AutoDream=complement
+
+**Why:**
+- TurboQuant + Prism MCP research for Frontier 1 memory evolution
+
+**Tests:** 11982/11982 passing (338 suites)
+
+**Lessons:**
+- GitHub raw URLs returned 404, required API workarounds
+
+---
+
+## Session 238 — 2026-03-30
+
+**What changed:**
+- Loop detection guard v1: core detector + hook + 40 tests in 0.55s
+- Phase 2 plan written to TODAYS_TASKS.md with stop conditions for Chats 4-7
+- Hook wired globally in settings.local.json
+
+**Why:**
+- Built loop detection guard v1 (PostToolUse hook + 40 tests) and Phase 2 plan for Chats 4-7
+
+**Tests:** 11982/11982 passing (338 suites)
+
+**Lessons:**
+- None significant
+
+---
