@@ -3983,3 +3983,21 @@ CLI chat 2:
 - None
 
 ---
+
+## Session 243 — 2026-03-31
+
+**What changed:**
+- CTX-8 PreCompact hook with git/task/health capture
+- Enhanced PostCompact with snapshot-specific recovery digest
+- 81 new tests passing, 488 context-monitor total
+- Wired globally + cross-chat delivery
+
+**Why:**
+- Chat 10: Built compaction protection — PreCompact snapshot + enhanced PostCompact recovery, 81 tests, wired globally
+
+**Tests:** 8959/8959 passing (223 suites)
+
+**Lessons:**
+- None — focused session, all 3 tasks completed cleanly
+
+---

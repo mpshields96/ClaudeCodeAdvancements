@@ -1150,3 +1150,16 @@
 {"event_type":"meta_learning_health","session":241,"health_score":0.613,"total_principles":22,"active_principles":13,"zombie_principles":9,"timestamp":"2026-03-31T03:25:43.315748Z"}
 {"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T04:17:19.453706+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
 {"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T04:17:19.474224+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T21:18:38.331096+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T21:18:38.353893+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T23:25:41.932165+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T23:25:41.966952+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":243,"domain":"context_monitor","outcome":"success","notes":"Chat 10: Built compaction protection \u2014 PreCompact snapshot + enhanced PostCompact recovery","timestamp":"2026-03-31T23:26:43.654762Z"}
+{"event_type":"win","session":243,"domain":"context_monitor","notes":"CTX-8 PreCompact hook with git/task/health capture","timestamp":"2026-03-31T23:26:43.654762Z"}
+{"event_type":"win","session":243,"domain":"context_monitor","notes":"Enhanced PostCompact with snapshot-specific recovery digest","timestamp":"2026-03-31T23:26:43.654762Z"}
+{"event_type":"win","session":243,"domain":"context_monitor","notes":"81 new tests, 488 context-monitor total","timestamp":"2026-03-31T23:26:43.654762Z"}
+{"event_type":"win","session":243,"domain":"context_monitor","notes":"Wired globally + cross-chat delivery","timestamp":"2026-03-31T23:26:43.654762Z"}
+{"event_type":"pain","session":243,"domain":"context_monitor","notes":"None","timestamp":"2026-03-31T23:26:43.654762Z"}
+{"event_type":"feedback_roi","session":243,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-31T23:26:43.654762Z"}
+{"event_type":"sentinel_stats","session":243,"total_principles":192,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-31T23:26:43.654762Z"}
+{"event_type":"meta_learning_health","session":243,"health_score":0.542,"total_principles":26,"active_principles":13,"zombie_principles":13,"timestamp":"2026-03-31T23:26:43.654762Z"}

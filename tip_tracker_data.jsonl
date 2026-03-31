@@ -72,3 +72,5 @@
 {"tip":"skills: frontmatter field preloads domain knowledge into agents - cleaner than prompt stuffing","source":"cca-desktop","session":"S241","timestamp":"2026-03-31T01:46:17.997713Z"}
 {"tip":"Wire resurfacer into /cca-init (9B) to close the automatic prevention loop","source":"cca-desktop","session":"S241","timestamp":"2026-03-31T03:25:43.315748Z"}
 {"tip":"Custom agent design (11B) is the proper home for subagent frontmatter \u2014 commands don't support it","source":"cca-desktop","session":"S241","timestamp":"2026-03-31T03:25:43.315748Z"}
+{"tip":"PreCompact hook can be extended to capture last N tool calls from transcript JSONL for richer recovery context","source":"cca-desktop","session":"S243","timestamp":"2026-03-31T23:26:43.654762Z"}
+{"tip":"SessionStart hook fires with matcher 'compact' after compaction \u2014 could inject recovery digest directly into session context","source":"cca-desktop","session":"S243","timestamp":"2026-03-31T23:26:43.654762Z"}

@@ -304,7 +304,7 @@ Both PreCompact and PostCompact hooks are confirmed available (claude-howto/06-h
 25 hook events). PreCompact receives matcher `manual/auto` (tells you why compaction
 fired). Neither can block. This is a design-then-build chat.
 
-#### 10A. Design Compaction Protection Protocol [TODO]
+#### 10A. Design Compaction Protection Protocol [DONE S243]
 **Scope:** Define exactly what state to preserve through compaction events.
 **Steps:**
 1. Read `CLAUDE_HOWTO_GAP_ANALYSIS.md` Module 8 — hook event details
@@ -333,7 +333,7 @@ the hook can only snapshot external state (git status, health file, env vars).
 It cannot snapshot conversation-internal state. This is still valuable but more
 limited than ideal. The design note must address this honestly.
 
-#### 10B. Build Compaction Protection [TODO]
+#### 10B. Build Compaction Protection [DONE S243]
 **Scope:** Implement the protocol from 10A. Only proceed if 10A confirms hooks
 provide enough data to be useful.
 **Steps:**
@@ -357,7 +357,7 @@ provide enough data to be useful.
 approach instead (save state every N tool calls via PostToolUse, not tied to
 compaction events). Document this as an alternative in the design note.
 
-#### 10C. Cross-Chat Delivery [TODO]
+#### 10C. Cross-Chat Delivery [DONE S243]
 **Scope:** Port compaction protection to Kalshi if hooks prove useful.
 Compaction protection is project-agnostic — if it works for CCA, it works
 for Kalshi. Wire globally in settings.local.json (same as loop guard).

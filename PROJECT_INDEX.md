@@ -549,3 +549,9 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `batch_wrap_analysis.py` (S240)
 - `tests/test_batch_wrap_analysis.py` (S240)
 - `WRAP_REFERENCE.md` (S240)
+
+
+### Added in S243
+- `context-monitor/hooks/pre_compact.py` (S243)
+- `context-monitor/COMPACTION_PROTECTION_DESIGN.md` (S243)
+- `context-monitor/tests/test_pre_compact.py` (S243)
