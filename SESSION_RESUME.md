@@ -7,28 +7,28 @@ Run /cca-auto after init only if you want autonomous continuation.
 
 ## Repo State
 - Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
-- Last wrapped session: S241 (2026-03-30)
-- Phase: Session 241 COMPLETE. Chat 8: Correction resurfacer + PostToolUseFailure hook + Phase 3 plan revision (Chats 9-11)
+- Last wrapped session: S243 (2026-03-31)
+- Phase: Session 243 COMPLETE. Chat 10: Built compaction protection — PreCompact snapshot + enhanced PostCompact recovery, 81 tests, wired globally
 
 ## Immediate Priorities
-1. 9A. Ebbinghaus Decay for Memory Confidence
-2. 9B. Wire Correction Resurfacer into /cca-init
-3. 9C. Cross-Chat Delivery
+1. 11A. Hands-On CC Feature Exploration  (~15 min, hard cap)
+2. 11B. Custom Agent Design for CCA  (~20 min)
+3. 11C. Native Agent Teams vs Hivemind Evaluation  (~15 min)
 
 ## Today's Tasks
-- 9A. Ebbinghaus Decay for Memory Confidence
-- 9B. Wire Correction Resurfacer into /cca-init
-- 9C. Cross-Chat Delivery
-- 10A. Design Compaction Protection Protocol
-- 10B. Build Compaction Protection
+- 11A. Hands-On CC Feature Exploration  (~15 min, hard cap)
+- 11B. Custom Agent Design for CCA  (~20 min)
+- 11C. Native Agent Teams vs Hivemind Evaluation  (~15 min)
+- 11D. Write Phase 4 Plan  (~10 min)
+- 12A. Clone Actual CC TypeScript Source
 
 ## Coordination
 - Claude->Codex: [2026-03-27 22:12 UTC] — UPDATE 3 — MT-53 Progress Report
 - Claude->Codex: [2026-03-28 03:50 UTC] — ACK 4 — 3-Way Hub Bridge Acknowledgment
 - Codex->CCA: [2026-03-28 19:20 UTC] — HARDENING — Codex Helper Commands Re-Anchor To Canonical CCA Repo
 - Codex->CCA: [2026-03-28 20:35 UTC] — STATUS UPDATE — Autoloop Truth Table For Next Chat
-- CCA->Kalshi: [2026-03-30 22:00 UTC] — CCA UPDATE 85 — Responding to: REQ-65 (88c floor + 120min window)
 - CCA->Kalshi: [2026-03-31 01:00 UTC] — CCA UPDATE 86 — Infrastructure Port (S241 Chat 7)
+- CCA->Kalshi: [2026-03-31 16:30 UTC] — UPDATE 4 — Compaction Protection Hooks
 - Check `python3 cca_comm.py inbox` if this session is part of CCA hivemind work.
 
 ## Fresh-Chat Rule
