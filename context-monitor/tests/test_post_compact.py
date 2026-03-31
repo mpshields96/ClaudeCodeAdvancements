@@ -4,7 +4,7 @@ import os
 import sys
 import tempfile
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -321,6 +321,193 @@ class TestConfigPaths(unittest.TestCase):
         with patch.dict(os.environ, {"CLAUDE_COMPACT_RECOVERY_PATH": "/tmp/recovery.md"}):
             paths = resolve_paths()
             self.assertEqual(str(paths["recovery_file"]), "/tmp/recovery.md")
+
+
+# ---------------------------------------------------------------------------
+# Snapshot integration tests (CTX-8 PreCompact ↔ PostCompact)
+# ---------------------------------------------------------------------------
+
+class TestReadSnapshot(unittest.TestCase):
+    """Tests for reading and consuming PreCompact snapshots."""
+
+    def test_reads_valid_snapshot(self):
+        from post_compact import read_snapshot
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump({
+                "version": 1,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "session_id": "s1",
+                "git_status": ["M file.py"],
+                "todays_tasks_todos": ["Task A [TODO]"],
+                "context_health": {"zone": "red", "pct": 72},
+            }, f)
+            path = Path(f.name)
+        result = read_snapshot(path)
+        self.assertIsNotNone(result)
+        self.assertEqual(result["session_id"], "s1")
+        self.assertEqual(result["git_status"], ["M file.py"])
+        # File should be deleted after reading
+        self.assertFalse(path.exists())
+
+    def test_returns_none_for_missing_file(self):
+        from post_compact import read_snapshot
+        result = read_snapshot(Path("/nonexistent/snapshot.json"))
+        self.assertIsNone(result)
+
+    def test_returns_none_for_corrupt_json(self):
+        from post_compact import read_snapshot
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            f.write("{corrupt json")
+            path = Path(f.name)
+        result = read_snapshot(path)
+        self.assertIsNone(result)
+        # Corrupt file should be cleaned up
+        self.assertFalse(path.exists())
+
+    def test_returns_none_for_stale_snapshot(self):
+        from post_compact import read_snapshot
+        # Create snapshot with timestamp 2 hours ago
+        old_time = datetime(2020, 1, 1, tzinfo=timezone.utc).isoformat()
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump({
+                "version": 1,
+                "timestamp": old_time,
+                "session_id": "old",
+            }, f)
+            path = Path(f.name)
+        result = read_snapshot(path)
+        self.assertIsNone(result)
+        self.assertFalse(path.exists())
+
+    def test_returns_none_for_wrong_version(self):
+        from post_compact import read_snapshot
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump({
+                "version": 99,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }, f)
+            path = Path(f.name)
+        result = read_snapshot(path)
+        self.assertIsNone(result)
+
+    def test_handles_missing_timestamp_gracefully(self):
+        from post_compact import read_snapshot
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+            json.dump({"version": 1}, f)
+            path = Path(f.name)
+        result = read_snapshot(path)
+        # No timestamp means no staleness check — should still work
+        self.assertIsNotNone(result)
+        self.assertFalse(path.exists())
+
+
+class TestBuildRecoveryDigestFromSnapshot(unittest.TestCase):
+    """Tests for the snapshot-enhanced recovery digest."""
+
+    def _make_snapshot(self, **overrides):
+        base = {
+            "version": 1,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "session_id": "test-session",
+            "cwd": "/test/project",
+            "chat_role": "desktop",
+            "context_health": {"zone": "red", "pct": 72, "tokens": 144000, "turns": 45, "window": 200000},
+            "git_status": ["M  hooks/pre_compact.py", "?? tests/test_pre_compact.py"],
+            "git_diff_stat": "2 files changed, 200 insertions(+), 5 deletions(-)",
+            "todays_tasks_todos": ["10A. Design Protocol [TODO]", "10B. Build Protection [TODO]"],
+            "session_header": "Session 243 | Chat 10 | 2026-03-31",
+            "anchor_content": "Zone: red (72% of 200k tokens)",
+        }
+        base.update(overrides)
+        return base
+
+    def test_includes_git_status(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot()
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "s1", snapshot)
+        self.assertIn("pre_compact.py", digest)
+        self.assertIn("test_pre_compact.py", digest)
+        self.assertIn("Files Modified", digest)
+
+    def test_includes_tasks(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot()
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "s1", snapshot)
+        self.assertIn("10A. Design Protocol", digest)
+        self.assertIn("10B. Build Protection", digest)
+        self.assertIn("Current Tasks", digest)
+
+    def test_includes_context_health(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot()
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "s1", snapshot)
+        self.assertIn("red zone", digest)
+        self.assertIn("72%", digest)
+
+    def test_includes_session_header(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot()
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "s1", snapshot)
+        self.assertIn("Session 243", digest)
+
+    def test_includes_chat_role(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot()
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "s1", snapshot)
+        self.assertIn("desktop", digest)
+
+    def test_includes_recovery_steps(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot()
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "s1", snapshot)
+        self.assertIn("Re-read `CLAUDE.md`", digest)
+        self.assertIn("git diff", digest)
+
+    def test_handles_empty_snapshot_fields(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot(
+            git_status=[], todays_tasks_todos=[], context_health={},
+            session_header="", chat_role="", cwd=""
+        )
+        digest = build_recovery_digest_from_snapshot("manual", "", "s1", snapshot)
+        # Should still produce valid digest without crashing
+        self.assertIn("Recovery Steps", digest)
+        self.assertNotIn("Files Modified", digest)  # No files = no section
+
+    def test_truncates_long_summary(self):
+        from post_compact import build_recovery_digest_from_snapshot, MAX_SUMMARY_LEN
+        snapshot = self._make_snapshot()
+        long_summary = "x" * (MAX_SUMMARY_LEN + 500)
+        digest = build_recovery_digest_from_snapshot("auto", long_summary, "s1", snapshot)
+        self.assertIn("...", digest)
+
+    def test_snapshot_enhanced_marker(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot()
+        digest = build_recovery_digest_from_snapshot("auto", "test", "s1", snapshot)
+        self.assertIn("snapshot-enhanced", digest)
+
+    def test_manual_trigger_label(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot()
+        digest = build_recovery_digest_from_snapshot("manual", "test", "s1", snapshot)
+        self.assertIn("manual (/compact)", digest)
+
+
+class TestResolvePathsWithSnapshot(unittest.TestCase):
+    """Tests for snapshot path resolution."""
+
+    def test_default_snapshot_path(self):
+        from post_compact import resolve_paths
+        with patch.dict(os.environ, {}, clear=True):
+            paths = resolve_paths()
+            self.assertTrue(str(paths["snapshot_file"]).endswith(".claude-compaction-snapshot.json"))
+
+    def test_custom_snapshot_path(self):
+        from post_compact import resolve_paths
+        with patch.dict(os.environ, {"CLAUDE_COMPACTION_SNAPSHOT_PATH": "/tmp/snap.json"}):
+            paths = resolve_paths()
+            self.assertEqual(str(paths["snapshot_file"]), "/tmp/snap.json")
 
 
 if __name__ == "__main__":

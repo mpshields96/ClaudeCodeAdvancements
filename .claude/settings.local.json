@@ -176,6 +176,17 @@
         ]
       }
     ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/context-monitor/hooks/pre_compact.py"
+          }
+        ]
+      }
+    ],
     "PostCompact": [
       {
         "matcher": "",
