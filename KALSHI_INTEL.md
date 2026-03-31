@@ -1229,3 +1229,44 @@ _Kalshi Research: move items here after incorporating into bot strategy/code._
   - [warning] win_rate_drift
   - [info] streak_anomaly
 - Summary: 4052 trades (1721 settled), 51% win rate, $450.11 PnL. Top strategy: expiry_sniper_v1. 3 proposals.
+
+---
+
+## S232 Deep Research Session (2026-03-28)
+
+### Daily Sniper Edge Analysis (DB-verified)
+
+**daily_sniper_v1 (LIVE):** 81 bets, 98.8% WR, +35.66 USD all-time.
+- Price sweet spot: 90-92c (100% WR, avg 0.40-0.60 USD/bet)
+- 93c: 95% WR (1 loss at n=20) — riskier
+- Volume driver: BTC displacement from strike center (not just volatility)
+- Saturday had 43 bets vs weekday 10-18 — BTC moved far from strikes
+- Income formula: `bets/day * avg_win * WR`. Need 30+ bets/day for mandate.
+
+### New Edge Opportunities (ranked by actionability)
+
+1. **Earnings Mentions Transcript Sniper** — 113 series, 32 events closing Mar 31.
+   LLM-analyzable transcripts. Buy at FLB prices where transcript confirms outcome.
+2. **Weekly KXBTCD Friday Boost** — Higher Friday volume, same FLB mechanism.
+3. **Weather Strategy Fix** — Current approach buys longshots (always loses). Fix to
+   trade high-confidence extremes only (88c+ NO positions). GFS ensemble free via Open-Meteo.
+4. **Economics CPI Sniper** — Already built. Next event April 10. Fed confirms Kalshi
+   beats Bloomberg consensus. Paper-trade April 10, live for May.
+5. **Low-Temperature Weather Markets** — KXLOWNYC, KXLOWMIA etc. Daily resolution, untapped.
+
+### Academic Research Findings
+
+- FLB confirmed in Kalshi by Fed paper (2026) and Karl Whelan (UCD) paper
+- Makers earn higher returns than Takers — always use limit orders
+- High-price contracts (88c+) have positive expected returns after fees
+- Low-price contracts (under 20c) are OVERPRICED — negative expected returns
+- LLMs are best at politics/language-based predictions, weakest at economics/weather
+- A weather bot using GFS ensemble made $1.8K on KXHIGH series (31-member ensemble forecasts)
+
+### Cross-Chat Deliveries This Session
+
+UPDATE 79: P&L correction + daily_sniper edge map
+UPDATE 80: Earnings mentions + economics CPI opportunities
+UPDATE 81: Volume drivers + KXBTCD Friday + displacement hypothesis
+UPDATE 82: URGENT — 32 earnings mention events closing March 31
+UPDATE 83: Complete research synthesis with ranked edge roadmap

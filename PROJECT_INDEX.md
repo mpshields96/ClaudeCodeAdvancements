@@ -539,3 +539,13 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `agent-guard/hooks/loop_guard.py` (S238)
 - `agent-guard/tests/test_loop_detector.py` (S238)
 - `agent-guard/tests/test_loop_guard_hook.py` (S238)
+
+
+### Added in S239
+- `memory-system/DREAM_INTEGRATION_DESIGN.md` (S239)
+
+
+### Added in S240
+- `batch_wrap_analysis.py` (S240)
+- `tests/test_batch_wrap_analysis.py` (S240)
+- `WRAP_REFERENCE.md` (S240)

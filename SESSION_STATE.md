@@ -3,7 +3,27 @@
 
 ---
 
-## Current State (as of Session 241 — 2026-03-30)
+## Current State (as of Session 242 — 2026-03-31)
+
+**Phase:** Session 242 COMPLETE. Chat 9: Ebbinghaus decay + init wiring + 8 Reddit reviews (CC source leak event)
+
+**What was done this session (S242):**
+- 9A: Built memory-system/decay.py — Ebbinghaus exponential decay replacing hard TTL cutoffs. Per-confidence rates (HIGH=0.98, MEDIUM=0.96, LOW=0.93). 33 tests.
+- 9B: Wired correction resurfacer into /cca-init as Step 2.97. Corrections auto-surface at session start.
+- 9C: Skipped (CCA-internal only, no Kalshi delivery needed)
+- 8 Reddit reviews: CC source leaked (ADAPT), axios supply chain attack (REFERENCE), 17 agentic AI papers (ADAPT), CC vs Codex prompts (REFERENCE), Boris Cherny 15 tips (ADAPT), CC token waste analysis (ADAPT), viral codebase walkthrough (REFERENCE), AgentHandover re-review (REFERENCE-PERSONAL)
+- Cloned instructkr/claude-code to references/ — turns out to be Python port, NOT actual TypeScript source. Real source needs different repo (Chat 12 task).
+- Drafted Chats 12-13 into TODAYS_TASKS.md (GitHub scan + source study, paper deep-dive + tool eval)
+
+**Next:**
+1. Chat 10: Compaction Protection (design + build) — now informed by leaked source confirming exact bug
+2. Chat 11: Architecture Study + Custom Agent Design + Phase 4 Plan
+3. Chat 12 (NEW): GitHub scan of leak derivatives + CC source study + CLAUDE.md audit
+4. Chat 13 (NEW): 17-paper research deep-dive + Forge/jig/contexto evaluation
+
+---
+
+## Previous State (Session 241 — 2026-03-30)
 
 **Phase:** Session 241 COMPLETE. Phase 2 FULLY COMPLETE (Chats 4-7). Phase 3 planned (Chats 8-11).
 
@@ -19,7 +39,6 @@
 2. Separate non-CCA chat: Matthew to study claude-howto interactively (cd references/claude-howto && claude)
 
 ---
-
 ## Previous State (Session 241, Chat 6 — 2026-03-30)
 
 **Phase:** Chat 6 complete: Claude-howto gap analysis (13 modules mapped) + Paseo mobile evaluation (DEFER)

@@ -65,3 +65,10 @@
 {"tip":"The guard uses ~/.claude-loop-detector.json for state \u2014 run cat to see what it tracks","source":"cca-desktop","session":"S238","timestamp":"2026-03-30T21:07:38.998095Z"}
 {"tip":"Chat 5 is the highest-leverage session \u2014 8K tokens saved per wrap compounds forever","source":"cca-desktop","session":"S238","timestamp":"2026-03-30T21:07:38.998095Z"}
 {"tip":"The mistake-learning pattern from Prism turns reactive debugging into proactive prevention","source":"cca-desktop","session":"S238","timestamp":"2026-03-30T21:07:38.998095Z"}
+{"tip":"AutoDream handles dedup/pruning for free \u2014 CCA Frontier 1 should focus on typed schemas, credential filtering, and cross-chat coordination","source":"cca-desktop","session":"S239","timestamp":"2026-03-30T23:00:51.796793Z"}
+{"tip":"Loop guard threshold (0.80) and min_consecutive (3) work well for real usage \u2014 no tuning needed yet","source":"cca-desktop","session":"S239","timestamp":"2026-03-30T23:00:51.796793Z"}
+{"tip":"Wrap command size directly impacts instruction-following quality during wraps","source":"cca-desktop","session":"S240","timestamp":"2026-03-30T23:52:25.837475Z"}
+{"tip":"PostToolUseFailure hook event is perfect trigger for mistake-learning pattern","source":"cca-desktop","session":"S241","timestamp":"2026-03-31T01:46:17.997713Z"}
+{"tip":"skills: frontmatter field preloads domain knowledge into agents - cleaner than prompt stuffing","source":"cca-desktop","session":"S241","timestamp":"2026-03-31T01:46:17.997713Z"}
+{"tip":"Wire resurfacer into /cca-init (9B) to close the automatic prevention loop","source":"cca-desktop","session":"S241","timestamp":"2026-03-31T03:25:43.315748Z"}
+{"tip":"Custom agent design (11B) is the proper home for subagent frontmatter \u2014 commands don't support it","source":"cca-desktop","session":"S241","timestamp":"2026-03-31T03:25:43.315748Z"}

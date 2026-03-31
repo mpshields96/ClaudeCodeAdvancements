@@ -457,6 +457,120 @@ verdict from docs alone and move on. Don't burn the session on setup issues.
 
 ---
 
+### CHAT 12: CC Source Study + GitHub Scan + CLAUDE.md Audit (~60 min)
+
+**Goal:** Leverage the CC source leak for concrete improvements. Clone the actual
+TypeScript source (not the Python port), study key subsystems, scan GitHub for
+high-quality community analysis, and audit our CLAUDE.md token count.
+
+**CRITICAL:** The instructkr/claude-code repo cloned in S242 is a Python REWRITE,
+NOT the leaked TypeScript source. The actual source was distributed via:
+- R2 zip: pub-aea8527898604c1bbb12468b1581d95e.r2.dev/src.zip (from original tweet)
+- GitHub mirrors mentioned in r/ClaudeAI 2088-pt post comments
+Find and clone the REAL TypeScript source. Verify by checking for .ts/.tsx files
+and the compact.ts file specifically.
+
+#### 12A. Clone Actual CC TypeScript Source [TODO]
+**Scope:** Find and clone the real leaked source (TypeScript, ~1884 files).
+**Steps:**
+1. Check the GitHub links from FINDINGS_LOG entries (2026-03-31 leak posts)
+2. Look for repos with actual .ts/.tsx files, not Python ports
+3. Clone to references/claude-code-ts/ (separate from the Python port)
+4. Verify: `find references/claude-code-ts/ -name "*.ts" | wc -l` should be ~1884
+5. Verify compact.ts exists: `find references/claude-code-ts/ -name "compact.ts"`
+**STOP CONDITION:** Real TypeScript source cloned and verified. If unavailable (DMCA'd),
+document and proceed with the Python port's JSON snapshots instead.
+
+#### 12B. Study Coordinator Mode + UDS Inbox [TODO] (~20 min)
+**Scope:** Read the actual Coordinator Mode and UDS Inbox implementation.
+**Steps:**
+1. Read coordinator/coordinatorMode.ts — how workers spawn, communicate, report
+2. Read any UDS (Unix Domain Socket) inbox implementation
+3. Compare with cca_comm.py: what does native CC do that we built manually?
+4. Write findings: `COORDINATOR_MODE_ANALYSIS.md` (~1 page)
+5. Verdict: does this replace cca_comm.py? Partial replace? Complement?
+**STOP CONDITION:** Analysis written. This directly informs MT-21 direction.
+
+#### 12C. Study Compaction Implementation [TODO] (~15 min)
+**Scope:** Read the actual compact.ts to understand the bug we're working around.
+**Steps:**
+1. Find and read services/compact/compact.ts
+2. Confirm the empty-array diff bug (line ~565 per Reddit analysis)
+3. Read what preCompactDiscoveredTools contains
+4. Document: what can our PostCompact hook realistically restore?
+**STOP CONDITION:** Compaction internals documented. Feeds Chat 10 design.
+
+#### 12D. CLAUDE.md Token Audit [TODO] (~10 min)
+**Scope:** Measure our CLAUDE.md against Boris Cherny's <1000 token advice.
+**Steps:**
+1. Count tokens in our project CLAUDE.md: `wc -w CLAUDE.md` (rough: words * 1.3)
+2. Count tokens in global ~/.claude/CLAUDE.md
+3. Identify what can move to subdirectory CLAUDE.md files (only loaded when relevant)
+4. Write reduction plan — target <1000 tokens for root CLAUDE.md
+**STOP CONDITION:** Audit complete with reduction plan. Don't implement yet.
+
+#### 12E. GitHub Scan — Leak Derivatives [TODO] (~15 min, time-boxed)
+**Scope:** Quick scan of GitHub trending for high-quality CC source analysis.
+**Steps:**
+1. Search GitHub for repos created since 2026-03-30 mentioning "claude code source"
+2. Filter: >50 stars, not just forks with no changes
+3. Look for: analysis tools, feature extractors, community patches, documentation
+4. Apply rat poison filter: no sketchy packages, no credential harvesters
+5. Log any BUILD/ADAPT findings to FINDINGS_LOG.md
+**STOP CONDITION:** 15 min max. Log findings. Don't get lost in rabbit holes.
+
+---
+
+### CHAT 13: Research Paper Deep-Dive + Tool Evaluation (~60 min)
+
+**Goal:** Turn the 17-paper agentic AI research into actionable CCA improvements.
+Evaluate the three tools mentioned (Forge, jig, contexto) against our existing stack.
+
+#### 13A. Fetch and Study 10 Principles Article Series [TODO] (~20 min)
+**Scope:** Read jdforsythe.github.io/10-principles thoroughly.
+**Steps:**
+1. Fetch the article series (10 principles across multiple pages)
+2. For each principle: map to CCA's current state (do we follow it? violate it?)
+3. Key principles to focus on:
+   - PRISM identities (<50 tokens) — audit our agent/command descriptions
+   - 45% threshold — when to use single vs multi-agent
+   - Rubber-stamp prevention — how to make senior-review adversarial
+   - Lost-in-middle — how our context management addresses this
+4. Write research doc: `AGENTIC_WORKFLOW_RESEARCH.md`
+**STOP CONDITION:** Research doc written. Actionable gaps identified.
+
+#### 13B. Evaluate Forge (Agent Assembly) [TODO] (~15 min)
+**Scope:** Clone and study github.com/jdforsythe/forge.
+**Steps:**
+1. Clone to references/forge/
+2. Read: how does it assemble agent teams? What's the vocabulary routing?
+3. Compare: does this offer anything our .claude/agents/ design (Chat 11B) doesn't?
+4. Verdict: ADOPT / ADAPT / SKIP with reasoning
+**STOP CONDITION:** Verdict written.
+
+#### 13C. Evaluate jig (Selective Context Loading) [TODO] (~10 min)
+**Scope:** Study github.com/jdforsythe/jig.
+**Steps:**
+1. Read architecture: how does it define and load context profiles?
+2. Compare: our slim_init.py does selective loading — does jig do it better?
+3. Verdict: ADOPT / ADAPT / SKIP
+**STOP CONDITION:** Verdict written.
+
+#### 13D. Evaluate contexto (Active Context Pruning) [TODO] (~10 min)
+**Scope:** Study github.com/ekailabs/contexto.
+**Steps:**
+1. Read: how does it prune context during a session?
+2. Compare: our context-monitor + session_pacer — complementary or redundant?
+3. Verdict: ADOPT / ADAPT / SKIP
+**STOP CONDITION:** Verdict written.
+
+#### 13E. Cross-Chat Delivery [TODO]
+**Scope:** If any research findings are Kalshi-relevant, deliver via CCA_TO_POLYBOT.md.
+The multi-agent efficiency data (DeepMind 2025) may inform Kalshi session design.
+**STOP CONDITION:** Delivery written or skipped.
+
+---
+
 ## DEFERRED (not scheduled, revisit when relevant)
 
 - **TurboQuant vector compression** — only when Frontier 1 hits storage scale problems

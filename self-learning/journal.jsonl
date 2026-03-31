@@ -1100,3 +1100,53 @@
 {"event_type":"sentinel_stats","session":238,"total_principles":187,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-30T21:07:38.998095Z"}
 {"event_type":"meta_learning_health","session":238,"health_score":0.635,"total_principles":21,"active_principles":13,"zombie_principles":8,"timestamp":"2026-03-30T21:07:38.998095Z"}
 {"event_type":"confidence_recalibration","session":238,"applied":21,"skipped":0,"reason":"ok","timestamp":"2026-03-30T21:07:38.998095Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T22:59:57.777271+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T22:59:57.851015+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":239,"domain":"general","outcome":"success","notes":"Chat 4: cleanup, verification, and Dream design \u2014 all stop conditions met","timestamp":"2026-03-30T23:00:51.796793Z"}
+{"event_type":"win","session":239,"domain":"general","notes":"All Chat 4 tasks done (4A-4D) \u2014 clean commit hygiene","timestamp":"2026-03-30T23:00:51.796793Z"}
+{"event_type":"win","session":239,"domain":"general","notes":"Loop guard validated end-to-end \u2014 fires on 3+ similar, no false positives","timestamp":"2026-03-30T23:00:51.796793Z"}
+{"event_type":"win","session":239,"domain":"general","notes":"Dream integration design clarifies CCA memory moat vs AutoDream","timestamp":"2026-03-30T23:00:51.796793Z"}
+{"event_type":"pain","session":239,"domain":"general","notes":"Env vars set in .zshrc but not active in current session \u2014 takes next launch","timestamp":"2026-03-30T23:00:51.796793Z"}
+{"event_type":"feedback_roi","session":239,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-30T23:00:51.796793Z"}
+{"event_type":"sentinel_stats","session":239,"total_principles":187,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-30T23:00:51.796793Z"}
+{"event_type":"meta_learning_health","session":239,"health_score":0.635,"total_principles":21,"active_principles":13,"zombie_principles":8,"timestamp":"2026-03-30T23:00:51.796793Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T23:24:51.807197+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T23:24:51.837048+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T23:51:35.011056+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-30T23:51:35.047057+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":240,"domain":"self_learning","outcome":"success","notes":"Chat 5 wrap optimization: batch analysis script, slim command, conditional cross-chat","timestamp":"2026-03-30T23:52:25.837475Z"}
+{"event_type":"win","session":240,"domain":"self_learning","notes":"batch_wrap_analysis.py consolidates 7 wrap steps into 1 call with 18 tests","timestamp":"2026-03-30T23:52:25.837475Z"}
+{"event_type":"win","session":240,"domain":"self_learning","notes":"cca-wrap.md slimmed 61% from 601 to 244 lines","timestamp":"2026-03-30T23:52:25.837475Z"}
+{"event_type":"win","session":240,"domain":"self_learning","notes":"Conditional cross-chat skip criteria added","timestamp":"2026-03-30T23:52:25.837475Z"}
+{"event_type":"pain","session":240,"domain":"self_learning","notes":"None","timestamp":"2026-03-30T23:52:25.837475Z"}
+{"event_type":"feedback_roi","session":240,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-30T23:52:25.837475Z"}
+{"event_type":"sentinel_stats","session":240,"total_principles":187,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-30T23:52:25.837475Z"}
+{"event_type":"meta_learning_health","session":240,"health_score":0.635,"total_principles":21,"active_principles":13,"zombie_principles":8,"timestamp":"2026-03-30T23:52:25.837475Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T01:45:09.260981+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T01:45:09.300748+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":241,"domain":"general","outcome":"success","notes":"Chat 6: Claude-howto gap analysis + Paseo mobile evaluation","timestamp":"2026-03-31T01:46:17.997713Z"}
+{"event_type":"win","session":241,"domain":"general","notes":"Gap analysis mapped 13 modules against CCA - identified subagent fields hooks orchestration as key gaps","timestamp":"2026-03-31T01:46:17.997713Z"}
+{"event_type":"win","session":241,"domain":"general","notes":"Paseo evaluated thoroughly - DEFER verdict with security concerns documented","timestamp":"2026-03-31T01:46:17.997713Z"}
+{"event_type":"pain","session":241,"domain":"general","notes":"None","timestamp":"2026-03-31T01:46:17.997713Z"}
+{"event_type":"feedback_roi","session":241,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-31T01:46:17.997713Z"}
+{"event_type":"sentinel_stats","session":241,"total_principles":187,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-31T01:46:17.997713Z"}
+{"event_type":"meta_learning_health","session":241,"health_score":0.635,"total_principles":21,"active_principles":13,"zombie_principles":8,"timestamp":"2026-03-31T01:46:17.997713Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T01:57:04.761457+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T01:57:04.800344+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T02:28:43.135994+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T02:28:43.159250+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T02:50:59.353888+00:00","session_id":"c96e3ece-6055-4716-a9fa-c4fee8a3dbcd","trigger":"auto","pre_zone":"red","pre_pct":80.8,"pre_turns":284,"compact_summary_len":14091,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T02:56:11.439896+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T02:56:11.464354+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T03:24:56.287959+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T03:24:56.326885+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":241,"domain":"self_learning","outcome":"success","notes":"Chat 8: Completed Prism capture->resurface pattern, wired PostToolUseFailure, revised Chats 9-11 plans","timestamp":"2026-03-31T03:25:43.315748Z"}
+{"event_type":"win","session":241,"domain":"self_learning","notes":"Correction resurfacer with grouping and frequency sorting (34 tests)","timestamp":"2026-03-31T03:25:43.315748Z"}
+{"event_type":"win","session":241,"domain":"self_learning","notes":"PostToolUseFailure hook wired globally (11 tests)","timestamp":"2026-03-31T03:25:43.315748Z"}
+{"event_type":"win","session":241,"domain":"self_learning","notes":"Phase 3 plan critically revised \u2014 caught 9B targeting wrong abstraction","timestamp":"2026-03-31T03:25:43.315748Z"}
+{"event_type":"pain","session":241,"domain":"self_learning","notes":"None","timestamp":"2026-03-31T03:25:43.315748Z"}
+{"event_type":"feedback_roi","session":241,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-03-31T03:25:43.315748Z"}
+{"event_type":"sentinel_stats","session":241,"total_principles":188,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-03-31T03:25:43.315748Z"}
+{"event_type":"meta_learning_health","session":241,"health_score":0.613,"total_principles":22,"active_principles":13,"zombie_principles":9,"timestamp":"2026-03-31T03:25:43.315748Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T04:17:19.453706+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-03-31T04:17:19.474224+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
