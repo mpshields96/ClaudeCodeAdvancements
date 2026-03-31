@@ -3,7 +3,64 @@
 
 ---
 
-## Current State (as of Session 238 — 2026-03-30)
+## Current State (as of Session 241 — 2026-03-30)
+
+**Phase:** Session 241 COMPLETE. Phase 2 FULLY COMPLETE (Chats 4-7). Phase 3 planned (Chats 8-11).
+
+**What was done this session (S241, Chat 7):**
+- 7A: Built correction_detector.py + hooks/correction_capture.py (Prism mistake-learning pattern). 68 new tests. Wired globally.
+- 7B: Ported loop guard + correction capture to Kalshi project settings. CCA_TO_POLYBOT UPDATE 86 written.
+- Phase 3 plan written into TODAYS_TASKS.md (Chats 8-11: resurfacing, memory decay, compaction protection, architecture study)
+- AgentHandover reviewed (ADAPT — confidence scoring model), claude-howto cloned to references/ for Matthew's study
+- **Tests**: 340/343 suites (12,019 tests). 3 pre-existing failures (autoloop x2 + fpdf). 68 new tests added.
+
+**Next:**
+1. Chat 8 (Phase 3): Correction resurfacing at session init + PostToolUseFailure hook
+2. Separate non-CCA chat: Matthew to study claude-howto interactively (cd references/claude-howto && claude)
+
+---
+
+## Previous State (Session 241, Chat 6 — 2026-03-30)
+
+**Phase:** Chat 6 complete: Claude-howto gap analysis (13 modules mapped) + Paseo mobile evaluation (DEFER)
+
+**What was done:**
+- Gap analysis mapped all 13 modules against CCA — identified subagent fields, hooks, orchestration pattern as key gaps
+- Paseo evaluated with thorough security assessment — DEFER verdict with re-eval criteria
+- **Tests**: 337 suites, 12000 tests passing. All green.
+
+---
+
+## Previous State (Session 240 — 2026-03-30)
+
+**Phase:** Session 240 COMPLETE. Chat 5: Wrap optimization — batch_wrap_analysis.py, slim wrap (601->244 lines), conditional cross-chat
+
+**What was done this session (S240):**
+- batch_wrap_analysis.py with 18 tests consolidates 7 wrap steps
+- cca-wrap.md 61% line reduction with WRAP_REFERENCE.md
+- Conditional cross-chat skip in Step 7.5
+- **Tests**: 341 suites, 12000 tests passing. All green.
+
+**Next:**
+1. Chat 6: Claude-howto gap analysis and Paseo evaluation
+2. Chat 7: Mistake-learning pattern and Kalshi port
+
+---
+## Previous State (Session 239 — 2026-03-30)
+
+**Phase:** Session 239 COMPLETE. Chat 4 complete: committed Phase 1 gaps, verified env vars + loop guard, wrote Dream integration design
+
+**What was done this session (S239):**
+- All 4 Chat 4 tasks completed cleanly (4A-4D)
+- Loop guard smoke tested — fires correctly, no false positives
+- Dream integration design maps CCA vs AutoDream separation of concerns
+- **Tests**: 340 suites, 11982 tests passing. All green.
+
+**Next:**
+1. Chat 5: batch_wrap_analysis.py + slim wrap command + conditional cross-chat (40% wrap token reduction)
+
+---
+## Previous State (Session 238 — 2026-03-30)
 
 **Phase:** Session 238 COMPLETE. Built loop detection guard v1 (PostToolUse hook + 40 tests) and Phase 2 plan for Chats 4-7
 
@@ -18,7 +75,6 @@
 2. Chat 5: wrap/init token optimization build (batch_wrap_analysis.py)
 
 ---
-
 ## Previous State (Session 237 — 2026-03-30)
 
 **Phase:** Session 237 COMPLETE. TurboQuant + Prism MCP research for Frontier 1 memory evolution
