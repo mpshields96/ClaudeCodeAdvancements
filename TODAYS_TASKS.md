@@ -123,7 +123,7 @@ and evolve in one subprocess call.
 
 Two evaluation/learning tasks that pair well — neither produces CCA code.
 
-#### 6A. Claude-Howto Best Practices Study [TODO]
+#### 6A. Claude-Howto Best Practices Study [DONE S241]
 **Scope:** Read shanraisshan/claude-code-best-practice repo (25K+ stars, 10 modules).
 This is Matthew's personal learning resource — CCA reads it and produces a gap analysis.
 **Steps:**
@@ -135,7 +135,7 @@ This is Matthew's personal learning resource — CCA reads it and produces a gap
 **STOP CONDITION:** Gap analysis written. Do NOT implement anything from it in this chat.
 **Reference:** FINDINGS_LOG entry #5, entry #72. github.com/shanraisshan/claude-code-best-practice
 
-#### 6B. Task G: Paseo Evaluation [TODO]
+#### 6B. Task G: Paseo Evaluation [DONE S241 — DEFER verdict]
 **Scope:** Install, test, and evaluate Paseo for mobile Claude Code access.
 **Steps:**
 1. Clone getpaseo/paseo repo
