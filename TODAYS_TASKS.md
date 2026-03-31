@@ -212,60 +212,38 @@ the patterns and hardens the infrastructure. Each task closes a loop that Phase 
 
 ---
 
-### CHAT 8: Correction Resurfacing + PostToolUseFailure (~45 min)
+### CHAT 8: Correction Resurfacing + PostToolUseFailure (~45 min) — DONE S241
 
 Complete the Prism mistake-learning pattern. Chat 7 built capture. Chat 8 builds resurfacing.
 
-#### 8A. Correction Resurfacing at Session Init [TODO]
+#### 8A. Correction Resurfacing at Session Init [DONE S241]
 **Scope:** Query recent corrections from journal.jsonl and surface them as warnings.
-**Context:** correction_detector.py captures error->fix sequences to journal.jsonl as
-`correction_captured` events. But they're never read back. Prism's pattern auto-surfaces
-high-importance corrections as warnings in future sessions. Without resurfacing,
-corrections are logged but never prevent repeat mistakes.
-**Steps:**
-1. Read self-learning/journal.py — understand the query API (get_recent, _load_journal)
-2. Build `self-learning/resurfacer.py`:
-   - `get_recent_corrections(days=7)` — query journal for correction_captured events
-   - `format_warnings(corrections)` — format as concise one-line warnings
-   - Return list of strings suitable for injection into session context
-3. Write tests for resurfacer.py
-4. Integration point: /cca-init can call `python3 self-learning/resurfacer.py` and
-   display recent corrections during session briefing
-**Expected output:** "Recent corrections (last 7 days): Edit failed on X due to
-non-unique match — use larger context string. (3 occurrences, last 2h ago)"
-**STOP CONDITION:** resurfacer.py works with tests. Integration into /cca-init is
-a separate step (can be done in 8A or left for later). Do NOT build importance
-scoring or Ebbinghaus decay here — that's 9A.
+**Delivered:** Added `get_recent_corrections()`, `format_correction_warnings()`,
+`format_correction_briefing()` to `self-learning/resurfacer.py`. Groups by
+(error_pattern, error_tool), sorts by frequency, shows relative time + avg fix time.
+CLI: `python3 self-learning/resurfacer.py corrections [--days N] [--json]`
+34 new tests in `test_correction_resurfacer.py`.
 
-#### 8B. Wire PostToolUseFailure Hook [TODO]
+#### 8B. Wire PostToolUseFailure Hook [DONE S241]
 **Scope:** Add PostToolUseFailure as a cleaner error signal for correction_detector.
-**Context:** Currently correction_capture.py runs on PostToolUse and uses heuristic
-regex to detect errors in tool output (ERROR_PATTERNS list in correction_detector.py).
-PostToolUseFailure fires only when a tool actually fails — no false positives.
-**Steps:**
-1. Verify PostToolUseFailure hook exists in current CC version:
-   `claude --help` or check hook documentation
-2. If it exists: create `self-learning/hooks/failure_capture.py` — simpler than
-   correction_capture.py because the failure is definitive (no heuristic needed)
-3. Wire in settings.local.json alongside existing PostToolUse hooks
-4. The failure_capture hook records the error; the existing correction_capture hook
-   on PostToolUse still detects when the correction happens. Together they give:
-   - Definitive error signal (PostToolUseFailure) + correction detection (PostToolUse)
-5. If PostToolUseFailure doesn't exist: document this, move on. The current
-   heuristic approach in correction_capture.py is the fallback.
-**STOP CONDITION:** Hook wired if available, or documented as unavailable. Move to 8C.
+**Delivered:** Confirmed PostToolUseFailure exists (25 hook events documented in
+claude-howto/06-hooks). Built `self-learning/hooks/failure_capture.py` — feeds
+failures to CorrectionDetector buffer (so correction_capture.py detects the fix)
+and logs directly to journal as `error` events. 11 new tests in `test_failure_capture.py`.
+Wired in `~/.claude/settings.local.json` as PostToolUseFailure hook (global).
 
-#### 8C. Cross-Chat Delivery [TODO]
-**Scope:** If any Kalshi-relevant improvements were made, write CCA_TO_POLYBOT.md.
-**STOP CONDITION:** Delivery written if applicable, skip if not.
+#### 8C. Cross-Chat Delivery [DONE S241 — not needed]
+**Scope:** PostToolUseFailure hook is global (settings.local.json), Kalshi gets it
+automatically. No separate delivery required.
 
 ---
 
-### CHAT 9: Memory Decay + Subagent Hardening (~45 min)
+### CHAT 9: Memory Decay + Init Integration (~45 min)
 
-Two independent improvements: principled memory decay, and frontmatter hardening.
+Two tasks: principled memory decay function, and wiring the correction resurfacer
+into /cca-init so warnings appear automatically at session start.
 
-#### 9A. Ebbinghaus Decay for Memory Confidence [TODO]
+#### 9A. Ebbinghaus Decay for Memory Confidence [DONE S242]
 **Scope:** Replace hard TTL cutoffs with continuous exponential decay.
 **Context:** CCA memory uses cliff-edge TTL: HIGH=365d, MEDIUM=180d, LOW=90d.
 A memory at day 89 (LOW) has full weight. At day 91 it vanishes. Prism uses
@@ -288,112 +266,194 @@ This is more principled and avoids the cliff.
    Integration requires schema changes (adding `last_accessed_at` field).
 **STOP CONDITION:** decay.py + tests. Integration is a future task.
 **Reference:** PRISM_TURBOQUANT_RESEARCH.md Section 3B, recommendation #3
+**Design note on rates:** At 0.95/day, base 100 drops to 50 in ~14 days (too
+aggressive for HIGH confidence). Per-confidence rates fix this:
+  - HIGH=0.98 → 50% at 34 days, effectively permanent for active memories
+  - MEDIUM=0.96 → 50% at 17 days, moderate decay
+  - LOW=0.93 → 50% at 10 days, fast decay for speculative memories
 
-#### 9B. Subagent Frontmatter Hardening [TODO]
-**Scope:** Add protective frontmatter fields to all CCA agent commands.
-**Context:** Gap analysis found we use ~5/16 available subagent frontmatter fields.
-Key missing fields that require zero code — just YAML frontmatter edits:
-- `maxTurns`: Prevents runaway agents (no current protection)
-- `effort`: Tunes per-agent quality (low for quick checks, high for complex work)
-- `disallowedTools`: Scope down agent tool access for safety
+#### 9B. Wire Correction Resurfacer into /cca-init [DONE S242]
+**Scope:** Make the capture->resurface loop fire automatically at session start.
+**Context:** Chat 8 built `resurfacer.py corrections` but nothing calls it.
+Without wiring into /cca-init, corrections are logged but never prevent repeat
+mistakes. This is the smallest change with the highest compound value.
 **Steps:**
-1. List all CCA commands that spawn agents:
-   `grep -rl "subagent_type\|Agent(" .claude/commands/`
-2. For each command, add appropriate frontmatter:
-   - Worker agents: `maxTurns: 50`, `effort: medium`
-   - Research agents: `maxTurns: 30`, `effort: high`
-   - Quick check agents: `maxTurns: 10`, `effort: low`
-   - All agents: `disallowedTools: [Write(~/.claude/*)]` (prevent modifying global config)
-3. No code changes — frontmatter only. Verify commands still load correctly.
-**STOP CONDITION:** All agent-spawning commands have maxTurns + effort set.
-**NOTE:** If commands use the Agent tool programmatically (not via frontmatter),
-this may require a different approach — document what's possible vs not.
+1. Read `.claude/commands/cca-init.md` — find the session briefing output section
+2. Add a step that runs `python3 self-learning/resurfacer.py corrections`
+3. Display output in the session briefing (only if there are corrections to show)
+4. Test: manually run the command, verify output format looks right in context
+5. Also consider adding to /cca-auto and /cca-desktop if they have init sections
+**Expected output in init briefing:**
+```
+Recent corrections (last 7 days):
+  - Edit: old_string not found — (3x) — avg fix: 12s — 2h ago
+  - Bash: command not found — (2x) — avg fix: 8s — 1d ago
+```
+**STOP CONDITION:** /cca-init displays recent corrections. Verified manually.
 
-#### 9C. Cross-Chat Delivery [TODO]
-**Scope:** Write CCA_TO_POLYBOT.md if applicable.
+#### 9C. Cross-Chat Delivery [DONE S242 — skipped, CCA-internal only]
+**Scope:** Write CCA_TO_POLYBOT.md if applicable (likely minimal — 9A/9B are CCA-internal).
 **STOP CONDITION:** Delivery written or skipped.
 
 ---
 
 ### CHAT 10: Compaction Protection Hooks (~60 min)
 
-**NOTE:** This chat starts with a design step. The gap analysis identified
-PreCompact/PostCompact as valuable but didn't define what to save or how.
+**Goal:** Protect critical session state through context compaction events.
+Both PreCompact and PostCompact hooks are confirmed available (claude-howto/06-hooks,
+25 hook events). PreCompact receives matcher `manual/auto` (tells you why compaction
+fired). Neither can block. This is a design-then-build chat.
 
 #### 10A. Design Compaction Protection Protocol [TODO]
 **Scope:** Define exactly what state to preserve through compaction events.
 **Steps:**
-1. Read gap analysis Module 8 (hooks deep dive) for PreCompact/PostCompact details
-2. Verify these hooks exist in current CC version (check docs/test)
-3. If they exist, design the protocol:
-   - **What to save (PreCompact):** Current task list (TodoWrite state), files being
-     edited, active file paths from recent tool calls, session progress markers
+1. Read `CLAUDE_HOWTO_GAP_ANALYSIS.md` Module 8 — hook event details
+2. Read `references/claude-howto/06-hooks/README.md` — PreCompact/PostCompact payload
+3. Determine what data the hooks receive on stdin:
+   - PreCompact: likely `{"hook_event_name": "PreCompact", "matcher": "auto"}`
+   - PostCompact: likely `{"hook_event_name": "PostCompact"}`
+   - Key question: does PreCompact get any conversation metadata (turn count,
+     token usage, recent tool calls)? Or just the trigger type?
+4. Design the protocol based on what data is actually available:
+   - **What to save (PreCompact):**
+     a. Session progress markers from `~/.claude-context-health.json` (if exists)
+     b. List of files modified this session (from git status)
+     c. Current working task description (parse from recent conversation if available)
+     d. Timestamp + compaction trigger type (manual vs auto)
    - **Where to save:** `~/.claude-compaction-snapshot.json` (atomic write)
-   - **What to restore (PostCompact):** Re-inject critical context as a system message
-     or read the snapshot file on next tool call
-   - **What NOT to save:** Full conversation content (too large), tool outputs (stale)
-4. Write the design as a short note: `context-monitor/COMPACTION_PROTECTION_DESIGN.md`
-5. If hooks don't exist: document this, evaluate alternative approaches (e.g.,
-   periodic state snapshots independent of compaction events)
-**STOP CONDITION:** Design note written. Build only if hooks confirmed available.
+   - **What to restore (PostCompact):**
+     a. Write snapshot content to stdout so it appears in Claude's context
+     b. This works because PostCompact hook output gets injected as context
+   - **What NOT to save:** Full conversation (too large), tool outputs (stale),
+     file contents (can be re-read)
+5. Write design: `context-monitor/COMPACTION_PROTECTION_DESIGN.md` (~1 page)
+**STOP CONDITION:** Design note written. Do NOT build until design is reviewed.
+**Key risk:** If PreCompact only receives the trigger type and nothing else,
+the hook can only snapshot external state (git status, health file, env vars).
+It cannot snapshot conversation-internal state. This is still valuable but more
+limited than ideal. The design note must address this honestly.
 
-#### 10B. Build Compaction Protection (if hooks available) [TODO]
-**Scope:** Implement the protocol from 10A.
+#### 10B. Build Compaction Protection [TODO]
+**Scope:** Implement the protocol from 10A. Only proceed if 10A confirms hooks
+provide enough data to be useful.
 **Steps:**
-1. Build `context-monitor/hooks/pre_compact.py` — PreCompact handler
-2. Build `context-monitor/hooks/post_compact.py` — PostCompact handler
-3. Wire in settings.local.json
-4. Tests
-**STOP CONDITION:** Hooks wired and tested, or documented as unavailable.
+1. Build `context-monitor/hooks/pre_compact.py`:
+   - Read external state (git status, context health file, env vars)
+   - Write atomic snapshot to `~/.claude-compaction-snapshot.json`
+   - Keep it fast (<1s) — compaction shouldn't be delayed by the hook
+2. Build `context-monitor/hooks/post_compact.py`:
+   - Read snapshot file
+   - Output concise summary to stdout (injected as post-compaction context)
+   - Format: "Pre-compaction state: working on [task], modified [files], [N]% context used"
+3. Wire both in settings.local.json
+4. Write tests:
+   - Snapshot write/read round-trip
+   - Missing snapshot file (graceful degradation)
+   - Malformed snapshot (don't crash)
+   - Output format validation
+5. Manual validation: trigger compaction in a test session, verify restore
+**STOP CONDITION:** Hooks wired and tested, or documented as insufficient.
+**Fallback:** If PreCompact data is too limited, consider a periodic snapshot
+approach instead (save state every N tool calls via PostToolUse, not tied to
+compaction events). Document this as an alternative in the design note.
 
 #### 10C. Cross-Chat Delivery [TODO]
-**Scope:** Port compaction protection to Kalshi if applicable.
+**Scope:** Port compaction protection to Kalshi if hooks prove useful.
+Compaction protection is project-agnostic — if it works for CCA, it works
+for Kalshi. Wire globally in settings.local.json (same as loop guard).
+**STOP CONDITION:** Delivery written or skipped.
 
 ---
 
-### CHAT 11: Architecture Study + Phase 4 Planning (~45 min)
+### CHAT 11: Architecture Study + Custom Agent Design + Phase 4 Planning (~60 min)
 
-This is a learning + planning session, not a build session. Output is design notes
-and a Phase 4 plan, not code.
+Research + evaluation session. Output is design notes and Phase 4 plan, not code.
+Each exploration task is time-boxed to prevent rabbit holes.
 
-#### 11A. Hands-On CC Feature Exploration [TODO]
-**Scope:** Try features identified in gap analysis that we've never used.
+#### 11A. Hands-On CC Feature Exploration [TODO] (~15 min, hard cap)
+**Scope:** Try features from gap analysis we've never used. Quick pass — try each
+once, note if useful, move on.
 **Steps:**
-1. Try `/btw` for side queries — does it preserve main context?
-2. Try `--bare` mode: `claude -p --bare "hello"` — measure startup time vs normal
-3. Try `/batch` if available — understand parallel changeset workflow
-4. Try `context: fork` in a test command — verify isolated execution
-5. Document findings: what works, what's useful, what's not worth it
-**STOP CONDITION:** Each feature tried once, findings documented. ~20 min max.
+1. `--bare` mode: `claude -p --bare "hello"` — measure startup time vs normal.
+   Useful for CCA scripts that shell out to `claude -p` (batch operations).
+   Time both: `time claude -p --bare "echo test"` vs `time claude -p "echo test"`
+2. `/btw` side query — does it preserve main context? Start a session, establish
+   context, then `/btw "unrelated question"`. Check if original context survives.
+3. `--max-turns` flag: `claude -p --max-turns 3 "task"` — does it hard-cap?
+   This would replace our reliance on maxTurns frontmatter for agent limiting.
+4. Skip `/batch` and `context: fork` for now — lower priority, save for Phase 4.
+**Deliverable:** 5-line findings per feature in `CC_FEATURE_NOTES.md`. No analysis
+paralysis — "useful / not useful / needs more testing" is sufficient.
+**STOP CONDITION:** 3 features tried, findings noted. 15 minutes max. Move on.
 
-#### 11B. Command->Agent->Skill Architecture Evaluation [TODO]
-**Scope:** Evaluate the orchestration pattern from gap analysis Module 9.
-**Context:** Current CCA commands do everything inline. The Module 9 pattern separates:
-- Command (lightweight coordinator) → Agent (background executor with preloaded skills)
-  → Skill (reusable domain knowledge)
+#### 11B. Custom Agent Design for CCA [TODO] (~20 min)
+**Scope:** Design CCA's first custom agents as `.claude/agents/*.md` files.
+This is where the deferred subagent frontmatter hardening (original 9B) lands.
+**Context:** Chat 8 confirmed CCA has zero custom agents — all 32 commands are
+inline slash commands. The claude-howto Module 4 subagent spec shows agents get:
+`maxTurns`, `effort`, `disallowedTools`, `skills`, `model`, `permissionMode`.
 **Steps:**
-1. Pick one CCA command as a case study (suggest /cca-wrap — most complex)
-2. Sketch how it would look refactored into Command->Agent->Skill
-3. Evaluate: would this actually be better? Or is it overengineering for our scale?
-4. Write findings in `ARCHITECTURE_EVALUATION.md`
-**STOP CONDITION:** Evaluation written. Do NOT refactor anything. This is analysis only.
+1. Identify which CCA workflows would benefit from being agents vs commands:
+   - `/cca-review` → agent candidate (research task, could be scoped + capped)
+   - `/senior-review` → agent candidate (analysis, benefits from effort:high)
+   - `/cca-scout` → agent candidate (web search heavy, can be restricted)
+   - `/cca-wrap` → stays as command (needs full tool access, interactive)
+2. For each agent candidate, draft the frontmatter:
+   ```yaml
+   ---
+   name: cca-reviewer
+   description: Review URLs against CCA frontiers
+   model: sonnet
+   maxTurns: 25
+   effort: high
+   disallowedTools: Write(~/.claude/*), Edit(~/.claude/*)
+   skills: cca-review
+   ---
+   ```
+3. Evaluate: is splitting command -> agent actually better for each case?
+   Criteria: Does it save tokens? Does it prevent runaway? Does it improve quality?
+4. Write design in `CUSTOM_AGENTS_DESIGN.md` — which ones to build, which to skip
+**STOP CONDITION:** Design note written. Do NOT create agents yet — that's Phase 4.
+**Deferred from 9B:** This is the proper home for subagent frontmatter hardening.
+The original 9B tried to add frontmatter to commands (wrong target). This task
+correctly designs custom agents from scratch with proper frontmatter.
 
-#### 11C. Native Agent Teams vs Hivemind Evaluation [TODO]
+#### 11C. Native Agent Teams vs Hivemind Evaluation [TODO] (~15 min)
 **Scope:** Compare Anthropic's native agent teams with our cca_comm.py hivemind.
 **Steps:**
-1. Check if `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is available
-2. If available: try spawning a basic 2-agent team, evaluate coordination
-3. Compare: shared task list (native) vs JSONL queue (ours). Pros/cons.
+1. Check if native agent teams are available:
+   `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 claude --help 2>&1 | grep -i team`
+2. If available: read the docs (references/claude-howto/10-cli/ or Module 10).
+   Key questions to answer:
+   - How do agents share state? (shared task list vs our JSONL queue)
+   - Can agents have different models? (we use Opus desktop + Sonnet worker)
+   - Can they run in separate terminals? (our current pattern)
+   - What coordination overhead does the native approach add?
+3. If NOT available or too experimental: document this and evaluate based on docs only
 4. Write verdict: ADOPT (replace hivemind) / COMPLEMENT (use alongside) / SKIP
+   with specific reasoning for each criterion above
 **STOP CONDITION:** Verdict written. This informs MT-21 direction.
+**Time-box:** 15 minutes. If agent teams are too experimental to test, write the
+verdict from docs alone and move on. Don't burn the session on setup issues.
 
-#### 11D. Write Phase 4 Plan [TODO]
-**Scope:** Based on Chats 8-11 findings, write Phase 4 task list.
+#### 11D. Write Phase 4 Plan [TODO] (~10 min)
+**Scope:** Based on Chats 8-11 findings, write Phase 4 task list into this file.
 **Steps:**
-1. Review what Chats 8-10 delivered vs what they deferred
-2. Incorporate Chat 11 findings (which features are worth adopting)
-3. Write Phase 4 plan following the same format as Phases 2-3
-**STOP CONDITION:** Phase 4 plan written into this file.
+1. Review what Chats 8-11 delivered vs deferred:
+   - Chat 8: capture->resurface loop complete, PostToolUseFailure wired
+   - Chat 9: decay function built, resurfacer wired into init
+   - Chat 10: compaction protection (built or documented as limited)
+   - Chat 11: feature notes, agent design, agent teams verdict
+2. Identify Phase 4 candidates from:
+   - Deferred items from Phase 3 (anything that didn't fit)
+   - Custom agent creation (from 11B design)
+   - Memory decay integration (from 9A — function built, schema change needed)
+   - SessionStart/SessionEnd hooks (automate init/wrap)
+   - Compaction protection v2 (if v1 was limited)
+   - Any new gaps discovered during Chats 8-11
+3. Write Phase 4 plan following same format (per-chat tasks with stop conditions)
+4. Also update DEFERRED section with anything newly deferred
+**STOP CONDITION:** Phase 4 plan written. This file is ready for the next cycle.
 
 ---
 
@@ -404,6 +464,7 @@ and a Phase 4 plan, not code.
 - **cc2codex** — LLM diversification tool, revisit if needed
 - **Octopoda shared knowledge spaces** — MT-21 hivemind enhancement, after basic hivemind is proven
 - **Loop guard v2 (embeddings)** — only if v1 string similarity proves insufficient
+- **Subagent frontmatter hardening** — deferred from 9B to 11B. CCA has no custom agents yet; the right sequence is design agents (11B) then harden with frontmatter (Phase 4). Original 9B incorrectly targeted slash commands which don't support agent frontmatter fields (maxTurns, effort, disallowedTools). See CUSTOM_AGENTS_DESIGN.md (Chat 11 deliverable) for the proper approach.
 
 ---
 

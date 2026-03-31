@@ -222,6 +222,20 @@ task selection during /cca-auto.
 
 ---
 
+## Step 2.97 — Surface recent corrections (mistake-learning)
+
+Show recent error corrections so this session avoids repeating past mistakes:
+
+```bash
+cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+python3 self-learning/resurfacer.py corrections --days 7 2>/dev/null
+```
+
+If corrections are returned, include them in the briefing under "RECENT CORRECTIONS:".
+These are auto-captured error→fix patterns from past sessions. If no corrections, skip silently.
+
+---
+
 ## Step 3 — Surface relevant findings (resurfacer)
 
 After reading SESSION_STATE.md (Step 1), determine the current work context:

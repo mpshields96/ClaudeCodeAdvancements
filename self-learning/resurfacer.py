@@ -28,9 +28,13 @@ CLI:
     python3 self-learning/resurfacer.py FINDINGS_LOG.md --mt MT-17
 """
 
+import json
+import os
 import re
 import sys
+from collections import defaultdict
 from dataclasses import dataclass, field, asdict
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 
@@ -470,49 +474,231 @@ def _extract_severity(title: str) -> str:
     return "info"
 
 
+# ── Correction Resurfacing (Prism mistake-learning pattern) ─────────────────
+
+JOURNAL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "journal.jsonl")
+DEFAULT_LOOKBACK_DAYS = 7
+MAX_CORRECTION_WARNINGS = 10
+
+
+def _load_journal_entries():
+    """Load all journal entries from JSONL."""
+    entries = []
+    if not os.path.exists(JOURNAL_PATH):
+        return entries
+    with open(JOURNAL_PATH, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    entries.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    return entries
+
+
+def _parse_timestamp(ts_str):
+    """Parse ISO timestamp string to datetime. Returns None on failure."""
+    if not ts_str:
+        return None
+    try:
+        ts_str = ts_str.replace("Z", "+00:00")
+        return datetime.fromisoformat(ts_str)
+    except (ValueError, TypeError):
+        return None
+
+
+def get_recent_corrections(days=DEFAULT_LOOKBACK_DAYS):
+    """
+    Query journal for correction_captured events within the lookback window.
+
+    Returns list of dicts with keys:
+      error_pattern, error_tool, fix_tool, count, last_seen, time_to_fix_avg, resources
+    Grouped by (error_pattern, error_tool) to deduplicate repeat mistakes.
+    """
+    entries = _load_journal_entries()
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+
+    corrections = []
+    for entry in entries:
+        if entry.get("event_type") != "correction_captured":
+            continue
+        ts = _parse_timestamp(entry.get("timestamp"))
+        if ts is None or ts < cutoff:
+            continue
+        corrections.append(entry)
+
+    if not corrections:
+        return []
+
+    # Group by (error_pattern, error_tool) to find recurring mistakes
+    groups = defaultdict(list)
+    for c in corrections:
+        metrics = c.get("metrics", {})
+        key = (metrics.get("error_pattern", "unknown"), metrics.get("error_tool", "unknown"))
+        groups[key].append(c)
+
+    summaries = []
+    for (pattern, tool), events in groups.items():
+        times_to_fix = []
+        last_seen = None
+        resources = set()
+
+        for e in events:
+            ts = _parse_timestamp(e.get("timestamp"))
+            if ts and (last_seen is None or ts > last_seen):
+                last_seen = ts
+
+            metrics = e.get("metrics", {})
+            ttf = metrics.get("time_to_fix_seconds")
+            if ttf is not None:
+                times_to_fix.append(ttf)
+
+            # Extract resource from notes (format: "Error on {resource}: ...")
+            notes = e.get("notes", "")
+            if notes.startswith("Error on "):
+                resource = notes.split(":")[0].replace("Error on ", "").strip()
+                if resource:
+                    resources.add(resource)
+
+        summaries.append({
+            "error_pattern": pattern,
+            "error_tool": tool,
+            "fix_tool": events[-1].get("metrics", {}).get("fix_tool", "unknown"),
+            "count": len(events),
+            "last_seen": last_seen.isoformat() if last_seen else None,
+            "time_to_fix_avg": round(sum(times_to_fix) / len(times_to_fix), 1) if times_to_fix else None,
+            "resources": sorted(resources)[:5],
+        })
+
+    # Most frequent first, then most recent
+    summaries.sort(key=lambda s: (-s["count"], s["last_seen"] or ""))
+
+    return summaries[:MAX_CORRECTION_WARNINGS]
+
+
+def format_correction_warnings(corrections):
+    """
+    Format correction summaries as concise one-line warnings.
+
+    Returns list of strings suitable for display at session start.
+    """
+    if not corrections:
+        return []
+
+    warnings = []
+    for c in corrections:
+        pattern = c["error_pattern"]
+        tool = c["error_tool"]
+        count = c["count"]
+        ttf = c["time_to_fix_avg"]
+
+        parts = [f"{tool}: {pattern}"]
+
+        if count > 1:
+            parts.append(f"({count}x)")
+
+        if ttf is not None:
+            parts.append(f"avg fix: {ttf:.0f}s")
+
+        if c.get("last_seen"):
+            last = _parse_timestamp(c["last_seen"])
+            if last:
+                ago = datetime.now(timezone.utc) - last
+                if ago.days > 0:
+                    parts.append(f"{ago.days}d ago")
+                elif ago.seconds >= 3600:
+                    parts.append(f"{ago.seconds // 3600}h ago")
+                else:
+                    parts.append(f"{ago.seconds // 60}m ago")
+
+        warnings.append(" — ".join(parts))
+
+    return warnings
+
+
+def format_correction_briefing(corrections, days=DEFAULT_LOOKBACK_DAYS):
+    """
+    Format corrections as a complete session-start briefing block.
+
+    Returns a string block or empty string if no corrections.
+    """
+    warnings = format_correction_warnings(corrections)
+    if not warnings:
+        return ""
+
+    lines = [f"Recent corrections (last {days} days):"]
+    for w in warnings:
+        lines.append(f"  - {w}")
+
+    return "\n".join(lines)
+
+
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Surface relevant findings from FINDINGS_LOG.md")
-    parser.add_argument("log_path", help="Path to FINDINGS_LOG.md")
-    parser.add_argument("--frontier", type=int, help="Frontier number (1-5, or 0 for all)")
-    parser.add_argument("--module", help="Module name (e.g., context-monitor)")
-    parser.add_argument("--mt", dest="mt_task", help="Master task (e.g., MT-17)")
-    parser.add_argument("--keywords", nargs="+", help="Search keywords")
-    parser.add_argument("--include-skip", action="store_true", help="Include SKIP verdicts")
-    parser.add_argument("--limit", type=int, help="Max results")
-    parser.add_argument("--json", action="store_true", help="Output as JSON")
+    parser = argparse.ArgumentParser(description="Surface relevant findings and corrections")
+    sub = parser.add_subparsers(dest="command")
+
+    # Subcommand: findings (original behavior)
+    findings_p = sub.add_parser("findings", help="Surface findings from FINDINGS_LOG.md")
+    findings_p.add_argument("log_path", help="Path to FINDINGS_LOG.md")
+    findings_p.add_argument("--frontier", type=int, help="Frontier number (1-5, or 0 for all)")
+    findings_p.add_argument("--module", help="Module name (e.g., context-monitor)")
+    findings_p.add_argument("--mt", dest="mt_task", help="Master task (e.g., MT-17)")
+    findings_p.add_argument("--keywords", nargs="+", help="Search keywords")
+    findings_p.add_argument("--include-skip", action="store_true", help="Include SKIP verdicts")
+    findings_p.add_argument("--limit", type=int, help="Max results")
+    findings_p.add_argument("--json", action="store_true", help="Output as JSON")
+
+    # Subcommand: corrections (new — Prism mistake-learning)
+    corr_p = sub.add_parser("corrections", help="Surface recent corrections from journal")
+    corr_p.add_argument("--days", type=int, default=DEFAULT_LOOKBACK_DAYS,
+                        help=f"Lookback window in days (default: {DEFAULT_LOOKBACK_DAYS})")
+    corr_p.add_argument("--json", action="store_true", help="Output as JSON")
 
     args = parser.parse_args()
 
-    results = resurface(
-        args.log_path,
-        frontier=args.frontier,
-        keywords=args.keywords,
-        module=args.module,
-        mt_task=args.mt_task,
-        include_skip=args.include_skip,
-        limit=args.limit,
-    )
+    if args.command == "corrections":
+        corrections = get_recent_corrections(days=args.days)
+        if args.json:
+            print(json.dumps(corrections, indent=2, default=str))
+        else:
+            briefing = format_correction_briefing(corrections, days=args.days)
+            if briefing:
+                print(briefing)
+            else:
+                print(f"No corrections in the last {args.days} days.")
 
-    if args.json:
-        import json
-        print(json.dumps([f.to_dict() for f in results], indent=2))
+    elif args.command == "findings":
+        results = resurface(
+            args.log_path,
+            frontier=args.frontier,
+            keywords=args.keywords,
+            module=args.module,
+            mt_task=args.mt_task,
+            include_skip=args.include_skip,
+            limit=args.limit,
+        )
+        if args.json:
+            print(json.dumps([f.to_dict() for f in results], indent=2))
+        else:
+            context_parts = []
+            if args.module:
+                context_parts.append(f"module={args.module}")
+            if args.frontier:
+                context_parts.append(f"frontier={args.frontier}")
+            if args.mt_task:
+                context_parts.append(f"task={args.mt_task}")
+            if args.keywords:
+                context_parts.append(f"keywords={','.join(args.keywords)}")
+            context = ", ".join(context_parts) or "all"
+            print(format_resurface_report(results, context))
+
     else:
-        context_parts = []
-        if args.module:
-            context_parts.append(f"module={args.module}")
-        if args.frontier:
-            context_parts.append(f"frontier={args.frontier}")
-        if args.mt_task:
-            context_parts.append(f"task={args.mt_task}")
-        if args.keywords:
-            context_parts.append(f"keywords={','.join(args.keywords)}")
-
-        context = ", ".join(context_parts) or "all"
-        print(format_resurface_report(results, context))
+        parser.print_help()
 
 
 if __name__ == "__main__":
