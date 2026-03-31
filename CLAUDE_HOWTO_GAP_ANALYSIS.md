@@ -307,3 +307,55 @@
 - Module 5 (MCP): We have our setup, just note Context7/DeepWiki
 - Module 7 (CLI flags): Reference, just note `--bare` and `--teleport`
 - Module 11 (Workflows): Similar to our spec-system, nothing new
+
+---
+
+## Second Study Resource: luongnv89/claude-howto (3K+ stars)
+
+**Cloned to:** `references/claude-howto/` (gitignored — reference only)
+**Source:** https://github.com/luongnv89/claude-howto (via r/vibecodeapp, 272pts)
+**Different from** shanraisshan/claude-code-best-practice (this gap analysis source).
+
+### Structure (10 numbered modules)
+
+| Folder | Topic | CCA Gap Priority | Study Time |
+|--------|-------|------------------|-----------|
+| 01-slash-commands/ | 8 example commands + README | LOW — we know this | 15 min skim |
+| 02-memory/ | CLAUDE.md layering (project, personal, directory) | LOW — we're ahead | 15 min skim |
+| 03-skills/ | 6 example skills (blog-draft, brand-voice, code-review, etc.) | MEDIUM — skill design patterns | 30 min |
+| 04-subagents/ | 7 example agents + 23-section deep reference | **HIGH** — covers maxTurns, effort, teams | 60 min |
+| 05-mcp/ | MCP server setup guide | LOW — we have our setup | 15 min skim |
+| 06-hooks/ | Hook events + 4 hook types (command, prompt, HTTP, agent) | **HIGH** — 25 events documented | 45 min |
+| 07-plugins/ | 3 full plugin examples (devops, documentation, pr-review) | MEDIUM — plugin architecture | 30 min |
+| 08-checkpoints/ | Checkpoint examples | LOW — basic feature | 10 min |
+| 09-advanced-features/ | Planning mode, Auto Mode, Channels, Voice | MEDIUM — several unused features | 30 min |
+| 10-cli/ | CLI flags and modes | LOW — reference | 15 min |
+
+**Total study time: ~4-5 hours** (prioritizing HIGH modules)
+
+### Built-in Interactive Features
+
+The repo includes two Claude Code skills (auto-detected on clone):
+- `/lesson-quiz <topic>` — Quiz yourself on any module (8-10 questions per topic)
+- `/self-assessment` — Comprehensive proficiency quiz across all 10 areas
+
+### Recommended Study Order (mapped to CCA gaps)
+
+1. **04-subagents/** (HIGH) — This is the deepest gap. Read the full README (23 sections).
+   Focus on: maxTurns, effort, agent teams, worktree isolation, persistent memory.
+   Cross-reference with gap analysis Module 2 above.
+
+2. **06-hooks/** (HIGH) — Read the full README for all 25 hook events.
+   Focus on: PostToolUseFailure, PreCompact/PostCompact, SessionStart/SessionEnd.
+   Cross-reference with gap analysis Module 8 above.
+
+3. **03-skills/** (MEDIUM) — Study the 6 example skills for design patterns.
+   Focus on: how SKILL.md files are structured, trigger descriptions.
+
+4. **09-advanced-features/** (MEDIUM) — Planning mode, Auto Mode, Channels.
+   Focus on: features we haven't tried yet.
+
+5. **07-plugins/** (MEDIUM) — Full plugin architecture with commands + agents + hooks.
+   This is the Command->Agent->Skill pattern from gap analysis Module 9.
+
+6. Everything else: skim at your pace.

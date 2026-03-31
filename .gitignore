@@ -19,3 +19,4 @@ pokemon-agent/*.gb.ram
 pokemon-agent/states/*.png
 pokemon-agent/states/*.state
 pokemon-agent/reference_repos/
+references/
