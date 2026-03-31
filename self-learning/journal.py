@@ -62,6 +62,8 @@ VALID_EVENT_TYPES = [
     "strategy_shift",     # Trading strategy parameter change
     # Trace analysis (MT-7)
     "trace_analysis",     # Transcript pattern analysis results
+    # Mistake-learning (Prism pattern)
+    "correction_captured", # Error->correction sequence detected and logged
 ]
 
 VALID_DOMAINS = [
