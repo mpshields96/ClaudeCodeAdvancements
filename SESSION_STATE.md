@@ -3,38 +3,37 @@
 
 ---
 
-## Current State (as of Session 246 — 2026-03-31, Chat 14.5)
+## Current State (as of Session 247 — 2026-04-01, Chat 15)
 
-**Phase:** Session 246 Chat 14.5 COMPLETE. Repo preservation + senior-reviewer validation + cache audit.
+**Phase:** Session 247 Chat 15 COMPLETE. All 4 priority agents built + Ebbinghaus decay integrated.
 
-**What was done this chat (S246 Chat 14.5):**
-- Cloned claw-code (instructkr/claw-code) to references/ — DMCA preservation
-- Cloned claude-code-source-build (andrew-kramer-inno) to references/ — DMCA preservation
-- Senior-reviewer agent VALIDATED: CONDITIONAL verdict, 5 real issues, anti-rubber-stamp confirmed
-- Cache audit: 68-99% cache read ratios, db8 bug NOT active
-- All 3 agents now fully validated (cca-test-runner, cca-reviewer, senior-reviewer)
-- TODAYS_TASKS.md updated with Chat 14.5 section
+**What was done this chat (S247 Chat 15):**
+- 15A: cca-scout agent BUILT + DEPLOYED (sonnet, maxTurns 40, validated: 4 posts from 10)
+- 15B: cca-test-runner HARDENED (maxTurns 15, summary-first output pattern)
+- 15C: Ebbinghaus decay INTEGRATED into memory_store.search() — effective_confidence + last_accessed_at
+- 15D: claw-code architecture notes documented (5 patterns, reference only)
+- MILESTONE: All 4 CUSTOM_AGENTS_DESIGN.md priority agents complete
 
 **Next:**
-1. Chat 15: cca-scout agent + test-runner hardening + Ebbinghaus decay
+1. Chat 15.5: Reddit review session (4 scout finds + Matthew's additional links)
 2. Chat 16: Agent Teams in /cca-nuclear + SessionStart hook + SubagentStart budget
 3. Chat 17: Compaction v2 + cross-chat delivery + Phase 5 plan
 
 ---
 
+## Previous State (Session 246 — 2026-03-31, Chat 14.5)
+
+**Phase:** Session 246 Chat 14.5 COMPLETE. Repo preservation + senior-reviewer validation + cache audit.
+
+**What was done this chat (S246 Chat 14.5):**
+- Cloned claw-code + claude-code-source-build to references/ (DMCA preservation)
+- Senior-reviewer VALIDATED: CONDITIONAL verdict, 5 real issues, anti-rubber-stamp confirmed
+- Cache audit: 68-99% cache read ratios, db8 bug NOT active
+- CLAUDE.md rules stolen: redundant-read guard + tool-call budget awareness
+
 ## Previous State (Session 245 — 2026-03-31)
 
 **Phase:** Session 245 COMPLETE. Chat 13: First two custom agents + 10 Principles research + tool verdicts
-
-**What was done this session (S245):**
-- Built cca-test-runner (haiku, validated) + cca-reviewer (sonnet, vocabulary routing)
-- 10 Principles research: PRISM identities, 45% threshold, rubber-stamp prevention, lost-in-middle
-- Forge/jig/contexto: all SKIP. Agent pipeline validation doc with deployment pattern
-- **Tests**: 349 suites, 12199 tests passing. All green.
-
-**Next:**
-1. Chat 14: Validate frontmatter fields (maxTurns, disallowedTools) via subagent_type invocation
-2. Chat 14: Build senior-reviewer agent + cca-scout agent
 
 ---
 ## Previous State (Session 245 — 2026-03-31)

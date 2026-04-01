@@ -1,166 +1,193 @@
-# NEXT CHAT HANDOFF — Chat 15
+# NEXT CHAT HANDOFF — Chat 15.5 / 16 / 17
 
 ## Start Here
-Run /cca-init. Last session was S246 Chat 14.5 on 2026-03-31.
-
-You are Chat 15. Phase 4 (Custom Agents) continues. Three agents validated, one to build + one to harden. Then Ebbinghaus decay integration.
+Run /cca-init. Last session was S247 Chat 15 on 2026-04-01.
 
 ---
 
-## Context: What was done (Chat 14 + 14.5)
+## Context: What was done (Chat 15)
 
-1. **All 3 agents VALIDATED** — cca-test-runner (haiku), cca-reviewer (sonnet), senior-reviewer (opus). All frontmatter fields confirmed working: `model` switches behavior, `maxTurns` is a hard cap (truncated mid-response at limit), `disallowedTools` behavioral confirmation. Full results in `AGENT_PIPELINE_VALIDATION.md`.
-2. **Two repos cloned** (DMCA preservation) to `references/` (gitignored, NOT in CCA git):
-   - `references/claw-code/` — Python rewrite of Claude Code by instructkr. 36 .py files, 30 dirs. Key files: `src/runtime.py` (routing), `src/query_engine.py` (session/budget management), `src/execution_registry.py` (uniform command/tool interface), `src/permissions.py` (deny model).
-   - `references/claude-code-source-build/` — Source map extraction by andrew-kramer-inno. CC v2.1.88 rebuilt from source maps. 4756 modules. ~90 feature flag names.
-3. **Cache audit: HEALTHY** — 68-99% cache read ratios across recent sessions. The db8 bug (cache_read stuck at ~15K) is NOT active on this machine. No urgent auditor build needed.
-4. **Reddit review #4 (Universal CLAUDE.md): ADAPT** — Two rules stolen in 14.5F: redundant-read guard + tool-call budget awareness added to CLAUDE.md Architecture Principles.
-5. **Senior-reviewer real verdict on `agent-guard/senior_review.py`:** CONDITIONAL — 5 issues found (silent `except Exception: pass` swallowing, PEP8 `l` variable, inconsistent GitContext instantiation, hardcoded LOC>1000 not a constant, dead `fp_confidence` logic). Anti-rubber-stamp confirmed: opus agent finds real issues, not a yes-machine.
+1. **15A: cca-scout agent BUILT + DEPLOYED** — 4th and final priority agent from CUSTOM_AGENTS_DESIGN.md. Sonnet, maxTurns 40, read-only. Scans r/ClaudeCode, r/ClaudeAI, r/vibecoding. Validated: 4 high-signal posts found from 10 test posts, proper rat-poison filtering, correct output format. 34K tokens, 41s. Command converted to thin orchestrator that spawns agent.
+2. **15B: cca-test-runner HARDENED** — maxTurns bumped 10->15. Summary-first output pattern added (RESULT line emitted before detailed analysis). Validated: 342/350 suites, 12199 tests, completed in turn 1 (well within 15-turn limit).
+3. **15C: Ebbinghaus decay INTEGRATED** — `decay.py` wired into `memory_store.py:search()`. New `last_accessed_at` column via migration. `search()` now returns `effective_confidence` per result (decay applied based on days since last access). Results sorted by effective_confidence. Touch-on-read refreshes decay clock. 4 new integration tests, all 117 tests pass.
+4. **15D: claw-code architecture notes** — 5 patterns documented in `CLAW_CODE_ARCHITECTURE_NOTES.md`: token-based routing, budget-aware sessions, uniform execution registry, permission deny model, filtered tool pools. Reference only — informs Chat 16+ design.
 
-**Deployed agents (all in `~/.claude/agents/`, session-discoverable):**
+**MILESTONE: All 4 priority agents from CUSTOM_AGENTS_DESIGN.md are now built and deployed.**
 
-| Agent | Model | maxTurns | Status | Token cost (observed) |
-|-------|-------|----------|--------|-----------------------|
-| cca-test-runner | haiku | 10 | VALIDATED | ~61K, 7s (quick smoke) |
-| cca-reviewer | sonnet | 30 | VALIDATED | ~43K, 158s (thorough review) |
-| senior-reviewer | opus | 15 | VALIDATED | ~40K, 168s (5 real issues) |
+| Agent | Model | maxTurns | Status |
+|-------|-------|----------|--------|
+| cca-test-runner | haiku | 15 | VALIDATED + HARDENED |
+| cca-reviewer | sonnet | 30 | VALIDATED |
+| senior-reviewer | opus | 15 | VALIDATED |
+| cca-scout | sonnet | 40 | VALIDATED |
+
+Phase 4 shifts from "build agents" to "orchestrate agents" starting Chat 16.
 
 ---
 
-## Chat 15 Tasks (4 tasks, ~70 min total)
+## Chat 15.5 — Reddit Review Session (~30 min)
 
-### 15A. Build `cca-scout` Agent (~25 min)
-**Scope:** Convert `/cca-scout` command into agent. Last of the 4 priority agents from `CUSTOM_AGENTS_DESIGN.md`.
+**Purpose:** Focused /cca-review session. No code changes. Pure intelligence gathering.
 
-**CRITICAL GOTCHA:** Agent discovery is cached at session start. An agent created mid-session will NOT be discoverable via `subagent_type`. You MUST:
-1. Build the agent file
-2. Copy to `~/.claude/agents/cca-scout.md`
-3. Test it using the `Agent` tool with `model: "sonnet"` parameter override (bypasses discovery requirement)
-4. Full `subagent_type` testing happens in Chat 16 (next session)
+### Scout Finds (from Chat 15 test run)
 
-**Frontmatter (from `CUSTOM_AGENTS_DESIGN.md` lines 108-119):**
-```yaml
+Review these 4 high-signal posts from the cca-scout validation run:
+
+1. **"Follow-up: Claude Code's source confirms the system prompt problem"** (r/ClaudeCode, 241 pts, 83 comments)
+   URL: https://www.reddit.com/r/ClaudeCode/comments/1s99j2t/
+   Why: Technical deep-dive on CC's internal system prompt structure — relevant to agent-guard and context-monitor.
+
+2. **"Claude Code running locally with Ollama"** (r/ClaudeCode, 195 pts, 62 comments)
+   URL: https://www.reddit.com/r/ClaudeCode/comments/1s90vd4/
+   Why: Local model backend for CC — implications for offline preparedness and cost reduction.
+
+3. **"Claude Code full reverse engineering breakdown"** (r/ClaudeCode, 101 pts, 18 comments)
+   URL: https://www.reddit.com/r/ClaudeCode/comments/1s8w0so/
+   Why: Pre-leak architectural analysis of CC internals — useful for hook system and tool-call budgeting.
+
+4. **"Claude Code 2.1.89 released"** (r/ClaudeCode, 93 pts, 40 comments)
+   URL: https://www.reddit.com/r/ClaudeCode/comments/1s9gubd/
+   Why: New release thread — check for changelog items affecting hooks, Stop events, session limits.
+
+### Matthew's Additional Links
+<!-- Matthew: Add your Reddit/GitHub URLs here before running Chat 15.5 -->
+5. (add URL here)
+6. (add URL here)
+
+### Workflow
+1. Run `/cca-init` (slim)
+2. For each URL above: run `/cca-review <url>` — full verdict (frontier mapping, rat poison check, BUILD/ADAPT/REFERENCE/SKIP)
+3. Log all verdicts to FINDINGS_LOG.md
+4. If any BUILD verdicts: note them for Chat 16+ task integration
+5. Commit the FINDINGS_LOG.md update
+6. Wrap with `/cca-wrap`
+
+**Budget note:** This is a review-only session. If peak hours, use cca-reviewer agent (sonnet) for each URL to keep orchestrator context lean. If off-peak, inline reviews are fine.
+
+**STOP CONDITION:** All URLs reviewed, verdicts logged, FINDINGS_LOG.md committed.
+
 ---
-name: cca-scout
-description: Scan subreddits for high-signal posts relevant to CCA frontiers. Use PROACTIVELY during /cca-nuclear sessions.
-tools: Read, Bash, Grep, Glob, WebFetch
-disallowedTools: Edit, Write, Agent
-model: sonnet
-maxTurns: 40
-effort: medium
-color: green
----
-```
+
+## Chat 16 — Agent Orchestration + Hooks (~60 min)
+
+### 16A. Wire Agent Teams into /cca-nuclear (~25 min)
+**Scope:** Make `/cca-nuclear` spawn parallel cca-reviewer agents for each URL instead of reviewing inline.
+
+**Current state:** `/cca-nuclear` scans subreddits, finds high-signal posts, then reviews each one sequentially in the main context — burning orchestrator tokens on content that should be delegated.
+
+**Target:** After cca-scout returns its ranked list, spawn one cca-reviewer agent per URL (in parallel batches of 3-4 to avoid rate limits). Each agent runs independently, returns verdict. Orchestrator collects verdicts and updates FINDINGS_LOG.md.
 
 **Steps:**
-1. Read `.claude/commands/cca-scout.md` (101 lines, 5 steps) — the current command to condense
-2. Read `reddit-intelligence/reddit_reader.py` — understand the tool the agent will call
-3. Create `.claude/agents/cca-scout.md` with frontmatter above + condensed prompt body containing:
-   - Subreddit targets: `r/ClaudeCode` (top 50), `r/ClaudeAI` (top 50), `r/vibecoding` (top 25)
-   - Reader invocation: `python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/reddit_reader.py "r/ClaudeCode" top 50`
-   - Filtering: score >= 50 OR comments >= 30; keyword match on tool/hook/agent/memory/MCP/etc
-   - Rat poison exclusions: memes, opinion posts, model debates, company news, hype
-   - Dedup: read `FINDINGS_LOG.md`, skip any URL already reviewed
-   - Output format: numbered list with title, subreddit, score, comment count, one-line "why"
-4. Copy to `~/.claude/agents/cca-scout.md` (global deploy):
-   ```bash
-   cp /Users/matthewshields/Projects/ClaudeCodeAdvancements/.claude/agents/cca-scout.md ~/.claude/agents/cca-scout.md
-   ```
-5. Convert `.claude/commands/cca-scout.md` into thin orchestrator (~15 lines) that spawns the agent
-6. Test: invoke via `Agent(model: "sonnet", prompt="Scan r/ClaudeCode for high-signal posts")` — verify it returns a ranked post list. Do NOT use `subagent_type` (won't work until next session).
-7. If the agent fails or returns garbage: check that `reddit_reader.py` path is correct, that WebFetch is in allowed tools, and that maxTurns 40 is enough for 3 subreddits
+1. Read `.claude/commands/cca-nuclear.md` — understand current flow
+2. Modify the review step: instead of inline review, spawn `Agent(subagent_type="cca-reviewer", prompt="Review <url>...")` for each URL
+3. Use parallel Agent calls (3-4 concurrent) — Claude Code supports multiple Agent tool calls in one message
+4. Collect results, format FINDINGS_LOG.md entries, append
+5. Test with 2-3 URLs from Chat 15.5's review session (use URLs already reviewed so we can compare quality)
 
-**STOP CONDITION:** Agent produces ranked post list. Both project and global copies deployed. Command converted to orchestrator. All 4 `CUSTOM_AGENTS_DESIGN.md` priority agents now complete.
+**STOP CONDITION:** `/cca-nuclear` delegates to agents. Parallel review works. FINDINGS_LOG.md updated correctly.
 
----
+### 16B. SessionStart Hook for Auto-Init (~20 min)
+**Scope:** Create a hook that fires on session start and runs lightweight init checks automatically.
 
-### 15B. Harden `cca-test-runner` Based on Real Usage (~15 min)
-**Scope:** Real usage in Chats 13-14 revealed edge cases. Fix them.
-
-**Known issues from `AGENT_PIPELINE_VALIDATION.md`:**
-- maxTurns 10 is a hard cap. Quick smoke (10 suites) completes in 7 turns. Full suite (349 suites) was CUT OFF at turn 10 mid-response — partial results lost.
-- Agent doesn't output partial results before truncation. If cut off, you get nothing useful from the last turn.
+**What it should do:**
+- Fire on CC session start (SessionStart event, if available — check CC docs)
+- Run `slim_init.py` automatically (smoke test + priority picker)
+- Output a 3-line status to the session: tests OK/FAIL, budget peak/off-peak, top task
+- Does NOT replace `/cca-init` — it's a lightweight pre-check that makes init faster
 
 **Steps:**
-1. Read `~/.claude/agents/cca-test-runner.md` and `AGENT_PIPELINE_VALIDATION.md` sections on test-runner
-2. Bump maxTurns from 10 to 15 (full suite needs ~12 turns: run + parse + rerun failures + summarize)
-3. Add instruction in prompt: "Output your summary FIRST, then detailed results. If you run out of turns, the summary is already captured."
-4. Update BOTH copies:
-   ```bash
-   cp /Users/matthewshields/Projects/ClaudeCodeAdvancements/.claude/agents/cca-test-runner.md ~/.claude/agents/cca-test-runner.md
-   ```
-5. Verify: invoke test runner with `Agent(subagent_type="cca-test-runner", prompt="Run full test suite")` — confirm it completes without truncation
+1. Check if SessionStart hook type exists in CC (may be `Notification` type or custom)
+2. If available: create `hooks/session_start_hook.py` — runs slim_init.py, outputs status
+3. Wire into `settings.local.json`
+4. Test by starting a new CC session in a separate terminal
+5. If SessionStart doesn't exist as a hook type: document the gap and propose using the existing Stop hook to write a "next session" breadcrumb instead
 
-**STOP CONDITION:** Test runner handles full suite without truncation. Summary-first output pattern confirmed.
+**STOP CONDITION:** Hook fires on session start OR gap documented with workaround.
 
----
+### 16C. SubagentStart Hook for Spawn Budget (~15 min)
+**Scope:** Track agent spawns and warn when cumulative cost exceeds budget.
 
-### 15C. Integrate Ebbinghaus Decay into Memory System (~20 min)
-**Scope:** Wire the decay function into actual memory queries. Currently dead code.
+**What it should do:**
+- Fire on each Agent tool call (PreToolUse where tool matches "Agent")
+- Count spawns this session, estimate cumulative token cost
+- Warn if total estimated agent cost > 200K tokens (configurable threshold)
+- Log each spawn to a session-level tracking file
 
-**Current state:**
-- `memory-system/decay.py` (151 lines) — has `compute_effective_confidence()` function. Standalone, nothing imports it.
-- `memory-system/tests/test_decay.py` (6.2K) — tests exist for the decay function itself.
-- `memory-system/memory_store.py:326` — `search()` method does FTS5 query, returns `_row_to_dict()` results. NO decay applied.
-- Schema (`memory_store.py:85-113`) has `created_at`, `updated_at` but NO `last_accessed_at` field.
+**Steps:**
+1. Create `hooks/spawn_budget_hook.py`
+2. PreToolUse matcher: tool_name == "Agent" or tool_name == "agent"
+3. Track count + estimated cost in `~/.claude-spawn-budget.json`
+4. At threshold: output warning (don't block — just warn)
+5. Wire into settings.local.json
+6. Test by spawning 2-3 agents and checking the budget file
 
-**Integration plan:**
-1. Add `last_accessed_at TEXT` column to the `memories` table. This requires a schema migration:
-   ```python
-   # In _init_schema or a migration method:
-   ALTER TABLE memories ADD COLUMN last_accessed_at TEXT NOT NULL DEFAULT '';
-   ```
-   Set default to empty string (backwards compatible). On first access, populate with current timestamp.
-
-2. In `search()` (line 326): after FTS5 returns rows and before `_row_to_dict()`, call `compute_effective_confidence()` for each result. Add `effective_confidence` to the returned dict. Sort by effective_confidence (decayed) instead of raw BM25 rank, or use a composite score.
-
-3. In `search()`: update `last_accessed_at` for every returned memory (touch on read). This refreshes the decay clock.
-
-4. Write integration tests in `tests/test_decay.py`:
-   - Memory created 30 days ago with HIGH confidence: effective confidence should be slightly reduced
-   - Memory created 365 days ago with LOW confidence: should be near zero
-   - Memory accessed today: `last_accessed_at` timestamp updated
-   - Search results ordered by effective confidence
-
-**Files to modify:**
-- `memory-system/memory_store.py` (~15 LOC changes: migration + search integration + access timestamp)
-- `memory-system/tests/test_decay.py` (~40 LOC additions: integration tests)
-
-**STOP CONDITION:** `search()` returns results with `effective_confidence` field. `last_accessed_at` updates on access. All existing tests still pass. New integration tests pass.
-
-Run tests after:
-```bash
-cd /Users/matthewshields/Projects/ClaudeCodeAdvancements && python3 -m pytest memory-system/tests/test_decay.py memory-system/tests/test_memory_store.py -v
-```
+**STOP CONDITION:** Hook tracks spawns, warns at threshold. Budget file accumulates correctly.
 
 ---
 
-### 15D. (If time) claw-code Architecture Notes (~10 min)
-**Scope:** Document architectural patterns from the cloned claw-code repo that inform CCA's agent dispatch design. Reference only — do NOT build anything.
+## Chat 17 — Compaction + Cross-Chat + Phase 5 Plan (~60 min)
 
-**Key findings from Chat 14.5 study of `references/claw-code/src/`:**
+### 17A. Compaction Protection v2 (~25 min)
+**Scope:** Upgrade context-monitor's compaction handling based on real session data.
 
-| File | Pattern | CCA Relevance |
-|------|---------|---------------|
-| `runtime.py` (193 lines) | `route_prompt()` — token-based fuzzy matching routes to commands OR tools by keyword overlap scoring | Separation of routing (which agent?) from execution (run agent). Our `/cca-nuclear` could use this for auto-selecting which agent handles which URL type. |
-| `query_engine.py` (194 lines) | `QueryEnginePort` — `max_turns` + `max_budget_tokens` + `compact_after_turns` + transcript persistence | Budget-aware session management. Their `max_budget_tokens=2000` is a hard cap on cumulative token usage. Directly informs our tool-call budget rule (15B). |
-| `execution_registry.py` (52 lines) | `ExecutionRegistry` — `MirroredCommand` + `MirroredTool` with uniform `.execute()` interface | Clean registry pattern. Our agents could follow: `AgentRegistry` with uniform `.spawn()`. |
-| `permissions.py` (21 lines) | `ToolPermissionContext` — `deny_names` frozenset + `deny_prefixes` tuple, `.blocks(tool_name)` | Permission model matching our `disallowedTools` frontmatter. Confirms our approach is aligned with CC internals. |
-| `tool_pool.py` (38 lines) | `ToolPool` — assembled with `simple_mode`/`include_mcp`/`permission_context` filters | Pattern for building filtered agent pools per task type (e.g., research agents vs build agents). |
+**Current state:** `context-monitor/session_pacer.py` tracks context usage zones (green/yellow/red/critical). But it doesn't protect against the actual compaction bug — where CLAUDE.md rules and session context are lost after compression fires.
 
-Write `CLAW_CODE_ARCHITECTURE_NOTES.md` (1 page max) in project root documenting these patterns.
+**Target:** Detect when compaction has fired (context usage drops suddenly) and re-inject critical rules.
 
-**STOP CONDITION:** Notes written and committed. Do NOT build anything from these patterns. They inform Chat 16+ design work.
+**Steps:**
+1. Read `context-monitor/session_pacer.py` — understand current zone tracking
+2. Add compaction detection: if context usage drops >30% between checks, compaction likely fired
+3. On detection: output a "COMPACTION DETECTED — re-reading critical context" message
+4. Re-read CLAUDE.md rules (the most commonly lost content after compaction)
+5. Test by simulating a context drop in the pacer's state file
+
+**STOP CONDITION:** Pacer detects compaction events. Re-injection triggered on detection.
+
+### 17B. Cross-Chat Delivery — Phase 3+4 Results (~15 min)
+**Scope:** Write a comprehensive CCA_TO_POLYBOT.md delivery summarizing Phase 3 (research) and Phase 4 (custom agents) results that benefit the Kalshi bot.
+
+**Deliverables for Kalshi chat:**
+- Loop detection guard (agent-guard/loop_detector.py) — prevents infinite retry loops
+- Session pacer with peak/off-peak awareness — saves tokens during rate-limited hours
+- Custom agent pattern — Kalshi could have its own agents (e.g., market-scanner, edge-validator)
+- Ebbinghaus decay for memory — applicable to Kalshi's self-learning journal (old patterns decay)
+
+**Steps:**
+1. Read current `~/.claude/cross-chat/CCA_TO_POLYBOT.md`
+2. Append a new delivery section with the 4 items above
+3. Include file paths, usage examples, and integration guidance
+4. Mark as PENDING for Kalshi chat to acknowledge
+
+**STOP CONDITION:** Delivery written with 4 items. Marked PENDING.
+
+### 17C. Write Phase 5 Plan (~20 min)
+**Scope:** Define Phase 5 of the Custom Agents milestone. Phase 4 was "build agents." Phase 5 is "production hardening + monitoring."
+
+**Phase 5 candidates (from Chat 15 advancement tips + CLAW_CODE_ARCHITECTURE_NOTES.md):**
+1. Tool-call budget hook (programmatic max_budget_tokens via PreToolUse — from claw-code patterns)
+2. Agent registry with uniform .spawn() interface
+3. Token-based prompt routing for /cca-nuclear URL dispatch
+4. Agent performance dashboard (which agents cost what, success rates)
+5. Agent retry/fallback patterns (if sonnet agent fails, retry with opus)
+
+**Steps:**
+1. Read `CUSTOM_AGENTS_DESIGN.md` for Phase 4 completion status
+2. Read `CLAW_CODE_ARCHITECTURE_NOTES.md` for architectural patterns to implement
+3. Write Phase 5 plan section in CUSTOM_AGENTS_DESIGN.md
+4. Update TODAYS_TASKS.md with Phase 5 task list
+
+**STOP CONDITION:** Phase 5 plan written and committed.
 
 ---
 
-## After Chat 15
+## Tests
+350 suites, 12199 tests passing (342/350 clean — 8 pre-existing failures in reference dirs + autoloop).
+10/10 quick smoke confirmed in Chat 15.
 
-- **Chat 16:** Agent Teams in `/cca-nuclear` (parallel URL reviews) + SessionStart hook for auto-init + SubagentStart budget tracking
-- **Chat 17:** Compaction v2 + cross-chat delivery + Phase 5 plan
+## Budget
+Check time at init:
+- **Peak (8AM-2PM ET weekday):** 40-50% budget. Skip 16C if needed. Limit agent test invocations.
+- **Off-peak:** 100% budget. Agent spawns OK.
 
-**Tests:** 349 suites, 12199 tests passing (10/10 quick smoke confirmed in 14.5 wrap). Git: main, clean.
-**Budget:** Check time at init. If off-peak (after 2PM ET or weekend): 100% budget, agent spawns OK. If peak (8AM-2PM ET weekday): 40-50%, skip 15D and limit agent test invocations.
-**Commit cadence:** Commit after each task (15A, 15B, 15C, 15D). Do not batch.
-
-**Milestone:** After 15A completes, all 4 priority agents from `CUSTOM_AGENTS_DESIGN.md` are built and deployed. Phase 4 shifts from "build agents" to "orchestrate agents" starting Chat 16.
+## Commit Cadence
+Commit after each task. Do not batch.
