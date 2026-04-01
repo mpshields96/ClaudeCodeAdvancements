@@ -82,3 +82,6 @@
 {"tip":"Vocabulary routing: 15-30 expert terms per agent as primary quality lever (Ranjan 2024)","source":"cca-desktop","session":"S245","timestamp":"2026-04-01T03:29:01.565046Z"}
 {"tip":"maxTurns is a hard cap not advisory \u2014 set conservative values (10 for mechanical, 15 for review, 30 for research)","source":"cca-desktop","session":"S246","timestamp":"2026-04-01T03:59:45.285384Z"}
 {"tip":"Dispatching 4 parallel agent reviews costs ~160K tokens total but saves main context from Reddit comment tree pollution","source":"cca-desktop","session":"S246","timestamp":"2026-04-01T03:59:45.285384Z"}
+{"tip":"Define standardized JSON return schema for agent results before building orchestration","source":"cca-desktop","session":"S248","timestamp":"2026-04-01T16:45:12.503364Z"}
+{"tip":"Agents need explicit do-not-write-to-files instructions to return results cleanly","source":"cca-desktop","session":"S248","timestamp":"2026-04-01T16:45:12.503364Z"}
+{"tip":"Low-signal posts (under 15pts/20 comments) almost always SKIP \u2014 check threshold first","source":"cca-desktop","session":"S248","timestamp":"2026-04-01T16:45:12.503364Z"}

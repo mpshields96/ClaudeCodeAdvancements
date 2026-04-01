@@ -148,3 +148,14 @@ Posts scanned: 138 total | Sessions used: 2
 ---
 
 Nuclear scan COMPLETE. All 138 posts processed. Run `/cca-auto` to implement top BUILD candidates.
+
+---
+
+## Manual Review — 2026-04-01
+
+### [2026-04-01] — "Claude Code full reverse engineering breakdown (before the leak)" (r/ClaudeCode, 102pts, 18 comments)
+- **Verdict:** ADAPT
+- **Frontier:** All five — Memory (tengu_session_memory, onyx_plover), Context Health (CLAUDE_CODE_AUTO_COMPACT_WINDOW, willow_mode thresholds 75min/100K tokens), Agent Guard (tengu_auto_background_agents, --agent-teams hidden CLI flag), Usage Dashboard (effort + task-budgets API betas), Spec (Ultraplan roadmap signal)
+- **Key insight:** Anthropic has built cross-session memory, background agent spawning, and task budgeting — all server-gated by tengu_* flags. CCA's hook-based implementations fill the exact gaps these flags leave disabled. Specific internal thresholds (Willow Mode: 75min/100K tokens) and env vars (CLAUDE_CODE_AUTO_COMPACT_WINDOW) can be directly wired into existing frontier modules.
+- **Source site:** https://ccu.galdoron.com/
+- **URL:** https://www.reddit.com/r/ClaudeCode/comments/1s8w0so/

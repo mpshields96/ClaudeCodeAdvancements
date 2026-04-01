@@ -688,7 +688,7 @@ Added to CLAUDE.md Architecture Principles: redundant-read guard + tool-call bud
 
 ### CHAT 15: Build Custom Agents (Priority 3-4) + Memory Decay Integration (~60 min)
 
-#### 15A. Build `cca-scout` Agent [TODO]
+#### 15A. Build `cca-scout` Agent [DONE S247]
 **Scope:** Convert /cca-scout into agent with sonnet model + maxTurns cap.
 **Steps:**
 1. Create `.claude/agents/cca-scout.md` with frontmatter from CUSTOM_AGENTS_DESIGN.md
@@ -697,7 +697,7 @@ Added to CLAUDE.md Architecture Principles: redundant-read guard + tool-call bud
 4. Test: run a subreddit scan, verify output quality
 **STOP CONDITION:** Agent works, produces ranked post lists.
 
-#### 15B. Harden `cca-test-runner` Agent + Build Remaining Agents [TODO]
+#### 15B. Harden `cca-test-runner` Agent + Build Remaining Agents [DONE S247]
 **Scope:** If Chat 13C built cca-test-runner successfully, harden it based on real usage.
 If 13C revealed frontmatter issues, fix them here. Then build any remaining agents
 from CUSTOM_AGENTS_DESIGN.md not yet built (cca-scout if not done in 15A).
@@ -707,7 +707,7 @@ from CUSTOM_AGENTS_DESIGN.md not yet built (cca-scout if not done in 15A).
 3. If time: build additional utility agents from CUSTOM_AGENTS_DESIGN.md
 **STOP CONDITION:** All 4 agents from CUSTOM_AGENTS_DESIGN.md built and tested.
 
-#### 15C. Integrate Ebbinghaus Decay into Memory System [TODO]
+#### 15C. Integrate Ebbinghaus Decay into Memory System [DONE S247]
 **Scope:** Wire the decay function (9A) into actual memory queries.
 **Context:** decay.py exists with compute_effective_confidence() but nothing calls it.
 Integration requires adding `last_accessed_at` field to memory schema and calling
