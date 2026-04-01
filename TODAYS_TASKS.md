@@ -681,7 +681,8 @@ inconsistent GitContext, hardcoded LOC threshold, dead fp_confidence). Anti-rubb
 
 #### 14.5E. Update TODAYS_TASKS.md [DONE S246]
 
-#### 14.5F. Steal CLAUDE.md Rules from Reddit Review #4 [SKIPPED — time-boxed session]
+#### 14.5F. Steal CLAUDE.md Rules from Reddit Review #4 [DONE S246]
+Added to CLAUDE.md Architecture Principles: redundant-read guard + tool-call budget awareness (~15 call cap for simple tasks).
 
 ---
 

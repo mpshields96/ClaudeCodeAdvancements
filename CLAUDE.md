@@ -67,6 +67,8 @@ The bot playing IS the development process, not a reward at the end of it.
 - **R&D before production.** Prototype in `/research/`, promote after testing.
 - **Tests before promotion.** Every promoted module needs passing tests.
 - **No rat poison:** No overengineering, no speculative features, no dependency bloat, no privacy violations.
+- **No redundant reads.** Before reading a file, check if you already read it this conversation. Skip the read unless the file was edited since last read. Long sessions waste significant tokens re-reading unchanged files.
+- **Tool-call budget awareness.** A 1-file bug fix should not need 30 tool calls. If a simple task exceeds ~15 tool calls, stop and reassess your approach — you may be going in circles. Multi-file features get proportionally more budget, but always question whether each tool call is necessary.
 
 ---
 
