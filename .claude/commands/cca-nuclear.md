@@ -206,54 +206,73 @@ If resuming: skip already-reviewed post IDs. Report how many are left.
 
 ---
 
-## PHASE 3 — Process Posts (batches of 10-15)
+## PHASE 3 — Process Posts (agent-delegated, batches of 3-4)
 
 Process NEEDLE posts first (highest score to lowest), then MAYBE. Never HAY.
 
-### For each post:
+### 3a. Fast-Scan Title Check (inline — no agent)
 
-**3a. Fast-Scan Title Check**
-If the title clearly indicates meme/humor/rant/complaint/comparison/pricing/first-time:
+Scan all post titles FIRST. If the title clearly indicates meme/humor/rant/complaint/comparison/pricing/first-time:
 ```
 FAST-SKIP: [title] — [reason]
 ```
+Remove fast-skipped posts from the review queue. This is cheap and saves agent spawns.
 
-**3b. Deep Read (posts that pass title check)**
-```bash
-python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/reddit_reader.py "POST_URL"
+### 3b. Agent-Delegated Review (posts that pass title check)
+
+For posts that pass the title check, spawn **cca-reviewer agents in parallel batches**.
+Each agent reviews one URL independently. The orchestrator collects and parses results.
+
+**Batch size:** 3-4 concurrent agents (respects rate limits). During PEAK hours, use 2.
+
+**For each batch, spawn agents like this (all in ONE message for parallelism):**
 ```
-Read EVERY comment — best insights are buried 3-4 levels deep.
-
-**3c. Condensed Verdict**
-
-SKIP: `SKIP: [title] ([score] pts) — [5-word reason]`
-
-REF: `REF: [title] ([score] pts) — [frontier] — [1-sentence summary]`
-
-ADAPT/BUILD:
-```
-[ADAPT/BUILD]: [title] ([score] pts) — [frontier]
-STEAL: [specific pattern, tool, or approach to take]
+Agent(subagent_type="cca-reviewer", prompt="Review this URL: <URL>\n\nAfter your standard review, output a STRUCTURED SUMMARY block at the end in this exact format:\n\n```\nREVIEW: [exact post title]\nSource: [URL]\nScore: [N] pts | [N]% upvoted | [N] comments\n\nFRONTIER: [frontier name(s)]\nRAT POISON: [CLEAN or CONTAMINATED — reason]\n\nWHAT IT IS:\n[2-3 sentences]\n\nWHAT WE CAN STEAL:\n[specific patterns worth taking]\n\nIMPLEMENTATION:\n- Delivery: [hook / command / MCP / CLI / agent]\n- Effort: [hours / days]\n- Dependencies: [none / list]\n\nVERDICT: [BUILD / ADAPT / REFERENCE / REFERENCE-PERSONAL / SKIP]\nWHY: [1-2 sentences]\n```")
 ```
 
-**3d. Special Flags**
-- Self-learning/autonomous agent posts → `POLYBOT-RELEVANT`
-- Multi-session/tmux/workspace posts → `MAESTRO-RELEVANT`
-- CLAUDE.md organization posts → `RULES-RELEVANT`
-- Token usage/cost posts → `USAGE-DASHBOARD`
+**IMPORTANT:** Include ALL Agent calls for one batch in a SINGLE message so they run in parallel.
 
-**3e. After Each Batch**
+### 3c. Parse Agent Results
 
-1. Append results to FINDINGS_LOG.md:
-   `[YYYY-MM-DD] [VERDICT] [Frontier] Description — URL`
+After each batch completes, parse each agent's output using the verdict_parser:
+
+```python
+import sys; sys.path.insert(0, 'reddit-intelligence')
+from verdict_parser import parse_verdict
+
+# For each agent result text:
+verdict = parse_verdict(agent_result_text)
+# verdict.title, verdict.verdict, verdict.frontier, verdict.url, etc.
+# verdict.to_findings_log_entry("YYYY-MM-DD") → FINDINGS_LOG format
+# verdict.to_condensed() → compact display format
+```
+
+If parsing fails (no REVIEW: block found), fall back to treating the full agent output
+as context and write a manual condensed verdict inline.
+
+### 3d. Special Flags (auto-detected by parser)
+
+The verdict_parser auto-detects these from content keywords:
+- Self-learning/autonomous agent → `POLYBOT-RELEVANT`
+- Multi-session/tmux/workspace → `MAESTRO-RELEVANT`
+- CLAUDE.md/rules file → `RULES-RELEVANT`
+- Token usage/cost tracking → `USAGE-DASHBOARD`
+
+### 3e. After Each Batch
+
+1. Append all batch results to FINDINGS_LOG.md using `verdict.to_findings_log_entry(date)`
 
 2. Update `nuclear_progress{FILE_SUFFIX}.json` with reviewed IDs and stats
 
-3. Print: `NUCLEAR: [N]/[total] | BUILD:[B] ADAPT:[A] REF:[R] SKIP:[S] | Polybot:[P]`
+3. Print batch summary:
+   ```
+   BATCH [N]: [agent_count] agents | [verdicts summary]
+   NUCLEAR: [reviewed]/[total] | BUILD:[B] ADAPT:[A] REF:[R] SKIP:[S] | Polybot:[P]
+   ```
 
 4. If context > 40%: STOP. Save progress. Generate interim report.
 
-5. Otherwise: continue automatically. Do NOT ask user between batches.
+5. Otherwise: continue to next batch automatically. Do NOT ask user between batches.
 
 ---
 
