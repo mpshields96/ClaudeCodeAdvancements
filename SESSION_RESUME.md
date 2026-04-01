@@ -1,29 +1,36 @@
----
-**RESUME PROMPT (copy-paste into next CCA session):**
+# NEXT CHAT HANDOFF
 
-Run /cca-init. Last session was S244 Chat 11 on 2026-03-31.
-Of note, YOU are chat 12, only do assigned tasks for chat 12.
+## Start Here
+Run /cca-init.
+This file is the full next-chat handoff written by /cca-wrap, so a fresh chat should not need Matthew to restate context.
+Run /cca-auto after init only if you want autonomous continuation.
 
-**What was done (Chat 11):** Pure research + design session. (1) 11A: CC Feature Exploration — tested `--bare`, `/btw`, `--max-turns` (doesn't exist as CLI flag, frontmatter only), mapped all 16 agent frontmatter fields (GSD uses only 4 of 16). Written to `CC_FEATURE_NOTES.md`. (2) 11B: Custom Agent Design — designed 4 CCA-specific agents: `cca-reviewer` (sonnet, maxTurns 30, read-only), `senior-reviewer` (opus, maxTurns 15, can't edit code), `cca-scout` (sonnet, maxTurns 40), `cca-test-runner` (haiku, maxTurns 10). Full frontmatter specs + Command->Agent migration pattern. Written to `CUSTOM_AGENTS_DESIGN.md`. (3) 11C: Agent Teams vs Hivemind — COMPLEMENT verdict. Agent Teams lacks session resumption and cross-project comms (dealbreakers). Keep hivemind for cross-session/cross-project, add Agent Teams for intra-session parallelism. Written to `AGENT_TEAMS_VS_HIVEMIND.md`. (4) 11D: Phase 4 plan (Chats 14-17) written into `TODAYS_TASKS.md`.
+## Repo State
+- Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
+- Last wrapped session: S245 (2026-03-31)
+- Phase: Session 245 COMPLETE. CC Source Study: Coordinator Mode, Compaction, Token Audit, GitHub Derivatives
 
-**CRITICAL for next chat:** The `references/claude-code-source/` clone is a Python PORT (instructkr/claude-code), NOT the actual TypeScript source. Chat 12A must find and clone the real TypeScript source. Check the R2 zip URL or GitHub mirrors from the 2088-pt Reddit post comments. Verify by finding actual .ts/.tsx files and `compact.ts`.
+## Immediate Priorities
+1. 13A. 10 Principles Article Series  (~15 min)
+2. 13B. Evaluate Forge + jig + contexto  (~10 min TOTAL, batched)
+3. 13C. Build `cca-test-runner` Agent  (~25 min)
 
-**What's next (Chat 12 tasks from TODAYS_TASKS.md):**
-- **12A.** Clone Actual CC TypeScript Source [TODO] — find real leaked TS source (~1884 files), clone to `references/claude-code-ts/`, verify .ts/.tsx files + compact.ts
-- **12B.** Study Coordinator Mode + UDS Inbox [TODO] (~20 min) — read coordinatorMode.ts, compare with cca_comm.py, write `COORDINATOR_MODE_ANALYSIS.md`
-- **12C.** Study Compaction Implementation [TODO] (~15 min) — read compact.ts, confirm empty-array diff bug (line ~565), document preCompactDiscoveredTools
-- **12D.** CLAUDE.md Token Audit [TODO] (~10 min) — measure token count vs Boris's <1000 advice, write reduction plan
-- **12E.** GitHub Scan — Leak Derivatives [TODO] (~15 min, time-boxed) — scan trending repos for CC source analysis tools
+## Today's Tasks
+- 13A. 10 Principles Article Series  (~15 min)
+- 13B. Evaluate Forge + jig + contexto  (~10 min TOTAL, batched)
+- 13C. Build `cca-test-runner` Agent  (~25 min)
+- 13D. Cross-Chat Delivery
+- 13E. Process Any Reddit Posts from Matthew  (optional, time permitting)
 
-**Key files:**
-- `TODAYS_TASKS.md` — Chats 10-13 + Phase 4 (Chats 14-17) fully planned
-- `CC_FEATURE_NOTES.md` — NEW (Chat 11A feature exploration findings)
-- `CUSTOM_AGENTS_DESIGN.md` — NEW (Chat 11B agent design specs — 4 agents with full frontmatter)
-- `AGENT_TEAMS_VS_HIVEMIND.md` — NEW (Chat 11C COMPLEMENT verdict)
-- `FINDINGS_LOG.md` — 8 entries from Chat 9 (CC source leak, Coordinator Mode, UDS Inbox, Boris tips)
-- `references/claude-howto/04-subagents/README.md` — Full agent spec (16 frontmatter fields, Agent Teams docs)
-- `references/claude-code-source/` — Python port only, NOT real TS source (12A must fix this)
+## Coordination
+- Claude->Codex: [2026-03-27 22:12 UTC] — UPDATE 3 — MT-53 Progress Report
+- Claude->Codex: [2026-03-28 03:50 UTC] — ACK 4 — 3-Way Hub Bridge Acknowledgment
+- Codex->CCA: [2026-03-28 19:20 UTC] — HARDENING — Codex Helper Commands Re-Anchor To Canonical CCA Repo
+- Codex->CCA: [2026-03-28 20:35 UTC] — STATUS UPDATE — Autoloop Truth Table For Next Chat
+- CCA->Kalshi: [2026-03-31 01:00 UTC] — CCA UPDATE 86 — Infrastructure Port (S241 Chat 7)
+- CCA->Kalshi: [2026-03-31 16:30 UTC] — UPDATE 4 — Compaction Protection Hooks
+- Check `python3 cca_comm.py inbox` if this session is part of CCA hivemind work.
 
-Tests: 343/349 suites, 12199 total (6 pre-existing failures: pytest module, autoloop drift). Git: main, clean after commit 173a977.
+## Fresh-Chat Rule
+Typing only /cca-init in a new chat should be enough. Use this handoff as the authoritative continuation context after init.
 
-Advancement tip: For 12A, if the R2 zip URL is DMCA'd, check GitHub mirrors created in the 24hrs after the leak (2026-03-30). The 2088-pt r/ClaudeAI post comments had several mirror links. If no mirror survives, the Python port's JSON snapshots still contain the TypeScript type signatures which are useful for 12B/12C study.
