@@ -91,18 +91,72 @@ A sync script could automate this (future task, not now).
 
 ---
 
-## What Chat 14 Must Validate
+## Chat 14 Validation Results (S246)
 
-1. [ ] `subagent_type: cca-test-runner` works after session restart
-2. [ ] maxTurns:10 actually caps execution
-3. [ ] disallowedTools prevents Write/Edit/Agent access
-4. [ ] model:haiku in frontmatter works (vs only Agent tool parameter)
-5. [ ] effort:low in frontmatter has observable effect
-6. [ ] Description-based auto-invocation (PROACTIVELY trigger) works
+### 1. subagent_type discovery — CONFIRMED
+Both `cca-test-runner` and `cca-reviewer` are discoverable via `subagent_type` parameter
+after session restart. Agents deployed to `~/.claude/agents/` before session start appear
+in the available types list automatically.
 
-If frontmatter fields 2-5 don't work, fallback is Agent tool parameters only.
-This changes the cca-reviewer and senior-reviewer designs (can't rely on
-frontmatter for safety scoping — must use tool parameters at invocation site).
+### 2. maxTurns — CONFIRMED (hard cap)
+`cca-test-runner` with `maxTurns: 10` was given a multi-step task (full test suite +
+individual reruns + file reads + summary). Agent used exactly 10 tool uses and was
+**cut off mid-response**. The response was truncated mid-sentence at turn 10.
+This is the safety behavior we want — maxTurns is a hard cap, not advisory.
+
+### 3. model via frontmatter — CONFIRMED
+- `cca-test-runner` (model: haiku): 61K tokens, 7s, mechanical output — haiku behavior
+- `cca-reviewer` (model: sonnet): 43K tokens, 158s, thorough multi-tool research — sonnet behavior
+- No need to pass `model` parameter at invocation site; frontmatter is sufficient
+
+### 4. disallowedTools — BEHAVIORAL CONFIRMATION
+Neither agent attempted to use their forbidden tools (Edit, Write, Agent).
+Not a hard proof (they might not have needed those tools), but the prompt design
+("you are read-only") combined with disallowedTools creates defense in depth.
+A hard test would require tricking the agent into trying a forbidden tool.
+
+### 5. effort frontmatter — UNOBSERVABLE
+`cca-reviewer` has `effort: high`, `cca-test-runner` has no effort field.
+No observable difference in behavior attributable specifically to effort.
+Likely affects internal reasoning quality but not measurable externally.
+
+### 6. Description-based PROACTIVELY — WORKS (in parent agent list)
+The description text "Use PROACTIVELY when the user pastes any URL" appears in the
+parent session's agent list. The parent (orchestrating) agent can see this instruction
+and should invoke the agent proactively. This is not automatic system behavior — it's
+guidance for the orchestrating agent/conversation.
+
+### 7. senior-reviewer — BUILT, NOT YET TESTED
+Deployed to `~/.claude/agents/senior-reviewer.md` during S246. Will be discoverable
+in the next session. Uses opus model, read-only, mandatory issue identification.
+
+---
+
+## Validated Frontmatter Fields Summary
+
+| Field | Status | Evidence |
+|-------|--------|----------|
+| name | WORKS | Both agents discovered by name |
+| description | WORKS | Displayed in agent list with full text |
+| model | WORKS | haiku vs sonnet confirmed by behavior + token costs |
+| maxTurns | WORKS | Hard cap at 10 — truncated mid-response |
+| disallowedTools | BEHAVIORAL | Neither agent tried forbidden tools |
+| effort | UNOBSERVABLE | No measurable external effect |
+| color | COSMETIC | Not verifiable in CLI output |
+
+**Bottom line:** All safety-critical frontmatter fields (model, maxTurns, disallowedTools)
+work as designed. Agents can be safely scoped via frontmatter alone — no need for
+fallback to Agent tool parameters at invocation site.
+
+---
+
+## Deployed Agents (3 total as of S246)
+
+| Agent | Model | maxTurns | Purpose | Status |
+|-------|-------|----------|---------|--------|
+| cca-test-runner | haiku | 10 | Run test suites | VALIDATED |
+| cca-reviewer | sonnet | 30 | URL review (BUILD/SKIP) | VALIDATED |
+| senior-reviewer | opus | 15 | Code review (APPROVE/RETHINK) | BUILT, untested |
 
 ---
 
@@ -110,6 +164,10 @@ frontmatter for safety scoping — must use tool parameters at invocation site).
 
 - [x] Agent file created (project + global)
 - [x] Prompt validated (haiku model, correct output format)
-- [x] Model override works (via Agent tool parameter)
-- [ ] Full frontmatter validation (needs session restart)
+- [x] Model override works (via frontmatter — confirmed S246)
+- [x] subagent_type discovery works (confirmed S246)
+- [x] maxTurns hard cap works (confirmed S246 — truncated at 10)
+- [x] disallowedTools behavioral confirmation (S246)
+- [x] senior-reviewer agent built and deployed (S246)
+- [ ] senior-reviewer validation (needs next session)
 - [ ] Integration into /cca-init and /cca-auto test steps

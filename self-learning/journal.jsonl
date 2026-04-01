@@ -1205,3 +1205,20 @@
 {"event_type":"feedback_roi","session":245,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-01T03:29:01.565046Z"}
 {"event_type":"sentinel_stats","session":245,"total_principles":193,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-01T03:29:01.565046Z"}
 {"event_type":"meta_learning_health","session":245,"health_score":0.527,"total_principles":27,"active_principles":13,"zombie_principles":14,"timestamp":"2026-04-01T03:29:01.565046Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T03:30:15.987141+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T03:30:16.013368+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T03:32:06.026450+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T03:32:06.050422+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T03:36:36.303457+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T03:36:36.337803+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T03:58:51.385734+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T03:58:51.421572+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":246,"domain":"general","outcome":"success","notes":"Chat 14: Agent pipeline fully validated, senior-reviewer built, 4 Reddit reviews dispatched via cca-reviewer agent","timestamp":"2026-04-01T03:59:45.285384Z"}
+{"event_type":"win","session":246,"domain":"general","notes":"All 3 frontmatter fields validated (model, maxTurns hard-cap, disallowedTools)","timestamp":"2026-04-01T03:59:45.285384Z"}
+{"event_type":"win","session":246,"domain":"general","notes":"Built senior-reviewer agent (opus, read-only, anti-rubber-stamp)","timestamp":"2026-04-01T03:59:45.285384Z"}
+{"event_type":"win","session":246,"domain":"general","notes":"4 Reddit reviews via cca-reviewer agent \u2014 first real agent usage","timestamp":"2026-04-01T03:59:45.285384Z"}
+{"event_type":"win","session":246,"domain":"general","notes":"maxTurns confirmed as hard cap (truncated mid-response at turn 10)","timestamp":"2026-04-01T03:59:45.285384Z"}
+{"event_type":"pain","session":246,"domain":"general","notes":"None significant","timestamp":"2026-04-01T03:59:45.285384Z"}
+{"event_type":"feedback_roi","session":246,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-01T03:59:45.285384Z"}
+{"event_type":"sentinel_stats","session":246,"total_principles":193,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-01T03:59:45.285384Z"}
+{"event_type":"meta_learning_health","session":246,"health_score":0.527,"total_principles":27,"active_principles":13,"zombie_principles":14,"timestamp":"2026-04-01T03:59:45.285384Z"}

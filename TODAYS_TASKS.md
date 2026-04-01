@@ -641,7 +641,7 @@ First two agents from the CUSTOM_AGENTS_DESIGN.md priority list.
 5. Keep old command logic as backup comment block until proven (3+ sessions)
 **STOP CONDITION:** Agent works, produces BUILD/SKIP verdicts. Old command still functional.
 
-#### 14B. Build `senior-reviewer` Agent [TODO]
+#### 14B. Build `senior-reviewer` Agent [DONE S246]
 **Scope:** Convert /senior-review into read-only agent.
 **Steps:**
 1. Create `.claude/agents/senior-reviewer.md` with frontmatter from CUSTOM_AGENTS_DESIGN.md
@@ -650,7 +650,7 @@ First two agents from the CUSTOM_AGENTS_DESIGN.md priority list.
 4. Test: review a recently modified file, verify APPROVE/CONDITIONAL/RETHINK verdict
 **STOP CONDITION:** Agent works, produces structured verdicts. Cannot edit files.
 
-#### 14C. Validate Agent Frontmatter Fields [TODO]
+#### 14C. Validate Agent Frontmatter Fields [DONE S246]
 **Scope:** Verify that maxTurns, effort, disallowedTools actually work as documented.
 **Steps:**
 1. Test maxTurns: spawn cca-reviewer with maxTurns: 3, verify it stops

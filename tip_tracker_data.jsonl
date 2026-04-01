@@ -78,3 +78,7 @@
 {"tip":"Agent Teams COMPLEMENT verdict: keep hivemind for cross-session, use Teams for intra-session parallelism","source":"cca-desktop","session":"S244","timestamp":"2026-04-01T01:12:02.816012Z"}
 {"tip":"Build simplest agent first to validate pipeline before complex ones","source":"cca-desktop","session":"S245","timestamp":"2026-04-01T02:43:40.341233Z"}
 {"tip":"Phase 4 detail should wait for Chat 13C empirical data","source":"cca-desktop","session":"S245","timestamp":"2026-04-01T02:43:40.341233Z"}
+{"tip":"Agents must be in ~/.claude/agents/ (global) \u2014 project-level not discovered by Agent tool","source":"cca-desktop","session":"S245","timestamp":"2026-04-01T03:29:01.565046Z"}
+{"tip":"Vocabulary routing: 15-30 expert terms per agent as primary quality lever (Ranjan 2024)","source":"cca-desktop","session":"S245","timestamp":"2026-04-01T03:29:01.565046Z"}
+{"tip":"maxTurns is a hard cap not advisory \u2014 set conservative values (10 for mechanical, 15 for review, 30 for research)","source":"cca-desktop","session":"S246","timestamp":"2026-04-01T03:59:45.285384Z"}
+{"tip":"Dispatching 4 parallel agent reviews costs ~160K tokens total but saves main context from Reddit comment tree pollution","source":"cca-desktop","session":"S246","timestamp":"2026-04-01T03:59:45.285384Z"}
