@@ -470,7 +470,7 @@ NOT the leaked TypeScript source. The actual source was distributed via:
 Find and clone the REAL TypeScript source. Verify by checking for .ts/.tsx files
 and the compact.ts file specifically.
 
-#### 12A. Clone Actual CC TypeScript Source [TODO]
+#### 12A. Clone Actual CC TypeScript Source [DONE S245]
 **Scope:** Find and clone the real leaked source (TypeScript, ~1884 files).
 **Steps:**
 1. Check the GitHub links from FINDINGS_LOG entries (2026-03-31 leak posts)
@@ -481,7 +481,7 @@ and the compact.ts file specifically.
 **STOP CONDITION:** Real TypeScript source cloned and verified. If unavailable (DMCA'd),
 document and proceed with the Python port's JSON snapshots instead.
 
-#### 12B. Study Coordinator Mode + UDS Inbox [TODO] (~20 min)
+#### 12B. Study Coordinator Mode + UDS Inbox [DONE S245] (~20 min)
 **Scope:** Read the actual Coordinator Mode and UDS Inbox implementation.
 **Steps:**
 1. Read coordinator/coordinatorMode.ts — how workers spawn, communicate, report
@@ -491,7 +491,7 @@ document and proceed with the Python port's JSON snapshots instead.
 5. Verdict: does this replace cca_comm.py? Partial replace? Complement?
 **STOP CONDITION:** Analysis written. This directly informs MT-21 direction.
 
-#### 12C. Study Compaction Implementation [TODO] (~15 min)
+#### 12C. Study Compaction Implementation [DONE S245] (~15 min)
 **Scope:** Read the actual compact.ts to understand the bug we're working around.
 **Steps:**
 1. Find and read services/compact/compact.ts
@@ -500,7 +500,7 @@ document and proceed with the Python port's JSON snapshots instead.
 4. Document: what can our PostCompact hook realistically restore?
 **STOP CONDITION:** Compaction internals documented. Feeds Chat 10 design.
 
-#### 12D. CLAUDE.md Token Audit [TODO] (~10 min)
+#### 12D. CLAUDE.md Token Audit [DONE S245] (~10 min)
 **Scope:** Measure our CLAUDE.md against Boris Cherny's <1000 token advice.
 **Steps:**
 1. Count tokens in our project CLAUDE.md: `wc -w CLAUDE.md` (rough: words * 1.3)
@@ -509,7 +509,7 @@ document and proceed with the Python port's JSON snapshots instead.
 4. Write reduction plan — target <1000 tokens for root CLAUDE.md
 **STOP CONDITION:** Audit complete with reduction plan. Don't implement yet.
 
-#### 12E. GitHub Scan — Leak Derivatives [TODO] (~15 min, time-boxed)
+#### 12E. GitHub Scan — Leak Derivatives [DONE S245] (~15 min, time-boxed)
 **Scope:** Quick scan of GitHub trending for high-quality CC source analysis.
 **Steps:**
 1. Search GitHub for repos created since 2026-03-30 mentioning "claude code source"
@@ -521,53 +521,78 @@ document and proceed with the Python port's JSON snapshots instead.
 
 ---
 
-### CHAT 13: Research Paper Deep-Dive + Tool Evaluation (~60 min)
+### CHAT 13: Compressed Research + First Agent Build (~60 min)
 
-**Goal:** Turn the 17-paper agentic AI research into actionable CCA improvements.
-Evaluate the three tools mentioned (Forge, jig, contexto) against our existing stack.
+**Goal:** PIVOT from research to building. Last research chat in this cycle.
+Compress remaining research into quick verdicts, then build the simplest custom
+agent as proof-of-concept. This validates the entire agent pipeline before Chat 14
+builds the harder agents.
 
-#### 13A. Fetch and Study 10 Principles Article Series [TODO] (~20 min)
-**Scope:** Read jdforsythe.github.io/10-principles thoroughly.
+**Strategic context (S245 analysis):**
+- Chats 9-12 were 4 consecutive research-heavy sessions. Only Chat 10 produced running code.
+- Research was necessary (can't build agents without studying frontmatter fields, can't design
+  context monitors without understanding compaction) but 4 straight research chats is the limit.
+- Chat 13 is the last with ANY pure research. After this, it's building until agents are running.
+- The 4 custom agents designed in CUSTOM_AGENTS_DESIGN.md are the biggest deliverable from
+  all this research. Building them proves the research was worth the investment.
+
+#### 13A. 10 Principles Article Series [TODO] (~15 min)
+**Scope:** Read jdforsythe.github.io/10-principles. Focus on the 4 principles most
+relevant to CCA's upcoming agent builds.
 **Steps:**
-1. Fetch the article series (10 principles across multiple pages)
-2. For each principle: map to CCA's current state (do we follow it? violate it?)
-3. Key principles to focus on:
-   - PRISM identities (<50 tokens) — audit our agent/command descriptions
-   - 45% threshold — when to use single vs multi-agent
-   - Rubber-stamp prevention — how to make senior-review adversarial
-   - Lost-in-middle — how our context management addresses this
-4. Write research doc: `AGENTIC_WORKFLOW_RESEARCH.md`
-**STOP CONDITION:** Research doc written. Actionable gaps identified.
+1. Fetch the article series
+2. Focus on: PRISM identities (<50 tokens), 45% multi-agent threshold,
+   rubber-stamp prevention, lost-in-middle context management
+3. Write `AGENTIC_WORKFLOW_RESEARCH.md` — short (1-2 pages), actionable gaps only
+**STOP CONDITION:** Research doc written. 15 min max. Move on.
 
-#### 13B. Evaluate Forge (Agent Assembly) [TODO] (~15 min)
-**Scope:** Clone and study github.com/jdforsythe/forge.
+#### 13B. Evaluate Forge + jig + contexto [TODO] (~10 min TOTAL, batched)
+**Scope:** Quick BUILD/SKIP verdicts for all three tools in one pass. NOT deep dives.
 **Steps:**
-1. Clone to references/forge/
-2. Read: how does it assemble agent teams? What's the vocabulary routing?
-3. Compare: does this offer anything our .claude/agents/ design (Chat 11B) doesn't?
-4. Verdict: ADOPT / ADAPT / SKIP with reasoning
-**STOP CONDITION:** Verdict written.
+1. For each tool: read README, check star count, assess overlap with CCA tooling
+2. Forge (agent assembly) — does it offer anything our .claude/agents/ design doesn't?
+3. jig (context loading) — does it beat slim_init.py?
+4. contexto (context pruning) — complementary or redundant with context-monitor?
+5. Write 3-line verdict per tool in FINDINGS_LOG.md (not separate analysis docs)
+**STOP CONDITION:** 3 verdicts logged. 10 min max. Don't clone any repos.
 
-#### 13C. Evaluate jig (Selective Context Loading) [TODO] (~10 min)
-**Scope:** Study github.com/jdforsythe/jig.
+#### 13C. Build `cca-test-runner` Agent [TODO] (~25 min)
+**Scope:** Build CCA's FIRST custom agent. The simplest one: haiku model, maxTurns 10,
+runs tests and reports results. This validates the entire agent pipeline.
+**Why this one first:**
+- Simplest frontmatter (haiku, maxTurns:10, only needs Bash+Read)
+- Immediately useful (every session runs tests — offloading saves opus tokens)
+- Validates: does maxTurns work? Does model override work? Does disallowedTools work?
+- If this works, Chat 14 can confidently build cca-reviewer and senior-reviewer
 **Steps:**
-1. Read architecture: how does it define and load context profiles?
-2. Compare: our slim_init.py does selective loading — does jig do it better?
-3. Verdict: ADOPT / ADAPT / SKIP
-**STOP CONDITION:** Verdict written.
+1. Read CUSTOM_AGENTS_DESIGN.md for the cca-test-runner spec
+2. Create `.claude/agents/cca-test-runner.md` with frontmatter:
+   ```yaml
+   ---
+   name: cca-test-runner
+   description: Run CCA test suite and report results
+   model: haiku
+   maxTurns: 10
+   disallowedTools: Write, Edit, Agent
+   ---
+   ```
+3. Write agent prompt body: run parallel_test_runner.py, parse output, report
+   pass/fail with failure details. ~30 lines.
+4. Test: spawn it manually with Agent tool, verify it runs tests and returns
+5. Validate frontmatter: does maxTurns actually cap it? Does haiku model activate?
+6. Document any frontmatter fields that don't work as expected
+**STOP CONDITION:** Agent runs tests successfully. Frontmatter validated.
+**Deliverable:** `.claude/agents/cca-test-runner.md` + validation notes
 
-#### 13D. Evaluate contexto (Active Context Pruning) [TODO] (~10 min)
-**Scope:** Study github.com/ekailabs/contexto.
-**Steps:**
-1. Read: how does it prune context during a session?
-2. Compare: our context-monitor + session_pacer — complementary or redundant?
-3. Verdict: ADOPT / ADAPT / SKIP
-**STOP CONDITION:** Verdict written.
-
-#### 13E. Cross-Chat Delivery [TODO]
-**Scope:** If any research findings are Kalshi-relevant, deliver via CCA_TO_POLYBOT.md.
-The multi-agent efficiency data (DeepMind 2025) may inform Kalshi session design.
+#### 13D. Cross-Chat Delivery [TODO]
+**Scope:** Write CCA_TO_POLYBOT.md if research findings are Kalshi-relevant.
+Also deliver the custom agent pattern — Kalshi could use a similar test-runner agent.
 **STOP CONDITION:** Delivery written or skipped.
+
+#### 13E. Process Any Reddit Posts from Matthew [TODO] (optional, time permitting)
+**Scope:** If Matthew feeds additional Reddit posts, review them with /cca-review.
+Only do this AFTER 13A-13D are complete. Do not let new research derail the build.
+**STOP CONDITION:** Posts reviewed or skipped if no time.
 
 ---
 
@@ -579,13 +604,23 @@ are CCA's first custom agents (from 11B design) and integration of Phase 3 compo
 **Evidence chain:**
 - Chat 11B designed 4 custom agents with full frontmatter specs (CUSTOM_AGENTS_DESIGN.md)
 - Chat 11C confirmed COMPLEMENT verdict: keep hivemind + add Agent Teams layer
+- Chat 12B studied actual Coordinator Mode source — cca_comm.py covers ~40% of CC's functionality.
+  Key gaps: typed messages, idle notifications, plan approval workflow, scratchpad.
+- Chat 12C studied actual compact.ts — empty-array diff is INTENTIONAL (full re-announcement).
+  preCompactDiscoveredTools preserves deferred tool schemas. Auto-compact triggers at ~98%.
+- Chat 12D audited CLAUDE.md — 11.4K tokens loaded per session (11.4x Boris target).
+  Reduction plan written: 58% savings achievable (Tier 1 quick wins + Tier 2 restructure).
+- Chat 13C builds first agent (cca-test-runner) to validate pipeline before Phase 4.
 - Chat 9A built Ebbinghaus decay function but did NOT integrate into memory system
-- Chat 10 built compaction protection but v2 improvements deferred pending real TS source
-- Chat 12 (upcoming) will study Coordinator Mode + UDS Inbox — may shift MT-21 direction
+- Chat 10 built compaction protection v1
 
 **Key reference documents:**
 - `CUSTOM_AGENTS_DESIGN.md` — 4 agents designed, frontmatter specs, migration pattern
 - `AGENT_TEAMS_VS_HIVEMIND.md` — COMPLEMENT verdict, hybrid architecture
+- `COORDINATOR_MODE_ANALYSIS.md` — NEW (S245): 3-layer transport, 10+ structured message types, CCA comparison
+- `COMPACTION_ANALYSIS.md` — NEW (S245): full pipeline, PTL recovery, cache sharing, file restoration budgets
+- `CLAUDE_MD_TOKEN_AUDIT.md` — NEW (S245): 11.4K tokens, 58% reduction plan
+- `CC_SOURCE_DERIVATIVES.md` — NEW (S245): 10 repos/blogs mapped to CCA frontiers
 - `CC_FEATURE_NOTES.md` — 16 frontmatter fields, --bare for tooling
 - `memory-system/decay.py` — Ebbinghaus decay function (built, not integrated)
 - `context-monitor/hooks/pre_compact.py` — Compaction protection v1
@@ -637,13 +672,15 @@ First two agents from the CUSTOM_AGENTS_DESIGN.md priority list.
 4. Test: run a subreddit scan, verify output quality
 **STOP CONDITION:** Agent works, produces ranked post lists.
 
-#### 15B. Build `cca-test-runner` Agent [TODO]
-**Scope:** New agent (not from existing command) — haiku model test executor.
+#### 15B. Harden `cca-test-runner` Agent + Build Remaining Agents [TODO]
+**Scope:** If Chat 13C built cca-test-runner successfully, harden it based on real usage.
+If 13C revealed frontmatter issues, fix them here. Then build any remaining agents
+from CUSTOM_AGENTS_DESIGN.md not yet built (cca-scout if not done in 15A).
 **Steps:**
-1. Create `.claude/agents/cca-test-runner.md` — haiku, maxTurns:10, read-only+Bash
-2. Write prompt: run parallel_test_runner.py, parse output, report failures
-3. Test: spawn from main context, verify it runs tests and returns results
-**STOP CONDITION:** Agent runs tests in separate context, reports pass/fail.
+1. Review 13C validation notes — any frontmatter fields that didn't work?
+2. Fix any issues discovered (maxTurns not capping, model not switching, etc.)
+3. If time: build additional utility agents from CUSTOM_AGENTS_DESIGN.md
+**STOP CONDITION:** All 4 agents from CUSTOM_AGENTS_DESIGN.md built and tested.
 
 #### 15C. Integrate Ebbinghaus Decay into Memory System [TODO]
 **Scope:** Wire the decay function (9A) into actual memory queries.
