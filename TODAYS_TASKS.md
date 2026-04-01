@@ -659,6 +659,30 @@ First two agents from the CUSTOM_AGENTS_DESIGN.md priority list.
 4. Document any fields that don't work as expected
 **STOP CONDITION:** Frontmatter validation documented. Fix any broken configs.
 
+### CHAT 14.5: Clone Repos + Validate Senior-Reviewer + Cache Audit (~20 min)
+
+Matthew's explicit directives — urgent repo preservation + validation.
+
+#### 14.5A. Clone claw-code Repo [DONE S246]
+**Scope:** Preserve instructkr/claw-code locally before potential DMCA takedown.
+Cloned to `references/claw-code/`. Not committed to CCA git (gitignored).
+
+#### 14.5B. Clone claude-code-source-build Repo [DONE S246]
+**Scope:** Preserve andrew-kramer-inno/claude-code-source-build locally.
+Cloned to `references/claude-code-source-build/`. Not committed to CCA git (gitignored).
+
+#### 14.5C. Validate senior-reviewer Agent [DONE S246]
+**Result:** CONDITIONAL verdict, 5 issues found (silent exception swallowing, PEP8 `l` var,
+inconsistent GitContext, hardcoded LOC threshold, dead fp_confidence). Anti-rubber-stamp confirmed.
+40K tokens, 168s. Documented in AGENT_PIPELINE_VALIDATION.md.
+
+#### 14.5D. Cache Audit Diagnostic [DONE S246]
+**Result:** Cache read ratios 68-99% across recent sessions. db8 bug NOT active. No action needed.
+
+#### 14.5E. Update TODAYS_TASKS.md [DONE S246]
+
+#### 14.5F. Steal CLAUDE.md Rules from Reddit Review #4 [SKIPPED — time-boxed session]
+
 ---
 
 ### CHAT 15: Build Custom Agents (Priority 3-4) + Memory Decay Integration (~60 min)
