@@ -171,5 +171,77 @@ class TestDecayRateConstants(unittest.TestCase):
         self.assertGreater(DEFAULT_PRUNE_FLOOR, 0.0)
 
 
+class TestDecayIntegrationWithMemoryStore(unittest.TestCase):
+    """Integration tests: decay applied during MemoryStore.search()."""
+
+    def setUp(self):
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+        from memory_store import MemoryStore
+        self.store = MemoryStore(":memory:")
+
+    def tearDown(self):
+        self.store.close()
+
+    def test_search_returns_effective_confidence(self):
+        """Search results include the effective_confidence field."""
+        self.store.create_memory("testing decay integration", tags=["test"])
+        results = self.store.search("decay")
+        self.assertTrue(len(results) > 0)
+        self.assertIn("effective_confidence", results[0])
+        # Just created — effective confidence should be very close to 100
+        self.assertGreater(results[0]["effective_confidence"], 95.0)
+
+    def test_search_updates_last_accessed_at(self):
+        """Searching touches last_accessed_at on returned memories."""
+        mem = self.store.create_memory("access timestamp test", tags=["access"])
+        # Initially last_accessed_at is empty
+        row = self.store.get_by_id(mem["id"])
+        self.assertEqual(row.get("last_accessed_at", ""), "")
+
+        # Search should populate last_accessed_at
+        self.store.search("access timestamp")
+        row = self.store.get_by_id(mem["id"])
+        self.assertTrue(row.get("last_accessed_at", ""), "last_accessed_at should be populated after search")
+        self.assertIn("T", row["last_accessed_at"])  # ISO format
+
+    def test_old_memory_has_lower_effective_confidence(self):
+        """A memory with an old created_at has lower effective_confidence than a fresh one."""
+        from datetime import datetime, timezone, timedelta
+        # Create two memories
+        fresh = self.store.create_memory("fresh memory for decay test", tags=["fresh"])
+        old = self.store.create_memory("old memory for decay test", tags=["old"])
+
+        # Manually backdate the old memory's updated_at and created_at
+        old_date = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat().replace("+00:00", "Z")
+        self.store._conn.execute(
+            "UPDATE memories SET created_at = ?, updated_at = ? WHERE id = ?",
+            (old_date, old_date, old["id"]),
+        )
+        self.store._conn.commit()
+
+        results = self.store.search("memory decay test")
+        self.assertEqual(len(results), 2)
+        # Results are sorted by effective_confidence descending
+        self.assertGreater(results[0]["effective_confidence"], results[1]["effective_confidence"])
+        # Fresh should be first
+        self.assertIn("fresh", results[0]["content"])
+
+    def test_very_old_low_confidence_near_zero(self):
+        """A LOW confidence memory from 365 days ago should have near-zero effective confidence."""
+        from datetime import datetime, timezone, timedelta
+        mem = self.store.create_memory("ancient low confidence memory", confidence="LOW", tags=["ancient"])
+        old_date = (datetime.now(timezone.utc) - timedelta(days=365)).isoformat().replace("+00:00", "Z")
+        self.store._conn.execute(
+            "UPDATE memories SET created_at = ?, updated_at = ? WHERE id = ?",
+            (old_date, old_date, mem["id"]),
+        )
+        self.store._conn.commit()
+
+        results = self.store.search("ancient low confidence")
+        self.assertEqual(len(results), 1)
+        # LOW at 0.93^365 ≈ 0.0 (effectively zero)
+        self.assertLess(results[0]["effective_confidence"], 1.0)
+
+
 if __name__ == "__main__":
     unittest.main()

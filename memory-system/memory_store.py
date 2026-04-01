@@ -19,6 +19,8 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional
 
+from decay import compute_effective_confidence
+
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -111,6 +113,11 @@ class MemoryStore:
                 value TEXT
             );
         """)
+        # Migration: add last_accessed_at column if missing
+        cols = {r[1] for r in self._conn.execute("PRAGMA table_info(memories)").fetchall()}
+        if "last_accessed_at" not in cols:
+            self._conn.execute("ALTER TABLE memories ADD COLUMN last_accessed_at TEXT NOT NULL DEFAULT ''")
+
         # Store schema version
         self._conn.execute(
             "INSERT OR REPLACE INTO meta (key, value) VALUES ('schema_version', ?)",
@@ -370,7 +377,39 @@ class MemoryStore:
             # Bad FTS5 query syntax — fall back to empty results
             return []
 
-        return [self._row_to_dict(r) for r in rows]
+        now = datetime.now(timezone.utc)
+        results = []
+        ids_to_touch = []
+        for r in rows:
+            d = self._row_to_dict(r)
+            # Compute days since last access (or creation if never accessed)
+            ref_field = d.get("last_accessed_at") or d.get("updated_at") or d.get("created_at")
+            try:
+                ref_dt = datetime.fromisoformat(ref_field.replace("Z", "+00:00"))
+                days_since = max(0.0, (now - ref_dt).total_seconds() / 86400)
+            except (ValueError, TypeError, AttributeError):
+                days_since = 0.0
+            d["effective_confidence"] = compute_effective_confidence(
+                100.0,  # base score normalized to 100
+                days_since,
+                d.get("confidence", "MEDIUM"),
+            )
+            results.append(d)
+            ids_to_touch.append(d["id"])
+
+        # Touch last_accessed_at for all returned memories
+        now_iso = _now_iso()
+        if ids_to_touch:
+            placeholders = ",".join("?" for _ in ids_to_touch)
+            self._conn.execute(
+                f"UPDATE memories SET last_accessed_at = ? WHERE id IN ({placeholders})",
+                [now_iso] + ids_to_touch,
+            )
+            self._conn.commit()
+
+        # Sort by effective_confidence descending (highest relevance + freshness first)
+        results.sort(key=lambda d: d["effective_confidence"], reverse=True)
+        return results
 
     def _prepare_query(self, query: str) -> str:
         """Prepare a search query for FTS5.
