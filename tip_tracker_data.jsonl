@@ -74,3 +74,5 @@
 {"tip":"Custom agent design (11B) is the proper home for subagent frontmatter \u2014 commands don't support it","source":"cca-desktop","session":"S241","timestamp":"2026-03-31T03:25:43.315748Z"}
 {"tip":"PreCompact hook can be extended to capture last N tool calls from transcript JSONL for richer recovery context","source":"cca-desktop","session":"S243","timestamp":"2026-03-31T23:26:43.654762Z"}
 {"tip":"SessionStart hook fires with matcher 'compact' after compaction \u2014 could inject recovery digest directly into session context","source":"cca-desktop","session":"S243","timestamp":"2026-03-31T23:26:43.654762Z"}
+{"tip":"Agent frontmatter has 16 fields but GSD only uses 4 \u2014 maxTurns and disallowedTools are the most impactful unused fields","source":"cca-desktop","session":"S244","timestamp":"2026-04-01T01:12:02.816012Z"}
+{"tip":"Agent Teams COMPLEMENT verdict: keep hivemind for cross-session, use Teams for intra-session parallelism","source":"cca-desktop","session":"S244","timestamp":"2026-04-01T01:12:02.816012Z"}

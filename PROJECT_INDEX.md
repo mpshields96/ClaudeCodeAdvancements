@@ -555,3 +555,9 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `context-monitor/hooks/pre_compact.py` (S243)
 - `context-monitor/COMPACTION_PROTECTION_DESIGN.md` (S243)
 - `context-monitor/tests/test_pre_compact.py` (S243)
+
+
+### Added in S244
+- `CC_FEATURE_NOTES.md` (S244)
+- `CUSTOM_AGENTS_DESIGN.md` (S244)
+- `AGENT_TEAMS_VS_HIVEMIND.md` (S244)
