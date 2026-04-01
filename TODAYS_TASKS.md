@@ -370,7 +370,7 @@ for Kalshi. Wire globally in settings.local.json (same as loop guard).
 Research + evaluation session. Output is design notes and Phase 4 plan, not code.
 Each exploration task is time-boxed to prevent rabbit holes.
 
-#### 11A. Hands-On CC Feature Exploration [TODO] (~15 min, hard cap)
+#### 11A. Hands-On CC Feature Exploration [DONE S244] (~15 min, hard cap)
 **Scope:** Try features from gap analysis we've never used. Quick pass — try each
 once, note if useful, move on.
 **Steps:**
@@ -386,7 +386,7 @@ once, note if useful, move on.
 paralysis — "useful / not useful / needs more testing" is sufficient.
 **STOP CONDITION:** 3 features tried, findings noted. 15 minutes max. Move on.
 
-#### 11B. Custom Agent Design for CCA [TODO] (~20 min)
+#### 11B. Custom Agent Design for CCA [DONE S244] (~20 min)
 **Scope:** Design CCA's first custom agents as `.claude/agents/*.md` files.
 This is where the deferred subagent frontmatter hardening (original 9B) lands.
 **Context:** Chat 8 confirmed CCA has zero custom agents — all 32 commands are
@@ -418,7 +418,7 @@ inline slash commands. The claude-howto Module 4 subagent spec shows agents get:
 The original 9B tried to add frontmatter to commands (wrong target). This task
 correctly designs custom agents from scratch with proper frontmatter.
 
-#### 11C. Native Agent Teams vs Hivemind Evaluation [TODO] (~15 min)
+#### 11C. Native Agent Teams vs Hivemind Evaluation [DONE S244] (~15 min)
 **Scope:** Compare Anthropic's native agent teams with our cca_comm.py hivemind.
 **Steps:**
 1. Check if native agent teams are available:
@@ -436,7 +436,7 @@ correctly designs custom agents from scratch with proper frontmatter.
 **Time-box:** 15 minutes. If agent teams are too experimental to test, write the
 verdict from docs alone and move on. Don't burn the session on setup issues.
 
-#### 11D. Write Phase 4 Plan [TODO] (~10 min)
+#### 11D. Write Phase 4 Plan [DONE S244] (~10 min)
 **Scope:** Based on Chats 8-11 findings, write Phase 4 task list into this file.
 **Steps:**
 1. Review what Chats 8-11 delivered vs deferred:
@@ -571,6 +571,170 @@ The multi-agent efficiency data (DeepMind 2025) may inform Kalshi session design
 
 ---
 
+## PHASE 4: NATIVE AGENT SYSTEM + INTEGRATION (Chats 14-17)
+
+Phase 3 researched and designed. Phase 4 builds and integrates. The key deliverables
+are CCA's first custom agents (from 11B design) and integration of Phase 3 components.
+
+**Evidence chain:**
+- Chat 11B designed 4 custom agents with full frontmatter specs (CUSTOM_AGENTS_DESIGN.md)
+- Chat 11C confirmed COMPLEMENT verdict: keep hivemind + add Agent Teams layer
+- Chat 9A built Ebbinghaus decay function but did NOT integrate into memory system
+- Chat 10 built compaction protection but v2 improvements deferred pending real TS source
+- Chat 12 (upcoming) will study Coordinator Mode + UDS Inbox — may shift MT-21 direction
+
+**Key reference documents:**
+- `CUSTOM_AGENTS_DESIGN.md` — 4 agents designed, frontmatter specs, migration pattern
+- `AGENT_TEAMS_VS_HIVEMIND.md` — COMPLEMENT verdict, hybrid architecture
+- `CC_FEATURE_NOTES.md` — 16 frontmatter fields, --bare for tooling
+- `memory-system/decay.py` — Ebbinghaus decay function (built, not integrated)
+- `context-monitor/hooks/pre_compact.py` — Compaction protection v1
+
+---
+
+### CHAT 14: Build Custom Agents (Priority 1-2) (~60 min)
+
+First two agents from the CUSTOM_AGENTS_DESIGN.md priority list.
+
+#### 14A. Build `cca-reviewer` Agent [TODO]
+**Scope:** Convert /cca-review command into Command -> Agent pattern.
+**Steps:**
+1. Create `.claude/agents/cca-reviewer.md` with frontmatter from CUSTOM_AGENTS_DESIGN.md
+2. Condense cca-review.md Steps 1-5 into agent prompt body (~80 lines max)
+3. Convert cca-review.md into thin orchestrator that spawns the agent
+4. Test: review a Reddit URL, compare output quality vs old command
+5. Keep old command logic as backup comment block until proven (3+ sessions)
+**STOP CONDITION:** Agent works, produces BUILD/SKIP verdicts. Old command still functional.
+
+#### 14B. Build `senior-reviewer` Agent [TODO]
+**Scope:** Convert /senior-review into read-only agent.
+**Steps:**
+1. Create `.claude/agents/senior-reviewer.md` with frontmatter from CUSTOM_AGENTS_DESIGN.md
+2. Key: disallowedTools: Edit, Write, Agent — reviewer cannot modify code
+3. Condense senior-review.md into agent prompt body
+4. Test: review a recently modified file, verify APPROVE/CONDITIONAL/RETHINK verdict
+**STOP CONDITION:** Agent works, produces structured verdicts. Cannot edit files.
+
+#### 14C. Validate Agent Frontmatter Fields [TODO]
+**Scope:** Verify that maxTurns, effort, disallowedTools actually work as documented.
+**Steps:**
+1. Test maxTurns: spawn cca-reviewer with maxTurns: 3, verify it stops
+2. Test effort: compare output quality at effort:low vs effort:high
+3. Test disallowedTools: verify senior-reviewer cannot Write
+4. Document any fields that don't work as expected
+**STOP CONDITION:** Frontmatter validation documented. Fix any broken configs.
+
+---
+
+### CHAT 15: Build Custom Agents (Priority 3-4) + Memory Decay Integration (~60 min)
+
+#### 15A. Build `cca-scout` Agent [TODO]
+**Scope:** Convert /cca-scout into agent with sonnet model + maxTurns cap.
+**Steps:**
+1. Create `.claude/agents/cca-scout.md` with frontmatter from CUSTOM_AGENTS_DESIGN.md
+2. Condense cca-scout.md into agent prompt body
+3. Convert cca-scout.md into thin orchestrator
+4. Test: run a subreddit scan, verify output quality
+**STOP CONDITION:** Agent works, produces ranked post lists.
+
+#### 15B. Build `cca-test-runner` Agent [TODO]
+**Scope:** New agent (not from existing command) — haiku model test executor.
+**Steps:**
+1. Create `.claude/agents/cca-test-runner.md` — haiku, maxTurns:10, read-only+Bash
+2. Write prompt: run parallel_test_runner.py, parse output, report failures
+3. Test: spawn from main context, verify it runs tests and returns results
+**STOP CONDITION:** Agent runs tests in separate context, reports pass/fail.
+
+#### 15C. Integrate Ebbinghaus Decay into Memory System [TODO]
+**Scope:** Wire the decay function (9A) into actual memory queries.
+**Context:** decay.py exists with compute_effective_confidence() but nothing calls it.
+Integration requires adding `last_accessed_at` field to memory schema and calling
+decay during memory retrieval.
+**Steps:**
+1. Update memory-system/schema.md — add `last_accessed_at` field
+2. Update memory query path to call compute_effective_confidence()
+3. Update memory access to refresh last_accessed_at timestamp
+4. Tests for integration (decay during query, timestamp updates)
+**STOP CONDITION:** Memory queries return decayed confidence scores.
+
+---
+
+### CHAT 16: /cca-nuclear Agent Teams Integration + Hook Automation (~60 min)
+
+#### 16A. Wire Agent Teams into /cca-nuclear [TODO]
+**Scope:** Use Agent Teams for parallel URL reviews within /cca-nuclear sessions.
+**Context:** 11C COMPLEMENT verdict: Agent Teams for intra-session parallelism.
+/cca-nuclear currently reviews URLs sequentially. With Agent Teams, it can spawn
+multiple cca-reviewer agents in parallel.
+**Steps:**
+1. Add CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 to settings (if not already)
+2. Modify cca-nuclear.md to spawn parallel reviewers for batches of 3-5 URLs
+3. Test: run a nuclear scan, verify parallel reviews complete correctly
+4. Measure: time for 10 reviews (sequential vs parallel)
+**STOP CONDITION:** Nuclear scans use parallel reviews. Fallback to sequential if teams fail.
+**Risk:** Agent Teams is experimental — must have graceful fallback.
+
+#### 16B. SessionStart Hook for Auto-Init [TODO]
+**Scope:** Move some /cca-init diagnostics into a SessionStart hook.
+**Context:** Gap analysis (6A) identified SessionStart as unused. Could automate
+parts of init (smoke test check, pacer reset, timer start) without the full command.
+**Steps:**
+1. Build `hooks/session_start.py` — lightweight session startup
+2. Auto-run: smoke test cache check, pacer reset, timer start
+3. Wire in settings.local.json as SessionStart hook
+4. Test: start a new session, verify hook fires
+**STOP CONDITION:** Hook fires reliably. Does NOT replace /cca-init — just pre-warms.
+
+#### 16C. SubagentStart Hook for Spawn Budget [TODO]
+**Scope:** Track and optionally limit agent spawns during peak hours.
+**Context:** Peak hours (8AM-2PM ET) should minimize agent spawns (40-50% budget).
+SubagentStart hook can count spawns and warn/block during peak.
+**Steps:**
+1. Build `hooks/subagent_budget.py` — count spawns, check time window
+2. During peak: warn after 3 spawns, soft-block after 5
+3. During off-peak: no limit (log only)
+4. Tests
+**STOP CONDITION:** Hook wired and tested. Warn-only mode initially.
+
+---
+
+### CHAT 17: Compaction v2 + Cross-Chat Delivery + Phase 5 Planning (~45 min)
+
+#### 17A. Compaction Protection v2 [TODO]
+**Scope:** Enhance PreCompact/PostCompact based on Chat 12C findings (TS source study).
+**Prereq:** Chat 12C must complete first (study actual compact.ts implementation).
+**Steps:**
+1. Review 12C findings — what can PostCompact realistically restore?
+2. If compact.ts study reveals preCompactDiscoveredTools structure: capture it
+3. If not: improve snapshot to include last N tool calls from session state
+4. Update tests
+**STOP CONDITION:** v2 hooks reflect actual compaction internals. Or documented as
+"v1 is sufficient" if 12C reveals no additional leverage.
+
+#### 17B. Cross-Chat Delivery — Phase 3+4 Results [TODO]
+**Scope:** Write comprehensive CCA_TO_POLYBOT.md delivery of all Phase 3-4 improvements.
+**Steps:**
+1. List all improvements that benefit Kalshi sessions:
+   - Compaction protection hooks (global — already wired)
+   - Custom agents pattern (if applicable to Kalshi)
+   - SubagentStart budget hook (global — peak protection)
+   - SessionStart hook (global — auto-init)
+2. Write delivery with implementation notes
+**STOP CONDITION:** Delivery written.
+
+#### 17C. Write Phase 5 Plan [TODO]
+**Scope:** Based on Chats 12-17 findings, plan the next cycle.
+**Candidates:**
+- Coordinator Mode adoption (if 12B confirms it's shipping publicly)
+- UDS Inbox integration (if 12B confirms socket API is stable)
+- Agent Teams GA features (if Anthropic stabilizes the API)
+- /loop integration to replace autoloop_trigger.py (Boris tip, FINDINGS_LOG #5)
+- Memory system FTS5 search (Frontier 1 core feature, still unbuilt)
+- /batch for parallel worktree operations (Boris tip)
+**STOP CONDITION:** Phase 5 plan written.
+
+---
+
 ## DEFERRED (not scheduled, revisit when relevant)
 
 - **TurboQuant vector compression** — only when Frontier 1 hits storage scale problems
@@ -578,7 +742,7 @@ The multi-agent efficiency data (DeepMind 2025) may inform Kalshi session design
 - **cc2codex** — LLM diversification tool, revisit if needed
 - **Octopoda shared knowledge spaces** — MT-21 hivemind enhancement, after basic hivemind is proven
 - **Loop guard v2 (embeddings)** — only if v1 string similarity proves insufficient
-- **Subagent frontmatter hardening** — deferred from 9B to 11B. CCA has no custom agents yet; the right sequence is design agents (11B) then harden with frontmatter (Phase 4). Original 9B incorrectly targeted slash commands which don't support agent frontmatter fields (maxTurns, effort, disallowedTools). See CUSTOM_AGENTS_DESIGN.md (Chat 11 deliverable) for the proper approach.
+- **Subagent frontmatter hardening** — COMPLETED via 11B. Custom agent designs now in CUSTOM_AGENTS_DESIGN.md with full frontmatter specs. Phase 4 Chats 14-15 will build them.
 
 ---
 
