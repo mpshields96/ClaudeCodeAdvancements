@@ -76,3 +76,5 @@
 {"tip":"SessionStart hook fires with matcher 'compact' after compaction \u2014 could inject recovery digest directly into session context","source":"cca-desktop","session":"S243","timestamp":"2026-03-31T23:26:43.654762Z"}
 {"tip":"Agent frontmatter has 16 fields but GSD only uses 4 \u2014 maxTurns and disallowedTools are the most impactful unused fields","source":"cca-desktop","session":"S244","timestamp":"2026-04-01T01:12:02.816012Z"}
 {"tip":"Agent Teams COMPLEMENT verdict: keep hivemind for cross-session, use Teams for intra-session parallelism","source":"cca-desktop","session":"S244","timestamp":"2026-04-01T01:12:02.816012Z"}
+{"tip":"Build simplest agent first to validate pipeline before complex ones","source":"cca-desktop","session":"S245","timestamp":"2026-04-01T02:43:40.341233Z"}
+{"tip":"Phase 4 detail should wait for Chat 13C empirical data","source":"cca-desktop","session":"S245","timestamp":"2026-04-01T02:43:40.341233Z"}

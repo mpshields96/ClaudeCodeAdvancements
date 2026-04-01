@@ -1176,3 +1176,20 @@
 {"event_type":"feedback_roi","session":244,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-01T01:12:02.816012Z"}
 {"event_type":"sentinel_stats","session":244,"total_principles":192,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-01T01:12:02.816012Z"}
 {"event_type":"meta_learning_health","session":244,"health_score":0.542,"total_principles":26,"active_principles":13,"zombie_principles":13,"timestamp":"2026-04-01T01:12:02.816012Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T01:54:44.776912+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T01:54:44.800957+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T02:42:07.501980+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T02:42:07.539661+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T02:42:50.306400+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T02:42:50.343090+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":245,"domain":"general","outcome":"success","notes":"CC Source Study: Coordinator Mode, Compaction, Token Audit, GitHub Derivatives","timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"win","session":245,"domain":"general","notes":"Cloned real CC TS source (1892 files)","timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"win","session":245,"domain":"general","notes":"Coordinator Mode analysis with CCA comparison","timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"win","session":245,"domain":"general","notes":"Compaction pipeline documented","timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"win","session":245,"domain":"general","notes":"CLAUDE.md 11.4K token audit","timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"win","session":245,"domain":"general","notes":"10 derivative repos mapped","timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"win","session":245,"domain":"general","notes":"Chat 13 restructured as pivot","timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"pain","session":245,"domain":"general","notes":"None","timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"feedback_roi","session":245,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"sentinel_stats","session":245,"total_principles":192,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"meta_learning_health","session":245,"health_score":0.542,"total_principles":26,"active_principles":13,"zombie_principles":13,"timestamp":"2026-04-01T02:43:40.341233Z"}

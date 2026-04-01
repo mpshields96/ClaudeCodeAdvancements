@@ -561,3 +561,10 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `CC_FEATURE_NOTES.md` (S244)
 - `CUSTOM_AGENTS_DESIGN.md` (S244)
 - `AGENT_TEAMS_VS_HIVEMIND.md` (S244)
+
+
+### Added in S245
+- `COORDINATOR_MODE_ANALYSIS.md` (S245)
+- `COMPACTION_ANALYSIS.md` (S245)
+- `CLAUDE_MD_TOKEN_AUDIT.md` (S245)
+- `CC_SOURCE_DERIVATIVES.md` (S245)

@@ -4019,3 +4019,23 @@ CLI chat 2:
 - None — research session on time
 
 ---
+
+## Session 245 — 2026-03-31
+
+**What changed:**
+- Cloned real CC TS source (1892 files)
+- Coordinator Mode analysis (3-layer transport, CCA comparison)
+- Compaction pipeline fully documented
+- CLAUDE.md 11.4K token audit with 58% reduction plan
+- 10 derivative repos mapped to CCA frontiers
+- Chat 13 restructured as research-to-build pivot
+
+**Why:**
+- CC Source Study: Coordinator Mode, Compaction, Token Audit, GitHub Derivatives
+
+**Tests:** 12199/12199 passing (349 suites)
+
+**Lessons:**
+- None
+
+---
