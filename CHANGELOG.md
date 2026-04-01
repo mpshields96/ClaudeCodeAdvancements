@@ -4039,3 +4039,20 @@ CLI chat 2:
 - None
 
 ---
+
+## Session 245 — 2026-03-31
+
+**What changed:**
+- Built cca-test-runner (haiku, validated) + cca-reviewer (sonnet, vocabulary routing)
+- 10 Principles research: PRISM identities, 45% threshold, rubber-stamp prevention, lost-in-middle
+- Forge/jig/contexto: all SKIP. Agent pipeline validation doc with deployment pattern
+
+**Why:**
+- Chat 13: First two custom agents + 10 Principles research + tool verdicts
+
+**Tests:** 12199/12199 passing (349 suites)
+
+**Lessons:**
+- None
+
+---

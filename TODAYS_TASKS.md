@@ -536,7 +536,7 @@ builds the harder agents.
 - The 4 custom agents designed in CUSTOM_AGENTS_DESIGN.md are the biggest deliverable from
   all this research. Building them proves the research was worth the investment.
 
-#### 13A. 10 Principles Article Series [TODO] (~15 min)
+#### 13A. 10 Principles Article Series [DONE S245] (~15 min)
 **Scope:** Read jdforsythe.github.io/10-principles. Focus on the 4 principles most
 relevant to CCA's upcoming agent builds.
 **Steps:**
@@ -546,7 +546,7 @@ relevant to CCA's upcoming agent builds.
 3. Write `AGENTIC_WORKFLOW_RESEARCH.md` — short (1-2 pages), actionable gaps only
 **STOP CONDITION:** Research doc written. 15 min max. Move on.
 
-#### 13B. Evaluate Forge + jig + contexto [TODO] (~10 min TOTAL, batched)
+#### 13B. Evaluate Forge + jig + contexto [DONE S245] (~10 min TOTAL, batched)
 **Scope:** Quick BUILD/SKIP verdicts for all three tools in one pass. NOT deep dives.
 **Steps:**
 1. For each tool: read README, check star count, assess overlap with CCA tooling
@@ -556,7 +556,7 @@ relevant to CCA's upcoming agent builds.
 5. Write 3-line verdict per tool in FINDINGS_LOG.md (not separate analysis docs)
 **STOP CONDITION:** 3 verdicts logged. 10 min max. Don't clone any repos.
 
-#### 13C. Build `cca-test-runner` Agent [TODO] (~25 min)
+#### 13C. Build `cca-test-runner` Agent [DONE S245] (~25 min)
 **Scope:** Build CCA's FIRST custom agent. The simplest one: haiku model, maxTurns 10,
 runs tests and reports results. This validates the entire agent pipeline.
 **Why this one first:**
@@ -584,12 +584,12 @@ runs tests and reports results. This validates the entire agent pipeline.
 **STOP CONDITION:** Agent runs tests successfully. Frontmatter validated.
 **Deliverable:** `.claude/agents/cca-test-runner.md` + validation notes
 
-#### 13D. Cross-Chat Delivery [TODO]
+#### 13D. Cross-Chat Delivery [DONE S245]
 **Scope:** Write CCA_TO_POLYBOT.md if research findings are Kalshi-relevant.
 Also deliver the custom agent pattern — Kalshi could use a similar test-runner agent.
 **STOP CONDITION:** Delivery written or skipped.
 
-#### 13E. Process Any Reddit Posts from Matthew [TODO] (optional, time permitting)
+#### 13E. Process Any Reddit Posts from Matthew [DEFERRED — next session with cca-reviewer agent]
 **Scope:** If Matthew feeds additional Reddit posts, review them with /cca-review.
 Only do this AFTER 13A-13D are complete. Do not let new research derail the build.
 **STOP CONDITION:** Posts reviewed or skipped if no time.
@@ -631,7 +631,7 @@ are CCA's first custom agents (from 11B design) and integration of Phase 3 compo
 
 First two agents from the CUSTOM_AGENTS_DESIGN.md priority list.
 
-#### 14A. Build `cca-reviewer` Agent [TODO]
+#### 14A. Build `cca-reviewer` Agent [DONE S245 — pulled forward to Chat 13]
 **Scope:** Convert /cca-review command into Command -> Agent pattern.
 **Steps:**
 1. Create `.claude/agents/cca-reviewer.md` with frontmatter from CUSTOM_AGENTS_DESIGN.md

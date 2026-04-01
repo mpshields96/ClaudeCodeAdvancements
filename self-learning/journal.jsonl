@@ -1193,3 +1193,15 @@
 {"event_type":"feedback_roi","session":245,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-01T02:43:40.341233Z"}
 {"event_type":"sentinel_stats","session":245,"total_principles":192,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-01T02:43:40.341233Z"}
 {"event_type":"meta_learning_health","session":245,"health_score":0.542,"total_principles":26,"active_principles":13,"zombie_principles":13,"timestamp":"2026-04-01T02:43:40.341233Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T02:54:53.889741+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T02:54:53.917884+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T03:27:47.495752+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-01T03:27:47.526896+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":245,"domain":"general","outcome":"success","notes":"Chat 13: Built first two custom agents, completed research pivot, validated agent pipeline","timestamp":"2026-04-01T03:29:01.565046Z"}
+{"event_type":"win","session":245,"domain":"general","notes":"Built cca-test-runner + cca-reviewer (first two custom agents)","timestamp":"2026-04-01T03:29:01.565046Z"}
+{"event_type":"win","session":245,"domain":"general","notes":"10 Principles research distilled into actionable agent design patterns","timestamp":"2026-04-01T03:29:01.565046Z"}
+{"event_type":"win","session":245,"domain":"general","notes":"Agent pipeline validated: global deployment, model override, session-start caching","timestamp":"2026-04-01T03:29:01.565046Z"}
+{"event_type":"pain","session":245,"domain":"general","notes":"None","timestamp":"2026-04-01T03:29:01.565046Z"}
+{"event_type":"feedback_roi","session":245,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-01T03:29:01.565046Z"}
+{"event_type":"sentinel_stats","session":245,"total_principles":193,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-01T03:29:01.565046Z"}
+{"event_type":"meta_learning_health","session":245,"health_score":0.527,"total_principles":27,"active_principles":13,"zombie_principles":14,"timestamp":"2026-04-01T03:29:01.565046Z"}

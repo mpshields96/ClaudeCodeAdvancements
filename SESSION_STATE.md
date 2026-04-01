@@ -5,6 +5,22 @@
 
 ## Current State (as of Session 245 — 2026-03-31)
 
+**Phase:** Session 245 COMPLETE. Chat 13: First two custom agents + 10 Principles research + tool verdicts
+
+**What was done this session (S245):**
+- Built cca-test-runner (haiku, validated) + cca-reviewer (sonnet, vocabulary routing)
+- 10 Principles research: PRISM identities, 45% threshold, rubber-stamp prevention, lost-in-middle
+- Forge/jig/contexto: all SKIP. Agent pipeline validation doc with deployment pattern
+- **Tests**: 349 suites, 12199 tests passing. All green.
+
+**Next:**
+1. Chat 14: Validate frontmatter fields (maxTurns, disallowedTools) via subagent_type invocation
+2. Chat 14: Build senior-reviewer agent + cca-scout agent
+
+---
+
+## Previous State (Session 245 — 2026-03-31)
+
 **Phase:** Session 245 COMPLETE. CC Source Study: Coordinator Mode, Compaction, Token Audit, GitHub Derivatives
 
 **What was done this session (S245):**
@@ -20,7 +36,6 @@
 1. Chat 13: 10 Principles research + Forge/jig/contexto verdicts + BUILD cca-test-runner agent
 
 ---
-
 ## Previous State (Session 244 — 2026-03-31)
 
 **Phase:** Session 244 COMPLETE. Chat 11: CC feature exploration + custom agent design + Agent Teams vs Hivemind evaluation + Phase 4 plan
