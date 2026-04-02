@@ -8,13 +8,19 @@ Run /cca-auto after init only if you want autonomous continuation.
 ## Repo State
 - Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
 - Last wrapped session: S250 (2026-04-02)
-- Phase: Session 250 COMPLETE. 21A tool-call budget hook (38 tests, wired PreToolUse), 21B cca-nuclear-daily spawns cca-scout agent
+- Phase: Session 250 COMPLETE. Chat 22 complete: 7 CCA hooks ported to polymarket-bot, font/directive rules extracted, Phase 6 plan written to TODAYS_TASKS.md
 
 ## Immediate Priorities
-1. all TODAYS_TASKS.md items complete — check MASTER_TASKS for next priority
+1. 23A. Extract session prompts from polybot-init.md
+2. 23B. Slim polybot-init.md structure
+3. 24A. Slim polybot-wrap.md
 
 ## Today's Tasks
-- No remaining [TODO] items found in TODAYS_TASKS.md.
+- 23A. Extract session prompts from polybot-init.md
+- 23B. Slim polybot-init.md structure
+- 24A. Slim polybot-wrap.md
+- 24B. Adapt batch_wrap_learning.py for Kalshi domain
+- 25A. Bot health check + API verification
 
 ## Coordination
 - Claude->Codex: [2026-03-27 22:12 UTC] — UPDATE 3 — MT-53 Progress Report

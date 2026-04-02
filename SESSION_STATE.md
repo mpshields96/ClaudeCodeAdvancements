@@ -5,6 +5,20 @@
 
 ## Current State (as of Session 250 — 2026-04-02)
 
+**Phase:** Session 250 COMPLETE. Chat 22 complete: 7 CCA hooks ported to polymarket-bot, font/directive rules extracted, Phase 6 plan written to TODAYS_TASKS.md
+
+**What was done this session (S250):**
+- 22A: 7 hooks wired in polymarket-bot (compaction protection, context meter, tool budget, alert, auto-handoff)
+- 22B: font-rules.md + standing-directives.md created, stripped from 3 command files
+- **Tests**: 10 suites, 331 tests passing. All green.
+
+**Next:**
+1. Chat 23: slim polybot-init.md 15.4KB→4KB (extract session prompts to SESSION_RESUME.md)
+
+---
+
+## Previous State (Session 250 — 2026-04-02)
+
 **Phase:** Session 250 COMPLETE. 21A tool-call budget hook (38 tests, wired PreToolUse), 21B cca-nuclear-daily spawns cca-scout agent
 
 **What was done this session (S250):**
@@ -16,7 +30,6 @@
 1. all TODAYS_TASKS.md items complete — check MASTER_TASKS for next priority
 
 ---
-
 ## Previous State (Session 249 — 2026-04-01)
 
 **Phase:** Session 249 COMPLETE. Chat 16: verdict_parser for agent-delegated /cca-nuclear, SessionStart hook, spawn budget hook

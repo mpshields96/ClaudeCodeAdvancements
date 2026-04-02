@@ -4125,3 +4125,19 @@ CLI chat 2:
 - no significant losses
 
 ---
+
+## Session 250 — 2026-04-02
+
+**What changed:**
+- 22A: 7 hooks wired in polymarket-bot (compaction protection, context meter, tool budget, alert, auto-handoff)
+- 22B: font-rules.md + standing-directives.md created, stripped from 3 command files
+
+**Why:**
+- Chat 22 complete: 7 CCA hooks ported to polymarket-bot, font/directive rules extracted, Phase 6 plan written to TODAYS_TASKS.md
+
+**Tests:** 331/331 passing (10 suites)
+
+**Lessons:**
+- no losses
+
+---

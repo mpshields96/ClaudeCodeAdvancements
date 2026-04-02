@@ -1314,3 +1314,16 @@
 {"event_type":"feedback_roi","session":250,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-02T22:23:37.063466Z"}
 {"event_type":"sentinel_stats","session":250,"total_principles":199,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-02T22:23:37.063466Z"}
 {"event_type":"meta_learning_health","session":250,"health_score":0.513,"total_principles":33,"active_principles":13,"zombie_principles":14,"timestamp":"2026-04-02T22:23:37.063466Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-02T22:45:34.946075+00:00","session_id":"","trigger":"unknown","pre_zone":"green","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":11}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-02T23:22:50.114299+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0.0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-02T23:27:31.514591+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-02T23:27:31.539293+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-02T23:27:39.756034+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-02T23:27:39.778674+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":250,"domain":"general","outcome":"success","notes":"Chat 22: hook chain port + rule dedup for Kalshi bot CCA-parity Phase 6","timestamp":"2026-04-02T23:27:57.755659Z"}
+{"event_type":"win","session":250,"domain":"general","notes":"7 CCA hooks ported to polymarket-bot with zero code (pure config)","timestamp":"2026-04-02T23:27:57.755659Z"}
+{"event_type":"win","session":250,"domain":"general","notes":"font-rules + standing-directives extracted to rules files, deduped across 3 commands","timestamp":"2026-04-02T23:27:57.755659Z"}
+{"event_type":"pain","session":250,"domain":"general","notes":"no losses","timestamp":"2026-04-02T23:27:57.755659Z"}
+{"event_type":"feedback_roi","session":250,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-02T23:27:57.755659Z"}
+{"event_type":"sentinel_stats","session":250,"total_principles":199,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-02T23:27:57.755659Z"}
+{"event_type":"meta_learning_health","session":250,"health_score":0.513,"total_principles":33,"active_principles":13,"zombie_principles":14,"timestamp":"2026-04-02T23:27:57.755659Z"}
