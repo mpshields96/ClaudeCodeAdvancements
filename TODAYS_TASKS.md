@@ -834,7 +834,7 @@ write Phase 5 plan (production hardening + monitoring), update TODAYS_TASKS.
 
 ### CHAT 19: cca-reviewer Agent Build (Highest ROI remaining agent)
 
-#### 19A. Build cca-reviewer Agent [TODO]
+#### 19A. Build cca-reviewer Agent [DONE S250 — agent exists, cca-review.md thin wrapper, CLAUDE.md auto-trigger updated]
 **Scope:** Convert /cca-review command into isolated cca-reviewer agent. Biggest remaining
 agent build from CUSTOM_AGENTS_DESIGN.md. Sonnet model, read-only, maxTurns 30.
 **Context:** Phase 4 proved the agent pattern. cca-reviewer is the highest-priority
@@ -848,7 +848,7 @@ with Reddit comment trees and analysis scaffolding.
 5. Keep original cca-review.md as fallback until 3 session validation passes
 **STOP CONDITION:** Agent produces BUILD/SKIP verdicts on 3 URLs. /cca-nuclear uses it.
 
-#### 19B. Hook Chain Integration Test [TODO]
+#### 19B. Hook Chain Integration Test [DONE S250 — 27 tests: session_start, spawn_budget, pre/post compact chain, state isolation]
 **Scope:** Validate that SessionStart → spawn budget → compaction v2 hooks work together
 without conflicts. Unit tests pass but interaction hasn't been integration-tested.
 **Steps:**
