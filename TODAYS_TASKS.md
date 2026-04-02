@@ -862,7 +862,7 @@ without conflicts. Unit tests pass but interaction hasn't been integration-teste
 
 ### CHAT 20: Agent Registry + Cost Monitoring
 
-#### 20A. Agent Registry (CLAW_CODE Pattern) [TODO]
+#### 20A. Agent Registry (CLAW_CODE Pattern) [DONE S250 — agent_registry.py + 33 tests pass]
 **Scope:** Implement uniform agent discovery from CLAW_CODE_ARCHITECTURE_NOTES.md §3.
 All CCA agents should be discoverable via a single registry, not scattered across ~/.claude/agents/.
 **Steps:**
@@ -872,7 +872,7 @@ All CCA agents should be discoverable via a single registry, not scattered acros
 4. Add registry check to /cca-init briefing (show count of active agents)
 **STOP CONDITION:** Registry lists all agents, init shows count.
 
-#### 20B. Agent Cost Dashboard [TODO]
+#### 20B. Agent Cost Dashboard [DONE S250 — agent_cost_reader.py + 41 tests pass]
 **Scope:** The spawn budget hook logs agent invocations. Build a reader that shows
 aggregate costs, success rates, and token usage per agent type.
 **Steps:**
