@@ -968,7 +968,7 @@ Extract to SESSION_RESUME.md (written by wrap, read by init at runtime).
 
 ### CHAT 24: Slim polybot-wrap.md + Session Infrastructure
 
-#### 24A. Slim polybot-wrap.md [TODO]
+#### 24A. Slim polybot-wrap.md [DONE]
 **Scope:** Apply CCA wrap pattern — critical path + OPTIONAL tags.
 **Steps:**
 1. Add CRITICAL PATH block at top (Steps 1, 3A, 3B, 4, 5 — the money steps)
@@ -978,7 +978,7 @@ Extract to SESSION_RESUME.md (written by wrap, read by init at runtime).
 **TARGET:** polybot-wrap.md 7.3KB → ~4KB
 **STOP CONDITION:** Wrap produces SESSION_RESUME.md. File under 4KB.
 
-#### 24B. Adapt batch_wrap_learning.py for Kalshi domain [TODO]
+#### 24B. Adapt batch_wrap_learning.py for Kalshi domain [DONE]
 **Scope:** CCA's batch_wrap_learning.py logs session learnings to self-learning journal.
 Adapt for Kalshi trading domain: trading events instead of general dev events.
 **Steps:**
