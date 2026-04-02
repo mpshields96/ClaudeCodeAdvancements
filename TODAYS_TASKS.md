@@ -942,7 +942,7 @@ Font rules and standing directives appear 3x across commands — move to .claude
 
 ### CHAT 23: Slim polybot-init.md
 
-#### 23A. Extract session prompts from polybot-init.md [TODO]
+#### 23A. Extract session prompts from polybot-init.md [DONE]
 **Scope:** The MAIN CHAT PROMPT and RESEARCH CHAT PROMPT blocks are the biggest waste — ~250 lines
 of stale state embedded in the command file, re-parsed on every init invocation.
 Extract to SESSION_RESUME.md (written by wrap, read by init at runtime).
@@ -955,7 +955,7 @@ Extract to SESSION_RESUME.md (written by wrap, read by init at runtime).
 **TARGET:** polybot-init.md 15.4KB → ~4KB
 **STOP CONDITION:** polybot-init.md under 5KB. polybot-wrap writes to SESSION_RESUME.md correctly.
 
-#### 23B. Slim polybot-init.md structure [TODO]
+#### 23B. Slim polybot-init.md structure [DONE]
 **Scope:** After 23A extractions, compress remaining static content.
 **Steps:**
 1. Merge STEP 3 (announce state) and STEP 4 (route to work) — they're 2 lines of logic, not 2 sections
