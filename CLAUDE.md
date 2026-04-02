@@ -126,20 +126,19 @@ The target is tools that Matthew can use TODAY in his Claude Code sessions, not 
 
 ## URL Review — Auto-Trigger (Non-Negotiable)
 
-When the user pastes a Reddit, GitHub, or any URL in this project's chat — with or without a slash command — Claude MUST automatically read and review it using the `/cca-review` workflow.
+When the user pastes a Reddit, GitHub, or any URL in this project's chat — with or without a slash command — Claude MUST automatically review it using the `cca-reviewer` agent.
 
 **How it works:**
 1. Detect any URL in the user's message (reddit.com, github.com, or any http/https link)
-2. For Reddit: run `python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/reddit_reader.py "<URL>"` to get the full post + all comments
-3. For non-Reddit: use WebFetch to read the page
-4. Deliver the full `/cca-review` verdict: frontier mapping, rat poison check, BUILD/ADAPT/REFERENCE/SKIP
-5. If the post contains links to GitHub repos, tools, or other resources — follow and read those too
+2. Spawn the `cca-reviewer` agent with the URL — it runs in isolation, keeping comment trees out of main context
+3. Display the agent's verdict: frontier mapping, rat poison check, BUILD/ADAPT/REFERENCE/SKIP
+4. If verdict is BUILD or ADAPT: run `/gsd:add-todo` to capture the idea
 
-**The user should be able to say "check this out" and paste a link.** That's it. No slash command required. Claude reads everything, analyzes it against the five frontiers, and delivers a verdict.
+**The user should be able to say "check this out" and paste a link.** That's it. No slash command required.
 
 If the user explicitly says "just read this" or "don't review" — skip the analysis and just return the content.
 
-Reddit links in comments and nested replies should also be followed if they point to tools, repos, or implementations relevant to the frontiers.
+**Fallback** (if agent tool unavailable): run the inline `/cca-review` workflow using `reddit_reader.py` for Reddit URLs and WebFetch for others.
 
 ---
 
