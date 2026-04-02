@@ -25,6 +25,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from typing import Dict, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
@@ -120,7 +121,7 @@ TEST_PAYLOADS = {
 TIMEOUT_MS = 2000  # 2 second max per hook (generous for CI)
 
 
-def _run_hook(hook_path: str, stdin_data: str, env_overrides: dict | None = None) -> tuple[int, str, str, float]:
+def _run_hook(hook_path: str, stdin_data: str, env_overrides: Optional[Dict] = None) -> Tuple[int, str, str, float]:
     """
     Run a hook script with given stdin data.
     Returns: (exit_code, stdout, stderr, elapsed_ms)
