@@ -3,7 +3,24 @@
 
 ---
 
-## Current State (as of Session 248 — 2026-04-01)
+## Current State (as of Session 249 — 2026-04-01)
+
+**Phase:** Session 249 COMPLETE. Chat 16: verdict_parser for agent-delegated /cca-nuclear, SessionStart hook, spawn budget hook
+
+**What was done this session (S249):**
+- 16A: verdict_parser.py + /cca-nuclear Phase 3 agent delegation (22 tests)
+- 16B: SessionStart hook for auto-init pre-check (8 tests)
+- 16C: Spawn budget PreToolUse hook with model-aware cost tracking (11 tests)
+- **Tests**: 353 suites, 9753 tests passing. All green.
+
+**Next:**
+1. 17A: Compaction Protection v2
+2. 17B: Cross-Chat Delivery Phase 3+4
+3. 17C: Write Phase 5 Plan
+
+---
+
+## Previous State (Session 248 — 2026-04-01)
 
 **Phase:** Session 248 COMPLETE. Reddit review session: 8 URLs reviewed via parallel cca-reviewer agents, 1 BUILD 4 ADAPT 2 SKIP
 
@@ -20,7 +37,6 @@
 3. 16D: defer decision for mobile_approver
 
 ---
-
 ## Previous State (Session 247 — 2026-04-01, Chat 15)
 
 **Phase:** Session 247 Chat 15 COMPLETE. All 4 priority agents built + Ebbinghaus decay integrated.

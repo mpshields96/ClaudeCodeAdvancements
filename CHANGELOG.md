@@ -4092,3 +4092,20 @@ CLI chat 2:
 - Peak hours limited batch sizes to 2-3 concurrent
 
 ---
+
+## Session 249 — 2026-04-01
+
+**What changed:**
+- 16A: verdict_parser.py + /cca-nuclear Phase 3 agent delegation (22 tests)
+- 16B: SessionStart hook for auto-init pre-check (8 tests)
+- 16C: Spawn budget PreToolUse hook with model-aware cost tracking (11 tests)
+
+**Why:**
+- Chat 16: verdict_parser for agent-delegated /cca-nuclear, SessionStart hook, spawn budget hook
+
+**Tests:** 9753/9753 passing (353 suites)
+
+**Lessons:**
+- Agent spawn for SessionStart docs — could have been a grep
+
+---

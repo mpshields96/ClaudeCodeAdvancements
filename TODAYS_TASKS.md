@@ -723,7 +723,7 @@ decay during memory retrieval.
 
 ### CHAT 16: /cca-nuclear Agent Teams Integration + Hook Automation (~60 min)
 
-#### 16A. Wire Agent Teams into /cca-nuclear [TODO]
+#### 16A. Wire Agent Teams into /cca-nuclear [DONE S249]
 **Scope:** Use Agent Teams for parallel URL reviews within /cca-nuclear sessions.
 **Context:** 11C COMPLEMENT verdict: Agent Teams for intra-session parallelism.
 /cca-nuclear currently reviews URLs sequentially. With Agent Teams, it can spawn
@@ -736,7 +736,7 @@ multiple cca-reviewer agents in parallel.
 **STOP CONDITION:** Nuclear scans use parallel reviews. Fallback to sequential if teams fail.
 **Risk:** Agent Teams is experimental — must have graceful fallback.
 
-#### 16B. SessionStart Hook for Auto-Init [TODO]
+#### 16B. SessionStart Hook for Auto-Init [DONE S249]
 **Scope:** Move some /cca-init diagnostics into a SessionStart hook.
 **Context:** Gap analysis (6A) identified SessionStart as unused. Could automate
 parts of init (smoke test check, pacer reset, timer start) without the full command.
@@ -747,7 +747,7 @@ parts of init (smoke test check, pacer reset, timer start) without the full comm
 4. Test: start a new session, verify hook fires
 **STOP CONDITION:** Hook fires reliably. Does NOT replace /cca-init — just pre-warms.
 
-#### 16C. SubagentStart Hook for Spawn Budget [TODO]
+#### 16C. SubagentStart Hook for Spawn Budget [DONE S249]
 **Scope:** Track and optionally limit agent spawns during peak hours.
 **Context:** Peak hours (8AM-2PM ET) should minimize agent spawns (40-50% budget).
 SubagentStart hook can count spawns and warn/block during peak.
