@@ -56,6 +56,8 @@ VALID_DOMAINS = {
     "nuclear_scan", "memory_system", "spec_system", "context_monitor",
     "agent_guard", "usage_dashboard", "reddit_intelligence",
     "self_learning", "general",
+    # Kalshi/trading domains (polymarket-bot cross-project learning)
+    "kalshi_monitoring", "kalshi_research", "kalshi_trading",
 }
 
 
