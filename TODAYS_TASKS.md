@@ -760,40 +760,68 @@ SubagentStart hook can count spawns and warn/block during peak.
 
 ---
 
-### CHAT 17: Compaction v2 + Cross-Chat Delivery + Phase 5 Planning (~45 min)
+### CHAT 17: Context Overhead Reduction (~45 min)
+# REPLANNED from S249: Original Chat 17 tasks moved to Chat 18 (see below)
+# Goal: Cut the ~55KB of system context loading every session by ~45%
+# This directly addresses the 44%-in-3-prompts rate limit burn problem
 
-#### 17A. Compaction Protection v2 [TODO]
-**Scope:** Enhance PreCompact/PostCompact based on Chat 12C findings (TS source study).
-**Prereq:** Chat 12C must complete first (study actual compact.ts implementation).
+#### 17A. MEMORY.md Prune [TODO]
+**Scope:** MEMORY.md is 18KB injected as system-reminder on EVERY turn (not cached).
+Cutting it 50% saves ~9KB per message for the rest of every session.
 **Steps:**
-1. Review 12C findings — what can PostCompact realistically restore?
-2. If compact.ts study reveals preCompactDiscoveredTools structure: capture it
-3. If not: improve snapshot to include last N tool calls from session state
-4. Update tests
-**STOP CONDITION:** v2 hooks reflect actual compaction internals. Or documented as
-"v1 is sufficient" if 12C reveals no additional leverage.
+1. Git commit before touching anything
+2. Read all 173 lines of MEMORY.md
+3. Remove: expired time-sensitive entries (2x promo, CC march features),
+   superseded project states (S77/S86/S94 audit notes), redundant feedback pairs,
+   obvious entries already covered by CLAUDE.md
+4. Target: 173 → ~80 lines
+5. Verify nothing critical lost — read the pruned version before committing
+**STOP CONDITION:** MEMORY.md under 90 lines. Git-committed. Reversible.
 
-#### 17B. Cross-Chat Delivery — Phase 3+4 Results [TODO]
-**Scope:** Write comprehensive CCA_TO_POLYBOT.md delivery of all Phase 3-4 improvements.
+#### 17B. titanium-field-names.md Scope Fix [TODO]
+**Scope:** Kalshi-specific field names file is in ~/.claude/rules/ (global),
+loading in every CCA session. Move to polymarket-bot/.claude/rules/ instead.
 **Steps:**
-1. List all improvements that benefit Kalshi sessions:
-   - Compaction protection hooks (global — already wired)
-   - Custom agents pattern (if applicable to Kalshi)
-   - SubagentStart budget hook (global — peak protection)
-   - SessionStart hook (global — auto-init)
-2. Write delivery with implementation notes
-**STOP CONDITION:** Delivery written.
+1. Copy to polymarket-bot/.claude/rules/titanium-field-names.md
+2. Verify Kalshi session still loads it (check polymarket-bot/.claude/ exists)
+3. Delete from ~/.claude/rules/
+**STOP CONDITION:** File loads for Kalshi, silent for CCA. ~52 lines removed globally.
 
-#### 17C. Write Phase 5 Plan [TODO]
-**Scope:** Based on Chats 12-17 findings, plan the next cycle.
-**Candidates:**
-- Coordinator Mode adoption (if 12B confirms it's shipping publicly)
-- UDS Inbox integration (if 12B confirms socket API is stable)
-- Agent Teams GA features (if Anthropic stabilizes the API)
-- /loop integration to replace autoloop_trigger.py (Boris tip, FINDINGS_LOG #5)
-- Memory system FTS5 search (Frontier 1 core feature, still unbuilt)
-- /batch for parallel worktree operations (Boris tip)
-**STOP CONDITION:** Phase 5 plan written.
+#### 17C. COMMANDS.md Split [TODO]
+**Scope:** 6.9KB of all-project command tables loads everywhere. CCA only needs
+CCA commands. Create a lean core version for the global @import.
+**Steps:**
+1. Create ~/.claude/COMMANDS-CORE.md — CCA section only + one-liner refs to others
+2. Update ~/.claude/CLAUDE.md to @COMMANDS-CORE.md instead of @COMMANDS.md
+3. Keep full COMMANDS.md intact as reference (don't delete)
+**STOP CONDITION:** Global load is lean CCA-focused version. Full table still accessible.
+
+#### 17D. mandatory-skills + gsd-framework Merge [TODO]
+**Scope:** Two overlapping files (194 lines, ~7KB) both define gsd:quick vs plan-phase.
+gsd-framework.md restates ~40% of mandatory-skills-workflow.md.
+**Steps:**
+1. Read both side-by-side
+2. Fold unique content from gsd-framework.md into mandatory-skills-workflow.md
+3. Delete gsd-framework.md
+4. Verify no unique directives lost
+**STOP CONDITION:** Single file covers both. ~50 lines removed from global load.
+**CAUTION:** Global rules — affects Kalshi chats too. Review carefully.
+
+---
+
+### CHAT 18: Original Chat 17 Tasks (Deferred from S249)
+
+#### 18A. Compaction Protection v2 [TODO]
+(was 17A) Enhance PreCompact/PostCompact. Detect context drops >30%, re-inject
+critical rules. Read context-monitor/session_pacer.py first.
+
+#### 18B. Cross-Chat Delivery — Phase 3+4 Results [TODO]
+(was 17B) Write CCA_TO_POLYBOT.md delivery: loop guard, session pacer,
+custom agent pattern, Ebbinghaus decay. 4 items, mark PENDING.
+
+#### 18C. Write Phase 5 Plan [TODO]
+(was 17C) Read CUSTOM_AGENTS_DESIGN.md + CLAW_CODE_ARCHITECTURE_NOTES.md,
+write Phase 5 plan (production hardening + monitoring), update TODAYS_TASKS.
 
 ---
 

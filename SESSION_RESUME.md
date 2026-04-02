@@ -7,67 +7,86 @@ Run /cca-init. Last session was S249 Chat 16 on 2026-04-01.
 
 ## Context: What was done (Chat 16)
 
-1. **16A: verdict_parser.py + /cca-nuclear agent delegation** — Created `reddit-intelligence/verdict_parser.py` that parses cca-reviewer agent freeform output into structured `ReviewVerdict` dataclass. Fields: title, url, score, frontier, verdict, flags. Auto-detects special flags (POLYBOT-RELEVANT, MAESTRO-RELEVANT, RULES-RELEVANT, USAGE-DASHBOARD). Formats to FINDINGS_LOG.md entries and condensed nuclear verdicts. Updated `/cca-nuclear` Phase 3 to spawn parallel cca-reviewer agents (batches of 3-4, 2 during peak) instead of inline review. Validated schema with live agent spawn — parseable JSON confirmed. 22 tests.
+All 3 Chat 16 tasks complete:
+- **16A**: `reddit-intelligence/verdict_parser.py` + `/cca-nuclear` Phase 3 rewritten for parallel cca-reviewer agent delegation (22 tests)
+- **16B**: `hooks/session_start_hook.py` — SessionStart hook, runs smoke+budget+top-task on session open (8 tests, wired in settings.local.json)
+- **16C**: `hooks/spawn_budget_hook.py` — PreToolUse[Agent] hook, tracks spawn cost by model, warns at 200K threshold (11 tests, wired in settings.local.json)
 
-2. **16B: SessionStart hook** — Created `hooks/session_start_hook.py`. Fires on CC SessionStart event. Runs smoke test via `init_cache.py`, reports tests/budget/top-task in 3 lines. CCA-project-scoped (skips non-CCA sessions). Disableable via `CCA_SESSION_START_DISABLED=1`. Wired into `~/.claude/settings.local.json`. 8 tests.
-
-3. **16C: Spawn budget hook** — Created `hooks/spawn_budget_hook.py`. PreToolUse hook matching "Agent" tool. Tracks spawn count + estimated token cost per session day. Model-aware: haiku=0.3x, sonnet=1.0x, opus=2.5x of 40K base. Soft warn at 75%, hard warn at 100% of threshold (default 200K tokens). State in `~/.claude-spawn-budget.json`, resets daily. Wired into settings.local.json. 11 tests.
-
-**New files:**
-- `reddit-intelligence/verdict_parser.py` (ReviewVerdict dataclass + parser)
-- `reddit-intelligence/tests/test_verdict_parser.py` (22 tests)
-- `hooks/session_start_hook.py` (SessionStart hook)
-- `hooks/tests/test_session_start_hook.py` (8 tests)
-- `hooks/spawn_budget_hook.py` (PreToolUse Agent budget tracker)
-- `hooks/tests/test_spawn_budget_hook.py` (11 tests)
-
-**Modified files:**
-- `.claude/commands/cca-nuclear.md` — Phase 3 rewritten for agent-delegated reviews
-- `~/.claude/settings.local.json` — SessionStart + PreToolUse[Agent] hooks added
-- `TODAYS_TASKS.md` — 16A/16B/16C marked DONE
+3 commits: c104c87 / 8526d41 / 333ad5d
 
 ---
 
-## Chat 17 — Compaction + Cross-Chat + Phase 5 Plan (~60 min)
+## Chat 17 — Context Overhead Reduction (~45 min)
 
-### 17A. Compaction Protection v2 (~25 min)
-**Scope:** Upgrade context-monitor's compaction handling based on real session data.
-**Current state:** `context-monitor/session_pacer.py` tracks context usage zones. But doesn't protect against the compaction bug — where CLAUDE.md rules and session context are lost after compression.
-**Target:** Detect when compaction has fired (context usage drops suddenly) and re-inject critical rules.
-**Steps:**
-1. Read `context-monitor/session_pacer.py` — understand current zone tracking
-2. Add compaction detection: if context usage drops >30% between checks, compaction likely fired
-3. On detection: output a "COMPACTION DETECTED — re-reading critical context" message
-4. Re-read CLAUDE.md rules (the most commonly lost content)
-5. Test by simulating a context drop in the pacer's state file
-**STOP CONDITION:** Pacer detects compaction events. Re-injection triggered.
+**WHY THIS IS NOW CHAT 17:**
+After Chat 16, session hit 44% of 5-hour limit in 3 prompts. Root cause: ~55KB of
+context loads every session. MEMORY.md (18KB) is injected as system-reminder on
+EVERY turn — not cached. Fixing this directly reduces burn rate for all future sessions.
 
-### 17B. Cross-Chat Delivery — Phase 3+4 Results (~15 min)
-**Scope:** Write CCA_TO_POLYBOT.md delivery summarizing Phase 3 (research) and Phase 4 (custom agents) results.
-**Deliverables for Kalshi:** Loop detection guard, session pacer, custom agent pattern, Ebbinghaus decay.
-**STOP CONDITION:** Delivery written with 4 items, marked PENDING.
+**Before touching anything: `git commit` current state as safety checkpoint.**
 
-### 17C. Write Phase 5 Plan (~20 min)
-**Scope:** Define Phase 5 — production hardening + monitoring.
-**Candidates:** Tool-call budget hook, agent registry, token routing, agent performance dashboard, retry/fallback.
-**Steps:** Read CUSTOM_AGENTS_DESIGN.md + CLAW_CODE_ARCHITECTURE_NOTES.md, write plan, update TODAYS_TASKS.
-**STOP CONDITION:** Phase 5 plan written and committed.
+### 17A. MEMORY.md Prune — Do This First (~20 min)
+File: `/Users/matthewshields/.claude/projects/-Users-matthewshields-Projects-ClaudeCodeAdvancements/memory/MEMORY.md`
+Current: 173 lines, 18KB — injected every turn as system-reminder.
+Target: ~80 lines (50%+ cut).
+
+**What to remove:**
+- Expired time-sensitive entries: `project_2x_token_promotion`, `project_cc_march_features`, `project_cli_migration_s226` (done), `project_post_promo_rate_reality`
+- Superseded project states: `project_s94_loop_seniordev_audit`, `project_hivemind_rollout`, `project_hivemind_vision` (if superseded by later work)
+- Redundant feedback pairs: `feedback_slow_build_mt20_mt21` + `feedback_no_rush_hivemind` (same message), `feedback_3chat_correctness_first` + `feedback_stick_with_2chat` (overlapping)
+- Entries whose content is already enforced by CLAUDE.md rules (e.g., cardinal safety pointers)
+
+**What to keep:**
+- All active feedback entries covering Matthew's preferences
+- Active project states (current MT priorities, financial sustainability goal)
+- All reference entries (they're short)
+- Model configuration entries (opus/sonnet assignments)
+
+**Safety:** git commit first. MEMORY.md is an index — the actual memory files aren't deleted.
+
+### 17B. titanium-field-names.md Scope Fix (~5 min)
+Global file loading in every CCA session — Kalshi-only content.
+- Copy: `~/.claude/rules/titanium-field-names.md` → `polymarket-bot/.claude/rules/`
+- Verify polymarket-bot/.claude/rules/ directory exists (create if not)
+- Delete from `~/.claude/rules/`
+- ~52 lines removed from global load permanently
+
+### 17C. COMMANDS.md Split (~15 min)
+6.9KB of all-project tables loads everywhere. CCA sessions don't need Kalshi/GSD tables.
+- Create `~/.claude/COMMANDS-CORE.md` with just CCA section + one-liner refs to Kalshi/GSD
+- Update `~/.claude/CLAUDE.md`: change `@COMMANDS.md` → `@COMMANDS-CORE.md`
+- Keep full `~/.claude/COMMANDS.md` intact (don't delete — still the reference)
+- ~120 lines removed from global per-session load
+
+### 17D. mandatory-skills + gsd-framework Merge (~15 min)
+130 + 64 = 194 lines, ~7KB — ~40% overlap between the two files.
+- Read both files
+- Fold unique content from `gsd-framework.md` into `mandatory-skills-workflow.md`
+- Delete `gsd-framework.md`
+- **CAUTION: global rules — affects Kalshi chats. Read carefully before deleting.**
+- ~50 lines removed
+
+### Expected outcome
+| Source | Before | After |
+|--------|--------|-------|
+| MEMORY.md (per turn) | 18KB | ~9KB |
+| COMMANDS.md (system prompt) | 6.9KB | ~2KB |
+| titanium-field-names (global) | ~1.9KB | 0 in CCA |
+| gsd-framework (global) | ~2.3KB | 0 (merged) |
+| **Total** | **~55KB** | **~30KB** |
 
 ---
 
-## CRITICAL WARNING: resume_generator.py --force
-DO NOT run `resume_generator.py --force` — it overwrites this hand-crafted file. This is the 3rd instance of this problem. The generated version loses task-specific context and gotchas.
+## Chat 18 — Original Chat 17 Tasks (Deferred)
 
-## Token Budget Warning
-Chat 16 was lean (2 agent spawns total). Rate limits hit hard yesterday across 15/15.5/16. Chat 17 should:
-- Use 0-1 agent spawns max
-- Keep responses concise
-- The spawn_budget_hook.py is now LIVE and will warn at threshold
+- **18A**: Compaction Protection v2 (session_pacer.py compaction detection)
+- **18B**: Cross-Chat Delivery — Phase 3+4 results to CCA_TO_POLYBOT.md
+- **18C**: Write Phase 5 Plan (CUSTOM_AGENTS_DESIGN.md Phase 5 section)
 
-## Tests
-269/353 suites pass in full run (9753 tests). Pre-existing failures are all `type | None` Python version issues + missing pytest/typst/fpdf. 10/10 smoke. All 41 new tests from this session pass independently.
+---
 
-## Commits (3 from Chat 16)
-- c104c87: 16A — verdict_parser + /cca-nuclear agent delegation
-- 8526d41: 16B — SessionStart hook for auto-init pre-check
-- 333ad5d: 16C — Spawn budget hook for agent cost tracking
+## Warnings for Chat 17
+- **DO NOT run `resume_generator.py --force`** — overwrites this file (3rd instance)
+- **Token budget**: Sonnet model. No agent spawns. This is pure file editing.
+- **git commit before each change** — all edits to global rules are risky
+- Tests: 269/353 passing (pre-existing failures, not from Chat 16 work)
