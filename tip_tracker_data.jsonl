@@ -85,3 +85,5 @@
 {"tip":"Define standardized JSON return schema for agent results before building orchestration","source":"cca-desktop","session":"S248","timestamp":"2026-04-01T16:45:12.503364Z"}
 {"tip":"Agents need explicit do-not-write-to-files instructions to return results cleanly","source":"cca-desktop","session":"S248","timestamp":"2026-04-01T16:45:12.503364Z"}
 {"tip":"Low-signal posts (under 15pts/20 comments) almost always SKIP \u2014 check threshold first","source":"cca-desktop","session":"S248","timestamp":"2026-04-01T16:45:12.503364Z"}
+{"tip":"Spawn budget hook is now live \u2014 it auto-warns at 75% of 200K token threshold","source":"cca-desktop","session":"S249","timestamp":"2026-04-02T21:19:02.756319Z"}
+{"tip":"verdict_parser handles freeform agent output with structured REVIEW blocks \u2014 test edge cases with real agent output before trusting","source":"cca-desktop","session":"S249","timestamp":"2026-04-02T21:19:02.756319Z"}

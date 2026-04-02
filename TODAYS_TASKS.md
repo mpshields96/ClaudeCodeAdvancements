@@ -765,7 +765,7 @@ SubagentStart hook can count spawns and warn/block during peak.
 # Goal: Cut the ~55KB of system context loading every session by ~45%
 # This directly addresses the 44%-in-3-prompts rate limit burn problem
 
-#### 17A. MEMORY.md Prune [TODO]
+#### 17A. MEMORY.md Prune [DONE S250 — 18391→7215 bytes (-61%)]
 **Scope:** MEMORY.md is 18KB injected as system-reminder on EVERY turn (not cached).
 Cutting it 50% saves ~9KB per message for the rest of every session.
 **Steps:**
@@ -778,7 +778,7 @@ Cutting it 50% saves ~9KB per message for the rest of every session.
 5. Verify nothing critical lost — read the pruned version before committing
 **STOP CONDITION:** MEMORY.md under 90 lines. Git-committed. Reversible.
 
-#### 17B. titanium-field-names.md Scope Fix [TODO]
+#### 17B. titanium-field-names.md Scope Fix [DONE S250 — moved to polymarket-bot/.claude/rules/]
 **Scope:** Kalshi-specific field names file is in ~/.claude/rules/ (global),
 loading in every CCA session. Move to polymarket-bot/.claude/rules/ instead.
 **Steps:**
@@ -787,7 +787,7 @@ loading in every CCA session. Move to polymarket-bot/.claude/rules/ instead.
 3. Delete from ~/.claude/rules/
 **STOP CONDITION:** File loads for Kalshi, silent for CCA. ~52 lines removed globally.
 
-#### 17C. COMMANDS.md Split [TODO]
+#### 17C. COMMANDS.md Split [DONE S250 — COMMANDS-CORE.md created, 6933→2690 bytes global load]
 **Scope:** 6.9KB of all-project command tables loads everywhere. CCA only needs
 CCA commands. Create a lean core version for the global @import.
 **Steps:**
@@ -796,7 +796,7 @@ CCA commands. Create a lean core version for the global @import.
 3. Keep full COMMANDS.md intact as reference (don't delete)
 **STOP CONDITION:** Global load is lean CCA-focused version. Full table still accessible.
 
-#### 17D. mandatory-skills + gsd-framework Merge [TODO]
+#### 17D. mandatory-skills + gsd-framework Merge [DONE S250 — gsd-framework.md deleted, unique content merged]
 **Scope:** Two overlapping files (194 lines, ~7KB) both define gsd:quick vs plan-phase.
 gsd-framework.md restates ~40% of mandatory-skills-workflow.md.
 **Steps:**
@@ -811,17 +811,102 @@ gsd-framework.md restates ~40% of mandatory-skills-workflow.md.
 
 ### CHAT 18: Original Chat 17 Tasks (Deferred from S249)
 
-#### 18A. Compaction Protection v2 [TODO]
+#### 18A. Compaction Protection v2 [DONE S250 — critical rules injection, 94 tests pass]
 (was 17A) Enhance PreCompact/PostCompact. Detect context drops >30%, re-inject
 critical rules. Read context-monitor/session_pacer.py first.
 
-#### 18B. Cross-Chat Delivery — Phase 3+4 Results [TODO]
+#### 18B. Cross-Chat Delivery — Phase 3+4 Results [DONE S250 — UPDATE 6 written to CCA_TO_POLYBOT.md]
 (was 17B) Write CCA_TO_POLYBOT.md delivery: loop guard, session pacer,
 custom agent pattern, Ebbinghaus decay. 4 items, mark PENDING.
 
-#### 18C. Write Phase 5 Plan [TODO]
+#### 18C. Write Phase 5 Plan [DONE S250 — Chats 19-21 plan written: 19A cca-reviewer, 19B hook chain, 20A registry, 20B cost dashboard, 21A tool budget, 21B cca-scout]
 (was 17C) Read CUSTOM_AGENTS_DESIGN.md + CLAW_CODE_ARCHITECTURE_NOTES.md,
 write Phase 5 plan (production hardening + monitoring), update TODAYS_TASKS.
+
+---
+
+## PHASE 5: PRODUCTION HARDENING + MONITORING (Chats 19-21)
+# Source: S250 Chat 17 — CUSTOM_AGENTS_DESIGN.md + CLAW_CODE_ARCHITECTURE_NOTES.md
+# Goal: Harden Phases 3-4 infrastructure, build highest-priority remaining agent,
+#       add monitoring for agent cost + quality, implement CLAW_CODE budget pattern.
+
+---
+
+### CHAT 19: cca-reviewer Agent Build (Highest ROI remaining agent)
+
+#### 19A. Build cca-reviewer Agent [TODO]
+**Scope:** Convert /cca-review command into isolated cca-reviewer agent. Biggest remaining
+agent build from CUSTOM_AGENTS_DESIGN.md. Sonnet model, read-only, maxTurns 30.
+**Context:** Phase 4 proved the agent pattern. cca-reviewer is the highest-priority
+remaining candidate: self-contained research task, currently pollutes main context
+with Reddit comment trees and analysis scaffolding.
+**Steps:**
+1. Create `~/.claude/agents/cca-reviewer.md` using the frontmatter from CUSTOM_AGENTS_DESIGN.md §1
+2. Condense current `cca-review.md` into the agent prompt body (5 frontiers, verdict format, rat poison)
+3. Update `/cca-nuclear` to delegate single-URL reviews to the agent instead of inline
+4. Test: 3 URLs reviewed via agent — verify same verdict quality as command
+5. Keep original cca-review.md as fallback until 3 session validation passes
+**STOP CONDITION:** Agent produces BUILD/SKIP verdicts on 3 URLs. /cca-nuclear uses it.
+
+#### 19B. Hook Chain Integration Test [TODO]
+**Scope:** Validate that SessionStart → spawn budget → compaction v2 hooks work together
+without conflicts. Unit tests pass but interaction hasn't been integration-tested.
+**Steps:**
+1. Write `tests/test_hook_chain_agents.py` — mock a session with all 3 hooks active
+2. Test: spawn budget hook fires before SessionStart hook (order matters)
+3. Test: compaction snapshot includes spawn budget state
+4. Verify: hooks don't double-write to the same state files
+**STOP CONDITION:** Integration test covers hook chain. 100% pass rate.
+
+---
+
+### CHAT 20: Agent Registry + Cost Monitoring
+
+#### 20A. Agent Registry (CLAW_CODE Pattern) [TODO]
+**Scope:** Implement uniform agent discovery from CLAW_CODE_ARCHITECTURE_NOTES.md §3.
+All CCA agents should be discoverable via a single registry, not scattered across ~/.claude/agents/.
+**Steps:**
+1. Create `agent-guard/agent_registry.py` — lists all CCA agents with metadata
+2. Registry reads ~/.claude/agents/*.md and parses frontmatter (name, model, maxTurns)
+3. CLI: `python3 agent_registry.py list` → table of agents with cost tier
+4. Add registry check to /cca-init briefing (show count of active agents)
+**STOP CONDITION:** Registry lists all agents, init shows count.
+
+#### 20B. Agent Cost Dashboard [TODO]
+**Scope:** The spawn budget hook logs agent invocations. Build a reader that shows
+aggregate costs, success rates, and token usage per agent type.
+**Steps:**
+1. Check what spawn budget hook writes (check hooks/spawn_budget.py output format)
+2. Write `agent-guard/agent_cost_reader.py` — reads the log, aggregates by agent name
+3. Output: per-agent totals (invocations, tokens, estimated cost)
+4. Wire to /cca-init briefing: show if any agent is unexpectedly expensive
+**STOP CONDITION:** cost_reader shows per-agent breakdown. Reads real spawn data.
+
+---
+
+### CHAT 21: Tool-Call Budget Hook + cca-scout Agent
+
+#### 21A. Tool-Call Budget Hook (CLAW_CODE Pattern) [TODO]
+**Scope:** Implement programmatic max_budget_tokens from CLAW_CODE_ARCHITECTURE_NOTES.md §2.
+PreToolUse hook that counts cumulative tool calls this session and warns at threshold.
+**Steps:**
+1. Create `context-monitor/hooks/tool_budget.py` — PreToolUse hook, counts calls per session
+2. State file: `~/.claude-tool-budget.json` — session_id + call_count + warnings_issued
+3. Thresholds: warn at 15 calls, BLOCK at 30 (configurable via env vars)
+4. Write 10 tests. Wire as PreToolUse hook.
+**STOP CONDITION:** Hook warns at threshold. 10 tests pass.
+
+#### 21B. cca-scout Agent Build [TODO]
+**Scope:** Convert /cca-scout into isolated cca-scout agent. Third priority from
+CUSTOM_AGENTS_DESIGN.md. Sonnet model, read-only, maxTurns 40.
+**Context:** Scout scans 50+ Reddit posts — heavy context pollution if run inline.
+Moving to agent isolates scanning context from main session.
+**Steps:**
+1. Create `~/.claude/agents/cca-scout.md` with frontmatter from CUSTOM_AGENTS_DESIGN.md §3
+2. Condense cca-scout.md into agent prompt body (subreddit list, signal scoring, output format)
+3. Verify: agent runs independently, writes findings to console (not to FINDINGS_LOG directly)
+4. /cca-nuclear-daily: update to spawn scout agent instead of running inline
+**STOP CONDITION:** Scout agent scans 1 subreddit via agent invocation. Results returned to caller.
 
 ---
 
