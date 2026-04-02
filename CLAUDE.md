@@ -140,6 +140,19 @@ If the user explicitly says "just read this" or "don't review" — skip the anal
 
 **Fallback** (if agent tool unavailable): run the inline `/cca-review` workflow using `reddit_reader.py` for Reddit URLs and WebFetch for others.
 
+## Subreddit Scanning — cca-scout Agent
+
+Use `/cca-scout` (or spawn the `cca-scout` agent directly) to scan multiple subreddits for
+high-signal posts without polluting the main session context. The scout runs on Sonnet, reads
+Reddit posts, deduplicates against FINDINGS_LOG.md, and returns a ranked shortlist.
+
+**When to use cca-scout:**
+- Proactively during `/cca-nuclear` or `/cca-nuclear-daily` sessions
+- When the user asks "what's new on r/ClaudeCode?" without a specific URL
+
+**After scout returns:** run `/cca-review <url>` on each shortlisted post, or spawn
+`cca-reviewer` agents in parallel for the full batch.
+
 ---
 
 ## Communication Style Rules

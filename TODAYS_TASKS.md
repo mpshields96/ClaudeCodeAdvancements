@@ -886,7 +886,7 @@ aggregate costs, success rates, and token usage per agent type.
 
 ### CHAT 21: Tool-Call Budget Hook + cca-scout Agent
 
-#### 21A. Tool-Call Budget Hook (CLAW_CODE Pattern) [TODO]
+#### 21A. Tool-Call Budget Hook (CLAW_CODE Pattern) [DONE S250 — tool_budget.py + 38 tests, wired in settings.local.json PreToolUse]
 **Scope:** Implement programmatic max_budget_tokens from CLAW_CODE_ARCHITECTURE_NOTES.md §2.
 PreToolUse hook that counts cumulative tool calls this session and warns at threshold.
 **Steps:**
@@ -896,7 +896,7 @@ PreToolUse hook that counts cumulative tool calls this session and warns at thre
 4. Write 10 tests. Wire as PreToolUse hook.
 **STOP CONDITION:** Hook warns at threshold. 10 tests pass.
 
-#### 21B. cca-scout Agent Build [TODO]
+#### 21B. cca-scout Agent Build [DONE S250 — cca-nuclear-daily uses scout agent, CLAUDE.md updated with cca-scout section]
 **Scope:** Convert /cca-scout into isolated cca-scout agent. Third priority from
 CUSTOM_AGENTS_DESIGN.md. Sonnet model, read-only, maxTurns 40.
 **Context:** Scout scans 50+ Reddit posts — heavy context pollution if run inline.

@@ -28,19 +28,24 @@ Review the top candidates. If any score >= 70 and have > 5K subscribers:
 
 This step uses Reddit's public API — no auth or tokens needed. Skip if rate-limited.
 
-## Phase 1 — Fetch & Classify
+## Phase 1 — Fetch & Classify (Scout Agent)
 
+Spawn the cca-scout agent to scan subreddits autonomously. This isolates
+the heavy scanning context from the main session:
+
+```
+Agent(subagent_type="cca-scout", prompt="Scan r/ClaudeCode (top 50), r/ClaudeAI (top 50), and r/vibecoding (top 25) for high-signal posts. Dedup against FINDINGS_LOG.md. Return a ranked shortlist of new posts worth full /cca-review analysis.")
+```
+
+The scout agent returns a ranked shortlist. Parse the output to identify NEEDLEs
+(high-signal posts worth full /cca-review), MAYBEs, and HAY.
+
+**Fallback** (if agent unavailable): run autonomous_scanner.py directly:
 ```bash
 python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/reddit-intelligence/autonomous_scanner.py daily --json
 ```
 
-Parse the JSON output. It contains one ScanResult per subreddit with:
-- `report`: summary stats (posts_fetched, needles, maybes, hay)
-- `needles`: posts to deep-read
-- `maybes`: optional secondary reads
-- `hay`: skip
-
-### Custom subreddits
+### Custom subreddits (fallback only)
 
 Default scans: r/ClaudeCode, r/ClaudeAI, r/vibecoding
 
