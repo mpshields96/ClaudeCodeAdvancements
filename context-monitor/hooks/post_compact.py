@@ -44,6 +44,7 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +165,7 @@ def update_state_after_compact(state_path: Path, trigger: str, session_id: str) 
 # Snapshot consumption (reads PreCompact snapshot, deletes after use)
 # ---------------------------------------------------------------------------
 
-def read_snapshot(snapshot_path: Path) -> dict | None:
+def read_snapshot(snapshot_path: Path) -> Optional[dict]:
     """
     Read and consume the PreCompact snapshot file.
 
@@ -306,11 +307,35 @@ def build_recovery_digest_from_snapshot(
         lines.append(summary)
         lines.append("")
 
-    # Recovery steps
+    # Critical rules injection (v2) — embed rules when pre-compaction context was high
+    critical_rules = snapshot.get("critical_rules", {})
+    pre_pct = health.get("pct", 0) if health else 0
+    rules_injected = False
+    if critical_rules and pre_pct >= 30:
+        rules_injected = True
+        lines.append("## Critical Rules (Re-injected — Context Was High Before Compaction)")
+        lines.append("")
+        cardinal = critical_rules.get("cardinal_safety", "")
+        if cardinal:
+            lines.append("### Cardinal Safety Rules")
+            lines.append(cardinal)
+            lines.append("")
+        gotchas = critical_rules.get("known_gotchas", "")
+        if gotchas:
+            lines.append("### Known Gotchas")
+            lines.append(gotchas)
+            lines.append("")
+
+    # Recovery steps — step 1 wording adapts based on whether rules were injected
+    step1 = (
+        "1. Rules above are re-injected — cardinal safety and gotchas are inline"
+        if rules_injected
+        else "1. Re-read `CLAUDE.md` for project rules and safety constraints"
+    )
     lines.extend([
         "## Recovery Steps",
         "",
-        "1. Re-read `CLAUDE.md` for project rules and safety constraints",
+        step1,
         "2. Re-read `SESSION_STATE.md` for current task and progress",
         "3. Run `git diff` on modified files to see your in-progress work",
         "4. Continue with the tasks listed above",

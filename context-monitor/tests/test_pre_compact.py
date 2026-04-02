@@ -391,5 +391,79 @@ class TestEndToEnd(unittest.TestCase):
             self.assertIn("timestamp", loaded)
 
 
+class TestExtractSection(unittest.TestCase):
+    """Tests for _extract_section helper (v2)."""
+
+    def test_extracts_section_content(self):
+        from pre_compact import _extract_section
+        content = "## Cardinal Safety Rules\n\nRule 1\nRule 2\n\n## Other Section\n\nOther"
+        result = _extract_section(content, "Cardinal Safety Rules")
+        self.assertIn("Rule 1", result)
+        self.assertIn("Rule 2", result)
+        self.assertNotIn("Other", result)
+
+    def test_returns_empty_when_not_found(self):
+        from pre_compact import _extract_section
+        result = _extract_section("## Different\n\ncontent", "Missing Section")
+        self.assertEqual(result, "")
+
+    def test_case_insensitive(self):
+        from pre_compact import _extract_section
+        content = "## KNOWN GOTCHAS\n\nGotcha here\n\n## Next"
+        result = _extract_section(content, "Known Gotchas")
+        self.assertIn("Gotcha here", result)
+
+    def test_empty_content(self):
+        from pre_compact import _extract_section
+        result = _extract_section("", "Anything")
+        self.assertEqual(result, "")
+
+
+class TestCaptureCriticalRules(unittest.TestCase):
+    """Tests for capture_critical_rules (v2)."""
+
+    def test_extracts_from_claude_md(self):
+        from pre_compact import capture_critical_rules
+        claude_content = (
+            "# Project\n\n"
+            "## Cardinal Safety Rules\n\nDO NOT BREAK THINGS.\nDO NOT EXPOSE CREDS.\n\n"
+            "## Known Gotchas\n\n- Credential regex needs hyphens\n- PyBoy is BANNED\n\n"
+            "## Other\n\nignored"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            claude_path = Path(tmpdir) / "CLAUDE.md"
+            claude_path.write_text(claude_content)
+            result = capture_critical_rules(tmpdir)
+            self.assertIn("cardinal_safety", result)
+            self.assertIn("known_gotchas", result)
+            self.assertIn("DO NOT BREAK", result["cardinal_safety"])
+            self.assertIn("PyBoy", result["known_gotchas"])
+
+    def test_returns_empty_dict_when_no_claude_md(self):
+        from pre_compact import capture_critical_rules
+        with tempfile.TemporaryDirectory() as tmpdir:
+            result = capture_critical_rules(tmpdir)
+            self.assertEqual(result, {})
+
+    def test_returns_empty_dict_on_read_error(self):
+        from pre_compact import capture_critical_rules
+        result = capture_critical_rules("/nonexistent/path/that/does/not/exist")
+        self.assertEqual(result, {})
+
+    def test_snapshot_includes_critical_rules(self):
+        from pre_compact import build_snapshot, _extract_section
+        claude_content = (
+            "## Cardinal Safety Rules\n\nSafety rule here\n\n"
+            "## Known Gotchas\n\nGotcha here\n"
+        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            (Path(tmpdir) / "CLAUDE.md").write_text(claude_content)
+            payload = {"session_id": "abc", "cwd": tmpdir}
+            paths = {"state_file": Path(tmpdir) / "state.json"}
+            snapshot = build_snapshot(payload, paths)
+            self.assertIn("critical_rules", snapshot)
+            self.assertIsInstance(snapshot["critical_rules"], dict)
+
+
 if __name__ == "__main__":
     unittest.main()

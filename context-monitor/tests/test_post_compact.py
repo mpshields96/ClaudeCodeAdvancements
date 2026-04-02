@@ -510,5 +510,67 @@ class TestResolvePathsWithSnapshot(unittest.TestCase):
             self.assertEqual(str(paths["snapshot_file"]), "/tmp/snap.json")
 
 
+class TestCriticalRulesInjection(unittest.TestCase):
+    """Tests for v2 critical rules injection in build_recovery_digest_from_snapshot."""
+
+    def _make_snapshot(self, pre_pct: int, critical_rules: dict) -> dict:
+        return {
+            "version": 1,
+            "timestamp": "2026-04-02T12:00:00+00:00",
+            "session_id": "test-session",
+            "chat_role": "desktop",
+            "session_header": "Session 250",
+            "context_health": {"zone": "red", "pct": pre_pct, "tokens": 80000, "turns": 20, "window": 200000},
+            "git_status": [],
+            "git_diff_stat": "",
+            "todays_tasks_todos": [],
+            "anchor_content": "",
+            "critical_rules": critical_rules,
+        }
+
+    def test_rules_injected_when_pct_above_30(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot(75, {
+            "cardinal_safety": "DO NOT BREAK ANYTHING.",
+            "known_gotchas": "PyBoy is BANNED.",
+        })
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "sid", snapshot)
+        self.assertIn("Cardinal Safety Rules", digest)
+        self.assertIn("DO NOT BREAK ANYTHING", digest)
+        self.assertIn("Known Gotchas", digest)
+        self.assertIn("PyBoy is BANNED", digest)
+        self.assertIn("Re-injected", digest)
+
+    def test_rules_not_injected_when_pct_below_30(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot(10, {
+            "cardinal_safety": "DO NOT BREAK ANYTHING.",
+        })
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "sid", snapshot)
+        self.assertNotIn("Cardinal Safety Rules", digest)
+        self.assertNotIn("DO NOT BREAK ANYTHING", digest)
+
+    def test_rules_not_injected_when_no_critical_rules(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot(80, {})
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "sid", snapshot)
+        self.assertNotIn("Re-injected", digest)
+
+    def test_only_cardinal_safety_injected_when_no_gotchas(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot(50, {
+            "cardinal_safety": "Safety rule here",
+        })
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "sid", snapshot)
+        self.assertIn("Cardinal Safety Rules", digest)
+        self.assertNotIn("Known Gotchas", digest)
+
+    def test_recovery_steps_updated_for_v2(self):
+        from post_compact import build_recovery_digest_from_snapshot
+        snapshot = self._make_snapshot(75, {"cardinal_safety": "rule"})
+        digest = build_recovery_digest_from_snapshot("auto", "summary", "sid", snapshot)
+        self.assertIn("Rules above are re-injected", digest)
+
+
 if __name__ == "__main__":
     unittest.main()

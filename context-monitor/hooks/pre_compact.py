@@ -44,6 +44,7 @@ Wire as PreCompact hook in .claude/settings.local.json:
 """
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -60,6 +61,8 @@ DEFAULT_STATE_FILE = Path.home() / ".claude-context-health.json"
 MAX_GIT_STATUS_LINES = 50
 MAX_TODAYS_TASKS = 20
 MAX_SESSION_HEADER_LINES = 50
+MAX_RULES_LINES = 35
+MAX_GOTCHAS_LINES = 25
 GIT_TIMEOUT = 5  # seconds
 
 
@@ -186,7 +189,6 @@ def capture_session_header(cwd: str) -> str:
     Looks for lines matching 'Session NNN' pattern (with a digit after 'Session ').
     Skips markdown headings that happen to contain the word 'Session'.
     """
-    import re
     state_path = Path(cwd) / "SESSION_STATE.md" if cwd else Path("SESSION_STATE.md")
     if not state_path.exists():
         return ""
@@ -224,6 +226,48 @@ def capture_anchor_summary(cwd: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Critical rules capture (v2 — re-injection support)
+# ---------------------------------------------------------------------------
+
+def _extract_section(content: str, section_name: str) -> str:
+    """Extract body under a '## section_name' heading until the next '##'."""
+    pattern = r"##[^\S\n]*" + re.escape(section_name) + r"[^\n]*\n(.*?)(?=\n##|\Z)"
+    match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+    return ""
+
+
+def capture_critical_rules(cwd: str) -> dict:
+    """Extract Cardinal Safety Rules and Known Gotchas from CLAUDE.md.
+
+    Returns a dict with 'cardinal_safety' and 'known_gotchas' keys.
+    Both are truncated to stay compact in the snapshot.
+    """
+    claude_path = Path(cwd) / "CLAUDE.md" if cwd else Path("CLAUDE.md")
+    if not claude_path.exists():
+        return {}
+    try:
+        content = claude_path.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+
+    result = {}
+
+    safety = _extract_section(content, "Cardinal Safety Rules")
+    if safety:
+        lines = safety.splitlines()[:MAX_RULES_LINES]
+        result["cardinal_safety"] = "\n".join(lines)
+
+    gotchas = _extract_section(content, "Known Gotchas")
+    if gotchas:
+        lines = gotchas.splitlines()[:MAX_GOTCHAS_LINES]
+        result["known_gotchas"] = "\n".join(lines)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Snapshot building and writing
 # ---------------------------------------------------------------------------
 
@@ -244,6 +288,7 @@ def build_snapshot(payload: dict, paths: dict) -> dict:
         "todays_tasks_todos": capture_todays_tasks(cwd),
         "session_header": capture_session_header(cwd),
         "anchor_content": capture_anchor_summary(cwd),
+        "critical_rules": capture_critical_rules(cwd),
     }
     return snapshot
 
