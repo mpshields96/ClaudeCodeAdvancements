@@ -4109,3 +4109,19 @@ CLI chat 2:
 - Agent spawn for SessionStart docs — could have been a grep
 
 ---
+
+## Session 250 — 2026-04-02
+
+**What changed:**
+- tool_budget.py: warn at 15, block at 30, 38 tests, live in settings.local.json
+- cca-nuclear-daily Phase 1 now spawns cca-scout agent; CLAUDE.md updated with scout section
+
+**Why:**
+- 21A tool-call budget hook (38 tests, wired PreToolUse), 21B cca-nuclear-daily spawns cca-scout agent
+
+**Tests:** 9950/9950 passing (357 suites)
+
+**Lessons:**
+- no significant losses
+
+---

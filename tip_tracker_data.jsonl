@@ -87,3 +87,5 @@
 {"tip":"Low-signal posts (under 15pts/20 comments) almost always SKIP \u2014 check threshold first","source":"cca-desktop","session":"S248","timestamp":"2026-04-01T16:45:12.503364Z"}
 {"tip":"Spawn budget hook is now live \u2014 it auto-warns at 75% of 200K token threshold","source":"cca-desktop","session":"S249","timestamp":"2026-04-02T21:19:02.756319Z"}
 {"tip":"verdict_parser handles freeform agent output with structured REVIEW blocks \u2014 test edge cases with real agent output before trusting","source":"cca-desktop","session":"S249","timestamp":"2026-04-02T21:19:02.756319Z"}
+{"tip":"PreToolUse block format is hookSpecificOutput.permissionDecision: deny (not top-level decision: block)","source":"cca-desktop","session":"S250","timestamp":"2026-04-02T22:23:37.063466Z"}
+{"tip":"Exempt cheap tools from budget counting to avoid false positives on routine reads","source":"cca-desktop","session":"S250","timestamp":"2026-04-02T22:23:37.063466Z"}

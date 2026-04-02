@@ -3,7 +3,21 @@
 
 ---
 
-## Current State (as of Session 249 — 2026-04-01)
+## Current State (as of Session 250 — 2026-04-02)
+
+**Phase:** Session 250 COMPLETE. 21A tool-call budget hook (38 tests, wired PreToolUse), 21B cca-nuclear-daily spawns cca-scout agent
+
+**What was done this session (S250):**
+- tool_budget.py: warn at 15, block at 30, 38 tests, live in settings.local.json
+- cca-nuclear-daily Phase 1 now spawns cca-scout agent; CLAUDE.md updated with scout section
+- **Tests**: 357 suites, 9950 tests passing. All green.
+
+**Next:**
+1. all TODAYS_TASKS.md items complete — check MASTER_TASKS for next priority
+
+---
+
+## Previous State (Session 249 — 2026-04-01)
 
 **Phase:** Session 249 COMPLETE. Chat 16: verdict_parser for agent-delegated /cca-nuclear, SessionStart hook, spawn budget hook
 
@@ -19,7 +33,6 @@
 3. 17C: Write Phase 5 Plan
 
 ---
-
 ## Previous State (Session 248 — 2026-04-01)
 
 **Phase:** Session 248 COMPLETE. Reddit review session: 8 URLs reviewed via parallel cca-reviewer agents, 1 BUILD 4 ADAPT 2 SKIP
