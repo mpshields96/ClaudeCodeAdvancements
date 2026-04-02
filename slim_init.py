@@ -589,6 +589,51 @@ def run_reflect_brief() -> dict:
         return {"patterns": 0, "entries": 0, "brief": "", "error": "Timeout: reflect exceeded 30 seconds"}
 
 
+def run_agent_briefing() -> dict:
+    """
+    Run agent registry + cost reader briefings for session init.
+    Returns two optional lines: agent count (registry) and spawn cost (cost reader).
+    Both fail-open — missing file or error returns empty strings.
+    """
+    result = {"registry": "", "cost": "", "cost_alert": ""}
+
+    # Agent registry: "Agents: 15 installed (4 CCA, 11 GSD) | Cost tiers: ..."
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "agent-guard" / "agent_registry.py"), "briefing"],
+            capture_output=True, text=True, timeout=5, cwd=str(PROJECT_ROOT),
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            result["registry"] = proc.stdout.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    # Agent cost reader: "Spawns today: 11 (~440K tokens, ~$1.98) | top: ..."
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "agent-guard" / "agent_cost_reader.py"), "briefing"],
+            capture_output=True, text=True, timeout=5, cwd=str(PROJECT_ROOT),
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            result["cost"] = proc.stdout.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    # Cost alert: warn if any agent exceeded $1.00 today
+    try:
+        proc = subprocess.run(
+            ["python3", str(PROJECT_ROOT / "agent-guard" / "agent_cost_reader.py"),
+             "alert", "1.0"],
+            capture_output=True, text=True, timeout=5, cwd=str(PROJECT_ROOT),
+        )
+        if proc.returncode != 0 and proc.stdout.strip():
+            result["cost_alert"] = proc.stdout.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    return result
+
+
 def run_timeline(n: int = 5) -> dict:
     """Run session_timeline.py recent N for quick history."""
     try:
@@ -711,6 +756,12 @@ def format_summary(summary: dict) -> str:
         lines.append(f"  Reflect: {summary['reflect_patterns']} patterns — {summary.get('reflect_brief', '')}")
     if summary.get("session_metrics_brief"):
         lines.append(f"  Metrics: {summary['session_metrics_brief']}")
+    if summary.get("agent_registry_brief"):
+        lines.append(f"  {summary['agent_registry_brief']}")
+    if summary.get("agent_cost_brief"):
+        lines.append(f"  {summary['agent_cost_brief']}")
+    if summary.get("agent_cost_alert"):
+        lines.append(f"  !! {summary['agent_cost_alert']}")
     if summary.get("blockers"):
         lines.append("  BLOCKERS:")
         for b in summary["blockers"]:
@@ -845,6 +896,15 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
     if directives.get("latest_title"):
         summary["directive_latest"] = directives["latest_title"]
         summary["directive_session"] = directives["latest_session"]
+
+    # Step 5.15: Agent registry + spawn cost briefing (20A/20B)
+    agent_brief = run_agent_briefing()
+    if agent_brief.get("registry"):
+        summary["agent_registry_brief"] = agent_brief["registry"]
+    if agent_brief.get("cost"):
+        summary["agent_cost_brief"] = agent_brief["cost"]
+    if agent_brief.get("cost_alert"):
+        summary["agent_cost_alert"] = agent_brief["cost_alert"]
 
     # Step 5.2: Full next-chat handoff cues (written by /cca-wrap into SESSION_RESUME.md)
     handoff_resume_path = session_state_path.parent / "SESSION_RESUME.md"
