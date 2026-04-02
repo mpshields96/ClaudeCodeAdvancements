@@ -910,6 +910,108 @@ Moving to agent isolates scanning context from main session.
 
 ---
 
+## PHASE 6: Kalshi Bot CCA-Parity Port (Chats 22-25)
+# Goal: Bring polymarket-bot up to CCA optimization level — hooks, slim init/wrap,
+# session infrastructure, then get bot operational. Ordered by dependency.
+
+### CHAT 22: Hook Chain Port
+
+#### 22A. Wire CCA hooks into polymarket-bot settings.local.json [DONE S250 — 7 hooks wired, python3.13, all smoke-tested]
+**Scope:** Zero-code configuration — point polymarket-bot at CCA's already-built hooks.
+Missing: compaction protection, context meter, context alert, tool budget, memory capture.
+**Steps:**
+1. Add PostToolUse: meter.py, compact_anchor.py (context health + compaction anchor)
+2. Add PreToolUse: alert.py, tool_budget.py (alongside existing peak_budget)
+3. Add PreCompact: pre_compact.py + PostCompact: post_compact.py (critical rules injection)
+4. Add Stop: auto_handoff.py (handoff at 80%+ context)
+5. Smoke test: echo '{"session_id":"test","tool_name":"Write","tool_input":{}}' | python3 <hook> for each new hook
+6. Commit
+**STOP CONDITION:** All hooks exit 0 on dummy payload. settings.local.json committed.
+
+#### 22B. Extract font rules + standing directives into rules files [DONE S250 — font-rules.md + standing-directives.md, stripped from 3 command files]
+**Scope:** Dedup content currently hardcoded in polybot-init.md AND polybot-auto.md AND polybot-wrap.md.
+Font rules and standing directives appear 3x across commands — move to .claude/rules/ where they load once.
+**Steps:**
+1. Create `polymarket-bot/.claude/rules/font-rules.md` — RULE 1 (no markdown tables) + RULE 2 (no dollar signs)
+2. Create `polymarket-bot/.claude/rules/standing-directives.md` — bypass permissions, autonomy rules, budget, model
+3. Strip font rules + standing directives sections from polybot-init.md, polybot-auto.md, polybot-wrap.md
+4. Verify: rules still load via .claude/rules/ auto-include
+**STOP CONDITION:** 3 command files trimmed. 2 rules files created.
+
+---
+
+### CHAT 23: Slim polybot-init.md
+
+#### 23A. Extract session prompts from polybot-init.md [TODO]
+**Scope:** The MAIN CHAT PROMPT and RESEARCH CHAT PROMPT blocks are the biggest waste — ~250 lines
+of stale state embedded in the command file, re-parsed on every init invocation.
+Extract to SESSION_RESUME.md (written by wrap, read by init at runtime).
+**Steps:**
+1. Create `polymarket-bot/SESSION_RESUME.md` template (written by polybot-wrap, read by polybot-init)
+2. Gut polybot-init.md MAIN CHAT PROMPT section — replace with: `Read SESSION_RESUME.md`
+3. Gut polybot-init.md RESEARCH CHAT PROMPT section — replace with: `Read SESSION_RESUME.md (research section)`
+4. Update polybot-wrap.md Step 3C: write to SESSION_RESUME.md instead of regenerating into polybot-init.md
+5. Update polybot-init.md CURRENT STATE section: `Read SESSION_HANDOFF.md` (already reads it anyway)
+**TARGET:** polybot-init.md 15.4KB → ~4KB
+**STOP CONDITION:** polybot-init.md under 5KB. polybot-wrap writes to SESSION_RESUME.md correctly.
+
+#### 23B. Slim polybot-init.md structure [TODO]
+**Scope:** After 23A extractions, compress remaining static content.
+**Steps:**
+1. Merge STEP 3 (announce state) and STEP 4 (route to work) — they're 2 lines of logic, not 2 sections
+2. Collapse SELF-IMPROVEMENT CHAIN ACTIVE block — this is runtime state, belongs in SESSION_HANDOFF
+3. Add CRITICAL PATH header (like CCA wrap) — Steps 1-3 mandatory, rest optional
+**TARGET:** Under 4KB total
+**STOP CONDITION:** polybot-init.md under 4KB. Test by starting a mock session.
+
+---
+
+### CHAT 24: Slim polybot-wrap.md + Session Infrastructure
+
+#### 24A. Slim polybot-wrap.md [TODO]
+**Scope:** Apply CCA wrap pattern — critical path + OPTIONAL tags.
+**Steps:**
+1. Add CRITICAL PATH block at top (Steps 1, 3A, 3B, 4, 5 — the money steps)
+2. Tag non-critical steps OPTIONAL
+3. Step 3C: now writes to SESSION_RESUME.md (from 23A) instead of polybot-init.md — verify
+4. Remove embedded session prompt template from wrap — it moved to SESSION_RESUME.md
+**TARGET:** polybot-wrap.md 7.3KB → ~4KB
+**STOP CONDITION:** Wrap produces SESSION_RESUME.md. File under 4KB.
+
+#### 24B. Adapt batch_wrap_learning.py for Kalshi domain [TODO]
+**Scope:** CCA's batch_wrap_learning.py logs session learnings to self-learning journal.
+Adapt for Kalshi trading domain: trading events instead of general dev events.
+**Steps:**
+1. Check if batch_wrap_learning.py works as-is in polymarket-bot context (it reads CCA paths)
+2. Either: symlink CCA scripts + adapt domain flag, or create polybot_wrap_learning.py wrapper
+3. Wire into polybot-wrap.md as Step 6 equivalent
+**STOP CONDITION:** polybot-wrap runs batch learning without errors.
+
+---
+
+### CHAT 25: Get Bot Operational
+
+#### 25A. Bot health check + API verification [TODO]
+**Scope:** Bot has been stopped since ~March 18 (2+ weeks stale). Verify before restarting live.
+**Steps:**
+1. Check Kalshi API connectivity: `./venv/bin/python3 main.py --health`
+2. Run strategy_analyzer.py --brief — see current strategy standings
+3. Update SESSION_HANDOFF.md with current date/state
+4. Run auto_guard_discovery.py — any new guards needed?
+5. Paper mode test: restart bot in paper mode, verify bets evaluating correctly
+**STOP CONDITION:** Bot runs in paper mode, --health clean, no blockers.
+
+#### 25B. Live restart + SESSION_RESUME.md initialization [TODO]
+**Scope:** Restart live trading with clean optimized infrastructure.
+**Steps:**
+1. Write fresh SESSION_RESUME.md with current P&L, guards, strategy standings
+2. Restart bot live: `nohup ./venv/bin/python3 main.py --live ... &`
+3. Verify first live bet cycle completes
+4. Commit all infrastructure changes
+**STOP CONDITION:** Bot running live, SESSION_RESUME.md current, all hooks active.
+
+---
+
 ## DEFERRED (not scheduled, revisit when relevant)
 
 - **TurboQuant vector compression** — only when Frontier 1 hits storage scale problems
