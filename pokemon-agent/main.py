@@ -206,8 +206,14 @@ def main(argv=None) -> int:
     else:
         from memory_reader import MemoryReader
         from agent import CrystalAgent
+        from crystal_intro_navigation import build_crystal_intro_navigator
         reader = MemoryReader(emu)
-        agent_kwargs = dict(emulator=emu, reader=reader, llm=llm)
+        agent_kwargs = dict(
+            emulator=emu,
+            reader=reader,
+            llm=llm,
+            navigator=build_crystal_intro_navigator(),
+        )
         model_name = resolve_model_name(args.backend, args.model)
         if model_name:
             agent_kwargs["model_name"] = model_name

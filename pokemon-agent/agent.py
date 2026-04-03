@@ -284,6 +284,12 @@ class CrystalAgent:
         """Return the tool surface supported by this agent instance."""
         if self.navigator is None:
             return [tool for tool in TOOLS if tool["name"] != "navigate_to"]
+        try:
+            current_map_id = self.reader.read_position().map_id
+        except Exception:
+            current_map_id = None
+        if current_map_id is None or not self.navigator.has_map(current_map_id):
+            return [tool for tool in TOOLS if tool["name"] != "navigate_to"]
         return TOOLS
 
     def _screen_detection_addresses(self) -> dict:
