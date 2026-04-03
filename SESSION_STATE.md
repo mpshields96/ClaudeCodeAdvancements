@@ -3,7 +3,22 @@
 
 ---
 
-## Current State (as of Session 251 — 2026-04-02)
+## Current State (as of Session 252 — 2026-04-02)
+
+**Phase:** Session 252 COMPLETE. Slimmed POLYBOT_INIT.md 105KB→42KB and refreshed SESSION_HANDOFF.md with current bot state
+
+**What was done this session (S252):**
+- POLYBOT_INIT.md stripped 970 lines: stale BOT STATE, session changelogs, context handoff template, progress log
+- SESSION_HANDOFF.md refreshed: PID 12448, session161 log, mandate deadline flagged, CCA Phase 6 noted
+- **Tests**: 223 suites, 8959 tests passing. All green.
+
+**Next:**
+1. 27A: Remove stale strategy references from polymarket-bot docs
+2. 27B: Wire every-3rd-cycle CCA check into monitoring loop
+
+---
+
+## Previous State (Session 251 — 2026-04-02)
 
 **Phase:** Session 251 COMPLETE. Phase 6 complete: polybot-init 88% slimmer, SESSION_RESUME.md live, Phase 7 planned
 
@@ -19,7 +34,6 @@
 2. Chat 26B: refresh SESSION_HANDOFF.md
 
 ---
-
 ## Previous State (Session 250 — 2026-04-02)
 
 **Phase:** Session 250 COMPLETE. Chat 22 complete: 7 CCA hooks ported to polymarket-bot, font/directive rules extracted, Phase 6 plan written to TODAYS_TASKS.md

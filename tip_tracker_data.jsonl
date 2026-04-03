@@ -93,3 +93,5 @@
 {"tip":"python3.13 required for type|None syntax hooks; python3 on this machine is 3.9.6","source":"cca-desktop","session":"S250","timestamp":"2026-04-02T23:27:57.755659Z"}
 {"tip":"POLYBOT_INIT.md at 105KB is highest-ROI next slim","source":"cca-desktop","session":"S251","timestamp":"2026-04-03T00:25:37.459338Z"}
 {"tip":"Check bot restart approval before touching live systems","source":"cca-desktop","session":"S251","timestamp":"2026-04-03T00:25:37.459338Z"}
+{"tip":"When slimming large docs, grep for session-specific patterns (Session 4X, old PIDs, stale log paths) to quickly find frozen-in-time sections","source":"cca-desktop","session":"S252","timestamp":"2026-04-03T00:54:54.653124Z"}
+{"tip":"Strip session changelogs from init files \u2014 CHANGELOG.md is the authoritative record, not the init file","source":"cca-desktop","session":"S252","timestamp":"2026-04-03T00:54:54.653124Z"}

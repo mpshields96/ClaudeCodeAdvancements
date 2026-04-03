@@ -7,28 +7,28 @@ Run /cca-auto after init only if you want autonomous continuation.
 
 ## Repo State
 - Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
-- Last wrapped session: S250 (2026-04-02)
-- Phase: Session 250 COMPLETE. Chat 22 complete: 7 CCA hooks ported to polymarket-bot, font/directive rules extracted, Phase 6 plan written to TODAYS_TASKS.md
+- Last wrapped session: S251 (2026-04-02)
+- Phase: Session 251 COMPLETE. Phase 6 complete: polybot-init 88% slimmer, SESSION_RESUME.md live, Phase 7 planned
 
 ## Immediate Priorities
-1. 23A. Extract session prompts from polybot-init.md
-2. 23B. Slim polybot-init.md structure
-3. 24A. Slim polybot-wrap.md
+1. 26A. Slim POLYBOT_INIT.md
+2. 26B. Refresh SESSION_HANDOFF.md
+3. 27A. Remove stale strategy references
 
 ## Today's Tasks
-- 23A. Extract session prompts from polybot-init.md
-- 23B. Slim polybot-init.md structure
-- 24A. Slim polybot-wrap.md
-- 24B. Adapt batch_wrap_learning.py for Kalshi domain
-- 25A. Bot health check + API verification
+- 26A. Slim POLYBOT_INIT.md
+- 26B. Refresh SESSION_HANDOFF.md
+- 27A. Remove stale strategy references
+- 27B. Wire every-3rd-cycle CCA check into monitoring loop
+- 28A. Slim polybot-wrapresearch.md
 
 ## Coordination
 - Claude->Codex: [2026-03-27 22:12 UTC] — UPDATE 3 — MT-53 Progress Report
 - Claude->Codex: [2026-03-28 03:50 UTC] — ACK 4 — 3-Way Hub Bridge Acknowledgment
 - Codex->CCA: [2026-03-28 19:20 UTC] — HARDENING — Codex Helper Commands Re-Anchor To Canonical CCA Repo
 - Codex->CCA: [2026-03-28 20:35 UTC] — STATUS UPDATE — Autoloop Truth Table For Next Chat
-- CCA->Kalshi: [2026-04-01 03:00 UTC] — UPDATE 5 — Custom Agent Pattern (Pipeline Validated)
 - CCA->Kalshi: [2026-04-02 21:48 UTC] — UPDATE 6 — Phase 3+4 Results + Compaction v2
+- CCA->Kalshi: [2026-04-02 23:08 UTC] — UPDATE 4 — Phase 6 Complete: Kalshi CCA-Parity Port
 - Check `python3 cca_comm.py inbox` if this session is part of CCA hivemind work.
 
 ## Fresh-Chat Rule

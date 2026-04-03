@@ -4159,3 +4159,20 @@ CLI chat 2:
 - Restarted bot prematurely before user approved
 
 ---
+
+## Session 252 — 2026-04-02
+
+**What changed:**
+- POLYBOT_INIT.md stripped 970 lines: stale BOT STATE, session changelogs, context handoff template, progress log
+- SESSION_HANDOFF.md refreshed: PID 12448, session161 log, mandate deadline flagged, CCA Phase 6 noted
+
+**Why:**
+- Slimmed POLYBOT_INIT.md 105KB→42KB and refreshed SESSION_HANDOFF.md with current bot state
+
+**Tests:** 8959/8959 passing (223 suites)
+
+**Lessons:**
+- 15KB target not met (42KB) — dense permanent reference sections legitimately can't be cut further
+- Chat 27-30 tasks remain (stale strategy refs, monitoring loop wiring, wrapresearch slim, Iron Laws, proactive requests)
+
+---
