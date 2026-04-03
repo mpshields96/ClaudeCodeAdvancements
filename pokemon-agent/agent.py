@@ -147,6 +147,7 @@ class MockLLMClient:
         self._call_count = 0
         self.last_messages: list = []
         self.last_system: str = ""
+        self.last_tools: list = []
 
     def add_response(self, response: LLMResponse) -> None:
         self._responses.append(response)
@@ -162,6 +163,7 @@ class MockLLMClient:
     ) -> LLMResponse:
         self.last_messages = messages
         self.last_system = system
+        self.last_tools = tools
 
         if self._call_count < len(self._responses):
             resp = self._responses[self._call_count]
@@ -277,6 +279,12 @@ class CrystalAgent:
     def on_step(self, callback: Callable[[StepResult], None]) -> None:
         """Register a callback that fires after each step."""
         self._on_step = callback
+
+    def _available_tools(self) -> list[dict]:
+        """Return the tool surface supported by this agent instance."""
+        if self.navigator is None:
+            return [tool for tool in TOOLS if tool["name"] != "navigate_to"]
+        return TOOLS
 
     def _screen_detection_addresses(self) -> dict:
         """Return RAM addresses for screen transition detection.
@@ -578,7 +586,7 @@ class CrystalAgent:
             max_tokens=MAX_TOKENS,
             system=SYSTEM_PROMPT,
             messages=self.messages,
-            tools=TOOLS,
+            tools=self._available_tools(),
             temperature=TEMPERATURE,
         )
 

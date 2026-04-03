@@ -161,6 +161,12 @@ class TestAgentStep(unittest.TestCase):
         self.assertEqual(len(result.tool_calls), 0)
         self.assertEqual(len(result.tool_results), 0)
 
+    def test_step_does_not_offer_navigation_without_navigator(self):
+        agent, llm = _make_agent()
+        agent.step()
+        offered_tools = {tool["name"] for tool in llm.last_tools}
+        self.assertNotIn("navigate_to", offered_tools)
+
 
 class TestToolExecution(unittest.TestCase):
     """Test tool call routing and execution."""

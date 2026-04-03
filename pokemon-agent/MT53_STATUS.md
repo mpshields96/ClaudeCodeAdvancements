@@ -1,6 +1,28 @@
 # MT-53: Pokemon Crystal Bot — Status & Observations
 
-## Current State (S224 — 2026-03-27)
+## Current State (Codex takeover — 2026-04-02)
+
+### 2026-04-02 Updates
+- **Gemini backend is now live on mGBA**: Real `main.py` session verified with `--backend gemini --load-state crystal_playable --headless`.
+- **Schema bridge fixed**: Anthropic JSON Schema tool definitions now convert recursively into Gemini's function declaration schema (`type_`, nested `items` / `properties`, unsupported keys dropped).
+- **Message bridge fixed**: Anthropic message history now converts into Gemini text/image/function-call/function-response parts instead of flattening tool blocks into strings.
+- **Backend/model mismatch fixed**: Crystal runs now default to `gemini-2.5-flash` when backend is `gemini` or `auto`, instead of accidentally passing `claude-opus-4-6` to Gemini.
+- **Gemini arg normalization fixed**: Integer-like numeric args are coerced back to ints, and sequence-like arg containers are normalized to plain Python lists. This fixed real tool-validation failures like `buttons must be a list`.
+- **Dead tool removed from prompt surface**: `navigate_to` is no longer offered when `CrystalAgent` has no navigator wired, so Gemini can't waste turns on impossible pathfinding actions.
+- **Real tool execution verified**: Live 2-step Crystal harness produced a successful Gemini `press_buttons` call (`left`) with no validation error.
+- **Tests**: 211 targeted `pokemon-agent` tests passing (`tests.test_gemini_client`, `test_main`, `test_agent`, `test_emulator_control`, `test_boot_sequence_crystal`, `test_memory_reader`, `test_setup_crystal_state`).
+
+### What Still Blocks Longer Play
+- **Gemini free-tier quota is tight**: The current backend hits `gemini-2.5-flash` free-tier request limits fast (observed 5 RPM). Long autonomous runs need pacing, more offline shortcuts, or a different provider path.
+- **Crystal navigation is still manual**: mGBA movement works, but there is no Crystal navigator wired yet, so the model must walk with button presses instead of map-aware routing.
+- **Deprecated SDK warning**: `google.generativeai` works in the current venv, but it prints a deprecation warning. A later MT-53 cut should migrate to `google.genai`.
+
+### Next Step
+1. Run a paced 10-20 minute Gemini+mGBA session with request throttling or more auto-advance shortcuts.
+2. Build Crystal-specific navigation/pathfinding before re-enabling `navigate_to`.
+3. Consider migrating `gemini_client.py` from `google.generativeai` to `google.genai` once the current live loop is stable.
+
+## Previous State (S224 — 2026-03-27)
 
 ### S224 Updates
 - **--model CLI flag added**: `--model claude-haiku-4-5-20251001` overrides config.py MODEL_NAME

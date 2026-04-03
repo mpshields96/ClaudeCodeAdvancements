@@ -26,6 +26,7 @@ import json
 import logging
 import os
 import uuid
+from collections.abc import Mapping, Sequence
 from typing import Any, Dict, List, Optional
 
 try:
@@ -42,12 +43,12 @@ DEFAULT_MODEL = "gemini-2.5-flash"
 
 def _normalize_tool_args(value: Any) -> Any:
     """Normalize Gemini function-call args into agent-friendly Python types."""
-    if isinstance(value, dict):
+    if isinstance(value, Mapping):
         return {
             key: _normalize_tool_args(item)
             for key, item in value.items()
         }
-    if isinstance(value, list):
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
         return [_normalize_tool_args(item) for item in value]
     if isinstance(value, float) and value.is_integer():
         return int(value)
