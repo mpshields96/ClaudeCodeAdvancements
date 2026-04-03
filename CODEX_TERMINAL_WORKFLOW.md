@@ -19,17 +19,20 @@ source ~/Projects/ClaudeCodeAdvancements/codex_shell_helpers.sh
 
 What they do:
 - `cx` prepares the current terminal for the repo-local Codex workflow and prints the next commands
-- `codex init` launches a fresh Codex chat with a repo-aware init prompt
-- `codex auto` launches a fresh Codex chat with a repo-aware auto-work prompt
-- `codex wrap` launches a fresh Codex chat with a repo-aware wrap prompt
+- `codex init` launches a fresh Codex chat with a repo-aware init prompt and refreshes `CODEX_INIT_PROMPT.md`
+- `codex auto` launches a fresh Codex chat with a repo-aware auto-work prompt and refreshes `CODEX_AUTO_PROMPT.md`
+- `codex next` launches from the same fresh-chat handoff path as `codex auto` and refreshes `CODEX_AUTO_PROMPT.md`
+- `codex wrap` launches a fresh Codex chat with a repo-aware wrap prompt and refreshes `CODEX_WRAP_PROMPT.md`
 - `codex chat "<prompt>"` launches a direct ad-hoc Codex chat
 - `cxa` jumps to CCA then runs `cx`
 - `cxbot` jumps to `polymarket-bot` then runs `cx`
+- `cxnext` is a shorthand for `codex next`
 
 Examples:
 - `cxa`
 - `codex init`
 - `codex auto`
+- `codex next`
 - `cxbot`
 - `codex init`
 
@@ -71,7 +74,7 @@ Recommended operator flow:
 2. `cxa` or `cxbot`
 3. `codex init`
 4. Work that chat until a clean stopping point
-5. `codex auto` for the next fresh execution chat
+5. `codex next` for the next fresh execution chat
 6. `codex wrap` when closing out a session or changing scope
 
 These reuse the existing Codex-side docs:
@@ -92,6 +95,14 @@ Wrap the current Codex chat and start a fresh one when any of these is true:
 
 Do not keep one Codex chat alive across multiple unrelated tasks just to save startup time.
 Fresh chats are usually cheaper than carrying muddy context.
+
+## Fresh-Chat Handoff Artifact
+
+`CODEX_AUTO_PROMPT.md` is now part of the command flow, not just documentation.
+
+- `codex auto` refreshes it before launching
+- `codex next` refreshes it before launching
+- the next fresh Codex chat should treat it as the current handoff artifact
 
 ## Why This Matches The Existing CCA/Kalshi System
 

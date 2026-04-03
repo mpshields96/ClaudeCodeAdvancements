@@ -6,6 +6,7 @@ can expose commands like:
 
   codex init
   codex auto
+  codex next
   codex wrap
   codex chat
 
@@ -39,6 +40,12 @@ CCA_ROOT = os.path.expanduser("~/Projects/ClaudeCodeAdvancements")
 POLYBOT_ROOT = os.path.expanduser("~/Projects/polymarket-bot")
 DEFAULT_CODEX_BIN = "/Applications/Codex.app/Contents/Resources/codex"
 DEFAULT_REASONING = 'model_reasoning_effort="high"'
+DEFAULT_PROMPT_FILES = {
+    "init": "CODEX_INIT_PROMPT.md",
+    "auto": "CODEX_AUTO_PROMPT.md",
+    "next": "CODEX_AUTO_PROMPT.md",
+    "wrap": "CODEX_WRAP_PROMPT.md",
+}
 
 
 @dataclass
@@ -303,7 +310,14 @@ def launch_codex(prompt: str, root: str, repo_type: str) -> int:
     return subprocess.run(cmd, cwd=root, env=env).returncode
 
 
+def write_prompt(path: str, prompt: str) -> None:
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(prompt)
+
+
 def build_prompt(mode: str, root: str, repo_type: str, task: str | None = None) -> str:
+    if mode == "next":
+        mode = "auto"
     if repo_type == "cca":
         if mode == "init":
             snapshot = collect_cca_init_snapshot(root)
@@ -333,12 +347,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Repo-aware Codex workflow dispatcher.")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    for name in ("init", "auto", "wrap"):
+    for name in ("init", "auto", "next", "wrap"):
         sub = subparsers.add_parser(name)
         sub.add_argument("--root", default=None, help="Repo root. Defaults to current git top-level.")
         sub.add_argument("--write", default=None, help="Optional output file for the generated prompt.")
         sub.add_argument("--launch", action="store_true", help="Launch Codex with the generated prompt.")
-        if name == "auto":
+        if name in {"auto", "next"}:
             sub.add_argument("--task", default=None, help="Explicit task override.")
 
     chat = subparsers.add_parser("chat")
@@ -352,17 +366,19 @@ def main(argv: list[str] | None = None) -> int:
         return launch_codex(args.prompt, root, repo_type)
 
     prompt = build_prompt(args.command, root, repo_type, task=getattr(args, "task", None))
+    default_prompt_name = DEFAULT_PROMPT_FILES.get(args.command)
 
     if getattr(args, "write", None):
         out_path = args.write
         if not os.path.isabs(out_path):
             out_path = os.path.join(root, out_path)
-        with open(out_path, "w", encoding="utf-8") as handle:
-            handle.write(prompt)
+        write_prompt(out_path, prompt)
         print(out_path)
         return 0
 
     if getattr(args, "launch", False):
+        if default_prompt_name:
+            write_prompt(os.path.join(root, default_prompt_name), prompt)
         return launch_codex(prompt, root, repo_type)
 
     sys.stdout.write(prompt)

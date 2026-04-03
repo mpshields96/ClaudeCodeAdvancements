@@ -36,7 +36,7 @@ codex() {
 
   local sub="${1:-}"
   case "$sub" in
-    init|auto|wrap)
+    init|auto|next|wrap)
       shift
       python3 "$HOME/Projects/ClaudeCodeAdvancements/codex_cmd.py" "$sub" --launch "$@"
       ;;
@@ -64,9 +64,14 @@ cx() {
   echo "Next commands:"
   echo "  codex init"
   echo "  codex auto"
+  echo "  codex next"
   echo "  codex wrap"
   echo "  codex chat \"<prompt>\""
+  echo ""
+  echo "Fresh-chat handoff artifact:"
+  echo "  CODEX_AUTO_PROMPT.md"
 }
 
 alias cxa='cd ~/Projects/ClaudeCodeAdvancements && cx'
 alias cxbot='cd ~/Projects/polymarket-bot && cx'
+alias cxnext='codex next'

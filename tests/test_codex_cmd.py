@@ -100,9 +100,23 @@ class TestCLI(unittest.TestCase):
         mock_normalize.return_value = ("/tmp/repo", "cca")
         mock_build_prompt.return_value = "prompt text\n"
         mock_launch.return_value = 0
-        exit_code = main(["auto", "--launch"])
+        with patch("codex_cmd.write_prompt") as mock_write_prompt:
+            exit_code = main(["auto", "--launch"])
         self.assertEqual(exit_code, 0)
         mock_launch.assert_called_once()
+        mock_write_prompt.assert_called_once_with("/tmp/repo/CODEX_AUTO_PROMPT.md", "prompt text\n")
+
+    @patch("codex_cmd.launch_codex")
+    @patch("codex_cmd.build_prompt")
+    @patch("codex_cmd.normalize_root")
+    def test_next_launch_writes_same_auto_handoff_file(self, mock_normalize, mock_build_prompt, mock_launch):
+        mock_normalize.return_value = ("/tmp/repo", "cca")
+        mock_build_prompt.return_value = "prompt text\n"
+        mock_launch.return_value = 0
+        with patch("codex_cmd.write_prompt") as mock_write_prompt:
+            exit_code = main(["next", "--launch"])
+        self.assertEqual(exit_code, 0)
+        mock_write_prompt.assert_called_once_with("/tmp/repo/CODEX_AUTO_PROMPT.md", "prompt text\n")
 
     @patch("codex_cmd.normalize_root")
     def test_main_writes_output_file(self, mock_normalize):

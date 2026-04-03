@@ -59,9 +59,11 @@ Direct launch options after sourcing `codex_shell_helpers.sh` from `~/.zshrc`:
 - `cx` — prepare the current terminal for the Codex workflow and show next commands
 - `cxa` — jump to `~/Projects/ClaudeCodeAdvancements` and run `cx`
 - `cxbot` — jump to `~/Projects/polymarket-bot` and run `cx`
-- `codex init` — launch a fresh init chat for the current repo
-- `codex auto` — launch a fresh auto-work chat for the current repo
-- `codex wrap` — launch a fresh wrap chat for the current repo
+- `cxnext` — shorthand for `codex next`
+- `codex init` — launch a fresh init chat for the current repo and refresh `CODEX_INIT_PROMPT.md`
+- `codex auto` — launch a fresh auto-work chat for the current repo and refresh `CODEX_AUTO_PROMPT.md`
+- `codex next` — launch the next fresh chat from the same `CODEX_AUTO_PROMPT.md` handoff path
+- `codex wrap` — launch a fresh wrap chat for the current repo and refresh `CODEX_WRAP_PROMPT.md`
 - `codex chat "<prompt>"` — launch an ad-hoc direct Codex chat
 - `bash launch_codex.sh` — open a fresh Terminal.app window for CCA and start Codex with `CCA init`
 - `bash launch_codex.sh kalshi` — open a fresh Terminal.app window for Kalshi and start Codex with `Kalshi init`
@@ -69,7 +71,7 @@ Direct launch options after sourcing `codex_shell_helpers.sh` from `~/.zshrc`:
 Prompt examples:
 - `cxa`
 - `codex init`
-- `codex auto`
+- `codex next`
 - `cxbot`
 - `codex init`
 - `bash launch_codex.sh cca "CCA init"`
@@ -103,6 +105,9 @@ Wrap command:
 Bridge files:
 - `CLAUDE_TO_CODEX.md` — Claude Code -> Codex notes
 - `CODEX_TO_CLAUDE.md` — Codex -> Claude Code durable handoff notes
+
+Fresh-chat handoff artifact:
+- `CODEX_AUTO_PROMPT.md` — refreshed by `codex auto` / `codex next`; treat it as the next-chat handoff file
 
 Repo-local Codex command helpers:
 - `python3 codex_init.py`
