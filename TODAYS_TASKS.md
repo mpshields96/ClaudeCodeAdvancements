@@ -1103,7 +1103,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 
 ### CHAT 31: Slim polybot-autoresearch.md (~30 min)
 
-#### 31A. Slim polybot-autoresearch.md [TODO]
+#### 31A. Slim polybot-autoresearch.md [DONE]
 **Scope:** 21.7KB — largest command file. /kalshi-research permanently retired S131. Most content is dead.
 **Steps:**
 1. Read full file — identify permanent rules vs session-specific content
@@ -1118,7 +1118,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 
 ### CHAT 32: Iron Laws Regression Script (~30 min)
 
-#### 32A. Build scripts/check_iron_laws.py [TODO]
+#### 32A. Build scripts/check_iron_laws.py [DONE]
 **Scope:** BOUNDS.md line refs go stale on every refactor. Today fixed 10 manually — should be automated.
 **Steps:**
 1. Parse BOUNDS.md — extract all `file:line N` references (regex: `(src/\S+\.py|main\.py)\s+line\s+(\d+)`)
@@ -1131,7 +1131,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 
 ### CHAT 33: polybot-wrap.md Audit + File Size Monitor (~30 min)
 
-#### 33A. Audit and slim polybot-wrap.md [TODO]
+#### 33A. Audit and slim polybot-wrap.md [DONE]
 **Scope:** 10.4KB — 3rd largest command file. Likely has accumulated stale session state.
 **Steps:**
 1. Read full file — identify stale session blocks (old restart commands, old pending tasks, session N refs)
@@ -1140,7 +1140,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 **TARGET:** 10.4KB → <6KB.
 **STOP CONDITION:** File under 6KB. No session-specific state embedded.
 
-#### 33B. Wire command file size check into polybot-wrap.md [TODO]
+#### 33B. Wire command file size check into polybot-wrap.md [DONE]
 **Scope:** Advancement tip from S253 — periodic wc -c audit catches file bloat before it accumulates.
 **Steps:**
 1. Add to polybot-wrap.md FINAL CHECKS section (or create one):
