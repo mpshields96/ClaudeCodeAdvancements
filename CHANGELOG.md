@@ -4176,3 +4176,22 @@ CLI chat 2:
 - Chat 27-30 tasks remain (stale strategy refs, monitoring loop wiring, wrapresearch slim, Iron Laws, proactive requests)
 
 ---
+
+## Session 253 — 2026-04-02
+
+**What changed:**
+- 27A/27B polybot-auto.md stripped 62 stale lines + 3rd-cycle CCA check wired
+- 28A polybot-wrapresearch.md 8.1KB→1.8KB (78% reduction)
+- 29A BOUNDS.md 10 Iron Law line refs corrected, eth_drift.py removed from TIER3
+- 30A proactive request triggers wired (guard/CUSUM/stale-comms) with templates
+- Phase 7 Chats 31-33 planned
+
+**Why:**
+- Phase 7 Chats 27-30 complete: polybot-auto cleanup, Iron Laws audit, wrapresearch slim, proactive request triggers
+
+**Tests:** 331/331 passing (6 suites)
+
+**Lessons:**
+- 30A trigger templates verbose — 248 lines vs 226 pre-30A
+
+---

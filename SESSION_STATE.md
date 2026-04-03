@@ -3,7 +3,25 @@
 
 ---
 
-## Current State (as of Session 252 — 2026-04-02)
+## Current State (as of Session 253 — 2026-04-02)
+
+**Phase:** Session 253 COMPLETE. Phase 7 Chats 27-30 complete: polybot-auto cleanup, Iron Laws audit, wrapresearch slim, proactive request triggers
+
+**What was done this session (S253):**
+- 27A/27B polybot-auto.md stripped 62 stale lines + 3rd-cycle CCA check wired
+- 28A polybot-wrapresearch.md 8.1KB→1.8KB (78% reduction)
+- 29A BOUNDS.md 10 Iron Law line refs corrected, eth_drift.py removed from TIER3
+- 30A proactive request triggers wired (guard/CUSUM/stale-comms) with templates
+- Phase 7 Chats 31-33 planned
+- **Tests**: 6 suites, 331 tests passing. All green.
+
+**Next:**
+1. 31A slim polybot-autoresearch.md 21.7KB→<5KB
+2. 32A build scripts/check_iron_laws.py regression script
+
+---
+
+## Previous State (Session 252 — 2026-04-02)
 
 **Phase:** Session 252 COMPLETE. Slimmed POLYBOT_INIT.md 105KB→42KB and refreshed SESSION_HANDOFF.md with current bot state
 
@@ -17,7 +35,6 @@
 2. 27B: Wire every-3rd-cycle CCA check into monitoring loop
 
 ---
-
 ## Previous State (Session 251 — 2026-04-02)
 
 **Phase:** Session 251 COMPLETE. Phase 6 complete: polybot-init 88% slimmer, SESSION_RESUME.md live, Phase 7 planned

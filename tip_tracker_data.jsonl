@@ -95,3 +95,6 @@
 {"tip":"Check bot restart approval before touching live systems","source":"cca-desktop","session":"S251","timestamp":"2026-04-03T00:25:37.459338Z"}
 {"tip":"When slimming large docs, grep for session-specific patterns (Session 4X, old PIDs, stale log paths) to quickly find frozen-in-time sections","source":"cca-desktop","session":"S252","timestamp":"2026-04-03T00:54:54.653124Z"}
 {"tip":"Strip session changelogs from init files \u2014 CHANGELOG.md is the authoritative record, not the init file","source":"cca-desktop","session":"S252","timestamp":"2026-04-03T00:54:54.653124Z"}
+{"tip":"polybot_comm.py pending before writing CCA requests prevents duplicate entries across sessions","source":"cca-desktop","session":"S253","timestamp":"2026-04-03T02:06:03.568623Z"}
+{"tip":"wc -c on Kalshi command files periodically surfaces token waste \u2014 polybot-autoresearch.md 21.7KB is next target","source":"cca-desktop","session":"S253","timestamp":"2026-04-03T02:06:03.568623Z"}
+{"tip":"BOUNDS.md file:line refs should be verified with grep -n after any major refactor \u2014 automate via check_iron_laws.py","source":"cca-desktop","session":"S253","timestamp":"2026-04-03T02:06:03.568623Z"}

@@ -1360,3 +1360,16 @@
 {"event_type":"feedback_roi","session":252,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-03T00:54:54.653124Z"}
 {"event_type":"sentinel_stats","session":252,"total_principles":199,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-03T00:54:54.653124Z"}
 {"event_type":"meta_learning_health","session":252,"health_score":0.513,"total_principles":33,"active_principles":13,"zombie_principles":14,"timestamp":"2026-04-03T00:54:54.653124Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-03T01:40:29.947222+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-03T01:40:29.971612+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-03T02:05:35.588613+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-03T02:05:35.613322+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":253,"domain":"kalshi","outcome":"success","notes":"Phase 7 Chats 27-30 complete: polybot-auto cleanup, Iron Laws audit, wrapresearch slim, proactive request triggers","timestamp":"2026-04-03T02:06:03.568623Z"}
+{"event_type":"win","session":253,"domain":"kalshi","notes":"polybot-auto.md 62 stale lines stripped + 3rd-cycle CCA check wired","timestamp":"2026-04-03T02:06:03.568623Z"}
+{"event_type":"win","session":253,"domain":"kalshi","notes":"BOUNDS.md 10 Iron Law refs corrected","timestamp":"2026-04-03T02:06:03.568623Z"}
+{"event_type":"win","session":253,"domain":"kalshi","notes":"polybot-wrapresearch.md 78% slim","timestamp":"2026-04-03T02:06:03.568623Z"}
+{"event_type":"win","session":253,"domain":"kalshi","notes":"proactive request triggers with guard/CUSUM/stale-comms templates","timestamp":"2026-04-03T02:06:03.568623Z"}
+{"event_type":"pain","session":253,"domain":"kalshi","notes":"trigger templates in 30A too verbose","timestamp":"2026-04-03T02:06:03.568623Z"}
+{"event_type":"feedback_roi","session":253,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-03T02:06:03.568623Z"}
+{"event_type":"sentinel_stats","session":253,"total_principles":199,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-03T02:06:03.568623Z"}
+{"event_type":"meta_learning_health","session":253,"health_score":0.513,"total_principles":33,"active_principles":13,"zombie_principles":14,"timestamp":"2026-04-03T02:06:03.568623Z"}
