@@ -514,31 +514,41 @@ class TestActionCacheIntegration(unittest.TestCase):
 class TestAutoAdvance(unittest.TestCase):
     """Test dialog auto-advance and escape (mewtoo patterns).
 
-    NOTE (S208): Dialog/menu detection via WINDOW_STACK_SIZE, TEXT_BOX_FLAGS, and
-    JOY_DISABLED is UNRELIABLE in Pokemon Crystal — these addresses have non-zero
-    values during normal overworld gameplay. Tests that depend on triggering DIALOG
-    or POKEMON_CENTER state via these flags are skipped until dialog detection is
-    reimplemented using a Crystal-specific approach (e.g., from reference repos).
+    S208 fix: dialog detection now uses text_reader.is_text_active() which checks
+    the text buffer at 0xD073 (wStringBuffer1). More reliable than WINDOW_STACK/
+    JOY_DISABLED flags which have non-zero values during normal Crystal overworld.
+    _set_dialog writes non-terminator bytes to 0xD073 to simulate active dialog.
     """
 
     def _set_dialog(self, emu):
-        """Set RAM to DIALOG state — BROKEN in Crystal, see S208 RESEARCH.md."""
-        emu.write_byte(0xCF85, 1)  # WINDOW_STACK_SIZE > 0
-        emu.write_byte(0xCF86, 1)  # TEXT_BOX_FLAGS > 0
+        """Set RAM to DIALOG state via text buffer approach (S208 fix).
+
+        Writes WINDOW_STACK_SIZE > 0 so is_text_active() proceeds past the
+        early-exit, then writes actual text bytes to wStringBuffer1 (0xD073)
+        so the content check succeeds. 0x80 = 'A' in Crystal char encoding.
+        """
+        emu.write_byte(0xCF85, 1)   # WINDOW_STACK_SIZE > 0
+        emu.write_byte(0xD073, 0x80)  # Text buffer: 'A' (non-zero, non-terminator)
+        emu.write_byte(0xD074, 0x81)  # Text buffer: 'B'
 
     def _set_pokemon_center(self, emu):
-        """Set RAM to POKEMON_CENTER state — BROKEN in Crystal, see S208."""
-        emu.write_byte(0xCFA0, 1)  # JOY_DISABLED > 0
+        """Set RAM to POKEMON_CENTER state — uses battle mode=0 + text active."""
+        # Pokemon Center healing uses text buffer too; simulate same way
+        emu.write_byte(0xCF85, 1)
+        emu.write_byte(0xD073, 0x80)
+        emu.write_byte(0xD074, 0x81)
 
     def _clear_menu_state(self, emu):
-        """Reset to overworld."""
+        """Reset to overworld — clear all menu/dialog indicators."""
         emu.write_byte(0xCF85, 0)
         emu.write_byte(0xCF86, 0)
         emu.write_byte(0xCFA0, 0)
         emu.write_byte(0xD100, 0)
         emu.write_byte(0xD22D, 0)
+        # Clear text buffer so is_text_active() returns False
+        emu.write_byte(0xD073, 0x00)
+        emu.write_byte(0xD074, 0x00)
 
-    @unittest.skip("S208: Crystal dialog detection unreliable — needs reimplementation")
     def test_dialog_auto_presses_a(self):
         """In DIALOG state, agent auto-presses A without calling LLM."""
         agent, llm = _make_agent()
@@ -548,7 +558,6 @@ class TestAutoAdvance(unittest.TestCase):
         self.assertIn("auto", result.llm_text)
         self.assertEqual(result.input_tokens, 0)
 
-    @unittest.skip("S208: Crystal dialog detection unreliable — needs reimplementation")
     def test_pokemon_center_auto_presses_a(self):
         """In POKEMON_CENTER state, agent auto-presses A."""
         agent, llm = _make_agent()
@@ -563,7 +572,6 @@ class TestAutoAdvance(unittest.TestCase):
         result = agent.step()
         self.assertEqual(llm.call_count, 1)
 
-    @unittest.skip("S208: Crystal dialog detection unreliable — needs reimplementation")
     def test_auto_advance_count_tracked(self):
         """Auto-advance count increments for each auto step."""
         agent, llm = _make_agent()
@@ -574,7 +582,6 @@ class TestAutoAdvance(unittest.TestCase):
         self.assertEqual(agent.auto_advance_count, 3)
         self.assertEqual(llm.call_count, 0)
 
-    @unittest.skip("S208: Crystal dialog detection unreliable — needs reimplementation")
     def test_dialog_escape_after_threshold(self):
         """After 7+ auto-A presses in dialog, switch to B."""
         agent, llm = _make_agent()
@@ -590,7 +597,6 @@ class TestAutoAdvance(unittest.TestCase):
         result = agent.step()
         self.assertIn("[auto-advance: b]", result.llm_text)
 
-    @unittest.skip("S208: Crystal dialog detection unreliable — needs reimplementation")
     def test_b_press_resets_auto_counter(self):
         """After B escape attempt, consecutive counter resets."""
         agent, _ = _make_agent()
@@ -603,7 +609,6 @@ class TestAutoAdvance(unittest.TestCase):
         agent.step()  # b (escape)
         self.assertEqual(agent._consecutive_auto_a, 0)
 
-    @unittest.skip("S208: Crystal dialog detection unreliable — needs reimplementation")
     def test_leaving_dialog_resets_counter(self):
         """When exiting dialog to overworld, auto counter resets."""
         agent, _ = _make_agent()
@@ -617,7 +622,6 @@ class TestAutoAdvance(unittest.TestCase):
         agent.step()  # This calls LLM
         self.assertEqual(agent._consecutive_auto_a, 0)
 
-    @unittest.skip("S208: Crystal dialog detection unreliable — needs reimplementation")
     def test_auto_advance_still_increments_step_count(self):
         """Auto-advance steps still count toward step_count."""
         agent, _ = _make_agent()
@@ -626,7 +630,6 @@ class TestAutoAdvance(unittest.TestCase):
         agent.step()
         self.assertEqual(agent.step_count, 2)
 
-    @unittest.skip("S208: Crystal dialog detection unreliable — needs reimplementation")
     def test_auto_advance_fires_callback(self):
         """Step callbacks fire for auto-advance steps too."""
         captured = []
@@ -637,7 +640,6 @@ class TestAutoAdvance(unittest.TestCase):
         agent.step()
         self.assertEqual(captured, [1, 2])
 
-    @unittest.skip("S208: Crystal dialog detection unreliable — needs reimplementation")
     def test_mixed_auto_and_llm_steps(self):
         """Agent transitions between auto and LLM steps correctly."""
         agent, llm = _make_agent()
@@ -657,7 +659,6 @@ class TestAutoAdvance(unittest.TestCase):
         r3 = agent.step()
         self.assertEqual(llm.call_count, 1)  # Still 1 — no new LLM call
 
-    @unittest.skip("S208: Crystal dialog detection unreliable — needs reimplementation")
     def test_auto_advance_zero_tokens(self):
         """Auto-advance steps use 0 tokens."""
         agent, _ = _make_agent()

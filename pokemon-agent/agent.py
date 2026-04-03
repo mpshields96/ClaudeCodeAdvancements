@@ -307,6 +307,11 @@ class CrystalAgent:
         - DIALOG state: press A to advance text (no reasoning needed)
         - POKEMON_CENTER state: press A to advance healing animation
         - After 7+ consecutive auto-A presses in same state: press B to escape loops
+
+        Crystal dialog detection: menu_state.DIALOG is unreliable from RAM flags alone
+        (S208: WINDOW_STACK=10 and JOY_DISABLED=146 are normal overworld values).
+        Fallback: text_reader.is_text_active() checks the actual text buffer content
+        at 0xD073, which is populated only when dialog is actively displayed.
         """
         if state.menu_state == MenuState.DIALOG:
             if self._consecutive_auto_a >= self.DIALOG_ESCAPE_THRESHOLD:
@@ -314,6 +319,13 @@ class CrystalAgent:
             return "a"  # Advance text
         if state.menu_state == MenuState.POKEMON_CENTER:
             return "a"  # Advance healing animation
+
+        # Crystal fallback: text reader checks actual text buffer content.
+        # More reliable than WINDOW_STACK/JOY_DISABLED flags (S208 fix).
+        if self.text_reader.is_text_active():
+            if self._consecutive_auto_a >= self.DIALOG_ESCAPE_THRESHOLD:
+                return "b"
+            return "a"
 
         # Not an auto-advance situation — reset counter
         self._consecutive_auto_a = 0
