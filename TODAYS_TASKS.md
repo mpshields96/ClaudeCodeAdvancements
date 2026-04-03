@@ -1012,6 +1012,95 @@ Adapt for Kalshi trading domain: trading events instead of general dev events.
 
 ---
 
+## PHASE 7: Kalshi Bot Full Optimization (Chats 26-30)
+
+Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
+
+### CHAT 26: POLYBOT_INIT.md Slim + SESSION_HANDOFF.md Refresh
+
+#### 26A. Slim POLYBOT_INIT.md [TODO]
+**Scope:** 105KB read every session = ~25K tokens burned at startup. Biggest remaining waste.
+**Steps:**
+1. Audit POLYBOT_INIT.md — identify static build docs vs live-status sections
+2. Extract live-status content to SESSION_HANDOFF.md (already the canonical state file)
+3. Strip or archive stale sections (old strategy docs, resolved incidents, outdated params)
+4. Keep only: architecture overview, Iron Laws summary, key file map
+**TARGET:** POLYBOT_INIT.md 105KB → ~15KB (static reference only)
+**STOP CONDITION:** File under 20KB. No live-status content left in it.
+
+#### 26B. Refresh SESSION_HANDOFF.md [TODO]
+**Scope:** Last updated March 29. Stale PID (87224 → 12448), stale P&L, stale bot state.
+**Steps:**
+1. Update BOT STATE: PID 12448, log /tmp/polybot_session161.log, all-time +69.89 USD
+2. Update strategy standings from --graduation-status output
+3. Update PENDING TASKS to reflect Phase 6 completion
+4. Trim any sections now covered by SESSION_RESUME.md
+**TARGET:** SESSION_HANDOFF.md current + under 6KB
+**STOP CONDITION:** Accurate state. No references to dead PIDs or March 18-29 sessions.
+
+---
+
+### CHAT 27: polybot-auto.md Deep Refresh
+
+#### 27A. Remove stale strategy references [TODO]
+**Scope:** polybot-auto.md monitoring loop and secondary tasks reference disabled strategies.
+**Steps:**
+1. Remove sol_drift_v1/xrp_drift_v1 graduation counters from monitoring loop SQL
+2. Remove DIRECTION FILTERS section (btc/eth/sol/xrp_drift all disabled)
+3. Update SECONDARY TASKS: reflect actual live strategies (expiry_sniper, daily_sniper, sports_game)
+4. Update PRIME DIRECTIVE target: +125 USD → current gap (55.11 USD)
+**STOP CONDITION:** No references to disabled strategies. SQL only queries active ones.
+
+#### 27B. Wire every-3rd-cycle CCA check into monitoring loop [TODO]
+**Scope:** CCA check currently only at startup. Needs mid-session wiring per coordination rules.
+**Steps:**
+1. Add cycle counter (write to /tmp/polybot_cycle_count.txt, increment each loop)
+2. Every 3rd cycle: cat ~/.claude/cross-chat/CCA_TO_POLYBOT.md | tail -60
+3. If new delivery found: implement + write to POLYBOT_TO_CCA.md
+4. Every 3rd cycle: also write proactive request to POLYBOT_TO_CCA.md if CCA comms stale >48hr
+**STOP CONDITION:** Loop checks CCA every 3rd cycle autonomously.
+
+---
+
+### CHAT 28: polybot-wrapresearch.md Slim + Retirement Notice
+
+#### 28A. Slim polybot-wrapresearch.md [TODO]
+**Scope:** Still 7.1KB. /kalshi-research is PERMANENTLY RETIRED — this command is rarely used.
+**Steps:**
+1. Add RETIRED notice at top: /kalshi-research permanently retired (S131). Use /polybot-wrap.
+2. Apply critical-path treatment: compress Steps 1-6 to essential only
+3. Remove embedded session prompt template (now in SESSION_RESUME.md)
+**TARGET:** polybot-wrapresearch.md 7.1KB → ~2KB
+**STOP CONDITION:** File under 2KB. Retirement notice prominent.
+
+---
+
+### CHAT 29: BOUNDS.md + Iron Laws Audit
+
+#### 29A. Verify Iron Laws file:line references [TODO]
+**Scope:** BOUNDS.md has 18 Iron Laws with file:line references — likely stale after Phase 6 refactoring.
+**Steps:**
+1. Read BOUNDS.md — extract all file:line references
+2. Verify each reference still points to a real line in a real file
+3. Update any stale references (files moved/renamed during Phase 6)
+4. Flag any laws that reference removed code
+**STOP CONDITION:** All 18 Iron Laws verified current. Stale refs updated or flagged.
+
+---
+
+### CHAT 30: Proactive POLYBOT_TO_CCA.md Request Wiring
+
+#### 30A. Wire proactive request writing into polybot-auto [TODO]
+**Scope:** POLYBOT_TO_CCA.md requests are never written autonomously — CCA only gets silence.
+**Steps:**
+1. Add proactive request trigger to polybot-auto.md: if guard accumulating losses (n>=5, WR<BE) → write request
+2. Add CUSUM trigger: if CUSUM >= 3.0 → write request to CCA for investigation
+3. Add stale comms trigger: if CCA_TO_POLYBOT.md last entry >48hr → write check-in request
+4. Template the request format in polybot-auto.md
+**STOP CONDITION:** polybot-auto autonomously writes POLYBOT_TO_CCA.md requests on trigger conditions.
+
+---
+
 ## DEFERRED (not scheduled, revisit when relevant)
 
 - **TurboQuant vector compression** — only when Frontier 1 hits storage scale problems
