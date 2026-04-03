@@ -1177,11 +1177,11 @@ Last updated: S125 (2026-03-23).
 - Phase 4: UI component library (reusable patterns for Claude Code web outputs)
 - Phase 5 (S257): Dashboard v2 — dashboard_generator.py wired into component_library.py. 8 components, multi-section layout, responsive HTML. COMPLETE.
 - Phase 6 (S258): Diagram generation pipeline — diagram_generator.py. FlowDiagram (5 node kinds, auto-layout) + SequenceDiagram (actors, lifelines, 4 message styles). Pure SVG, no external deps. 55 tests. COMPLETE.
-- Phase 7: Integration — wire figure_generator, diagram_generator, component_library into reports, dashboards, slides, websites (single import API)
+- Phase 7 (S258): Integration — visual.py unified façade. Single import over all 6 pillars (charts 28 types, components 8, diagrams, figures, dashboard, slides). Convenience factories: make_flow(), make_sequence(), make_chart(kind). 72 exports, 55 tests. COMPLETE.
 
 **Success criteria:** A CCA session can produce visual outputs (reports, dashboards, charts, web pages) that look professional WITHOUT manual post-processing. The visual quality gap between Claude Code output and professional design tools shrinks measurably.
 
-**Status:** Phase 6 COMPLETE (S258). Phases 1-6 done. Next: Phase 7 (Integration — unified visual API across all pillars).
+**Status:** ALL 7 PHASES COMPLETE (S258). MT-32 fully delivered.
 Last updated: S258 (2026-04-03).
 
 ---
@@ -1260,7 +1260,7 @@ See `CCA_PRIME_DIRECTIVE.md`.
 | 2 | MT-33 | Strategic Intelligence Report | 9 | +0.0 | 50% | +0.0 | +1.0 | 0.0 | **10.0** | S121 | Phase 4-6: chart integration, self-reference, hardening. kalshi_data_collector + learning_data_collector + report_differ built (S122-S123). |
 | 3 | MT-23 | Mobile Remote Control v2 | 8 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **9.0** | NEW (S103) | Research: evaluate Telegram/Discord channels MCP |
 | 4 | MT-26 | Financial Intelligence Engine | 7 | +0.0 | 92% | +0.0 | +1.0 | 0.0 | **8.0** | S103 | CCA scope COMPLETE. Tier 3 Phase 2 deferred (needs numpy). 79 pipeline tests. |
-| 5 | MT-32 | Visual Excellence & Design Engineering | 8 | +0.0 | 75% | +0.0 | +0.0 | 0.0 | **8.0** | S258 | Phases 1-6 COMPLETE. diagram_generator.py — flow+sequence SVG, 55 tests. Next: Phase 7 (Integration). |
+| 5 | MT-32 | Visual Excellence & Design Engineering | 8 | +0.0 | 100% | +0.0 | +0.0 | 0.0 | **8.0** | S258 | ALL 7 PHASES COMPLETE. visual.py — 72 exports, 55 tests. Full pillar integration done. |
 | — | MT-34 | Medical AI (OpenEvidence replacement) | 6 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **6.0** | IDEA (S121) | BLOCKED: Matthew refining concept. Do not start. |
 | 6 | MT-24 | Visualization & Graphics Engine | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 4 |
 | 7 | MT-25 | Presentation Generator | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 8 (WAITING: style samples) |
