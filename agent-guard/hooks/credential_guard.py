@@ -13,9 +13,14 @@ Primary threats guarded:
   4. /proc/self/environ                      — reads process environment (Linux)
   5. history | (pipe)                        — command history may contain secrets
 
+Enforcement tiers (from iron_laws.py):
+  IRON LAWS (IL-*)    — Always block, no override. IL-1 covers env exfiltration.
+  DANGER ZONES (DZ-*) — Critical blocks; high warns (or blocks if CLAUDE_AG_BLOCK=1).
+  Legacy patterns     — Docker/history patterns not in iron_laws, handled here directly.
+
 Behavior:
   - Default: warn Claude, but allow (with explanation of what the command does)
-  - Opt-in blocking: set CLAUDE_CRED_GUARD_BLOCK=1 to block flagged commands
+  - Opt-in blocking: set CLAUDE_AG_BLOCK=1 (or legacy CLAUDE_CRED_GUARD_BLOCK=1)
   - Disabled: set CLAUDE_CRED_GUARD_DISABLED=1
 
 Wire as PreToolUse hook:
@@ -34,6 +39,15 @@ import os
 import re
 import sys
 from pathlib import Path
+
+# Iron Laws + Danger Zones enforcement (AG-5)
+_IRON_LAWS_PATH = Path(__file__).parent.parent
+sys.path.insert(0, str(_IRON_LAWS_PATH))
+try:
+    from iron_laws import enforce as _il_enforce, VerdictLevel as _VL, verdict_to_hook_response as _il_response
+    _IRON_LAWS_AVAILABLE = True
+except ImportError:
+    _IRON_LAWS_AVAILABLE = False
 
 
 # ---------------------------------------------------------------------------
@@ -176,7 +190,11 @@ def main() -> None:
         print(json.dumps(_allow_response()))
         sys.exit(0)
 
-    blocking = os.environ.get("CLAUDE_CRED_GUARD_BLOCK") == "1"
+    # CLAUDE_AG_BLOCK supersedes legacy CLAUDE_CRED_GUARD_BLOCK
+    blocking = (
+        os.environ.get("CLAUDE_AG_BLOCK") == "1"
+        or os.environ.get("CLAUDE_CRED_GUARD_BLOCK") == "1"
+    )
 
     try:
         raw = sys.stdin.read()
@@ -184,21 +202,37 @@ def main() -> None:
     except (json.JSONDecodeError, ValueError):
         payload = {}
 
-    # Only act on Bash tool calls
     tool_name = payload.get("tool_name", "")
-    if tool_name not in ("Bash", "bash"):
-        print(json.dumps(_allow_response()))
-        sys.exit(0)
 
-    # Extract the command from the tool input
+    # Extract tool input
     tool_input = payload.get("tool_input", {})
     if isinstance(tool_input, str):
         try:
             tool_input = json.loads(tool_input)
         except (json.JSONDecodeError, ValueError):
             tool_input = {}
-    command = tool_input.get("command", "")
 
+    # --- Iron Laws + Danger Zones (AG-5) ---
+    # Runs on ALL tool types (not just Bash) for Write/Edit protection.
+    if _IRON_LAWS_AVAILABLE and tool_name:
+        agent_name = os.environ.get("CLAUDE_AGENT_NAME")
+        project_root = os.environ.get("CLAUDE_PROJECT_ROOT")
+        verdict = _il_enforce(
+            tool=tool_name,
+            tool_input=tool_input,
+            agent_name=agent_name,
+            project_root=project_root,
+        )
+        if verdict.level != _VL.PASS:
+            print(json.dumps(_il_response(verdict)))
+            sys.exit(0)
+
+    # --- Legacy Bash-specific threat patterns ---
+    if tool_name not in ("Bash", "bash"):
+        print(json.dumps(_allow_response()))
+        sys.exit(0)
+
+    command = tool_input.get("command", "")
     if not command:
         print(json.dumps(_allow_response()))
         sys.exit(0)
