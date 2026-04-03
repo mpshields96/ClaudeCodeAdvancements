@@ -206,7 +206,12 @@ def apply_suggestions(patterns, strategy):
             else:
                 changes.append(f"{key}: {old_val} -> {val}")
 
-    if changes:
+    # If stale_strategy was detected, reset updated_at even with no param changes.
+    # This prevents the staleness warning from recurring every session when the
+    # strategy is intentionally stable (no bounds-defined params to adjust).
+    stale_detected = any(p.get("type") == "stale_strategy" for p in patterns)
+
+    if changes or stale_detected:
         strategy["version"] = strategy.get("version", 0) + 1
         strategy["updated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         strategy["updated_by"] = "reflect.py"
@@ -347,11 +352,14 @@ def reflect(domain=None, apply=False, brief=False, propose=False, session_id=Non
     # Apply suggestions if requested
     if apply:
         changes = apply_suggestions(patterns, strategy)
+        stale_reset = any(p.get("type") == "stale_strategy" for p in patterns)
         if changes:
             print(f"\n--- Applied Strategy Changes ---")
             for c in changes:
                 print(f"  APPLIED: {c}")
             print(f"Strategy version bumped to v{strategy.get('version', '?')}")
+        elif stale_reset:
+            print(f"\nNo parameter changes needed. Staleness clock reset (v{strategy.get('version', '?')}, updated_at refreshed).")
         else:
             print("\nNo strategy changes to apply.")
 

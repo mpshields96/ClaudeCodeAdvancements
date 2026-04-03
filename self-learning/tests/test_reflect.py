@@ -448,6 +448,36 @@ class TestApplySuggestions(unittest.TestCase):
         self.assertEqual(len(changes), 1)
         self.assertIn("clamped", changes[0])
 
+    def test_stale_strategy_pattern_resets_updated_at_even_with_no_changes(self):
+        """When stale_strategy is detected but no parameter changes needed,
+        updated_at is still bumped to reset the staleness clock.
+        Without this fix: the stale warning fires every session indefinitely."""
+        old_updated = "2026-03-10T00:00:00Z"
+        self.strategy["updated_at"] = old_updated
+        # Stale pattern with no suggestion
+        patterns = [{
+            "type": "stale_strategy",
+            "severity": "info",
+            "message": "Strategy config is 19 days old with 1434 journal entries since",
+            "data": {"days_old": 19, "entries_since": 1434},
+        }]
+        with patch.object(rf, "_save_strategy") as mock_save, \
+             patch("reflect.log_event"):
+            rf.apply_suggestions(patterns, self.strategy)
+        # updated_at must be reset even though no param changes were applied
+        self.assertNotEqual(self.strategy.get("updated_at"), old_updated,
+                            "stale_strategy should reset updated_at even with no param changes")
+        mock_save.assert_called_once()
+
+    def test_non_stale_pattern_no_change_does_not_save(self):
+        """Non-stale patterns with no suggestions don't trigger a save."""
+        patterns = [{"type": "high_skip_rate", "severity": "info",
+                     "message": "test", "data": {}}]
+        with patch.object(rf, "_save_strategy") as mock_save, \
+             patch("reflect.log_event"):
+            rf.apply_suggestions(patterns, self.strategy)
+        mock_save.assert_not_called()
+
 
 # ── micro_reflect ─────────────────────────────────────────────────────────────
 
