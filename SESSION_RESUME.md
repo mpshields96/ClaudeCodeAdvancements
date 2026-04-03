@@ -1,28 +1,31 @@
-# SESSION RESUME — S256
-# Written by S255 wrap. Read at S256 init.
+# SESSION RESUME — S257
+# Written by S256 wrap. Read at S257 init.
 
-## S255 COMPLETED
-- AG-5: `agent-guard/iron_laws.py` — 4 Iron Laws + 5 Danger Zones. `credential_guard.py` runs `enforce()` first. 59 new tests. fb41b55.
-- slim_init Step 5.3: session_orchestrator registration permanent. d5f365c.
-- MT-49 stale_strategy fix: `reflect.py apply_suggestions` resets `updated_at` on stale detect even with no param changes. strategy.json → v2. b2aed7b.
-- Principle transfer tp_3270b82a accepted (PROJECT_INDEX.md hotspot: session_mgmt→code_quality).
-- 4 new principles auto-discovered (203 total). b4bb565.
-- Cross-chat: 4 Kalshi S162 questions answered (CCA_TO_POLYBOT.md). Codex status update written (CLAUDE_TO_CODEX.md).
-- Tests: 274 suites all passing. Git: clean. Pushed 73f0d41.
+## S256 COMPLETED
+- Committed Codex changes (776e7a6): pokemon-agent Gemini schema normalization (_json_schema_to_gemini_schema, _normalize_tool_args, resolve_model_name), CODEX_TERMINAL_WORKFLOW.md + launch_codex.sh, Codex helper re-anchor fix.
+- Todo captured: terminal CCA self-chaining gap (.planning/todos/pending/f85ab1da.json).
+- MT-32 Phase 4 COMPLETE: design-skills/component_library.py — 8 reusable HTML components (button, badge, alert, card, progress_bar, data_table, tabs, stat_card), component_stylesheet(), page(). 75 tests. (926e831)
+- component_demo.py: browser-viewable demo of all 8 components, 16KB self-contained HTML. (6584ae1)
+- Kalshi S256 delivery: Codex Gemini fix, autoloop gap, sports_game n=6, btc_lag DEAD, MT-32 next.
+- MASTER_TASKS.md: MT-32 Phase 4 COMPLETE → Phase 5 = Dashboard v2. PROJECT_INDEX updated.
+- Tests: 274 suites passing (618 tests in design-skills). Git: clean. Pushed 2c97bef.
 
 ## NEXT SESSION PRIORITIES
-1. MT-32 (Visual Excellence) — score 14.0, stagnating 97 sessions
-2. r/claudecode scan — 3 subreddits stale; run cca-nuclear-daily off-peak
-3. Codex: check CODEX_TO_CLAUDE.md for response to S255 update
+1. MT-32 Phase 5: Dashboard v2 — wire component_library into dashboard_generator (interactive, real-time, responsive, dark/light theme)
+2. Terminal self-chaining for one-off CCA chats — .planning/todos/pending/f85ab1da.json
+3. r/claudecode scan stale (3 subreddits) — cca-nuclear-daily when off-peak
 
 ## KEY STATE
-- strategy.json: v2, updated_at 2026-04-03T03:15:26Z (staleness clock reset)
-- agent-guard/iron_laws.py: new — 4 ILs, 5 DZs, enforce(), verdict_to_hook_response()
-- credential_guard.py: iron_laws.enforce() runs before legacy patterns; CLAUDE_AG_BLOCK=1 enables DZ blocking
-- slim_init: Step 5.3 registers session orchestrator (respects CCA_CHAT_ID env var)
-- Kalshi: running 18-23 USD/day, sports_game n=6 (need 30), btc_lag DEAD (HFTs, do not promote)
+- design-skills/component_library.py: COMPLETE — button(4 variants), badge(5), alert(4), card(3), progress_bar(4), data_table(striped/compact/empty), tabs(ARIA), stat_card(delta). CSS via component_stylesheet().
+- design-skills/component_demo.py: run `python3 component_demo.py --open` to preview in browser.
+- MT-32 Phase 4 complete. Phase 5 = Dashboard v2 (dashboard_generator.py, 1186 lines, complex refactor).
+- Terminal self-chaining: desktop Electron autoloop OK, CLI outer-loop OK, one-off terminal can't self-chain.
+- Codex helpers: now re-anchored to canonical CCA repo (wrong-repo issue fixed S256).
+- Kalshi: 18-23 USD/day, sports_game n=6 (need 30), btc_lag DEAD, 15-min crypto BANNED.
 
 ## GOTCHAS
-- spec-guard warns on every Write/Edit — warn-only mode, not a blocker, visual noise only
-- polymarket-bot check_iron_laws.py ≠ agent-guard iron_laws.py — different systems, no conflict
-- MT-41 shows as stagnating in priority_picker but is COMPLETE (all 3 phases S160-S163)
+- pytest not available on system python3.14 or pokemon-agent venv — use `python3 <test_file.py>` directly or CCA parallel_test_runner.py
+- html.count("<th") matches "<thead>" — always use html.count("<th>") with closing > in assertions
+- spec-guard fires on every new module write — warn-only, not a blocker
+- component_library tests are in design-skills/tests/ (alongside other design-skills tests), NOT in top-level tests/
+- Dashboard v2 (MT-32 Phase 5) requires reading dashboard_generator.py (1186 lines) — do at fresh session start, not at 50%+ context

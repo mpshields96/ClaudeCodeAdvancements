@@ -5,7 +5,7 @@
 
 ## Current State (as of Session 256 — 2026-04-02)
 
-**Phase:** Session 256 IN PROGRESS. Codex improvements committed, MT-32 Phase 4 complete, Kalshi delivery written.
+**Phase:** Session 256 COMPLETE. Codex improvements committed, MT-32 Phase 4 complete, Kalshi delivery written.
 
 **What was done this session (S256):**
 - Codex changes committed (776e7a6): pokemon-agent Gemini schema normalization (`_json_schema_to_gemini_schema`, `_normalize_tool_args`, `resolve_model_name`), CODEX_TERMINAL_WORKFLOW.md + launch_codex.sh, Codex helper re-anchor to canonical CCA repo.
