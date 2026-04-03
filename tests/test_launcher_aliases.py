@@ -39,10 +39,10 @@ class TestLauncherAliases(unittest.TestCase):
     def test_cca_alias_exists(self):
         self.assertIn('alias cca=', self.zshrc)
 
-    def test_cca_uses_opus(self):
+    def test_cca_uses_sonnet(self):
         match = re.search(r'alias cca="([^"]+)"', self.zshrc)
         self.assertIsNotNone(match, "cca alias not found")
-        self.assertIn("--model opus", match.group(1))
+        self.assertIn("--model sonnet", match.group(1))
 
     def test_cca_targets_correct_dir(self):
         match = re.search(r'alias cca="([^"]+)"', self.zshrc)

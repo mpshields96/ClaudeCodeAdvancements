@@ -4195,3 +4195,23 @@ CLI chat 2:
 - 30A trigger templates verbose — 248 lines vs 226 pre-30A
 
 ---
+
+## Session 254 — 2026-04-03
+
+**What changed:**
+- polybot-autoresearch.md 21.7KB→4.5KB (79% reduction, RETIRED)
+- polybot-wrap.md 10.4KB→6.0KB (42% reduction, file size audit wired)
+- scripts/check_iron_laws.py — 16 ILs verified, pre-commit hook active
+- CCA model: Opus→Sonnet 4.6 via settings.json + alias + test updated
+- SESSION_HANDOFF + polybot-init MAIN CHAT updated to current live state
+- Codex handoff written: Terminal.app setup + Pokemon MT-53 instructions
+
+**Why:**
+- Phase 7 complete: polybot docs slimmed, check_iron_laws.py built, CCA switched to Sonnet 4.6, Codex handoff written
+
+**Tests:** 9950/9950 passing (274 suites)
+
+**Lessons:**
+- polybot-autoresearch.md needed 4 size iterations to reach <5KB target
+
+---

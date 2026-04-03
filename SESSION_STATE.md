@@ -3,7 +3,26 @@
 
 ---
 
-## Current State (as of Session 253 — 2026-04-02)
+## Current State (as of Session 254 — 2026-04-03)
+
+**Phase:** Session 254 COMPLETE. Phase 7 complete: polybot docs slimmed, check_iron_laws.py built, CCA switched to Sonnet 4.6, Codex handoff written
+
+**What was done this session (S254):**
+- polybot-autoresearch.md 21.7KB→4.5KB (79% reduction, RETIRED)
+- polybot-wrap.md 10.4KB→6.0KB (42% reduction, file size audit wired)
+- scripts/check_iron_laws.py — 16 ILs verified, pre-commit hook active
+- CCA model: Opus→Sonnet 4.6 via settings.json + alias + test updated
+- SESSION_HANDOFF + polybot-init MAIN CHAT updated to current live state
+- Codex handoff written: Terminal.app setup + Pokemon MT-53 instructions
+- **Tests**: 274 suites, 9950 tests passing. All green.
+
+**Next:**
+1. New CCA chat to assist Kalshi monitoring + Codex Pokemon MT-53 review
+2. Kalshi Session 162: mandate assessment + btc_lag_v1 live promotion decision
+
+---
+
+## Previous State (Session 253 — 2026-04-02)
 
 **Phase:** Session 253 COMPLETE. Phase 7 Chats 27-30 complete: polybot-auto cleanup, Iron Laws audit, wrapresearch slim, proactive request triggers
 
@@ -20,7 +39,6 @@
 2. 32A build scripts/check_iron_laws.py regression script
 
 ---
-
 ## Previous State (Session 252 — 2026-04-02)
 
 **Phase:** Session 252 COMPLETE. Slimmed POLYBOT_INIT.md 105KB→42KB and refreshed SESSION_HANDOFF.md with current bot state

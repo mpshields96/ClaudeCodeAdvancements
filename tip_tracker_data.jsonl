@@ -98,3 +98,5 @@
 {"tip":"polybot_comm.py pending before writing CCA requests prevents duplicate entries across sessions","source":"cca-desktop","session":"S253","timestamp":"2026-04-03T02:06:03.568623Z"}
 {"tip":"wc -c on Kalshi command files periodically surfaces token waste \u2014 polybot-autoresearch.md 21.7KB is next target","source":"cca-desktop","session":"S253","timestamp":"2026-04-03T02:06:03.568623Z"}
 {"tip":"BOUNDS.md file:line refs should be verified with grep -n after any major refactor \u2014 automate via check_iron_laws.py","source":"cca-desktop","session":"S253","timestamp":"2026-04-03T02:06:03.568623Z"}
+{"tip":"project settings.json is cleaner than --model launch flags for per-project model config","source":"cca-desktop","session":"S254","timestamp":"2026-04-03T02:52:38.192776Z"}
+{"tip":"pre-commit hook on check_iron_laws.py catches BOUNDS.md drift at commit time not code review","source":"cca-desktop","session":"S254","timestamp":"2026-04-03T02:52:38.192776Z"}
