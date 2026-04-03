@@ -916,6 +916,19 @@ def run_slim_init(session_state_path: Path = SESSION_STATE_PATH) -> dict:
         if handoff_summary.get("coordination"):
             summary["handoff_coordination"] = handoff_summary["coordination"]
 
+    # Step 5.3: Register this session with the orchestrator (enables multi-chat coordination)
+    import os as _os
+    _role = _os.environ.get("CCA_CHAT_ID", "desktop")
+    try:
+        _reg = subprocess.run(
+            ["python3", "session_orchestrator.py", "register", _role],
+            capture_output=True, text=True, timeout=5,
+            cwd=str(session_state_path.parent),
+        )
+        summary["orchestrator_registered"] = _role
+    except Exception:
+        pass  # Non-blocking — orchestrator failure never prevents init
+
     return summary
 
 
