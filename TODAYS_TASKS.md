@@ -1077,7 +1077,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 
 ### CHAT 29: BOUNDS.md + Iron Laws Audit
 
-#### 29A. Verify Iron Laws file:line references [TODO]
+#### 29A. Verify Iron Laws file:line references [DONE]
 **Scope:** BOUNDS.md has 18 Iron Laws with file:line references — likely stale after Phase 6 refactoring.
 **Steps:**
 1. Read BOUNDS.md — extract all file:line references
@@ -1090,7 +1090,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 
 ### CHAT 30: Proactive POLYBOT_TO_CCA.md Request Wiring
 
-#### 30A. Wire proactive request writing into polybot-auto [TODO]
+#### 30A. Wire proactive request writing into polybot-auto [DONE]
 **Scope:** POLYBOT_TO_CCA.md requests are never written autonomously — CCA only gets silence.
 **Steps:**
 1. Add proactive request trigger to polybot-auto.md: if guard accumulating losses (n>=5, WR<BE) → write request
