@@ -1042,7 +1042,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 
 ### CHAT 27: polybot-auto.md Deep Refresh
 
-#### 27A. Remove stale strategy references [TODO]
+#### 27A. Remove stale strategy references [DONE]
 **Scope:** polybot-auto.md monitoring loop and secondary tasks reference disabled strategies.
 **Steps:**
 1. Remove sol_drift_v1/xrp_drift_v1 graduation counters from monitoring loop SQL
@@ -1051,7 +1051,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 4. Update PRIME DIRECTIVE target: +125 USD → current gap (55.11 USD)
 **STOP CONDITION:** No references to disabled strategies. SQL only queries active ones.
 
-#### 27B. Wire every-3rd-cycle CCA check into monitoring loop [TODO]
+#### 27B. Wire every-3rd-cycle CCA check into monitoring loop [DONE]
 **Scope:** CCA check currently only at startup. Needs mid-session wiring per coordination rules.
 **Steps:**
 1. Add cycle counter (write to /tmp/polybot_cycle_count.txt, increment each loop)
