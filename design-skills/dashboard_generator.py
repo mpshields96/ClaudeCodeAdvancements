@@ -57,6 +57,17 @@ except ImportError:
 import design_tokens
 from design_linter import DARK_PALETTE
 
+# Import component library (MT-32 Phase 5 — Dashboard v2)
+try:
+    from component_library import (
+        stat_card as _cl_stat_card,
+        badge as _cl_badge,
+        component_stylesheet as _cl_stylesheet,
+    )
+    COMPONENT_LIB_AVAILABLE = True
+except ImportError:
+    COMPONENT_LIB_AVAILABLE = False
+
 COLORS = {
     **design_tokens.CCA_PALETTE,
     "background": design_tokens.CCA_PALETTE["bg"],
@@ -155,6 +166,17 @@ def _e(text: str) -> str:
 
 class DashboardRenderer:
     """Renders DashboardData as self-contained HTML."""
+
+    def _module_badge_variant(self, status: str) -> str:
+        """Map dashboard module status to component-library badge variants."""
+        normalized = (status or "").upper()
+        if normalized == "COMPLETE":
+            return "success"
+        if normalized == "FAILING":
+            return "danger"
+        if normalized == "ACTIVE":
+            return "warning"
+        return "neutral"
 
     def render(self, data: DashboardData, theme: str = "light", refresh_seconds: int = 0, interactive: bool = False) -> str:
         """Generate complete HTML string. theme: 'light' or 'dark'. refresh_seconds: auto-refresh interval (0=off). interactive: include Chart.js interactive charts (requires CDN)."""
@@ -580,7 +602,10 @@ footer {{
   .container {{ max-width: 100%; padding: 0; }}
   .module-card, .metric-card, .chart-card {{ break-inside: avoid; }}
 }}
-"""
+""" + (
+            # MT-32 Phase 5: include component_library styles
+            _cl_stylesheet() if COMPONENT_LIB_AVAILABLE else ""
+        )
 
     def _js(self) -> str:
         """JavaScript for v2 interactive features."""
@@ -916,9 +941,15 @@ document.addEventListener('keydown', function(e) {
             return ""
         cards = []
         for m in metrics:
+            if COMPONENT_LIB_AVAILABLE:
+                card_html = _cl_stat_card(m.label, m.value)
+            else:
+                card_html = (
+                    f'<div class="metric-value" style="color: {m.status_color()}">{_e(m.value)}</div>'
+                    f'<div class="metric-label">{_e(m.label)}</div>'
+                )
             cards.append(f"""  <div class="metric-card">
-    <div class="metric-value" style="color: {m.status_color()}">{_e(m.value)}</div>
-    <div class="metric-label">{_e(m.label)}</div>
+    {card_html}
   </div>""")
         return f"""<div class="metrics">
 {chr(10).join(cards)}
@@ -929,12 +960,16 @@ document.addEventListener('keydown', function(e) {
             return ""
         cards = []
         for m in modules:
+            if COMPONENT_LIB_AVAILABLE:
+                status_html = _cl_badge(m.status, variant=self._module_badge_variant(m.status))
+            else:
+                status_html = f'<span class="module-status" style="background: {m.status_color()}">{_e(m.status)}</span>'
             cards.append(f"""  <div class="module-card" data-name="{_e(m.name)}" style="border-left-color: {m.status_color()}">
     <div class="module-name">{_e(m.name)}</div>
     <div class="module-path">{_e(m.path)}</div>
     <div class="module-meta">
       <span class="module-tests">{m.tests} tests</span>
-      <span class="module-status" style="background: {m.status_color()}">{_e(m.status)}</span>
+      {status_html}
     </div>
   </div>""")
         return f"""<h2 class="section-header collapsible" id="modules-header" onclick="toggleSection('modules-header','modules-content')">Modules <span class="chevron">&#9660;</span></h2>
