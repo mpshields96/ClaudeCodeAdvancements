@@ -23,6 +23,15 @@ Push: yes/no
 - The thread accumulates lots of logs, handoffs, or mixed topics
 - You want a clean repo/task handoff with minimal token waste
 - The working context feels muddy; start fresh with repo + task + branch + latest commit
+- Roughly every 60-90 minutes of focused work if the chat is still active
+
+## Wrap now when
+
+- A commit-ready deliverable is done
+- We are about to change repos, branches, or tasks
+- The current chat has solved the thing it was opened for
+- The thread is getting mixed-topic and expensive
+- We need a clean handoff point for Claude Code or the next Codex chat
 
 ## Codex session ritual
 
@@ -46,16 +55,23 @@ Push: yes/no
 
 Current default is Terminal.app, not the Codex desktop app.
 
-Direct launch options:
-- `cx` — start Codex in the current directory with `gpt-5.4`, high reasoning, danger-full-access, approval `never`
-- `cxa` — open Codex in `~/Projects/ClaudeCodeAdvancements` with `CCA_CHAT_ID=codex`
-- `cxbot` — open Codex in `~/Projects/polymarket-bot`
+Direct launch options after sourcing `codex_shell_helpers.sh` from `~/.zshrc`:
+- `cx` — prepare the current terminal for the Codex workflow and show next commands
+- `cxa` — jump to `~/Projects/ClaudeCodeAdvancements` and run `cx`
+- `cxbot` — jump to `~/Projects/polymarket-bot` and run `cx`
+- `codex init` — launch a fresh init chat for the current repo
+- `codex auto` — launch a fresh auto-work chat for the current repo
+- `codex wrap` — launch a fresh wrap chat for the current repo
+- `codex chat "<prompt>"` — launch an ad-hoc direct Codex chat
 - `bash launch_codex.sh` — open a fresh Terminal.app window for CCA and start Codex with `CCA init`
 - `bash launch_codex.sh kalshi` — open a fresh Terminal.app window for Kalshi and start Codex with `Kalshi init`
 
 Prompt examples:
-- `cxa "CCA init"`
-- `cxa "CCA go: tighten codex terminal docs"`
+- `cxa`
+- `codex init`
+- `codex auto`
+- `cxbot`
+- `codex init`
 - `bash launch_codex.sh cca "CCA init"`
 - `bash launch_codex.sh kalshi "Kalshi init"`
 

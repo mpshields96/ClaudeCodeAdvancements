@@ -144,6 +144,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `hour_sizing.py` — Time-of-day sizing adjuster: hourly EV → multiplier schedule. 23 tests (S188).
 
 **pokemon-agent/** — MT-53 Autonomous Pokemon Crystal bot (~35% complete, S219)
+- `MT53_COMPLETION_PLAN.md` — Current source of truth for Crystal MVP vs Full MT-53, capability matrix, milestone order, and acceptance tests (S256)
 - `agent.py` — Core CrystalAgent: step loop, auto-advance, action cache, stuck detection, battle AI, LLM integration (989 LOC)
 - `emulator_control.py` — Emulator abstraction (swappable backends). **PyBoy backend exists but is BANNED — needs mGBA replacement**
 - `memory_reader.py` — Crystal RAM addresses + state reading (party, battle, badges, position)
@@ -516,6 +517,13 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S228
 - `self-learning/wrap_summary.py` (S228)
 - `tests/test_confidence_recalibrator.py` (S228)
+
+
+### Added in S256
+- `pokemon-agent/MT53_COMPLETION_PLAN.md` (S256)
+- `codex_cmd.py` (S256)
+- `codex_shell_helpers.sh` (S256)
+- `tests/test_codex_cmd.py` (S256)
 
 
 ### Added in S231

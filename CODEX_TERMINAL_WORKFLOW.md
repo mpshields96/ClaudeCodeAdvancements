@@ -9,50 +9,29 @@ Current preference:
 
 ## Shell Shortcuts
 
-Add these to `~/.zshrc`:
+One-time setup:
+
+Add this to `~/.zshrc`:
 
 ```bash
-export CODEX_BIN="/Applications/Codex.app/Contents/Resources/codex"
-if [[ -x "$CODEX_BIN" && ":$PATH:" != *":/Applications/Codex.app/Contents/Resources:"* ]]; then
-  export PATH="$PATH:/Applications/Codex.app/Contents/Resources"
-fi
-
-codex54() {
-  if [[ ! -x "$CODEX_BIN" ]]; then
-    echo "Codex binary not found at $CODEX_BIN" >&2
-    return 127
-  fi
-
-  "$CODEX_BIN" -m gpt-5.4 -c 'model_reasoning_effort="high"' -s danger-full-access -a never "$@"
-}
-
-cx() {
-  local cwd root
-  cwd="$PWD"
-  root="$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null || true)"
-
-  if [[ "$cwd" == "$HOME/Projects/ClaudeCodeAdvancements"* || "$root" == "$HOME/Projects/ClaudeCodeAdvancements" ]]; then
-    export CCA_CHAT_ID=codex
-  elif [[ "$cwd" == "$HOME/Projects/polymarket-bot"* || "$root" == "$HOME/Projects/polymarket-bot" ]]; then
-    export CCA_CHAT_ID=codex
-  fi
-
-  codex54 "$@"
-}
-
-alias cxa='cd ~/Projects/ClaudeCodeAdvancements && cx'
-alias cxbot='cd ~/Projects/polymarket-bot && cx'
+source ~/Projects/ClaudeCodeAdvancements/codex_shell_helpers.sh
 ```
 
 What they do:
-- `cx` starts Codex in the current repo with the full Codex profile and auto-sets `CCA_CHAT_ID=codex` when launched from CCA or Kalshi
-- `cxa` starts Codex in CCA using that same smart `cx` behavior
-- `cxbot` starts Codex in the Kalshi repo with that same smart `cx` behavior
+- `cx` prepares the current terminal for the repo-local Codex workflow and prints the next commands
+- `codex init` launches a fresh Codex chat with a repo-aware init prompt
+- `codex auto` launches a fresh Codex chat with a repo-aware auto-work prompt
+- `codex wrap` launches a fresh Codex chat with a repo-aware wrap prompt
+- `codex chat "<prompt>"` launches a direct ad-hoc Codex chat
+- `cxa` jumps to CCA then runs `cx`
+- `cxbot` jumps to `polymarket-bot` then runs `cx`
 
 Examples:
-- `cxa "CCA init"`
-- `cxa "CCA go: review launch scripts, no state-file edits"`
-- `cxbot "Kalshi init"`
+- `cxa`
+- `codex init`
+- `codex auto`
+- `cxbot`
+- `codex init`
 
 ## Fresh Terminal Windows
 
@@ -86,15 +65,33 @@ That makes the existing internal comms work as designed:
 
 ## Startup Ritual
 
-Recommended first prompts:
-- `CCA init`
-- `Kalshi init`
-- `CCA go: <task>`
+Recommended operator flow:
+
+1. Open a new terminal
+2. `cxa` or `cxbot`
+3. `codex init`
+4. Work that chat until a clean stopping point
+5. `codex auto` for the next fresh execution chat
+6. `codex wrap` when closing out a session or changing scope
 
 These reuse the existing Codex-side docs:
 - `CODEX_CODEWORDS.md`
 - `CODEX_QUICKSTART.md`
 - `CODEX_OPERATING_MANUAL.md`
+
+## When To Wrap And Start A New Codex Chat
+
+Wrap the current Codex chat and start a fresh one when any of these is true:
+
+- one branch or one focused task is complete
+- 1-2 substantive deliverables have landed
+- you need to switch repos, switch branches, or change problem domains
+- the chat has become mixed-topic or muddy
+- you are re-reading the same files because context has gotten stale
+- you need a clean handoff after roughly 60-90 minutes of focused work
+
+Do not keep one Codex chat alive across multiple unrelated tasks just to save startup time.
+Fresh chats are usually cheaper than carrying muddy context.
 
 ## Why This Matches The Existing CCA/Kalshi System
 
