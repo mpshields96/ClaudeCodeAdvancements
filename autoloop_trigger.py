@@ -22,6 +22,7 @@ Usage:
 
 import json
 import os
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -34,6 +35,7 @@ from desktop_automator import DesktopAutomator
 PROJECT_DIR = "/Users/matthewshields/Projects/ClaudeCodeAdvancements"
 RESUME_FILE = os.path.join(PROJECT_DIR, "SESSION_RESUME.md")
 AUDIT_LOG = os.path.expanduser("~/.cca-autoloop-trigger.jsonl")
+PAUSE_FILE = os.path.expanduser("~/.cca-autoloop-paused")
 PROMPT_PREFIX = (
     "/cca-init\n\n"
     "Treat the full next-chat handoff below as the authoritative /cca-wrap context. "
@@ -100,6 +102,38 @@ def is_cli_mode() -> bool:
     return os.environ.get("CCA_AUTOLOOP_CLI") == "1"
 
 
+def is_one_off_cli_mode() -> bool:
+    """Detect a standalone terminal session that should chain via terminal_chain.py."""
+    if is_cli_mode():
+        return False
+    try:
+        return bool(sys.stdout.isatty())
+    except Exception:
+        return False
+
+
+def _chain_terminal_session(dry_run: bool = False) -> bool:
+    """Spawn the terminal-chain relay for one-off CLI sessions."""
+    terminal_chain = os.path.join(PROJECT_DIR, "terminal_chain.py")
+    if dry_run:
+        _log("terminal_chain_dry_run", {"parent_pid": os.getppid()})
+        return True
+
+    try:
+        subprocess.Popen(
+            [sys.executable, terminal_chain, "--pid", str(os.getppid())],
+            cwd=PROJECT_DIR,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        _log("terminal_chain_spawned", {"parent_pid": os.getppid()})
+        return True
+    except OSError as exc:
+        _log("terminal_chain_failed", {"error": str(exc)})
+        return False
+
+
 def trigger_next_session(dry_run: bool = False) -> bool:
     """Trigger the next CCA session.
 
@@ -133,6 +167,18 @@ def trigger_next_session(dry_run: bool = False) -> bool:
         print("CLI autoloop mode — outer loop will handle the next session.")
         return True
 
+    if is_one_off_cli_mode():
+        ok = _chain_terminal_session(dry_run=dry_run)
+        if ok:
+            _log("trigger_one_off_cli", {"dry_run": dry_run})
+            if dry_run:
+                print("One-off terminal mode — DRY RUN. terminal_chain.py would continue the loop.")
+            else:
+                print("One-off terminal mode — terminal_chain.py will continue the loop.")
+        else:
+            print("ERROR: Could not start terminal_chain.py for one-off terminal session.")
+        return ok
+
     # Log peak/off-peak context (MT-38 Phase 4)
     peak_info = {}
     try:
@@ -146,8 +192,9 @@ def trigger_next_session(dry_run: bool = False) -> bool:
     _log("trigger_start", {"dry_run": dry_run, **peak_info})
 
     # Check pause state (MT-35 Phase 4)
-    pause_file = os.path.expanduser("~/.cca-autoloop-paused")
-    if os.path.exists(pause_file):
+    canonical_resume = os.path.join(PROJECT_DIR, "SESSION_RESUME.md")
+    respect_pause = os.path.abspath(RESUME_FILE) == os.path.abspath(canonical_resume)
+    if respect_pause and os.path.exists(PAUSE_FILE):
         _log("trigger_skipped", {"reason": "paused"})
         print("Autoloop PAUSED — skipping trigger. Resume with: python3 autoloop_pause.py resume")
         return False
