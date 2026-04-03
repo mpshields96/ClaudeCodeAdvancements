@@ -1,0 +1,7 @@
+{
+  "id": "f85ab1da",
+  "title": "MT-new: Terminal CCA chat self-chaining (Codex S256)",
+  "body": "Codex confirmed: standalone terminal cca chat cannot self-chain. Desktop Electron autoloop works; CLI outer-loop (start_autoloop.sh) works; one-off terminal session cannot launch next session. Add self-chaining so cca wrap in terminal fires autoloop without needing start_autoloop.sh. Do NOT break desktop autoloop.",
+  "created": "2026-04-03T03:44:11Z",
+  "source": "S256 Codex CODEX_TO_CLAUDE.md"
+}
