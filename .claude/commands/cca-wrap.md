@@ -145,25 +145,32 @@ Handled by doc_updater.py (Steps 3-5). Only edit manually if batch missed someth
 
 ---
 
-## Step 7.5 — Cross-chat comms (Kalshi bot, CONDITIONAL)
+## Step 7.5 — Cross-chat comms (Kalshi bot, ALWAYS RUN)
 
-Skip check — if none of these are true, skip the entire step:
-- Session touched files in polymarket-bot/ or kalshi-related code
-- Session produced trading research, self-learning improvements, or guard changes
-- There are pending POLYBOT_TO_CCA.md requests to answer
-- Session built infrastructure the Kalshi bot benefits from
-
-If skipping: log "Cross-chat: no Kalshi-relevant work this session." and move on.
-
-Otherwise:
+Run every wrap — no skipping. This keeps CCA_STATUS.md current so the Kalshi chat
+knows what CCA built this session without waiting for Matthew to relay it.
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
-grep "^## \[" ~/.claude/cross-chat/CCA_TO_POLYBOT.md 2>/dev/null | tail -1 || echo "No deliveries"
-grep -c "Status: PENDING" ~/.claude/cross-chat/POLYBOT_TO_CCA.md 2>/dev/null || echo "0"
+
+# Summarize what CCA did this session for the Kalshi chat
+SESSION_FOCUS="[one-line summary of what was built/researched this session]"
+python3 cross_chat_board.py update "$SESSION_FOCUS"
+
+# If Kalshi-relevant work was done (trading research, infra, guard changes):
+# append a delivery to CCA_TO_POLYBOT.md and set the delivery flag
+python3 cross_chat_board.py board  # show full state before wrapping
 ```
 
-Append update to `~/.claude/cross-chat/CCA_TO_POLYBOT.md` if relevant work was done.
+**Delivery flag**: if you wrote to CCA_TO_POLYBOT.md this session, also run:
+```bash
+python3 cross_chat_board.py flag-delivery
+```
+This creates `~/.claude/cross-chat/.new_cca_delivery` so the Kalshi chat detects
+the new delivery on its next cycle (not just every 3rd cycle).
+
+If no Kalshi-relevant work: still run `python3 cross_chat_board.py update "no Kalshi work this session"`.
+Never skip this step — CCA_STATUS.md staleness is exactly why comms break down.
 
 ---
 

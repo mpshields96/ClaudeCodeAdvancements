@@ -232,6 +232,107 @@ def mark_delivered(req_id: str) -> None:
     print(f"  Marked {req_id} as DELIVERED")
 
 
+DELIVERY_FLAG = CROSS_CHAT / ".new_cca_delivery"
+KALSHI_LAST_CHECK = CROSS_CHAT / ".kalshi_last_cca_check"
+
+
+def flag_delivery() -> None:
+    """Set delivery flag so Kalshi chat detects new CCA work on next cycle."""
+    now = datetime.now(timezone.utc)
+    DELIVERY_FLAG.write_text(now.isoformat())
+    print(f"Delivery flag set: {now.strftime('%Y-%m-%d %H:%M UTC')}")
+    print(f"Kalshi chat will detect this on its next cycle.")
+
+
+def kalshi_check() -> dict:
+    """
+    Called by Kalshi monitoring loop every cycle (cheap — just checks a flag file).
+    Returns dict with: has_new_delivery, delivery_time, urgent_count.
+
+    Usage in Kalshi monitoring loop:
+        result = json.loads(subprocess.check_output([
+            'python3', '/path/to/cross_chat_board.py', 'kalshi-check'
+        ]))
+        if result['has_new_delivery']:
+            # Read CCA_TO_POLYBOT.md immediately
+            # Call mark_seen() after reading
+    """
+    has_new = False
+    delivery_time = None
+
+    if DELIVERY_FLAG.exists():
+        flag_ts_str = DELIVERY_FLAG.read_text().strip()
+        flag_ts = datetime.fromisoformat(flag_ts_str)
+
+        last_check_ts = None
+        if KALSHI_LAST_CHECK.exists():
+            try:
+                last_check_ts = datetime.fromisoformat(KALSHI_LAST_CHECK.read_text().strip())
+            except Exception:
+                pass
+
+        if last_check_ts is None or flag_ts > last_check_ts:
+            has_new = True
+            delivery_time = flag_ts_str
+
+    pending = parse_pending_requests(QUEUE_FILE)
+    urgent = [r for r in pending if r["priority"] == "URGENT"]
+
+    import json
+    result = {
+        "has_new_delivery": has_new,
+        "delivery_time": delivery_time,
+        "urgent_count": len(urgent),
+        "urgent_items": [r["topic"][:60] for r in urgent[:3]],
+        "pending_count": len(pending),
+    }
+    print(json.dumps(result))
+    return result
+
+
+def kalshi_mark_seen() -> None:
+    """Call after Kalshi reads the new delivery — clears the flag."""
+    now = datetime.now(timezone.utc)
+    KALSHI_LAST_CHECK.write_text(now.isoformat())
+    print(f"Marked seen at {now.strftime('%Y-%m-%d %H:%M UTC')}")
+
+
+def post_request(topic: str, priority: str = "NORMAL", detail: str = "") -> None:
+    """
+    Kalshi chat posts a new request to REQUEST_QUEUE.md. One command, no manual editing.
+
+    Usage: python3 cross_chat_board.py post "topic here" [URGENT|NORMAL|BACKGROUND] ["detail"]
+    """
+    if not QUEUE_FILE.exists():
+        print("REQUEST_QUEUE.md not found")
+        return
+    text = QUEUE_FILE.read_text()
+
+    # Get next REQ number
+    existing = re.findall(r"REQ-(\d+)", text)
+    next_n = max((int(n) for n in existing), default=0) + 1
+    req_id = f"REQ-{next_n:03d}"
+
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    block = f"""
+---
+
+### {req_id} | {priority} | Status: PENDING
+Topic: {topic}
+Submitted: {now} by monitoring chat
+Picked up: —
+{('Detail: ' + detail) if detail else ''}
+"""
+    QUEUE_FILE.write_text(text + block)
+
+    # Also write to POLYBOT_TO_CCA.md for full text
+    BOT_TO_CCA.open("a").write(
+        f"\n## [{now}] — {req_id} — {topic}\nPriority: {priority}\n{detail}\n"
+    )
+    print(f"Posted {req_id} ({priority}): {topic}")
+    print(f"CCA will see this at next init (cross_chat_board.py brief)")
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if not args or args[0] in ("board", "show"):
@@ -243,5 +344,16 @@ if __name__ == "__main__":
         update_cca_status(focus)
     elif args[0] == "ack" and len(args) > 1:
         mark_delivered(args[1])
+    elif args[0] == "flag-delivery":
+        flag_delivery()
+    elif args[0] == "kalshi-check":
+        kalshi_check()
+    elif args[0] == "kalshi-mark-seen":
+        kalshi_mark_seen()
+    elif args[0] == "post" and len(args) > 1:
+        topic = args[1]
+        priority = args[2].upper() if len(args) > 2 else "NORMAL"
+        detail = args[3] if len(args) > 3 else ""
+        post_request(topic, priority, detail)
     else:
-        print(f"Usage: cross_chat_board.py [board|brief|update|ack REQ-N]")
+        print("Usage: cross_chat_board.py [board|brief|update|ack REQ-N|flag-delivery|kalshi-check|kalshi-mark-seen|post TOPIC [PRIORITY] [DETAIL]]")

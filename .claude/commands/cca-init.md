@@ -110,27 +110,18 @@ This runs all 223 suites in ~26s (vs ~110s serial). Never use the serial for loo
 
 ## Step 2.5 — Cross-chat comms check (Kalshi bot)
 
-Read both directions of the Kalshi cross-chat to show full comms status:
+Run the unified action board for a structured comms summary:
 
 ```bash
 cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
 python3 session_timer.py mark init:enrichment init
-
-echo "=== INCOMING (Kalshi -> CCA) ==="
-cat ~/.claude/cross-chat/POLYBOT_TO_CCA.md 2>/dev/null | tail -40
-echo ""
-echo "=== OUTGOING (CCA -> Kalshi) last entry ==="
-cat ~/.claude/cross-chat/CCA_TO_POLYBOT.md 2>/dev/null | tail -20
-echo ""
-echo "=== PENDING COUNT ==="
-grep -c "Status: PENDING" ~/.claude/cross-chat/POLYBOT_TO_CCA.md 2>/dev/null || echo "0"
+python3 cross_chat_board.py brief
 ```
 
 Include in the briefing:
-- **CROSS-CHAT INBOX:** Show any PENDING requests from Kalshi bot (these get priority in /cca-auto)
-- **LAST CCA DELIVERY:** Show the date/topic of the most recent CCA_TO_POLYBOT.md entry
-- If last CCA delivery is >48 hours old, flag: "COMMS STALE — write proactive update during /cca-auto"
-- If there are unanswered questions in either direction, flag them prominently
+- **CROSS-CHAT INBOX:** Any URGENT items from the board get priority in /cca-auto
+- **COMMS STATE:** Flag if CCA → Kalshi delivery is >2 days old (board shows this automatically)
+- If URGENT items exist, plan to address them before other MT work this session
 
 ---
 
