@@ -141,6 +141,24 @@ class TestComponentStylesheetIntegration(unittest.TestCase):
         self.assertIn(".cca-stat-card", style_content)
 
 
+class TestDataTableIntegration(unittest.TestCase):
+    """Master tasks should use data_table() from component_library."""
+
+    def setUp(self):
+        self.renderer = DashboardRenderer()
+        self.html = self.renderer.render(_sample_data())
+
+    def test_component_table_wrapper_present(self):
+        self.assertIn('<div class="cca-table-wrap">', self.html)
+
+    def test_component_table_class_present(self):
+        self.assertRegex(self.html, r'<table class="[^"]*cca-table')
+
+    def test_master_tasks_keep_sortable_behavior(self):
+        self.assertIn("tasks-table", self.html)
+        self.assertIn("sortable", self.html)
+
+
 class TestBackwardsCompatibility(unittest.TestCase):
     """Existing dashboard features must still work after component_library wiring."""
 

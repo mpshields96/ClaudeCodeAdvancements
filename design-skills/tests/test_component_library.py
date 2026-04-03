@@ -235,6 +235,10 @@ class TestDataTable(unittest.TestCase):
         html = cl.data_table(["A", "B", "C"], [["1", "2", "3"]])
         self.assertEqual(html.count("<th>"), 3)
 
+    def test_escape_cells_false_keeps_trusted_html(self):
+        html = cl.data_table(["A"], [["<strong>trusted</strong>"]], escape_cells=False)
+        self.assertIn("<strong>trusted</strong>", html)
+
 
 class TestTabs(unittest.TestCase):
     def test_tab_labels_present(self):

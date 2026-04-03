@@ -130,10 +130,12 @@ def build_wrap_prompt(root: str, snapshot: WrapSnapshot) -> str:
             "",
             "Wrap checklist:",
             "1. Run the most relevant validation for the substantive changes.",
-            "2. Summarize what changed, what passed, and any remaining risks.",
-            "3. Commit if there are substantive changes ready to land.",
-            "4. Leave runtime/session files alone unless the task explicitly includes them.",
-            "5. If the result matters inside CCA, send a direct queue note from codex to desktop and leave a durable note in CODEX_TO_CLAUDE.md when useful.",
+            "2. If this Codex session materially changed CCA state, update SESSION_STATE.md, PROJECT_INDEX.md, CHANGELOG.md, and SESSION_RESUME.md as needed.",
+            "3. Feed CCA's learning loop when useful: wrap_tracker, tip_tracker, session_outcome_tracker, and correction/journal tools are fair game for Codex too.",
+            "4. Summarize what changed, what passed, and any remaining risks.",
+            "5. Commit if there are substantive changes ready to land.",
+            "6. Leave runtime/session files alone unless the task explicitly includes them.",
+            "7. If the result matters inside CCA, send a direct queue note from codex to desktop and leave a durable note in CODEX_TO_CLAUDE.md when useful.",
         ]
     )
 

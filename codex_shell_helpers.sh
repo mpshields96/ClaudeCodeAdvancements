@@ -64,7 +64,6 @@ cx() {
   echo "Next commands:"
   echo "  codex init"
   echo "  codex auto"
-  echo "  codex next"
   echo "  codex wrap"
   echo "  codex chat \"<prompt>\""
   echo ""
@@ -74,4 +73,4 @@ cx() {
 
 alias cxa='cd ~/Projects/ClaudeCodeAdvancements && cx'
 alias cxbot='cd ~/Projects/polymarket-bot && cx'
-alias cxnext='codex next'
+alias cxnext='codex auto'

@@ -13,23 +13,24 @@ Codex is:
 - A backup lane when Claude Code is rate-limited or unstable
 - A second opinion for code review, debugging, and architecture
 - A careful repo-local worker that follows existing project rules
+- A full CCA hivemind member when Matthew explicitly wants CCA-quality workflow inside Codex
 
 Codex is not:
 - A replacement for Claude Code's long-running memory/hook infrastructure
-- The owner of `SESSION_STATE.md` or `SESSION_HANDOFF.md`
 - An autonomous operator for live trading workflows
 
 ## Read-First Rules
 
 Before substantive work, Codex should read:
 1. `AGENTS.md`
-2. The authoritative state file for the repo
+2. The fast-orientation index / authoritative state stack for the repo
    - CCA: `SESSION_STATE.md`
    - polybot: `SESSION_HANDOFF.md`
+   - In CCA, also read `PROJECT_INDEX.md`, `TODAYS_TASKS.md`, `MATTHEW_DIRECTIVES.md`, `CODEX_PRIME_DIRECTIVE.md`, `SESSION_RESUME.md`, and `CLAUDE_TO_CODEX.md`
 3. Any directly relevant local docs for the assigned task
 
-These state files are authoritative. Only Claude Code updates them unless
-Matthew explicitly says otherwise.
+These state files remain authoritative. In CCA-equal mode, Codex is expected to
+keep them current when it lands work, rather than treating them as read-only.
 
 ## Repo Access Model
 
@@ -120,6 +121,8 @@ Workflow:
 Repo-local bridge files:
 - `CLAUDE_TO_CODEX.md` for Claude Code -> Codex notes
 - `CODEX_TO_CLAUDE.md` for Codex -> Claude Code durable notes
+- `CCA_TO_POLYBOT.md` / `POLYBOT_TO_CCA.md` are mandatory bridge context when Kalshi coordination is relevant
+- `python3 bridge_status.py` is the canonical tri-chat freshness / relay-gap check
 
 Dual-notify rule for Kalshi-bot changes:
 - If Codex changes `/Users/matthewshields/Projects/polymarket-bot/`, Codex must notify both CCA and Kalshi.
@@ -140,6 +143,14 @@ Preferred terminal entrypoint for now:
 - `bash launch_codex.sh` / `bash launch_codex.sh kalshi` for fresh Terminal.app windows
 - See `CODEX_TERMINAL_WORKFLOW.md` for the Terminal-first setup
 
+Command simplification:
+- Treat `codex auto` as the single continuation/work command
+- `codex next` may still exist as a compatibility alias, but it should not carry separate workflow meaning
+
+Prime directive:
+- `CODEX_PRIME_DIRECTIVE.md` is mandatory reading for CCA Codex chats
+- Default to stealing and adapting proven CCA machinery before building Codex-only parallel systems
+
 Preferred desktop-app entrypoint:
 - Use `$cca-desktop-workflow`
 - Canonical repo source: `codex-skills/cca-desktop-workflow/`
@@ -148,14 +159,19 @@ Preferred desktop-app entrypoint:
 Init:
 - Verify the active repo root is the canonical CCA repo before substantive work
 - Read `AGENTS.md`
-- Read the authoritative state file
-- In CCA, read `TODAYS_TASKS.md` when present
+- Read `PROJECT_INDEX.md`, the authoritative state file, `TODAYS_TASKS.md`, `MATTHEW_DIRECTIVES.md`, `CODEX_PRIME_DIRECTIVE.md`, `SESSION_RESUME.md`, and `CLAUDE_TO_CODEX.md`
+- Surface CCA self-learning context when available: `wrap_tracker.py trend`, `tip_tracker.py pending`, `session_outcome_tracker.py init-briefing`, and `self-learning/resurfacer.py corrections --days 7`
+- Surface CCA optimization context when available: `priority_picker.py init-briefing`, `priority_picker.py recommend`, `mt_originator.py --briefing`, `session_timeline.py recent 5`, and `hivemind_session_validator.format_for_init()`
 - Treat `SESSION_RESUME.md` as the full next-chat handoff written by `/cca-wrap`
 - Check `git status` and recent `git log`
 - State repo, reasoning level, risk profile, and file scope before substantive work
 
 Auto:
 - Work in focused loops on one task at a time
+- Respect CCA task order: `TODAYS_TASKS.md` first, then `SESSION_RESUME.md`, then `SESSION_STATE.md`
+- Re-check the surfaced self-learning signals before drifting scope or repeating a recent mistake
+- Re-check the surfaced optimization signals before falling back to stale task memory or ad hoc task picking
+- Run `python3 bridge_status.py` at the start of coordination rounds instead of freehand checking bridge files in random order
 - Prefer default reasoning unless the task justifies high
 - Keep edits narrow, validate with local tests when practical, and use branch-first workflow
 - Use commit messages as durable handoff notes to Claude Code
@@ -163,6 +179,8 @@ Auto:
 
 Wrap:
 - Stop before context gets muddy
+- If Codex landed meaningful CCA work, update `SESSION_STATE.md`, `PROJECT_INDEX.md`, `CHANGELOG.md`, and `SESSION_RESUME.md` as needed
+- Feed CCA's learning loop when useful via `wrap_tracker.py`, `tip_tracker.py`, `session_outcome_tracker.py`, and journal/correction tooling
 - Summarize outcome, tests, open issues, and next best step
 - Prepare a short relay message for Matthew / Claude Code when needed
 - Distill durable lessons into `CODEX_LEARNINGS.md` when they are likely to matter again
@@ -207,7 +225,6 @@ Claude Code owns:
 - Cross-chat coordination
 - Autonomous monitoring loops
 - Live trading operations and operational safety ownership
-- Authoritative state-file updates
 
 Codex owns:
 - Focused implementation
@@ -217,6 +234,10 @@ Codex owns:
 - Architecture second opinions
 - Overflow work when Claude Code is limited or busy
 - Backup execution lane when Anthropic limits interfere with progress
+
+In explicit CCA-equal mode, Codex also updates the same shared CCA session docs
+that Claude would normally update, provided the edits reflect real session work
+and the repo stays internally consistent.
 
 Codex is also a good reviewer of Claude Code's work, especially for catching
 blind spots that self-review can miss.

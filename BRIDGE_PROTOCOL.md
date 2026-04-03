@@ -75,6 +75,7 @@ CCA init/wrap should treat these as mandatory coordination context:
 - `CODEX_TO_CLAUDE.md`
 - `~/.claude/cross-chat/CCA_TO_POLYBOT.md`
 - `~/.claude/cross-chat/POLYBOT_TO_CCA.md`
+- `python3 bridge_status.py` output before task switching or wrap
 
 ### Codex
 
@@ -82,12 +83,14 @@ Codex init should read:
 - `CLAUDE_TO_CODEX.md`
 - `SESSION_RESUME.md`
 - relevant Kalshi bridge notes when the task touches trading coordination
+- `python3 bridge_status.py` before coordination rounds
 
 ### Kalshi
 
 Kalshi session start should read:
 - `CCA_TO_POLYBOT.md`
 - any relay CCA includes from Codex
+- `CODEX_OBSERVATIONS.md`
 
 ## Message Style
 
@@ -117,13 +120,15 @@ Avoid:
 - `CODEX_TO_CLAUDE.md` exists
 - `CCA_TO_POLYBOT.md` exists
 - `POLYBOT_TO_CCA.md` exists
+- `CODEX_OBSERVATIONS.md` exists as the direct Kalshi <-> Codex note lane
 - `SESSION_RESUME.md` generation now surfaces recent Codex/Kalshi bridge headings
+- `bridge_status.py` now provides a single freshness + relay-gap check across the active lanes
 
 ### Still Manual
 
-- CCA is still the manual relay point between Codex and Kalshi
-- No direct Codex <-> Kalshi bridge file exists yet
-- No polling/daemon sync exists across all four bridge files
+- CCA is still the primary relay point between Codex and Kalshi
+- No polling/daemon sync exists across all bridge files yet
+- `bridge_status.py` is a supervisor/health check, not an auto-responder
 
 ## Phase-Up Path
 

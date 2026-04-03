@@ -54,15 +54,30 @@ repeat the full repo path.
 When invoked in `init` mode:
 1. Verify the active repo root is `/Users/matthewshields/Projects/ClaudeCodeAdvancements`; if not, say so and switch to that repo before continuing.
 2. Read `AGENTS.md`.
-3. Read `SESSION_STATE.md`.
-4. Read `TODAYS_TASKS.md` when present.
-5. Read Codex-side docs if relevant:
+3. Read `PROJECT_INDEX.md`.
+4. Read `SESSION_STATE.md`.
+5. Read `TODAYS_TASKS.md` when present.
+6. Read `MATTHEW_DIRECTIVES.md`.
+7. Read `CODEX_PRIME_DIRECTIVE.md`.
+8. Read `SESSION_RESUME.md`.
+9. Read Codex-side docs if relevant:
    - `CODEX_OPERATING_MANUAL.md`
    - `CODEX_QUICKSTART.md`
    - `CLAUDE_TO_CODEX.md`
-6. Check `git status --short` and recent `git log --oneline`.
-7. Check `cca_comm.py inbox` or the internal queue when the task involves coordination.
-8. Run a reasonable baseline validation for the assigned scope.
+10. Check `git status --short` and recent `git log --oneline`.
+11. Check `cca_comm.py inbox` or the internal queue when the task involves coordination.
+12. Run a reasonable baseline validation for the assigned scope.
+13. Surface CCA learning signals when available:
+   - `python3 wrap_tracker.py trend`
+   - `python3 tip_tracker.py pending`
+   - `python3 session_outcome_tracker.py init-briefing --last 10`
+   - `python3 self-learning/resurfacer.py corrections --days 7`
+14. Surface CCA optimization signals when available:
+   - `python3 priority_picker.py init-briefing --session <N>`
+   - `python3 priority_picker.py recommend`
+   - `python3 mt_originator.py --briefing`
+   - `python3 session_timeline.py recent 5`
+   - `python3 -c "import hivemind_session_validator as hsv; print(hsv.format_for_init())"`
 
 Init mode should end with a compact briefing:
 - current branch
@@ -75,12 +90,15 @@ Init mode should end with a compact briefing:
 
 When invoked in `auto` mode:
 1. Prefer `TODAYS_TASKS.md` first.
-2. Fall through to `SESSION_STATE.md`, repo priorities, and live queue requests only after today's tasks are clear or the user scoped you elsewhere.
+2. Fall through to `SESSION_RESUME.md`, then `SESSION_STATE.md`, repo priorities, and live queue requests only after today's tasks are clear or the user scoped you elsewhere.
 3. Work in focused loops with narrow scope.
 4. Test when practical before and after edits.
 5. Commit after each meaningful deliverable.
 6. Use CCA internal comms directly when coordination matters; do not turn Matthew into a relay.
 7. Keep going until a natural wrap point instead of pausing after each small task.
+8. Re-check the surfaced self-learning signals before repeating a known mistake or broadening scope.
+9. Follow `CODEX_PRIME_DIRECTIVE.md`: prefer adapting existing CCA machinery over inventing Codex-only parallel systems.
+10. Re-check the surfaced optimization signals before falling back to ad hoc task selection.
 
 Default target: 1-2 meaningful deliverables per Codex session unless the user says otherwise.
 
@@ -88,15 +106,18 @@ Default target: 1-2 meaningful deliverables per Codex session unless the user sa
 
 When invoked in `wrap` mode:
 1. Run the most relevant validation for the changed scope.
-2. Summarize what changed, what passed, and any remaining risks.
-3. Commit clearly if the work is ready.
-4. Send a direct CCA queue note to desktop when the conclusion belongs inside the CCA comms system.
-5. Update Codex-owned docs only:
+2. If Codex landed meaningful CCA work, update `SESSION_STATE.md`, `PROJECT_INDEX.md`, `CHANGELOG.md`, and `SESSION_RESUME.md` before closing out.
+3. Summarize what changed, what passed, and any remaining risks.
+4. Commit clearly if the work is ready.
+5. Send a direct CCA queue note to desktop when the conclusion belongs inside the CCA comms system.
+6. Update Codex-owned docs when useful:
    - `CODEX_LEARNINGS.md`
    - `CODEX_QUICKSTART.md`
    - `CODEX_OPERATING_MANUAL.md`
-
-Do not mutate Claude-owned state files unless explicitly assigned.
+7. Feed CCA learning tools when useful:
+   - `python3 wrap_tracker.py log ...`
+   - `python3 tip_tracker.py add ...`
+   - `python3 session_outcome_tracker.py auto-record ...`
 
 To generate a ready-to-paste wrap command from live repo state, run:
 - `python3 codex_wrap.py`

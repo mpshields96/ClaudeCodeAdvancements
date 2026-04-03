@@ -4215,3 +4215,36 @@ CLI chat 2:
 - polybot-autoresearch.md needed 4 size iterations to reach <5KB target
 
 ---
+
+## Session 256 — 2026-04-02
+
+**What changed:**
+- MT-32 Phase 4 component_library.py: button/badge/alert/card/progress_bar/data_table/tabs/stat_card + stylesheet + page, 75 tests
+- Codex CODEX_TO_CLAUDE.md digested: Gemini schema normalization, CLI autoloop test fix, repo re-anchor all committed
+
+**Why:**
+- MT-32 Phase 4 complete: component_library.py (8 HTML components, 75 tests); Codex Gemini improvements committed; Kalshi delivery written
+
+**Tests:** 12490/12490 passing (351 suites)
+
+**Lessons:**
+- html.count('<th') matches '<thead>' substring — one debug cycle to fix test assertion
+- pytest not on system python3.14 — rediscovery overhead for each test run
+
+---
+
+## Session 258 — 2026-04-03
+
+**What changed:**
+- MT-32 Phase 6 — diagram_generator.py, 55 tests, pure SVG
+- MT-32 Phase 7 — visual.py façade, 72 exports, 55 tests, all pillars integrated
+
+**Why:**
+- MT-32 complete: diagram_generator.py (flow+sequence SVG) + visual.py unified façade (72 exports, 165 tests)
+
+**Tests:** 2064/2064 passing (0 suites)
+
+**Lessons:**
+- Context hit 83% before 3rd task
+
+---

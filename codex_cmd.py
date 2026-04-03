@@ -6,7 +6,6 @@ can expose commands like:
 
   codex init
   codex auto
-  codex next
   codex wrap
   codex chat
 
@@ -364,6 +363,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "chat":
         return launch_codex(args.prompt, root, repo_type)
+
+    if args.command == "next":
+        print("`codex next` is a legacy alias for `codex auto`.", file=sys.stderr)
 
     prompt = build_prompt(args.command, root, repo_type, task=getattr(args, "task", None))
     default_prompt_name = DEFAULT_PROMPT_FILES.get(args.command)

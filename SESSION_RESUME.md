@@ -1,31 +1,30 @@
-# SESSION RESUME — S257
-# Written by S256 wrap. Read at S257 init.
+# NEXT CHAT HANDOFF
 
-## S256 COMPLETED
-- Committed Codex changes (776e7a6): pokemon-agent Gemini schema normalization (_json_schema_to_gemini_schema, _normalize_tool_args, resolve_model_name), CODEX_TERMINAL_WORKFLOW.md + launch_codex.sh, Codex helper re-anchor fix.
-- Todo captured: terminal CCA self-chaining gap (.planning/todos/pending/f85ab1da.json).
-- MT-32 Phase 4 COMPLETE: design-skills/component_library.py — 8 reusable HTML components (button, badge, alert, card, progress_bar, data_table, tabs, stat_card), component_stylesheet(), page(). 75 tests. (926e831)
-- component_demo.py: browser-viewable demo of all 8 components, 16KB self-contained HTML. (6584ae1)
-- Kalshi S256 delivery: Codex Gemini fix, autoloop gap, sports_game n=6, btc_lag DEAD, MT-32 next.
-- MASTER_TASKS.md: MT-32 Phase 4 COMPLETE → Phase 5 = Dashboard v2. PROJECT_INDEX updated.
-- Tests: 274 suites passing (618 tests in design-skills). Git: clean. Pushed 2c97bef.
+## Start Here
+Run /cca-init.
+This file is the full next-chat handoff written by /cca-wrap, so a fresh chat should not need Matthew to restate context.
+Run /cca-auto after init only if you want autonomous continuation.
 
-## NEXT SESSION PRIORITIES
-1. MT-32 Phase 5: Dashboard v2 — wire component_library into dashboard_generator (interactive, real-time, responsive, dark/light theme)
-2. Terminal self-chaining for one-off CCA chats — .planning/todos/pending/f85ab1da.json
-3. r/claudecode scan stale (3 subreddits) — cca-nuclear-daily when off-peak
+## Repo State
+- Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
+- Last wrapped session: S258 (2026-04-03)
+- Phase: Session 258 COMPLETE. MT-32 complete: diagram_generator.py (flow+sequence SVG) + visual.py unified façade (72 exports, 165 tests)
 
-## KEY STATE
-- design-skills/component_library.py: COMPLETE — button(4 variants), badge(5), alert(4), card(3), progress_bar(4), data_table(striped/compact/empty), tabs(ARIA), stat_card(delta). CSS via component_stylesheet().
-- design-skills/component_demo.py: run `python3 component_demo.py --open` to preview in browser.
-- MT-32 Phase 4 complete. Phase 5 = Dashboard v2 (dashboard_generator.py, 1186 lines, complex refactor).
-- Terminal self-chaining: desktop Electron autoloop OK, CLI outer-loop OK, one-off terminal can't self-chain.
-- Codex helpers: now re-anchored to canonical CCA repo (wrong-repo issue fixed S256).
-- Kalshi: 18-23 USD/day, sports_game n=6 (need 30), btc_lag DEAD, 15-min crypto BANNED.
+## Immediate Priorities
+1. MT-32 done — pick MT-53 Pokemon or MT-20 Senior Dev next
 
-## GOTCHAS
-- pytest not available on system python3.14 or pokemon-agent venv — use `python3 <test_file.py>` directly or CCA parallel_test_runner.py
-- html.count("<th") matches "<thead>" — always use html.count("<th>") with closing > in assertions
-- spec-guard fires on every new module write — warn-only, not a blocker
-- component_library tests are in design-skills/tests/ (alongside other design-skills tests), NOT in top-level tests/
-- Dashboard v2 (MT-32 Phase 5) requires reading dashboard_generator.py (1186 lines) — do at fresh session start, not at 50%+ context
+## Today's Tasks
+- No remaining [TODO] items found in TODAYS_TASKS.md.
+
+## Coordination
+- Claude->Codex: [2026-04-03 17:18 UTC] — KALSHI RELAY — CPI readiness command now available
+- Claude->Codex: [2026-04-03 17:34 UTC] — KALSHI RELAY — tonight board priorities locked
+- Codex->CCA: [2026-04-03 17:14 UTC] — KALSHI SUPPORT — CPI readiness audit helper added
+- Codex->CCA: [2026-04-03 17:34 UTC] — KALSHI SUPPORT — tonight board ranked for April 3
+- CCA->Kalshi: [2026-04-03 17:14 UTC] — REQ-068 DELIVERY — CPI readiness audit command added
+- CCA->Kalshi: [2026-04-03 17:34 UTC] — REQ-069 DELIVERY — tonight board and next market families
+- Check `python3 cca_comm.py inbox` if this session is part of CCA hivemind work.
+
+## Fresh-Chat Rule
+Typing only /cca-init in a new chat should be enough. Use this handoff as the authoritative continuation context after init.
+

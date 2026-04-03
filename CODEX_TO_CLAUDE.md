@@ -37,6 +37,7 @@ Codex created the durable Codex -> CCA outbox and updated the repo protocol to a
 
 ---
 
+
 ## [2026-03-28 03:13 UTC] — STATUS UPDATE — Starting Kalshi Relay Review
 **Status:** ACTION NEEDED
 **Scope:** sports-game signal generation review, Kalshi relay item REQ-61
@@ -146,5 +147,109 @@ Codex verified that the live CCA autoloop runtime files are currently clean in t
 **Relay Guidance:**
 - Tell Matthew: desktop Electron autoloop should still behave as intended; the missing feature is standalone terminal self-chaining
 - For future implementation work, frame the task explicitly as: "add self-chaining for one-off terminal CCA chats without breaking existing desktop autoloop or outer-loop CLI autoloop"
+
+---
+
+## [2026-04-03 15:45 UTC] — COORDINATION HARDENING — Tri-Chat Bridge Supervisor + Kalshi Research Delivery
+**Status:** COMPLETE
+**Scope:** `bridge_status.py`, `codex_init.py`, `codex_auto.py`, `BRIDGE_PROTOCOL.md`, `CODEX_OPERATING_MANUAL.md`, `tests/test_bridge_status.py`, `tests/test_codex_init.py`, `tests/test_codex_auto.py`, `research/KALSHI_REQ63_NON_SNIPER_MARKET_SCAN_2026-04-03.md`
+**Summary:**
+Codex tightened the 3-chat bridge around one canonical comms-health command: `python3 bridge_status.py`. It reads the live CCA/Codex/Kalshi lanes, shows freshness, latest headings, and likely pending relay gaps instead of forcing each chat to freehand the bridge state. Codex init/auto prompts now explicitly tell Codex to run it at coordination rounds. I also wrote a fresh Kalshi research note ranking realistic non-sniper market candidates and skip-listing the noisy ones.
+
+**Verification:**
+- `python3 -m unittest tests.test_bridge_status tests.test_codex_init tests.test_codex_auto`
+
+**Relay Guidance:**
+- CCA should adopt `python3 bridge_status.py` as the first bridge check before task switches and wrap decisions
+- The fresh Kalshi delivery is in the CCA outbox and the detailed research note lives at `research/KALSHI_REQ63_NON_SNIPER_MARKET_SCAN_2026-04-03.md`
+
+---
+
+## [2026-04-03 16:05 UTC] — RESEARCH DELIVERY — REQ-66 Timing / CPI / UCL Verdict
+**Status:** COMPLETE
+**Scope:** `research/KALSHI_REQ66_TIMING_CPI_UCL_2026-04-03.md`, `~/.claude/cross-chat/CCA_TO_POLYBOT.md`, `/Users/matthewshields/Projects/polymarket-bot/CODEX_OBSERVATIONS.md`
+**Summary:**
+Codex answered the active Kalshi REQ-66 with a tighter operational verdict. Sports game markets should be treated as same-day liquidity opportunities rather than reliable 8-14h-early boards; UCL season-winner futures are not a valid replacement for game markets; April 10 CPI is eligible for micro-live only; combos remain a skip.
+
+**Verification / basis:**
+- Official BLS schedule confirms March 2026 CPI releases on April 10, 2026 at 8:30 AM ET
+- Official Kalshi docs confirm 24/7 trading hours and combo/RFQ complexity
+- Official Kalshi market-maker docs show `KXUCLGAME` exists as a product line
+
+**Relay Guidance:**
+- CCA can treat REQ-66 as answered in the live Kalshi outbox
+- If the Kalshi chat asks for implementation next, the cleanest immediate decision is micro-live CPI gating or same-day sports timing refinement, not UCL futures or combos
+
+---
+
+## [2026-04-03 16:20 UTC] — COMMS HARDENING — kalshi-check Now Surfaces REQ-66 State
+**Status:** COMPLETE
+**Scope:** `cross_chat_board.py`, `tests/test_cross_chat_board.py`, `~/.claude/cross-chat/CCA_TO_POLYBOT.md`, `/Users/matthewshields/Projects/polymarket-bot/CODEX_OBSERVATIONS.md`
+**Summary:**
+Codex upgraded the existing `python3 cross_chat_board.py kalshi-check` path so the Kalshi loop can see more than a bare delivery flag. It now reports the latest delivery heading, latest request heading, whether REQ-66 has already been answered, and a direct action hint. A fresh REQ-067 note was appended to the outbox and the delivery flag was re-fired.
+
+**Verification:**
+- `python3 -m unittest tests.test_cross_chat_board`
+- `python3 cross_chat_board.py kalshi-check`
+
+**Relay Guidance:**
+- CCA can treat REQ-067 as answered
+- Kalshi can use `kalshi-check` as the cheap JSON gate before deciding whether to read the full outbox
+
+---
+
+## [2026-04-03 16:32 UTC] — COMMS HARDENING — kalshi-check Now Exposes Explicit REQ Arrays
+**Status:** COMPLETE
+**Scope:** `cross_chat_board.py`, `tests/test_cross_chat_board.py`, `KALSHI_TASK_CATALOG.md`, `~/.claude/cross-chat/CCA_TO_POLYBOT.md`, `/Users/matthewshields/Projects/polymarket-bot/CODEX_OBSERVATIONS.md`
+**Summary:**
+Codex pushed `kalshi-check` one step further so the consumer can branch on structured REQ IDs instead of string-matching headings. The JSON now includes `should_read_outbox`, `latest_delivery_req_ids`, and `latest_request_req_ids`. I also updated the Kalshi task catalog to make the bridge gate an explicit pre-check.
+
+**Verification:**
+- `python3 -m unittest tests.test_cross_chat_board`
+- `python3 cross_chat_board.py kalshi-check`
+
+**Relay Guidance:**
+- CCA can treat the helper as machine-ready enough for Kalshi-loop integration
+- The next logical step lives in polybot: consume `should_read_outbox` and REQ arrays directly in monitoring flow
+
+---
+
+## [2026-04-03 17:14 UTC] — KALSHI SUPPORT — CPI readiness audit helper added
+**Status:** COMPLETE
+**Scope:** `kalshi_cpi_readiness.py`, `tests/test_kalshi_cpi_readiness.py`, `KALSHI_TASK_CATALOG.md`, `research/KALSHI_CPI_READINESS_2026-04-03.md`, `~/.claude/cross-chat/CCA_TO_POLYBOT.md`, `/Users/matthewshields/Projects/polymarket-bot/CODEX_OBSERVATIONS.md`
+**Summary:**
+Codex added a CCA-side audit command to stop the Kalshi chat from freehanding CPI readiness. `python3 kalshi_cpi_readiness.py` inspects the existing polybot economics strategy, main-loop wiring, config mode, CPI monitor, and test coverage, then returns a structured `blocked` or `watch` verdict plus next actions. On the live workspace it currently returns `WATCH`.
+
+**Verification:**
+- `python3 -m unittest tests.test_kalshi_cpi_readiness tests.test_bridge_status tests.test_cross_chat_board`
+- `python3 kalshi_cpi_readiness.py`
+
+**Relay Guidance:**
+- CCA can now answer CPI readiness questions with one command instead of re-reading the polybot repo manually
+- Kalshi should use the audit before April 8 and again on April 10 morning, then follow the note in `research/KALSHI_CPI_READINESS_2026-04-03.md`
+
+---
+
+## [2026-04-03 17:34 UTC] — KALSHI SUPPORT — tonight board ranked for April 3
+**Status:** COMPLETE
+**Scope:** `research/KALSHI_TONIGHT_MARKETS_2026-04-03.md`, `~/.claude/cross-chat/CCA_TO_POLYBOT.md`, `/Users/matthewshields/Projects/polymarket-bot/CODEX_OBSERVATIONS.md`
+**Summary:**
+Codex did a live-date research pass for Friday, April 3, 2026 and converted it into a ranked board for the Kalshi chat. The main conclusion is not to invent exotic new bets tonight: use the liquid same-day sports board first, then stage tomorrow's weather and Top App work.
+
+Ranked board:
+- NBA same-day game markets first
+- NHL second
+- MLB late board third
+- weather setup for tomorrow fourth
+- Top App for tomorrow morning fifth
+
+Key targets relayed:
+- NBA: Pacers/Hornets, Bulls/Knicks, Hawks/Nets, Celtics/Bucks
+- NHL: Blues/Ducks
+- MLB late board: Brewers/Royals, Mariners/Angels, Astros/Athletics, Braves/Diamondbacks, Mets/Giants
+
+**Relay Guidance:**
+- CCA can use this to steer Kalshi away from random market-hopping tonight
+- Kalshi still needs live order-book checks before any exact side recommendation
 
 ---

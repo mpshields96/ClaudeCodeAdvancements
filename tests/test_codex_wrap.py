@@ -57,6 +57,10 @@ class TestBuildWrapPrompt(unittest.TestCase):
         self.assertIn(".queue_hook_last_check", prompt)
         self.assertIn("abc1234 Example commit", prompt)
         self.assertIn("Wrap checklist:", prompt)
+        self.assertIn("SESSION_STATE.md", prompt)
+        self.assertIn("SESSION_RESUME.md", prompt)
+        self.assertIn("wrap_tracker", prompt)
+        self.assertIn("session_outcome_tracker", prompt)
 
     def test_prompt_handles_empty_lists(self):
         snapshot = WrapSnapshot(

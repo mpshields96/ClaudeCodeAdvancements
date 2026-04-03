@@ -21,6 +21,7 @@ Stdlib only. No external dependencies.
 import html
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass, field, asdict
 from datetime import date, datetime
@@ -62,6 +63,7 @@ try:
     from component_library import (
         stat_card as _cl_stat_card,
         badge as _cl_badge,
+        data_table as _cl_data_table,
         component_stylesheet as _cl_stylesheet,
     )
     COMPONENT_LIB_AVAILABLE = True
@@ -985,10 +987,52 @@ document.addEventListener('keydown', function(e) {
     def _render_master_tasks(self, tasks: List[MasterTaskRow]) -> str:
         if not tasks:
             return ""
-        rows = []
-        for t in tasks:
-            width = t.score_bar_width()
-            rows.append(f"""  <tr>
+        if COMPONENT_LIB_AVAILABLE:
+            rows = []
+            for t in tasks:
+                width = t.score_bar_width()
+                priority_cell = (
+                    '<div style="display:flex;align-items:center;gap:8px">'
+                    f"<span>{t.score:.1f}</span>"
+                    f'<div class="score-bar"><div class="score-bar-fill" style="width:{width:.1f}%"></div></div>'
+                    "</div>"
+                )
+                rows.append([
+                    f"<strong>{_e(t.id)}</strong>",
+                    _e(t.name),
+                    priority_cell,
+                    _e(t.status),
+                ])
+
+            table_html = _cl_data_table(
+                ["ID", "Name", "Priority", "Status"],
+                rows,
+                striped=True,
+                compact=True,
+                escape_cells=False,
+            )
+            table_html = table_html.replace(
+                '<table class="cca-table cca-table-striped cca-table-compact">',
+                '<table class="tasks-table sortable cca-table cca-table-striped cca-table-compact">',
+                1,
+            )
+            table_html = re.sub(
+                r"<thead>.*?</thead>",
+                '<thead><tr>'
+                '<th scope="col" onclick="sortTable(0)" style="cursor:pointer">ID <span class="sort-indicator">&#9661;</span></th>'
+                '<th scope="col" onclick="sortTable(1)" style="cursor:pointer">Name <span class="sort-indicator">&#9661;</span></th>'
+                '<th scope="col" onclick="sortTable(2)" style="cursor:pointer">Priority <span class="sort-indicator">&#9661;</span></th>'
+                '<th scope="col" onclick="sortTable(3)" style="cursor:pointer">Status <span class="sort-indicator">&#9661;</span></th>'
+                "</tr></thead>",
+                table_html,
+                count=1,
+                flags=re.DOTALL,
+            )
+        else:
+            rows = []
+            for t in tasks:
+                width = t.score_bar_width()
+                rows.append(f"""  <tr>
     <td><strong>{_e(t.id)}</strong></td>
     <td>{_e(t.name)}</td>
     <td>
@@ -999,14 +1043,15 @@ document.addEventListener('keydown', function(e) {
     </td>
     <td>{_e(t.status)}</td>
   </tr>""")
-        return f"""<h2 class="section-header collapsible" id="tasks-header" onclick="toggleSection('tasks-header','tasks-content')">Master Tasks <span class="chevron">&#9660;</span></h2>
-<div id="tasks-content" class="collapsible-content">
-<table class="tasks-table sortable">
+            table_html = f"""<table class="tasks-table sortable">
 <thead><tr><th scope="col" onclick="sortTable(0)" style="cursor:pointer">ID <span class="sort-indicator">&#9661;</span></th><th scope="col" onclick="sortTable(1)" style="cursor:pointer">Name <span class="sort-indicator">&#9661;</span></th><th scope="col" onclick="sortTable(2)" style="cursor:pointer">Priority <span class="sort-indicator">&#9661;</span></th><th scope="col" onclick="sortTable(3)" style="cursor:pointer">Status <span class="sort-indicator">&#9661;</span></th></tr></thead>
 <tbody>
 {chr(10).join(rows)}
 </tbody>
-</table>
+</table>"""
+        return f"""<h2 class="section-header collapsible" id="tasks-header" onclick="toggleSection('tasks-header','tasks-content')">Master Tasks <span class="chevron">&#9660;</span></h2>
+<div id="tasks-content" class="collapsible-content">
+{table_html}
 </div>"""
 
 

@@ -255,6 +255,7 @@ def data_table(
     caption: Optional[str] = None,
     striped: bool = False,
     compact: bool = False,
+    escape_cells: bool = True,
 ) -> str:
     """Render an HTML data table.
 
@@ -264,6 +265,7 @@ def data_table(
         caption: Optional <caption> element text.
         striped: Adds alternating row shading class.
         compact: Reduces cell padding.
+        escape_cells: HTML-escape body cells. Set False only for trusted markup.
 
     Returns:
         HTML string.
@@ -283,7 +285,10 @@ def data_table(
 
     if rows:
         tbody_rows = "".join(
-            "<tr>" + "".join(f"<td>{_esc(str(cell))}</td>" for cell in row) + "</tr>"
+            "<tr>" + "".join(
+                f"<td>{_esc(str(cell)) if escape_cells else str(cell)}</td>"
+                for cell in row
+            ) + "</tr>"
             for row in rows
         )
         tbody = f"<tbody>{tbody_rows}</tbody>"

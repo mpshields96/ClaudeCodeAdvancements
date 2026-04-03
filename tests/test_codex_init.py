@@ -94,9 +94,18 @@ class TestTaskSelection(unittest.TestCase):
     def test_select_top_task_prefers_todays_tasks(self):
         task = select_top_task(
             todos=["Build init command", "Build auto command"],
+            resume_priorities=["Finish fresh-chat handoff"],
             session_next=["Pokemon boot sequence"],
         )
         self.assertEqual(task, "Build init command")
+
+    def test_select_top_task_falls_back_to_resume_priorities(self):
+        task = select_top_task(
+            todos=[],
+            resume_priorities=["Finish fresh-chat handoff"],
+            session_next=["Pokemon boot sequence"],
+        )
+        self.assertEqual(task, "Finish fresh-chat handoff")
 
     def test_reasoning_high_for_architecture_work(self):
         level = suggest_reasoning_level("Design autoloop coordination architecture")
@@ -183,6 +192,15 @@ class TestBuildInitPrompt(unittest.TestCase):
             ),
             resume_priorities=["Verify the fresh handoff", "Check Kalshi request queue"],
             coordination_notes=["Kalshi->CCA: REQUEST 1 — Political Markets Volume Probe"],
+            wrap_trend="Trend: stable",
+            pending_tips="PENDING TIPS (2 pending): tighten init scope",
+            session_insights="SESSION INSIGHTS: tests correlate with A sessions",
+            recent_corrections="Recent corrections (last 7 days): avoid stale repo roots",
+            priority_briefing="PRIORITY RANKING: MT-49, MT-41, MT-32",
+            priority_recommendation="**TOP PICK:** MT-32 (Visual Excellence)",
+            mt_proposals="MT PROPOSALS (2 above score 30.0): Claude /dream",
+            session_timeline="Last 5 sessions: S256, S254, S253",
+            hivemind_status="Hivemind: Phase 3 awaiting first 3-chat session",
         )
         prompt = build_init_prompt("/tmp/repo", snapshot)
         self.assertIn("$cca-desktop-workflow", prompt)
@@ -193,6 +211,17 @@ class TestBuildInitPrompt(unittest.TestCase):
         self.assertIn("Smoke: 10/10 passed", prompt)
         self.assertIn("Verify the fresh handoff", prompt)
         self.assertIn("Political Markets Volume Probe", prompt)
+        self.assertIn("Trend: stable", prompt)
+        self.assertIn("tighten init scope", prompt)
+        self.assertIn("tests correlate with A sessions", prompt)
+        self.assertIn("avoid stale repo roots", prompt)
+        self.assertIn("CODEX_PRIME_DIRECTIVE.md", prompt)
+        self.assertIn("bridge_status.py", prompt)
+        self.assertIn("PRIORITY RANKING", prompt)
+        self.assertIn("TOP PICK", prompt)
+        self.assertIn("MT PROPOSALS", prompt)
+        self.assertIn("Last 5 sessions", prompt)
+        self.assertIn("Hivemind:", prompt)
 
 
 class TestCLI(unittest.TestCase):

@@ -118,6 +118,16 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         mock_write_prompt.assert_called_once_with("/tmp/repo/CODEX_AUTO_PROMPT.md", "prompt text\n")
 
+    @patch("codex_cmd.build_prompt")
+    @patch("codex_cmd.normalize_root")
+    def test_next_prints_legacy_alias_notice(self, mock_normalize, mock_build_prompt):
+        mock_normalize.return_value = ("/tmp/repo", "cca")
+        mock_build_prompt.return_value = "prompt text\n"
+        with patch("sys.stdout.write"), patch("sys.stderr.write") as mock_stderr:
+            exit_code = main(["next"])
+        self.assertEqual(exit_code, 0)
+        self.assertTrue(any("legacy alias" in call.args[0] for call in mock_stderr.call_args_list))
+
     @patch("codex_cmd.normalize_root")
     def test_main_writes_output_file(self, mock_normalize):
         mock_normalize.return_value = ("/tmp/repo", "cca")

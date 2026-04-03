@@ -78,6 +78,43 @@ def last_entry_topic(path: Path) -> str:
     return entries[-1][:60] if entries else ""
 
 
+def latest_heading(path: Path) -> str:
+    """Return the latest markdown H2 heading line without the leading hashes."""
+    if not path.exists():
+        return ""
+    headings = [line.strip().lstrip("#").strip() for line in path.read_text().splitlines() if line.startswith("## ")]
+    return headings[-1] if headings else ""
+
+
+def file_contains_req(path: Path, req_id: str) -> bool:
+    """Return True if the file text references the given REQ ID in common forms."""
+    if not path.exists():
+        return False
+    text = path.read_text()
+    patterns = {
+        req_id,
+        req_id.replace("-", ""),
+        req_id.replace("-", "-0"),
+        req_id.replace("REQ-", "REQUEST "),
+    }
+    normalized = text.upper()
+    return any(pattern.upper() in normalized for pattern in patterns)
+
+
+def extract_req_ids(text: str) -> list[str]:
+    """Extract normalized REQ-xxx IDs from text, preserving order."""
+    matches = re.findall(r"(?:REQ|REQUEST)[-\s]?0*(\d+)", text, flags=re.IGNORECASE)
+    seen = set()
+    req_ids = []
+    for match in matches:
+        req_id = f"REQ-{int(match):03d}"
+        if req_id in seen:
+            continue
+        seen.add(req_id)
+        req_ids.append(req_id)
+    return req_ids
+
+
 def age_days(date_str: str) -> int:
     """How many days since this date string (YYYY-MM-DD)."""
     try:
@@ -279,12 +316,35 @@ def kalshi_check() -> dict:
     urgent = [r for r in pending if r["priority"] == "URGENT"]
 
     import json
+    latest_delivery = latest_heading(CCA_TO_BOT)
+    latest_request = latest_heading(BOT_TO_CCA)
+    latest_delivery_req_ids = extract_req_ids(latest_delivery)
+    latest_request_req_ids = extract_req_ids(latest_request)
+    req66_answered = file_contains_req(CCA_TO_BOT, "REQ-66") or file_contains_req(CCA_TO_BOT, "REQ-066")
+    should_read_outbox = has_new or bool(urgent)
+
+    if has_new:
+        action_hint = "Read CCA_TO_POLYBOT.md now and run kalshi-mark-seen after processing."
+    elif urgent:
+        action_hint = f"Urgent request queue has {len(urgent)} item(s); review REQUEST_QUEUE.md."
+    elif req66_answered:
+        action_hint = "REQ-66 has a CCA answer on file; use latest delivery for April 7-10 decisions."
+    else:
+        action_hint = "No new CCA delivery flag. Continue normal monitoring."
+
     result = {
         "has_new_delivery": has_new,
         "delivery_time": delivery_time,
         "urgent_count": len(urgent),
         "urgent_items": [r["topic"][:60] for r in urgent[:3]],
         "pending_count": len(pending),
+        "latest_delivery_heading": latest_delivery,
+        "latest_request_heading": latest_request,
+        "latest_delivery_req_ids": latest_delivery_req_ids,
+        "latest_request_req_ids": latest_request_req_ids,
+        "req66_answered": req66_answered,
+        "should_read_outbox": should_read_outbox,
+        "action_hint": action_hint,
     }
     print(json.dumps(result))
     return result

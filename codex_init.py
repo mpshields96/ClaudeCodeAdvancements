@@ -95,6 +95,15 @@ class InitSnapshot:
     validation: ValidationSummary
     resume_priorities: list[str] = field(default_factory=list)
     coordination_notes: list[str] = field(default_factory=list)
+    wrap_trend: str = ""
+    pending_tips: str = ""
+    session_insights: str = ""
+    recent_corrections: str = ""
+    priority_briefing: str = ""
+    priority_recommendation: str = ""
+    mt_proposals: str = ""
+    session_timeline: str = ""
+    hivemind_status: str = ""
 
 
 def _run_git(root: str, *args: str) -> str:
@@ -248,6 +257,30 @@ def _read_if_exists(path: str) -> str:
         return handle.read()
 
 
+def _run_optional_python(root: str, *args: str) -> str:
+    """Run a repo-local Python helper and return a trimmed summary if useful."""
+    proc = _run_python(root, *args)
+    output = (proc.stdout or proc.stderr).strip()
+    if proc.returncode != 0:
+        return ""
+    lowered = output.lower()
+    if not output:
+        return ""
+    if lowered in {
+        "no outcome data",
+        "no pending tips.",
+        "no corrections in the last 7 days.",
+    }:
+        return ""
+    return output
+
+
+def _next_session_num(session: SessionSummary) -> int:
+    if session.session_num is None:
+        return 1
+    return session.session_num + 1
+
+
 def run_validation(root: str) -> ValidationSummary:
     summary_proc = _run_python(root, "init_cache.py", "summary")
     summary_output = (summary_proc.stdout or summary_proc.stderr).strip()
@@ -269,10 +302,15 @@ def run_validation(root: str) -> ValidationSummary:
         summary=smoke_output or "Smoke test did not produce output.",
     )
 
-
-def select_top_task(todos: list[str], session_next: list[str]) -> str:
+def select_top_task(
+    todos: list[str],
+    resume_priorities: list[str],
+    session_next: list[str],
+) -> str:
     if todos:
         return todos[0]
+    if resume_priorities:
+        return resume_priorities[0]
     if session_next:
         return session_next[0]
     return ""
@@ -290,6 +328,8 @@ def determine_next_step(snapshot: InitSnapshot, top_task: str) -> str:
         return "Review unread Codex inbox items before starting new work."
     if snapshot.todos and top_task:
         return f"Start the first remaining daily task: {top_task}."
+    if snapshot.resume_priorities and top_task:
+        return f"Start the top SESSION_RESUME.md priority: {top_task}."
     if snapshot.session.next_items and top_task:
         return f"Start the first session-state next item: {top_task}."
     if snapshot.substantive:
@@ -320,6 +360,21 @@ def collect_snapshot(root: str) -> InitSnapshot:
     validation = run_validation(root)
     handoff_snapshot = build_handoff_snapshot(root)
     handoff_summary = summarize_snapshot_for_init(handoff_snapshot, max_priorities=3, max_coordination=3)
+    wrap_trend = _run_optional_python(root, "wrap_tracker.py", "trend")
+    pending_tips = _run_optional_python(root, "tip_tracker.py", "pending")
+    session_insights = _run_optional_python(root, "session_outcome_tracker.py", "init-briefing", "--last", "10")
+    recent_corrections = _run_optional_python(root, "self-learning/resurfacer.py", "corrections", "--days", "7")
+    priority_briefing = _run_optional_python(
+        root,
+        "priority_picker.py",
+        "init-briefing",
+        "--session",
+        str(_next_session_num(session)),
+    )
+    priority_recommendation = _run_optional_python(root, "priority_picker.py", "recommend")
+    mt_proposals = _run_optional_python(root, "mt_originator.py", "--briefing")
+    session_timeline = _run_optional_python(root, "session_timeline.py", "recent", "5")
+    hivemind_status = _run_optional_python(root, "-c", "import hivemind_session_validator as hsv; print(hsv.format_for_init())")
 
     return InitSnapshot(
         branch=branch,
@@ -334,6 +389,15 @@ def collect_snapshot(root: str) -> InitSnapshot:
         validation=validation,
         resume_priorities=handoff_summary.get("top_priorities", []),
         coordination_notes=handoff_summary.get("coordination", []),
+        wrap_trend=wrap_trend,
+        pending_tips=pending_tips,
+        session_insights=session_insights,
+        recent_corrections=recent_corrections,
+        priority_briefing=priority_briefing,
+        priority_recommendation=priority_recommendation,
+        mt_proposals=mt_proposals,
+        session_timeline=session_timeline,
+        hivemind_status=hivemind_status,
     )
 
 
@@ -350,7 +414,11 @@ def _format_lines(items: list[str]) -> list[str]:
 
 
 def build_init_prompt(root: str, snapshot: InitSnapshot) -> str:
-    top_task = select_top_task(snapshot.todos, snapshot.session.next_items)
+    top_task = select_top_task(
+        snapshot.todos,
+        snapshot.resume_priorities,
+        snapshot.session.next_items,
+    )
     reasoning_level = suggest_reasoning_level(top_task)
     next_step = determine_next_step(snapshot, top_task)
     phase_line = snapshot.session.phase or "No phase summary found."
@@ -393,14 +461,30 @@ def build_init_prompt(root: str, snapshot: InitSnapshot) -> str:
         "Cross-agent coordination to keep in view:",
         *_format_lines(snapshot.coordination_notes),
         "",
+        "CCA self-learning signals:",
+        f"- Wrap trend: {snapshot.wrap_trend or 'none'}",
+        f"- Pending tips: {snapshot.pending_tips or 'none'}",
+        f"- Session insights: {snapshot.session_insights or 'none'}",
+        f"- Recent corrections: {snapshot.recent_corrections or 'none'}",
+        "",
+        "CCA optimization signals:",
+        f"- Priority briefing: {snapshot.priority_briefing or 'none'}",
+        f"- Priority recommendation: {snapshot.priority_recommendation or 'none'}",
+        f"- MT proposals: {snapshot.mt_proposals or 'none'}",
+        f"- Session timeline: {snapshot.session_timeline or 'none'}",
+        f"- Hivemind status: {snapshot.hivemind_status or 'none'}",
+        "",
         "Recent commits for context:",
         *_format_lines(snapshot.recent_commits),
         "",
         "Init checklist:",
-        "1. Read AGENTS.md, SESSION_STATE.md, TODAYS_TASKS.md, SESSION_RESUME.md, and CLAUDE_TO_CODEX.md.",
+        "1. Read AGENTS.md, PROJECT_INDEX.md, SESSION_STATE.md, TODAYS_TASKS.md, MATTHEW_DIRECTIVES.md, CODEX_PRIME_DIRECTIVE.md, SESSION_RESUME.md, and CLAUDE_TO_CODEX.md.",
         "2. Respect the runtime/generated files above unless the task explicitly includes them.",
-        "3. Prefer today's tasks first; otherwise fall through to the session state's next item.",
-        "4. Use CCA comms directly if coordination matters, and check the Kalshi bridge notes when trading coordination is in play.",
+        "3. Prefer TODAYS_TASKS.md first, then SESSION_RESUME.md priorities, then SESSION_STATE.md next items.",
+        "4. Absorb the self-learning signals above before choosing implementation direction.",
+        "5. Run `python3 bridge_status.py` before changing task direction so stale lanes and relay gaps are visible.",
+        "6. Check both Codex inbox and CCA bridge context before changing task direction.",
+        "7. Use CCA comms directly if coordination matters, and check the Kalshi bridge notes when trading coordination is in play.",
     ]
     return "\n".join(lines).strip() + "\n"
 

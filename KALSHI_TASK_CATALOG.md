@@ -16,6 +16,20 @@ For Kalshi main to receive and execute these tasks:
 
 ## Task Categories
 
+### Pre-Check: Bridge Gate
+
+Before assigning or acting on bridge work, use the cheap JSON gate first:
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/cross_chat_board.py kalshi-check
+```
+
+Interpretation:
+- `should_read_outbox=true` → read `~/.claude/cross-chat/CCA_TO_POLYBOT.md` now
+- `latest_delivery_req_ids` / `latest_request_req_ids` → which request the latest bridge activity is about
+- `req66_answered=true` → REQ-66 already has a CCA answer on file; use that delivery instead of re-asking
+- after reading: `python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/cross_chat_board.py kalshi-mark-seen`
+
 ### Category 1: Bridge Processing
 
 Process research findings that CCA sent via CCA_TO_POLYBOT.md.
@@ -82,15 +96,29 @@ python3 cca_comm.py task km "Run Page-Hinkley drift detection on sniper bet outc
 **When to assign:** Monthly, or when sniper performance changes unexpectedly.
 **Expected output:** Drift detection report with change points and recommended actions.
 
+### Category 7: Event-Day Readiness
+
+Audit whether a specific economics event is actually deployable before the chat improvises.
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/kalshi_cpi_readiness.py
+```
+
+**When to assign:** Before April CPI, GDP, or any economics-event micro-live discussion.
+**Expected output:** `blocked` or `watch` verdict with structural checks, live dependencies, and the next 2-3 exact actions.
+
 ---
 
 ## Assignment Protocol
 
 1. CCA desktop checks if Kalshi main has pending tasks: `python3 cca_comm.py inbox km`
-2. If no pending tasks and Kalshi main is running: assign from this catalog
-3. Priority order: Bridge > Self-Learning > Sniper Analysis > Calibration > Research > Drift
-4. Never assign more than 2 tasks at once (Kalshi main has its own monitoring duties)
-5. Track assigned tasks in SESSION_STATE.md under "Kalshi task assignments"
+2. Run the bridge gate first:
+   `python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/cross_chat_board.py kalshi-check`
+3. If `should_read_outbox=true`, process the latest CCA delivery before assigning anything else
+4. If no pending tasks and Kalshi main is running: assign from this catalog
+5. Priority order: Bridge > Self-Learning > Sniper Analysis > Calibration > Research > Drift
+6. Never assign more than 2 tasks at once (Kalshi main has its own monitoring duties)
+7. Track assigned tasks in SESSION_STATE.md under "Kalshi task assignments"
 
 ## Measuring Success
 

@@ -3,7 +3,35 @@
 
 ---
 
-## Current State (as of Session 256 — 2026-04-02)
+## Current State (as of Session 258 — 2026-04-03)
+
+**Phase:** Session 258 COMPLETE. MT-32 complete: diagram_generator.py (flow+sequence SVG) + visual.py unified façade (72 exports, 165 tests)
+
+**What was done this session (S258):**
+- MT-32 Phase 6 — diagram_generator.py, 55 tests, pure SVG
+- MT-32 Phase 7 — visual.py façade, 72 exports, 55 tests, all pillars integrated
+- **Tests**: 0 suites, 2064 tests passing. All green.
+
+**Next:**
+1. MT-32 done — pick MT-53 Pokemon or MT-20 Senior Dev next
+
+---
+
+## Previous State (Session 256 — 2026-04-02)
+
+**Phase:** Session 256 COMPLETE. MT-32 Phase 4 complete: component_library.py (8 HTML components, 75 tests); Codex Gemini improvements committed; Kalshi delivery written
+
+**What was done this session (S256):**
+- MT-32 Phase 4 component_library.py: button/badge/alert/card/progress_bar/data_table/tabs/stat_card + stylesheet + page, 75 tests
+- Codex CODEX_TO_CLAUDE.md digested: Gemini schema normalization, CLI autoloop test fix, repo re-anchor all committed
+- **Tests**: 351 suites, 12490 tests passing. All green.
+
+**Next:**
+1. MT-32 Phase 5 Dashboard v2 (wire component_library into dashboard_generator)
+2. Terminal self-chaining for one-off CCA chats (.planning/todos/pending/f85ab1da.json)
+
+---
+## Previous State (Session 256 — 2026-04-02)
 
 **Phase:** Session 256 COMPLETE. Codex improvements committed, MT-32 Phase 4 complete, Kalshi delivery written.
 
@@ -21,7 +49,6 @@
 3. Terminal self-chaining for one-off CCA chats (.planning/todos/pending/f85ab1da.json)
 
 ---
-
 ## Previous State (Session 253 — 2026-04-02)
 
 **Phase:** Session 253 COMPLETE. Phase 7 Chats 27-30 complete: polybot-auto cleanup, Iron Laws audit, wrapresearch slim, proactive request triggers

@@ -42,6 +42,10 @@ Scoped examples:
 - `CCA autoloop on Pokemon viewer testing`
 - `CCA wrap this session`
 
+Use one continuation command idea in practice:
+- keep using `CCA auto` for fresh continuation/work chats
+- do not invent a separate `CCA next` concept
+
 These are chat conventions, not built-in slash commands. They should be treated as shorthand for invoking `$cca-desktop-workflow` on the CCA repo.
 
 Repo guard:
@@ -66,6 +70,10 @@ python3 codex_init.py --write CODEX_INIT_PROMPT.md
 
 `SESSION_RESUME.md` is the full next-chat handoff written by `/cca-wrap`; `CCA init`
 should now be enough to rehydrate the next chat without extra pasted context.
+
+Also read `CODEX_PRIME_DIRECTIVE.md` during CCA init. It is the standing rule
+that Codex should steal and adapt CCA's best internal machinery rather than
+build a parallel Codex-only workflow stack.
 
 ### Auto
 
