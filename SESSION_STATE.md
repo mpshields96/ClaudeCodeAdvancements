@@ -3,23 +3,22 @@
 
 ---
 
-## Current State (as of Session 255 — 2026-04-03)
+## Current State (as of Session 256 — 2026-04-02)
 
-**Phase:** Session 255 COMPLETE. AG-5 Iron Laws + Danger Zones, MT-49 stale_strategy fix, cross-chat comms delivered, slim_init orchestrator permanent
+**Phase:** Session 256 IN PROGRESS. Codex improvements committed, MT-32 Phase 4 complete, Kalshi delivery written.
 
-**What was done this session (S255):**
-- `agent-guard/iron_laws.py` — AG-5: 4 Iron Laws + 5 Danger Zones tiered enforcement. `credential_guard.py` updated to run `enforce()` as first gate. 59 new tests.
-- `slim_init.py` — orchestrator registration now permanent Step 5.3 (was manual)
-- `self-learning/reflect.py` — MT-49: fixed stale_strategy false-positive loop (now resets updated_at even when no param changes). 2 new tests.
-- `principle_transfer` — tp_3270b82a accepted (PROJECT_INDEX.md hotspot: session_mgmt→code_quality)
-- `principle_discoverer` — 4 new principles registered (large_commit pattern, 203 total)
-- Cross-chat: answered 4 Kalshi S162 questions (REQ-65 paper/live split, earnings mentions, compound path, ETH sniper ceiling). Codex status update written.
-- **Tests**: 274 suites, all passing. strategy.json bumped to v2.
+**What was done this session (S256):**
+- Codex changes committed (776e7a6): pokemon-agent Gemini schema normalization (`_json_schema_to_gemini_schema`, `_normalize_tool_args`, `resolve_model_name`), CODEX_TERMINAL_WORKFLOW.md + launch_codex.sh, Codex helper re-anchor to canonical CCA repo.
+- Todo captured: terminal CCA chat self-chaining gap (Codex finding — desktop autoloop OK, one-off terminal can't self-chain)
+- `design-skills/component_library.py` — MT-32 Phase 4: 8 reusable HTML components (button, badge, alert, card, progress_bar, data_table, tabs, stat_card) + component_stylesheet() + page() wrapper. 75 tests. (926e831)
+- Cross-chat: Kalshi S256 delivery written (Codex Gemini fix, autoloop gap, sports_game n=6, btc_lag DEAD, MT-32 next) (cf73782)
+- MASTER_TASKS.md: MT-32 Phase 4 COMPLETE, Phase 5 = Dashboard v2. PROJECT_INDEX.md updated.
+- **Tests**: 274 suites + 75 new = 618 tests in design-skills, smoke 10/10 passing.
 
 **Next:**
-1. Priority picker: MT-32 (Visual Excellence) or MT-49 continued
+1. MT-32 Phase 5: Dashboard v2 — interactive, real-time, responsive, themeable (wire component_library into dashboard_generator)
 2. r/claudecode scan stale (3 subreddits) — cca-nuclear-daily when off-peak
-3. Codex: check CODEX_TO_CLAUDE.md for responses to S255 update
+3. Terminal self-chaining for one-off CCA chats (.planning/todos/pending/f85ab1da.json)
 
 ---
 

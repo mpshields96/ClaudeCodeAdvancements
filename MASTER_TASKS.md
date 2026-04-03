@@ -1181,8 +1181,8 @@ Last updated: S125 (2026-03-23).
 
 **Success criteria:** A CCA session can produce visual outputs (reports, dashboards, charts, web pages) that look professional WITHOUT manual post-processing. The visual quality gap between Claude Code output and professional design tools shrinks measurably.
 
-**Status:** Phase 3 COMPLETE (S231). Phases 1-3 done. Next: Phase 4 (UI component library).
-Last updated: S231 (2026-03-28).
+**Status:** Phase 4 COMPLETE (S256). Phases 1-4 done. Next: Phase 5 (Dashboard v2 — interactive, real-time, responsive, themeable).
+Last updated: S256 (2026-04-02).
 
 ---
 
@@ -1260,7 +1260,7 @@ See `CCA_PRIME_DIRECTIVE.md`.
 | 2 | MT-33 | Strategic Intelligence Report | 9 | +0.0 | 50% | +0.0 | +1.0 | 0.0 | **10.0** | S121 | Phase 4-6: chart integration, self-reference, hardening. kalshi_data_collector + learning_data_collector + report_differ built (S122-S123). |
 | 3 | MT-23 | Mobile Remote Control v2 | 8 | +0.0 | 0% | +0.0 | +1.0 | 0.0 | **9.0** | NEW (S103) | Research: evaluate Telegram/Discord channels MCP |
 | 4 | MT-26 | Financial Intelligence Engine | 7 | +0.0 | 92% | +0.0 | +1.0 | 0.0 | **8.0** | S103 | CCA scope COMPLETE. Tier 3 Phase 2 deferred (needs numpy). 79 pipeline tests. |
-| 5 | MT-32 | Visual Excellence & Design Engineering | 8 | +0.0 | 25% | +0.0 | +0.0 | 0.0 | **8.0** | S231 | Phases 1-3 COMPLETE. design_tokens canonical module, all consumers wired. Next: Phase 4 (UI components). |
+| 5 | MT-32 | Visual Excellence & Design Engineering | 8 | +0.0 | 50% | +0.0 | +0.0 | 0.0 | **8.0** | S256 | Phases 1-4 COMPLETE. component_library.py — 8 components, 75 tests. Next: Phase 5 (Dashboard v2). |
 | — | MT-34 | Medical AI (OpenEvidence replacement) | 6 | +0.0 | 0% | +0.0 | +0.0 | 0.0 | **6.0** | IDEA (S121) | BLOCKED: Matthew refining concept. Do not start. |
 | 6 | MT-24 | Visualization & Graphics Engine | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 4 |
 | 7 | MT-25 | Presentation Generator | — | — | — | — | — | — | **ABSORBED** | — | Absorbed into MT-32 Pillar 8 (WAITING: style samples) |
