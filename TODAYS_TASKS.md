@@ -1101,6 +1101,55 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 
 ---
 
+### CHAT 31: Slim polybot-autoresearch.md (~30 min)
+
+#### 31A. Slim polybot-autoresearch.md [TODO]
+**Scope:** 21.7KB — largest command file. /kalshi-research permanently retired S131. Most content is dead.
+**Steps:**
+1. Read full file — identify permanent rules vs session-specific content
+2. Remove embedded session prompt template block (now in SESSION_RESUME.md)
+3. Remove stale session state blocks (task lists, analytics, restart commands)
+4. Keep: research methodology, self-rating rubric, file update checklist, FONT RULES
+5. Add RETIRED notice at top matching polybot-wrapresearch.md format
+**TARGET:** 21.7KB → <5KB. Permanent reference only — session state in SESSION_HANDOFF.md.
+**STOP CONDITION:** File under 5KB. Retirement notice at top. No embedded session prompts.
+
+---
+
+### CHAT 32: Iron Laws Regression Script (~30 min)
+
+#### 32A. Build scripts/check_iron_laws.py [TODO]
+**Scope:** BOUNDS.md line refs go stale on every refactor. Today fixed 10 manually — should be automated.
+**Steps:**
+1. Parse BOUNDS.md — extract all `file:line N` references (regex: `(src/\S+\.py|main\.py)\s+line\s+(\d+)`)
+2. For each ref: `grep -n` the pattern described in the IL rule and verify it's within ±5 lines of stated line
+3. Report CURRENT / STALE / MISSING for each Iron Law with file:line reference
+4. Exit code 1 if any STALE or MISSING — safe to wire into pre-commit hook
+**STOP CONDITION:** `python scripts/check_iron_laws.py` outputs CURRENT for all 18+ ILs. Exits 0.
+
+---
+
+### CHAT 33: polybot-wrap.md Audit + File Size Monitor (~30 min)
+
+#### 33A. Audit and slim polybot-wrap.md [TODO]
+**Scope:** 10.4KB — 3rd largest command file. Likely has accumulated stale session state.
+**Steps:**
+1. Read full file — identify stale session blocks (old restart commands, old pending tasks, session N refs)
+2. Extract any session-specific state — redirect to SESSION_HANDOFF.md
+3. Slim toward critical path only — keep: step structure, self-rating rubric, FONT RULES
+**TARGET:** 10.4KB → <6KB.
+**STOP CONDITION:** File under 6KB. No session-specific state embedded.
+
+#### 33B. Wire command file size check into polybot-wrap.md [TODO]
+**Scope:** Advancement tip from S253 — periodic wc -c audit catches file bloat before it accumulates.
+**Steps:**
+1. Add to polybot-wrap.md FINAL CHECKS section (or create one):
+   `wc -c ~/.claude/commands/polybot-*.md` — flag any file that has grown >20% since last session
+2. Add threshold annotations: polybot-auto.md warn@20KB, polybot-init.md warn@25KB, polybot-wrap.md warn@12KB, polybot-autoresearch.md warn@6KB (post-Chat-31)
+**STOP CONDITION:** polybot-wrap.md outputs file sizes + threshold warnings at every wrap.
+
+---
+
 ## DEFERRED (not scheduled, revisit when relevant)
 
 - **TurboQuant vector compression** — only when Frontier 1 hits storage scale problems
