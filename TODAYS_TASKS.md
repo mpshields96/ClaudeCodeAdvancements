@@ -1018,7 +1018,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 
 ### CHAT 26: POLYBOT_INIT.md Slim + SESSION_HANDOFF.md Refresh
 
-#### 26A. Slim POLYBOT_INIT.md [TODO]
+#### 26A. Slim POLYBOT_INIT.md [DONE]
 **Scope:** 105KB read every session = ~25K tokens burned at startup. Biggest remaining waste.
 **Steps:**
 1. Audit POLYBOT_INIT.md — identify static build docs vs live-status sections
@@ -1028,7 +1028,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 **TARGET:** POLYBOT_INIT.md 105KB → ~15KB (static reference only)
 **STOP CONDITION:** File under 20KB. No live-status content left in it.
 
-#### 26B. Refresh SESSION_HANDOFF.md [TODO]
+#### 26B. Refresh SESSION_HANDOFF.md [DONE]
 **Scope:** Last updated March 29. Stale PID (87224 → 12448), stale P&L, stale bot state.
 **Steps:**
 1. Update BOT STATE: PID 12448, log /tmp/polybot_session161.log, all-time +69.89 USD
