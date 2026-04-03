@@ -991,7 +991,7 @@ Adapt for Kalshi trading domain: trading events instead of general dev events.
 
 ### CHAT 25: Get Bot Operational
 
-#### 25A. Bot health check + API verification [TODO]
+#### 25A. Bot health check + API verification [DONE]
 **Scope:** Bot has been stopped since ~March 18 (2+ weeks stale). Verify before restarting live.
 **Steps:**
 1. Check Kalshi API connectivity: `./venv/bin/python3 main.py --health`
@@ -1001,7 +1001,7 @@ Adapt for Kalshi trading domain: trading events instead of general dev events.
 5. Paper mode test: restart bot in paper mode, verify bets evaluating correctly
 **STOP CONDITION:** Bot runs in paper mode, --health clean, no blockers.
 
-#### 25B. Live restart + SESSION_RESUME.md initialization [TODO]
+#### 25B. Live restart + SESSION_RESUME.md initialization [DONE]
 **Scope:** Restart live trading with clean optimized infrastructure.
 **Steps:**
 1. Write fresh SESSION_RESUME.md with current P&L, guards, strategy standings
