@@ -167,6 +167,22 @@ class TestAgentStep(unittest.TestCase):
         offered_tools = {tool["name"] for tool in llm.last_tools}
         self.assertNotIn("navigate_to", offered_tools)
 
+    def test_step_offers_navigation_when_current_map_is_supported(self):
+        from navigation import MapData, Navigator, TileType
+
+        agent, llm = _make_agent()
+        navigator = Navigator()
+        map_data = MapData(map_id=3 * 256 + 1, name="Mock Crystal Map", width=8, height=8)
+        for y in range(8):
+            for x in range(8):
+                map_data.set_tile(x, y, TileType.FLOOR)
+        navigator.add_map(map_data)
+        agent.navigator = navigator
+
+        agent.step()
+        offered_tools = {tool["name"] for tool in llm.last_tools}
+        self.assertIn("navigate_to", offered_tools)
+
 
 class TestToolExecution(unittest.TestCase):
     """Test tool call routing and execution."""
