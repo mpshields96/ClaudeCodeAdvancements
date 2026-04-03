@@ -1,35 +1,34 @@
-# NEXT CHAT HANDOFF
+# SESSION RESUME — S254 → S255
 
-## Start Here
-Run /cca-init.
-This file is the full next-chat handoff written by /cca-wrap, so a fresh chat should not need Matthew to restate context.
-Run /cca-auto after init only if you want autonomous continuation.
+Run /cca-init. Last session S254 on 2026-04-03.
 
-## Repo State
-- Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
-- Last wrapped session: S253 (2026-04-02)
-- Phase: Session 253 COMPLETE. Phase 7 Chats 27-30 complete: polybot-auto cleanup, Iron Laws audit, wrapresearch slim, proactive request triggers
+COMPLETED S254:
+  Phase 7 ALL DONE (Chats 31-33):
+  31A: polybot-autoresearch.md 21.7KB→4.5KB (79%, RETIRED notice added)
+  32A: scripts/check_iron_laws.py — 16 ILs verified CURRENT, pre-commit hook wired
+  33A: polybot-wrap.md 10.4KB→6.0KB (42%, FINAL CHECKS + file size audit added)
+  33B: wc -c thresholds wired into polybot-wrap.md FINAL CHECKS section
+  + CCA model: Opus→Sonnet 4.6 via .claude/settings.json + alias + test fixed
+  + SESSION_HANDOFF + polybot-init MAIN CHAT updated to Session 162 live state
+  + Codex handoff: Terminal.app setup + Pokemon MT-53 instructions in CODEX_OBSERVATIONS.md
+  + Pre-commit hook: check_iron_laws.py fires on every polymarket-bot commit
 
-## Immediate Priorities
-1. 31A. Slim polybot-autoresearch.md
-2. 32A. Build scripts/check_iron_laws.py
-3. 33A. Audit and slim polybot-wrap.md
+TODAYS_TASKS: ALL DONE (31A/32A/33A/33B marked [DONE])
 
-## Today's Tasks
-- 31A. Slim polybot-autoresearch.md
-- 32A. Build scripts/check_iron_laws.py
-- 33A. Audit and slim polybot-wrap.md
-- 33B. Wire command file size check into polybot-wrap.md
+NEXT SESSION PRIORITIES:
+  1. Assist Kalshi monitoring chat (Session 162) — mandate assessment, btc_lag_v1 live promotion
+  2. Support Codex CCA review — answer questions, implement findings
+  3. Check POLYBOT_TO_CCA.md for new requests from Kalshi chat
+  4. Priority picker for next CCA work after today's tasks exhausted
 
-## Coordination
-- Claude->Codex: [2026-03-27 22:12 UTC] — UPDATE 3 — MT-53 Progress Report
-- Claude->Codex: [2026-03-28 03:50 UTC] — ACK 4 — 3-Way Hub Bridge Acknowledgment
-- Codex->CCA: [2026-03-28 19:20 UTC] — HARDENING — Codex Helper Commands Re-Anchor To Canonical CCA Repo
-- Codex->CCA: [2026-03-28 20:35 UTC] — STATUS UPDATE — Autoloop Truth Table For Next Chat
-- CCA->Kalshi: [2026-04-02 23:55 UTC] — UPDATE 5 — Chat 26A+26B: POLYBOT_INIT.md + SESSION_HANDOFF.md Refresh
-- CCA->Kalshi: [2026-04-02 UTC] — UPDATE 6 — S253 Kalshi doc cleanup complete
-- Check `python3 cca_comm.py inbox` if this session is part of CCA hivemind work.
+KEY STATE:
+  Kalshi bot: RUNNING PID 12448, /tmp/polybot_session161.log
+  All-time P&L: +88.32 USD | Today: +5.88 USD (April 3, 02:45 UTC)
+  Tests: 274/357 suites, 9950 tests (4 pre-existing Python 3.9 compat failures)
+  Last commit: dd771fa
 
-## Fresh-Chat Rule
-Typing only /cca-init in a new chat should be enough. Use this handoff as the authoritative continuation context after init.
-
+GOTCHAS:
+  - CCA now Sonnet 4.6 — settings.json + alias both updated, no --model flag needed
+  - check_iron_laws.py pre-commit hook active in polymarket-bot — will block commits on stale refs
+  - Codex may have questions about CCA project structure — have PROJECT_INDEX.md ready
+  - polybot-autoresearch.md RETIRED — if Kalshi chat asks about research session startup, point to SESSION_HANDOFF.md
