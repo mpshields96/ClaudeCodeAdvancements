@@ -133,6 +133,13 @@ Dual-notify rule for Kalshi-bot changes:
 Codex should mirror the useful parts of CCA's workflow without pretending the
 platform hooks are identical.
 
+Preferred terminal entrypoint for now:
+- `cx` in the current repo
+- `cxa` for `/Users/matthewshields/Projects/ClaudeCodeAdvancements`
+- `cxbot` for `/Users/matthewshields/Projects/polymarket-bot`
+- `bash launch_codex.sh` / `bash launch_codex.sh kalshi` for fresh Terminal.app windows
+- See `CODEX_TERMINAL_WORKFLOW.md` for the Terminal-first setup
+
 Preferred desktop-app entrypoint:
 - Use `$cca-desktop-workflow`
 - Canonical repo source: `codex-skills/cca-desktop-workflow/`

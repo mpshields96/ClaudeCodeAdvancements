@@ -42,6 +42,26 @@ Push: yes/no
    - Call out open risks or blockers
    - Prepare a short relay message for Claude Code when useful
 
+## Terminal First
+
+Current default is Terminal.app, not the Codex desktop app.
+
+Direct launch options:
+- `cx` — start Codex in the current directory with `gpt-5.4`, high reasoning, danger-full-access, approval `never`
+- `cxa` — open Codex in `~/Projects/ClaudeCodeAdvancements` with `CCA_CHAT_ID=codex`
+- `cxbot` — open Codex in `~/Projects/polymarket-bot`
+- `bash launch_codex.sh` — open a fresh Terminal.app window for CCA and start Codex with `CCA init`
+- `bash launch_codex.sh kalshi` — open a fresh Terminal.app window for Kalshi and start Codex with `Kalshi init`
+
+Prompt examples:
+- `cxa "CCA init"`
+- `cxa "CCA go: tighten codex terminal docs"`
+- `bash launch_codex.sh cca "CCA init"`
+- `bash launch_codex.sh kalshi "Kalshi init"`
+
+Terminal workflow reference:
+- `CODEX_TERMINAL_WORKFLOW.md`
+
 ## Desktop Skill
 
 Codex desktop app equivalent of CCA slash commands:
@@ -73,6 +93,8 @@ Repo-local Codex command helpers:
 - `python3 codex_auto.py`
 - `python3 codex_autoloop.py`
 - `python3 codex_autoloop.py --max-deliverables 2`
+- `bash launch_codex.sh`
+- `bash launch_codex.sh kalshi`
 
 ## Codex self-learning
 

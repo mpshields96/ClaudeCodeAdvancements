@@ -3,7 +3,7 @@ import unittest
 import os
 import sys
 
-from main import parse_args
+from main import DEFAULT_GEMINI_MODEL, parse_args, resolve_model_name
 
 
 class TestParseArgs(unittest.TestCase):
@@ -64,6 +64,27 @@ class TestParseArgs(unittest.TestCase):
         self.assertEqual(args.load_state, "s.state")
         self.assertTrue(args.verbose)
         self.assertTrue(args.offline)
+
+
+class TestResolveModelName(unittest.TestCase):
+    """Test backend-specific model selection."""
+
+    def test_uses_cli_override_for_any_backend(self):
+        self.assertEqual(
+            resolve_model_name("gemini", "gemini-2.5-pro"),
+            "gemini-2.5-pro",
+        )
+        self.assertEqual(
+            resolve_model_name("anthropic", "claude-haiku-4-5-20251001"),
+            "claude-haiku-4-5-20251001",
+        )
+
+    def test_uses_gemini_default_for_gemini_backend(self):
+        self.assertEqual(resolve_model_name("gemini", None), DEFAULT_GEMINI_MODEL)
+        self.assertEqual(resolve_model_name("auto", None), DEFAULT_GEMINI_MODEL)
+
+    def test_leaves_anthropic_model_unset_without_override(self):
+        self.assertIsNone(resolve_model_name("anthropic", None))
 
 
 if __name__ == "__main__":

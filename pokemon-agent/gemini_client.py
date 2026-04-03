@@ -21,6 +21,8 @@ Usage:
 """
 from __future__ import annotations
 
+import base64
+import json
 import logging
 import os
 import uuid
@@ -38,6 +40,48 @@ logger = logging.getLogger(__name__)
 DEFAULT_MODEL = "gemini-2.5-flash"
 
 
+def _normalize_tool_args(value: Any) -> Any:
+    """Normalize Gemini function-call args into agent-friendly Python types."""
+    if isinstance(value, dict):
+        return {
+            key: _normalize_tool_args(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_normalize_tool_args(item) for item in value]
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return value
+
+
+def _json_schema_to_gemini_schema(schema: Any) -> Any:
+    """Convert Anthropic/JSON Schema fragments into Gemini schema format."""
+    if not isinstance(schema, dict):
+        return schema
+
+    converted = {}
+
+    for key, value in schema.items():
+        if key == "type":
+            converted["type_"] = str(value).upper()
+        elif key == "format":
+            converted["format_"] = value
+        elif key == "properties" and isinstance(value, dict):
+            converted["properties"] = {
+                name: _json_schema_to_gemini_schema(prop_schema)
+                for name, prop_schema in value.items()
+            }
+        elif key == "items":
+            converted["items"] = _json_schema_to_gemini_schema(value)
+        elif key in {"description", "nullable", "enum", "required"}:
+            converted[key] = value
+        elif key in {"default", "title", "$schema", "$defs", "additionalProperties"}:
+            # Gemini's deprecated SDK rejects many standard JSON Schema fields.
+            continue
+
+    return converted
+
+
 def _anthropic_tool_to_gemini(tool: dict) -> dict:
     """Convert an Anthropic-format tool to Gemini function declaration.
 
@@ -50,7 +94,7 @@ def _anthropic_tool_to_gemini(tool: dict) -> dict:
     return {
         "name": tool["name"],
         "description": tool.get("description", ""),
-        "parameters": tool.get("input_schema", {}),
+        "parameters": _json_schema_to_gemini_schema(tool.get("input_schema", {})),
     }
 
 
@@ -68,6 +112,8 @@ def _anthropic_messages_to_gemini(messages: list) -> list:
     Gemini: [{"role": "user", "parts": ["..."]}, {"role": "model", "parts": ["..."]}]
     """
     gemini_messages = []
+    tool_names_by_id = {}
+
     for msg in messages:
         role = "model" if msg.get("role") == "assistant" else "user"
         content = msg.get("content", "")
@@ -77,18 +123,54 @@ def _anthropic_messages_to_gemini(messages: list) -> list:
             parts = []
             for block in content:
                 if isinstance(block, dict):
-                    if block.get("type") == "text":
-                        parts.append(block["text"])
-                    elif block.get("type") == "image":
-                        # Skip images for now — Gemini has different image handling
-                        parts.append("[image omitted]")
+                    block_type = block.get("type")
+                    if block_type == "text":
+                        parts.append({"text": block["text"]})
+                    elif block_type == "image":
+                        source = block.get("source", {})
+                        media_type = source.get("media_type", "image/png")
+                        data = source.get("data")
+                        if data:
+                            parts.append({
+                                "inline_data": {
+                                    "mime_type": media_type,
+                                    "data": base64.b64decode(data),
+                                },
+                            })
+                    elif block_type == "tool_use":
+                        tool_use_id = block.get("id", "")
+                        tool_name = block.get("name", "")
+                        if tool_use_id and tool_name:
+                            tool_names_by_id[tool_use_id] = tool_name
+                        parts.append({
+                            "function_call": {
+                                "id": tool_use_id,
+                                "name": tool_name,
+                                "args": block.get("input", {}),
+                            },
+                        })
+                    elif block_type == "tool_result":
+                        tool_use_id = block.get("tool_use_id", "")
+                        result_content = block.get("content", "")
+                        try:
+                            response = json.loads(result_content)
+                        except (TypeError, json.JSONDecodeError):
+                            response = {"result": result_content}
+                        parts.append({
+                            "function_response": {
+                                "id": tool_use_id,
+                                "name": tool_names_by_id.get(tool_use_id, tool_use_id),
+                                "response": response,
+                            },
+                        })
                     else:
-                        parts.append(str(block))
+                        parts.append({"text": str(block)})
                 else:
-                    parts.append(str(block))
-            gemini_messages.append({"role": role, "parts": parts})
+                    parts.append({"text": str(block)})
+            if parts:
+                gemini_messages.append({"role": role, "parts": parts})
         else:
-            gemini_messages.append({"role": role, "parts": [str(content)]})
+            gemini_messages.append({"role": role, "parts": [{"text": str(content)}]})
 
     return gemini_messages
 
@@ -174,7 +256,7 @@ class GeminiClient:
                     tool_uses.append(ToolUse(
                         id=f"gemini-{uuid.uuid4().hex[:8]}",
                         name=part.function_call.name,
-                        input=args,
+                        input=_normalize_tool_args(args),
                     ))
                 elif part.text:
                     text_parts.append(part.text)

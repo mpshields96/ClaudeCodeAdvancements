@@ -18,6 +18,8 @@ import time
 
 from config import DEFAULT_ROM, LOG_DIR, STATE_DIR, SCREENSHOT_DIR
 
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+
 
 def setup_logging(log_dir: str, verbose: bool = False) -> None:
     """Configure logging to file and console."""
@@ -123,6 +125,19 @@ def _init_llm(backend: str, logger):
     return None
 
 
+def resolve_model_name(backend: str, cli_model: str | None) -> str | None:
+    """Resolve the model override to pass into CrystalAgent.
+
+    Anthropic can keep using config.MODEL_NAME by omitting an override.
+    Gemini needs an explicit Gemini model unless the user provided one.
+    """
+    if cli_model:
+        return cli_model
+    if backend in {"gemini", "auto"}:
+        return DEFAULT_GEMINI_MODEL
+    return None
+
+
 def detect_game_type(rom_path: str) -> str:
     """Detect game type from ROM file extension.
 
@@ -193,8 +208,9 @@ def main(argv=None) -> int:
         from agent import CrystalAgent
         reader = MemoryReader(emu)
         agent_kwargs = dict(emulator=emu, reader=reader, llm=llm)
-        if args.model:
-            agent_kwargs["model_name"] = args.model
+        model_name = resolve_model_name(args.backend, args.model)
+        if model_name:
+            agent_kwargs["model_name"] = model_name
         agent = CrystalAgent(**agent_kwargs)
 
         # Run Crystal boot sequence if starting from fresh ROM

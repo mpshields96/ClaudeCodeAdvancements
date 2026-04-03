@@ -151,6 +151,41 @@ class TestGeminiClientCreateMessage(unittest.TestCase):
         self.assertEqual(result.tool_uses[0].input, {"buttons": ["a", "b"]})
 
     @patch("gemini_client.genai")
+    def test_tool_call_coerces_integer_like_numbers(self, mock_genai):
+        """Gemini tool args should normalize 3.0 -> 3 for integer fields."""
+        mock_fc = MagicMock()
+        mock_fc.name = "navigate_to"
+        mock_fc.args = {"x": 7.0, "y": 0.0}
+
+        mock_part = MagicMock()
+        mock_part.text = None
+        mock_part.function_call = mock_fc
+
+        mock_response = MagicMock()
+        mock_response.candidates = [MagicMock()]
+        mock_response.candidates[0].content.parts = [mock_part]
+        mock_response.usage_metadata.prompt_token_count = 120
+        mock_response.usage_metadata.candidates_token_count = 25
+
+        mock_model = MagicMock()
+        mock_model.generate_content.return_value = mock_response
+        mock_genai.GenerativeModel.return_value = mock_model
+
+        client = self._make_client(mock_genai)
+        result = client.create_message(
+            model="gemini-2.5-flash",
+            max_tokens=1024,
+            system="Play Pokemon.",
+            messages=[{"role": "user", "content": "Move!"}],
+            tools=[{"name": "navigate_to", "description": "Move to coordinates",
+                    "input_schema": {"type": "object", "properties": {
+                        "x": {"type": "integer"}, "y": {"type": "integer"}}}}],
+            temperature=0.0,
+        )
+
+        self.assertEqual(result.tool_uses[0].input, {"x": 7, "y": 0})
+
+    @patch("gemini_client.genai")
     def test_mixed_text_and_tool_response(self, mock_genai):
         """Should handle responses with both text and tool calls."""
         mock_text_part = MagicMock()
@@ -212,11 +247,129 @@ class TestToolConversion(unittest.TestCase):
         self.assertEqual(result["name"], "press_buttons")
         self.assertEqual(result["description"], "Press one or more buttons on the Game Boy.")
         self.assertIn("parameters", result)
+        self.assertEqual(result["parameters"]["type_"], "OBJECT")
+        self.assertNotIn("type", result["parameters"])
+        self.assertEqual(
+            result["parameters"]["properties"]["buttons"]["type_"],
+            "ARRAY",
+        )
+        self.assertEqual(
+            result["parameters"]["properties"]["buttons"]["items"]["type_"],
+            "STRING",
+        )
+
+    def test_convert_nested_tool_schema(self):
+        from gemini_client import _anthropic_tool_to_gemini
+        anthropic_tool = {
+            "name": "update_objectives",
+            "description": "Update quest log.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "objectives": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "description": {"type": "string"},
+                                "status": {
+                                    "type": "string",
+                                    "enum": ["active", "completed"],
+                                    "default": "active",
+                                },
+                            },
+                            "required": ["description"],
+                        },
+                    },
+                },
+                "required": ["objectives"],
+            },
+        }
+        result = _anthropic_tool_to_gemini(anthropic_tool)
+        objective_schema = result["parameters"]["properties"]["objectives"]["items"]
+        self.assertEqual(objective_schema["type_"], "OBJECT")
+        self.assertEqual(
+            objective_schema["properties"]["description"]["type_"],
+            "STRING",
+        )
+        self.assertEqual(
+            objective_schema["properties"]["status"]["enum"],
+            ["active", "completed"],
+        )
+        self.assertNotIn("default", objective_schema["properties"]["status"])
 
     def test_convert_empty_tools(self):
         from gemini_client import _anthropic_tools_to_gemini
         self.assertEqual(_anthropic_tools_to_gemini([]), [])
         self.assertEqual(_anthropic_tools_to_gemini(None), [])
+
+
+class TestMessageConversion(unittest.TestCase):
+    """Test Anthropic message format -> Gemini content conversion."""
+
+    def test_convert_messages_with_tool_history(self):
+        from gemini_client import _anthropic_messages_to_gemini
+
+        messages = [
+            {
+                "role": "assistant",
+                "content": [
+                    {"type": "text", "text": "Going to press A."},
+                    {
+                        "type": "tool_use",
+                        "id": "tool-1",
+                        "name": "press_buttons",
+                        "input": {"buttons": ["a"]},
+                    },
+                ],
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "tool-1",
+                        "content": json.dumps({"pressed": ["a"], "count": 1}),
+                    },
+                ],
+            },
+        ]
+
+        result = _anthropic_messages_to_gemini(messages)
+
+        self.assertEqual(result[0]["role"], "model")
+        self.assertEqual(result[0]["parts"][0]["text"], "Going to press A.")
+        self.assertEqual(
+            result[0]["parts"][1]["function_call"]["name"],
+            "press_buttons",
+        )
+        self.assertEqual(
+            result[0]["parts"][1]["function_call"]["args"],
+            {"buttons": ["a"]},
+        )
+        self.assertEqual(
+            result[1]["parts"][0]["function_response"]["name"],
+            "press_buttons",
+        )
+        self.assertEqual(
+            result[1]["parts"][0]["function_response"]["response"],
+            {"pressed": ["a"], "count": 1},
+        )
+
+
+class TestArgNormalization(unittest.TestCase):
+    """Test normalization of Gemini function-call args."""
+
+    def test_sequence_like_values_become_lists(self):
+        from gemini_client import _normalize_tool_args
+
+        result = _normalize_tool_args({
+            "buttons": ("left", "right"),
+            "nested": {"coords": (7.0, 0.0)},
+        })
+
+        self.assertEqual(result["buttons"], ["left", "right"])
+        self.assertEqual(result["nested"]["coords"], [7, 0])
 
 
 if __name__ == "__main__":
