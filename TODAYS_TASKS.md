@@ -1064,7 +1064,7 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 
 ### CHAT 28: polybot-wrapresearch.md Slim + Retirement Notice
 
-#### 28A. Slim polybot-wrapresearch.md [TODO]
+#### 28A. Slim polybot-wrapresearch.md [DONE]
 **Scope:** Still 7.1KB. /kalshi-research is PERMANENTLY RETIRED — this command is rarely used.
 **Steps:**
 1. Add RETIRED notice at top: /kalshi-research permanently retired (S131). Use /polybot-wrap.
