@@ -1,34 +1,28 @@
-# SESSION RESUME — S254 → S255
+# SESSION RESUME — S256
+# Written by S255 wrap. Read at S256 init.
 
-Run /cca-init. Last session S254 on 2026-04-03.
+## S255 COMPLETED
+- AG-5: `agent-guard/iron_laws.py` — 4 Iron Laws + 5 Danger Zones. `credential_guard.py` runs `enforce()` first. 59 new tests. fb41b55.
+- slim_init Step 5.3: session_orchestrator registration permanent. d5f365c.
+- MT-49 stale_strategy fix: `reflect.py apply_suggestions` resets `updated_at` on stale detect even with no param changes. strategy.json → v2. b2aed7b.
+- Principle transfer tp_3270b82a accepted (PROJECT_INDEX.md hotspot: session_mgmt→code_quality).
+- 4 new principles auto-discovered (203 total). b4bb565.
+- Cross-chat: 4 Kalshi S162 questions answered (CCA_TO_POLYBOT.md). Codex status update written (CLAUDE_TO_CODEX.md).
+- Tests: 274 suites all passing. Git: clean. Pushed 73f0d41.
 
-COMPLETED S254:
-  Phase 7 ALL DONE (Chats 31-33):
-  31A: polybot-autoresearch.md 21.7KB→4.5KB (79%, RETIRED notice added)
-  32A: scripts/check_iron_laws.py — 16 ILs verified CURRENT, pre-commit hook wired
-  33A: polybot-wrap.md 10.4KB→6.0KB (42%, FINAL CHECKS + file size audit added)
-  33B: wc -c thresholds wired into polybot-wrap.md FINAL CHECKS section
-  + CCA model: Opus→Sonnet 4.6 via .claude/settings.json + alias + test fixed
-  + SESSION_HANDOFF + polybot-init MAIN CHAT updated to Session 162 live state
-  + Codex handoff: Terminal.app setup + Pokemon MT-53 instructions in CODEX_OBSERVATIONS.md
-  + Pre-commit hook: check_iron_laws.py fires on every polymarket-bot commit
+## NEXT SESSION PRIORITIES
+1. MT-32 (Visual Excellence) — score 14.0, stagnating 97 sessions
+2. r/claudecode scan — 3 subreddits stale; run cca-nuclear-daily off-peak
+3. Codex: check CODEX_TO_CLAUDE.md for response to S255 update
 
-TODAYS_TASKS: ALL DONE (31A/32A/33A/33B marked [DONE])
+## KEY STATE
+- strategy.json: v2, updated_at 2026-04-03T03:15:26Z (staleness clock reset)
+- agent-guard/iron_laws.py: new — 4 ILs, 5 DZs, enforce(), verdict_to_hook_response()
+- credential_guard.py: iron_laws.enforce() runs before legacy patterns; CLAUDE_AG_BLOCK=1 enables DZ blocking
+- slim_init: Step 5.3 registers session orchestrator (respects CCA_CHAT_ID env var)
+- Kalshi: running 18-23 USD/day, sports_game n=6 (need 30), btc_lag DEAD (HFTs, do not promote)
 
-NEXT SESSION PRIORITIES:
-  1. Assist Kalshi monitoring chat (Session 162) — mandate assessment, btc_lag_v1 live promotion
-  2. Support Codex CCA review — answer questions, implement findings
-  3. Check POLYBOT_TO_CCA.md for new requests from Kalshi chat
-  4. Priority picker for next CCA work after today's tasks exhausted
-
-KEY STATE:
-  Kalshi bot: RUNNING PID 12448, /tmp/polybot_session161.log
-  All-time P&L: +88.32 USD | Today: +5.88 USD (April 3, 02:45 UTC)
-  Tests: 274/357 suites, 9950 tests (4 pre-existing Python 3.9 compat failures)
-  Last commit: dd771fa
-
-GOTCHAS:
-  - CCA now Sonnet 4.6 — settings.json + alias both updated, no --model flag needed
-  - check_iron_laws.py pre-commit hook active in polymarket-bot — will block commits on stale refs
-  - Codex may have questions about CCA project structure — have PROJECT_INDEX.md ready
-  - polybot-autoresearch.md RETIRED — if Kalshi chat asks about research session startup, point to SESSION_HANDOFF.md
+## GOTCHAS
+- spec-guard warns on every Write/Edit — warn-only mode, not a blocker, visual noise only
+- polymarket-bot check_iron_laws.py ≠ agent-guard iron_laws.py — different systems, no conflict
+- MT-41 shows as stagnating in priority_picker but is COMPLETE (all 3 phases S160-S163)

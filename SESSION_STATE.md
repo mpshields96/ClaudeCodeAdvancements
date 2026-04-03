@@ -3,22 +3,23 @@
 
 ---
 
-## Current State (as of Session 254 — 2026-04-03)
+## Current State (as of Session 255 — 2026-04-03)
 
-**Phase:** Session 254 COMPLETE. Phase 7 complete: polybot docs slimmed, check_iron_laws.py built, CCA switched to Sonnet 4.6, Codex handoff written
+**Phase:** Session 255 COMPLETE. AG-5 Iron Laws + Danger Zones, MT-49 stale_strategy fix, cross-chat comms delivered, slim_init orchestrator permanent
 
-**What was done this session (S254):**
-- polybot-autoresearch.md 21.7KB→4.5KB (79% reduction, RETIRED)
-- polybot-wrap.md 10.4KB→6.0KB (42% reduction, file size audit wired)
-- scripts/check_iron_laws.py — 16 ILs verified, pre-commit hook active
-- CCA model: Opus→Sonnet 4.6 via settings.json + alias + test updated
-- SESSION_HANDOFF + polybot-init MAIN CHAT updated to current live state
-- Codex handoff written: Terminal.app setup + Pokemon MT-53 instructions
-- **Tests**: 274 suites, 9950 tests passing. All green.
+**What was done this session (S255):**
+- `agent-guard/iron_laws.py` — AG-5: 4 Iron Laws + 5 Danger Zones tiered enforcement. `credential_guard.py` updated to run `enforce()` as first gate. 59 new tests.
+- `slim_init.py` — orchestrator registration now permanent Step 5.3 (was manual)
+- `self-learning/reflect.py` — MT-49: fixed stale_strategy false-positive loop (now resets updated_at even when no param changes). 2 new tests.
+- `principle_transfer` — tp_3270b82a accepted (PROJECT_INDEX.md hotspot: session_mgmt→code_quality)
+- `principle_discoverer` — 4 new principles registered (large_commit pattern, 203 total)
+- Cross-chat: answered 4 Kalshi S162 questions (REQ-65 paper/live split, earnings mentions, compound path, ETH sniper ceiling). Codex status update written.
+- **Tests**: 274 suites, all passing. strategy.json bumped to v2.
 
 **Next:**
-1. New CCA chat to assist Kalshi monitoring + Codex Pokemon MT-53 review
-2. Kalshi Session 162: mandate assessment + btc_lag_v1 live promotion decision
+1. Priority picker: MT-32 (Visual Excellence) or MT-49 continued
+2. r/claudecode scan stale (3 subreddits) — cca-nuclear-daily when off-peak
+3. Codex: check CODEX_TO_CLAUDE.md for responses to S255 update
 
 ---
 
