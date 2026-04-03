@@ -107,6 +107,18 @@ python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/kalshi_cpi_readine
 **When to assign:** Before April CPI, GDP, or any economics-event micro-live discussion.
 **Expected output:** `blocked` or `watch` verdict with structural checks, live dependencies, and the next 2-3 exact actions.
 
+### Category 8: Price Gate
+
+Turn a sports lean into a real bet/pass decision with one quoted price.
+
+```bash
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/kalshi_price_gate.py list
+python3 /Users/matthewshields/Projects/ClaudeCodeAdvancements/kalshi_price_gate.py eval --market rockets-bucks --yes 61
+```
+
+**When to assign:** When Kalshi has a live YES quote and needs a fast discipline check.
+**Expected output:** explicit `bet` or `pass` verdict against the stored ceiling.
+
 ---
 
 ## Assignment Protocol

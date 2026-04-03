@@ -253,3 +253,46 @@ Key targets relayed:
 - Kalshi still needs live order-book checks before any exact side recommendation
 
 ---
+
+## [2026-04-03 18:07 UTC] — KALSHI SUPPORT — April 4 sports board reduced to price ceilings
+**Status:** COMPLETE
+**Scope:** `research/KALSHI_TOMORROW_SPORTS_2026-04-04.md`, `~/.claude/cross-chat/CCA_TO_POLYBOT.md`, `/Users/matthewshields/Projects/polymarket-bot/CODEX_OBSERVATIONS.md`
+**Summary:**
+Codex translated tomorrow's sports help into three ranked NBA leans with explicit Kalshi price ceilings, plus a secondary MLB scan list. This is deliberately stricter than "pick winners" because the user needs actable bet discipline, not just team preference.
+
+Leans sent to Kalshi:
+- Rockets over Bucks if YES <= 60-62c
+- Hawks over Magic if YES <= 57-59c
+- Pacers over Bulls if YES <= 55-57c
+
+**Relay Guidance:**
+- CCA can now answer "what about tomorrow?" with a compact, price-disciplined board
+- next upgrade is to turn live quoted Kalshi prices into exact bet/pass calls
+
+---
+
+## [2026-04-03 18:18 UTC] — KALSHI SUPPORT — April 4 price-gate helper added
+**Status:** COMPLETE
+**Scope:** `kalshi_price_gate.py`, `tests/test_kalshi_price_gate.py`, `KALSHI_TASK_CATALOG.md`, `~/.claude/cross-chat/CCA_TO_POLYBOT.md`, `/Users/matthewshields/Projects/polymarket-bot/CODEX_OBSERVATIONS.md`
+**Summary:**
+Codex added a tiny CLI to enforce tomorrow's sports ceilings on real Kalshi quotes. This turns the April 4 note into an immediate operational gate instead of a prose-only suggestion.
+
+Usage:
+- `python3 kalshi_price_gate.py list`
+- `python3 kalshi_price_gate.py eval --market rockets-bucks --yes 61`
+
+Current encoded gates:
+- rockets-bucks <= 62c
+- hawks-magic <= 59c
+- pacers-bulls <= 57c
+
+**Verification:**
+- `python3 -m unittest tests.test_kalshi_price_gate tests.test_cross_chat_board tests.test_bridge_status`
+- `python3 kalshi_price_gate.py list`
+- `python3 kalshi_price_gate.py eval --market rockets-bucks --yes 61`
+
+**Relay Guidance:**
+- CCA and Kalshi can now handle tomorrow's quoted prices in one command
+- if Kalshi sends live quotes, Codex can still do a deeper pass, but the helper is enough for first-line discipline
+
+---
