@@ -3,7 +3,24 @@
 
 ---
 
-## Current State (as of Session 250 — 2026-04-02)
+## Current State (as of Session 251 — 2026-04-02)
+
+**Phase:** Session 251 COMPLETE. Phase 6 complete: polybot-init 88% slimmer, SESSION_RESUME.md live, Phase 7 planned
+
+**What was done this session (S251):**
+- polybot-init.md 15.4KB→1.9KB + SESSION_RESUME.md created
+- polybot-wrap/wrapresearch redirected to SESSION_RESUME.md
+- batch_wrap_learning kalshi domains added
+- Phase 7 Chats 26-30 planned in TODAYS_TASKS.md
+- **Tests**: 10 suites, 331 tests passing. All green.
+
+**Next:**
+1. Chat 26A: slim POLYBOT_INIT.md 105KB→15KB
+2. Chat 26B: refresh SESSION_HANDOFF.md
+
+---
+
+## Previous State (Session 250 — 2026-04-02)
 
 **Phase:** Session 250 COMPLETE. Chat 22 complete: 7 CCA hooks ported to polymarket-bot, font/directive rules extracted, Phase 6 plan written to TODAYS_TASKS.md
 
@@ -16,7 +33,6 @@
 1. Chat 23: slim polybot-init.md 15.4KB→4KB (extract session prompts to SESSION_RESUME.md)
 
 ---
-
 ## Previous State (Session 250 — 2026-04-02)
 
 **Phase:** Session 250 COMPLETE. 21A tool-call budget hook (38 tests, wired PreToolUse), 21B cca-nuclear-daily spawns cca-scout agent

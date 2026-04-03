@@ -175,3 +175,5 @@
 {"session":248,"grade":"A","outcome":"success","tests_added":0,"tests_total":543,"summary":"Reddit review session: 8 URLs via parallel agents, 1 BUILD 4 ADAPT 2 SKIP, advancement tips integrated into Chat 16+17 plans","timestamp":"2026-04-01T16:45:12.503364Z"}
 {"session":249,"grade":"A","outcome":"success","tests_added":41,"tests_total":9753,"summary":"Chat 16: All 3 tasks done \u2014 agent-delegated reviews, session start hook, spawn budget tracking","timestamp":"2026-04-02T21:19:02.756319Z"}
 {"session":250,"grade":"A","outcome":"success","tests_added":38,"tests_total":9950,"summary":"21A tool-call budget hook + 21B cca-scout wiring complete","timestamp":"2026-04-02T22:23:37.063466Z"}
+{"session":250,"grade":"A","outcome":"success","tests_added":0,"tests_total":9950,"summary":"Chat 22: hook chain port + rule dedup for Kalshi bot CCA-parity Phase 6","timestamp":"2026-04-02T23:27:57.755659Z"}
+{"session":251,"grade":"B","outcome":"success","tests_added":0,"tests_total":331,"summary":"Phase 6 complete: Kalshi CCA-parity port done, Phase 7 optimization planned","timestamp":"2026-04-03T00:25:37.459338Z"}

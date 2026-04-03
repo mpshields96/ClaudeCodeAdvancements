@@ -4141,3 +4141,21 @@ CLI chat 2:
 - no losses
 
 ---
+
+## Session 251 — 2026-04-02
+
+**What changed:**
+- polybot-init.md 15.4KB→1.9KB + SESSION_RESUME.md created
+- polybot-wrap/wrapresearch redirected to SESSION_RESUME.md
+- batch_wrap_learning kalshi domains added
+- Phase 7 Chats 26-30 planned in TODAYS_TASKS.md
+
+**Why:**
+- Phase 6 complete: polybot-init 88% slimmer, SESSION_RESUME.md live, Phase 7 planned
+
+**Tests:** 331/331 passing (10 suites)
+
+**Lessons:**
+- Restarted bot prematurely before user approved
+
+---

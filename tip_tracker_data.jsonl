@@ -89,3 +89,7 @@
 {"tip":"verdict_parser handles freeform agent output with structured REVIEW blocks \u2014 test edge cases with real agent output before trusting","source":"cca-desktop","session":"S249","timestamp":"2026-04-02T21:19:02.756319Z"}
 {"tip":"PreToolUse block format is hookSpecificOutput.permissionDecision: deny (not top-level decision: block)","source":"cca-desktop","session":"S250","timestamp":"2026-04-02T22:23:37.063466Z"}
 {"tip":"Exempt cheap tools from budget counting to avoid false positives on routine reads","source":"cca-desktop","session":"S250","timestamp":"2026-04-02T22:23:37.063466Z"}
+{"tip":"settings.local.json gitignored by default in polymarket-bot \u2014 use git add -f to force-track","source":"cca-desktop","session":"S250","timestamp":"2026-04-02T23:27:57.755659Z"}
+{"tip":"python3.13 required for type|None syntax hooks; python3 on this machine is 3.9.6","source":"cca-desktop","session":"S250","timestamp":"2026-04-02T23:27:57.755659Z"}
+{"tip":"POLYBOT_INIT.md at 105KB is highest-ROI next slim","source":"cca-desktop","session":"S251","timestamp":"2026-04-03T00:25:37.459338Z"}
+{"tip":"Check bot restart approval before touching live systems","source":"cca-desktop","session":"S251","timestamp":"2026-04-03T00:25:37.459338Z"}

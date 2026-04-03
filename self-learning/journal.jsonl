@@ -1327,3 +1327,15 @@
 {"event_type":"feedback_roi","session":250,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-02T23:27:57.755659Z"}
 {"event_type":"sentinel_stats","session":250,"total_principles":199,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-02T23:27:57.755659Z"}
 {"event_type":"meta_learning_health","session":250,"health_score":0.513,"total_principles":33,"active_principles":13,"zombie_principles":14,"timestamp":"2026-04-02T23:27:57.755659Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-03T00:25:19.854162+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-03T00:25:19.878608+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-03T00:25:23.956781+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-03T00:25:23.981015+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"session_outcome","session":251,"domain":"kalshi_monitoring","outcome":"success","notes":"Phase 6 complete: Kalshi CCA-parity port done, Phase 7 optimization planned","timestamp":"2026-04-03T00:25:37.459338Z"}
+{"event_type":"win","session":251,"domain":"kalshi_monitoring","notes":"polybot-init.md 88% reduction + SESSION_RESUME.md","timestamp":"2026-04-03T00:25:37.459338Z"}
+{"event_type":"win","session":251,"domain":"kalshi_monitoring","notes":"wrap/wrapresearch redirected","timestamp":"2026-04-03T00:25:37.459338Z"}
+{"event_type":"win","session":251,"domain":"kalshi_monitoring","notes":"Phase 7 planned","timestamp":"2026-04-03T00:25:37.459338Z"}
+{"event_type":"pain","session":251,"domain":"kalshi_monitoring","notes":"premature bot restart","timestamp":"2026-04-03T00:25:37.459338Z"}
+{"event_type":"feedback_roi","session":251,"total_feedback_events":0,"profitable_count":0,"unprofitable_count":0,"total_profit_cents":0,"win_rate":0.0,"principles_updated":0,"timestamp":"2026-04-03T00:25:37.459338Z"}
+{"event_type":"sentinel_stats","session":251,"total_principles":199,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-03T00:25:37.459338Z"}
+{"event_type":"meta_learning_health","session":251,"health_score":0.513,"total_principles":33,"active_principles":13,"zombie_principles":14,"timestamp":"2026-04-03T00:25:37.459338Z"}
