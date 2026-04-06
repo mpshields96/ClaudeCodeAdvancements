@@ -1150,6 +1150,184 @@ Goal: Eliminate remaining token waste, refresh stale state, harden comms loop.
 
 ---
 
+## PHASE 8: REDDIT BATCH BUILDS (S262+) — Chats 34-37
+
+Source: S262 Reddit link dump (16 URLs reviewed). 2 BUILD verdicts + high-value ADAPTs.
+All sessions: solo unless noted. Off-peak preferred. Use gsd:quick throughout.
+
+### Progress Tracker
+
+| Chat | Session | Status | Output |
+|------|---------|--------|--------|
+| 34: Unblock + Cache Expiry Hook | — | TODO | Green tests, cache expiry hook live, ENABLE_TOOL_SEARCH advisory |
+| 35: /review Command + Context Monitor | — | TODO | /review slash command, 4 new advisory signals |
+| 36: MT-53 Wire + Blast Radius | — | TODO | collision_reader_crystal wired, blast_radius in agent-guard |
+| 37: Memory Overhaul (mem0 patterns) | — | TODO | Semantic dedup, 3-tier scoping, FAISS backend |
+
+---
+
+### CHAT 34: Unblock Tests + Cache Expiry Hook (~75 min)
+
+#### 34A. Python 3.9 Union Fix
+
+**Goal:** Restore full 223-suite test harness to green.
+**Why now:** 81 suites blocked by `X | None` syntax (Python 3.9 incompatible). Unblocks clean baseline for all subsequent commits.
+
+Steps:
+1. `grep -rn "| None" --include="*.py"` across the project
+2. Replace all `X | None` → `Optional[X]` with `from typing import Optional` at top of each file
+3. Run `python3 parallel_test_runner.py --quick --workers 8` — confirm green
+4. Commit: "fix: Python 3.9 union syntax — replace X|None with Optional[X]"
+
+Stop condition: all 10 smoke suites green. Do not chase pre-existing failures unrelated to this fix.
+
+#### 34B. Cache Expiry UserPromptSubmit Hook (BUILD #14)
+
+**Goal:** Block users before they unknowingly pay full input token cost after a cache expiry.
+**Source finding:** r/ClaudeCode 1sd8t5u — 858-session audit, 54% of turns hit cache expiry, mechanism fully described.
+
+Files to create/edit:
+- `hooks/stop_hook_idle_writer.py` — append `{"idle_since": <unix_timestamp>}` to `~/.claude-context-health.json` on every Stop event
+- `hooks/user_prompt_submit_cache_guard.py` — read `idle_since`, compute elapsed, block once if >5min with advisory: `"Cache likely expired (idle Xmin — Pro TTL=5min, Max TTL=1hr). Proceeding costs full input tokens. Resend to continue."`
+- Wire both in `settings.local.json`: Stop hook → idle writer, UserPromptSubmit → cache guard
+
+TTL constants: Pro = 300s, Max = 3600s. Detect plan tier from env var `CLAUDE_CODE_MAX_PLAN` if present; otherwise default to 300s (conservative).
+
+Tests: idle_writer writes correct timestamp, cache_guard blocks at 301s, cache_guard passes at 299s, cache_guard passes on second send (block-once behavior), no-op if idle_since missing.
+
+Commit after tests green.
+
+#### 34C. ENABLE_TOOL_SEARCH Advisory
+
+**Goal:** Surface the single highest-leverage env var find from the batch (45k→15-20k context).
+**Effort:** ~20 min add-on to context-monitor.
+
+Steps:
+1. In `context_monitor/pacer.py` session-start check: detect if `ENABLE_TOOL_SEARCH` env var is unset
+2. If unset: emit one-time advisory to stderr: `"Advisory: ENABLE_TOOL_SEARCH not set. Setting it can reduce /context from ~45k to ~15-20k tokens. Add to .zshrc: export ENABLE_TOOL_SEARCH=1"`
+3. Only emit once per session (gate on `~/.claude-context-health.json` `tool_search_advisory_shown` flag)
+
+Tests: advisory fires when unset, suppressed when set, suppressed after first show.
+Commit with 34B or separately.
+
+---
+
+### CHAT 35: /review Slash Command + Context Monitor Hardening (~75 min)
+
+#### 35A. Build /review Adversarial Code Review Command (BUILD #12)
+
+**Goal:** Ship a findings-only code review slash command that doesn't say LGTM when bugs exist.
+**Source:** OpenAI Codex review prompt (open source, verified). Community SKILL.md spec already written.
+
+Steps:
+1. Fetch Codex prompt: `WebFetch https://raw.githubusercontent.com/openai/codex/main/codex-rs/core/review_prompt.md`
+2. Create `.claude/commands/review.md` (SKILL.md pattern):
+   - YAML frontmatter: name, description, trigger (`/review`)
+   - Instructions: findings-only output, no compliments, no invented issues
+   - P0 (must fix before ship) / P1 (strong recommendation) / P2 (suggestion) / P3 (nitpick) tagging
+   - Forced verdict block: `VERDICT: Ship / Ship with changes (list P0s) / Rethink (list P0s+P1s)`
+3. Create `.claude/commands/references/review-output-format.md` — exact output structure
+4. Create `.claude/commands/references/review-criteria.md` — what counts as P0 vs P3, "only flag what author would definitely fix" principle
+5. Test: run `/review` on a recent `git diff HEAD~1` and confirm it finds something real
+
+Commit: "feat: /review adversarial code review command (Codex prompt adapted)"
+
+#### 35B. Context Monitor — 4 New Advisory Signals
+
+**Goal:** Context-monitor emits actionable advice before users hit the expensive scenarios.
+**Sources:** Findings #1 (cache bust), #2 (--resume), #6 (CLAUDE.md size, 1M context).
+
+All changes in `context_monitor/` module:
+
+1. **Cache ratio signal** — in `pacer.py` or `context_health.py`: after each turn, compute `cache_read_tokens / (cache_read_tokens + cache_creation_tokens)`. If ratio < 0.5 on a non-first turn, write `cache_bust_detected: true` to health file and emit: `"Warning: cache hit ratio {ratio:.0%} — something may be busting the cache (--resume, CLAUDE.md change, MCP schema injection)."`
+
+2. **--resume detection** — in session-start check: detect if CC was invoked with `--resume` flag (check `CLAUDE_CODE_RESUME` env var or equivalent). If set: emit `"Note: session started with --resume. Caching is disabled — every turn re-transmits full context."` before first tool call.
+
+3. **CLAUDE.md size warning** — in session-start check: `os.path.getsize(CLAUDE_MD_PATH)`. If >3072 bytes (3KB): emit `"Advisory: CLAUDE.md is {size}KB. It re-sends on every interaction. Consider progressive disclosure (file references, not @includes)."` One-time per session.
+
+4. **CLAUDE_CODE_DISABLE_1M_CONTEXT recommendation** — add to red/critical zone output: `"Tip: set CLAUDE_CODE_DISABLE_1M_CONTEXT=1 to force 200k context window (reduces cache expiry risk and per-token cost on uncached turns)."`
+
+Tests: one test per signal covering fire and no-fire conditions.
+Commit after all tests green.
+
+---
+
+### CHAT 36: MT-53 Collision Wire + Agent-Guard Blast Radius (~75 min)
+
+#### 36A. Wire collision_reader_crystal into main.py (MT-53)
+
+**Goal:** Crystal intro navigation uses real collision data.
+**Source:** SESSION_RESUME.md — exact files named.
+
+Steps:
+1. Read `crystal_intro_navigation.py` and `main.py` current state
+2. Replace `build_intro_navigator` with `build_intro_navigator_with_collision` in both files
+3. Smoke test the navigation path (offline mode if possible)
+4. Commit
+
+#### 36B. Blast Radius Import Graph for Agent-Guard
+
+**Goal:** Tag files by structural risk before multi-agent sessions touch them.
+**Source:** Finding #16 (codesight concept, build Python-native).
+
+Steps:
+1. Create `agent-guard/blast_radius.py`:
+   - Walk all `.py` files in project using `ast` (stdlib)
+   - Parse `import` and `from X import Y` statements
+   - Build forward dependency dict: `{file: [files_it_imports]}`
+   - Invert to reverse dependency dict: `{file: [files_that_import_it]}`
+   - `blast_radius(file)` = `len(reverse_deps[file])` (transitive optional as stretch)
+2. Add `blast_radius: int` field to file ownership manifest output in `agent_guard/ownership.py`
+3. Tag files with `blast_radius > 5` as `high_risk: true` in manifest
+4. Emit warning in PreToolUse when a multi-agent session targets a `high_risk` file
+
+Tests: known import graph produces correct blast_radius values, high_risk flag fires at threshold, zero-dep file = 0.
+Commit.
+
+---
+
+### CHAT 37: Memory System — mem0 Patterns (Frontier 1 Overhaul) (~90 min)
+
+**Note:** Assess scope at session start. If changes touch >4 subsystems: run gsd:plan-phase first (20 min). Otherwise gsd:quick.
+
+#### 37A. BMAD Party-Mode Read (research only, ~15 min)
+
+Fetch and read: `https://raw.githubusercontent.com/bmadcode/bmad-method/main/src/core-skills/bmad-party-mode/SKILL.md`
+Capture key patterns as comments in `agent-guard/hivemind_notes.md` (new file, scratch pad only).
+Do NOT build anything — this is a prerequisite read before any further MT-21 hivemind work.
+
+#### 37B. Memory System Semantic Deduplication
+
+**Goal:** Fix append-only memory rot — memories should update/delete when stale, not pile up.
+**Source:** Finding #15 (mem0 architecture). Do NOT adopt mem0 as a dependency — extract patterns only.
+
+Steps:
+1. Update `memory-system/schema.md`: add `user_id`, `agent_id`, `run_id` scoping fields to memory record schema. Get schema approved (mental review against existing records) before writing code.
+2. In `memory-system/capture_hook.py` (or equivalent write path): before inserting a new memory, retrieve semantically similar existing memories (string similarity or keyword overlap — no embeddings required for v1)
+3. Pass candidate memories + new memory to LLM with prompt: "Given these existing memories and this new memory, should we: (A) add new, (B) update existing [id], or (C) delete existing [id] as superseded? Reply with one word + optional id."
+4. Execute the decision: ADD inserts new record, UPDATE modifies existing, DELETE removes stale
+5. Three-tier scoping: all read/write operations filter by `user_id` + optional `agent_id`/`run_id`
+
+#### 37C. FAISS Local Vector Backend (stretch — only if time permits)
+
+- Install `faiss-cpu` (stdlib-adjacent, pure local)
+- Replace keyword-overlap similarity in 37B with FAISS cosine similarity using sentence embeddings
+- Fallback: if FAISS unavailable, revert to keyword overlap (graceful degradation)
+
+Commit after 37B tests green. 37C is optional — don't delay commit for it.
+
+---
+
+## DEFERRED FROM PHASE 8 (scheduled when phase 8 complete)
+
+- **SKILL.md wrapping of CCA modules** — Wrap CCA frontier modules as publishable Agent Skills (NEW F6 candidate). Strategic decision needed first: do we want to publish externally?
+- **ai-blind-spots taxonomy** → port into `/senior-review` + `/spec:design-review` (small, any session gap)
+- **MT-21 hivemind with BMAD patterns** — after Chat 37 BMAD read
+- **Loop detector PostToolUse enhancement** — count same-file read+edit, warn if >N without test pass (extends S238 loop_guard.py)
+- **Auto-generate PROJECT_INDEX.md** from AST (codesight pattern) — after blast_radius is working
+
+---
+
 ## DEFERRED (not scheduled, revisit when relevant)
 
 - **TurboQuant vector compression** — only when Frontier 1 hits storage scale problems

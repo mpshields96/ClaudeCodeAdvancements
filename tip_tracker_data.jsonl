@@ -106,3 +106,5 @@
 {"tip":"FlowDiagram auto-layout uses longest-path layering no external graphviz needed","source":"cca-desktop","session":"S258","timestamp":"2026-04-03T06:04:30.679495Z"}
 {"tip":"Python 3.9 X|Y union syntax affects many CCA files \u2014 batch fix needed before session work","source":"cca-desktop","session":"S260","timestamp":"2026-04-06T02:08:40.988431Z"}
 {"tip":"session_start.py hook clears health file on every new session open \u2014 three-layer defense now active","source":"cca-desktop","session":"S261","timestamp":"2026-04-06T02:52:19.473008Z"}
+{"tip":"Spawn cca-reviewer agents in parallel for URL batches \u2014 keeps comment trees out of main context","source":"cca-desktop","session":"S262","timestamp":"2026-04-06T03:19:08.430742Z"}
+{"tip":"Check Chrome MCP availability before reviewing r/ClaudeAI URLs \u2014 they block all automated fetch","source":"cca-desktop","session":"S262","timestamp":"2026-04-06T03:19:08.430742Z"}
