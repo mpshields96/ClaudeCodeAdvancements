@@ -1369,6 +1369,100 @@ Steps:
 
 ---
 
+### CHAT 38C: [TODO] Sniper Limits + 25 USD/Day Diversification Strategy (~75 min)
+
+**Priority: HIGHEST — Matthew directive S166 + standing prime directive.**
+**Goal:** (1) Set a STATISTICALLY-GROUNDED permanent sniper bet limit. (2) Design the 3-source
+diversified income portfolio that reaches 25 USD/day without relying on sniper volume.
+**Source data available:** REQ-080, polymarket-bot/.planning/TODAY_TASKS.md, cross-chat comms.
+**Deliver via:** CCA_TO_POLYBOT.md.
+
+Context:
+- Daily sniper WR is 99%+ on BTC but a single 9-10 USD loss erases many wins
+- S166 already implemented: ETH 10→2 USD cap, BTC 10→5 USD cap, max_daily_bets→20
+- BUT: the S166 numbers were reactive, not statistically derived
+- Need objective rules that survive scrutiny when Matthew challenges them with data
+
+#### Part A: Objective Sniper Limits (Kelly math)
+
+1. Pull current stats from REQ data in POLYBOT_TO_CCA.md:
+   - BTC daily_sniper: 734 bets, 95.8% WR, +41.66 net profit (pre-scale-up data)
+   - ETH daily_sniper: current WR and sample size from latest comms
+   - Bankroll: ~200 USD (REQ-077 confirmed)
+2. Run Kelly math to derive objective bet size:
+   - Fractional Kelly (0.25x) at 95.8% WR on binary bet (win=0.93 USD per dollar, lose=1.00):
+     `b = 0.93, p = 0.958, q = 0.042` → `Kelly = (0.93*0.958 - 0.042) / 0.93`
+   - 0.25x Kelly on 200 USD bankroll = objective BTC sniper size
+   - ETH at lower WR → compute separately
+3. Max bets/day limit — derive from expected daily loss risk:
+   - P(at least 1 loss in N bets) = 1 - (0.958)^N
+   - At N=20: P(loss) = 1-(0.958)^20 = ~57% — pick N where daily loss risk ≤ 20%
+   - N where P(loss) ≤ 20% → solve: 0.8 = (0.958)^N → N = ln(0.8)/ln(0.958) ≈ 5.2 → cap = 5 BTC sniper bets/day for <20% loss-day probability
+   - Document exact N for BTC and ETH separately
+4. Write `SNIPER_LIMITS_RATIONALE.md` in polymarket-bot/.planning/ (1 page):
+   - Kelly-derived bet sizes + max bets/day derivation with full math shown
+   - Hard rules: "BTC sniper: max N bets/day at X USD each. ETH: max M bets/day at Y USD each."
+   - Trigger for recalculation: after every 100 bets, recalculate from live WR
+
+#### Part B: 3-Source Diversified Income Map
+
+Goal: identify 3 income sources that can each contribute 5-8 USD/day independently.
+Do NOT include speculative sources — must have structural edge basis.
+
+Research each candidate and score:
+1. **sports_game (MLB/NHL/NBA)** — current Phase 1 active, edge confirmed by SPRT (lambda=+6.139).
+   - After Sharp Score Phase 1-2 wired: estimated +2-4 USD/day improvement
+   - Realistic daily contribution: 5-8 USD/day (current ~3-5 USD, improving)
+   - GAP: still needs efficiency_feed (Chat 38B) and injury data (Chat 39)
+
+2. **economics_sniper (KXCPI/KXFED/KXUNRATE)** — paper mode, KXCPI fires April 8.
+   - FLB basis: strong (academic anchoring bias in economic forecasts)
+   - Monthly events only → 2-4 bets/month per market × 3 markets = ~8-12 bets/month
+   - Realistic daily contribution: 0.5-1.5 USD/day averaged (low frequency, high per-bet value)
+   - GAP: not a daily source — need volume from elsewhere
+
+3. **soccer sniper (KXUCLGAME pre/in-play)** — paper mode, awaiting UCL games.
+   - UCL: 8 games/month April-May, then off until September
+   - EPL/Bundesliga: 10 matchdays remaining, ~30-50 games
+   - FLB basis: confirmed in soccer (same structural mispricing as MLB)
+   - Realistic daily contribution: 2-4 USD/day during active matchdays (not daily)
+   - GAP: seasonal, not 7-day-a-week
+
+4. **in-play sniper (90c+ trigger on sports events)** — currently paper for UCL.
+   - This is the highest-ROI extension of FLB: near-expiry prices are best calibrated
+   - Active daily across NBA/NHL/MLB (lots of games) once wired
+   - Realistic daily contribution: 3-6 USD/day if NBA/NHL in-play wired
+   - GAP: only UCL in-play wired currently; NBA/NHL games run daily and are untapped
+
+5. Identify the COMBINATION that achieves 25 USD/day:
+   - BTC sniper (capped): X USD/day
+   - sports_game (post-Phase 1+2): Y USD/day
+   - in-play sports sniper (new): Z USD/day
+   - Sum to 25 — fill the gap analysis
+
+#### Part C: In-Play Sports Sniper Proposal (the gap-filler)
+
+Based on Part B analysis, in-play sports sniper is likely the missing 5-8 USD/day.
+Design a concrete proposal:
+1. Trigger: NBA/NHL/MLB game in last 5 minutes with Kalshi price ≥90c on one side
+2. Same 90c FLB logic as UCL sniper (paper-validated S165)
+3. At 20+ NBA/NHL/MLB games per day → expect 5-15 trigger events/day
+4. Size: same as UCL in-play (conservative start, 2-3 USD)
+5. Write 1-page design note to CCA_TO_POLYBOT.md: exact trigger logic + expected yield math
+
+#### Delivery
+
+Write to CCA_TO_POLYBOT.md:
+- `SNIPER_LIMITS_RATIONALE.md` reference + hard rules summary (exact numbers)
+- 3-source income map with realistic daily contribution per source
+- In-play sports sniper proposal with wiring sketch
+- Gap-to-25-USD analysis: "we need X more USD/day — in-play sniper fills it"
+
+**STOP CONDITION:** Kelly math documented, income map complete, in-play sniper proposed,
+all delivered to CCA_TO_POLYBOT.md. Do NOT implement code this session — research + design only.
+
+---
+
 ### CHAT 39: Sports Math Port — Phase 2 (injury_data.py + SITUATIONAL component) (~60 min)
 
 **Goal:** Port injury leverage table into polymarket-bot and wire as SITUATIONAL component in Sharp Score.
