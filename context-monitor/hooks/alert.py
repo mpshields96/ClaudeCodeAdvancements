@@ -73,6 +73,12 @@ WARN_TEMPLATES = {
     ),
 }
 
+# Signal 4: 1M context tip — appended to red/critical output
+DISABLE_1M_TIP = (
+    "Tip: set CLAUDE_CODE_DISABLE_1M_CONTEXT=1 to force 200k context window "
+    "(reduces cache expiry risk and per-token cost on uncached turns)."
+)
+
 
 def load_state(state_path: Path) -> dict:
     """Load context health state from file. Returns empty dict on any failure."""
@@ -152,10 +158,15 @@ def build_message(
     else:
         autocompact_suffix = ""
 
-    return template.format(
+    msg = template.format(
         pct=pct, tool_name=tool_name, block_msg=block_msg,
         autocompact_suffix=autocompact_suffix,
     )
+
+    # Signal 4: append 1M context tip in red/critical zones
+    msg = f"{msg} {DISABLE_1M_TIP}"
+
+    return msg
 
 
 def _allow_response() -> dict:

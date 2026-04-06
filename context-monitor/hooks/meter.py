@@ -173,6 +173,88 @@ def estimate_tokens_from_transcript(transcript_path: Path) -> tuple[int, int]:
     return total_chars // 4, turn_count
 
 
+def estimate_cache_ratio_from_transcript(transcript_path: Path) -> tuple[int, int, int]:
+    """
+    Read transcript JSONL and return (cache_read, cache_creation, turns_with_usage)
+    from the LAST turn that has usage data.
+
+    Returns (0, 0, 0) if no usage data or file missing.
+    Used for cache bust detection: a low cache_read / (cache_read + cache_creation)
+    ratio on a non-first turn suggests the prompt cache was invalidated.
+    """
+    if not transcript_path.exists():
+        return 0, 0, 0
+
+    last_cache_read = 0
+    last_cache_create = 0
+    turns_with_usage = 0
+
+    try:
+        with open(transcript_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+
+                usage = entry.get("usage", {})
+                if not usage and entry.get("type") == "assistant":
+                    usage = entry.get("message", {}).get("usage", {})
+                if isinstance(usage, dict):
+                    cache_read = usage.get("cache_read_input_tokens", 0)
+                    cache_create = usage.get("cache_creation_input_tokens", 0)
+                    if cache_read > 0 or cache_create > 0:
+                        turns_with_usage += 1
+                        last_cache_read = cache_read
+                        last_cache_create = cache_create
+    except OSError:
+        return 0, 0, 0
+
+    return last_cache_read, last_cache_create, turns_with_usage
+
+
+def compute_cache_ratio(cache_read: int, cache_create: int) -> float | None:
+    """
+    Compute cache hit ratio: cache_read / (cache_read + cache_create).
+
+    Returns None if no cache tokens seen (ratio is meaningless with no data).
+    Returns 0.0–1.0 otherwise.
+    """
+    total = cache_read + cache_create
+    if total == 0:
+        return None
+    return cache_read / total
+
+
+def detect_cache_bust(
+    cache_read: int,
+    cache_create: int,
+    turns_with_usage: int,
+    threshold: float = 0.5,
+) -> tuple[bool, float | None]:
+    """
+    Detect a likely cache bust.
+
+    A cache bust is when the cache hit ratio drops below `threshold` on a turn
+    that is NOT the first usage-bearing turn (first turn always has low cache_read
+    because nothing has been cached yet).
+
+    Returns (bust_detected: bool, ratio: float | None).
+    """
+    if turns_with_usage <= 1:
+        # First turn always has low cache_read — not a bust
+        return False, compute_cache_ratio(cache_read, cache_create)
+
+    ratio = compute_cache_ratio(cache_read, cache_create)
+    if ratio is None:
+        return False, None
+
+    return ratio < threshold, ratio
+
+
 def get_autocompact_pct() -> int | None:
     """Read CLAUDE_AUTOCOMPACT_PCT_OVERRIDE from environment.
 
@@ -261,6 +343,9 @@ def write_state_file(
     window: int = DEFAULT_WINDOW,
     thresholds: dict | None = None,
     autocompact_pct: int | None = None,
+    cache_bust_detected: bool = False,
+    cache_ratio: float | None = None,
+    preserve_keys: dict | None = None,
 ) -> None:
     """
     Write context health state to a JSON file.
@@ -276,6 +361,8 @@ def write_state_file(
       session_id            - Claude Code session identifier
       autocompact_pct       - CLAUDE_AUTOCOMPACT_PCT_OVERRIDE value (null if not set)
       autocompact_proximity - percentage points until compaction fires (null if not set)
+      cache_bust_detected   - True if cache hit ratio dropped below threshold on non-first turn
+      cache_ratio           - last turn's cache_read / (cache_read + cache_creation), or null
       updated_at            - ISO timestamp of this write
     """
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -289,8 +376,14 @@ def write_state_file(
         "session_id": session_id,
         "autocompact_pct": autocompact_pct,
         "autocompact_proximity": compute_autocompact_proximity(pct, autocompact_pct),
+        "cache_bust_detected": cache_bust_detected,
+        "cache_ratio": cache_ratio,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    # Preserve caller-supplied keys (e.g. idle_since written by stop hook)
+    if preserve_keys:
+        for k, v in preserve_keys.items():
+            state.setdefault(k, v)
     # Atomic write via temp file
     tmp_path = path.with_suffix(".tmp")
     try:
@@ -322,6 +415,9 @@ def run_meter(
 
     autocompact_pct: value of CLAUDE_AUTOCOMPACT_PCT_OVERRIDE (or None).
     When set, the state file includes proximity to compaction threshold.
+
+    Also computes cache bust detection: if cache hit ratio drops below 0.5
+    on a non-first turn, writes cache_bust_detected=True to state file.
     """
     tokens, turns = estimate_tokens_from_transcript(transcript_path)
 
@@ -335,6 +431,27 @@ def run_meter(
         pct = compute_context_percentage(tokens, window)
         zone = classify_health_zone(pct, active_thresholds)
 
+    # Cache bust detection (Signal 1)
+    cache_read, cache_create, turns_with_usage = estimate_cache_ratio_from_transcript(transcript_path)
+    bust, ratio = detect_cache_bust(cache_read, cache_create, turns_with_usage)
+
+    # Read previous state to detect transitions (emit warning only on new bust)
+    prev_bust = False
+    if state_path.exists():
+        try:
+            prev_state = json.loads(state_path.read_text())
+            prev_bust = bool(prev_state.get("cache_bust_detected", False))
+            # Preserve any keys written by other hooks (e.g. idle_since from stop hook)
+            preserve = {k: v for k, v in prev_state.items()
+                        if k not in ("pct", "zone", "tokens", "turns", "window",
+                                     "thresholds", "session_id", "autocompact_pct",
+                                     "autocompact_proximity", "cache_bust_detected",
+                                     "cache_ratio", "updated_at")}
+        except (json.JSONDecodeError, OSError):
+            preserve = {}
+    else:
+        preserve = {}
+
     write_state_file(
         path=state_path,
         pct=pct,
@@ -345,9 +462,21 @@ def run_meter(
         window=window,
         thresholds=active_thresholds,
         autocompact_pct=autocompact_pct,
+        cache_bust_detected=bust,
+        cache_ratio=ratio,
+        preserve_keys=preserve,
     )
 
-    return {"pct": pct, "zone": zone, "tokens": tokens, "turns": turns}
+    newly_busted = bust and not prev_bust
+    return {
+        "pct": pct,
+        "zone": zone,
+        "tokens": tokens,
+        "turns": turns,
+        "cache_bust_detected": bust,
+        "cache_ratio": ratio,
+        "newly_busted": newly_busted,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -381,7 +510,7 @@ def main() -> None:
     window = int(os.environ.get("CLAUDE_CONTEXT_WINDOW", str(DEFAULT_WINDOW)))
     autocompact = get_autocompact_pct()
 
-    run_meter(
+    result = run_meter(
         session_id=session_id,
         transcript_path=transcript_path,
         state_path=state_path,
@@ -389,7 +518,17 @@ def main() -> None:
         autocompact_pct=autocompact,
     )
 
-    # PostToolUse hook — output nothing, exit 0 (non-blocking)
+    # Emit cache bust warning once when newly detected (Signal 1)
+    if result.get("newly_busted"):
+        ratio = result.get("cache_ratio")
+        ratio_pct = f"{ratio:.0%}" if ratio is not None else "unknown"
+        msg = (
+            f"Warning: cache hit ratio {ratio_pct} — something may be busting the cache "
+            f"(--resume, CLAUDE.md change, MCP schema injection)."
+        )
+        print(json.dumps({"suppressOutput": False, "message": msg}))
+
+    # PostToolUse hook — exit 0 (non-blocking)
     sys.exit(0)
 
 
