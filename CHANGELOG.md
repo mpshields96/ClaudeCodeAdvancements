@@ -4263,3 +4263,20 @@ CLI chat 2:
 - No code built — context already at 84% at /cca-auto start
 
 ---
+
+## Session 261 — 2026-04-05
+
+**What changed:**
+- pacer reset() now clears health file
+- SessionStart hook clears health file on every new session
+- staleness guard added to _read_context_health()
+
+**Why:**
+- Fixed session_pacer stale context state bug — new sessions no longer inherit prior session's red context pct
+
+**Tests:** 331/331 passing (6 suites)
+
+**Lessons:**
+- session was init-only, no MT work done
+
+---

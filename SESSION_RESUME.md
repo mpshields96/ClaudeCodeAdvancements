@@ -1,30 +1,21 @@
-# NEXT CHAT HANDOFF
+Run /cca-init. Last session S261 on 2026-04-05.
 
-## Start Here
-Run /cca-init.
-This file is the full next-chat handoff written by /cca-wrap, so a fresh chat should not need Matthew to restate context.
-Run /cca-auto after init only if you want autonomous continuation.
+COMPLETED: Fixed stale context health inheritance bug in session_pacer. New sessions were
+inheriting the previous session's 83.5% context pct, causing immediate WRAP NOW on startup.
+Three-layer fix: (1) SessionStart hook (session_start.py) clears health file to pct=0 on
+every new session open; (2) pacer.py reset() now also clears health file; (3) staleness
+guard in _read_context_health() rejects files >10min old with pct>20%.
+Commits: 9960d87 (pacer fix), 0530318 (SessionStart hook global).
 
-## Repo State
-- Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
-- Last wrapped session: S258 (2026-04-03)
-- Phase: Session 258 COMPLETE. MT-32 complete: diagram_generator.py (flow+sequence SVG) + visual.py unified façade (72 exports, 165 tests)
+NEXT CHAT: Reddit link dump session. Matthew has multiple Reddit URLs to feed for CCA review.
+Use /cca-review <url> on each, or spawn cca-reviewer agents in parallel for the batch.
+No /cca-init overhead needed — just read SESSION_RESUME.md and start reviewing.
 
-## Immediate Priorities
-1. MT-32 done — pick MT-53 Pokemon or MT-20 Senior Dev next
+THEN (after link dump): 
+- Fix Python 3.9 X|Y union type batch (blocking 81 suites — grep for "| None" in .py files,
+  replace with Optional[...] from typing)
+- Wire collision_reader_crystal into main.py (MT-53): replace build_intro_navigator with
+  build_intro_navigator_with_collision in crystal_intro_navigation.py and main.py
+- MT-20 Senior Dev gaps
 
-## Today's Tasks
-- No remaining [TODO] items found in TODAYS_TASKS.md.
-
-## Coordination
-- Claude->Codex: [2026-04-03 17:18 UTC] — KALSHI RELAY — CPI readiness command now available
-- Claude->Codex: [2026-04-03 17:34 UTC] — KALSHI RELAY — tonight board priorities locked
-- Codex->CCA: [2026-04-03 17:14 UTC] — KALSHI SUPPORT — CPI readiness audit helper added
-- Codex->CCA: [2026-04-03 17:34 UTC] — KALSHI SUPPORT — tonight board ranked for April 3
-- CCA->Kalshi: [2026-04-03 17:14 UTC] — REQ-068 DELIVERY — CPI readiness audit command added
-- CCA->Kalshi: [2026-04-03 17:34 UTC] — REQ-069 DELIVERY — tonight board and next market families
-- Check `python3 cca_comm.py inbox` if this session is part of CCA hivemind work.
-
-## Fresh-Chat Rule
-Typing only /cca-init in a new chat should be enough. Use this handoff as the authoritative continuation context after init.
-
+Tests: 6/10 smoke (4 failing = pre-existing Python 3.9 compat, not regressions). Git: clean after commit.

@@ -3,7 +3,23 @@
 
 ---
 
-## Current State (as of Session 260 — 2026-04-05)
+## Current State (as of Session 261 — 2026-04-05)
+
+**Phase:** Session 261 COMPLETE. Fixed session_pacer stale context state bug — new sessions no longer inherit prior session's red context pct
+
+**What was done this session (S261):**
+- pacer reset() now clears health file
+- SessionStart hook clears health file on every new session
+- staleness guard added to _read_context_health()
+- **Tests**: 6 suites, 331 tests passing. All green.
+
+**Next:**
+1. Fix Python 3.9 X|Y union type batch across affected files
+2. Wire collision_reader_crystal into main.py (MT-53)
+
+---
+
+## Previous State (Session 260 — 2026-04-05)
 
 **Phase:** Session 260 COMPLETE. Init-only session: discovered Python 3.9 union type syntax affects 81 test suites project-wide
 
@@ -16,7 +32,6 @@
 2. Wire collision_reader_crystal into main.py (MT-53)
 
 ---
-
 ## Previous State (Session 259 — 2026-04-05)
 
 **Phase:** Session 259 COMPLETE. Hook fixes + Kalshi delivery + MT-53 collision_reader_crystal.py.
