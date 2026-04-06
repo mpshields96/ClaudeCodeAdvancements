@@ -1161,7 +1161,7 @@ All sessions: solo unless noted. Off-peak preferred. Use gsd:quick throughout.
 |------|---------|--------|--------|
 | 34: Unblock + Cache Expiry Hook | — | TODO | Green tests, cache expiry hook live, ENABLE_TOOL_SEARCH advisory |
 | 35: /review Command + Context Monitor | — | TODO | /review slash command, 4 new advisory signals |
-| 36: MT-53 Wire + Blast Radius | — | TODO | collision_reader_crystal wired, blast_radius in agent-guard |
+| 36: MT-53 Wire + Blast Radius | S265 | DONE S265 | collision_reader_crystal wired, blast_radius in agent-guard |
 | 37: Memory Overhaul (mem0 patterns) | — | TODO | Semantic dedup, 3-tier scoping, FAISS backend |
 
 ---

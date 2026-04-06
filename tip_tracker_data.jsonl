@@ -110,3 +110,7 @@
 {"tip":"Check Chrome MCP availability before reviewing r/ClaudeAI URLs \u2014 they block all automated fetch","source":"cca-desktop","session":"S262","timestamp":"2026-04-06T03:19:08.430742Z"}
 {"tip":"from __future__ import annotations is the zero-cost Python 3.9 union syntax fix \u2014 one line, no imports, no type changes","source":"cca-desktop","session":"S263","timestamp":"2026-04-06T03:42:26.175527Z"}
 {"tip":"UserPromptSubmit hooks can emit non-blocking warnings via message field in JSON output","source":"cca-desktop","session":"S263","timestamp":"2026-04-06T03:42:26.175527Z"}
+{"tip":"For tests involving Path.home(), always create two separate temp dirs \u2014 one for home, one for cwd \u2014 to prevent real ~/.claude/ files leaking into tests","source":"cca-desktop","session":"S264","timestamp":"2026-04-06T04:15:29.187025Z"}
+{"tip":"preserve_keys pattern in write_state_file allows multiple hooks to share a state file without clobbering each other's fields","source":"cca-desktop","session":"S264","timestamp":"2026-04-06T04:15:29.187025Z"}
+{"tip":"blast_radius.py --file <path> gives single-file import depth check before editing shared utilities","source":"cca-desktop","session":"S265","timestamp":"2026-04-06T19:13:00.807912Z"}
+{"tip":"build_intro_navigator_with_collision uses real wall grids from pret/pokecrystal blk data, not all-FLOOR","source":"cca-desktop","session":"S265","timestamp":"2026-04-06T19:13:00.807912Z"}

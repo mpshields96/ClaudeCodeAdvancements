@@ -3,7 +3,34 @@
 
 ---
 
-## Current State (as of Session 264 — 2026-04-05)
+## Current State (as of Session 265 — 2026-04-06)
+
+**Phase:** Session 265 COMPLETE. Chat 36: wired collision_reader_crystal into main.py (MT-53) + blast_radius import graph for agent-guard with ownership.py integration
+
+**What was done this session (S265):**
+- 36A: main.py uses build_intro_navigator_with_collision for accurate wall routing
+- 36B: blast_radius.py (ast graph, 24 tests) + blast_radius column in ownership manifest
+- **Tests**: 374 suites, 12677 tests passing. All green.
+
+**Next:**
+1. Chat 37: check SESSION_RESUME for next tasks
+
+---
+
+## Previous State (Session 264 — 2026-04-05)
+
+**Phase:** Session 264 COMPLETE. Built /review adversarial code review slash command (BUILD #12) and context-monitor 4 new advisory signals (cache bust, --resume, CLAUDE.md size, 1M tip)
+
+**What was done this session (S264):**
+- /review slash command with P0-P3 tagging and VERDICT block (Codex prompt adapted)
+- context-monitor 4 advisory signals with 21 tests passing
+- **Tests**: 362 suites, 12653 tests passing. All green.
+
+**Next:**
+1. 35A/35B DONE — move to Chat 36: wire collision_reader_crystal into main.py (36A) + blast_radius import graph (36B)
+
+---
+## Previous State (Session 264 — 2026-04-05)
 
 **Phase:** Session 264 COMPLETE. Audited S263 recent work and fixed SessionStart next-task regression
 
@@ -19,7 +46,6 @@
 2. Chat 35: context-monitor 4 new advisory signals
 
 ---
-
 ## Previous State (Session 263 — 2026-04-05)
 
 **Phase:** Session 263 COMPLETE. Python 3.9 union fix (51 files), cache expiry UserPromptSubmit hook, ENABLE_TOOL_SEARCH advisory

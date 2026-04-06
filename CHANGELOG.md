@@ -4332,3 +4332,35 @@ CLI chat 2:
 - GSD node.js not available (minor ceremony skip)
 
 ---
+
+## Session 264 — 2026-04-05
+
+**What changed:**
+- /review slash command with P0-P3 tagging and VERDICT block (Codex prompt adapted)
+- context-monitor 4 advisory signals with 21 tests passing
+
+**Why:**
+- Built /review adversarial code review slash command (BUILD #12) and context-monitor 4 new advisory signals (cache bust, --resume, CLAUDE.md size, 1M tip)
+
+**Tests:** 12653/12653 passing (362 suites)
+
+**Lessons:**
+- Test mock required two-temp-dir pattern for Path.home() isolation
+
+---
+
+## Session 265 — 2026-04-06
+
+**What changed:**
+- 36A: main.py uses build_intro_navigator_with_collision for accurate wall routing
+- 36B: blast_radius.py (ast graph, 24 tests) + blast_radius column in ownership manifest
+
+**Why:**
+- Chat 36: wired collision_reader_crystal into main.py (MT-53) + blast_radius import graph for agent-guard with ownership.py integration
+
+**Tests:** 12677/12677 passing (374 suites)
+
+**Lessons:**
+- spec-guard warn-only noise on every edit (expected, no impact)
+
+---

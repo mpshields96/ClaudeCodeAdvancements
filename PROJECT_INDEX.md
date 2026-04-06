@@ -576,3 +576,8 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 - `COMPACTION_ANALYSIS.md` (S245)
 - `CLAUDE_MD_TOKEN_AUDIT.md` (S245)
 - `CC_SOURCE_DERIVATIVES.md` (S245)
+
+
+### Added in S265
+- `agent-guard/blast_radius.py` (S265)
+- `agent-guard/tests/test_blast_radius.py` (S265)
