@@ -27,6 +27,17 @@ import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+try:
+    from blast_radius import (
+        build_import_graph,
+        build_reverse_deps as _build_reverse_deps,
+        blast_radius as _blast_radius,
+        high_risk_files,
+    )
+    _BLAST_RADIUS_AVAILABLE = True
+except ImportError:
+    _BLAST_RADIUS_AVAILABLE = False
+
 
 # ---------------------------------------------------------------------------
 # Git data extraction (pure output — no side effects beyond subprocess)
@@ -195,6 +206,7 @@ def build_report(
     conflict_risks: list[str],
     cwd: str,
     conflicts_only: bool = False,
+    reverse_deps: dict | None = None,
 ) -> str:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines = [
@@ -215,15 +227,28 @@ def build_report(
         lines.append("## Conflict Risk Files (modified in 2+ recent commits)")
         lines.append("These files were touched by multiple sessions. Coordinate before editing.")
         lines.append("")
-        lines.append("| File | Sessions | Last Modified |")
-        lines.append("|------|----------|---------------|")
-        for f in sorted(conflict_risks):
-            commits = ownership[f]
-            sessions = ", ".join(
-                sorted({extract_session_label(c["subject"]) for c in commits})
-            )
-            last = format_date_short(commits[0]["date_iso"])
-            lines.append(f"| `{f}` | {sessions} | {last} |")
+        if reverse_deps is not None:
+            lines.append("| File | Sessions | Last Modified | Blast Radius |")
+            lines.append("|------|----------|---------------|-------------|")
+            for f in sorted(conflict_risks):
+                commits = ownership[f]
+                sessions = ", ".join(
+                    sorted({extract_session_label(c["subject"]) for c in commits})
+                )
+                last = format_date_short(commits[0]["date_iso"])
+                br = _blast_radius(f, reverse_deps)
+                flag = " !!" if br > 5 else ""
+                lines.append(f"| `{f}` | {sessions} | {last} | {br}{flag} |")
+        else:
+            lines.append("| File | Sessions | Last Modified |")
+            lines.append("|------|----------|---------------|")
+            for f in sorted(conflict_risks):
+                commits = ownership[f]
+                sessions = ", ".join(
+                    sorted({extract_session_label(c["subject"]) for c in commits})
+                )
+                last = format_date_short(commits[0]["date_iso"])
+                lines.append(f"| `{f}` | {sessions} | {last} |")
         lines.append("")
 
     if conflicts_only:
@@ -245,6 +270,19 @@ def build_report(
     else:
         lines.append("_No file activity found in the lookback window._")
         lines.append("")
+
+    # Blast radius section
+    if reverse_deps is not None:
+        risky = high_risk_files(reverse_deps)
+        if risky:
+            lines.append("## High Blast Radius Files (>5 importers)")
+            lines.append("Editing these files affects many dependents. Review carefully.")
+            lines.append("")
+            lines.append("| File | Blast Radius |")
+            lines.append("|------|-------------|")
+            for f, br in risky:
+                lines.append(f"| `{f}` | {br} |")
+            lines.append("")
 
     if not uncommitted and not conflict_risks:
         lines.append("_No uncommitted changes. No conflict risks detected._")
@@ -302,12 +340,21 @@ def main() -> int:
     uncommitted = get_uncommitted_files(cwd)
     conflict_risks = find_conflict_risks(ownership)
 
+    reverse_deps = None
+    if _BLAST_RADIUS_AVAILABLE:
+        try:
+            forward = build_import_graph(cwd)
+            reverse_deps = _build_reverse_deps(forward)
+        except Exception:
+            pass  # blast radius is optional — never break the manifest
+
     report = build_report(
         ownership=ownership,
         uncommitted=uncommitted,
         conflict_risks=conflict_risks,
         cwd=cwd,
         conflicts_only=args.conflicts_only,
+        reverse_deps=reverse_deps,
     )
 
     if args.output:
