@@ -121,6 +121,16 @@ def main() -> None:
     if not smoke_ok:
         status_lines.insert(0, "WARNING: Smoke tests failing — run /cca-init for details")
 
+    # ENABLE_TOOL_SEARCH advisory — warn once per session if unset
+    # When unset, CC fetches deferred tool schemas every turn (~14k tokens overhead).
+    # Set ENABLE_TOOL_SEARCH=false in env config to disable and reclaim those tokens.
+    tool_search_val = os.environ.get("ENABLE_TOOL_SEARCH")
+    if tool_search_val is None:
+        status_lines.append(
+            "ADVISORY: ENABLE_TOOL_SEARCH not set — add \"ENABLE_TOOL_SEARCH\": \"false\" "
+            "to env config to save ~14k tokens/turn and prevent cache invalidation"
+        )
+
     # Output as user-visible message
     output = {
         "suppressOutput": False,
