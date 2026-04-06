@@ -1212,9 +1212,9 @@ Commit with 34B or separately.
 
 ---
 
-### CHAT 35: /review Slash Command + Context Monitor Hardening (~75 min)
+### CHAT 35: /review Slash Command + Context Monitor Hardening (~75 min) [DONE S264]
 
-#### 35A. Build /review Adversarial Code Review Command (BUILD #12)
+#### 35A. Build /review Adversarial Code Review Command (BUILD #12) [DONE S264]
 
 **Goal:** Ship a findings-only code review slash command that doesn't say LGTM when bugs exist.
 **Source:** OpenAI Codex review prompt (open source, verified). Community SKILL.md spec already written.
@@ -1232,7 +1232,7 @@ Steps:
 
 Commit: "feat: /review adversarial code review command (Codex prompt adapted)"
 
-#### 35B. Context Monitor — 4 New Advisory Signals
+#### 35B. Context Monitor — 4 New Advisory Signals [DONE S264]
 
 **Goal:** Context-monitor emits actionable advice before users hit the expensive scenarios.
 **Sources:** Findings #1 (cache bust), #2 (--resume), #6 (CLAUDE.md size, 1M context).
