@@ -34,6 +34,7 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
+import re
 
 CCA_ROOT = Path(__file__).resolve().parent.parent
 
@@ -73,8 +74,59 @@ def run_smoke_test() -> tuple[bool, str]:
 def get_top_task() -> str:
     """Get the top task from TODAYS_TASKS.md."""
     tasks_file = CCA_ROOT / "TODAYS_TASKS.md"
+    if tasks_file.exists():
+        try:
+            content = tasks_file.read_text()
+            for line in content.split("\n"):
+                if "[TODO]" in line:
+                    # Strip markdown list prefix and brackets
+                    task = line.strip().lstrip("-").lstrip("*").strip()
+                    # Remove [TODO] prefix
+                    task = task.replace("[TODO]", "").strip()
+                    return task[:80]
+        except Exception:
+            pass
+
+    session_state_file = CCA_ROOT / "SESSION_STATE.md"
+    if session_state_file.exists():
+        try:
+            content = session_state_file.read_text()
+            in_current_state = False
+            in_next_block = False
+
+            for raw_line in content.split("\n"):
+                line = raw_line.strip()
+
+                if line.startswith("## ") and "Current State" in line:
+                    in_current_state = True
+                    in_next_block = False
+                    continue
+
+                if in_current_state and line.startswith("## ") and "Current State" not in line:
+                    break
+
+                if not in_current_state:
+                    continue
+
+                if line == "**Next:**":
+                    in_next_block = True
+                    continue
+
+                if not in_next_block or not line:
+                    continue
+
+                if line.startswith("**") or line.startswith("---"):
+                    break
+
+                task = re.sub(r"^\d+\.\s*", "", line).strip()
+                if task:
+                    return task[:80]
+        except Exception:
+            pass
+
     if not tasks_file.exists():
         return "No TODAYS_TASKS.md"
+
     try:
         content = tasks_file.read_text()
         for line in content.split("\n"):

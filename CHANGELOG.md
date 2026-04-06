@@ -3,6 +3,24 @@
 
 ---
 
+## Session 264 — 2026-04-05
+
+**What changed:**
+- `hooks/session_start_hook.py` — fixed SessionStart next-task extraction to fall back to `SESSION_STATE.md` when `TODAYS_TASKS.md` has no active `[TODO]` markers
+- `hooks/tests/test_session_start_hook.py` — added 4 tests for Session State fallback parsing and `ENABLE_TOOL_SEARCH` advisory coverage
+
+**Why:**
+- S263 added SessionStart pre-check output, but the current `TODAYS_TASKS.md` format no longer exposes active `[TODO]` entries
+- Result: every new session falsely reported `Next: All tasks done — check MASTER_TASKS`, which hid the actual current work
+- SessionStart now surfaces the real current `Next` item from `SESSION_STATE.md`, which matches how CCA tracks active work today
+
+**Tests:** `python3 hooks/tests/test_session_start_hook.py` (12 tests), `python3 parallel_test_runner.py --quick --workers 8` (10/10 suites, 543 tests)
+
+**Lessons:**
+- Hook parsers cannot assume markdown formats stay stable; fall back to the authoritative state file when task docs become narrative
+
+---
+
 ## Session 197 — 2026-03-26
 
 **What changed:**
