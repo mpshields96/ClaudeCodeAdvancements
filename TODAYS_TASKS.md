@@ -1369,6 +1369,171 @@ Steps:
 
 ---
 
+### CHAT 39: Sports Math Port — Phase 2 (injury_data.py + SITUATIONAL component) (~60 min)
+
+**Goal:** Port injury leverage table into polymarket-bot and wire as SITUATIONAL component in Sharp Score.
+**Source:** `agentic-rd-sandbox/core/injury_data.py` (380 LOC). Matthew directive: steal ANYTHING beneficial.
+**Deliver via:** CCA_TO_POLYBOT.md.
+
+Steps:
+1. Read `/Users/matthewshields/Projects/agentic-rd-sandbox/core/injury_data.py` in full:
+   Extract: `POSITIONAL_LEVERAGE` dict (NBA/NFL/MLB/NHL positions → point-spread impact),
+   `get_injury_leverage(sport, position, status) -> (float, bool)`, `InjuryReport` dataclass,
+   `flag_injury_impact(player_name, position, sport, status) -> InjuryReport`.
+2. Append to `/Users/matthewshields/Projects/polymarket-bot/sports_math.py` (created in 38B):
+   - Full `POSITIONAL_LEVERAGE` static dict
+   - `get_injury_leverage()` and `flag_injury_impact()` functions
+   - `situational_score_from_injuries(injury_reports: list[InjuryReport]) -> float`
+     Returns 0-15 pts (cap: 15) to feed SITUATIONAL component of Sharp Score
+   - Update `sharp_score_for_bet()` to accept optional `injury_reports` list
+3. Update `tests/test_sports_math.py`:
+   - Test: leverage lookup by sport + position
+   - Test: flagging fires for QB/PG/SP (star positions)
+   - Test: no-flag for backup positions
+   - Test: situational_score caps at 15
+   - Total: 10+ new tests
+4. Write delivery to CCA_TO_POLYBOT.md:
+   - "injury_data ported to sports_math.py. Wire: pass injury_reports to sharp_score_for_bet()"
+   - Include wiring example (2-3 lines in sports_game_loop.py)
+5. Commit.
+
+**STOP CONDITION:** injury functions in sports_math.py, tests pass, delivery written.
+
+---
+
+### CHAT 40: Sports Math Port — Phase 3 (nba_pdo.py + nhl_data.py) (~75 min)
+
+**Goal:** Port NBA PDO regression signal and NHL goalie starter detection — two high-value kill switches.
+**Source:** `agentic-rd-sandbox/core/nba_pdo.py` (483 LOC) + `agentic-rd-sandbox/core/nhl_data.py` (392 LOC).
+**Deliver via:** CCA_TO_POLYBOT.md.
+
+Steps:
+1. Read `agentic-rd-sandbox/core/nba_pdo.py` in full:
+   Extract: `_PDO_SNAPSHOT` static dict (all 30 NBA teams → pdo_score),
+   `get_pdo_signal(team: str) -> str` ("regression", "recovery", "neutral"),
+   `pdo_situational_pts(home_team, away_team) -> float` (0-10 pts for SITUATIONAL).
+   NOTE: nba_api dependency → port static snapshot only (no live fetching). Same pattern as efficiency_feed.
+2. Read `agentic-rd-sandbox/core/nhl_data.py` in full:
+   Extract: `get_nhl_starters_for_game(game_id: str) -> Optional[dict]` logic and goalie cache pattern.
+   Adapt: wire into Kalshi's NHL game lookup (sports_game_loop already has game_id context).
+   Create `nhl_kill_switch_signal(home_goalie_starter: bool, away_goalie_starter: bool) -> dict`
+   returning `{skip: bool, reason: str}` — skip bet if backup goalie detected on favored team.
+3. Append both to `/Users/matthewshields/Projects/polymarket-bot/sports_math.py`:
+   - `_PDO_SNAPSHOT` dict + `pdo_situational_pts()`
+   - `nhl_kill_switch_signal()` 
+   - Update `sharp_score_for_bet()` to accept `pdo_home_team`, `pdo_away_team` kwargs for NBA
+4. Tests: pdo regression/recovery/neutral cases, neutral range (98-102), goalie kill switch fires,
+   kill switch passes on both confirmed starters. 12+ new tests.
+5. Write delivery:
+   - "PDO + NHL goalie kill switch ported. PDO wires to NBA sharp_score. NHL kill switch replaces
+     manual goalie check in sports_game_loop."
+   - Include wiring sketch (4-5 lines)
+6. Commit.
+
+**STOP CONDITION:** PDO + NHL goalie in sports_math.py, tests pass, delivery written.
+
+---
+
+### CHAT 41: Sports Math Port — Phase 4 (analytics.py + calibration.py) (~60 min)
+
+**Goal:** Port bet performance analytics and Sharp Score calibration pipeline — closes the self-learning loop.
+**Source:** `agentic-rd-sandbox/core/analytics.py` (457 LOC) + `agentic-rd-sandbox/core/calibration.py` (401 LOC).
+**Deliver via:** CCA_TO_POLYBOT.md.
+
+Steps:
+1. Read `agentic-rd-sandbox/core/analytics.py` in full:
+   Extract: `compute_sharp_roi_correlation()`, `compute_equity_curve()`, `compute_rolling_metrics()`,
+   `compute_book_breakdown()`, `get_bet_counts()` — all accept `list[dict]`, source-agnostic.
+   These work directly on Kalshi's bet records with zero adaptation.
+2. Read `agentic-rd-sandbox/core/calibration.py` in full:
+   Extract: `get_calibration_report()`, `CalibrationReport` dataclass, Brier score + bin calibration logic.
+   Adapt: calibration reads from polymarket-bot DB path (not sandbox DB path).
+3. Create `/Users/matthewshields/Projects/polymarket-bot/sports_analytics.py`:
+   - All analytics functions from analytics.py (no internal imports)
+   - `CalibrationReport` dataclass + `get_calibration_report(db_path)`
+   - `generate_sports_performance_report(bets: list[dict]) -> str` — text summary
+     combining sharp_roi_correlation + rolling_metrics + calibration in one call
+4. Tests: `tests/test_sports_analytics.py`
+   - Test: equity curve monotonicity with all-win sequence
+   - Test: ROI correlation returns buckets dict
+   - Test: calibration returns inactive when n<10
+   - Test: rolling metrics with 30-day window
+   - 12+ tests
+5. Write delivery to CCA_TO_POLYBOT.md:
+   - "sports_analytics.py delivered. Wire generate_sports_performance_report() into /polybot-wrap
+     output to get Sharp Score calibration + ROI breakdown every session."
+6. Commit.
+
+**STOP CONDITION:** sports_analytics.py exists, tests pass, delivery written.
+
+---
+
+### CHAT 42: Sports Math Port — Phase 5 (CLV tracking + originator_engine Monte Carlo) (~75 min)
+
+**Goal:** Port CLV tracking and Monte Carlo simulation — gives Kalshi bot bet quality measurement + probability confidence.
+**Source:** `agentic-rd-sandbox/core/clv_tracker.py` (286 LOC) + `agentic-rd-sandbox/core/originator_engine.py` (335 LOC).
+**Deliver via:** CCA_TO_POLYBOT.md.
+
+Steps:
+1. Read `agentic-rd-sandbox/core/clv_tracker.py` in full:
+   Extract: `log_clv_snapshot()`, `read_clv_log()`, `clv_summary()` — CSV persistence layer.
+   CLV math already in math_engine.py: `calculate_clv(open_price, close_price, bet_price)` and
+   `clv_grade(clv)`. Port both the math functions and the persistence layer.
+2. Read `agentic-rd-sandbox/core/originator_engine.py` in full:
+   Extract: `run_trinity_simulation(mean, sport, line) -> TrinityResult`, `efficiency_gap_to_margin()`.
+   Trinity weighting: ceiling(20%) + floor(20%) + median(60%) → cover_probability.
+   Adapt for Kalshi binary markets: use `cover_probability` as a second opinion on edge_pct.
+   Add `binary_confidence_from_simulation(edge_pct, home_team, away_team, sport) -> float`
+   that runs 1000 sims and returns P(our edge estimate is correct) as a confidence multiplier.
+3. Create `/Users/matthewshields/Projects/polymarket-bot/sports_clv.py`:
+   - CLV math functions + persistence (CSV at data/kalshi_clv_log.csv)
+   - `log_clv_snapshot()` wired for Kalshi: accepts kalshi event_id, side, prices
+4. Append to `sports_math.py`:
+   - `binary_confidence_from_simulation()` using Trinity sim approach
+   - Update `sharp_score_for_bet()` to optionally boost score when sim confidence > 0.65
+5. Tests: `tests/test_sports_clv.py` — CLV log round-trip, CLV grade thresholds, summary aggregation.
+   `tests/test_sports_math.py` additions: sim confidence returns float in [0,1], score boost fires. 10+ tests.
+6. Write delivery:
+   - "CLV tracking + Monte Carlo confidence ported. Wire sports_clv.log_clv_snapshot() after
+     each bet settles. Wire binary_confidence_from_simulation() as optional sharp_score boost."
+7. Commit.
+
+**STOP CONDITION:** sports_clv.py + sim confidence in sports_math.py, tests pass, delivery written.
+
+---
+
+### CHAT 43: Sports Math Port — Phase 6 (tennis_data.py + full integration audit) (~60 min)
+
+**Goal:** Port tennis surface/player data, then run a full integration audit across all Phase 1-5 ports.
+**Source:** `agentic-rd-sandbox/core/tennis_data.py` (583 LOC).
+**Deliver via:** CCA_TO_POLYBOT.md.
+
+Steps:
+1. Read `agentic-rd-sandbox/core/tennis_data.py` in full:
+   Extract: `_SURFACE_MAP` tournament-to-surface dict, `normalize_player_name()`,
+   `get_player_surface_rating(player, surface) -> float`, `tennis_surface_kill_switch(sport_key, home_player, away_player) -> dict`.
+   Surface kill switch: fire if top-10 clay specialist on clay vs. hard-court specialist.
+2. Append to `sports_math.py`:
+   - `_TENNIS_SURFACE_MAP` dict + `get_player_surface_rating()`
+   - `tennis_surface_kill_switch()` — returns `{skip: bool, reason: str, surface: str}`
+   - Wire into `sharp_score_for_bet()` as a pre-filter for tennis sport_keys
+3. Integration audit across ALL ported modules:
+   - Verify imports: sports_math.py, sports_analytics.py, sports_clv.py are all stdlib-only
+   - Run full test suite: all sports_* tests must pass
+   - Check for function signature conflicts between Phase 1-5 additions
+   - Verify `sharp_score_for_bet()` signature handles all new kwargs correctly
+4. Write final delivery to CCA_TO_POLYBOT.md:
+   - "Sports math stack COMPLETE (Phase 1-6). Summary: sports_math.py (Sharp Score + efficiency +
+     injury + PDO + NHL goalie + sim confidence + tennis), sports_analytics.py (calibration + ROI),
+     sports_clv.py (CLV tracking). Full wiring guide attached."
+   - Include complete wiring guide: which functions to call at which point in sports_game_loop.py
+5. Update TODAYS_TASKS.md: mark all CHAT 38B-43 tasks as DONE.
+6. Commit.
+
+**STOP CONDITION:** Tennis ported, integration audit passes, complete wiring guide delivered.
+
+---
+
 ## DEFERRED FROM PHASE 8 (scheduled when phase 8 complete)
 
 - **SKILL.md wrapping of CCA modules** — Wrap CCA frontier modules as publishable Agent Skills (NEW F6 candidate). Strategic decision needed first: do we want to publish externally?
