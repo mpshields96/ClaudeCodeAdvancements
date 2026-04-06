@@ -114,3 +114,5 @@
 {"tip":"preserve_keys pattern in write_state_file allows multiple hooks to share a state file without clobbering each other's fields","source":"cca-desktop","session":"S264","timestamp":"2026-04-06T04:15:29.187025Z"}
 {"tip":"blast_radius.py --file <path> gives single-file import depth check before editing shared utilities","source":"cca-desktop","session":"S265","timestamp":"2026-04-06T19:13:00.807912Z"}
 {"tip":"build_intro_navigator_with_collision uses real wall grids from pret/pokecrystal blk data, not all-FLOOR","source":"cca-desktop","session":"S265","timestamp":"2026-04-06T19:13:00.807912Z"}
+{"tip":"When tests fail due to real filesystem state leaking (pause files, env vars), add explicit temp-path params to setUp","source":"cca-desktop","session":"S267","timestamp":"2026-04-06T21:46:57.059033Z"}
+{"tip":"agentic-rd-sandbox has production Sharp Score math \u2014 steal it, don't rewrite","source":"cca-desktop","session":"S267","timestamp":"2026-04-06T21:46:57.059033Z"}

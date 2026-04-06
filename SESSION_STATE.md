@@ -3,7 +3,24 @@
 
 ---
 
-## Current State (as of Session 266 — 2026-04-06)
+## Current State (as of Session 267 — 2026-04-06)
+
+**Phase:** Session 267 COMPLETE. S267: REQ-075 Kalshi sports research delivered + BMAD agent manifest + sports math upgrade plan (S267 directive)
+
+**What was done this session (S267):**
+- REQ-075 MLB academic basis confirmed + UCL Arsenal FLB analysis complete
+- Sports betting 3-phase upgrade plan written (CCA_TO_POLYBOT + CLAUDE_TO_CODEX + TODAYS_TASKS + memory)
+- Fixed autoloop test isolation bug (pause file leaking into 4 tests)
+- Fixed 2 memory-system test string-match assertions
+- **Tests**: 364 suites, 12699 tests passing. All green.
+
+**Next:**
+1. Chat 38A: finish BMAD patterns (manifest CLI + 400-word cap + reactive pair)
+2. Chat 38B: port sports_math.py from agentic-rd-sandbox (Sharp Score + efficiency feed)
+
+---
+
+## Previous State (Session 266 — 2026-04-06)
 
 **Phase:** Session 266 COMPLETE. Chat 37: BMAD party-mode research + Memory System semantic dedup overhaul (Frontier 1).
 
@@ -18,7 +35,6 @@
    - Candidates: MT-53 mGBA emulator boot, MT-21 hivemind with BMAD patterns, auto-generate PROJECT_INDEX from AST (blast_radius unblocked)
 
 ---
-
 ## Previous State (Session 264 — 2026-04-05)
 
 **Phase:** Session 264 COMPLETE. Built /review adversarial code review slash command (BUILD #12) and context-monitor 4 new advisory signals (cache bust, --resume, CLAUDE.md size, 1M tip)

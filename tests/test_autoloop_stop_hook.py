@@ -27,6 +27,8 @@ class TestShouldTrigger(unittest.TestCase):
         self.resume_file = os.path.join(self.tmpdir, "SESSION_RESUME.md")
         self.breadcrumb = os.path.join(self.tmpdir, "autoloop-fired")
         self.audit_log = os.path.join(self.tmpdir, "trigger.jsonl")
+        # Explicit non-existent pause path — prevents real ~/.cca-autoloop-paused leaking in
+        self.pause_path = os.path.join(self.tmpdir, "no-pause")
 
     def tearDown(self):
         import shutil
@@ -54,6 +56,7 @@ class TestShouldTrigger(unittest.TestCase):
             breadcrumb_path=self.breadcrumb,
             autoloop_enabled=True,
             max_resume_age_seconds=600,
+            pause_path=self.pause_path,
         )
         self.assertTrue(result)
 
@@ -123,6 +126,7 @@ class TestShouldTrigger(unittest.TestCase):
             autoloop_enabled=True,
             max_resume_age_seconds=600,
             breadcrumb_max_age_seconds=600,  # 10 min max
+            pause_path=self.pause_path,
         )
         self.assertTrue(result)
 
@@ -143,6 +147,7 @@ class TestShouldTrigger(unittest.TestCase):
             autoloop_enabled=True,
             max_resume_age_seconds=600,
             breadcrumb_max_age_seconds=600,
+            pause_path=self.pause_path,
         )
         self.assertTrue(result)
 
@@ -169,6 +174,7 @@ class TestShouldTrigger(unittest.TestCase):
             breadcrumb_path=self.breadcrumb,
             autoloop_enabled=True,
             max_resume_age_seconds=600,
+            pause_path=self.pause_path,
         )
         self.assertTrue(result)
 

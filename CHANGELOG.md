@@ -4364,3 +4364,22 @@ CLI chat 2:
 - spec-guard warn-only noise on every edit (expected, no impact)
 
 ---
+
+## Session 267 — 2026-04-06
+
+**What changed:**
+- REQ-075 MLB academic basis confirmed + UCL Arsenal FLB analysis complete
+- Sports betting 3-phase upgrade plan written (CCA_TO_POLYBOT + CLAUDE_TO_CODEX + TODAYS_TASKS + memory)
+- Fixed autoloop test isolation bug (pause file leaking into 4 tests)
+- Fixed 2 memory-system test string-match assertions
+
+**Why:**
+- S267: REQ-075 Kalshi sports research delivered + BMAD agent manifest + sports math upgrade plan (S267 directive)
+
+**Tests:** 12699/12699 passing (364 suites)
+
+**Lessons:**
+- MT-21 BMAD only partial (38A has 2 remaining patterns)
+- Autoloop test bug was pre-existing but still cost diagnosis time
+
+---
