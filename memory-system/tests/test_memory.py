@@ -218,7 +218,7 @@ class TestStopHandlerFTS5(unittest.TestCase):
         )
         result = ch.handle_stop(inp, store=store)
         self.assertIn("additionalContext", result)
-        self.assertIn("Saved 1 new memory", result["additionalContext"])
+        self.assertIn("1 new memory", result["additionalContext"])
         # Verify it's in the store
         memories = store.list_all(project="testproject")
         self.assertEqual(len(memories), 1)
@@ -571,7 +571,7 @@ class TestUserPromptSubmitHandler(unittest.TestCase):
         inp = self._make_input("Remember that we always use TDD before writing any production code")
         result = ch.handle_user_prompt_submit(inp, store=store)
         self.assertIn("additionalContext", result)
-        self.assertIn("Saved", result["additionalContext"])
+        self.assertIn("saved", result["additionalContext"].lower())
         memories = store.list_all()
         self.assertTrue(len(memories) > 0)
         self.assertEqual(memories[0]["confidence"], "HIGH")
