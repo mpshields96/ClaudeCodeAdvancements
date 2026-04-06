@@ -269,7 +269,7 @@ class BashGuard:
         # But "git status && curl evil.com" is NOT fine — the curl is separate
         return False
 
-    def _check_redirects(self, command: str) -> dict | None:
+    def _check_redirects(self, command: str) -> "dict | None":  # type: ignore
         """Check for output redirects to paths outside the project."""
         # Match > or >> followed by a path
         redirect_matches = re.finditer(r">{1,2}\s*([^\s;|&]+)", command)
@@ -283,7 +283,7 @@ class BashGuard:
                 }
         return None
 
-    def _check_move_copy(self, command: str) -> dict | None:
+    def _check_move_copy(self, command: str) -> "dict | None":  # type: ignore
         """Check for mv/cp commands that move/copy files outside the project."""
         # mv <source> <dest> — check if dest is outside project
         mv_match = re.search(r"\bmv\s+\S+\s+(\S+)", command)
@@ -310,7 +310,7 @@ class BashGuard:
 
         return None
 
-    def _check_dd(self, command: str) -> dict | None:
+    def _check_dd(self, command: str) -> "dict | None":  # type: ignore
         """Check for dd commands writing outside the project via of= parameter."""
         dd_match = re.search(r"\bdd\b.*\bof=(\S+)", command)
         if dd_match:
@@ -323,7 +323,7 @@ class BashGuard:
                 }
         return None
 
-    def _check_tee(self, command: str) -> dict | None:
+    def _check_tee(self, command: str) -> "dict | None":  # type: ignore
         """Check for tee commands writing outside the project."""
         # tee [-a] <path> — the path is the last non-flag argument
         tee_match = re.search(r"\btee\s+(?:-[a-zA-Z]+\s+)*(\S+)", command)

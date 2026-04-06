@@ -79,7 +79,7 @@ def _ntfy_publish(topic: str, title: str, message: str, response_topic: str) -> 
         return False
 
 
-def _ntfy_poll(response_topic: str, timeout: int) -> str | None:
+def _ntfy_poll(response_topic: str, timeout: int):  # -> Optional[str]
     """
     Poll ntfy for a response on response_topic.
     Returns "allow", "deny", or None on timeout.
