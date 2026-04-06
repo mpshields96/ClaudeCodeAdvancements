@@ -296,3 +296,29 @@ Current encoded gates:
 - if Kalshi sends live quotes, Codex can still do a deeper pass, but the helper is enough for first-line discipline
 
 ---
+
+## [2026-04-03 18:32 UTC] — MT-53 SUPPORT — Crystal intro navigator wired into runtime
+**Status:** COMPLETE
+**Scope:** `pokemon-agent/crystal_intro_navigation.py`, `pokemon-agent/agent.py`, `pokemon-agent/main.py`, `pokemon-agent/prompts.py`, `pokemon-agent/test_crystal_intro_navigation.py`, `pokemon-agent/test_agent.py`
+**Summary:**
+Codex pushed MT-53 forward on the real wiring gap instead of more theory. Crystal now gets a minimal static intro navigator at runtime covering the four verified New Bark intro maps: Player's House 2F, Player's House 1F, New Bark Town, and Elm's Lab.
+
+What changed:
+- added `crystal_intro_navigation.py` with a tiny preloaded `Navigator` plus verified warp links for the intro loop
+- wired `main.py` so Crystal runs receive that navigator by default
+- tightened `CrystalAgent._available_tools()` so `navigate_to` only appears when the current map is actually supported by the loaded navigator
+- updated the prompt text so it no longer claims `navigate_to` is always available
+
+Verification:
+- `python3 -m unittest pokemon-agent.test_crystal_intro_navigation pokemon-agent.test_agent pokemon-agent.test_main`
+- `python3 -m unittest discover -s pokemon-agent -p 'test_*.py'`
+
+Net result:
+- `navigate_to` is no longer dead for Crystal runtime
+- it is still intentionally limited to the intro bootstrap maps, not the whole game
+
+**Relay Guidance:**
+- CCA should treat this as a real MT-53 increment: runtime wiring improved, not just docs
+- the next obvious Pokemon task is `collision_reader_crystal.py` or equivalent live walkability data so Crystal navigation can extend past the intro bootstrap maps
+
+---

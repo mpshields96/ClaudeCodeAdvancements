@@ -94,3 +94,26 @@ python3 setup_crystal_state.py --starter totodile
 
 ### Matthew's Directive
 This is a **fun brain rot project**. Not mission-critical. The bot should play for 15-20 minutes, address issues, restart. Learn through playing. Don't over-engineer.
+
+## 2026-04-03 — Crystal Intro Navigator Wiring
+
+### What Changed
+- Added `crystal_intro_navigation.py` with a minimal static `Navigator` for:
+  - Player's House 2F
+  - Player's House 1F
+  - New Bark Town
+  - Elm's Lab
+- Wired `main.py` so Crystal runs now receive that navigator by default
+- Tightened `CrystalAgent._available_tools()` so `navigate_to` only appears when the current map is actually supported
+- Updated prompt wording so it no longer implies `navigate_to` is always present
+
+### Why This Matters
+- Crystal runtime now has a real `navigate_to` path on the intro maps instead of a dead or globally-disabled tool
+- This closes part of the wiring gap noted in `CODE_REVIEW.md` and `MT53_COMPLETION_PLAN.md`
+
+### Verification
+- `python3 -m unittest pokemon-agent.test_crystal_intro_navigation pokemon-agent.test_agent pokemon-agent.test_main`
+- `python3 -m unittest discover -s pokemon-agent -p 'test_*.py'`
+
+### Next Step
+1. Build `collision_reader_crystal.py` or equivalent live walkability source so `navigate_to` can extend beyond the intro bootstrap maps.

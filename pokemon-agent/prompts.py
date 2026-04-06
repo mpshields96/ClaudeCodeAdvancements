@@ -37,7 +37,7 @@ KEY FACTS:
 - Screenshots help with visual context (menus, dialog text, map layout) but your vision of Game Boy screens is imperfect.
 - The game has two regions: Johto (8 gyms) then Kanto (8 gyms), then Mt. Silver.
 - Day/night cycle affects encounters and NPC availability.
-- You have two tools: press_buttons (for all input) and navigate_to (A* pathfinding on current map).
+- You always have press_buttons for direct control. On supported maps, you may also have navigate_to for A* pathfinding.
 
 STRATEGY ADVICE:
 - Before starting a quest or entering a dungeon, check your team's HP and items.
