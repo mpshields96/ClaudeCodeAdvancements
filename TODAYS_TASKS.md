@@ -1168,7 +1168,7 @@ All sessions: solo unless noted. Off-peak preferred. Use gsd:quick throughout.
 
 ### CHAT 34: Unblock Tests + Cache Expiry Hook (~75 min)
 
-#### 34A. Python 3.9 Union Fix
+#### 34A. Python 3.9 Union Fix [DONE S263]
 
 **Goal:** Restore full 223-suite test harness to green.
 **Why now:** 81 suites blocked by `X | None` syntax (Python 3.9 incompatible). Unblocks clean baseline for all subsequent commits.
@@ -1181,7 +1181,7 @@ Steps:
 
 Stop condition: all 10 smoke suites green. Do not chase pre-existing failures unrelated to this fix.
 
-#### 34B. Cache Expiry UserPromptSubmit Hook (BUILD #14)
+#### 34B. Cache Expiry UserPromptSubmit Hook (BUILD #14) [DONE S263]
 
 **Goal:** Block users before they unknowingly pay full input token cost after a cache expiry.
 **Source finding:** r/ClaudeCode 1sd8t5u — 858-session audit, 54% of turns hit cache expiry, mechanism fully described.
@@ -1197,7 +1197,7 @@ Tests: idle_writer writes correct timestamp, cache_guard blocks at 301s, cache_g
 
 Commit after tests green.
 
-#### 34C. ENABLE_TOOL_SEARCH Advisory
+#### 34C. ENABLE_TOOL_SEARCH Advisory [DONE S263]
 
 **Goal:** Surface the single highest-leverage env var find from the batch (45k→15-20k context).
 **Effort:** ~20 min add-on to context-monitor.

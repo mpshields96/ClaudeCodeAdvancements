@@ -108,3 +108,5 @@
 {"tip":"session_start.py hook clears health file on every new session open \u2014 three-layer defense now active","source":"cca-desktop","session":"S261","timestamp":"2026-04-06T02:52:19.473008Z"}
 {"tip":"Spawn cca-reviewer agents in parallel for URL batches \u2014 keeps comment trees out of main context","source":"cca-desktop","session":"S262","timestamp":"2026-04-06T03:19:08.430742Z"}
 {"tip":"Check Chrome MCP availability before reviewing r/ClaudeAI URLs \u2014 they block all automated fetch","source":"cca-desktop","session":"S262","timestamp":"2026-04-06T03:19:08.430742Z"}
+{"tip":"from __future__ import annotations is the zero-cost Python 3.9 union syntax fix \u2014 one line, no imports, no type changes","source":"cca-desktop","session":"S263","timestamp":"2026-04-06T03:42:26.175527Z"}
+{"tip":"UserPromptSubmit hooks can emit non-blocking warnings via message field in JSON output","source":"cca-desktop","session":"S263","timestamp":"2026-04-06T03:42:26.175527Z"}

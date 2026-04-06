@@ -4297,3 +4297,20 @@ CLI chat 2:
 - No code shipped — planning session only
 
 ---
+
+## Session 263 — 2026-04-05
+
+**What changed:**
+- 34A: fixed X|None syntax in 51 files, smoke 6/10→10/10
+- 34B: Stop+UserPromptSubmit cache expiry hooks with 12 tests
+- 34C: ENABLE_TOOL_SEARCH advisory in SessionStart hook
+
+**Why:**
+- Python 3.9 union fix (51 files), cache expiry UserPromptSubmit hook, ENABLE_TOOL_SEARCH advisory
+
+**Tests:** 12551/12551 passing (372 suites)
+
+**Lessons:**
+- GSD node.js not available (minor ceremony skip)
+
+---
