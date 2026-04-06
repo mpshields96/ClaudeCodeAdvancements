@@ -3,17 +3,20 @@
 
 ---
 
-## Current State (as of Session 258 — 2026-04-03)
+## Current State (as of Session 259 — 2026-04-05)
 
-**Phase:** Session 258 COMPLETE. MT-32 complete: diagram_generator.py (flow+sequence SVG) + visual.py unified façade (72 exports, 165 tests)
+**Phase:** Session 259 COMPLETE. Hook fixes + Kalshi delivery + MT-53 collision_reader_crystal.py.
 
-**What was done this session (S258):**
-- MT-32 Phase 6 — diagram_generator.py, 55 tests, pure SVG
-- MT-32 Phase 7 — visual.py façade, 72 exports, 55 tests, all pillars integrated
-- **Tests**: 0 suites, 2064 tests passing. All green.
+**What was done this session (S259):**
+- Fixed bash_guard.py + mobile_approver.py Python 3.9 compat (global hooks crashing on Bash calls — was blocking Kalshi terminal launch)
+- Kalshi delivery (REQ-066/067): CPI FLB research (Burgi et al. SSRN 5502658 verified, STAY PAPER verdict), UCL/soccer/MMA market structure (KXUCL, KXUCLGAME, KXEPLGAME etc.), Arsenal buy thesis 26c→29-32c
+- MT-53: collision_reader_crystal.py — static accurate collision grids for 4 intro maps + RAM fallback. 27 tests.
+- **Tests**: 27 new pokemon-agent tests passing.
 
 **Next:**
-1. MT-32 done — pick MT-53 Pokemon or MT-20 Senior Dev next
+1. Wire collision_reader_crystal into main.py (replace build_intro_navigator with build_intro_navigator_with_collision)
+2. Run paced Gemini+mGBA Crystal session to validate navigation with real collision data
+3. MT-20 Senior Dev gaps (next after MT-53 session)
 
 ---
 
