@@ -232,7 +232,20 @@ class SessionPacer:
             return {}
         try:
             with open(self.context_state_path) as f:
-                return json.load(f)
+                data = json.load(f)
+            # Reject stale health state from a previous session.
+            # If the file hasn't been updated in the last 10 minutes AND pct is
+            # non-trivially high, it's almost certainly from a prior session.
+            updated_at_str = data.get("updated_at")
+            if updated_at_str:
+                try:
+                    updated_at = datetime.fromisoformat(updated_at_str)
+                    age = datetime.now(timezone.utc) - updated_at
+                    if age > timedelta(minutes=10) and data.get("pct", 0) > 20:
+                        return {}
+                except ValueError:
+                    pass
+            return data
         except (json.JSONDecodeError, OSError):
             return {}
 
@@ -482,6 +495,24 @@ def cli_main(args: list = None):
             max_duration_minutes=pacer.max_duration_minutes,
         )
         pacer.state.save()
+        # Clear stale health state from the previous session so the new
+        # session doesn't inherit a red/critical context percentage.
+        fresh_health = {
+            "pct": 0.0,
+            "zone": "green",
+            "tokens": 0,
+            "turns": 0,
+            "window": 200000,
+            "session_id": "reset",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        try:
+            state_path = Path(pacer.context_state_path)
+            tmp = state_path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(fresh_health, indent=2))
+            tmp.replace(state_path)
+        except OSError:
+            pass  # Non-fatal — stale-check in _read_context_health is the backstop
         print("Reset: New session started.")
 
     else:
