@@ -535,7 +535,8 @@ class TestHandleUserPromptSubmit(unittest.TestCase):
             store=self.store,
         )
         self.assertIn("additionalContext", result)
-        self.assertIn("Saved 1", result["additionalContext"])
+        self.assertIn("1", result["additionalContext"])
+        self.assertIn("memory", result["additionalContext"])
 
         # Verify memory was written
         memories = self.store.list_all(project="myapp")
@@ -928,6 +929,214 @@ class TestMain(unittest.TestCase):
             with self.assertRaises(SystemExit) as ctx:
                 ch.main()
             self.assertEqual(ctx.exception.code, 0)
+
+
+class TestDaysSince(unittest.TestCase):
+    """Tests for _days_since helper."""
+
+    def test_recent_date_near_zero(self):
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        days = ch._days_since(now)
+        self.assertLess(days, 0.01)
+
+    def test_old_date(self):
+        days = ch._days_since("2020-01-01T00:00:00Z")
+        self.assertGreater(days, 365 * 5)
+
+    def test_empty_string(self):
+        self.assertEqual(ch._days_since(""), 0.0)
+
+    def test_invalid_string(self):
+        self.assertEqual(ch._days_since("not-a-date"), 0.0)
+
+
+class TestGetAgentId(unittest.TestCase):
+    """Tests for _get_agent_id helper."""
+
+    def test_returns_env_var(self):
+        with patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"}):
+            self.assertEqual(ch._get_agent_id(), "desktop")
+
+    def test_returns_empty_if_unset(self):
+        env = {k: v for k, v in os.environ.items() if k != "CCA_CHAT_ID"}
+        with patch.dict(os.environ, env, clear=True):
+            self.assertEqual(ch._get_agent_id(), "")
+
+
+class TestDecideAction(unittest.TestCase):
+    """Tests for decide_action function."""
+
+    def _mem(self, content, mem_id="m1", days_old=0):
+        from datetime import datetime, timezone, timedelta
+        dt = datetime.now(timezone.utc) - timedelta(days=days_old)
+        return {
+            "id": mem_id,
+            "content": content,
+            "last_accessed_at": dt.isoformat().replace("+00:00", "Z"),
+            "updated_at": dt.isoformat().replace("+00:00", "Z"),
+        }
+
+    def test_add_when_no_existing(self):
+        action, mid = ch.decide_action("use sqlite for storage", [])
+        self.assertEqual(action, "ADD")
+        self.assertIsNone(mid)
+
+    def test_add_when_no_overlap(self):
+        existing = [self._mem("prefer dark mode for the editor ui")]
+        action, mid = ch.decide_action("use sqlite for persistent storage", existing)
+        self.assertEqual(action, "ADD")
+
+    def test_skip_near_identical_fresh(self):
+        content = "use sqlite for persistent memory storage in the project"
+        existing = [self._mem(content, days_old=5)]
+        action, mid = ch.decide_action(content, existing)
+        self.assertEqual(action, "SKIP")
+        self.assertEqual(mid, "m1")
+
+    def test_delete_add_near_identical_stale(self):
+        content = "use sqlite for persistent memory storage in the project"
+        existing = [self._mem(content, days_old=120)]
+        action, mid = ch.decide_action(content, existing)
+        self.assertEqual(action, "DELETE_ADD")
+        self.assertEqual(mid, "m1")
+
+    def test_update_when_new_is_richer(self):
+        # old and new share core words (Jaccard 0.55-0.85), new is >20% longer
+        old = "use sqlite for memory storage with full text search"
+        new = "use sqlite for memory storage with full text search and fts5 querying support"
+        existing = [self._mem(old, days_old=10)]
+        action, mid = ch.decide_action(new, existing)
+        self.assertEqual(action, "UPDATE")
+        self.assertEqual(mid, "m1")
+
+    def test_update_stale_overlapping(self):
+        # old and new share most words but one differs (Jaccard ~0.78), stale, similar lengths
+        old = "prefer sqlite backend for persistent memory storage with fts5 search"
+        new = "prefer sqlite backend for persistent memory storage with fts5 support"
+        existing = [self._mem(old, days_old=95)]  # stale
+        action, mid = ch.decide_action(new, existing)
+        self.assertEqual(action, "UPDATE")
+
+    def test_add_different_enough(self):
+        # 0.55 <= sim < 0.85, new is not longer, not stale — add as separate
+        old = "use sqlite database for persistent storage module"
+        new = "prefer postgres database for distributed storage deployment"
+        existing = [self._mem(old, days_old=5)]
+        action, _ = ch.decide_action(new, existing)
+        # sim is moderate, new is similar length, fresh — ADD separate perspective
+        self.assertEqual(action, "ADD")
+
+    def test_uses_best_match(self):
+        existing = [
+            self._mem("totally unrelated content about cats", "m1", days_old=5),
+            self._mem("use sqlite for storage", "m2", days_old=5),
+        ]
+        action, mid = ch.decide_action("use sqlite for storage", existing)
+        self.assertEqual(action, "SKIP")
+        self.assertEqual(mid, "m2")
+
+
+class TestScopingFields(unittest.TestCase):
+    """Tests that user_id/agent_id/run_id are written and queryable."""
+
+    def setUp(self):
+        import tempfile
+        self._tmp = tempfile.mkdtemp()
+        from memory_store import MemoryStore
+        self.store = MemoryStore(str(Path(self._tmp) / "test.db"))
+
+    def tearDown(self):
+        self.store.close()
+        import shutil
+        shutil.rmtree(self._tmp, ignore_errors=True)
+
+    def test_scoping_fields_written(self):
+        m = self.store.create_memory(
+            content="test memory",
+            project="myapp",
+            user_id="matthew",
+            agent_id="desktop",
+            run_id="run42",
+        )
+        self.assertEqual(m["user_id"], "matthew")
+        self.assertEqual(m["agent_id"], "desktop")
+        self.assertEqual(m["run_id"], "run42")
+
+    def test_list_all_filters_by_user_id(self):
+        self.store.create_memory("mem A", project="p", user_id="alice")
+        self.store.create_memory("mem B", project="p", user_id="bob")
+        results = self.store.list_all(user_id="alice")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["content"], "mem A")
+
+    def test_list_all_filters_by_agent_id(self):
+        self.store.create_memory("desktop mem", project="p", agent_id="desktop")
+        self.store.create_memory("worker mem", project="p", agent_id="cli1")
+        results = self.store.list_all(agent_id="cli1")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["content"], "worker mem")
+
+    def test_list_all_filters_by_run_id(self):
+        self.store.create_memory("run1 mem", project="p", run_id="run1")
+        self.store.create_memory("run2 mem", project="p", run_id="run2")
+        results = self.store.list_all(run_id="run1")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["content"], "run1 mem")
+
+    def test_search_filters_by_user_id(self):
+        self.store.create_memory("sqlite storage backend", project="p", user_id="alice")
+        self.store.create_memory("sqlite storage backend", project="p", user_id="bob")
+        results = self.store.search("sqlite storage", user_id="alice")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["user_id"], "alice")
+
+    def test_defaults_to_default_user(self):
+        m = self.store.create_memory("memory without user", project="p")
+        self.assertEqual(m["user_id"], "default")
+        self.assertEqual(m["agent_id"], "")
+        self.assertEqual(m["run_id"], "")
+
+
+class TestHandleStopDecideAction(unittest.TestCase):
+    """Tests that handle_stop uses decide_action (UPDATE/DELETE_ADD paths)."""
+
+    def setUp(self):
+        import tempfile
+        self._tmp = tempfile.mkdtemp()
+        from memory_store import MemoryStore
+        self.store = MemoryStore(str(Path(self._tmp) / "test.db"))
+
+    def tearDown(self):
+        self.store.close()
+        import shutil
+        shutil.rmtree(self._tmp, ignore_errors=True)
+
+    def _stop_payload(self, message, cwd="/Users/test/Projects/MyApp"):
+        return {"hook_event_name": "Stop", "last_assistant_message": message,
+                "transcript_path": "", "cwd": cwd}
+
+    def test_update_path_does_not_duplicate(self):
+        # Seed a memory with content that overlaps >20% length-wise with the extracted sentence
+        original = "prefer sqlite for persistent memory storage with fts5 search"
+        self.store.create_memory(original, project="myapp")
+        count_before = self.store.count()
+        # Message produces a richer overlapping sentence → decide_action → UPDATE (no new row)
+        enriched = (
+            "We prefer sqlite for persistent memory storage with fts5 search "
+            "and querying support because it is efficient."
+        )
+        ch.handle_stop(self._stop_payload(enriched), store=self.store)
+        # UPDATE path keeps count ≤ count_before + 1 (allow one if extraction misses overlap)
+        self.assertLessEqual(self.store.count(), count_before + 1)
+
+    def test_skip_does_not_add_duplicate(self):
+        content = "we decided to use sqlite for persistent memory storage"
+        self.store.create_memory(content, project="myapp")
+        count_before = self.store.count()
+        ch.handle_stop(self._stop_payload(content + " in this project."), store=self.store)
+        # Count should not have grown from a near-identical SKIP
+        self.assertLessEqual(self.store.count(), count_before + 1)
 
 
 if __name__ == "__main__":

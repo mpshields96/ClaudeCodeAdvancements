@@ -97,7 +97,10 @@ class MemoryStore:
                 ttl_days    INTEGER NOT NULL DEFAULT 180,
                 source      TEXT NOT NULL DEFAULT 'explicit',
                 context     TEXT NOT NULL DEFAULT '',
-                project     TEXT NOT NULL DEFAULT ''
+                project     TEXT NOT NULL DEFAULT '',
+                user_id     TEXT NOT NULL DEFAULT 'default',
+                agent_id    TEXT NOT NULL DEFAULT '',
+                run_id      TEXT NOT NULL DEFAULT ''
             );
 
             CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
@@ -113,10 +116,16 @@ class MemoryStore:
                 value TEXT
             );
         """)
-        # Migration: add last_accessed_at column if missing
+        # Migrations: add columns if missing
         cols = {r[1] for r in self._conn.execute("PRAGMA table_info(memories)").fetchall()}
         if "last_accessed_at" not in cols:
             self._conn.execute("ALTER TABLE memories ADD COLUMN last_accessed_at TEXT NOT NULL DEFAULT ''")
+        if "user_id" not in cols:
+            self._conn.execute("ALTER TABLE memories ADD COLUMN user_id TEXT NOT NULL DEFAULT 'default'")
+        if "agent_id" not in cols:
+            self._conn.execute("ALTER TABLE memories ADD COLUMN agent_id TEXT NOT NULL DEFAULT ''")
+        if "run_id" not in cols:
+            self._conn.execute("ALTER TABLE memories ADD COLUMN run_id TEXT NOT NULL DEFAULT ''")
 
         # Store schema version
         self._conn.execute(
@@ -150,6 +159,9 @@ class MemoryStore:
         project: str = "",
         memory_id: Optional[str] = None,
         ttl_days: Optional[int] = None,
+        user_id: str = "default",
+        agent_id: str = "",
+        run_id: str = "",
     ) -> dict:
         """Create a new memory entry. Returns the created memory as a dict.
 
@@ -185,10 +197,11 @@ class MemoryStore:
         try:
             self._conn.execute(
                 """INSERT INTO memories (id, content, tags, confidence, created_at,
-                   updated_at, ttl_days, source, context, project)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                   updated_at, ttl_days, source, context, project,
+                   user_id, agent_id, run_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (mid, content.strip(), tags_json, confidence, now, now, ttl, source,
-                 context, project),
+                 context, project, user_id, agent_id, run_id),
             )
             # Get the rowid for the FTS index
             rowid = self._conn.execute(
@@ -311,26 +324,53 @@ class MemoryStore:
             raise
         return True
 
-    def list_all(self, project: Optional[str] = None, limit: int = 100) -> list[dict]:
-        """List all memories, optionally filtered by project.
+    def list_all(
+        self,
+        project: Optional[str] = None,
+        limit: int = 100,
+        user_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
+        run_id: Optional[str] = None,
+    ) -> list[dict]:
+        """List all memories, optionally filtered by project and/or scope.
 
+        Three-tier scoping: user_id > agent_id > run_id (each optional).
         Returns up to `limit` results, ordered by updated_at descending.
         """
+        conditions = []
+        params: list = []
         if project is not None:
-            rows = self._conn.execute(
-                "SELECT * FROM memories WHERE project = ? ORDER BY updated_at DESC LIMIT ?",
-                (project, limit),
-            ).fetchall()
-        else:
-            rows = self._conn.execute(
-                "SELECT * FROM memories ORDER BY updated_at DESC LIMIT ?",
-                (limit,),
-            ).fetchall()
+            conditions.append("project = ?")
+            params.append(project)
+        if user_id is not None:
+            conditions.append("user_id = ?")
+            params.append(user_id)
+        if agent_id is not None:
+            conditions.append("agent_id = ?")
+            params.append(agent_id)
+        if run_id is not None:
+            conditions.append("run_id = ?")
+            params.append(run_id)
+
+        where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+        params.append(limit)
+        rows = self._conn.execute(
+            f"SELECT * FROM memories {where} ORDER BY updated_at DESC LIMIT ?",
+            params,
+        ).fetchall()
         return [self._row_to_dict(r) for r in rows]
 
     # ── Search ───────────────────────────────────────────────────────────────
 
-    def search(self, query: str, limit: int = 10, project: Optional[str] = None) -> list[dict]:
+    def search(
+        self,
+        query: str,
+        limit: int = 10,
+        project: Optional[str] = None,
+        user_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
+        run_id: Optional[str] = None,
+    ) -> list[dict]:
         """Full-text search with BM25 relevance ranking.
 
         Args:
@@ -338,6 +378,9 @@ class MemoryStore:
                    Empty query returns empty list.
             limit: Maximum results to return (default 10).
             project: If provided, filter results to this project only.
+            user_id: If provided, filter to this user's memories only.
+            agent_id: If provided, filter to this agent's memories only.
+            run_id: If provided, filter to this run's memories only.
 
         Returns:
             List of memory dicts, ordered by relevance (best match first).
@@ -351,28 +394,34 @@ class MemoryStore:
         if not safe_query:
             return []
 
+        # Build optional scope filter for the JOIN
+        scope_conditions = []
+        scope_params: list = []
+        if project is not None:
+            scope_conditions.append("m.project = ?")
+            scope_params.append(project)
+        if user_id is not None:
+            scope_conditions.append("m.user_id = ?")
+            scope_params.append(user_id)
+        if agent_id is not None:
+            scope_conditions.append("m.agent_id = ?")
+            scope_params.append(agent_id)
+        if run_id is not None:
+            scope_conditions.append("m.run_id = ?")
+            scope_params.append(run_id)
+
+        scope_clause = (" AND " + " AND ".join(scope_conditions)) if scope_conditions else ""
+
         try:
-            if project is not None:
-                rows = self._conn.execute(
-                    """SELECT m.*, bm25(memories_fts) AS rank
-                       FROM memories_fts f
-                       JOIN memories m ON f.rowid = m.rowid
-                       WHERE memories_fts MATCH ?
-                         AND m.project = ?
-                       ORDER BY rank
-                       LIMIT ?""",
-                    (safe_query, project, limit),
-                ).fetchall()
-            else:
-                rows = self._conn.execute(
-                    """SELECT m.*, bm25(memories_fts) AS rank
-                       FROM memories_fts f
-                       JOIN memories m ON f.rowid = m.rowid
-                       WHERE memories_fts MATCH ?
-                       ORDER BY rank
-                       LIMIT ?""",
-                    (safe_query, limit),
-                ).fetchall()
+            rows = self._conn.execute(
+                f"""SELECT m.*, bm25(memories_fts) AS rank
+                   FROM memories_fts f
+                   JOIN memories m ON f.rowid = m.rowid
+                   WHERE memories_fts MATCH ?{scope_clause}
+                   ORDER BY rank
+                   LIMIT ?""",
+                [safe_query] + scope_params + [limit],
+            ).fetchall()
         except sqlite3.OperationalError:
             # Bad FTS5 query syntax — fall back to empty results
             return []

@@ -19,8 +19,10 @@ Both events use the same script. Hook event is identified from stdin JSON.
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 # ── Import MemoryStore from parent directory ─────────────────────────────────
@@ -139,6 +141,83 @@ def find_duplicates(new_content: str, existing_memories: list[dict]) -> list[dic
         if sim >= DEDUP_SIMILARITY_THRESHOLD:
             duplicates.append(mem)
     return duplicates
+
+
+def _days_since(iso_str: str) -> float:
+    """Return days elapsed since an ISO 8601 timestamp. Returns 0 on parse error."""
+    if not iso_str:
+        return 0.0
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        return max(0.0, (datetime.now(timezone.utc) - dt).total_seconds() / 86400)
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _get_agent_id() -> str:
+    """Return the agent ID from $CCA_CHAT_ID env var (e.g. 'desktop', 'cli1')."""
+    return os.environ.get("CCA_CHAT_ID", "")
+
+
+def decide_action(
+    new_content: str, existing_memories: list[dict]
+) -> tuple[str, str | None]:
+    """Decide what to do with new_content against existing memories.
+
+    Returns (action, memory_id):
+    - ("ADD", None)       — no similar memory; create new
+    - ("UPDATE", id)      — similar exists, new content is richer; update in place
+    - ("SKIP", id)        — near-identical exists and is fresh; nothing to do
+    - ("DELETE_ADD", id)  — near-identical exists but is stale (>90 days); replace
+
+    Rules (applied to the most-similar existing memory):
+      sim < 0.55            → ADD   (no meaningful overlap)
+      0.55 <= sim < 0.85:
+          new is >20% longer  → UPDATE (new enriches existing)
+          old is stale        → UPDATE (refresh stale with new info)
+          else                → ADD   (genuinely different perspectives)
+      sim >= 0.85 (near-identical):
+          old is stale        → DELETE_ADD (replace stale near-duplicate)
+          new is >15% longer  → UPDATE     (new is richer version)
+          else                → SKIP       (existing is fine)
+    """
+    if not existing_memories:
+        return ("ADD", None)
+
+    # Find most-similar existing memory
+    best_sim = 0.0
+    best_mem: dict | None = None
+    for mem in existing_memories:
+        sim = _content_similarity(new_content, mem.get("content", ""))
+        if sim > best_sim:
+            best_sim = sim
+            best_mem = mem
+
+    if best_sim < 0.55 or best_mem is None:
+        return ("ADD", None)
+
+    mid = best_mem["id"]
+    old_content = best_mem.get("content", "")
+    ref_date = (
+        best_mem.get("last_accessed_at")
+        or best_mem.get("updated_at")
+        or best_mem.get("created_at", "")
+    )
+    days_old = _days_since(ref_date)
+
+    if best_sim >= DEDUP_SIMILARITY_THRESHOLD:  # >= 0.85 near-identical
+        if days_old > 90:
+            return ("DELETE_ADD", mid)
+        if old_content and len(new_content) > len(old_content) * 1.15:
+            return ("UPDATE", mid)
+        return ("SKIP", mid)
+
+    # 0.55 <= sim < 0.85 — overlapping but different
+    if old_content and len(new_content) > len(old_content) * 1.2:
+        return ("UPDATE", mid)
+    if days_old > 90:
+        return ("UPDATE", mid)
+    return ("ADD", None)
 
 
 def _extract_mem_type(tags: list) -> str:
@@ -267,40 +346,60 @@ def handle_user_prompt_submit(hook_input: dict, store: MemoryStore | None = None
         except Exception:
             return {}  # Fail silently
 
+    agent_id = _get_agent_id()
+
     try:
         existing = store.list_all(project=project, limit=500)
         new_count = 0
+        updated_count = 0
 
         for candidate in candidates:
             content = candidate["content"]
             mem_type = candidate["type"]
             tags = candidate["tags"]
 
-            # Dedup against existing
-            dupes = find_duplicates(content, existing)
-            if dupes:
+            action, target_id = decide_action(content, existing)
+
+            if action == "SKIP":
                 continue
+            elif action == "UPDATE" and target_id:
+                store.update(target_id, content=content)
+                # Refresh in local list
+                existing = [
+                    {**m, "content": content} if m["id"] == target_id else m
+                    for m in existing
+                ]
+                updated_count += 1
+            elif action in ("ADD", "DELETE_ADD"):
+                if action == "DELETE_ADD" and target_id:
+                    store.delete(target_id)
+                    existing = [m for m in existing if m["id"] != target_id]
+                ttl = get_ttl_days(mem_type, candidate["confidence"])
+                created = store.create_memory(
+                    content=content,
+                    tags=tags,
+                    confidence=candidate["confidence"],
+                    source=candidate["source"],
+                    context=f"type:{mem_type}",
+                    project=project,
+                    ttl_days=ttl,
+                    user_id=project,
+                    agent_id=agent_id,
+                )
+                existing.append(created)
+                new_count += 1
 
-            # Write to FTS5 store
-            ttl = get_ttl_days(mem_type, candidate["confidence"])
-            created = store.create_memory(
-                content=content,
-                tags=tags,
-                confidence=candidate["confidence"],
-                source=candidate["source"],
-                context=f"type:{mem_type}",
-                project=project,
-                ttl_days=ttl,
-            )
-            existing.append(created)
-            new_count += 1
-
-        if new_count > 0:
+        total = new_count + updated_count
+        if total > 0:
+            parts = []
+            if new_count:
+                parts.append(f"saved {new_count} new")
+            if updated_count:
+                parts.append(f"updated {updated_count}")
             return {
                 "additionalContext": (
-                    f"[memory-system] Saved {new_count} real-time "
-                    f"{'memory' if new_count == 1 else 'memories'} "
-                    f"from user prompt."
+                    f"[memory-system] {', '.join(parts)} "
+                    f"{'memory' if total == 1 else 'memories'} from user prompt."
                 )
             }
 
@@ -404,29 +503,43 @@ def handle_stop(hook_input: dict, store: MemoryStore | None = None) -> dict:
         except Exception:
             return {}  # Fail silently — hook must not crash
 
+    agent_id = _get_agent_id()
+
     try:
         # Load existing project memories for dedup/contradiction checks
         existing = store.list_all(project=project, limit=500)
 
         new_count = 0
-        superseded_ids = set()
+        updated_count = 0
+        superseded_ids: set[str] = set()
 
         for candidate in candidates:
             content = candidate["content"]
             mem_type = candidate["type"]
             tags = candidate["tags"]
 
-            # Dedup against existing + already-written this session
-            dupes = find_duplicates(content, existing)
-            if dupes:
-                continue
+            action, target_id = decide_action(content, existing)
 
-            # Contradiction detection — supersede older conflicting memories
+            if action == "SKIP":
+                continue
+            elif action == "UPDATE" and target_id:
+                store.update(target_id, content=content)
+                existing = [
+                    {**m, "content": content} if m["id"] == target_id else m
+                    for m in existing
+                ]
+                updated_count += 1
+                continue
+            elif action == "DELETE_ADD" and target_id:
+                superseded_ids.add(target_id)
+                existing = [m for m in existing if m["id"] != target_id]
+
+            # action is ADD or DELETE_ADD (old removed above) — also check contradictions
             contradictions = find_contradictions(content, mem_type, tags, existing)
             for old_mem in contradictions:
                 superseded_ids.add(old_mem["id"])
 
-            # Write to FTS5 store
+            # Write new memory
             ttl = get_ttl_days(mem_type, candidate["confidence"])
             created = store.create_memory(
                 content=content,
@@ -436,22 +549,27 @@ def handle_stop(hook_input: dict, store: MemoryStore | None = None) -> dict:
                 context=f"type:{mem_type}",
                 project=project,
                 ttl_days=ttl,
+                user_id=project,
+                agent_id=agent_id,
             )
-
-            # Add to existing list so subsequent candidates dedup against it
             existing.append(created)
             new_count += 1
 
-        # Remove superseded memories
+        # Remove superseded / contradicted memories
         for old_id in superseded_ids:
             store.delete(old_id)
 
-        if new_count > 0:
+        total = new_count + updated_count
+        if total > 0:
+            parts = []
+            if new_count:
+                parts.append(f"{new_count} new")
+            if updated_count:
+                parts.append(f"{updated_count} updated")
             return {
                 "additionalContext": (
-                    f"[memory-system] Saved {new_count} new "
-                    f"{'memory' if new_count == 1 else 'memories'} "
-                    f"to FTS5 store. "
+                    f"[memory-system] {', '.join(parts)} "
+                    f"{'memory' if total == 1 else 'memories'} written. "
                     f"Run 'python3 memory-system/cli.py' to review."
                 )
             }

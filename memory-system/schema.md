@@ -30,7 +30,10 @@ Each memory is a JSON object with these fields:
   "created_at": "2026-02-19T14:30:22Z",
   "last_used": "2026-02-19T14:30:22Z",
   "confidence": "HIGH",
-  "source": "explicit"
+  "source": "explicit",
+  "user_id": "default",
+  "agent_id": "desktop",
+  "run_id": ""
 }
 ```
 
@@ -38,7 +41,7 @@ Each memory is a JSON object with these fields:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | Unique. Format: `mem_YYYYMMDD_HHMMSS_xxx` (xxx = 3 random chars) |
+| `id` | string | yes | Unique. Format: `mem_YYYYMMDD_HHMMSS_xxx` (xxx = 8 hex chars) |
 | `type` | string | yes | One of the 5 memory types below |
 | `content` | string | yes | The memory itself. Max 500 chars. Plain English. |
 | `project` | string | yes | Project slug. `"_global"` for cross-project memories. |
@@ -47,6 +50,33 @@ Each memory is a JSON object with these fields:
 | `last_used` | ISO 8601 | yes | Last time this memory was surfaced in a session |
 | `confidence` | string | yes | `"HIGH"` / `"MEDIUM"` / `"LOW"` (see below) |
 | `source` | string | yes | `"explicit"` / `"inferred"` / `"session-end"` (see below) |
+| `user_id` | string | no | Identity of the user. Defaults to `"default"`. Used for multi-user isolation. |
+| `agent_id` | string | no | Agent type/role that created this memory (e.g., `"desktop"`, `"cli1"`). Empty = unscoped. |
+| `run_id` | string | no | Session or run identifier. Empty = not scoped to a specific run. |
+
+---
+
+## Three-Tier Scoping
+
+Memories support three levels of scope for multi-agent and multi-session isolation:
+
+| Tier | Field | Meaning |
+|------|-------|---------|
+| User | `user_id` | Isolates memories per user. Default: `"default"`. |
+| Agent | `agent_id` | Isolates per agent role (desktop coordinator, CLI worker, research agent). Optional. |
+| Run | `run_id` | Isolates per session/conversation. Optional. |
+
+**Lookup behavior:**
+- `user_id` alone: returns all memories for this user across agents and runs
+- `user_id + agent_id`: returns memories created by this agent type for this user
+- `user_id + agent_id + run_id`: returns only memories from this specific run
+
+**When to use agent scoping:** If you want the desktop coordinator and CLI workers to share memories, leave `agent_id` empty. If you want each worker to have its own memory namespace, pass its `CCA_CHAT_ID` as `agent_id`.
+
+**Source of scoping values:**
+- `user_id`: project slug (derived from cwd)
+- `agent_id`: `$CCA_CHAT_ID` env var if set, otherwise `""`
+- `run_id`: not yet populated; reserved for future session-ID tracking
 
 ---
 
