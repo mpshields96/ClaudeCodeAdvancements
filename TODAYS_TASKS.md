@@ -1318,6 +1318,57 @@ Commit after 37B tests green. 37C is optional — don't delay commit for it.
 
 ---
 
+### CHAT 38: BMAD Hivemind Patterns (MT-21) + Sports Math Port Phase 1 (~90 min)
+
+Two tasks. Do in order 38A then 38B.
+
+#### 38A. MT-21 Hivemind — BMAD Patterns (agent manifest + context cap + reactive pair)
+
+**Goal:** Wire the 3 BMAD patterns from Chat 37 research into the hivemind infrastructure.
+**Source:** `agent-guard/hivemind_notes.md` — all patterns are defined there.
+
+Steps:
+1. `session_orchestrator.py`: `register()` already updated with `ROLE_CAPABILITIES` manifest (S267).
+   Add `manifest` CLI command: prints all roles with their capabilities and alive status.
+2. `cca_comm.py` `cmd_task()`: add 400-word context cap warning. If `len(task.split()) > 400`,
+   print a warning before sending: "BMAD context cap: task is N words (cap 400). Consider trimming."
+   Do NOT block — warn only.
+3. `cca_comm.py`: add `question` command — reactive pair pattern:
+   `python3 cca_comm.py question <target> "question text"` sends a message with category="question".
+   `python3 cca_comm.py inbox` already handles reading — just need a distinct send category so
+   desktop knows it needs to reply in the same session, not next session.
+4. Tests: manifest output format, context cap warning fires at >400 words, question category routing.
+Commit.
+
+#### 38B. Sports Math Port — Phase 1 (steal from agentic-rd-sandbox)
+
+**Goal:** Port Sharp Score + team efficiency data into polymarket-bot as `sports_math.py`.
+**Source:** Matthew directive S267. Steal from agentic-rd-sandbox, don't rewrite from scratch.
+**Deliver via:** CCA_TO_POLYBOT.md (Kalshi chat implements after delivery).
+
+Steps:
+1. Read `/Users/matthewshields/Projects/agentic-rd-sandbox/core/math_engine.py`:
+   Extract these functions (stdlib only, no external deps): `calculate_sharp_score()`,
+   `passes_collar()`, `passes_collar_soccer()`, `implied_probability()`,
+   `no_vig_probability()`, `fractional_kelly()`, `assign_grade()` + BetCandidate dataclass.
+2. Read `/Users/matthewshields/Projects/agentic-rd-sandbox/core/efficiency_feed.py`:
+   Extract `_TEAM_DATA` dict (NBA + NHL + MLB + soccer sections) + `get_team_efficiency()` logic.
+3. Create `/Users/matthewshields/Projects/polymarket-bot/sports_math.py`:
+   - All extracted math functions (adapted for Kalshi context — binary markets only, no spreads/totals)
+   - `efficiency_gap_from_teams(home_team, away_team) -> float` helper using `_TEAM_DATA`
+   - `sharp_score_for_bet(edge_pct, home_team, away_team) -> (float, dict)` convenience wrapper
+   - No imports from polymarket-bot internals (standalone module, importable anywhere)
+4. Tests: `tests/test_sports_math.py` — sharp_score formula, efficiency gap lookup, collar check,
+   unknown team fallback (8.0), kelly sizing. 15+ tests.
+5. Write delivery to CCA_TO_POLYBOT.md:
+   - "sports_math.py delivered at [path]. Next: wire into sports_game_loop.py"
+   - Include wiring instructions: 3 lines to add after edge_pct computed
+6. Commit to polymarket-bot (separate commit from CCA changes).
+
+**STOP CONDITION:** sports_math.py exists, tests pass, delivery written. Kalshi chat wires it.
+
+---
+
 ## DEFERRED FROM PHASE 8 (scheduled when phase 8 complete)
 
 - **SKILL.md wrapping of CCA modules** — Wrap CCA frontier modules as publishable Agent Skills (NEW F6 candidate). Strategic decision needed first: do we want to publish externally?

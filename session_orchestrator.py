@@ -100,13 +100,26 @@ class PidRegistry:
     def _path(self, role: str) -> str:
         return os.path.join(self.pid_dir, f"{role}.pid")
 
+    # Agent manifest: capabilities for each known role (BMAD pattern)
+    ROLE_CAPABILITIES = {
+        "desktop": ["coordinate", "commit", "update_docs", "launch_workers", "review"],
+        "cli1": ["build", "test", "implement", "refactor"],
+        "cli2": ["build", "test", "implement", "refactor"],
+        "kalshi": ["monitor", "trade", "research", "analyze"],
+    }
+
     def register(self, role: str, pid: int = 0) -> None:
-        """Register a session. PID is optional — heartbeat is primary liveness signal."""
+        """Register a session with capabilities manifest (BMAD agent manifest pattern).
+
+        PID is optional — heartbeat is primary liveness signal.
+        Capabilities are derived from ROLE_CAPABILITIES manifest.
+        """
         data = {
             "role": role,
             "pid": pid if pid else os.getpid(),
             "started_at": time.time(),
             "last_heartbeat": time.time(),
+            "capabilities": self.ROLE_CAPABILITIES.get(role, []),
         }
         with open(self._path(role), "w") as f:
             json.dump(data, f)
@@ -385,6 +398,7 @@ def cli_main(args: list = None):
         print("  set-mode MODE             Save default target mode (solo/2chat/3chat)")
         print("  register ROLE             Register this session (desktop/cli1/kalshi)")
         print("  deregister ROLE           Deregister a session")
+        print("  manifest                  Show agent manifest (roles + capabilities)")
         return
 
     cmd = args[0]
