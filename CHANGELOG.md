@@ -4248,3 +4248,18 @@ CLI chat 2:
 - Context hit 83% before 3rd task
 
 ---
+
+## Session 260 — 2026-04-05
+
+**What changed:**
+- Identified scope of Python 3.9 X|Y union type regression (81 suites)
+
+**Why:**
+- Init-only session: discovered Python 3.9 union type syntax affects 81 test suites project-wide
+
+**Tests:** 10438/10438 passing (371 suites)
+
+**Lessons:**
+- No code built — context already at 84% at /cca-auto start
+
+---

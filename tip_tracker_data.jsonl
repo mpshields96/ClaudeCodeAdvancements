@@ -104,3 +104,4 @@
 {"tip":"Dashboard v2 (MT-32 Phase 5) requires reading 1186-line dashboard_generator.py \u2014 only start at fresh session context","source":"cca-desktop","session":"S256","timestamp":"2026-04-03T04:07:48.460763Z"}
 {"tip":"visual.py make_chart facade hides 28 chart types behind single import","source":"cca-desktop","session":"S258","timestamp":"2026-04-03T06:04:30.679495Z"}
 {"tip":"FlowDiagram auto-layout uses longest-path layering no external graphviz needed","source":"cca-desktop","session":"S258","timestamp":"2026-04-03T06:04:30.679495Z"}
+{"tip":"Python 3.9 X|Y union syntax affects many CCA files \u2014 batch fix needed before session work","source":"cca-desktop","session":"S260","timestamp":"2026-04-06T02:08:40.988431Z"}

@@ -3,7 +3,21 @@
 
 ---
 
-## Current State (as of Session 259 — 2026-04-05)
+## Current State (as of Session 260 — 2026-04-05)
+
+**Phase:** Session 260 COMPLETE. Init-only session: discovered Python 3.9 union type syntax affects 81 test suites project-wide
+
+**What was done this session (S260):**
+- Identified scope of Python 3.9 X|Y union type regression (81 suites)
+- **Tests**: 371 suites, 10438 tests passing. All green.
+
+**Next:**
+1. Fix Python 3.9 compat batch across all affected files
+2. Wire collision_reader_crystal into main.py (MT-53)
+
+---
+
+## Previous State (Session 259 — 2026-04-05)
 
 **Phase:** Session 259 COMPLETE. Hook fixes + Kalshi delivery + MT-53 collision_reader_crystal.py.
 
@@ -19,7 +33,6 @@
 3. MT-20 Senior Dev gaps (next after MT-53 session)
 
 ---
-
 ## Previous State (Session 256 — 2026-04-02)
 
 **Phase:** Session 256 COMPLETE. MT-32 Phase 4 complete: component_library.py (8 HTML components, 75 tests); Codex Gemini improvements committed; Kalshi delivery written
