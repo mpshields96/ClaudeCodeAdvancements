@@ -18,6 +18,7 @@ Usage:
     # Pipe-friendly (non-interactive)
     echo "What are the main concerns?" | python3 senior_chat.py path/to/file.py
 """
+from __future__ import annotations
 
 import argparse
 import json

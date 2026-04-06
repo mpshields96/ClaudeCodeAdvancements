@@ -27,6 +27,7 @@ CLI:
     python3 self-learning/resurfacer.py FINDINGS_LOG.md --keywords trading Kalshi
     python3 self-learning/resurfacer.py FINDINGS_LOG.md --mt MT-17
 """
+from __future__ import annotations
 
 import json
 import os

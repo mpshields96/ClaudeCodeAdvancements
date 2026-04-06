@@ -20,6 +20,7 @@ Usage:
     python3 self-learning/trading_analysis_runner.py --json              # JSON output
     python3 self-learning/trading_analysis_runner.py --append-intel      # Append to KALSHI_INTEL.md
 """
+from __future__ import annotations
 
 import json
 import os

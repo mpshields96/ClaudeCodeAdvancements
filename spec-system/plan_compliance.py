@@ -26,6 +26,7 @@ Usage (library):
 
 Stdlib only. No external dependencies.
 """
+from __future__ import annotations
 
 import re
 import sys

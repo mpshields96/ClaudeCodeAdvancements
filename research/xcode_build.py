@@ -11,6 +11,7 @@ Usage:
     python3 xcode_build.py schemes --project MyApp.xcodeproj
     python3 xcode_build.py simulators
 """
+from __future__ import annotations
 
 import argparse
 import glob

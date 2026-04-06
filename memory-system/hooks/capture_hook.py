@@ -16,6 +16,7 @@ Usage (hooks config):
 
 Both events use the same script. Hook event is identified from stdin JSON.
 """
+from __future__ import annotations
 
 import json
 import re

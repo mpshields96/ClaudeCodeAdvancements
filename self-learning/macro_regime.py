@@ -30,6 +30,7 @@ Usage:
 CLI:
     python3 macro_regime.py --now 2026-03-19T13:30:00
 """
+from __future__ import annotations
 
 import json
 import sys

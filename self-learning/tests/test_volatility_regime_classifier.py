@@ -4,6 +4,7 @@ Classifies current market conditions into LOW/NORMAL/HIGH volatility
 regimes based on recent bet outcome distribution. Informs strategy
 parameter adjustment (tighter stops in high vol, wider in low vol).
 """
+from __future__ import annotations
 import json
 import os
 import sys

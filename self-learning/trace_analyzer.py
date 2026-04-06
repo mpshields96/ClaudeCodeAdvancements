@@ -10,6 +10,7 @@ Usage:
     python3 trace_analyzer.py <path/to/session.jsonl>
     python3 trace_analyzer.py <path> --json
 """
+from __future__ import annotations
 
 import json
 import os

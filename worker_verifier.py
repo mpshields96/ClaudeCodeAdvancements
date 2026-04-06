@@ -23,6 +23,7 @@ CLI:
     python3 worker_verifier.py --test-cmd "python3 -m pytest" --before 100 --after 105
     python3 worker_verifier.py --json
 """
+from __future__ import annotations
 import argparse
 import json
 import subprocess

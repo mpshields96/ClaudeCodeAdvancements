@@ -17,6 +17,7 @@ Usage:
     cliff_map = analyzer.cliff_map(loss_levels=[-11.39, -10.0, -8.0, -6.0])
     print(cliff_map.summary())
 """
+from __future__ import annotations
 import random
 from dataclasses import dataclass
 

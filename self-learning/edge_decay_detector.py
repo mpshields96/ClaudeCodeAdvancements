@@ -18,6 +18,7 @@ Usage:
     if trend.should_alert:
         print(f"WARNING: {trend.message}")
 """
+from __future__ import annotations
 import statistics
 from dataclasses import dataclass
 from datetime import date

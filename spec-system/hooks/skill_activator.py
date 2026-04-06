@@ -21,6 +21,7 @@ Usage (hooks config in settings.local.json):
     "command": "python3 /path/to/skill_activator.py"
   }]
 """
+from __future__ import annotations
 
 import json
 import os

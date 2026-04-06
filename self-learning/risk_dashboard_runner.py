@@ -20,6 +20,7 @@ Usage:
     report = RiskDashboard(outcomes, config).run()
     print(json.dumps(report, indent=2))
 """
+from __future__ import annotations
 import statistics
 from dataclasses import dataclass
 

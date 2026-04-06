@@ -19,6 +19,7 @@ Usage:
   python3 otel_receiver.py query [--hours N]       # Query stored metrics
   python3 otel_receiver.py summary [--hours N]     # Summarize recent metrics
 """
+from __future__ import annotations
 
 import argparse
 import http.server

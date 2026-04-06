@@ -36,6 +36,7 @@ Wire as PreToolUse hook in ~/.claude/settings.json or .claude/settings.local.jso
     }
   }
 """
+from __future__ import annotations
 import json
 import os
 import sys

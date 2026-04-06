@@ -17,6 +17,7 @@ Usage:
     sim = LossReductionSimulator(dist)
     report = sim.full_report(bankroll=178.05, target=250.0, n_days=60, n_sims=10000)
 """
+from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 

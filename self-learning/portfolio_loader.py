@@ -24,6 +24,7 @@ CLI:
     python3 portfolio_loader.py holdings.csv
     python3 portfolio_loader.py holdings.json --json
 """
+from __future__ import annotations
 
 import csv
 import json

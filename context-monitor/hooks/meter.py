@@ -33,6 +33,7 @@ Environment variables (all optional):
   CLAUDE_CONTEXT_DISABLED            - Set to "1" to disable this hook
   CLAUDE_AUTOCOMPACT_PCT_OVERRIDE    - CC's autocompact threshold (read-only, state output includes proximity)
 """
+from __future__ import annotations
 import json
 import os
 import sys

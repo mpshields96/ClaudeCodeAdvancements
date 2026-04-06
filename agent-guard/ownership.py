@@ -17,6 +17,7 @@ Usage:
 Output: Markdown table with columns: File, Last Session, Date, Commit Message
 Conflict detection: files appearing in 2+ commits within the lookback window.
 """
+from __future__ import annotations
 import argparse
 import json
 import os

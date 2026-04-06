@@ -14,6 +14,7 @@ Hook protocol:
   - stdin: JSON with tool_name + tool_input
   - stdout: JSON response (empty {} to pass, {"message": "..."} to warn)
 """
+from __future__ import annotations
 
 import json
 import sys

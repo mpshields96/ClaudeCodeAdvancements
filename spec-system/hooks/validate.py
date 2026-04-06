@@ -15,6 +15,7 @@ Configuration:
 Usage (hooks config):
   PreToolUse: python3 /path/to/validate.py
 """
+from __future__ import annotations
 
 import json
 import os

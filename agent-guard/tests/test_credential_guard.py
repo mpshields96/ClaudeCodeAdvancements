@@ -1,6 +1,7 @@
 """
 Tests for AG-3: credential-extraction guard.
 """
+from __future__ import annotations
 import json
 import os
 import sys

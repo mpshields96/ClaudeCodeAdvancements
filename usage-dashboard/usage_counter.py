@@ -16,6 +16,7 @@ Transcript format (from context-monitor/hooks/meter.py — proven):
   PROJECT_HASH = absolute project dir with / replaced by -
   Token data in assistant entries: entry["message"]["usage"]
 """
+from __future__ import annotations
 import argparse
 import json
 import os

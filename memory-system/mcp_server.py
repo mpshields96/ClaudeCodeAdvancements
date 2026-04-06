@@ -17,6 +17,7 @@ Registration (add to ~/.claude/claude_desktop_config.json or project MCP config)
   }
 }
 """
+from __future__ import annotations
 
 import json
 import sys

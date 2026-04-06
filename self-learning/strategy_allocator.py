@@ -19,6 +19,7 @@ Usage:
     result = alloc.allocate(bankroll=178.05)
     print(result.summary())
 """
+from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 

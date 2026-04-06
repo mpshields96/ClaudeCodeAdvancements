@@ -18,6 +18,7 @@ Options:
   --dir PATH        Override memory directory (default: ~/.claude-memory)
   --no-color        Disable ANSI color output
 """
+from __future__ import annotations
 import argparse
 import json
 import os

@@ -17,6 +17,7 @@ Usage:
     score = compute_effective_confidence(85.0, days=20, confidence="HIGH")
     prune = should_prune(30.0, days=60, confidence="LOW")
 """
+from __future__ import annotations
 
 import math
 

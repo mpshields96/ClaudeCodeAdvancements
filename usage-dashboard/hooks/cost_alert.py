@@ -24,6 +24,7 @@ Configuration via environment variables:
 Usage (hooks config):
   PreToolUse: python3 /path/to/cost_alert.py
 """
+from __future__ import annotations
 
 import json
 import os

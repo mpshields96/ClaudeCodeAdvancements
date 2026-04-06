@@ -16,6 +16,7 @@ CLI:
     python3 monte_carlo_simulator.py --bankroll 100 --target 125 --days 60 --sims 10000
     python3 monte_carlo_simulator.py --from-db  # use actual polybot.db bet history
 """
+from __future__ import annotations
 import argparse
 import json
 import math

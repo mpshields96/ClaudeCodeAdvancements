@@ -16,6 +16,7 @@ Usage:
     python3 paper_digest.py unprocessed     # Show unprocessed papers
     python3 paper_digest.py stats           # Digest statistics
 """
+from __future__ import annotations
 
 import json
 import os

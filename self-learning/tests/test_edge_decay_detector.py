@@ -4,6 +4,7 @@ Detects whether a trading edge is stable, growing, or deteriorating using
 rolling window analysis. Answers: is our 93.3% WR holding steady or was
 it an artifact of a hot streak?
 """
+from __future__ import annotations
 import os
 import sys
 import json

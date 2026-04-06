@@ -26,6 +26,7 @@ Output (one line, ANSI-colored):
   CTX [==========] 78% HIGH | $0.15 | Sonnet    (red)
   CTX [==========] 92% CRIT | $0.23 | Sonnet    (bold red)
 """
+from __future__ import annotations
 import json
 import os
 import sys

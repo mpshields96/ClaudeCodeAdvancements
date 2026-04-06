@@ -23,6 +23,7 @@ Usage:
 Run standalone:
     python3 self-learning/strategy_health_scorer.py --db /path/to/polybot.db
 """
+from __future__ import annotations
 
 import math
 import os

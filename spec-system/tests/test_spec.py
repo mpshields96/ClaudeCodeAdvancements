@@ -3,6 +3,7 @@
 Smoke tests for spec-system validate hook.
 Run: python3 spec-system/tests/test_spec.py
 """
+from __future__ import annotations
 
 import json
 import sys
