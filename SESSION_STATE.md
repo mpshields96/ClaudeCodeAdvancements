@@ -3,17 +3,19 @@
 
 ---
 
-## Current State (as of Session 265 — 2026-04-06)
+## Current State (as of Session 266 — 2026-04-06)
 
-**Phase:** Session 265 COMPLETE. Chat 36: wired collision_reader_crystal into main.py (MT-53) + blast_radius import graph for agent-guard with ownership.py integration
+**Phase:** Session 266 COMPLETE. Chat 37: BMAD party-mode research + Memory System semantic dedup overhaul (Frontier 1).
 
-**What was done this session (S265):**
-- 36A: main.py uses build_intro_navigator_with_collision for accurate wall routing
-- 36B: blast_radius.py (ast graph, 24 tests) + blast_radius column in ownership manifest
-- **Tests**: 374 suites, 12677 tests passing. All green.
+**What was done this session (S266):**
+- Kalshi URGENT REQ-072/REQ-073: sports board analysis (BOS 1-book outlier warning) + full Kalshi market expansion scan (KXFED, KXUNRATE, politics, UFC). Delivered to CCA_TO_POLYBOT.md.
+- 37A: BMAD party-mode patterns captured in agent-guard/hivemind_notes.md (prereq for MT-21).
+- 37B: Memory System semantic dedup — decide_action() ADD/UPDATE/SKIP/DELETE_ADD logic, user_id/agent_id/run_id scoping fields in schema+DB+API. 22 new tests. 214/214 passing. Commit bdc98f4.
+- TODAYS_TASKS Chat 37 marked DONE.
 
 **Next:**
-1. Chat 37: check SESSION_RESUME for next tasks
+1. Chat 38: priority_picker for next task (TODAYS_TASKS Chat 37 done, fall to MASTER_TASKS)
+   - Candidates: MT-53 mGBA emulator boot, MT-21 hivemind with BMAD patterns, auto-generate PROJECT_INDEX from AST (blast_radius unblocked)
 
 ---
 
