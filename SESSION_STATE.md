@@ -5,9 +5,24 @@
 
 ## Current State (as of Session 269 — 2026-04-06)
 
-**Phase:** Session 269 COMPLETE. Full Phase 9 planning package delivered to Kalshi chat via CCA_TO_POLYBOT.md. All 10 TODAYS_TASKS TODO items marked DONE.
+**Phase:** Session 269 COMPLETE. Full Phase 9 planning package + efficiency_feed.py + CPI/NBA research delivered to Kalshi bot
 
 **What was done this session (S269):**
+- efficiency_feed.py with NHL data (23 tests)
+- REQ-083B: CPI skip verdict + NBA in-play restart recommendation
+- **Tests**: 374 suites, 12708 tests passing. All green.
+
+**Next:**
+1. Kalshi chat restarts bot + wires efficiency_feed
+2. CCA: priority_picker → MT-32 or MT-21
+
+---
+
+## Previous State (Session 269 — 2026-04-06 (extended))
+
+**Phase:** Session 269 COMPLETE (extended). All REQ-083 deliverables complete. Bot is stopped; ready to restart after Kalshi chat wires remaining items.
+
+**What was done this session (S269 + context continuation):**
 - CHAT 38C: Kelly-derived sniper limits (SNIPER_LIMITS_RATIONALE.md) + 25 USD/day income map (INCOME_MAP_S269.md)
 - CHAT 44: Bot calibration plan — BUG 1 in-game guard + date sort + 24h horizon + balance_check.py
 - CHAT 45: sports_math.py wiring instructions (file is at src/strategies/sports_math.py)
@@ -18,17 +33,19 @@
 - CHAT 50: KALSHI_INIT_CHECKLIST.md — mandatory 5-step session init
 - CHAT 51: CONTEXT_MANAGEMENT_S269.md — PreCompact/PostCompact port + ACTIVE_DIRECTIVES.md
 - CHAT 52: PHASE9_WRAP_TEMPLATE.md — Phase 9 audit + Phase 10 plan template
-- All 7 files committed to polymarket-bot (commit b3408d5)
-- **Tests**: smoke 10/10 PASS (did not rerun full suite — no CCA code changed)
+- REQ-083B: CPI April 10 research — economics sniper WILL NOT fire (all markets above ceiling or below floor)
+- REQ-083C: efficiency_feed.py committed (b014194) — NBA/NHL/MLB/NCAAB/EPL team strength data + 23 tests
+- REQ-083B: NBA research — in-play sniper already wired (5abe5de), would fire on OKC@91c tonight
+- Kalshi chat already built: sports_inplay_sniper.py (817f4bf) + wired loop (5abe5de) + 5 Phase 1 bugs (ddfdd4f) + Phase 4 overhaul (2a63099)
+- **Tests**: smoke 10/10 PASS (no CCA code changed)
 
 **Next:**
-1. Kalshi chat executes Chats 44-52 using delivered docs
-2. CCA monitors via cross-chat comms — address any Kalshi questions
-3. After all TODOs done: return to priority_picker → MT-32 (Visual Excellence) score 8.0
-4. Watch for: KXCPI April 10 settlement → economics sniper live promotion
+1. Kalshi chat: RESTART BOT — in-play opportunities being missed (OKC@91c tonight, playoffs April 19+)
+2. Kalshi chat: Wire efficiency_feed.py into sports_math.py (3-line addition, instructions in CCA_TO_POLYBOT.md)
+3. CPI economics sniper: skip April 10, position for May CPI (watch ~June 3-10 window)
+4. CCA next: priority_picker → MT-32 (Visual Excellence) score 8.0 or MT-21 (Hivemind)
 
 ---
-
 ## Previous State (Session 267 — 2026-04-06)
 
 **Phase:** Session 267 COMPLETE. S267: REQ-075 Kalshi sports research delivered + BMAD agent manifest + sports math upgrade plan (S267 directive)

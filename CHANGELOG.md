@@ -4401,3 +4401,20 @@ CLI chat 2:
 - no new tests this session
 
 ---
+
+## Session 269 — 2026-04-06
+
+**What changed:**
+- efficiency_feed.py with NHL data (23 tests)
+- REQ-083B: CPI skip verdict + NBA in-play restart recommendation
+
+**Why:**
+- Full Phase 9 planning package + efficiency_feed.py + CPI/NBA research delivered to Kalshi bot
+
+**Tests:** 12708/12708 passing (374 suites)
+
+**Lessons:**
+- KalshiClient init debugging (2 attempts)
+- CPI market format mismatch
+
+---
