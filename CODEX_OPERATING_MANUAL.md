@@ -131,6 +131,16 @@ Dual-notify rule for Kalshi-bot changes:
 - Do this for code changes, bug fixes, parameter-safe hardening, and any other repo edits that materially affect Kalshi behavior or operator understanding.
 - Do not assume CCA will relay later. Dual notification is the default, not a special case.
 
+Advancement execution rule:
+- When Codex identifies an actionable advancement tip, Codex should execute it or codify it during the same workstream whenever it is safe and in scope.
+- Do not end the session with "Advancement tip: ..." as a suggestion-only footer if the underlying improvement can be implemented, logged, or turned into a durable operating rule right now.
+- Treat these tips as required follow-through, not optional inspiration.
+
+Operational proof rule:
+- Unit tests and static reasoning do not prove an operational helper works in the live repo.
+- Any startup gate, wrap helper, bridge command, or operator-facing workflow should be live-probed at least once before Codex treats it as trustworthy.
+- If the live probe disagrees with the tested design, log the runtime truth immediately and prioritize the runtime blocker over the cleaner paper design.
+
 ## Codex Init / Auto / Wrap Emulation
 
 Codex should mirror the useful parts of CCA's workflow without pretending the

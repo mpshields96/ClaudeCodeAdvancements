@@ -271,6 +271,38 @@ Leans sent to Kalshi:
 
 ---
 
+## [2026-04-07 03:10 UTC] — HARDENING — Kalshi overhaul prompt path cleaned up + advancement execution rule codified
+**Status:** ACTION NEEDED
+**Scope:** `polymarket-bot/scripts/polybot_wrap_helper.py`, `polymarket-bot/tests/test_polybot_wrap_helper.py`, `polymarket-bot/SESSION_HANDOFF.md`, `polymarket-bot/SESSION_RESUME.md`, `polymarket-bot/CODEX_OBSERVATIONS.md`, `CODEX_OPERATING_MANUAL.md`, `polymarket-bot/AGENTS.md`
+**Summary:**
+Codex reviewed the completed Kalshi overhaul work and found the stale-state problem was still active in the operator prompt path even after the visibility gate landed. The wrap helper could not replace the legacy `SESSION_RESUME.md` format, the generated prompt still carried old restart-first priorities, and it even rendered the entire guard-count dict into the startup text. Those are now fixed. I also codified Matthew's new instruction that Codex should execute or formalize actionable advancement tips during the workstream instead of leaving them as suggestion-only footers.
+
+**Verification:**
+- `source venv/bin/activate && python3 -m pytest tests/test_polybot_wrap_helper.py tests/test_kalshi_visibility_report.py -q`
+- Result: `11 passed`
+
+**Relay Guidance:**
+- CCA should treat the Kalshi prompt path as partially hardened but still blocked until `scripts/kalshi_visibility_report.py --edge-mode cached --strict-same-day-sports` produces a real cached report instead of `UNKNOWN @ missing`.
+- Do not route playoff/in-play/dynamic-series expansion as "current progress" until the visibility/coverage/startup blockers are actually closed.
+
+---
+
+## [2026-04-07 03:22 UTC] — LIVE PROBE — visibility gate runtime path still blocked
+**Status:** ACTION NEEDED
+**Scope:** `polymarket-bot/scripts/kalshi_visibility_report.py`, `polymarket-bot/SESSION_HANDOFF.md`, `polymarket-bot/SESSION_RESUME.md`, `polymarket-bot/CODEX_OBSERVATIONS.md`, `CODEX_OPERATING_MANUAL.md`
+**Summary:**
+Codex live-tested the visibility gate instead of trusting the green test suite and found the real blocker is worse than "cache missing." The runtime path started crawling huge pagination in `/events` and `/markets` and still had not produced a cached report within normal startup time. The gate wiring exists, but the operator-facing scan is not startup-safe yet. I codified the rule this exposed as well: operational helpers need a live probe, not just unit coverage.
+
+**Verification:**
+- Live probe: `source venv/bin/activate && python3 scripts/kalshi_visibility_report.py --edge-mode cached --strict-same-day-sports`
+- Result: runtime crawl hit 10,000+ events before safety stop and 100,000+ open-market pages during the probe window; no usable cache was produced in normal operator time
+
+**Relay Guidance:**
+- CCA should now describe the Kalshi visibility blocker as a runtime scan-path problem, not merely a missing JSON file.
+- Any follow-on work should prioritize a startup-safe visibility scan strategy or bounded pagination path before more restart/expansion guidance.
+
+---
+
 ## [2026-04-03 18:18 UTC] — KALSHI SUPPORT — April 4 price-gate helper added
 **Status:** COMPLETE
 **Scope:** `kalshi_price_gate.py`, `tests/test_kalshi_price_gate.py`, `KALSHI_TASK_CATALOG.md`, `~/.claude/cross-chat/CCA_TO_POLYBOT.md`, `/Users/matthewshields/Projects/polymarket-bot/CODEX_OBSERVATIONS.md`
