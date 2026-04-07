@@ -117,3 +117,7 @@
 {"tip":"When tests fail due to real filesystem state leaking (pause files, env vars), add explicit temp-path params to setUp","source":"cca-desktop","session":"S267","timestamp":"2026-04-06T21:46:57.059033Z"}
 {"tip":"agentic-rd-sandbox has production Sharp Score math \u2014 steal it, don't rewrite","source":"cca-desktop","session":"S267","timestamp":"2026-04-06T21:46:57.059033Z"}
 {"tip":"Read files before editing in new sessions to avoid 'file not read' edit errors","source":"cca-desktop","session":"S268","timestamp":"2026-04-07T00:29:08.738973Z"}
+{"tip":"Pull polymarket-bot git log at session start to see what Kalshi already built \u2014 avoids duplicate work","source":"cca-desktop","session":"S269","timestamp":"2026-04-07T02:31:08.467092Z"}
+{"tip":"KalshiClient: always use load_from_env() from src/platforms/kalshi.py, not KalshiClient(auth) directly","source":"cca-desktop","session":"S269","timestamp":"2026-04-07T02:31:08.467092Z"}
+{"tip":"Check polymarket-bot TODAY_TASKS.md at every session start \u2014 Kalshi bot tasks live there, not in CCA TODAYS_TASKS","source":"cca-desktop","session":"S270","timestamp":"2026-04-07T02:58:56.793983Z"}
+{"tip":"KalshiSeriesDiscovery is the replacement for all hardcoded _SPORT_SERIES dicts \u2014 wire it before adding new sports","source":"cca-desktop","session":"S270","timestamp":"2026-04-07T02:58:56.793983Z"}

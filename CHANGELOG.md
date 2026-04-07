@@ -4418,3 +4418,19 @@ CLI chat 2:
 - CPI market format mismatch
 
 ---
+
+## Session 270 — 2026-04-06
+
+**What changed:**
+- efficiency_feed wired into sports_game signal (da8f134, eff_gap in all reason strings)
+- KalshiSeriesDiscovery class — 11 confirmed Odds API mappings + classify_series + 67 tests (2b8d376)
+
+**Why:**
+- efficiency_feed wired into sports_game + KalshiSeriesDiscovery class (67 tests) + REQ-083 all closed
+
+**Tests:** 12708/12708 passing (364 suites)
+
+**Lessons:**
+- Explored CCA MT priorities before Matthew redirected — should check polymarket-bot TODAY_TASKS at init
+
+---

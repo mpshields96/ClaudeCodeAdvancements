@@ -3,7 +3,22 @@
 
 ---
 
-## Current State (as of Session 269 — 2026-04-06)
+## Current State (as of Session 270 — 2026-04-06)
+
+**Phase:** Session 270 COMPLETE. efficiency_feed wired into sports_game + KalshiSeriesDiscovery class (67 tests) + REQ-083 all closed
+
+**What was done this session (S270):**
+- efficiency_feed wired into sports_game signal (da8f134, eff_gap in all reason strings)
+- KalshiSeriesDiscovery class — 11 confirmed Odds API mappings + classify_series + 67 tests (2b8d376)
+- **Tests**: 364 suites, 12708 tests passing. All green.
+
+**Next:**
+1. Kalshi chat: wire KalshiSeriesDiscovery into sports_game_loop + verify max_daily_bets=30 + restart bot
+2. Codex: income portfolio model (25 USD/day target) + portfolio simulation
+
+---
+
+## Previous State (Session 269 — 2026-04-06)
 
 **Phase:** Session 269 COMPLETE. Full Phase 9 planning package + efficiency_feed.py + CPI/NBA research delivered to Kalshi bot
 
@@ -17,7 +32,6 @@
 2. CCA: priority_picker → MT-32 or MT-21
 
 ---
-
 ## Previous State (Session 269 — 2026-04-06 (extended))
 
 **Phase:** Session 269 COMPLETE (extended). All REQ-083 deliverables complete. Bot is stopped; ready to restart after Kalshi chat wires remaining items.
