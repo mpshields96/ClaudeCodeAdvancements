@@ -482,6 +482,24 @@ def cli_main(args: list = None):
         registry.deregister(role)
         print(f"Deregistered {role}")
 
+    elif cmd == "manifest":
+        registry = PidRegistry()
+        print("CCA Agent Manifest")
+        print("=" * 40)
+        for role, caps in PidRegistry.ROLE_CAPABILITIES.items():
+            alive = registry.is_alive(role)
+            status = "ALIVE" if alive else "offline"
+            data = registry.read(role)
+            caps_str = ", ".join(caps)
+            print(f"  {role:<10} [{status}]  capabilities: {caps_str}")
+            if data and alive:
+                import datetime as _dt
+                started = _dt.datetime.fromtimestamp(data.get("started_at", 0)).strftime("%H:%M")
+                print(f"             started: {started}  pid: {data.get('pid', '?')}")
+        print()
+        state = _get_live_state()
+        print(f"Active mode: {state.mode.value}")
+
     else:
         print(f"Unknown command: {cmd}")
         sys.exit(1)

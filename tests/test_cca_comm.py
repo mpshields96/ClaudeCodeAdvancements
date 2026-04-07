@@ -4,11 +4,13 @@ Tests for cca_comm.py — Simple CCA Hivemind Communication Wrappers.
 Run: python3 tests/test_cca_comm.py
 """
 
+import io
 import json
 import os
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
@@ -576,13 +578,130 @@ class TestCrossProjectRouting(unittest.TestCase):
 
 class TestCommands(unittest.TestCase):
     def test_all_commands_registered(self):
-        expected = {"inbox", "say", "task", "claim", "release", "done", "ack", "status",
-                    "broadcast", "assign", "shutdown", "context"}
+        expected = {"inbox", "say", "task", "question", "claim", "release", "done", "ack",
+                    "status", "broadcast", "assign", "shutdown", "context"}
         self.assertEqual(set(cca_comm.COMMANDS.keys()), expected)
 
     def test_all_commands_callable(self):
         for name, func in cca_comm.COMMANDS.items():
             self.assertTrue(callable(func), f"{name} is not callable")
+
+
+class TestBMADContextCap(unittest.TestCase):
+    """400-word cap warning on cmd_task (BMAD context cap pattern)."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp.close()
+        import cca_comm as _cc
+        self._orig = _cc.ciq.DEFAULT_QUEUE_PATH
+        _cc.ciq.DEFAULT_QUEUE_PATH = self.tmp.name
+
+    def tearDown(self):
+        import cca_comm as _cc
+        _cc.ciq.DEFAULT_QUEUE_PATH = self._orig
+        os.unlink(self.tmp.name)
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_no_warning_under_cap(self):
+        short_task = "do this thing"  # well under 400 words
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_task(["cli1", short_task])
+        output = f.getvalue()
+        self.assertNotIn("BMAD context cap", output)
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_warning_over_cap(self):
+        long_task = " ".join(["word"] * 401)
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_task(["cli1", long_task])
+        output = f.getvalue()
+        self.assertIn("BMAD context cap", output)
+        self.assertIn("401 words", output)
+        self.assertIn("cap 400", output)
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "desktop"})
+    def test_task_still_sent_over_cap(self):
+        """Warning does NOT block the task — warn only."""
+        long_task = " ".join(["word"] * 401)
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_task(["cli1", long_task])
+        output = f.getvalue()
+        self.assertIn("Task assigned", output)
+
+
+class TestQuestionCommand(unittest.TestCase):
+    """question command — reactive pair pattern (BMAD)."""
+
+    def setUp(self):
+        self.tmp = tempfile.NamedTemporaryFile(suffix=".jsonl", delete=False)
+        self.tmp.close()
+        import cca_comm as _cc
+        self._orig = _cc.ciq.DEFAULT_QUEUE_PATH
+        _cc.ciq.DEFAULT_QUEUE_PATH = self.tmp.name
+
+    def tearDown(self):
+        import cca_comm as _cc
+        _cc.ciq.DEFAULT_QUEUE_PATH = self._orig
+        os.unlink(self.tmp.name)
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "cli1"})
+    def test_question_routes_with_question_category(self):
+        import cca_internal_queue as ciq
+        cca_comm.cmd_question(["desktop", "what is the plan?"])
+        msgs = ciq.get_unread("desktop", self.tmp.name)
+        self.assertEqual(len(msgs), 1)
+        self.assertEqual(msgs[0]["category"], "question")
+
+    @patch.dict(os.environ, {"CCA_CHAT_ID": "cli1"})
+    def test_question_output_says_needs_reply(self):
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_question(["desktop", "should I proceed?"])
+        output = f.getvalue()
+        self.assertIn("needs reply this session", output)
+
+    def test_question_no_args_prints_usage(self):
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_question([])
+        self.assertIn("Usage", f.getvalue())
+
+
+class TestManifestCommand(unittest.TestCase):
+    """manifest CLI command on session_orchestrator."""
+
+    def test_manifest_prints_all_roles(self):
+        from session_orchestrator import PidRegistry
+        f = io.StringIO()
+        with redirect_stdout(f):
+            from session_orchestrator import cli_main
+            cli_main(["manifest"])
+        output = f.getvalue()
+        for role in PidRegistry.ROLE_CAPABILITIES:
+            self.assertIn(role, output)
+
+    def test_manifest_shows_capabilities(self):
+        f = io.StringIO()
+        with redirect_stdout(f):
+            from session_orchestrator import cli_main
+            cli_main(["manifest"])
+        output = f.getvalue()
+        self.assertIn("coordinate", output)   # desktop capability
+        self.assertIn("build", output)        # cli1/cli2 capability
+        self.assertIn("monitor", output)      # kalshi capability
+
+    def test_manifest_shows_alive_status(self):
+        f = io.StringIO()
+        with redirect_stdout(f):
+            from session_orchestrator import cli_main
+            cli_main(["manifest"])
+        output = f.getvalue()
+        # At minimum, offline roles shown
+        self.assertIn("offline", output)
 
 
 if __name__ == "__main__":

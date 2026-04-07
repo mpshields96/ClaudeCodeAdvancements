@@ -140,6 +140,9 @@ def cmd_say(args):
     print(f"Sent to {_target_name(target)}: {message}")
 
 
+BMAD_CONTEXT_CAP = 400  # words — compression threshold per BMAD party-mode research
+
+
 def cmd_task(args):
     """Assign a task to another chat. Clears only OLD stale messages (>2h), preserves recent ones."""
     if len(args) < 2:
@@ -147,6 +150,11 @@ def cmd_task(args):
         return
     target = args[0]
     task = " ".join(args[1:])
+
+    # BMAD context cap: warn if task exceeds 400 words (compression threshold)
+    word_count = len(task.split())
+    if word_count > BMAD_CONTEXT_CAP:
+        print(f"BMAD context cap: task is {word_count} words (cap {BMAD_CONTEXT_CAP}). Consider trimming.")
     me = detect_chat_id()
 
     if is_kalshi_target(target):
@@ -302,6 +310,25 @@ def cmd_status(args):
         print("No active scope claims.")
 
 
+def cmd_question(args):
+    """Send a question to another chat — reactive pair pattern (BMAD).
+
+    Unlike 'say' (FYI), a question signals that desktop must reply this session.
+    Usage: question <target> "question text"
+    """
+    if len(args) < 2:
+        print("Usage: question <target> <question>")
+        return
+    target = args[0]
+    question = " ".join(args[1:])
+    me = detect_chat_id()
+    if is_kalshi_target(target):
+        ccq.send_message("cca", target, question, category="question", path=ccq.DEFAULT_QUEUE_PATH)
+    else:
+        ciq.send_message(me, target, question, category="question", path=_qpath())
+    print(f"Question sent to {_target_name(target)} [needs reply this session]: {question}")
+
+
 def cmd_broadcast(args):
     """Send a message to all other chats."""
     if not args:
@@ -440,6 +467,7 @@ COMMANDS = {
     "inbox": cmd_inbox,
     "say": cmd_say,
     "task": cmd_task,
+    "question": cmd_question,
     "claim": cmd_claim,
     "release": cmd_release,
     "done": cmd_done,
