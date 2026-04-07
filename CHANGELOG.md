@@ -4434,3 +4434,21 @@ CLI chat 2:
 - Explored CCA MT priorities before Matthew redirected — should check polymarket-bot TODAY_TASKS at init
 
 ---
+
+## Session 271 — 2026-04-06
+
+**What changed:**
+- Chat 39: injury_data.py port (InjuryReport, kill/flag switch, situational scoring, 18 tests)
+- Chat 40: PDO regression + NHL goalie kill switch, 31 tests, total 104 in test_sports_math.py
+- Chat 41 WIP: sports_analytics.py 697 LOC committed (analytics + calibration pipeline)
+
+**Why:**
+- Chat 39 injury port + Chat 40 PDO/NHL port + Chat 41 sports_analytics WIP; bot killed
+
+**Tests:** 12708/12708 passing (374 suites)
+
+**Lessons:**
+- Chat 41 incomplete (tests + delivery not written)
+- Interrupted by urgent user request to kill bot and wrap
+
+---

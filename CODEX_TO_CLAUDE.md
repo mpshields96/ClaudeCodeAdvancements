@@ -238,6 +238,50 @@ Codex did a live-date research pass for Friday, April 3, 2026 and converted it i
 
 Ranked board:
 - NBA same-day game markets first
+
+---
+
+## [2026-04-07 03:35 UTC] — HANDOFF PROMPT — Tomorrow Continue Overhaul From Visibility Cache Gate
+**Status:** ACTION NEEDED
+**Scope:** `polymarket-bot/scripts/kalshi_visibility_report.py`, `polymarket-bot/scripts/polybot_wrap_helper.py`, `polymarket-bot/tests/test_kalshi_visibility_report.py`, `polymarket-bot/tests/test_polybot_wrap_helper.py`, `polymarket-bot/.claude/commands/polybot-init.md`, `polymarket-bot/.claude/commands/polybot-wrap.md`
+**Summary:**
+Codex continued the Kalshi overhaul and changed the visibility gate so startup is now cache-only by default instead of silently doing a full live exchange crawl. The gate now rejects stale or obviously corrupt cached reports and fails closed as `UNKNOWN`; the wrap helper applies the same check so handoff/resume state stops trusting junk visibility snapshots. This closes the immediate “startup-safe gate” bug, but the live rebuild path itself is still unproven and remains the next blocker.
+
+**Verification:**
+- `source /Users/matthewshields/Projects/polymarket-bot/venv/bin/activate && python3 -m pytest /Users/matthewshields/Projects/polymarket-bot/tests/test_kalshi_visibility_report.py /Users/matthewshields/Projects/polymarket-bot/tests/test_polybot_wrap_helper.py -q`
+- `python3 -m py_compile /Users/matthewshields/Projects/polymarket-bot/scripts/kalshi_visibility_report.py /Users/matthewshields/Projects/polymarket-bot/scripts/polybot_wrap_helper.py`
+- Result: targeted tests passed; compile passed
+- Not run: live rebuild, because current shell/env lacked `KALSHI_API_KEY_ID`
+
+**Relay Guidance:**
+- Relay to Kalshi: startup gate is now fail-closed and cache-safe; do not treat that as overhaul complete
+- Relay to Kalshi: next action is a deliberate live rebuild to validate the refreshed report path, not restart pressure or new strategy work
+
+**Tomorrow Prompt:**
+```text
+Continue the Kalshi overhaul from the visibility gate work Codex landed on 2026-04-06/07.
+
+Current truth:
+- `scripts/kalshi_visibility_report.py` is now cache-only by default and startup-safe.
+- Stale or obviously corrupt cached reports now fail closed as `same_day_gate = UNKNOWN`.
+- `scripts/polybot_wrap_helper.py` now applies the same validation.
+- The next blocker is not “wire the gate”; it is “prove the intentional live rebuild path is sane and fast enough.”
+
+First actions:
+1. Read `/Users/matthewshields/Projects/ClaudeCodeAdvancements/CODEX_TO_CLAUDE.md` latest handoff entry and `/Users/matthewshields/Projects/polymarket-bot/CODEX_OBSERVATIONS.md`.
+2. In `/Users/matthewshields/Projects/polymarket-bot`, verify focused tests still pass:
+   `source venv/bin/activate && python3 -m pytest tests/test_kalshi_visibility_report.py tests/test_polybot_wrap_helper.py -q`
+3. Run the intentional live rebuild only if credentials are available:
+   `./venv/bin/python3 scripts/kalshi_visibility_report.py --refresh-live --edge-mode cached --strict-same-day-sports`
+4. Inspect the rebuilt JSON/markdown and decide:
+   - if sane: the startup visibility blocker is materially reduced
+   - if still too heavy or malformed: keep working on the live fetch path itself
+
+Rules for this continuation:
+- Do not revert user/Claude runtime changes in `sports_game.py` or `sports_math.py`.
+- Do not pivot to restart, expansion, or strategy work until the live rebuild path is validated.
+- Treat any fresh-but-bogus report as an overhaul blocker, not a PASS.
+```
 - NHL second
 - MLB late board third
 - weather setup for tomorrow fourth

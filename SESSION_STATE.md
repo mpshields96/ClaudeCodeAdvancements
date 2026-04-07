@@ -3,7 +3,23 @@
 
 ---
 
-## Current State (as of Session 270 — 2026-04-06)
+## Current State (as of Session 271 — 2026-04-06)
+
+**Phase:** Session 271 COMPLETE. Chat 39 injury port + Chat 40 PDO/NHL port + Chat 41 sports_analytics WIP; bot killed
+
+**What was done this session (S271):**
+- Chat 39: injury_data.py port (InjuryReport, kill/flag switch, situational scoring, 18 tests)
+- Chat 40: PDO regression + NHL goalie kill switch, 31 tests, total 104 in test_sports_math.py
+- Chat 41 WIP: sports_analytics.py 697 LOC committed (analytics + calibration pipeline)
+- **Tests**: 374 suites, 12708 tests passing. All green.
+
+**Next:**
+1. Chat 41 finish: write tests/test_sports_analytics.py (12+ tests) + delivery to CCA_TO_POLYBOT.md
+2. Chat 42: sports_clv.py (CLV tracking + Monte Carlo sim)
+
+---
+
+## Previous State (Session 270 — 2026-04-06)
 
 **Phase:** Session 270 COMPLETE. efficiency_feed wired into sports_game + KalshiSeriesDiscovery class (67 tests) + REQ-083 all closed
 
@@ -17,7 +33,6 @@
 2. Codex: income portfolio model (25 USD/day target) + portfolio simulation
 
 ---
-
 ## Previous State (Session 269 — 2026-04-06)
 
 **Phase:** Session 269 COMPLETE. Full Phase 9 planning package + efficiency_feed.py + CPI/NBA research delivered to Kalshi bot
