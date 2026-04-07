@@ -1383,6 +1383,13 @@ Context:
 - BUT: the S166 numbers were reactive, not statistically derived
 - Need objective rules that survive scrutiny when Matthew challenges them with data
 
+**2026-04-06 correction from post-ban audit + user feedback:**
+- Sniper is the base layer, not the roadmap.
+- No new sniper variants should take priority over building a second real engine.
+- Sports may become `30-40%` of total bets, but only if MLB/NHL/NBA are handled as separate calibrated lanes.
+- We are not ignoring other Kalshi markets; non-sports discovery remains a separate mandatory lane.
+- Daily profit takes priority over betting sports games days from now. Same-day market visibility is a blocker priority.
+
 #### Part A: Objective Sniper Limits (Kelly math)
 
 1. Pull current stats from REQ data in POLYBOT_TO_CCA.md:
@@ -1658,13 +1665,12 @@ Steps:
 **Layer 4 — Session Intelligence** (Chat 50-52): Fix the Kalshi CHAT itself —
   context continuity, delivery implementation, execution quality.
 
-The 25 USD/day breakdown after full overhaul:
-  BTC sniper (Kelly-capped, 5 bets/day at ~3-5 USD): ~4-6 USD/day
-  Sports game (post-calibration + Sharp Score):        ~6-9 USD/day
-  In-play sports sniper (Chat 47):                     ~5-8 USD/day
-  Economics sniper (live April 8+):                    ~2-3 USD/day
-  UFC (Chat 48, after paper validation):               ~1-2 USD/day
-  Total target:                                        ~18-28 USD/day
+Hard rules for Phase 9:
+  - Sniper is the capital base, not the default answer to every profit gap.
+  - Sports can reach `30-40%` of total bets once calibrated, but MLB/NHL/NBA are separate lanes.
+  - Non-sports market discovery remains mandatory in parallel.
+  - Market visibility is a blocker: the bot cannot execute the mission if it cannot see the board.
+  - Same-day / near-term profit takes priority over betting sports games days from now.
 
 ---
 
@@ -1766,7 +1772,13 @@ After CCA delivers `sports_math.py` via CCA_TO_POLYBOT.md:
 
 **Owner: CCA designs the strategy. Kalshi chat implements.**
 
-**The gap-filler: same FLB logic as UCL soccer_sniper, applied to NBA/NHL/MLB daily games.**
+**This is NOT the immediate answer to every profit gap.**
+Only proceed after:
+1. Chat 44 bot correctness fixes land
+2. same-day sports visibility is verified
+3. MLB/NHL/NBA are being tracked as separate calibrated lanes
+
+**If those conditions are met, this becomes a candidate gap-filler using the same FLB logic as UCL soccer_sniper, applied to NBA/NHL/MLB daily games.**
 
 Why this fills the 25 USD/day gap:
 - UCL soccer_sniper: 8 games/month → ~0.27 games/day → maybe 0.5-1 USD/day
@@ -1823,7 +1835,7 @@ vanity markets). A few will have FLB-exploitable structure we haven't found yet.
 **NOT a real-time 9,490-series scanner** — that's expensive and unnecessary.
 
 CCA deliverable: `scripts/kalshi_series_scout.py` — runs weekly, finds high-volume series
-outside current coverage.
+outside current coverage, and makes full-market visibility a first-class capability rather than an afterthought.
 
 Design:
 1. `GET /markets/series` paginated — fetch ALL series (one-time weekly scan, not per-loop)
@@ -1832,6 +1844,10 @@ Design:
    KXCPI/KXFED/KXGDP (economics), KX* unknown (candidates)
 4. Output: ranked list of candidates by volume, with category label
 5. Human review: Matthew reviews weekly output and decides which to add to strategy map
+
+Correction:
+- This is not just "nice to have." Market visibility is a blocker priority because the current bot
+  cannot even see enough of Kalshi correctly to satisfy the daily-profit mandate.
 
 Weekly cron: run every Monday 06:00 ET, output to `.planning/SERIES_SCOUT_YYYY-MM-DD.md`
 

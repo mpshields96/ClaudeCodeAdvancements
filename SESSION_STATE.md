@@ -14,8 +14,9 @@
 - **Tests**: 374 suites, 12708 tests passing. All green.
 
 **Next:**
-1. Chat 38B: port sports_math.py from agentic-rd-sandbox
-2. Chat 38C: sniper limits + Kelly math
+1. Chat 44: bot correctness + same-day sports visibility (do not bet days-out games)
+2. Chat 48: full Kalshi market visibility / dynamic discovery
+3. Build second engine: MLB first, NHL second, NBA third; stop defaulting to sniper variants
 
 ---
 
