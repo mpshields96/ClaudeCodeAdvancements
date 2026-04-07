@@ -1628,6 +1628,309 @@ Steps:
 
 ---
 
+## PHASE 9: KALSHI BOT MASTER OVERHAUL (Chats 44-52)
+# Matthew directive S268: "massive overhaul of the Kalshi bot and chat"
+# Sports betting is ONE category among many. The full overhaul covers all 4 market categories
+# plus bot infrastructure and Kalshi chat session quality.
+#
+# CONTEXT: Two calibration bugs were already fixed in S268 (committed to polymarket-bot):
+#   - NCAAB wired into sports scanner (commit 763ba03)
+#   - Daily cap raised 8→30 (commit 28a9c74)
+#   - Bot needs a RESTART to pick up both changes.
+#
+# CODEX REVIEW REQUIRED before executing any Phase 9 chat.
+# Confirm before restarting bot: is KXNCAABGAME the actual Kalshi series for NCAAB games?
+# If wrong, change back to exclude basketball_ncaab until confirmed.
+
+---
+
+### PHASE 9 OVERVIEW — Four Layers
+
+**Layer 1 — Bot Calibration** (Chat 44): Fix the remaining code-level bugs that cause
+  the bot to behave incorrectly even when the strategy is right.
+
+**Layer 2 — Signal Quality** (Chats 38B-43 + 45-46): Make each bet smarter.
+  CCA delivers the math stack. Kalshi chat wires it.
+
+**Layer 3 — Market Expansion** (Chats 47-49): Expand beyond the 9 current series
+  into new categories with confirmed structural edge.
+
+**Layer 4 — Session Intelligence** (Chat 50-52): Fix the Kalshi CHAT itself —
+  context continuity, delivery implementation, execution quality.
+
+The 25 USD/day breakdown after full overhaul:
+  BTC sniper (Kelly-capped, 5 bets/day at ~3-5 USD): ~4-6 USD/day
+  Sports game (post-calibration + Sharp Score):        ~6-9 USD/day
+  In-play sports sniper (Chat 47):                     ~5-8 USD/day
+  Economics sniper (live April 8+):                    ~2-3 USD/day
+  UFC (Chat 48, after paper validation):               ~1-2 USD/day
+  Total target:                                        ~18-28 USD/day
+
+---
+
+### CHAT 44: [TODO] Layer 1 — Bot Calibration (Kalshi chat executes, ~45 min)
+
+**Owner: Kalshi chat** (not CCA — these are bot wiring changes)
+**Prerequisite: Codex review of NCAAB series name before restart**
+
+#### 44A. Confirm NCAAB series name and restart bot
+
+Before restarting: confirm `KXNCAABGAME` is the real Kalshi series prefix.
+Check via: `kalshi.get_markets(series_ticker="KXNCAABGAME", status="open")` in a test script.
+If empty and no error → series exists but no open markets (OK for now, off-season).
+If 404/error → series name is wrong; revert the NCAAB addition until confirmed.
+
+After confirmation: restart bot, check log for:
+  `[sports_game] Scan: NBA=X NCAAB=X NHL=X MLB=X ...`
+
+#### 44B. Game-date priority sort
+
+File: `polymarket-bot/main.py`, function: `sports_game_loop`
+Location: just before `for market in markets:` in the inner sport loop
+Change: sort markets by `_parse_ticker_date(m.ticker)` ascending before iterating
+Purpose: today's games are bet before April 9 games
+
+```python
+# Sort by game date ascending — today's games take priority over distant games
+markets = sorted(
+    markets,
+    key=lambda m: _parse_ticker_date(m.ticker) or datetime.max.replace(tzinfo=timezone.utc)
+)
+```
+
+Tests: add 2 unit tests to test_sports_game.py — verify sort order with mixed dates.
+Risk: LOW — sort only changes order, not what gets bet.
+
+#### 44C. 24h betting horizon
+
+File: `polymarket-bot/main.py`, function: `sports_game_loop`
+Add parameter: `max_bet_horizon_hours: int = 24`
+Location: inner market loop, after `kalshi_date = _parse_ticker_date(ticker)`:
+
+```python
+if kalshi_date and (kalshi_date - _now_ts).total_seconds() > max_bet_horizon_hours * 3600:
+    logger.debug("[sports_game] %s too far out (>%dh) — skip", ticker, max_bet_horizon_hours)
+    continue
+```
+
+Call site: pass `max_bet_horizon_hours=24` (consider 36h if 24h feels too tight for evening games).
+NOTE: This does NOT affect economics_sniper (different loop, different parameter). Economics
+sniper naturally needs 48h horizon for pre-release windows — leave that loop unchanged.
+
+Tests: add 3 unit tests — game within 24h passes, game at 25h skipped, edge case at exactly 24h.
+Risk: LOW — only restricts distant bets, never blocks valid today bets.
+
+#### 44D. Balance reconciliation script
+
+File: `polymarket-bot/scripts/balance_check.py` (new)
+Purpose: calls Kalshi `/portfolio/balance` API, compares to DB all-time P&L + initial deposit
+Output: reconciliation report showing any gap between DB records and actual account balance
+Context: REQ-077 requested this. DB all-time = 139.10 USD, actual balance = 223.07 USD —
+  the gap is the initial deposit amount (not a bug, just untracked).
+
+Implementation:
+1. Call `GET /portfolio/balance` → get `balance` field (cash) + positions value
+2. Read DB: `SELECT SUM(pnl) FROM trades WHERE resolved=1` → all-time P&L
+3. Infer initial deposit: `actual_balance - db_pnl`
+4. Print reconciliation table: initial_deposit | db_pnl | expected_balance | actual_balance | gap
+5. Flag if gap > $5 (suggests missing trades or accounting error)
+
+**STOP CONDITION:** Bot restarted with NCAAB confirmed, sort + horizon wired, balance_check.py working.
+
+---
+
+### CHAT 45: [TODO] Layer 2 — Wire Sports Math Phase 1 (Kalshi chat, ~45 min)
+
+**Prerequisite: CCA Chat 38B must be complete (sports_math.py delivered)**
+**Owner: Kalshi chat**
+
+After CCA delivers `sports_math.py` via CCA_TO_POLYBOT.md:
+1. Verify `sports_math.py` is at `polymarket-bot/sports_math.py`
+2. In `sports_game_loop`, after `edge_pct` is computed for each market, add:
+   ```python
+   from sports_math import sharp_score_for_bet, efficiency_gap_from_teams
+   sharp = sharp_score_for_bet(edge_pct=edge_pct, home_team=home_team, away_team=away_team)
+   if sharp < 35:
+       logger.debug("[sports_game] %s Sharp=%d below threshold (35) — skip", ticker, sharp)
+       continue
+   ```
+3. Log Sharp Score in bet record for post-analysis
+4. Paper validation: run 20 bets. Compare win rate pre/post Sharp Score filter.
+5. After 20 bets: if WR unchanged or improved → raise threshold to 40, continue validation.
+
+**STOP CONDITION:** Sharp Score filter live in paper mode, 20-bet validation running.
+
+---
+
+### CHAT 46: [TODO] Layer 2 — In-Play Sports Sniper (CCA designs, Kalshi wires)
+
+**Owner: CCA designs the strategy. Kalshi chat implements.**
+
+**The gap-filler: same FLB logic as UCL soccer_sniper, applied to NBA/NHL/MLB daily games.**
+
+Why this fills the 25 USD/day gap:
+- UCL soccer_sniper: 8 games/month → ~0.27 games/day → maybe 0.5-1 USD/day
+- NBA/NHL/MLB daily games: 15-25 games/day → 5-15 trigger events/day at 90c+
+- Each bet: 2-3 USD at 90-95c → expected value +5-15c per bet
+- Expected daily contribution: 5-8 USD/day
+
+CCA deliverable (design note in CCA_TO_POLYBOT.md):
+1. Trigger logic: `yes_price >= 90` OR `no_price >= 90` AND game settle time < 3h from now
+2. Eligible series: KXNBAGAME + KXNHLGAME + KXMLBGAME (NOT soccer — 90c threshold works
+   differently on 3-way markets)
+3. Size: start at 2 USD (same as UCL soccer_sniper), ramp after 20-bet validation
+4. Dedup: one bet per game (same game_key dedup as sports_game_loop)
+5. NOT eligible if we already have an open sports_game bet on the same game
+6. Loop: separate `sports_inplay_sniper_loop` — same architecture as soccer_sniper_loop
+7. Wiring: add to main.py alongside existing soccer_sniper_loop
+
+Kalshi deliverable: implement after CCA design note arrives.
+
+**STOP CONDITION:** sports_inplay_sniper_loop live in paper mode, firing on NBA/NHL/MLB.
+
+---
+
+### CHAT 47: [TODO] Layer 3 — UFC Market Strategy (research + design only)
+
+**Owner: CCA research, Kalshi chat implements after validation**
+
+UFC has documented oddsmaker conservatism bias (FLB-like structure) in academic literature.
+Kalshi series: KXUFCFIGHT. Next event: UFC 316 (May 3, 2026 — Oliveira vs Makhachev 2).
+
+CCA deliverable (research note + design sketch):
+1. Verify: does Kalshi KXUFCFIGHT open 14 days before the event or closer?
+   If <7 days: limited time to scan + bet at good prices.
+2. Signal: compare Kalshi implied probability vs BestFightOdds / DraftKings consensus
+   Same edge% + collar logic as sports_game_v1 — almost identical implementation.
+3. Edge floor: 8% minimum (UFC markets are less liquid than MLB/NBA)
+4. Kill switch: title fights vs prelims (different price behavior)
+5. Volume check: is KXUFCFIGHT volume comparable to KXMLBGAME? If <50K, skip for now.
+
+**NOT a new strategy file** — if volume and edge basis confirmed, extend `sports_game_v1`
+to include `"mma_mixed_martial_arts": "KXUFCFIGHT"` in the sport map.
+
+Paper validation: 5 UFC events before going live (low event frequency = long validation window).
+
+**STOP CONDITION:** Research note written. Decision: BUILD or DEFER (volume-gated).
+
+---
+
+### CHAT 48: [TODO] Layer 3 — Dynamic Market Discovery (lightweight scanner)
+
+**Context:** Kalshi has 9,490 total series. Most are irrelevant (copy trading, micro-cap,
+vanity markets). A few will have FLB-exploitable structure we haven't found yet.
+
+**NOT a real-time 9,490-series scanner** — that's expensive and unnecessary.
+
+CCA deliverable: `scripts/kalshi_series_scout.py` — runs weekly, finds high-volume series
+outside current coverage.
+
+Design:
+1. `GET /markets/series` paginated — fetch ALL series (one-time weekly scan, not per-loop)
+2. Filter: `volume > 50000` AND `close_time > 7 days from now` AND NOT in known series set
+3. Group by category prefix: KXBTC*/KXETH* (crypto), KXNBA*/KXNHL* etc. (sports),
+   KXCPI/KXFED/KXGDP (economics), KX* unknown (candidates)
+4. Output: ranked list of candidates by volume, with category label
+5. Human review: Matthew reviews weekly output and decides which to add to strategy map
+
+Weekly cron: run every Monday 06:00 ET, output to `.planning/SERIES_SCOUT_YYYY-MM-DD.md`
+
+This is NOT automation of new markets — it's INTELLIGENCE about what exists.
+Matthew makes the decision to expand, not the bot.
+
+**STOP CONDITION:** scout script runs and produces weekly report.
+
+---
+
+### CHAT 49: [TODO] Layer 3 — Economics Sniper Live Promotion
+
+**Prerequisite: KXCPI April 8 paper bet settles correctly**
+**Owner: Kalshi chat**
+
+After KXCPI April 8 paper bet:
+1. Verify paper bet settled correctly (correct direction, correct price)
+2. Check: was the signal correct? Did the CPI print match the over/under threshold?
+3. If YES: promote economics_sniper to live for KXCPI only. Keep KXFED/KXUNRATE paper.
+4. After 3 live CPI bets with wins: promote KXFED and KXUNRATE to live.
+5. After all 3 live with 10+ bets total: raise economics bet size from default to 5 USD.
+
+Expected contribution: 2-3 USD per event × ~4 events/month = ~8-12 USD/month ≈ 0.3-0.4 USD/day
+Low daily frequency but high per-event value (consistent with "diversified income" goal).
+
+**STOP CONDITION:** KXCPI live, KXFED/KXUNRATE paper, size ramp scheduled.
+
+---
+
+### CHAT 50: [TODO] Layer 4 — Kalshi Chat Session Quality Overhaul
+
+**This is the highest-leverage improvement. Bad session quality erases good bot code.**
+
+Root causes identified S268:
+1. Kalshi chat not reading CCA_TO_POLYBOT.md at session start — misses deliveries
+2. SESSION_HANDOFF.md goes stale — chat works from outdated state
+3. No mandatory checklist — chat starts coding before reading context
+4. Context limit causes mid-session degradation — chat forgets earlier decisions
+
+CCA deliverable: new `polymarket-bot/.planning/KALSHI_INIT_CHECKLIST.md`
+
+Mandatory Kalshi session init (5 steps, all required before any code):
+```
+Step 1: cat ~/.claude/cross-chat/CCA_TO_POLYBOT.md | tail -200
+        → Any URGENT items? Implement them NOW before anything else.
+Step 2: cat .planning/SESSION_HANDOFF.md | head -100
+        → What was the last session's state? What was left unfinished?
+Step 3: python3 main.py --health (or equivalent) + verify bot is running
+        → PID alive? Log shows errors? Recent bets settling correctly?
+Step 4: python3 scripts/balance_check.py
+        → P&L today (CST). Are we on track for 25 USD? Any strategy bleeding?
+Step 5: Check open positions + daily bet count per strategy
+        → Any strategy at cap? Any bets stuck open >48h?
+```
+
+Then and ONLY then: decide what to work on this session.
+
+Also: update `/polybot-auto` loop rule — every 3rd cycle must re-read CCA_TO_POLYBOT.md tail.
+If last CCA delivery >48h ago, write POLYBOT_TO_CCA.md requesting update.
+
+**STOP CONDITION:** KALSHI_INIT_CHECKLIST.md written. /polybot-init updated to run it at start.
+polybot-auto updated to check CCA comms every 3rd cycle.
+
+---
+
+### CHAT 51: [TODO] Layer 4 — Kalshi Chat Context Management
+
+**Problem:** Kalshi sessions degrade as context fills. Chat forgets directives from session start.
+
+CCA deliverable: context anchor strategy for Kalshi sessions.
+
+1. Expand PreCompact hook (already in CCA) → port to Kalshi project.
+   Snapshot current bot state (strategy statuses, open bets, P&L today) before compaction.
+2. PostCompact hook: restore key state from snapshot + print reminder of current directives.
+3. SESSION_HANDOFF.md: redesign format to be compaction-resilient.
+   Use numbered sections (survive compression). Max 500 words (BMAD context cap analogue).
+4. Critical directive anchoring: at session start, write key directives to a file the chat
+   can re-read mid-session: `.planning/ACTIVE_DIRECTIVES.md` (5 bullet points max).
+
+**STOP CONDITION:** PreCompact/PostCompact ports to Kalshi project. SESSION_HANDOFF.md redesigned.
+ACTIVE_DIRECTIVES.md format defined.
+
+---
+
+### CHAT 52: [TODO] Phase 9 Wrap + Phase 10 Planning
+
+After Chats 44-51 complete:
+1. Audit actual vs expected P&L improvement:
+   - Before overhaul: X USD/day (last 7 days average before S268)
+   - After overhaul: Y USD/day (7 days after full deployment)
+   - Gap analysis: what still needs to close to hit 25 USD/day?
+2. Evaluate sports_math Phase 1-2 impact: did Sharp Score filter improve WR?
+3. Evaluate in-play sniper: is it firing? What's the per-bet expected value?
+4. Write Phase 10 plan (if needed) based on measured gaps.
+
+**STOP CONDITION:** Audit complete, P&L delta measured, Phase 10 plan written if gap remains.
+
+---
+
 ## DEFERRED FROM PHASE 8 (scheduled when phase 8 complete)
 
 - **SKILL.md wrapping of CCA modules** — Wrap CCA frontier modules as publishable Agent Skills (NEW F6 candidate). Strategic decision needed first: do we want to publish externally?

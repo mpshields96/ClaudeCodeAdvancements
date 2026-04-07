@@ -4383,3 +4383,21 @@ CLI chat 2:
 - Autoloop test bug was pre-existing but still cost diagnosis time
 
 ---
+
+## Session 268 — 2026-04-06
+
+**What changed:**
+- NCAAB wired into sports scanner (KXNCAABGAME)
+- daily cap raised 8→30
+- Phase 9 master overhaul planned (Chats 44-52)
+
+**Why:**
+- Planning session: NCAAB scanner wired, daily cap raised to 30, Phase 9 master overhaul plan written
+
+**Tests:** 12708/12708 passing (374 suites)
+
+**Lessons:**
+- 38B sports_math.py not executed (plan-only by user directive)
+- no new tests this session
+
+---

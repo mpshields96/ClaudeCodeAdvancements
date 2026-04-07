@@ -3,7 +3,23 @@
 
 ---
 
-## Current State (as of Session 267 — 2026-04-06)
+## Current State (as of Session 268 — 2026-04-06)
+
+**Phase:** Session 268 COMPLETE. Planning session: NCAAB scanner wired, daily cap raised to 30, Phase 9 master overhaul plan written
+
+**What was done this session (S268):**
+- NCAAB wired into sports scanner (KXNCAABGAME)
+- daily cap raised 8→30
+- Phase 9 master overhaul planned (Chats 44-52)
+- **Tests**: 374 suites, 12708 tests passing. All green.
+
+**Next:**
+1. Chat 38B: port sports_math.py from agentic-rd-sandbox
+2. Chat 38C: sniper limits + Kelly math
+
+---
+
+## Previous State (Session 267 — 2026-04-06)
 
 **Phase:** Session 267 COMPLETE. S267: REQ-075 Kalshi sports research delivered + BMAD agent manifest + sports math upgrade plan (S267 directive)
 
@@ -19,7 +35,6 @@
 2. Chat 38B: port sports_math.py from agentic-rd-sandbox (Sharp Score + efficiency feed)
 
 ---
-
 ## Previous State (Session 266 — 2026-04-06)
 
 **Phase:** Session 266 COMPLETE. Chat 37: BMAD party-mode research + Memory System semantic dedup overhaul (Frontier 1).
