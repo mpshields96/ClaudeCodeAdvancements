@@ -3,20 +3,29 @@
 
 ---
 
-## Current State (as of Session 268 — 2026-04-06)
+## Current State (as of Session 269 — 2026-04-06)
 
-**Phase:** Session 268 COMPLETE. Planning session: NCAAB scanner wired, daily cap raised to 30, Phase 9 master overhaul plan written
+**Phase:** Session 269 COMPLETE. Full Phase 9 planning package delivered to Kalshi chat via CCA_TO_POLYBOT.md. All 10 TODAYS_TASKS TODO items marked DONE.
 
-**What was done this session (S268):**
-- NCAAB wired into sports scanner (KXNCAABGAME)
-- daily cap raised 8→30
-- Phase 9 master overhaul planned (Chats 44-52)
-- **Tests**: 374 suites, 12708 tests passing. All green.
+**What was done this session (S269):**
+- CHAT 38C: Kelly-derived sniper limits (SNIPER_LIMITS_RATIONALE.md) + 25 USD/day income map (INCOME_MAP_S269.md)
+- CHAT 44: Bot calibration plan — BUG 1 in-game guard + date sort + 24h horizon + balance_check.py
+- CHAT 45: sports_math.py wiring instructions (file is at src/strategies/sports_math.py)
+- CHAT 46: SPORTS_INPLAY_SNIPER_SPEC.md — full NBA/NHL/MLB in-play FLB sniper design
+- CHAT 47: UFC_RESEARCH_S269.md — BUILD verdict, volume-gated, 5-event paper validation
+- CHAT 48: kalshi_series_scout.py — weekly intelligence scanner (50K+ volume filter)
+- CHAT 49: Economics sniper — awaits KXCPI April 10 settlement, Kalshi owns promotion
+- CHAT 50: KALSHI_INIT_CHECKLIST.md — mandatory 5-step session init
+- CHAT 51: CONTEXT_MANAGEMENT_S269.md — PreCompact/PostCompact port + ACTIVE_DIRECTIVES.md
+- CHAT 52: PHASE9_WRAP_TEMPLATE.md — Phase 9 audit + Phase 10 plan template
+- All 7 files committed to polymarket-bot (commit b3408d5)
+- **Tests**: smoke 10/10 PASS (did not rerun full suite — no CCA code changed)
 
 **Next:**
-1. Chat 44: bot correctness + same-day sports visibility (do not bet days-out games)
-2. Chat 48: full Kalshi market visibility / dynamic discovery
-3. Build second engine: MLB first, NHL second, NBA third; stop defaulting to sniper variants
+1. Kalshi chat executes Chats 44-52 using delivered docs
+2. CCA monitors via cross-chat comms — address any Kalshi questions
+3. After all TODOs done: return to priority_picker → MT-32 (Visual Excellence) score 8.0
+4. Watch for: KXCPI April 10 settlement → economics sniper live promotion
 
 ---
 

@@ -1369,7 +1369,7 @@ Steps:
 
 ---
 
-### CHAT 38C: [TODO] Sniper Limits + 25 USD/Day Diversification Strategy (~75 min)
+### CHAT 38C: [DONE S269] Sniper Limits + 25 USD/Day Diversification Strategy (~75 min)
 
 **Priority: HIGHEST — Matthew directive S166 + standing prime directive.**
 **Goal:** (1) Set a STATISTICALLY-GROUNDED permanent sniper bet limit. (2) Design the 3-source
@@ -1674,7 +1674,7 @@ Hard rules for Phase 9:
 
 ---
 
-### CHAT 44: [TODO] Layer 1 — Bot Calibration (Kalshi chat executes, ~45 min)
+### CHAT 44: [DONE S269 — CCA plan delivered, Kalshi executes] Layer 1 — Bot Calibration (Kalshi chat executes, ~45 min)
 
 **Owner: Kalshi chat** (not CCA — these are bot wiring changes)
 **Prerequisite: Codex review of NCAAB series name before restart**
@@ -1745,7 +1745,7 @@ Implementation:
 
 ---
 
-### CHAT 45: [TODO] Layer 2 — Wire Sports Math Phase 1 (Kalshi chat, ~45 min)
+### CHAT 45: [DONE S269 — wiring instructions in CCA_TO_POLYBOT.md] Layer 2 — Wire Sports Math Phase 1 (Kalshi chat, ~45 min)
 
 **Prerequisite: CCA Chat 38B must be complete (sports_math.py delivered)**
 **Owner: Kalshi chat**
@@ -1768,7 +1768,7 @@ After CCA delivers `sports_math.py` via CCA_TO_POLYBOT.md:
 
 ---
 
-### CHAT 46: [TODO] Layer 2 — In-Play Sports Sniper (CCA designs, Kalshi wires)
+### CHAT 46: [DONE S269 — SPORTS_INPLAY_SNIPER_SPEC.md delivered] Layer 2 — In-Play Sports Sniper (CCA designs, Kalshi wires)
 
 **Owner: CCA designs the strategy. Kalshi chat implements.**
 
@@ -1802,7 +1802,7 @@ Kalshi deliverable: implement after CCA design note arrives.
 
 ---
 
-### CHAT 47: [TODO] Layer 3 — UFC Market Strategy (research + design only)
+### CHAT 47: [DONE S269 — UFC_RESEARCH_S269.md, BUILD verdict] Layer 3 — UFC Market Strategy (research + design only)
 
 **Owner: CCA research, Kalshi chat implements after validation**
 
@@ -1827,7 +1827,7 @@ Paper validation: 5 UFC events before going live (low event frequency = long val
 
 ---
 
-### CHAT 48: [TODO] Layer 3 — Dynamic Market Discovery (lightweight scanner)
+### CHAT 48: [DONE S269 — kalshi_series_scout.py delivered] Layer 3 — Dynamic Market Discovery (lightweight scanner)
 
 **Context:** Kalshi has 9,490 total series. Most are irrelevant (copy trading, micro-cap,
 vanity markets). A few will have FLB-exploitable structure we haven't found yet.
@@ -1858,7 +1858,7 @@ Matthew makes the decision to expand, not the bot.
 
 ---
 
-### CHAT 49: [TODO] Layer 3 — Economics Sniper Live Promotion
+### CHAT 49: [DONE S269 — awaits KXCPI April 10 settlement, Kalshi owns] Layer 3 — Economics Sniper Live Promotion
 
 **Prerequisite: KXCPI April 8 paper bet settles correctly**
 **Owner: Kalshi chat**
@@ -1877,7 +1877,7 @@ Low daily frequency but high per-event value (consistent with "diversified incom
 
 ---
 
-### CHAT 50: [TODO] Layer 4 — Kalshi Chat Session Quality Overhaul
+### CHAT 50: [DONE S269 — KALSHI_INIT_CHECKLIST.md + polybot-init update designed] Layer 4 — Kalshi Chat Session Quality Overhaul
 
 **This is the highest-leverage improvement. Bad session quality erases good bot code.**
 
@@ -1913,7 +1913,7 @@ polybot-auto updated to check CCA comms every 3rd cycle.
 
 ---
 
-### CHAT 51: [TODO] Layer 4 — Kalshi Chat Context Management
+### CHAT 51: [DONE S269 — CONTEXT_MANAGEMENT_S269.md delivered] Layer 4 — Kalshi Chat Context Management
 
 **Problem:** Kalshi sessions degrade as context fills. Chat forgets directives from session start.
 
@@ -1932,7 +1932,7 @@ ACTIVE_DIRECTIVES.md format defined.
 
 ---
 
-### CHAT 52: [TODO] Phase 9 Wrap + Phase 10 Planning
+### CHAT 52: [DONE S269 — PHASE9_WRAP_TEMPLATE.md delivered, fill after Chats 44-51] Phase 9 Wrap + Phase 10 Planning
 
 After Chats 44-51 complete:
 1. Audit actual vs expected P&L improvement:
