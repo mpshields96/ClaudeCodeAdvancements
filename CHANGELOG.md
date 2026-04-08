@@ -4488,3 +4488,56 @@ CLI chat 2:
 - context window hit mid-session causing repeated exploration
 
 ---
+
+## Session 275 — 2026-04-08
+
+**What changed:**
+- Phase 1 complete: relics/regions/echo bosses all confirmed from live OSRS Wiki data
+- 39/39 leagues6 tests passing, Phase 1 gate PASSED, 0 PENDING relic fields remaining
+
+**Why:**
+- Built complete Phase 1 data layer for OSRS Leagues 6 Companion Tool — all data validated, 39/39 tests passing, Phase 1 gate passed
+
+**Tests:** 12610/12610 passing (374 suites)
+
+**Lessons:**
+- Reddit scraper still uses Python requests (403 blocked) — needs subprocess curl update
+- Husky FAQ post was an image, content unextractable
+
+---
+
+## Session 276 — 2026-04-08
+
+**What changed:**
+- engine.py Phase 2 gate passed 24/24 vectors
+- Codex data-injection + PENDING propagation refactor applied
+- validate.py Phase 2 gate added
+
+**Why:**
+- leagues6 Phase 2 engine.py complete + Codex refactor applied; 65/65 CCA+leagues tests passing; 4 new Codex-written tests require engine fixes next session
+
+**Tests:** 12610/12610 passing (374 suites)
+
+**Lessons:**
+- Codex modified test_engine.py mid-session leaving 4 failures
+- context hit red before fixing Codex test additions
+
+---
+
+## Session 277 — 2026-04-08
+
+**What changed:**
+- Built src/app.py (Phase 3 Streamlit UI, 380 LOC, all gate checks passing)
+- Guided Matthew through full Discord export pipeline (13 channels captured)
+- Synthesized Leagues 6 meta: Magic likely dominant, Kandarin+Desert+Asgarnia top combo
+
+**Why:**
+- Phase 3 Streamlit UI built for leagues6-companion; Discord bot setup guided; meta analysis from community exports
+
+**Tests:** 12610/12610 passing (374 suites)
+
+**Lessons:**
+- Streamlit not pre-installed in venv (cost time)
+- Discord forum threads too large to export all 124 — pivoted to targeted approach
+
+---

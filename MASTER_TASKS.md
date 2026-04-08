@@ -2088,3 +2088,29 @@ See `CCA_PRIME_DIRECTIVE.md`.
 - Cross-run optimization data is genuinely useful for AI game completion research
 
 **Status:** Phase 1 COMPLETE (S199). Research: research/MT53_POKEMON_RESEARCH.md. Verdict: PyBoy for GBC (Crystal + ROM hacks), mGBA + mGBA-http for GBA (Emerald). Rules-based engine (not LLM — Matthew: "doesn't burn tokens"). Key reference: llm_pokemon_scaffold (PyBoy + Claude function calling). Phase 2 next: emulator_control.py + state_reader.py + game_state.py. ROM hacks list TBD from Matthew.
+
+---
+
+## MT-54: OSRS Leagues 6 Companion Tool (TIME-SENSITIVE — Personal)
+
+**Source:** Matthew directive (S275, 2026-04-08) — "I want an interactive tool to plan and track my OSRS Leagues VI build. Algorithmic, personalized — better than manually scrolling r/2007scape or just using OSRSwiki."
+
+**What it is:** A Streamlit web app for OSRS Leagues VI: Demonic Pacts (April 15 – June 10, 2026). Planning tool + live tracker. Scores all 56 possible region combinations against the player's preferences. Universal — works across any build strategy.
+
+**Hard deadline:** MVP functional by April 13 EOD. League starts April 15.
+
+**Project location:** `/Users/matthewshields/Projects/leagues6-companion/`
+**GitHub:** mpshields96/OSRSLeaguesTool (push after local dev complete)
+
+**Stack:** Python 3.11 + Streamlit + Pydantic v2 + requests (no PRAW — Reddit via HTML scraping)
+
+**Phase gates:**
+- Phase 1: Data layer (JSON + models + scraper) → PASSED April 8
+- Phase 2: engine.py scoring all 56 combos (April 9)
+- Phase 3: Streamlit UI wizard + mobile layout (April 10-11)
+
+**Key design principle:** Universal engine. No hardcoded "correct" build. Tool scores based on PlayerPreferences (afk_weight, pvm_weight, points_weight, pvp_averse, skill_level). Player can explore any build.
+
+**CCA methodology applied:** Phase gates, Codex review after each gate, session resume files, TDD.
+
+**Status:** Phase 1 COMPLETE (S275, 2026-04-08). 39/39 tests passing. Phase 2 next: engine.py.

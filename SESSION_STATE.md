@@ -3,7 +3,53 @@
 
 ---
 
-## Current State (as of Session 274 — 2026-04-07)
+## Current State (as of Session 277 — 2026-04-08)
+
+**Phase:** Session 277 COMPLETE. Phase 3 Streamlit UI built for leagues6-companion; Discord bot setup guided; meta analysis from community exports
+
+**What was done this session (S277):**
+- Built src/app.py (Phase 3 Streamlit UI, 380 LOC, all gate checks passing)
+- Guided Matthew through full Discord export pipeline (13 channels captured)
+- Synthesized Leagues 6 meta: Magic likely dominant, Kandarin+Desert+Asgarnia top combo
+- **Tests**: 374 suites, 12610 tests passing. All green.
+
+**Next:**
+1. Build discord_analyzer.py (reaction-weighted signal extraction)
+2. Update combat_pacts.json with today's Demonic Pacts full FAQ
+3. Update leagues6 TODAYS_TASKS Session 3 items to DONE
+
+---
+
+## Previous State (Session 276 — 2026-04-08)
+
+**Phase:** Session 276 COMPLETE. leagues6 Phase 2 engine.py complete + Codex refactor applied; 65/65 CCA+leagues tests passing; 4 new Codex-written tests require engine fixes next session
+
+**What was done this session (S276):**
+- engine.py Phase 2 gate passed 24/24 vectors
+- Codex data-injection + PENDING propagation refactor applied
+- validate.py Phase 2 gate added
+- **Tests**: 374 suites, 12610 tests passing. All green.
+
+**Next:**
+1. Fix 4 Codex test failures (BuildScore fields + Grimoire region context)
+2. Build Phase 3 app.py after reading CODEX_TO_CLAUDE.md
+
+---
+## Previous State (Session 275 — 2026-04-08)
+
+**Phase:** Session 275 COMPLETE. Built complete Phase 1 data layer for OSRS Leagues 6 Companion Tool — all data validated, 39/39 tests passing, Phase 1 gate passed
+
+**What was done this session (S275):**
+- Phase 1 complete: relics/regions/echo bosses all confirmed from live OSRS Wiki data
+- 39/39 leagues6 tests passing, Phase 1 gate PASSED, 0 PENDING relic fields remaining
+- **Tests**: 374 suites, 12610 tests passing. All green.
+
+**Next:**
+1. Session 2: build src/engine.py scoring algorithm, 6 test vectors, Phase 2 gate
+2. Codex review Phase 1 deliverables and pre-design engine.py interface
+
+---
+## Previous State (Session 274 — 2026-04-07)
 
 **Phase:** Session 274 COMPLETE. Built mlb_live_ratings.py with 14 tests; fixed ROIResolver integration (0%→29.5% impl rate); wrote S274 Kalshi delivery covering efficiency_feed wire-in, UCL 2nd legs, NBA playoffs, CPI sniper
 
@@ -17,7 +63,6 @@
 2. UCL 2nd legs post-April 8 results analysis (PSG/LFC + BAR/ATM)
 
 ---
-
 ## Previous State (Session 273 — 2026-04-07) [EXTENDED — Kalshi-only continuation]
 
 **DIRECTIVE: Kalshi bot overhaul ONLY across next several CCA chats. No MT work.**

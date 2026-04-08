@@ -21,6 +21,160 @@
 #
 # ---
 
+## [2026-04-08 17:34 UTC] — LEAGUES6 STATUS UPDATE — User wants guided Discord Developer Portal setup after current CCA task
+**Status:** ACTION NEEDED
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/DISCORD_READER_SETUP.md`, desktop CCA chat workflow only
+**Summary:**
+Matthew said that after the current OSRS Leagues Phase 3 task finishes in the desktop CCA app, he plans to ask CCA to carefully guide him through the Discord Developer Portal flow for creating the separate read-only bot application. Keep this in setup-only mode for now: create/manage the bot application, explain the separate bot-vs-personal-account distinction, generate the invite link, and avoid any implementation overlap with active UI work unless that task is explicitly complete.
+
+The current Codex guidance already written in `DISCORD_READER_SETUP.md` should be used as the safety baseline: no selfbot, no personal-account automation, no token in source, read-only permissions only.
+
+**Verification:**
+- Coordination note only
+
+**Relay Guidance:**
+- After the current UI task, CCA can safely switch into step-by-step portal guidance mode.
+- CCA should not ask Matthew to paste the raw bot token into chat; only confirm it is stored locally.
+
+## [2026-04-08 17:21 UTC] — LEAGUES6 STATUS UPDATE — Non-overlap support docs landed
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/CLAUDE_TO_CODEX.md`, `/Users/matthewshields/Projects/leagues6-companion/PHASE3_UI_STATE_CONTRACT.md`, `/Users/matthewshields/Projects/leagues6-companion/DISCORD_READER_SETUP.md`, `/Users/matthewshields/Projects/leagues6-companion/SESSION_RESUME.md`
+**Summary:**
+The adjacent support pass is complete and did not touch `src/app.py` or other active UI implementation files. I created the missing `CLAUDE_TO_CODEX.md` append-only handoff lane, added `PHASE3_UI_STATE_CONTRACT.md` to keep Streamlit session state compatible with the future full pact tree, and added `DISCORD_READER_SETUP.md` so the Discord reader has a safe token/setup/spec document before any code is written. `SESSION_RESUME.md` now points the next Phase 3 session at the UI state contract.
+
+This slice is safe for CCA to consume immediately while continuing UI ownership.
+
+**Verification:**
+- Docs/state updates only; no runtime code touched
+
+**Relay Guidance:**
+- CCA should read `PHASE3_UI_STATE_CONTRACT.md` before locking pact/session-state design.
+- Discord work is still setup-only; no bot code exists yet and no package was added.
+
+## [2026-04-08 17:20 UTC] — LEAGUES6 STATUS UPDATE — Non-overlap support work for active CCA UI session
+**Status:** FYI
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/CLAUDE_TO_CODEX.md`, project-root design/setup docs only; explicitly avoiding `src/app.py` and active UI implementation files
+**Summary:**
+Matthew started a new CCA session aimed at Phase 3 `src/app.py`. To avoid overlap, this Codex session is taking adjacent support scope only: create the missing CCA→Codex coordination file template, write a pact-tree-ready UI state contract CCA can follow while building Streamlit, and write the Discord bot setup/spec so that future `discord_reader.py` work has safety and setup guardrails.
+
+No UI code or active `src/` implementation files are being touched in this slice.
+
+**Verification:**
+- Coordination note only; support work in progress
+
+**Relay Guidance:**
+- CCA can continue owning `src/app.py` without collision from this Codex session.
+- If CCA wants to consume the contract/setup docs mid-session, it can do so safely.
+
+## [2026-04-08 17:15 UTC] — LEAGUES6 STATUS UPDATE — Engine hardening landed and verified
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/src/engine.py`, `/Users/matthewshields/Projects/leagues6-companion/src/models.py`, `/Users/matthewshields/Projects/leagues6-companion/tests/test_engine.py`, `/Users/matthewshields/Projects/leagues6-companion/SESSION_RESUME.md`, `/Users/matthewshields/Projects/leagues6-companion/TODAYS_TASKS.md`
+**Summary:**
+The validation-first hardening pass is complete. Codex turned four Phase 2 review findings into enforced tests, reproduced the failures, and patched the engine/model layer so the fixes are now proven rather than speculative. `score_build()` now preserves the selected relic path and pact ID, rejects duplicate region IDs, surfaces always-unlocked region context (`Varlamore`, `Karamja`), and includes Karamja's pending echo intel in `pending_fields`. `RelicSynergiser` also now uses region context for region-substitute scoring, so relic values are no longer fully region-agnostic.
+
+The deeper pact-tree architecture issue is still open: this pass did not replace the current scalar pact model with a full 40-node tree representation. That remains the main correctness/design blocker before Phase 3 UI should be allowed to hard-bake pact state.
+
+**Verification:**
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/test_engine.py -q` → `26 passed`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/ -q` → `67 passed`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 validate.py` → `GATE: PASSED`
+
+**Relay Guidance:**
+- CCA can treat the old concrete Phase 2 correctness bugs as closed.
+- Before building Streamlit pact UI, keep the remaining warning active: do not bind UI state to a scalar `pact_id` if the product goal is still the full Demonic Pacts tree.
+
+## [2026-04-08 17:11 UTC] — LEAGUES6 STATUS UPDATE — Active Codex ownership on engine hardening
+**Status:** ACTION NEEDED
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/src/engine.py`, `/Users/matthewshields/Projects/leagues6-companion/tests/test_engine.py`, possible supporting model/data files if required by failing tests
+**Summary:**
+Matthew explicitly authorized this Codex session to move from review-only into contributor mode on the OSRS Leagues 6 Companion project, with the requirement that CCA stays aware to avoid overlapping edits. I am taking ownership of validation-first engine hardening: add missing correctness tests around the known Phase 2 gaps, reproduce failures, and patch the implementation only where the tests prove it is wrong.
+
+Initial target issues are the same five already flagged in review: `BuildScore` fidelity, duplicate-region rejection, region-aware relic synergy, full-build always-unlocked context visibility, and avoiding Phase 3 lock-in to a scalar pact shape.
+
+**Verification:**
+- Coordination note only; implementation work in progress
+
+**Relay Guidance:**
+- Treat the leagues6 engine/test layer as actively owned by Codex right now.
+- If a CCA/Claude session touches the same files, coordinate first or stay read-only until this hardening pass is complete.
+
+## [2026-04-08 17:10 UTC] — LEAGUES6 REVIEW — Phase 2 tests green, but 5 post-gate issues remain
+**Status:** ACTION NEEDED
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/src/engine.py`, `/Users/matthewshields/Projects/leagues6-companion/tests/test_engine.py`, `/Users/matthewshields/Projects/leagues6-companion/data/combat_pacts.json`, `/Users/matthewshields/Projects/leagues6-companion/CODEX_REVIEW_S277.md`
+**Summary:**
+Codex reviewed the shipped Phase 2 engine. The gate suite passes (`24/24`), but the tests are missing several important consumer-facing correctness checks. The biggest concrete bug is that `score_build()` returns a `BuildScore` with `relic_path=[]` and `pact_id=""`, so any Phase 3 UI summary will misreport the actual user-selected build. The deeper architectural issue is that the engine still models pacts as a single scalar choice backed by a 3-entry JSON file, which does not match Matthew's new directive to support the full 40-node pact tree.
+
+Additional findings:
+- `RelicSynergiser.score_path()` accepts `regions` but ignores them, so relic+region synergy and Reloaded marginal choice are still effectively region-agnostic.
+- `score_build()` validates region count but not uniqueness, so duplicate region IDs score successfully.
+- Always-unlocked regions are omitted from `BuildScore`, which means Karamja's pending echo-boss context never surfaces in `pending_fields` for real builds.
+
+Detailed write-up plus a Phase 3 Streamlit structure sketch is in `CODEX_REVIEW_S277.md`.
+
+**Verification:**
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/test_engine.py -q`
+- Ad hoc probes confirmed:
+  - `BuildScore.relic_path == []`
+  - `BuildScore.pact_id == ""`
+  - `RelicSynergiser.score_path({7: "reloaded"}, ["kandarin"], prefs) == score_path({7: "reloaded"}, ["desert"], prefs)`
+  - duplicate region IDs currently score instead of raising
+
+**Relay Guidance:**
+- Read `/Users/matthewshields/Projects/leagues6-companion/CODEX_REVIEW_S277.md` before locking Phase 3 UI structure.
+- Fix `BuildScore` fidelity first; otherwise the UI will display incorrect selections.
+- Do not build pact UI around a single `pact_id` string. Use a richer tree/path state shape now.
+
+---
+
+## [2026-04-08 17:01 UTC] — LEAGUES6 DIRECTIVE — OSRS username provided for tracker wiring
+**Status:** FYI
+**Scope:** future `src/tracker.py` / hiscores integration in `/Users/matthewshields/Projects/leagues6-companion/`
+**Summary:**
+Matthew provided the OSRS account name for the live tracker and hiscores integration: `QwertyLoolz9`. Use it as the initial/default profile value for local development or example wiring, but do not hardcode it in a way that blocks later editing in the UI.
+
+**Verification:**
+- User directive received directly in Codex chat on 2026-04-08
+
+**Relay Guidance:**
+- CCA can prewire the tracker flow against `QwertyLoolz9` now.
+- Keep the username editable in Streamlit session state or config, not embedded as a fixed constant.
+
+---
+
+## [2026-04-08 17:00 UTC] — LEAGUES6 DIRECTIVE — Full pact tree required for MVP planning
+**Status:** ACTION NEEDED
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/CODEX_REVIEW_S276.md`, active `src/engine.py` Phase 2 design
+**Summary:**
+Matthew answered the open pact-model question: the tool should plan the full 40-node Demonic Pacts tree, not just a top-level melee/ranged/magic selector, if feasible and useful. That means the current simplified pact abstraction is no longer the target architecture for the universal interactive planner. Phase 2 does not necessarily need every node's perfect balance logic today, but the engine contract should be shaped so pact path depth can be represented now rather than bolted on later.
+
+**Verification:**
+- User directive received directly in Codex chat on 2026-04-08
+
+**Relay Guidance:**
+- CCA should not hard-bake pact handling to a single `pact_id` scalar if that creates migration pain.
+- Prefer a structure like `combat_style + unlocked_nodes + reset_count_remaining` or equivalent typed model, even if node-level scoring starts simple in the first pass.
+- Keep the current region/relic scoring work moving, but design the pact layer for full-tree expansion immediately.
+
+---
+
+## [2026-04-08 16:51 UTC] — LEAGUES6 REVIEW — Phase 1 gate hardened, Phase 2 contract proposed
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/src/models.py`, `/Users/matthewshields/Projects/leagues6-companion/data/relics.json`, `/Users/matthewshields/Projects/leagues6-companion/tests/test_models.py`, `/Users/matthewshields/Projects/leagues6-companion/validate.py`, `/Users/matthewshields/Projects/leagues6-companion/CODEX_REVIEW_S276.md`
+**Summary:**
+Codex reviewed the OSRS Leagues tool Phase 1 layer and found one concrete gate failure plus two schema issues that mattered for Phase 2. `validate.py` was reporting Phase 1 `PASSED` even while `tests/test_models.py` was failing, placeholder relic stubs were ambiguous enough to leak into future engine logic, and important JSON notes for Reloaded/community intelligence were being silently dropped by Pydantic. I hardened the model/data/test/validation layer and wrote a concrete engine contract plus algorithm notes in `CODEX_REVIEW_S276.md` so the active Phase 2 chat can build against a reviewed interface instead of designing blind.
+
+**Verification:**
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 validate.py`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/test_models.py -q`
+- Result: Phase 1 gate passes and model tests are green
+
+**Relay Guidance:**
+- Read `/Users/matthewshields/Projects/leagues6-companion/CODEX_REVIEW_S276.md` before finalizing `src/engine.py`.
+- Do not let `engine.py` consider placeholder relics selectable.
+- Treat Reloaded as an exhaustive marginal search over tiers 1-6 excluding already-picked relic IDs; do not recurse and do not zero unknown value.
+
+---
+
 ## [2026-03-28 02:44 UTC] — STATUS UPDATE — 3-Way Hub Bridge Activated
 **Status:** COMPLETE
 **Scope:** `resume_generator.py`, `BRIDGE_PROTOCOL.md`, `KALSHI_3CHAT_GAMEPLAN.md`, `SESSION_RESUME.md`
