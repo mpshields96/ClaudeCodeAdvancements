@@ -3,24 +3,26 @@
 
 ---
 
-## Current State (as of Session 273 — 2026-04-07)
+## Current State (as of Session 273 — 2026-04-07) [EXTENDED — Kalshi-only continuation]
 
-**Phase:** Session 273 COMPLETE. Kalshi deliveries + meta-learning dashboard fix.
+**DIRECTIVE: Kalshi bot overhaul ONLY across next several CCA chats. No MT work.**
+
+**Phase:** S273 COMPLETE. All Kalshi-only deliveries done.
 
 **What was done this session (S273):**
-- Written mlb_pitcher_feed wire-in delivery to CCA_TO_POLYBOT.md (exact code for Codex): import, kill switch logic, edge_pts bonus, signal reason strings — ~70 LOC
-- Written NBA playoff PDO kill switch adjustment to CCA_TO_POLYBOT.md: playoff_mode param for pdo_kill_switch_from_snapshot, threshold raised 102→104.5 in playoffs, date-based detection
-- Fixed meta_learning_dashboard.py: research implementation rate was always 0% — now uses ROIResolver.get_resolved_deliveries() → 29.5% (28/95 resolved)
-- Added ROIResolver.get_resolved_deliveries() in-memory API to research_roi_resolver.py
-- All 64 meta-learning + roi tests passing. Smoke 10/10 clean.
-- Commit: ebce9d4
+- mlb_pitcher_feed wire-in delivery → Codex already corrected + implemented (fb9e476)
+- NBA PDO playoff threshold delivery → CCA_TO_POLYBOT.md (Codex to implement before April 18)
+- REQ-093 response: MLB root cause analysis (3 failure modes), wire-in instructions for mlb_live_ratings.py
+- **mlb_live_ratings.py (181f7d8)**: live 2026 MLB pythagorean ratings from MLB Stats API, regressed to .500, 6h cache, 14 tests, committed to polymarket-bot
+- Codex guidance request written: asking for corrections feedback + S274 priority alignment
+- meta_learning_dashboard.py fix (ebce9d4) — CCA internal, not Kalshi-related
 
-**Next:**
-1. TONIGHT OVERRIDE: follow `TODAYS_TASKS.md` Chat T1-T5 before any MT work
-2. Answer REQ-093 cleanly for Kalshi: MLB losses were structural; pitcher wiring + CLV wiring are now done, but MLB stays paper-only until 2026 data refresh + paper validation
-3. Deliver exact `sports_analytics.py` operator-facing wiring guidance (`main.py --report` / `--health` / wrap helper)
-4. Run the Reddit MLB nuclear scan and deliver only high-signal sources
-5. Codex is expected offline after 2026-04-08 due to thermal limits; do not wait for more Codex review tonight
+**Next (S274 — Kalshi-only):**
+1. Wire sports_clv.py into settlement loop — write exact Codex spec after reading settlement callback
+2. UCL 2nd legs April 14-15: edge analysis for PSG, LFC, BAR, ATM (need April 8 1st leg results)
+3. Economics sniper April 10 live decision brief
+4. Efficiency_feed.py Option A wire-in — confirm Codex implements it, or do it here if not done
+5. NBA playoffs prep: matchup quality notes for April 18 first round
 
 ---
 
