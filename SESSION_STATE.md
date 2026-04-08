@@ -16,9 +16,11 @@
 - Commit: ebce9d4
 
 **Next:**
-1. Reddit MLB nuclear scan (separate chat — own context)
-2. MT-49 Phase 2: Active principle transfer (principle_transfer.py → make it active with acceptance tracking)
-3. Kalshi: Codex implements mlb_pitcher_feed wire-in + playoff PDO from CCA_TO_POLYBOT.md
+1. TONIGHT OVERRIDE: follow `TODAYS_TASKS.md` Chat T1-T5 before any MT work
+2. Answer REQ-093 cleanly for Kalshi: MLB losses were structural; pitcher wiring + CLV wiring are now done, but MLB stays paper-only until 2026 data refresh + paper validation
+3. Deliver exact `sports_analytics.py` operator-facing wiring guidance (`main.py --report` / `--health` / wrap helper)
+4. Run the Reddit MLB nuclear scan and deliver only high-signal sources
+5. Codex is expected offline after 2026-04-08 due to thermal limits; do not wait for more Codex review tonight
 
 ---
 

@@ -4,6 +4,102 @@
 
 ---
 
+## TONIGHT PRIORITY OVERRIDE — 2026-04-08 (Codex thermal shutdown handoff)
+
+This override takes precedence for tonight's CCA sessions. The older Phase 1-3 plan
+below remains as archive/context, but CCA should work the tasks in this section first.
+
+Context:
+- Codex is being turned off soon because running 3 terminal chats overheats Matthew's MacBook.
+- Do NOT wait for more Codex reviews tonight. Assume Codex is offline until a later spot-check session.
+- Kalshi now has MLB pitcher wiring + sports CLV settlement wiring locally. The next value is research,
+  validation, and exact operator-facing integration guidance.
+
+### CHAT T1 — Answer REQ-093 cleanly: MLB loss verdict + next action
+
+**Goal:** Give Kalshi one direct verdict on why MLB underperformed and what is actually left.
+
+**Deliver to `CCA_TO_POLYBOT.md`:**
+1. MLB losses were structural, not a single-cause fluke:
+   - in-game betting bug already fixed
+   - stale 2024 MLB team-strength data still contaminates `efficiency_feed.py`
+   - starting pitcher gap was real and is now wired by Codex
+2. New reality after Codex work:
+   - pitcher signal is wired
+   - CLV logging is wired in settlement
+   - MLB should remain paper-only until 2026 team-strength refresh + paper sample
+3. Clear recommendation:
+   - do NOT spend tonight re-arguing the pitcher wire-in
+   - next MLB work is data refresh + validation, not more heuristics
+
+**STOP CONDITION:** One explicit BUILD/WAIT verdict in `CCA_TO_POLYBOT.md`.
+
+### CHAT T2 — Deliver exact sports analytics runtime wiring plan
+
+**Goal:** Close the current overhaul hole: `sports_analytics.py` exists, but Kalshi does not
+surface it anywhere operator-facing.
+
+**Scope:**
+1. Read `src/strategies/sports_analytics.py` in polybot
+2. Identify the smallest useful integration point:
+   - `main.py --report`
+   - `main.py --health`
+   - `/polybot-wrap` helper
+3. Write an exact delivery to `CCA_TO_POLYBOT.md`:
+   - which function to call
+   - what inputs already exist
+   - where to print CLV + calibration + ROI summary
+   - minimum test cases Kalshi should add
+
+**Required judgment:** prefer the path that gives Matthew actionable sports quality feedback
+fastest, not the prettiest architecture.
+
+**STOP CONDITION:** Kalshi has a copy-pasteable wiring guide for operator-facing sports analytics.
+
+### CHAT T3 — Reddit MLB nuclear scan (separate context)
+
+**Goal:** Find high-signal MLB modeling sources that are actually useful for this bot.
+
+**Target sources:** r/sportsbook, r/sportsbetting, GitHub repos linked from those threads,
+and any 2026-season starting-pitcher / xFIP / rest / bullpen model discussions.
+
+**Deliverable:**
+- BUILD / ADAPT / REFERENCE / SKIP verdicts
+- 2-4 high-quality model/data sources only
+- explicit rat-poison rejection for low-signal systems
+- note whether team-level efficiency is even the right framing for MLB versus pitcher-first data
+
+**STOP CONDITION:** `CCA_TO_POLYBOT.md` delivery with only high-signal findings.
+
+### CHAT T4 — 2026 MLB data refresh plan
+
+**Goal:** Tell Kalshi exactly how to replace stale MLB strength inputs.
+
+**Scope:**
+1. Determine whether `efficiency_feed.py` should:
+   - be refreshed with 2026 MLB data, or
+   - drop MLB team-strength scoring entirely and lean on books + pitcher signal
+2. If refresh is viable:
+   - identify the source
+   - specify fields
+   - specify update cadence
+3. If not viable:
+   - explicitly recommend removing MLB from `efficiency_gap` scoring until better data exists
+
+**STOP CONDITION:** One explicit path chosen and delivered to Kalshi.
+
+### CHAT T5 — Low priority only if T1-T4 are done
+
+**Topic:** REQ-095 NBA playoff PDO
+
+Codex answer already: NBA is still paper-only and not urgent tonight.
+If CCA spends time here anyway, the correct posture is:
+- do not prioritize implementation tonight
+- if implemented later, use playoff-specific wider thresholds
+- paper-first before any live implication
+
+---
+
 ## PHASE 1: COMPLETED (S236-S238)
 
 Tasks A-E from the original S235 plan. All investigation/research/build work done.
