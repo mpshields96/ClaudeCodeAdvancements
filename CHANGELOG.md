@@ -4452,3 +4452,39 @@ CLI chat 2:
 - Interrupted by urgent user request to kill bot and wrap
 
 ---
+
+## Session 272 — 2026-04-07
+
+**What changed:**
+- Fixed 3 sports_game bugs (72h horizon, INFO logging, EPL names) — bot now bets
+- mlb_pitcher_feed.py: live MLB Stats API ERA kill switch + edge pts, 24 tests
+- sports_clv.py: Kalshi-adapted CLV tracker ported from sandbox, 33 tests
+- sports_analytics.py moved to src/strategies/, 29 tests
+
+**Why:**
+- Kalshi bot sports fixes + MLB pitcher feed + CLV tracker: bot was silent due to 3 bugs, all fixed; mlb_pitcher_feed.py and sports_clv.py delivered with 57 new tests
+
+**Tests:** 12708/12708 passing (374 suites)
+
+**Lessons:**
+- sports_clv.py write interrupted mid-session, finished in continuation
+- N=7 MLB sample too small for definitive root cause analysis
+
+---
+
+## Session 274 — 2026-04-07
+
+**What changed:**
+- mlb_live_ratings.py live pythagorean ratings + 14 passing tests
+- ROIResolver integration in meta_learning_dashboard fixed (0%→29.5%)
+
+**Why:**
+- Built mlb_live_ratings.py with 14 tests; fixed ROIResolver integration (0%→29.5% impl rate); wrote S274 Kalshi delivery covering efficiency_feed wire-in, UCL 2nd legs, NBA playoffs, CPI sniper
+
+**Tests:** 12708/12708 passing (374 suites)
+
+**Lessons:**
+- ROIResolver test isolation bug cost ~30min diagnosing canonical-path guard
+- context window hit mid-session causing repeated exploration
+
+---

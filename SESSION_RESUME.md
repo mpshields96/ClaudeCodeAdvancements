@@ -1,34 +1,81 @@
-# SESSION RESUME — S271 → S272
+# Session Resume — S274 → S275
 
-Run /cca-init. Last session was S271 on 2026-04-06.
+**Last session:** S274 — 2026-04-07
+**Next session number:** S275
+**Status:** Tests 12708/12708 passing (364/374 suites; 10 pre-existing module-not-found failures). Git: clean after wrap commit.
 
-## What was completed (S271):
-- **Chat 39 DONE**: injury_data.py ported into sports_math.py. Added: LEVERAGE_KILL_THRESHOLD=3.5, LEVERAGE_FLAG_THRESHOLD=2.0, _POSITIONAL_LEVERAGE dict (NBA/NFL/NHL/MLB/SOCCER), InjuryReport dataclass, get_positional_leverage(), evaluate_injury_impact(), injury_kill_switch(), situational_score_from_injuries(), updated sharp_score_for_bet() signature to accept injury_reports. 18 tests added → 73 total in test_sports_math.py. Delivery written to CCA_TO_POLYBOT.md.
-- **Chat 40 DONE**: nba_pdo + nhl_data ported into sports_math.py. Added: _PDO_SNAPSHOT (NBA 2024-25 static dict, 30 teams), _PDO_TEAM_ALIASES (NBA-namespaced only), _resolve_nba_team(), get_pdo_signal(), pdo_situational_pts(), pdo_kill_switch_from_snapshot(), nhl_kill_switch_signal(). 31 tests added → 104 total. Delivery written to CCA_TO_POLYBOT.md.
-- **Chat 41 WIP** (commit 23f7892): sports_analytics.py created at polymarket-bot/ root (697 LOC). Contains: get_bet_counts, compute_sharp_roi_correlation, compute_equity_curve, compute_rolling_metrics, compute_strategy_breakdown, CalibrationReport dataclass, get_calibration_report (adapted for polybot trades table), calibration_is_ready, generate_sports_performance_report. NO TESTS written yet. NO delivery to CCA_TO_POLYBOT.md yet.
-- **Bot killed**: PID 303 (main.py --live --reset-soft-stop) killed via SIGKILL.
+---
 
-## What's next (CRITICAL — Chat 41 finish first):
-1. **Chat 41 FINISH**: Write `tests/test_sports_analytics.py` with 12+ tests covering:
-   - equity curve monotonicity with all-win sequence
-   - compute_sharp_roi_correlation returns bins dict
-   - calibration returns inactive when n<10
-   - compute_rolling_metrics with 30-day window
-   - compute_strategy_breakdown sorts by roi_pct
-   - generate_sports_performance_report returns string with headers
-   Then write delivery to CCA_TO_POLYBOT.md: "Wire generate_sports_performance_report() into /polybot-wrap"
-   Commit. Mark Chat 41 DONE.
-2. **Chat 42**: Create sports_clv.py (CLV math + CSV persistence) + append binary_confidence_from_simulation() to sports_math.py. Source: agentic-rd-sandbox/core/clv_tracker.py + originator_engine.py.
-3. **Chat 43**: Port tennis_data.py + full integration audit.
+## STANDING DIRECTIVE (Matthew — PERMANENT for next several sessions)
 
-## Key file paths:
-- sports_math.py: `/Users/matthewshields/Projects/polymarket-bot/src/strategies/sports_math.py` (~700 LOC)
-- sports_analytics.py (WIP): `/Users/matthewshields/Projects/polymarket-bot/sports_analytics.py` (697 LOC)
-- tests: `/Users/matthewshields/Projects/polymarket-bot/tests/test_sports_math.py` (104 tests)
-- Reference sandbox: `/Users/matthewshields/Projects/agentic-rd-sandbox/core/`
-- CCA_TO_POLYBOT: `~/.claude/cross-chat/CCA_TO_POLYBOT.md`
+**ALL CCA chats focus SOLELY on Kalshi bot overhaul. No MT work, no CCA internals.**
+Every session reads TODAYS_TASKS.md TONIGHT PRIORITY OVERRIDE and works those tasks.
+Codex is offline (thermal shutdown). CCA delivers guidance; Kalshi chat implements.
 
-## Tests: 12708/12708 passing (364/374 suites — 10 pre-existing reference failures).
-## Git: polymarket-bot clean (commit 23f7892 = Chat 41 WIP). CCA clean.
+---
 
-## IMPORTANT — bot is OFF. Do not restart without user confirmation.
+## What S274 completed
+
+1. **mlb_live_ratings.py** built in `polymarket-bot/src/strategies/` (commit `181f7d8`)
+   - Fetches 2026 MLB standings from MLB Stats API (free, same API as mlb_pitcher_feed)
+   - Computes regressed pythagorean win% → adj_em with 30-game Bayesian prior
+   - All 30 teams mapped via `_API_TO_CANONICAL`; 6h cache
+   - 14 tests all pass in `tests/test_mlb_live_ratings.py`
+
+2. **meta_learning_dashboard.py ROIResolver fix** (commit `ebce9d4`)
+   - `ResearchROITracker.__init__()` now calls `ROIResolver.get_resolved_deliveries()` for canonical path only
+   - Implementation rate corrected: 0% → 29.5% (28/95 resolved)
+   - Canonical-path guard prevents test isolation contamination
+
+3. **CCA_TO_POLYBOT.md** — S274 full delivery written:
+   - **REQ-093 verdict**: MLB losses structural (bug fixed, pitcher wired, efficiency stale) → paper-only, 50 bets gate
+   - **efficiency_feed Option A** exact code: `from mlb_live_ratings import refresh_efficiency_feed_mlb as _mlb_refresh; _mlb_refresh(_TEAM_EFFICIENCY)` at module load
+   - **UCL 2nd legs**: Bayern (2-1 up, Apr 15 away Bayer) and Arsenal (1-0 up, Apr 16 away PSG leg analysis needed) = strong FLB setups. PSG/LFC and BAR/ATM results from Apr 8 still needed
+   - **Economics sniper CPI brief**: 48h gate open, `cpi_release_monitor.py` at 08:28 ET Apr 10
+   - **NBA playoffs**: PDO flags and adj_em comparisons for first-round matchups
+
+---
+
+## TODAYS_TASKS.md status (TONIGHT PRIORITY OVERRIDE)
+
+| Task | Status |
+|------|--------|
+| CHAT T1 — REQ-093 MLB verdict | DONE S274 |
+| CHAT T2 — sports_analytics runtime wiring plan | **TODO** |
+| CHAT T3 — Reddit MLB nuclear scan | **TODO** |
+| CHAT T4 — 2026 MLB data refresh plan | DONE S274 |
+| CHAT T5 — NBA PDO (low priority) | deferred |
+
+---
+
+## S275 priorities (in order)
+
+1. **CHAT T2**: Read `src/strategies/sports_analytics.py` → deliver exact operator-facing wiring guide (which function, what inputs, where to print, min tests) to `CCA_TO_POLYBOT.md`
+2. **CHAT T3**: Reddit MLB nuclear scan (r/sportsbook, r/sportsbetting) → pitcher-first vs team-efficiency framing, 2026 xFIP/rest/bullpen models, BUILD/SKIP verdicts
+3. **Check Codex wire-in**: Did Codex implement efficiency_feed Option A? Check git log in polymarket-bot
+4. **UCL 2nd legs**: April 8 results now available — check PSG/LFC and BAR/ATM scorelines, update FLB analysis
+
+---
+
+## Key file paths
+
+- `polymarket-bot/src/strategies/mlb_live_ratings.py` — new file, commit `181f7d8`
+- `polymarket-bot/tests/test_mlb_live_ratings.py` — 14 tests
+- `polymarket-bot/src/strategies/sports_analytics.py` — READ THIS for CHAT T2
+- `polymarket-bot/src/strategies/efficiency_feed.py` — lines 148-179: MLB section, Option A wire-in target
+- `~/.claude/cross-chat/CCA_TO_POLYBOT.md` — all deliveries written, delivery flag set
+- `self-learning/meta_learning_dashboard.py` — ROIResolver canonical-path guard at `__init__`
+
+---
+
+## Known gotchas
+
+- When running polymarket-bot tests: use `PYTHONPATH=. pytest tests/` from `/Users/matthewshields/Projects/polymarket-bot/`
+- System Python at `/opt/homebrew/opt/python@3.14` lacks pytest — use `/Library/Frameworks/Python.framework/Versions/3.13/bin/pytest`
+- MLB efficiency_feed scale: ±8 (ERA-based 2024) vs ±2.3 (pythagorean early 2026) — Bayesian regression toward .500 makes early-season values near-neutral, not a bug
+- Codex is OFFLINE (thermal shutdown) — CCA proposes, Kalshi chat self-implements or waits for Codex spot-check
+- Kalshi bot was STOPPED at S274 wrap (SIGKILL after SIGTERM/SIGINT failed to terminate async loop)
+
+---
+
+Run `/cca-init` then proceed directly to CHAT T2 (sports_analytics wiring plan).

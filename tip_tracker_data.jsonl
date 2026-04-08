@@ -123,3 +123,7 @@
 {"tip":"KalshiSeriesDiscovery is the replacement for all hardcoded _SPORT_SERIES dicts \u2014 wire it before adding new sports","source":"cca-desktop","session":"S270","timestamp":"2026-04-07T02:58:56.793983Z"}
 {"tip":"When user sends urgent wrap message, kill bot first (check comm_state.json for PID) then commit WIP before wrapping","source":"cca-desktop","session":"S271","timestamp":"2026-04-07T04:58:51.827248Z"}
 {"tip":"sports_analytics.py calibration adapts sandbox bet_log schema to polybot trades table: side==result determines win","source":"cca-desktop","session":"S271","timestamp":"2026-04-07T04:58:51.827248Z"}
+{"tip":"sport-specific time horizons prevent soccer games 3 days out from polluting scans","source":"cca-desktop","session":"S272","timestamp":"2026-04-08T00:19:03.945717Z"}
+{"tip":"ERA kill switch needs MIN_IP floor to avoid noise from 1-start sample sizes","source":"cca-desktop","session":"S272","timestamp":"2026-04-08T00:19:03.945717Z"}
+{"tip":"When writing test isolation guards, check canonical path at class init time not method call time","source":"cca-desktop","session":"S274","timestamp":"2026-04-08T02:13:48.044074Z"}
+{"tip":"Bayesian regression toward .500 with 30-game prior is the right MLB early-season model","source":"cca-desktop","session":"S274","timestamp":"2026-04-08T02:13:48.044074Z"}

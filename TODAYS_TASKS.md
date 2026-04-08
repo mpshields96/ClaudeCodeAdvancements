@@ -15,7 +15,7 @@ Context:
 - Kalshi now has MLB pitcher wiring + sports CLV settlement wiring locally. The next value is research,
   validation, and exact operator-facing integration guidance.
 
-### CHAT T1 — Answer REQ-093 cleanly: MLB loss verdict + next action
+### CHAT T1 — Answer REQ-093 cleanly: MLB loss verdict + next action [DONE S274]
 
 **Goal:** Give Kalshi one direct verdict on why MLB underperformed and what is actually left.
 
@@ -71,7 +71,7 @@ and any 2026-season starting-pitcher / xFIP / rest / bullpen model discussions.
 
 **STOP CONDITION:** `CCA_TO_POLYBOT.md` delivery with only high-signal findings.
 
-### CHAT T4 — 2026 MLB data refresh plan
+### CHAT T4 — 2026 MLB data refresh plan [DONE S274]
 
 **Goal:** Tell Kalshi exactly how to replace stale MLB strength inputs.
 

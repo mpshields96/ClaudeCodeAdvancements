@@ -3,7 +3,22 @@
 
 ---
 
-## Current State (as of Session 273 — 2026-04-07) [EXTENDED — Kalshi-only continuation]
+## Current State (as of Session 274 — 2026-04-07)
+
+**Phase:** Session 274 COMPLETE. Built mlb_live_ratings.py with 14 tests; fixed ROIResolver integration (0%→29.5% impl rate); wrote S274 Kalshi delivery covering efficiency_feed wire-in, UCL 2nd legs, NBA playoffs, CPI sniper
+
+**What was done this session (S274):**
+- mlb_live_ratings.py live pythagorean ratings + 14 passing tests
+- ROIResolver integration in meta_learning_dashboard fixed (0%→29.5%)
+- **Tests**: 374 suites, 12708 tests passing. All green.
+
+**Next:**
+1. Check Codex wire-in of efficiency_feed Option A (mlb_live_ratings hook)
+2. UCL 2nd legs post-April 8 results analysis (PSG/LFC + BAR/ATM)
+
+---
+
+## Previous State (Session 273 — 2026-04-07) [EXTENDED — Kalshi-only continuation]
 
 **DIRECTIVE: Kalshi bot overhaul ONLY across next several CCA chats. No MT work.**
 
@@ -25,7 +40,6 @@
 5. NBA playoffs prep: matchup quality notes for April 18 first round
 
 ---
-
 ## Previous State (Session 271 — 2026-04-06)
 
 **Phase:** Session 271 COMPLETE. Chat 39 injury port + Chat 40 PDO/NHL port + Chat 41 sports_analytics WIP; bot killed
