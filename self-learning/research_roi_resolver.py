@@ -488,6 +488,38 @@ class ROIResolver:
                 return f.read()
         return ""
 
+    def get_resolved_deliveries(self) -> List[dict]:
+        """Return deliveries with statuses resolved from all sources (in-memory only).
+
+        Suitable for callers that need live status counts without writing to disk.
+        """
+        deliveries = _load_outcomes(self.outcomes_path)
+        if not deliveries:
+            return []
+
+        acks = parse_delivery_acks(self._read_ack_text())
+        updates = resolve_deliveries(acks, self.outcomes_path)
+        commit_updates = self._scan_commits()
+        cca_updates = self._scan_cca_to_polybot()
+
+        resolved_ids = {u["delivery_id"] for u in updates}
+        for cu in commit_updates:
+            if cu["delivery_id"] not in resolved_ids:
+                updates.append(cu)
+                resolved_ids.add(cu["delivery_id"])
+        for cc in cca_updates:
+            if cc["delivery_id"] not in resolved_ids:
+                updates.append(cc)
+                resolved_ids.add(cc["delivery_id"])
+
+        delivery_map = {d["delivery_id"]: dict(d) for d in deliveries}
+        for u in updates:
+            did = u["delivery_id"]
+            if did in delivery_map:
+                delivery_map[did]["status"] = u["new_status"]
+
+        return list(delivery_map.values())
+
     def run(self) -> dict:
         """Run the full resolve + ROI pipeline. Returns JSON-serializable report."""
         # Load

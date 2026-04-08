@@ -235,10 +235,31 @@ class ImprovementTracker:
 
 
 class ResearchROITracker:
-    """Track research delivery ROI."""
+    """Track research delivery ROI.
+
+    Uses ROIResolver.get_resolved_deliveries() for live status resolution
+    (DELIVERY_ACK + git commits + CCA cross-chat). Falls back to raw JSONL
+    on import error so the dashboard never crashes.
+    """
 
     def __init__(self, filepath: str):
-        self._entries = _load_jsonl(filepath)
+        raw = _load_jsonl(filepath)
+        # Only use live resolution for the canonical outcomes file.
+        # Skip resolution for temp files / test fixtures to avoid session-number
+        # collisions between fake test entries and real DELIVERY_ACK sessions.
+        _canonical = os.path.join(os.path.dirname(os.path.abspath(__file__)), "research_outcomes.jsonl")
+        if os.path.abspath(filepath) != _canonical:
+            self._entries = raw
+            return
+        try:
+            import sys as _sys
+            _sl_dir = os.path.dirname(os.path.abspath(filepath))
+            if _sl_dir not in _sys.path:
+                _sys.path.insert(0, _sl_dir)
+            from research_roi_resolver import ROIResolver
+            self._entries = ROIResolver(outcomes_path=filepath).get_resolved_deliveries()
+        except Exception:
+            self._entries = raw
 
     @property
     def total_deliveries(self) -> int:
@@ -255,7 +276,8 @@ class ResearchROITracker:
     def implementation_rate(self) -> float:
         if not self._entries:
             return 0.0
-        implemented = sum(1 for e in self._entries if e.get("status") == "implemented")
+        _resolved = {"implemented", "acknowledged", "sent_confirmed", "profitable", "unprofitable"}
+        implemented = sum(1 for e in self._entries if e.get("status") in _resolved)
         return implemented / len(self._entries)
 
     def to_dict(self) -> dict:
