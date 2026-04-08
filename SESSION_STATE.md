@@ -3,7 +3,26 @@
 
 ---
 
-## Current State (as of Session 271 — 2026-04-06)
+## Current State (as of Session 273 — 2026-04-07)
+
+**Phase:** Session 273 COMPLETE. Kalshi deliveries + meta-learning dashboard fix.
+
+**What was done this session (S273):**
+- Written mlb_pitcher_feed wire-in delivery to CCA_TO_POLYBOT.md (exact code for Codex): import, kill switch logic, edge_pts bonus, signal reason strings — ~70 LOC
+- Written NBA playoff PDO kill switch adjustment to CCA_TO_POLYBOT.md: playoff_mode param for pdo_kill_switch_from_snapshot, threshold raised 102→104.5 in playoffs, date-based detection
+- Fixed meta_learning_dashboard.py: research implementation rate was always 0% — now uses ROIResolver.get_resolved_deliveries() → 29.5% (28/95 resolved)
+- Added ROIResolver.get_resolved_deliveries() in-memory API to research_roi_resolver.py
+- All 64 meta-learning + roi tests passing. Smoke 10/10 clean.
+- Commit: ebce9d4
+
+**Next:**
+1. Reddit MLB nuclear scan (separate chat — own context)
+2. MT-49 Phase 2: Active principle transfer (principle_transfer.py → make it active with acceptance tracking)
+3. Kalshi: Codex implements mlb_pitcher_feed wire-in + playoff PDO from CCA_TO_POLYBOT.md
+
+---
+
+## Previous State (Session 271 — 2026-04-06)
 
 **Phase:** Session 271 COMPLETE. Chat 39 injury port + Chat 40 PDO/NHL port + Chat 41 sports_analytics WIP; bot killed
 
@@ -18,7 +37,6 @@
 2. Chat 42: sports_clv.py (CLV tracking + Monte Carlo sim)
 
 ---
-
 ## Previous State (Session 270 — 2026-04-06)
 
 **Phase:** Session 270 COMPLETE. efficiency_feed wired into sports_game + KalshiSeriesDiscovery class (67 tests) + REQ-083 all closed
