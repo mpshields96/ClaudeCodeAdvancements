@@ -4541,3 +4541,171 @@ CLI chat 2:
 - Discord forum threads too large to export all 124 — pivoted to targeted approach
 
 ---
+
+## Session 278 — 2026-04-08
+
+**What changed:**
+- discord_analyzer.py built (19 exports, 4798 messages, reaction-weighted → community_meta.json)
+- combat_pacts.json v0.4 — April 8 Jagex FAQ (40 nodes, 3 resets, Magic/Melee/Ranged clarifications)
+- Demonic Pacts Magic thread exported+analyzed — 2t Shadow + Kandarin + Desert confirmed dominant
+- Dad Schedule Dragon Meta deep review — dad persona mapped (Wildy+Tirannwn+ToA, EH+Butler's Bell)
+
+**Why:**
+- leagues6 discord_analyzer.py + combat_pacts.json v0.4 + Magic/Dad Schedule thread exports and deep review
+
+**Tests:** 12610/12610 passing (374 suites)
+
+**Lessons:**
+- Discord token exposed in chat — security incident, password change required
+- narrow no-break space \u202f parser bug cost one debug cycle
+
+---
+
+## Session 279 — 2026-04-09
+
+**What changed:**
+- 9 Discord threads exported (28 files, 5620 messages in community_meta.json)
+- All PENDING fields cleared — Karamja confirmed no echo boss (universal starting region)
+- Google Drive guides fetched: Herblore+Quests+Agility by zigzagzigal, full folder catalogued
+- Content pipeline sources documented: syrifgit task scraper, mejrs map viewer, ihavegroot LeaguesMap
+- Codex comms updated: build_decoder impl request, content pipeline design, session ack
+
+**Why:**
+- leagues6 intelligence haul: 9 Discord threads, Google Drive guides stolen, all PENDING fields cleared, content pipeline sources mapped
+
+**Tests:** 12610/12610 passing (374 suites)
+
+**Lessons:**
+- Zero tracker code written — session was pure intelligence/data work
+- build_decoder.py Codex-blocked (tests existed, module absent — Codex since resolved)
+
+---
+
+## Session 281 — 2026-04-09
+
+**What changed:**
+- RecommendationMode presets (AFK/PvM/Points now) + prefs_for_mode() in tracker.py
+- hiscores integration: src/hiscores.py stdlib-only fetch + skill-level filtering in available_activities
+- region unlock advisor: rank-weighted next-region suggestions wired into tracker tab
+- pact_import.py unblocked pre-existing test_app.py; April 10 patch_april10.py + patches template
+
+**Why:**
+- leagues6-companion tracker expansion: recommendation modes, hiscores integration, region advisor, pact import, April 10 patch tooling
+
+**Tests:** 12610/12610 passing (360 suites)
+
+**Lessons:**
+- spec-guard warn-only noise on every file edit
+
+---
+
+## Session 282 — 2026-04-10
+
+**What changed:**
+- April 10 echo patch: all 6 bosses confirmed
+- Activity expansion 22→48 across all 10 regions
+- Weekly priority section + 6 tests
+- Synergy 4-task plan written to Codex
+
+**Why:**
+- leagues6 April 10 patch applied, activity expansion 22→48, weekly priority checklist, synergy task plan queued for new chats
+
+**Tests:** 141/141 passing (141 suites)
+
+**Lessons:**
+- Tasks D/F already done by Codex — wasted planning overhead
+
+---
+
+## Session 283 — 2026-04-09
+
+**What changed:**
+- synergy_pairs + gear_synergies authored and tier-validated in relics.json
+- validate.py Step 8 machine-checks tier constraints at gate
+- SYNERGY_PLAN.md pre-work checklists + Codex review gates for all 4 tasks
+- leagues6 CLAUDE.md quality standard + feedback memory saved
+
+**Why:**
+- leagues6 synergy data: 14 tier-valid pairs + 10 gear synergies; validate.py gate enforcement; SYNERGY_PLAN.md with Codex review gates; quality standard in CLAUDE.md and memory
+
+**Tests:** 12610/12610 passing (374 suites)
+
+**Lessons:**
+- rushed Task 1 first pass — missed T4 same-tier conflict, required self-correction
+- wasted round-trip on mistake proper pre-work would have prevented
+
+---
+
+## Session 284 — 2026-04-09
+
+**What changed:**
+- leagues6 synergy Tasks 1-4 verified complete; 3 missing direct unit tests added for _pair_bonus/_gear_bonus
+- community_helpers.py + tracker Community Intel expander shipped (TDD, 12 tests)
+
+**Why:**
+- leagues6 synergy audit + community intel tracker section + Codex coordination rule
+
+**Tests:** 12610/12610 passing (360 suites)
+
+**Lessons:**
+- slim_init missed post-22:00 Codex entries showing Tasks 3+4 already done
+- spec-guard firing on every app.py edit added friction
+
+---
+
+## Session 285 — 2026-04-10
+
+**What changed:**
+- Community build archetype clusters in Discord expander (cached, 13 new tests)
+- keyword_score: presence→occurrence-count cap=3 (11 tests, strategy threads +80% signal)
+- safe_decode_build hardening — malformed URL skipped not crashing
+- Codex coordination standing directive in CLAUDE.md + memory + SESSION_RESUME
+
+**Why:**
+- Leagues6: community archetype clusters UI, keyword density scoring fix, safe_decode_build hardening, Codex coordination directive permanized
+
+**Tests:** 12610/12610 passing (360 suites)
+
+**Lessons:**
+- safe_decode_build was redundant — Codex had already verified it; duplicate work
+- SESSION_RESUME test count stale at session start
+
+---
+
+## Session 290 — 2026-04-09
+
+**What changed:**
+- guide_intel.json 2→6 skills (agility/quests/slayer/prayer/herblore/fishing) across all 10 regions
+- activities.json 48→52 (rock_crabs, brimhaven_agility_arena, chaos_altar, zalcano)
+- tracker guide expander rebuilt as 6-tab skill UI
+- leagues6 tests 244→262 (+18); all PRE/POST-FLIGHT Codex comms written autonomously
+
+**Why:**
+- leagues6-companion guide intel expanded to 6 skills + 4 new activities + autonomous Codex coordination
+
+**Tests:** 12409/12409 passing (355 suites)
+
+**Lessons:**
+- no CCA frontier code work; session was data/content expansion only
+- some fishing level claims needed accuracy fixes mid-session
+
+---
+
+## Session 291 — 2026-04-09
+
+**What changed:**
+- GitHub push (OSRSLeaguesTool repo live)
+- leagues_query.py: 84k Discord messages searchable with free-text + --regions/--tasks/--wiki flags
+- wiki_data.json: full relic/task/region data with wiki links
+- Reddit + Discord intelligence synthesized for magic build planning
+
+**Why:**
+- leagues6-companion: pushed to GitHub, built leagues_query.py personal research assistant with 84k Discord messages + full OSRS wiki knowledge base
+
+**Tests:** 12409/12409 passing (355 suites)
+
+**Lessons:**
+- Streamlit Cloud deploy blocked (GitHub OAuth issue — Matthew to resolve)
+- spec-guard warnings on leagues_query.py (warn-only, no spec written for small utility)
+
+---

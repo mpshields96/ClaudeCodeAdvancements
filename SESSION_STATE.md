@@ -3,7 +3,154 @@
 
 ---
 
-## Current State (as of Session 277 — 2026-04-08)
+## Current State (as of Session 291 — 2026-04-09)
+
+**Phase:** Session 291 COMPLETE. leagues6-companion: pushed to GitHub, built leagues_query.py personal research assistant with 84k Discord messages + full OSRS wiki knowledge base
+
+**What was done this session (S291):**
+- GitHub push (OSRSLeaguesTool repo live)
+- leagues_query.py: 84k Discord messages searchable with free-text + --regions/--tasks/--wiki flags
+- wiki_data.json: full relic/task/region data with wiki links
+- Reddit + Discord intelligence synthesized for magic build planning
+- **Tests**: 355 suites, 12409 tests passing. All green.
+
+**Next:**
+1. Download 3 big Discord threads (31k+36k msgs) and analyze
+2. Find blank planner link in Discord, clone it, add Claude Code Google Drive update capability
+3. Package data into Claude Project for iOS access
+
+---
+
+## Previous State (Session 290 — 2026-04-09)
+
+**Phase:** Session 290 COMPLETE. leagues6-companion guide intel expanded to 6 skills + 4 new activities + autonomous Codex coordination
+
+**What was done this session (S290):**
+- guide_intel.json 2→6 skills (agility/quests/slayer/prayer/herblore/fishing) across all 10 regions
+- activities.json 48→52 (rock_crabs, brimhaven_agility_arena, chaos_altar, zalcano)
+- tracker guide expander rebuilt as 6-tab skill UI
+- leagues6 tests 244→262 (+18); all PRE/POST-FLIGHT Codex comms written autonomously
+- **Tests**: 355 suites, 12409 tests passing. All green.
+
+**Next:**
+1. talk to Codex — verify fishing level claims + activities.json additions
+2. next CCA frontier: continue MT-21 hivemind or MT-53 pokemon work
+
+---
+## Previous State (Session 285 — 2026-04-10)
+
+**Phase:** Session 285 COMPLETE. Leagues6: community archetype clusters UI, keyword density scoring fix, safe_decode_build hardening, Codex coordination directive permanized
+
+**What was done this session (S285):**
+- Community build archetype clusters in Discord expander (cached, 13 new tests)
+- keyword_score: presence→occurrence-count cap=3 (11 tests, strategy threads +80% signal)
+- safe_decode_build hardening — malformed URL skipped not crashing
+- Codex coordination standing directive in CLAUDE.md + memory + SESSION_RESUME
+- **Tests**: 360 suites, 12610 tests passing. All green.
+
+**Next:**
+1. Item 2: translate cluster common_node_ids to readable labels (blocked on Codex Q3 answer)
+2. Item 3: pact-tree planner scoring (Phase 5)
+
+---
+## Previous State (Session 284 — 2026-04-09)
+
+**Phase:** Session 284 COMPLETE. leagues6 synergy audit + community intel tracker section + Codex coordination rule
+
+**What was done this session (S284):**
+- leagues6 synergy Tasks 1-4 verified complete; 3 missing direct unit tests added for _pair_bonus/_gear_bonus
+- community_helpers.py + tracker Community Intel expander shipped (TDD, 12 tests)
+- **Tests**: 360 suites, 12610 tests passing. All green.
+
+**Next:**
+1. wait for Codex post-flight verdict on community intel
+2. April 10 echo patch workflow after Jagex reveals
+
+---
+## Previous State (Session 283 — 2026-04-09)
+
+**Phase:** Session 283 COMPLETE. leagues6 synergy data: 14 tier-valid pairs + 10 gear synergies; validate.py gate enforcement; SYNERGY_PLAN.md with Codex review gates; quality standard in CLAUDE.md and memory
+
+**What was done this session (S283):**
+- synergy_pairs + gear_synergies authored and tier-validated in relics.json
+- validate.py Step 8 machine-checks tier constraints at gate
+- SYNERGY_PLAN.md pre-work checklists + Codex review gates for all 4 tasks
+- leagues6 CLAUDE.md quality standard + feedback memory saved
+- **Tests**: 374 suites, 12610 tests passing. All green.
+
+**Next:**
+1. Codex reviews Task 1 data — verdict to CODEX_TO_CLAUDE.md
+2. next CCA chat reads verdict then starts Task 2 engine
+
+---
+## Previous State (Session 282 — 2026-04-10)
+
+**Phase:** Session 282 COMPLETE. leagues6 April 10 patch applied, activity expansion 22→48, weekly priority checklist, synergy task plan queued for new chats
+
+**What was done this session (S282):**
+- April 10 echo patch: all 6 bosses confirmed
+- Activity expansion 22→48 across all 10 regions
+- Weekly priority section + 6 tests
+- Synergy 4-task plan written to Codex
+- **Tests**: 141 suites, 141 tests passing. All green.
+
+**Next:**
+1. New chat: Task 1 synergy_pairs data (ask Matthew for YouTube intel first)
+2. New chat: Task 2 engine recommend_relics_for_regions()
+
+---
+## Previous State (Session 281 — 2026-04-09)
+
+**Phase:** Session 281 COMPLETE. leagues6-companion tracker expansion: recommendation modes, hiscores integration, region advisor, pact import, April 10 patch tooling
+
+**What was done this session (S281):**
+- RecommendationMode presets (AFK/PvM/Points now) + prefs_for_mode() in tracker.py
+- hiscores integration: src/hiscores.py stdlib-only fetch + skill-level filtering in available_activities
+- region unlock advisor: rank-weighted next-region suggestions wired into tracker tab
+- pact_import.py unblocked pre-existing test_app.py; April 10 patch_april10.py + patches template
+- **Tests**: 360 suites, 12610 tests passing. All green.
+
+**Next:**
+1. April 10: fill patches/echo_drops_apr10.json + run patch_april10.py after Jagex reveal
+2. Codex Task D/E closed — wire completed_ids + import button into app.py tracker tab
+
+---
+## Previous State (Session 279 — 2026-04-09)
+
+**Phase:** Session 279 COMPLETE. leagues6 intelligence haul: 9 Discord threads, Google Drive guides stolen, all PENDING fields cleared, content pipeline sources mapped
+
+**What was done this session (S279):**
+- 9 Discord threads exported (28 files, 5620 messages in community_meta.json)
+- All PENDING fields cleared — Karamja confirmed no echo boss (universal starting region)
+- Google Drive guides fetched: Herblore+Quests+Agility by zigzagzigal, full folder catalogued
+- Content pipeline sources documented: syrifgit task scraper, mejrs map viewer, ihavegroot LeaguesMap
+- Codex comms updated: build_decoder impl request, content pipeline design, session ack
+- **Tests**: 374 suites, 12610 tests passing. All green.
+
+**Next:**
+1. tracker slice 2: hiscores integration or recommendation modes
+2. post-launch April 15 syrifgit task sync
+
+---
+## Previous State (Session 278 — 2026-04-08)
+
+**Phase:** Session 278 COMPLETE. leagues6 discord_analyzer.py + combat_pacts.json v0.4 + Magic/Dad Schedule thread exports and deep review
+
+**What was done this session (S278):**
+- discord_analyzer.py built (19 exports, 4798 messages, reaction-weighted → community_meta.json)
+- combat_pacts.json v0.4 — April 8 Jagex FAQ (40 nodes, 3 resets, Magic/Melee/Ranged clarifications)
+- Demonic Pacts Magic thread exported+analyzed — 2t Shadow + Kandarin + Desert confirmed dominant
+- Dad Schedule Dragon Meta deep review — dad persona mapped (Wildy+Tirannwn+ToA, EH+Butler's Bell)
+- **Tests**: 374 suites, 12610 tests passing. All green.
+
+**Next:**
+1. leagues6 Phase 4 tracker.py after Codex clears pact-tree architecture decision
+2. More Discord thread exports in next session (DCE CLI ready, fresh token needed)
+3. New reverse-engineering target: `build_decoder.py` for `osrsleaguescountdown.io/tree?share=` URLs found in Magic/Melee exports
+4. Next Codex chat should check CCA comms first, then be ready to review more exported Discord threads
+
+---
+## Previous State (Session 277 — 2026-04-08)
 
 **Phase:** Session 277 COMPLETE. Phase 3 Streamlit UI built for leagues6-companion; Discord bot setup guided; meta analysis from community exports
 
@@ -19,7 +166,6 @@
 3. Update leagues6 TODAYS_TASKS Session 3 items to DONE
 
 ---
-
 ## Previous State (Session 276 — 2026-04-08)
 
 **Phase:** Session 276 COMPLETE. leagues6 Phase 2 engine.py complete + Codex refactor applied; 65/65 CCA+leagues tests passing; 4 new Codex-written tests require engine fixes next session
