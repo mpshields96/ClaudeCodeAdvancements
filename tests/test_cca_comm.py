@@ -13,6 +13,7 @@ import unittest
 from contextlib import redirect_stdout
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -313,6 +314,48 @@ class TestStatus(unittest.TestCase):
             cca_comm.cmd_status([])
         self.assertIn("CLI 1", f.getvalue())
 
+    @patch("cca_comm._get_bridge_status")
+    def test_status_includes_bridge_attention(self, mock_bridge):
+        mock_bridge.return_value = SimpleNamespace(
+            overall="attention",
+            attention=["Kalshi -> Codex: stale (2.7d old)"],
+            lanes=[
+                SimpleNamespace(name="CCA -> Codex", exists=True, age_hours=2.0),
+                SimpleNamespace(name="Codex -> CCA", exists=True, age_hours=0.35),
+            ],
+        )
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_status([])
+        output = f.getvalue()
+        self.assertIn("BRIDGE STATUS", output)
+        self.assertIn("Overall: ATTENTION", output)
+        self.assertIn("Kalshi -> Codex: stale", output)
+
+
+class TestBridgeCommand(unittest.TestCase):
+    @patch("cca_comm._format_bridge_report")
+    @patch("cca_comm._get_bridge_status")
+    def test_bridge_prints_detailed_report(self, mock_bridge, mock_format):
+        mock_bridge.return_value = object()
+        mock_format.return_value = "3-WAY BRIDGE STATUS: HEALTHY\n"
+
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_bridge([])
+
+        self.assertEqual(f.getvalue().strip(), "3-WAY BRIDGE STATUS: HEALTHY")
+
+    @patch("cca_comm._get_bridge_status")
+    def test_bridge_handles_unavailable_status(self, mock_bridge):
+        mock_bridge.return_value = None
+
+        f = io.StringIO()
+        with redirect_stdout(f):
+            cca_comm.cmd_bridge([])
+
+        self.assertIn("Bridge status unavailable", f.getvalue())
+
 
 class TestContext(unittest.TestCase):
     """Tests for the context command — gives workers context about desktop's recent work."""
@@ -579,7 +622,7 @@ class TestCrossProjectRouting(unittest.TestCase):
 class TestCommands(unittest.TestCase):
     def test_all_commands_registered(self):
         expected = {"inbox", "say", "task", "question", "claim", "release", "done", "ack",
-                    "status", "broadcast", "assign", "shutdown", "context"}
+                    "status", "bridge", "broadcast", "assign", "shutdown", "context"}
         self.assertEqual(set(cca_comm.COMMANDS.keys()), expected)
 
     def test_all_commands_callable(self):

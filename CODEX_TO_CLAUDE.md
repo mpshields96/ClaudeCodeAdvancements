@@ -552,3 +552,178 @@ Net result:
 - the next obvious Pokemon task is `collision_reader_crystal.py` or equivalent live walkability data so Crystal navigation can extend past the intro bootstrap maps
 
 ---
+
+## [2026-04-09 00:52 UTC] — LEAGUES6 STATUS UPDATE — stale red-gate warning cleared
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/validate.py`, `/Users/matthewshields/Projects/leagues6-companion/tests/`, `/Users/matthewshields/Projects/leagues6-companion/CODEX_TO_CLAUDE.md`
+**Summary:**
+The earlier Leagues 6 handoff claiming the companion repo gate was red is stale. I re-ran the current local checks and the repo is green again, which means the shared placeholder/data-model drift around the Karamja/no-echo state has already been resolved in the current working tree.
+
+Current state from this Codex session:
+- `venv/bin/python3 -m pytest tests/ -q` → `84 passed`
+- `venv/bin/python3 validate.py` → `GATE: PASSED`
+
+I also appended the same correction inside the companion repo’s local `CODEX_TO_CLAUDE.md` so the active CCA Leagues chat can see it directly during wrap/init.
+
+**Verification:**
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/ -q`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 validate.py`
+
+**Relay Guidance:**
+- Ignore the prior “repo gate red / fix placeholder contract first” guidance.
+- Safe next work is back to roadmap items: tracker expansion, decoded-build clustering, or planner-prefill work.
+
+## [2026-04-09 01:02 UTC] — LEAGUES6 STATUS UPDATE — decoded-build clustering landed
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/build_decoder.py`, `/Users/matthewshields/Projects/leagues6-companion/tests/test_build_decoder.py`, `/Users/matthewshields/Projects/leagues6-companion/SESSION_RESUME.md`
+**Summary:**
+I continued on the next isolated Leagues 6 slice after the green baseline check and extended `build_decoder.py` into a usable community-build clustering tool. The decoder can now group countdown-share builds by Jaccard overlap on `selected_node_ids`, which turns the Discord-export sweep into repeated archetype clusters instead of just raw decoded URLs.
+
+New CLI:
+`venv/bin/python3 build_decoder.py --community-meta data/community_meta.json --clusters`
+
+This stays intentionally separate from pact-planner scoring and UI work. It is an ingestion/intelligence tool for surfacing what the community is repeatedly building, which makes it a safe Codex-owned slice while the full planner remains split out.
+
+**Verification:**
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/test_build_decoder.py -q` → `7 passed`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/ -q` → `85 passed`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 validate.py` → `GATE: PASSED`
+
+**Relay Guidance:**
+- Safe next Leagues work is planner-prefill/import UX based on `decode_build()` or the new cluster summaries.
+- No Kalshi relay needed.
+
+## [2026-04-09 01:08 UTC] — LEAGUES6 STATUS UPDATE — decoder now has planner-prefill bridge
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/build_decoder.py`, `/Users/matthewshields/Projects/leagues6-companion/tests/test_build_decoder.py`, `/Users/matthewshields/Projects/leagues6-companion/SESSION_RESUME.md`
+**Summary:**
+I kept the Leagues decoder workstream going one more step without overlapping `src/app.py`. `build_decoder.py` now exposes `decoded_build_to_pact_plan()`, which converts a decoded community share build directly into the tree-ready `pact_plan` dict shape the app already expects in session state. That makes the next planner/import slice straightforward: take a share URL, decode it, and seed `selected_node_ids` plus a safe `combat_style` hint when it is unambiguous.
+
+Hybrid or unclear builds deliberately map `combat_style` to `None` so the import path does not invent a false style commitment. This stays cleanly on the ingestion side and does not pretend node-level pact scoring exists yet.
+
+**Verification:**
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/test_build_decoder.py -q` → `8 passed`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/ -q` → `94 passed`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 validate.py` → `GATE: PASSED`
+
+**Relay Guidance:**
+- Cleanest next Leagues slice is a tiny imported-build UX in `src/app.py` that seeds `st.session_state["pact_plan"]` from a share code or URL.
+- No Kalshi relay needed.
+
+## [2026-04-09 02:00 UTC] — LEAGUES6 STATUS UPDATE — Task D/E closed for CCA
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/src/app.py`, `/Users/matthewshields/Projects/leagues6-companion/src/tracker.py`, `/Users/matthewshields/Projects/leagues6-companion/src/pact_import.py`, `/Users/matthewshields/Projects/leagues6-companion/tests/test_tracker.py`, `/Users/matthewshields/Projects/leagues6-companion/tests/test_app.py`
+**Summary:**
+I checked the latest Leagues comms and picked up the live CCA queue rather than the older decoder TODOs. Both remaining asks from S281/S282 are now closed:
+
+1. Import build UI:
+- planner now accepts a countdown share URL or raw share code
+- import uses `src/pact_import.py` and seeds the tree-ready `pact_plan` state
+- invalid imports fail cleanly with a user-facing error
+- the UI explicitly says current scoring still only uses top-level combat style
+
+2. Completed-activity suppression:
+- tracker now stores `completed_activity_ids`
+- recommendation APIs accept `completed_ids`
+- each live rec card has `Mark done`
+- completed activities disappear from future recommendations until `Reset done`
+
+Current baseline after this pass:
+- `venv/bin/python3 -m pytest tests/ -q` → `124 passed`
+- `venv/bin/python3 validate.py` → `GATE: PASSED`
+
+I also updated the companion repo’s `SESSION_RESUME.md` and `TODAYS_TASKS.md` so the next Leagues pickup sees Task D/E as closed instead of stale open work.
+
+**Verification:**
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/ -q` → `124 passed`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 validate.py` → `GATE: PASSED`
+
+**Relay Guidance:**
+- Treat CCA Task D and Task E as closed.
+- Best next Leagues slice is tracker-intelligence polish or more Discord/community ingestion.
+
+## [2026-04-09 02:08 UTC] — LEAGUES6 STATUS UPDATE — prior-phase hardening found a real bug
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/src/region_advisor.py`, `/Users/matthewshields/Projects/leagues6-companion/tests/test_region_advisor.py`
+**Summary:**
+I started the requested “harden/review past phases” pass and found one actual edge-case bug in older Phase 4 logic. `advise_next_unlock()` was using the raw input list length to decide whether all 3 choosable slots were already locked, so duplicate IDs or always-unlocked IDs like `varlamore` could incorrectly suppress advisor output.
+
+That is now fixed. The advisor normalizes to unique choosable locked IDs before applying the 3-slot cutoff, and there is regression coverage for the duplicate/always-unlocked case plus the advice-formatting path.
+
+Current baseline after this hardening pass:
+- `venv/bin/python3 -m pytest tests/ -q` → `126 passed`
+- `venv/bin/python3 validate.py` → `GATE: PASSED`
+
+**Verification:**
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/test_region_advisor.py -q` → `14 passed`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 -m pytest tests/ -q` → `126 passed`
+- `cd /Users/matthewshields/Projects/leagues6-companion && venv/bin/python3 validate.py` → `GATE: PASSED`
+
+**Relay Guidance:**
+- Treat this past-phase hardening item as closed.
+- Further review passes should keep targeting pure helper modules first; they are yielding the best signal-to-risk ratio.
+
+---
+
+## [2026-04-10 UTC] — LEAGUES6 GAP AUDIT — Codex's 6 missing items (S285)
+**Status:** ACTION NEEDED
+**Scope:** leagues6-companion project — full gap list from Codex post-session audit
+
+**Summary:**
+Codex identified 6 gaps after reviewing S285 work. Items 1 is FIXED this session. Items 2-6 are open.
+
+**Item 1 — Robust community build ingestion [FIXED S285]**
+One malformed countdown share URL (`1IQgAKUECA`) in community_meta.json caused `decode_build` to
+raise, aborting the entire 45-URL pipeline. Fixed by adding `safe_decode_build()` to build_decoder.py
+(returns None on exception) and updating `cluster_community_meta_text` to skip None results.
+Tests: `test_safe_decode_build_*` added to test_build_decoder.py. 198 passed post-fix.
+
+**Item 2 — Better archetype summaries [OPEN]**
+Cluster section in app.py:953 shows style/points/count/shared-node-count but not user-facing
+relic or route names. Next step: translate common_node_ids into readable pact node labels.
+File: src/app.py, src/community_helpers.py, build_decoder.py
+
+**Item 3 — Full planner scoring still stops at top-level style [OPEN — MAJOR]**
+Imported `selected_node_ids` stored and displayed but do NOT drive planner scoring yet.
+Documented in SESSION_RESUME.md as Phase 5 / pact-tree planner work. Biggest missing piece
+if goal is "real build planner."
+File: src/engine.py, SESSION_RESUME.md
+
+**Item 4 — Real UI/integration coverage [OPEN]**
+app.py has lightweight/stubbed tests, not real Streamlit interaction tests.
+Engine and helper coverage is strong; app-path coverage is weak.
+File: tests/test_app.py
+
+**Item 5 — Data freshness is still manual [OPEN]**
+April 10 patch, Discord exports, analyzer refreshes are all operator-driven.
+No automated refresh/update pipeline exists yet.
+Files: discord_analyzer.py, patch_april10.py
+
+**Item 6 — Project hygiene [OPEN]**
+No README.md, SESSION_RESUME.md was stale (now fixed), repo is local-only (no git remote).
+Makes handoff and recovery worse than actual code quality.
+Files: README.md (missing), SESSION_RESUME.md (updated S285)
+
+**Relay Guidance:**
+- Item 1 is fixed. Items 2-6 are ranked by Codex's priority: 1→2→3→4→5→6.
+- Next CCA task should be Item 2 (readable node labels in archetype summaries) OR Item 3 (pact-tree scoring) per Codex recommendation.
+- Codex's exact words: "highest-value next fix is item 1: harden cluster ingestion so malformed share links get skipped instead of poisoning the whole community-intel path."
+
+## [2026-04-09 20:02 UTC] — CCA COORDINATION — Bridge visibility added to `cca_comm.py`
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/ClaudeCodeAdvancements/cca_comm.py`, `/Users/matthewshields/Projects/ClaudeCodeAdvancements/tests/test_cca_comm.py`
+**Summary:**
+The operator-facing comms command now surfaces durable bridge health instead of forcing separate manual checks. `python3 cca_comm.py status` now prints the tri-chat bridge snapshot after queue/scopes, including lane freshness and any relay attention items. New command: `python3 cca_comm.py bridge` prints the full detailed bridge report from `bridge_status.py`.
+
+This is meant to reduce the “messages exist but nobody looked at the bridge files” failure mode. On the live repo state it already surfaces one real issue: `Kalshi -> Codex` is stale.
+
+**Verification:**
+- `python3 tests/test_cca_comm.py` → `53 tests OK`
+- `python3 tests/test_bridge_status.py` → `3 tests OK`
+- `python3 parallel_test_runner.py --quick --workers 8` → `10/10 suites passed, 543 tests`
+- `python3 cca_comm.py status`
+- `python3 cca_comm.py bridge`
+
+**Relay Guidance:**
+- CCA/Claude should prefer `python3 cca_comm.py status` as the first coordination check because it now includes bridge health.
+- Use `python3 cca_comm.py bridge` when a stale relay or lane mismatch needs exact file-level detail.

@@ -27,6 +27,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
@@ -266,6 +267,51 @@ def cmd_ack(args):
     print(f"Acknowledged {count} messages for {ciq.VALID_CHATS.get(me, me)}.")
 
 
+def _get_bridge_status() -> Any | None:
+    """Load tri-chat bridge status if the helper is available."""
+    try:
+        from bridge_status import collect_bridge_status
+    except ImportError:
+        return None
+
+    try:
+        return collect_bridge_status()
+    except OSError:
+        return None
+
+
+def _format_bridge_age(age_hours: float | None) -> str:
+    """Compact bridge age formatting for status output."""
+    if age_hours is None:
+        return "missing"
+    if age_hours < 1:
+        return f"{int(age_hours * 60)}m"
+    if age_hours < 48:
+        return f"{age_hours:.1f}h"
+    return f"{age_hours / 24.0:.1f}d"
+
+
+def _print_bridge_snapshot(status: Any) -> None:
+    """Print a compact bridge-health summary."""
+    print("\nBRIDGE STATUS:")
+    print(f"  Overall: {status.overall.upper()}")
+    for lane in status.lanes:
+        state = "missing" if not lane.exists else _format_bridge_age(lane.age_hours)
+        print(f"  {lane.name}: {state}")
+
+    if status.attention:
+        print("  Attention:")
+        for item in status.attention:
+            print(f"    - {item}")
+
+
+def _format_bridge_report(status: Any) -> str:
+    """Render the detailed bridge report."""
+    from bridge_status import format_report
+
+    return format_report(status)
+
+
 def cmd_status(args):
     """Show full hivemind status (internal CCA + Kalshi chats)."""
     summary = ciq.get_unread_summary(_qpath())
@@ -308,6 +354,22 @@ def cmd_status(args):
             print(f"  {sender}: {s['subject']}")
     else:
         print("No active scope claims.")
+
+    bridge_status = _get_bridge_status()
+    if bridge_status is not None:
+        _print_bridge_snapshot(bridge_status)
+    else:
+        print("\nBRIDGE STATUS:")
+        print("  Unavailable.")
+
+
+def cmd_bridge(args):
+    """Show the detailed tri-chat bridge status report."""
+    bridge_status = _get_bridge_status()
+    if bridge_status is None:
+        print("Bridge status unavailable.")
+        return
+    print(_format_bridge_report(bridge_status).rstrip())
 
 
 def cmd_question(args):
@@ -473,6 +535,7 @@ COMMANDS = {
     "done": cmd_done,
     "ack": cmd_ack,
     "status": cmd_status,
+    "bridge": cmd_bridge,
     "broadcast": cmd_broadcast,
     "assign": cmd_task,  # Alias: "assign" = "task" (used in /cca-auto-desktop docs)
     "shutdown": cmd_shutdown,
@@ -493,6 +556,7 @@ def main():
         print("  done <summary>          Send wrap summary to desktop")
         print("  ack [chat_id]           Acknowledge all messages")
         print("  status                  Show all queues + scopes")
+        print("  bridge                  Show detailed bridge lane freshness")
         print("  broadcast <msg>         Send to all other chats")
         print("  context [n]             Show recent commits, scopes, queue stats")
         print()
