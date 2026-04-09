@@ -206,6 +206,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `desktop_autoloop.py` — MT-22: Self-sustaining desktop loop orchestrator (resume watcher, state tracking, model selection, Code tab awareness). 60 tests (S132/S136)
 - `start_desktop_autoloop.sh` — MT-22: One-command desktop auto-loop launcher (S132)
 - `DESKTOP_AUTOLOOP_SETUP.md` — MT-22: Setup guide (permissions, quick start, troubleshooting)
+- `LEAGUES_CLAUDE_PROJECT_PACKAGING.md` — Leagues support playbook for packaging `OSRSLeaguesTool` wiki/community knowledge into Claude Project docs for claude.ai/iOS use
 - `session_outcome_tracker.py` — MT-10: Session prompt-to-outcome JSONL tracker (planned vs completed, auto-grade, trend analysis, outcome analyzer with pattern detection + recommendations, 62 tests, S133/S136)
 - `session_timer.py` — MT-36 Phase 1: Per-step timing instrumentation for session lifecycle (init/wrap/test/code/doc categories, context manager + manual timing, JSONL persistence, cross-session averages, outlier detection, 31 tests, S144)
 - `efficiency_analyzer.py` — MT-36 Phase 2: Session overhead analyzer (SessionProfile, OverheadAnalyzer, static wrap analysis, slim wrap proposal, recommendations, 32 tests, S147)

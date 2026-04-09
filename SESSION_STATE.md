@@ -3,7 +3,27 @@
 
 ---
 
-## Current State (as of Session 291 — 2026-04-09)
+## Current State (as of Session 292 — 2026-04-09)
+
+**Phase:** Session 292 COMPLETE. Leagues support lane updated: Bucket 1 done per Matthew, Bucket 2 active in CCA, Bucket 3 packaging playbook written in CCA
+
+**What was done this session (S292):**
+- Confirmed the Leagues bridge in CCA already reflects the S291 pivot to `OSRSLeaguesTool`
+- Wrote `LEAGUES_CLAUDE_PROJECT_PACKAGING.md` as the non-overlapping Bucket 3 operator playbook
+- Updated `SESSION_RESUME.md` to reflect Matthew's latest state update:
+  - 3 Discord threads analyzed
+  - blank planner / Google Drive work in progress in CCA
+  - Claude Project packaging is now queued with an explicit checklist
+- **Tests**: `python3 parallel_test_runner.py --quick --workers 8` → 10/10 suites passed, 543 tests
+
+**Next:**
+1. Let CCA finish Bucket 2: blank planner clone/adaptation + Google Drive update capability
+2. Use `LEAGUES_CLAUDE_PROJECT_PACKAGING.md` to build the Claude Project document pack once planner outputs stabilize
+3. Upload the doc pack to a Claude Project and verify mobile/web queries against the Leagues knowledge base
+
+---
+
+## Previous State (Session 291 — 2026-04-09)
 
 **Phase:** Session 291 COMPLETE. leagues6-companion: pushed to GitHub, built leagues_query.py personal research assistant with 84k Discord messages + full OSRS wiki knowledge base
 
@@ -20,7 +40,6 @@
 3. Package data into Claude Project for iOS access
 
 ---
-
 ## Previous State (Session 290 — 2026-04-09)
 
 **Phase:** Session 290 COMPLETE. leagues6-companion guide intel expanded to 6 skills + 4 new activities + autonomous Codex coordination
