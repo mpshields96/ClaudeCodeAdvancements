@@ -27,13 +27,16 @@ Optional later source:
 
 ## Output Document Set
 
-Upload 4 documents to one Claude Project named `Leagues 6 Planner`.
+Use a 4-document minimum pack, or a 5-document pack when planner/route notes deserve their own upload.
+
+Current CCA local state indicates the Leagues iOS pack has already expanded to 5 docs, so Codex support should treat 5 as the preferred shape when that extra planner/advisor layer exists.
 
 Ready-to-fill templates now exist in CCA:
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_01_OVERVIEW.md`
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_02_REGIONS_RELICS_TASKS.md`
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_03_COMMUNITY_META.md`
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_04_QUERY_EXAMPLES.md`
+- `LEAGUES_CLAUDE_PROJECT_TEMPLATE_05_PLANNER_ROUTE_NOTES.md`
 
 ### 1. `01_OVERVIEW.md`
 
@@ -85,6 +88,17 @@ Include copy-pasteable prompts such as:
 
 Also include one line telling Claude to cite which uploaded doc it used.
 
+### 5. `05_PLANNER_ROUTE_NOTES.md` (optional in the minimal pack, preferred when planner outputs exist)
+
+Use this when the project has a live advisor, route notes, or build-specific planning guidance that should not be mixed into the core fact/reference docs.
+
+Include:
+- current focus build or route
+- planner/advisor outputs worth preserving
+- tradeoffs between region paths
+- warnings and opportunity costs
+- open questions that Claude should keep explicit instead of smoothing over
+
 ## Build Rules
 
 1. Distill, do not dump.
@@ -99,7 +113,7 @@ Also include one line telling Claude to cite which uploaded doc it used.
 1. Refresh source data after new Discord exports:
    - run `discord_analyzer.py`
    - run targeted `leagues_query.py` lookups for topics that need distilled summaries
-2. Draft the 4 documents above from current JSON plus query outputs.
+2. Draft the 4 or 5 documents above from current JSON plus query outputs.
    - start from the template files in this repo
 3. Upload them to a Claude Project named `Leagues 6 Planner`.
 4. Test on web or iOS with 5-10 concrete planning questions.
