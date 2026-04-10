@@ -1,45 +1,38 @@
-Run /cca-init. Last session was S292 on 2026-04-09.
+Run /cca-init. Last session was S293 on 2026-04-10.
 
-Leagues tools support only. CCA tests: 355/374 suites (12409 total — existing 3.9 union syntax failures, no new regressions).
+WHAT WAS DONE (S293 — CCA):
+- /cca-init skill patched: mandatory PRE-FLIGHT write to CLAUDE_TO_CODEX.md now baked in
+- refresh_discord.py ran: 5 channels, 8,223 msgs, community_meta.json committed
+- Deployment prep: runtime.txt (Python 3.12), all data in git → app LIVE on Streamlit Cloud
+- Point Milestone Advisor: new expander in Build Planner, tier T1-T8 roadmap + top tasks, 8 tests (270 total)
+- ui_styles.py: full CSS design system (tokens, card/badge/score_bar/tip components)
+- UI overhaul plan: 6 packages (A-F), file ownership defined, Codex owns B+D
+- Both CLAUDE_TO_CODEX.md entries written (PRE-FLIGHT + WRAP with full master plan)
+- All pushed to github.com/mpshields96/OSRSLeaguesTool (latest: 2b33af2)
 
-WHAT WAS DONE (S291 + S292 support state):
-- GitHub push: OSRSLeaguesTool repo live at https://github.com/mpshields96/OSRSLeaguesTool (commit 7c74488)
-- leagues_query.py: personal research assistant — searches 84,652 Discord messages + OSRS wiki
-  - Free-text: python3 leagues_query.py "magic region picks" → Discord + wiki results with links
-  - python3 leagues_query.py --regions → region points table (Desert=1410, Asgarnia=1170, etc.)
-  - python3 leagues_query.py --tasks magic → all magic tasks with points + wiki URLs
-  - python3 leagues_query.py --wiki grimoire → relic lookup with wiki link
-- data/wiki_data.json: full OSRS wiki data (relics T1-T8, all 75 tasks with points, region echo gear, magic tasks, point cap requirements, mechanic changes)
-- Pact planner confirmed: https://tools.runescape.wiki/demonic-pacts/ (what Discord links to)
-- League dates confirmed: April 15 – June 10, 2026. Echo item stats reveal April 10.
-- Reddit scan: "Six Easy/Lazy builds for Demonic Pacts Leagues" post has 6 builds including 3 magic variants with tree links
-- Magic build consensus: Ancients forced. Kandarin+Desert+Zeah/Kourend for magic. T6=Grimoire (core).
-- Per Matthew update: Bucket 1 is now done (3 Discord threads analyzed) and CCA is actively working Bucket 2 (blank planner / Google Drive path).
-- CCA-side Bucket 3 prep doc now exists at `LEAGUES_CLAUDE_PROJECT_PACKAGING.md`.
-- Ready-to-fill upload templates now exist for all 4 Claude Project docs.
+WHAT CODEX HAS BEEN ASSIGNED:
+- Package B: src/ui_plan.py (Plan tab redesign) — can start now
+- Package D: src/ui_intel.py (Intel tab — community/reddit/guides) — can start now
+- Earlier task: current points input + tier progress bar (still valid)
 
-IMPORTANT — leagues_query.py NOT usable by regular Claude Chat:
-- It's a local Python script reading files from /Users/matthewshields/Downloads/leagues6-discord/
-- Regular Claude (web/iOS) cannot run local scripts or access local files
-- Solution: Claude Projects — upload distilled wiki/community docs → works on iOS
-- Packaging spec/checklist lives in `LEAGUES_CLAUDE_PROJECT_PACKAGING.md`
+MATTHEW'S PENDING ACTIONS:
+- April 10 echo stats reveal: ~10AM UTC today — run refresh_discord.py after it posts,
+  then apply patches/echo_drops_apr10.json via patch_april10.py, then git push
 
-NEXT SESSION WORK (in order):
+NEXT WORK (in order):
+1. URGENT ~10AM UTC: refresh_discord.py → patch_april10.py → git push (echo stats)
+2. CCA Chat 2: Package C (src/ui_track.py) + Package E (src/ui_info.py) in parallel with Codex
+3. After B+C+D+E done: Package F (thin app.py wire-up) — CCA Chat 1
+4. April 15 post-launch: wiki task scrape for full 654 tasks
 
-Bucket 2 — Clone the blank planner + Claude Code Google Drive integration [IN PROGRESS BY CCA]:
-  - Find the blank planner URL from the route tool Discord thread (ID 1487101393511649360)
-  - Clone/copy the Google Sheet structure
-  - Build a script that lets Claude Code update the Google Drive plan autonomously given Matthew's guidance
-  - Requires: Google Drive API credentials (OAuth or service account) — Matthew to provide or set up
-  - Key capability: Claude reads current plan state, Matthew says "add X to region Y", Claude updates sheet
+UI OVERHAUL — file ownership:
+  src/ui_styles.py → DONE (S293, CCA)
+  src/ui_plan.py   → Codex (Package B)
+  src/ui_track.py  → CCA Chat 2 (Package C)
+  src/ui_intel.py  → Codex (Package D)
+  src/ui_info.py   → CCA Chat 2 (Package E)
+  src/app.py       → CCA Chat 1 LAST (Package F)
 
-Bucket 3 — Claude Project setup for iOS access [READY AFTER BUCKET 2]:
-  - Follow `LEAGUES_CLAUDE_PROJECT_PACKAGING.md`
-  - Start from the 4 `LEAGUES_CLAUDE_PROJECT_TEMPLATE_*` files in CCA
-  - Generate 4 upload docs: overview, regions/relics/tasks, community meta, query examples
-  - Upload to a new Claude Project titled "Leagues 6 Planner"
-  - Verify iOS Claude app can query it: "what magic tasks give most points in Desert?"
-  - Keep planner implementation details separate until Bucket 2 stabilizes
-
-leagues6-companion gate: venv/bin/python3 -m pytest tests/ -q → 262 passed, GATE: PASSED
-leagues6-companion git: 7c74488 (leagues_query.py + wiki_data.json added), remote: OSRSLeaguesTool
+leagues6-companion gate: venv/bin/python3 -m pytest tests/ -q → 270 passed
+leagues6-companion git: 2b33af2 (S293 wrap), remote: OSRSLeaguesTool (pushed)
+CCA tests: 355/374 suites (existing 3.9 union syntax failures, no new regressions)

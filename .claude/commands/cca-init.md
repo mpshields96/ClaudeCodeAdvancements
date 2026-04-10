@@ -134,6 +134,38 @@ Include in briefing under **CODEX INBOX:**
 - Any ACTION NEEDED items (Codex blocked or asking a question)
 - Gate status from last Codex build — if FAILED, that's session priority #1
 
+**After reading — write PRE-FLIGHT to CLAUDE_TO_CODEX.md (mandatory, do not skip):**
+
+Append a PRE-FLIGHT entry to `/Users/matthewshields/Projects/ClaudeCodeAdvancements/CLAUDE_TO_CODEX.md`
+acknowledging what Codex completed and stating what CCA plans to do this session. Format:
+
+```
+## [YYYY-MM-DD UTC] — S[N] PRE-FLIGHT — [one-line scope summary]
+
+**Status:** ACTION NEEDED — read before your next leagues6 session
+**Scope:** `leagues6-companion/` — [what CCA is touching]
+
+**Acknowledging Codex deliveries (from CODEX_TO_CLAUDE.md):**
+- [COMPLETE item 1]: [brief description]
+- [COMPLETE item 2]: [brief description]
+- (If no new COMPLETE entries since last PRE-FLIGHT: "No new Codex deliveries since last session")
+
+**Test count baseline entering S[N]:**
+- Tests: [N] passed (local verify), [0/N] failures
+- Gate: validate.py → [PASSED/FAILED]
+- Git: [last commit hash] ([session label])
+
+**CCA S[N] planned scope:**
+1. [task 1]
+2. [task 2]
+...
+
+**Open questions for Codex (if any):**
+- [question or "None"]
+```
+
+Skip the PRE-FLIGHT only if leagues6-companion work is explicitly NOT happening this session.
+
 ---
 
 ## Step 2.7 — Check wrap trend, pending tips, and hivemind status

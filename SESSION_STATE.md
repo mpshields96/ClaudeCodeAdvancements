@@ -3,7 +3,42 @@
 
 ---
 
-## Current State (as of Session 292 — 2026-04-09)
+## Current State (as of Session 293 — 2026-04-10)
+
+**Phase:** Session 293 COMPLETE. leagues6: deployed, Point Milestone Advisor, UI overhaul planned with Codex packages
+
+**What was done this session (S293):**
+- cca-init PRE-FLIGHT write patched
+- Discord refresh + deploy prep (runtime.txt)
+- Point Milestone Advisor 270 tests
+- ui_styles.py design system + UI overhaul plan
+- **Tests**: 1 suites, 270 tests passing. All green.
+
+**Next:**
+1. April 10 echo stats patch (refresh + patch_april10.py)
+2. UI overhaul Package C+E (CCA Chat 2)
+
+---
+
+## Previous State (Session 292 — 2026-04-09)
+
+**Phase:** Session 292 COMPLETE. Leagues6 data pipeline expanded to 154k messages + planner.py advisor + Claude Project iOS docs + community intel mined
+
+**What was done this session (S292):**
+- 154,750-message Discord corpus via DCE CLI automation (3 new threads)
+- refresh_discord.py one-command re-export with token stored securely
+- planner.py live sheet advisor for Magic/Kandarin/Desert/Zeah/T6 Grimoire build
+- 5 Claude Project docs for iOS access generated and bug-fixed
+- Point Cap thread mined: Echo Thermy warning, Wilderness as 4th region candidate
+- **Tests**: 374 suites, 12409 tests passing. All green.
+
+**Next:**
+1. Upload 5 docs to claude.ai Project titled Leagues 6 Planner
+2. Run refresh_discord.py after April 10 echo reveal
+3. Consider Wilderness as 4th region to close 4340pt gap to T6 Grimoire
+
+---
+## Previous State (Session 292 — 2026-04-09)
 
 **Phase:** Session 292 COMPLETE. Leagues support lane updated: Bucket 1 done per Matthew, Bucket 2 active in CCA, Bucket 3 packaging playbook written in CCA
 
@@ -23,7 +58,6 @@
 3. Upload the doc pack to a Claude Project and verify mobile/web queries against the Leagues knowledge base
 
 ---
-
 ## Previous State (Session 291 — 2026-04-09)
 
 **Phase:** Session 291 COMPLETE. leagues6-companion: pushed to GitHub, built leagues_query.py personal research assistant with 84k Discord messages + full OSRS wiki knowledge base

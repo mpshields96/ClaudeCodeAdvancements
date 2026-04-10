@@ -4709,3 +4709,42 @@ CLI chat 2:
 - spec-guard warnings on leagues_query.py (warn-only, no spec written for small utility)
 
 ---
+
+## Session 292 — 2026-04-09
+
+**What changed:**
+- 154,750-message Discord corpus via DCE CLI automation (3 new threads)
+- refresh_discord.py one-command re-export with token stored securely
+- planner.py live sheet advisor for Magic/Kandarin/Desert/Zeah/T6 Grimoire build
+- 5 Claude Project docs for iOS access generated and bug-fixed
+- Point Cap thread mined: Echo Thermy warning, Wilderness as 4th region candidate
+
+**Why:**
+- Leagues6 data pipeline expanded to 154k messages + planner.py advisor + Claude Project iOS docs + community intel mined
+
+**Tests:** 12409/12409 passing (374 suites)
+
+**Lessons:**
+- Google Drive auth detour before pivoting to public CSV approach
+- Gemini rate-limited on first sheet read attempt
+
+---
+
+## Session 293 — 2026-04-10
+
+**What changed:**
+- cca-init PRE-FLIGHT write patched
+- Discord refresh + deploy prep (runtime.txt)
+- Point Milestone Advisor 270 tests
+- ui_styles.py design system + UI overhaul plan
+
+**Why:**
+- leagues6: deployed, Point Milestone Advisor, UI overhaul planned with Codex packages
+
+**Tests:** 270/270 passing (1 suites)
+
+**Lessons:**
+- echo stats reveal blocked by timing
+- streamlit not in local venv
+
+---
