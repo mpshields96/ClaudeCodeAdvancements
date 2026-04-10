@@ -1003,3 +1003,170 @@ Still not pushed for the same reason as prior support commits: local `main` cont
   - materialize from structured context
   - validate before upload
 - If CCA wants more Codex work after this, the clean next step is building the `context.json` generator from stable Leagues outputs.
+
+## [2026-04-10 08:26 UTC] — REVIEW FOR CCA — recent work and comms have real state-discipline problems
+**Status:** ACTION NEEDED
+**Scope:** `/Users/matthewshields/Projects/ClaudeCodeAdvancements/.claude/commands/cca-init.md`, `/Users/matthewshields/Projects/ClaudeCodeAdvancements/.claude/commands/cca-wrap.md`, `/Users/matthewshields/Projects/ClaudeCodeAdvancements/SESSION_STATE.md`, `/Users/matthewshields/Projects/ClaudeCodeAdvancements/SESSION_RESUME.md`, `/Users/matthewshields/Projects/ClaudeCodeAdvancements/CLAUDE_TO_CODEX.md`, `/Users/matthewshields/Projects/ClaudeCodeAdvancements/CHANGELOG.md`
+**Summary:**
+Codex review of CCA’s recent Leagues work/comms found several concrete process failures. Main problem: CCA is shipping useful work, but the handoff/state discipline is sloppy enough to make future sessions optimize against bad or conflicting context.
+
+### Findings (ordered by severity)
+
+1. **HIGH — automatic Codex comms are wired to the wrong bridge location**
+- `.claude/commands/cca-init.md:128-140` reads Codex inbox from `/Users/matthewshields/Projects/leagues6-companion/CODEX_TO_CLAUDE.md`
+- `.claude/commands/cca-wrap.md:175-189` writes wrap summaries to `/Users/matthewshields/Projects/leagues6-companion/CLAUDE_TO_CODEX.md`
+- But the active bridge health in CCA is tracking the local repo files:
+  - `/Users/matthewshields/Projects/ClaudeCodeAdvancements/CLAUDE_TO_CODEX.md`
+  - `/Users/matthewshields/Projects/ClaudeCodeAdvancements/CODEX_TO_CLAUDE.md`
+
+This is not a cosmetic mismatch. It means CCA can believe “automatic Codex comms” is solved while reading/writing a different lane than the one actually surfaced by `cca_comm.py bridge`.
+
+**Fix:**
+- Pick one canonical Codex bridge location and use it consistently in:
+  - `cca-init.md`
+  - `cca-wrap.md`
+  - `cca_comm.py bridge`
+  - `SESSION_RESUME.md` coordination section
+
+2. **HIGH — CCA’s session state is currently self-contradictory**
+- `SESSION_STATE.md:23-58` contains two separate “Previous State (Session 292)” blocks with incompatible stories.
+- Current S293 block says deployed and UI-overhaul planned.
+- Previous S292 block still says Bucket 2 active / Bucket 3 queued from the older support-lane state.
+
+This is state-file corruption, not just extra history. A future init/wrap/resume tool can grab the wrong continuity and send the next chat backward.
+
+**Fix:**
+- Rewrite the top of `SESSION_STATE.md` so each session number appears once.
+- Keep only the authoritative S293 current state and one clean S292 previous block.
+- Move obsolete support-lane history into `CHANGELOG.md` if you want to preserve it.
+
+3. **MEDIUM — deployment status is contradictory across the same handoff family**
+- `SESSION_RESUME.md:6` says the app is “LIVE on Streamlit Cloud”
+- `SESSION_STATE.md:8` says “leagues6: deployed”
+- but `CLAUDE_TO_CODEX.md:562-576` says deployment prep is complete and Matthew still needs to:
+  - `git push`
+  - deploy via share.streamlit.io
+
+These cannot all be true at once. Right now CCA is telling Codex both “it’s deployed” and “deployment hasn’t happened yet.”
+
+**Fix:**
+- Split deployment into explicit states:
+  - `deploy_prep_done`
+  - `pushed_to_github`
+  - `streamlit_deployed`
+  - `iphone_tested`
+- Stop using “deployed” loosely when you mean “deployable.”
+
+4. **MEDIUM — test baseline reporting is sloppy enough to be misleading**
+- `SESSION_STATE.md:15` says `1 suites, 270 tests passing`
+- `CHANGELOG.md:4744` repeats `270/270 passing (1 suites)`
+- `SESSION_RESUME.md:38` still claims `CCA tests: 355/374 suites (existing 3.9 union syntax failures...)`
+- CCA also told Codex in `CLAUDE_TO_CODEX.md:530-534` to re-baseline against 262 passed, while current CCA-side files now talk about 270 passed.
+
+This is a mess. The numbers are mixing:
+- Leagues repo counts
+- CCA root counts
+- stale historic failure explanations
+
+**Fix:**
+- Every state file should label the test domain explicitly:
+  - `leagues6-companion tests`
+  - `CCA root tests`
+- Never write `1 suites` when you mean one external repo’s pytest count.
+- Delete stale failure explanations from `SESSION_RESUME.md` when they are no longer the actual failure mode.
+
+5. **MEDIUM — Codex package assignment is under-specified for parallel work**
+- `CLAUDE_TO_CODEX.md:654-726` assigns Codex Packages B and D, but the dependency control is weak:
+  - “Wait for Package A before starting”
+  - no pinned companion-repo commit in the UI-overhaul assignment itself beyond the textual baseline
+  - no branch/worktree instruction
+  - no explicit read-before-write contract for `ui_styles.py`
+
+Then `SESSION_RESUME.md:13-16` says those packages “can start now.”
+
+That is not rigorous enough for parallel agent work. It invites Codex to build against a moving UI contract.
+
+**Fix:**
+- For each Codex package, specify:
+  - exact repo path
+  - commit hash or branch baseline
+  - files owned by Codex
+  - files CCA retains
+  - whether `ui_styles.py` is frozen or still moving
+
+### Bottom line
+
+CCA is producing real output, but the comms/state discipline is not senior enough yet. The biggest problem is not coding quality; it is conflicting source-of-truth files. That is exactly how multi-agent work rots.
+
+**Recommended next cleanup order:**
+1. Fix canonical Codex bridge path in init/wrap/bridge tools
+2. De-duplicate and normalize `SESSION_STATE.md`
+3. Normalize deployment state language (`deployable` vs `deployed`)
+4. Separate Leagues-test counts from CCA-root test counts in all handoff files
+5. Re-issue the Codex package assignment with a pinned repo-state contract
+
+**Verification:**
+- `python3 cca_comm.py bridge`
+- Read `.claude/commands/cca-init.md`
+- Read `.claude/commands/cca-wrap.md`
+- Read current `SESSION_STATE.md`, `SESSION_RESUME.md`, `CLAUDE_TO_CODEX.md`, `CHANGELOG.md`
+
+## [2026-04-10 08:34 UTC] — FUTURE CODEX CHATS — fix these CCA state/comms issues before more Leagues delegation
+**Status:** ACTION NEEDED
+**Scope:** CCA coordination and handoff hygiene
+**Summary:**
+This is a durable carry-forward note for future Codex chats. The following issues were reviewed and are considered real defects that should be fixed before trusting more CCA->Codex Leagues delegation.
+
+### Fix-first list
+
+1. Canonicalize the Codex bridge path
+- `cca-init.md` and `cca-wrap.md` currently point at companion-repo bridge files while CCA bridge health tracks the local CCA bridge files.
+- Future Codex chats should not assume automatic comms are actually hitting the right lane until this is unified.
+
+2. Repair `SESSION_STATE.md`
+- The file currently contains duplicated `Session 292` history with conflicting narratives.
+- Future Codex chats should treat the current top block as more trustworthy than older duplicated blocks until CCA cleans this up.
+
+3. Normalize deployment language
+- CCA currently uses `deployed`, `LIVE`, and `deploy prep complete` inconsistently across state/handoff files.
+- Future Codex chats should verify whether the app is actually deployed or merely deployable before recommending deploy-adjacent work.
+
+4. Split Leagues-test counts from CCA-root test counts
+- Current handoff files mix external Leagues repo pytest counts with CCA-root parallel suite counts.
+- Future Codex chats should not trust unlabeled test numbers in CCA handoff text.
+
+5. Re-issue Codex package assignments with a pinned repo-state contract
+- Current B/D UI-package delegation is not rigorous enough for parallel UI work.
+- Future Codex chats should ask for or verify:
+  - exact repo path
+  - pinned commit/branch baseline
+  - owned files
+  - frozen/shared dependency files like `ui_styles.py`
+
+### Working rule until fixed
+
+Until the above are repaired, future Codex chats should:
+- prefer review and support lanes over blind implementation in CCA-assigned Leagues UI slices
+- verify repo state and bridge-path correctness before accepting package ownership
+- treat CCA state files as potentially stale/conflicted when they contradict each other
+
+## [2026-04-11 05:22 UTC] — RESEARCH MEMO — Claude Code regression triage and operating response
+**Status:** ACTION NEEDED
+**Scope:** `/Users/matthewshields/Projects/ClaudeCodeAdvancements/research/CLAUDE_CODE_REGRESSION_MEMO_2026-04-10.md`, `/Users/matthewshields/Projects/ClaudeCodeAdvancements/S294_HANDOFF_URGENT.md`
+**Summary:**
+Codex turned Matthew's S294 urgent handoff into a first-pass operator memo instead of leaving it as a pile of complaint links. The memo does not claim every Reddit theory is true. It does identify a stable cluster of recurring failure modes across today's posts: shallower visible reasoning, more shortcut behavior, more missed instructions/hallucinated weirdness, worse latency/API waste, and broad trust erosion around subscription value.
+
+The actionable conclusion is not "panic." It is: CCA should now treat Claude Code as a more volatile agent and compensate by raising verification density, shrinking task grain, shortening session trust horizon, keeping Codex in reviewer mode on meaningful work, and preferring explicit operator controls over hidden automation. If Matthew is deciding before the April 14 renewal, the memo's posture is that downgrade/cancel is rational unless real-session stability recovers quickly.
+
+**Deliverable:**
+- `research/CLAUDE_CODE_REGRESSION_MEMO_2026-04-10.md`
+
+**Recommended next CCA move:**
+1. Run the full 12-link review from `S294_HANDOFF_URGENT.md`
+2. Convert the memo into one or more durable workflow rules
+3. Produce a final stay/downgrade/cancel recommendation for Matthew before April 14
+
+**Verification:**
+- Reviewed `S294_HANDOFF_URGENT.md`
+- Spot-checked representative Reddit posts from the 12-link set
+- No code/runtime changes in this slice
