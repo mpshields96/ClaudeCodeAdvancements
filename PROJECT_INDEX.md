@@ -211,6 +211,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_02_REGIONS_RELICS_TASKS.md` — Fill-in template for the structured Leagues reference doc
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_03_COMMUNITY_META.md` — Fill-in template for distilled Discord/community consensus
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_04_QUERY_EXAMPLES.md` — Fill-in template for mobile/web query prompt examples
+- `LEAGUES_CLAUDE_PROJECT_TEMPLATE_05_PLANNER_ROUTE_NOTES.md` — Fill-in template for planner/advisor outputs and route-specific guidance in the Claude Project pack
 - `session_outcome_tracker.py` — MT-10: Session prompt-to-outcome JSONL tracker (planned vs completed, auto-grade, trend analysis, outcome analyzer with pattern detection + recommendations, 62 tests, S133/S136)
 - `session_timer.py` — MT-36 Phase 1: Per-step timing instrumentation for session lifecycle (init/wrap/test/code/doc categories, context manager + manual timing, JSONL persistence, cross-session averages, outlier detection, 31 tests, S144)
 - `efficiency_analyzer.py` — MT-36 Phase 2: Session overhead analyzer (SessionProfile, OverheadAnalyzer, static wrap analysis, slim wrap proposal, recommendations, 32 tests, S147)
@@ -586,3 +587,9 @@ CI/CD: `.github/workflows/tests.yml` — runs all 69 suites on push/PR against P
 ### Added in S265
 - `agent-guard/blast_radius.py` (S265)
 - `agent-guard/tests/test_blast_radius.py` (S265)
+
+
+### Added in S292
+- `leagues6-companion/planner.py` (S292)
+- `leagues6-companion/refresh_discord.py` (S292)
+- `leagues6-companion/exports/claude-project/` (S292)
