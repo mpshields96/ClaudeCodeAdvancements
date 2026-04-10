@@ -118,6 +118,8 @@ Include:
 3. Upload them to a Claude Project named `Leagues 6 Planner`.
 4. Test on web or iOS with 5-10 concrete planning questions.
 5. Tighten weak docs if Claude answers vaguely or mixes wiki facts with Discord speculation.
+6. Run the validator before upload:
+   - `python3 leagues_project_doc_validator.py validate <docs_dir> --require-planner`
 
 ## Validation Checklist
 
