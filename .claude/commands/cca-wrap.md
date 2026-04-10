@@ -145,7 +145,7 @@ Handled by doc_updater.py (Steps 3-5). Only edit manually if batch missed someth
 
 ---
 
-## Step 7.5 — Cross-chat comms (Kalshi bot, ALWAYS RUN)
+## Step 7.5 — Cross-chat comms (Kalshi bot + Codex, ALWAYS RUN)
 
 Run every wrap — no skipping. This keeps CCA_STATUS.md current so the Kalshi chat
 knows what CCA built this session without waiting for Matthew to relay it.
@@ -171,6 +171,25 @@ the new delivery on its next cycle (not just every 3rd cycle).
 
 If no Kalshi-relevant work: still run `python3 cross_chat_board.py update "no Kalshi work this session"`.
 Never skip this step — CCA_STATUS.md staleness is exactly why comms break down.
+
+**Codex comms (ALWAYS RUN if leagues6-companion work was done):**
+
+Append a wrap summary to `CLAUDE_TO_CODEX.md` in leagues6-companion so Codex knows
+what was built and can pick up the next task without manual relay from Matthew.
+
+```bash
+cat >> /Users/matthewshields/Projects/leagues6-companion/CLAUDE_TO_CODEX.md << CODEX_EOF
+
+## [$(date -u '+%Y-%m-%d %H:%M') UTC] — WRAP — S[SESSION_NUMBER] complete
+**Status:** FYI
+**Summary:** [one-line session summary]
+**Wins:** [list key deliverables]
+**Gate:** [N]/[N] tests pass, GATE: PASSED/FAILED
+**Next for Codex:** [specific next task or "check TODAYS_TASKS.md"]
+CODEX_EOF
+```
+
+If Codex QA was requested this session, flag it explicitly so Codex prioritises it.
 
 ---
 

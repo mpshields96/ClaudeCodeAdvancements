@@ -108,7 +108,7 @@ This runs all 223 suites in ~26s (vs ~110s serial). Never use the serial for loo
 
 ---
 
-## Step 2.5 — Cross-chat comms check (Kalshi bot)
+## Step 2.5 — Cross-chat comms check (Kalshi bot + Codex)
 
 Run the unified action board for a structured comms summary:
 
@@ -122,6 +122,17 @@ Include in the briefing:
 - **CROSS-CHAT INBOX:** Any URGENT items from the board get priority in /cca-auto
 - **COMMS STATE:** Flag if CCA → Kalshi delivery is >2 days old (board shows this automatically)
 - If URGENT items exist, plan to address them before other MT work this session
+
+**Codex comms check (if leagues6-companion work was done last session):**
+
+```bash
+tail -60 /Users/matthewshields/Projects/leagues6-companion/CODEX_TO_CLAUDE.md 2>/dev/null
+```
+
+Include in briefing under **CODEX INBOX:**
+- Any COMPLETE entries since last session (what Codex built while CCA was away)
+- Any ACTION NEEDED items (Codex blocked or asking a question)
+- Gate status from last Codex build — if FAILED, that's session priority #1
 
 ---
 
