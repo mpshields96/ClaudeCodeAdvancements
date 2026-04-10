@@ -76,6 +76,12 @@ class TestValidatePack(unittest.TestCase):
         result = validate_pack(self.root, require_planner=True)
         self.assertTrue(result.ok)
 
+    def test_manifest_is_ignored_when_present(self):
+        self._write_valid_four_doc_pack()
+        _write(self.root / "leagues_project_pack.json", '{"doc_count": 4}\n')
+        result = validate_pack(self.root)
+        self.assertTrue(result.ok)
+
     def test_placeholder_tokens_fail_by_default(self):
         self._write_valid_four_doc_pack()
         _write(

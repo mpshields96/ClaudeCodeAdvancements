@@ -122,6 +122,8 @@ Include:
    - `python3 leagues_project_doc_validator.py validate <docs_dir> --require-planner`
 7. If you need a fresh output pack directory first:
    - `python3 leagues_project_doc_pack.py init <docs_dir> --with-planner`
+8. If you have structured context JSON and want rendered docs plus a manifest:
+   - `python3 leagues_project_doc_pack.py materialize <docs_dir> <context.json> --with-planner`
 
 ## Validation Checklist
 
@@ -136,6 +138,16 @@ Failure signs:
 - Claude invents data not present in the documents
 - Claude cannot distinguish wiki facts from community opinions
 - Claude gives generic OSRS advice instead of Leagues-specific answers
+
+## Manifest
+
+The `materialize` command writes `leagues_project_pack.json` alongside the docs.
+
+Use it to track:
+- whether planner notes were included
+- how many docs were generated
+- which structured context file was used
+- which source paths fed the pack
 
 ## Refresh Policy
 

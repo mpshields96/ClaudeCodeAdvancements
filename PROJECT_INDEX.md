@@ -212,7 +212,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_03_COMMUNITY_META.md` — Fill-in template for distilled Discord/community consensus
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_04_QUERY_EXAMPLES.md` — Fill-in template for mobile/web query prompt examples
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_05_PLANNER_ROUTE_NOTES.md` — Fill-in template for planner/advisor outputs and route-specific guidance in the Claude Project pack
-- `leagues_project_doc_pack.py` — CLI scaffold generator for the Leagues Claude Project upload pack; materializes 4-doc or 5-doc output directories from repo templates
+- `leagues_project_doc_pack.py` — CLI scaffold + materializer for the Leagues Claude Project upload pack; initializes templates or renders a 4-doc/5-doc pack plus `leagues_project_pack.json` manifest from structured context JSON
 - `leagues_project_doc_validator.py` — CLI validator for the Leagues Claude Project upload pack (required docs, headings, placeholder detection; supports 4-doc and 5-doc packs)
 - `session_outcome_tracker.py` — MT-10: Session prompt-to-outcome JSONL tracker (planned vs completed, auto-grade, trend analysis, outcome analyzer with pattern detection + recommendations, 62 tests, S133/S136)
 - `session_timer.py` — MT-36 Phase 1: Per-step timing instrumentation for session lifecycle (init/wrap/test/code/doc categories, context manager + manual timing, JSONL persistence, cross-session averages, outlier detection, 31 tests, S144)
