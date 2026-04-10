@@ -10,6 +10,7 @@
 **What was done this session (S292):**
 - Confirmed the Leagues bridge in CCA already reflects the S291 pivot to `OSRSLeaguesTool`
 - Wrote `LEAGUES_CLAUDE_PROJECT_PACKAGING.md` as the non-overlapping Bucket 3 operator playbook
+- Added 4 ready-to-fill Claude Project upload templates for overview, structured reference, community meta, and query examples
 - Updated `SESSION_RESUME.md` to reflect Matthew's latest state update:
   - 3 Discord threads analyzed
   - blank planner / Google Drive work in progress in CCA
@@ -18,7 +19,7 @@
 
 **Next:**
 1. Let CCA finish Bucket 2: blank planner clone/adaptation + Google Drive update capability
-2. Use `LEAGUES_CLAUDE_PROJECT_PACKAGING.md` to build the Claude Project document pack once planner outputs stabilize
+2. Use `LEAGUES_CLAUDE_PROJECT_PACKAGING.md` plus the `LEAGUES_CLAUDE_PROJECT_TEMPLATE_*` files to build the Claude Project document pack once planner outputs stabilize
 3. Upload the doc pack to a Claude Project and verify mobile/web queries against the Leagues knowledge base
 
 ---

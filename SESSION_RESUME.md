@@ -16,6 +16,7 @@ WHAT WAS DONE (S291 + S292 support state):
 - Magic build consensus: Ancients forced. Kandarin+Desert+Zeah/Kourend for magic. T6=Grimoire (core).
 - Per Matthew update: Bucket 1 is now done (3 Discord threads analyzed) and CCA is actively working Bucket 2 (blank planner / Google Drive path).
 - CCA-side Bucket 3 prep doc now exists at `LEAGUES_CLAUDE_PROJECT_PACKAGING.md`.
+- Ready-to-fill upload templates now exist for all 4 Claude Project docs.
 
 IMPORTANT — leagues_query.py NOT usable by regular Claude Chat:
 - It's a local Python script reading files from /Users/matthewshields/Downloads/leagues6-discord/
@@ -34,6 +35,7 @@ Bucket 2 — Clone the blank planner + Claude Code Google Drive integration [IN 
 
 Bucket 3 — Claude Project setup for iOS access [READY AFTER BUCKET 2]:
   - Follow `LEAGUES_CLAUDE_PROJECT_PACKAGING.md`
+  - Start from the 4 `LEAGUES_CLAUDE_PROJECT_TEMPLATE_*` files in CCA
   - Generate 4 upload docs: overview, regions/relics/tasks, community meta, query examples
   - Upload to a new Claude Project titled "Leagues 6 Planner"
   - Verify iOS Claude app can query it: "what magic tasks give most points in Desert?"

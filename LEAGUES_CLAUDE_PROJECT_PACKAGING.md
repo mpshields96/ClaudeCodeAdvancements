@@ -29,6 +29,12 @@ Optional later source:
 
 Upload 4 documents to one Claude Project named `Leagues 6 Planner`.
 
+Ready-to-fill templates now exist in CCA:
+- `LEAGUES_CLAUDE_PROJECT_TEMPLATE_01_OVERVIEW.md`
+- `LEAGUES_CLAUDE_PROJECT_TEMPLATE_02_REGIONS_RELICS_TASKS.md`
+- `LEAGUES_CLAUDE_PROJECT_TEMPLATE_03_COMMUNITY_META.md`
+- `LEAGUES_CLAUDE_PROJECT_TEMPLATE_04_QUERY_EXAMPLES.md`
+
 ### 1. `01_OVERVIEW.md`
 
 Keep this under ~3 pages.
@@ -94,6 +100,7 @@ Also include one line telling Claude to cite which uploaded doc it used.
    - run `discord_analyzer.py`
    - run targeted `leagues_query.py` lookups for topics that need distilled summaries
 2. Draft the 4 documents above from current JSON plus query outputs.
+   - start from the template files in this repo
 3. Upload them to a Claude Project named `Leagues 6 Planner`.
 4. Test on web or iOS with 5-10 concrete planning questions.
 5. Tighten weak docs if Claude answers vaguely or mixes wiki facts with Discord speculation.

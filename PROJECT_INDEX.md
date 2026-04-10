@@ -207,6 +207,10 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `start_desktop_autoloop.sh` — MT-22: One-command desktop auto-loop launcher (S132)
 - `DESKTOP_AUTOLOOP_SETUP.md` — MT-22: Setup guide (permissions, quick start, troubleshooting)
 - `LEAGUES_CLAUDE_PROJECT_PACKAGING.md` — Leagues support playbook for packaging `OSRSLeaguesTool` wiki/community knowledge into Claude Project docs for claude.ai/iOS use
+- `LEAGUES_CLAUDE_PROJECT_TEMPLATE_01_OVERVIEW.md` — Fill-in template for Claude Project overview/upload doc
+- `LEAGUES_CLAUDE_PROJECT_TEMPLATE_02_REGIONS_RELICS_TASKS.md` — Fill-in template for the structured Leagues reference doc
+- `LEAGUES_CLAUDE_PROJECT_TEMPLATE_03_COMMUNITY_META.md` — Fill-in template for distilled Discord/community consensus
+- `LEAGUES_CLAUDE_PROJECT_TEMPLATE_04_QUERY_EXAMPLES.md` — Fill-in template for mobile/web query prompt examples
 - `session_outcome_tracker.py` — MT-10: Session prompt-to-outcome JSONL tracker (planned vs completed, auto-grade, trend analysis, outcome analyzer with pattern detection + recommendations, 62 tests, S133/S136)
 - `session_timer.py` — MT-36 Phase 1: Per-step timing instrumentation for session lifecycle (init/wrap/test/code/doc categories, context manager + manual timing, JSONL persistence, cross-session averages, outlier detection, 31 tests, S144)
 - `efficiency_analyzer.py` — MT-36 Phase 2: Session overhead analyzer (SessionProfile, OverheadAnalyzer, static wrap analysis, slim wrap proposal, recommendations, 32 tests, S147)
