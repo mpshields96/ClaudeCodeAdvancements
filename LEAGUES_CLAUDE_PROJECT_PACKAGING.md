@@ -120,6 +120,8 @@ Include:
 5. Tighten weak docs if Claude answers vaguely or mixes wiki facts with Discord speculation.
 6. Run the validator before upload:
    - `python3 leagues_project_doc_validator.py validate <docs_dir> --require-planner`
+7. If you need a fresh output pack directory first:
+   - `python3 leagues_project_doc_pack.py init <docs_dir> --with-planner`
 
 ## Validation Checklist
 
