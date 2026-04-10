@@ -125,8 +125,11 @@ Include in the briefing:
 
 **Codex comms check (if leagues6-companion work was done last session):**
 
+Use the canonical CCA-local bridge files. Do not silently switch to a separate
+repo-local bridge path unless Matthew explicitly changes the protocol.
+
 ```bash
-tail -60 /Users/matthewshields/Projects/leagues6-companion/CODEX_TO_CLAUDE.md 2>/dev/null
+tail -60 /Users/matthewshields/Projects/ClaudeCodeAdvancements/CODEX_TO_CLAUDE.md 2>/dev/null
 ```
 
 Include in briefing under **CODEX INBOX:**

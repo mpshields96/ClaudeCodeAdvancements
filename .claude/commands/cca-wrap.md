@@ -174,11 +174,12 @@ Never skip this step — CCA_STATUS.md staleness is exactly why comms break down
 
 **Codex comms (ALWAYS RUN if leagues6-companion work was done):**
 
-Append a wrap summary to `CLAUDE_TO_CODEX.md` in leagues6-companion so Codex knows
-what was built and can pick up the next task without manual relay from Matthew.
+Append a wrap summary to the canonical CCA-local `CLAUDE_TO_CODEX.md` bridge so
+Codex knows what was built and can pick up the next task without manual relay
+from Matthew.
 
 ```bash
-cat >> /Users/matthewshields/Projects/leagues6-companion/CLAUDE_TO_CODEX.md << CODEX_EOF
+cat >> /Users/matthewshields/Projects/ClaudeCodeAdvancements/CLAUDE_TO_CODEX.md << CODEX_EOF
 
 ## [$(date -u '+%Y-%m-%d %H:%M') UTC] — WRAP — S[SESSION_NUMBER] complete
 **Status:** FYI

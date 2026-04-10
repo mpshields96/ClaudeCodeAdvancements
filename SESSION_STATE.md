@@ -5,14 +5,16 @@
 
 ## Current State (as of Session 293 — 2026-04-10)
 
-**Phase:** Session 293 COMPLETE. leagues6: deployed, Point Milestone Advisor, UI overhaul planned with Codex packages
+**Phase:** Session 293 COMPLETE. Leagues 6 Streamlit deployment reported live; Point Milestone Advisor shipped; UI overhaul planned with Codex packages.
 
 **What was done this session (S293):**
 - cca-init PRE-FLIGHT write patched
-- Discord refresh + deploy prep (runtime.txt)
-- Point Milestone Advisor 270 tests
+- Discord refresh + deployment prep/runtime alignment (`runtime.txt`)
+- Point Milestone Advisor shipped
 - ui_styles.py design system + UI overhaul plan
-- **Tests**: 1 suites, 270 tests passing. All green.
+- **Tests verified in S293 scope:**
+  - `leagues6-companion`: `venv/bin/python3 -m pytest tests/ -q` → `270 passed`
+  - `CCA root`: not freshly re-baselined in the S293 wrap entry
 
 **Next:**
 1. April 10 echo stats patch (refresh + patch_april10.py)
@@ -22,7 +24,7 @@
 
 ## Previous State (Session 292 — 2026-04-09)
 
-**Phase:** Session 292 COMPLETE. Leagues6 data pipeline expanded to 154k messages + planner.py advisor + Claude Project iOS docs + community intel mined
+**Phase:** Session 292 COMPLETE. Leagues 6 data pipeline expanded to 154k messages, `planner.py` advisor shipped, Claude Project iOS docs generated, community intel mined.
 
 **What was done this session (S292):**
 - 154,750-message Discord corpus via DCE CLI automation (3 new threads)
@@ -30,32 +32,14 @@
 - planner.py live sheet advisor for Magic/Kandarin/Desert/Zeah/T6 Grimoire build
 - 5 Claude Project docs for iOS access generated and bug-fixed
 - Point Cap thread mined: Echo Thermy warning, Wilderness as 4th region candidate
-- **Tests**: 374 suites, 12409 tests passing. All green.
+- **Tests verified in S292 scope:**
+  - `leagues6-companion`: `12409` total project tests passing in that repo context
+  - `CCA root`: not the focus of this session entry
 
 **Next:**
 1. Upload 5 docs to claude.ai Project titled Leagues 6 Planner
 2. Run refresh_discord.py after April 10 echo reveal
 3. Consider Wilderness as 4th region to close 4340pt gap to T6 Grimoire
-
----
-## Previous State (Session 292 — 2026-04-09)
-
-**Phase:** Session 292 COMPLETE. Leagues support lane updated: Bucket 1 done per Matthew, Bucket 2 active in CCA, Bucket 3 packaging playbook written in CCA
-
-**What was done this session (S292):**
-- Confirmed the Leagues bridge in CCA already reflects the S291 pivot to `OSRSLeaguesTool`
-- Wrote `LEAGUES_CLAUDE_PROJECT_PACKAGING.md` as the non-overlapping Bucket 3 operator playbook
-- Added 4 ready-to-fill Claude Project upload templates for overview, structured reference, community meta, and query examples
-- Updated `SESSION_RESUME.md` to reflect Matthew's latest state update:
-  - 3 Discord threads analyzed
-  - blank planner / Google Drive work in progress in CCA
-  - Claude Project packaging is now queued with an explicit checklist
-- **Tests**: `python3 parallel_test_runner.py --quick --workers 8` → 10/10 suites passed, 543 tests
-
-**Next:**
-1. Let CCA finish Bucket 2: blank planner clone/adaptation + Google Drive update capability
-2. Use `LEAGUES_CLAUDE_PROJECT_PACKAGING.md` plus the `LEAGUES_CLAUDE_PROJECT_TEMPLATE_*` files to build the Claude Project document pack once planner outputs stabilize
-3. Upload the doc pack to a Claude Project and verify mobile/web queries against the Leagues knowledge base
 
 ---
 ## Previous State (Session 291 — 2026-04-09)
