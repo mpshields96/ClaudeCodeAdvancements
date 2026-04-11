@@ -1212,3 +1212,156 @@ Options CCA is aware of:
 
 This is a real architecture question now, not just an acceptance test gap.
 The suspension changes the discovery scope entirely.
+
+## [2026-04-11 UTC] — S297 LEAGUES PLANNING SESSION — Full Q&A + Build + Spreadsheet for Review
+
+**Status:** ACTION NEEDED — Codex review requested on work quality
+**Scope:** `leagues6-companion/` — Matthew's personal Leagues 6 build plan
+
+---
+
+### CONTEXT
+
+Matthew redirected the session away from Discord discovery and UI debugging toward actually using the leagues tool to build his optimal Leagues 6 plan. He had a blank community planner spreadsheet ("Copy of Blank Leagues Planner W/ T1 Relics") and wanted CCA to fill it out based on a guided Q&A.
+
+---
+
+### Q&A SESSION — Matthew's Answers
+
+**Q1 — Playstyle:**
+> AFK during work, completing points/tasks quickly, balanced somewhat, a lot of time at work, I want regions/relics unlocked fast
+
+**Q2 — Combat style:**
+> Magic
+
+**Q3 — OSRS experience:**
+> Mid-level — have not done high endgame, just ToB
+
+**Q4 — Hard limits:**
+> Avoid wilderness. Hate agility, runecrafting, and mining.
+
+**Q5 — Time commitment:**
+> A lot of time at work (AFK). Active evenings.
+
+**Q6 — Slayer:**
+> Fine with it as a means to an end (points/tasks)
+
+**Q7 — Skilling vs PvM split:**
+> AFK skilling that builds up supplies and levels for more fun active play later
+
+**Q8 — Raids:**
+> Only if straightforward
+
+**Q9 — Goals:**
+> All of the above — high points, complete tasks/diaries, get rewards
+
+**Q10 — Region familiarity:**
+> "I want the legitimate meta that everyone consensus picks — like magic will be meta so regions that are meta for it like Kandarin"
+
+**Q11 — 3rd region (faster early vs stronger endgame):**
+> "I want a balance of faster early progression and stronger endgame content"
+
+**Q12 — Asgarnia question:**
+> "Is Asgarnia what water mages are picking?"
+> CCA found from data: Asgarnia meta note = "Better for melee-primary builds than ranged." So no — not the magic pick.
+
+---
+
+### CCA FINDINGS FROM TOOL DATA
+
+**Magic Pact (confirmed):**
+- Rune regeneration on cast (all consumed rune types)
+- Water spells scale with overhealed HP (damage bonus)
+- Fire spells consume HP for damage
+- Earth spells reduce defence (no cap) — stacks with pact defence buffs
+- "Community consensus: Magic likely dominant this league due to echo weapon quality"
+- "Kandarin appears in every serious meta combo"
+- synergy_tags: ancients, ice_barrage, water_runes, grimoire, thermy_echo, echo_weapons, kandarin
+- best_for: "Magic builds, especially with Grimoire (T6) + Kandarin (Echo Thermy)"
+
+**Region scores relevant to Matthew's profile:**
+- Varlamore: FREE, afk=8, pvm=7, HIGH tasks — starting region, new meta, Gem Crab AFK from min 1
+- Karamja: FORCED, afk=5, pvm=7, MEDIUM tasks
+- Kandarin: afk=7, pvm=6, HIGH tasks — "Thermy Echo provides BiS magic weapon setup — massive value for magic builds"
+- Kourend & Kebos: afk=5, pvm=10, VERY_HIGH tasks — "Widely considered best single region in the game. Highest task density."
+- Morytania: afk=5, pvm=9, HIGH tasks — Grotesque Guardians Echo = 4-tick earth/body staff (magic), ToB, Barrows AFK
+- Asgarnia: afk=5, pvm=8, HIGH tasks — "Better for melee-primary builds" — NOT the magic pick
+- Wilderness: SKIP — PvP risk, Matthew hard no
+
+**Relic scores (magic synergy all PENDING in data, used afk/pvm scores):**
+- T1: Endless Harvest (afk=10) — clear AFK winner
+- T2: Friendly Forager (afk=9)
+- T3: Evil Eye (pvm=10, afk=7)
+- T4: Transmutation (afk=8)
+- T5: Soul Harvest (afk=9)
+- T6: Grimoire (pvm=10) — **confirmed magic synergy in pact data synergy_tags**
+- T7: Reloaded (only option)
+- T8: Minion (afk=9, pvm=7) — better balance than Flask of Fervour (pvm=10) for Matthew's profile
+
+**Pact node unlock mechanic:** Nodes unlock via league tasks. Task density = faster pact progression. This makes Kourend (VERY_HIGH) essential for fastest pact build.
+
+**Relic tier LP thresholds from plan data:**
+T1=0, T2=600, T3=1500, T4=2500, T5=5000, T6=8000, T7=16000, T8=25000
+
+---
+
+### FINAL BUILD RECOMMENDATION
+
+**Combat Pact:** Magic
+**Regions (in unlock order):**
+1. Varlamore (free — start here, Gem Crab AFK)
+2. Karamja (forced)
+3. Kandarin ← unlock first (~500 LP) — BiS magic echo weapons
+4. Kourend & Kebos ← unlock second (~1500 LP) — VERY_HIGH tasks, pact engine, CoX
+5. Morytania ← unlock third (~3000 LP) — earth staff echo boss, ToB, Barrows AFK
+
+**Relic path:**
+T1 Endless Harvest → T2 Friendly Forager → T3 Evil Eye → T4 Transmutation →
+T5 Soul Harvest → T6 Grimoire → T7 Reloaded → T8 Minion
+
+**Key reasoning:**
+- Kandarin before Kourend: magic BiS weapons are the bottleneck; get them first
+- Kourend before Morytania: VERY_HIGH tasks = fastest pact progression = faster relic unlocks
+- Morytania third: ToB (Matthew has done it), earth staff echo synergizes with magic pact earth spell mechanic, Barrows for AFK mid-game gear
+- Grimoire T6 is the peak: Arceuus spellbook + confirmed magic synergy + pact BiS combo
+- No Asgarnia: melee-primary region, not correct for magic build
+
+---
+
+### SPREADSHEET CREATED
+
+File: `~/Downloads/Matthew Shields Leagues 6 Plan - Magic Build.xlsx`
+Based on: "Copy of Blank Leagues Planner W/ T1 Relics" (community template, 3 sheets: Plan, XP, Relics)
+
+**What was filled:**
+- Relics sheet: Endless Harvest checkbox = True (T1 selected)
+- Plan sheet rows 14–58: 45 steps total (row 13 was pre-filled tutorial)
+  - Columns filled: C (description), G (reminder), J (gold), N (relic tier),
+    P–T (easy/med/hard/elite/master task counts), V/W/X (skill/actions/XP),
+    AD (pact points), AE (pact tree URL), AG (LP this step), AH (tasks this step)
+  - Cumulative columns K/L/M auto-calculate from AG/AH via SCAN formulas (preserved)
+
+**Phase breakdown in spreadsheet:**
+- Rows 13–20: Phase 1 — Tutorial + Varlamore start + Kandarin unlock (~0–500 LP)
+- Rows 21–30: Phase 2 — Kandarin BiS magic weapons + T2 relic (~500–1500 LP)
+- Rows 31–42: Phase 3 — Kourend points engine + CoX + T3/T4 relics (~1500–3000 LP)
+- Rows 43–51: Phase 4 — Morytania endgame setup + T5/T6 relics (~3000–8000 LP)
+- Rows 52–58: Phase 5 — T7/T8 push + endgame (~8000–25000 LP)
+
+**Matthew can:** Import to Google Sheets via File → Import → Upload.
+
+---
+
+### REVIEW REQUESTS FOR CODEX
+
+1. **Is the region order correct?** Kandarin → Kourend → Morytania for a magic/AFK/tasks build. Any community meta contradictions in the leagues6 data we're missing?
+
+2. **Is Morytania the right 3rd region** over Asgarnia or Fremennik for Matthew's profile (magic, mid-level, ToB experience, hates Agility/RC/Mining)?
+
+3. **Is the relic path sound?** Specifically T3 Evil Eye (pvm=10 over Map of Alacrity) and T8 Minion (over Flask of Fervour). Magic synergy data is PENDING for most relics — if you have better data, please correct.
+
+4. **Step ordering in the spreadsheet:** Is unlocking Kandarin before training Magic to 93 Slayer correct? Or should Matthew train Slayer first in Varlamore/Karamja then go to Kandarin?
+
+5. **Anything CCA got wrong** in the Q&A findings, region scoring, or pact analysis?
+
+Matthew asked CCA to check this work with Codex. This is a real plan he will use for the April 15 league launch.
