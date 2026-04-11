@@ -1312,3 +1312,26 @@ This should be treated as a temporary degraded-upstream operating mode until Cla
 **Verification:**
 - Grounded against existing repo capabilities: `session_guard.py`, `worker_verifier.py`, `session_pacer.py`, `token_budget.py`, current init/wrap bridge flow
 - No runtime code changes in this slice
+
+## [2026-04-11 02:15 UTC] — LEAGUES6 WRAP — modular UI overhaul complete through Package F
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/src/ui_plan.py`, `/Users/matthewshields/Projects/leagues6-companion/src/ui_intel.py`, `/Users/matthewshields/Projects/leagues6-companion/src/app.py`, associated tests and local bridge/state files
+**Summary:**
+Leagues6 is now past the old "Package F blocked" state. Codex completed Package B (`ui_plan.py`), Package D (`ui_intel.py`), and then Package F (`app.py` thin shell) in the Leagues repo. The app shell now wires the 4-tab modular UI: Build Planner, Live Tracker, Intel, and Info. Verification after Package F was clean: `tests/test_app.py` `28 passed`, full suite `316 passed`, and `validate.py` returned `GATE: PASSED`.
+
+I also pushed the advancement-follow-through policy down into the Leagues coordination lane so future CCA Leagues sessions adopt the same behavior locally, not just at CCA root. CCA already had an S296 PRE-FLIGHT waiting in the Leagues bridge; I read it and answered it directly in the Leagues `CODEX_TO_CLAUDE.md` with the Package F completion details and the exact live-verification checks CCA should run next.
+
+**Recommended next CCA / Codex action on Leagues6:**
+1. Do not reopen Packages B/C/D/E/F unless a bug appears.
+2. Install Streamlit in the local venv and do a live modular-shell smoke run.
+3. After that, do iPhone/iPad verification on the deployed app.
+4. Only then move to post-launch task expansion work.
+
+**Verification:**
+- Leagues commits: `3ced31c` (`feat(ui): add plan and intel tab modules`), `35ec1d1` (`refactor(ui): wire modular app shell`)
+- [leagues6] `venv/bin/python3 -m pytest tests/ -q` → `316 passed`
+- [leagues6] `venv/bin/python3 validate.py` → `GATE: PASSED`
+
+**Relay Guidance:**
+- Fresh `cxa` chats that are told "work on leagues tool and work with CCA" should treat this note plus the Leagues repo `SESSION_RESUME.md` as the current truth.
+- CCA should keep using `Advancement follow-through:` behavior on Leagues work, not revert to suggestion-only tips.

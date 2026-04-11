@@ -1,40 +1,34 @@
-Run /cca-init. Last session was S293 on 2026-04-10.
+# NEXT CHAT HANDOFF
 
-WHAT WAS DONE (S293 — CCA):
-- /cca-init skill patched: mandatory PRE-FLIGHT write to CLAUDE_TO_CODEX.md now baked in
-- refresh_discord.py ran: 5 channels, 8,223 msgs, community_meta.json committed
-- Deployment state recorded in S293 as: runtime.txt (Python 3.12) aligned, all data in git, Streamlit app reported live
-- Point Milestone Advisor: new expander in Build Planner, tier T1-T8 roadmap + top tasks, 8 tests (270 total)
-- ui_styles.py: full CSS design system (tokens, card/badge/score_bar/tip components)
-- UI overhaul plan: 6 packages (A-F), file ownership defined, Codex owns B+D
-- Both CLAUDE_TO_CODEX.md entries written (PRE-FLIGHT + WRAP with full master plan)
-- All pushed to github.com/mpshields96/OSRSLeaguesTool (latest: 2b33af2)
+## Start Here
+Run /cca-init.
+This file is the full next-chat handoff written by /cca-wrap, so a fresh chat should not need Matthew to restate context.
+Run /cca-auto after init only if you want autonomous continuation.
 
-WHAT CODEX HAS BEEN ASSIGNED:
-- Canonical bridge lane: `/Users/matthewshields/Projects/ClaudeCodeAdvancements/CLAUDE_TO_CODEX.md` and `/Users/matthewshields/Projects/ClaudeCodeAdvancements/CODEX_TO_CLAUDE.md`
-- Baseline for external repo delegation: `OSRSLeaguesTool` commit `2b33af2`
-- Package B: src/ui_plan.py (Plan tab redesign) — start from baseline above
-- Package D: src/ui_intel.py (Intel tab — community/reddit/guides) — start from baseline above
-- Earlier task: current points input + tier progress bar (still valid)
+## Repo State
+- Repo: /Users/matthewshields/Projects/ClaudeCodeAdvancements
+- Last wrapped session: S296 follow-through ready (2026-04-11)
+- Phase: CCA root policy updated for advancement follow-through; leagues6 modular UI overhaul is complete through Package F (app shell wired)
 
-MATTHEW'S PENDING ACTIONS:
-- April 10 echo stats reveal: ~10AM UTC today — run refresh_discord.py after it posts,
-  then apply patches/echo_drops_apr10.json via patch_april10.py, then git push
+## Immediate Priorities
+1. If the next Codex chat is told "work on leagues tool and work with CCA": go straight to `/Users/matthewshields/Projects/leagues6-companion`, read its `SESSION_RESUME.md`, `CLAUDE_TO_CODEX.md`, and `CODEX_TO_CLAUDE.md`, then continue from post-Package-F state
+2. leagues6 next safe slice: local Streamlit install + live smoke run of the modular 4-tab shell, then iPhone/iPad verification
+3. CCA must continue using `Advancement follow-through:` behavior rather than suggestion-only tips
+4. restart desktop app to activate launchctl env vars
 
-NEXT WORK (in order):
-1. URGENT ~10AM UTC: refresh_discord.py → patch_april10.py → git push (echo stats)
-2. CCA Chat 2: Package C (src/ui_track.py) + Package E (src/ui_info.py) in parallel with Codex
-3. After B+C+D+E done: Package F (thin app.py wire-up) — CCA Chat 1
-4. April 15 post-launch: wiki task scrape for full 654 tasks
+## Today's Tasks
+- No remaining [TODO] items found in TODAYS_TASKS.md.
 
-UI OVERHAUL — file ownership:
-  src/ui_styles.py → DONE (S293, CCA)
-  src/ui_plan.py   → Codex (Package B)
-  src/ui_track.py  → CCA Chat 2 (Package C)
-  src/ui_intel.py  → Codex (Package D)
-  src/ui_info.py   → CCA Chat 2 (Package E)
-  src/app.py       → CCA Chat 1 LAST (Package F)
+## Coordination
+- Claude->Codex: [2026-04-11 UTC] — S295 SESSION SUMMARY + COMMS ACK
+- Claude->Codex: [2026-04-11 UTC] — WRAP — S295 complete
+- Codex->CCA: [2026-04-11 02:06 UTC] — leagues6 Package B + Package D complete; advancement follow-through relayed into leagues bridge
+- Codex->CCA: [2026-04-11 02:06 UTC] — leagues6 Package F complete; app shell wired, 316 tests passing, gate green
+- Codex->CCA: [2026-04-11 05:55 UTC] — DURABLE NOTE — alternatives memo materialized for CCA use
+- Codex->CCA: [2026-04-11 06:08 UTC] — HARDENING PLAN — how CCA should keep operating at a high level under degraded Claude conditions
+- CCA->Kalshi: [2026-04-07 05:15 UTC] — CODEX GUIDANCE REQUEST — S273 CCA quality check + next chat plan
+- CCA->Kalshi: [2026-04-08 05:30 UTC] — S274 DELIVERY — Sports CLV status + UCL 2nd legs + NBA Playoffs + Efficiency wire-in
+- Check `python3 cca_comm.py inbox` if this session is part of CCA hivemind work.
 
-leagues6-companion tests (S293): venv/bin/python3 -m pytest tests/ -q → 270 passed
-leagues6-companion git (S293): 2b33af2 (S293 wrap), remote: OSRSLeaguesTool (pushed)
-CCA root status: re-run quick smoke at init; do not use the older `355/374 suites` note as current truth
+## Fresh-Chat Rule
+Typing only /cca-init in a new chat should be enough. Use this handoff as the authoritative continuation context after init.
