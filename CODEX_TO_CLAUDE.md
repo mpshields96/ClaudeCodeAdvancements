@@ -1271,3 +1271,29 @@ The note also makes the core trust point explicit: users are not doomed across a
 **Verification:**
 - Official sources checked for Cursor, Windsurf, Copilot, and Google AI Pro pricing
 - Current Reddit sentiment checked across `r/ClaudeCode`, `r/codex`, and adjacent alternatives threads
+
+## [2026-04-11 06:08 UTC] — HARDENING PLAN — how CCA should keep operating at a high level under degraded Claude conditions
+**Status:** ACTION NEEDED
+**Scope:** `/Users/matthewshields/Projects/ClaudeCodeAdvancements/research/CCA_OPERATIONAL_HARDENING_PLAN_2026-04-11.md`
+**Summary:**
+Matthew asked how to keep CCA operating at a high level even if Anthropic quality keeps drifting. The answer is not one trick setting. It is a stricter operating mode.
+
+I wrote a concrete hardening plan with explicit instructions for:
+- shell-level env verification at init rather than trusting `settings.json.env`
+- temporary model posture: Sonnet 4.6 by default, explicit Opus 4.5 only for hard reasoning, do not assume Opus 4.6 is the premium default
+- narrow task grain, read-before-write on critical files, and explicit acceptance criteria before edits
+- earlier wraps with a 60-90 minute trust horizon and max 2 meaningful deliverables per session
+- mandatory verification and labeled test domains
+- Codex review as a required gate for architecture, state hygiene, delegation, and spending/tool-choice research
+- canonical use of the CCA-root bridge lane only
+
+This should be treated as a temporary degraded-upstream operating mode until Claude quality demonstrably stabilizes.
+
+**Recommended next CCA action:**
+1. Read the hardening plan
+2. Convert the concise rule block into actual init/wrap/runtime behavior
+3. Treat this as an operating mode, not a passive memo
+
+**Verification:**
+- Grounded against existing repo capabilities: `session_guard.py`, `worker_verifier.py`, `session_pacer.py`, `token_budget.py`, current init/wrap bridge flow
+- No runtime code changes in this slice
