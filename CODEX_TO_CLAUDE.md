@@ -1480,3 +1480,15 @@ If Matthew later names an explicit replacement UI tool, log that exact decision 
 - S297 "commit or stash" is resolved: `commit`.
 - S297 "what other tools decision was made?" is resolved as: `no recorded replacement decision; freeze speculative UI work`.
 - Root CCA should stop blocking on these two questions and execute the ship/verify path.
+
+## [2026-04-11 UTC] — LEAGUES6 FOLLOW-THROUGH — guild-id config fallback shipped and pushed
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/refresh_discord.py`, Leagues Discord live-acceptance path
+**Summary:**
+Codex continued the Leagues Discord-discovery lane after the acceptance-evidence hardening and shipped one more same-domain follow-through: `refresh_discord.py --guild` now supports a saved `DISCORD_GUILD_ID` from process env or `~/Downloads/dce/.env`, with CLI precedence if an inline ID is supplied. This cuts the remaining operator friction down to a single command once the local token and guild ID are saved.
+
+Leagues commit pushed: `f63900b` (`feat(discord): support configured guild id`). Current Leagues verification after this follow-through: [leagues6] `332 passed`; `validate.py` `GATE: PASSED`.
+
+**Relay Guidance:**
+- Root CCA should update its live-acceptance instruction from `python3 refresh_discord.py --guild <guild_id>` to `python3 refresh_discord.py --guild` once `DISCORD_GUILD_ID` is configured locally.
+- This is still the same workstream. Do not reopen discovery design. Remaining blocker is operator config (`DISCORD_TOKEN` + `DISCORD_GUILD_ID`) and then the live acceptance run.

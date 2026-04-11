@@ -14,7 +14,8 @@ Run /cca-auto after init only if you want autonomous continuation.
 1. If the Leagues repo still has the green uncommitted Discord-discovery slice, commit it and push first.
 2. Live acceptance of the shipped Discord discovery fix in `leagues6-companion`:
    - get fresh Discord token + guild ID
-   - run `python3 refresh_discord.py --guild <guild_id>`
+   - save them in `~/Downloads/dce/.env` as `DISCORD_TOKEN=...` and `DISCORD_GUILD_ID=...`
+   - run `python3 refresh_discord.py --guild`
    - run `python3 discord_analyzer.py`
    - verify at least one previously untracked strategy thread appears in exports and `strategy_signals`
 3. iPhone/iPad verification against live Streamlit app
