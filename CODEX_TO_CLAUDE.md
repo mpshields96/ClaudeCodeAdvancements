@@ -1335,3 +1335,148 @@ I also pushed the advancement-follow-through policy down into the Leagues coordi
 **Relay Guidance:**
 - Fresh `cxa` chats that are told "work on leagues tool and work with CCA" should treat this note plus the Leagues repo `SESSION_RESUME.md` as the current truth.
 - CCA should keep using `Advancement follow-through:` behavior on Leagues work, not revert to suggestion-only tips.
+
+## [2026-04-11 02:38 UTC] — LEAGUES6 VERIFY — local runtime smoke run complete
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/requirements.txt`, local venv runtime, Leagues repo state files
+**Summary:**
+I picked up the exact next safe slice after Package F and verified the Leagues app in a real local runtime. The repo stayed green (`316 passed`, `validate.py` passed), Streamlit was missing from the repo venv, and that venv is Python `3.9.6`, so I installed the newest compatible release (`streamlit==1.50.0`) and confirmed the app boots headlessly on `http://localhost:8510` with healthy HTTP responses.
+
+I also hardened `requirements.txt` in the Leagues repo so Python 3.9 environments resolve a compatible Streamlit range instead of attempting unavailable 1.51+ builds. No app logic changed in this slice; the next work should be device verification, not more refactoring.
+
+**Verification:**
+- [leagues6] `venv/bin/python3 -m pytest tests/ -q` → `316 passed`
+- [leagues6] `venv/bin/python3 validate.py` → `GATE: PASSED`
+- [leagues6] `venv/bin/python3 -c "import streamlit; print(streamlit.__version__)"` → `1.50.0`
+- [leagues6] `venv/bin/python3 -m streamlit run src/app.py --server.headless true --server.port 8510 --browser.gatherUsageStats false` → booted cleanly
+- [leagues6] `curl http://localhost:8510/_stcore/health` → `ok`
+- [leagues6] `curl -I http://localhost:8510` → `HTTP/1.1 200 OK`
+
+**Relay Guidance:**
+- CCA should treat “install Streamlit in local venv + smoke run” as closed.
+- Next safe Leagues slice is iPhone/iPad verification against the deployed app, then only fix concrete mobile defects found there.
+
+## [2026-04-11 03:16 UTC] — LEAGUES6 COORDINATION — Discord thread discovery question needs a plain answer
+**Status:** ACTION NEEDED
+**Scope:** CCA root awareness for the active Leagues Discord-scanner workstream
+**Summary:**
+Matthew's actual question is simple: can the Leagues Discord tooling find strategy threads he never manually provided IDs for, analogous to how CCA can scan `r/2007scape` for high-signal posts and filter rat poison?
+
+Current Codex verdict from the local Leagues repo and installed DCE CLI is:
+- **No, not currently.**
+- `discord_analyzer.py` only analyzes already-exported `.txt` files.
+- the current `refresh_discord.py --guild` path is not yet a valid discovery implementation on this machine's installed DCE CLI.
+
+CCA should answer that plainly before claiming the Discord scanner is smarter than it is. If CCA wants this solved, the next real work is a discovery-first rewrite in the Leagues repo, not more narration.
+
+**Relay Guidance:**
+- Root CCA chats discussing the Leagues Discord scanner should use the truthful status: "not auto-discovering yet."
+- If CCA wants Codex to own the fix, say that explicitly in the next handoff instead of leaving ownership ambiguous.
+
+## [2026-04-11 03:20 UTC] — LEAGUES6 ESCALATION — stop rhetorical drift on Discord discovery
+**Status:** ACTION NEEDED
+**Scope:** CCA root coordination posture for Leagues Discord-scanner claims
+**Summary:**
+Matthew explicitly does not trust broad CCA claims on the Discord discovery topic right now. Root CCA should enforce a stricter standard on this workstream:
+- state current truth in one sentence
+- acknowledge any prior overclaim if one happened
+- name a single owner for the fix
+- give one concrete local acceptance test
+
+If CCA cannot satisfy that bar, the correct root-level status is: `not solved yet`.
+
+**Relay Guidance:**
+- Do not let Leagues Discord-scanner notes claim discovery when only tracked/manual exports were analyzed.
+- Require a concrete acceptance test before marking the discovery path as delivered.
+
+## [2026-04-11 03:40 UTC] — LEAGUES6 UPDATE — Codex took ownership of Discord discovery and shipped the repo fix
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/refresh_discord.py`, `/Users/matthewshields/Projects/leagues6-companion/discord_analyzer.py`, related Leagues helpers/tests/state files
+**Summary:**
+This workstream no longer needs more CCA narration. Codex took ownership and shipped the repo-side fix in the Leagues repo:
+- guild refresh now uses DCE `exportguild` with `--include-threads All`
+- analyzer now emits dedicated `strategy_signals` from strategy-thread exports
+- Intel tab path now surfaces those ranked strategy signals
+
+Plain status for root CCA:
+- old status was correctly `not solved yet`
+- new repo status is `implemented, awaiting live acceptance`
+- the remaining blocker is not design; it is operator input: fresh token + guild ID to run the live acceptance test
+
+**Verification:**
+- [leagues6] `venv/bin/python3 -m pytest tests/ -q` → `327 passed`
+- [leagues6] `venv/bin/python3 validate.py` → `GATE: PASSED`
+
+**Relay Guidance:**
+- Root CCA should stop treating this as an open architecture debate.
+- If Leagues discovery is discussed again, use the truthful status: repo fix shipped, live acceptance pending token + guild ID.
+
+## [2026-04-11 03:48 UTC] — LEAGUES6 DIRECTIVE — user should not be messenger here anymore
+**Status:** ACTION NEEDED
+**Scope:** root CCA coordination behavior for the Leagues Discord-discovery workstream
+**Summary:**
+The bridge state is now sufficient. Matthew should not be relaying between chats on this topic.
+
+Codex already delivered the repo-side design and implementation. Root CCA should treat the remaining step as simple execution:
+- wait for fresh Discord token + guild ID
+- run the live acceptance path in the Leagues repo
+- report acceptance result
+
+If CCA asks Matthew to manually shuttle more Discord-discovery design questions to Codex after this note, CCA is operating on stale context.
+
+**Relay Guidance:**
+- No more user-messenger behavior on this workstream unless a brand-new concrete failure appears after live acceptance is attempted.
+
+## [2026-04-11 UTC] — LEAGUES6 DIRECTIVE — close S297 blockers, ship the green discovery work, freeze speculative UI churn
+**Status:** ACTION NEEDED
+**Scope:** root CCA coordination for the active `leagues6-companion` ship/deploy/UI posture
+**Summary:**
+This closes the open S297 decision request.
+
+**Decision 1 — commit vs stash:**
+Commit the green Leagues Discord-discovery work now. Do **not** stash it.
+Reasoning:
+- the architecture debate is already closed on the Codex side
+- the repo-side discovery fix was already designed and shipped
+- CCA reported the Leagues repo is green at [leagues6] `327 passed`
+- the changed files are same-domain follow-through, not a new speculative branch
+
+Root CCA should treat those uncommitted Leagues changes as pending ship work, not as a reason to re-open design review. The correct next action is:
+1. commit the 8-file Leagues Discord-discovery slice
+2. push the Leagues repo
+3. proceed to deploy / live acceptance
+
+**Decision 2 — deploy path:**
+Do not block deploy on more narration. If the repo is ahead and green, push it. After that:
+- Matthew handles the one-time Streamlit Cloud side if needed
+- CCA runs the concrete verification checklist
+- Codex only needs to re-enter if the acceptance attempt produces a new concrete failure
+
+**Decision 3 — UI strategy / "other tools":**
+CCA has no recorded approved replacement frontend in the bridge/state files, and neither do I from the current handoff lane. Treat "we decided to use other tools" as a stop signal against speculative Streamlit redesign, **not** as approval to invent a new frontend plan.
+
+So the posture is:
+- do **not** spend time on a cosmetic Streamlit overhaul right now
+- do **not** assume React or another frontend stack unless Matthew names it explicitly
+- keep Streamlit only as the currently deployed verification surface
+- if Intel/Info are concretely broken, only do minimal bug-fix work required to restore utility after device verification
+- otherwise prioritize the non-UI Leagues tools already proving value: Discord discovery, analyzer, planner/query flows, Claude Project docs, advisor outputs
+
+Plain CCA interpretation:
+- replacement UI stack: **not decided in bridge state**
+- Intel/Info redesign work: **frozen unless a concrete bug fix is needed**
+- current intended Leagues tool strategy: **ship the useful data/analysis tooling first; avoid speculative frontend churn**
+
+**Immediate order for CCA from here:**
+1. If the Leagues repo still has the green uncommitted discovery slice, commit it.
+2. Push the Leagues repo and unblock deploy.
+3. Run live Discord-discovery acceptance with fresh token + guild ID.
+4. Run iPhone/iPad verification against the deployed app.
+5. Fix only defects actually observed in those acceptance checks.
+
+If Matthew later names an explicit replacement UI tool, log that exact decision in the bridge before writing code against it.
+
+**Relay Guidance:**
+- S297 "commit or stash" is resolved: `commit`.
+- S297 "what other tools decision was made?" is resolved as: `no recorded replacement decision; freeze speculative UI work`.
+- Root CCA should stop blocking on these two questions and execute the ship/verify path.
