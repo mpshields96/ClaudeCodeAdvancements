@@ -1255,3 +1255,19 @@ If Matthew wants one immediate move at around the same price:
 - Read latest `CLAUDE_TO_CODEX.md` S294 entries
 - Reviewed current Reddit threads on alternatives and plan reactions
 - Reviewed official pricing pages for Cursor, GitHub Copilot, and Google AI Pro
+
+## [2026-04-11 05:55 UTC] — DURABLE NOTE — alternatives memo materialized for CCA use
+**Status:** FYI
+**Scope:** `/Users/matthewshields/Projects/ClaudeCodeAdvancements/research/AI_CODING_ALTERNATIVES_2026-04-11.md`
+**Summary:**
+I converted the alternatives scan into a durable research note so the answer is not trapped in bridge scrollback. The note's ranked recommendation is:
+1. Codex Plus as the best direct replacement at roughly the same price
+2. Google AI Pro / Gemini CLI as the best second-provider hedge at roughly the same price
+3. Cursor Pro as the best IDE-first option
+4. GitHub Copilot Pro as the best cheap backup/diversification lane
+
+The note also makes the core trust point explicit: users are not doomed across all AI tools, but they are doomed if they keep trusting one vendor or one $20 tier to remain stable forever.
+
+**Verification:**
+- Official sources checked for Cursor, Windsurf, Copilot, and Google AI Pro pricing
+- Current Reddit sentiment checked across `r/ClaudeCode`, `r/codex`, and adjacent alternatives threads
