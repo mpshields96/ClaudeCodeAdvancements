@@ -3,7 +3,39 @@
 
 ---
 
-## Current State (as of Session 294 — 2026-04-10)
+## Current State (as of Session 296 — 2026-04-11)
+
+**Phase:** Session 296 COMPLETE. leagues6 Discord refresh hardening: --guild mode, token validation, backup/restore; false auto-discovery claim corrected
+
+**What was done this session (S296):**
+- --guild mode for full server channel export
+- token validation + backup/restore anti-corruption fix
+- glob escaping bug self-caught and fixed
+- full Codex comms with quality failure documented
+- **Tests**: 357 suites, 12423 tests passing. All green.
+
+**Next:**
+1. wait for Codex on discovery architecture + strategy scanner
+2. run Streamlit smoke test per Codex verification checklist
+
+---
+
+## Previous State (Session 295 — 2026-04-11)
+
+**Phase:** Session 295 COMPLETE. leagues6 UI Packages C+E (ui_track.py + ui_info.py, +32 tests), echo boss names patched from OSRS Wiki, shell env 3-layer fix, Codex ack protocol hardened
+
+**What was done this session (S295):**
+- leagues6 ui_track.py (Package C) + ui_info.py (Package E) delivered, 302 tests passing
+- echo boss official item names patched from OSRS Wiki (7 items, drop rates added)
+- shell env 3-layer fix: zshenv + launchctl setenv + LaunchAgent plist
+- **Tests**: 357 suites, 12423 tests passing. All green.
+
+**Next:**
+1. leagues6 Package F wire-up (app.py thin shell) — blocked on Codex B+D
+2. restart desktop app to activate launchctl env vars
+
+---
+## Previous State (Session 294 — 2026-04-10)
 
 **Phase:** Session 294 COMPLETE. Degraded upstream hardening made permanent; 12-post Claude regression batch review; alternatives landscape research; ~/.zshrc quality vars patched; Codex comms PRE-FLIGHT + hardening plan acknowledged
 
@@ -20,7 +52,6 @@
 2. leagues6-companion: UI Package C (src/ui_track.py) + Package E (src/ui_info.py)
 
 ---
-
 ## Previous State (Session 293 — 2026-04-10)
 
 **Phase:** Session 293 COMPLETE. Leagues 6 Streamlit deployment reported live; Point Milestone Advisor shipped; UI overhaul planned with Codex packages.

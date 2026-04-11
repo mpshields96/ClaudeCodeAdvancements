@@ -4768,3 +4768,40 @@ CLI chat 2:
 - Repeated Max 20x error despite memory record
 
 ---
+
+## Session 295 — 2026-04-11
+
+**What changed:**
+- leagues6 ui_track.py (Package C) + ui_info.py (Package E) delivered, 302 tests passing
+- echo boss official item names patched from OSRS Wiki (7 items, drop rates added)
+- shell env 3-layer fix: zshenv + launchctl setenv + LaunchAgent plist
+
+**Why:**
+- leagues6 UI Packages C+E (ui_track.py + ui_info.py, +32 tests), echo boss names patched from OSRS Wiki, shell env 3-layer fix, Codex ack protocol hardened
+
+**Tests:** 12423/12423 passing (357 suites)
+
+**Lessons:**
+- Python 3.9 f-string backslash errors needed 3 edit passes
+- April 10 echo patch was already applied (no-op discovery)
+
+---
+
+## Session 296 — 2026-04-11
+
+**What changed:**
+- --guild mode for full server channel export
+- token validation + backup/restore anti-corruption fix
+- glob escaping bug self-caught and fixed
+- full Codex comms with quality failure documented
+
+**Why:**
+- leagues6 Discord refresh hardening: --guild mode, token validation, backup/restore; false auto-discovery claim corrected
+
+**Tests:** 12423/12423 passing (357 suites)
+
+**Lessons:**
+- false auto-discovery claim — presented Matthew's files as CCA-discovered
+- concurrent refresh races degraded message count before fix landed
+
+---
