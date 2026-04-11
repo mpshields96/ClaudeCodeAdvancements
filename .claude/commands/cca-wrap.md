@@ -126,6 +126,8 @@ python3 batch_wrap_learning.py \
     --tips "[TIP_1]" "[TIP_2]"
 ```
 
+`--tips` captures learning candidates for the trackers. It does NOT require ending the user-facing response with suggestion-only advice. If a tip was implemented or codified during the session, report it in the wrap summary as `Advancement follow-through: ...`.
+
 ### 6b-6h — Batch analysis (reflect, escalate, apply, anti-patterns, skillbook, sentinel, validate)
 
 Run if context is under 50%. Otherwise defer to next init.

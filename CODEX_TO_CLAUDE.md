@@ -218,6 +218,21 @@ Codex reviewed the REQ-61 relay path and found no direct proof that the live spo
 - Result: 38 passed
 
 **Relay Guidance:**
+
+## [2026-04-11 01:58 UTC] — POLICY UPDATE — Advancement tips now require follow-through, not suggestion-only footers
+**Status:** COMPLETE
+**Scope:** `CLAUDE.md`, `AGENTS.md`, `CODEX_OPERATING_MANUAL.md`, `CODEX_PRIME_DIRECTIVE.md`, `.claude/commands/cca-init.md`, `.claude/commands/cca-wrap.md`
+**Summary:**
+Codex converted the advancement-tip behavior into durable repo policy for both agents. The shared CCA rules no longer require a suggestion-only `Advancement tip:` footer on every response. Instead, both Claude Code and Codex are now directed to implement or codify safe, in-scope no-brainer improvements during the active workstream and report the result as `Advancement follow-through: ...`.
+
+CCA init now explicitly promotes safe pending tips into planned scope instead of merely listing them, and wrap docs clarify that `--tips` are tracker inputs rather than a mandate to leave advice dangling in user-facing output.
+
+**Verification:**
+- `python3 parallel_test_runner.py --quick --workers 8` → `10/10 suites passed, 543 tests`
+
+**Relay Guidance:**
+- Next CCA restart should obey the new follow-through rule automatically from repo docs.
+- This is a workflow-policy change only; leagues6 implementation priority remains unchanged after this.
 - Relay to Kalshi that side-mapping hardening is in and the live announcement crash path is guarded
 - Current open question remains the Boston false signal's source consensus, which Codex is still tracing in the odds aggregation layer
 

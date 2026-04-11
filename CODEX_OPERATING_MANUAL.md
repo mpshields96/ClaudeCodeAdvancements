@@ -133,8 +133,10 @@ Dual-notify rule for Kalshi-bot changes:
 
 Advancement execution rule:
 - When Codex identifies an actionable advancement tip, Codex should execute it or codify it during the same workstream whenever it is safe and in scope.
+- Screen for no-brainer follow-through during init and wrap: if a tip can be implemented, logged, or turned into a durable operating rule in under ~15 minutes without expanding risk, do it now instead of carrying it as advice.
 - Do not end the session with "Advancement tip: ..." as a suggestion-only footer if the underlying improvement can be implemented, logged, or turned into a durable operating rule right now.
 - Treat these tips as required follow-through, not optional inspiration.
+- Report what was done as `Advancement follow-through: ...`, not as a dangling suggestion. Only emit a remaining tip when blocked, out of scope, or risky.
 
 Operational proof rule:
 - Unit tests and static reasoning do not prove an operational helper works in the live repo.
@@ -181,6 +183,7 @@ Auto:
 - Respect CCA task order: `TODAYS_TASKS.md` first, then `SESSION_RESUME.md`, then `SESSION_STATE.md`
 - Re-check the surfaced self-learning signals before drifting scope or repeating a recent mistake
 - Re-check the surfaced optimization signals before falling back to stale task memory or ad hoc task picking
+- If `tip_tracker.py pending` surfaces an actionable no-brainer improvement that fits the current workstream, implement or codify it before mentioning it to Matthew as advice.
 - Run `python3 bridge_status.py` at the start of coordination rounds instead of freehand checking bridge files in random order
 - Prefer default reasoning unless the task justifies high
 - Keep edits narrow, validate with local tests when practical, and use branch-first workflow
@@ -192,6 +195,7 @@ Wrap:
 - If Codex landed meaningful CCA work, update `SESSION_STATE.md`, `PROJECT_INDEX.md`, `CHANGELOG.md`, and `SESSION_RESUME.md` as needed
 - Feed CCA's learning loop when useful via `wrap_tracker.py`, `tip_tracker.py`, `session_outcome_tracker.py`, and journal/correction tooling
 - Summarize outcome, tests, open issues, and next best step
+- Include `Advancement follow-through:` in the wrap summary when a tip was executed or codified during the session.
 - Prepare a short relay message for Matthew / Claude Code when needed
 - Distill durable lessons into `CODEX_LEARNINGS.md` when they are likely to matter again
 - For Kalshi-bot changes, confirm both CCA and Kalshi were notified, not just one lane

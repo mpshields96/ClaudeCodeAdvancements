@@ -42,6 +42,7 @@ If it exists and is useful, Codex should adopt it.
 Good:
 - Surfacing `wrap_tracker.py trend` inside Codex init
 - Surfacing `tip_tracker.py pending` inside Codex auto
+- Converting actionable pending tips into immediate follow-through or durable repo rules instead of leaving them as suggestion-only output
 - Using `session_outcome_tracker.py init-briefing` to shape Codex task selection
 - Using `self-learning/resurfacer.py corrections` to avoid repeated mistakes
 
@@ -56,6 +57,7 @@ Adoption is not read-only. If Codex benefits from CCA systems, Codex should also
 - updating shared CCA session docs when appropriate
 - writing durable handoff notes
 - logging tips or outcomes when useful
+- codifying no-brainer improvements immediately when they are safe, local, and in scope
 - extending tests around shared workflow tools
 
 ### 4. Build thin Codex shims, not alternate universes

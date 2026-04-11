@@ -185,6 +185,7 @@ python3 -c "import hivemind_session_validator as hsv; print(hsv.format_for_init(
 If wrap trend shows "declining", flag it prominently in the briefing.
 If there are pending tips, include the top 3 under "PENDING TIPS:" in the briefing.
 Include hivemind status line in the briefing (shows Phase 1 gate progress).
+If the top pending tip is a safe no-brainer that fits the current session, convert it into an `ADVANCEMENT FOLLOW-THROUGH:` item in the planned scope and implement or codify it this session instead of merely mentioning it.
 
 ---
 

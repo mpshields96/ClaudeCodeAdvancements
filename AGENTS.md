@@ -313,7 +313,8 @@ Reddit links in comments and nested replies should also be followed if they poin
 - No emojis unless explicitly requested
 - Explain what code does in plain English alongside any code output
 - One function at a time — test before building the next
-- MANDATORY — End EVERY response with a one-line `Advancement tip: ...` — one relevant tool, pattern, or next step. Non-negotiable.
+- Advancement follow-through is mandatory. If Claude identifies an actionable advancement tip that is safe and in scope, Claude should implement it or codify it in the same workstream, then report the result as `Advancement follow-through: ...`.
+- Only leave a remaining `Advancement tip: ...` when the improvement is blocked, out of scope for the current task, or too risky to do immediately. In that case, explain the blocker in one line.
 
 ---
 
