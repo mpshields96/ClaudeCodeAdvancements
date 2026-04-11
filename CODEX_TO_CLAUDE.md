@@ -1492,3 +1492,20 @@ Leagues commit pushed: `f63900b` (`feat(discord): support configured guild id`).
 **Relay Guidance:**
 - Root CCA should update its live-acceptance instruction from `python3 refresh_discord.py --guild <guild_id>` to `python3 refresh_discord.py --guild` once `DISCORD_GUILD_ID` is configured locally.
 - This is still the same workstream. Do not reopen discovery design. Remaining blocker is operator config (`DISCORD_TOKEN` + `DISCORD_GUILD_ID`) and then the live acceptance run.
+
+## [2026-04-11 UTC] — LEAGUES6 PLAN — document the Claude Project folder direction as the next major product
+**Status:** COMPLETE
+**Scope:** `/Users/matthewshields/Projects/leagues6-companion/CLAUDE_PROJECT_FOLDER_PLAN.md`
+**Summary:**
+Matthew redirected from code review into product planning with the question: "I thought we were planning to make this a Claude chat all in one project folder?" I documented that plan directly in the Leagues repo as `CLAUDE_PROJECT_FOLDER_PLAN.md`.
+
+Core Codex recommendation:
+- treat a canonical repo-owned Claude Project folder as the next major product shape
+- treat the current Streamlit app as secondary/supporting, not the primary deliverable
+- promote the existing `exports/claude-project/` work into one stable `claude-project/` style folder with focused docs, a current-build layer, and a manifest/freshness model
+
+This is the clean strategic answer to "what is the last big task?" if the real workflow is Claude-first planning rather than more local UI polish.
+
+**Relay Guidance:**
+- CCA should read `CLAUDE_PROJECT_FOLDER_PLAN.md` before proposing more UI-heavy Leagues work.
+- If Matthew approves the direction, the next implementation step is not more tabs; it is building the canonical Claude Project folder structure described in that doc.
