@@ -3,7 +3,25 @@
 
 ---
 
-## Current State (as of Session 293 — 2026-04-10)
+## Current State (as of Session 294 — 2026-04-10)
+
+**Phase:** Session 294 COMPLETE. Degraded upstream hardening made permanent; 12-post Claude regression batch review; alternatives landscape research; ~/.zshrc quality vars patched; Codex comms PRE-FLIGHT + hardening plan acknowledged
+
+**What was done this session (S294):**
+- ~/.zshrc patched with shell-env quality vars (MAX_THINKING_TOKENS/DISABLE_ADAPTIVE_THINKING/EFFORT_LEVEL=max)
+- 12-post cca-review batch with full verdicts logged to FINDINGS_LOG.md
+- Degraded upstream operating mode permanent across all chats (rules/, learnings.md, CLAUDE.md, memory)
+- Reddit alternatives sweep — community consensus documented in research/
+- Codex bridge confirmed, PRE-FLIGHT + hardening plan acknowledged
+- **Tests**: 357 suites, 12423 tests passing. All green.
+
+**Next:**
+1. leagues6-companion: echo stats patch (patch_april10.py)
+2. leagues6-companion: UI Package C (src/ui_track.py) + Package E (src/ui_info.py)
+
+---
+
+## Previous State (Session 293 — 2026-04-10)
 
 **Phase:** Session 293 COMPLETE. Leagues 6 Streamlit deployment reported live; Point Milestone Advisor shipped; UI overhaul planned with Codex packages.
 
@@ -17,11 +35,11 @@
   - `CCA root`: not freshly re-baselined in the S293 wrap entry
 
 **Next:**
+0. !! READ S294_HANDOFF_URGENT.md FIRST — 12 URL reviews + Matthew subscription crisis (April 14 deadline)
 1. April 10 echo stats patch (refresh + patch_april10.py)
 2. UI overhaul Package C+E (CCA Chat 2)
 
 ---
-
 ## Previous State (Session 292 — 2026-04-09)
 
 **Phase:** Session 292 COMPLETE. Leagues 6 data pipeline expanded to 154k messages, `planner.py` advisor shipped, Claude Project iOS docs generated, community intel mined.

@@ -186,6 +186,25 @@ See `REFERENCE.md` for the full test-by-test breakdown.
 
 ---
 
+## Degraded Upstream Operating Mode (S294 — Matthew directive, PERMANENT until lifted)
+
+Anthropic silently degraded Opus 4.6 quality (67% thinking drop, AMD data confirmed, Boris Cherny acknowledged).
+Prompt caching regressed ~March 23 2026. Matthew confirmed this in real time over 2 months.
+**Full rules in `~/.claude/rules/degraded-upstream-mode.md` — loaded every session.**
+
+CCA-specific enforcement:
+- **Default model:** Sonnet 4.6 for routine work. `--model claude-opus-4-5` explicit pin for hard reasoning only. Opus 4.6 is NOT the premium default.
+- **Shell env check at init:** Run `env | grep CLAUDE` and log result in briefing. Flags must be in shell, not settings.json.env (settings.json.env does not reach the claude process).
+- **No self-certification:** Architecture, state files, multi-file refactors, research affecting spend/tool decisions — all require Codex review or direct verification before marking DONE.
+- **Test counts:** Always labeled `[CCA-root]` or `[leagues6]` or `[polybot]`. Never naked numbers.
+- **Deployment language:** Only: `in_development` / `deploy_prep_complete` / `pushed_to_github` / `deployed_to_streamlit_cloud` / `post_deploy_verified`.
+- **Session horizon:** 60-90 minutes effective, max 2 meaningful deliverables. Wrap earlier rather than riding a contaminated session deep.
+- **Codex is mandatory reviewer** for: architecture, state hygiene, delegation plans, research affecting Matthew's tool/spend decisions.
+
+This is not optional and does not expire until Matthew says so.
+
+---
+
 ## Desktop Autoloop (MT-22)
 
 Self-sustaining CCA session cycle in Claude.app Code tab. See `DESKTOP_AUTOLOOP_SETUP.md` for full docs.

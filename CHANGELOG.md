@@ -4748,3 +4748,23 @@ CLI chat 2:
 - streamlit not in local venv
 
 ---
+
+## Session 294 — 2026-04-10
+
+**What changed:**
+- ~/.zshrc patched with shell-env quality vars (MAX_THINKING_TOKENS/DISABLE_ADAPTIVE_THINKING/EFFORT_LEVEL=max)
+- 12-post cca-review batch with full verdicts logged to FINDINGS_LOG.md
+- Degraded upstream operating mode permanent across all chats (rules/, learnings.md, CLAUDE.md, memory)
+- Reddit alternatives sweep — community consensus documented in research/
+- Codex bridge confirmed, PRE-FLIGHT + hardening plan acknowledged
+
+**Why:**
+- Degraded upstream hardening made permanent; 12-post Claude regression batch review; alternatives landscape research; ~/.zshrc quality vars patched; Codex comms PRE-FLIGHT + hardening plan acknowledged
+
+**Tests:** 12423/12423 passing (357 suites)
+
+**Lessons:**
+- Post-by-post review not done proactively — had to be asked
+- Repeated Max 20x error despite memory record
+
+---

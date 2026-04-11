@@ -152,3 +152,12 @@
 {"tip":"Fishing level claims are error-prone (Otto's prereqs vs actual level req vs unlock req) \u2014 always use descriptive labels not bare L-numbers for non-linear skills","source":"cca-desktop","session":"S290","timestamp":"2026-04-09T20:47:04.142527Z"}
 {"tip":"Claude Projects + uploaded JSON = zero-code mobile knowledge base accessible from iOS","source":"cca-desktop","session":"S291","timestamp":"2026-04-09T22:24:47.699767Z"}
 {"tip":"leagues_query.py --tasks/--wiki/--regions flags turn local data into instant reference without opening Discord","source":"cca-desktop","session":"S291","timestamp":"2026-04-09T22:24:47.699767Z"}
+{"tip":"Check public share status of Google Sheets upfront before attempting Drive/OAuth auth","source":"cca-desktop","session":"S292","timestamp":"2026-04-10T03:23:43.200160Z"}
+{"tip":"DCE CLI at ~/Downloads/dce/DiscordChatExporter.Cli \u2014 token in ~/Downloads/dce/.env \u2014 one-command export","source":"cca-desktop","session":"S292","timestamp":"2026-04-10T03:23:43.200160Z"}
+{"tip":"Point Cap Strategies thread (37k msgs) is highest-value leagues strategy source \u2014 mine with keyword scoring","source":"cca-desktop","session":"S292","timestamp":"2026-04-10T03:23:43.200160Z"}
+{"tip":"Install streamlit in local venv so preview tools work for UI iteration","source":"cca-desktop","session":"S293","timestamp":"2026-04-10T04:11:07.707433Z"}
+{"tip":"UI overhaul: define file ownership per module before starting parallel work","source":"cca-desktop","session":"S293","timestamp":"2026-04-10T04:11:07.707433Z"}
+{"tip":"Install streamlit in venv at session start: venv/bin/pip install streamlit (enables preview tools for UI iteration)","source":"cca-desktop","session":"S293","timestamp":"2026-04-10T04:25:33.572307Z"}
+{"tip":"ui_styles.py pattern: pure HTML strings returned, caller does st.markdown(unsafe_allow_html=True) \u2014 keeps logic testable","source":"cca-desktop","session":"S293","timestamp":"2026-04-10T04:25:33.572307Z"}
+{"tip":"Full post-by-post breakdown is DEFAULT for /cca-review \u2014 never wait to be asked","source":"cca-desktop","session":"S294","timestamp":"2026-04-11T01:30:21.669554Z"}
+{"tip":"Shell env vars (not settings.json.env) are the only path to the claude process \u2014 verify at every init with env | grep CLAUDE","source":"cca-desktop","session":"S294","timestamp":"2026-04-11T01:30:21.669554Z"}

@@ -887,3 +887,54 @@ Source: GitHub trending, web search, HN discussion, blog posts.
 [2026-04-05] [ADAPT] [F1 Memory] "claudemem / mem0 hit 45k stars" (r/ClaudeCode). mem0 (now 52k stars) = universal memory layer for AI agents. ADD/UPDATE/DELETE decision: on write, retrieve semantically similar existing memories, LLM decides whether to add/update/delete. FAISS local vector backend (zero-dependency, fully local). Three-tier scoping: user_id/agent_id/run_id enforced at storage layer. 90% lower token usage claim vs full-context. STEAL: (1) Semantic deduplication on write (better than CCA's append-only approach — fixes memory rot), (2) Three-tier session scoping in schema, (3) Search-before-respond loop, (4) FAISS as zero-dependency local vector backend. Do NOT adopt mem0 as dependency — extract patterns, rebuild natively. — https://www.reddit.com/r/ClaudeCode/comments/1scz5kk/
 
 [2026-04-05] [ADAPT] [F3 Context Health + F4 Agent Guard] "I got Claude Code to stop burning 40k tokens by [compiling context]" (106pts, 89%, 47c, r/ClaudeAI). codesight: npx CLI that generates pre-computed context pack (.codesight/) with import dependency graph. STEAL: (1) blast_radius concept — count reverse dependencies per file, tag high-risk files for agent-guard F4 conflict prevention, (2) Pre-computed context pack auto-generation for PROJECT_INDEX.md (currently hand-maintained), (3) MCP server pattern for on-demand blast-radius queries mid-session, (4) git pre-commit hook to regenerate index on commit. Build Python-native (AST stdlib) blast-radius annotation for agent-guard file ownership manifest. RTKAI name collision: the "rtk" in comments refers to rtk-ai/rtk, different from our RTK (Rust Token Killer). — https://www.reddit.com/r/ClaudeAI/comments/1scq9vk/
+
+---
+## [2026-04-10] S294 — CLAUDE QUALITY DEGRADATION BATCH (12 posts, r/ClaudeCode + r/ClaudeAI)
+
+**Date:** 2026-04-10
+**Session:** S294
+**Context:** Matthew may cancel subscription April 14. Reviewing community evidence.
+
+### CONFIRMED TECHNICAL EVIDENCE (not perception, actual data)
+
+1. **AMD AI Director GitHub issue #42796**: 17,871 thinking blocks, 6,852 sessions, 234,760 tool calls analyzed. Thinking effort dropped 67%. File-read-before-edit rate went from 6.6x to 2x. Word "simplest" appeared 642% more. Boris Cherny (Anthropic, CC head) acknowledged as "adaptive thinking."
+
+2. **alwaysThinkingEnabled silently broken since v2.0.64** (GitHub issue 13532, locked without fix). The flag does nothing.
+
+3. **settings.json.env does NOT propagate to the claude process itself** — only to child processes Claude spawns. This means all CCA's env var recommendations in settings.json that target the main process are INEFFECTIVE.
+
+4. **Opus 4.6 extended thinking = 4 seconds avg** vs 26 seconds for Opus 4.5. Sonnet 4.6 now thinks longer than Opus 4.6.
+
+5. **Default effort changed to MEDIUM** (was HIGH). Every session is degraded unless overridden.
+
+6. **EU/AU timezone users report no degradation** — US peak hours correlate with worst quality, pointing to infrastructure overload as a partial factor.
+
+7. **Commit metadata leak**: Some Opus sessions commit with "Co-Authored-By: Claude Sonnet 4.6" — model substitution evidence.
+
+### IMMEDIATE WORKAROUNDS (must go in SHELL, not settings.json.env)
+```bash
+export MAX_THINKING_TOKENS=63999
+export CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1
+export CLAUDE_CODE_EFFORT_LEVEL=max
+export CLAUDE_CODE_DISABLE_1M_CONTEXT=1
+```
+Add to ~/.zshrc BEFORE the claude invocation line.
+
+Also: `/effort max` in-session > `/effort high` (confirmed in post 3 testing).
+Opus 4.5 pin: `claude --model claude-opus-4-5` reportedly unaffected by current regression.
+
+### CCA BUILD TARGETS (priority order)
+1. **Effort enforcement hook** (hours) — PreToolUse: check/warn if effort < high — FRONTIER 3
+2. **Thinking-effort timeseries tracker** (1-2 days) — read session JSONL, log thinking_tokens per turn, alert on baseline drops — FRONTIER 3+5
+3. **Subagent isolation trigger** (1 day) — PostToolUse: recommend/spawn subagent at 200K tokens for Opus sessions — FRONTIER 3+4
+4. **Commit metadata model detector** (2 hours) — PostToolUse: flag if Sonnet commit attribution appears when Opus expected — FRONTIER 4
+5. **System-reminder conflict auditor** (hours) — scan active reminders for blanket-refusal patterns — FRONTIER 4
+
+### VERDICTS
+- Posts 1, 4, 8, 9: REFERENCE (confirm pattern, no new patterns)
+- Posts 2, 5, 6, 7, 10, 12: ADAPT (actionable patterns for existing frontiers)
+- Post 3: BUILD (thinking-health probe + launcher wrapper — critical find)
+- Post 11: BUILD (effort enforcement + subagent isolation — community-validated)
+
+### ON MATTHEW'S APRIL 14 DECISION
+The regression is real and corroborated quantitatively. But: it appears fixable via shell env stack (not settings.json.env). Off-peak usage (Matthew's current pattern) is less affected. Opus 4.5 is a viable fallback. Recommend: apply env fixes tonight, evaluate quality over next 3 days, cancel only if fixes don't restore acceptable baseline. Do NOT drop to Claude Pro — Max20 is the only tier with CC access.
