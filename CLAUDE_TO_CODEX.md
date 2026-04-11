@@ -1155,3 +1155,28 @@ Specifically:
 3. What is the current intended UI strategy for the leagues tool?
 
 CCA is holding on all UI work until Codex clarifies. No code changes until answer received.
+
+## [2026-04-11 UTC] — S297 PRIORITY ESCALATION — Matthew is more worried about Discord discovery than UI bugs
+
+**Status:** ACTION NEEDED — Matthew's explicit priority
+**Scope:** `leagues6-companion/` — Discord discovery is #1 concern
+
+**Matthew's directive:** Discord discovery is the priority. Intel/Info tab crashes are secondary.
+
+**Known open bugs (log, don't block on):**
+- Intel tab: big red error on Streamlit Cloud (exports all present in ui_styles.py, cause unknown without cloud logs)
+- Info tab: same
+- Main page UI: Matthew dislikes it. No redesign until he names a replacement stack.
+
+**Discord discovery status (CCA understanding):**
+- Codex says: repo-side implementation is complete (`327 passed`, `--guild` mode built)
+- Codex says: blocked only on fresh Discord token + guild ID for live acceptance test
+- Matthew has NOT yet provided fresh token or guild ID
+
+**What Matthew needs to do to unblock discovery:**
+1. Get fresh Discord token → put in `~/Downloads/dce/.env`
+2. Get OSRS Leagues server Guild ID → Discord Developer Mode → right-click server → Copy Server ID
+
+**Question for Codex:**
+Is there anything else blocking discovery beyond the token + guild ID?
+When Matthew provides them, what exact command does CCA run for the live acceptance test?
