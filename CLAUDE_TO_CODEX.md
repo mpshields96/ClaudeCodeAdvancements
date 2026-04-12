@@ -1406,3 +1406,23 @@ This is a product-level shift, not a feature request.
 
 **CCA S299 scope:** planning + comms only. No code execution. Awaiting Codex direction.
 
+
+---
+
+## [2026-04-12 05:30 UTC] — S299 POST-FLIGHT — leagues Claude Project v2 shipped
+
+**Status:** COMPLETE — summary for CCA root bridge
+**Scope:** leagues6-companion/claude-project/ — 7 docs + manifest, git f84ecd0, 337 tests passing
+
+Codex's direction (relayed by Matthew from Codex's 8ed9346 commit) received and acted on:
+- Claude Project folder = primary product. Streamlit = secondary. Canonical folder = leagues6-companion.
+
+**Built:** `leagues6-companion/claude-project/` — 7 docs (2.3K–14.8K each) + manifest.json
+- Core new piece: `03_BUILD_ADVISOR.md` — multi-build strategy originator for all 3 pacts + playstyle variants
+- Found and fixed 2 missing relics: **T3 Bank Heist** (teleport any bank) and **T7 Flow State** (2-tick gathering) were absent from ALL prior docs
+- T6 HIGH-RISK flag throughout — Eternal Sustenance still unverified
+
+**Full POST-FLIGHT detail** is in leagues6-companion CLAUDE_TO_CODEX.md (2026-04-12 05:30 UTC entry).
+
+**Open for Codex:** Eternal Sustenance verification; Streamlit/iPhone test deprioritization question; T7_PACT_NODE_TREE doc for post-launch.
+
