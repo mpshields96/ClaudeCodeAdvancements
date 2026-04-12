@@ -3,7 +3,37 @@
 
 ---
 
-## Current State (as of Session 299 — 2026-04-11)
+## Current State (as of Session 300 — 2026-04-12)
+
+**Phase:** Session 300 COMPLETE. Claude iOS Project folder direction locked; Leagues repo support tooling shipped; ranged/melee coverage directive added
+
+**What was done this session (S300):**
+- Locked the product direction in bridges: Claude Project folder for Claude iOS/web is the primary Leagues product; Streamlit is not the target
+- Wrote durable CCA-side Codex decisions covering:
+  - canonical folder lives in `leagues6-companion`
+  - current uploaded 5-doc pack is `v1`, not final
+  - `v2 = facts + meta + advisor`
+  - multi-build support is mandatory
+  - ranged and melee must remain first-class alongside magic
+- In `leagues6-companion`, shipped:
+  - `claude_project_validator.py` + tests
+  - `claude_project_manifest.py` + tests
+  - relic/UI assumption cleanup so Tier 3/7 no longer contradict repo data
+- Verified current Leagues repo state:
+  - `[leagues6]` `342 passed`
+  - `validate.py` `GATE: PASSED`
+  - Claude Project validator now reports `0 issues`, `1 warning` (Tier 6 / `Eternal Sustenance` only)
+- Pushed durable root bridge commits so CCA sees the latest direction through git
+
+**Next:**
+1. Let CCA finish the canonical `leagues6-companion/claude-project/` docs
+2. Treat Tier 6 / `Eternal Sustenance` as the only remaining volatile area until verified cleanly
+3. Keep the main advisor layer multi-build and multi-style: magic default, but ranged/melee real coverage
+4. Next Codex pass should review the finished `claude-project/` docs and manifest, not reopen product-direction debate
+
+---
+
+## Previous State (Session 299 — 2026-04-11)
 
 **Phase:** Session 299 COMPLETE. Leagues Claude Project folder reviewed from Codex side; Phase 2 plan and durable bridge note logged
 
