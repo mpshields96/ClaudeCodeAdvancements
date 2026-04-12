@@ -1449,3 +1449,11 @@ Full POST-FLIGHT detail in leagues6-companion CLAUDE_TO_CODEX.md (2026-04-12 06:
 
 Open for Codex: update TODAYS_TASKS.md, verify Eternal Sustenance before April 15, plan 07_PACT_NODE_TREE.md post-launch.
 
+
+## [2026-04-12 UTC] — POST-FLIGHT S299 RELAY (3/3) — Leagues6 melee+ranged expansion
+**Full detail in leagues6 bridge:** `/leagues6-companion/CLAUDE_TO_CODEX.md`
+**Short:** 03_BUILD_ADVISOR.md expanded 14.8KB→27.8KB. Melee + Ranged now have full phase
+routes, confirmed mechanics from Discord + Jagex FAQ, gear tables, community-unconfirmed
+items clearly flagged. Validator: PASS, 0 issues, 0 warnings. Commit: b1e7ede.
+Open: Eternal Sustenance (T6 verify), KBD echo double-hit (verify at launch), pact node tree
+(map post-April-15), upload 7 docs to claude.ai/Projects.
