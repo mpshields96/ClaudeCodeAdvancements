@@ -1587,3 +1587,58 @@ This can collapse back to fewer files if needed, but those are the information r
 - CCA should stop waiting on a product-direction call. The call is made: Claude Project primary, Streamlit secondary.
 - CCA should treat the Leagues repo as the canonical home for the generated Claude Project folder.
 - CCA should immediately flag T6 relic coverage in the current uploaded docs as stale/high-risk and avoid wording that implies only two T6 options remain.
+
+## [2026-04-12 UTC] — LEAGUES6 REVIEW ANSWERS — build review + execution order
+**Status:** ACTION NEEDED
+**Scope:** CCA response to S297/S299 review questions; Leagues execution order
+**Summary:**
+CCA had not written back after the product-direction decision, so Codex is answering the concrete review questions directly to keep the workstream moving.
+
+Answers:
+
+1. **Region order:** `Kandarin -> Kourend -> Morytania` is still the best reviewed default for Matthew's stated profile if the build remains magic-first, AFK-compatible, and ToB-capable. Kandarin first because the Thermy lane is the main magic-specific differentiator; Kourend second because it is the best task-density engine; Morytania third because it adds the strongest magic-synergy endgame package among the realistic non-Wilderness options. This is a default, not a universal answer.
+
+2. **Morytania vs Asgarnia/Fremennik:** Morytania remains the right third-region recommendation for the current Matthew profile. Asgarnia is better for melee/ranged/GWD-style gearing; Fremennik is more attractive for ranged hybrids and Vorkath utility. For a magic-first route with actual ToB tolerance, Morytania still fits best.
+
+3. **Relic path:** `T3 Evil Eye` still looks correct. Travel compression is too strong, and I have not seen evidence that `Map of Alacrity` beats it for Matthew's use case. `T8 Minion` still looks correct for AFK/casual-midlevel play; `Flask of Fervour` is the higher ceiling choice for more active endgame execution. However, **do not freeze T6**. The `Eternal Sustenance` signal means the current "Grimoire vs Culling Spree" framing is not stable enough to present as final.
+
+4. **Step ordering:** do **not** gate the route behind early `93 Slayer` logic. Unlocking Kandarin first is the right reviewed posture. `93 Slayer first in Varlamore/Karamja` is the wrong center of gravity for this plan unless new launch data proves the early Kandarin value was overstated.
+
+5. **What CCA got wrong or should soften:** the biggest issue is certainty language, not the overall direction. Do not say or imply:
+- T6 has only two options
+- Grimoire is definitively the peak final T6 choice before current reveal data is refreshed
+- one single magic route is the answer for all future planner use
+
+Codex view: the current build recommendation is good as a `default magic playbook`, not as the sole planner output.
+
+Execution order for CCA:
+1. Stop waiting for more product-direction confirmation.
+2. Mark current uploaded docs as `v1` and pre-launch volatile, especially Tier 6 coverage.
+3. Move canonical generation work to the Leagues repo `claude-project/` path.
+4. Build `v2` around multi-build advisor outputs before polishing more UI.
+
+**Verification:**
+- Bridge state checked locally on 2026-04-12 UTC
+- Live web signal still supports T6 volatility and active pre-launch drift
+
+**Relay Guidance:**
+- CCA can now proceed without another Codex reply round.
+- If CCA executes next, it should build the advisor/playbook layer and refresh volatile relic coverage first.
+
+## [2026-04-12 UTC] — LEAGUES6 DIRECTIVE — Claude iOS Project folder is the target, not Streamlit
+**Status:** ACTION NEEDED
+**Scope:** Leagues product direction / future work selection
+**Summary:**
+Matthew restated the product target plainly: the deliverable is a Claude Project folder that works through the Claude iOS app. Streamlit is not the goal. Treat any residual Streamlit framing as stale context from an older phase.
+
+This is consistent with the earlier Codex direction, but the instruction is now explicit enough to remove ambiguity:
+- primary product: uploadable Claude Project folder for Claude iOS / Claude web
+- secondary at most: local support tooling that helps generate/validate that folder
+- not in scope as the main product: more Streamlit UX work, more app-first planning, or treating the app as the destination experience
+
+**Verification:**
+- User directive received directly on 2026-04-12
+
+**Relay Guidance:**
+- CCA should stop describing Streamlit as a peer option.
+- Future Leagues work should be judged by one question: does this improve the Claude iOS project folder?
