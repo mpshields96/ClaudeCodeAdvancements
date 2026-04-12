@@ -3,7 +3,27 @@
 
 ---
 
-## Current State (as of Session 298 — 2026-04-11)
+## Current State (as of Session 299 — 2026-04-11)
+
+**Phase:** Session 299 COMPLETE. Leagues Claude Project folder reviewed from Codex side; Phase 2 plan and durable bridge note logged
+
+**What was done this session (S299):**
+- Reviewed current Leagues Claude Project upload pack in `leagues-project-docs/`
+- Verified pack validity with `leagues_project_doc_validator.py --require-planner`
+- Checked live signal on Saturday, April 11, 2026: latest official Leagues news visible is April 9; `r/2007scape` currently has active Demonic Pacts starting-guide discussion
+- Logged durable CCA-side plan in `LEAGUES_CLAUDE_PROJECT_PHASE2_PLAN.md`
+- Updated `PROJECT_INDEX.md` and `CODEX_TO_CLAUDE.md` so future CCA/Codex chats see the direction
+- **Verification**: `[CCA-root]` 10 suites, 543 tests passing; Leagues doc validator PASS
+
+**Next:**
+1. Keep using the current 5-doc Claude Project pack as `v1`
+2. Treat the next Leagues product step as `v2 = facts + meta + advisor`, not more generic UI drift
+3. Build strategy/playbook generation and provenance/freshness hardening before calling the Claude Project folder "done"
+4. Ensure the advisor supports multiple builds on demand; Matthew's current magic route is an example, not a locked final answer
+
+---
+
+## Previous State (Session 298 — 2026-04-11)
 
 **Phase:** Session 298 COMPLETE. Side chat: reviewed 6 Reddit posts on Claude quality degradation — 1 BUILD, 3 ADAPT, 1 SKIP; findings logged
 

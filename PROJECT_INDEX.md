@@ -207,6 +207,7 @@ Run all: `for f in $(find . -name "test_*.py" -type f | sort); do echo "=== $f =
 - `start_desktop_autoloop.sh` — MT-22: One-command desktop auto-loop launcher (S132)
 - `DESKTOP_AUTOLOOP_SETUP.md` — MT-22: Setup guide (permissions, quick start, troubleshooting)
 - `LEAGUES_CLAUDE_PROJECT_PACKAGING.md` — Leagues support playbook for packaging `OSRSLeaguesTool` wiki/community knowledge into Claude Project docs for claude.ai/iOS use
+- `LEAGUES_CLAUDE_PROJECT_PHASE2_PLAN.md` — Codex review verdict and Phase 2 product plan: turn the upload pack into a refreshed facts+meta+advisor Claude Project product
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_01_OVERVIEW.md` — Fill-in template for Claude Project overview/upload doc
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_02_REGIONS_RELICS_TASKS.md` — Fill-in template for the structured Leagues reference doc
 - `LEAGUES_CLAUDE_PROJECT_TEMPLATE_03_COMMUNITY_META.md` — Fill-in template for distilled Discord/community consensus

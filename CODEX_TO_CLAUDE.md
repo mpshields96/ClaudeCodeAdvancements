@@ -1509,3 +1509,43 @@ This is the clean strategic answer to "what is the last big task?" if the real w
 **Relay Guidance:**
 - CCA should read `CLAUDE_PROJECT_FOLDER_PLAN.md` before proposing more UI-heavy Leagues work.
 - If Matthew approves the direction, the next implementation step is not more tabs; it is building the canonical Claude Project folder structure described in that doc.
+
+## [2026-04-11 UTC] — LEAGUES6 REVIEW — CCA-side Phase 2 plan logged for the Claude Project folder
+**Status:** COMPLETE
+**Scope:** `LEAGUES_CLAUDE_PROJECT_PHASE2_PLAN.md`, `PROJECT_INDEX.md`
+**Summary:**
+Codex reviewed the current CCA-side Leagues upload pack and logged the next-step product plan in `LEAGUES_CLAUDE_PROJECT_PHASE2_PLAN.md`. Core verdict: the current 5-doc pack is a valid `v1` static reference product, but it is not yet the full optimizer/planning brain Matthew described. The next major step should be `v2 = facts + meta + advisor`, with `leagues_query.py` treated as the source engine that regenerates the Claude Project folder instead of the folder being treated as the primary source of truth.
+
+Concrete gaps called out in the plan:
+- the docs mix official facts with subjective synthesis
+- query examples promise task/optimization coverage the current upload docs do not fully support
+- the pack is too magic-centered to act like a universal Leagues planner
+- freshness needs an explicit official-news + `r/2007scape` refresh rule
+
+Live signal checked on Saturday, April 11, 2026:
+- latest official Leagues news visible on the OSRS site is the April 9 `Get Ready For Leagues VI: Demonic Pacts - April 15th` post
+- `r/2007scape` currently shows active discussion around a Demonic Pacts starting guide, with comments indicating more task details are still arriving pre-launch
+
+**Verification:**
+- `[CCA-root] python3 parallel_test_runner.py --quick --workers 8` → `10/10 suites passed, 543 tests`
+- `python3 leagues_project_doc_validator.py validate leagues-project-docs --require-planner` → `PASS: checked 5 docs, 0 issues`
+
+**Relay Guidance:**
+- CCA should treat `LEAGUES_CLAUDE_PROJECT_PHASE2_PLAN.md` as the durable Codex review for the next Leagues product step.
+- Keep using the current 5-doc upload pack now, but stop calling it the final form.
+- Next implementation work should favor strategy/playbook generation and provenance/freshness hardening over more generic UI expansion.
+
+## [2026-04-11 UTC] — LEAGUES6 DIRECTIVE — Multi-build support is mandatory
+**Status:** ACTION NEEDED
+**Scope:** `LEAGUES_CLAUDE_PROJECT_PHASE2_PLAN.md`, future Claude Project/advisor generation
+**Summary:**
+Matthew added one important constraint after the Phase 2 plan review: the Leagues Claude Project folder must be able to return more than one build when asked. Magic may remain the likely meta combat style, but regions, relics, and route structure are expected to change. The planner should therefore treat Matthew's current magic route as one example/playbook, not the single canonical answer.
+
+This means the next advisor layer must support multiple variants for the same combat style, including alternate region trios, alternate relic philosophies, and alternate goals like AFK, points-rush, or raid-first.
+
+**Verification:**
+- Directive logged in `LEAGUES_CLAUDE_PROJECT_PHASE2_PLAN.md`
+
+**Relay Guidance:**
+- CCA should not design the Claude Project folder around one frozen route.
+- `05_PLANNER_ROUTE_NOTES.md` should remain a personal route note, while the advisor/playbook layer handles multiple builds on request.
