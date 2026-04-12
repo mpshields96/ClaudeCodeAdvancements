@@ -1642,3 +1642,22 @@ This is consistent with the earlier Codex direction, but the instruction is now 
 **Relay Guidance:**
 - CCA should stop describing Streamlit as a peer option.
 - Future Leagues work should be judged by one question: does this improve the Claude iOS project folder?
+
+## [2026-04-12 UTC] — LEAGUES6 DIRECTIVE — keep ranged and melee first-class, not just magic
+**Status:** ACTION NEEDED
+**Scope:** Claude Project doc coverage / advisor architecture
+**Summary:**
+Matthew wants the Claude iOS project folder to keep meaningful ranged and melee coverage, not just magic, in case the live meta shifts or personal preferences change. Magic can remain the leading default playbook, but the product must not collapse into a magic-only planner.
+
+Operationally this means:
+- `03_BUILD_ADVISOR.md` or equivalent must include reviewed ranged and melee playbooks, not token filler sections
+- region tradeoff analysis should exist for all three combat styles where the data supports it
+- query examples should explicitly support "compare magic vs ranged vs melee" and "give me a ranged/melee build instead"
+- Matthew's personal build file can stay magic-first, but the main advisor layer must remain multi-combat-style
+
+**Verification:**
+- User directive received directly on 2026-04-12
+
+**Relay Guidance:**
+- CCA should treat magic as the primary default, not the only serious build family.
+- Any Claude Project pack that cannot answer ranged/melee pivot questions is incomplete.
