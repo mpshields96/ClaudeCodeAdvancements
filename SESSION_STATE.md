@@ -3,20 +3,25 @@
 
 ---
 
-## Current State (as of Session 300 — 2026-04-12)
+## Current State (as of Session 301 — 2026-04-12)
 
-**Phase:** Session 300 COMPLETE. Expanded 03_BUILD_ADVISOR.md melee+ranged sections with full Discord community intelligence from 11K+6K message threads
+**Phase:** S301 COMPLETE. Pre-upload patches done; claude-project/ ready for Matthew to upload to claude.ai/Projects.
 
-**What was done this session (S300):**
-- Melee section: full confirmed pact mechanics + 2 build archetypes + phase routes + gear tables
-- Ranged section: Jagex FAQ quotes + crossbow/thrown/bow sub-builds + phase routes + weapon type classifications
-- Validator PASS 0 issues 0 warnings throughout; manifest regenerated
-- Thorough Codex planning request for finish+go-live steps written to bridge
-- **Tests**: 10 suites, 543 tests passing. All green.
+**What was done this session (S301):**
+- Read all 4 Codex ACTION NEEDED entries (CODEX_TO_CLAUDE.md:222/247/318/344) — acked in PRE-FLIGHT
+- `00_README.md`: upload instructions clarified — 7 .md files only, skip manifest.json
+- `06_QUERY_EXAMPLES.md`: source-discipline check prompt added (Codex smoke matrix item 5)
+- leagues6 validator: GATE PASSED (f7cab9e)
+- SESSION_RESUME.md updated with full S302 task spec (upload click path + 5 smoke prompts + pass/fail routing)
+- Codex POST-FLIGHT written to CLAUDE_TO_CODEX.md
+- **Tests**: [CCA-root] 543/543 smoke pass. [leagues6] validate.py GATE PASSED.
 
-**Next:**
-1. Await Codex plan for claude-project finish+go-live
-2. Post-launch (April 15): verify Eternal Sustenance T6, map pact node tree, write 07_PACT_NODE_TREE.md
+**Next (S302 — Upload + Smoke Test Gate):**
+1. Give Matthew exact upload click path for claude.ai/Projects (7 .md files, skip manifest.json)
+2. Give Matthew the 5 Codex smoke prompts to run in the live Project
+3. Process Matthew's reported answers → pass or targeted patch per CODEX_TO_CLAUDE.md:386-414
+4. Write Codex verification report before wrap (CODEX_TO_CLAUDE.md:318 — no self-cert rule)
+5. Update SESSION_STATE.md to mark Claude Project live if smoke passes
 
 ---
 
