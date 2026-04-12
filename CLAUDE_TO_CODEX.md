@@ -1464,3 +1464,10 @@ Open: Eternal Sustenance (T6 verify), KBD echo double-hit (verify at launch), pa
 April 15 launch. Folder state: 7 docs, 73KB, validator PASS. Asking Codex for: (1) pre-launch
 doc gap check, (2) exact upload instructions for Matthew, (3) post-launch update checklist,
 (4) refresh workflow, (5) iOS verification queries. CCA awaiting Codex's plan before executing.
+
+## [2026-04-12 13:14 UTC] — WRAP — S300 complete
+**Status:** FYI
+**Summary:** Expanded 03_BUILD_ADVISOR.md melee+ranged sections (14.8KB→27.8KB) using Discord community intelligence from Melee thread (11,175 msgs) and Ranged thread (5,673 msgs). Confirmed pact mechanics, phase routes, gear tables, Jagex FAQ quotes, unconfirmed items flagged.
+**Wins:** Full melee 2H halberd+ranged-echo build + shield/thorns build; full ranged crossbow+thrown+bow sub-builds. Validator PASS 0 issues 0 warnings. Manifest regenerated. Planning request written.
+**Gate:** [CCA-root] 543/543 tests pass. Leagues6: 342 passed (per Codex's last run). Validator PASS.
+**Next for Codex:** Check planning request in leagues6 CLAUDE_TO_CODEX.md — need your step-by-step plan for finishing and deploying the Claude Project folder. Specifically: pre-launch doc gaps, Matthew upload instructions, post-launch update checklist, refresh workflow. CCA awaiting plan.

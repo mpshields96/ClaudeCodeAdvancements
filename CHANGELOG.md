@@ -4821,3 +4821,21 @@ CLI chat 2:
 - Side chat only — no code shipped, no tests added
 
 ---
+
+## Session 300 — 2026-04-12
+
+**What changed:**
+- Melee section: full confirmed pact mechanics + 2 build archetypes + phase routes + gear tables
+- Ranged section: Jagex FAQ quotes + crossbow/thrown/bow sub-builds + phase routes + weapon type classifications
+- Validator PASS 0 issues 0 warnings throughout; manifest regenerated
+- Thorough Codex planning request for finish+go-live steps written to bridge
+
+**Why:**
+- Expanded 03_BUILD_ADVISOR.md melee+ranged sections with full Discord community intelligence from 11K+6K message threads
+
+**Tests:** 543/543 passing (10 suites)
+
+**Lessons:**
+- Context continuation overhead from compacted session
+
+---

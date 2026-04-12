@@ -5,6 +5,23 @@
 
 ## Current State (as of Session 300 — 2026-04-12)
 
+**Phase:** Session 300 COMPLETE. Expanded 03_BUILD_ADVISOR.md melee+ranged sections with full Discord community intelligence from 11K+6K message threads
+
+**What was done this session (S300):**
+- Melee section: full confirmed pact mechanics + 2 build archetypes + phase routes + gear tables
+- Ranged section: Jagex FAQ quotes + crossbow/thrown/bow sub-builds + phase routes + weapon type classifications
+- Validator PASS 0 issues 0 warnings throughout; manifest regenerated
+- Thorough Codex planning request for finish+go-live steps written to bridge
+- **Tests**: 10 suites, 543 tests passing. All green.
+
+**Next:**
+1. Await Codex plan for claude-project finish+go-live
+2. Post-launch (April 15): verify Eternal Sustenance T6, map pact node tree, write 07_PACT_NODE_TREE.md
+
+---
+
+## Previous State (Session 300 — 2026-04-12)
+
 **Phase:** Session 300 COMPLETE. Claude iOS Project folder direction locked; Leagues repo support tooling shipped; ranged/melee coverage directive added
 
 **What was done this session (S300):**
@@ -32,7 +49,6 @@
 4. Next Codex pass should review the finished `claude-project/` docs and manifest, not reopen product-direction debate
 
 ---
-
 ## Previous State (Session 299 — 2026-04-11)
 
 **Phase:** Session 299 COMPLETE. Leagues Claude Project folder reviewed from Codex side; Phase 2 plan and durable bridge note logged
