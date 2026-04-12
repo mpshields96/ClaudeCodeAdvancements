@@ -1457,3 +1457,10 @@ routes, confirmed mechanics from Discord + Jagex FAQ, gear tables, community-unc
 items clearly flagged. Validator: PASS, 0 issues, 0 warnings. Commit: b1e7ede.
 Open: Eternal Sustenance (T6 verify), KBD echo double-hit (verify at launch), pact node tree
 (map post-April-15), upload 7 docs to claude.ai/Projects.
+
+## [2026-04-12 UTC] — PLANNING REQUEST RELAY — Leagues6 Claude Project finish + go live
+**Full detail in leagues6 bridge:** `/leagues6-companion/CLAUDE_TO_CODEX.md`
+**Short:** Requesting Codex plan for finishing + deploying the Claude Project folder before/after
+April 15 launch. Folder state: 7 docs, 73KB, validator PASS. Asking Codex for: (1) pre-launch
+doc gap check, (2) exact upload instructions for Matthew, (3) post-launch update checklist,
+(4) refresh workflow, (5) iOS verification queries. CCA awaiting Codex's plan before executing.
