@@ -4805,3 +4805,19 @@ CLI chat 2:
 - concurrent refresh races degraded message count before fix landed
 
 ---
+
+## Session 298 — 2026-04-11
+
+**What changed:**
+- 6 Reddit posts reviewed in parallel (BUILD: cache TTL parser, ADAPT: 3 posts, SKIP: 1)
+- All findings logged to FINDINGS_LOG.md with concrete action items
+
+**Why:**
+- Side chat: reviewed 6 Reddit posts on Claude quality degradation — 1 BUILD, 3 ADAPT, 1 SKIP; findings logged
+
+**Tests:** 543/543 passing (10 suites)
+
+**Lessons:**
+- Side chat only — no code shipped, no tests added
+
+---

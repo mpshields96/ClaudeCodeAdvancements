@@ -161,3 +161,10 @@
 {"tip":"ui_styles.py pattern: pure HTML strings returned, caller does st.markdown(unsafe_allow_html=True) \u2014 keeps logic testable","source":"cca-desktop","session":"S293","timestamp":"2026-04-10T04:25:33.572307Z"}
 {"tip":"Full post-by-post breakdown is DEFAULT for /cca-review \u2014 never wait to be asked","source":"cca-desktop","session":"S294","timestamp":"2026-04-11T01:30:21.669554Z"}
 {"tip":"Shell env vars (not settings.json.env) are the only path to the claude process \u2014 verify at every init with env | grep CLAUDE","source":"cca-desktop","session":"S294","timestamp":"2026-04-11T01:30:21.669554Z"}
+{"tip":"run venv/bin/python3 -c \"import py_compile; py_compile.compile(f, doraise=True)\" immediately after writing f-string-heavy files targeting Python 3.9","source":"cca-desktop","session":"S295","timestamp":"2026-04-11T01:56:22.662431Z"}
+{"tip":"launchctl setenv + RunAtLoad LaunchAgent plist is the two-layer macOS solution for GUI app env vars","source":"cca-desktop","session":"S295","timestamp":"2026-04-11T01:56:22.662431Z"}
+{"tip":"list every CODEX_TO_CLAUDE.md entry individually in PRE-FLIGHT by timestamp \u2014 summaries cause bridge drift","source":"cca-desktop","session":"S295","timestamp":"2026-04-11T01:56:22.662431Z"}
+{"tip":"Before claiming discovery verify HOW content arrived \u2014 presence on disk is not the same as CCA-found","source":"cca-desktop","session":"S296","timestamp":"2026-04-11T02:54:40.862223Z"}
+{"tip":"Run validate_token before any DCE export to prevent silent file corruption","source":"cca-desktop","session":"S296","timestamp":"2026-04-11T02:54:40.862223Z"}
+{"tip":"Cache TTL data already in local JSONL \u2014 just needs parser","source":"cca-desktop","session":"S298","timestamp":"2026-04-12T04:42:00.708352Z"}
+{"tip":"CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1 may be missing from ~/.zshrc","source":"cca-desktop","session":"S298","timestamp":"2026-04-12T04:42:00.708352Z"}

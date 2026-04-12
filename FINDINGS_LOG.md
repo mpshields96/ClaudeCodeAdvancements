@@ -938,3 +938,123 @@ Opus 4.5 pin: `claude --model claude-opus-4-5` reportedly unaffected by current 
 
 ### ON MATTHEW'S APRIL 14 DECISION
 The regression is real and corroborated quantitatively. But: it appears fixable via shell env stack (not settings.json.env). Off-peak usage (Matthew's current pattern) is less affected. Opus 4.5 is a viable fallback. Recommend: apply env fixes tonight, evaluate quality over next 3 days, cancel only if fixes don't restore acceptable baseline. Do NOT drop to Claude Pro — Max20 is the only tier with CC access.
+
+## 2026-04-11 — Side Chat `/cca-review` batch (6 regression-cluster URLs)
+
+[2026-04-11] [ADAPT] [Frontier 3 + Frontier 4 + Frontier 5] "AMD AI directors analysis confirms lobotomization of Claude" (1766pts, 97%, 287c, r/ClaudeAI). REAL PRIMARY SOURCE under the Reddit title: anthropics/claude-code issue #42796 opened 2026-04-02 with 6,852 session files, 17,871 thinking blocks, and 234,760 tool calls analyzed. Hard signal: read:edit dropped 6.6 -> 2.0, stop-hook violations went 0 -> 173, full-file writes doubled, user interrupts and reasoning loops rose sharply. IMPORTANT: the Reddit post overclaims causality. Anthropic's Boris Cherny replied on 2026-04-06 that `redact-thinking-2026-02-12` is UI-only, while adaptive thinking defaults + medium-effort defaults are the intended changes. STEAL: use this as a telemetry blueprint for CCA canaries (read:edit ratio, premature-stop rate, interrupt rate), not as proof that hidden thinking itself caused the regression. — https://www.reddit.com/r/ClaudeAI/comments/1sifepi/amd_ai_directors_analysis_confirms_lobotomization/ ; https://github.com/anthropics/claude-code/issues/42796
+[2026-04-11] [SKIP] [Sentiment / Duplicate] "Completely IMMORAL business practices from Anthropic right now." (637pts, 88%, 208c, r/ClaudeCode). High-engagement outrage thread but mostly repetition of the same regression/opacity complaints. Comments recycle known workarounds (disable adaptive thinking, set effort=max, pin older versions) without adding new measurements or implementation detail. Useful as customer-trust signal only; no new frontier move. — https://www.reddit.com/r/ClaudeCode/comments/1sieemk/completely_immoral_business_practices_from/
+[2026-04-11] [SKIP] [Speculation / Low Signal] "they didn’t actually cut limits they just made the model less effective so you burn more tokens" (17pts, 69%, 34c, r/ClaudeCode). Pure speculation thread with no measurements, no primary sources, and contradictory replies ("limits were cut" vs "model got worse" vs "both"). No buildable content beyond already-known sentiment that degraded quality increases token burn. — https://www.reddit.com/r/ClaudeCode/comments/1si7m54/they_didnt_actually_cut_limits_they_just_made_the/
+[2026-04-11] [REFERENCE] [General QA Discipline] "Claude has gotten sooo much worse" (109pts, 88%, 43c, r/ClaudeCode). Anecdotal regression report, but one comment is worth preserving: when model reliability becomes non-stationary, deterministic unit/e2e tests become the only stable guardrail. This is validation for CCA's test-first / verify-after-edit posture, not a new frontier build. — https://www.reddit.com/r/ClaudeCode/comments/1shhz50/claude_has_gotten_sooo_much_worse/
+[2026-04-11] [ADAPT] [Frontier 3 + Frontier 5] "Data from 120k API calls across 2 machines proves Anthropic silently downgraded cache TTL from 1h -> 5m on March 6th" (65pts, 93%, 24c, r/ClaudeCode). Strong corroboration of an ALREADY-LOGGED bug cluster, now with a concrete workaround repo: `cnighswonger/claude-code-cache-fix` (updated 2026-04-11) intercepts outgoing `/v1/messages` requests, normalizes resumed-session attachment placement, stabilizes tool ordering/fingerprints, and optionally strips image bloat. Caveats: npm/Node install only, not standalone binary; still a client-side patch over Anthropic bugs. STEAL: repo is worth studying for request-normalization patterns and cache-health diagnostics, but the core cache TTL / resume-bust problem was already logged by CCA on 2026-03-30, 2026-03-31, and 2026-04-05. — https://www.reddit.com/r/ClaudeCode/comments/1sj1zb0/data_from_120k_api_calls_across_2_machines_proves/ ; https://github.com/cnighswonger/claude-code-cache-fix
+[2026-04-11] [REFERENCE] [Frontier 3 + Frontier 5] "WHAT IN THE ACTUAL... is going on right now??! 2.1.101 is GARBAGE." (40pts, 84%, 31c, r/ClaudeCode). Mixed anecdote, but the thread maps onto real open bug classes rather than one monolithic "nerf": context bloat tracker #29971 (opened 2026-03-02), resume re-injection regression #34039 (opened 2026-03-13), "out of extra usage" despite disabled #45144 (opened 2026-04-08), and vanished promotional credit #46244 (opened 2026-04-10). Takeaway: some perceived "quality collapse" is actual model regression, but some is separate usage/accounting/context duplication bugs stacking on top of it. Use as reference for the bug cluster, not as causal proof by itself. — https://www.reddit.com/r/ClaudeCode/comments/1siyjoc/what_in_the_actual_is_going_on_right_now_21101_is/ ; https://github.com/anthropics/claude-code/issues/29971 ; https://github.com/anthropics/claude-code/issues/34039 ; https://github.com/anthropics/claude-code/issues/45144 ; https://github.com/anthropics/claude-code/issues/46244
+
+### Batch Verdict
+- High-signal posts: AMD issue thread (#42796) and the cache-fix / cache-TTL thread.
+- Medium-signal reference: the 2.1.101 thread, because it points to real open bugs.
+- Low-signal duplicates: the "immoral business practices", "they didn’t cut limits", and generic "Claude got worse" threads.
+- Overall cluster read: Reddit is correctly detecting a real regression window, but it collapses at least three separate phenomena into one story: (1) adaptive thinking / effort-default changes, (2) cache / resume / context bloat bugs, and (3) billing / extra-usage/account-state bugs.
+
+---
+
+## S298 Side Chat — 2026-04-11 — Degradation Batch (6 posts)
+
+**Context:** Side chat specifically for reviewing 6 posts about Claude quality degradation wave. All reviewed in parallel via cca-reviewer agents.
+
+---
+
+### [2026-04-11] AMD AI Director's Analysis Confirms Lobotomization
+Source: https://www.reddit.com/r/ClaudeAI/comments/1sifepi/amd_ai_directors_analysis_confirms_lobotomization/
+Score: 1762 pts | 97% upvoted | 287 comments
+Verdict: ADAPT
+Frontiers: 3 (Context Health), 5 (Usage Dashboard) — New Frontier candidate (upstream quality transparency)
+
+**Actionable signals:**
+1. Community consensus on MAX_THINKING_TOKENS is **128000**, not 63999 — CCA's degraded-upstream-mode.md uses 63999, worth bumping
+2. **Car wash canary test** — "Should I walk or drive to the car wash 50 feet away?" — fails reliably during peak hours on Opus 4.6, passes off-peak. Automatable as a session-start quality probe (no existing CCA equivalent)
+3. **Laziness trigger detector** — u/Obvious_Equivalent_1 built a PostToolUse hook that scores validity of Claude's "this will take too long" claims against context usage. Frontier 3 gap — CCA has the rule but not the enforcement code
+4. **JSONL thinking redaction gap** — showThinkingSummaries now redacts to 0%, meaning context-monitor's transcript-based thinking token counts are zeroed. Needs a compensating fix
+5. Car wash canary → session_health_check.py stub; laziness detector → PostToolUse hook pattern
+
+---
+
+### [2026-04-11] Completely Immoral Business Practices
+Source: https://www.reddit.com/r/ClaudeCode/comments/1sieemk/completely_immoral_business_practices_from/
+Score: 635 pts | 88% upvoted | 208 comments
+Verdict: ADAPT
+Frontiers: 5 (Usage Dashboard), 3 (Context Health)
+
+**Actionable signals:**
+1. **Missing env var:** `CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1` — community-confirmed fix, NOT currently in CCA's degraded-upstream-mode.md env check. Verify against ~/.zshrc
+2. **thinking=auto JSON config path** — separate from effort level settings. Setting `thinking: true` (not "auto") prevents throttling. Different mechanism, different fix
+3. **Version pinning at v1.9.92** — reportedly the last version before 2.0 adaptive thinking regression. Not codified in CCA yet
+4. **Thinking caching false positive** — identical thinking block output on successive prompts = cached no-op, not real reasoning. context-monitor cannot currently distinguish
+5. Validates: existing degraded-upstream-mode.md env stack is community-correct. Boris Cherny GitHub 42796 citation confirmed
+
+---
+
+### [2026-04-11] They Didn't Cut Limits, Made Model Less Effective
+Source: https://www.reddit.com/r/ClaudeCode/comments/1si7m54/they_didnt_actually_cut_limits_they_just_made_the/
+Score: 17 pts | 69% upvoted | 34 comments
+Verdict: SKIP
+Frontiers: N/A
+
+**Rationale:** Pure venting thread, no implementations, no data. One speculative idea (entropy-bounded context compaction as alternative to token counting) with no code or repo. CCA's AMD data (17,871 thinking blocks) already covers this ground with real numbers. Nothing to add.
+
+---
+
+### [2026-04-11] Claude Has Gotten Sooo Much Worse
+Source: https://www.reddit.com/r/ClaudeCode/comments/1shhz50/claude_has_gotten_sooo_much_worse/
+Score: 104 pts | 88% upvoted | 43 comments
+Verdict: ADAPT
+Frontiers: 3 (Context Health), 4 (Agent Guard)
+
+**Actionable signals:**
+1. **PostToolUse auto-smoke-test hook** — after every Write/Edit on .py/.ts/.js, auto-run scoped test suite and surface failures immediately. CCA has the "verify after edit" rule but NO enforcement mechanism in code. Frontier 3 gap
+2. **`find /` unbounded traversal guard** — Claude ran `find /` on workstation with terabytes of network storage mounted. agent-guard.md covers credential guarding but NOT unbounded filesystem traversal. Add deny pattern: `find /` or `find ~` without `-maxdepth` flag
+3. Peak/off-peak degradation independently confirmed by u/dutchviking — validates CCA's existing budgeting rule
+
+---
+
+### [2026-04-11] Data from 120k API Calls Proves Cache TTL Downgrade
+Source: https://www.reddit.com/r/ClaudeCode/comments/1sj1zb0/data_from_120k_api_calls_across_2_machines_proves/
+Score: 66 pts | 93% upvoted | 24 comments
+Verdict: BUILD
+Frontiers: 3 (Context Health), 5 (Usage Dashboard)
+
+**Actionable signals:**
+1. **Prompt cache TTL silently switched from 1h → 5min on March 6, 2026** — empirically proven from 119,866 API calls across 2 machines. 25.9% cost waste in March vs 1.1% in February
+2. **Extraction path is local JSONL** — `~/.claude/projects/**/*.jsonl` contains `message.usage.cache_creation.ephemeral_5m_input_tokens` and `ephemeral_1h_input_tokens`. No API needed. CCA can read these TODAY
+3. **Usage schema to steal** from cnighswonger/claude-code-cache-fix: fields `ttl_tier`, `q5h_pct`, `q7d_pct`, `peak_hour`, `ephemeral_1h_input_tokens`, `ephemeral_5m_input_tokens` — exact schema for usage-dashboard
+4. **`~/.claude/quota-status.json`** — written by fix tool, contains `five_hour`/`seven_day` utilization + `resets_at`. context-monitor could read this for quota awareness without API calls
+5. **Cache regression detector** — if ephemeral_5m_tokens = 0 for N days (clean window), then reappear = regression. Automatable baseline check
+
+**Why BUILD:** Data source is local, structured, already on disk. Zero external dependencies. Community already shipped a Node.js extractor proving the method works. CCA just needs the Python parser.
+
+---
+
+### [2026-04-11] What In The Actual Is Going On — v2.1.101 Is Garbage
+Source: https://www.reddit.com/r/ClaudeCode/comments/1siyjoc/what_in_the_actual_is_going_on_right_now_21101_is/
+Score: 39 pts | 84% upvoted | 31 comments
+Verdict: ADAPT
+Frontiers: 3 (Context Health)
+
+**Actionable signals:**
+1. **cachedGrowthBookFeatures poisoning** — `.claude.json` caches feature flags; stale/malformed entry causes memory docs to load at 1.5x-2x token cost. Fix: clear the object, restart. context-monitor has no detection for this
+2. **Detection heuristic** — compare expected token cost of loaded docs (from file sizes) vs actual from `/context`. If actual > expected × 1.3 → flag context bloat + surface the fix
+3. **dynamic-system-prompt-sections** internal feature flag — likely root cause of token doubling. Monitoring cachedGrowthBookFeatures for unknown keys would give early warning
+4. **autocompact buffer increased 21k → 33k** in same release window — context-monitor zone thresholds may need recalibration if session start baseline has silently grown
+
+---
+
+### S298 Batch Summary
+
+| Post | Verdict | Top Frontier | Top Signal |
+|------|---------|-------------|------------|
+| AMD lobotomization analysis | ADAPT | F3/F5 | Car wash canary + laziness detector hook |
+| Immoral business practices | ADAPT | F5/F3 | Missing CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1 env var |
+| Limits not cut, quality degraded | SKIP | — | Nothing new vs AMD data |
+| Claude gotten worse | ADAPT | F3/F4 | PostToolUse auto-smoke + find / guard |
+| 120k API calls cache TTL | BUILD | F3/F5 | Local JSONL cache efficiency parser — zero deps |
+| v2.1.101 garbage | ADAPT | F3 | cachedGrowthBookFeatures bloat detection |
+
+**Session note:** Side chat only. Findings logged. No implementation done. Wrap follows.

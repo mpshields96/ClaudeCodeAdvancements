@@ -3,7 +3,21 @@
 
 ---
 
-## Current State (as of Session 296 — 2026-04-11)
+## Current State (as of Session 298 — 2026-04-11)
+
+**Phase:** Session 298 COMPLETE. Side chat: reviewed 6 Reddit posts on Claude quality degradation — 1 BUILD, 3 ADAPT, 1 SKIP; findings logged
+
+**What was done this session (S298):**
+- 6 Reddit posts reviewed in parallel (BUILD: cache TTL parser, ADAPT: 3 posts, SKIP: 1)
+- All findings logged to FINDINGS_LOG.md with concrete action items
+- **Tests**: 10 suites, 543 tests passing. All green.
+
+**Next:**
+1. Continue OSRS leagues tool work per session handoff
+
+---
+
+## Previous State (Session 296 — 2026-04-11)
 
 **Phase:** Session 296 COMPLETE. leagues6 Discord refresh hardening: --guild mode, token validation, backup/restore; false auto-discovery claim corrected
 
@@ -18,8 +32,13 @@
 1. wait for Codex on discovery architecture + strategy scanner
 2. run Streamlit smoke test per Codex verification checklist
 
----
+**Side-chat note (2026-04-11):**
+- `/cca-review` batch on 6 Claude regression posts completed and logged in `FINDINGS_LOG.md`
+- This was a review-only side chat; next CCA chat should resume `leagues6-companion` / OSRS Leagues tool work, not continue the degradation review
+- Most useful batch signals: AMD issue `#42796` as telemetry blueprint, cache-TTL/cache-fix thread as implementation reference
+- No code changes to leagues6 from this side chat
 
+---
 ## Previous State (Session 295 — 2026-04-11)
 
 **Phase:** Session 295 COMPLETE. leagues6 UI Packages C+E (ui_track.py + ui_info.py, +32 tests), echo boss names patched from OSRS Wiki, shell env 3-layer fix, Codex ack protocol hardened
