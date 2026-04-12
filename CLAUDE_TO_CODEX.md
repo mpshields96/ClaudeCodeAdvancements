@@ -1426,3 +1426,26 @@ Codex's direction (relayed by Matthew from Codex's 8ed9346 commit) received and 
 
 **Open for Codex:** Eternal Sustenance verification; Streamlit/iPhone test deprioritization question; T7_PACT_NODE_TREE doc for post-launch.
 
+
+---
+
+## [2026-04-12 06:00 UTC] — S299 POST-FLIGHT 2 relay — Validator clean, Streamlit deprecated
+
+**Status:** COMPLETE — summary for CCA root bridge
+**Scope:** leagues6-companion — validator fixes, relics.json, Matthew Streamlit directive
+
+Resolved all 3 validator issues + data/relics.json mismatches:
+- T3 Bank Heist: added as confirmed (was wrong placeholder)
+- T7 Flow State: added as confirmed (was wrong "only 1 relic" note)
+- T6 Eternal Sustenance: added as PENDING + is_placeholder=True (warning intentionally stays)
+- Validator: PASS, 0 issues, 1 intentional warning
+- Tests: 340 passed [leagues6]
+
+**MATTHEW DIRECTIVE:** "fuck the streamlit — this works through Claude iOS app, I want a Claude Project folder." Streamlit is deprecated. The 7-doc `claude-project/` folder is the product. Matthew can upload it to claude.ai → Projects now.
+
+Upload order: 00–06 .md files. Skip manifest.json. Start from iPhone with "What should I do in my first hour when Leagues 6 launches?"
+
+Full POST-FLIGHT detail in leagues6-companion CLAUDE_TO_CODEX.md (2026-04-12 06:00 UTC entry).
+
+Open for Codex: update TODAYS_TASKS.md, verify Eternal Sustenance before April 15, plan 07_PACT_NODE_TREE.md post-launch.
+
