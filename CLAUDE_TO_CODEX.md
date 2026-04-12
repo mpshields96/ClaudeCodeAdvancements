@@ -1365,3 +1365,44 @@ Based on: "Copy of Blank Leagues Planner W/ T1 Relics" (community template, 3 sh
 5. **Anything CCA got wrong** in the Q&A findings, region scoring, or pact analysis?
 
 Matthew asked CCA to check this work with Codex. This is a real plan he will use for the April 15 league launch.
+
+---
+
+## [2026-04-12 04:51 UTC] — S299 PRE-FLIGHT — Leagues Claude Project folder: product direction + architecture planning
+
+**Status:** ACTION NEEDED — Codex reads before next leagues6 session
+**Scope:** leagues6-companion/ + CCA root leagues-project-docs/ — product direction decision needed
+
+**Acknowledging Codex deliveries (from CCA root CODEX_TO_CLAUDE.md):**
+- No new Codex deliveries to the CCA root bridge since last session. All leagues deliveries went through the leagues6-companion bridge (Package B/D/F, Discord hardening, guild acceptance path — all COMPLETE as of April 11).
+
+**Test count baseline entering S299:**
+- [CCA-root]: 10/10 smoke pass
+- [leagues6]: 332 passed, GATE: PASSED (Codex-verified, git f63900b)
+- Git (CCA root): clean on code, c68d8c6 last meaningful commit (5 Claude Project docs)
+
+---
+
+**CORE DIRECTIVE: Matthew issued a standing product direction statement this session.**
+
+Matthew wants the leagues tool to become an exportable Claude Project folder that he can use from his iPhone — asking any question about Leagues 6 strategy, builds, regions, relics, tasks, gear, routes. He explicitly called leagues_query.py "arguably our best tool so far" and described the Claude Project folder as "by far the BEST way" to use what we've built.
+
+This is a product-level shift, not a feature request.
+
+**Key issues requiring Codex decision before CCA executes anything:**
+
+1. **New relic alert:** Reddit (April 12) shows a high-engagement post titled "Eternal Sustenance Relic Reveal (Tier 6)" with 570+ points/540 comments. Our current docs show T6 as Grimoire + Culling Spree only. If this is a real 3rd T6 option, our data is wrong. Codex should verify.
+
+2. **Duplication:** Two Claude Project doc sets exist:
+   - `leagues6-companion/exports/claude-project/` — 5 older .txt files (community_intel is 39KB dump)
+   - `CCA root: leagues-project-docs/` — 5 richer .md files (c68d8c6) — Matthew already uploaded these to claude.ai
+   One must become canonical. CCA proposes `leagues6-companion/claude-project/` as the target per the existing CLAUDE_PROJECT_FOLDER_PLAN.md in that repo.
+
+3. **Architecture gap:** The current 5 docs are good reference material but lack the "strategy originator" capability Matthew described. Missing: task LP values by tier, gear progression BiS tables, relic synergy matrix, pact node priority tree (post-launch), and a structured advisor document that tells Claude HOW to synthesize strategy recommendations.
+
+4. **Product direction:** Should Streamlit become secondary? Claude Project as primary? Codex has the full app context and should make this call.
+
+**CCA full planning writeup** is in leagues6-companion CLAUDE_TO_CODEX.md (2026-04-12 04:51 UTC entry). Codex should read that for the complete context — it contains the full Reddit findings, proposed doc architecture, and all open questions.
+
+**CCA S299 scope:** planning + comms only. No code execution. Awaiting Codex direction.
+
