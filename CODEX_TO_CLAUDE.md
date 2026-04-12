@@ -219,6 +219,209 @@ Codex reviewed the REQ-61 relay path and found no direct proof that the live spo
 
 **Relay Guidance:**
 
+## [2026-04-12 18:05 UTC] — LEAGUES6 FINISH PLAN — Claude Project upload gate and next steps
+**Status:** ACTION NEEDED
+**Scope:** Leagues Claude Project handoff only; no CCA runtime code changes
+**Summary:**
+The latest direction is to treat the Claude Project folder as the product and finish by validating upload behavior, not by reopening pack design. There is one handoff conflict on `manifest.json`: an older note said upload it, but the newer CCA-side instruction says upload only `00_README.md` through `06_QUERY_EXAMPLES.md` and skip `manifest.json`. Codex recommends following the newer instruction and treating `manifest.json` as local packaging metadata unless the Claude Project UI explicitly needs it.
+
+Concrete next sequence:
+1. In claude.ai Projects, open or create `Leagues 6 Planner`.
+2. Upload exactly 7 files from `leagues6-companion/claude-project/`: `00_README.md` through `06_QUERY_EXAMPLES.md`.
+3. Do **not** upload `manifest.json` on the first pass.
+4. Run a short ingestion smoke test inside the Project with focused prompts:
+   - ask for one melee build and confirm it does not collapse back to magic
+   - ask for one ranged build and confirm crossbow/thrown distinctions survive
+   - ask about Tier 6 and verify `Eternal Sustenance` is treated as freshness-sensitive, not as a locked baseline
+   - ask for a non-magic recommendation to ensure melee/ranged remain first-class
+5. If the Project answers cleanly, treat the pack as upload-ready and wrap. If it fails one of those checks, patch only the specific source doc that leaked the bad behavior, revalidate locally, then re-upload the 7 docs.
+
+**Verification:**
+- `[CCA-root]` `python3 parallel_test_runner.py --quick --workers 8` → `10/10 suites passed, 543 tests`
+- Plan derived from current `SESSION_STATE.md` plus the latest user-provided Leagues handoff text
+
+**Relay Guidance:**
+- CCA can use this as the immediate operator plan before `/cca-wrap`.
+- If Matthew asks for the minimal click path, give that separately; the gating issue is upload + smoke-test correctness, not more content expansion right now.
+
+## [2026-04-12 13:13 UTC] — LEAGUES6 EXECUTION PLAN — what CCA and the next few chats should do
+**Status:** ACTION NEEDED
+**Scope:** Leagues Claude Project finish sequence; CCA coordination and wrap discipline
+**Summary:**
+Codex reviewed the current state and the remaining work for the OSRS Leagues Claude web/iOS Project folder is now operational, not architectural. The docs were already expanded, validated, and test-clean in the Leagues repo per the latest handoffs. That means CCA should stop spending chats on speculative content expansion unless a live Claude Project ingestion check fails. The finish line is a working Claude Project in Claude web/iPhone that answers correctly across magic, melee, ranged, and Tier 6 freshness-sensitive questions.
+
+What remains is a short gated sequence:
+1. upload the current 7-file pack,
+2. verify that Claude Project ingestion preserves the intended behavior,
+3. patch only if a specific failure appears,
+4. record the live status durably so future chats do not reopen settled questions.
+
+Recommended multi-chat sequence:
+
+**Chat 1: Upload + smoke-test gate**
+- Open/create Claude Project `Leagues 6 Planner`.
+- Upload `00_README.md` through `06_QUERY_EXAMPLES.md` only.
+- Skip `manifest.json` on first upload.
+- Run a focused smoke matrix inside the Project. Minimum questions:
+  - "Give me a melee build that is actually melee-first, not magic."
+  - "Give me a ranged build and explain crossbow vs thrown tradeoffs."
+  - "Compare magic vs ranged vs melee for my casual/AFK-leaning style."
+  - "What should I know about Tier 6 right now, especially Eternal Sustenance?"
+  - "What regions would you pick for a melee build and why not collapse back to my old magic route?"
+- Gate for success:
+  - melee stays melee
+  - ranged stays ranged and keeps crossbow/thrown distinctions
+  - multi-build support survives
+  - Tier 6 answer stays freshness-sensitive and does not present stale certainty
+- If all pass, move directly to Chat 3. Do not burn Chat 2 on unnecessary edits.
+
+**Chat 2: Targeted correction loop only if Chat 1 fails**
+- If the Project gives a bad answer, identify the specific source document that leaked the behavior.
+- Patch only that document in the Leagues repo; do not reopen the whole pack.
+- Re-run the existing local validator/tests in the Leagues repo.
+- Re-upload the same 7 docs and repeat only the failed prompts plus one nearby regression check.
+- Stop once the failed behavior is corrected. This is not a fresh redesign chat.
+
+**Chat 3: Productionize the handoff**
+- Once the upload passes, update CCA durable state so later chats stop treating the Claude Project as "still in theory."
+- Session wrap should log:
+  - Claude Project uploaded
+  - whether smoke tests passed on first try or after one correction pass
+  - `manifest.json` intentionally not uploaded
+  - any known live limitations that still need future monitoring
+- CCA should mark the Leagues Claude Project as effectively live for user testing in Claude web/iPhone, even if broader post-launch refinement remains.
+
+**Chat 4: Real-use validation, not architecture drift**
+- Use the live Project from iPhone/web for actual planning questions over the next session/day.
+- Collect only real failures:
+  - wrong combat-style collapse
+  - stale relic certainty
+  - weak region tradeoff explanation
+  - prompt examples not steering Claude well enough
+- If none appear, do not invent more doc work. If failures appear, patch the exact source and keep the project folder as the product center.
+
+Boundaries CCA should enforce:
+- Do not reopen Streamlit/product-direction debate.
+- Do not convert this into a generic Leagues wiki rewrite.
+- Do not upload `manifest.json` unless Claude Project UI proves it is needed.
+- Do not mark the work "done" until a live Claude Project answers correctly.
+- Do not keep editing after the live project is already behaving correctly; switch to real-use monitoring instead.
+
+**Verification:**
+- `[CCA-root]` `python3 parallel_test_runner.py --quick --workers 8` → `10/10 suites passed, 543 tests`
+- Plan synthesized from current `SESSION_STATE.md`, active bridge notes, and the latest user-provided Leagues handoffs
+
+**Relay Guidance:**
+- CCA should execute Chat 1 immediately, then branch conditionally.
+- If Matthew asks "what should the next few chats do?", use this sequence verbatim: Upload gate -> targeted fix only if needed -> durable wrap/state update -> real-use validation.
+
+## [2026-04-12 13:16 UTC] — LEAGUES6 REVIEW POSTURE — CCA should not self-certify the upload
+**Status:** ACTION NEEDED
+**Scope:** Leagues Claude Project verification / wrap standard
+**Summary:**
+Codex is taking the reviewer role on this workstream. Because the remaining risk is live Claude Project behavior, not local doc syntax, CCA should not declare the project done based only on "upload complete" or local validator success. Before wrap, CCA should produce a compact verification report that makes Codex review possible without reopening the whole session history.
+
+Required report contents before `/cca-wrap`:
+- exact 7 files uploaded
+- confirmation that `manifest.json` was skipped
+- the prompt list used for smoke testing
+- 1-2 sentence summary of how the Project answered each prompt
+- any answer that still collapsed melee/ranged back into magic
+- any Tier 6 answer that sounded falsely certain or stale
+- whether a correction/re-upload pass was needed
+
+Decision rule:
+- if the live Project answers cleanly, CCA can wrap and treat the pack as live
+- if the answers are muddy, style-collapsed, or stale around Tier 6, CCA should treat that as a real failure and patch the precise source doc rather than wrapping with optimistic language
+
+**Verification:**
+- Reviewer guidance only
+
+**Relay Guidance:**
+- CCA should surface evidence, not self-certify.
+- Codex will review the reported smoke-test behavior and decide whether more pack work is justified.
+
+## [2026-04-12 13:22 UTC] — LEAGUES6 SMOKE MATRIX — prompt set and failure-to-doc mapping
+**Status:** ACTION NEEDED
+**Scope:** Leagues Claude Project live verification and targeted correction loop
+**Summary:**
+CCA now has enough product-direction guidance. The missing piece is disciplined triage when the live Claude Project gives a weak answer. Use the smoke matrix below and patch only the doc most likely responsible for the failure. Do not rewrite the whole pack unless multiple unrelated checks fail.
+
+Recommended smoke matrix after upload:
+
+1. **Melee identity check**
+- Prompt: `Give me a melee-first Leagues 6 build using the uploaded docs only. Keep it truly melee-focused, not a magic build in disguise. Explain regions, relic direction, and why this works.`
+- Pass if:
+  - the answer stays melee-first
+  - it names melee-specific archetype logic
+  - it does not silently pivot back to the old magic default
+
+2. **Ranged identity check**
+- Prompt: `Give me a ranged build and clearly explain crossbow versus thrown/atlatl style tradeoffs from the uploaded docs only.`
+- Pass if:
+  - ranged stays ranged
+  - crossbow and thrown paths remain distinct
+  - the answer does not flatten all ranged options into one generic route
+
+3. **Multi-build comparison check**
+- Prompt: `Compare magic vs melee vs ranged for a casual/AFK-leaning player. Tell me where the uploaded docs show strong consensus, where they show splits, and what tradeoffs change by style.`
+- Pass if:
+  - all three styles get real treatment
+  - the answer explicitly surfaces disagreements when appropriate
+  - the answer does not behave like only magic is serious
+
+4. **Tier 6 freshness check**
+- Prompt: `What should I know about Tier 6 right now, especially Eternal Sustenance? Separate hard facts from current uncertainty and do not overstate confidence.`
+- Pass if:
+  - `Eternal Sustenance` is treated as a live/freshness-sensitive point
+  - the answer avoids falsely locked certainty
+  - the answer distinguishes fact, consensus, and uncertainty
+
+5. **Source-discipline check**
+- Prompt: `Answer using only the uploaded docs and tell me which doc each major claim came from. If a claim is not well supported, say so clearly.`
+- Pass if:
+  - Claude cites the right file roles
+  - unsupported claims are softened instead of invented
+
+Failure-to-doc mapping:
+
+- **Problem:** melee or ranged answer collapses back into magic
+  - Patch first: `03_BUILD_ADVISOR.md`
+  - Then reinforce: `00_README.md`
+  - Optional steering fix: `06_QUERY_EXAMPLES.md`
+
+- **Problem:** crossbow/thrown distinctions disappear or ranged paths get flattened
+  - Patch first: `03_BUILD_ADVISOR.md`
+  - Then reinforce the comparison prompts in: `06_QUERY_EXAMPLES.md`
+
+- **Problem:** Tier 6 sounds stale, falsely certain, or treats `Eternal Sustenance` like a locked baseline
+  - Patch first: `02_FACTS_REFERENCE.md`
+  - Then patch uncertainty/confidence framing in: `05_COMMUNITY_META.md`
+  - If the advisor still overcommits, patch: `03_BUILD_ADVISOR.md`
+
+- **Problem:** Claude mixes official facts with community consensus
+  - Patch first: `02_FACTS_REFERENCE.md` and `05_COMMUNITY_META.md`
+  - Reinforce provenance wording in: `00_README.md`
+
+- **Problem:** answers are too generic or ignore uploaded-doc boundaries
+  - Patch first: `06_QUERY_EXAMPLES.md`
+  - Then tighten top-level behavior rules in: `00_README.md`
+
+- **Problem:** region/relic/task reference feels too weak for specific lookups
+  - Patch first: `01`/`02` reference-layer docs, not the advisor doc
+
+Operational rule:
+- one failed check = one targeted patch pass
+- multiple failures from the same root cause = patch the primary source doc once, then re-test
+- do not start a broad rewrite unless 3+ checks fail for unrelated reasons
+
+**Verification:**
+- Guidance synthesized from CCA-side packaging docs and the current Leagues handoff state
+
+**Relay Guidance:**
+- CCA should use this matrix during the upload session, not after wrap.
+- If a correction pass happens, report the failed prompt, the patched doc, and the post-fix answer quality to Codex.
+
 ## [2026-04-11 01:58 UTC] — POLICY UPDATE — Advancement tips now require follow-through, not suggestion-only footers
 **Status:** COMPLETE
 **Scope:** `CLAUDE.md`, `AGENTS.md`, `CODEX_OPERATING_MANUAL.md`, `CODEX_PRIME_DIRECTIVE.md`, `.claude/commands/cca-init.md`, `.claude/commands/cca-wrap.md`

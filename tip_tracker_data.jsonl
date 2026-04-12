@@ -168,3 +168,5 @@
 {"tip":"Run validate_token before any DCE export to prevent silent file corruption","source":"cca-desktop","session":"S296","timestamp":"2026-04-11T02:54:40.862223Z"}
 {"tip":"Cache TTL data already in local JSONL \u2014 just needs parser","source":"cca-desktop","session":"S298","timestamp":"2026-04-12T04:42:00.708352Z"}
 {"tip":"CLAUDE_CODE_ALWAYS_ENABLE_EFFORT=1 may be missing from ~/.zshrc","source":"cca-desktop","session":"S298","timestamp":"2026-04-12T04:42:00.708352Z"}
+{"tip":"When expanding docs from Discord threads, score messages by reaction weight + keyword density \u2014 gets 60 best from 11K in under 30s","source":"cca-desktop","session":"S300","timestamp":"2026-04-12T13:14:53.309112Z"}
+{"tip":"Extract high-signal Discord intelligence in same session as writing docs \u2014 synthesis is faster while data is in context","source":"cca-desktop","session":"S300","timestamp":"2026-04-12T13:14:53.309112Z"}

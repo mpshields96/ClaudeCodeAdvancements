@@ -2922,3 +2922,5 @@
 {"event_type":"sentinel_stats","session":300,"total_principles":216,"counter_principles":0,"sentinel_sourced":0,"timestamp":"2026-04-12T13:14:53.309112Z"}
 {"event_type":"meta_learning_health","session":300,"health_score":0.366,"total_principles":50,"active_principles":13,"zombie_principles":35,"timestamp":"2026-04-12T13:14:53.309112Z"}
 {"event_type":"confidence_recalibration","session":300,"applied":48,"skipped":2,"reason":"ok","timestamp":"2026-04-12T13:14:53.309112Z"}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-12T13:19:03.880199+00:00","session_id":"test_integration_session","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
+{"event_type":"compaction","domain":"context_monitor","timestamp":"2026-04-12T13:19:03.906149+00:00","session_id":"","trigger":"unknown","pre_zone":"unknown","pre_pct":0,"pre_turns":0,"compact_summary_len":0,"compaction_count":1}
