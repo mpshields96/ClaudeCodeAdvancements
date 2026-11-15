@@ -645,5 +645,24 @@ class TestWeeklyReviewAndReports(_Base):
         self.assertNotIn("s.tradingview_symbol || s.symbol", html)  # synthetic symbol never sent to TradingView
 
 
+class TestWeeklyReportAndPolish(unittest.TestCase):
+    def test_weekly_report_week_passthrough_is_validated(self):
+        from ui import server as srv
+        self.assertEqual(srv._plan_call("weekly_report", "weekly_report", {})[1], {})
+        self.assertEqual(srv._plan_call("weekly_report", "weekly_report", {"week": "2026-W39"})[1], {"week": "2026-W39"})
+        for bad in ("2026-W39\n", "../x", "2026-W3", 202639, "2026-W39; rm"):
+            with self.assertRaises(ValueError):
+                srv._plan_call("weekly_report", "weekly_report", {"week": bad})
+        self.assertIn("week", srv._clean_body({"week": "2026-W39"}))
+
+    def test_page_has_build_pdf_label_config_and_polish(self):
+        with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ui", "index.html")) as fh:
+            html = fh.read()
+        for needle in ("Build weekly PDF", "/api/weekly_report", "tradingview_label", "session_config",
+                       "REFUSED, no fill", "Session complete (", "limitsCompact", "chart=1", "desk.tvOn"):
+            self.assertIn(needle, html)
+        self.assertNotIn("s.tradingview_symbol || s.symbol", html)
+
+
 if __name__ == "__main__":
     unittest.main()

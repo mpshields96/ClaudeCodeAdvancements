@@ -9,7 +9,8 @@ Input: D/review.json (weeks, default_week, by_week{...}), D/ledger.jsonl,
 D/decisions.jsonl, and D/session.json when present. Offline and stdlib only.
 Every number is simulated. Sizes and limits are TEST VALUES, never
 Matthew's. Chrome runs with a throwaway --user-data-dir in a temp dir, never a
-real profile. The look reuses the approved print-edition CSS (The Income Pivot).
+real profile. The look is the approved print-edition style, inlined in this
+file (REPORT_CSS) so a clean export needs no private stylesheet.
 """
 import argparse
 import html
@@ -123,9 +124,17 @@ def iso_week(ts):
 
 
 def short_ts(ts):
+    """ISO time -> 'YYYY-MM-DD HH:MMZ' in UTC; text it cannot parse is returned as is."""
     if not ts:
         return ""
-    return str(ts).replace("T", " ").replace("Z", "Z")[:17] + ("Z" if str(ts).endswith("Z") else "")
+    s = str(ts).strip()
+    try:
+        dt = datetime.fromisoformat(s[:-1] + "+00:00" if s.endswith("Z") else s)
+    except ValueError:
+        return s
+    if dt.tzinfo is None:                     # naive: show it without claiming UTC
+        return dt.strftime("%Y-%m-%d %H:%M")
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%MZ")
 
 
 def metric(comp, name, default=None):
@@ -206,47 +215,70 @@ def weekly_chart(review, weeks, sel):
 
 # ---------- page ----------
 
-CSS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..",
-                        "nov14-proposal-exchange", "print-edition", "The_Income_Pivot.html")
-
-
-def approved_css():
-    """The approved print-edition <style> block, with our own footer label."""
-    try:
-        with open(os.path.normpath(CSS_PATH), "r", encoding="utf-8") as fh:
-            m = re.search(r"<style>(.*?)</style>", fh.read(), re.S)
-        css = m.group(1) if m else ""
-    except OSError:
-        css = ""
-    css = css.replace('"The Income Pivot · private"', '"SIMULATED desk report · mock fills · TEST VALUES"')
-    return css + EXTRA_CSS
-
-
-EXTRA_CSS = """
-:root{ --paper:#fcfaf6; --ink:#1b222b; --ink2:#49515b; --muted:#636a72; --rule:#e5e3dd;
-  --cool:#0e5e8a; --cool-soft:#e6eff4; --warm:#c56c21; --warm-soft:#f7ebdf;
-  --serif: Charter, "Iowan Old Style", Georgia, serif; --sans: "Avenir Next", Avenir, Seravek, "Gill Sans", sans-serif; }
-body{ margin:0 auto; max-width:186mm; }
+# Self-contained stylesheet: the approved print-edition look (The Income Pivot
+# palette, type and grid), inlined so a clean export renders the same with no
+# private file. Fonts fall back to common serif/sans faces off macOS.
+REPORT_CSS = """
+:root{ --paper:#fcfaf6; --ink:#1b222b; --ink2:#49515b; --muted:#636a72; --faint:#9a9fa5;
+  --rule:#e5e3dd; --cool:#0e5e8a; --cool-soft:#e6eff4; --warm:#c56c21; --warm-soft:#f7ebdf;
+  --serif: Charter, "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+  --sans: "Avenir Next", Avenir, Seravek, "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+@page{ size:letter; margin:12mm 15mm 14mm 15mm; background:#fcfaf6;
+  @bottom-left{ content:"SIMULATED desk report · mock fills · TEST VALUES"; font:500 7pt "Avenir Next",Avenir,Arial,sans-serif; color:#9a9fa5; }
+  @bottom-right{ content:counter(page) " / " counter(pages); font:600 7.5pt "Avenir Next",Avenir,Arial,sans-serif; color:#636a72; }
+}
+*{ box-sizing:border-box }
+html,body{ background:var(--paper); }
+body{ margin:0 auto; max-width:186mm; color:var(--ink); font:9pt/1.38 var(--serif);
+  -webkit-print-color-adjust:exact; print-color-adjust:exact; font-variant-numeric:lining-nums tabular-nums; }
 @media screen{ body{ padding:10mm 12mm; } }
-@page{ size:letter; margin:13mm 15mm 15mm 15mm; }
-body{ font-size:9pt; line-height:1.38; }
-h1{ font-size:25pt; margin-bottom:2mm; } h2{ font-size:13.5pt; margin-bottom:1.6mm; }
-.deck{ font-size:10.4pt; margin-bottom:3mm; }
-section{ margin-top:3.6mm; padding-top:2.4mm; }
-.answer{ padding:2.4mm 3.4mm 0.6mm; margin-bottom:3.4mm; } .answer ul.tight li{ font-size:8.8pt; margin-bottom:0.8mm; }
-.tiles{ margin-bottom:3mm; } table{ margin:1.4mm 0 2.4mm; font-size:7.6pt; } td{ padding:1.2mm 1.4mm; }
-.callout{ padding:2.2mm 3mm 0.4mm; margin:2mm 0 2mm; }
-.labels{ display:flex; flex-wrap:wrap; gap:1.4mm; margin:0 0 4mm; }
-.labels span{ font:700 6.4pt/1 var(--sans); letter-spacing:.11em; text-transform:uppercase; border:0.6pt solid var(--warm);
+b,strong{ font-weight:700 }
+section{ margin-top:3.4mm; padding-top:2.2mm; border-top:0.6pt solid var(--rule); }
+section.first{ margin-top:0; padding-top:0; border-top:0; }
+.kicker{ font:600 7.2pt/1.2 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--cool);
+  margin:0 0 1.6mm; break-after:avoid; }
+h1{ font:700 25pt/1.0 var(--serif); letter-spacing:-.015em; margin:0 0 2mm; }
+h2{ font:700 13pt/1.15 var(--serif); letter-spacing:-.01em; margin:0 0 1.4mm; break-after:avoid; }
+h3{ font:600 9.6pt/1.25 var(--sans); margin:3mm 0 1mm; break-after:avoid; }
+p{ margin:0 0 1.8mm; }
+p,li{ orphans:2; widows:2 }
+.deck{ font:400 10.4pt/1.34 var(--serif); color:var(--ink2); margin:0 0 2.6mm; }
+.note{ font:400 7.4pt/1.4 var(--sans); color:var(--muted); }
+.small{ font-size:8.4pt; line-height:1.4 }
+.labels{ display:flex; flex-wrap:wrap; gap:1.4mm; margin:0 0 3mm; }
+.labels span{ font:700 6.3pt/1 var(--sans); letter-spacing:.11em; text-transform:uppercase; border:0.6pt solid var(--warm);
   color:#9a4d12; border-radius:1mm; padding:1.1mm 1.6mm; background:var(--warm-soft); }
+.answer{ border-left:2.2pt solid var(--cool); background:var(--cool-soft); padding:2.2mm 3.4mm 0.6mm;
+  margin:0 0 3mm; border-radius:0 2mm 2mm 0; break-inside:avoid; }
+.answer .label{ font:700 7pt/1 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--cool); margin-bottom:1.4mm; }
+ul.tight{ margin:0 0 2mm; padding-left:4.2mm } ul.tight li{ margin:0 0 0.9mm; font-size:8.8pt; line-height:1.38 }
+.tiles{ display:grid; grid-template-columns:1fr 1fr; gap:2.6mm; margin:0 0 2.6mm; break-inside:avoid; }
 .tiles.four{ grid-template-columns:1fr 1fr 1fr 1fr; }
-.tiles.four .tile .num{ font-size:15pt; }
+.tile{ border-top:1.4pt solid var(--ink); padding:1.8mm 0 0; }
+.tile .num{ font:700 15pt/1 var(--serif); letter-spacing:-.01em; }
+.tile .num.warm{ color:var(--warm) } .tile .num.cool{ color:var(--cool) }
+.tile .cap{ font:400 7.4pt/1.3 var(--sans); color:var(--ink2); margin-top:1.2mm; }
+figure{ margin:1.6mm 0 2mm; break-inside:avoid; }
+.chart svg{ display:block; width:100%; height:auto; max-height:46mm; }
+figcaption{ font:400 7.2pt/1.4 var(--sans); color:var(--muted); margin-top:1mm; }
+figcaption b{ color:var(--ink2); font-weight:600 }
+table{ width:100%; border-collapse:collapse; font:400 7.6pt/1.34 var(--sans); margin:1.2mm 0 2.2mm; }
+th{ text-align:left; font:700 6.5pt/1.2 var(--sans); letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+  padding:1.1mm 1.4mm; border-bottom:0.8pt solid var(--ink); vertical-align:bottom; break-after:avoid; }
+td{ padding:1.1mm 1.4mm; border-bottom:0.5pt solid var(--rule); vertical-align:top; }
+tr{ break-inside:avoid; }
+td.opt{ font-weight:600; color:var(--ink); width:24%; }
 td.r, th.r{ text-align:right; white-space:nowrap; }
 td.neg{ color:#9a4d12 } td.pos{ color:var(--cool) }
-table.tight td{ padding:1.1mm 1.4mm } table.tight{ font-size:7.4pt }
-.chart svg{ display:block; width:100%; height:auto; }
-ul.tight li{ font-size:9pt }
+table.tight{ font-size:7.4pt }
+.callout{ background:var(--warm-soft); border-radius:2mm; padding:2mm 3mm 0.4mm; margin:1.6mm 0 2mm; break-inside:avoid; }
+.callout .label{ font:700 7pt/1 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:#9a4d12; margin-bottom:1.2mm; }
 """
+
+
+def report_css():
+    """The report's own stylesheet. No external or private file is read."""
+    return REPORT_CSS
 
 
 def labels_bar(review, bw, sizing):
@@ -328,8 +360,9 @@ def comparison_table(bw, allw):
         a = metric(cw, nm)
         b = metric(ca, nm) if ca else None
         money_row = any(k in str(nm) for k in ("P&L", "fees", "cash"))
-        fa = money(a) if money_row else e(a)
-        fb = (money(b) if money_row else e(b)) if ca else "n/a"
+        sg = "fees" not in str(nm)                      # fees are a cost: no plus sign
+        fa = money(a, sign=sg) if money_row else e(a)
+        fb = (money(b, sign=sg) if money_row else e(b)) if ca else "n/a"
         rows.append("<tr><td>%s</td><td class='r'>%s</td><td class='r'>%s</td></tr>" % (e(nm), fa, fb))
     return ("<table class='tight'><tr><th>Metric (simulated)</th><th class='r'>This week</th>"
             "<th class='r'>All weeks</th></tr>%s</table>" % "".join(rows))
@@ -467,7 +500,7 @@ def build_html(state_dir, week=None):
     parts = [
         "<!doctype html><html lang='en'><head><meta charset='utf-8'>",
         "<meta name='viewport' content='width=device-width, initial-scale=1'>",
-        "<title>Desk report %s</title><style>%s</style></head><body>" % (e(week), approved_css()),
+        "<title>Desk report %s</title><style>%s</style></head><body>" % (e(week), report_css()),
         "<section class='first'>",
         "<div class='kicker'>Paper desk &middot; %s &middot; %s</div>" % (e(week), e(review.get("strategy") or bw.get("strategy"))),
         "<h1>Weekly desk report</h1>",

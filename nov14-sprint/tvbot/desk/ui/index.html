@@ -71,6 +71,8 @@ aside{overflow:auto;padding:10px;min-height:0}
 .card h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .card h3 .r{float:right;text-transform:none;letter-spacing:0}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-variant-numeric:tabular-nums}
+.kv .wide{grid-column:1/-1;min-width:0;overflow-wrap:anywhere}
+.banner.stale.done{background:#17331f;color:#cfe9d4;border-color:#2e6b40}
 .kv b{font-weight:600;color:var(--muted)}
 .pnl{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .pnl div{background:var(--panel2);border-radius:6px;padding:6px 8px}
@@ -166,6 +168,7 @@ code{font-size:11.5px;color:#b8c7d6}
       <a id="tvlink" href="https://www.tradingview.com/chart/?symbol=AMEX%3ASPY" target="_blank" rel="noopener noreferrer" title="Opens TradingView (AMEX:SPY) in your own browser. REFERENCE ONLY: the desk never reads it.">Open my TradingView chart &#8599;</a>
       <span class="muted" title="macOS: hold the mouse on the green window button, then choose Tile Window to Left of Screen for TradingView and Tile Window to Right of Screen for this desk.">macOS tip: hold the green button &rarr; Tile left / right</span>
       <span class="tag" title="Independent comparison of a real market. Display only: no alerts, no webhooks, nothing read back.">TradingView chart: operator view only, not used by the desk. REFERENCE ONLY, real market, not the desk's data, nothing flows into the bot</span>
+      <span class="tag" id="tvLabel" hidden></span>
     </span>
   </div>
 </header>
@@ -556,13 +559,17 @@ function renderHeader(){
   $('#mode').textContent = s.mode || (m.missing ? 'NO SESSION YET (runner has not written session.json)' : 'REPLAY (OFFLINE, SIMULATED)');
   $('#datalabel').textContent = s.data_label || (S.manifest || {}).label || 'SYNTHETIC BARS';
   $('#symstrat').textContent = (s.symbol || '-') + ' · ' + (s.strategy || '-');
+  if (!S.tvPicked && TV_REFS.indexOf(s.tradingview_symbol) >= 0 && S.tvRef !== s.tradingview_symbol) { S.tvRef = s.tradingview_symbol; $('#tvRef').value = S.tvRef; }
+  const tl = $('#tvLabel'); if (s.tradingview_label) { tl.textContent = String(s.tradingview_label); tl.hidden = false; } else tl.hidden = true;
   const tvSym = S.tvRef;  // a real reference symbol; the desk's synthetic symbol is never sent to TradingView
   $('#tvlink').href = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(tvSym);
   $('#tvlink').title = 'Opens TradingView (' + tvSym + ') in your own browser. REFERENCE ONLY, real market, not the desk\'s data; the desk never reads it.';
   $('#tvRefName').textContent = tvSym; $('#tvRefName2').textContent = tvSym;
   // expiry
   const ex = s.expires_utc ? Date.parse(s.expires_utc) : NaN; const ee = $('#expiry');
-  if (isFinite(ex)) { const left = (ex - clockNow(s)) / 1000;
+  const done = /^(CLOSED|COMPLETE|COMPLETED|DONE)$/.test(phaseOf(s));
+  if (done) { ee.textContent = 'session complete (' + phaseOf(s) + '): no expiry'; ee.style.color = ''; }
+  else if (isFinite(ex)) { const left = (ex - clockNow(s)) / 1000;
     ee.textContent = (left > 0 ? 'expires ' + String(s.expires_utc).slice(11, 16) + 'Z (in ' + ago(left) + ')' : 'SESSION EXPIRED ' + String(s.expires_utc).slice(11, 16) + 'Z') + clockLabel(s);
     ee.style.color = left > 0 ? (left < 900 ? 'var(--warn)' : '') : 'var(--bad)'; } else ee.textContent = 'expiry not set';
   // badges: the session's own badge strings first, derived only as a fallback
@@ -584,7 +591,9 @@ function renderHeader(){
     disc.textContent = 'DISCONNECTED: showing last known state' + (S.lastOk ? ' (last contact ' + ago((Date.now() - S.lastOk) / 1000) + ' ago, ' + new Date(S.lastOk).toISOString().slice(11, 19) + 'Z)' : '') + '. Controls are off until the desk server answers.'; }
   else { disc.hidden = true; document.body.classList.remove('stale-vals'); }
   const st = $('#stale');
-  if (S.conn && m.missing) { st.hidden = false; st.textContent = 'No session.json in the state directory yet. The session runner has not started; the chart shows whatever bars exist.'; }
+  st.classList.toggle('done', done && !m.missing);
+  if (S.conn && done && !m.missing) { st.hidden = false; st.textContent = 'Session complete (' + ph + '). The replay has finished and these figures are final. SIMULATED, mock fills, TEST VALUES.'; }
+  else if (S.conn && m.missing) { st.hidden = false; st.textContent = 'No session.json in the state directory yet. The session runner has not started; the chart shows whatever bars exist.'; }
   else if (S.conn && num(m.age_s) !== null && m.age_s > 30 && !c.stopped && !expired) { st.hidden = false; st.textContent = 'Connected to the desk server, but the session runner has not written state for ' + ago(m.age_s) + '. Figures are as of ' + tsFull(m.mtime_utc) + '.'; }
   else st.hidden = true;
 }
@@ -626,7 +635,7 @@ function renderChartView(){
   const q = num(ex.position_qty);
   $('#expo').innerHTML = '<b>Position</b><span>' + (q === null ? '-' : (q === 0 ? 'FLAT' : (q > 0 ? 'LONG ' : 'SHORT ') + Math.abs(q))) + (q ? ' @ ' + fmt(ex.avg_price, 4) : '') + '</span>' +
     '<b>Gross incl. working</b><span>' + fmt(ex.gross_including_working) + '</span>' +
-    '<b>Limits</b><span>' + esc(limitsText(s.limits)) + '</span>';
+    '<b class="wide">Limits <span class="muted small">(TEST VALUES)</span></b><span class="wide small" title="' + esc(limitsText(s.limits)) + '">' + esc(limitsCompact(s.limits)) + '</span>' + execRows(s);
   $('#expConf').textContent = S.conn === false ? 'last known, unconfirmed' : 'per in-process fake broker (simulated)';
   const prot = s.protective_orders || [];
   $('#protect').innerHTML = '<b>Protective orders:</b> ' + (prot.length ? prot.map(o => orderText(o)).join('<br>') : (q ? '<span class="neg">NONE while a position is open</span>' : 'none (flat)'));
@@ -670,6 +679,9 @@ function renderChartView(){
   for (const li of document.querySelectorAll('#feed li[data-id]')) li.onclick = () => select(li.dataset.id, true);
 }
 
+function limitsCompact(l){ if (!l) return '-'; const parts = [];
+  for (const k of Object.keys(l)) { const n = num(l[k]); if (k !== 'label' && n !== null) parts.push(k.replace(/_/g, ' ').replace(/^max /, '') + ' $' + n.toLocaleString('en-US')); }
+  return parts.join(' · ') || '-'; }
 function limitsText(l){ if (!l) return '-'; const parts = []; for (const k of Object.keys(l)) if (k !== 'label') parts.push(k.replace(/_/g, ' ') + ' ' + l[k]); return parts.join(', ') + (l.label ? ' (' + l.label + ')' : ''); }
 function orderText(o){ return esc([o.side, o.qty, o.type, o.stop != null ? 'stop ' + o.stop : '', o.limit != null ? 'limit ' + o.limit : '', o.status || '', o.order_id || o.client_id || ''].filter(Boolean).join(' ')) + (o.simulated ? ' <span class="muted">(sim)</span>' : ''); }
 function decLine(d, big){ return '<span data-id="' + esc(d.decision_id) + '" style="cursor:pointer">' + pill(d.action) + ' <b>' + esc(d.reason_code || '') + '</b> ' + (big ? '<div>' + esc(d.reason_text || '') + '</div>' : '<span class="muted">' + esc(tsShort(d.ts_knowable)) + '</span>') + '</span>'; }
@@ -722,6 +734,21 @@ function chkTable(rc){
   if (!rc.length) return '<div class="hint">None recorded for this decision.</div>';
   return '<table class="chk">' + rc.map(x => '<tr' + (chkOk(x) ? '' : ' class="failrow"') + '><td>' + esc(x.id || x.check || x.name || '-') + '</td><td class="' + (chkOk(x) ? 'p' : 'f') + '">' + (chkOk(x) ? 'PASSED' : 'FAILED') + '</td><td class="small">' + esc(x.detail || '') + '</td></tr>').join('') + '</table>';
 }
+// Sizing, session_config (read-only) and order-engine refusals. A refusal is never a fill.
+function execRows(s){
+  let h = '';
+  if (s.sizing && typeof s.sizing === 'object') h += '<b class="wide">Sizing</b><span class="wide small">' + esc(metricVal(s.sizing)) + ' (TEST VALUES)</span>';
+  const c = s.session_config;
+  if (c && typeof c === 'object') h += '<b class="wide">Session config</b><span class="wide small">' + esc(['strategy', 'strategy_cfg', 'limits', 'fill_costs'].filter(k => k in c).map(k => k.replace(/_/g, ' ') + ': ' + metricVal(c[k])).join(' | ')) + ' (read-only, TEST VALUES)</span>';
+  const xr = Array.isArray(s.exec_refusals) ? s.exec_refusals : [];
+  const al = (Array.isArray(s.alarms) ? s.alarms : []).filter(a => a && /^EXEC_.*OVER_CAP$/.test(String(a.code || a.kind || '')));
+  const nRef = s.refused_decisions != null ? metricVal(s.refused_decisions) : String(xr.length);
+  if (xr.length || al.length || s.refused_decisions != null) {
+    h += '<b class="wide">Refused by order engine</b><span class="wide small"><b class="neg">REFUSED, no fill</b> ' + esc(nRef) + (xr.length ? ': ' + esc(xr.slice(-3).map(metricVal).join('; ')) : '') + '</span>';
+    if (al.length) h += '<b class="wide">Cap warnings</b><span class="wide small">' + al.slice(-3).map(a => esc(String(a.code || a.kind)) + ' (' + esc(String(a.severity || 'warn')) + ', ' + (a.blocking ? 'blocking' : 'non-blocking') + '): REFUSED, not a fill').join('<br>') + '</span>';
+  }
+  return h;
+}
 function metricVal(v){
   if (v == null) return '-';
   if (typeof v === 'number') return String(Math.round(v * 10000) / 10000);
@@ -767,8 +794,11 @@ function renderReview(){
   if (wks.length) { const wi = wks.indexOf(r.week);
     h += '<div class="row" style="margin-top:6px"><label>Week <select id="wkSel">' + wks.map(w => '<option value="' + esc(w) + '"' + (w === r.week ? ' selected' : '') + '>' + esc(w) + (w === r.default_week ? ' (latest)' : '') + '</option>').join('') + '</select></label>' +
       '<button id="wkPrior"' + (wi <= 0 ? ' disabled' : '') + '>&larr; Prior week</button>' +
+      ' <button id="wkBuild"' + (routeOk('/api/weekly_report') ? '' : ' disabled class="na" title="Needs the launcher (route not offered by this server)"') + '>Build weekly PDF</button>' +
       (r.week_report ? ' <a href="/reports/' + encodeURIComponent(r.week_report) + '" target="_blank" rel="noopener">Weekly report (' + (/\.pdf$/.test(r.week_report) ? 'PDF' : 'HTML') + ') &#8599;</a>' : ' <span class="small muted">Weekly report not written yet for ' + esc(r.week || '') + '.</span>') + '</div>' +
-      '<div class="small muted">' + esc(r.scope || ('week ' + (r.week || ''))) + (r.label ? ' · ' + esc(r.label) : '') + '</div>'; }
+      '<div class="small muted">' + esc(r.scope || ('week ' + (r.week || ''))) + (r.label ? ' · ' + esc(r.label) : '') + '</div>' +
+      (S.built && S.built.week === r.week ? '<div class="small"><a href="' + esc(S.built.url) + '" target="_blank" rel="noopener">Open ' + esc(S.built.file) + ' &#8599;</a> ' + esc(S.built.label || 'SIMULATED weekly report') + (S.built.pages ? ' · ' + esc(String(S.built.pages)) + ' page(s)' : '') + '</div>' : '') +
+      (Array.isArray(r.reports) && r.reports.length ? '<div class="small muted">Reports: ' + r.reports.map(x => { const n = typeof x === 'string' ? x : (x && x.name) || ''; return REPORT_OK.test(n) ? '<a href="/reports/' + encodeURIComponent(n) + '" target="_blank" rel="noopener">' + esc(n) + '</a>' : ''; }).filter(Boolean).join(' · ') + '</div>' : ''); }
   h += '</div>';
   if (r.no_fills) h += '<div class="nofill">' + esc(r.trade_note || 'No trade filled in this session.') + '</div><br>';
   else if (!r.best_trade) h += '<div class="nofill">' + esc(r.trade_note || 'No closed trade yet.') + '</div><br>';
@@ -808,6 +838,14 @@ function renderReview(){
   for (const b of el.querySelectorAll('[data-trev]')) b.onclick = () => { const k = b.dataset.trev; if (S.tradeRev[k]) delete S.tradeRev[k]; else S.tradeRev[k] = true; renderAll(); };
   const pickWeek = async w => { S.week = w; S.reviewReveal = null; S.tradeRev = {}; try { S.review = await getJ(reviewUrl()); } catch (e) { toast('Could not load week ' + esc(w) + ': ' + esc(e.message)); } renderAll(); };
   if ($('#wkSel')) $('#wkSel').onchange = e => pickWeek(e.target.value);
+  if ($('#wkBuild')) $('#wkBuild').onclick = async () => {
+    const j = await control('/api/weekly_report', r.week ? {week: r.week} : {});
+    const cr = j && j.controller_result;
+    if (cr && cr.ok && /^\/reports\/[A-Za-z0-9][A-Za-z0-9_.-]*\.(pdf|html)$/.test(String(cr.url || ''))) {
+      S.built = {week: cr.week || r.week, url: cr.url, file: cr.file || cr.url.slice(9), label: cr.label, pages: cr.pages};
+      try { S.review = await getJ(reviewUrl()); } catch (e) {} renderAll();
+    } else if (j) toast('<b class="neg">Report not built</b>: ' + esc((cr && (cr.error || cr.reason)) || 'no report returned'));
+  };
   if ($('#wkPrior')) $('#wkPrior').onclick = () => { const i = wks.indexOf(r.week); if (i > 0) pickWeek(wks[i - 1]); };
   if ($('#bpReveal')) $('#bpReveal').onclick = async () => { try { S.reviewReveal = await getJ(reviewUrl('reveal_pass=1')); } catch (e) { toast('Could not load the hypothetical path: ' + esc(e.message)); } renderAll(); };
   if ($('#bpHide')) $('#bpHide').onclick = () => { S.reviewReveal = null; renderAll(); };
@@ -832,7 +870,7 @@ async function control(route, body){
     if (!r.ok || !j.ok) { toast('<b class="neg">Not applied</b>: ' + esc(j.error || j.manager_error || r.status) + (j.request_id ? '<br><span class="muted">request ' + esc(j.request_id) + ' logged</span>' : '')); renderAll(); setTimeout(tick, 400); return false; }
     const called = j.controller_called || j.manager_called;
     toast('<b>' + esc(j.request) + '</b> recorded as <code>' + esc(j.request_id) + '</code>.<br>' + (called ? 'Session controller called.' : esc(j.note || 'Controller not attached: recorded for the runner.')) + '<br><span class="muted">SIMULATED</span>');
-    renderAll(); setTimeout(tick, 400); return true;
+    renderAll(); setTimeout(tick, 400); return j;
   } catch (e) { toast('<b class="neg">Not sent</b>: the desk server is unreachable. Nothing was changed.'); return false; }
 }
 function doPause(){ control('/api/pause', {}); }
@@ -880,9 +918,12 @@ function tvShow(on){
   pane.hidden = !on; main.classList.toggle('withtv', !!on); $('#tvToggle').checked = !!on;
   requestAnimationFrame(draw);
 }
-$('#tvToggle').onchange = e => tvShow(e.target.checked);
+$('#tvToggle').onchange = e => { tvShow(e.target.checked); try { localStorage.setItem('desk.tvOn', e.target.checked ? '1' : '0'); } catch (x) {} };
+const REPORT_OK = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,120}\.(pdf|html)$/;
 const TV_REFS = ['AMEX:SPY', 'NASDAQ:QQQ', 'AMEX:IWM', 'AMEX:DIA'];
-$('#tvRef').onchange = e => { S.tvRef = TV_REFS.indexOf(e.target.value) >= 0 ? e.target.value : 'AMEX:SPY'; renderHeader(); if (!$('#tvPane').hidden) tvShow(true); };
+// Open with the TradingView reference visible: /?chart=1, or the remembered toggle.
+(function(){ const want = /(^|&)chart=1(&|$)/.test(location.search.slice(1)); let kept = false; try { kept = localStorage.getItem('desk.tvOn') === '1'; } catch (x) {} if (want || kept) tvShow(true); })();
+$('#tvRef').onchange = e => { S.tvPicked = true; S.tvRef = TV_REFS.indexOf(e.target.value) >= 0 ? e.target.value : 'AMEX:SPY'; renderHeader(); if (!$('#tvPane').hidden) tvShow(true); };
 $('#tvHide').onclick = () => tvShow(false);
 $('#showHolds').onchange = e => { S.showHolds = e.target.checked; renderAll(); };
 document.addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return;

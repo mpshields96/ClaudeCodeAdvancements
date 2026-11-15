@@ -1,23 +1,23 @@
-# desk/ui: status (worker B, CONTRACT v2)
+# desk/ui: status (worker B, CONTRACT v2 + 18:20Z release list + Codex QA)
 
-Updated 2026-11-15 ~17:58Z. Paper/offline only. Stdlib only, `/usr/bin/python3 -I` 3.9.6. No commits made; the coordinator publishes.
+Updated 2026-11-15 18:14Z. Paper/offline only. Stdlib only, `/usr/bin/python3 -I` 3.9.6. No commits made; the coordinator publishes.
 
 ## Files
 
 | File | What it is |
 |---|---|
 | `ui/__init__.py` | package marker |
-| `ui/server.py` | loopback-only HTTP server: reads state files, takes control POSTs, builds the review |
+| `ui/server.py` | loopback-only HTTP server: reads state files, takes control POSTs, builds the weekly review, serves reports |
 | `ui/index.html` | the whole page (inline CSS and JS, canvas chart of desk replay bars) |
 | `ui/make_sample_state.py` | regenerates `ui/sample_state/` from `tvbot/fixtures/normal_bars.jsonl` (70 bars) |
 | `ui/sample_state/` | v2-shaped sample: phase ARMED, preflight, schedule, refusal_checks on all 70 decisions |
-| `tests/test_ui_server.py` | 31 tests |
+| `tests/test_ui_server.py` | 40 tests |
 
 ## Run
 
 ```
 cd nov14-sprint/tvbot/desk
-/usr/bin/python3 -I -m unittest discover -s tests -p 'test_ui*'      # 31 tests, OK at 17:55Z
+/usr/bin/python3 -I -m unittest discover -s tests -p 'test_ui*'      # 40 tests, OK at 18:13Z
 /usr/bin/python3 -I ui/server.py --state-dir ui/sample_state --port 8781   # sample view
 /usr/bin/python3 -I launch.py --no-browser --fresh --state-dir <dir> --port 8783   # real controller
 ```
@@ -29,7 +29,11 @@ cd nov14-sprint/tvbot/desk
 
 ## API
 
-GET: `/`, `/api/health` (lists routes), `/api/session`, `/api/bars` (only bars with `ts_close <= replay_clock_utc`), `/api/decisions` (outcome hidden until `?reveal=<id>`), `/api/ledger`, `/api/audit`, `/api/review` (`?reveal_pass=1` adds the hypothetical path), `/api/control_requests`.
+GET:
+- `/`, `/api/health` (lists `routes`), `/api/session`, `/api/bars` (only bars with `ts_close <= replay_clock_utc`), `/api/ledger`, `/api/audit`, `/api/control_requests`.
+- `/api/decisions`: outcome hidden until `?reveal=<id>`. On reveal, if the decision row has no `outcome`, the server joins `review.json` round trips (top level plus every `by_week` entry) on `entry_decision_id` or `exit_decision_id`. The outcome then carries entry/exit fill IDs, fill times, average prices, gross, fees, net, `simulated: true` and its source.
+- `/api/review?week=<YYYY-Www>` (`&reveal_pass=1` adds the hypothetical path). It returns `weeks`, `default_week` (latest), `week`, `reports`, `week_report`. With `by_week`, the selected week's values are authoritative; an unknown week falls back to the default. best/worst trade carry `signal_ts` = the decision's `ts_knowable` and `first_fill_ts` = entry fill time.
+- `/api/reports` lists report files. `/reports/<name>` serves only `.pdf`/`.html` from `<state_dir>/reports/`. The name must match `^[A-Za-z0-9][A-Za-z0-9_.-]{0,120}\.(pdf|html)$` and resolve via realpath inside that folder; anything else is 404. Responses are inline, no-store and nosniff; HTML gets a sandboxed CSP.
 
 POST (JSON, same-origin only, body up to 64 KB):
 
@@ -45,27 +49,49 @@ POST (JSON, same-origin only, body up to 64 KB):
 | `/api/schedule` | `{enabled}` | `set_schedule(enabled)`, else `schedule_on()` / `schedule_off()` |
 | `/api/close_session` | | `close_session()` |
 
-Every POST appends `{ts, action, body, request_id, ...}` to `state_dir/control_requests.jsonl` with fsync **before** the controller is called, then a second line with `status` (`controller_ok`, `controller_refused`, `controller_error`, `controller_missing_method`). The reply is `{ok, session, controller_called, error, simulated:true, ...}`. A controller result of `{"ok": false, "reason": X}` returns `ok:false, error:X` (HTTP 200). Missing confirm, a bad body or a cross-origin request return 4xx and call nothing.
+`/api/run_to_end` comes from launch.py's EXTRA_ROUTES. The page calls it from the "Run to end" button.
+
+Every POST appends `{ts, action, body, request_id, ...}` to `state_dir/control_requests.jsonl` with fsync **before** the controller is called, then a second line with `status`. Missing confirm, a bad body or a cross-origin request return 4xx and call nothing.
+
+## Page
+
+- **Flow buttons:** Step 1, Step 10, Run to end, Play, Stop playing, Pause, Resume, Stop & Close and Clear Stop (both behind a confirm dialog, sending `{confirm:true}`), plus the Schedule toggle. Each button is disabled and struck through when its route is missing from `/api/health` routes, or after a 404, as on a bare server without the launcher.
+- **TradingView reference:** a header picker offers AMEX:SPY (default), NASDAQ:QQQ, AMEX:IWM and AMEX:DIA. The link and the optional embed use only that operator symbol, never the desk's SYNTH-FUND-60M. Labels read "REFERENCE ONLY, real market, not the desk's data, nothing flows into the bot", "independent comparison" and "no alerts, no webhooks, nothing read back"; `allow_symbol_change: false`. The desk chart carries a SYNTHETIC pill.
+- **Weekly review:** a week picker (latest marked), a Prior week button, a "Weekly report (PDF)" link for the selected week (or "not written yet"), and scope and label. The comparison is a readable Metric/Value table with no raw JSON. No-fill weeks show their note faithfully.
+- **Trade cards:** before Reveal they show only the decision ID, side, qty and Signal (knowable time). After "Reveal outcome" they show net, gross, fees, entry/exit, first fill, exit kind and time, and filled IDs, with "Hide outcome again".
+- **Decision view after Replay:** the chart is masked after `ts_knowable`. Before Reveal, the trail shows only entries at or before `ts_knowable`, with a count of hidden later entries, and the ledger is hidden. After Reveal, it shows the joined outcome (fill IDs, exit, net) and the flag "SIMULATED, MOCK FILL".
+
+## Added 18:10-18:14Z (runner hooks and QA polish)
+
+- `/api/weekly_report` (launcher route) now takes `{"week": "YYYY-Www"}`. `week` is in BODY_KEYS, and `_plan_call` checks it with `[0-9]{4}-W[0-9]{2}` fullmatch; anything else is a 400. It is passed as `{"week": ...}`. The review's week row has a **Build weekly PDF** button for the selected week, disabled without the route. On success it links the returned `/reports/...` url, shows the label and page count, and refreshes the review. A Reports line links every `/api/reports` file.
+- The header shows `tradingview_label` beside the link. `tradingview_symbol` sets the reference symbol only if it is in the allowed list (SPY/QQQ/IWM/DIA), and the operator's own pick wins.
+- Exposure panel: compact limits (`daily loss $30 · gross exposure $2,000 · ...`, full text in the tooltip) on a full-width row. Sizing and session_config (strategy, strategy_cfg, limits, fill_costs) appear read-only. `exec_refusals`, `refused_decisions` and EXEC_*_OVER_CAP alarms show as "REFUSED, no fill", never as fills.
+- When the phase is CLOSED or COMPLETE, a static "Session complete" banner replaces the stale-runner warning, and the expiry reads "session complete: no expiry".
+- `/?chart=1` opens with the TradingView reference visible, and the toggle is remembered in localStorage (`desk.tvOn`).
+- Verified offline at 18:13Z on demo state: complete banner, no expiry countdown, compact limits, sizing and config shown, Build disabled on the bare server, Reports links listed. No iframe, no external script, no JS errors. `?chart=1` was not opened, so the session stayed offline.
 
 ## What was verified
 
-- 31/31 UI tests: all nine routes with arguments, request line written before the call, play 0, caps, confirm refusal, controller refusal, no-argument fallbacks (DeskControls shape), missing method, bars clock filter, best pass and reveal hiding, CSP, page labels.
-- Live, through `launch.py` on port 8783 (DeskControls on a real SessionController, scratch state): arm, advance 3, pause, resume, schedule on/off, Stop & Close without confirm (refused), with confirm (STOPPED), clear_stop (PRE_SESSION), close_session (CLOSED). Every call returned ok with the phase expected.
-- Browser, sample state and live state, at desktop and 900px: no console errors, no horizontal scroll, no iframe and no external script loaded (TradingView toggle left off). Flow buttons enable by phase. Best pass shows trend_filter_down (2 of 8 refusal checks failed), and its hypothetical path appears only after Reveal, labeled never in P&L.
+- 38/38 UI tests at 18:08Z. The 7 new tests cover: the default week is the latest, a no-fill week is faithful and doesn't leak a hypothetical, an unknown week falls back, signal = ts_knowable, the reveal join from round trips, report path safety (txt, `..`, encoded traversal, missing file, dotfile and a pdf outside reports/ all 404), and the page strings (no `tradingview_symbol || symbol` fallback).
+- Browser check on the bare server, with demo state from a `--demo` run (weeks W23-W40, reports only for W40). Network off; no iframe and no external script.
+  - Run to end is disabled (no route without the launcher).
+  - The link points to AMEX:SPY.
+  - The review defaults to W40, and the comparison shows ema with 1 trade, fees 2.00 and net -1.33.
+  - The best trade card hides its outcome; Signal reads 2026-09-28 17:30:02Z. After Reveal it shows net -1.33 and both MOCK FILL IDs.
+  - The PDF link returns 200 application/pdf. Prior week moves to W39 and shows "No entry filled" and "report not written yet".
+  - Replay of `dec-ema-febefb2a7d64f0b4`: before Reveal, 1 later trail entry and the ledger are hidden, and no net or exit fill appears. Only the KNEW row's intent ID shows, which is knowable at 17:30:02. After Reveal, both fill IDs and -1.33 appear, and "No outcome recorded" is gone.
+- Earlier (17:55Z): live through `launch.py` with a real SessionController, all nine POST routes returned the expected phases.
 
 ## Fixed in this pass
 
-- Expiry is judged on the replay clock: session.py writes `expires_utc` on the simulated clock, so wall-clock comparison showed SESSION EXPIRED and would have blocked re-Arm after Clear Stop.
-- The review's broker row read "NOT CONNECTED" because v2 has no `connected` field. It now reads "OFFLINE (in-process fake)" when `external` is false.
-- Moved legacy-hook stray files (`.claude-compact-*.md`, `self-learning/`) out of `ui/` so they are not published.
+- Codex QA: the reveal join for decisions without an outcome, outcome and fills moved behind Reveal on cards and trail, the comparison rendered as a table with a week selector, the TradingView link mapped to an operator reference symbol (AMEX:SPY), and the trade-card Signal uses `ts_knowable`.
+- The comparison Trades column matched "after-cost P&L of closed mock round trips" (showed -1.33). An exact metric name ("round trips") now wins over a substring.
+- Earlier: expiry judged on the replay clock; the broker row reads OFFLINE (in-process fake).
 
-## Gaps and notes for the coordinator
+## Notes for the coordinator
 
-1. **Desk suite has failures outside ui/** (17:54Z run of all tests: 144 tests, 38 errors). 33 are in `test_orders_manager` (`max_loss_per_trade` is None in its LIMITS). 5 are in `test_integration` (`fake_broker._fill_price()` takes 3 positional args but gets 4, via `session.advance`). Neither file is mine. UI tests pass.
-2. My routes take precedence over launch.py's `advance`, `play`, `clear_stop` and `close_session`, because `install_routes` skips existing routes. That works with DeskControls (tested live). One difference: `/api/clear_stop` needs `{confirm:true}`, which the page sends.
-3. `play(0)`: launch.py treats 0 as the default 4 bars/s. The UI maps 0 to `stop_play`, then `pause_play`, per CONTRACT v2.
-4. There is no "playing" flag in session.json, so Play and Stop playing are both enabled while ARMED. A `playing: bool` field would let the page show which one is active.
-5. Port 8765 is also the pokemon-viewer port in `.claude/launch.json`; launch.py's `free_port` avoids the clash.
-6. The TradingView embed (official Advanced Chart widget, off by default, CSP-allowed) was not exercised, because verification stays offline. The "Open my TradingView chart" link is plain and opens in the user's browser.
-7. The comparison table adds a cash row (0 trades, $0) when the session's review has none.
-8. The stale banner ("runner has not written state for N min") appears on the static sample by design; it hides once a runner writes state.
+1. Reports exist only for weeks the launcher wrote (W40 in the demo); other weeks show "Weekly report not written yet".
+2. Hook stray files (`.claude-compact-anchor.md`, `.claude-compact-recovery.md`, `self-learning/`) sit in `desk/`, outside `ui/`, and were left alone. Exclude them from the publish.
+3. My routes take precedence over launch.py's `advance`, `play`, `clear_stop` and `close_session` (`install_routes` skips existing keys). Tested live with DeskControls.
+4. There is no `playing` flag in session.json, so Play and Stop playing are both enabled while ARMED.
+5. The TradingView embed (official widget, off by default, CSP-allowed) was not exercised, because verification stays offline.

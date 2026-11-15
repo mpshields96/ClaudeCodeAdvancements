@@ -57,7 +57,8 @@ CONFIRM_REQUIRED = ("stop_close", "clear_stop")
 TV_SCRIPT_ORIGIN = "https://s3.tradingview.com"
 TV_FRAME_ORIGINS = ("https://s.tradingview.com", "https://www.tradingview-widget.com",
                     "https://www.tradingview.com")
-BODY_KEYS = ("n", "bars_per_sec", "enabled", "confirm", "note")
+BODY_KEYS = ("n", "bars_per_sec", "enabled", "confirm", "note", "week")
+WEEK_RE = re.compile(r"[0-9]{4}-W[0-9]{2}")
 MAX_ADVANCE = 500
 MAX_PLAY_RATE = 50.0
 
@@ -82,6 +83,13 @@ def _plan_call(request, method_name, body):
         return method_name, {"bars_per_sec": min(rate, MAX_PLAY_RATE)}, ()
     if request == "clear_stop":
         return method_name, {"confirm": True}, ()
+    if request == "weekly_report":
+        week = body.get("week")
+        if week is None or week == "":
+            return method_name, {}, ()
+        if not isinstance(week, str) or not WEEK_RE.fullmatch(week):
+            raise ValueError("week must look like 2026-W40")
+        return method_name, {"week": week}, ()
     if request == "schedule":
         enabled = body.get("enabled") is True
         return method_name, {"enabled": enabled}, (

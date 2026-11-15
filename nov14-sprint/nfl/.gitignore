@@ -1,0 +1,9 @@
+# Code and protocols only. Third-party data, derived rows and results stay local.
+/data/
+/real/
+/slate/
+/walkforward/results/
+/walkforward/RUN_LOG.jsonl
+/adversarial/*.json
+*.csv
+__pycache__/

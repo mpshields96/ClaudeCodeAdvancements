@@ -1,0 +1,144 @@
+{
+  "title": "NFL walk-forward model vs listed market prices (paper research only)",
+  "written_at_utc": "2026-11-15T16:44:15Z",
+  "written_before_any_test_run": true,
+  "note": "Written before any model code existed and before any test-season result was computed. wf.py reads every setting below from this file. Any later change must be logged under deviations with time and reason; test-season results may not motivate a change.",
+  "data": {
+    "path": "nov14-sprint/nfl/data/raw/games.csv",
+    "sha256": "44f6ba50a76303869229be8fdad82d124e77f24f50c90c319fbc245dd34120a0",
+    "games_used_for_betting": "rows with both scores present and game_type in REG, WC, DIV, CON, SB",
+    "data_quality_rows": "kept exactly as published; rows where spread sign disagrees with the moneyline favorite (|spread_line| >= 1.5 and the moneyline favorite is the other team) are counted and a sensitivity run excluding them is reported"
+  },
+  "as_of_rule": "Features for game g use only results of games whose gameday is strictly earlier than g's gameday. Games on the same date never see each other's results. Pre-game fields of g itself allowed: spread_line, total_line, moneylines and juice for g, away_rest, home_rest, div_game, location (Neutral vs Home), roof == 'dome'. Not allowed: scores, result, total, overtime, temp, wind, roof open/closed state, QB names.",
+  "ratings": {
+    "elo": {
+      "initial": 1505,
+      "k": 20,
+      "home_field_elo": 48,
+      "neutral_site_home_field": 0,
+      "mov_multiplier": "ln(|margin|+1) * 2.2 / (winner_elo_diff_incl_hfa * 0.001 + 2.2)",
+      "tie_update": "result 0.5, multiplier ln(1)=0, so no change",
+      "season_regression": "rating = 1505 + (2/3) * (rating - 1505) before each team's first game of a new season",
+      "elo_points_per_spread_point": 25,
+      "source": "FiveThirtyEight NFL Elo, as described by secondary replications; original page offline (see WALKFORWARD_RESULT.md)"
+    },
+    "points": {
+      "kind": "exponentially weighted points scored (off) and allowed (def) per team",
+      "alpha": 0.1,
+      "initial": 21.0,
+      "season_regression": "rating = league_mean_prev_season + (2/3) * (rating - league_mean_prev_season)"
+    }
+  },
+  "models": {
+    "fit": "logistic regression with L2 penalty, Newton-Raphson, intercept not penalized",
+    "l2_lambda": 5.0,
+    "max_iter": 50,
+    "tol": 1e-10,
+    "win": {
+      "target": "home team wins (ties dropped from fit)",
+      "features": [
+        "logit_market_fair_home_win",
+        "elo_diff_incl_hfa_over_100",
+        "rest_diff_clip7_over_7",
+        "div_game"
+      ],
+      "fit_rows": "games with valid moneylines on both sides, seasons 2006..S-1"
+    },
+    "cover": {
+      "target": "home covers: result > spread_line (pushes dropped from fit)",
+      "features": [
+        "elo_spread_minus_line_over_7",
+        "pts_margin_minus_line_over_7",
+        "spread_line_over_7",
+        "rest_diff_clip7_over_7",
+        "div_game"
+      ],
+      "fit_rows": "games with spread_line, seasons 2002..S-1 (1999-2001 are rating burn-in)"
+    },
+    "over": {
+      "target": "over: total > total_line (pushes dropped from fit)",
+      "features": [
+        "pts_total_minus_line_over_10",
+        "total_line_over_10",
+        "dome"
+      ],
+      "fit_rows": "games with total_line, seasons 2002..S-1"
+    }
+  },
+  "walk_forward": {
+    "test_seasons": [
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025,
+      2026
+    ],
+    "refit": "once per test season, on seasons strictly earlier than the test season only",
+    "2026": "season to date: games with scores in the file (last scored gameday 2026-11-12)"
+  },
+  "pricing": {
+    "price_used": "the listed American odds for that side in games.csv (moneyline, spread juice or total juice)",
+    "missing_or_invalid_juice": "spread/total: assume -110 for that side and flag the bet price_assumed=true; moneyline: no bet (cannot assume a moneyline). Invalid means |odds| < 100 or not a number.",
+    "fair_probability": "multiplicative (proportional) devig of the two listed sides: p_i = q_i / (q_home + q_away), q = implied probability",
+    "payout": "1 unit risked per bet; win pays american profit (odds/100 if positive, 100/|odds| if negative); push returns 0; loss -1",
+    "stress": {
+      "minus_10_cents": "every price 10 cents worse on the American cents scale (-110 -> -120, +150 -> +140, +105 -> -105)",
+      "minus_half_point": "spread and total line 0.5 point worse for the side bet; moneyline unchanged",
+      "both": "both stresses at once"
+    }
+  },
+  "selection": {
+    "primary_rule": "bet a side when model probability minus market fair probability for that side >= 0.03 (at most one side per market per game)",
+    "primary_edge_threshold": 0.03,
+    "sensitivity_thresholds_reported_not_chosen": [
+      0.0,
+      0.02,
+      0.05,
+      0.08
+    ],
+    "note": "Selection uses the fair-probability edge at the listed price; stress results reuse the same bets, priced worse. No threshold is chosen from test results."
+  },
+  "metrics": {
+    "per_season_and_pooled": [
+      "bets",
+      "wins",
+      "losses",
+      "pushes",
+      "win_rate_ex_push",
+      "avg_breakeven_win_rate",
+      "win_rate_minus_breakeven",
+      "roi_listed",
+      "roi_stress_minus_10c",
+      "roi_stress_minus_half_point",
+      "roi_stress_both"
+    ],
+    "calibration_all_games": "log-loss and Brier of model vs market fair probability on every test game with valid prices (pushes and ties dropped)",
+    "bootstrap": "block bootstrap by (season, week), 2000 resamples, seed 20261115, 95% percentile CI for pooled ROI and for pooled log-loss difference (model minus market)",
+    "pooled_test_seasons": "2012-2025 completed seasons; 2026 reported separately and also in an all-seasons row"
+  },
+  "verdict_rule": "An out-of-sample edge is claimed only if, for a market, the pooled 2012-2025 ROI at listed prices has a bootstrap 95% CI entirely above 0 AND model log-loss beats the market (CI of difference entirely below 0). With 3 markets tested, a lone marginal pass is reported as not established. Otherwise verdict: no demonstrated edge.",
+  "deviations": [
+    {
+      "utc": "2026-11-15T16:45:19Z",
+      "before_first_test_run": true,
+      "change": "Ratings follow franchises across relocations: STL->LA, SD->LAC, OAK->LV (team codes in games.csv change on relocation; without this the relocated team would restart at 1505).",
+      "reason": "implementation detail found while reading team codes; not motivated by any result"
+    },
+    {
+      "utc": "2026-11-15T16:45:19Z",
+      "before_first_test_run": true,
+      "change": "The data-quality sensitivity run also excludes the three games named in nfldata GitHub issue #34 (2021_15_NE_IND, 2021_17_CLE_PIT, 2023_02_IND_HOU; reported spread sign flips). Primary run keeps all rows as published.",
+      "reason": "third-party data-quality report found during provenance check; not motivated by any result"
+    }
+  ]
+}

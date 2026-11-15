@@ -23,7 +23,7 @@
 | `reconcile.js:34-35` and its alarm list | Match exchange orders to the ledger by client id, and alarm on anything unexplained. | `reconcile()`: FOREIGN_ORDER, ORDER_MISSING, FILL_TOTAL_MISMATCH, OVERFILL, POSITION_* , INCOMPLETE_LISTING |
 | `sender.js:236` ("ONE POST. Never repeated") | Never re-send blind after an uncertain submit | `_resolve_uncertain`: query first. A found order is adopted. An absent one is re-sent once under the same client id, so the broker's duplicate check still applies. |
 | `sender.js:155,173,225,232`; `arming.js:296-301` | Check the kill switch again at each step | Each submit re-reads `stopped`/`paused`/armed/expiry (`entry_block_reason`) |
-| `btc15m-bot-claude/tools/risk_gate.py` (HALT, DAY_STOP) | A halt survives restarts and only a person lifts it. A day stop clears the next day. Limits only tighten. | `stopped` persists in controls.json, and only `clear_stop()` lifts it, after a confirmed flat. `day_stop` is keyed to the trading day. Limits are read-only TEST VALUES. |
+| `btc15m-bot-claude/tools/risk_gate.py` (HALT, DAY_STOP) | A halt survives restarts and only a person lifts it. A day stop clears the next day. Limits only tighten. | `stopped` persists in controls.json, and only `clear_stop(confirm=True)` lifts it, after a confirmed flat (audit-logged; a restart, expiry or schedule re-arm never clears it). `day_stop` is keyed to the trading day. Limits are read-only TEST VALUES. |
 
 ## Adapted (changed on purpose)
 

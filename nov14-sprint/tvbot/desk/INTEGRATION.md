@@ -56,12 +56,32 @@ With `--qty 0`, `ema` sizes about 20 shares and the $10 TEST max loss refuses ev
 entry. The review lists those as `refused_decisions` ("REFUSED BY RISK CHECK - NOT
 SENT, NOT FILLED"). That is the limit working, not a bug.
 
+## Session config lock
+
+At creation each state dir records `session_config.json` (strategy, strategy
+settings including `fixed_qty`, limits and fill costs). Reopening the same dir with
+a different `--qty`, `--strategy` or limits is refused: launch.py prints the recorded
+and requested values and exits 2, and `desk_audit.jsonl` gets a
+`session_config_change_refused` row with both. A non-empty state dir without a
+config is also refused. To try a different size, start a clearly labeled fresh
+scenario with `--fresh` (the old dir is renamed aside, never deleted) or a new
+`--state-dir`.
+
 ## Controls (UI buttons and POST routes)
 
 `arm`, `pause`, `resume`, `play`, `stop_play`, `advance`, `advance10`, `run_to_end`,
 `schedule_on`, `schedule_off`, `close_session`, `preflight`, `stop_close` and
 `clear_stop` (both need body `{"confirm": true}`). Stop survives a restart and
 blocks re-arming until Clear Stop is confirmed.
+
+`weekly_report` (POST `/api/weekly_report`, body `{"week": "2026-W40"}`, or no week
+for the default) writes `reports/report_<week>.html` and `.pdf` (at most 3 pages)
+and returns the `/reports/...` link. CLI equivalent:
+`/usr/bin/python3 -I desk/report.py --state-dir <dir> --week 2026-W40`.
+
+The TradingView panel uses `AMEX:SPY` as a REFERENCE ONLY real-market chart beside
+the synthetic replay (`tradingview_symbol`, `tradingview_label` in `/api/session`).
+The desk never reads TradingView data, and its prices are not the replay's.
 
 ## Fill model
 
@@ -85,7 +105,7 @@ including weeks with no fills, so a prior week can be picked.
 
 ## State files (in the state dir)
 
-`session.json`, `decisions.jsonl`, `ledger.jsonl`, `intents.jsonl`, `audit.jsonl`,
+`session_config.json` (the frozen sizing, limits and strategy), `session.json`, `decisions.jsonl`, `ledger.jsonl`, `intents.jsonl`, `audit.jsonl`,
 `desk_audit.jsonl`, `controls.json`, `control_requests.jsonl`, `broker_state.json`
 (the fake broker's book, kept apart from the order engine's journal), `review.json`,
 and `reports/` (the weekly PDF and HTML).
