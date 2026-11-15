@@ -1,0 +1,6 @@
+/private/
+/*.html
+/*.csv
+/*.json
+/__pycache__/
+/PUBLISHER_NOTE.md
