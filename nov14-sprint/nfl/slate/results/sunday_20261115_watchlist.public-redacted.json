@@ -1,4 +1,9 @@
 {
+  "_public_redaction": {
+    "copy_of": "sunday_20261115_watchlist.json",
+    "original_sha256": "60f4a1c5c77a1d5f34321ad8af62df80a4f5a0ef0506a4ee43be40e4abc2249e",
+    "note": "Public redacted copy. The authentic original stays local; hash pins elsewhere refer to the original."
+  },
   "schema_version": 1,
   "slate_date": "2026-11-15",
   "ranked_utc": "2026-11-15T07:38:26Z",
@@ -63,7 +68,7 @@
       "status": "formal_call",
       "formal_call": true,
       "volatility": "High",
-      "risk_tag": "Passing-down role",
+      "risk_tag": "PIT inactives / shared targets",
       "fit": "Four of five and seven of eight current-season appearances cleared 22.5. Both football reviews keep the conditional case; the only exact-line quote needs 53.5%, and Dowdle shares passing work.",
       "break_even": 0.5348837209302326,
       "market_probability": 0.5,
@@ -71,7 +76,27 @@
       "exact_line_books": 1,
       "other_two_sided_books": 0,
       "source_url": "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/events/48e497c230e6c9afcb3b600091d28e17/odds",
-      "ticket": null
+      "ticket": null,
+      "market_value_gap_pp": -3.488,
+      "market_value_label": "Unfavorable",
+      "market_value_detail": "Unfavorable: market estimate 50.00% (the offering book alone; no other exact-line quote); quote needs 53.49%.",
+      "evidence_utc": "2026-11-15T07:43:33Z",
+      "supplemental_fit": "If TE Pat Freiermuth sits, short targets could shift. Warren shares that work with Rico Dowdle; extra targets for Warren are uncertain.",
+      "supplemental_risk": "TE Pat Freiermuth (illness) and DT Derrick Harmon (foot) were questionable. Harmon could affect game script, not Warren’s receiving role directly. Recheck final inactives and Warren’s passing-down role.",
+      "supplemental_sources": [
+        {
+          "player": "Pat Freiermuth",
+          "source_url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401873064",
+          "reported_utc": "2026-11-14T17:39:00Z",
+          "retrieved_utc": "2026-11-15T07:14:57Z"
+        },
+        {
+          "player": "Derrick Harmon",
+          "source_url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401873064",
+          "reported_utc": "2026-11-14T20:05:00Z",
+          "retrieved_utc": "2026-11-15T07:14:57Z"
+        }
+      ]
     },
     {
       "rank": 2,
@@ -105,7 +130,10 @@
       "exact_line_books": 5,
       "other_two_sided_books": 4,
       "source_url": "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds",
-      "ticket": null
+      "ticket": null,
+      "market_value_gap_pp": -1.242,
+      "market_value_label": "Unfavorable",
+      "market_value_detail": "Unfavorable: market estimate 61.16% (4 other books at this line); quote needs 62.41%."
     },
     {
       "rank": 3,
@@ -139,7 +167,10 @@
       "exact_line_books": 4,
       "other_two_sided_books": 3,
       "source_url": "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/events/b8c10fdf1e0ac4e13deee7f7c0af0b0b/odds",
-      "ticket": null
+      "ticket": null,
+      "market_value_gap_pp": -1.22,
+      "market_value_label": "Unfavorable",
+      "market_value_detail": "Unfavorable: market estimate 50.00% (3 other books at this line); quote needs 51.22%."
     },
     {
       "rank": 4,
@@ -173,7 +204,10 @@
       "exact_line_books": 3,
       "other_two_sided_books": 2,
       "source_url": "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/events/b5700b4d938fd94429f60d4622cc9c0a/odds",
-      "ticket": null
+      "ticket": null,
+      "market_value_gap_pp": 0.025,
+      "market_value_label": "Essentially even",
+      "market_value_detail": "Essentially even: market estimate 50.52% (2 other books at this line); quote needs 50.50%."
     },
     {
       "rank": 5,
@@ -199,7 +233,7 @@
       "status": "watchlist_only",
       "formal_call": false,
       "volatility": "High",
-      "risk_tag": "First-start quarterback",
+      "risk_tag": "QB change / recheck inactives",
       "fit": "Bowers cleared 58.5 in five of five and all seven current-season appearances. The seven occurred before rookie Fernando Mendoza's first start. Seattle had allowed 42.1 yards per game to entire tight-end groups.",
       "break_even": 0.5305164319248826,
       "market_probability": 0.502106149957877,
@@ -207,15 +241,50 @@
       "exact_line_books": 3,
       "other_two_sided_books": 2,
       "source_url": "https://api.the-odds-api.com/v4/sports/americanfootball_nfl/events/6079a5cbabf99b265a17edfc92a1da60/odds",
-      "ticket": null
+      "ticket": null,
+      "market_value_gap_pp": -2.841,
+      "market_value_label": "Unfavorable",
+      "market_value_detail": "Unfavorable: market estimate 50.21% (2 other books at this line); quote needs 53.05%.",
+      "evidence_utc": "2026-11-15T07:29:23Z",
+      "supplemental_fit": "The Raiders named Fernando Mendoza their starting quarterback. Kirk Cousins started their last game on 2026-11-08.",
+      "supplemental_risk": "Bowers’ seven-game sample predates the new starter. Mendoza’s target distribution is unknown; recheck the quarterback and Bowers on the final inactives.",
+      "supplemental_sources": [
+        {
+          "source_url": "https://www.raiders.com/news/fernando-mendoza-named-raiders-starting-quarterback",
+          "retrieved_utc": "2026-11-15T07:29:23Z",
+          "sha256": "833023c2227d22fcd6dd2c7ec6cf6ab1f309dd1f8763ea58dd9a149d3654086f",
+          "page_title": "Fernando Mendoza named Raiders' starting quarterback"
+        }
+      ],
+      "last_start": {
+        "name": "Kirk Cousins",
+        "game_id": "2026_09_LV_SF",
+        "gameday": "2026-11-08",
+        "label": "known (nflverse row of the latest completed game)"
+      }
     }
   ],
   "inputs": {
     "candidate_record_sha256": "6885d506c57b84b6e9c5f1cea25d78e3746669c61466b148888eeda5b0899e31",
     "selection_record_sha256": "4e68284cd801d4e572dbe6dc5348608d5e348342303cdcde82330f08d5de540e",
-    "matchup_review": "/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/Matchup_Review.md",
+    "matchup_review": "~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/Matchup_Review.md",
     "matchup_review_sha256": "cf1a75c02257276f2b684c30d77b2febd88ad5f40af25d428c14eb33b9d1c567",
-    "football_red_team": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/FOOTBALL_RED_TEAM.md",
+    "football_red_team": "nov14-sprint/nfl/slate/FOOTBALL_RED_TEAM.md",
     "football_red_team_sha256": "09d2588136d3c649add9ea6d24a8c16a79ec8c60faa6615bc259f0093de33dd6"
+  },
+  "appearance_evidence": {
+    "version": 2,
+    "sha256": "7f202c76572738e0329e8c9721fbaacee06333008748a019d05880c380b50980",
+    "built_utc": "2026-11-15T07:38:37Z",
+    "role": "Subsequent verification of consecutive 2026 player appearances. Original ranking retained."
+  },
+  "supplement": {
+    "published_utc": "2026-11-15T09:35:09Z",
+    "issued_watchlist_sha256": "155a4e84da6ff16c57135bafff7832658a44be6988246c02a19f20f0b72325b4",
+    "candidate_record_sha256": "ae6f1781efbaa846f803c70cdb6469ddeb536541beffcd8a24f1ca5b6dd5047e",
+    "selection_record_sha256": "519c9506d143113ff7cb1334e496dbd987d6c1935bc45ebdf5df445ad51ffdd3",
+    "slate_sha256": "c90a28feeb23e96ddecabb20e0da634db27646676e62d1dd500e4463c1716593",
+    "review_evidence_sha256": "6b99a7662178f58ece05fe029dd8a92725c16345ff15469acb84b9ba19477604",
+    "market_value_basis": "Market probability with the bookmaker margin removed minus the hit rate needed at the quoted price, in percentage points. Within 0.1 point of zero is labeled essentially even. This compares prices; it does not estimate a football edge or change the ranking."
   }
 }

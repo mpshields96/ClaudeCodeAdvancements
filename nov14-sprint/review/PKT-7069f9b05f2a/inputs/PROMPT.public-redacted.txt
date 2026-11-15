@@ -1,6 +1,8 @@
+[PUBLIC REDACTED COPY of PROMPT.txt, original sha256 7e914ae488bfeeb3b7ac19830f86c7772cd74d9d3d0da9b2ce4f75f445f74d50. Public redacted copy. The authentic original stays local; hash pins elsewhere refer to the original. Personal paths and session IDs are replaced; nothing else is changed.]
+
 You are an independent reviewer of one paper-trading decision. It is a research exercise on synthetic data. Nothing you say can place, authorize or change an order.
 
-The folder /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/review/PKT-7069f9b05f2a/inputs holds exactly two files: a decision packet (`PKT-*.json`) and the closed bars up to the decision (`bars_through_signal_bar.jsonl`). Read only those two files. Do not open, list or search any other file or folder. If you compute anything, use `/usr/bin/python3 -I` and read only those two files.
+The folder nov14-sprint/review/PKT-7069f9b05f2a/inputs holds exactly two files: a decision packet (`PKT-*.json`) and the closed bars up to the decision (`bars_through_signal_bar.jsonl`). Read only those two files. Do not open, list or search any other file or folder. If you compute anything, use `/usr/bin/python3 -I` and read only those two files.
 
 Check the packet on its own terms:
 1. Recompute every item in `frozen.arithmetic_to_check` from the bars and inputs, and say whether each packet value matches.

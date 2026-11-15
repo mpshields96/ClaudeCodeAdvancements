@@ -1,4 +1,9 @@
 {
+  "_public_redaction": {
+    "copy_of": "sunday_20261115_review_evidence.json",
+    "original_sha256": "6b99a7662178f58ece05fe029dd8a92725c16345ff15469acb84b9ba19477604",
+    "note": "Public redacted copy. The authentic original stays local; hash pins elsewhere refer to the original."
+  },
   "schema_version": 1,
   "slate_date": "2026-11-15",
   "verified_utc": "2026-11-15T07:43:33Z",
@@ -19,7 +24,7 @@
           "reported_utc": "2026-11-14T20:05:00Z",
           "retrieved_utc": "2026-11-15T07:14:57Z",
           "source_url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401873064",
-          "saved_file": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/inputs/espn-summary.20261115T071450Z/event_401873064.json"
+          "saved_file": "nov14-sprint/nfl/slate/inputs/espn-summary.20261115T071450Z/event_401873064.json"
         },
         {
           "player": "Pat Freiermuth",
@@ -29,11 +34,11 @@
           "reported_utc": "2026-11-14T17:39:00Z",
           "retrieved_utc": "2026-11-15T07:14:57Z",
           "source_url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401873064",
-          "saved_file": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/inputs/espn-summary.20261115T071450Z/event_401873064.json"
+          "saved_file": "nov14-sprint/nfl/slate/inputs/espn-summary.20261115T071450Z/event_401873064.json"
         }
       ],
       "team_input": {
-        "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/slate_20261115.json",
+        "path": "nov14-sprint/nfl/slate/slate_20261115.json",
         "sha256": "c90a28feeb23e96ddecabb20e0da634db27646676e62d1dd500e4463c1716593",
         "built_utc": "2026-11-15T07:34:55Z"
       },
@@ -44,7 +49,7 @@
         "http_status": 200,
         "final_url": "https://www.nfl.com/players/jaylen-warren/stats/logs/2026/",
         "sha256": "af1314dfd3eb0b5e8e3c4845ca2ed2efbc0b19b9e553b93eec166eef2ce840ef",
-        "saved_file": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/tools/official_player_logs_20261115.json",
+        "saved_file": "nov14-sprint/nfl/slate/tools/official_player_logs_20261115.json",
         "saved_file_sha256": "217b65f973a1b35e053fe786c96ba168544a56540e52593fac9b11a1d01e1119",
         "saved_representation": "NFL.com response parsed to table headers and all game rows; saved source SHA is the fetched HTML digest."
       },
@@ -215,7 +220,7 @@
       "method": "Use total scores on the highest play_id in quarter 2 of each completed regular-season game in Weeks 1–9; take Arizona points and the Rams opponent points.",
       "source": "nflverse play-by-play 2026",
       "source_url": "https://github.com/nflverse/nflverse-data/releases/tag/pbp",
-      "saved_file": "/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/work/nfl-matchup/play_by_play_2026.csv.gz",
+      "saved_file": "~/Documents/Codex/2026-11-14/paper-desk-final-closeout/work/nfl-matchup/play_by_play_2026.csv.gz",
       "sha256": "b29cf0cc8bc90fdd6932d03b98c0b880d02d9829864a66cfe2f819f0bed96978",
       "retrieved_utc": null,
       "local_file_modified_utc": "2026-11-15T06:55:54+00:00",
@@ -223,7 +228,7 @@
     }
   },
   "props_input": {
-    "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/props_20261115.json",
+    "path": "nov14-sprint/nfl/slate/props_20261115.json",
     "sha256": "7f202c76572738e0329e8c9721fbaacee06333008748a019d05880c380b50980",
     "version": 2,
     "built_utc": "2026-11-15T07:38:37Z"

@@ -1,3 +1,5 @@
+[PUBLIC REDACTED COPY of claude_review_raw.txt, original sha256 ba47bad237734d52d0f43cf5cb41b992b8cf213b67917e7bbc10f10a35150c81. Public redacted copy. The authentic original stays local; hash pins elsewhere refer to the original. Personal paths and session IDs are replaced; nothing else is changed.]
+
 ```json
 {
   "packet_id": "PKT-7069f9b05f2a",
@@ -74,7 +76,7 @@
   ]
 }
 ```
-Files opened: /private/tmp/claude-501/-Users-matthewshields-Projects-ClaudeCodeAdvancements/c9f73180-d807-4913-a273-3d087df6f461/scratchpad/blind_PKT-7069f9b05f2a/PKT-7069f9b05f2a.json
-Files opened: /private/tmp/claude-501/-Users-matthewshields-Projects-ClaudeCodeAdvancements/c9f73180-d807-4913-a273-3d087df6f461/scratchpad/blind_PKT-7069f9b05f2a/bars_through_signal_bar.jsonl
+Files opened: <tmp>
+Files opened: <tmp>
 Command: date -u +%Y-%m-%dT%H:%M:%SZ
-Command: cd /private/tmp/claude-501/-Users-matthewshields-Projects-ClaudeCodeAdvancements/c9f73180-d807-4913-a273-3d087df6f461/scratchpad && /usr/bin/python3 -I - (inline script on stdin; it read only the two files above. It checked the sha256, matched recent_closed_bars against the file, recomputed both EMAs with first-close and SMA seeds, scanned for crosses, computed qty and notional, the timing and the stop estimate, and wrote no files.)
+Command: cd <tmp> && /usr/bin/python3 -I - (inline script on stdin; it read only the two files above. It checked the sha256, matched recent_closed_bars against the file, recomputed both EMAs with first-close and SMA seeds, scanned for crosses, computed qty and notional, the timing and the stop estimate, and wrote no files.)
