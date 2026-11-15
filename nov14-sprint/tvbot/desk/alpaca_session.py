@@ -220,8 +220,12 @@ class AlpacaSessionController(S.SessionController):
         self.snapshot_error = None
         if self.lab is None:
             self.lab = self._default_lab(state_dir)
+        self.config_revision = None
         S.SessionController.__init__(self, state_dir=state_dir, strategy=strategy, limits=limits,
                                      strategy_cfg=cfg)
+        if self.config_revision is not None:
+            # A changed sizing snapshot never inherits an armed state: the operator re-arms.
+            self.mgr.disarm(reason="SESSION_CONFIG_REVISED")
         # Every manager reconcile report (start-up, restart, reconnect, arm, Stop, operator) also
         # reaches the adapter, so a failed or incomplete reconcile blocks new exposure there too.
         raw_reconcile = self.mgr.reconcile
@@ -468,6 +472,55 @@ class AlpacaSessionController(S.SessionController):
     def play(self, bars_per_sec=4.0):
         return {"ok": False, "reason": "NO_PLAY_IN_ALPACA_MODE",
                 "detail": "bars arrive only when you click Check for new bars", "simulated": self.mock}
+
+    # ---------------------------------------------------------------- sizing-only revision
+    SIZING_CFG_KEYS = ("fixed_qty", "test_size", "limits")
+    _REVISION_KEYS = ("label", "created_utc", "revision", "revised_utc", "revisions", "limits_source")
+
+    @classmethod
+    def _non_sizing(cls, cfg):
+        out = {k: v for k, v in cfg.items() if k not in cls._REVISION_KEYS and k != "limits"}
+        out["strategy_cfg"] = {k: v for k, v in (cfg.get("strategy_cfg") or {}).items()
+                               if k not in cls.SIZING_CFG_KEYS}
+        return out
+
+    def _bind_session_config(self):
+        """Alpaca restart with a new verified sizing snapshot (Codex 23:1xZ): the same state dir
+        keeps every journal, the day's P&L, working orders and Stop; only sizing and limits are
+        revised, recorded with the old values, and the desk starts DISARMED. The snapshot was
+        already verified by resolve_limits (connected: operator-approved only). A change to the
+        strategy, its non-sizing settings or the cost model is still refused, and the offline
+        scenario keeps its immutable lock (the base class)."""
+        path = os.path.join(self.state_dir, S.SESSION_CONFIG_FILE)
+        if os.path.exists(path):
+            with open(path) as fh:
+                have = json.load(fh)
+            want = S.session_config_for(self.strategy, self.strategy_cfg, self.limits)
+            diff = S._config_diff({k: v for k, v in have.items() if k not in self._REVISION_KEYS}, want)
+            if not diff:
+                return have                                   # same config (revised or not): resume
+            if self._non_sizing(have) == self._non_sizing(want):
+                now = iso(_dt.datetime.utcnow().replace(tzinfo=_dt.timezone.utc))
+                prior = {k: have.get(k) for k in ("strategy_cfg", "limits", "limits_source")}
+                prior.update(revision=int(have.get("revision") or 0), bound_utc=have.get("revised_utc")
+                             or have.get("created_utc"))
+                src = {k: self.limits_source.get(k) for k in ("provenance", "hash", "approved_utc", "label")}
+                rec = dict(want, created_utc=have.get("created_utc"), revised_utc=now,
+                           revision=prior["revision"] + 1, limits_source=src,
+                           revisions=list(have.get("revisions") or []) + [prior])
+                tmp = path + ".tmp"
+                with open(tmp, "w") as fh:
+                    json.dump(rec, fh, indent=2, sort_keys=True)
+                os.replace(tmp, path)
+                S._append_jsonl(os.path.join(self.state_dir, "desk_audit.jsonl"), {
+                    "ts_wall_utc": now, "kind": "session_config_revised", "simulated": self.mock,
+                    "revision": rec["revision"], "diff": diff, "limits_source": src,
+                    "kept": "journals, day P&L, working orders, Stop and adapter on/off state",
+                    "armed_after": False})
+                self.config_revision = {"revision": rec["revision"], "diff": diff, "revised_utc": now,
+                                        "limits_source": src}
+                return rec
+        return S.SessionController._bind_session_config(self)
 
     def run_to_end(self):
         return self.play()

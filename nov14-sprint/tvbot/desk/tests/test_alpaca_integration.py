@@ -489,6 +489,104 @@ class SubPennyProtectiveStop(unittest.TestCase):
             self.assertIn("PROTECTIVE_STOP_CROSSED", fh.read())
 
 
+class SizingOnlyRestartRevision(unittest.TestCase):
+    """Codex 23:1xZ: the ordinary worksheet workflow. Launch, close, save a new sizing draft (or
+    approve new limits), relaunch on the SAME state dir: a sizing-only revision is accepted and
+    recorded; journals, day P&L, working orders and Stop are kept; the desk starts disarmed. A
+    strategy or non-sizing change is still refused; the offline scenario lock is unchanged.
+    Mock venue, synthetic ids, TEST VALUE limits (not Matthew's)."""
+
+    DRAFT = {"fixed_shares": 2, "max_loss_per_trade": 40, "daily_loss": 120,
+             "per_trade_notional": 1800, "gross_exposure": 3600}
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="desk-alpaca-rev-")
+        self.d = os.path.join(self.tmp, "s")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _open(self, strategy="ema", **kw):
+        return AS.AlpacaSessionController(self.d, strategy=strategy, **kw)
+
+    def _audit(self):
+        with open(os.path.join(self.d, "desk_audit.jsonl")) as fh:
+            return [json.loads(x) for x in fh if x.strip()]
+
+    def test_draft_then_restart_keeps_history_and_starts_disarmed(self):
+        import alpaca.sizing as SZ
+        c = self._open()
+        c.alpaca_enable(confirm=True)
+        c.check_new_bars()
+        c.arm()
+        px = float(c.bars[-1]["close"])
+        c.mgr.submit_intent({"decision_id": "rev-test-entry-0001", "kind": "entry", "side": "buy", "qty": 1,
+                             "limit": round(px - 5.0, 2), "ref_price": px, "intended_entry": px,
+                             "invalidation": round(px - 8.0, 2)})
+        working = [x["decision_id"] for x in c.mgr.intents.values() if x.get("status") == "acked"]
+        self.assertEqual(working, ["rev-test-entry-0001"])
+        n_audit = len(self._audit())
+        self.assertTrue(c.mgr.state()["armed"])
+        c.close()
+        SZ.save_draft(self.d, self.DRAFT)
+        c2 = self._open()
+        try:
+            self.assertEqual(c2.fixed_qty, 2) if hasattr(c2, "fixed_qty") else None
+            cfg = c2.session_config
+            self.assertEqual(cfg["revision"], 1)
+            self.assertEqual(cfg["strategy_cfg"]["fixed_qty"], 2)
+            self.assertEqual(cfg["revisions"][0]["strategy_cfg"]["fixed_qty"], 1)
+            self.assertEqual(cfg["limits_source"]["provenance"], "draft")
+            self.assertFalse(c2.mgr.state()["armed"])                 # never inherits armed
+            self.assertIn("rev-test-entry-0001",
+                          [x["decision_id"] for x in c2.mgr.intents.values() if x.get("status") == "acked"])
+            aud = self._audit()
+            self.assertGreater(len(aud), n_audit)                     # journal appended, not replaced
+            self.assertTrue(any(r.get("kind") == "session_config_revised" for r in aud))
+            self.assertFalse(any(r.get("kind") == "session_config_change_refused" for r in aud))
+        finally:
+            c2.close()
+        c3 = self._open()                                              # same revised config: plain resume
+        try:
+            self.assertEqual(c3.session_config["revision"], 1)
+            self.assertIsNone(c3.config_revision)
+        finally:
+            c3.close()
+
+    def test_stop_survives_a_sizing_revision(self):
+        import alpaca.sizing as SZ
+        c = self._open()
+        c.alpaca_enable(confirm=True)
+        c.check_new_bars()
+        c.stop_and_close(reason="TEST")
+        c.close()
+        SZ.save_draft(self.d, self.DRAFT)
+        c2 = self._open()
+        try:
+            self.assertTrue(c2.mgr.state()["controls"]["stopped"])
+            self.assertFalse(AdapterState(self.d).enabled)            # Stop's disable persists
+            self.assertEqual(c2.session_config["revision"], 1)
+        finally:
+            c2.close()
+
+    def test_strategy_change_still_refused(self):
+        import session as S
+        c = self._open()
+        c.close()
+        with self.assertRaises(S.SessionConfigChanged):
+            self._open(strategy="cash")
+        cfg = dict(S.DEMO_STRATEGY_CFG, fast=int(S.DEMO_STRATEGY_CFG.get("fast", 9)) + 2)
+        with self.assertRaises(S.SessionConfigChanged):
+            self._open(strategy_cfg=cfg)
+
+    def test_offline_scenario_size_change_still_refused(self):
+        import session as S
+        d = os.path.join(self.tmp, "offline")
+        S.SessionController(d, strategy="ema", strategy_cfg=dict(S.DEMO_STRATEGY_CFG, fixed_qty=1)).close()
+        with self.assertRaises(S.SessionConfigChanged):
+            S.SessionController(d, strategy="ema", strategy_cfg=dict(S.DEMO_STRATEGY_CFG, fixed_qty=2))
+
+
 class LauncherConnectedGuards(unittest.TestCase):
     """Codex 22:56Z and 22:46Z. Both refusals happen before any lock, rename, broker object or
     python process, so these tests never reach a transport (and https never runs here)."""
