@@ -1,0 +1,12 @@
+{
+  "claimed_utc": "2026-11-15T17:29:56Z",
+  "hashed_files": [
+    "strategies/engine.py",
+    "strategies/base.py",
+    "strategies/registry.py",
+    "strategies/RULES.md"
+  ],
+  "note": "holdout_bars.jsonl first evaluated by worker C strategies with these rules. A changed rule hash refuses the holdout. EMAX's holdout was already claimed 2026-11-14T22:17:06Z, so the ema rows are not a first look.",
+  "rule_hash": "d3056d25d4bae654857cf1f468c1ad050a7efb8da1d9df801a7eeba5e2dbee03",
+  "simulated": true
+}

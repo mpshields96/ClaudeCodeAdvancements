@@ -1,0 +1,5 @@
+{"client_id": "C-D011-enterlong", "decision_id": "D011-enterlong", "intent_id": "I-D011-enterlong", "qty": 19, "side": "buy", "simulated": true, "status": "persisted_before_dispatch", "ts": "2026-06-02T18:30:05Z"}
+{"client_id": "C-D027-exit", "decision_id": "D027-exit", "intent_id": "I-D027-exit", "qty": 19, "side": "sell", "simulated": true, "status": "persisted_before_dispatch", "ts": "2026-06-04T20:30:05Z"}
+{"client_id": "C-D029-enterlong", "decision_id": "D029-enterlong", "intent_id": "I-D029-enterlong", "qty": 19, "side": "buy", "simulated": true, "status": "persisted_before_dispatch", "ts": "2026-06-05T15:30:05Z"}
+{"client_id": "C-D033-exit", "decision_id": "D033-exit", "intent_id": "I-D033-exit", "qty": 19, "side": "sell", "simulated": true, "status": "persisted_before_dispatch", "ts": "2026-06-05T19:30:05Z"}
+{"client_id": "C-D056-entershort", "decision_id": "D056-entershort", "intent_id": "I-D056-entershort", "qty": 20, "side": "sell", "simulated": true, "status": "persisted_before_dispatch", "ts": "2026-06-10T21:30:05Z"}

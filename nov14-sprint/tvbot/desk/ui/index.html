@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paper Desk (SIMULATED)</title>
+<style>
+:root{
+  --bg:#0f1216; --panel:#161b21; --panel2:#1c232b; --line:#2a333d; --fg:#e6ebf0; --muted:#8c98a5;
+  --up:#26a69a; --down:#ef5350; --trig:#e0b341; --entry:#4f9dff; --exitc:#3ccf7a; --inval:#ff5b5b;
+  --pass:#9aa6b2; --pos:#c792ea; --warn:#f0a020; --bad:#e5484d; --ok:#30a46c; --sim:#ffcc00;
+  --grid:#1f262e; --hatch:#2a313a;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+button{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:#4a5663}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.danger{background:#3a1416;border-color:#7a2a2e;color:#ffd7d7;font-weight:700}
+button.warnb{background:#33280f;border-color:#6d5420;color:#ffe2a8;font-weight:700}
+button.pri{background:#12304f;border-color:#2a5d93}
+a{color:#7fb6ff}
+.banner{padding:8px 14px;font-weight:700;letter-spacing:.02em}
+.banner.disc{background:repeating-linear-gradient(45deg,#5a0f12,#5a0f12 12px,#3b0a0c 12px,#3b0a0c 24px);color:#fff;border-bottom:2px solid var(--bad);font-size:15px}
+.banner.stale{background:#2e240c;color:#ffd98a;border-bottom:1px solid #6d5420;font-weight:600}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:6px 12px;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.spacer{flex:1}
+.big{font-weight:900;letter-spacing:.08em;padding:3px 10px;border-radius:4px;font-size:15px}
+.sim{background:var(--sim);color:#111}
+.mock{background:#ff8a00;color:#111}
+.mode{font-weight:700}
+.tag{border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted);font-size:12px}
+.tag.syn{color:#ffd27a;border-color:#6d5420}
+.chip{border-radius:12px;padding:2px 9px;font-size:12px;font-weight:700;border:1px solid}
+.chip.ok{background:#0f2a1d;border-color:#2a6d48;color:#8ff0b8}
+.chip.warn{background:#2e240c;border-color:#6d5420;color:#ffd98a}
+.chip.bad{background:#3a1416;border-color:#7a2a2e;color:#ffb3b3}
+.chip.unk{background:#20252b;border-color:#3b444e;color:#aab4bf}
+.tabs{display:flex;gap:4px}
+.tabs button{border-radius:6px 6px 0 0;border-bottom:none;background:transparent}
+.tabs button.on{background:var(--panel2);border-color:var(--line);font-weight:700}
+.flow{display:flex;gap:4px;font-size:12px;color:var(--muted);flex-wrap:wrap;align-items:center}
+.flow button{padding:3px 8px;font-size:12px}
+.flow button.cur{box-shadow:0 0 0 2px #7fb6ff;font-weight:700}
+.flow button.na{text-decoration:line-through;opacity:.45}
+.flow .ar{color:#4a5663}
+.risk{font-size:12px;color:#ffe2a8}
+.tvbar{font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chk td.f{color:#ffb3b3;font-weight:700} .chk td.p{color:#8ff0b8}
+.chk tr.failrow td{background:#241214}
+main{flex:1;display:grid;grid-template-columns:minmax(0,62fr) minmax(330px,38fr);min-height:0}
+main.withtv{grid-template-columns:minmax(0,36fr) minmax(0,36fr) minmax(320px,28fr)}
+#tvPane{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+#tvPane[hidden]{display:none}
+#tvHost{flex:1;min-height:300px;position:relative;background:#0b0e11}
+#tvHost .tradingview-widget-container{position:absolute;inset:0}
+#tvHost .tradingview-widget-container__widget{height:calc(100% - 22px)}
+#tvHost .tradingview-widget-copyright{font-size:11px;padding:3px 8px}
+#chartPane{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+.ctool{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;font-size:12px}
+.ctool button{padding:2px 8px}
+#ohlc{color:var(--muted);font-variant-numeric:tabular-nums}
+#cvwrap{flex:1;position:relative;min-height:240px;overflow:hidden}
+#cv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+.legend{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:11.5px;padding:4px 8px;border-top:1px solid var(--line);background:var(--panel)}
+.legend i{font-style:normal;font-weight:700}
+aside{overflow:auto;padding:10px;min-height:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.card h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.card h3 .r{float:right;text-transform:none;letter-spacing:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-variant-numeric:tabular-nums}
+.kv b{font-weight:600;color:var(--muted)}
+.pnl{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pnl div{background:var(--panel2);border-radius:6px;padding:6px 8px}
+.pnl small{display:block;color:var(--muted);font-size:11px}
+.pnl span{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+.pnl .main span{font-size:19px}
+.pos{color:var(--up)} .neg{color:var(--down)} .zero{color:var(--fg)}
+.pill{display:inline-block;border-radius:4px;padding:0 6px;font-size:11px;font-weight:800;letter-spacing:.03em;vertical-align:1px}
+.p-enter_long{background:#0f3d33;color:#7ff0d4}.p-enter_short{background:#4a1617;color:#ffb3b3}
+.p-exit{background:#123a5c;color:#a9d4ff}.p-pass{background:#2a3038;color:#c7d0da}.p-hold{background:#1d2228;color:#7d8894}
+.p-knew{background:#24303b;color:#bcd}.p-requested{background:#1d3550;color:#a9d4ff}.p-acked{background:#2b2350;color:#cbb8ff}
+.p-filled{background:#4a3410;color:#ffd38a}.p-rejected,.p-alarm{background:#4a1617;color:#ffb3b3}
+.p-canceled{background:#333;color:#ccc}.p-control{background:#3d3410;color:#ffe9a8}
+.feed{list-style:none;margin:0;padding:0;max-height:320px;overflow:auto}
+.feed li{padding:5px 4px;border-bottom:1px solid var(--grid);cursor:pointer}
+.feed li:hover{background:var(--panel2)}
+.feed li.sel{background:#1a2a3d}
+.feed .t{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:11.5px}
+.hint{color:var(--muted);font-size:12px}
+.sec{border-left:3px solid var(--line);padding-left:10px;margin:10px 0}
+.sec h4{margin:0 0 6px;font-size:13px}
+.sec.s1{border-color:var(--entry)} .sec.s2{border-color:var(--trig)} .sec.s3{border-color:#cbb8ff} .sec.s4{border-color:var(--bad)}
+.sw{display:inline-block;width:18px;height:0;border-top:2px dashed;vertical-align:middle;margin-right:6px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:4px 6px;border-bottom:1px solid var(--grid);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px}
+.trail td:first-child{white-space:nowrap;color:var(--muted);font-size:11.5px}
+.st{font-weight:800;font-size:11px;padding:1px 6px;border-radius:4px}
+.st-PASS,.st-CONNECTED,.st-EXERCISED,.st-NO.ALARMS{background:#0f2a1d;color:#8ff0b8}
+.st-FAIL,.st-ALARM,.st-OPEN,.st-NOT{background:#3a1416;color:#ffb3b3}
+.st-UNTESTED{background:#2e240c;color:#ffd98a}
+.hypo{background:#3a2f55;color:#dccbff;font-weight:800;padding:1px 6px;border-radius:4px;font-size:11px}
+.outcome{background:#1b1630;border:1px dashed #6b5aa8;border-radius:6px;padding:8px;margin-top:8px}
+.nofill{background:#2e240c;border:1px solid #6d5420;color:#ffe2a8;border-radius:6px;padding:10px;font-weight:600}
+#toast{position:fixed;right:14px;bottom:14px;max-width:420px;background:#111820;border:1px solid var(--line);border-radius:8px;padding:10px 12px;box-shadow:0 6px 20px rgba(0,0,0,.4);display:none;z-index:9}
+dialog{background:var(--panel);color:var(--fg);border:1px solid #7a2a2e;border-radius:10px;max-width:480px}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.stale-vals .live{opacity:.55;text-decoration:line-through dotted #ff6b6b}
+code{font-size:11.5px;color:#b8c7d6}
+@media (max-width:1100px){
+  body{height:auto;overflow:auto}
+  main{grid-template-columns:1fr}
+  main.withtv{grid-template-columns:1fr}
+  #chartPane,#tvPane{height:58vh;min-height:380px;border-right:0;border-bottom:1px solid var(--line)}
+  aside{overflow:visible}
+}
+</style>
+</head>
+<body>
+<div id="disc" class="banner disc" hidden></div>
+<div id="stale" class="banner stale" hidden></div>
+<header>
+  <div class="row">
+    <span class="big sim">SIMULATED</span>
+    <span class="big mock">MOCK FILLS</span>
+    <span class="mode" id="mode">REPLAY (OFFLINE, SIMULATED)</span>
+    <span class="tag syn" id="datalabel">SYNTHETIC BARS</span>
+    <span class="tag" id="symstrat">-</span>
+    <span class="tag" id="expiry">expiry -</span>
+    <span class="spacer"></span>
+    <span class="chip unk" id="armChip">SIMULATION: DISARMED</span>
+    <span class="chip ok" id="brokerChip">EXTERNAL BROKER: NONE (offline in-process fake broker)</span>
+  </div>
+  <div class="row">
+    <div class="flow" id="flow" aria-label="Session flow">
+      <button data-f="review" title="Pre-session check from session.json preflight">1 Review</button><span class="ar">&rarr;</span>
+      <button data-f="arm" class="pri" title="Arms this offline replay session. No broker connection.">2 Arm</button><span class="ar">&rarr;</span>
+      <button data-f="step1" title="Advance the replay clock by 1 bar">Step 1</button>
+      <button data-f="step10" title="Advance the replay clock by 10 bars">Step 10</button>
+      <button data-f="runend" title="Run the replay to the last bar (launcher route /api/run_to_end)">Run to end</button>
+      <button data-f="play" title="Play the replay at 4 bars per second">Play</button>
+      <button data-f="stopplay" title="Stop playing; the session stays armed">Stop playing</button><span class="ar">&rarr;</span>
+      <button data-f="pause" id="btnPause" class="warnb" title="Blocks new entries and cancels entry remainders. Protective exits stay.">Pause</button>
+      <button data-f="resume" title="Lift the pause">Resume</button>
+      <button data-f="stop" id="btnStop" class="danger" title="Disables entries and schedule, cancels entries, closes the reconciled position.">Stop &amp; Close</button>
+      <button data-f="clear" title="Only this button clears a Stop. The schedule never does.">Clear Stop</button><span class="ar">&rarr;</span>
+      <button data-f="close" title="Close the session (must be flat), then open the review">Close &amp; review</button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="tabs" role="tablist">
+      <button data-view="chart" class="on">Chart</button>
+      <button data-view="decision">Decision</button>
+      <button data-view="review">Session review</button>
+    </div>
+    <span class="risk" id="risk">Max loss per trade $10.00 (TEST VALUE) &middot; Notional cap $2,000 (TEST VALUE) &middot; Daily loss $30.00 (TEST VALUE)</span>
+    <span class="spacer"></span>
+    <span class="tvbar">
+      <label title="Loads TradingView's official Advanced Chart widget of a REAL reference symbol beside the synthetic desk chart. Off by default."><input type="checkbox" id="tvToggle"> Show TradingView chart</label>
+      <label title="Real-market reference symbol for an independent comparison. The desk's own symbol is synthetic and is never sent to TradingView.">Reference <select id="tvRef"><option value="AMEX:SPY" selected>AMEX:SPY</option><option value="NASDAQ:QQQ">NASDAQ:QQQ</option><option value="AMEX:IWM">AMEX:IWM</option><option value="AMEX:DIA">AMEX:DIA</option></select></label>
+      <a id="tvlink" href="https://www.tradingview.com/chart/?symbol=AMEX%3ASPY" target="_blank" rel="noopener noreferrer" title="Opens TradingView (AMEX:SPY) in your own browser. REFERENCE ONLY: the desk never reads it.">Open my TradingView chart &#8599;</a>
+      <span class="muted" title="macOS: hold the mouse on the green window button, then choose Tile Window to Left of Screen for TradingView and Tile Window to Right of Screen for this desk.">macOS tip: hold the green button &rarr; Tile left / right</span>
+      <span class="tag" title="Independent comparison of a real market. Display only: no alerts, no webhooks, nothing read back.">TradingView chart: operator view only, not used by the desk. REFERENCE ONLY, real market, not the desk's data, nothing flows into the bot</span>
+    </span>
+  </div>
+</header>
+<main id="main">
+  <section id="tvPane" hidden>
+    <div class="ctool"><b>TradingView reference: <span id="tvRefName">AMEX:SPY</span></b><span class="tag">REFERENCE ONLY, real market, not the desk's data, nothing flows into the bot</span><span class="spacer"></span><button id="tvHide" title="Remove the TradingView widget">Hide</button></div>
+    <div id="tvHost"></div>
+    <div class="legend">Independent comparison, operator view only. This is a real market (<span id="tvRefName2">AMEX:SPY</span>), not the desk's synthetic data, and nothing flows into the bot: no alerts, no webhooks, nothing read back. Chart and market data by TradingView (official embed widget).</div>
+  </section>
+  <section id="chartPane">
+    <div class="ctool">
+      <b>Desk replay chart</b> <span class="pill" style="background:var(--sim);color:#111">SYNTHETIC</span><span class="tag syn" id="srcTag">source: desk replay bars (synthetic), not TradingView, not a real market</span>
+      <span class="spacer"></span>
+      <span id="ohlc"></span>
+      <button id="zIn" title="Zoom in">+</button><button id="zOut" title="Zoom out">&minus;</button>
+      <button id="zFit" title="Show all bars">All</button><button id="zLast" title="Follow the latest bar">Latest</button>
+    </div>
+    <div id="cvwrap"><canvas id="cv"></canvas></div>
+    <div class="legend">
+      <span><i style="color:var(--up)">&#9650;</i> long entry</span><span><i style="color:var(--down)">&#9660;</i> short entry</span>
+      <span><i style="color:var(--entry)">&#9670;</i> exit</span><span><i style="color:var(--pass)">&#9675;</i> pass</span>
+      <span><i style="color:#ffb347">&#9472;</i> mock fill</span>
+      <span>Click a marker for its replay. Wheel = zoom, drag = pan.</span>
+    </div>
+  </section>
+  <aside>
+    <div id="viewChart">
+      <div class="card">
+        <h3>Current decision <span class="r small" id="nowTs"></span></h3>
+        <div id="nowDec" class="hint">Waiting for decisions.</div>
+      </div>
+      <div class="card">
+        <h3>P&amp;L <span class="r"><span class="pill" style="background:var(--sim);color:#111">SIMULATED</span></span></h3>
+        <div class="pnl live">
+          <div><small>Realized</small><span id="pRe">-</span></div>
+          <div><small>Unrealized</small><span id="pUn">-</span></div>
+          <div><small>Fees</small><span id="pFe">-</span></div>
+          <div class="main"><small>After cost (net)</small><span id="pAc">-</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Exposure and protective orders <span class="r small" id="expConf"></span></h3>
+        <div class="kv live" id="expo"></div>
+        <div id="protect" class="small" style="margin-top:6px"></div>
+        <div id="working" class="small" style="margin-top:4px"></div>
+      </div>
+      <div class="card">
+        <h3>Session and controls</h3>
+        <div class="kv" id="ctrlState"></div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnArm" class="pri" title="Arms this offline replay session. No broker connection.">Arm this replay session (offline)</button>
+          <button id="btnPause2" class="warnb">Pause</button>
+          <button id="btnStop2" class="danger">Stop &amp; Close</button>
+        </div>
+        <div class="small" id="livePath" style="margin-top:8px"></div>
+        <div class="small muted" id="undecided" style="margin-top:4px"></div>
+      </div>
+      <div class="card">
+        <h3>Offline schedule (simulated clock)</h3>
+        <label><input type="checkbox" id="schedTgl"> Offline schedule (simulated clock)</label>
+        <div class="kv small" id="schedInfo" style="margin-top:6px"></div>
+        <div class="hint" style="margin-top:4px">Off by default. A schedule never clears a Stop: only Clear Stop does.</div>
+      </div>
+      <div class="card">
+        <h3>Reasons for actions and passes <span class="r small"><label><input type="checkbox" id="showHolds"> show holds</label></span></h3>
+        <ul class="feed" id="feed"></ul>
+      </div>
+    </div>
+
+    <div id="viewDecision" hidden>
+      <div class="card" id="decCard"><div class="hint">Click a marker on the chart (&#9650; &#9660; &#9670; &#9675;) or a row in the reasons feed.</div></div>
+    </div>
+
+    <div id="viewReview" hidden>
+      <div id="reviewBody" class="hint">Loading review.</div>
+    </div>
+  </aside>
+</main>
+
+<dialog id="dlgStop">
+  <h3 style="margin-top:0;color:#ffb3b3">Stop &amp; Close this session?</h3>
+  <p>This disables new entries and the schedule, cancels entry orders, then closes the reconciled position, including late or partial fills. Protective exits stay until the broker confirms flat. The desk will not show FLAT until broker positions say 0.</p>
+  <p class="small muted">Offline replay: the broker is the in-process FakeBroker. SIMULATED.</p>
+  <div class="row" style="justify-content:flex-end">
+    <button id="dlgNo">Cancel</button>
+    <button id="dlgYes" class="danger">Yes, Stop &amp; Close</button>
+  </div>
+</dialog>
+<dialog id="dlgPre">
+  <h3 style="margin-top:0">Pre-session check</h3>
+  <div id="preBody" class="small"></div>
+  <p class="small muted">From session.json preflight. Offline replay, in-process fake broker, TEST VALUE limits. SIMULATED.</p>
+  <div class="row" style="justify-content:flex-end">
+    <button id="preClose">Close</button>
+    <button id="preArm" class="pri">Arm this replay session (offline)</button>
+  </div>
+</dialog>
+<dialog id="dlgClear">
+  <h3 style="margin-top:0;color:#ffd98a">Clear the Stop?</h3>
+  <p>Only this button clears a Stop; the schedule never does. The session goes back to the pre-session state, disarmed. You must Review and Arm again before any new entry.</p>
+  <p class="small muted">Offline replay. SIMULATED.</p>
+  <div class="row" style="justify-content:flex-end">
+    <button id="clrNo">Cancel</button>
+    <button id="clrYes" class="warnb">Yes, clear the Stop</button>
+  </div>
+</dialog>
+<div id="toast"></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const MARK = {enter_long:1, enter_short:1, exit:1, pass:1};
+const S = {session:null, bars:[], manifest:null, decisions:[], ledger:[], audit:[], review:null,
+  sel:null, revealed:{}, tradeRev:{}, routes:null, week:null, tvRef:'AMEX:SPY', view:'chart', showHolds:false, conn:null, lastOk:0, lastSig:'', lastFull:0, first:true};
+const V = {start:0, count:120, follow:true, hover:-1, drag:null, markers:[], geo:null};
+
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function num(v){ if (v === null || v === undefined || v === '' || typeof v === 'boolean') return null; const n = Number(v); return isFinite(n) ? n : null; }
+function fmt(v, d){ const n = num(v); if (n === null) return '-'; return n.toFixed(d == null ? 2 : d); }
+function money(v){ const n = num(v); if (n === null) return '<span class="muted">-</span>';
+  const c = n > 0 ? 'pos' : n < 0 ? 'neg' : 'zero'; return '<span class="'+c+'">'+(n>0?'+':'')+n.toFixed(2)+'</span>'; }
+function tsShort(s){ if (!s) return '-'; return String(s).replace('T',' ').replace(/:\d\dZ$/,'Z').slice(5); }
+function tsFull(s){ return s ? String(s).replace('T',' ') : '-'; }
+function pill(kind){ return '<span class="pill p-'+esc(kind)+'">'+esc(String(kind).replace('_',' ').toUpperCase())+'</span>'; }
+function ago(sec){ sec = Math.max(0, Math.round(sec)); if (sec < 90) return sec+'s'; if (sec < 5400) return Math.round(sec/60)+' min'; return (sec/3600).toFixed(1)+' h'; }
+
+function setH(el, h){ if (el._h !== h) { el.innerHTML = h; el._h = h; } }  // keep DOM (scroll, focus, clicks) when nothing changed
+async function getJ(url){ const r = await fetch(url, {cache:'no-store'}); if (!r.ok) throw new Error(url+' '+r.status); return r.json(); }
+
+function reviewUrl(extra){ const q = []; if (S.week) q.push('week=' + encodeURIComponent(S.week)); if (extra) q.push(extra); return '/api/review' + (q.length ? '?' + q.join('&') : ''); }
+// ---------------- data loading ----------------
+async function loadAll(){
+  if (S.routes === null) { try { const h = await getJ('/api/health'); S.routes = Array.isArray(h.routes) ? new Set(h.routes) : undefined; } catch (e) { S.routes = undefined; } }
+  const [b, d, l, a, rv] = await Promise.all([getJ('/api/bars'), getJ('/api/decisions'), getJ('/api/ledger'), getJ('/api/audit'), getJ(reviewUrl())]);
+  const oldN = S.bars.length;
+  S.bars = (b.items || []).map(x => Object.assign({}, x, {t: Date.parse(x.ts_close), to: Date.parse(x.ts_open)}));
+  S.manifest = b.manifest || null;
+  S.decisions = (d.items || []).map(x => Object.assign({}, x, {t: Date.parse(x.ts_knowable)}));
+  S.decisions.sort((x, y) => x.t - y.t);
+  S.ledger = l.items || [];
+  S.audit = (a.items || []).slice().sort((x, y) => String(x.ts).localeCompare(String(y.ts)));
+  S.review = rv;
+  S.lastFull = Date.now();
+  if (V.follow || oldN === 0) { V.start = Math.max(0, S.bars.length - V.count); }
+}
+
+async function tick(){
+  try {
+    const s = await getJ('/api/session');
+    S.session = s; S.lastOk = Date.now();
+    const sig = (s.updated_utc || '') + '|' + ((s._meta || {}).mtime_utc || '');
+    if (sig !== S.lastSig || Date.now() - S.lastFull > 15000) { await loadAll(); S.lastSig = sig; }
+    S.conn = true;
+    if (S.first) { S.first = false; firstView(); }
+  } catch (e) {
+    S.conn = false;
+  }
+  renderAll();
+}
+
+// Expiry is judged on the replay (simulated) clock when the session has one:
+// session.py writes expires_utc on that clock, not on wall time.
+function clockNow(s){ const r = s && s.replay_clock_utc ? Date.parse(s.replay_clock_utc) : NaN; return isFinite(r) ? r : Date.now(); }
+function clockLabel(s){ return s && s.replay_clock_utc && isFinite(Date.parse(s.replay_clock_utc)) ? ' on the replay clock' : ''; }
+function firstView(){
+  const s = S.session || {};
+  const c = s.controls || {};
+  const expired = s.expires_utc && Date.parse(s.expires_utc) < clockNow(s);
+  if (c.stopped || expired) setView('review');
+}
+
+// ---------------- helpers on data ----------------
+function idxAtOrBefore(t){ const b = S.bars; let lo = 0, hi = b.length - 1, ans = -1;
+  while (lo <= hi) { const m = (lo + hi) >> 1; if (b[m].t <= t) { ans = m; lo = m + 1; } else hi = m - 1; } return ans; }
+function idxOpenAtOrBefore(t){ const b = S.bars; let lo = 0, hi = b.length - 1, ans = -1;
+  while (lo <= hi) { const m = (lo + hi) >> 1; if (b[m].to <= t) { ans = m; lo = m + 1; } else hi = m - 1; } return ans; }
+function decById(id){ return S.decisions.find(d => d.decision_id === id) || null; }
+function selDecision(){ return S.sel ? decById(S.sel) : null; }
+function ledgerFor(id){ return S.ledger.filter(r => r.decision_id === id || r.exit_decision_id === id); }
+function trailFor(id){
+  const ids = new Set([id]);
+  for (const r of ledgerFor(id)) for (const k of ['intent_id','order_id','exit_order_id','exit_intent_id']) if (r[k]) ids.add(r[k]);
+  let out = S.audit.filter(e => ids.has(e.decision_id) || ids.has(e.intent_id) || ids.has(e.client_id) || ids.has(e.order_id));
+  if (!out.length) out = S.audit.filter(e => JSON.stringify(e).indexOf(id) >= 0);
+  return out;
+}
+
+// ---------------- chart ----------------
+function clampView(){ const n = S.bars.length; V.count = Math.max(10, Math.min(Math.max(n, 10), Math.round(V.count)));
+  V.start = Math.max(0, Math.min(Math.max(0, n - V.count), Math.round(V.start))); }
+
+function niceStep(raw){ const p = Math.pow(10, Math.floor(Math.log10(raw))); const f = raw / p; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p; }
+
+function draw(){
+  const c = $('#cv'), wrap = $('#cvwrap'); const dpr = window.devicePixelRatio || 1;
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  if (c.width !== Math.round(W*dpr) || c.height !== Math.round(H*dpr)) { c.width = Math.round(W*dpr); c.height = Math.round(H*dpr); }
+  const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+  const cs = getComputedStyle(document.documentElement); const col = n => cs.getPropertyValue(n).trim();
+  const bars = S.bars, n = bars.length; V.markers = [];
+  g.font = '11px -apple-system,system-ui,sans-serif';
+  if (!n) { g.fillStyle = col('--muted'); g.font = '14px system-ui'; g.fillText('No replay bars yet: state_dir/bars.jsonl is missing or empty.', 20, 40); return; }
+  clampView();
+  const padL = 6, padR = 74, padT = 8, padB = 22;
+  const volH = Math.max(28, Math.round((H - padT - padB) * 0.15));
+  const pw = W - padL - padR, ph = H - padT - padB - volH - 8;
+  const bw = pw / V.count;
+  const sd = selDecision(); const masked = !!(sd && !S.revealed[sd.decision_id]);
+  const decIdx = sd ? idxAtOrBefore(sd.t) : -1;
+  const cut = masked ? decIdx : n - 1;
+  const i0 = V.start, i1 = Math.min(n - 1, V.start + V.count - 1);
+  let lo = Infinity, hi = -Infinity, vmax = 1;
+  for (let i = i0; i <= i1 && i <= cut; i++) { const b = bars[i]; lo = Math.min(lo, b.low); hi = Math.max(hi, b.high); vmax = Math.max(vmax, b.volume || 0); }
+  const lines = [];
+  if (sd) {
+    const spec = [['trigger','--trig','TRIGGER'],['intended_entry','--entry','ENTRY'],['intended_exit','--exitc','EXIT'],['invalidation','--inval','INVALID']];
+    for (const [k, cv, lab] of spec) { const v = num(sd[k]); if (v !== null) lines.push({v, c: col(cv), lab, from: decIdx, dash: [6,4]}); }
+  } else {
+    const s = S.session || {}; const ex = s.exposure || {};
+    const q = num(ex.position_qty), ap = num(ex.avg_price);
+    if (q && ap !== null) lines.push({v: ap, c: col('--pos'), lab: 'POSITION ' + (q > 0 ? 'LONG ' : 'SHORT ') + Math.abs(q) + ' avg', from: -1, dash: [2,3]});
+    for (const o of (s.protective_orders || [])) { const v = num(o.stop != null ? o.stop : (o.price != null ? o.price : o.limit)); if (v !== null) lines.push({v, c: col('--inval'), lab: 'PROTECTIVE ' + (o.stop != null ? 'STOP' : 'EXIT') + ' (' + (o.status || '?') + ')', from: -1, dash: [8,4]}); }
+  }
+  for (const L of lines) { lo = Math.min(lo, L.v); hi = Math.max(hi, L.v); }
+  if (!isFinite(lo)) { lo = 0; hi = 1; }
+  const pad = (hi - lo) * 0.08 || 0.5; lo -= pad; hi += pad;
+  const X = i => padL + (i - V.start + 0.5) * bw;
+  const Y = p => padT + (hi - p) / (hi - lo) * ph;
+  V.geo = {padL, padR, padT, padB, pw, ph, bw, W, H, lo, hi};
+
+  // watermark: source of this chart
+  g.save(); g.fillStyle = 'rgba(255,255,255,0.045)'; g.textAlign = 'center';
+  g.font = '700 ' + Math.max(14, Math.min(34, pw / 22)) + 'px system-ui';
+  const lab = ((S.session || {}).data_label || (S.manifest || {}).label || 'SYNTHETIC BARS');
+  g.fillText('DESK REPLAY · ' + lab + ' · NOT TRADINGVIEW', padL + pw / 2, padT + ph / 2);
+  g.restore();
+
+  // grid + price axis
+  const step = niceStep((hi - lo) / 6); const dec = step < 0.1 ? 3 : step < 1 ? 2 : 1;
+  g.strokeStyle = col('--grid'); g.lineWidth = 1; g.fillStyle = col('--muted'); g.textAlign = 'left';
+  for (let p = Math.ceil(lo / step) * step; p <= hi; p += step) {
+    const y = Math.round(Y(p)) + 0.5; g.beginPath(); g.moveTo(padL, y); g.lineTo(padL + pw, y); g.stroke();
+    g.fillText(p.toFixed(dec), padL + pw + 6, y + 4);
+  }
+  // time axis
+  const minPx = 78; const every = Math.max(1, Math.ceil(minPx / bw)); let lastDay = '';
+  g.textAlign = 'center';
+  for (let i = i0; i <= i1; i++) {
+    const b = bars[i]; const day = String(b.ts_close).slice(5, 10);
+    if ((i - i0) % every === 0 && X(i) > padL + 34) {
+      const x = X(i); g.strokeStyle = col('--grid'); g.beginPath(); g.moveTo(Math.round(x)+.5, padT); g.lineTo(Math.round(x)+.5, padT + ph); g.stroke();
+      g.fillStyle = col('--muted'); g.fillText((day !== lastDay ? day + ' ' : '') + String(b.ts_close).slice(11, 16), x, H - 6); lastDay = day;
+    }
+  }
+
+  // candles + volume
+  const vTop = padT + ph + 8;
+  for (let i = i0; i <= i1; i++) {
+    if (i > cut) break;
+    const b = bars[i]; const x = X(i); const up = b.close >= b.open; g.strokeStyle = g.fillStyle = up ? col('--up') : col('--down');
+    g.beginPath(); g.moveTo(Math.round(x) + .5, Y(b.high)); g.lineTo(Math.round(x) + .5, Y(b.low)); g.stroke();
+    if (bw >= 3) { const bwid = Math.max(1, bw * 0.66); const y1 = Y(Math.max(b.open, b.close)), y2 = Y(Math.min(b.open, b.close));
+      g.fillRect(x - bwid / 2, y1, bwid, Math.max(1, y2 - y1)); }
+    const vh = (b.volume || 0) / vmax * volH; g.globalAlpha = 0.45; g.fillRect(x - Math.max(1, bw * 0.66) / 2, vTop + volH - vh, Math.max(1, bw * 0.66), vh); g.globalAlpha = 1;
+    if (!b.volume) { g.fillStyle = col('--bad'); g.fillText('0', x, vTop + volH - 2); }
+  }
+  g.fillStyle = col('--muted'); g.textAlign = 'left'; g.fillText('volume', padL + 2, vTop + 10);
+
+  // hidden-future region
+  if (masked && decIdx >= i0 - 1) {
+    const xs = Math.max(padL, X(decIdx) + bw / 2);
+    if (xs < padL + pw) {
+      g.save(); g.fillStyle = 'rgba(20,24,30,0.85)'; g.fillRect(xs, padT, padL + pw - xs, ph + volH + 8);
+      g.strokeStyle = col('--hatch'); g.lineWidth = 1; g.beginPath();
+      for (let k = xs - ph; k < padL + pw; k += 12) { g.moveTo(k, padT + ph + volH + 8); g.lineTo(k + ph + volH, padT); }
+      g.save(); g.beginPath(); g.rect(xs, padT, padL + pw - xs, ph + volH + 8); g.clip();
+      g.beginPath(); for (let k = xs - ph - volH; k < padL + pw; k += 14) { g.moveTo(k, padT + ph + volH + 8); g.lineTo(k + ph + volH + 8, padT); } g.stroke(); g.restore();
+      g.fillStyle = '#cbd5df'; g.textAlign = 'center'; g.font = '600 12px system-ui';
+      const mx = xs + (padL + pw - xs) / 2;
+      if (padL + pw - xs > 150) { g.fillText('Later bars hidden', mx, padT + ph / 2 - 8); g.font = '11px system-ui';
+        g.fillText('Knowable view at ' + tsShort(sd.ts_knowable), mx, padT + ph / 2 + 8); g.fillText('Press "Reveal outcome"', mx, padT + ph / 2 + 22); }
+      g.restore();
+    }
+  }
+
+  // decision vertical line
+  if (sd && decIdx >= i0 && decIdx <= i1) {
+    const x = Math.round(X(decIdx)) + .5; g.save(); g.setLineDash([3, 3]); g.strokeStyle = '#7fb6ff'; g.beginPath(); g.moveTo(x, padT); g.lineTo(x, padT + ph); g.stroke(); g.restore();
+    g.fillStyle = '#7fb6ff'; g.textAlign = 'left'; g.fillText('decision knowable ' + String(sd.ts_knowable).slice(11, 16) + 'Z', Math.min(x + 4, padL + pw - 150), padT + 12);
+  }
+
+  // horizontal lines (setup or position/protection)
+  for (const L of lines) {
+    const y = Math.round(Y(L.v)) + .5; const xs = L.from >= 0 ? Math.max(padL, X(L.from) - bw / 2) : padL;
+    g.save(); g.setLineDash(L.dash); g.strokeStyle = L.c; g.lineWidth = 1.5; g.beginPath(); g.moveTo(xs, y); g.lineTo(padL + pw, y); g.stroke(); g.restore();
+    g.fillStyle = L.c; g.fillRect(padL + pw + 1, y - 8, padR - 2, 16); g.fillStyle = '#111'; g.textAlign = 'left'; g.font = '700 10.5px system-ui';
+    g.fillText(fmt(L.v, 2), padL + pw + 6, y + 4);
+    g.fillStyle = L.c; g.textAlign = 'right'; g.font = '700 10px system-ui'; g.fillText(L.lab, padL + pw - 4, y - 4);
+    g.font = '11px -apple-system,system-ui,sans-serif';
+  }
+
+  // last price tag
+  if (!masked) { const b = bars[n - 1]; const y = Y(b.close); if (y > padT && y < padT + ph && !lines.length) {
+    g.fillStyle = '#3b4652'; g.fillRect(padL + pw + 1, y - 8, padR - 2, 16); g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(fmt(b.close, 2), padL + pw + 6, y + 4); } }
+
+  // mock fills
+  for (const r of S.ledger) for (const f of (r.fills || [])) {
+    const t = Date.parse(f.ts); if (!isFinite(t)) continue; const i = idxOpenAtOrBefore(t);
+    if (i < i0 || i > i1 || i > cut) continue; const p = num(f.price); if (p === null) continue;
+    const x = X(i), y = Y(p); g.strokeStyle = '#ffb347'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - Math.max(5, bw * .6), y); g.lineTo(x + Math.max(5, bw * .6), y); g.stroke(); g.lineWidth = 1;
+    if (bw > 16) { g.fillStyle = '#ffb347'; g.textAlign = 'left'; g.font = '700 9px system-ui'; g.fillText('MOCK FILL', x + Math.max(6, bw * .6) + 2, y + 3); g.font = '11px -apple-system,system-ui,sans-serif'; }
+  }
+
+  // markers
+  const stack = {};
+  for (const d of S.decisions) {
+    if (!MARK[d.action]) continue; const i = idxAtOrBefore(d.t); if (i < i0 || i > i1) continue; if (masked && i > cut) continue;
+    const b = bars[i]; const x = X(i); const k = stack[i] = (stack[i] || 0) + 1; const r = Math.max(5, Math.min(8, bw * 0.45)); let y;
+    g.lineWidth = 1.5;
+    if (d.action === 'enter_long') { y = Y(b.low) + 10 + r + (k - 1) * (2 * r + 3); g.fillStyle = col('--up'); g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y + r); g.lineTo(x - r, y + r); g.closePath(); g.fill(); }
+    else if (d.action === 'enter_short') { y = Y(b.high) - 10 - r - (k - 1) * (2 * r + 3); g.fillStyle = col('--down'); g.beginPath(); g.moveTo(x, y + r); g.lineTo(x + r, y - r); g.lineTo(x - r, y - r); g.closePath(); g.fill(); }
+    else if (d.action === 'exit') { y = Y(b.high) - 10 - r - (k - 1) * (2 * r + 3); g.fillStyle = col('--entry'); g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y); g.lineTo(x, y + r); g.lineTo(x - r, y); g.closePath(); g.fill(); }
+    else { y = Y(b.low) + 10 + r + (k - 1) * (2 * r + 3); g.strokeStyle = col('--pass'); g.beginPath(); g.arc(x, y, r - 1, 0, Math.PI * 2); g.stroke(); }
+    if (S.sel === d.decision_id) { g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, r + 4, 0, Math.PI * 2); g.stroke(); }
+    g.lineWidth = 1;
+    V.markers.push({x, y, r: r + 5, id: d.decision_id});
+  }
+
+  // crosshair
+  if (V.hover >= i0 && V.hover <= i1 && !V.drag) {
+    const x = Math.round(X(V.hover)) + .5; g.strokeStyle = 'rgba(200,210,220,0.25)'; g.beginPath(); g.moveTo(x, padT); g.lineTo(x, padT + ph + volH + 8); g.stroke();
+  }
+}
+
+function setOhlc(){
+  const b = S.bars[V.hover];
+  const sd = selDecision(); const masked = sd && !S.revealed[sd.decision_id];
+  if (!b || (masked && V.hover > idxAtOrBefore(sd.t))) { $('#ohlc').textContent = ''; return; }
+  $('#ohlc').textContent = tsShort(b.ts_close) + '  O ' + fmt(b.open) + '  H ' + fmt(b.high) + '  L ' + fmt(b.low) + '  C ' + fmt(b.close) + '  V ' + (b.volume == null ? '-' : b.volume);
+}
+
+function barAt(px){ const g = V.geo; if (!g) return -1; return Math.floor((px - g.padL) / g.bw) + V.start; }
+
+(function wireChart(){
+  const c = $('#cv');
+  c.addEventListener('wheel', e => { e.preventDefault(); const r = c.getBoundingClientRect(); const anchor = barAt(e.clientX - r.left);
+    const f = e.deltaY > 0 ? 1.15 : 1 / 1.15; const old = V.count; V.count = V.count * f; clampView();
+    const g = V.geo; if (g && anchor >= 0) { const frac = (anchor - V.start) / old; V.start = anchor - frac * V.count; }
+    V.follow = (V.start + V.count >= S.bars.length); clampView(); draw(); }, {passive: false});
+  c.addEventListener('pointerdown', e => { c.setPointerCapture(e.pointerId); V.drag = {x: e.clientX, y: e.clientY, start: V.start, moved: false}; });
+  c.addEventListener('pointermove', e => { const r = c.getBoundingClientRect();
+    if (V.drag) { const dx = e.clientX - V.drag.x; if (Math.abs(dx) > 3) V.drag.moved = true;
+      if (V.drag.moved && V.geo) { V.start = V.drag.start - dx / V.geo.bw; V.follow = false; clampView(); draw(); } return; }
+    const i = barAt(e.clientX - r.left); const near = V.markers.some(m => Math.hypot(m.x - (e.clientX - r.left), m.y - (e.clientY - r.top)) <= m.r);
+    c.style.cursor = near ? 'pointer' : 'crosshair';
+    if (i !== V.hover) { V.hover = i; setOhlc(); draw(); } });
+  c.addEventListener('pointerup', e => { const d = V.drag; V.drag = null; if (!d || d.moved) return;
+    const r = c.getBoundingClientRect(); const px = e.clientX - r.left, py = e.clientY - r.top; let best = null, bd = 1e9;
+    for (const m of V.markers) { const dd = Math.hypot(m.x - px, m.y - py); if (dd <= m.r && dd < bd) { bd = dd; best = m; } }
+    if (best) select(best.id, true); });
+  c.addEventListener('pointerleave', () => { V.hover = -1; setOhlc(); draw(); });
+  c.addEventListener('dblclick', () => { V.count = S.bars.length; V.start = 0; clampView(); draw(); });
+  $('#zIn').onclick = () => { const mid = V.start + V.count / 2; V.count /= 1.4; V.start = mid - V.count / 2; clampView(); draw(); };
+  $('#zOut').onclick = () => { const mid = V.start + V.count / 2; V.count *= 1.4; V.start = mid - V.count / 2; clampView(); draw(); };
+  $('#zFit').onclick = () => { V.count = S.bars.length; V.start = 0; V.follow = true; clampView(); draw(); };
+  $('#zLast').onclick = () => { V.follow = true; V.start = S.bars.length - V.count; S.sel = null; clampView(); renderAll(); };
+  if (window.ResizeObserver) new ResizeObserver(() => draw()).observe($('#cvwrap')); else window.addEventListener('resize', draw);
+})();
+
+function select(id, toDecision){
+  S.sel = id; const d = decById(id);
+  if (d) { const i = idxAtOrBefore(d.t); if (i >= 0 && (i < V.start + 3 || i > V.start + V.count * 0.7)) { V.start = i - Math.floor(V.count * 0.6); } V.follow = false; clampView(); }
+  if (toDecision) setView('decision'); else renderAll();
+}
+
+// ---------------- views ----------------
+function setView(v){
+  if (S.view !== v) { const a = document.querySelector('aside'); if (a) a.scrollTop = 0; }
+  S.view = v;
+  for (const b of document.querySelectorAll('.tabs button')) b.classList.toggle('on', b.dataset.view === v);
+  $('#viewChart').hidden = v !== 'chart'; $('#viewDecision').hidden = v !== 'decision'; $('#viewReview').hidden = v !== 'review';
+  renderAll();
+}
+for (const b of document.querySelectorAll('.tabs button')) b.onclick = () => setView(b.dataset.view);
+
+function renderHeader(){
+  const s = S.session || {}; const m = s._meta || {};
+  $('#mode').textContent = s.mode || (m.missing ? 'NO SESSION YET (runner has not written session.json)' : 'REPLAY (OFFLINE, SIMULATED)');
+  $('#datalabel').textContent = s.data_label || (S.manifest || {}).label || 'SYNTHETIC BARS';
+  $('#symstrat').textContent = (s.symbol || '-') + ' · ' + (s.strategy || '-');
+  const tvSym = S.tvRef;  // a real reference symbol; the desk's synthetic symbol is never sent to TradingView
+  $('#tvlink').href = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(tvSym);
+  $('#tvlink').title = 'Opens TradingView (' + tvSym + ') in your own browser. REFERENCE ONLY, real market, not the desk\'s data; the desk never reads it.';
+  $('#tvRefName').textContent = tvSym; $('#tvRefName2').textContent = tvSym;
+  // expiry
+  const ex = s.expires_utc ? Date.parse(s.expires_utc) : NaN; const ee = $('#expiry');
+  if (isFinite(ex)) { const left = (ex - clockNow(s)) / 1000;
+    ee.textContent = (left > 0 ? 'expires ' + String(s.expires_utc).slice(11, 16) + 'Z (in ' + ago(left) + ')' : 'SESSION EXPIRED ' + String(s.expires_utc).slice(11, 16) + 'Z') + clockLabel(s);
+    ee.style.color = left > 0 ? (left < 900 ? 'var(--warn)' : '') : 'var(--bad)'; } else ee.textContent = 'expiry not set';
+  // badges: the session's own badge strings first, derived only as a fallback
+  const c = s.controls || {}; const ph = phaseOf(s);
+  const bc = $('#brokerChip');
+  bc.className = 'chip ok'; bc.textContent = (s.external_broker_badge || 'EXTERNAL BROKER: NONE (offline in-process fake broker)') + (S.conn === false ? ' (last known)' : '');
+  const ac = $('#armChip');
+  ac.textContent = (s.badge || ('SIMULATION: ' + (ph === 'STOPPED' ? 'STOPPED' : ph === 'PAUSED' ? 'PAUSED' : ph === 'ARMED' ? 'ARMED' : 'DISARMED'))) + (S.conn === false ? ' (last known)' : '');
+  ac.className = 'chip ' + (ph === 'STOPPED' ? 'bad' : ph === 'PAUSED' ? 'warn' : ph === 'ARMED' ? 'ok' : 'unk');
+  // risk line (TEST VALUES; Matthew sets real size and limits)
+  const L = s.limits || {}; const usd = (v, d) => { const n = num(v); return n === null ? '-' : '$' + n.toLocaleString('en-US', {minimumFractionDigits: d, maximumFractionDigits: d}); };
+  setH($('#risk'), 'Max loss per trade ' + usd(L.max_loss_per_trade != null ? L.max_loss_per_trade : 10, 2) + ' (TEST VALUE) &middot; Notional cap ' + usd(L.per_trade_notional != null ? L.per_trade_notional : 2000, 0) + ' (TEST VALUE) &middot; Daily loss ' + usd(L.daily_loss != null ? L.daily_loss : 30, 2) + ' (TEST VALUE)');
+  // flow bar: buttons enable by phase
+  const expired = isFinite(ex) && ex < clockNow(s);
+  renderFlow(s, ph, expired);
+  // banners
+  const disc = $('#disc');
+  if (S.conn === false) { disc.hidden = false; document.body.classList.add('stale-vals');
+    disc.textContent = 'DISCONNECTED: showing last known state' + (S.lastOk ? ' (last contact ' + ago((Date.now() - S.lastOk) / 1000) + ' ago, ' + new Date(S.lastOk).toISOString().slice(11, 19) + 'Z)' : '') + '. Controls are off until the desk server answers.'; }
+  else { disc.hidden = true; document.body.classList.remove('stale-vals'); }
+  const st = $('#stale');
+  if (S.conn && m.missing) { st.hidden = false; st.textContent = 'No session.json in the state directory yet. The session runner has not started; the chart shows whatever bars exist.'; }
+  else if (S.conn && num(m.age_s) !== null && m.age_s > 30 && !c.stopped && !expired) { st.hidden = false; st.textContent = 'Connected to the desk server, but the session runner has not written state for ' + ago(m.age_s) + '. Figures are as of ' + tsFull(m.mtime_utc) + '.'; }
+  else st.hidden = true;
+}
+
+// phase: the session's own field first; derived from older fields only as a fallback
+function phaseOf(s){
+  if (!S.session || (s._meta || {}).missing) return 'NONE';
+  if (s.phase) return String(s.phase).toUpperCase();
+  const c = s.controls || {};
+  return c.stopped ? 'STOPPED' : c.paused ? 'PAUSED' : s.armed ? 'ARMED' : 'PRE_SESSION';
+}
+function preflightOk(s){ const pf = Array.isArray(s.preflight) ? s.preflight : []; return pf.length > 0 && pf.every(x => x && x.ok === true); }
+function renderFlow(s, ph, expired){
+  const off = S.conn === false || ph === 'NONE';
+  const more = num(s.bars_total) === null || num(s.bars_done) === null || num(s.bars_done) < num(s.bars_total);
+  const flat = !num((s.exposure || {}).position_qty);
+  const run = ph === 'ARMED' || ph === 'PAUSED';
+  const en = {arm: ph === 'PRE_SESSION' && preflightOk(s) && !expired, step1: run && more, step10: run && more, runend: run && more, play: run && more, stopplay: run,
+    pause: ph === 'ARMED', resume: ph === 'PAUSED', stop: run || ph === 'PRE_SESSION', clear: ph === 'STOPPED', close: ph === 'CLOSED' || ((run || ph === 'STOPPED') && flat)};
+  const cur = ph === 'PRE_SESSION' ? (preflightOk(s) ? 'arm' : 'review') : ph === 'ARMED' ? 'play' : ph === 'PAUSED' ? 'resume' : ph === 'STOPPED' || ph === 'CLOSED' ? 'close' : 'review';
+  for (const b of document.querySelectorAll('#flow button')) { const f = b.dataset.f; const na = !routeOk(FLOW_ROUTE[f]);
+    b.disabled = f === 'review' ? false : (off || na || !en[f]); b.classList.toggle('cur', f === cur);
+    b.classList.toggle('na', na); if (na && !b.dataset.t0) { b.dataset.t0 = b.title; b.title = b.title + ' (not available: this server has no ' + FLOW_ROUTE[f] + ' route)'; } }
+  $('#btnPause2').disabled = off || !en.pause || !routeOk('/api/pause'); $('#btnStop2').disabled = off || !en.stop || !routeOk('/api/stop_close');
+  $('#schedTgl').disabled = off || !routeOk('/api/schedule');
+}
+function openPre(){
+  const s = S.session || {}; const pf = Array.isArray(s.preflight) ? s.preflight : []; const ok = preflightOk(s);
+  $('#preBody').innerHTML = (pf.length ? '<table class="chk">' + pf.map(x => '<tr' + (x.ok ? '' : ' class="failrow"') + '><td class="' + (x.ok ? 'p' : 'f') + '">' + (x.ok ? '&#10003; OK' : '&#10007; FAIL') + '</td><td><b>' + esc(x.check) + '</b></td><td>' + esc(x.detail || '') + '</td></tr>').join('') + '</table>' : '<div class="hint">No preflight checks reported yet.</div>') +
+    '<div class="hint" style="margin-top:6px">' + (ok ? 'All checks pass.' : 'Arm stays off until every check passes.') + ' Phase: ' + esc(phaseOf(s)) + '. Size and limits are TEST VALUES. ' + (S.conn === false ? '<b class="neg">Disconnected: last known checks.</b>' : '') + '</div>';
+  $('#preArm').disabled = !(ok && phaseOf(s) === 'PRE_SESSION' && S.conn !== false);
+  const d = $('#dlgPre'); if (d.showModal) d.showModal();
+}
+
+function renderChartView(){
+  const s = S.session || {}; const p = s.pnl || {}; const ex = s.exposure || {}; const c = s.controls || {};
+  $('#pRe').innerHTML = money(p.realized); $('#pUn').innerHTML = money(p.unrealized);
+  $('#pFe').innerHTML = p.fees == null ? '-' : '<span class="neg">' + fmt(-Math.abs(num(p.fees) || 0)) + '</span>'; $('#pAc').innerHTML = money(p.after_cost);
+  const q = num(ex.position_qty);
+  $('#expo').innerHTML = '<b>Position</b><span>' + (q === null ? '-' : (q === 0 ? 'FLAT' : (q > 0 ? 'LONG ' : 'SHORT ') + Math.abs(q))) + (q ? ' @ ' + fmt(ex.avg_price, 4) : '') + '</span>' +
+    '<b>Gross incl. working</b><span>' + fmt(ex.gross_including_working) + '</span>' +
+    '<b>Limits</b><span>' + esc(limitsText(s.limits)) + '</span>';
+  $('#expConf').textContent = S.conn === false ? 'last known, unconfirmed' : 'per in-process fake broker (simulated)';
+  const prot = s.protective_orders || [];
+  $('#protect').innerHTML = '<b>Protective orders:</b> ' + (prot.length ? prot.map(o => orderText(o)).join('<br>') : (q ? '<span class="neg">NONE while a position is open</span>' : 'none (flat)'));
+  const wk = (ex.working_orders || []).filter(o => !o.protective);
+  $('#working').innerHTML = '<b>Working entry orders:</b> ' + (wk.length ? wk.map(o => orderText(o)).join('<br>') : 'none');
+  // controls
+  const lp = s.live_path || {};
+  const ph = phaseOf(s); const rate = num(s.play_rate_bars_per_sec);
+  setH($('#ctrlState'), '<b>Phase</b><span><b>' + esc(ph) + '</b></span><b>Mode</b><span>' + esc(s.mode || '-') + '</span><b>Session</b><span>' + esc(s.session_id || '-') + '</span>' +
+    '<b>Bars replayed</b><span>' + (num(s.bars_done) === null ? '-' : esc(s.bars_done) + ' of ' + esc(s.bars_total == null ? '?' : s.bars_total)) + '</span>' +
+    '<b>Play rate</b><span>' + (rate === null ? '-' : fmt(rate, 1) + ' bars/s (simulated clock)') + '</span>' +
+    '<b>Armed</b><span>' + (s.armed ? 'yes (replay)' : 'no') + '</span>' +
+    '<b>Paused</b><span>' + (c.paused ? '<span style="color:var(--warn)">yes</span>' : 'no') + '</span>' +
+    '<b>Stopped</b><span>' + (c.stopped ? '<span class="neg">yes</span>' : 'no') + '</span>' +
+    '<b>Flat confirmed</b><span>' + (c.flat_confirmed ? '<span class="pos">yes, broker positions = 0</span>' : (c.stopped ? '<span class="neg">NOT YET</span>' : 'n/a')) + '</span>' +
+    '<b>Replay clock</b><span>' + tsFull(s.replay_clock_utc || (S.bars.length ? S.bars[S.bars.length - 1].ts_close : '')) + '</span>' +
+    '<b>State written</b><span>' + tsFull(s.updated_utc) + '</span>' +
+    '<b>Controller</b><span>' + ((s._controller_attached || s._manager_attached) ? 'attached: buttons act now' : 'not attached: buttons are recorded for the runner') + '</span>' +
+    (s.entry_block_reason ? '<b>Entries blocked</b><span>' + esc(s.entry_block_reason) + '</span>' : ''));
+  $('#btnArm').disabled = S.conn === false || ph !== 'PRE_SESSION' || !preflightOk(s);
+  // offline schedule (simulated clock); never clears a Stop
+  const sc = s.schedule || {}; const tg = $('#schedTgl');
+  if (document.activeElement !== tg) tg.checked = !!sc.enabled;
+  tg.disabled = S.conn === false || ph === 'NONE' || ph === 'CLOSED';
+  setH($('#schedInfo'), '<b>State</b><span>' + (sc.enabled ? 'ON' : 'OFF') + '</span><b>Clock</b><span>' + esc(sc.clock || 'SIMULATED') + '</span>' +
+    '<b>Next open</b><span>' + esc(tsFull(sc.next_open_utc)) + '</span><b>Next close</b><span>' + esc(tsFull(sc.next_close_utc)) + '</span>' +
+    (sc.calendar ? '<b>Calendar</b><span>' + esc(typeof sc.calendar === 'object' ? JSON.stringify(sc.calendar) : sc.calendar) + '</span>' : '') +
+    (sc.note ? '<b>Note</b><span>' + esc(sc.note) + '</span>' : ''));
+  $('#livePath').innerHTML = '<b>Live path: </b><span class="neg">DISABLED</span> ' + esc(lp.reason || 'No venue selected, no personal limits, no explicit enable.');
+  const und = s.undecided || [];
+  $('#undecided').textContent = und.length ? 'Undecided (yours to set): ' + und.join('; ') : '';
+  // current decision
+  const last = S.decisions.length ? S.decisions[S.decisions.length - 1] : null;
+  const lastAct = S.decisions.slice().reverse().find(d => d.action !== 'hold');
+  $('#nowTs').textContent = last ? tsShort(last.ts_knowable) : '';
+  $('#nowDec').innerHTML = last ? decLine(last, true) + (lastAct && lastAct !== last ? '<div class="small muted" style="margin-top:6px">Last action: ' + decLine(lastAct, false) + '</div>' : '') : 'No decisions yet.';
+  for (const el of document.querySelectorAll('#nowDec [data-id]')) el.onclick = () => select(el.dataset.id, true);
+  // feed
+  const rows = S.decisions.filter(d => S.showHolds || d.action !== 'hold').slice(-200).reverse();
+  setH($('#feed'), rows.length ? rows.map(d => '<li data-id="' + esc(d.decision_id) + '"' + (S.sel === d.decision_id ? ' class="sel"' : '') + '><span class="t">' + esc(tsShort(d.ts_knowable)) + '</span> ' + pill(d.action) + ' <b>' + esc(d.reason_code || '') + '</b><br>' + esc(d.reason_text || '') + '</li>').join('') : '<li class="muted">No actions or passes yet.</li>');
+  for (const li of document.querySelectorAll('#feed li[data-id]')) li.onclick = () => select(li.dataset.id, true);
+}
+
+function limitsText(l){ if (!l) return '-'; const parts = []; for (const k of Object.keys(l)) if (k !== 'label') parts.push(k.replace(/_/g, ' ') + ' ' + l[k]); return parts.join(', ') + (l.label ? ' (' + l.label + ')' : ''); }
+function orderText(o){ return esc([o.side, o.qty, o.type, o.stop != null ? 'stop ' + o.stop : '', o.limit != null ? 'limit ' + o.limit : '', o.status || '', o.order_id || o.client_id || ''].filter(Boolean).join(' ')) + (o.simulated ? ' <span class="muted">(sim)</span>' : ''); }
+function decLine(d, big){ return '<span data-id="' + esc(d.decision_id) + '" style="cursor:pointer">' + pill(d.action) + ' <b>' + esc(d.reason_code || '') + '</b> ' + (big ? '<div>' + esc(d.reason_text || '') + '</div>' : '<span class="muted">' + esc(tsShort(d.ts_knowable)) + '</span>') + '</span>'; }
+
+function summarize(e){
+  const skip = {ts:1, kind:1, simulated:1, mock:1, decision_id:1};
+  return Object.keys(e).filter(k => !skip[k] && e[k] !== null && e[k] !== '' && typeof e[k] !== 'object').map(k => '<code>' + esc(k) + '</code> ' + esc(e[k])).join(' &middot; ');
+}
+
+function renderDecisionView(){
+  const d = selDecision(); const el = $('#decCard');
+  if (!d) { setH(el, '<div class="hint">Click a marker on the chart (&#9650; &#9660; &#9670; &#9675;) or a row in the reasons feed. What was knowable at decision time shows first; the outcome stays hidden until you press Reveal outcome.</div>'); return; }
+  const marks = S.decisions.filter(x => MARK[x.action]); const k = marks.findIndex(x => x.decision_id === d.decision_id);
+  const rev = S.revealed[d.decision_id];
+  const lines = [['trigger','--trig','Trigger'],['intended_entry','--entry','Intended entry'],['intended_exit','--exitc','Intended exit'],['invalidation','--inval','Invalidation']];
+  const allTrail = trailFor(d.decision_id); const kn = Date.parse(d.ts_knowable);
+  const trail = rev ? allTrail : allTrail.filter(e => isFinite(kn) && Date.parse(e.ts) <= kn);
+  const laterN = allTrail.length - trail.length; const trades = rev ? ledgerFor(d.decision_id) : [];
+  let h = '<div class="row"><button id="dPrev"' + (k <= 0 ? ' disabled' : '') + '>&larr; prev</button><button id="dNext"' + (k < 0 || k >= marks.length - 1 ? ' disabled' : '') + '>next &rarr;</button>' +
+    '<span class="spacer"></span><span class="pill" style="background:#12304f;color:#a9d4ff">KNOWABLE AT ' + esc(tsShort(d.ts_knowable)) + '</span></div>';
+  h += '<h2 style="margin:8px 0 2px;font-size:17px">' + pill(d.action) + ' ' + esc(d.reason_code || '') + ' <span class="muted small">' + esc(d.symbol || '') + ' · ' + esc(d.strategy || '') + ' · qty ' + esc(d.qty == null ? '-' : d.qty) + '</span></h2>';
+  h += '<div class="small muted">' + esc(d.decision_id) + (d.action === 'pass' ? ' · a pass places no order' : '') + '</div>';
+  h += '<div class="sec s1"><h4>1. Setup on the chart</h4><table>' + lines.map(([k2, c, lab]) => '<tr><td><span class="sw" style="border-color:var(' + c + ')"></span>' + lab + '</td><td>' + fmt(d[k2], 4) + '</td></tr>').join('') + '</table>' +
+    '<div class="hint">Lines start at the decision bar. Bars after ' + esc(tsShort(d.ts_knowable)) + ' are ' + (rev ? 'shown (outcome revealed).' : 'hidden on the chart.') + '</div></div>';
+  h += '<div class="sec s2"><h4>2. Case for and against</h4><div class="kv"><b>Reason</b><span>' + esc(d.reason_text || '-') + '</span><b>For</b><span>' + esc(d.case_for || '-') + '</span><b>Against</b><span>' + esc(d.case_against || '-') + '</span>' +
+    '<b>Est. cost</b><span>' + (num(d.est_cost) === null ? '-' : fmt(d.est_cost) + ' (round trip, simulated)') + '</span><b>Pass condition</b><span>' + esc(d.pass_condition || '-') + '</span></div>' +
+    '<div style="margin-top:6px"><b class="small">Refusal checks</b> <span class="small muted">(what the desk checked before acting; a failed check is a reason to refuse)</span>' + chkTable(d.refusal_checks) + '</div></div>';
+  h += '<div class="sec s3"><h4>3. Trail: knew &rarr; requested &rarr; acknowledged &rarr; filled</h4>';
+  h += trail.length ? '<table class="trail">' + trail.map(e => '<tr><td>' + esc(tsFull(e.ts)) + '</td><td>' + pill(e.kind || '?') + (e.kind === 'filled' || e.mock ? ' <span class="pill mock">MOCK FILL</span>' : '') + '<div class="small">' + summarize(e) + '</div></td></tr>').join('') + '</table>' : '<div class="hint">No audit entries reference this decision' + (d.action === 'pass' ? ' beyond the decision itself: a pass sends nothing.' : '.') + '</div>';
+  if (laterN) h += '<div class="hint" style="margin-top:4px">' + laterN + ' later trail entr' + (laterN === 1 ? 'y' : 'ies') + ' (requested, acknowledged, filled) and the ledger stay hidden until Reveal outcome.</div>';
+  if (trades.length) h += '<div class="small" style="margin-top:6px">Ledger: ' + trades.map(r => '<b>' + esc(r.trade_id) + '</b> ' + esc(r.side || '') + ' ' + esc(r.qty == null ? '' : r.qty) + ', ' + (r.fills || []).length + ' mock fill(s), fees ' + fmt(r.fees) + ', intent <code>' + esc(r.intent_id || '-') + '</code>, order <code>' + esc(r.order_id || '-') + '</code>').join('<br>') + '</div>';
+  h += '</div>';
+  h += '<div class="sec s4"><h4>Outcome</h4>';
+  if (!rev) h += '<div class="hint">Hidden. Judge the decision on what was knowable first.</div><button id="dReveal" class="pri" style="margin-top:6px">Reveal outcome</button>';
+  else { const o = rev.outcome;
+    h += '<div class="outcome"><b>Revealed (hindsight)</b>' + (d.action === 'pass' ? ' <span class="hypo">HYPOTHETICAL: never in P&amp;L</span>' : '') + '<div class="kv small" style="margin-top:4px">' +
+      (o && typeof o === 'object' ? Object.keys(o).filter(k2 => k2 !== 'simulated').map(k2 => '<b>' + esc(k2.replace(/_/g, ' ')) + '</b><span>' + (/pnl|unreal/.test(k2) ? money(o[k2]) : /_ts$/.test(k2) ? esc(tsFull(o[k2])) : esc(metricVal(o[k2]))) + '</span>').join('') + (o.simulated ? '<b>Flag</b><span>SIMULATED, MOCK FILL</span>' : '') : '<span>No outcome recorded' + (d.action === 'pass' ? '' : ' (no closed round trip joins this decision yet)') + '.</span>') +
+      '</div></div><button id="dHide" style="margin-top:6px">Hide outcome again</button>'; }
+  h += '</div>';
+  setH(el, h);
+  if ($('#dPrev')) $('#dPrev').onclick = () => select(marks[k - 1].decision_id, true);
+  if ($('#dNext')) $('#dNext').onclick = () => select(marks[k + 1].decision_id, true);
+  if ($('#dReveal')) $('#dReveal').onclick = async () => { try { const r = await getJ('/api/decisions?reveal=' + encodeURIComponent(d.decision_id)); S.revealed[d.decision_id] = r.item || {}; } catch (e) { toast('Could not load the outcome: ' + e.message); } renderAll(); };
+  if ($('#dHide')) $('#dHide').onclick = () => { delete S.revealed[d.decision_id]; renderAll(); };
+}
+
+function chkOk(x){ return !!x && (x.passed === true || x.ok === true); }
+function chkTable(rc){
+  rc = Array.isArray(rc) ? rc : [];
+  if (!rc.length) return '<div class="hint">None recorded for this decision.</div>';
+  return '<table class="chk">' + rc.map(x => '<tr' + (chkOk(x) ? '' : ' class="failrow"') + '><td>' + esc(x.id || x.check || x.name || '-') + '</td><td class="' + (chkOk(x) ? 'p' : 'f') + '">' + (chkOk(x) ? 'PASSED' : 'FAILED') + '</td><td class="small">' + esc(x.detail || '') + '</td></tr>').join('') + '</table>';
+}
+function metricVal(v){
+  if (v == null) return '-';
+  if (typeof v === 'number') return String(Math.round(v * 10000) / 10000);
+  if (typeof v === 'boolean') return v ? 'yes' : 'no';
+  if (Array.isArray(v)) return v.length + ' item(s)';
+  if (typeof v === 'object') return Object.keys(v).map(k => k.replace(/_/g, ' ') + ': ' + metricVal(v[k])).join('; ');
+  return String(v);
+}
+function kvObj(o){ return Object.keys(o).map(k => '<b>' + esc(k.replace(/_/g, ' ')) + '</b><span>' + esc(metricVal(o[k])) + '</span>').join(''); }
+function metricsTable(m){
+  const rows = Array.isArray(m) ? m.filter(x => x && typeof x === 'object').map(x => [x.metric || x.name || '-', x.value])
+    : (m && typeof m === 'object' ? Object.keys(m).map(k => [k.replace(/_/g, ' '), m[k]]) : []);
+  if (!rows.length) return '';
+  return '<table style="margin-top:6px"><tr><th>Metric</th><th>Value</th></tr>' + rows.map(([k, v]) => '<tr><td>' + esc(k) + '</td><td>' + esc(metricVal(v)) + '</td></tr>').join('') + '</table>';
+}
+function fillList(fills){
+  fills = Array.isArray(fills) ? fills : [];
+  if (!fills.length) return '-';
+  return fills.map(f => esc(f.kind || f.side || 'fill') + ' <code>' + esc(f.intent_id || f.fill_id || '-') + '</code> ' + esc(tsFull(f.ts)) + ' @ ' + fmt(f.price, 4) + ' fee ' + fmt(f.fee) + ' <span class="pill mock">MOCK FILL</span>').join('<br>');
+}
+
+function tradeCard(title, r, note){
+  if (!r) return '<div class="card"><h3>' + title + '</h3><div class="hint">None.</div></div>';
+  const key = (S.review && S.review.week || '') + '|' + title + '|' + (r.decision_id || r.trade_id || '');
+  const shown = !!S.tradeRev[key];
+  let h = '<div class="card"><h3>' + title + ' <span class="r"><button data-replay="' + esc(r.decision_id || '') + '" class="pri">Replay</button></span></h3>' +
+    '<div class="kv"><b>Decision</b><span><code>' + esc(r.decision_id || '-') + '</code> · ' + esc(r.side || '') + ' ' + esc(r.qty == null ? '' : r.qty) + '</span>' +
+    '<b>Signal</b><span>' + esc(tsFull(r.signal_ts)) + ' <span class="small muted">(knowable at decision time)</span></span></div>';
+  if (!shown) h += '<div class="hint" style="margin-top:4px">Fills, exit and net stay hidden until you reveal them. Replay opens the chart cut off at the signal.</div><button data-trev="' + esc(key) + '" style="margin-top:6px">Reveal outcome</button>';
+  else h += '<div class="outcome" style="margin-top:6px"><b>Revealed (hindsight)</b> <span class="pill" style="background:var(--sim);color:#111">SIMULATED</span><div class="kv small" style="margin-top:4px">' +
+    '<b>Net after cost</b><span style="font-size:17px;font-weight:700">' + money(r.pnl_net) + '</span><b>Gross</b><span>' + money(r.gross_pnl) + '</span><b>Fees</b><span>' + fmt(r.fees) + '</span>' +
+    '<b>Entry / exit</b><span>' + fmt(r.avg_entry, 4) + ' / ' + fmt(r.avg_exit, 4) + '</span><b>First fill</b><span>' + esc(tsFull(r.first_fill_ts || r.entry_ts)) + '</span>' +
+    '<b>Exit</b><span>' + esc(r.exit_kind || '-') + ' at ' + esc(tsFull(r.exit_ts)) + '</span><b>Filled IDs</b><span>' + fillList(r.fills) + '</span></div></div>' +
+    '<button data-trev="' + esc(key) + '" style="margin-top:6px">Hide outcome again</button>';
+  return h + (note ? '<div class="hint" style="margin-top:4px">' + esc(note) + '</div>' : '') + '</div>';
+}
+
+function renderReview(){
+  const r = S.review; const el = $('#reviewBody');
+  if (!r) { setH(el, '<div class="hint">Review not loaded yet.</div>'); return; }
+  let h = '<div class="card"><h3>Session review <span class="r"><span class="pill" style="background:var(--sim);color:#111">SIMULATED</span></span></h3><div class="hint">Each replay opens on what was knowable at decision time. Outcomes stay behind Reveal outcome.</div>';
+  const wks = Array.isArray(r.weeks) ? r.weeks : [];
+  if (wks.length) { const wi = wks.indexOf(r.week);
+    h += '<div class="row" style="margin-top:6px"><label>Week <select id="wkSel">' + wks.map(w => '<option value="' + esc(w) + '"' + (w === r.week ? ' selected' : '') + '>' + esc(w) + (w === r.default_week ? ' (latest)' : '') + '</option>').join('') + '</select></label>' +
+      '<button id="wkPrior"' + (wi <= 0 ? ' disabled' : '') + '>&larr; Prior week</button>' +
+      (r.week_report ? ' <a href="/reports/' + encodeURIComponent(r.week_report) + '" target="_blank" rel="noopener">Weekly report (' + (/\.pdf$/.test(r.week_report) ? 'PDF' : 'HTML') + ') &#8599;</a>' : ' <span class="small muted">Weekly report not written yet for ' + esc(r.week || '') + '.</span>') + '</div>' +
+      '<div class="small muted">' + esc(r.scope || ('week ' + (r.week || ''))) + (r.label ? ' · ' + esc(r.label) : '') + '</div>'; }
+  h += '</div>';
+  if (r.no_fills) h += '<div class="nofill">' + esc(r.trade_note || 'No trade filled in this session.') + '</div><br>';
+  else if (!r.best_trade) h += '<div class="nofill">' + esc(r.trade_note || 'No closed trade yet.') + '</div><br>';
+  else { h += tradeCard('Best net trade', r.best_trade, r.trade_note); h += tradeCard('Worst net trade', r.worst_trade, ''); }
+  const bp = r.best_pass;
+  h += '<div class="card"><h3>Best reasoned pass <span class="hypo">HYPOTHETICAL</span>' + (bp && bp.decision_id ? ' <span class="r"><button data-replay="' + esc(bp.decision_id) + '" class="pri">Replay</button></span>' : '') + '</h3>' +
+    '<div class="hint" style="margin-bottom:6px"><b>Rule:</b> ' + esc(r.best_pass_rule || '') + '</div>';
+  if (bp) {
+    const rc = Array.isArray(bp.refusal_checks) ? bp.refusal_checks : []; const failed = rc.filter(x => !chkOk(x));
+    const nf = bp.failed_refusal_checks != null ? bp.failed_refusal_checks : failed.length;
+    h += '<div class="kv"><b>Pass</b><span>' + esc(tsFull(bp.ts_knowable)) + ' · ' + esc(bp.reason_code || '') + '</span>' +
+      '<b>Failed refusal checks</b><span><b>' + esc(Array.isArray(nf) ? nf.length : nf) + '</b> of ' + rc.length + (failed.length ? ': ' + esc(failed.map(x => x.id || x.check || '?').join(', ')) : '') + '</span>' +
+      '<b>Reason</b><span>' + esc(bp.reason_text || '') + '</span><b>Pass condition</b><span>' + esc(bp.pass_condition || '') + '</span>' +
+      '<b>In P&amp;L?</b><span>No. A pass places no order; an avoided move is never counted as profit.</span></div>' + chkTable(rc);
+    const hyp = S.reviewReveal && S.reviewReveal.best_pass && S.reviewReveal.best_pass.decision_id === bp.decision_id ? S.reviewReveal.best_pass.hypothetical_after_reveal : null;
+    if (hyp) h += '<div class="outcome" style="margin-top:6px"><b>Hypothetical path after the pass</b> <span class="hypo">HYPOTHETICAL: never in P&amp;L</span><div class="kv small" style="margin-top:4px">' + (typeof hyp === 'object' ? kvObj(hyp) : '<span>' + esc(hyp) + '</span>') + '</div></div><button id="bpHide" style="margin-top:6px">Hide hypothetical path</button>';
+    else h += '<button id="bpReveal" class="pri" style="margin-top:6px">Reveal hypothetical path</button> <span class="small muted">hindsight only, labeled HYPOTHETICAL</span>';
+  } else h += '<div class="hint">No pass could be scored (' + esc(r.pass_candidates || 0) + ' candidates).</div>';
+  h += '</div>';
+  const cmp = r.comparison || {}; const rows = cmp.rows || [];
+  h += '<div class="card"><h3>After-cost comparison (includes cash)</h3><table><tr><th>Strategy</th><th>Trades</th><th>Fees</th><th>Net after cost</th><th>Source</th></tr>' +
+    rows.map(x => '<tr><td>' + esc(x.name || x.strategy || '-') + '</td><td>' + esc(x.trades == null ? '-' : x.trades) + '</td><td>' + fmt(x.fees) + '</td><td>' + money(x.net_after_cost != null ? x.net_after_cost : x.net) + '</td><td class="small muted">' + esc(x.source || '') + '</td></tr>').join('') + '</table>' +
+    '<div class="hint" style="margin-top:4px">' + esc(cmp.spread_note || '') + '</div>' +
+    metricsTable(cmp.metrics) + '</div>';
+  const oa = r.operating_audit || {};
+  h += '<div class="card"><h3>Operating audit</h3><table>' + (oa.checks || []).map(c => '<tr><td>' + esc(c.name) + '</td><td><span class="st st-' + esc(String(c.status).split(' ')[0]) + '">' + esc(c.status) + '</span></td><td class="small">' + esc(c.detail || '') + '</td></tr>').join('') + '</table>';
+  const counts = oa.counts_by_kind || {};
+  h += '<div class="small muted" style="margin-top:6px">Audit entries: ' + (Object.keys(counts).length ? Object.keys(counts).map(k => esc(k) + ' ' + counts[k]).join(', ') : 'none') + '</div>';
+  if ((oa.alarms || []).length) h += '<div class="small" style="margin-top:6px"><b class="neg">Alarms</b><br>' + oa.alarms.map(a => esc(tsFull(a.ts)) + ' ' + summarize(a)).join('<br>') + '</div>';
+  if ((oa.rejected || []).length) h += '<div class="small" style="margin-top:6px"><b>Refused orders</b><br>' + oa.rejected.map(a => esc(tsFull(a.ts)) + ' ' + summarize(a)).join('<br>') + '</div>';
+  if ((oa.control_events || []).length) h += '<div class="small" style="margin-top:6px"><b>Control events</b><br>' + oa.control_events.map(a => esc(tsFull(a.ts)) + ' ' + summarize(a)).join('<br>') + '</div>';
+  h += '</div>';
+  const so = r.source_of || {};
+  h += '<div class="small muted">Sections from review.json: ' + esc(Object.keys(so).filter(k => so[k] === 'review.json').join(', ') || 'none') + '. Computed by the UI from the ledger, decisions and audit: ' + esc(Object.keys(so).filter(k => so[k] === 'ui-computed').join(', ') || 'none') + '.</div>';
+  setH(el, h);
+  for (const b of el.querySelectorAll('[data-replay]')) b.onclick = () => { if (b.dataset.replay) { delete S.revealed[b.dataset.replay]; select(b.dataset.replay, true); } };
+  for (const b of el.querySelectorAll('[data-trev]')) b.onclick = () => { const k = b.dataset.trev; if (S.tradeRev[k]) delete S.tradeRev[k]; else S.tradeRev[k] = true; renderAll(); };
+  const pickWeek = async w => { S.week = w; S.reviewReveal = null; S.tradeRev = {}; try { S.review = await getJ(reviewUrl()); } catch (e) { toast('Could not load week ' + esc(w) + ': ' + esc(e.message)); } renderAll(); };
+  if ($('#wkSel')) $('#wkSel').onchange = e => pickWeek(e.target.value);
+  if ($('#wkPrior')) $('#wkPrior').onclick = () => { const i = wks.indexOf(r.week); if (i > 0) pickWeek(wks[i - 1]); };
+  if ($('#bpReveal')) $('#bpReveal').onclick = async () => { try { S.reviewReveal = await getJ(reviewUrl('reveal_pass=1')); } catch (e) { toast('Could not load the hypothetical path: ' + esc(e.message)); } renderAll(); };
+  if ($('#bpHide')) $('#bpHide').onclick = () => { S.reviewReveal = null; renderAll(); };
+}
+
+function renderAll(){
+  renderHeader();
+  if (S.view === 'chart') renderChartView();
+  else if (S.view === 'decision') renderDecisionView();
+  else renderReview();
+  draw();
+}
+
+// ---------------- controls ----------------
+function toast(html){ const t = $('#toast'); t.innerHTML = html; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = 'none', 7000); }
+async function control(route, body){
+  try {
+    const r = await fetch(route, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body || {})});
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 404 && S.routes) { S.routes.delete(route); }
+    if (j && j.session && typeof j.session === 'object') { S.session = Object.assign({}, S.session || {}, j.session); }
+    if (!r.ok || !j.ok) { toast('<b class="neg">Not applied</b>: ' + esc(j.error || j.manager_error || r.status) + (j.request_id ? '<br><span class="muted">request ' + esc(j.request_id) + ' logged</span>' : '')); renderAll(); setTimeout(tick, 400); return false; }
+    const called = j.controller_called || j.manager_called;
+    toast('<b>' + esc(j.request) + '</b> recorded as <code>' + esc(j.request_id) + '</code>.<br>' + (called ? 'Session controller called.' : esc(j.note || 'Controller not attached: recorded for the runner.')) + '<br><span class="muted">SIMULATED</span>');
+    renderAll(); setTimeout(tick, 400); return true;
+  } catch (e) { toast('<b class="neg">Not sent</b>: the desk server is unreachable. Nothing was changed.'); return false; }
+}
+function doPause(){ control('/api/pause', {}); }
+function askStop(){ const dlg = $('#dlgStop'); if (dlg.showModal) dlg.showModal(); else if (confirm('Stop & Close this session? Entries off, entries canceled, position closed.')) control('/api/stop_close', {confirm: true}); }
+function askClear(){ const dlg = $('#dlgClear'); if (dlg.showModal) dlg.showModal(); else if (confirm('Clear the Stop? You must Review and Arm again.')) control('/api/clear_stop', {confirm: true}); }
+async function doClose(){
+  if (phaseOf(S.session || {}) === 'CLOSED') { setView('review'); return; }
+  if (await control('/api/close_session', {})) { try { S.review = await getJ(reviewUrl()); } catch (e) {} setView('review'); }
+}
+const FLOW_ROUTE = {arm: '/api/arm', step1: '/api/advance', step10: '/api/advance', runend: '/api/run_to_end', play: '/api/play', stopplay: '/api/play',
+  pause: '/api/pause', resume: '/api/resume', stop: '/api/stop_close', clear: '/api/clear_stop', close: '/api/close_session'};
+// Buttons whose route the server does not list (bare ui/server.py without the launcher) stay disabled.
+function routeOk(route){ return !route || !(S.routes instanceof Set) || S.routes.has(route); }
+const FLOW = {review: openPre, arm: () => control('/api/arm', {}), step1: () => control('/api/advance', {n: 1}), step10: () => control('/api/advance', {n: 10}), runend: () => control('/api/run_to_end', {}),
+  play: () => control('/api/play', {bars_per_sec: 4}), stopplay: () => control('/api/play', {bars_per_sec: 0}), pause: doPause,
+  resume: () => control('/api/resume', {}), stop: askStop, clear: askClear, close: doClose};
+for (const b of document.querySelectorAll('#flow button')) b.onclick = () => { const fn = FLOW[b.dataset.f]; if (fn) fn(); };
+$('#btnPause2').onclick = doPause; $('#btnStop2').onclick = askStop;
+$('#dlgNo').onclick = () => $('#dlgStop').close();
+$('#dlgYes').onclick = () => { $('#dlgStop').close(); control('/api/stop_close', {confirm: true}); };
+$('#clrNo').onclick = () => $('#dlgClear').close();
+$('#clrYes').onclick = () => { $('#dlgClear').close(); control('/api/clear_stop', {confirm: true}); };
+$('#preClose').onclick = () => $('#dlgPre').close();
+$('#preArm').onclick = () => { $('#dlgPre').close(); control('/api/arm', {}); };
+$('#btnArm').onclick = () => control('/api/arm', {});
+$('#schedTgl').onchange = e => control('/api/schedule', {enabled: !!e.target.checked});
+
+// ---------------- TradingView (operator view only; the desk never reads it) ----------------
+// Off by default. The official embed script is only requested after the operator ticks the box.
+const TV_SRC = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+function tvShow(on){
+  const pane = $('#tvPane'), host = $('#tvHost'), main = $('#main');
+  host.textContent = '';
+  if (on) {
+    const sym = S.tvRef;  // real reference symbol only, never the desk's synthetic symbol
+    const box = document.createElement('div'); box.className = 'tradingview-widget-container';
+    const w = document.createElement('div'); w.className = 'tradingview-widget-container__widget'; box.appendChild(w);
+    const cp = document.createElement('div'); cp.className = 'tradingview-widget-copyright';
+    const a = document.createElement('a'); a.href = 'https://www.tradingview.com/'; a.target = '_blank'; a.rel = 'noopener nofollow';
+    a.textContent = 'Track all markets on TradingView'; cp.appendChild(a); box.appendChild(cp);
+    const sc = document.createElement('script'); sc.type = 'text/javascript'; sc.async = true; sc.src = TV_SRC;
+    sc.innerHTML = JSON.stringify({autosize: true, symbol: sym, interval: '60', timezone: 'Etc/UTC', theme: 'dark', style: '1', locale: 'en', allow_symbol_change: false, support_host: 'https://www.tradingview.com'});
+    box.appendChild(sc); host.appendChild(box); S.tvSym = sym;
+  } else S.tvSym = null;
+  pane.hidden = !on; main.classList.toggle('withtv', !!on); $('#tvToggle').checked = !!on;
+  requestAnimationFrame(draw);
+}
+$('#tvToggle').onchange = e => tvShow(e.target.checked);
+const TV_REFS = ['AMEX:SPY', 'NASDAQ:QQQ', 'AMEX:IWM', 'AMEX:DIA'];
+$('#tvRef').onchange = e => { S.tvRef = TV_REFS.indexOf(e.target.value) >= 0 ? e.target.value : 'AMEX:SPY'; renderHeader(); if (!$('#tvPane').hidden) tvShow(true); };
+$('#tvHide').onclick = () => tvShow(false);
+$('#showHolds').onchange = e => { S.showHolds = e.target.checked; renderAll(); };
+document.addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return;
+  if (S.view === 'decision' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { const b = $(e.key === 'ArrowLeft' ? '#dPrev' : '#dNext'); if (b && !b.disabled) b.click(); }
+  if (e.key === 'Escape' && S.sel) { S.sel = null; renderAll(); } });
+
+tick(); setInterval(tick, 2000); setInterval(renderHeader, 1000);
+</script>
+</body>
+</html>

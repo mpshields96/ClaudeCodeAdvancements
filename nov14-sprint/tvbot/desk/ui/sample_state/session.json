@@ -1,0 +1,116 @@
+{
+  "armed": true,
+  "badge": "SIMULATION: ARMED",
+  "bars_done": 70,
+  "bars_total": 70,
+  "broker": {
+    "external": false,
+    "name": "FakeBroker (offline, in-process)"
+  },
+  "controls": {
+    "flat_confirmed": false,
+    "paused": false,
+    "stopped": false
+  },
+  "data_label": "SYNTHETIC BARS",
+  "expires_utc": "2026-06-12T23:30:00Z",
+  "exposure": {
+    "avg_price": 98.71038,
+    "gross_including_working": 1964.4,
+    "position_qty": -20,
+    "working_orders": [
+      {
+        "client_id": "C-D056-entershort-stop",
+        "order_id": "FB-C1-STOP",
+        "protective": true,
+        "qty": 20,
+        "reduce_only": true,
+        "side": "buy",
+        "simulated": true,
+        "status": "working",
+        "stop": 98.95,
+        "type": "stop"
+      }
+    ]
+  },
+  "external_broker_badge": "EXTERNAL BROKER: NONE (offline in-process fake broker)",
+  "limits": {
+    "daily_loss": 30.0,
+    "gross_exposure": 2000.0,
+    "label": "TEST VALUES (Matthew sets real size and limits)",
+    "max_loss_per_trade": 10.0,
+    "per_trade_notional": 2000.0
+  },
+  "live_path": {
+    "enabled": false,
+    "reason": "No venue, no personal limits, no explicit enable."
+  },
+  "mode": "REPLAY (OFFLINE, SIMULATED)",
+  "phase": "ARMED",
+  "play_rate_bars_per_sec": 4.0,
+  "pnl": {
+    "after_cost": 4.8124,
+    "fees": 6.0,
+    "realized": 1.0048,
+    "unrealized": 9.8076
+  },
+  "preflight": [
+    {
+      "check": "data",
+      "detail": "sample replay bars (SYNTHETIC BARS)",
+      "ok": true
+    },
+    {
+      "check": "broker reconciled",
+      "detail": "FakeBroker (offline, in-process); alarms: 0",
+      "ok": true
+    },
+    {
+      "check": "limits loaded",
+      "detail": "max loss/trade $10.00, notional $2000, daily loss $30.00 (TEST VALUES)",
+      "ok": true
+    },
+    {
+      "check": "stop",
+      "detail": "no Stop active",
+      "ok": true
+    }
+  ],
+  "protective_orders": [
+    {
+      "client_id": "C-D056-entershort-stop",
+      "order_id": "FB-C1-STOP",
+      "protective": true,
+      "qty": 20,
+      "reduce_only": true,
+      "side": "buy",
+      "simulated": true,
+      "status": "working",
+      "stop": 98.95,
+      "type": "stop"
+    }
+  ],
+  "replay_clock_utc": "2026-06-12T21:30:00Z",
+  "sample_note": "Hand-placed sample for UI development. Not a strategy result.",
+  "schedule": {
+    "calendar": "fixture",
+    "clock": "SIMULATED",
+    "enabled": false,
+    "next_close_utc": null,
+    "next_open_utc": null,
+    "note": "Off by default. A schedule never clears a Stop."
+  },
+  "session_id": "sample-ui-dev",
+  "simulated": true,
+  "strategy": "ema",
+  "symbol": "SYNTH-FUND-60M",
+  "tradingview_symbol": "AMEX:SPY",
+  "undecided": [
+    "venue / broker",
+    "personal position size and dollar limits",
+    "stop placement policy",
+    "session hours and overnight exposure",
+    "paid data (no purchase)"
+  ],
+  "updated_utc": "2026-11-15T17:55:36Z"
+}

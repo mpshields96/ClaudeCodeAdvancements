@@ -1,0 +1,91 @@
+# Paper desk: integration and normal commands
+
+SIMULATED paper desk. Mock fills only. No broker account, no credentials, no real
+orders, no network order path. TradingView is a display link the operator opens
+in their own browser; the desk never reads TradingView data. Limits and the
+1-share size are TEST VALUES. Matthew sets real sizing and limits himself.
+
+## Normal commands (macOS system Python, stdlib only)
+
+Run from the repository root.
+
+```bash
+/usr/bin/python3 -I nov14-sprint/tvbot/desk/launch.py
+```
+Start the desk (state in `desk/state`, resumes where it stopped) and open the UI at
+`http://127.0.0.1:8765/`.
+
+```bash
+/usr/bin/python3 -I nov14-sprint/tvbot/desk/launch.py --demo
+```
+Fresh scratch state in `desk/state-demo` (any previous one is renamed, never
+deleted), replay all 630 bars, write the weekly review (and the weekly PDF when
+`desk/report.py` is present), then serve the UI.
+
+```bash
+/usr/bin/python3 -I nov14-sprint/tvbot/desk/launch.py --check
+```
+Offline self-check in a temporary directory. Exit 0 and `CHECK PASS` on success.
+
+```bash
+/usr/bin/python3 -I nov14-sprint/tvbot/desk/launch.py --no-browser --state-dir /tmp/desk-qa --fresh --port 8765
+```
+Targeted QA in a scratch state directory.
+
+```bash
+/usr/bin/python3 -IB -m unittest discover -s nov14-sprint/tvbot/desk/tests
+```
+All desk tests.
+
+## Flags
+
+| flag | default | meaning |
+|---|---|---|
+| `--state-dir` | `desk/state` | scratch state directory |
+| `--strategy` | `ema` | `ema`, `gold_basket`, `fixed_risk_single`, `bounded_fixed`, `cash` |
+| `--qty` | `1` | HYPOTHETICAL fixed entry size in shares (TEST VALUE). `0` = the strategy's own sizing |
+| `--port` | `8765` | loopback port (the next free one is used if taken) |
+| `--fresh` | off | rename the existing state dir aside and start clean |
+| `--demo` | off | fresh scratch run to the end, weekly review, then serve |
+| `--play-rate` | `4` | bars per second for Play |
+| `--autoplay` | off | enable the simulated schedule and start Play |
+| `--no-browser` | off | do not open the browser |
+| `--check` | off | offline self-check, then exit |
+
+With `--qty 0`, `ema` sizes about 20 shares and the $10 TEST max loss refuses every
+entry. The review lists those as `refused_decisions` ("REFUSED BY RISK CHECK - NOT
+SENT, NOT FILLED"). That is the limit working, not a bug.
+
+## Controls (UI buttons and POST routes)
+
+`arm`, `pause`, `resume`, `play`, `stop_play`, `advance`, `advance10`, `run_to_end`,
+`schedule_on`, `schedule_off`, `close_session`, `preflight`, `stop_close` and
+`clear_stop` (both need body `{"confirm": true}`). Stop survives a restart and
+blocks re-arming until Clear Stop is confirmed.
+
+## Fill model
+
+- A decision made on bar N's close is filled at bar N+1's close, never at bar N+1's
+  open. The open is stamped before the decision exists. Each fill carries
+  `event_ts`, `report_ts` and `fill_model`.
+- Costs per side: half spread 1 bps, slippage 2 bps, and a commission of $0.005/share
+  with a $1 minimum.
+- Bar intake refuses `BAD_BAR`, `OUT_OF_ORDER`, `GAP_IN_SESSION`, `STALE_EXCHANGE_TS`,
+  `FUTURE_EXCHANGE_TS`, `ZERO_VOLUME`, `OUT_OF_SESSION` and `NOT_CLOSED_AT_RECEIPT`
+  (receipt earlier than the bar's close, so its high/low/close aren't knowable yet).
+  A refused bar never fills an order and never reaches the strategy.
+
+## Weekly review
+
+`review.json` covers one ISO week of local sessions (America/Chicago); by default
+it's the last replayed week. `weeks`, `default_week` and `by_week` hold every week,
+including weeks with no fills, so a prior week can be picked.
+`all_weeks_summary` is the whole-run total. The fixture spans 18 weeks
+(2026-06-01 to 2026-10-02).
+
+## State files (in the state dir)
+
+`session.json`, `decisions.jsonl`, `ledger.jsonl`, `intents.jsonl`, `audit.jsonl`,
+`desk_audit.jsonl`, `controls.json`, `control_requests.jsonl`, `broker_state.json`
+(the fake broker's book, kept apart from the order engine's journal), `review.json`,
+and `reports/` (the weekly PDF and HTML).

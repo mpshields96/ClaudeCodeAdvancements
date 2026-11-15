@@ -1,0 +1,13 @@
+# Runtime state and agent scratch. Never commit.
+state/
+state-demo/
+state.prev-*/
+state-demo.prev-*/
+*.prev-*/
+__pycache__/
+*.pyc
+.claude-compact-anchor.md
+.claude-compact-recovery.md
+self-learning/
+# Licensed third-party data outputs (private, local only)
+out/research_private/
