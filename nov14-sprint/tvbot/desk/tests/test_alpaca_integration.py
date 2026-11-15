@@ -587,6 +587,65 @@ class SizingOnlyRestartRevision(unittest.TestCase):
             S.SessionController(d, strategy="ema", strategy_cfg=dict(S.DEMO_STRATEGY_CFG, fixed_qty=2))
 
 
+class HttpsEntryQuoteGate(unittest.TestCase):
+    """Codex 23:23Z: on the HTTPS path each BUY candidate reads the free-IEX latest quote via
+    alpaca.readiness.read_quote; invalid/crossed/stale holds the new entry. Injected transport,
+    synthetic payloads, no network, no account."""
+
+    class _Q:
+        def __init__(self, quote):
+            self.quote = quote
+        def request(self, method, origin, path, query=None, **kw):
+            assert (method, origin, path) == ("GET", "data", "/v2/stocks/SPY/quotes/latest")
+            return 200, {"symbol": "SPY", "quote": self.quote}
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="desk-alpaca-qg-")
+        self.c = AS.AlpacaSessionController(os.path.join(self.tmp, "s"), strategy="ema")
+
+    def tearDown(self):
+        self.c.close()
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _bounds(self, quote):
+        c = self.c
+        real = c.transport
+        c.mock, c.transport = False, self._Q(quote)
+        try:
+            d = {"decision_id": "qg-0001"}
+            res = c._entry_bounds(d, None, c.mgr.state(), 1, "buy", 400.0, 395.0)
+            return d, res
+        finally:
+            c.mock, c.transport = True, real
+
+    def _iso(self, age_s):
+        import datetime as dt
+        t = dt.datetime.fromisoformat(str(self.c.clock.now()).replace("Z", "+00:00")) if not hasattr(self.c.clock.now(), "isoformat") else self.c.clock.now()
+        if t.tzinfo is None:
+            t = t.replace(tzinfo=dt.timezone.utc)
+        return (t - dt.timedelta(seconds=age_s)).isoformat().replace("+00:00", "Z")
+
+    def test_fresh_quote_allows_and_is_recorded(self):
+        d, (limit, refusal) = self._bounds({"t": self._iso(1), "bp": 399.98, "ap": 400.02, "bs": 1, "as": 1})
+        self.assertIsNone(refusal)
+        self.assertTrue(d["quote_observation"]["fresh"])
+        self.assertEqual(self.c.latest_quote["ask"], 400.02)
+
+    def test_crossed_and_stale_hold_entry(self):
+        for q, why in (({"t": self._iso(1), "bp": 400.05, "ap": 400.0, "bs": 1, "as": 1}, "CROSSED_QUOTE"),
+                       ({"t": self._iso(3600), "bp": 399.98, "ap": 400.02, "bs": 1, "as": 1}, "STALE_QUOTE"),
+                       ({"t": "garbage", "bp": 1, "ap": 2}, "INVALID_QUOTE")):
+            d, (limit, refusal) = self._bounds(q)
+            self.assertIsNone(limit)
+            self.assertEqual(refusal[0], "QUOTE_GATE")
+            self.assertIn(why, refusal[1])
+
+    def test_mock_path_does_not_read_quotes(self):
+        d = {"decision_id": "qg-0002"}
+        self.c._entry_bounds(d, None, self.c.mgr.state(), 1, "buy", 400.0, 395.0)
+        self.assertNotIn("quote_observation", d)
+
+
 class LauncherConnectedGuards(unittest.TestCase):
     """Codex 22:56Z and 22:46Z. Both refusals happen before any lock, rename, broker object or
     python process, so these tests never reach a transport (and https never runs here)."""

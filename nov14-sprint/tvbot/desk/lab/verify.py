@@ -76,11 +76,13 @@ def verify(state_dir, forecast_id):
               and sc.get("forecast_row_hash") == f["row_hash"])
         checks.append(_check("LATER_ONLY", lo, "%d later bar(s) closing after %s, all stored after the forecast"
                              % (len(sc["later_bars"]), f["ts_knowable"])))
-        core = S.compute_core(f, sc["later_bars"])
-        same = all(core[k] == sc.get(k) for k in S.CORE_KEYS)
+        ver = int(sc.get("score_version") or 1)      # legacy rows have no score_version
+        core = S.compute_core(f, sc["later_bars"], version=ver)
+        same = all(core[k] == sc.get(k) for k in (S.CORE_KEYS_V2 if ver >= 2 else S.CORE_KEYS_V1))
         if same and f["strategy"] == "challenger":
             e = st.forecast_index.get("fc-ema-%s" % f["group_id"][4:])
-            cmp_ = S.comparison(core, None if e is None else S.compute_core(e, sc["later_bars"]))
+            cmp_ = S.comparison(core, None if e is None else S.compute_core(e, sc["later_bars"], version=ver),
+                                version=ver)
             same = all(sc.get(k) == v for k, v in cmp_.items())
         checks.append(_check("SCORE", same, "recomputed net %s bps (2x friction %s) %s the stored score"
                              % (core["net_bps"], core["net_bps_2x"], "matches" if same else "does NOT match")))

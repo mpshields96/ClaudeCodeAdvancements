@@ -26,6 +26,23 @@ PASS_LABEL = "HYPOTHETICAL (pass, not traded)"
 CORE_KEYS = ("horizon_bars", "exposure", "qty", "kind", "entry", "exit", "gross_bps", "net_usd",
              "net_bps", "net_usd_2x", "net_bps_2x", "hypothetical", "entry_lag_s", "entry_attainable",
              "crosses_session")
+CORE_KEYS_V1 = CORE_KEYS                       # legacy rows (no score_version) verify against these
+SCORE_VERSION = 2
+CORE_KEYS_V2 = CORE_KEYS_V1 + ("eligible", "ineligible_reason")
+
+
+def ineligible_reasons(f, later, lag, crosses):
+    """Why a forecast cannot be scored as a fill at the next open (v2). [] means eligible."""
+    out = []
+    if lag > 60.0:
+        out.append("next-open entry not attainable (lag %.0f s)" % lag)
+    if crosses:
+        out.append("next bar not contiguous (gap or session cross)")
+    if any(b.get("partial") for b in later):
+        out.append("partial or gappy horizon bar")
+    if len(later) < HORIZON:
+        out.append("horizon incomplete")
+    return out
 
 
 def later_bars(store, f, horizon=HORIZON):
@@ -58,8 +75,12 @@ def _leg(entry_raw, exit_raw, side, qty, mult):
     return e, x, usd
 
 
-def compute_core(f, later):
-    """Pure score of forecast row `f` on its later bars (verify recomputes this)."""
+def compute_core(f, later, version=SCORE_VERSION):
+    """Pure score of forecast row `f` on its later bars (verify recomputes this).
+
+    version 2: an ineligible window (unattainable entry, gap/session cross, partial bar) gets
+    kind "ineligible" and no numeric P&L. version 1 is the legacy rule, kept only for verify.
+    """
     s = int(f.get("exposure") or 0)
     first, last = later[0], later[-1]
     entry_raw, exit_raw = float(first["open"]), float(last["close"])
@@ -70,7 +91,14 @@ def compute_core(f, later):
             "gross_bps": round(s * (exit_raw / entry_raw - 1.0) * 1e4, 4),
             "entry_lag_s": round(max(lag, 0.0), 3), "entry_attainable": lag <= 60.0,
             "crosses_session": B.parse_ts(first["ts_open"]) > B.parse_ts(f["bar_ts_close"]),
-            "hypothetical": None}
+            "hypothetical": None, "eligible": True, "ineligible_reason": None}
+    if version >= 2:
+        why = ineligible_reasons(f, later, lag, core["crosses_session"])
+        if why:
+            core.update({"kind": "ineligible", "eligible": False, "ineligible_reason": "; ".join(why),
+                         "gross_bps": None, "net_usd": None, "net_bps": None, "net_usd_2x": None,
+                         "net_bps_2x": None})
+            return {k: core.get(k) for k in CORE_KEYS_V2}
     trade = f.get("action") in ("enter_long", "enter_short") and s != 0 and core["qty"] > 0
     if trade:
         q = core["qty"]
@@ -93,7 +121,7 @@ def compute_core(f, later):
                              "net_bps_2x": round(usd2 / (q * entry_raw) * 1e4, 4)}
         core.update({"kind": "pass/flat", "net_usd": 0.0, "net_bps": 0.0, "net_usd_2x": 0.0,
                      "net_bps_2x": 0.0, "hypothetical": hyp})
-    return {k: core.get(k) for k in CORE_KEYS}
+    return {k: core.get(k) for k in (CORE_KEYS_V2 if version >= 2 else CORE_KEYS_V1)}
 
 
 def cost_qty_label(core):
@@ -102,6 +130,8 @@ def cost_qty_label(core):
     No explicit fixed reference share count is implemented yet: cost_reference_shares stays None.
     """
     hyp = core.get("hypothetical") or {}
+    if core.get("kind") == "ineligible":
+        return {"cost_qty": 0, "cost_qty_source": "none: ineligible window, not scored", "cost_reference_shares": None}
     if core.get("kind") == "trade":
         q, src = core.get("qty"), "forecast row qty (TEST-notional sizing at forecast time)"
     elif hyp:
@@ -111,7 +141,28 @@ def cost_qty_label(core):
     return {"cost_qty": q, "cost_qty_source": src, "cost_reference_shares": None}
 
 
-def comparison(ch_core, ema_core):
+def comparison(ch_core, ema_core, version=SCORE_VERSION):
+    """Paired challenger differences. v2 disables them for ineligible windows and carry marks."""
+    if version < 2:
+        return comparison_v1(ch_core, ema_core)
+    ok = {"trade", "pass/flat"}
+    out = {"vs_cash_net_bps": None, "vs_cash_net_bps_2x": None, "vs_ema_net_bps": None,
+           "vs_ema_net_bps_2x": None}
+    if ch_core.get("kind") not in ok:
+        out["comparison_status"] = "disabled: challenger window is %s" % ch_core.get("kind")
+        return out
+    out["vs_cash_net_bps"], out["vs_cash_net_bps_2x"] = ch_core["net_bps"], ch_core["net_bps_2x"]
+    if ema_core is None or ema_core.get("kind") not in ok:
+        out["comparison_status"] = "vs EMA disabled: EMA window is %s" % (
+            "missing" if ema_core is None else ema_core.get("kind"))
+        return out
+    out["vs_ema_net_bps"] = round(ch_core["net_bps"] - ema_core["net_bps"], 4)
+    out["vs_ema_net_bps_2x"] = round(ch_core["net_bps_2x"] - ema_core["net_bps_2x"], 4)
+    out["comparison_status"] = "paired: same window, both eligible, no carry"
+    return out
+
+
+def comparison_v1(ch_core, ema_core):
     out = {"vs_cash_net_bps": ch_core["net_bps"], "vs_cash_net_bps_2x": ch_core["net_bps_2x"]}
     if ema_core is not None:
         out["vs_ema_net_bps"] = round(ch_core["net_bps"] - ema_core["net_bps"], 4)
@@ -140,7 +191,7 @@ def score_pending(state_dir, store=None):
             row = {"format": R.FORMAT, "label": R.SCORE_LABEL, "score_id": "sc-" + f["forecast_id"][3:],
                    "forecast_id": f["forecast_id"], "group_id": gid, "strategy": f["strategy"],
                    "scored_at": R.now_iso(), "later_bar_shas": shas, "later_bars": later,
-                   "forecast_row_hash": f["row_hash"],
+                   "forecast_row_hash": f["row_hash"], "score_version": SCORE_VERSION,
                    "synthetic": bool(f.get("synthetic_inputs")) or any(R._synthetic(b) for b in later)}
             row.update(cores[f["strategy"]])
             row.update(cost_qty_label(cores[f["strategy"]]))

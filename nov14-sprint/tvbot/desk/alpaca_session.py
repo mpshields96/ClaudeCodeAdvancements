@@ -27,6 +27,7 @@ import session as S
 import alpaca as A
 from alpaca.state import AdapterState
 from alpaca.broker import cent_price
+from alpaca.readiness import read_quote
 from orders.calendar import SessionCalendar, parse_ts, iso
 
 MODE_MOCK = "mock"
@@ -372,6 +373,15 @@ class AlpacaSessionController(S.SessionController):
     def _entry_bounds(self, d, bar, st, qty, side, entry, inval):
         if side != "buy":
             return None, ("SHORT_OPEN_BLOCKED", SHORT_OPEN_DETAIL)
+        if not self.mock:
+            # HTTPS entries only: one free-IEX latest-quote read per BUY candidate. Protective
+            # stops, residual cover and Stop & Close never pass through here, so they are never held.
+            q = read_quote(self.transport, self.clock.now())
+            self.latest_quote = d["quote_observation"] = q
+            self._desk_audit("entry_quote_observed", decision_id=d.get("decision_id"), quote=q)
+            if not (q.get("valid") and q.get("fresh")):
+                return None, ("QUOTE_GATE", "new entry held: SPY IEX quote %s; no order"
+                              % (q.get("reason") or "unavailable"))
         lim = self.limits
         cost = S._cost_usd(d)
         gross_used = float(st["exposure"].get("gross_including_working") or 0.0)
@@ -636,6 +646,7 @@ class AlpacaSessionController(S.SessionController):
             except Exception as exc:
                 out["protective_error"] = "%s: %s" % (exc.__class__.__name__, str(exc)[:160])
         out["protection"] = self._protection_view()
+        out["latest_quote"] = getattr(self, "latest_quote", None)
         return out
 
     # ---------------------------------------------------------------- operator controls
@@ -835,6 +846,7 @@ class AlpacaSessionController(S.SessionController):
         sim["recovery"] = self._recovery_view()
         sim["last_check"] = self.last_check if hasattr(self, "last_check") else None
         sim["protection"] = dict(self._protection_view(), fill_timing_note=FILL_TIMING_NOTE)
+        sim["latest_quote"] = getattr(self, "latest_quote", None)
         clock = getattr(self, "clock", None)
         sim["clock_utc"] = iso(clock.now()) if clock else None
         sim["schedule"] = {"enabled": False, "clock": clock.name if clock else None,
