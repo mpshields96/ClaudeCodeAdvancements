@@ -385,14 +385,14 @@ def lab_section(state_dir):
             e(exc.__class__.__name__))
     fr = v.get("frozen") or {}
     rows = "".join(
-        "<tr><td>%s</td><td class='r'>%s</td><td class='r'>%s</td><td class='r'>%s</td><td class='r'>%s</td><td>not yet a valid comparison</td></tr>" % (
-            e(name), e(t.get("forecasts")), e(t.get("scored")), e(t.get("trades")), e(t.get("ineligible", 0)))
+        "<tr><td>%s</td><td class='r'>%s</td><td class='r'>%s</td><td class='r'>%s</td><td>not yet a valid comparison</td></tr>" % (
+            e(name), e(t.get("forecasts")), e(t.get("scored")), e(t.get("trades")))
         for name, t in sorted((v.get("totals") or {}).items()))
     return (head +
             "<p class='note'><b>Comparison totals disabled: not yet a valid comparison.</b> Summed bps are not a "
             "strategy return and show no after-cost superiority.</p>"
             "<table class='tight'><tr><th>Strategy</th><th class='r'>Forecasts</th><th class='r'>Scored</th>"
-            "<th class='r'>Eligible with exposure</th><th class='r'>Ineligible (no P&amp;L)</th><th>Comparison</th></tr>"
+            "<th class='r'>With exposure</th><th>Comparison</th></tr>"
             "%s</table>" % rows +
             "<p class='note'>%s. %s. Data: %s. Challenger %s, frozen %s. Costs are ASSUMED; scores use later bars only. "
             "Every lab row is in this session's state directory; open /lab to verify any forecast.</p></section>" % (

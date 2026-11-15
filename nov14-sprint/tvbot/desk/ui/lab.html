@@ -91,7 +91,7 @@ summary { cursor: pointer; font-weight: 600; }
     <p class="muted" id="cmp-disabled" style="margin:0 0 6px"><b>Comparison totals disabled: not yet a valid comparison.</b>
       The scorer does not yet exclude unattainable entries, session-crossing or partial later bars, or equalize
       excluded windows across strategies. Summed bps are not a strategy return and show no after-cost superiority.</p>
-    <table id="totals"><thead><tr><th>Strategy</th><th>Forecasts</th><th>Scored</th><th>Eligible with exposure</th><th>Ineligible (no P&amp;L)</th>
+    <table id="totals"><thead><tr><th>Strategy</th><th>Forecasts</th><th>Scored</th><th>With exposure</th>
       <th>Comparison</th></tr></thead><tbody></tbody></table>
   </div>
 
@@ -151,7 +151,7 @@ summary { cursor: pointer; font-weight: 600; }
     NAMES.forEach(function (n) {
       var t = (v.totals || {})[n] || {};
       tb.appendChild(el("tr", null, [el("td", {text: LABEL[n]}), el("td", {class: "num", text: cnt(t.forecasts)}),
-        el("td", {class: "num", text: cnt(t.scored)}), el("td", {class: "num", text: cnt(t.trades)}), el("td", {class: "num", text: cnt(t.ineligible)}),
+        el("td", {class: "num", text: cnt(t.scored)}), el("td", {class: "num", text: cnt(t.trades)}),
         el("td", {class: "muted", text: "not yet a valid comparison"})]));
     });
   }
@@ -159,8 +159,7 @@ summary { cursor: pointer; font-weight: 600; }
   function cell(r) {
     if (!r) return el("td", {class: "muted", text: "-"});
     var cls = r.action === "enter_long" ? "long" : (r.action === "enter_short" ? "short" : "pass-t");
-    var net = !r.scored ? "awaiting next bar" : (r.eligible === false ? "ineligible: " + (r.ineligible_reason || "not scored")
-      : "markout " + fmt(r.net_bps) + " bps, 2x " + fmt(r.net_bps_2x) + " (diagnostic)");
+    var net = r.scored ? ("markout " + fmt(r.net_bps) + " bps, 2x " + fmt(r.net_bps_2x) + " (diagnostic)") : "awaiting next bar";
     var btn = el("button", {type: "button", "data-id": r.forecast_id, title: r.reason_text || ""},
       [el("span", {class: cls, text: r.action + (r.qty ? " " + r.qty : "")}),
        el("div", {class: "r", text: (r.reason_code || "") + " - " + net})]);
@@ -206,9 +205,7 @@ summary { cursor: pointer; font-weight: 600; }
         el("div", null, [el("b", {text: c.id + " "}), el("span", {class: "muted", text: c.detail || ""})])]));
     });
     var a = res.after;
-    if (a && a.eligible === false) d.appendChild(el("p", null, ["After: ", el("b", {text: "ineligible"}),
-      " - " + (a.ineligible_reason || "not scored") + ". No P&L is scored for this window and it is left out of every comparison."]));
-    else if (a) d.appendChild(el("p", null, ["After: ", el("b", {text: a.kind || ""}), " gross " + fmt(a.gross_bps) +
+    if (a) d.appendChild(el("p", null, ["After: ", el("b", {text: a.kind || ""}), " gross " + fmt(a.gross_bps) +
       " bps, net " + fmt(a.net_bps) + " bps, 2x friction " + fmt(a.net_bps_2x) + " bps" +
       " (one-window markout, diagnostic only; not a strategy return; vs EMA/cash: not yet a valid comparison)" +
       (a.entry_attainable === false ? " (entry lag " + fmt(a.entry_lag_s) + " s: next-open entry not attainable; diagnostic only, should earn no markout)" : "")]));

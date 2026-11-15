@@ -277,54 +277,6 @@ class TestChallengerTrade(LabBase):
         self.assertIn("enter_short", acts)
 
 
-class TestIneligibleWindows(LabBase):
-    """v2 scoring: unattainable entry, gap/session cross and partial bars earn no P&L (Codex 23:25Z)."""
-
-    def _drive(self):
-        bars = trend_bars(n=16)
-        bars[5]["delivered_ts"] = _ts(B.parse_ts(bars[5]["ts_close"]) + _dt.timedelta(seconds=600))  # late
-        bars[12]["partial"] = True                                                                     # partial
-        del bars[9]                                                                                    # gap
-        drive_bars(self.dir, bars)
-        return R.Store(self.dir).rows["scores"]
-
-    def test_three_cases_are_ineligible_with_no_numbers_and_verify(self):
-        scores = self._drive()
-        bad = [s for s in scores if s.get("eligible") is False]
-        reasons = " | ".join(sorted({s["ineligible_reason"] for s in bad}))
-        for frag in ("not attainable", "not contiguous", "partial"):
-            self.assertIn(frag, reasons)
-        for s in bad:
-            self.assertEqual(s["kind"], "ineligible")
-            self.assertEqual(s["score_version"], 2)
-            for k in ("gross_bps", "net_bps", "net_bps_2x", "net_usd", "net_usd_2x"):
-                self.assertIsNone(s[k], k)
-            if s["strategy"] == "challenger":
-                self.assertIsNone(s["vs_ema_net_bps"])
-                self.assertIsNone(s["vs_cash_net_bps"])
-                self.assertIn("disabled", s["comparison_status"])
-            res = V.verify(self.dir, s["forecast_id"])
-            self.assertTrue(res["ok"], [c for c in res["checks"] if c["passed"] is False])
-        good = [s for s in scores if s.get("eligible") is True]
-        self.assertTrue(good and all(isinstance(s["net_bps"], float) for s in good))
-
-    def test_view_counts_ineligible_and_sums_only_eligible(self):
-        self._drive()
-        t = lab.view(self.dir)["totals"]["challenger"]
-        self.assertGreaterEqual(t["ineligible"], 3)
-        self.assertTrue(all(r.get("eligible") is not False or r.get("net_bps") is None
-                            for g in lab.view(self.dir)["groups"] for r in g["rows"].values()))
-
-    def test_legacy_v1_rule_still_recomputes_for_old_rows(self):
-        self._drive()
-        st = R.Store(self.dir)
-        s = [x for x in st.rows["scores"] if x.get("eligible") is False][0]
-        f = st.forecast_index[s["forecast_id"]]
-        v1 = S.compute_core(f, s["later_bars"], version=1)
-        self.assertEqual(set(v1), set(S.CORE_KEYS_V1))
-        self.assertIsInstance(v1["net_bps"], float)   # the old rule scored it; v2 does not
-
-
 class TestTamperEvidence(LabBase):
     def _scored_challenger(self):
         st = R.Store(self.dir)

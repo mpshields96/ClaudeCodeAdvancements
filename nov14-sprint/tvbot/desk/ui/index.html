@@ -655,50 +655,6 @@ function renderBrokerBanner(s){
     (rec.ambiguous ? '<span class="flag alarm">RECOVERY AMBIGUOUS: ' + esc(rec.reason || 'see panel') + ' (Enable refused until Reconcile clears it)</span>' : '') +
     '<span class="small">Nothing runs in the background: bars advance only when you press Check for new bars.</span>');
 }
-// Operator exposure view from session.protection, session.protective_orders and last_check.
-// Pending broker confirmation is shown apart from confirmed working stops. A stop is never a guaranteed loss cap.
-const PEND_RE = /^(pending|uncertain|pending_new|submitted|unconfirmed)$/i;
-function protectionHtml(s){
-  const pv = s.protection;
-  if (!pv || typeof pv !== 'object') return '<div class="muted"><b>Protection:</b> not reported by this session.</div>';
-  if (!pv.available) return '<div><b>Protection:</b> <span class="flag unc">UNAVAILABLE</span> ' + esc(pv.error || 'order state could not be read') + '; treat any booked shares as unprotected.</div>';
-  const pos = Number(pv.position_qty || 0); const side = pos > 0 ? 'sell' : 'buy';
-  const po = (Array.isArray(s.protective_orders) ? s.protective_orders : []).filter(o => o && o.side === side);
-  const rem = o => Number(o.remaining != null ? o.remaining : (o.qty || 0)) || 0;
-  const pend = Math.min(Number(pv.protective_qty || 0), po.filter(o => PEND_RE.test(String(o.status || ''))).reduce((t, o) => t + rem(o), 0));
-  const conf = Math.max(0, Number(pv.protective_qty || 0) - pend);
-  const unc = Number(pv.uncovered_qty || 0);
-  let h = '<div><b>Protection (as of the last Check):</b> booked SPY <b>' + esc(String(Math.abs(pos))) + '</b> sh' + (pos ? (pos > 0 ? ' long' : ' short') : ' (flat)') +
-    ' &middot; protective stop confirmed working <b>' + esc(String(conf)) + '</b>' +
-    ' &middot; <span class="' + (pend ? 'flag unc' : '') + '">pending broker confirmation ' + esc(String(pend)) + '</span>' +
-    ' &middot; working exits ' + esc(String(pv.exit_working_qty || 0)) +
-    ' &middot; uncovered <b class="' + (unc ? 'neg' : '') + '">' + esc(String(unc)) + '</b></div>';
-  if (pend) h += '<div class="small"><span class="flag unc">PENDING CONFIRMATION</span> ' + esc(String(pend)) + ' share(s) sit on a protective order the broker has not confirmed. It may or may not be live; the desk counts it as covering only so it never double-sells. Reconcile or the next Check settles it.</div>';
-  if (unc) h += '<div><span class="flag alarm">UNCOVERED</span> ' + esc(pv.warning || (unc + ' booked shares have no working protective stop or exit')) + (pv.last_refusal ? '; last protective refusal: ' + esc(metricVal(pv.last_refusal)) : '') + '</div>';
-  if (pos) h += '<div class="small"><b>Not a loss cap:</b> a stop order is not a guaranteed limit on loss. It can fill well below its price in a gap or fast market, or be rejected.</div>';
-  h += '<div class="small"><b>Between manual Checks nothing runs.</b> ' + esc(pv.fill_timing_note || 'Fills, rejections and cancels at the broker are seen only at your next Check.') + checkGapText(s) + '</div>';
-  return h;
-}
-function checkGapText(s){
-  const lc = s.last_check; if (!lc || typeof lc !== 'object' || !lc.utc) return ' No Check yet in this session.';
-  const now = Date.parse(s.clock_utc || ''), at = Date.parse(lc.utc);
-  const ago = isFinite(now) && isFinite(at) && now >= at ? Math.round((now - at) / 1000) : null;
-  const prev = lc.since_previous_check_s;
-  return (ago != null ? ' Last Check ' + ago + ' s ago on the session clock.' : ' Last Check at ' + tsFull(lc.utc) + '.') +
-    (prev != null && isFinite(prev) ? ' Gap before it: ' + Math.round(prev) + ' s.' : '');
-}
-function quoteHtml(s){
-  const q0 = s.quote; const q = q0 && typeof q0 === 'object' ? (q0.observation || q0.latest || q0) : null;
-  const ok = q && q.valid === true && q0.available !== false && isFinite(q.bid) && isFinite(q.ask) && q.bid > 0 && q.ask >= q.bid;
-  if (!ok) return '<div><b>Latest IEX bid/ask:</b> <span class="flag unc">UNAVAILABLE</span> ' + esc((q && (q.reason || q.detail)) || (q0 && q0.detail) || 'no valid quote observation in this session') + '</div>';
-  const bid = Number(q.bid), ask = Number(q.ask);
-  const sp = q.spread_usd != null && isFinite(q.spread_usd) ? Number(q.spread_usd) : ask - bid;
-  const bps = q.spread_bps != null && isFinite(q.spread_bps) ? Number(q.spread_bps) : sp / ((bid + ask) / 2) * 10000;
-  return '<div><b>Latest IEX bid/ask (observed, not live):</b> bid $' + bid.toFixed(2) + ' / ask $' + ask.toFixed(2) +
-    ' &middot; spread $' + sp.toFixed(2) + ' (' + bps.toFixed(1) + ' bps)' +
-    ' &middot; quote time ' + esc(tsFull(q.quote_utc)) + (q.age_s != null && isFinite(q.age_s) ? ', ' + esc(String(Math.round(q.age_s * 10) / 10)) + ' s old when read' : '') +
-    (q.fresh === false ? ' <span class="flag unc">STALE</span>' : '') + ' &middot; free IEX feed only, not the full market</div>';
-}
 function renderAlpacaPanel(s){
   const row = $('#alpacaRow'); const info = $('#alpacaInfo');
   if (!isAlpaca(s)) { row.hidden = true; info.hidden = true; return; }
@@ -724,7 +680,6 @@ function renderAlpacaPanel(s){
     const ig = Array.isArray(rec.integrity) ? rec.integrity : [];
     if (ig.length) h += '<div><b>Integrity faults (adapter disabled on each):</b><br>' + ig.slice(-5).map(x => '<span class="flag alarm">' + esc(x.code || x.kind || 'FAULT') + '</span> ' + esc(x.detail || x.reason || (typeof x === 'object' ? JSON.stringify(x) : x))).join('<br>') + '</div>';
   }
-  h += protectionHtml(s) + quoteHtml(s);
   const lc = s.last_check;
   if (lc && typeof lc === 'object') h += '<div><b>Last check for bars:</b> ' + esc(tsFull(lc.utc)) + ' &middot; ' + (lc.ok ? esc(lc.bars) + ' new closed bar(s)' + (lc.source ? ' from ' + esc(lc.source) : '') + ((lc.empty_slots || []).length ? ' &middot; ' + lc.empty_slots.length + ' empty minute(s)' : '') + ((lc.partial_slots || []).length ? ' &middot; ' + lc.partial_slots.length + ' partial minute(s)' : '') : '<span class="neg">failed: ' + esc(lc.error || '') + (lc.detail ? ' (' + esc(lc.detail) + ')' : '') + '</span>') + '</div>';
   else h += '<div class="muted">No check for bars yet. Press Check for new bars when you want one.</div>';
