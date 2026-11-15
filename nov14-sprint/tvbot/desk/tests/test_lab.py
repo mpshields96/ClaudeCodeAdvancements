@@ -498,5 +498,16 @@ class TestLabRoutesLocal(LabBase):
         self.assertIn(b"HYPOTHETICAL", page)
 
 
+class EmptyViewLabel(unittest.TestCase):
+    def test_first_run_view_says_no_forecast_data_yet(self):
+        import tempfile
+        from lab import record as R
+        with tempfile.TemporaryDirectory() as td:
+            v = R.view(td)
+        self.assertEqual(v["data_label"], "No forecast data yet")
+        self.assertFalse(v["synthetic"])
+        self.assertTrue(all(n == 0 for n in v["counts"].values()))
+
+
 if __name__ == "__main__":
     unittest.main()

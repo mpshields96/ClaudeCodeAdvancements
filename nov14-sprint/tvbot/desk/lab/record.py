@@ -277,7 +277,8 @@ def view(state_dir, limit=200):
                         "sum_net_bps_2x": round(sum(s.get("net_bps_2x") or 0.0 for s in sc), 4)}
     synthetic = any(f.get("synthetic_inputs") for f in st.rows["forecasts"])
     return {"ok": True, "label": SCORE_LABEL, "forecast_label": FORECAST_LABEL,
-            "data_label": "MOCK / synthetic bars" if synthetic else "IEX-only bars (not consolidated)",
+            "data_label": ("No forecast data yet" if not st.rows["forecasts"] else
+                           "MOCK / synthetic bars" if synthetic else "IEX-only bars (not consolidated)"),
             "synthetic": synthetic,
             "frozen": {"strategy": "challenger", "rule_id": CH.RULE_ID, "frozen_at": CH.FROZEN_AT,
                        "cfg_hash": CH.CFG_HASH, "params": dict(CH.PARAMS), "cost_label": CH.COST_LABEL},
