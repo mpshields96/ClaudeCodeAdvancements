@@ -244,7 +244,7 @@ def _brief(f, s):
            "scored": s is not None}
     if s is not None:
         for k in ("net_bps", "net_bps_2x", "gross_bps", "net_usd", "vs_ema_net_bps", "vs_cash_net_bps",
-                  "hypothetical"):
+                  "hypothetical", "kind", "eligible", "ineligible_reason", "comparison_status"):
             if k in s:
                 out[k] = s[k]
     return out
@@ -266,9 +266,13 @@ def view(state_dir, limit=200):
     totals = {}
     for name in BASELINES:
         sc = [s for s in st.rows["scores"] if s["strategy"] == name]
+        sc_all, sc = sc, [s for s in sc if s.get("kind") in ("trade", "pass/flat")]
         nets = [s["net_bps"] for s in sc if s.get("net_bps") is not None]
         totals[name] = {"forecasts": sum(1 for f in st.rows["forecasts"] if f["strategy"] == name),
-                        "scored": len(sc), "trades": sum(1 for s in sc if s.get("exposure")),
+                        "scored": len(sc_all), "trades": sum(1 for s in sc if s.get("kind") == "trade"),
+                        "carry_marks": sum(1 for s in sc_all if str(s.get("kind") or "").startswith("hold")),
+                        "sums_status": "deprecated diagnostic: eligible trade and pass rows only, carry excluded; never a comparison or return",
+                        "ineligible": sum(1 for s in sc_all if s.get("eligible") is False),
                         "sum_net_bps": round(sum(nets), 4),
                         "sum_net_bps_2x": round(sum(s.get("net_bps_2x") or 0.0 for s in sc), 4)}
     synthetic = any(f.get("synthetic_inputs") for f in st.rows["forecasts"])

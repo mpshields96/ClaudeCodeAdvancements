@@ -1,4 +1,8 @@
+from pathlib import Path
+import sys
 import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from alpaca.weekly import fill_economics, render_week
 
 
@@ -27,3 +31,7 @@ class WeeklyPaperReview(unittest.TestCase):
         self.assertIn("synthetic SPY bars", html)
         self.assertIn("venue confirmed flat.", html)
         self.assertIn("No recorded week", html)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -66,7 +66,7 @@ def trend_bars(n=14, step=0.003, start="2026-11-16T14:30:00Z"):
         ts_o, ts_c = t0 + _dt.timedelta(hours=i), t0 + _dt.timedelta(hours=i + 1)
         out.append({"ts_open": _ts(ts_o), "ts_close": _ts(ts_c), "open": o, "high": round(c * 1.001, 4),
                     "low": round(o * 0.999, 4), "close": c, "volume": 1000, "symbol": "SPY",
-                    "source": SYN_SOURCE, "delivered_ts": _ts(ts_c + _dt.timedelta(seconds=2))})
+                    "source": SYN_SOURCE, "delivered_ts": _ts(ts_c)})   # lag 0: next open attainable (v2)
         px = c
     return out
 
@@ -275,6 +275,124 @@ class TestChallengerTrade(LabBase):
         drive_bars(self.dir, trend_bars(step=-0.003))
         acts = {f["action"] for f in self.rows(R.FORECASTS) if f["strategy"] == "challenger"}
         self.assertIn("enter_short", acts)
+
+
+def minute_bars(n=14, lag_s=2, drop=()):
+    """trend_bars knowable lag_s after each close, with SYNTHETIC genuine-style minute opens."""
+    bars = trend_bars(n=n)
+    for b in bars:
+        b["delivered_ts"] = _ts(B.parse_ts(b["ts_close"]) + _dt.timedelta(seconds=lag_s))
+        t0 = B.parse_ts(b["ts_open"])
+        b["minute_opens"] = [[_ts(t0 + _dt.timedelta(minutes=k)), round(b["open"] * (1 + 0.0001 * k), 4)]
+                             for k in range(16) if k not in drop]
+    return bars
+
+
+class TestMinuteProxyEntry(LabBase):
+    """v3: a genuine later minute open replaces an unattainable next-bar open (Codex 23:31Z)."""
+
+    def _scores(self, **kw):
+        drive_bars(self.dir, minute_bars(**kw))
+        return R.Store(self.dir).rows["scores"]
+
+    def _entry_minute(self, s):
+        return (B.parse_ts(s["entry"]["ts"]) - B.parse_ts(s["later_bars"][0]["ts_open"])).total_seconds() / 60
+
+    def test_two_second_lag_scores_from_next_minute_open_and_verifies(self):
+        scores = self._scores()
+        self.assertTrue(scores)
+        for s in scores:
+            self.assertEqual(s["score_version"], 3)
+            self.assertTrue(s["eligible"], s.get("ineligible_reason"))
+            self.assertEqual(s["entry"]["basis"], S.PROXY_BASIS)
+            self.assertEqual(self._entry_minute(s), 1.0)
+            self.assertEqual(s["entry"]["raw"], s["later_bars"][0]["minute_opens"][1][1])
+            self.assertEqual(s["entry"]["bar_open_raw"], s["later_bars"][0]["open"])
+            self.assertIn("2 s before", s["entry"]["rationale"])
+            res = V.verify(self.dir, s["forecast_id"])
+            self.assertTrue(res["ok"], [c for c in res["checks"] if c["passed"] is False])
+        ch = [s for s in scores if s["strategy"] == "challenger"]
+        self.assertTrue(any(isinstance(s["vs_ema_net_bps"], float) for s in ch))
+
+    def test_never_an_earlier_minute_and_missing_minutes_not_filled(self):
+        for s in self._scores(lag_s=90, drop=(2,)):
+            self.assertEqual(self._entry_minute(s), 3.0)     # 1 is earlier than knowable, 2 is missing
+
+    def test_no_stored_minute_late_enough_stays_ineligible(self):
+        for s in self._scores(lag_s=1200):                   # past the 16 stored minutes
+            self.assertFalse(s["eligible"])
+            self.assertIn("no genuine later minute", s["ineligible_reason"])
+
+    def test_old_bars_without_minute_marks_stay_strict_and_v2_rule_is_kept(self):
+        bars = trend_bars(n=4)
+        for b in bars:
+            b["delivered_ts"] = _ts(B.parse_ts(b["ts_close"]) + _dt.timedelta(seconds=2))
+        st = R.Store(drive_bars(self.dir, bars).state_dir)
+        f = [x for x in st.rows["forecasts"] if x["strategy"] == "challenger"][0]
+        later, _ = S.later_bars(st, f)
+        self.assertEqual(S.compute_core(f, later)["kind"], "ineligible")
+        mb = minute_bars(n=4)
+        later_m = [dict(b, minute_opens=m["minute_opens"]) for b, m in zip(later, mb[1:])]
+        self.assertEqual(S.compute_core(f, later_m, version=2)["kind"], "ineligible")
+        self.assertNotEqual(S.compute_core(f, later_m, version=3)["kind"], "ineligible")
+
+
+class TestIneligibleWindows(LabBase):
+    """v2 scoring: unattainable entry, gap/session cross and partial bars earn no P&L (Codex 23:25Z)."""
+
+    def _drive(self):
+        bars = trend_bars(n=16)
+        bars[5]["delivered_ts"] = _ts(B.parse_ts(bars[5]["ts_close"]) + _dt.timedelta(seconds=600))  # late
+        bars[12]["partial"] = True                                                                     # partial
+        del bars[9]                                                                                    # gap
+        drive_bars(self.dir, bars)
+        return R.Store(self.dir).rows["scores"]
+
+    def test_three_cases_are_ineligible_with_no_numbers_and_verify(self):
+        scores = self._drive()
+        bad = [s for s in scores if s.get("eligible") is False]
+        reasons = " | ".join(sorted({s["ineligible_reason"] for s in bad}))
+        for frag in ("not attainable", "not contiguous", "partial"):
+            self.assertIn(frag, reasons)
+        for s in bad:
+            self.assertEqual(s["kind"], "ineligible")
+            self.assertEqual(s["score_version"], S.SCORE_VERSION)
+            for k in ("gross_bps", "net_bps", "net_bps_2x", "net_usd", "net_usd_2x"):
+                self.assertIsNone(s[k], k)
+            if s["strategy"] == "challenger":
+                self.assertIsNone(s["vs_ema_net_bps"])
+                self.assertIsNone(s["vs_cash_net_bps"])
+                self.assertIn("disabled", s["comparison_status"])
+            res = V.verify(self.dir, s["forecast_id"])
+            self.assertTrue(res["ok"], [c for c in res["checks"] if c["passed"] is False])
+        good = [s for s in scores if s.get("eligible") is True]
+        self.assertTrue(good and all(isinstance(s["net_bps"], float) for s in good))
+
+    def test_view_counts_ineligible_and_sums_only_eligible(self):
+        self._drive()
+        t = lab.view(self.dir)["totals"]["challenger"]
+        self.assertGreaterEqual(t["ineligible"], 3)
+        self.assertTrue(all(r.get("eligible") is not False or r.get("net_bps") is None
+                            for g in lab.view(self.dir)["groups"] for r in g["rows"].values()))
+
+    def test_any_positive_lag_is_ineligible_zero_lag_is_scored(self):
+        st = R.Store(drive_bars(self.dir, trend_bars(n=4)).state_dir)
+        f = [x for x in st.rows["forecasts"] if x["strategy"] == "challenger"][0]
+        nxt = [b for b in trend_bars(n=4) if b["ts_open"] == f["bar_ts_close"]]
+        for lag, ok in ((0, True), (2, False), (59, False), (60, False), (61, False)):
+            g = dict(f, ts_knowable=_ts(B.parse_ts(f["bar_ts_close"]) + _dt.timedelta(seconds=lag)))
+            core = S.compute_core(g, nxt)
+            self.assertEqual(core["eligible"], ok, lag)
+            self.assertEqual(core["net_bps"] is None, not ok, lag)
+
+    def test_legacy_v1_rule_still_recomputes_for_old_rows(self):
+        self._drive()
+        st = R.Store(self.dir)
+        s = [x for x in st.rows["scores"] if x.get("eligible") is False][0]
+        f = st.forecast_index[s["forecast_id"]]
+        v1 = S.compute_core(f, s["later_bars"], version=1)
+        self.assertEqual(set(v1), set(S.CORE_KEYS_V1))
+        self.assertIsInstance(v1["net_bps"], float)   # the old rule scored it; v2 does not
 
 
 class TestTamperEvidence(LabBase):

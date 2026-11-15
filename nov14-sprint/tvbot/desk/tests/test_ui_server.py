@@ -1041,6 +1041,17 @@ class TestAlpacaPage(unittest.TestCase):
         self.assertIn("S.apBind = {draft_hash: w.draft_hash", self.html)
         self.assertIn("approval approves the saved draft", self.html)
 
+    def test_protection_check_gap_and_quote_view(self):
+        # lead Codex 23:2xZ: booked qty, confirmed vs pending protective qty, exits, uncovered,
+        # the gap between manual Checks, and the latest IEX quote only when it is a valid observation
+        for s in ("function protectionHtml(s)", "function checkGapText(s)", "function quoteHtml(s)",
+                  "h += protectionHtml(s) + quoteHtml(s);", "protective stop confirmed working",
+                  "pending broker confirmation", "PENDING CONFIRMATION", "working exits", "UNCOVERED",
+                  "Not a loss cap:", "Between manual Checks nothing runs.", "since_previous_check_s",
+                  "q.valid === true", "q0.available !== false", "Latest IEX bid/ask (observed, not live)",
+                  "UNAVAILABLE"):
+            self.assertIn(s, self.html)
+
     def test_broker_labels_follow_actual_transport(self):
         # Codex QA 22:45Z: arm tooltip and broker chip name mock vs paper HTTPS from the transport the
         # controller built (session.broker.transport), not the inherited offline text or the mode name alone.

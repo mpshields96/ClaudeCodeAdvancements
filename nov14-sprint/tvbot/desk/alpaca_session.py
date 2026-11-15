@@ -863,8 +863,11 @@ class AlpacaSessionController(S.SessionController):
         sim["bar_max_age_s"] = self.bar_max_age_s
         sim["warmup"] = self.warmup_view() if hasattr(self, "hist") else None
         sim["snapshot_error"] = self.snapshot_error
-        sim["quote"] = {"available": False,
-                        "detail": "production data path is IEX trade bars only; the live IEX bid/ask "
-                                  "check (alpaca/readiness.py) is not wired into entries in this build"}
+        lq = getattr(self, "latest_quote", None)
+        sim["quote"] = (dict(lq, available=True, observed_at="last HTTPS BUY entry check") if lq else
+                        {"available": False,
+                         "detail": "no IEX quote read yet: the HTTPS path reads alpaca/readiness.py "
+                                   "read_quote once per BUY candidate and holds the entry if it is "
+                                   "invalid, crossed or stale; the mock path reads no quotes"})
         sim["simulated"] = self.mock
         return sim

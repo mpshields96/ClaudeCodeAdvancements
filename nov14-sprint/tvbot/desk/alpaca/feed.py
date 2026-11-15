@@ -34,6 +34,7 @@ from orders.calendar import _alpaca_rows, cross_check, iso, parse_ts
 
 UTC = _dt.timezone.utc
 ONE_MIN = _dt.timedelta(minutes=1)
+MINUTE_MARKS = 16   # first genuine minute opens kept per slot, for the lab's later-entry proxy
 BARS_PATH = "/v2/stocks/%s/bars" % SYMBOL
 SOURCES = (DATA_LABEL_IEX, DATA_LABEL_MOCK)
 MAX_PAGES = 100
@@ -209,17 +210,19 @@ class IexSpyFeed(object):
 
         opens = [o for o, _c in slots]
         buckets = [[] for _ in slots]
+        starts = [[] for _ in slots]
         outside = 0
         for t in sorted(minutes):
             i = _bisect.bisect_right(opens, t) - 1
             if i >= 0 and t + ONE_MIN <= slots[i][1]:
                 buckets[i].append(minutes[t])
+                starts[i].append(t)
             else:
                 outside += 1
         self.last_fetch["minutes_outside_slots"] = outside
 
         out, r = [], iso(recv)
-        for (o, c), mins in zip(slots, buckets):
+        for (o, c), mins, ts in zip(slots, buckets, starts):
             expected = int((c - o).total_seconds() // 60)
             if not mins:
                 self.last_fetch["empty_slots"].append([iso(o), iso(c)])
@@ -234,7 +237,9 @@ class IexSpyFeed(object):
                    "bar_count_1min": len(mins), "minutes_expected": expected,
                    "partial": len(mins) < expected,
                    "vwap_iex": (sum(m["vw"] * m["v"] for m in vw) / vw_vol) if vw_vol > 0 else None,
-                   "received_ts": r, "delivered_ts": r}
+                   "received_ts": r, "delivered_ts": r,
+                   # local state only: genuine IEX minute starts and opens, never filled or invented
+                   "minute_opens": [[iso(t), m["o"]] for t, m in zip(ts[:MINUTE_MARKS], mins[:MINUTE_MARKS])]}
             if bar["partial"]:
                 self.last_fetch["partial_slots"].append([iso(o), iso(c)])
             out.append(bar)

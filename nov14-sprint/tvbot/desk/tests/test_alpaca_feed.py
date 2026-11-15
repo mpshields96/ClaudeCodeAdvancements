@@ -1,4 +1,3 @@
-import os
 """Tests for alpaca.feed, alpaca.mock_data and the NYSE calendar profile (W2).
 
 Offline only: an in-process transport routes to MockData; no socket, no key,
@@ -7,6 +6,7 @@ no Alpaca host. Every bar is synthetic.
 Run from desk/: /usr/bin/python3 -IB -m unittest discover -s tests -p 'test_alpaca_feed*'
 """
 import datetime as _dt
+import os
 import sys
 import unittest
 
@@ -67,6 +67,14 @@ def make_feed(days=(MON,), page_limit=1000, **mock_kw):
 
 
 class NyseCalendarProfile(unittest.TestCase):
+
+    def test_minute_opens_keep_first_sixteen_genuine_minutes(self):
+        feed, _tr, _data = make_feed()
+        b = feed.fetch_closed_bars(None, "2026-11-16T21:05:00Z")[0]
+        mo = b["minute_opens"]
+        self.assertEqual(len(mo), 16)
+        self.assertEqual(mo[0], [b["ts_open"], b["open"]])
+        self.assertTrue(all(x[0] < y[0] for x, y in zip(mo, mo[1:])))
     def test_covers_2026_and_2027_only(self):
         cal = nyse()
         self.assertEqual(cal.describe()["covered"], list(NYSE_COVERED))
