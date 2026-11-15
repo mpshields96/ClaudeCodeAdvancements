@@ -15,7 +15,7 @@ import re
 import zlib
 from datetime import datetime, timedelta, timezone
 
-S = "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate"
+S = os.path.expanduser("~/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate")
 PDF = S + "/pdf_export/Sunday_NFL_Brief.pdf"
 WL = S + "/results/sunday_20261115_watchlist.json"
 WL_ISSUED = S + "/results/sunday_20261115_watchlist.issued_2026-11-15T073826Z.json"

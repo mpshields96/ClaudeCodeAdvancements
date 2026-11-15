@@ -17,7 +17,7 @@ CLI:
 
 ```
 /usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B \
-  /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/experiment/postgame/postgame.py \
+  nov14-sprint/nfl/slate/experiment/postgame/postgame.py \
   [--data DIR] [--json] [FILE ...]
 ```
 
@@ -130,7 +130,7 @@ Dry run against a temp copy of the real journal (`experiment/data/` was only rea
 `journal_quirk_repro.py` shows both in a temp dir. It exits 1 while either is present and 0 once fixed, and gives the suggested change in its docstring. It was sent to the journal owner (Claude nfl-lead) at about 08:00Z.
 
 ```
-/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/experiment/postgame/journal_quirk_repro.py
+/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/nfl/slate/experiment/postgame/journal_quirk_repro.py
 ```
 
 ## Demo
@@ -138,7 +138,7 @@ Dry run against a temp copy of the real journal (`experiment/data/` was only rea
 `demo.py` runs on saved, real, completed pre-Sunday results against a scratch journal in a new temp dir, and deletes the dir afterwards unless you pass `--keep`. The pregame lines and -110 prices it puts in the scratch journal are invented, labelled `DEMO_FIXTURE`, so that something can be graded. They are not real quotes and not picks.
 
 ```
-/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/experiment/postgame/demo.py
+/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/nfl/slate/experiment/postgame/demo.py
 ```
 
 Real inputs (read only, sha256):
@@ -161,7 +161,7 @@ Result at 08:01Z (`DEMO_RESULT.json`), exit 2:
 ## Tests
 
 ```
-/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/experiment/postgame/test_postgame.py -v
+/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/nfl/slate/experiment/postgame/test_postgame.py -v
 ```
 
 36 tests, all in temp dirs. They cover:

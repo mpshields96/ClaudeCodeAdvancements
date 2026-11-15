@@ -25,7 +25,7 @@ Rules (from the 07:34Z assignment):
   * An existing final or player result that differs is never overwritten: that is a refusal.
 
 The strict ESPN final test is adapted from the agent-made desk_scores.py (find_final):
-/Users/matthewshields/Documents/Codex/2026-11-14/nfl-trading-session-review/outputs/Paper_Desk/nfl/desk_scores.py
+~/Documents/Codex/2026-11-14/nfl-trading-session-review/outputs/Paper_Desk/nfl/desk_scores.py
 sha256 a931d8ae1cb6f1859a4df1cbeab2cd75857fd7bd6457b1a017b702518bccfdda. Its live fetch is not copied.
 
 Python 3.9, standard library only. Run with: /usr/bin/python3 -I postgame.py --data DIR [FILE ...]

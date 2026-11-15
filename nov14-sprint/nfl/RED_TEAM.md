@@ -1,6 +1,6 @@
 # NFL Sunday red-team acceptance, final
 
-Written by the Claude coordinator, local_50238c87.
+Written by the Claude coordinator, local_<session>.
 
 - Started 07:26Z on 2026-11-15.
 - First final at 09:41:13Z.
@@ -9,7 +9,7 @@ Written by the Claude coordinator, local_50238c87.
   - bot-advisor's r8 hardening `67562a3` and its r7 update;
   - nfl-slate-data's weekly commit `f39f57b`;
   - postgame's ESPN box-score import `967cbd9`.
-- Corrected at 2026-11-15T09:53:45Z (from `date -u`), at the request of Sunday release owner Codex 01a1de97 and its sender. The 09:46Z text let "23.5 at −110" satisfy the Warren call. It cannot. The issued contract is exactly over 22.5 receiving yards at −115 or better. Also brought up to date: the weekly fix, the postgame collectors and the inactive-list timing. No verdict changed.
+- Corrected at 2026-11-15T09:53:45Z (from `date -u`), at the request of Sunday release owner Codex <codex-thread> and its sender. The 09:46Z text let "23.5 at −110" satisfy the Warren call. It cannot. The issued contract is exactly over 22.5 receiving yards at −115 or better. Also brought up to date: the weekly fix, the postgame collectors and the inactive-list timing. No verdict changed.
 
 A failure is reported as a failure and never relabelled. This is paper and research only, and no ticket has been recorded. Earlier versions of this file are in git, the last at `229abfc`.
 
@@ -29,7 +29,7 @@ It is the front-door PDF `Documents/Codex/2026-11-15/nfl-weekly-release-integrat
 **Kansas City Chiefs moneyline**
 
 - DraftKings −166, limit −166 or better.
-- The final refresh (`NFL_Live/observations/final-release-20261115T093513Z.json`, 09:35:13Z, 2 credits, run by Codex 01a1de30) shows DraftKings −166. The other books: FanDuel −172, BetRivers −177, BetMGM −175, ESPN BET −175.
+- The final refresh (`NFL_Live/observations/final-release-20261115T093513Z.json`, 09:35:13Z, 2 credits, run by Codex <codex-thread>) shows DraftKings −166. The other books: FanDuel −172, BetRivers −177, BetMGM −175, ESPN BET −175.
 - The price sits exactly at the limit.
 - Break-even is 62.4%. The engine's market figure (61.16%) and its model (60.24%) are both below it. The page prints the expected return as −2.4%.
 
@@ -89,7 +89,7 @@ It is the front-door PDF `Documents/Codex/2026-11-15/nfl-weekly-release-integrat
 | r5 G2a, G2b and G6 on the current card | **PASS, 3 of 3** at 09:55:19Z | `advisor/repros/r5_venue_and_g2g6.py` exits 0. It reads `slate/results/sunday_20261115_selections.json` (sha `519c9506`) and `BEST_BETS_SUN_NOV15.md` (sha `01e836e7`):<br>- G2a: the Warren game log carries `retrieved_utc` and a saved copy or hash;<br>- G2b: the afternoon pass figures carry `window_notes_sources`;<br>- G6: the Warren call and the card both name Freiermuth and Harmon.<br>Its venue section finds 3 of 120 team-games where ESPN's at/vs label disagrees with nflverse's home team: HOU-JAX, CIN-ATL and PIT-NO. nflverse marks all three Neutral. INFO only.<br>**History:** all three FAILed on the 08:25:48Z card, and that result went to the release owner. They pass now. |
 | KC write-up title | **PASS** | "Can Kansas City keep running without Walker?" The earlier lag is cleared. |
 | Line movement and CLV | **PASS on honesty** | DraftKings ranged −166 to −162 since the Nov 14 ESPN display. BetMGM −115 held across 6 checks. There is no claim of an opener, close or CLV. |
-| Live price path | **PASS on discipline** | `sunday_card.full_snapshot` is human-click only. The one final two-call refresh at 09:35:13Z was Codex 01a1de30's. Claude made no Odds API call and read no key. |
+| Live price path | **PASS on discipline** | `sunday_card.full_snapshot` is human-click only. The one final two-call refresh at 09:35:13Z was Codex <codex-thread>'s. Claude made no Odds API call and read no key. |
 
 ## FLAGs open at close
 

@@ -9,7 +9,7 @@
     {
      "captured_utc": "2026-11-14T22:53:42Z",
      "games": 14,
-     "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/real/inputs/nfl-public-lines.20261114T225342Z.json",
+     "path": "nov14-sprint/nfl/real/inputs/nfl-public-lines.20261114T225342Z.json",
      "player_rows": 0,
      "sha256": "206d164be40574fa78cb9a1fca8f0db3b3c8d8ef0a5b56431f3f975682d60e9e",
      "shape": "espn_public_lines"
@@ -25,7 +25,7 @@
     {
      "captured_utc": "2026-11-15T07:37:36Z",
      "games": 0,
-     "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/tools/official_player_logs_20261115.json",
+     "path": "nov14-sprint/nfl/slate/tools/official_player_logs_20261115.json",
      "player_rows": 1536,
      "sha256": "217b65f973a1b35e053fe786c96ba168544a56540e52593fac9b11a1d01e1119",
      "shape": "nflcom_game_logs"
@@ -266,7 +266,7 @@
  "journal_verify_problems": [],
  "real_inputs": [
   {
-   "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/real/inputs/nfl-public-lines.20261114T225342Z.json",
+   "path": "nov14-sprint/nfl/real/inputs/nfl-public-lines.20261114T225342Z.json",
    "sha256": "206d164be40574fa78cb9a1fca8f0db3b3c8d8ef0a5b56431f3f975682d60e9e"
   },
   {
@@ -274,7 +274,7 @@
    "sha256": "537a4ec5db76f29430595b2c40811987ad704d3bae159dd69dd1f5667c90b8b2"
   },
   {
-   "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/tools/official_player_logs_20261115.json",
+   "path": "nov14-sprint/nfl/slate/tools/official_player_logs_20261115.json",
    "sha256": "217b65f973a1b35e053fe786c96ba168544a56540e52593fac9b11a1d01e1119"
   }
  ],

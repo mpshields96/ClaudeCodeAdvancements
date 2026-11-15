@@ -1,6 +1,6 @@
 # Coordinator's own checks (Nov 14 sprint)
 
-Run by the coordinator session `local_50238c87` from a clean shell (`env -i PATH=/usr/bin:/bin`, `/usr/bin/python3` 3.9.6). Scratch ledgers live in the coordinator's scratchpad, so no lane file was written. These are checks the coordinator ran, not the lanes' own claims.
+Run by the coordinator session `local_<session>` from a clean shell (`env -i PATH=/usr/bin:/bin`, `/usr/bin/python3` 3.9.6). Scratch ledgers live in the coordinator's scratchpad, so no lane file was written. These are checks the coordinator ran, not the lanes' own claims.
 
 ## NFL (checked 21:36Z)
 
@@ -132,28 +132,28 @@ The coordinator did not exercise the BUSY path (exit 4); the lane reports it at 
   - the packet holds no outcome and no other answer.
 
   The receipt is codex/fable-followup/MODEL_SELECTION_RECEIPT.txt. The reviewer was told to read only those two files; nothing technically enforced it.
-- **Fable follow-up result (22:44Z):** the reviewer ran 22:37:20Z to 22:43:17Z. Every turn in its transcript is claude-fable-5-2, and the transcript shows exactly two Read calls, both on the inputs. Verdict: agree, with 8 of 8 arithmetic items matching. Its main concern is that earliest_fill_seq 124 is likely wrong and 125 is the first qualifying bar, the same fault type as 74 against 75 in the other packet. Raw answer: codex/fable-followup/FABLE_RAW_ANSWER.txt. Sent to Codex as msg 01a1dc3b (codex/RECEIPT_20261114T224400Z_fable_followup.txt); the message was queued, and delivery is not confirmed.
+- **Fable follow-up result (22:44Z):** the reviewer ran 22:37:20Z to 22:43:17Z. Every turn in its transcript is claude-fable-5-2, and the transcript shows exactly two Read calls, both on the inputs. Verdict: agree, with 8 of 8 arithmetic items matching. Its main concern is that earliest_fill_seq 124 is likely wrong and 125 is the first qualifying bar, the same fault type as 74 against 75 in the other packet. Raw answer: codex/fable-followup/FABLE_RAW_ANSWER.txt. Sent to Codex as msg <codex-thread> (codex/RECEIPT_20261114T224400Z_fable_followup.txt); the message was queued, and delivery is not confirmed.
 
 ## Restart, 120-minute one-shot session (2026-11-15T05:17:16Z)
 - Matthew's own words: HUMAN_DIRECT_20261115T044126Z_RESTART_120MIN.txt. The window is 04:41:26Z to 06:41:26Z.
-- Codex: queued msg 01a1dd82 on thread 01a1dbe0. Asks: restart its chats, name the release and desk owner, exercise the user path at about 06:00Z. Receipts: codex/TO_CODEX_*_restart_120min.txt and RECEIPT_*.
+- Codex: queued msg <codex-thread> on thread <codex-thread>. Asks: restart its chats, name the release and desk owner, exercise the user path at about 06:00Z. Receipts: codex/TO_CODEX_*_restart_120min.txt and RECEIPT_*.
 - Lanes restarted by SendMessage, with deliverables due 05:50Z:
-  - tvbot-lead (local_2bd925d2): real-data adapter that fails closed, earliest_fill fix, risk and leak fix, result page and gate, START_TONIGHT.md.
-  - nfl-lead (local_1c8ba33b): real games from codex/real-intake.
-  - reddit-research (local_462cb9ef): reddit/REAL_DATA_SOURCES.md, due 05:40Z.
-- Advisor started: bot-advisor, local_abcc3d7a, a fresh Opus chat in the shared checkout that writes only advisor/. Pass 1 (rubric) is due 05:15Z; I send pass 2 at about 05:50Z.
+  - tvbot-lead (local_<session>): real-data adapter that fails closed, earliest_fill fix, risk and leak fix, result page and gate, START_TONIGHT.md.
+  - nfl-lead (local_<session>): real games from codex/real-intake.
+  - reddit-research (local_<session>): reddit/REAL_DATA_SOURCES.md, due 05:40Z.
+- Advisor started: bot-advisor, local_<session>, a fresh Opus chat in the shared checkout that writes only advisor/. Pass 1 (rubric) is due 05:15Z; I send pass 2 at about 05:50Z.
 - 05:27:35Z midpoint:
   - Advisor pass 1 is in advisor/ACCEPTANCE_RUBRIC.md: 22 checks, 2 FAIL (B4 repeat run loses bars; A5 STATUS stale), C4 not yet sent.
   - tvbot-lead got B4, A5, A1 and D2, due 06:05Z.
   - reddit-research got verbatim Twelve Data terms and header auth, due 06:00Z.
   - nfl-lead got the Louisiana DraftKings availability check from a primary page, due 06:00Z.
-  - Codex got queued msg 01a1ddac: a user-path run at about 06:05Z, and NFL captures for the next window.
+  - Codex got queued msg <codex-thread>: a user-path run at about 06:05Z, and NFL captures for the next window.
   - A draft of START_TONIGHT.md was sent to Matthew's phone with SendUserFile.
 - 06:35:22Z close-out (window ends 06:41:26Z):
   - tvbot B4, A5, A1 and D2 landed at 05:33-05:36Z: paper --fresh, a REAL FILE DOES NOT LINE UP refusal, and unset TD_KEY.
   - The reddit addendum at 05:35Z has verbatim Twelve Data terms and documented header auth. START_TONIGHT still uses the URL key form; header auth is in REAL_DATA_SOURCES.md.
   - NFL: DraftKings is on the LGCB licensee list. Price rows are still local-unverified.
-  - Codex at 06:34Z: release ZIP owner 01a1dc37; desk 01a1dbe0; mobile NFL intake 01a1d874. It is running the user path; verdict pending.
+  - Codex at 06:34Z: release ZIP owner <codex-thread>; desk <codex-thread>; mobile NFL intake <codex-thread>. It is running the user path; verdict pending.
   - NOT DONE: advisor pass 2 (no time left after the fixes). No real file run. Final START_TONIGHT sent to Matthew's phone. Nothing committed. Lanes idle; no work after 06:41Z.
 
 ## 20261115T065651Z coordinator: NFL one-shot start
@@ -162,9 +162,9 @@ The coordinator did not exercise the BUSY path (exit 4); the lane reports it at 
 
 ## 20261115T070716Z coordinator: picker handed to Codex
 - 06:5xZ: nfl-slate-data, nfl-props and nfl-picker hit the 5-hour limit (reset 09:40Z, after the 08:59:53Z sprint end). nfl-lead also failed. No worker output after picker.py 06:51Z and the past-only test 06:54Z.
-- 07:04Z Codex: 01a1de05-7d2e is the only picker writer; 01a1de05-7985 owns the inputs. Claude stops writing picker.py and the inputs.
+- 07:04Z Codex: <codex-thread> is the only picker writer; <codex-thread> owns the inputs. Claude stops writing picker.py and the inputs.
 - picker.py left as found (61,222 bytes). Past-only test: market wins (weight 1.00); top-2 ML by model rating is the only small-sample lead.
-- Design notes + concerns to Codex: msg 01a1de08-5fe5 (RECEIPT_20261115T070716Z_picker_handoff.txt).
+- Design notes + concerns to Codex: msg <codex-thread> (RECEIPT_20261115T070716Z_picker_handoff.txt).
 - Claude never read OAPI.docx and holds no key.
 - NOT DONE by Claude: band, windows, line-shopping loader, hypothesis/challenge/ticket workflow, guard tests, picks page. All now Codex's. bot-advisor idle, ready for NFL_REVIEW.md once a picks path is posted.
 - Coordinator has compacted 3+ times; stands down after this note. A successor needs: this section, the handoff file above, advisor/PASS2_TRADING.md.
@@ -174,9 +174,9 @@ The coordinator did not exercise the BUSY path (exit 4); the lane reports it at 
 - Observed at 07:12-07:13Z: picker.py was rewritten to 42,499 bytes (sha prefix bc6f909563c1fb52), split into selection_markets.py and selection_decisions.py. A grep found no odds_feed, urllib.request, http.client or socket import in the three files. `selection_markets.key_for` carries event, period, market, subject, side and line. That should fix the prop-ID collision on the old engine at lines 708 and 768. NOT ACCEPTED: no test yet.
 - Ownership, per the 07:13Z Codex relay:
   - Codex 7d2e is the sole engine writer.
-  - Codex 01a1dc37 owns Final_Decisions.json (present, 07:09Z, 2,495 bytes).
-  - Codex 01a1de0b owns integration and UI.
+  - Codex <codex-thread> owns Final_Decisions.json (present, 07:09Z, 2,495 bytes).
+  - Codex <codex-thread> owns integration and UI.
   - The roster is in nfl/slate/ASSIGNMENTS_0712Z.md. My 07:12Z draft, which made nfl-picker the writer after a handback, is withdrawn. No Claude session edited picker.py.
 - Briefs queued to the four workers at 07:14Z (message ids 879f85f7, f0d82615, b6b710f8, a797cc67). Due: nfl-picker repros 07:45Z, nfl-lead tests 07:40Z, slate-data 07:45Z, props dissent 08:00Z, red-team acceptance 08:40Z.
-- ACK queued to Codex 01a1de0b (01a1de0e-0845) and 7d2e (01a1de0e-08dd). Receipts: codex/RECEIPT_20261115T071343Z_ack_*.txt.
+- ACK queued to Codex <codex-thread> (<codex-thread>) and 7d2e (<codex-thread>). Receipts: codex/RECEIPT_20261115T071343Z_ack_*.txt.
 - First work from the workers is NOT yet verified. Their briefs are queued behind turns already in progress.

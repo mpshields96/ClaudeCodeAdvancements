@@ -1,7 +1,7 @@
 # Football red team: Sunday Nov 15 2026 selections
 
-Writer: Claude NFL red-team writer (a side session of sprint-coord local_50238c87). Written 2026-11-15, about 07:16-07:25Z. Updated 07:30Z for the last-5/last-10 rule and two new official sources. Stop time: 08:59:53Z.
-Scope: this is paper and advisory work only. It places no orders and contacts no sportsbook. It edits no engine file: `picker.py`, the selection helpers, frozen_picker and BEST_BETS belong to Codex 01a1de05-7d2e. It made no odds call and read no key.
+Writer: Claude NFL red-team writer (a side session of sprint-coord local_<session>). Written 2026-11-15, about 07:16-07:25Z. Updated 07:30Z for the last-5/last-10 rule and two new official sources. Stop time: 08:59:53Z.
+Scope: this is paper and advisory work only. It places no orders and contacts no sportsbook. It edits no engine file: `picker.py`, the selection helpers, frozen_picker and BEST_BETS belong to Codex <codex-thread>. It made no odds call and read no key.
 
 ## Verdicts first
 
@@ -23,7 +23,7 @@ So the first-half under is also a pass. A ticket that reads "1st Half" is not th
 
 ## Sources (saved data only, with capture times)
 
-- **Odds.** `/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json`, captured 06:55:06Z. Per-book `last_update` times run 06:53:50Z to 06:54:59Z.
+- **Odds.** `~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json`, captured 06:55:06Z. Per-book `last_update` times run 06:53:50Z to 06:54:59Z.
 - **Codex calls.** `Final_Decisions.json` (decided 07:08:57Z), `Sunday_Card.json` and `Matchup_Review.md`, all in the same folder.
 - **Player game logs.** `nov14-sprint/nfl/slate/tools/official_player_logs_20261115.json`, captured from NFL.com at 07:09:25Z, with cutoff before Nov 15.
 - **Results and lines.** `nov14-sprint/nfl/data/raw/games.csv`, 2026 rows.
@@ -284,17 +284,17 @@ The table records the first run.
 
 **Middles and cross-market hedges (09:33Z probe on the current engine, scratch script, no source edits).**
 - **Same-market middles are refused.** The direction rule now covers them: totals Over 45.5 plus Under 47.5 on one game gets "Duplicate, opposing, or excess review call". Both spread sides at ±3 are also refused.
-- **Opposite exposure across two markets of one game is still accepted.** Example: the home moneyline plus the away +3. The written rule allows it, because direction is checked per market. By the same rule, read from the code but not probed, a full-game Over with a first-half Under, or a game Over with a team-total Under, would also pass. This is the release owner's call (01a1de30, engine owner 7d2e). It does not touch today's two calls, which are on different games.
+- **Opposite exposure across two markets of one game is still accepted.** Example: the home moneyline plus the away +3. The written rule allows it, because direction is checked per market. By the same rule, read from the code but not probed, a full-game Over with a first-half Under, or a game Over with a team-total Under, would also pass. This is the release owner's call (<codex-thread>, engine owner 7d2e). It does not touch today's two calls, which are on different games.
 
 Repro command:
 
 ```bash
-/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/redteam/test_engine_ids.py -v
+/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I nov14-sprint/nfl/slate/redteam/test_engine_ids.py -v
 ```
 
 ## 7. Postgame import review (09:34Z, read-only)
 
-Owners: postgame intake, Codex 01a1de05; journal, Codex 01a1de0b. The red team edited none of their files. They were being edited during the review, so these hashes are from 09:30Z: postgame.py 481bd2f5, espn_fetch.py 8bb9380c, test_espn_boxscore.py fc0f20a9, test_postgame.py 591bc4d9, journal.py c021cbac.
+Owners: postgame intake, Codex <codex-thread>; journal, Codex <codex-thread>. The red team edited none of their files. They were being edited during the review, so these hashes are from 09:30Z: postgame.py 481bd2f5, espn_fetch.py 8bb9380c, test_espn_boxscore.py fc0f20a9, test_postgame.py 591bc4d9, journal.py c021cbac.
 
 | Check | Result |
 |---|---|
@@ -305,8 +305,8 @@ Owners: postgame intake, Codex 01a1de05; journal, Codex 01a1de0b. The red team e
 | Period-specific grading in journal.py | **PASS.** `postgame/journal_quirk_repro.py` exits 0: player props are graded on the exact market, period included. |
 
 Findings. None is a failure.
-1. **LOW, display (01a1de05).** The summary's `recorded_finals[...]["h1"]` lists [away, home], while the finals otherwise read home first. The stored values are right (h1_home 20, h1_away 6). A label would prevent a misread.
-2. **LOW, journal (01a1de0b).** The folded state keeps the last write. A later hand entry (`journal.py final` or `player-result`) with a different number replaces the earlier one for grading, with no warning. The append-only log keeps both. The intake itself refuses conflicting captures, so only hand entries are exposed. Suggest refusing, or flagging, a second differing value unless a revise flag is given, as tickets already do.
+1. **LOW, display (<codex-thread>).** The summary's `recorded_finals[...]["h1"]` lists [away, home], while the finals otherwise read home first. The stored values are right (h1_home 20, h1_away 6). A label would prevent a misread.
+2. **LOW, journal (<codex-thread>).** The folded state keeps the last write. A later hand entry (`journal.py final` or `player-result`) with a different number replaces the earlier one for grading, with no warning. The append-only log keeps both. The intake itself refuses conflicting captures, so only hand entries are exposed. Suggest refusing, or flagging, a second differing value unless a revise flag is given, as tickets already do.
 3. **Caveat.** A first-half moneyline tie grades as a push. Check the book's half rule before trusting a graded first-half moneyline.
 
 Scratch probes: `espn_real_acceptance.py` and `middle_probe.py` in this session's scratchpad. They are not committed; they import the source read-only and write only to temp dirs.
@@ -325,8 +325,8 @@ This check runs against the final release. The red team edited no engine, journa
 | Final calls against the policy | **PASS.** The selections are 519c9506 (run 09:31:27Z), with the issued 07:08:57Z review replayed unchanged. Kansas City moneyline is at DraftKings −166 (KC at ATL, early window). Jaylen Warren over 22.5 receiving yards is at BetMGM −115 (PIT at CIN, night window). The two calls are on different games and in different windows, so no shared-risk note is needed. They are not on the same subject, so they cannot point in opposite directions. No ticket is recorded. |
 | Final PDF matches the calls | **PASS.** `pdf_export/Sunday_NFL_Brief.pdf` is 0d89417e, one page, 11,230 bytes. It shows the same two formal calls at the 3:35 am CT (09:35Z) prices. Each limit equals its price (−166 and −115). The other three rows are labeled Watch, and the footer reads "No ticket recorded". |
 | Postgame import, final code | **PASS.** The code is unchanged since the section 7 hashes (postgame.py 481bd2f5, espn_fetch.py 8bb9380c, journal.py c021cbac; last commits 967cbd9 and 4add245). test_postgame 36 OK, test_espn_boxscore 8 OK and the quirk repro exits 0. The real-data acceptance was re-run at 09:45Z on a throwaway journal: PIT 27–6, first half 20–6, Warren 143 rushing, 0 receiving and 1 reception, with two props pending as before. |
-| Actual import into the real journal | **None yet, as expected.** `experiment/data/` has no `finals.jsonl`. Today's first kickoff is 14:30Z, so no Nov 15 final exists. Its owner (01a1de05) runs `espn_fetch.py` once after the games end. The red team did not run it against the real journal. |
+| Actual import into the real journal | **None yet, as expected.** `experiment/data/` has no `finals.jsonl`. Today's first kickoff is 14:30Z, so no Nov 15 final exists. Its owner (<codex-thread>) runs `espn_fetch.py` once after the games end. The red team did not run it against the real journal. |
 
-**For the PDF owner (01a1de0d / 01a1de30), not a failure.** The headline says Claude would pass on Kansas City at −166, but KC is still listed as a formal conditional pick. The PDF's own price check shows a market-based expected return of −2.4%. The disagreement is disclosed, so the main thing for the reader is that KC is the weaker of the two calls.
+**For the PDF owner (<codex-thread> / <codex-thread>), not a failure.** The headline says Claude would pass on Kansas City at −166, but KC is still listed as a formal conditional pick. The PDF's own price check shows a market-based expected return of −2.4%. The disagreement is disclosed, so the main thing for the reader is that KC is the weaker of the two calls.
 
-**Open notes, unchanged from section 7.** These go to their owners through the coordinator: the first-half order label (01a1de05), the journal's last write winning for a hand entry (01a1de0b), and the caveat that a first-half moneyline tie grades as a push. The red-team scope is finished.
+**Open notes, unchanged from section 7.** These go to their owners through the coordinator: the first-half order label (<codex-thread>), the journal's last write winning for a hand entry (<codex-thread>), and the caveat that a first-half moneyline tie grades as a push. The red-team scope is finished.

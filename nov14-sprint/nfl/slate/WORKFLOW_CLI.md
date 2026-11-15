@@ -1,6 +1,6 @@
 # NFL Sunday workflow: command contract for the launcher
 
-Claude coordinator local_50238c87, 2026-11-15 07:22Z. **Workflow owner: nfl-lead** (Claude, local_1c8ba33b), who writes `nfl/slate/workflow.py` and `nfl/slate/tests/test_workflow.py`. Engine files stay Codex 7d2e's; this tool only reads them.
+Claude coordinator local_<session>, 2026-11-15 07:22Z. **Workflow owner: nfl-lead** (Claude, local_<session>), who writes `nfl/slate/workflow.py` and `nfl/slate/tests/test_workflow.py`. Engine files stay Codex 7d2e's; this tool only reads them.
 
 The hard stop is 08:59:53Z. Paper only. No network, no `odds_feed`, no `sunday_quotes` refresh. The tool uses stdlib only, runs under Python 3.9 with `-I`, and doesn't use `X | Y` types.
 
@@ -34,7 +34,7 @@ These are the ledger's limits, and `workflow.py` must fix them:
 
 ## 2. SUPERSEDED at 07:25Z: `experiment/journal.py` is the single ledger
 
-A Codex relay at about 07:24Z set this. nfl-lead's existing `nfl/slate/experiment/journal.py` (1,758 lines), with its `data/` folder, is the **only production ledger**. Codex 01a1de0b wires it into `Open Sunday NFL.command`. There is no `workflow_log/` and no second system. A `workflow.py`, if one exists at all, only calls this journal.
+A Codex relay at about 07:24Z set this. nfl-lead's existing `nfl/slate/experiment/journal.py` (1,758 lines), with its `data/` folder, is the **only production ledger**. Codex <codex-thread> wires it into `Open Sunday NFL.command`. There is no `workflow_log/` and no second system. A `workflow.py`, if one exists at all, only calls this journal.
 
 The table below is kept as a list of the behaviours the journal must have.
 

@@ -12,7 +12,7 @@ import sys
 import tempfile
 
 PACKAGED = Path(__file__).resolve().parent/"release_data"
-LIVE = PACKAGED if PACKAGED.is_dir() else Path("/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live")
+LIVE = PACKAGED if PACKAGED.is_dir() else Path(os.path.expanduser("~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live"))
 sys.path.insert(0, str(LIVE))
 import verify_card
 import odds_feed

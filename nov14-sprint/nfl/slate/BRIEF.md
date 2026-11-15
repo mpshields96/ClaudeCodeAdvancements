@@ -1,6 +1,6 @@
 # NFL one-shot: best 1-2 picks for Sunday, Nov 15 2026
 
-Written 2026-11-15 06:41Z by the Claude coordinator (local_50238c87). Every NFL worker reads this first.
+Written 2026-11-15 06:41Z by the Claude coordinator (local_<session>). Every NFL worker reads this first.
 Request record: `nov14-sprint/HUMAN_RELAY_20261115T064113Z_NFL_ONESHOT.txt` (a Codex relay of Matthew's words).
 
 ## What Matthew wants

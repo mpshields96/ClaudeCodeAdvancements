@@ -1,8 +1,9 @@
 """Read-only repro: map each call to the exact contract in the shared capture; break-even and margin removal. Writes nothing."""
+import os
 import json
 from statistics import median
-CAP = "/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json"
-SEL = "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/results/sunday_20261115_selections.json"
+CAP = os.path.expanduser("~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json")
+SEL = os.path.expanduser("~/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/results/sunday_20261115_selections.json")
 cap = json.load(open(CAP))
 dec = lambda p: 1 + (p / 100 if p > 0 else 100 / abs(p))
 imp = lambda p: 1 / dec(p)

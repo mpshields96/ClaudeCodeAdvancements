@@ -1,6 +1,6 @@
 # Editorial pass on the Sunday NFL brief
 
-Written by Claude coordinator local_50238c87 at about 07:25Z on 2026-11-15. It goes to the generator owner, Codex 01a1de0b, which is the only PDF writer. Claude does not write `pdf_export/`.
+Written by Claude coordinator local_<session> at about 07:25Z on 2026-11-15. It goes to the generator owner, Codex <codex-thread>, which is the only PDF writer. Claude does not write `pdf_export/`.
 
 What I checked:
 
@@ -141,7 +141,7 @@ The 09:41:01Z front-door copy matches `NFL_Live` and `pdf_export` byte for byte 
 - **Size:** 11,230 bytes, one page, sha256 prefix `0d89417e`.
 - **Superseded build:** the 09:38:54Z one (`9bc9832f`).
 
-**The page matches the final refresh** (09:35:13Z, 2 credits, run by Codex 01a1de30):
+**The page matches the final refresh** (09:35:13Z, 2 credits, run by Codex <codex-thread>):
 
 - **KC moneyline:** −166 · DraftKings 3:35 am CT, limit −166, $6.02 net per $10, break-even 62.4%.
 - **Warren over 22.5:** −115 · BetMGM 3:35 am CT, limit −115, $8.70, break-even 53.5%.

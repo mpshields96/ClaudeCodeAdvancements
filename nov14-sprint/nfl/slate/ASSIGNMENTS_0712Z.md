@@ -2,7 +2,7 @@
 
 **This replaces the 07:12Z draft of this file.** The draft made nfl-picker the engine writer after a handback. That is withdrawn.
 
-**Source.** A Codex relay pasted into the Claude coordinator chat at about 07:13Z. It was posted by the prior supervisor 01a1dbe0 on behalf of the current technical supervisor 01a1de0b-7734. It is an agent relay; Matthew may not have typed it. It narrows ownership and grants no new permission.
+**Source.** A Codex relay pasted into the Claude coordinator chat at about 07:13Z. It was posted by the prior supervisor <codex-thread> on behalf of the current technical supervisor <codex-thread>. It is an agent relay; Matthew may not have typed it. It narrows ownership and grants no new permission.
 
 **The hard stop is 08:59:53 UTC.** Every limit in BRIEF.md still applies:
 
@@ -50,18 +50,18 @@ This is a general rule about finishing work. It doesn't order anyone to edit a p
 
 | Owner | Writes | Never writes |
 |---|---|---|
-| **Codex 01a1de05-7d2e**, the engine author | The sole writer, for this release, of `picker.py`, `selection_markets.py`, `selection_decisions.py`, the frozen selection, the results files and the result pages. It is staging privately until the coordinator ACKs. | |
-| **Codex 01a1dc37**, the release owner | The final overlay `Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/Final_Decisions.json`, already supplied (07:09Z, 2,495 bytes) | engine files |
-| **Codex 01a1de0b-7734**, the technical supervisor | Technical integration and UI. Codex 01a1dbe0 has handed UI over. | |
-| **Codex 01a1de05-7985**, the data worker | `props_20261115.json` | |
-| **nfl-picker** (Claude, local_36f1426d) | `FOOTBALL_RED_TEAM.md` and the independent football and selection review. Its read-only repro tests go in `nfl/slate/redteam/`. | the engine files listed above, the overlay, inputs |
-| **nfl-lead** (Claude, local_1c8ba33b) | The experiment and workflow, in its own files: hypothesis register, candidate-pool log, Matthew's challenge log, ticket log, and grading against controls | the engine files, the overlay |
-| **nfl-slate-data** (Claude, local_d0efdc45) | the team JSON `slate_20261115.json`, per INPUT_HANDOFF.md | props JSON, engine files |
-| **nfl-props** (Claude, local_b9abf01d) | `DISSENT_PREGAME.md` and `.json`, the pregame football and fantasy dissent | props JSON, engine files |
-| **bot-advisor** (Claude, local_abcc3d7a) | `advisor/NFL_REVIEW.md`, a read-only review with repros | any code |
-| **Claude coordinator** (local_50238c87) | This roster, red-team acceptance and Claude worker coordination | engine files |
+| **Codex <codex-thread>**, the engine author | The sole writer, for this release, of `picker.py`, `selection_markets.py`, `selection_decisions.py`, the frozen selection, the results files and the result pages. It is staging privately until the coordinator ACKs. | |
+| **Codex <codex-thread>**, the release owner | The final overlay `Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/Final_Decisions.json`, already supplied (07:09Z, 2,495 bytes) | engine files |
+| **Codex <codex-thread>**, the technical supervisor | Technical integration and UI. Codex <codex-thread> has handed UI over. | |
+| **Codex <codex-thread>**, the data worker | `props_20261115.json` | |
+| **nfl-picker** (Claude, local_<session>) | `FOOTBALL_RED_TEAM.md` and the independent football and selection review. Its read-only repro tests go in `nfl/slate/redteam/`. | the engine files listed above, the overlay, inputs |
+| **nfl-lead** (Claude, local_<session>) | The experiment and workflow, in its own files: hypothesis register, candidate-pool log, Matthew's challenge log, ticket log, and grading against controls | the engine files, the overlay |
+| **nfl-slate-data** (Claude, local_<session>) | the team JSON `slate_20261115.json`, per INPUT_HANDOFF.md | props JSON, engine files |
+| **nfl-props** (Claude, local_<session>) | `DISSENT_PREGAME.md` and `.json`, the pregame football and fantasy dissent | props JSON, engine files |
+| **bot-advisor** (Claude, local_<session>) | `advisor/NFL_REVIEW.md`, a read-only review with repros | any code |
+| **Claude coordinator** (local_<session>) | This roster, red-team acceptance and Claude worker coordination | engine files |
 
-Nobody merges into, overwrites or reverts `picker.py` or the two selection modules except Codex 7d2e. A finding goes to the coordinator as a repro. The coordinator relays it to 7d2e and 01a1de0b and checks that the fix landed, so it isn't left as an open "not touching".
+Nobody merges into, overwrites or reverts `picker.py` or the two selection modules except Codex 7d2e. A finding goes to the coordinator as a repro. The coordinator relays it to 7d2e and <codex-thread> and checks that the fix landed, so it isn't left as an open "not touching".
 
 ## Engine state seen at 07:13Z, observed only, not accepted
 

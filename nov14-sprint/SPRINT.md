@@ -4,8 +4,8 @@
 - **Authority:** Matthew's verbatim request in [HUMAN_DIRECT_20261114T2103Z.txt](HUMAN_DIRECT_20261114T2103Z.txt).
 - **Owners:**
   - Claude coordinator (Opus 5.5, this CCA chat) owns implementation and staffing.
-  - Codex supervisor `01a1dbe0-ec74-7dc0-a8b3-90d55189cd36` owns independent tests, acceptance, closeout and the TikTok intake. Its workspace: `~/Documents/Codex/2026-11-14/nfl-trading-session-review/`.
-- **Folder:** `/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/`. Each lane writes only in its own subfolder.
+  - Codex supervisor `<session-id>` owns independent tests, acceptance, closeout and the TikTok intake. Its workspace: `~/Documents/Codex/2026-11-14/nfl-trading-session-review/`.
+- **Folder:** `nov14-sprint/`. Each lane writes only in its own subfolder.
 
 ## Hard limits (every chat, every agent)
 - **Paper and research only.** No bets, deposits, orders, trades, money movement or sportsbook/exchange/broker accounts. No keys, tokens, passwords, paid data or purchases. No TradingView account changes from Claude lanes; Codex decides any chart-side test. Paper output never implies a real edge or authorizes real money.
@@ -51,16 +51,16 @@ Each lane fills in its exact commands in its `STATUS.md` under **Entry points**.
 ## ROSTER (verified with get_session at 21:17Z)
 | Chat | Session id | Model / effort | Lane | Writes only in |
 |---|---|---|---|---|
-| Coordinator (old, until ACK) | `local_8b24affb-739a-4e37-9130-c69717bc66e0` | Opus 5.5 / xhigh | staffing, relays; hands off at 21:22Z, see HANDOFF_COORDINATOR.md | `nov14-sprint/` top level and `codex/` receipts |
-| Coordinator (fresh, sprint-coord) | `local_50238c87-fcc4-4796-b0c4-64a969e5eaa0` | Opus 5.5 / xhigh | integration, both model paths, verification, front door, closeout | `nov14-sprint/` top level and `codex/` receipts |
-| nfl-lead | `local_1c8ba33b-9ff7-4d76-8c8a-7bfd38bf9bd8` | Fable 5.2 / high | R1 | `nfl/` |
-| tvbot-lead | `local_2bd925d2-76cb-4f1f-a6f9-b4880cded8fd` | Fable 5.2 / high | R2 | `tvbot/` |
-| reddit-research | `local_462cb9ef-2d22-48ee-a582-f88529ba6304` | Fable 5.2 / high | R3 | `reddit/` |
+| Coordinator (old, until ACK) | `local_<session>` | Opus 5.5 / xhigh | staffing, relays; hands off at 21:22Z, see HANDOFF_COORDINATOR.md | `nov14-sprint/` top level and `codex/` receipts |
+| Coordinator (fresh, sprint-coord) | `local_<session>` | Opus 5.5 / xhigh | integration, both model paths, verification, front door, closeout | `nov14-sprint/` top level and `codex/` receipts |
+| nfl-lead | `local_<session>` | Fable 5.2 / high | R1 | `nfl/` |
+| tvbot-lead | `local_<session>` | Fable 5.2 / high | R2 | `tvbot/` |
+| reddit-research | `local_<session>` | Fable 5.2 / high | R3 | `reddit/` |
 
 - **Model note.** start_session ignores a model above the parent's family, so all three lanes first came up on Opus 5.5. At about 21:17Z I switched each to Fable 5.2 with set_session_model, stopped the Opus first turn (about one minute of reading), and resumed it by message.
 - Lane leads may run their own Sonnet or Haiku subagents, and must name them in STATUS.md.
 
-## RESULT (coordinator local_50238c87, written 22:31:13Z)
+## RESULT (coordinator local_<session>, written 22:31:13Z)
 - **What Matthew can open:** `START_HERE.html` (the front door), `Paper Desk.command` (the desk with NFL, Trading and Practice tabs) and `odds/price_helper.html` (price against confidence, for his +150 to −170 range). All are paper only and run locally.
 - **TV bot (R2):** it runs end to end on synthetic 60-minute bars. On the coordinator's fresh-copy retest it finished +$227.88 after costs over 8 trips, against +$72.99 for buy-and-hold. At 8x costs it lost $69.03.
   - Rerun and adverse checks held.

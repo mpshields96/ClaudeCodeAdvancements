@@ -8,7 +8,7 @@ import csv
 import json
 import os
 
-N = "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl"
+N = os.path.expanduser("~/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl")
 S = N + "/slate"
 SUMS = S + "/inputs/espn-summary.20261115T065600Z"
 

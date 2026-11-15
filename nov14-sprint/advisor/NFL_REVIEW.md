@@ -1,6 +1,6 @@
 # Advisor review v2: NFL card for Sunday, Nov 15 (final freeze 07:29:44Z)
 
-Written 07:36Z by bot-advisor (local_abcc3d7a). It is read-only: I edited no worker files, and there are no tickets or orders. My scripts live in `advisor/repros/` and write nothing. I made no network calls, live odds checks or new sports calls. Desk, journal and PDF acceptance belong to Codex and are not scored here.
+Written 07:36Z by bot-advisor (local_<session>). It is read-only: I edited no worker files, and there are no tickets or orders. My scripts live in `advisor/repros/` and write nothing. I made no network calls, live odds checks or new sports calls. Desk, journal and PDF acceptance belong to Codex and are not scored here.
 
 **Final freeze: PASS.** The three engine files match the freeze hashes, the rules hash is unchanged, both calls are the same as at the 07:08:57Z review, the run was before the first kickoff, and there are 0 tickets.
 
@@ -42,7 +42,7 @@ If any of these changes after 07:36Z, this review is out of date for that file. 
 Every command below runs from any folder, uses absolute paths and writes nothing.
 
 **Repro A (freeze, sources, evidence labels, Warren counts, open statuses):**
-`/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r4_final_freeze.py`
+`/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r4_final_freeze.py`
 
 | # | Claim on the card | Expected | Observed (Repro A unless noted) | Result |
 |---|---|---|---|---|
@@ -57,7 +57,7 @@ Every command below runs from any folder, uses absolute paths and writes nothing
 | F9 | G2: afternoon pass figures ("Arizona stayed under 6.5 before halftime four times in nine games…", line 39) | A source for each figure, and a clear period and market | No source field anywhere for the late window. "Under 6.5 before halftime" doesn't say whether it is a team first-half total or points allowed | **NOT YET**, LOW. It is a pass, so no money depends on it, but it is still an unsourced stat |
 | F10 | G6: open statuses named for the Warren call | The card names PIT's still-open designations before inactives | Slate file: Pat Freiermuth TE Questionable, Derrick Harmon DT Questionable. On card: neither | **NOT YET**, MEDIUM. Freiermuth's status changes Pittsburgh's short-target share, and that bears directly on a Warren receiving prop |
 
-Command for F7: `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/redteam/test_engine_ids.py`, then the same with `.../nfl/slate/tests/test_picker_grading.py`. Each prints "OK".
+Command for F7: `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/nfl/slate/redteam/test_engine_ids.py`, then the same with `.../nfl/slate/tests/test_picker_grading.py`. Each prints "OK".
 
 ## Material remaining defects, ranked
 
@@ -65,7 +65,7 @@ These are findings for Codex, the single writer. I edited none of them.
 
 **D1. HIGH: both calls lose money at the market's own estimate, and the model adds nothing.**
 - **The claim:** both calls are below break-even, and no edge is shown.
-- **The command:** `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r2_prices.py`
+- **The command:** `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r2_prices.py`
 - **Expected:** a pick that clears break-even, or a card that plainly says it doesn't.
 - **Observed:**
   - KC needs 62.41% at -166, and the market estimate is 61.16% (the median of 4 peers), so it returns -1.99% per unit.
@@ -85,7 +85,7 @@ These are findings for Codex, the single writer. I edited none of them.
 
 **D3. MEDIUM: Warren's football case leans on games played without Dowdle.**
 - **The claim:** the headline (line 45) rests on 7/8 and on the first meeting (3 catches, 49 yards). Both include weeks 3-5, when Rico Dowdle was out.
-- **The command:** `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r1_football.py`
+- **The command:** `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r1_football.py`
 - **Expected:** the split by Dowdle's role, shown next to 7/8.
 - **Observed:**
   - Since Dowdle returned (weeks 6-8), Warren is over in 2 of 3: 28, 36, 0.
@@ -148,7 +148,7 @@ These are findings for Codex, the single writer. I edited none of them.
 
 | Repro | Command | Expected | Observed |
 |---|---|---|---|
-| Contract IDs | `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r3_ids.py` | Two players on the same line, full game vs first half, and team totals all get distinct ids; the opposite side pairs within the same player; ":" is escaped; 3 and 3.0 give one key | All true. `A%3AOver` is escaped. `spreads::T:3` for both 3 and 3.0. No `__pycache__` |
+| Contract IDs | `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r3_ids.py` | Two players on the same line, full game vs first half, and team totals all get distinct ids; the opposite side pairs within the same player; ":" is escaped; 3 and 3.0 give one key | All true. `A%3AOver` is escaped. `spreads::T:3` for both 3 and 3.0. No `__pycache__` |
 | 61.2% vs 60.9% | r2 | Two distinct, labelled numbers | 0.61164 (4 peers) and 0.60924 (all 5). Reconciled; wording in D5 |
 | 135 vs 136 | r1 | The decided count excludes ties | 136 scored, 1 tie, 135 decided. Reconciled |
 | Warren from 0 peers | r2 | Flagged | See D2 |
@@ -162,14 +162,14 @@ These are findings for Codex, the single writer. I edited none of them.
 
 - **No release after the one reviewed above.** At 07:37:50Z, picker.py `5771a47f31a13731`, selection_decisions.py `6898d72cca26951d` and selection_markets.py `91bbfbab0af9460e` are unchanged since 07:29:44Z. The selections, card md and card html are unchanged since 07:34:01Z (`4e68284c`, `2d5c3b37`, `91f95754`). I re-ran r4. Its output matches v2: **M5 PASS, G2 NOT YET (narrow), G6 NOT YET (one item).**
 - **Last-5/10 rule: PASS for Warren.** The rule is consecutive current-season games, against today's line, with the available n shown and no padding from earlier seasons. Pittsburgh played 8 games in 2026, weeks 1-8 (nflverse `games.csv`), with a bye in week 9. The 8 dates in `recent_appearances` match those games one for one, from 2026-09-13 to 2026-11-01. There is no 2025 padding. The card shows "5 available" and "8 available" against 22.5, which is today's line.
-  - Command: `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B -c 'import csv,sys; [print(r["week"],r["gameday"]) for r in csv.DictReader(open(sys.argv[1])) if r["season"]=="2026" and "PIT" in (r["home_team"],r["away_team"]) and r["home_score"]]' /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/data/raw/games.csv`
+  - Command: `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B -c 'import csv,sys; [print(r["week"],r["gameday"]) for r in csv.DictReader(open(sys.argv[1])) if r["season"]=="2026" and "PIT" in (r["home_team"],r["away_team"]) and r["home_score"]]' nov14-sprint/nfl/data/raw/games.csv`
 - **The 0-yard game on 2026-11-01 is a real appearance (resolved 07:42Z).** The saved official Steelers page (`steelers-matchup.20261115T072500Z`, hash matches) says "Warren rushed for 143 yards on 17 carries in Week 8". Week 8 is CLE at PIT on Nov 1, so he was active and the card is right to count the 0. The receiving values themselves still rest on the unsaved nfl.com game log, which is G2a.
 
 ## Follow-up at 07:43Z: acceptance repro for the open items, and a venue check
 
 The open items are fixes the engine owner (Codex 7d2e) has to make, so I wrote a pass/fail check rather than leaving them as a list. Once a new release lands, anyone can run it:
 
-`/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r5_venue_and_g2g6.py`
+`/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r5_venue_and_g2g6.py`
 
 | Item | Passes when | Now (07:43Z) |
 |---|---|---|
@@ -185,7 +185,7 @@ The open items are fixes the engine owner (Codex 7d2e) has to make, so I wrote a
 
 The rows above are history. They scored the engine output (`selections.json`) and the markdown card, before the supplement existed. The supplement doesn't change the engine. It's a separate file, `results/sunday_20261115_review_evidence.json` (07:43:34Z, sha `6b99a766`). The front door is `Sunday NFL.html` (07:45:38Z, sha `f823e80a`), and `sunday_view.py` (07:45:37Z, sha `2acd8d49`) renders it. The engine code is unchanged from the 07:29:44Z freeze: picker `5771a47f`, decisions `6898d72c`, markets `91bbfbab`.
 
-Repro: `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r6_review_evidence.py`. It is read-only, makes no network calls, and imports no engine or view module. Result: **23 of 23 checks pass**.
+Repro: `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r6_review_evidence.py`. It is read-only, makes no network calls, and imports no engine or view module. Result: **23 of 23 checks pass**.
 
 | Item | Result | What I checked myself |
 |---|---|---|
@@ -205,7 +205,7 @@ Repro: `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthew
 
 Verdict at 07:52Z: **G2 PASS and G6 PASS on the product surfaces.** Two LOW notes are open: the Rams list isn't on the page, and the markdown card doesn't name the two players. The bets themselves are unchanged. KC at −166 is a pass. Warren over 22.5 is a lean only at −115 or better, after the inactives. No proven edge.
 
-## Last-5/10 clarification at 07:58Z (relayed by the props reviewer, local_b9abf01d)
+## Last-5/10 clarification at 07:58Z (relayed by the props reviewer, local_<session>)
 
 The rule, as relayed from Matthew: last 5 and last 10 mean consecutive 2026 appearances only. Don't pad with 2025 games. Show the available n. Keep the count against today's line apart from the count against the line actually posted for each game.
 
@@ -220,7 +220,7 @@ The rule, as relayed from Matthew: last 5 and last 10 mean consecutive 2026 appe
 
   - The misses against the posted lines were week 6 (28 against 28.5) and week 8 (0 against 22.5).
   - The 4/5 and 7/8 counts describe his box scores against a number that wasn't posted for those games. They don't show that he beat the market. The actual-line measure is weaker in his latest games, at 3/5 and 1/3. I agree with the props reviewer's dissent on this.
-  - Command: `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B -c 'import json,sys; e=sorted([c for c in json.load(open(sys.argv[1]))["calls"] if c.get("subject")=="Jaylen Warren"][0]["recent_appearances"]["entries"],key=lambda r:r["date"]); [print(n, sum(r["value"]>22.5 for r in e[-n:]), sum(r["value"]>r["prior_line"] for r in e[-n:]), len(e[-n:])) for n in (3,5,8)]' /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/results/sunday_20261115_selections.json`
+  - Command: `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B -c 'import json,sys; e=sorted([c for c in json.load(open(sys.argv[1]))["calls"] if c.get("subject")=="Jaylen Warren"][0]["recent_appearances"]["entries"],key=lambda r:r["date"]); [print(n, sum(r["value"]>22.5 for r in e[-n:]), sum(r["value"]>r["prior_line"] for r in e[-n:]), len(e[-n:])) for n in (3,5,8)]' nov14-sprint/nfl/slate/results/sunday_20261115_selections.json`
 - **My review left out the 3/5 actual-line count for the last five.** It is added here.
 - **LOW, owner's fix (Codex 7d2e).** The page's "Independent review: conditional lean" paragraph is at `sunday_view.py` line 61 (hash `2acd8d490ad40389`; PROP_REVIEW cites line 56) and appears once in `Sunday NFL.html`. It gives "beat the actual historical lines in 6 of 8" with no source label and no last-five figure.
   - Suggested wording, for the owner to decide: "against each game's own posted line (Stat Sniper, books and quote times unverified) he was over in 6 of 8 and 3 of his last 5."
@@ -232,7 +232,7 @@ The rule, as relayed from Matthew: last 5 and last 10 mean consecutive 2026 appe
 - **Files:**
   - `pdf_export/Sunday_NFL_Brief.pdf`, 07:40:55Z, hash `5c977322`.
   - `results/sunday_20261115_watchlist.json`, reissued 07:45:31Z, hash `3e6d10df`.
-- **Command:** `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r7_pdf_vs_watchlist.py`. It reads the PDF text with the standard library only and imports nothing from the builder.
+- **Command:** `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r7_pdf_vs_watchlist.py`. It reads the PDF text with the standard library only and imports nothing from the builder.
 - **Result:** `TOTAL 15 of 15 checks pass`. No mismatch.
 
 | Check | Result |
@@ -312,17 +312,17 @@ Each handoff time is the kickoff minus 90 minutes, using the watchlist's `kickof
 
 | Recipient | Thread | Queued at | Message id |
 |---|---|---|---|
-| Release owner | `01a1de30-b81b-7811-827b-af5dbd9cd9f6` | 08:11:59Z | `01a1de43-6137-7af3-a0d5-74ba4998f56b` |
-| Codex advisor | `01a1de02-799a-7373-aa82-c639510bd088` | 08:12:00Z | `01a1de43-61c9-7ab0-b2dc-ce7718ca9c5d` |
+| Release owner | `<session-id>` | 08:11:59Z | `<session-id>` |
+| Codex advisor | `<session-id>` | 08:12:00Z | `<session-id>` |
 
 ## Window recheck at 09:34Z: M5, G2/G6, print edition, paper versus real cash, same-game disclosure
 
-This covers the 09:23:32-11:23:32Z window that Matthew opened, as relayed by Codex 01a1de0b-7734. I wrote no application file. The owners were writing between 09:26Z and 09:32Z, so I read the files after they settled: selections 09:31:28Z, journal.py 09:32:06Z, PDF 09:32:55Z.
+This covers the 09:23:32-11:23:32Z window that Matthew opened, as relayed by Codex <codex-thread>. I wrote no application file. The owners were writing between 09:26Z and 09:32Z, so I read the files after they settled: selections 09:31:28Z, journal.py 09:32:06Z, PDF 09:32:55Z.
 
 **Commands** (read-only, no network, import no engine, view, journal or PDF-builder module):
 
-- `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r8_print_disclosure_paper.py`, result `TOTAL 30 of 30 checks pass` at 09:34:34Z.
-- `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r6_review_evidence.py`, result `TOTAL 23 of 23 checks pass` at 09:34:39Z.
+- `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r8_print_disclosure_paper.py`, result `TOTAL 30 of 30 checks pass` at 09:34:34Z.
+- `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r6_review_evidence.py`, result `TOTAL 23 of 23 checks pass` at 09:34:39Z.
 
 | Gap | Verdict | What I checked |
 |---|---|---|
@@ -332,7 +332,7 @@ This covers the 09:23:32-11:23:32Z window that Matthew opened, as relayed by Cod
 | Paper versus real cash | PASS | The PDF says BEST SAVED QUOTE, Conditional selections, No ticket recorded, Log your read and any ticket, and Louisiana availability is unverified. It claims no opener, close or closing-line value. The `/` page footer keeps a conditional selection, observed odds and an accepted ticket apart, and says Matthew submits any wager himself. `selections.json` has no tickets. The journal now stores Matthew's accepted price, the offered price (for information only, never graded), stake, a required placement time and the issued minimum. Its ticket table marks a ticket "[below the issued minimum]" or "[different line from the bot's …]". This closes the journal side of RED_TEAM row 36. Real accepted terms stay unknown until Matthew enters a ticket, by design. |
 | Same-game disclosure | PASS (not owed today) | The two calls are in two games, the five watchlist rows are in five games, and no call carries `shared_game_risk`. The PDF prints no false shared-game line. |
 
-**Remaining regression for the owner (not a fail today).** `sunday_view.py`, which serves the `/` Sunday page, has no shared-game line. `pdf_export/brief.py`, `selection_release.py` and `sunday_week_release.py` do. Under the 08:06Z policy of up to two distinct contracts per Chicago window, a same-game pair could be issued, and then the PDF would disclose it but the page would not. The fix belongs to the release owner, 01a1de30: render the call's `shared_game_risk` text (already set by `selection_release.py`) on the `/` page. Repro: r8 section 3 prints the render-path table.
+**Remaining regression for the owner (not a fail today).** `sunday_view.py`, which serves the `/` Sunday page, has no shared-game line. `pdf_export/brief.py`, `selection_release.py` and `sunday_week_release.py` do. Under the 08:06Z policy of up to two distinct contracts per Chicago window, a same-game pair could be issued, and then the PDF would disclose it but the page would not. The fix belongs to the release owner, <codex-thread>: render the call's `shared_game_risk` text (already set by `selection_release.py`) on the `/` page. Repro: r8 section 3 prints the render-path table.
 
 **Notes, LOW and unchanged.**
 
@@ -346,8 +346,8 @@ This covers the 09:23:32-11:23:32Z window that Matthew opened, as relayed by Cod
 
 | Recipient | Thread | Queued at | Message id |
 |---|---|---|---|
-| Release owner | `01a1de30-b81b-7811-827b-af5dbd9cd9f6` | 09:35:22Z | `01a1de8f-b474-7021-bb0e-6527222345be` |
-| Codex advisor | `01a1de02-799a-7373-aa82-c639510bd088` | 09:35:22Z | `01a1de8f-b4bf-7722-968e-708f1a70758c` |
+| Release owner | `<session-id>` | 09:35:22Z | `<session-id>` |
+| Codex advisor | `<session-id>` | 09:35:22Z | `<session-id>` |
 
 No message went to the engine writer (7d2e) or the journal owner (0b-7734): neither has an open item from this recheck.
 
@@ -363,8 +363,8 @@ This checks the release Matthew already has. I wrote no application file. The ca
 
 **Commands** (read-only, no network, import no application module):
 
-- `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r8_print_disclosure_paper.py`, result `TOTAL 43 of 43 checks pass` at 09:46:36Z.
-- `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/advisor/repros/r6_review_evidence.py`, result `TOTAL 23 of 23 checks pass` at 09:46Z.
+- `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r8_print_disclosure_paper.py`, result `TOTAL 43 of 43 checks pass` at 09:46:36Z.
+- `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B nov14-sprint/advisor/repros/r6_review_evidence.py`, result `TOTAL 23 of 23 checks pass` at 09:46Z.
 
 **What changed in r8 since 09:34Z**
 
@@ -398,8 +398,8 @@ This checks the release Matthew already has. I wrote no application file. The ca
 
 | Recipient | Thread | Message id |
 |---|---|---|
-| Release owner | `01a1de30-b81b-7811-827b-af5dbd9cd9f6` | `01a1de9a-b4d4-7573-99f6-fb393b6fdeac` |
-| Codex advisor | `01a1de02-799a-7373-aa82-c639510bd088` | `01a1de9a-b566-7c00-a437-1a16bb9aa8ca` |
+| Release owner | `<session-id>` | `<session-id>` |
+| Codex advisor | `<session-id>` | `<session-id>` |
 
 ## Book grading rules versus paper (10:02Z, relay ff1c)
 
@@ -438,7 +438,7 @@ This checks the release Matthew already has. I wrote no application file. The ca
 2. **Warren Over 22.5 receiving yards at BetMGM -115.**
    - **DNP or inactive.** Both books void. The journal voids only through a manual `record_void` with a source; otherwise the grade is "unknown". It has no one-snap test.
    - **Stat corrections.** The journal takes the latest recorded value, with no cutoff. That matches BetMGM's right to amend. It does not match DK's "no re-settlement", which would only matter for a DK prop.
-   - **Bet Defense: a ticket refund, not a paper void.** This bullet was corrected at 10:09Z on the journal owner's ruling (Codex 01a1de0b, who read Louisiana Football Rules lines 103 and 108-112). I re-read the same section at 10:08Z, and it agrees. The 10:02Z version recommended a `record_void` on the paper call; that recommendation is withdrawn.
+   - **Bet Defense: a ticket refund, not a paper void.** This bullet was corrected at 10:09Z on the journal owner's ruling (Codex <codex-thread>, who read Louisiana Football Rules lines 103 and 108-112). I re-read the same section at 10:08Z, and it agrees. The 10:02Z version recommended a `record_void` on the paper call; that recommendation is withdrawn.
      - The issued paper result keeps its original conventions. Bet Defense is account- and ticket-specific, so it is not a reason to void the paper call.
      - The only time it changes anything: Matthew's accepted betslip shows the Bet Defense icon, and BetMGM actually returns the stake. Then use the existing per-ticket settlement or refund for that ticket only.
      - Not every first-quarter exit is refunded. The exit must meet the rule: an official injury, ruled out with no return. The stake comes back in its original form. A bet already unconditionally decided before the exit settles normally.
@@ -446,7 +446,7 @@ This checks the release Matthew already has. I wrote no application file. The ca
 
 This was a finding for the journal owner, not an edit. The owner has ruled on Bet Defense (see the corrected bullet). No paper grade has changed. Current quotes and selections stand. Nothing in this section was signed in, bought or bet.
 
-### Correction: DraftKings mobile versus retail (10:06Z, after Codex 01a1de0b's check)
+### Correction: DraftKings mobile versus retail (10:06Z, after Codex <codex-thread>'s check)
 
 The table above is unchanged. This section narrows what its DK labels mean.
 

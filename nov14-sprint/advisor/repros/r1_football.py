@@ -1,6 +1,7 @@
 """Read-only repro: re-derive the card's football claims from saved data. Writes nothing."""
+import os
 import csv, json
-ROOT = "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl"
+ROOT = os.path.expanduser("~/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl")
 G = ROOT + "/data/raw/games.csv"
 L = ROOT + "/slate/tools/official_player_logs_20261115.json"
 rows = [r for r in csv.DictReader(open(G)) if r["season"] == "2026" and r["game_type"] == "REG"]

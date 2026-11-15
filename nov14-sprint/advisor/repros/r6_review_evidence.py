@@ -12,9 +12,9 @@ import hashlib
 import json
 import os
 
-N = "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl"
+N = os.path.expanduser("~/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl")
 S = N + "/slate"
-LIVE = "/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live"
+LIVE = os.path.expanduser("~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live")
 WARREN = "48e497c230e6c9afcb3b600091d28e17:full_game:player_reception_yds:Jaylen%20Warren:Over:22.5"
 results = []
 

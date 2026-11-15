@@ -2,7 +2,7 @@
 
 The dated assessment uses source files that accompany each game. Claude built the producer and gathered the public sources. Codex completed the two real inputs and independently checked the released output. The default 2026-11-15 spec screens Kansas City and Green Bay across the saved twelve-game slate. Other teams without supplied records remain unassessed.
 
-## Files and exact paths (all under `/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/replacements/`)
+## Files and exact paths (all under `nov14-sprint/nfl/slate/replacements/`)
 
 | File | What |
 |---|---|

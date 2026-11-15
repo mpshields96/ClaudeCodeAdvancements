@@ -1,8 +1,8 @@
 # TV bot lane: handoff to the parent
 
-Written 2026-11-15T09:48:35Z by the TV bot lane (Claude, session `local_2bd925d2-76cb-4f1f-a6f9-b4880cded8fd`).
-For the current Claude parent, sprint-coord (`local_50238c87-fcc4-4796-b0c4-64a969e5eaa0`), and
-the top session (`local_8b24affb-739a-4e37-9130-c69717bc66e0`).
+Written 2026-11-15T09:48:35Z by the TV bot lane (Claude, session `local_<session>`).
+For the current Claude parent, sprint-coord (`local_<session>`), and
+the top session (`local_<session>`).
 
 **State: the lane's assignment is finished and closed. This chat is idle.** No successor is
 needed. If work resumes later, read this file, then the first section of `STATUS.md`.

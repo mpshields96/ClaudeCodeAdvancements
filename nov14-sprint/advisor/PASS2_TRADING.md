@@ -20,12 +20,12 @@ Result: 18 PASS, 0 FAIL, 4 NOT YET (B2, B5, C4 and B6).
 | C1 | PASS | Short version at `START_TONIGHT.md:9-22`. |
 | C2 | PASS | 158 lines (was 183). Line 7 says the steps happen on the Mac, and the commands are exact (`:41`, `:60`, `:67`). |
 | C3 | PASS | Only Matthew's steps remain: look at the page, the gate, and a source decision. What isn't built is listed at `START_TONIGHT.md:151-158`. |
-| C4 | NOT YET | A draft (05:27Z) and the 05:37Z version were sent. `COORDINATOR_CHECKS.md:157` lists "Final START_TONIGHT sent to Matthew's phone" as NOT DONE. The 06:40Z version has not been sent. |
+| C4 | NOT YET | A draft (05:27Z) and the 05:37Z version were sent. `COORDINATOR_CHECKS.md:157` lists the final START_TONIGHT delivery as NOT DONE. The 06:40Z version has not been sent. |
 | C5 | PASS | Success notes in each step. Refusal help at `START_TONIGHT.md:126-138`, including "REAL FILE DOES NOT LINE UP" at `:87-92`. |
 | D1 | PASS | The trading bot has no network imports. Note for NFL: the new `nfl/slate/tools/props_fetch_espn.py` uses urllib against keyless public ESPN endpoints. That is checked in the NFL review. |
 | D2 | PASS | The fetch with the key in the URL is gone: `START_TONIGHT.md` has no apikey, curl or TD_KEY. The key scan of `nov14-sprint` is clean, and `real/` is gitignored (`tvbot/.gitignore:2`). |
 | D3 | PASS | `START_TONIGHT.md:18-19` and `:147`. The export refusal is tested. |
-| D4 | PASS | No event contracts anywhere. NFL picks now come from a new request (via Codex relay, which is not proof Matthew typed it). See `NFL_REVIEW.md`. |
+| D4 | PASS | No event contracts anywhere. NFL picks now come from a new request (via an agent relay, not a direct human message). See `NFL_REVIEW.md`. |
 | D5 | PASS | `git log --since=2026-11-15T04:41Z` was empty at 06:58Z. I saw no installs or schedules. Re-scored at 07:46Z under the new local-commit rule: still PASS. Three explicit-folder local commits, no push, no legacy files (`ACCEPTANCE_RUBRIC.md`, last section). |
 | D6 | PASS | Writes are inside `nov14-sprint/`. Stray `.claude-compact-anchor.md` files (in `nov14-sprint/` and `nfl/slate/tools/`) come from legacy CTX-5 hooks. They are agent-made and harmless. |
 

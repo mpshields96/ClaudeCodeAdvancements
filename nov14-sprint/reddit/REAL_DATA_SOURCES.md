@@ -189,13 +189,13 @@ read -s TD_KEY
 4. Run the request. It writes hourly SPY bars, oldest first, in UTC. **Preferred form:** the command under "Addendum 06:00Z" at the end of this file, which sends the key in a header and not in the URL. The command below is the fallback.
 
 ```bash
-curl -s --create-dirs -o "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/tvbot/real/spy_1h_twelvedata.csv" "https://api.twelvedata.com/time_series?symbol=SPY&interval=1h&outputsize=5000&order=asc&timezone=UTC&format=CSV&delimiter=,&apikey=${TD_KEY}"
+curl -s --create-dirs -o "nov14-sprint/tvbot/real/spy_1h_twelvedata.csv" "https://api.twelvedata.com/time_series?symbol=SPY&interval=1h&outputsize=5000&order=asc&timezone=UTC&format=CSV&delimiter=,&apikey=${TD_KEY}"
 ```
 
 5. Check the first lines. The first line should be a header beginning `datetime`. If it begins with `{`, it is an error message from Twelve Data and not data.
 
 ```bash
-head -3 "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/tvbot/real/spy_1h_twelvedata.csv"
+head -3 "nov14-sprint/tvbot/real/spy_1h_twelvedata.csv"
 ```
 
 6. Tell the coordinator chat that the SPY file is in place. Say nothing about the key.
@@ -371,7 +371,7 @@ What the header changes, and what it does not:
 Replacement for step 4. Run it in the same Terminal window as step 3:
 
 ```bash
-printf 'Authorization: apikey %s\n' "$TD_KEY" | curl -s --create-dirs -H @- -o "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/tvbot/real/spy_1h_twelvedata.csv" "https://api.twelvedata.com/time_series?symbol=SPY&interval=1h&outputsize=5000&order=asc&timezone=UTC&format=CSV&delimiter=,"
+printf 'Authorization: apikey %s\n' "$TD_KEY" | curl -s --create-dirs -H @- -o "nov14-sprint/tvbot/real/spy_1h_twelvedata.csv" "https://api.twelvedata.com/time_series?symbol=SPY&interval=1h&outputsize=5000&order=asc&timezone=UTC&format=CSV&delimiter=,"
 ```
 
 Then clear the key from that Terminal window:

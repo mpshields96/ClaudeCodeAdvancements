@@ -33,7 +33,7 @@ a decision made from inside an assistant session.
 **1. Open Terminal and go to the project folder.**
 
 ```bash
-cd /Users/matthewshields/Projects/ClaudeCodeAdvancements
+cd ~/Projects/ClaudeCodeAdvancements
 ```
 
 **2. Run the test replay.** This uses made-up bars and is labelled TEST ONLY.

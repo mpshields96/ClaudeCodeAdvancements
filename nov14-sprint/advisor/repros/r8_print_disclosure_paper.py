@@ -21,9 +21,9 @@ import re
 import zlib
 from datetime import datetime, timedelta, timezone
 
-S = "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate"
-LIVE = "/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live"
-FRONT = "/Users/matthewshields/Documents/Codex/2026-11-15/nfl-weekly-release-integration/outputs/Sunday NFL Brief.pdf"
+S = os.path.expanduser("~/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate")
+LIVE = os.path.expanduser("~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live")
+FRONT = os.path.expanduser("~/Documents/Codex/2026-11-15/nfl-weekly-release-integration/outputs/Sunday NFL Brief.pdf")
 BUILDER = S + "/pdf_export/Sunday_NFL_Brief.pdf"
 SEL = S + "/results/sunday_20261115_selections.json"
 WL = S + "/results/sunday_20261115_watchlist.json"

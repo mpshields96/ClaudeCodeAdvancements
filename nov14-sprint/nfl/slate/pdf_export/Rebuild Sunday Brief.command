@@ -7,7 +7,7 @@ if [ -d "$base/../release_data" ]; then
 elif [ -d "$base/examples/sunday" ]; then
     src="$base/examples/sunday"
 else
-    src="/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live"
+    src="$HOME/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live"
 fi
 set --
 if [ -f "$src/sunday_20261115_watchlist.json" ]; then

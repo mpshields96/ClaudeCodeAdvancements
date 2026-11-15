@@ -1,4 +1,5 @@
 """Build the November 15 player prop input offline from the captured public evidence."""
+import os
 import argparse
 from collections import Counter, defaultdict
 import csv
@@ -15,7 +16,7 @@ HERE = Path(__file__).resolve().parent
 SLATE = HERE.parent
 INPUTS = SLATE / "inputs"
 FORM = HERE / "official_player_logs_20261115.json"
-ODDS = Path("/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json")
+ODDS = Path(os.path.expanduser("~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json"))
 MARKETS = {"player_reception_yds", "player_pass_yds", "player_rush_yds"}
 INACTIVE = {"Out", "Injured Reserve", "Reserve/Injured", "Suspended", "Physically Unable to Perform"}
 PENDING = {"Questionable", "Doubtful"}

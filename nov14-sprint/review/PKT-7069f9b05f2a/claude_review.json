@@ -34,5 +34,5 @@
   "The session calendar for 2026-06-15, to confirm that seq 74 and seq 75 exist at 17:30Z and 18:30Z."
  ],
  "arithmetic_all_match": true,
- "note": "Fresh Opus 5.5 subagent run by coordinator local_50238c87, 2026-11-14 22:01:38Z to 22:02:57Z, model id from the subagent transcript. Given only the two packet files and REVIEW_PROMPT.md."
+ "note": "Fresh Opus 5.5 subagent run by coordinator local_<session>, 2026-11-14 22:01:38Z to 22:02:57Z, model id from the subagent transcript. Given only the two packet files and REVIEW_PROMPT.md."
 }

@@ -1,6 +1,6 @@
 """Read-only red-team repros for the Sunday engine (selection_markets, selection_decisions).
 
-Writer: Claude NFL red-team writer (side session of sprint-coord local_50238c87).
+Writer: Claude NFL red-team writer (side session of sprint-coord local_<session>).
 Scope: tests only. Never edits, merges into, overwrites or reverts engine files.
 Imports only selection_markets and selection_decisions (stdlib only). Never imports
 odds_feed, sunday_quotes or verify_card. Makes no network calls and uses no key.
@@ -40,7 +40,7 @@ import selection_decisions as decisions  # noqa: E402
 
 assert "odds_feed" not in sys.modules and "sunday_quotes" not in sys.modules and "verify_card" not in sys.modules
 
-REAL_CAPTURE = "/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json"
+REAL_CAPTURE = os.path.expanduser("~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json")
 REAL_SELECTIONS = os.path.join(SLATE, "results", "sunday_20261115_selections.json")
 REAL_CANDIDATES = os.path.join(SLATE, "results", "sunday_20261115_candidates.json")
 

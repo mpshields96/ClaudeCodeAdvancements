@@ -14,7 +14,7 @@ Built 2026-11-15 07:34:55Z by the nfl-slate-data worker. Paper and advisory only
 
 **Rebuild command** (one self-contained stdlib file, Python 3.9-safe, run isolated; inputs are the newest capture folders below):
 
-    S=/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate
+    S=nov14-sprint/nfl/slate
     /usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I $S/tools/build_slate.py \
       --out $S/slate_20261115.json \
       --espn-summary-dir $S/inputs/espn-summary.20261115T071450Z \
@@ -23,10 +23,10 @@ Built 2026-11-15 07:34:55Z by the nfl-slate-data worker. Paper and advisory only
       --club-qb-dir $S/inputs/club-qb-announcements.20261115T072922Z \
       --espn-depth-dir $S/inputs/espn-depthcharts.20261115T065829Z \
       --nfl-injuries-dir $S/inputs/nfl-com-injuries-reg10.20261115T071450Z \
-      --odds-shared /Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json \
-      --health /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/codex/NFL_SUNDAY_HEALTH.json \
-      --lines /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/real/inputs/nfl-public-lines.20261114T225342Z.json \
-      --games-csv /Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/data/raw/games.csv
+      --odds-shared ~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json \
+      --health nov14-sprint/codex/NFL_SUNDAY_HEALTH.json \
+      --lines nov14-sprint/nfl/real/inputs/nfl-public-lines.20261114T225342Z.json \
+      --games-csv nov14-sprint/nfl/data/raw/games.csv
 
 The builder verifies each capture's sha256 against the disk, skips non-200 bodies, and exits 1 if validation fails (12 games, 24 teams, required fields, four last-four games each, cross-book block present). The two new flags are optional; without them the file builds as in the first delivery.
 

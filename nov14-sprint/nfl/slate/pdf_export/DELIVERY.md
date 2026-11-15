@@ -1,7 +1,7 @@
 # Sunday NFL decision brief
 
 Updated: 2026-11-15T09:40:04Z
-Owner: NFL PDF writer, Codex 01a1de0d-fdf2-7c51-88eb-0f3fa24e8f1a. Integrated release owner 01a1de30-b81b-7811-827b-af5dbd9cd9f6.
+Owner: NFL PDF writer, Codex <session-id>. Integrated release owner <session-id>.
 Authority: Matthew’s Sunday PDF, player-prop and substitution review requests. The explicit recovery window ends 2026-11-15T11:23:32Z. This is pregame, advisory work with saved inputs.
 Next: The release owner has the final PDF and generator for normal desk export. Future dated prices or personnel findings can be rendered from their saved observations and source-matched reviewed selections.
 

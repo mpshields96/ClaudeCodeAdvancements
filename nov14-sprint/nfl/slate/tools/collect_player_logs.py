@@ -1,4 +1,5 @@
 """Capture official public roster and completed player-game HTML for the 2026-11-15 slate."""
+import os
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -15,7 +16,7 @@ import unicodedata
 BASE = "https://www.nfl.com"
 CUTOFF = "2026-11-15"
 HERE = Path(__file__).resolve().parent
-ODDS = Path("/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json")
+ODDS = Path(os.path.expanduser("~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json"))
 DEFAULT = HERE / "official_player_logs_20261115.json"
 SUFFIX = re.compile(r"\s+(?:jr|sr|ii|iii|iv|v)\.?$", re.I)
 ALIASES = {"Zonovan Knight": "Bam Knight"}

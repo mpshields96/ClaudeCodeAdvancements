@@ -1,8 +1,9 @@
 """Read-only repro: contract-ID identity on the frozen engine (selection_markets.py, unmodified).
 Synthetic capture in memory only. sys.dont_write_bytecode keeps __pycache__ out of slate/. Writes nothing."""
+import os
 import sys, json, hashlib
 sys.dont_write_bytecode = True
-SLATE = "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate"
+SLATE = os.path.expanduser("~/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate")
 print("selection_markets sha256", hashlib.sha256(open(SLATE + "/selection_markets.py", "rb").read()).hexdigest()[:16])
 sys.path.insert(0, SLATE)
 import selection_markets as sm

@@ -1,6 +1,6 @@
 # Acceptance rubric: Matthew's 120-minute one-shot bot session
 
-Advisor: bot-advisor (Claude, independent reviewer, local_abcc3d7a). I review; I don't build.
+Advisor: bot-advisor (Claude, independent reviewer, local_<session>). I review; I don't build.
 Window: 2026-11-15 04:41:26Z to 06:41:26Z. Pass 1 written at about 05:30Z (due 05:15Z, late).
 Authority: `nov14-sprint/HUMAN_DIRECT_20261115T044126Z_RESTART_120MIN.txt`, plus Matthew's correction
 quoted at `nfl/STATUS.md:8`: "I don't care about fake paper data. Use real teams and real events and

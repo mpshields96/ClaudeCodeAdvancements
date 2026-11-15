@@ -25,14 +25,14 @@ All times UTC. Hashes are SHA-256 of the files as they sit now (checked 2026-11-
 
 | Input | Path (under the repo, `nov14-sprint/nfl/slate/` unless absolute) | Captured | SHA-256 |
 |---|---|---|---|
-| Shared Sunday odds feed (5 Louisiana books: draftkings, fanduel, betmgm, espnbet = theScore Bet, betrivers) | `/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json` | 2026-11-15T06:55:06Z | 2a50d6951366342f8656ee01e113c44cceff0acdfa027ea933f9286c0c73d56f |
+| Shared Sunday odds feed (5 Louisiana books: draftkings, fanduel, betmgm, espnbet = theScore Bet, betrivers) | `~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json` | 2026-11-15T06:55:06Z | 2a50d6951366342f8656ee01e113c44cceff0acdfa027ea933f9286c0c73d56f |
 | ESPN core propBets for DraftKings (lines only, no prices; 874 files, 24 roster files with injury entries) | `inputs/props-espn-propbets.20261115T065800Z/` (MANIFEST.json) | 2026-11-15T06:58:56Z | MANIFEST sha256 cbee7a6b7f5fd69034f90659da05cffcb13da235d1fa9a3af8d72806c0533874 |
 | Integrator's NFL.com game-log form file (191 player logs, 191 career pages, all 2026 regular season, last game included 2026-11-09, cutoff exclusive 2026-11-15) | `tools/official_player_logs_20261115.json` | logs 07:08:54Z to 07:09:25Z, careers 07:10:55Z to 07:11:54Z, file rebuilt 07:37:36Z (it now also carries `alias_source` and `confirmed_no_stats_by_player`) | 217b65f973a1b35e053fe786c96ba168544a56540e52593fac9b11a1d01e1119 (I first analysed earlier builds, da4549ed… and f3b3062e…; the form numbers differ from the latest build only by the derived-zero rule in appendix L) |
 | NFL.com week-10 injury page (another session's capture) | `inputs/nfl-com-injuries-reg10.20261115T071450Z/nfl_injuries_reg10.html` (https://www.nfl.com/injuries/league/2026/reg10, HTTP 200, 401090 bytes) | 2026-11-15T07:14:50Z | 1d52e7f200cffb958f37b989f1cefe8c1d1ecfd66bc4b9b5428ac62d4c9c03da |
 | Integrator's props file, read only | `props_20261115.json` (version 2, available true, 1038 props, 98 excluded) | built 2026-11-15T07:38:37Z | 7f202c76572738e0329e8c9721fbaacee06333008748a019d05880c380b50980 |
 | Integrator's appearance sources (club and NFL inactives pages and gamebook rows, stored extracts; used for the inactive and derived-zero labels; I did not open the pages) | `tools/official_appearance_sources_20261115.json` and `tools/appearance_gamebook_rows_20261115.json` | retrieval times are inside each entry (Steelers entry 07:28:18Z) | 911d33f5897f5dbca5f3ba5b429a4bf702768f634b2623d61eafc3fd37c14043 and 70252f41e5f4d8a6d39915d4c170718bc964e18763618b98b1834c58dd9d8461 |
 | Warren's prior-line rows (Stat Sniper, third party; **collected by another chat, not by me, not re-fetched**) | `pdf_export/evidence/2026-11-15.json`, `calls[1].recent_appearances.entries` (8 rows: appearance, date, value, prior_line; the file's `prior_line_source_url` names the Stat Sniper page and `source_url` names the NFL.com game log). The file changed while I worked (its layout and sha moved; I re-read it at 07:37Z and the 8 rows are the same). It also now carries role text for Warren, quoted in section 5, which I did not verify. `FOOTBALL_RED_TEAM.md` line 35 cites `results/sunday_20261115_candidates.json` for the same rows (not opened by me) and says the books and quote times are not verified. Source page named there: https://statsniper.com/leagues/nfl/player/jaylen-warren/props/receiving-yards/ | not stated in the rows | file sha 356c5b6651c059ccc22ae83e29e0d831632404e28453f72743bf43754d18de5a (as read 07:37Z; an earlier read was 8f19c754…) |
-| Codex's review and decision (reported, not re-derived) | `/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/Matchup_Review.md` and `Final_Decisions.json` | decided 07:08:57Z | not hashed by me |
+| Codex's review and decision (reported, not re-derived) | `~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/Matchup_Review.md` and `Final_Decisions.json` | decided 07:08:57Z | not hashed by me |
 
 My own scripts (all offline, stdlib only, Python 3.9 safe, run as `/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I`):
 
@@ -507,7 +507,7 @@ Form counts at the DraftKings line (last 10 games): 244 compared; 198 identical;
 ```
 cd nov14-sprint/nfl/slate
 py() { /usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I "$@"; }
-FEED=/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json
+FEED=~/Documents/Codex/2026-11-14/paper-desk-final-closeout/outputs/NFL_Live/sunday-odds.json
 py tools/props_review.py $FEED inputs/props-espn-propbets.20261115T065800Z ../real/inputs/nfl-public-lines.20261114T225342Z.json review.json
 py tools/props_review_stats.py review.json
 py tools/props_review_tables.py review.json tables.md                                      # sections A to H

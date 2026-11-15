@@ -7,12 +7,12 @@ Paper and research only. Nothing here places a bet, opens an account or moves mo
 
 Matthew's wrap notice (10:01:34Z, relayed by Codex): finish the item in hand, hand off, stand down. This lane is finished and handed back. Paper only; no bets, accounts, keys or source pulls. The Sunday PDF, its issued calls and the 09:35:13Z prices were not touched by this lane.
 
-- **Ownership.** `slate/experiment/journal.py`, its tests, `SETTLEMENT_API.md`, `EVALUATION.md` and `slate/experiment/data/` belong to Codex 01a1de0b. This lane no longer edits them.
+- **Ownership.** `slate/experiment/journal.py`, its tests, `SETTLEMENT_API.md`, `EVALUATION.md` and `slate/experiment/data/` belong to Codex <codex-thread>. This lane no longer edits them.
 - **Verified and committed (local, not pushed).** Commit 7303268: blind public comparator carrier (`slate/experiment/comparator.py`, 27 tests OK, chain of 4 rows intact) and the role-hypothesis carrier (`slate/experiment/role_check.py`, 15 tests OK, spec matches journal row H3fb769df). A second local commit carries this file, the older lane files this session made and the corrected evidence note.
 - **Comparator result.** Three public calls observed by Codex were frozen before kickoff. The registered comparator, Rodeero_, is recorded as missing for the 2026-11-15 slate. Only Codex can observe Reddit.
 - **Role hypothesis.** Public history does not back the Warren four-targets forecast: 44 of 84 after a dip (52.4%), 156 of 258 with no dip (60.5%), 200 of 342 for all eligible cases (58.5%, includes the 84 dip cases), 2 of 7 on the strict pattern. Counterargument only; no call, price or rule changed. Note: `slate/experiment/ROLE_HYPOTHESIS_EVIDENCE.md` (figures corrected about 10:10Z after Codex review).
-- **Hand-off file for Codex 01a1de30:** `/Users/matthewshields/Documents/Codex/2026-11-15/nfl-weekly-release-integration/work/from-claude/COMPARATOR_AND_ROLE_CHECK_HANDOFF.md`.
-- **Open, not this lane's:** Codex 01a1de30 signoff on the two helpers; any later Rodeero_ call seen before kickoff; results into `comparator.py result` and `role_check.py record` after the finals.
+- **Hand-off file for Codex <codex-thread>:** `~/Documents/Codex/2026-11-15/nfl-weekly-release-integration/work/from-claude/COMPARATOR_AND_ROLE_CHECK_HANDOFF.md`.
+- **Open, not this lane's:** Codex <codex-thread> signoff on the two helpers; any later Rodeero_ call seen before kickoff; results into `comparator.py result` and `role_check.py record` after the finals.
 - **Left uncommitted on purpose:** `data/raw/games.csv` and `data/raw/DATASETS.md` (third-party downloads; `MANIFEST.json` holds the source and hash), `real/inputs/` (byte copies of Codex captures), lock files, `self-learning/` strays, `BEST_BETS_SUN_NOV15.*` and everything under `slate/` that other writers own.
 - **No real blocker.** Everything below is older history.
 
@@ -73,7 +73,7 @@ Ledger, observed 2026-11-15T05:16:39Z: 11 takes (all unsettled), 41 passes, 4 re
 
 ### Entry points for the real data
 
-Run from the CCA root (`/Users/matthewshields/Projects/ClaudeCodeAdvancements`). System `python3` 3.9.6, standard library only.
+Run from the CCA root (`~/Projects/ClaudeCodeAdvancements`). System `python3` 3.9.6, standard library only.
 
 Dry run. Reads the two captures, writes the reports in `nov14-sprint/nfl/real/`, writes nothing to the ledger:
 
@@ -155,7 +155,7 @@ Paper and research only. Nothing here places a bet, opens an account or moves mo
 
 ## Entry points
 
-Run from a clean shell at the CCA root (`/Users/matthewshields/Projects/ClaudeCodeAdvancements`). System `python3` is 3.9.6, standard library only.
+Run from a clean shell at the CCA root (`~/Projects/ClaudeCodeAdvancements`). System `python3` is 3.9.6, standard library only.
 
 Normal command (read-only, exit 0):
 

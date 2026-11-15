@@ -1,7 +1,7 @@
 # TV bot lane: STATUS
 
 Lane: TradingView bot (requirement R2, Matthew's words: "TradingView claude bot").
-Owner: Claude, Fable 5.2, session `local_2bd925d2-76cb-4f1f-a6f9-b4880cded8fd`.
+Owner: Claude, Fable 5.2, session `local_<session>`.
 Written: 2026-11-14T22:29:07Z. Updated 2026-11-14T22:34:28Z for the coordinator's close-out (UTC times, what
 changed since 22:12Z, what is not verified, the fresh reviewer's run). Last runs observed
 2026-11-14 22:23Z to 22:33Z. Hard stop 23:02:00Z. Nothing is committed.
@@ -451,7 +451,7 @@ that the mechanics work. It is not evidence that the rule makes money.
 
 ## Entry points
 
-Run from a clean shell at the CCA root (`/Users/matthewshields/Projects/ClaudeCodeAdvancements`).
+Run from a clean shell at the CCA root (`~/Projects/ClaudeCodeAdvancements`).
 Use `/usr/bin/python3` (3.9.6). Standard library only. No network.
 
 2026-11-15: put `-I` after `/usr/bin/python3` in every command below. Each was rerun that way
@@ -828,7 +828,7 @@ opportunity through one order path.
   of the TradingView policy pages. Messages to the coordinator session. One message to Codex.
 - Matthew typed in this chat: "Get back to work, tell codex get everything restarted I just used a
   Fable reset". I passed that to Codex through its queue command at 22:12Z. The message was queued
-  (`01a1dc1e-44f5-7620-8477-8e9398db67e9`) but the thread did not resume, so it is not confirmed
+  (`<session-id>`) but the thread did not resume, so it is not confirmed
   read. Receipt: `receipts/TO_CODEX_restart_20261114T221212Z.txt`.
 - A session-start note says a global pause is recorded. I judged it out of date: Matthew's direct
   Nov 14 sprint request and his line above both came after the Nov 7 pause.
