@@ -420,7 +420,8 @@ class SessionController(object):
             mgr_limits["max_loss_per_trade"] = self.limits["max_loss_per_trade"]
         self.engine_checks_max_loss = "max_loss_per_trade" in _mgr_mod.LIMIT_KEYS
         self.mgr = OrderManager(self.state_dir, self.broker, mgr_limits, symbol=self.symbol,
-                                calendar=self.calendar, strategy=strategy, data_label=self.data_label)
+                                calendar=self.calendar, strategy=strategy, data_label=self.data_label,
+                                bar_max_age_s=self.bar_max_age_s)
         self.paths = {k: os.path.join(self.state_dir, v) for k, v in {
             "session": "session.json", "bars": "bars.jsonl", "decisions": "decisions.jsonl",
             "ledger": "ledger.jsonl", "review": "review.json", "progress": "progress.json",

@@ -27,6 +27,7 @@ from urllib.parse import parse_qs, urlparse
 UI_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(UI_DIR, "index.html")
 LAB_PATH = os.path.join(UI_DIR, "lab.html")      # W2's standalone decision-lab page
+SPY_STUDY_PATH = os.path.join(UI_DIR, "spy_study.html")   # Codex's historical SPY study (hindsight)
 DESK_DIR = os.path.dirname(UI_DIR)
 
 
@@ -819,6 +820,7 @@ class DeskHandler(BaseHTTPRequestHandler):
                                         "limits_routes": list(LIMITS_ROUTES),
                                         "lab_api": self.server.has_method("lab_view"),
                                         "lab_page": os.path.isfile(LAB_PATH),
+                                        "spy_study_page": os.path.isfile(SPY_STUDY_PATH),
                                         "broker_mode": self.server.broker_mode(),
                                         "simulated": self.server.simulated()})
             if route == "/api/session":
@@ -849,6 +851,12 @@ class DeskHandler(BaseHTTPRequestHandler):
                     return self._send(404, "The decision lab page (ui/lab.html) is not in this build yet.",
                                       "text/plain; charset=utf-8")
                 with open(LAB_PATH, "rb") as fh:
+                    return self._send(200, fh.read(), "text/html; charset=utf-8")
+            if route in ("/spy-study", "/spy-study.html"):
+                if not os.path.isfile(SPY_STUDY_PATH):
+                    return self._send(404, "The SPY November study page (ui/spy_study.html) is not in this build yet.",
+                                      "text/plain; charset=utf-8")
+                with open(SPY_STUDY_PATH, "rb") as fh:
                     return self._send(200, fh.read(), "text/html; charset=utf-8")
             if route == "/api/bars":
                 bars, manifest, meta = _bars(self.state_dir)
@@ -1076,9 +1084,15 @@ class DeskServer(ThreadingHTTPServer):
                                  "effects": sizing.effects(values, **kw)}
                 confirm = body.get("confirm")
                 reason = body.get("reason")
+                drafted = body.get("draft_hash")
+                prior = body.get("prior_approved_hash", sizing.UNSET)
+                if prior is not sizing.UNSET and prior is not None and not isinstance(prior, str):
+                    prior = "invalid"   # a non-text hash can never match; approve() refuses it
                 snap = sizing.approve(self.state_dir,
                                       confirm if isinstance(confirm, str) else "",
-                                      reason if isinstance(reason, str) else "")
+                                      reason if isinstance(reason, str) else "",
+                                      reviewed_draft_hash=drafted if isinstance(drafted, str) else "",
+                                      prior_approved_hash=prior)
                 self._append({"ts": utc_now_iso(), "action": "limits_approve", "source": "ui",
                               "status": "approved", "hash": snap.get("hash"),
                               "previous_hash": snap.get("previous_hash"),

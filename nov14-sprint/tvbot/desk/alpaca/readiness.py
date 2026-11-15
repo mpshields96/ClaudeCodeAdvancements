@@ -16,6 +16,7 @@ if __name__ == "__main__" and not __package__:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from alpaca import FEED, SYMBOL
+from alpaca.transport import TransportRefused
 
 # Execution freshness policy for each manually requested quote, in seconds.
 MAX_QUOTE_AGE = 30
@@ -44,6 +45,11 @@ def _price(value):
 def _get(transport, origin, path, query=None):
     try:
         status, payload = transport.request("GET", origin, path, query=query)
+    except TransportRefused as exc:
+        # Never return arbitrary exception text, even if a remote service echoed it.
+        if not exc.sent and str(exc) in {"credentials unavailable from provider", "invalid credentials"}:
+            return None, "PAPER_CREDENTIALS_UNAVAILABLE"
+        return None, "REQUEST_REFUSED"
     except Exception:
         return None, "REQUEST_FAILED"
     if status != 200:
@@ -161,6 +167,8 @@ def format_result(result):
                      (quote["bid"],quote["ask"],quote["spread_usd"],quote["spread_bps"],quote["age_s"]))
     if result["reasons"]:
         lines.append("Checks: " + ", ".join(tag.replace("_", " ").lower() for tag in result["reasons"]))
+    if "PAPER_CREDENTIALS_UNAVAILABLE" in result["reasons"]:
+        lines.append("Check the paper key pair in the selected provider. The setup guide lists the Keychain item names.")
     return "\n".join(lines)
 
 def main(argv=None):

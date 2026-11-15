@@ -23,6 +23,7 @@ import os
 import re
 import tempfile
 import time
+from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
 
 from alpaca import (LABEL_ALPACA_PAPER, LABEL_INJECTED, LABEL_MOCK_LOCAL, ORDER_TYPES, SYMBOL,
                     TIME_IN_FORCE)
@@ -63,6 +64,23 @@ def map_status(alpaca_status):
     return alpaca_status            # unknown statuses pass through; the manager flags UNKNOWN_STATUS
 
 
+def cent_price(v, side):
+    """A price on Alpaca's $0.01 tick, rounded toward the safe side, as a Decimal from the
+    lexical value (never a raw float cast). The same rule serves limits and stops:
+    sell UP (a sell limit never sells for less; a long's protective sell stop sits a fraction
+    of a cent closer, so it never risks more than the strategy's level), buy DOWN (a buy
+    limit never pays more; a short's protective buy stop likewise). None if not a positive
+    finite price."""
+    f = _num(v)
+    if f is None or f <= 0:
+        return None
+    # First drop binary-float noise (0.1 + 0.2 = 0.30000000000000004 is 0.30, not a reason to
+    # move a cent), then round to the tick in the safe direction.
+    d = Decimal(repr(f)).quantize(Decimal("0.000001"))
+    d = d.quantize(Decimal("0.01"), rounding=ROUND_CEILING if side == "sell" else ROUND_FLOOR)
+    return d if d > 0 else None
+
+
 def _num(v):
     if v is None or v == "":
         return None
@@ -79,6 +97,7 @@ class _Fault(Exception):
 
 class AlpacaPaperBroker(object):
     symbol = SYMBOL
+    exits_hold_position = True    # a working sell holds its shares (no reduce-only flag for equities)
 
     def __init__(self, transport, state_dir, evidence_label, adapter_state):
         if evidence_label not in PRICE_BASIS:
@@ -363,24 +382,31 @@ class AlpacaPaperBroker(object):
             return self._reject(client_id, "UNSUPPORTED_ORDER_TYPE")
         if side == "buy" and limit is None and not reduce_only:
             return self._reject(client_id, "UNPRICED_ENTRY")      # an opening buy needs its own price bound
+        # Every price goes on the $0.01 tick toward the safe side (cent_price), from its lexical
+        # value: a strategy level such as an EMA-derived stop of 101.6914 becomes a sell stop of
+        # 101.70, never a BAD_PRICE that leaves the shares uncovered.
+        requested_px = {"limit": limit, "stop": stop}
+        limit_d = stop_d = None
         if limit is not None:
-            f = _num(limit)
-            if f is None or f <= 0:
+            limit_d = cent_price(limit, side)
+            if limit_d is None:
                 return self._reject(client_id, "BAD_PRICE")
-            # Round toward the safe side of the $0.01 tick: never pay more, never sell for less.
-            limit = (math.floor(f * 100 + 1e-6) if side == "buy" else math.ceil(f * 100 - 1e-6)) / 100.0
-            if limit <= 0:
-                return self._reject(client_id, "BAD_PRICE")
+            limit = float(limit_d)
         if stop is not None:
-            f = _num(stop)
-            if f is None or f <= 0 or abs(round(f, 2) - f) > 1e-9:
+            stop_d = cent_price(stop, side)
+            if stop_d is None:
                 return self._reject(client_id, "BAD_PRICE")
+            stop = float(stop_d)
         otype = "limit" if limit is not None else ("stop" if stop is not None else "market")
         if otype not in ORDER_TYPES:
             return self._reject(client_id, "UNSUPPORTED_ORDER_TYPE")
         prior = self.book["orders"].get(client_id)
         if prior is not None and prior.get("state") in ("acked", "rejected"):
             return self._reject(client_id, "DUPLICATE_CLIENT_ORDER_ID", order_id=prior.get("order_id"))
+        if prior is not None and prior.get("state") in UNRESOLVED:
+            # A sent but unseen submit is never re-POSTed, whoever asks: only finding it resolves it.
+            return self._reject(client_id, "SUBMIT_UNRESOLVED",
+                                detail="%s was already sent and is not visible yet; nothing was resent" % client_id)
         blocked = self.block_reason(exclude=client_id)
         if blocked and not reduce_only:
             return self._reject(client_id, blocked)
@@ -418,14 +444,17 @@ class AlpacaPaperBroker(object):
                "limit": limit, "stop": stop, "tag": tag, "reduce_only": bool(reduce_only),
                "submit_ts": _now(), "status": None, "alpaca_status": None, "cum_qty": 0, "avg": None,
                "fills": []}
+        if any(requested_px[k] is not None and _num(requested_px[k]) != rec[k] for k in ("limit", "stop")):
+            rec["price_requested"] = {k: _num(v) for k, v in requested_px.items() if v is not None}
+            rec["price_rule"] = "rounded to the $0.01 tick: sell up, buy down"
         self.book["orders"][client_id] = rec
         self._save()
         body = {"symbol": SYMBOL, "qty": str(int(qty)), "side": side, "type": otype,
                 "time_in_force": TIME_IN_FORCE, "client_order_id": client_id}
-        if limit is not None:
-            body["limit_price"] = "%.2f" % float(limit)
-        if stop is not None:
-            body["stop_price"] = "%.2f" % float(stop)
+        if limit_d is not None:
+            body["limit_price"] = str(limit_d)
+        if stop_d is not None:
+            body["stop_price"] = str(stop_d)
         try:
             st, payload = self.transport.request("POST", "trading", "/v2/orders", None, body)
         except BrokerUncertain:

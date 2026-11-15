@@ -794,8 +794,28 @@ class TestLimitsRoutes(_PostMixin, _Base):
         st, j = self.post("/api/limits/approve", {"confirm": "APPROVE PAPER LIMITS", "reason": " "})
         self.assertEqual(st, 400)
         self.assertFalse(os.path.exists(self._approved()))
+        seen = self.get_json("/api/limits")             # what the operator reviewed on screen
+        self.assertTrue(seen["draft_hash"])
+        self.assertIsNone(seen["approved_hash"])
+        # an approval without the reviewed hashes, or with a stale draft hash, is refused
+        st, j = self.post("/api/limits/approve", {"confirm": "APPROVE PAPER LIMITS", "reason": "t"})
+        self.assertEqual(st, 400)
+        self.assertIn("draft you reviewed", j["error"])
+        st, j = self.post("/api/limits/approve", {"confirm": "APPROVE PAPER LIMITS", "reason": "t",
+                                                  "draft_hash": "0" * 64, "prior_approved_hash": None})
+        self.assertEqual(st, 400)
+        self.assertIn("draft changed", j["error"])
+        st, j = self.post("/api/limits/approve", {"confirm": "APPROVE PAPER LIMITS", "reason": "t",
+                                                  "draft_hash": seen["draft_hash"]})
+        self.assertEqual(st, 400)                        # prior approved hash not named
+        st, j = self.post("/api/limits/approve", {"confirm": "APPROVE PAPER LIMITS", "reason": "t",
+                                                  "draft_hash": seen["draft_hash"], "prior_approved_hash": 7})
+        self.assertEqual(st, 400)                        # a non-text hash never matches
+        self.assertFalse(os.path.exists(self._approved()))
         st, j = self.post("/api/limits/approve", {"confirm": "APPROVE PAPER LIMITS",
-                                                  "reason": "synthetic fixture"})
+                                                  "reason": "synthetic fixture",
+                                                  "draft_hash": seen["draft_hash"],
+                                                  "prior_approved_hash": seen["approved_hash"]})
         self.assertEqual(st, 200, j)
         self.assertEqual(j["approved"]["provenance"], "operator-approved")
         self.assertIn("keeps the limits it loaded at start", j["note"])
@@ -861,6 +881,18 @@ class TestAlpacaRoutesAbsent(_PostMixin, _Base):
         else:
             self.assertEqual(st, 404)
             self.assertIn(b"not in this build", raw)
+
+    def test_spy_study_page_served_as_html(self):
+        self.assertTrue(os.path.isfile(server.SPY_STUDY_PATH), "ui/spy_study.html is part of this build")
+        for path in ("/spy-study", "/spy-study.html"):
+            st, h, raw = self.req("GET", path)
+            self.assertEqual(st, 200, path)
+            self.assertIn("text/html", h["content-type"])
+            self.assertIn(b"<html", raw[:2000].lower())
+        self.assertIs(self.get_json("/api/health")["spy_study_page"], True)
+        page = self.req("GET", "/")[2].decode("utf-8")
+        self.assertIn('href="/spy-study"', page)
+        self.assertIn("SPY November study (historical, hindsight)", page)
 
     def test_no_controller_alpaca_501(self):
         srv = server.make_server(self.state, host="127.0.0.1", port=0)
@@ -984,7 +1016,7 @@ class TestAlpacaPage(unittest.TestCase):
         self.html = _page()
 
     def test_banner_controls_and_setup_present(self):
-        for s in ("brokerBanner", "viewSetup", "Check for new closed bar", "Reconcile now",
+        for s in ("brokerBanner", "viewSetup", "Check for new bars", "Reconcile now",
                   "/api/alpaca/enable", "/api/alpaca/disable", "/api/alpaca/reconcile",
                   "/api/limits/draft", "/api/limits/effects", "/api/limits/approve",
                   "Save draft", "Review and approve", "Check effects", "Copy into draft",
@@ -1004,8 +1036,27 @@ class TestAlpacaPage(unittest.TestCase):
     def test_setup_never_auto_approves(self):
         # the only approve call is the dialog's Yes handler, which sends the typed phrase and reason
         self.assertEqual(self.html.count("postLimits('/api/limits/approve'"), 1)
-        self.assertIn("{confirm: ph, reason: rs}", self.html)
+        self.assertIn("{confirm: ph, reason: rs, draft_hash: bind.draft_hash", self.html)
+        # the binding is captured when the dialog opens, from the worksheet the operator reviewed
+        self.assertIn("S.apBind = {draft_hash: w.draft_hash", self.html)
         self.assertIn("approval approves the saved draft", self.html)
+
+    def test_broker_labels_follow_actual_transport(self):
+        # Codex QA 22:45Z: arm tooltip and broker chip name mock vs paper HTTPS from the transport the
+        # controller built (session.broker.transport), not the inherited offline text or the mode name alone.
+        for s in ("function transportKind(s)", "((s || {}).broker || {}).transport",
+                  "/^MockAlpacaTransport\\b/", "/^HttpsTransport\\b/",
+                  "over HTTPS to the fixed paper host", "in-process mock transport",
+                  "transport not reported", "const armText = bw.arm, armTitle = bw.title;",
+                  "brokerWords(s).chip"):
+            self.assertIn(s, self.html)
+        self.assertNotIn("isPaper(s) ? ' &middot; <b>sends real requests", self.html)
+        # the repr prefixes the page keys on are the transports' own (no network: nothing is sent)
+        sys.path.insert(0, DESK_DIR)
+        from alpaca.mock import MockAlpacaTransport
+        from alpaca.transport import HttpsTransport, StaticTestProvider
+        self.assertTrue(repr(MockAlpacaTransport()).startswith("MockAlpacaTransport("))
+        self.assertTrue(repr(HttpsTransport(StaticTestProvider("SYNTHETIC-ID", "SYNTHETIC-SECRET"), opener=object())).startswith("HttpsTransport("))
 
 
 class TestAlpacaBarsFile(unittest.TestCase):

@@ -12,9 +12,13 @@ Order path rules (ported from the BTC order-live-r8b design, see BTC_REUSE.md):
     sees it. Its id and client order id are derived from decision_id, so a
     repeated decision is a no-op and a retried submit carries the same client id.
   * An uncertain submit (lost ack, timeout, outage) is never blindly resent: the
-    manager queries the client id first. Found -> adopt. Cleanly absent -> one
-    resend with the same client id. Unreachable -> held as "uncertain" until a
-    reconcile resolves it, and new entries are blocked meanwhile.
+    manager queries the client id first. Found -> adopt. Not visible (a 404 or
+    empty lookup from a broker whose query raises BrokerUncertain, e.g. Alpaca)
+    -> held as "uncertain" with NO re-POST: a stable client id alone never
+    justifies resending. Only a later lookup that finds the order (adopt)
+    resolves it. Cleanly absent on a broker whose query returns None as proof
+    (the FakeBroker contract) -> one resend with the same client id.
+    Unreachable -> held as "uncertain"; new entries are blocked meanwhile.
   * Fills are booked once per exec_id, whatever order or how often they arrive.
     A fill for an unacknowledged intent counts as its acknowledgment.
   * reconcile() compares the broker's listing, fills and position with the
@@ -53,10 +57,11 @@ import hashlib
 import json
 import math
 import os
+from decimal import Decimal
 
 from orders.calendar import parse_ts, iso
 from orders.fake_broker import BrokerError, BrokerOutage, BrokerUncertain
-from orders.intake import check_bar
+from orders.intake import check_bar, DEFAULT_MAX_AGE_S
 
 # Bar codes after which the bar's prices are not used as the mark.
 UNTRUSTED_BAR_CODES = ("BAD_BAR", "OUT_OF_ORDER", "STALE_EXCHANGE_TS", "FUTURE_EXCHANGE_TS",
@@ -132,6 +137,11 @@ def _record_hash(rec):
     return hashlib.sha256(json.dumps(body, sort_keys=True).encode("utf-8")).hexdigest()[:16]
 
 
+
+def _dec(x):
+    """Lexical Decimal of a number (shortest repr), for cap comparisons without float drift."""
+    return Decimal(repr(float(x)))
+
 class JsonlLog(object):
     """Append-only JSONL with seq + per-record hash; each append is fsynced."""
 
@@ -205,8 +215,11 @@ class OrderManager(object):
 
     def __init__(self, state_dir, broker, limits, symbol=None, calendar=None, clock=None,
                  strategy=None, data_label=None, multiplier=1.0, reconcile_on_start=True,
-                 flatten_lead_s=DEFAULT_FLATTEN_LEAD_S):
+                 flatten_lead_s=DEFAULT_FLATTEN_LEAD_S, bar_max_age_s=DEFAULT_MAX_AGE_S):
         self.limits = self._check_limits(limits)
+        # Bar freshness for routing. Offline keeps intake's 5 s default; the Alpaca session binds its
+        # advertised window (900 s) so an ordinary manual Check inside that window can still route.
+        self.bar_max_age_s = float(bar_max_age_s)
         self.limits_label = (limits.get("label") if isinstance(limits, dict) else None) or LIMITS_LABEL
         self.broker = broker
         self.symbol = symbol or getattr(broker, "symbol", "SYNTH")
@@ -522,11 +535,16 @@ class OrderManager(object):
 
     def gross_exposure(self):
         """Position + working entries + reserved (persisted, unresolved) entries, in notional."""
+        return float(self._gross_dec())
+
+    def _gross_dec(self):
+        """gross_exposure in lexical Decimal, so a cap check accepts exact equality."""
         mark = self.mark if self.mark is not None else (self.pos_avg or 0.0)
-        gross = abs(self.pos_qty) * mark * self.multiplier
+        mult = _dec(self.multiplier)
+        gross = Decimal(abs(int(self.pos_qty))) * _dec(mark) * mult
         for it in self._live([ENTRY]):
             price = self._price_of(it) or 0.0
-            gross += self._remaining(it) * price * self.multiplier
+            gross += Decimal(int(self._remaining(it))) * _dec(price) * mult
         return gross
 
     def unrealized(self):
@@ -625,13 +643,13 @@ class OrderManager(object):
         if cost is not None and (not isinstance(cost, (int, float)) or isinstance(cost, bool)
                                  or not math.isfinite(cost) or cost < 0):
             return "BAD_COST"
-        notional = it["qty"] * price * self.multiplier
-        if notional > self.limits["per_trade_notional"]:
-            return "NOTIONAL"
+        notional_d = Decimal(int(it["qty"])) * _dec(price) * _dec(self.multiplier)
+        if notional_d > _dec(self.limits["per_trade_notional"]):
+            return "NOTIONAL"     # lexical Decimal: exactly at the cap passes, any true excess is refused
         new_risk = self._entry_max_loss(it, qty=it["qty"])
         if new_risk > self.limits["max_loss_per_trade"]:
             return "MAX_LOSS"
-        if self.gross_exposure() + notional > self.limits["gross_exposure"]:
+        if self._gross_dec() + notional_d > _dec(self.limits["gross_exposure"]):
             return "RISK_GROSS"
         loss = max(0.0, -self.day_pnl())
         if loss >= self.limits["daily_loss"]:
@@ -762,6 +780,12 @@ class OrderManager(object):
         if order is not None:
             self._adopt(iid, order, how="query")
             return True
+        if unseen:
+            # Not visible is never proof of "not placed", and the venue gives no bounded visibility
+            # guarantee: hold the intent (and its reserved exposure) with no re-POST.
+            self._audit("alarm", code="SUBMIT_UNRESOLVED", intent_id=iid, blocking=True,
+                        detail="%s was sent but is not visible at the broker; no resend" % iid)
+            return False
         if allow_retry and int(it.get("retries", 0)) < 1 and \
                 (it["kind"] != ENTRY or self.entry_block_reason() in (None, "UNRESOLVED_SUBMIT")):
             self._set_status(iid, "pending", retries=int(it.get("retries", 0)) + 1)
@@ -769,8 +793,6 @@ class OrderManager(object):
                         note="query found no order; resending with the same client id")
             self._dispatch(iid)
             return self.intents[iid]["status"] != "uncertain"
-        if unseen:
-            return False                    # stays uncertain; reconcile keeps asking by client id
         self._set_status(iid, "not_placed", reason="broker has no order for this client id")
         self._audit("rejected", intent_id=iid, reason="NOT_PLACED", by="reconcile")
         return True
@@ -826,7 +848,7 @@ class OrderManager(object):
             self._sim_now = parse_ts(when)
         code = "OK"
         if self.calendar is not None:
-            ok, code, detail = check_bar(bar, self._prev_bar, self.calendar)
+            ok, code, detail = check_bar(bar, self._prev_bar, self.calendar, max_age_s=self.bar_max_age_s)
             self._bar_status = None if ok else code
             if not ok:
                 self._audit("alarm", code="BAR_" + code, blocking=False, bar_ts_open=bar.get("ts_open"),
@@ -967,6 +989,13 @@ class OrderManager(object):
             flag("POSITION_EXCESS" if excess else "POSITION_MISMATCH",
                  "broker position %d, booked %d" % (bqty, self.pos_qty))
         report["positions"] = {"broker": bqty, "booked": self.pos_qty}
+        if isinstance(mine, dict) and mine.get("fractional"):
+            exact = str(mine.get("qty_exact"))
+            report["positions"]["broker_exact"] = exact
+            report["positions"]["fractional"] = True
+            flag("POSITION_UNSUPPORTED_FRACTIONAL",
+                 "broker shows %s %s, a fractional position this desk did not open and will not trade; "
+                 "arming and new orders stay refused until it is gone" % (exact, self.symbol))
         # Anything not known to be done counts as working: "working" and unknown statuses alike.
         report["working_orders"] = [o["client_id"] for o in by_client.values() if o.get("status") not in BROKER_DONE]
         report["desk_working_orders"] = [c for c in report["working_orders"] if c in self.by_client]
@@ -1140,7 +1169,10 @@ class OrderManager(object):
         if not rep.get("complete"):
             why.append("broker order listing incomplete")
         pos = rep.get("positions") or {}
-        if pos.get("broker") != 0:
+        if pos.get("fractional"):
+            why.append("broker position %s %s is fractional (not this desk's; not traded)" % (
+                pos.get("broker_exact"), self.symbol))
+        elif pos.get("broker") != 0:
             why.append("broker position %s" % pos.get("broker"))
         if pos.get("booked") != 0:
             why.append("booked position %s" % pos.get("booked"))
@@ -1191,13 +1223,39 @@ class OrderManager(object):
             self._save_controls(close_pending=why)
             return {"state": "pending", "why": why}
         side = "sell" if bqty > 0 else "buy"
+        unprotected = False
+        if getattr(self.broker, "exits_hold_position", False):
+            # This venue holds the shares of a working exit, so a close next to the protective is
+            # refused. Cancel the desk's protective/exit orders on this side, wait until the broker
+            # shows them done (an accepted cancel is not proof), reconcile, then close what is left.
+            held = [it for it in self._live(["protective", "exit"]) if it["side"] == side]
+            if held:
+                for it in held:
+                    try:
+                        self._call("cancel", it["client_id"])
+                    except BrokerError:
+                        pass
+                rep = self.reconcile(reason="stop-unprotect")
+                still = [it["intent_id"] for it in self._live(["protective", "exit"]) if it["side"] == side]
+                if not rep.get("connected") or still:
+                    why = ("protective cancel requested, not yet confirmed by the broker (%s); close waits "
+                           "so nothing sells twice" % (", ".join(still) or "broker unreachable"))
+                    self._save_controls(close_pending=why)
+                    return {"state": "pending", "why": why, "unconfirmed_cancels": still}
+                self._audit("control", action="stop_protection_canceled", intent_ids=[it["intent_id"] for it in held])
+                bqty = rep["positions"]["broker"]
+                if bqty == 0:
+                    return self._progress_stop()           # the protective traded during the cancel
+                side = "sell" if bqty > 0 else "buy"
+            unprotected = not any(it["side"] == side for it in self._live(["protective"]))
         closes = self._live(["close"])
         wrong = [c["intent_id"] for c in closes if c["side"] != side]
         for iid in wrong:
             self._cancel(iid)
         covered = sum(self._remaining(c) for c in closes if c["side"] == side)
         if covered >= abs(bqty):
-            why = "close order working; protective exits kept until flat"
+            why = ("close order working; protective canceled first" if unprotected
+                   else "close order working; protective exits kept until flat")
             self._save_controls(close_pending=why)
             return {"state": "pending", "why": why, "close": [c["intent_id"] for c in closes]}
         qty = abs(bqty) - covered
@@ -1209,9 +1267,17 @@ class OrderManager(object):
         it = self.intents.get(iid) or {}
         st = it.get("status")
         if st == "acked":
-            why = "closing %d at market (reduce-only); protective exits kept until flat" % qty
+            if unprotected:
+                why = "closing %d at market (reduce-only); protective canceled first" % qty
+            else:
+                why = "closing %d at market (reduce-only); protective exits kept until flat" % qty
             self._save_controls(close_pending=why)
             return {"state": "closing", "intent_id": iid, "qty": qty, "why": why}
+        if unprotected:
+            why = "position %d SPY UNPROTECTED: protective canceled, close pending" % abs(bqty)
+            self._save_controls(close_pending=why)
+            return {"state": "closing_unprotected", "why": why, "intent_id": iid, "qty": qty,
+                    "close_status": st, "close_reason": it.get("reason")}
         if st in ("rejected", "not_placed"):
             why = "close rejected (%s); protective exits kept; retry next poll" % it.get("reason")
         else:

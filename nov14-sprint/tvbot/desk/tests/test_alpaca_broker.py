@@ -215,20 +215,36 @@ class ManagerFlowTests(Case):
         self.assertEqual(self.fill_count(iid), 1)
         self.assertNotEqual(self.m.intents[iid]["status"], "not_placed")
         self.assertEqual(len(self.trading.orders), 1)     # one order at Alpaca
+        self.assertEqual(len(posts(self.trading)), 1)     # exactly one POST across call, restart and polls
         self.assertEqual(set(c[3]["client_order_id"] for c in posts(self.trading)), {cid})
         self.assertEqual(self.b.uncertain_client_ids(), [])
         self.assertFalse(any(r.get("reason") == "NOT_PLACED" for r in self.m.audit_rows()
                              if isinstance(r, dict))) if hasattr(self.m, "audit_rows") else None
 
-    def test_timeout_without_order_resends_same_client_id_once(self):
+    def test_timeout_404_one_post_across_call_restart_and_polls(self):
+        """Codex 22:50Z: a 404 after an uncertain POST is held unresolved with no re-POST, ever."""
         self.start()
         self.trading.fault("POST", "timeout")
         iid = self.buy("e1", 2)
-        self.assertEqual(self.m.intents[iid]["status"], "acked")
-        self.assertEqual(len(self.trading.orders), 1)
-        self.assertEqual(len(posts(self.trading)), 2)        # first lost, one resend with the same client id
-        cids = set(json.dumps(c[3], sort_keys=True) for c in posts(self.trading))
-        self.assertEqual(len(cids), 1)
+        self.assertEqual(self.m.intents[iid]["status"], "uncertain")
+        self.assertEqual(len(posts(self.trading)), 1)        # the call itself: no resend
+        self.assertEqual(self.b.uncertain_client_ids(), [iid])
+        self.bar()                                           # first poll
+        rep = self.m.reconcile(reason="test")
+        self.assertIn("SUBMIT_UNRESOLVED", [a["code"] for a in rep["alarms"] if a["blocking"]])
+        self.assertEqual(rep["not_placed"], [])
+        self.b.note_reconcile(rep)
+        self.assertEqual(self.b.block_reason(), "RECOVERY_AMBIGUOUS")
+        m = self.restart()
+        self.assertEqual(m.intents[iid]["status"], "uncertain")
+        self.bar()                                           # second poll, after the restart
+        m.reconcile(reason="test")
+        self.assertEqual(m.intents[iid]["status"], "uncertain")
+        self.assertEqual(len(posts(self.trading)), 1)        # still exactly one POST
+        self.assertEqual(len(self.trading.orders), 0)
+        self.assertEqual(self.b.uncertain_client_ids(), [iid])
+        self.assertEqual(self.b.submit(iid, "buy", 2, limit=LX)["reason"], "SUBMIT_UNRESOLVED")
+        self.assertEqual(len(posts(self.trading)), 1)        # a direct re-submit is refused too
 
     def test_unresolved_uncertain_blocks_new_exposure(self):
         self.start()
@@ -296,6 +312,142 @@ class ManagerFlowTests(Case):
         rep = self.m.reconcile()
         self.assertFalse(rep["ok"])
         self.assertEqual(self.b.block_reason(), "RECOVERY_AMBIGUOUS")
+
+
+class ProtectedStopTests(Case):
+    """Release blocker 3: a working protective holds the shares at Alpaca, so Stop cancels it first."""
+
+    def long_protected(self, qty=1, stop=90.0):              # TEST VALUES
+        self.start()
+        iid = self.buy("e1", qty)
+        self.bar()
+        self.assertEqual(self.m.pos_qty, qty)
+        pid = self.m.submit_intent({"decision_id": "prot", "kind": "protective", "side": "sell", "qty": qty,
+                                    "stop": stop})
+        self.assertEqual(self.m.intents[pid]["status"], "acked")
+        return iid, pid
+
+    def close_posts(self):
+        return [c for c in posts(self.trading) if c[3]["side"] == "sell" and c[3]["type"] == "market"]
+
+    def test_protected_stop_cancels_then_closes_then_flat(self):
+        _, pid = self.long_protected(1)
+        r = self.m.stop_and_close()
+        self.assertEqual(self.m.intents[pid]["status"], "canceled")
+        self.assertEqual(r["close"]["state"], "closing", r)
+        cp = self.close_posts()
+        self.assertEqual(len(cp), 1)
+        self.assertEqual(int(cp[0][3]["qty"]), 1)
+        self.bar()
+        self.assertTrue(self.m.controls.get("flat_confirmed"))
+        self.assertEqual(self.trading.pos_qty, 0)
+        self.assertEqual(self.m.pos_qty, 0)
+
+    def test_uncertain_cancel_sends_no_close(self):
+        _, pid = self.long_protected(1)
+        self.trading.cancel_mode = "pending"               # DELETE accepted, order sits in pending_cancel
+        r = self.m.stop_and_close()
+        self.assertEqual(r["close"]["state"], "pending", r)
+        self.assertIn(pid, r["close"]["unconfirmed_cancels"])
+        self.assertEqual(self.close_posts(), [])
+        self.assertFalse(r["flat_confirmed"])
+        self.trading.fault("DELETE", "timeout")
+        r2 = self.m.stop_and_close()
+        self.assertEqual(r2["close"]["state"], "pending")
+        self.assertEqual(self.close_posts(), [])
+
+    def test_protective_fills_during_cancel_no_close_flat(self):
+        _, pid = self.long_protected(1, stop=90.0)
+        self.trading.cancel_mode = "pending"
+        self.m.stop_and_close()
+        self.trading.advance(89.0)                          # the stop trades before the cancel lands
+        self.b.step({"close": 89.0})
+        r = self.m.stop_and_close()
+        self.assertEqual(self.close_posts(), [])
+        self.assertEqual(r["close"]["state"], "flat_confirmed", r)
+        self.assertTrue(r["flat_confirmed"])
+        self.assertEqual(self.trading.pos_qty, 0)
+        self.assertEqual(self.m.pos_qty, 0)
+
+    def test_partial_protective_fill_closes_only_the_remainder(self):
+        _, pid = self.long_protected(2, stop=90.0)
+        self.trading.cancel_mode = "pending"
+        self.m.stop_and_close()
+        self.trading.partial_next = 1
+        self.trading.advance(89.0)                          # 1 of 2 trades, then the cancel lands
+        self.trading.partial_next = None
+        self.b.step({"close": 89.0})
+        self.assertEqual(self.trading.pos_qty, 1)
+        r = self.m.stop_and_close()
+        cp = self.close_posts()
+        self.assertEqual(len(cp), 1, r)
+        self.assertEqual(int(cp[0][3]["qty"]), 1)
+        self.assertEqual(r["close"]["state"], "closing", r)
+
+    def test_close_refused_after_cancel_reports_unprotected(self):
+        _, pid = self.long_protected(1)
+        self.trading.reject_next = "http"                   # the close POST is refused by the venue
+        r = self.m.stop_and_close()
+        self.assertEqual(r["close"]["state"], "closing_unprotected", r)
+        self.assertEqual(r["status_text"], "position 1 SPY UNPROTECTED: protective canceled, close pending")
+        self.assertFalse(r["flat_confirmed"])
+
+
+class FractionalPositionTests(Case):
+    """Release blocker 2: an external 0.4 SPY position is reported exactly and never traded."""
+
+    def setUp(self):
+        Case.setUp(self)
+        self.trading.advance(100.0)
+        self.trading.pos_qty, self.trading.pos_avg = 0.4, 100.0      # synthetic external fractional lot
+        self.new_manager()
+
+    def test_positions_keep_exact_qty(self):
+        row = self.b.positions()["SPY"]
+        self.assertEqual(row["qty_exact"], "0.4")
+        self.assertTrue(row["fractional"])
+
+    def test_reconcile_blocks_with_exact_qty(self):
+        rep = self.m.reconcile(reason="test")
+        self.assertFalse(rep["ok"])
+        codes = [a["code"] for a in rep["alarms"] if a["blocking"]]
+        self.assertIn("POSITION_UNSUPPORTED_FRACTIONAL", codes)
+        self.assertEqual(rep["positions"]["broker_exact"], "0.4")
+        self.assertTrue(any("0.4" in a["detail"] for a in rep["alarms"]))
+
+    def test_arm_refused(self):
+        r = self.m.arm("S1", expires_utc=FAR)
+        self.assertFalse(r["ok"])
+        self.assertEqual(r["reason"], "RECONCILE_NOT_CLEAN")
+
+    def test_stop_not_flat_confirmed_and_nothing_traded(self):
+        n = len(posts(self.trading))
+        r = self.m.stop_and_close()
+        self.assertFalse(r["flat_confirmed"])
+        self.assertIn("0.4", r["status_text"])
+        self.assertEqual(len(posts(self.trading)), n)
+        self.assertEqual(self.trading.pos_qty, 0.4)
+        c = self.m.clear_stop(confirm=True)
+        self.assertFalse(c["ok"])
+
+    def test_broker_refuses_orders_against_it(self):
+        self.assertEqual(self.b.submit("f1", "sell", 1, stop=95.0, reduce_only=True)["reason"],
+                         "POSITION_UNSUPPORTED_FRACTIONAL")
+        self.assertEqual(posts(self.trading), [])
+
+    def test_short_fractional_blocks_arm_and_is_never_flat(self):
+        self.trading.pos_qty = -0.4                                    # synthetic external fractional short
+        self.restart()
+        self.assertEqual(self.b.positions()["SPY"]["qty_exact"], "-0.4")
+        rep = self.m.reconcile(reason="test")
+        self.assertIn("POSITION_UNSUPPORTED_FRACTIONAL", [a["code"] for a in rep["alarms"] if a["blocking"]])
+        self.assertFalse(self.m.arm("S1", expires_utc=FAR)["ok"])
+        n = len(posts(self.trading))
+        r = self.m.stop_and_close()
+        self.assertFalse(r["flat_confirmed"])
+        self.assertIn("-0.4", r["status_text"])
+        self.assertEqual(len(posts(self.trading)), n)
+        self.assertEqual(self.trading.pos_qty, -0.4)
 
 
 class BrokerUnitTests(Case):
@@ -376,6 +528,57 @@ class BrokerUnitTests(Case):
         self.assertEqual(self.b.submit("x3", "buy", 1, limit=LX)["status"], "accepted")
         self.assertEqual(self.b.submit("x4", "buy", 1, limit=LX)["reason"], "EXEC_CAP")
 
+    def test_gap_over_cap_serialized_post(self):
+        """Section 3a: what is POSTed fits the cap at the order's own floored limit; nothing when it cannot."""
+        self.b.exec_caps = {"per_trade_notional": 100.25, "gross_exposure": 100.25}   # TEST VALUES
+        self.trading.advance(100.0)
+        self.b.step({"close": 100.0, "ts_close": "t1"})
+        bound = 100.259                                    # a computed bound off the tick
+        r = self.b.submit("g1", "buy", 1, limit=bound)
+        self.assertEqual(r["status"], "accepted")
+        body = posts(self.trading)[-1][3]
+        self.assertEqual(body["limit_price"], "100.25")
+        self.assertEqual(body["type"], "limit")
+        self.assertEqual(body["time_in_force"], "day")
+        self.assertLessEqual(float(body["limit_price"]), int(bound * 100) / 100.0)
+        self.assertLessEqual(int(body["qty"]) * float(body["limit_price"]), 100.25 + 1e-9)
+        n = len(posts(self.trading))
+        self.b.exec_caps = {"per_trade_notional": 99.0}    # TEST VALUE: the bound is under the share price
+        self.assertEqual(self.b.submit("g2", "buy", 1, limit=100.0)["reason"], "EXEC_CAP")
+        self.assertEqual(len(posts(self.trading)), n)
+
+    def test_addendum_three_entries_send_zero_posts(self):
+        """Mark 100, cap 100.25 (TEST VALUES): an over-cap limit, an unpriced buy and a short-opening sell."""
+        self.b.exec_caps = {"per_trade_notional": 100.25, "gross_exposure": 100.25}
+        self.trading.advance(100.0)
+        self.b.step({"close": 100.0, "ts_close": "t1"})
+        before = list(self.trading.calls)
+        self.assertEqual(self.b.submit("a1", "buy", 1, limit=101.0)["reason"], "EXEC_CAP")
+        self.assertEqual(self.b.submit("a2", "buy", 1)["reason"], "UNPRICED_ENTRY")
+        self.assertEqual(self.b.submit("a3", "sell", 1, limit=99.0)["reason"], "SHORT_OPEN_BLOCKED")
+        self.assertEqual(posts(self.trading), [])
+        self.assertFalse([c for c in self.trading.calls[len(before):] if c[0] in ("POST", "DELETE")])
+
+    def test_unpriced_entry_makes_no_call_at_all(self):
+        self.trading.advance(100.0)
+        self.b.step({"close": 100.0, "ts_close": "t1"})
+        n = len(self.trading.calls)
+        self.assertEqual(self.b.submit("u1", "buy", 1)["reason"], "UNPRICED_ENTRY")
+        self.assertEqual(len(self.trading.calls), n)
+
+    def test_working_and_uncertain_orders_count_in_gross(self):
+        self.b.exec_caps = {"per_trade_notional": 150.0, "gross_exposure": 250.0}    # TEST VALUES
+        self.trading.advance(100.0)
+        self.b.step({"close": 100.0, "ts_close": "t1"})
+        self.assertEqual(self.b.submit("w1", "buy", 1, limit=100.0)["status"], "accepted")   # working, unfilled
+        self.trading.fault("POST", "lost_ack")
+        with self.assertRaises(BrokerUncertain):
+            self.b.submit("w2", "buy", 1, limit=100.0)                                       # uncertain
+        self.b.book["orders"]["w2"]["state"] = "uncertain"
+        # gross = 100 working + 100 uncertain + 100 new = 300 > 250, and the uncertain submit also blocks
+        self.assertIn(self.b.submit("w3", "buy", 1, limit=100.0, )["reason"], ("EXEC_CAP", "RECOVERY_AMBIGUOUS"))
+        self.assertEqual(self.b._exec_cap_refusal("w3", "buy", 1, 0, 100.0, None)["cap"], "gross_exposure")
+
     def test_local_rejects(self):
         self.assertEqual(self.b.submit("bad id!", "buy", 1)["reason"], "BAD_CLIENT_ID")
         self.assertEqual(self.b.submit("p1", "buy", 1, limit=-1.0)["reason"], "BAD_PRICE")
@@ -391,8 +594,11 @@ class BrokerUnitTests(Case):
         self.trading.fault("POST", "lost_ack")
         with self.assertRaises(BrokerUncertain):
             self.b.submit("dup1", "buy", 1, limit=LX)
-        rec = self.b.book["orders"]["dup1"]
-        rec["state"] = "not_found"                        # as if a query had wrongly said not found
+        n = len(posts(self.trading))
+        r = self.b.submit("dup1", "buy", 1, limit=LX)     # an unresolved submit is never re-POSTed
+        self.assertEqual(r["reason"], "SUBMIT_UNRESOLVED")
+        self.assertEqual(len(posts(self.trading)), n)
+        del self.b.book["orders"]["dup1"]                 # as if the local book had lost the record
         r = self.b.submit("dup1", "buy", 1, limit=LX)
         self.assertEqual(r["reason"], "DUPLICATE_CLIENT_ORDER_ID")
         self.assertTrue(r["order_id"])

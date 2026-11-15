@@ -26,6 +26,7 @@ import hashlib
 import json
 import math
 import os
+from decimal import Decimal
 from datetime import datetime, timedelta, timezone
 
 try:
@@ -209,7 +210,9 @@ def base_qty(price, cfg):
         cap = min(cap, float(lims["per_trade_notional"]))
     fq = _fixed_qty(c)
     if fq is not None:
-        return int(fq) if fq * float(price) <= cap else 0
+        # Lexical Decimal: 3 x $501.04 is exactly $1503.12, not 1503.1200000000001 > cap.
+        # A true excess (3 x $501.05 against $1503.12) is still refused.
+        return int(fq) if Decimal(fq) * Decimal(repr(float(price))) <= Decimal(repr(cap)) else 0
     return int(math.floor(cap / float(price)))
 
 

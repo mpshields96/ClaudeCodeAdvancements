@@ -201,6 +201,19 @@ class TestContractNames(LabBase):
         fid = scores[-1]["forecast_id"]
         self.assertTrue(V.verify(self.dir, fid)["ok"])
 
+    def test_every_score_row_labels_the_cost_qty(self):
+        drive_mock_feed(self.dir, days=("2026-11-16",))
+        scores = self.rows(R.SCORES)
+        self.assertTrue(scores)
+        for r in scores:
+            self.assertIn("cost_qty", r)
+            self.assertTrue(r["cost_qty_source"])
+            self.assertIsNone(r["cost_reference_shares"])
+            if r["kind"] == "trade":
+                self.assertEqual(r["cost_qty"], r["qty"])
+            elif r.get("hypothetical"):
+                self.assertEqual(r["cost_qty"], r["hypothetical"]["qty"])
+
     def test_historical_study_slot_is_a_disabled_placeholder(self):
         with open(os.path.join(DESK, "ui", "lab.html"), encoding="utf-8") as fh:
             page = fh.read()
@@ -208,6 +221,8 @@ class TestContractNames(LabBase):
         m = re.search(r'<button id="hist-link"[^>]*>', page)
         self.assertTrue(m and " disabled" in m.group(0))
         self.assertNotIn("hist-link\").href", page)
+        self.assertIn("not yet a valid comparison", page)
+        self.assertNotIn("t.sum_net_bps", page)
 
 
 class TestReportLabSection(LabBase):
@@ -230,7 +245,8 @@ class TestReportLabSection(LabBase):
         _, page = RP.build_html(self.dir)
         self.assertIn("Decision lab (shadow)", page)
         self.assertIn("HYPOTHETICAL", page)
-        self.assertIn("2x friction", page)
+        self.assertIn("not yet a valid comparison", page)
+        self.assertNotIn("Sum net bps", page)
         self.assertIn(CH.RULE_ID, page)
         self.assertIn("ASSUMED", page)
         for name in ("cash", "challenger", "ema"):

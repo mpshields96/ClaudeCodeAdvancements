@@ -373,7 +373,7 @@ def lab_section(state_dir):
     SHADOW and HYPOTHETICAL: never routed, never counted in P&L, never a promotion."""
     if not os.path.exists(os.path.join(state_dir, "lab_forecasts.jsonl")):
         return ""
-    head = "<section><div class='kicker'>Decision lab (shadow)</div><h2>Challenger against EMA and cash, hypothetical</h2>"
+    head = "<section><div class='kicker'>Decision lab (shadow)</div><h2>Shadow forecasts recorded, counts only</h2>"
     try:
         desk = os.path.dirname(os.path.abspath(__file__))
         if desk not in sys.path:
@@ -385,14 +385,14 @@ def lab_section(state_dir):
             e(exc.__class__.__name__))
     fr = v.get("frozen") or {}
     rows = "".join(
-        "<tr><td>%s</td><td class='r'>%s</td><td class='r'>%s</td><td class='r'>%s</td><td class='r'>%s</td><td class='r'>%s</td></tr>" % (
-            e(name), e(t.get("forecasts")), e(t.get("scored")), e(t.get("trades")),
-            e("%.2f" % t["sum_net_bps"]) if isinstance(t.get("sum_net_bps"), (int, float)) else "n/a",
-            e("%.2f" % t["sum_net_bps_2x"]) if isinstance(t.get("sum_net_bps_2x"), (int, float)) else "n/a")
+        "<tr><td>%s</td><td class='r'>%s</td><td class='r'>%s</td><td class='r'>%s</td><td>not yet a valid comparison</td></tr>" % (
+            e(name), e(t.get("forecasts")), e(t.get("scored")), e(t.get("trades")))
         for name, t in sorted((v.get("totals") or {}).items()))
     return (head +
+            "<p class='note'><b>Comparison totals disabled: not yet a valid comparison.</b> Summed bps are not a "
+            "strategy return and show no after-cost superiority.</p>"
             "<table class='tight'><tr><th>Strategy</th><th class='r'>Forecasts</th><th class='r'>Scored</th>"
-            "<th class='r'>With exposure</th><th class='r'>Sum net bps</th><th class='r'>Sum net bps, 2x friction</th></tr>"
+            "<th class='r'>With exposure</th><th>Comparison</th></tr>"
             "%s</table>" % rows +
             "<p class='note'>%s. %s. Data: %s. Challenger %s, frozen %s. Costs are ASSUMED; scores use later bars only. "
             "Every lab row is in this session's state directory; open /lab to verify any forecast.</p></section>" % (
@@ -464,6 +464,14 @@ def build_html(state_dir, week=None):
     session = read_json(os.path.join(state_dir, "session.json"), {}) or {}
     week, weeks = pick_week(review, week)
     bw = week_view(review, week)
+    if session.get("broker_mode") in ("alpaca-paper", "alpaca-mock"):
+        # Alpaca paper/mock week: rendered by the weekly owner's module from this desk's own
+        # paper ledger and session snapshot, not by the offline synthetic-bar report below.
+        desk = os.path.dirname(os.path.abspath(__file__))
+        if desk not in sys.path:
+            sys.path.insert(0, desk)
+        from alpaca.weekly import render_week
+        return week, render_week(state_dir, session, bw, week)
     allw = review.get("all_weeks_summary") or {}
     sizing = bw.get("sizing") or review.get("sizing") or session.get("sizing") or {}
     limits = session.get("limits") or {}

@@ -61,6 +61,18 @@ EXTRA_ROUTES = {
 }
 
 
+def _weekly_label(runner):
+    """Say which source the weekly report came from; never call a paper week offline mock fills."""
+    mode = getattr(runner, "broker_mode", None)
+    if mode == "alpaca-mock":
+        return ("ALPACA MOCK weekly report: local fake venue, synthetic ids and fills; "
+                "fees and limits as recorded, not account-verified")
+    if mode == "alpaca-paper":
+        return ("ALPACA PAPER weekly report: simulated paper account, no real money; "
+                "fees as recorded by the adapter, not account-verified")
+    return "SIMULATED weekly report (offline synthetic bars, mock fills, TEST VALUES)"
+
+
 class DeskControls(object):
     """No-argument control methods for the UI server's record_control(), which
     writes each request durably before calling the method."""
@@ -137,7 +149,7 @@ class DeskControls(object):
         name = os.path.basename(path)
         self.r._desk_audit("weekly_report", week=wk, file=name, pages=pages)
         return {"ok": True, "simulated": True, "week": wk, "file": name, "url": "/reports/" + name,
-                "pages": pages, "label": "SIMULATED weekly report (mock fills, TEST VALUES)"}
+                "pages": pages, "label": _weekly_label(self.r)}
 
 
 class AlpacaDeskControls(DeskControls):
@@ -497,7 +509,8 @@ def main(argv=None):
     ap.add_argument("--port", type=int, default=DEFAULT_PORT)
     ap.add_argument("--no-browser", action="store_true", help="do not open the browser")
     ap.add_argument("--fresh", action="store_true",
-                    help="move an existing state dir aside (renamed, never deleted) and start clean")
+                    help="move an existing state dir aside (renamed, never deleted) and start clean "
+                         "(offline and alpaca-paper mock only; refused with --transport https)")
     ap.add_argument("--play-rate", type=float, default=4.0, help="bars per second for Play (max %d)"
                     % S.MAX_PLAY_RATE)
     ap.add_argument("--autoplay", action="store_true", help="enable the simulated schedule and start Play")
@@ -524,6 +537,14 @@ def main(argv=None):
         return 2
     if not alpaca and (a.transport != "mock" or a.limits):
         print("[desk] REFUSED: --transport and --limits apply only with --broker alpaca-paper.")
+        return 2
+    if alpaca and a.transport == "https" and a.fresh:
+        # Codex 22:56Z: rotating the connected journal aside would reset intraday risk history on a
+        # retry. Refused before any lock, rename or broker object exists. Mock --fresh is unchanged;
+        # a limits change goes through the Setup worksheet approval, never through --fresh.
+        print("[desk] REFUSED: --fresh is mock-only. The connected paper state dir keeps its order journal "
+              "and intraday risk history and is never moved aside. To change limits, approve a new snapshot "
+              "in the Setup worksheet. Nothing was moved, locked or started.")
         return 2
 
     if a.check:

@@ -156,6 +156,63 @@ class AlpacaSessionIntegration(unittest.TestCase):
         self.assertIsNone(limit)
         self.assertEqual(why[0], "ENTRY_BOUND")
 
+    # ------------------------------------------------------------ strategy sizing basis
+    def _approved(self, sub, **vals):
+        """A SYNTHETIC worksheet approval in a scratch dir (never Matthew's values)."""
+        sizing = AS.importlib.import_module("alpaca.sizing")
+        d = os.path.join(self.tmp, sub + "-limits")
+        os.makedirs(d, exist_ok=True)
+        v = {"fixed_shares": 10, "per_trade_notional": 6000.0, "gross_exposure": 12000.0,
+             "max_loss_per_trade": 150.0, "daily_loss": 300.0}
+        v.update(vals)
+        sizing.save_draft(d, v)
+        seen = sizing.read_draft(d)                       # what the operator "reviewed"
+        sizing.approve(d, sizing.CONFIRM_PHRASE, "synthetic test approval",
+                       reviewed_draft_hash=sizing.content_hash(seen.get("values")),
+                       prior_approved_hash=None)
+        return sizing.approved_path(d)
+
+    def test_strategy_sizing_uses_chosen_per_order_cap_not_offline_test_cap(self):
+        from strategies import base as B
+        c = self.make("sz", limits_path=self._approved("sz"))
+        self.assertEqual(c.strategy_cfg["fixed_qty"], 10)
+        self.assertEqual(B.base_qty(500, c.strategy_cfg), 10)    # $5,000 fits the $6,000 cap
+        self.assertEqual(B.base_qty(600, c.strategy_cfg), 10)    # exactly at the cap
+        self.assertEqual(B.base_qty(600.01, c.strategy_cfg), 0)  # above the cap: refused, never resized
+        self.assertEqual(c.strategy_cfg["limits"]["gross_exposure"], 12000.0)
+        self.assertNotIn("TEST VALUES", c.strategy_cfg["test_size"]["label"])
+
+    def test_strategy_sizing_lower_chosen_cap_refuses(self):
+        from strategies import base as B
+        c = self.make("sz2", limits_path=self._approved("sz2", per_trade_notional=4000.0))
+        self.assertEqual(B.base_qty(399, c.strategy_cfg), 10)
+        self.assertEqual(B.base_qty(500, c.strategy_cfg), 0)     # 10 x $500 > $4,000
+
+    def test_chosen_size_reaches_the_serialized_post(self):
+        c = self.make("sz3", limits_path=self._approved("sz3"))
+        c.alpaca_enable(confirm=True)
+        self.run_days(c)
+        buys = [b for b in posts(c) if b["side"] == "buy"]
+        self.assertTrue(buys, "10 shares under a $6,000 cap must be able to enter")
+        for b in buys:
+            self.assertEqual(int(b["qty"]), 10)
+            self.assertLessEqual(10 * float(b["limit_price"]), 6000.0 + 1e-9)
+
+    def test_offline_desk_keeps_its_test_cap_contract(self):
+        import session as S
+        from strategies import base as B
+        d = os.path.join(self.tmp, "offline")
+        ctl = S.SessionController(state_dir=d, strategy="ema")
+        try:
+            self.assertNotIn("test_size", ctl.strategy_cfg)
+            self.assertEqual(B.base_qty(500, ctl.strategy_cfg), 1)        # 1-share demo preset
+            self.assertEqual(B.base_qty(500, dict(ctl.strategy_cfg, fixed_qty=10)), 0)  # $2,000 TEST cap
+        finally:
+            try:
+                ctl.close()
+            except Exception:
+                pass
+
     # ------------------------------------------------------------ Stop, recovery, venue clock
     def test_stop_disables_adapter_persistently(self):
         c = self.make()
@@ -205,6 +262,367 @@ class AlpacaSessionIntegration(unittest.TestCase):
         self.assertEqual(flags["evidence"], A.LABEL_MOCK_LOCAL)
         self.assertEqual(flags["data_source"], A.DATA_LABEL_MOCK)
 
+
+class AlpacaWeeklyHook(unittest.TestCase):
+    """Codex weekly owner, 23:0xZ: a paper or mock session's weekly report goes to alpaca/weekly.py,
+    not the offline synthetic-bar renderer, and the response label names its real source."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="desk-alpaca-weekly-")
+        self.c = AS.AlpacaSessionController(os.path.join(self.tmp, "s"), strategy="ema")
+        self.c.alpaca_enable(confirm=True)
+        self.c.check_new_bars()
+        self.c.review()
+
+    def tearDown(self):
+        try:
+            self.c.close()
+        except Exception:
+            pass
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_mock_session_routes_to_alpaca_weekly(self):
+        import report as RP
+        _, page = RP.build_html(self.c.state_dir)
+        self.assertIn("SPY rehearsal week", page)
+
+    def test_label_is_source_aware(self):
+        import launch as L
+        self.assertIn("ALPACA MOCK", L._weekly_label(self.c))
+        self.assertNotIn("TEST VALUES", L._weekly_label(self.c))
+
+        class Offline(object):
+            pass
+        self.assertIn("offline synthetic bars", L._weekly_label(Offline()))
+
+
+class DecimalCapsAndMockEventTime(unittest.TestCase):
+    """Codex 23:09Z: 3 x $501.04 is exactly a $1503.12 cap (float says 1503.1200000000001), and mock
+    fill times follow the synthetic bar clock so mock-week fills land in the mock week."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="desk-alpaca-dec-")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_base_qty_accepts_exact_cap_only(self):
+        from strategies.base import base_qty
+        cfg = {"fixed_qty": 3, "test_size": {"order_notional": 5000.0}, "limits": {"per_trade_notional": 1503.12}}
+        self.assertEqual(base_qty(501.04, cfg), 3)
+        self.assertEqual(base_qty(501.05, cfg), 0)      # a true excess is still refused
+
+    def test_manager_cap_checks_accept_exact_equality_only(self):
+        from orders.calendar import SessionCalendar
+        from orders.fake_broker import FakeBroker
+        from orders.manager import OrderManager
+        lim = {"per_trade_notional": 1503.12, "max_loss_per_trade": 100.0, "daily_loss": 30.0,
+               "gross_exposure": 1503.12, "label": "TEST VALUES"}
+        m = OrderManager(self.tmp, FakeBroker(seed=7), lim, calendar=SessionCalendar.fixture_profile())
+        try:
+            def intent(px):
+                return {"decision_id": "dec-cap", "kind": "entry", "side": "buy", "qty": 3, "limit": px,
+                        "intended_entry": px, "invalidation": px - 1.0}
+            self.assertIsNone(m._check_entry_risk(intent(501.04)))
+            self.assertEqual(m._check_entry_risk(intent(501.05)), "NOTIONAL")
+            lim2 = dict(lim, per_trade_notional=5000.0)
+            m.limits.update(lim2)
+            self.assertIsNone(m._check_entry_risk(intent(501.04)))
+            self.assertEqual(m._check_entry_risk(intent(501.05)), "RISK_GROSS")
+        finally:
+            m.close()
+
+    def test_mock_fill_time_follows_bar_clock(self):
+        c = AS.AlpacaSessionController(os.path.join(self.tmp, "s"), strategy="ema")
+        try:
+            c.alpaca_enable(confirm=True)
+            c.check_new_bars()
+            tr = c.transport.trading
+            bar = c.bars[-1]
+            tr.event_ts = bar["ts_close"]
+            fill_ts = tr._event_tick()
+            self.assertEqual(fill_ts[:13], bar["ts_close"][:13])   # mock time, not today's wall clock
+            tr.event_ts = None
+            self.assertNotEqual(tr._event_tick()[:10], bar["ts_close"][:10])  # order times stay on _tick()
+        finally:
+            c.close()
+
+
+class ManagerBarFreshnessBinding(unittest.TestCase):
+    """Codex adviser 23:1xZ: the Alpaca session advertised 900 s but OrderManager.on_bar checked
+    bars at intake's 5 s default, so a 10:30 bar checked at 10:31:01 was refused BAR_STALE_EXCHANGE_TS.
+    The manager now uses the session's window; offline keeps 5 s; past the window is still refused."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="desk-alpaca-fresh-")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _aged(self, bar, age_s):
+        from orders.calendar import parse_ts, iso
+        import datetime as _dt
+        b = dict(bar)
+        b.pop("exchange_ts", None)
+        b["delivered_ts"] = iso(parse_ts(b["ts_close"]) + _dt.timedelta(seconds=age_s))
+        return b
+
+    def test_alpaca_manager_uses_session_window_and_refuses_past_it(self):
+        from orders.intake import check_bar
+        c = AS.AlpacaSessionController(os.path.join(self.tmp, "a"), strategy="ema")
+        try:
+            self.assertEqual(c.mgr.bar_max_age_s, c.bar_max_age_s)
+            self.assertEqual(c.bar_max_age_s, 900.0)
+            c.alpaca_enable(confirm=True)
+            c.check_new_bars()
+            bar = c.bars[-1]
+            ok, code, _ = check_bar(self._aged(bar, 61), None, c.mgr.calendar, max_age_s=c.mgr.bar_max_age_s)
+            self.assertNotEqual(code, "STALE_EXCHANGE_TS")
+            ok, code, d = check_bar(self._aged(bar, 901), None, c.mgr.calendar, max_age_s=c.mgr.bar_max_age_s)
+            self.assertIn("STALE_EXCHANGE_TS", d.get("codes") or [code])
+        finally:
+            c.close()
+
+    def test_offline_manager_keeps_five_seconds(self):
+        import session as S
+        from orders.intake import DEFAULT_MAX_AGE_S
+        c = S.SessionController(os.path.join(self.tmp, "o"), strategy="ema")
+        try:
+            self.assertEqual(c.mgr.bar_max_age_s, DEFAULT_MAX_AGE_S)
+            self.assertEqual(DEFAULT_MAX_AGE_S, 5.0)
+        finally:
+            c.close()
+
+
+class SubPennyProtectiveStop(unittest.TestCase):
+    """Codex adviser 23:1xZ: a normal EMA stop has fractional cents (e.g. 101.6914). It must reach
+    the venue on the $0.01 tick toward the safe side (long sell stop UP, buy DOWN), never as a
+    BAD_PRICE that leaves the shares bare; a refused initial protective retries under a NEW id;
+    a stop already through the last close is refused visibly. Mock venue, synthetic ids, TEST VALUES."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="desk-alpaca-cent-")
+        self.c = AS.AlpacaSessionController(os.path.join(self.tmp, "s"), strategy="ema")
+        self.c.alpaca_enable(confirm=True)
+        self.c.check_new_bars()
+        self.c.arm()
+        self.trading = self.c.transport.trading
+        self.px = float(self.c.bars[-1]["close"])
+        self.c._fetch = lambda after, now: ([], [])
+
+    def tearDown(self):
+        try:
+            self.c.close()
+        except Exception:
+            pass
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _stops(self):
+        return [b for b in posts(self.c) if b.get("type") == "stop"]
+
+    def _entry(self, inval, partial=None):
+        c = self.c
+        did = "cent-test-entry-0001"
+        c.decisions.append({"decision_id": did, "invalidation": inval})
+        c.mgr.submit_intent({"decision_id": did, "kind": "entry", "side": "buy", "qty": 3,
+                             "limit": round(self.px + 0.5, 2), "ref_price": self.px,
+                             "intended_entry": self.px, "invalidation": inval})
+        self.trading.partial_next = partial
+        self.trading.advance(self.px)
+
+    def test_cent_price_rule(self):
+        from decimal import Decimal
+        from alpaca.broker import cent_price
+        self.assertEqual(cent_price(101.6914, "sell"), Decimal("101.70"))
+        self.assertEqual(cent_price(101.6914, "buy"), Decimal("101.69"))
+        self.assertEqual(cent_price(101.70, "sell"), Decimal("101.70"))
+        self.assertEqual(cent_price(0.1 + 0.2, "sell"), Decimal("0.30"))      # float noise is not a cent
+        for bad in (0, -1, float("nan"), float("inf"), None, "x", 0.001):
+            self.assertIsNone(cent_price(bad, "buy"), bad)
+
+    def test_fractional_ema_stop_is_posted_on_tick_and_partial_residual_covered(self):
+        c = self.c
+        inval = self.px - 2.0 + 0.0014                          # an EMA-like level with fractional cents
+        self._entry(inval, partial=1)
+        c.check_new_bars()                                     # books 1, attaches a 1-share stop
+        self.trading.partial_next = None
+        self.trading.advance(self.px)                          # the other 2 fill between Checks
+        r = c.check_new_bars()
+        stops = self._stops()
+        self.assertEqual([int(b["qty"]) for b in stops], [1, 2], stops)
+        from decimal import Decimal, ROUND_CEILING
+        want = str(Decimal(repr(inval)).quantize(Decimal("0.01"), rounding=ROUND_CEILING))
+        self.assertEqual({b["stop_price"] for b in stops}, {want})
+        self.assertEqual(r["orders"]["protection"]["uncovered_qty"], 0)
+        self.assertFalse([x for x in c.mgr.intents.values() if x.get("kind") == "protective"
+                          and x.get("status") == "rejected"])
+
+    def test_rejected_initial_protective_retries_under_new_id(self):
+        c = self.c
+        self._entry(round(self.px - 2.0, 2) + 0.0037)
+        self.trading.reject_next = "http"                      # the first protective POST is refused
+        c.check_new_bars()
+        prot = [x for x in c.mgr.intents.values() if x.get("kind") == "protective"]
+        self.assertEqual([x.get("status") for x in prot], ["rejected"], prot)
+        self.assertEqual(c.session_state()["protection"]["uncovered_qty"], 3)
+        self.assertIn("last_refusal", c.session_state()["protection"])
+        c.check_new_bars()                                     # next Check: a NEW id, not the rejected one
+        prot = [x for x in c.mgr.intents.values() if x.get("kind") == "protective"]
+        ids = [x["decision_id"] for x in prot]
+        self.assertEqual(len(set(ids)), 2, ids)
+        self.assertTrue(ids[1].endswith("|try2"), ids)
+        self.assertEqual(c.session_state()["protection"]["uncovered_qty"], 0)
+
+    def test_stop_through_last_close_is_refused_visibly(self):
+        c = self.c
+        self._entry(round(self.px - 2.0, 2))
+        c.bars[-1] = dict(c.bars[-1], close=round(self.px - 2.5, 2))   # market already below the stop
+        n0 = len(self._stops())
+        for x in list(c.mgr.intents.values()):
+            if x.get("kind") == "protective":
+                self.skipTest("protective already attached on entry fill")
+        c._order_pass()
+        self.assertEqual(len(self._stops()), n0)
+        pv = c._protection_view()
+        self.assertEqual(pv["uncovered_qty"], 3)
+        with open(c.paths["desk_audit"]) as fh:
+            self.assertIn("PROTECTIVE_STOP_CROSSED", fh.read())
+
+
+class LauncherConnectedGuards(unittest.TestCase):
+    """Codex 22:56Z and 22:46Z. Both refusals happen before any lock, rename, broker object or
+    python process, so these tests never reach a transport (and https never runs here)."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="desk-launch-guard-")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_connected_fresh_is_refused_before_any_rename_or_lock(self):
+        import contextlib
+        import glob
+        import io
+        import launch as L
+        d = os.path.join(self.tmp, "state-alpaca-paper")
+        os.makedirs(d)
+        journal = os.path.join(d, "intents.jsonl")
+        with open(journal, "w") as fh:
+            fh.write('{"synthetic": true}\n')
+        out = io.StringIO()
+        for extra in ([], ["--limits", os.path.join(self.tmp, "absent.json")]):
+            with self.subTest(extra=extra), contextlib.redirect_stdout(out):
+                rc = L.main(["--broker", "alpaca-paper", "--transport", "https", "--fresh",
+                             "--state-dir", d, "--no-browser"] + extra)
+            self.assertEqual(rc, 2)
+        self.assertIn("--fresh is mock-only", out.getvalue())
+        self.assertTrue(os.path.exists(journal))                      # journal untouched
+        self.assertEqual(glob.glob(d + ".prev-*"), [])                # nothing moved aside
+        self.assertFalse(os.path.exists(d.rstrip(os.sep) + L.LOCK_SUFFIX))   # no lock taken
+
+    @unittest.skipUnless(os.path.exists("/bin/zsh"), "needs /bin/zsh")
+    def test_mock_finder_command_refuses_other_transport_or_broker(self):
+        import subprocess
+        cmd = os.path.join(DESK, "Open Alpaca Paper Desk.command")
+        for args in (["--transport", "https"], ["--transport=https"], ["--tra", "https"],
+                     ["--broker", "offline"], ["--provider", "env", "--t=https"]):
+            with self.subTest(args=args):
+                p = subprocess.run(["/bin/zsh", cmd] + args, stdin=subprocess.DEVNULL,
+                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=20)
+                text = p.stdout.decode("utf-8", "replace")
+                self.assertEqual(p.returncode, 2, text)
+                self.assertIn("REFUSED", text)
+                self.assertNotIn("mock walkthrough check", text)       # launch.py never started
+        with open(cmd) as fh:
+            body = fh.read()
+        self.assertIn('"$@" --transport mock', body)                  # mock forced last, even if missed
+
+
+
+class ZeroBarCheckProtection(unittest.TestCase):
+    """Codex 23:00Z (1->4 share case; 1->3 here to fit the TEST caps): a manual Check with zero new bars still books later fills of known orders and
+    covers only the residual shares; no duplicate, nothing beside a pending Stop, and an uncovered
+    count is visible when it cannot be covered. Mock venue, synthetic ids, TEST VALUE limits."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="desk-alpaca-zero-")
+        self.c = AS.AlpacaSessionController(os.path.join(self.tmp, "s"), strategy="ema")
+        self.c.alpaca_enable(confirm=True)
+        self.c.check_new_bars()                              # warm start
+        self.c.arm()
+        self.trading = self.c.transport.trading
+        self.px = float(self.c.bars[-1]["close"])
+        self.c._fetch = lambda after, now: ([], [])          # no new hourly bar yet
+
+    def tearDown(self):
+        try:
+            self.c.close()
+        except Exception:
+            pass
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _partial_entry(self, with_invalidation=True):
+        c = self.c
+        did = "zero-bar-test-entry-0001"
+        if with_invalidation:
+            c.decisions.append({"decision_id": did, "invalidation": round(self.px - 3.0, 2)})
+        c.mgr.submit_intent({"decision_id": did, "kind": "entry", "side": "buy", "qty": 3,
+                             "limit": round(self.px + 0.5, 2), "ref_price": self.px,
+                             "intended_entry": self.px, "invalidation": round(self.px - 3.0, 2)})
+        self.assertEqual(len(self.trading.orders), 1, c.mgr.intents)
+        self.trading.partial_next = 1
+        self.trading.advance(self.px)                         # venue: 1 of 3 filled (3 x ~$500 fits the $2,000 TEST cap)
+        c.check_new_bars()                                    # books 1, attaches a 1-share stop
+        self.trading.partial_next = None
+        self.trading.advance(self.px)                         # venue: the other 2 fill between Checks
+
+    def _stops(self):
+        return [b for b in posts(self.c) if b.get("type") == "stop"]
+
+    def test_later_fill_booked_and_only_residual_covered_once(self):
+        c = self.c
+        self._partial_entry()
+        stops = self._stops()
+        self.assertEqual([int(b["qty"]) for b in stops], [1])
+        self.assertEqual(c.mgr.pos_qty, 1)                    # desk has not seen the late fill yet
+        r = c.check_new_bars()
+        self.assertEqual(r["bars"], 0)
+        self.assertEqual(r["exposure_before_check"]["position_qty"], 1)
+        self.assertGreaterEqual(r["orders"]["poll"]["fills_booked"], 1)
+        self.assertEqual(c.mgr.pos_qty, 3)
+        self.assertEqual([int(b["qty"]) for b in self._stops()], [1, 2])   # residual only
+        prot = r["orders"]["protection"]
+        self.assertEqual((prot["covered_qty"], prot["uncovered_qty"]), (3, 0))
+        self.assertIn("next Check", r["fill_timing_note"])
+        c.check_new_bars()
+        self.assertEqual(len(self._stops()), 2)               # no duplicate on a second Check
+        self.assertEqual(c.session_state()["protection"]["uncovered_qty"], 0)
+
+    def test_no_residual_protective_beside_a_pending_stop(self):
+        c = self.c
+        self._partial_entry()
+        c.stop_and_close()
+        n = len(self._stops())
+        c.check_new_bars()
+        c.check_new_bars()
+        self.assertEqual(len(self._stops()), n)               # Stop & Close owns the position
+
+    def test_uncovered_count_visible_when_no_invalidation(self):
+        c = self.c
+        self._partial_entry(with_invalidation=False)
+        r = c.check_new_bars()
+        self.assertEqual(self._stops(), [])
+        prot = r["orders"]["protection"]
+        self.assertEqual(prot["uncovered_qty"], 3)
+        self.assertIn("no working protective", prot["warning"])
+        self.assertEqual(c.session_state()["protection"]["uncovered_qty"], 3)
+
+    def test_reconcile_stays_read_only(self):
+        c = self.c
+        self._partial_entry()
+        n = len(posts(c))
+        c.reconcile_now()
+        self.assertEqual(len(posts(c)), n)
 
 if __name__ == "__main__":
     unittest.main()

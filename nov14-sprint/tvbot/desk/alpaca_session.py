@@ -26,6 +26,7 @@ import os
 import session as S
 import alpaca as A
 from alpaca.state import AdapterState
+from alpaca.broker import cent_price
 from orders.calendar import SessionCalendar, parse_ts, iso
 
 MODE_MOCK = "mock"
@@ -36,6 +37,7 @@ TICK = 0.01
 BAR_MAX_AGE_S = 900.0
 WARMUP_MAX_AGE_S = 21 * 86400.0   # catch-up bars older than BAR_MAX_AGE_S warm features only (9 sessions + holidays)
 WARMUP_BARS_DEFAULT = 63          # bot/rules.py DEFAULT_PARAMS["warmup_bars"]
+FILL_TIMING_NOTE = ("Manual desk: a broker fill that happens between your Checks is booked, and any uncovered shares get a protective stop, only at your next Check for new bars. Until then those shares may be unprotected. Reconcile is read-only and never sends an order.")
 VENUE_CLOCK_SKEW_S = 120.0
 SNAPSHOT_FILE = "alpaca_broker_snapshot.json"
 MOCK_START_DAY = "2026-11-16"     # synthetic walkthrough day (a Monday on the NYSE calendar)
@@ -198,6 +200,14 @@ class AlpacaSessionController(S.SessionController):
         self.lab = lab
         cfg = dict(S.DEMO_STRATEGY_CFG if strategy_cfg is None else strategy_cfg)
         cfg["fixed_qty"] = int(fixed)
+        # Strategy sizing basis = this session's chosen limits, never the offline $2,000 TEST
+        # cap (Codex 22:5xZ: base_qty(500) returned 0 for 10 shares under a $6,000 per-order
+        # cap). The offline DeskSession keeps its old contract: it never sets these keys.
+        cfg["test_size"] = {"order_notional": float(limits["per_trade_notional"]),
+                            "label": "SESSION LIMITS (%s)" % (self.limits_source.get("provenance") or "?"),
+                            "source": "alpaca session limits"}
+        cfg["limits"] = {k: float(limits[k]) for k in
+                         ("per_trade_notional", "max_loss_per_trade", "daily_loss", "gross_exposure")}
         # Everything session_state()/preflight() read is built BEFORE the base init, which
         # publishes state at its end (Codex 22:24Z: clock was missing at that point).
         self._calendar = SessionCalendar.nyse_2026_2027()
@@ -385,6 +395,8 @@ class AlpacaSessionController(S.SessionController):
         trading = getattr(self.transport, "trading", None)
         if not self.mock or trading is None or not hasattr(trading, "advance"):
             return
+        if hasattr(trading, "event_ts"):
+            trading.event_ts = bar.get("ts_close") or bar.get("ts")   # mock fills follow the mock clock
         o, h, l, c = (float(bar[k]) for k in ("open", "high", "low", "close"))
         for p in ((o, l, h, c) if c >= o else (o, h, l, c)):
             trading.advance(p)
@@ -392,7 +404,17 @@ class AlpacaSessionController(S.SessionController):
     def check_new_bars(self):
         """Operator action: fetch closed SPY bars once and process them. Never loops or schedules."""
         with self.lock:
+            # Honest pre-check exposure: what the desk had booked before this click (a broker fill
+            # since the previous Check is not booked until now).
+            before = self._protection_view()
+            prev = (self.last_check or {}).get("utc") if getattr(self, "last_check", None) else None
             now = self.clock.on_check(self.calendar, self.minutes)
+            since = None
+            if prev:
+                try:
+                    since = round((now - parse_ts(prev)).total_seconds(), 1)
+                except Exception:
+                    since = None
             self._sync_mock_venue_clock(now)
             after = self.bars[-1]["ts_close"] if self.bars else None
             warm_start = after is None
@@ -402,7 +424,11 @@ class AlpacaSessionController(S.SessionController):
                 new, warm_empty = self._fetch(after, now)
             except Exception as exc:
                 self.last_check = {"utc": iso(now), "ok": False, "error": exc.__class__.__name__,
-                                   "detail": str(exc)[:200], "bars": 0}
+                                   "detail": str(exc)[:200], "bars": 0,
+                                   "exposure_before_check": before, "since_previous_check_s": since}
+                # The data feed failing does not stop the order side: book later fills and cover
+                # uncovered shares anyway (reduce-only; never a new entry).
+                self.last_check["orders"] = self._order_pass()
                 self._desk_audit("check_bars_failed", **self.last_check)
                 self._write_state()
                 return dict(self.last_check, simulated=self.mock)
@@ -426,7 +452,11 @@ class AlpacaSessionController(S.SessionController):
                                "source": self.data_label, "warm_start": warm_start,
                                "empty_slots": list(warm_empty or lf.get("empty_slots") or []),
                                "partial_slots": list(lf.get("partial_slots") or []),
-                               "warmup": self.warmup_view()}
+                               "warmup": self.warmup_view(),
+                               "exposure_before_check": before, "since_previous_check_s": since,
+                               "fill_timing_note": FILL_TIMING_NOTE}
+            # Even with zero new bars: book later fills of known orders, then cover the residual.
+            self.last_check["orders"] = self._order_pass()
             self._desk_audit("check_bars", **self.last_check)
             self._write_state()
             return dict(self.last_check, bars_done=self.i, simulated=self.mock)
@@ -445,6 +475,115 @@ class AlpacaSessionController(S.SessionController):
     def set_schedule(self, enabled=False):
         return {"ok": False, "reason": "NO_SCHEDULE_IN_ALPACA_MODE",
                 "detail": "manual paper session only; no launchd, cron or background job", "simulated": self.mock}
+
+    # ---------------------------------------------------------------- protection on every Check
+    def _protection_view(self):
+        """Booked position against shares covered by working reducing orders (protective stop,
+        exit or close). Uncertain orders count as covering: they may be live, so never double-sell."""
+        try:
+            st = self.mgr.state()
+        except Exception as exc:
+            return {"available": False, "error": exc.__class__.__name__, "simulated": self.mock}
+        pos = int(st["exposure"]["position_qty"] or 0)
+        side = "sell" if pos > 0 else "buy"
+        prot = sum(int(o.get("remaining") or 0) for o in st["protective_orders"] if o.get("side") == side)
+        exits = sum(int(o.get("remaining") or 0) for o in st["exposure"]["working_orders"]
+                    if o.get("kind") in ("exit", "close") and o.get("side") == side)
+        covered = min(abs(pos), prot + exits) if pos else 0
+        out = {"available": True, "position_qty": pos, "protective_qty": prot, "exit_working_qty": exits,
+               "covered_qty": covered, "uncovered_qty": abs(pos) - covered,
+               "stopped": bool(st["controls"]["stopped"]), "simulated": self.mock}
+        if out["uncovered_qty"] > 0:
+            out["warning"] = ("%d of %d booked SPY shares have no working protective stop or exit order"
+                              % (out["uncovered_qty"], abs(pos)))
+            ref = [x for x in self.mgr.intents.values()
+                   if x.get("kind") == "protective" and x.get("status") == "rejected"]
+            if ref:
+                last = ref[-1]
+                out["last_refusal"] = {"decision_id": last.get("decision_id"), "reason": last.get("reason")}
+        return out
+
+    def _ensure_protective(self, bar):
+        """Residual-aware protective (Codex 23:00Z). The base attaches a stop only when NO protective
+        exists, so a 1-to-4 share partial fill left 3 shares bare. Here: cover the uncovered residual
+        only; nothing while Stop & Close owns the position or an exit/close is working; no duplicate
+        (an open attempt counts as covering); a refused attempt is retried on a later Check at most
+        three times, then the uncovered count stays on screen."""
+        st = self.mgr.state()
+        pos = int(st["exposure"]["position_qty"] or 0)
+        if pos == 0:
+            return
+        if st["controls"]["stopped"] or st["controls"].get("close_pending"):
+            return
+        if any(o["kind"] in ("exit", "close") for o in st["exposure"]["working_orders"]):
+            return
+        pv = self._protection_view()
+        if pv.get("uncovered_qty", 0) <= 0:
+            return
+        inval, it = self._entry_invalidation()
+        if inval is None or it is None:
+            self._desk_audit("alarm", code="NO_PROTECTIVE", detail="open position without an invalidation price",
+                             uncovered_qty=pv["uncovered_qty"])
+            return
+        # Initial (nothing covered) and residual share one path: the first attempt keeps the
+        # base id, a refused attempt is retried under a NEW id (|tryN), never the rejected one.
+        if pv["covered_qty"] == 0:
+            base = "protect|%s|%d" % (it["decision_id"], abs(pos))
+        else:
+            base = "protect|%s|%d|res%d" % (it["decision_id"], abs(pos), pv["covered_qty"])
+        tries = [x for x in self.mgr.intents.values()
+                 if x.get("decision_id") == base or str(x.get("decision_id", "")).startswith(base + "|try")]
+        if any(x.get("status") in ("pending", "uncertain", "acked") for x in tries):
+            return
+        if len(tries) >= 3:
+            self._desk_audit("alarm", code="PROTECTIVE_RESIDUAL_REFUSED", uncovered_qty=pv["uncovered_qty"],
+                             detail="protective refused %d times; %d shares stay uncovered"
+                                    % (len(tries), pv["uncovered_qty"]))
+            return
+        side = "sell" if pos > 0 else "buy"
+        # Recheck the crossing on the price the venue will actually see (cent tick, safe side):
+        # a long's sell stop at or above the last close (a short's buy stop at or below) would
+        # trigger at once or be refused. Refuse here, visibly; the operator decides (Stop & Close).
+        cent = cent_price(inval, side)
+        last = bar.get("close") if bar else None
+        if cent is not None and last is not None:
+            crossed = (float(cent) >= float(last)) if side == "sell" else (float(cent) <= float(last))
+            if crossed:
+                self._desk_audit("alarm", code="PROTECTIVE_STOP_CROSSED", uncovered_qty=pv["uncovered_qty"],
+                                 stop_level=float(inval), stop_on_tick=str(cent), last_close=float(last),
+                                 detail="%s stop %s is already through the last close %.2f; not sent, "
+                                        "%d shares uncovered; use Stop & Close to exit"
+                                        % (side, cent, float(last), pv["uncovered_qty"]))
+                return
+        did = base if not tries else "%s|try%d" % (base, len(tries) + 1)
+        self._desk_audit("protective_residual" if pv["covered_qty"] else "protective_initial",
+                         position_qty=pos, covered_qty=pv["covered_qty"], residual_qty=pv["uncovered_qty"],
+                         decision_id=did, stop_level=float(inval),
+                         stop_on_tick=str(cent) if cent is not None else None)
+        self.mgr.submit_intent({"decision_id": did, "kind": "protective", "side": side,
+                                "qty": int(pv["uncovered_qty"]), "stop": float(inval),
+                                "ref_price": float(bar["close"]),
+                                "signal_ts": bar.get("delivered_ts") or bar.get("ts_close")})
+
+    def _order_pass(self):
+        """Every manual Check, even with zero new bars or a failed data fetch: book later fills of
+        known orders (poll), then cover any uncovered shares (reduce-only). Never a new entry."""
+        out = {}
+        try:
+            # step(None): the adapter's one read of open desk orders, with no bar recorded and no
+            # mark moved (the per-bar path does the same read inside step(bar)).
+            self.broker.step(None)
+            res = self.mgr.poll()
+            out["poll"] = {k: res.get(k) for k in ("events", "fills_booked", "duplicates", "connected")}
+        except Exception as exc:
+            out["poll_error"] = exc.__class__.__name__
+        if self.bars:
+            try:
+                self._ensure_protective(self.bars[-1])
+            except Exception as exc:
+                out["protective_error"] = "%s: %s" % (exc.__class__.__name__, str(exc)[:160])
+        out["protection"] = self._protection_view()
+        return out
 
     # ---------------------------------------------------------------- operator controls
     def _recovery(self):
@@ -642,6 +781,7 @@ class AlpacaSessionController(S.SessionController):
         sim["limits_source"] = dict(self.limits_source)
         sim["recovery"] = self._recovery_view()
         sim["last_check"] = self.last_check if hasattr(self, "last_check") else None
+        sim["protection"] = dict(self._protection_view(), fill_timing_note=FILL_TIMING_NOTE)
         clock = getattr(self, "clock", None)
         sim["clock_utc"] = iso(clock.now()) if clock else None
         sim["schedule"] = {"enabled": False, "clock": clock.name if clock else None,

@@ -96,6 +96,21 @@ def compute_core(f, later):
     return {k: core.get(k) for k in CORE_KEYS}
 
 
+def cost_qty_label(core):
+    """Which share count set this row's friction hurdle (not part of CORE_KEYS; label only).
+
+    No explicit fixed reference share count is implemented yet: cost_reference_shares stays None.
+    """
+    hyp = core.get("hypothetical") or {}
+    if core.get("kind") == "trade":
+        q, src = core.get("qty"), "forecast row qty (TEST-notional sizing at forecast time)"
+    elif hyp:
+        q, src = hyp.get("qty"), "TEST-notional base_qty on the entry price (pass hypothetical, read only)"
+    else:
+        q, src = 0, "none: hold is marked to market with no new cost"
+    return {"cost_qty": q, "cost_qty_source": src, "cost_reference_shares": None}
+
+
 def comparison(ch_core, ema_core):
     out = {"vs_cash_net_bps": ch_core["net_bps"], "vs_cash_net_bps_2x": ch_core["net_bps_2x"]}
     if ema_core is not None:
@@ -128,6 +143,7 @@ def score_pending(state_dir, store=None):
                    "forecast_row_hash": f["row_hash"],
                    "synthetic": bool(f.get("synthetic_inputs")) or any(R._synthetic(b) for b in later)}
             row.update(cores[f["strategy"]])
+            row.update(cost_qty_label(cores[f["strategy"]]))
             if f["strategy"] == "challenger":
                 row.update(comparison(cores["challenger"], ema_core))
             wrote.append(st.append("scores", row))

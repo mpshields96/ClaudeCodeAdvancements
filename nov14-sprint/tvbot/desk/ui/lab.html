@@ -39,6 +39,7 @@ h2 { font-size: 15px; margin: 0 0 8px; }
 button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
   border-radius: 6px; padding: 4px 8px; cursor: pointer; }
 button:hover { border-color: var(--muted); }
+button:disabled { opacity: .5; cursor: not-allowed; border-color: var(--line); }
 button.sel { background: var(--sel); }
 table { width: 100%; border-collapse: collapse; }
 th, td { text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -86,9 +87,12 @@ summary { cursor: pointer; font-weight: 600; }
   </div>
 
   <div class="panel scroll">
-    <h2>Totals (hypothetical, basis points)</h2>
+    <h2>Counts only</h2>
+    <p class="muted" id="cmp-disabled" style="margin:0 0 6px"><b>Comparison totals disabled: not yet a valid comparison.</b>
+      The scorer does not yet exclude unattainable entries, session-crossing or partial later bars, or equalize
+      excluded windows across strategies. Summed bps are not a strategy return and show no after-cost superiority.</p>
     <table id="totals"><thead><tr><th>Strategy</th><th>Forecasts</th><th>Scored</th><th>With exposure</th>
-      <th>Sum net bps</th><th>Sum net bps, 2x friction</th></tr></thead><tbody></tbody></table>
+      <th>Comparison</th></tr></thead><tbody></tbody></table>
   </div>
 
   <div class="grid">
@@ -148,14 +152,14 @@ summary { cursor: pointer; font-weight: 600; }
       var t = (v.totals || {})[n] || {};
       tb.appendChild(el("tr", null, [el("td", {text: LABEL[n]}), el("td", {class: "num", text: cnt(t.forecasts)}),
         el("td", {class: "num", text: cnt(t.scored)}), el("td", {class: "num", text: cnt(t.trades)}),
-        el("td", {class: "num", text: fmt(t.sum_net_bps)}), el("td", {class: "num", text: fmt(t.sum_net_bps_2x)})]));
+        el("td", {class: "muted", text: "not yet a valid comparison"})]));
     });
   }
 
   function cell(r) {
     if (!r) return el("td", {class: "muted", text: "-"});
     var cls = r.action === "enter_long" ? "long" : (r.action === "enter_short" ? "short" : "pass-t");
-    var net = r.scored ? ("net " + fmt(r.net_bps) + " bps, 2x " + fmt(r.net_bps_2x)) : "awaiting next bar";
+    var net = r.scored ? ("markout " + fmt(r.net_bps) + " bps, 2x " + fmt(r.net_bps_2x) + " (diagnostic)") : "awaiting next bar";
     var btn = el("button", {type: "button", "data-id": r.forecast_id, title: r.reason_text || ""},
       [el("span", {class: cls, text: r.action + (r.qty ? " " + r.qty : "")}),
        el("div", {class: "r", text: (r.reason_code || "") + " - " + net})]);
@@ -203,8 +207,8 @@ summary { cursor: pointer; font-weight: 600; }
     var a = res.after;
     if (a) d.appendChild(el("p", null, ["After: ", el("b", {text: a.kind || ""}), " gross " + fmt(a.gross_bps) +
       " bps, net " + fmt(a.net_bps) + " bps, 2x friction " + fmt(a.net_bps_2x) + " bps" +
-      (a.vs_ema_net_bps !== undefined ? ", vs EMA " + fmt(a.vs_ema_net_bps) : "") +
-      (a.entry_attainable === false ? " (entry lag " + fmt(a.entry_lag_s) + " s: next-open entry not attainable)" : "")]));
+      " (one-window markout, diagnostic only; not a strategy return; vs EMA/cash: not yet a valid comparison)" +
+      (a.entry_attainable === false ? " (entry lag " + fmt(a.entry_lag_s) + " s: next-open entry not attainable; diagnostic only, should earn no markout)" : "")]));
     [["Before: forecast record (written before the later bars existed)", res.before, true],
      ["After: score record (later bars only)", res.after, false],
      ["Inputs", res.inputs, false]].forEach(function (p) {

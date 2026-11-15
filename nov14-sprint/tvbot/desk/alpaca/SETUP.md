@@ -9,8 +9,9 @@ made from this desk. No agent has opened a connection to any Alpaca host, read a
 your Keychain. Everything was built and tested against a local mock with made-up ids and bars. The
 first real request is yours, in step 7, after you approve your own limits.
 
-Commands below run from the desk folder:
-`nov14-sprint/tvbot/desk`
+Commands below run from the desk folder, `nov14-sprint/tvbot/desk` inside the repository. From the
+repository root (the folder that contains `nov14-sprint/`), run `cd nov14-sprint/tvbot/desk` first.
+Every path below (`launch.py`, `alpaca/...`, `state/...`) is relative to that desk folder.
 
 ---
 
@@ -114,8 +115,14 @@ It prints the old-to-new changes and asks for the same phrase and a reason. `sho
 `approve` prints the current worksheet.
 
 Either way the desk writes `state/limits_approved.json` with `provenance: "operator-approved"`, the
-time, your reason, the change list and a fingerprint (hash) of the five numbers. If that file is
-edited by hand afterwards, the fingerprint stops matching and the real paper path refuses it. To
+time, your reason, the change list and a fingerprint (hash) of that whole record. If any part of
+that file is edited by hand afterwards (a number, the time, the reason, the change list), the
+fingerprint stops matching and the real paper path refuses it.
+
+Approval is tied to what you reviewed. If the draft or your approved limits change after you
+open **Review and approve** (another tab, another window, a Terminal approval), the approval is
+refused and you're asked to reload and check again. Cap checks use exact decimal arithmetic, so
+a stop-out of $1.0014 counts as over a $1.00 cap, and share counts always round down. To
 change limits, save a new draft and approve again. To withdraw approval, delete that one file.
 
 ## 6. Rehearse in mock mode (no keys, no network)
@@ -133,7 +140,7 @@ It works with a draft: the banner then says **DRAFT LIMITS (not approved)**. Thi
 - The banner at the top shows the mode (`alpaca-mock`), the evidence label, the data label, whether
   the adapter is enabled, and where the limits came from.
 - **Enable** asks you to confirm. **Disable** asks for a reason. The adapter always starts disabled.
-- **Check for new closed bar** is the only way bars advance. There is no Play button and no timer in
+- **Check for new bars** is the only way bars advance. There is no Play button and no timer in
   Alpaca modes: when you're not clicking, nothing happens.
 - Partial fills, orders the desk isn't sure about, and reconcile alarms show plainly in the orders
   area, each with its evidence label.
@@ -142,6 +149,16 @@ It works with a draft: the banner then says **DRAFT LIMITS (not approved)**. Thi
 ## 7. Your first manual paper session (you, when you're ready)
 
 This is the first time anything sends your keys to Alpaca, and it goes only to the paper host.
+
+**First, the readiness check.** It refuses to touch any credential until your approved limits load.
+Then it makes four read-only GET requests to the paper host and submits no order:
+
+```bash
+/usr/bin/python3 -IB alpaca/readiness.py --state-dir state --limits state/limits_approved.json
+```
+
+(`alpaca/readiness.py` is Codex's checker. Use the state folder and limits file you approved.)
+If it passes, start the session:
 
 ```bash
 /usr/bin/python3 -IB launch.py --broker alpaca-paper --transport https --limits state/limits_approved.json
@@ -154,7 +171,7 @@ This is the first time anything sends your keys to Alpaca, and it goes only to t
   `fixed_shares`. Each refusal says which.
 - It starts **disabled**. Press **Enable** and confirm. Keys are read from Keychain only when a request
   is actually sent.
-- Each **Check for new closed bar** asks Alpaca's free IEX feed for the latest closed SPY bar. SPY only.
+- Each **Check for new bars** asks Alpaca's free IEX feed for the latest closed SPY bar. SPY only.
   No paid data route exists in the code.
 - **Stop** works at any time, even while disabled, and turns the adapter off.
 - Nothing runs in the background. Close the window and the desk does nothing until you open it again.

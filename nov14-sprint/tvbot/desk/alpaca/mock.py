@@ -21,6 +21,7 @@ Fault knobs (all off by default):
   listing_cap = n           the server returns at most n rows from GET /v2/orders (truncated listing)
   advance(price)            moves the market: fills working orders that can trade at `price`
 """
+import calendar as _cal
 import time
 
 from alpaca.transport import TransportRefused, check_data_query, encode_query, resolve_origin, validate_path
@@ -62,6 +63,10 @@ class MockTrading(object):
                          {"date": "2026-06-02", "open": "09:30", "close": "16:00"}]
         self.calls = []
         self._t = float(int(time.time()))  # created_at ordering; starts at wall time so "after" filters work
+        # Fill (event) times. The desk's mock session sets event_ts to each synthetic bar's time so
+        # mock fills land in the mock week; order created/submitted times stay on _tick() above.
+        self.event_ts = None
+        self._ev_t = 0.0
 
     # ---- knobs ----
     def fault(self, method, kind, count=1, path_prefix="/v2/"):
@@ -84,6 +89,16 @@ class MockTrading(object):
     def _tick(self):
         self._t = max(self._t + 1.0, float(int(time.time())) + 1.0)
         return _iso(self._t)
+
+    def _event_tick(self):
+        if not self.event_ts:
+            return self._tick()
+        try:
+            base = float(_cal.timegm(time.strptime(str(self.event_ts)[:19], "%Y-%m-%dT%H:%M:%S")))
+        except (TypeError, ValueError):
+            return self._tick()
+        self._ev_t = max(self._ev_t + 1.0, base)
+        return _iso(self._ev_t)
 
     def _new_row(self, client_order_id, symbol, side, qty, otype, limit, stop):
         self.seq += 1
@@ -266,7 +281,7 @@ class MockTrading(object):
         cum1 = cum0 + q
         row["filled_avg_price"] = round((avg0 * cum0 + price * q) / cum1, 6)
         row["filled_qty"] = cum1
-        row["updated_at"] = self._tick()
+        row["updated_at"] = self._event_tick()
         signed = q if row["side"] == "buy" else -q
         if row["symbol"] != "SPY":
             oq, oa = self.other_positions.get(row["symbol"], (0, 0.0))

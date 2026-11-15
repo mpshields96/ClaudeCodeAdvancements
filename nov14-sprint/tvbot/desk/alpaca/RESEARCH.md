@@ -118,3 +118,15 @@ operator click, a handful of pages per day), far below 200/min.
 6. Whether Basic's "latest 15 minutes" historical restriction also applies to `feed=iex` (read here as
    SIP-only). If it applies to IEX, a fetch right after a slot close returns 403 or no minutes, and the
    feed raises FeedError or reports `empty_slots`; it never invents a bar.
+
+## Trading-API facts relayed by W1 (2026-11-15, not re-checked by W2)
+
+Full citations are S1-S14 in `alpaca/STATUS_W1.md`.
+
+1. `GET /v2/orders` takes `limit` up to 500 (default 50). Source: docs.alpaca.markets/reference/getallorders
+2. `GET /v2/orders:by_client_order_id?client_order_id=...` looks up one order by client id. Source:
+   docs.alpaca.markets/reference/getorderbyclientorderid
+3. `DELETE /v2/orders/{id}` returns 204 when the cancel is accepted and 422 when the order cannot be canceled;
+   an order in `pending_cancel` can still fill. Sources: docs.alpaca.markets/reference/deleteorderbyorderid and
+   docs.alpaca.markets/docs/orders-at-alpaca
+4. [UNVERIFIED, third-party only] A duplicate `client_order_id` returns 422 "must be unique".

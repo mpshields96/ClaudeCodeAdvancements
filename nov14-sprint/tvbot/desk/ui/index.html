@@ -175,6 +175,7 @@ code{font-size:11.5px;color:#b8c7d6}
       <button data-view="setup" title="Your paper limits: draft, check effects, approve. Agents never fill these.">Setup (limits)</button>
     </div>
     <a id="labLink" href="/lab" target="_blank" rel="noopener" hidden title="Opens the decision lab in a new tab">Decision lab &#8599;</a>
+    <a id="spyLink" href="/spy-study" target="_blank" rel="noopener" title="Opens the historical SPY November study in a new tab. It is hindsight analysis of past bars, not a live signal.">SPY November study (historical, hindsight) &#8599;</a>
     <span class="risk" id="risk">Max loss per trade $10.00 (TEST VALUE) &middot; Notional cap $2,000 (TEST VALUE) &middot; Daily loss $30.00 (TEST VALUE)</span>
     <span class="spacer"></span>
     <span class="tvbar">
@@ -276,7 +277,7 @@ code{font-size:11.5px;color:#b8c7d6}
 <dialog id="dlgStop">
   <h3 style="margin-top:0;color:#ffb3b3">Stop &amp; Close this session?</h3>
   <p>This disables new entries and the schedule, cancels entry orders, then closes the reconciled position, including late or partial fills. Protective exits stay until the broker confirms flat. The desk will not show FLAT until broker positions say 0.</p>
-  <p class="small muted">Offline replay: the broker is the in-process FakeBroker. SIMULATED.</p>
+  <p class="small muted" id="stopNote">Offline replay: the broker is the in-process FakeBroker. SIMULATED.</p>
   <div class="row" style="justify-content:flex-end">
     <button id="dlgNo">Cancel</button>
     <button id="dlgYes" class="danger">Yes, Stop &amp; Close</button>
@@ -285,7 +286,7 @@ code{font-size:11.5px;color:#b8c7d6}
 <dialog id="dlgPre">
   <h3 style="margin-top:0">Pre-session check</h3>
   <div id="preBody" class="small"></div>
-  <p class="small muted">From session.json preflight. Offline replay, in-process fake broker, TEST VALUE limits. SIMULATED.</p>
+  <p class="small muted" id="preNote">From session.json preflight. Offline replay, in-process fake broker, TEST VALUE limits. SIMULATED.</p>
   <div class="row" style="justify-content:flex-end">
     <button id="preClose">Close</button>
     <button id="preArm" class="pri">Arm this replay session (offline)</button>
@@ -303,7 +304,7 @@ code{font-size:11.5px;color:#b8c7d6}
 <dialog id="dlgEnable">
   <h3 style="margin-top:0;color:#d6e8ff">Enable the Alpaca adapter?</h3>
   <p id="enMode">Mode: -</p>
-  <p>The desk may then send orders for SPY within your loaded limits, only when you press <b>Check for new closed bar</b> or a control. Nothing runs in the background. <b>Disable</b> or <b>Stop</b> turns it off again at any time.</p>
+  <p>The desk may then send orders for SPY within your loaded limits, only when you press <b>Check for new bars</b> or a control. Nothing runs in the background. <b>Disable</b> or <b>Stop</b> turns it off again at any time.</p>
   <p class="small muted" id="enLimits"></p>
   <div class="row" style="justify-content:flex-end">
     <button id="enNo">Cancel</button>
@@ -429,7 +430,7 @@ function draw(){
   const cs = getComputedStyle(document.documentElement); const col = n => cs.getPropertyValue(n).trim();
   const bars = S.bars, n = bars.length; V.markers = [];
   g.font = '11px -apple-system,system-ui,sans-serif';
-  if (!n) { g.fillStyle = col('--muted'); g.font = '14px system-ui'; g.fillText(isAlpaca(S.session || {}) ? 'No bars yet: press Check for new closed bar (state_dir/alpaca_bars.jsonl is empty).' : 'No replay bars yet: state_dir/bars.jsonl is missing or empty.', 20, 40); return; }
+  if (!n) { g.fillStyle = col('--muted'); g.font = '14px system-ui'; g.fillText(isAlpaca(S.session || {}) ? 'No bars yet: press Check for new bars (state_dir/alpaca_bars.jsonl is empty).' : 'No replay bars yet: state_dir/bars.jsonl is missing or empty.', 20, 40); return; }
   clampView();
   const padL = 6, padR = 74, padT = 8, padB = 22;
   const volH = Math.max(28, Math.round((H - padT - padB) * 0.15));
@@ -615,6 +616,23 @@ function setView(v){
 // ---------------- Alpaca paper mode (fields come from session.json; absent = offline desk, unchanged) ----------------
 function isAlpaca(s){ return /^alpaca/.test(String((s || {}).broker_mode || '')); }
 function isPaper(s){ return String((s || {}).broker_mode || '') === 'alpaca-paper'; }
+// Broker wording comes from the transport the controller actually built (session.broker.transport), not the mode name alone.
+function transportKind(s){
+  if (!isAlpaca(s)) return 'offline';
+  const t = String(((s || {}).broker || {}).transport || '');
+  return /^MockAlpacaTransport\b/.test(t) ? 'mock' : /^HttpsTransport\b/.test(t) ? 'https' : 'unknown';
+}
+function brokerWords(s){
+  const k = transportKind(s);
+  if (k === 'offline') return {kind: k, chip: 'EXTERNAL BROKER: NONE (offline in-process fake broker)', arm: 'Arm this replay session (offline)',
+    title: 'Arms this offline replay session. No broker connection.'};
+  if (k === 'mock') return {kind: k, chip: 'BROKER: ALPACA MOCK, in-process transport (synthetic ids, no network)', arm: 'Arm this Alpaca MOCK session',
+    title: 'Arms this session after preflight passes. Broker: in-process mock transport (synthetic ids and fills, no network). Bars advance only when you press Check.'};
+  if (k === 'https') return {kind: k, chip: 'BROKER: ALPACA PAPER over HTTPS to the fixed paper host (simulated money)', arm: 'Arm this Alpaca PAPER session',
+    title: 'Arms this session after preflight passes. Broker: Alpaca PAPER account over HTTPS to the fixed paper host (simulated money, no real orders), SPY only, within your approved limits. Bars advance only when you press Check.'};
+  return {kind: k, chip: 'BROKER: ' + String((s || {}).broker_mode || 'alpaca').toUpperCase() + ' (transport not reported; unconfirmed)', arm: 'Arm this Alpaca session (transport unconfirmed)',
+    title: 'The session did not report which transport it built. Do not arm until the header names mock or paper HTTPS.'};
+}
 function adapterOf(s){ const a = (s && typeof s.adapter === 'object' && s.adapter) ? s.adapter : ((s && s._adapter_file) || null); return a || {enabled: false, disabled_reason: 'no adapter state written yet (starts disabled)'}; }
 function limitsSrc(s){ const ls = (s && s.limits_source) || null; if (!ls) return {label: '-', draft: false};
   const label = String(ls.label || ls.provenance || '-'); return {label: label, draft: /DRAFT/i.test(label) || ls.provenance === 'draft', prov: ls.provenance, hash: ls.hash, ts: ls.approved_utc || ls.saved_utc, error: ls.error}; }
@@ -635,7 +653,7 @@ function renderBrokerBanner(s){
     (unc.length ? '<span class="flag unc">UNCERTAIN ORDERS: ' + unc.length + '</span>' : '') +
     (rec.reconcile_blocking ? '<span class="flag alarm">RECONCILE BLOCKING ENTRIES</span>' : '') +
     (rec.ambiguous ? '<span class="flag alarm">RECOVERY AMBIGUOUS: ' + esc(rec.reason || 'see panel') + ' (Enable refused until Reconcile clears it)</span>' : '') +
-    '<span class="small">Nothing runs in the background: bars advance only when you press Check for new closed bar.</span>');
+    '<span class="small">Nothing runs in the background: bars advance only when you press Check for new bars.</span>');
 }
 function renderAlpacaPanel(s){
   const row = $('#alpacaRow'); const info = $('#alpacaInfo');
@@ -664,7 +682,7 @@ function renderAlpacaPanel(s){
   }
   const lc = s.last_check;
   if (lc && typeof lc === 'object') h += '<div><b>Last check for bars:</b> ' + esc(tsFull(lc.utc)) + ' &middot; ' + (lc.ok ? esc(lc.bars) + ' new closed bar(s)' + (lc.source ? ' from ' + esc(lc.source) : '') + ((lc.empty_slots || []).length ? ' &middot; ' + lc.empty_slots.length + ' empty minute(s)' : '') + ((lc.partial_slots || []).length ? ' &middot; ' + lc.partial_slots.length + ' partial minute(s)' : '') : '<span class="neg">failed: ' + esc(lc.error || '') + (lc.detail ? ' (' + esc(lc.detail) + ')' : '') + '</span>') + '</div>';
-  else h += '<div class="muted">No check for bars yet. Press Check for new closed bar when you want one.</div>';
+  else h += '<div class="muted">No check for bars yet. Press Check for new bars when you want one.</div>';
   if (s.warmup && s.warmup.text) h += '<div><b>Warm-up:</b> ' + esc(s.warmup.text) + '</div>';
   if (al.length) h += '<div><b>Alarms:</b><br>' + al.slice(-8).map(x => '<span class="flag alarm">' + esc((x && (x.code || x.kind)) || 'ALARM') + '</span> ' + esc((x && (x.detail || x.reason || x.message)) || (typeof x === 'object' ? JSON.stringify(x) : x))).join('<br>') + '</div>';
   if (!h) h = '<span class="muted">No reconcile alarms, uncertain orders or integrity faults reported.</span>';
@@ -696,7 +714,7 @@ function renderHeader(){
   const bc = $('#brokerChip');
   const alp = isAlpaca(s);
   bc.className = 'chip ' + (alp ? (adapterOf(s).enabled ? 'warn' : 'unk') : 'ok');
-  bc.textContent = (alp ? 'BROKER: ' + String(s.broker_mode).toUpperCase() + ' (' + (s.evidence_label || 'evidence not labeled') + ')' : (s.external_broker_badge || 'EXTERNAL BROKER: NONE (offline in-process fake broker)')) + (S.conn === false ? ' (last known)' : '');
+  bc.textContent = (alp ? brokerWords(s).chip + ' [' + (s.evidence_label || 'evidence not labeled') + ']' : (s.external_broker_badge || 'EXTERNAL BROKER: NONE (offline in-process fake broker)')) + (S.conn === false ? ' (last known)' : '');
   // the SIMULATED / MOCK FILLS badges stay for offline and mock; real paper shows its own evidence label
   const bs = $('#badgeSim'), bm = $('#badgeMock');
   if (isPaper(s)) { bs.textContent = 'PAPER (no real money)'; bm.textContent = String(s.evidence_label || 'ALPACA PAPER'); }
@@ -714,6 +732,7 @@ function renderHeader(){
   } else
   setH($('#risk'), 'Max loss per trade ' + usd(L.max_loss_per_trade != null ? L.max_loss_per_trade : 10, 2) + ' (TEST VALUE) &middot; Notional cap ' + usd(L.per_trade_notional != null ? L.per_trade_notional : 2000, 0) + ' (TEST VALUE) &middot; Daily loss ' + usd(L.daily_loss != null ? L.daily_loss : 30, 2) + ' (TEST VALUE)');
   const ll = $('#labLink'); ll.hidden = !((S.health || {}).lab_page);
+  const sl = $('#spyLink'); if (sl) sl.hidden = (S.health || {}).spy_study_page === false;
   // flow bar: buttons enable by phase
   const expired = isFinite(ex) && ex < clockNow(s);
   renderFlow(s, ph, expired);
@@ -756,7 +775,7 @@ function renderFlow(s, ph, expired){
   for (const f of ['step10', 'runend', 'play', 'stopplay']) { const b = document.querySelector('#flow button[data-f="' + f + '"]'); if (b) b.hidden = alp; }
   const s1 = document.querySelector('#flow button[data-f="step1"]');
   if (s1) { if (s1.dataset.txt0 === undefined) { s1.dataset.txt0 = s1.textContent; s1.dataset.tt0 = s1.dataset.t0 || s1.title; }
-    if (alp) { s1.textContent = 'Check for new closed bar'; s1.disabled = off || ph === 'NONE' || ph === 'CLOSED' || !routeOk('/api/advance');
+    if (alp) { s1.textContent = 'Check for new bars'; s1.disabled = off || ph === 'NONE' || ph === 'CLOSED' || !routeOk('/api/advance');
       s1.title = 'Asks the feed once for the latest closed SPY bar and acts on it. Nothing happens between your clicks.'; }
     else { s1.textContent = s1.dataset.txt0; if (!s1.classList.contains('na')) s1.title = s1.dataset.tt0; } }
   const sc = $('#schedCard'); if (sc) sc.hidden = alp;
@@ -773,9 +792,6 @@ function openPre(){
 
 function renderChartView(){
   const s = S.session || {}; const p = s.pnl || {}; const ex = s.exposure || {}; const c = s.controls || {};
-  $('#srcTag').textContent = !isAlpaca(s) ? 'source: desk replay bars (synthetic), not TradingView, not a real market'
-    : isPaper(s) ? 'source: Alpaca free IEX bars (alpaca_bars.jsonl), paper account; not TradingView'
-    : 'source: mock Alpaca bars (synthetic, alpaca_bars.jsonl), not TradingView, not a real market';
   $('#pRe').innerHTML = money(p.realized); $('#pUn').innerHTML = money(p.unrealized);
   $('#pFe').innerHTML = p.fees == null ? '-' : '<span class="neg">' + fmt(-Math.abs(num(p.fees) || 0)) + '</span>'; $('#pAc').innerHTML = money(p.after_cost);
   const q = num(ex.position_qty);
@@ -790,10 +806,10 @@ function renderChartView(){
   // controls
   const lp = s.live_path || {};
   const ph = phaseOf(s); const rate = num(s.play_rate_bars_per_sec);
-  setH($('#ctrlState'), '<b>Phase</b><span><b>' + esc(ph) + '</b></span><b>Mode</b><span>' + esc(s.mode || '-') + '</span><b>Session</b><span>' + esc(s.session_id || '-') + '</span>' +
+  setH($('#ctrlState'), '<b>Phase</b><span><b>' + esc(ph) + '</b></span><b>Mode</b><span>' + esc(modeShort(s)) + '</span><b>Session</b><span>' + esc(s.session_id || '-') + '</span>' +
     '<b>Bars replayed</b><span>' + (num(s.bars_done) === null ? '-' : esc(s.bars_done) + ' of ' + esc(s.bars_total == null ? '?' : s.bars_total)) + '</span>' +
     '<b>Play rate</b><span>' + (rate === null ? '-' : fmt(rate, 1) + ' bars/s (simulated clock)') + '</span>' +
-    '<b>Armed</b><span>' + (s.armed ? 'yes (replay)' : 'no') + '</span>' +
+    '<b>Armed</b><span>' + (s.armed ? (isAlpaca(s) ? 'yes' : 'yes (replay)') : 'no') + '</span>' +
     '<b>Paused</b><span>' + (c.paused ? '<span style="color:var(--warn)">yes</span>' : 'no') + '</span>' +
     '<b>Stopped</b><span>' + (c.stopped ? '<span class="neg">yes</span>' : 'no') + '</span>' +
     '<b>Flat confirmed</b><span>' + (c.flat_confirmed ? '<span class="pos">yes, broker positions = 0</span>' : (c.stopped ? '<span class="neg">NOT YET</span>' : 'n/a')) + '</span>' +
@@ -902,6 +918,11 @@ function execRows(s){
   if (s.sizing && typeof s.sizing === 'object') h += '<b class="wide">Sizing</b><span class="wide small">' + esc(metricVal(s.sizing)) + ' (TEST VALUES)</span>';
   const c = s.session_config;
   if (c && typeof c === 'object') h += '<b class="wide">Session config</b><span class="wide small">' + esc(['strategy', 'strategy_cfg', 'limits', 'fill_costs'].filter(k => k in c).map(k => k.replace(/_/g, ' ') + ': ' + metricVal(c[k])).join(' | ')) + ' (read-only, TEST VALUES)</span>';
+  const pv = s.protection;
+  if (pv && typeof pv === 'object' && pv.available && pv.position_qty) {
+    const bad = (pv.uncovered_qty || 0) > 0;
+    h += '<b class="wide">Protection</b><span class="wide small">' + (bad ? '<b class="neg">' + esc(String(pv.uncovered_qty)) + ' of ' + esc(String(Math.abs(pv.position_qty))) + ' shares UNCOVERED</b>' : 'all ' + esc(String(Math.abs(pv.position_qty))) + ' shares covered') + ' (stop ' + esc(String(pv.protective_qty || 0)) + ', exit ' + esc(String(pv.exit_working_qty || 0)) + ')' + (pv.last_refusal ? '; last protective refusal: ' + esc(metricVal(pv.last_refusal)) : '') + '</span>';
+  }
   const xr = Array.isArray(s.exec_refusals) ? s.exec_refusals : [];
   const al = (Array.isArray(s.alarms) ? s.alarms : []).filter(a => a && /^EXEC_.*OVER_CAP$/.test(String(a.code || a.kind || '')));
   const nRef = s.refused_decisions != null ? metricVal(s.refused_decisions) : String(xr.length);
@@ -1013,8 +1034,30 @@ function renderReview(){
   if ($('#bpHide')) $('#bpHide').onclick = () => { S.reviewReveal = null; renderAll(); };
 }
 
+function modeShort(s){
+  return isAlpaca(s) ? (isPaper(s) ? 'ALPACA PAPER (manual checks; simulated account)' : 'ALPACA MOCK (manual checks; synthetic)') : (s.mode || '-');
+}
+// Mode-dependent labels live outside the per-view renderers so they are right on every tab (QA 2026-11-15).
+function renderModeLabels(){
+  const s = S.session || {}; const alp = isAlpaca(s); const bw = brokerWords(s); const paper = bw.kind === 'https';
+  $('#srcTag').textContent = !alp ? 'source: desk replay bars (synthetic), not TradingView, not a real market'
+    : paper ? 'source: Alpaca free IEX bars (alpaca_bars.jsonl), paper account; not TradingView'
+    : 'source: mock Alpaca bars (synthetic, alpaca_bars.jsonl), not TradingView, not a real market';
+  const armText = bw.arm, armTitle = bw.title;
+  ['#btnArm', '#preArm'].forEach(id => { const b = $(id); if (b) { b.textContent = armText; b.title = armTitle; } });
+  const fa = document.querySelector('button[data-f="arm"]'); if (fa) fa.title = armTitle;
+  const sn = $('#stopNote');
+  if (sn) sn.textContent = !alp ? 'Offline replay: the broker is the in-process FakeBroker. SIMULATED.'
+    : (paper ? 'Alpaca PAPER account over HTTPS (simulated money, no real orders). ' : bw.kind === 'mock' ? 'Alpaca MOCK: in-process transport, synthetic ids and fills, no network. ' : 'Transport not reported; unconfirmed. ')
+      + 'Stop also turns the adapter off; it stays off after a restart until you press Enable again.';
+  const pn = $('#preNote');
+  if (pn) pn.textContent = !alp ? 'From session.json preflight. Offline replay, in-process fake broker, TEST VALUE limits. SIMULATED.'
+    : 'From session.json preflight. ' + (paper ? 'Alpaca PAPER account over HTTPS (simulated money).' : bw.kind === 'mock' ? 'Alpaca MOCK (in-process transport, synthetic, no network).' : 'Transport not reported; unconfirmed.') + ' Limits: ' + limitsSrc(s).label + '.';
+}
+
 function renderAll(){
   renderHeader();
+  renderModeLabels();
   if (S.view === 'chart') renderChartView();
   else if (S.view === 'decision') renderDecisionView();
   else if (S.view === 'setup') renderSetup();
@@ -1062,7 +1105,7 @@ $('#btnArm').onclick = () => control('/api/arm', {});
 $('#schedTgl').onchange = e => control('/api/schedule', {enabled: !!e.target.checked});
 // Alpaca adapter: Enable asks to confirm, Disable asks for a reason, Reconcile acts on demand (works while disabled)
 $('#btnEnable').onclick = () => { const s = S.session || {}; const ls = limitsSrc(s);
-  $('#enMode').innerHTML = 'Mode: <b>' + esc(s.broker_mode || '-') + '</b> &middot; ' + esc(s.evidence_label || '') + (isPaper(s) ? ' &middot; <b>sends real requests to Alpaca\'s paper host</b>' : ' &middot; local mock only, no network');
+  $('#enMode').innerHTML = 'Mode: <b>' + esc(s.broker_mode || '-') + '</b> &middot; ' + esc(s.evidence_label || '') + ({https: ' &middot; <b>sends real requests over HTTPS to Alpaca\'s fixed paper host</b>', mock: ' &middot; in-process mock transport only, no network'}[transportKind(s)] || ' &middot; <b>transport not reported; do not enable until the header names it</b>');
   $('#enLimits').textContent = 'Limits this session loaded: ' + ls.label + '. Real-money live trading is not built and cannot be enabled here.';
   const d = $('#dlgEnable'); if (d.showModal) d.showModal(); else if (confirm('Enable the Alpaca adapter (' + (s.broker_mode || '') + ')?')) control('/api/alpaca/enable', {confirm: true}); };
 $('#enNo').onclick = () => $('#dlgEnable').close();
@@ -1158,6 +1201,8 @@ function openApprove(){
   const pd = Array.isArray(w.pending_diff) ? w.pending_diff : [];
   $('#apDiff').innerHTML = pd.length ? '<table class="lt"><tr><th>Field</th><th>Old (approved)</th><th>New (draft)</th></tr>' + pd.map(d => '<tr><td><b>' + esc(d.field) + '</b></td><td>' + limCell(d.old) + '</td><td>' + limCell(d.new) + '</td></tr>').join('') + '</table>' : '<span class="muted">No changes from your approved limits.</span>';
   $('#apPhraseShow').textContent = w.confirm_phrase || 'APPROVE PAPER LIMITS';
+  // Bind approval to exactly what is on screen now: the saved draft and the approved limits it replaces
+  S.apBind = {draft_hash: w.draft_hash || '', prior_approved_hash: w.approved_hash == null ? null : w.approved_hash};
   $('#apPhrase').value = ''; $('#apReason').value = '';
   const d = $('#dlgApprove'); if (d.showModal) d.showModal();
 }
@@ -1165,7 +1210,8 @@ $('#apNo').onclick = () => $('#dlgApprove').close();
 $('#apYes').onclick = async () => { const ph = $('#apPhrase').value, rs = $('#apReason').value.trim();
   if (!ph || !rs) { (ph ? $('#apReason') : $('#apPhrase')).focus(); return; }
   $('#dlgApprove').close();
-  const j = await postLimits('/api/limits/approve', {confirm: ph, reason: rs});
+  const bind = S.apBind || {}; S.apBind = null;
+  const j = await postLimits('/api/limits/approve', {confirm: ph, reason: rs, draft_hash: bind.draft_hash || '', prior_approved_hash: bind.prior_approved_hash === undefined ? null : bind.prior_approved_hash});
   if (j) { S.limMsg = '<span class="pos">Approved.</span> ' + esc(j.note || ''); renderSetup(); } };
 
 // ---------------- TradingView (operator view only; the desk never reads it) ----------------

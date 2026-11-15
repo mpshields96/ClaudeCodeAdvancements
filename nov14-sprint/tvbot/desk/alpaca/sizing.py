@@ -22,6 +22,7 @@ import os
 import sys
 import tempfile
 import time
+from decimal import Decimal, InvalidOperation, ROUND_CEILING, ROUND_FLOOR
 
 FIELDS = ("fixed_shares", "max_loss_per_trade", "daily_loss", "per_trade_notional", "gross_exposure")
 CAP_FIELDS = ("per_trade_notional", "max_loss_per_trade", "daily_loss", "gross_exposure")
@@ -89,9 +90,39 @@ def _read_json(path):
 
 
 def content_hash(values):
+    """Hash of the five values only. Identifies the draft the operator reviewed."""
     canon = {k: (values or {}).get(k) for k in FIELDS}
     blob = json.dumps(canon, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def record_hash(record):
+    """Hash of the whole approval record except its own "hash" field: values, provenance,
+    approved_utc, reason, by, diff, previous_hash. Editing any of them breaks verification."""
+    body = {k: v for k, v in (record or {}).items() if k != "hash"}
+    blob = json.dumps(body, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+CENT = Decimal("0.01")
+UNSET = object()   # approve() refuses unless the caller names what was reviewed
+
+
+def _dec(x):
+    """Decimal from the operator's input, via its decimal text (never binary float arithmetic)."""
+    if isinstance(x, bool) or x is None:
+        raise InvalidOperation
+    if isinstance(x, float):
+        x = repr(x)
+    d = Decimal(x.strip()) if isinstance(x, str) else Decimal(x)
+    if not d.is_finite():
+        raise InvalidOperation
+    return d
+
+
+def _money(d, rounding=ROUND_CEILING):
+    """A Decimal amount shown at cent precision; losses and exposure round up (the safe side)."""
+    return float(d.quantize(CENT, rounding=rounding))
 
 
 def _check(field, value, allow_null):
@@ -109,9 +140,10 @@ def _check(field, value, allow_null):
     if not math.isfinite(float(value)):
         return None, "%s must be a finite number" % field
     if field == "fixed_shares":
-        if float(value) != int(float(value)):
+        d = _dec(value)
+        if d != d.to_integral_value():
             return None, "fixed_shares must be whole shares (no fractions)"
-        value = int(float(value))
+        value = int(d)
         if value <= 0:
             return None, "fixed_shares must be at least 1"
         return value, None
@@ -179,8 +211,14 @@ def save_draft(state_dir, values, copied_from=None):
     return row
 
 
-def approve(state_dir, confirm, reason, by="operator (local)"):
-    """Turn the current draft into the approved snapshot. Only the operator calls this."""
+def approve(state_dir, confirm, reason, reviewed_draft_hash=UNSET, prior_approved_hash=UNSET,
+            by="operator (local)"):
+    """Turn the current draft into the approved snapshot. Only the operator calls this.
+
+    reviewed_draft_hash: worksheet()["draft_hash"] of the draft the operator looked at.
+    prior_approved_hash: worksheet()["approved_hash"] at that moment (None when nothing was approved).
+    Either one differing from what is on disk now (a stale review, a concurrent edit, a second
+    tab) refuses the approval."""
     if (confirm or "").strip() != CONFIRM_PHRASE:
         raise LimitsError('type exactly "%s" to approve' % CONFIRM_PHRASE)
     reason = (reason or "").strip()
@@ -192,21 +230,33 @@ def approve(state_dir, confirm, reason, by="operator (local)"):
     clean, problems = validate(draft.get("values"), allow_null=False)
     if problems:
         raise LimitsError("draft is not complete: " + "; ".join(problems))
+    if reviewed_draft_hash is UNSET or not reviewed_draft_hash:
+        raise LimitsError("approval must name the draft you reviewed; reload the Setup panel and try again")
+    if reviewed_draft_hash != content_hash(draft.get("values")):
+        raise LimitsError("the draft changed after you reviewed it (another tab or edit); "
+                          "reload the Setup panel, check the values again, then approve")
     old = read_approved(state_dir) or {}
+    if prior_approved_hash is UNSET:
+        raise LimitsError("approval must name the approved limits you saw (none, or their hash); "
+                          "reload the Setup panel and try again")
+    if (prior_approved_hash or None) != (old.get("hash") or None):
+        raise LimitsError("the approved limits changed after you reviewed them (another tab or edit); "
+                          "reload the Setup panel and try again")
     snap = {"provenance": PROV_APPROVED, "label": APPROVED_LABEL, "values": clean,
             "approved_utc": _now(), "reason": reason[:500], "by": str(by)[:80],
-            "diff": diff(old.get("values"), clean), "hash": content_hash(clean),
+            "diff": diff(old.get("values"), clean), "values_hash": content_hash(clean),
             "previous_hash": old.get("hash")}
+    snap["hash"] = record_hash(snap)
     _write_json(approved_path(state_dir), snap)
     return snap
 
 
-def _loaded(obj, label):
+def _loaded(obj, label, hash_=None):
     clean, problems = validate(obj.get("values"), allow_null=False)
     if problems:
         raise LimitsError("; ".join(problems))
     return {"values": clean, "provenance": obj.get("provenance"), "approved_utc": obj.get("approved_utc"),
-            "hash": content_hash(clean), "label": label}
+            "hash": hash_ or content_hash(clean), "values_hash": content_hash(clean), "label": label}
 
 
 def check_snapshot(obj, allow_draft=False):
@@ -215,10 +265,13 @@ def check_snapshot(obj, allow_draft=False):
         raise LimitsError("limits file must be a JSON object")
     prov = obj.get("provenance")
     if prov == PROV_APPROVED:
-        values = obj.get("values")
-        if obj.get("hash") != content_hash(values):
-            raise LimitsError("limits were edited after approval (hash mismatch); approve them again")
-        return _loaded(obj, APPROVED_LABEL)
+        if not obj.get("hash") or obj.get("hash") != record_hash(obj) \
+                or obj.get("values_hash") != content_hash(obj.get("values")):
+            raise LimitsError("approved limits were edited after approval (record hash mismatch); "
+                              "treat them as unapproved and approve them again")
+        if not obj.get("approved_utc") or not str(obj.get("reason") or "").strip():
+            raise LimitsError("approved limits are missing their approval time or reason; approve them again")
+        return _loaded(obj, APPROVED_LABEL, hash_=obj.get("hash"))
     if prov == PROV_DRAFT and allow_draft:
         return _loaded(obj, DRAFT_LABEL)
     if prov == PROV_DRAFT:
@@ -269,22 +322,28 @@ def as_session_limits(loaded):
 
 def _pos(x, name):
     try:
-        x = float(x)
-    except (TypeError, ValueError):
+        x = _dec(x)
+    except (InvalidOperation, TypeError, ValueError):
         raise LimitsError("%s must be a number" % name)
-    if not math.isfinite(x) or x <= 0:
+    if x <= 0:
         raise LimitsError("%s must be more than zero" % name)
     return x
 
 
 def _nonneg(x, name):
     try:
-        x = float(x or 0.0)
-    except (TypeError, ValueError):
+        x = _dec(x if x not in (None, "") else 0)
+    except (InvalidOperation, TypeError, ValueError):
         raise LimitsError("%s must be a number" % name)
-    if not math.isfinite(x) or x < 0:
+    if x < 0:
         raise LimitsError("%s cannot be negative" % name)
     return x
+
+
+def _floor_shares(budget, per_share):
+    if per_share <= 0:
+        return 0
+    return max(0, int((budget / per_share).to_integral_value(rounding=ROUND_FLOOR)))
 
 
 def effects(values, ref_price, stop_distance, fee_per_share=0.0, slippage_per_share=0.0,
@@ -292,7 +351,9 @@ def effects(values, ref_price, stop_distance, fee_per_share=0.0, slippage_per_sh
     """Calculated effects of a draft at a chosen reference price and illustrative stop distance.
 
     Pure arithmetic; it reads no files and changes nothing. Fees and slippage are the operator's
-    assumptions and are labeled as such."""
+    assumptions and are labeled as such. All arithmetic is decimal from the decimal text of each
+    input: each cap check compares the exact (unrounded) amount with an exact ">", share counts
+    round down, and displayed losses and exposure round up to the cent."""
     price = _pos(ref_price, "reference price")
     stop = _pos(stop_distance, "stop distance")
     fee = _nonneg(fee_per_share, "fee per share")
@@ -302,24 +363,30 @@ def effects(values, ref_price, stop_distance, fee_per_share=0.0, slippage_per_sh
     working = _nonneg(working_notional, "working orders notional")
     v, _ = validate(values or {}, allow_null=True)
     shares = v.get("fixed_shares")
-    per_share_cost = 2.0 * (fee + slip)   # entry and exit
-    out = {"inputs": {"reference_price": price, "stop_distance": stop},
-           "assumptions": {"fee_per_share": fee, "slippage_per_share": slip, "label": ASSUMED_LABEL,
-                           "note": "costs counted on entry and exit"},
-           "shares": shares, "checks": [], "suggestions": [], "simulated": True}
+    per_share_cost = 2 * (fee + slip)   # entry and exit
+    out = {"inputs": {"reference_price": float(price), "stop_distance": float(stop)},
+           "assumptions": {"fee_per_share": float(fee), "slippage_per_share": float(slip),
+                           "label": ASSUMED_LABEL, "note": "costs counted on entry and exit"},
+           "shares": shares, "checks": [], "suggestions": [], "simulated": True,
+           "arithmetic": "decimal; caps compare the exact amount; shares round down; losses shown rounded up"}
+    caps = {}
+    for k in CAP_FIELDS:
+        caps[k] = _dec(v[k]) if v.get(k) is not None else None
+    exact = {}
     if shares is not None:
-        notional = shares * price
-        loss = shares * stop + shares * per_share_cost
-        worst = open_exp + working + notional
-        out.update(notional=round(notional, 2), payoff_per_1usd_move=float(shares),
-                   est_loss_at_stop=round(loss, 2), est_costs=round(shares * per_share_cost, 2),
-                   worst_case_if_all_working_fill=round(worst, 2))
-    caps = {k: v.get(k) for k in CAP_FIELDS}
+        q = Decimal(shares)
+        exact["notional"] = q * price
+        exact["costs"] = q * per_share_cost
+        exact["loss"] = q * stop + exact["costs"]
+        exact["worst"] = open_exp + working + exact["notional"]
+        out.update(notional=_money(exact["notional"]), payoff_per_1usd_move=float(shares),
+                   est_loss_at_stop=_money(exact["loss"]), est_costs=_money(exact["costs"]),
+                   worst_case_if_all_working_fill=_money(exact["worst"]))
     rem = {}
     if caps["daily_loss"] is not None:
-        rem["daily_loss_remaining"] = round(caps["daily_loss"] - realized, 2)
+        rem["daily_loss_remaining"] = _money(caps["daily_loss"] - realized, ROUND_FLOOR)
     if caps["gross_exposure"] is not None:
-        rem["gross_exposure_remaining"] = round(caps["gross_exposure"] - open_exp - working, 2)
+        rem["gross_exposure_remaining"] = _money(caps["gross_exposure"] - open_exp - working, ROUND_FLOOR)
     out["remaining_capacity"] = rem
 
     def add(cap, ok, reason):
@@ -334,37 +401,38 @@ def effects(values, ref_price, stop_distance, fee_per_share=0.0, slippage_per_sh
             continue
         if shares is None:
             continue
+        lim = float(limit)
         if cap == "per_trade_notional":
-            ok = out["notional"] <= limit
+            ok = not exact["notional"] > limit
             add(cap, ok, "order value $%.2f %s your per-trade cap $%.2f"
-                % (out["notional"], "is within" if ok else "is OVER", limit))
+                % (out["notional"], "is within" if ok else "is OVER", lim))
         elif cap == "max_loss_per_trade":
-            ok = out["est_loss_at_stop"] <= limit
+            ok = not exact["loss"] > limit
             add(cap, ok, "estimated loss at the stop $%.2f %s your per-trade loss cap $%.2f"
-                % (out["est_loss_at_stop"], "is within" if ok else "is OVER", limit))
+                % (out["est_loss_at_stop"], "is within" if ok else "is OVER", lim))
         elif cap == "daily_loss":
-            after = realized + out["est_loss_at_stop"]
-            ok = after <= limit
+            after = realized + exact["loss"]
+            ok = not after > limit
             add(cap, ok, "today's realized loss $%.2f plus this stop-out $%.2f = $%.2f, %s your daily cap $%.2f"
-                % (realized, out["est_loss_at_stop"], after, "within" if ok else "OVER", limit))
+                % (_money(realized), out["est_loss_at_stop"], _money(after), "within" if ok else "OVER", lim))
         elif cap == "gross_exposure":
-            ok = out["worst_case_if_all_working_fill"] <= limit
+            ok = not exact["worst"] > limit
             add(cap, ok, "if every working order filled, exposure would be $%.2f, %s your gross cap $%.2f"
-                % (out["worst_case_if_all_working_fill"], "within" if ok else "OVER", limit))
+                % (out["worst_case_if_all_working_fill"], "within" if ok else "OVER", lim))
     out["all_pass"] = bool(out["checks"]) and all(c["ok"] for c in out["checks"])
 
     def suggest(text, n):
         out["suggestions"].append({"text": text, "shares": max(0, int(n)), "label": SUGGESTION_LABEL})
 
     if caps["max_loss_per_trade"] is not None:
-        suggest("shares that fit your $%.2f risk at a $%.2f stop" % (caps["max_loss_per_trade"], stop),
-                math.floor(caps["max_loss_per_trade"] / (stop + per_share_cost)))
+        suggest("shares that fit your $%.2f risk at a $%.2f stop" % (float(caps["max_loss_per_trade"]), float(stop)),
+                _floor_shares(caps["max_loss_per_trade"], stop + per_share_cost))
     if caps["per_trade_notional"] is not None:
-        suggest("shares that fit your $%.2f per-trade cap at $%.2f" % (caps["per_trade_notional"], price),
-                math.floor(caps["per_trade_notional"] / price))
+        suggest("shares that fit your $%.2f per-trade cap at $%.2f" % (float(caps["per_trade_notional"]), float(price)),
+                _floor_shares(caps["per_trade_notional"], price))
     if caps["gross_exposure"] is not None:
-        suggest("shares that fit the gross exposure you have left at $%.2f" % price,
-                math.floor(max(0.0, caps["gross_exposure"] - open_exp - working) / price))
+        suggest("shares that fit the gross exposure you have left at $%.2f" % float(price),
+                _floor_shares(max(Decimal(0), caps["gross_exposure"] - open_exp - working), price))
     return out
 
 
@@ -386,6 +454,8 @@ def worksheet(state_dir):
             approved_ok = str(exc)
     pending = diff((approved or {}).get("values"), (draft or {}).get("values")) if draft else []
     return {"fields": list(FIELDS), "help": FIELD_HELP, "draft": draft, "approved": approved,
+            "draft_hash": content_hash(draft.get("values")) if draft else None,
+            "approved_hash": (approved or {}).get("hash") or None,
             "approved_ok": approved_ok, "active": active, "pending_diff": pending,
             "confirm_phrase": CONFIRM_PHRASE, "test_examples": [dict(e) for e in TEST_EXAMPLES],
             "labels": {"draft": DRAFT_LABEL, "approved": APPROVED_LABEL, "test": TEST_EXAMPLE_LABEL}}
@@ -419,6 +489,7 @@ def _cli(argv):
     if not draft:
         print("No draft in %s. Use --from-file or the Setup panel." % args.state_dir)
         return 2
+    seen = worksheet(args.state_dir)   # what is shown now is what approval is bound to
     old = (read_approved(args.state_dir) or {}).get("values")
     print("Changes (old -> new):")
     for row in diff(old, draft.get("values")) or [{"field": "(none)", "old": "", "new": ""}]:
@@ -426,7 +497,8 @@ def _cli(argv):
     confirm = input('Type "%s" to approve: ' % CONFIRM_PHRASE)
     reason = input("Reason: ")
     try:
-        snap = approve(args.state_dir, confirm, reason)
+        snap = approve(args.state_dir, confirm, reason, reviewed_draft_hash=seen["draft_hash"],
+                       prior_approved_hash=seen["approved_hash"])
     except LimitsError as exc:
         print("Not approved: %s" % exc)
         return 2
