@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper Desk</title>
+<style>
+:root{
+  --paper:#fcfaf6; --ink:#1b222b; --ink2:#49515b; --muted:#636a72; --rule:#e5e3dd;
+  --cool:#0e5e8a; --cool-soft:#e6eff4; --warm:#c56c21; --warm-soft:#f7ebdf;
+  --serif: Charter, "Iowan Old Style", Georgia, serif;
+  --sans: "Avenir Next", Avenir, Seravek, "Gill Sans", sans-serif;
+  --mono: "SF Mono", Menlo, Consolas, monospace;
+}
+*{ box-sizing:border-box }
+[hidden]{ display:none !important }
+html,body{ background:var(--paper) }
+body{ margin:0; color:var(--ink); font:17px/1.5 var(--serif); font-variant-numeric:lining-nums tabular-nums }
+main{ max-width:760px; margin:0 auto; padding:32px 16px 64px }
+a{ color:var(--cool); text-decoration:none; border-bottom:1px solid #9cbbd0 }
+section{ margin-top:30px; padding-top:20px; border-top:1px solid var(--rule) }
+section.first{ margin-top:0; padding-top:0; border-top:0 }
+.kicker{ font:600 12px/1.2 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--cool); margin:0 0 10px }
+h1{ font:700 42px/1.05 var(--serif); letter-spacing:-.015em; margin:0 0 10px }
+h2{ font:700 25px/1.15 var(--serif); margin:0 0 8px }
+p{ margin:0 0 10px }
+.deck{ font:400 19px/1.4 var(--serif); color:var(--ink2); margin:0 0 16px }
+.note{ font:400 13px/1.45 var(--sans); color:var(--muted) }
+.banner{ border-left:4px solid var(--warm); background:var(--warm-soft); padding:10px 14px; border-radius:0 8px 8px 0; font:600 14px/1.4 var(--sans); color:#7a3e0f; margin:0 0 18px }
+form{ display:grid; grid-template-columns:1fr 1fr; gap:12px 14px; margin:10px 0 0 }
+label{ display:block; font:600 12px/1.3 var(--sans); letter-spacing:.06em; text-transform:uppercase; color:var(--ink2) }
+label.wide{ grid-column:1 / -1 }
+input,select,textarea{ display:block; width:100%; margin-top:5px; font:15px/1.35 var(--sans); color:var(--ink); background:#fff; border:1px solid #cfccc4; border-radius:6px; padding:8px 9px }
+textarea{ min-height:58px; resize:vertical }
+input:focus,select:focus,textarea:focus{ outline:2px solid #9cbbd0; border-color:var(--cool) }
+.choice{ display:flex; gap:8px; margin-top:5px }
+.choice label{ flex:1; text-transform:none; letter-spacing:0; font:600 15px/1 var(--sans); color:var(--ink); border:1px solid #cfccc4; border-radius:6px; background:#fff; padding:10px; text-align:center; cursor:pointer }
+.choice label{ position:relative }
+.choice input{ position:absolute; opacity:0; width:1px; height:1px; margin:0 }
+.choice label:has(input:focus-visible){ outline:2px solid #9cbbd0 }
+.choice input:checked + span{ color:var(--paper) }
+.choice label:has(input:checked){ background:var(--ink); border-color:var(--ink); color:var(--paper) }
+.hint{ font:400 12.5px/1.35 var(--sans); color:var(--muted); text-transform:none; letter-spacing:0; margin-top:4px; font-weight:400 }
+.hint.flag{ color:#9a4d12 }
+.row{ display:flex; flex-wrap:wrap; gap:10px; margin:12px 0 0 }
+button{ font:600 15px/1 var(--sans); border-radius:6px; padding:11px 16px; cursor:pointer; border:1px solid var(--ink); background:var(--ink); color:var(--paper) }
+button.ghost{ background:#fff; color:var(--ink) }
+button:disabled{ opacity:.5; cursor:wait }
+pre{ font:12.5px/1.45 var(--mono); background:#151b22; color:#e9edf1; border-radius:8px; padding:10px 12px; margin:12px 0 0; white-space:pre-wrap; word-break:break-word; max-height:420px; overflow:auto }
+pre:empty{ display:none }
+.ok{ color:#1d6b3a } .bad{ color:#a3261b }
+.result{ font:700 12px/1 var(--sans); letter-spacing:.1em; text-transform:uppercase; margin:12px 0 0 }
+h3{ font:700 19px/1.2 var(--serif); margin:22px 0 8px }
+nav{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px }
+nav a{ font:600 14px/1 var(--sans); border:1px solid var(--ink); border-radius:999px; padding:8px 14px; color:var(--ink) }
+nav a.on{ background:var(--ink); color:var(--paper) }
+.tiles{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin:12px 0 0 }
+.tile{ background:#fff; border:1px solid var(--rule); border-radius:8px; padding:12px 13px }
+.tile .num{ font:700 24px/1.1 var(--serif); color:var(--ink) }
+.tile .cap{ font:400 12.5px/1.35 var(--sans); color:var(--muted); margin-top:5px }
+.tile.cool{ border-top:3px solid var(--cool) } .tile.warm{ border-top:3px solid var(--warm) }
+.two{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:10px 0 0 }
+.rev{ background:#fff; border:1px solid var(--rule); border-radius:8px; padding:12px 14px; font:400 14px/1.45 var(--sans) }
+.rev .who{ font:600 12px/1.2 var(--sans); letter-spacing:.1em; text-transform:uppercase; color:var(--muted) }
+.rev .verdict{ font:700 22px/1.2 var(--serif); margin:4px 0 6px }
+.rev ul{ margin:6px 0 0; padding-left:18px } .rev li{ margin:0 0 4px }
+.tag{ display:inline-block; font:600 11px/1 var(--sans); letter-spacing:.08em; text-transform:uppercase; border-radius:4px; padding:4px 6px; background:var(--cool-soft); color:var(--cool) }
+.tag.warn{ background:var(--warm-soft); color:#7a3e0f }
+details{ margin:14px 0 0; border:1px solid var(--rule); border-radius:8px; background:#fff; padding:10px 14px }
+summary{ cursor:pointer; font:600 14px/1.4 var(--sans) }
+.mine{ border-left:4px solid var(--cool); background:var(--cool-soft); padding:10px 14px; border-radius:0 8px 8px 0; font:600 14px/1.4 var(--sans); margin:10px 0 0 }
+.chart{ width:100%; height:auto; background:#fff; border:1px solid var(--rule); border-radius:8px; margin:10px 0 0 }
+.chart .ln{ fill:none; stroke:var(--ink); stroke-width:1.6 }
+.chart .mk{ stroke-width:1.2; stroke-dasharray:3 3 } .chart text{ font:500 11px var(--sans); fill:var(--muted) }
+@media (max-width:640px){ form{ grid-template-columns:1fr } h1{ font-size:34px } .two{ grid-template-columns:1fr } }
+</style>
+</head>
+<body>
+<main>
+<section class="first">
+  <div class="kicker">Paper desk · local only · <a href="START_HERE.html">Start here</a></div>
+  <h1>Paper Desk</h1>
+  <p class="deck">See what the trading bot decided and make your own paper call on it. Log NFL takes and passes. Rerun the replay. Every button runs the same local tool the lanes tested.</p>
+  <div class="banner">Paper only. Nothing here places a bet or an order, signs in anywhere, or sends data off this Mac.</div>
+  <nav><a class="on" href="#trading">Trading bot</a><a href="#practice">Practice</a><a href="#nfl">NFL picks</a><a href="#tv">Replay tools</a></nav>
+  <p class="note">__LEDGER_NOTE__</p>
+</section>
+
+<section id="trading">
+  <div class="kicker">Trading bot · one paper decision · synthetic bars</div>
+  <h2 id="tr-title">What the bot decided</h2>
+  <p id="tr-rule"></p>
+  <div class="tiles" id="tr-tiles"><div class="tile"><div class="cap">Loading…</div></div></div>
+  <p class="note" id="tr-src"></p>
+
+  <h3>Two independent reviews of this same decision</h3>
+  <p class="note">Each reviewer saw only the packet and the bars up to the decision: no later bars, no fill, no profit, and not the other's answer. Both answers are stored copies, labelled with when they were captured and which model wrote them.</p>
+  <div class="two" id="tr-reviews"></div>
+  <p class="note" id="tr-resolution">The replay itself settles the timing question: the first order waited for bar 75 at 18:30:00Z, as the fill rule says. The packet's "earliest fill" fields were lower bounds, not a forecast. Source: <a href="codex/packet-review/Independent_Resolution.md">Codex's note</a>.</p>
+
+  <h3>Your call: follow or pass</h3>
+  <p>Would you have followed this signal? Decide before you open "What happened next". Your call is saved on its own, one per decision, and can't be changed afterwards.</p>
+  <div id="tr-mine" class="mine" hidden></div>
+  <form id="tf" autocomplete="off">
+    <label>Your call
+      <span class="choice">
+        <label><input type="radio" name="choice" value="follow"><span>Follow</span></label>
+        <label><input type="radio" name="choice" value="pass"><span>Pass</span></label>
+      </span>
+    </label>
+    <label class="wide">Why
+      <textarea name="reason" id="tr-reason" maxlength="300" placeholder="One line, in your own words"></textarea>
+    </label>
+  </form>
+  <div class="row"><button type="button" id="tr-decide">Record my call</button></div>
+  <div class="result" id="tr-res"></div>
+  <pre id="tr-out"></pre>
+
+  <details id="tr-after"><summary>What happened next, and the whole replay (open after you decide)</summary><div id="tr-next"></div></details>
+  <p class="note" style="margin-top:12px">Chart: the same rule as a TradingView script for your own chart, display only, with no data leaving TradingView: <a href="tvbot/pine/README.md">tvbot/pine/README.md</a>. Packet as text: <a href="tvbot/out/normal/decision_packet.md">decision_packet.md</a>. Journal of every bar: <a href="tvbot/out/normal/decisions.jsonl">decisions.jsonl</a>.</p>
+</section>
+
+<section id="practice">
+  <div class="kicker">Practice · blind · one decision at a time</div>
+  <h2>Practice: would you follow this signal?</h2>
+  <p>These are the bot's other buy signals from the same synthetic replay. Neither reviewer saw them, and the desk keeps the chart and the result back until you record a call. You get only what the bot knew at that moment. One call per decision, saved on its own and never changed.</p>
+  <p class="note">The raw replay journal is on disk in tvbot/out/. Opening it first would spoil the exercise.</p>
+  <div id="pr-last"></div>
+  <div id="pr-q"><p class="note">Loading…</p></div>
+  <form id="pf" autocomplete="off" hidden>
+    <label>Your call
+      <span class="choice">
+        <label><input type="radio" name="choice" value="follow"><span>Follow</span></label>
+        <label><input type="radio" name="choice" value="pass"><span>Pass</span></label>
+      </span>
+    </label>
+    <label class="wide">Why
+      <textarea name="reason" id="pr-reason" maxlength="300" placeholder="One line, in your own words"></textarea>
+    </label>
+  </form>
+  <div class="row"><button type="button" id="pr-decide" hidden>Record my call and show what happened</button></div>
+  <div class="result" id="pr-res"></div>
+  <pre id="pr-out"></pre>
+</section>
+
+<section id="nfl">
+  <div class="kicker">NFL · your decision</div>
+  <h2>Log a take or a pass</h2>
+  <p>A pass is a decision too. It gets scored against the closing line like a take, so log the games you skip as well.</p>
+  <div class="row"><button type="button" id="load" class="ghost">Load the slate</button></div>
+  <form id="f" autocomplete="off">
+    <label class="wide">Game
+      <select name="game_id" id="game" required><option value="">Load the slate first</option></select>
+    </label>
+    <label>Decision
+      <span class="choice">
+        <label><input type="radio" name="action" value="take" checked><span>Take</span></label>
+        <label><input type="radio" name="action" value="pass"><span>Pass</span></label>
+      </span>
+    </label>
+    <label>Market
+      <select name="market" id="market">
+        <option value="spread">Spread</option><option value="total">Total</option>
+        <option value="moneyline">Moneyline</option><option value="prop">Player prop</option>
+      </select>
+    </label>
+    <label>Side <select name="side" id="side"></select></label>
+    <label id="line-wrap">Line
+      <input name="line" id="line" inputmode="decimal" placeholder="-2.5">
+      <span class="hint">For a spread, the line for the side you picked, e.g. home −2.5.</span>
+    </label>
+    <label class="wide" id="sel-wrap" hidden>Player and stat
+      <input name="selection" id="selection" maxlength="80" placeholder="Player name, receiving yards">
+    </label>
+    <label>Price (American odds)
+      <input name="price" id="price" inputmode="numeric" placeholder="-110">
+      <span class="hint" id="band">Your range is −170 to +150. Outside it is recorded and flagged.</span>
+    </label>
+    <label>Stake, units
+      <input name="stake" id="stake" inputmode="decimal" placeholder="1">
+      <span class="hint">At most 1. Takes only.</span>
+    </label>
+    <label>When you saw the price
+      <input type="datetime-local" id="qlocal" step="60">
+      <span class="hint" id="qutc"></span>
+    </label>
+    <label>Where you saw it
+      <input name="source" id="source" maxlength="80" placeholder="Sportsbook or site name">
+    </label>
+    <label class="wide">Why
+      <textarea name="reason" id="reason" maxlength="300" placeholder="One line, in your own words"></textarea>
+    </label>
+  </form>
+  <div class="row">
+    <button type="button" id="log">Log decision</button>
+    <button type="button" id="status" class="ghost">Show my ledger</button>
+    <button type="button" id="settle" class="ghost">Settle finished games</button>
+  </div>
+  <div class="result" id="nfl-res"></div>
+  <pre id="nfl-out"></pre>
+</section>
+
+<section id="tv">
+  <div class="kicker">TradingView · paper replay</div>
+  <h2>Rerun the replay</h2>
+  <p>The replay reads only the lane's own sample bars, never TradingView data. It fills at the next bar, after costs.</p>
+  <div class="row" id="tv-buttons"><span class="note">Checking for the replay runner…</span></div>
+  <div class="result" id="tv-res"></div>
+  <details><summary>Terminal output</summary><pre id="tv-out"></pre></details>
+</section>
+</main>
+<script>
+const TOKEN = "__DESK_TOKEN__";
+const $ = id => document.getElementById(id);
+const SIDES = {spread:["home","away"], moneyline:["home","away"], total:["over","under"], prop:["over","under"]};
+
+function show(prefix, r){
+  const ok = r.exit === 0;
+  $(prefix+"-res").innerHTML = ok ? '<span class="ok">Done</span>' : '<span class="bad">Refused or failed (exit '+r.exit+')</span>';
+  $(prefix+"-out").textContent = r.output || r.error || "";
+}
+async function call(prefix, url, body, btn){
+  if (btn) btn.disabled = true;
+  $(prefix+"-res").textContent = "Running…"; $(prefix+"-out").textContent = "";
+  try {
+    const opt = body === undefined ? {} : {method:"POST", headers:{"Content-Type":"application/json","X-Desk-Token":TOKEN}, body:JSON.stringify(body)};
+    const resp = await fetch(url, opt);
+    const r = await resp.json();
+    if (!resp.ok) r.exit = r.exit ?? resp.status;
+    show(prefix, r); return r;
+  } catch(e){ show(prefix, {exit:-1, output:"The desk is not running. Double-click Paper Desk.command again."}); }
+  finally { if (btn) btn.disabled = false; }
+}
+function setSides(){
+  const m = $("market").value;
+  $("side").innerHTML = SIDES[m].map(s => '<option value="'+s+'">'+s[0].toUpperCase()+s.slice(1)+'</option>').join("");
+  $("line-wrap").hidden = m === "moneyline";
+  $("sel-wrap").hidden = m !== "prop";
+}
+function pad(n){ return String(n).padStart(2,"0"); }
+function nowLocal(){
+  const d = new Date();
+  return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes());
+}
+function quoteUTC(){
+  const v = $("qlocal").value;
+  if (!v) return "";
+  const d = new Date(v);
+  return isNaN(d) ? "" : d.toISOString().slice(0,19)+"Z";
+}
+function showUTC(){ const u = quoteUTC(); $("qutc").textContent = u ? "Logged as "+u+" (UTC)" : "Pick a time"; }
+function bandHint(){
+  const p = parseInt($("price").value, 10), h = $("band");
+  const out = !isNaN(p) && Math.abs(p) >= 100 && (p < -170 || p > 150);
+  h.className = "hint" + (out ? " flag" : "");
+  h.textContent = out ? "Outside your −170 to +150 range. It will be recorded with a flag." : "Your range is −170 to +150. Outside it is recorded and flagged.";
+}
+
+$("load").onclick = async e => {
+  const r = await call("nfl", "/api/slate", undefined, e.target);
+  if (!r) return;
+  const g = r.games || [];
+  $("game").innerHTML = g.length ? '<option value="">Choose a game ('+g.length+' still open)</option>' + g.map(x => '<option value="'+x.id+'">'+x.label+'</option>').join("") : '<option value="">No open games on the slate</option>';
+};
+$("log").onclick = e => {
+  const f = new FormData($("f"));
+  const body = Object.fromEntries(f.entries());
+  body.quote_ts = quoteUTC();
+  if (body.action === "pass") body.stake = "";
+  call("nfl", "/api/log", body, e.target);
+};
+$("status").onclick = e => call("nfl", "/api/status", undefined, e.target);
+$("settle").onclick = e => call("nfl", "/api/settle", {}, e.target);
+$("market").onchange = setSides;
+$("qlocal").oninput = showUTC;
+$("price").oninput = bandHint;
+
+async function loadTV(){
+  const box = $("tv-buttons");
+  try {
+    const r = await (await fetch("/api/tv")).json();
+    if (!r.actions.length){ box.innerHTML = '<span class="note">The replay runner has not been released yet. This panel fills in when it is.</span>'; return; }
+    box.innerHTML = "";
+    r.actions.forEach((a,i) => {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = a.label; if (i) b.className = "ghost";
+      if (a.note) b.title = a.note;
+      b.onclick = () => call("tv", "/api/tv/"+encodeURIComponent(a.name), {}, b);
+      box.appendChild(b);
+    });
+  } catch(e){ box.innerHTML = '<span class="note">The desk is not running.</span>'; }
+}
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const money = v => (v < 0 ? "−$" : "$") + Math.abs(v).toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+const signed = v => (v >= 0 ? "+" : "−") + money(Math.abs(v)).replace("$","$");
+const tile = (num, cap, cls) => '<div class="tile '+(cls||"")+'"><div class="num">'+num+'</div><div class="cap">'+cap+'</div></div>';
+let TR = null;
+function review(who, m){
+  if (!m) return '<div class="rev"><div class="who">'+who+'</div><div class="verdict">No answer attached yet</div><p>Prepare the inputs and attach a reply with review/review_kit.py.</p></div>';
+  const warn = m.matches_inputs ? "" : ' <span class="tag warn">does not match this packet</span>';
+  const list = (m.concerns||[]).slice(0,3).map(c => '<li>'+esc(c)+'</li>').join("");
+  return '<div class="rev"><div class="who">'+who+' · model '+esc(m.model)+'</div>'
+    + '<div class="verdict">'+esc(m.verdict === "cannot_tell" ? "cannot tell" : m.verdict[0].toUpperCase()+m.verdict.slice(1))+'</div>'
+    + '<span class="tag">Recorded '+esc(m.captured_utc)+'</span>'+warn
+    + '<p style="margin:8px 0 0">Arithmetic '+(m.arithmetic_all_match ? "all matched" : "had a mismatch")+'. Rule followed: '+esc(m.rule_followed)+'.</p>'
+    + (list ? '<ul>'+list+'</ul>' : "")
+    + '<p class="note" style="margin:6px 0 0">Full answer: <a href="review/'+esc(m.packet_id)+'/'+esc(m.answer_file)+'">'+esc(m.answer_file)+'</a></p></div>';
+}
+function showMine(c){
+  const box = $("tr-mine");
+  if (!c){ box.hidden = true; return; }
+  box.hidden = false;
+  box.textContent = "Your call, recorded "+c.decided_utc+": "+c.choice.toUpperCase()+" — "+c.reason;
+  $("tf").hidden = true; $("tr-decide").hidden = true;
+}
+async function loadTrading(){
+  try { TR = await (await fetch("/api/trading")).json(); }
+  catch(e){ $("tr-tiles").innerHTML = tile("—", "The desk is not running."); return; }
+  if (!TR.ready){ $("tr-tiles").innerHTML = tile("—", "No decision has been prepared for review yet. Run review/review_kit.py prepare."); return; }
+  const d = TR.decision, o = TR.order, p = TR.portfolio, stop = TR.rule.params.stop_pct;
+  const sig = d.signal_ts.replace("T"," ").replace(":00Z"," UTC");
+  const risk = o.qty * TR.close * stop / 100;
+  $("tr-title").textContent = (d.action === "ENTER_LONG" ? "Buy " : d.action+" ") + o.qty + " shares of " + TR.symbol;
+  $("tr-rule").textContent = TR.rule.in_words;
+  $("tr-tiles").innerHTML =
+      tile(esc(sig), "Signal: bar "+d.bar_seq+" closed, "+TR.timeframe_minutes+"-minute bars. Reason: "+esc(d.reason_code).replace("_"," ")+".", "cool")
+    + tile(o.qty+" shares", "About "+money(o.notional_at_signal_close)+" at the signal close of $"+TR.close+". Limit: "+money(TR.plan.risk_limits.max_position_notional)+".", "cool")
+    + tile("−"+money(risk), "Downside at the stop: sell after a close "+stop+"% below the fill bar's open. A gap can cost more. Daily loss limit "+money(TR.plan.risk_limits.max_daily_loss)+".", "warm")
+    + tile(money(p.cash), "Cash at the decision, position "+p.position_qty+" shares. It fills at the next bar's open after "+esc(d.decision_ready_ts.slice(11,19))+"Z, plus costs.", "");
+  $("tr-src").innerHTML = "Packet "+esc(TR.packet_id)+" (sha "+esc(TR.packet_sha256.slice(0,12))+"), prepared "+esc(TR.prepared_utc)+". Synthetic bars from a seeded generator, not market data, and nothing from TradingView. Inputs as given to the reviewers: <a href=\"review/"+esc(TR.packet_id)+"/inputs/PROMPT.txt\">PROMPT.txt</a>.";
+  $("tr-reviews").innerHTML = review("Claude", TR.reviews.claude) + review("Astra (Codex)", TR.reviews.astra);
+  const r = TR.replay, b = TR.buy_and_hold || {}, t = TR.first_trip;
+  $("tr-next").innerHTML = (t ? '<p style="margin:10px 0 0">This order filled at bar '+t.entry_fill_seq+', '+esc(t.entry_fill_ts)+', at a raw open of $'+t.entry_raw_open+' plus costs. It was sold at bar '+t.exit_fill_seq+' ('+esc(t.exit_reason).replace("_"," ")+'), '+esc(t.exit_fill_ts)+'. Net on this trade: '+signed(t.net_pnl)+'.</p>' : "")
+    + '<div class="tiles">'
+    + tile(signed(r.net_pnl), "Bot, whole replay, after costs. "+r.fills+" fills, "+r.round_trip_count+" round trips ("+r.wins+" won, "+r.losses+" lost).", "cool")
+    + tile(signed(b.net_pnl ?? 0), "Buy and hold, "+(b.shares ?? "")+" shares, same costs, never sold.", "")
+    + tile("−"+money(r.max_drawdown), "Largest fall from a peak during the replay.", "warm")
+    + tile(money(r.end_equity), "Ending value from "+money(r.start_cash)+". Still holding "+r.open_position_qty+" shares.", "")
+    + '</div><p class="note" style="margin:10px 0 0">'+esc(r.data_note)+'.</p>';
+  showMine(TR.my_call);
+}
+$("tr-decide").onclick = async e => {
+  if (!TR || !TR.ready) return;
+  const f = new FormData($("tf"));
+  const r = await call("tr", "/api/trading/decide", {packet_id: TR.packet_id, choice: f.get("choice") || "", reason: $("tr-reason").value}, e.target);
+  if (r && r.exit === 0) loadTrading();
+};
+let PQ = null;
+function chart(pts, marks){
+  if (!pts || pts.length < 2) return "";
+  const W = 640, H = 220, L = 46, R = 10, T = 14, B = 26;
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), dy = (y1 - y0) || 1;
+  const X = q => L + (q - x0) / ((x1 - x0) || 1) * (W - L - R), Y = v => T + (y1 - v) / dy * (H - T - B);
+  const d = pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join(" ");
+  const m = marks.filter(k => k.seq != null).map(k => '<line class="mk" x1="'+X(k.seq)+'" x2="'+X(k.seq)+'" y1="'+T+'" y2="'+(H-B)+'" stroke="'+k.color+'"/>'+(X(k.seq) > W - 170 ? '<text text-anchor="end" x="'+(X(k.seq)-4)+'"' : '<text x="'+(X(k.seq)+4)+'"')+' y="'+(T+10+k.row*13)+'">'+k.label+'</text>').join("");
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Closing prices around the decision"><text x="4" y="'+(T+8)+'">$'+y1.toFixed(2)+'</text><text x="4" y="'+(H-B)+'">$'+y0.toFixed(2)+'</text><text x="'+L+'" y="'+(H-6)+'">bar '+x0+'</text><text x="'+(W-R-60)+'" y="'+(H-6)+'">bar '+x1+'</text><path class="ln" d="'+d+'"/>'+m+'</svg>';
+}
+async function loadPractice(){
+  let P; try { P = await (await fetch("/api/practice")).json(); } catch(e){ $("pr-q").innerHTML = '<p class="note">The desk is not running.</p>'; return; }
+  if (!P.ready){ $("pr-q").innerHTML = '<p class="note">No practice decisions yet. Run the replay first.</p>'; return; }
+  const L = P.last;
+  if (L){
+    const t = L.trip, c = L.call;
+    const marks = [{seq:L.signal_seq,label:"signal",color:"#0e5e8a",row:0}];
+    if (t){ marks.push({seq:t.entry_fill_seq,label:"filled",color:"#0e5e8a",row:1}); marks.push({seq:t.exit_fill_seq,label:"sold ("+t.exit_reason.replace(/_/g," ")+")",color:"#c56c21",row:2}); }
+    const res = t ? "The bot's trade: bought "+t.qty+" at bar "+t.entry_fill_seq+", sold at bar "+t.exit_fill_seq+" ("+t.exit_reason.replace(/_/g," ")+"), net "+signed(t.net_pnl)+" after costs."
+                  : "The bot bought and was still holding when the replay ended, so there is no final result.";
+    const yours = c.choice === "follow" ? (t ? "You followed, so your paper result is "+signed(t.net_pnl)+"." : "You followed; the trade was still open at the end.")
+                                        : "You passed, so your paper result is $0.00"+(t ? ", against the bot's "+signed(t.net_pnl)+"." : ".");
+    $("pr-last").innerHTML = '<h3>Decision '+L.number+': what happened</h3><div class="mine">Your call, recorded '+esc(c.decided_utc)+': '+esc(c.choice.toUpperCase())+' — '+esc(c.reason)+'</div>'
+      + chart(L.points, marks) + '<p style="margin:10px 0 0">'+esc(res)+' '+esc(yours)+'</p><p class="note">One trade on synthetic bars says nothing about an edge. It is practice at reading the bot\'s reasons.</p>';
+  }
+  PQ = P.question;
+  if (!PQ){ $("pr-q").innerHTML = '<p class="mine">You have made a call on all '+P.total+' practice decisions.</p>'; $("pf").hidden = true; $("pr-decide").hidden = true; return; }
+  const sig = PQ.signal_ts.replace("T"," ").replace(":00Z"," UTC");
+  $("pr-q").innerHTML = '<h3>Decision '+PQ.number+' of '+P.total+' <span class="tag">'+P.done+' done</span></h3><div class="tiles">'
+    + tile(esc(sig), "Bar "+PQ.bar_seq+" closed at $"+PQ.close+". Fast average "+PQ.ema_fast.toFixed(2)+", slow "+PQ.ema_slow.toFixed(2)+".", "cool")
+    + tile("Buy "+PQ.qty, "About "+money(PQ.qty*PQ.close)+". It would fill at the next bar's open after "+esc(PQ.decision_ready_ts.slice(11,19))+"Z.", "cool")
+    + tile("−"+money(PQ.qty*PQ.close*(P.stop_pct||0)/100), "Roughly what the "+(P.stop_pct||"?")+"% stop risks; a gap can cost more. Daily loss limit "+money(PQ.limit_daily_loss)+".", "warm")
+    + tile(money(PQ.day_pnl), "Profit or loss so far that day. Position before the call: "+PQ.position_qty+" shares.", "")
+    + '</div><p style="margin:10px 0 0">'+esc(PQ.explanation)+'</p>';
+  $("pf").reset(); $("pf").hidden = false; $("pr-decide").hidden = false;
+}
+$("pr-decide").onclick = async e => {
+  if (!PQ) return;
+  const f = new FormData($("pf"));
+  const r = await call("pr", "/api/practice/decide", {decision_id: PQ.decision_id, choice: f.get("choice") || "", reason: $("pr-reason").value}, e.target);
+  if (r && r.exit === 0) loadPractice();
+};
+setSides(); $("qlocal").value = nowLocal(); showUTC(); loadTV(); loadTrading(); loadPractice();
+</script>
+</body>
+</html>

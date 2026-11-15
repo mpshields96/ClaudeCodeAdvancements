@@ -1,0 +1,147 @@
+{
+  "slate_date": "2026-11-15",
+  "card_sha256": "96d09884cab7d0444c8f95551def07f43a94ed9de22695a280947310d4106932",
+  "headline": "Warren gets the stronger vote",
+  "deck": "Both reviews favor Warren if his passing role holds. Claude would pass on Kansas City at -166.",
+  "window_note": "Munich (8:30 a.m.) and noon share one window. No formal Munich pick.",
+  "pass_notes": {
+    "Afternoon": "Only 3 of 9 Rams opponents scored under seven by halftime. The Raiders named Fernando Mendoza to replace Kirk Cousins. Recheck Bowers and his QB."
+  },
+  "availability": "Check inactives and the line. Log your read and any ticket. Louisiana availability is unverified.",
+  "calls": [
+    {
+      "event_id": "3c71d515b726f1096aabb435badb83fd",
+      "market": "h2h",
+      "subject": "",
+      "side": "Kansas City Chiefs",
+      "point": null,
+      "title": "Can Kansas City keep running without Walker?",
+      "football": "Kansas City (6-2) allows 17.9 points per game to Atlanta’s 24.8 (3-6). With different rosters, KC won their 2024 meeting 22-17.",
+      "risk": "Right tackle Jaylon Moore is out (Saturday report, checked 1:24:59 a.m. CT). KC expects Josh Ezeudu to make his second start this season. A deficit tests his pass protection. Passing-down and goal-line roles remain unsettled.",
+      "market_note": "The current model gives KC 60.2% and trailed the market over 135 test games.",
+      "market_probability": 0.609,
+      "show_market_based_return": true,
+      "market_label": "the median of five books",
+      "sources": [
+        [
+          "KC results",
+          "https://www.chiefs.com/schedule/2026/"
+        ],
+        [
+          "ATL results",
+          "https://www.atlantafalcons.com/schedule/2026/"
+        ],
+        [
+          "Injuries",
+          "https://www.chiefs.com/news/week-10-injury-report-chiefs-vs-falcons-2026"
+        ],
+        [
+          "NFL matchup",
+          "https://media.nfl.com/content/dam/communications/football-communications/2026/capsules/Week%2010%20Capsules.pdf"
+        ]
+      ],
+      "summary_condition": "Only if Mahomes starts and Kelce, Rice and Worthy play.",
+      "prior_observations": [
+        {
+          "book": "draftkings",
+          "price": -166,
+          "observed_utc": "2026-11-14T22:53:42Z",
+          "source": "ESPN display",
+          "source_url": "https://www.espn.com/nfl/game/_/gameId/401873058/chiefs-falcons",
+          "artifact_sha256": "206d164be40574fa78cb9a1fca8f0db3b3c8d8ef0a5b56431f3f975682d60e9e"
+        }
+      ]
+    },
+    {
+      "event_id": "48e497c230e6c9afcb3b600091d28e17",
+      "market": "player_reception_yds",
+      "subject": "Jaylen Warren",
+      "side": "Over",
+      "point": 22.5,
+      "title": "Warren can get there on short throws",
+      "football": "He caught 3 passes for 49 yards against Cincinnati before Dowdle returned.",
+      "risk": "A Pittsburgh lead favors handoffs. Check the official inactive list when available for TE Freiermuth (illness) and DT Harmon (foot), both questionable. Since Dowdle returned, Pittsburgh reports 46% of routes and 10% of targets for Warren (sample unspecified). He had zero receiving yards last game.",
+      "market_note": "BetMGM’s 22.5 was the lowest line. The other four books ranged from 23.5 to 27.5. Independent expected value is unknown.",
+      "market_probability": 0.5,
+      "market_label": "BetMGM’s two -115 prices",
+      "sources": [
+        [
+          "NFL game log",
+          "https://www.nfl.com/players/jaylen-warren/stats/logs/2026/"
+        ],
+        [
+          "Steelers usage",
+          "https://www.steelers.com/news/matt-s-stats-week-10-at-bengals"
+        ],
+        [
+          "Prior lines",
+          "https://statsniper.com/leagues/nfl/player/jaylen-warren/props/receiving-yards/"
+        ]
+      ],
+      "summary_condition": "Only if Rodgers starts and Warren keeps passing downs.",
+      "recent_appearances": {
+        "season": 2026,
+        "season_type": "REG",
+        "complete_through_card": true,
+        "source_url": "https://www.nfl.com/players/jaylen-warren/stats/logs/2026/",
+        "prior_line_source_url": "https://statsniper.com/leagues/nfl/player/jaylen-warren/props/receiving-yards/",
+        "entries": [
+          {
+            "appearance": 1,
+            "date": "2026-09-13",
+            "value": 27,
+            "prior_line": 19.5
+          },
+          {
+            "appearance": 2,
+            "date": "2026-09-20",
+            "value": 34,
+            "prior_line": 18.5
+          },
+          {
+            "appearance": 3,
+            "date": "2026-09-27",
+            "value": 49,
+            "prior_line": 26.5
+          },
+          {
+            "appearance": 4,
+            "date": "2026-10-01",
+            "value": 33,
+            "prior_line": 26.5
+          },
+          {
+            "appearance": 5,
+            "date": "2026-10-11",
+            "value": 87,
+            "prior_line": 22.5
+          },
+          {
+            "appearance": 6,
+            "date": "2026-10-18",
+            "value": 28,
+            "prior_line": 28.5
+          },
+          {
+            "appearance": 7,
+            "date": "2026-10-25",
+            "value": 36,
+            "prior_line": 25.5
+          },
+          {
+            "appearance": 8,
+            "date": "2026-11-01",
+            "value": 0,
+            "prior_line": 22.5
+          }
+        ],
+        "corroborating_input": {
+          "file": "props_20261115.json",
+          "schema_version": 2,
+          "sha256": "7f202c76572738e0329e8c9721fbaacee06333008748a019d05880c380b50980"
+        }
+      }
+    }
+  ],
+  "red_team": "Claude's NFL football red team separately reviewed both frozen calls."
+}

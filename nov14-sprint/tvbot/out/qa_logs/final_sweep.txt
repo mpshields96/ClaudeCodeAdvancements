@@ -1,0 +1,18 @@
+COST SWEEP on nov14-sprint/tvbot/fixtures/normal_bars.jsonl, rule EMAX-1.0.0-14251ac3, 17 fills
+
+Same trades, every cost multiplied (repriced from the raw open stored on each fill):
+  costs x0   net    +270.30
+  costs x1   net    +227.88   equals the replay's net: yes
+  costs x2   net    +185.47
+  costs x4   net    +100.63
+  costs x8   net     -69.03
+net falls at every step as costs rise: yes
+
+Separate re-runs that wait extra bars before filling (these are different fills,
+so they are shown apart and are not part of the check above):
+  extra wait 0 bar(s)   fills  17   net    +227.88
+  extra wait 1 bar(s)   fills  17   net    +244.09
+  extra wait 2 bar(s)   fills  17   net    +466.74
+Inside a session the decision is ready just after the next bar has opened, so the
+fill is already one full bar later; an extra wait of 1 changes only fills that
+cross a session break.

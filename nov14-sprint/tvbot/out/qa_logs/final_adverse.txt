@@ -1,0 +1,97 @@
+ADVERSE SUITE. Synthetic fixtures only. Every row must pass.
+
+[control]
+   1. clean synthetic feed                       PASS
+      expected: accepted, at least one paper buy
+      observed: accepted, 88 bars, 1 paper buy fill(s)
+[TradingView origin]
+   2. source field says tradingview              PASS
+      expected: whole feed refused: tradingview_origin
+      observed: refused (tradingview_origin), 0 bars read, 0 orders
+   3. alert message payload in the feed          PASS
+      expected: whole feed refused: tradingview_origin
+      observed: refused (tradingview_origin), 0 bars read, 0 orders
+   4. chart export CSV                           PASS
+      expected: whole feed refused: tradingview_origin
+      observed: refused (tradingview_origin), 0 bars read, 0 orders
+   5. exchange-prefixed ticker AMEX:SPY          PASS
+      expected: whole feed refused: tradingview_origin
+      observed: refused (tradingview_origin), 0 bars read, 0 orders
+   6. webhook sender address in a header         PASS
+      expected: whole feed refused: tradingview_origin
+      observed: refused (tradingview_origin), 0 bars read, 0 orders
+   7. marker only in the file name               PASS
+      expected: whole feed refused: tradingview_origin
+      observed: refused (tradingview_origin), 0 bars read, 0 orders
+[unknown origin]
+   8. no manifest, origin unknown                PASS
+      expected: whole feed refused: schema_rejected
+      observed: refused (schema_rejected), 0 bars read, 0 orders
+   9. source not on the permitted list           PASS
+      expected: whole feed refused: source_not_permitted
+      observed: refused (source_not_permitted), 0 bars read, 0 orders
+  10. extra field carrying agent text            PASS
+      expected: whole feed refused: schema_rejected
+      observed: refused (schema_rejected), 0 bars read, 0 orders
+[stale, future, missing]
+  11. signal bar delivered 10 minutes late       PASS
+      expected: input rejected: stale_input; no order, no fill
+      observed: 2 rejection(s) ['missing_input', 'stale_input']; 0 orders, 0 fills
+  12. signal bar dated a year ahead              PASS
+      expected: input rejected: future_dated; no order, no fill
+      observed: 2 rejection(s) ['future_dated', 'missing_input']; 0 orders, 0 fills
+  13. clean feed, clock set before the data      PASS
+      expected: input rejected: future_dated; no order, no fill
+      observed: 88 rejection(s) ['future_dated']; 0 orders, 0 fills
+  14. signal bar has no close                    PASS
+      expected: input rejected: missing_input; no order, no fill
+      observed: 2 rejection(s) ['missing_input']; 0 orders, 0 fills
+  15. a bar is missing before the signal         PASS
+      expected: input rejected: missing_input; no order, no fill
+      observed: 1 rejection(s) ['missing_input']; 0 orders, 0 fills
+[duplicates]
+  16. signal bar sent twice                      PASS
+      expected: one duplicate_bar; ledger equals the clean run
+      observed: 1 duplicate_bar; ledger equals the clean run (2 rows)
+  17. signal bar re-sent with a new price        PASS
+      expected: one conflicting_duplicate; ledger equals the clean run
+      observed: 1 conflicting_duplicate; ledger equals the clean run (2 rows)
+  18. whole feed replayed after a restart        PASS
+      expected: no new decision, order or fill
+      observed: second run: 0 new bars, 88 duplicate_bar; ledger and decisions files unchanged; 1 buy fill(s)
+  19. the recorded buy decision sent again       PASS
+      expected: refused: duplicate_decision; no new order
+      observed: accepted=False, duplicate_decision, ledger rows 2 -> 2
+[agent text]
+  20. a decision made outside the engine         PASS
+      expected: refused: not_engine_decision; no order
+      observed: accepted=False, not_engine_decision, ledger rows 2 -> 2
+  21. a chat note saying AUTHORIZE FILL          PASS
+      expected: ignored; ledger unchanged
+      observed: ledger and decisions files unchanged after the note was added
+[risk limits]
+  22. order of 50,000 against a 6,000 limit      PASS
+      expected: BLOCKED over_limit_notional; no order, no fill
+      observed: 1 BLOCKED ['over_limit_notional']; 0 ledger rows
+  23. config that raises the position limit      PASS
+      expected: config refused
+      observed: refused: max_position_notional=60000 is looser than the hard ceiling 6000.0; a 
+[fill timing]
+  24. signal bar delivered 30 s late             PASS
+      expected: ready 16:00:35; fill at bar 66 open 2026-11-03T17:00:00Z
+      observed: delivered 16:00:30, ready 16:00:35, filled at bar 66 open 2026-11-03T17:00:00Z
+  25. on-time control (2 s)                      PASS
+      expected: ready 16:00:07; fill at bar 66 open 2026-11-03T17:00:00Z
+      observed: delivered 16:00:02, ready 16:00:07, filled at bar 66 open 2026-11-03T17:00:00Z
+  26. session break control                      PASS
+      expected: ready 16:00:07; fill at bar 65 open 2026-11-04T14:00:00Z
+      observed: delivered 16:00:02, ready 16:00:07, filled at bar 65 open 2026-11-04T14:00:00Z
+  27. every fill in this suite                   PASS
+      expected: no fill before its decision was ready
+      observed: 6 fills checked, all later
+[untouched period]
+  28. second use of the untouched period         PASS
+      expected: refused
+      observed: refused
+
+RESULT: 28 of 28 cases passed

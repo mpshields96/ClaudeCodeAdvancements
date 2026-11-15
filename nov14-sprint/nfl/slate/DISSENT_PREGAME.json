@@ -1,0 +1,455 @@
+{
+  "schema": "dissent_pregame/1",
+  "built_utc": "2026-11-15T09:55:59Z",
+  "paper_only": true,
+  "advisory_only": true,
+  "author": "nfl-props worker (Claude)",
+  "top6_definition": "the six engine candidates with rank 1 to 6 in results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z) (run 2026-11-15T09:31:27Z); this file adds no second ranking",
+  "ranked_rows_in_run": 1720,
+  "rows": [
+    {
+      "engine_rank": 1,
+      "label": "Indianapolis Colts to win",
+      "game": "MIA at IND",
+      "kickoff_utc": "2026-11-15T18:00:00Z",
+      "market": "moneyline",
+      "line": null,
+      "price": -200,
+      "opposite_price": 170,
+      "offering_book": "espnbet",
+      "offering_book_updated_utc": "2026-11-15T06:53:59Z",
+      "break_even": 0.6667,
+      "market_no_vig": 0.6528,
+      "gap_pp": -1.39,
+      "model_estimate": 0.5995,
+      "peer_count": 4,
+      "control": true,
+      "selected": false,
+      "engine_source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+      "headline": "Indianapolis moneyline (control row): the price already charges for Miami's first-time quarterback, and Indianapolis itself is 2-7 and rebuilt.",
+      "case_against": [
+        {
+          "label": "K",
+          "text": "Indianapolis is 2-7 with five straight losses (weeks 5 to 9). It has scored 184 and allowed 249 in nine games: 20.4 for, 27.7 against, margin -7.2 per game (E, -65 / 9). Miami is 1-7 (126 for, 200 against; 15.8 and 25.0; margin -9.25 per game, E). The two teams' margins are 2.0 points apart (E).",
+          "source": "ESPN public scoreboard, site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=1..9 (retrieved 2026-11-15T09:42:01Z to 09:42:03Z)",
+          "source_time_utc": "2026-11-15T09:42:01Z"
+        },
+        {
+          "label": "K",
+          "text": "AP preview: the Colts traded Quenton Nelson and DeForest Buckner about two weeks ago and Keenan Allen and Josh Downs this week; Laquon Treadwell moves into the WR1 role; the headline calls it a battle of reeling teams. The roster that produced the 2-7 record is not the roster that plays Sunday.",
+          "source": "AP preview carried in the ESPN summary file (headline: QB Kyle McCord eager to make his 1st NFL start as Dolphins and Colts meet in battle of reeling teams), published 2026-11-12T23:10:34Z",
+          "source_time_utc": "2026-11-12T23:10:34Z"
+        },
+        {
+          "label": "K",
+          "text": "Indianapolis is missing OT Jalen Travis (Out, record 2026-11-14T01:50Z), TE Will Mallory (Out, 2026-11-14T17:22Z), TE Mo Alie-Cox (IR, 2026-11-14T17:24Z), LB Jaylon Carlies (Out, 2026-11-14T01:46Z) and LB Akeem Davis-Gaither (IR). ESPN's saved list shows only five entries per team, so completeness is U.",
+          "source": "ESPN public game summary, site.api.espn.com/apis/site/v2/sports/football/nfl/summary (saved copy inputs/espn-summary.20261115T071450Z/, retrieved 2026-11-15T07:14:50Z)",
+          "source_time_utc": "2026-11-15T07:14:50Z"
+        },
+        {
+          "label": "K",
+          "text": "Miami starts Kyle McCord, his first NFL start. That is in the price: DraftKings shows Indianapolis at -218 at its earliest observation (2026-11-14T22:53Z) and at -218 in the 06:54Z read. What the price was before the quarterback news is U, so no pre-news comparison exists.",
+          "source": "miamidolphins.com, top-quotes article on the new quarterback (saved copy retrieved 2026-11-15T07:29:24Z; article time zone not stated); results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+          "source_time_utc": "2026-11-15T07:29:24Z"
+        },
+        {
+          "label": "E",
+          "text": "Model 59.95% against break-even 66.67% at -200; market no-vig 65.28%; gap -1.39 points. Even the market's own fair number sits below the price paid. The -200 comes from one book (theScore Bet); the other four are -210 to -220, so the cheapest price is the least representative.",
+          "source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+          "source_time_utc": "2026-11-15T09:31:27Z"
+        }
+      ],
+      "price_limits": "One-book best price (espnbet -200, updated 2026-11-15T06:53:59Z); other books are -210 to -220 (K). Pre-news price U. No 'last 5' record is a pick-grade sample for a moneyline: Indianapolis lost its last 5, Miami went L L W L L (E, ESPN scoreboards).",
+      "unknowns": [
+        "Lucas Oil Stadium roof status (ESPN indoor field is null)",
+        "final inactives (about 16:30Z, E, from the 90-minute rule)",
+        "whether ESPN's five-entry injury lists are truncated"
+      ],
+      "weakens_this_dissent": "More Miami offensive-line or receiver absences on the final inactive list, or a Miami quarterback change before kickoff."
+    },
+    {
+      "engine_rank": 2,
+      "label": "Cincinnati Bengals to win",
+      "game": "PIT at CIN",
+      "kickoff_utc": "2026-11-16T01:20:00Z",
+      "market": "moneyline",
+      "line": null,
+      "price": -178,
+      "opposite_price": 150,
+      "offering_book": "fanduel",
+      "offering_book_updated_utc": "2026-11-15T06:54:59Z",
+      "break_even": 0.6403,
+      "market_no_vig": 0.6266,
+      "gap_pp": -1.37,
+      "model_estimate": 0.5892,
+      "peer_count": 4,
+      "control": true,
+      "selected": false,
+      "engine_source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+      "headline": "Cincinnati moneyline (control row): Pittsburgh won the earlier meeting, has the better defense, and the cheapest Cincinnati price is one book's.",
+      "case_against": [
+        {
+          "label": "K",
+          "text": "Pittsburgh beat Cincinnati 30-27 in Pittsburgh in week 3.",
+          "source": "ESPN public scoreboard, site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=1..9 (retrieved 2026-11-15T09:42:01Z to 09:42:03Z)",
+          "source_time_utc": "2026-11-15T09:42:01Z"
+        },
+        {
+          "label": "K",
+          "text": "Both are 6-2 and won their last four (L W W W W each). Cincinnati scores 30.0 and allows 21.9 per game (margin +8.1); Pittsburgh scores 22.5 and allows 18.0 (margin +4.5). Pittsburgh's defense is the better of the two by 3.9 points per game (E, 21.9 - 18.0).",
+          "source": "ESPN public scoreboard, site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=1..9 (retrieved 2026-11-15T09:42:01Z to 09:42:03Z)",
+          "source_time_utc": "2026-11-15T09:42:01Z"
+        },
+        {
+          "label": "K",
+          "text": "Cincinnati S Kyle Dugger is Out (record 2026-11-14T01:56Z) and WR Andrei Iosivas is on IR (2026-11-14T20:08Z). Pittsburgh TE Pat Freiermuth (illness, 2026-11-14T17:39Z) and DT Derrick Harmon (2026-11-14T20:05Z) are Questionable, and WR Michael Pittman Jr. is on IR.",
+          "source": "ESPN public game summary, site.api.espn.com/apis/site/v2/sports/football/nfl/summary (saved copy inputs/espn-summary.20261115T071450Z/, retrieved 2026-11-15T07:14:50Z)",
+          "source_time_utc": "2026-11-15T07:14:50Z"
+        },
+        {
+          "label": "K",
+          "text": "FanDuel -178 is the cheapest of five books (others -185 to -195). DraftKings moved from -192 (2026-11-14T22:53Z) to -185 (06:54Z), toward Pittsburgh; reason U.",
+          "source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z); sunday-odds.json, saved keyless odds capture (captured 2026-11-15T06:55:06Z)",
+          "source_time_utc": "2026-11-15T06:55:06Z"
+        },
+        {
+          "label": "E",
+          "text": "Model 58.92% against break-even 64.03% at -178; market no-vig 62.66%; gap -1.37 points.",
+          "source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+          "source_time_utc": "2026-11-15T09:31:27Z"
+        }
+      ],
+      "price_limits": "Best price from one book (FanDuel). Game total about 49 to 49.5 (K, feed), so a one-score game is the base case. Night kickoff (2026-11-16T01:20Z), so more news can arrive after every other game has kicked off.",
+      "unknowns": [
+        "stadium roof status (not read)",
+        "final inactives about 23:50Z (E, 90-minute rule)",
+        "AccuWeather forecast hour and its time zone (39 F, gust 5 mph, hour parameter 20)"
+      ],
+      "weakens_this_dissent": "Pittsburgh inactives of Freiermuth or Harmon, or a Cincinnati price at or better than -178 at several books."
+    },
+    {
+      "engine_rank": 3,
+      "label": "Kansas City Chiefs to win",
+      "game": "KC at ATL",
+      "kickoff_utc": "2026-11-15T18:00:00Z",
+      "market": "moneyline",
+      "line": null,
+      "price": -166,
+      "opposite_price": 140,
+      "offering_book": "draftkings",
+      "offering_book_updated_utc": "2026-11-15T06:54:00Z",
+      "break_even": 0.6241,
+      "market_no_vig": 0.6116,
+      "gap_pp": -1.24,
+      "model_estimate": 0.6024,
+      "peer_count": 4,
+      "control": false,
+      "selected": true,
+      "engine_source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+      "headline": "Kansas City moneyline (the selected call): Walker is out, Emmett Johnson has never carried more than 8 times, and the price is below the market's own fair number.",
+      "case_against": [
+        {
+          "label": "K",
+          "text": "Kenneth Walker III is Out (groin; ESPN record 2026-11-14T16:33Z). He had 159 carries for 872 yards. Emmett Johnson had 26 carries for 111 yards over eight 2026 appearances, with a maximum of 8 in a game. DraftKings, BetMGM and theScore Bet posted Johnson at 16.5 carries (observed 2026-11-15T07:52Z): the books expect a big role, but no one has seen him carry it.",
+          "source": "ESPN public game summary, site.api.espn.com/apis/site/v2/sports/football/nfl/summary (saved copy inputs/espn-summary.20261115T071450Z/, retrieved 2026-11-15T07:14:50Z); replacements/KC_SNAPSHOT_20261115.md and replacement_report_20261115.json (Claude producer, Codex-checked); Replacement_Role_Crosscheck.md (Codex independent check) citing chiefs.com injury report and preview, nfl.com game log, packers.com depth chart, transactions and gamebook, nflverse",
+          "source_time_utc": "2026-11-15T07:52Z"
+        },
+        {
+          "label": "K",
+          "text": "An archived 2022 to 2025 check found the next back led or tied his team's backs in carries in 17 of 23 qualifying team-games, and team back rushing yards fell below the prior four-game average in 14 of 23 (narrow cases, not odds, and not a KC price).",
+          "source": "Replacement_Role_Crosscheck.md (Codex independent check) citing chiefs.com injury report and preview, nfl.com game log, packers.com depth chart, transactions and gamebook, nflverse",
+          "source_time_utc": "unknown (analysis run time not stamped in the note)"
+        },
+        {
+          "label": "K",
+          "text": "Kansas City is also without OT Jaylon Moore (Out, 2026-11-14T02:02Z) and DT Peter Woods (Out, 2026-11-14T02:00Z); RB Jaydn Ott and CB Mansoor Delane are Questionable (records 2026-11-13T23:28Z and T23:25Z; injury types not in my saved notes, so U). KC has lost two of its last five (W W L L W).",
+          "source": "ESPN public game summary, site.api.espn.com/apis/site/v2/sports/football/nfl/summary (saved copy inputs/espn-summary.20261115T071450Z/, retrieved 2026-11-15T07:14:50Z); ESPN public scoreboard, site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=1..9 (retrieved 2026-11-15T09:42:01Z to 09:42:03Z)",
+          "source_time_utc": "2026-11-15T07:14:50Z"
+        },
+        {
+          "label": "K",
+          "text": "Red-team condition on the call: Mahomes starts and the listed receiving group remains available. The saved ESPN injury list has five KC entries and no quarterback among them; whether the list is truncated is U, so Mahomes' status is not confirmed by that file.",
+          "source": "ESPN public game summary, site.api.espn.com/apis/site/v2/sports/football/nfl/summary (saved copy inputs/espn-summary.20261115T071450Z/, retrieved 2026-11-15T07:14:50Z)",
+          "source_time_utc": "2026-11-15T07:14:50Z"
+        },
+        {
+          "label": "E",
+          "text": "Model 60.24% against break-even 62.41% at -166; market no-vig 61.16%; gap -1.24 points. The market's own fair number is 1.24 points under the price paid. DraftKings -166 is the cheapest of five (others -172 to -186); DraftKings has not moved since its earliest observation (2026-11-14T22:53Z), which is after the Walker Out record (2026-11-14T16:33Z), so the price from before the Walker news is U.",
+          "source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+          "source_time_utc": "2026-11-15T09:31:27Z"
+        }
+      ],
+      "price_limits": "Best price is one book's (draftkings -166, updated 2026-11-15T06:54:00Z). Atlanta is also short WR Zachariah Branch (Out, 2026-11-13T19:42Z) and LB Divine Deablo (Out, 2026-11-14T22:57Z), which favors Kansas City and is in the price (K, same ESPN file).",
+      "unknowns": [
+        "Mercedes-Benz Stadium roof status (ESPN indoor field is null), so the 54 F forecast may not matter",
+        "Mahomes status in the final inactive list",
+        "final inactives about 16:30Z (E)",
+        "snap or goal-line split between Johnson, Ott and Nate Carter"
+      ],
+      "weakens_this_dissent": "Johnson and Ott both active with Johnson on the goal line, the Chiefs' line intact, and Mahomes confirmed.",
+      "see_also": "Replacement roles section below; FOOTBALL_RED_TEAM.md section 1; WATCHLIST_REVIEW.md Kansas City ML row."
+    },
+    {
+      "engine_rank": 4,
+      "label": "First half · over 16.5 game points",
+      "game": "MIA at IND",
+      "kickoff_utc": "2026-11-15T18:00:00Z",
+      "market": "total",
+      "line": 16.5,
+      "price": -175,
+      "opposite_price": 138,
+      "offering_book": "betrivers",
+      "offering_book_updated_utc": null,
+      "break_even": 0.6364,
+      "market_no_vig": 0.6023,
+      "gap_pp": -3.4,
+      "model_estimate": null,
+      "peer_count": 0,
+      "control": false,
+      "selected": false,
+      "engine_source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+      "headline": "First half over 16.5 (Miami at Indianapolis): a one-book line that sits below its peers, with Miami's own first-half scoring at or under 7 points in six of eight games.",
+      "case_against": [
+        {
+          "label": "K",
+          "text": "Miami scored 7 or fewer points in the first half in 6 of 8 games (own first-half points 6, 6, 7, 0, 7, 21, 13, 3; average 7.9 per game, E). Indianapolis averaged 11.0 (E). Miami starts a first-time starter (McCord) without C Aaron Brewer (Out, record 2026-11-14T01:25Z); both are reasons to expect Miami's first-half scoring to stay low (interpretation, not measured).",
+          "source": "ESPN public scoreboard, site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=1..9 (retrieved 2026-11-15T09:42:01Z to 09:42:03Z); ESPN public game summary, site.api.espn.com/apis/site/v2/sports/football/nfl/summary (saved copy inputs/espn-summary.20261115T071450Z/, retrieved 2026-11-15T07:14:50Z)",
+          "source_time_utc": "2026-11-15T09:42:01Z"
+        },
+        {
+          "label": "K",
+          "text": "Both sides are thin: Indianapolis is missing OT Travis, TE Mallory and the trade-away receivers (AP, 2026-11-12T23:10:34Z); Miami is missing WR Jared Wayne (Out, 2026-11-14T00:09Z) and has WR Chris Bell Doubtful (2026-11-13T22:10Z).",
+          "source": "ESPN public game summary, site.api.espn.com/apis/site/v2/sports/football/nfl/summary (saved copy inputs/espn-summary.20261115T071450Z/, retrieved 2026-11-15T07:14:50Z); AP preview carried in the ESPN summary file (headline: QB Kyle McCord eager to make his 1st NFL start as Dolphins and Colts meet in battle of reeling teams), published 2026-11-12T23:10:34Z",
+          "source_time_utc": "2026-11-15T07:14:50Z"
+        },
+        {
+          "label": "E",
+          "text": "Over 16.5 first-half points hit in 6 of 9 Indianapolis games and 5 of 8 Miami games (pooled 11 of 17). Last five games: Indianapolis 3 of 5, Miami 2 of 5 (pooled 5 of 10). The 2026 history leans over, so that is the honest counterweight to this dissent. The line was set 2 to 3 points below DraftKings, FanDuel and theScore Bet (18.5 to 19.5), consistent with BetRivers pricing the shorter line at -175 (E, interpretation).",
+          "source": "ESPN public scoreboard, site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=1..9 (retrieved 2026-11-15T09:42:01Z to 09:42:03Z); sunday-odds.json, saved keyless odds capture (captured 2026-11-15T06:55:06Z)",
+          "source_time_utc": "2026-11-15T09:42:01Z"
+        },
+        {
+          "label": "E",
+          "text": "These rates are against today's line only. The first-half line each game opened at is U, so there is no hit rate against each game's own prior line. Feed first-half team totals Indianapolis 10.5 plus Miami 7.5 = 18.0 (E), 1.5 over 16.5.",
+          "source": "sunday-odds.json, saved keyless odds capture (captured 2026-11-15T06:55:06Z)",
+          "source_time_utc": "2026-11-15T06:55:06Z"
+        }
+      ],
+      "price_limits": "Single book: BetRivers only (peer_count 0), book_updated_utc is null, so the line can be stale (U). With one book the 'gap' is the book's own margin and cannot be an edge: pw(-175) = 63.64%, pw(+138) = 42.02%, sum 105.65% (E), no-vig over 60.23% (E), gap -3.40 points (E, the share of the book's own margin carried by the over).",
+      "unknowns": [
+        "Lucas Oil roof status (46 F, gust 10 mph if open)",
+        "BetRivers line freshness",
+        "first-half lines of past games",
+        "final inactives about 16:30Z (E)"
+      ],
+      "weakens_this_dissent": "A dated BetRivers update showing 16.5 is current, or Miami's center and receiver absences replaced by active players on the 16:30Z (E) inactive list."
+    },
+    {
+      "engine_rank": 5,
+      "label": "First half · under 24.5 game points",
+      "game": "JAX at TEN",
+      "kickoff_utc": "2026-11-15T18:00:00Z",
+      "market": "total",
+      "line": 24.5,
+      "price": -162,
+      "opposite_price": 130,
+      "offering_book": "betrivers",
+      "offering_book_updated_utc": null,
+      "break_even": 0.6183,
+      "market_no_vig": 0.5871,
+      "gap_pp": -3.12,
+      "model_estimate": null,
+      "peer_count": 0,
+      "control": false,
+      "selected": false,
+      "engine_source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+      "headline": "First half under 24.5 (Jacksonville at Tennessee): a one-book line one point above its peers; a 10.5 to 11 point favorite can pull away early.",
+      "case_against": [
+        {
+          "label": "K",
+          "text": "Jacksonville is a 10.5 to 11 point favorite (game total about 46; team totals about 28.5 to 29.5 and 16.5, K feed) and is 6-2 with a +13.5 margin. In its 42-7 win over Indianapolis in week 8 the first half totaled 28 (Jacksonville 28, Indianapolis 0).",
+          "source": "sunday-odds.json, saved keyless odds capture (captured 2026-11-15T06:55:06Z); ESPN public scoreboard, site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=1..9 (retrieved 2026-11-15T09:42:01Z to 09:42:03Z)",
+          "source_time_utc": "2026-11-15T06:55:06Z"
+        },
+        {
+          "label": "E",
+          "text": "Under 24.5 first-half points hit in 6 of 8 Jacksonville games and 5 of 8 Tennessee games (pooled 11 of 16; under 23.5: 9 of 16). The last five games each are 3 of 5 and 2 of 5 (pooled 5 of 10): the recent trend is no better than a coin flip, and Tennessee's last five first-half totals were 31, 15, 13, 31, 27. The honest counterweight is that the full 2026 sample leans under.",
+          "source": "ESPN public scoreboard, site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=1..9 (retrieved 2026-11-15T09:42:01Z to 09:42:03Z)",
+          "source_time_utc": "2026-11-15T09:42:01Z"
+        },
+        {
+          "label": "K",
+          "text": "Tennessee's defense is depleted: LB Cody Barton (concussion, 2026-11-13T22:28Z) and LB Anthony Hill Jr. (neck, 2026-11-13T22:26Z) are Out, G Peter Skoronski is on IR (2026-11-14T21:52Z) and RB Tyjae Spears is Questionable (knee, 2026-11-13T20:43Z). Jacksonville S Jessie Bates III is Out (coach's decision, 2026-11-13T16:23Z). Missing defenders on a defense that already allows 24.9 points per game (E) make a quick Jacksonville score more plausible, not less (interpretation, not measured).",
+          "source": "ESPN public game summary, site.api.espn.com/apis/site/v2/sports/football/nfl/summary (saved copy inputs/espn-summary.20261115T071450Z/, retrieved 2026-11-15T07:14:50Z)",
+          "source_time_utc": "2026-11-15T07:14:50Z"
+        },
+        {
+          "label": "E",
+          "text": "Feed first-half team totals Jacksonville 14.5 plus Tennessee 7.5 = 22.0 (E), 2.5 under the 24.5 line, and 2026 own first-half scoring averages 15.9 plus 6.2 = 22.1 (E, ESPN). The cushion is real but it is also the cushion the -162 price charges for.",
+          "source": "sunday-odds.json, saved keyless odds capture (captured 2026-11-15T06:55:06Z); ESPN public scoreboard, site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=1..9 (retrieved 2026-11-15T09:42:01Z to 09:42:03Z)",
+          "source_time_utc": "2026-11-15T06:55:06Z"
+        }
+      ],
+      "price_limits": "Single book: BetRivers only, 24.5 against 23.5 at the other books (K), book_updated_utc null so staleness is U. With one book the 'gap' is the book's own margin and cannot be an edge: pw(-162) = 61.83%, pw(+130) = 43.48%, sum 105.31% (E), no-vig under 58.71%, gap -3.12 points (E).",
+      "unknowns": [
+        "Nissan Stadium weather effect (53 F, gust 7 mph forecast, hour U)",
+        "BetRivers line freshness",
+        "first-half lines of past games",
+        "final inactives about 16:30Z (E)"
+      ],
+      "weakens_this_dissent": "A dated BetRivers update showing 24.5 is current, or Jacksonville quarterback or running-back inactives at 16:30Z (E) that slow its first-half scoring."
+    },
+    {
+      "engine_rank": 6,
+      "label": "Green Bay Packers to win",
+      "game": "MIN at GB",
+      "kickoff_utc": "2026-11-15T18:00:00Z",
+      "market": "moneyline",
+      "line": null,
+      "price": -142,
+      "opposite_price": 120,
+      "offering_book": "draftkings",
+      "offering_book_updated_utc": "2026-11-15T06:54:00Z",
+      "break_even": 0.5868,
+      "market_no_vig": 0.5728,
+      "gap_pp": -1.4,
+      "model_estimate": 0.5548,
+      "peer_count": 4,
+      "control": false,
+      "selected": false,
+      "engine_source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+      "headline": "Green Bay moneyline: Minnesota is the better 2026 team on both sides of the ball, Cousins is a steady fill-in, and Green Bay's backfield is a three-man committee without Jacobs.",
+      "case_against": [
+        {
+          "label": "K",
+          "text": "Minnesota is 6-2 (146 for, 116 against; 18.2 and 14.5 per game; margin +3.8) against Green Bay's 6-3 (216 and 191; 24.0 and 21.2; +2.8). Minnesota's 14.5 allowed is the lowest of the ten teams I pulled (E; not a league-wide rank). Minnesota's losses are 15-19 at Detroit (week 8) and 6-23 against Buffalo (week 9).",
+          "source": "ESPN public scoreboard, site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=2026&seasontype=2&week=1..9 (retrieved 2026-11-15T09:42:01Z to 09:42:03Z)",
+          "source_time_utc": "2026-11-15T09:42:01Z"
+        },
+        {
+          "label": "K",
+          "text": "Kyler Murray is Out (hamstring, record 2026-11-14T19:54Z), so Kirk Cousins starts. His line with the Raiders per the club article: 202 of 315, 2,340 yards, 20 TD, 8 INT, rating 97.1 (club article). Minnesota also has WR Jauan Jennings (Out, 2026-11-13T21:30Z), LB Blake Cashman (Out, 2026-11-14T00:30Z) and WR Jordan Addison (thumb, Questionable) in doubt or out.",
+          "source": "ESPN public game summary, site.api.espn.com/apis/site/v2/sports/football/nfl/summary (saved copy inputs/espn-summary.20261115T071450Z/, retrieved 2026-11-15T07:14:50Z); vikings.com, Kirk Cousins starting vs Packers (saved copy retrieved 2026-11-15T07:29:25Z; article stamped Nov 13, 2026 3:11 PM, time zone not stated)",
+          "source_time_utc": "2026-11-15T07:29:25Z"
+        },
+        {
+          "label": "K",
+          "text": "Green Bay RB Josh Jacobs is Out (finger, 2026-11-14T14:26Z); RB Chris Brooks (ankle, 2026-11-14T22:29Z) and G Kevin Zeitler (2026-11-14T02:24Z) are Questionable; TE Josh Whyle is on IR. The run game rests on a Kaleb Johnson / MarShawn Lloyd / Brooks committee (see Replacement roles).",
+          "source": "ESPN public game summary, site.api.espn.com/apis/site/v2/sports/football/nfl/summary (saved copy inputs/espn-summary.20261115T071450Z/, retrieved 2026-11-15T07:14:50Z)",
+          "source_time_utc": "2026-11-15T07:14:50Z"
+        },
+        {
+          "label": "K",
+          "text": "DraftKings moved from -148 (2026-11-14T22:53Z) to -142 (06:54Z), toward Minnesota; the reason is U. DraftKings -142 is the cheapest of five (others -145 to -155).",
+          "source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+          "source_time_utc": "2026-11-15T09:31:27Z"
+        },
+        {
+          "label": "E",
+          "text": "Model 55.48% against break-even 58.68% at -142; market no-vig 57.28%; gap -1.40 points.",
+          "source": "results/sunday_20261115_candidates.json (engine run 2026-11-15T09:31:27Z)",
+          "source_time_utc": "2026-11-15T09:31:27Z"
+        }
+      ],
+      "price_limits": "Best price is one book's (draftkings -142, updated 2026-11-15T06:54:00Z). Spread is Green Bay -2.5 to -3 (K, feed): a field-goal game, so a one-score swing flips the result.",
+      "unknowns": [
+        "Lambeau weather effect (41 F, gust 5 mph forecast, hour U)",
+        "Brooks' snap count after activation (club transaction, 2026-11-14)",
+        "final inactives about 16:30Z (E)"
+      ],
+      "weakens_this_dissent": "Minnesota's two straight losses (15-19 at Detroit, 6-23 against Buffalo) support Green Bay, though who played quarterback in those games is U. The dissent also weakens if Cousins is ruled out, or if Brooks and Zeitler are both active and the Green Bay run game looks intact at 16:30Z (E).",
+      "see_also": "Replacement roles section below (Green Bay backfield)."
+    }
+  ],
+  "replacement_roles": {
+    "note": "Read-only summary. Hard evidence and interpretation are kept apart; nothing here changes a call, an order, a probability or the replacement report. Win-probability adjustment stays null.",
+    "kansas_city": {
+      "hard_evidence": [
+        {
+          "label": "K",
+          "text": "Walker Out; Johnson 26 carries, 111 yards (4.27), max 8 in a game, 14 catches for 237 yards over eight appearances; Walker 159 for 872.",
+          "source": "Replacement_Role_Crosscheck.md (Codex independent check) citing chiefs.com injury report and preview, nfl.com game log, packers.com depth chart, transactions and gamebook, nflverse",
+          "source_time_utc": "unknown (club and NFL pages undated in the note)"
+        },
+        {
+          "label": "K",
+          "text": "Three books posted Johnson at 16.5 rushing attempts (DraftKings over -116 / under -110; BetMGM and theScore Bet over -120 / under -110), no-vig 50.6% to 51.0% for 17 or more. Rushing-yard lines 72.5 to 75.5 (06:55:06Z feed).",
+          "source": "Replacement_Role_Crosscheck.md (Codex independent check) citing chiefs.com injury report and preview, nfl.com game log, packers.com depth chart, transactions and gamebook, nflverse",
+          "source_time_utc": "2026-11-15T07:52Z"
+        }
+      ],
+      "interpretation": [
+        {
+          "label": "U",
+          "text": "Chiefs preview expects Johnson to carry the load; goal-line and passing-down roles for Johnson, Ott and Carter are unconfirmed. Efficiency with 17 carries is unknown.",
+          "source": "replacements/KC_SNAPSHOT_20261115.md and replacement_report_20261115.json (Claude producer, Codex-checked)",
+          "source_time_utc": "2026-11-15T08:23:38Z"
+        }
+      ],
+      "football_case_against": "A back who has never carried more than 8 times is asked to carry 17. Archived cases lean toward the next back leading in carries but toward a team rushing decline, and Moore's absence hurts the line. This is a qualifier on the Kansas City call, not a price."
+    },
+    "green_bay": {
+      "hard_evidence": [
+        {
+          "label": "K",
+          "text": "Nov 10 depth chart lists MarShawn Lloyd behind Josh Jacobs. Chris Brooks activated Nov 14 (status Questionable). Same-book rushing-yard lines: Kaleb Johnson 28.5 to 29.5, Lloyd 10.5 to 11.5 (DraftKings 29.5 and 11.5, FanDuel 29.5 and 10.5, BetRivers 28.5 and 10.5).",
+          "source": "Replacement_Role_Crosscheck.md (Codex independent check) citing chiefs.com injury report and preview, nfl.com game log, packers.com depth chart, transactions and gamebook, nflverse",
+          "source_time_utc": "unknown (club pages undated in the note)"
+        },
+        {
+          "label": "K",
+          "text": "Nov 8 gamebook: Kaleb Johnson 14 carries for 68 yards, Pierre Strong 8 for 22, Jacobs 4 for 5. Green Bay led 42-21 entering the fourth quarter and half of Johnson's yards came on one 34-yard run. Jacobs had only three current-season games.",
+          "source": "Replacement_Role_Crosscheck.md (Codex independent check) citing chiefs.com injury report and preview, nfl.com game log, packers.com depth chart, transactions and gamebook, nflverse",
+          "source_time_utc": "unknown (gamebook for the Nov 8 game)"
+        }
+      ],
+      "interpretation": [
+        {
+          "label": "U",
+          "text": "Team reporter (Nov 13) reads recent usage as Kaleb Johnson ahead of Lloyd. That is the reporter's read, not a depth-chart change. Allow a committee outcome; observe all three backs' status.",
+          "source": "Replacement_Role_Crosscheck.md (Codex independent check) citing chiefs.com injury report and preview, nfl.com game log, packers.com depth chart, transactions and gamebook, nflverse",
+          "source_time_utc": "unknown (Nov 13 article)"
+        }
+      ],
+      "football_case_against": "No single back is established; Jacobs' four-carry game and Johnson's 14 carries came in a blowout script, which says little about a role in a close game. How much the Green Bay moneyline reflects the committee is U (no pre-news price)."
+    }
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "statement": "In the 09:31:27Z engine run, a positive market gap is almost never available by construction, so the top-ranked rows are the least-negative gaps and not edges; single-book rows can never show a positive gap.",
+      "rule": "market_gap_pp = market no-vig probability minus break-even at the offered price. With peer_count 0 the no-vig is the offering book's own, so gap is the book's own margin share (always below zero if the book has any margin).",
+      "check_now": "In this run, 950 of 1720 ranked rows have peer_count 0 and none has gap >= 0 (range -4.83 to -1.99 points); of 114 ranked rows with peer_count >= 3, 1 has a gap > 0. (K, computed from the candidates file.)",
+      "falsifier": "Any peer_count 0 ranked row with gap >= 0 (this run: 0 of 950).",
+      "control": "The 114 ranked rows with peer_count >= 3, where an outside consensus exists and a positive gap can occur (this run: 1 positive).",
+      "status": "checked, not falsified (this run only)",
+      "implication": "Rows 4 and 5 are ranked on margin, not value. Print the offering-book count beside any single-book row."
+    },
+    {
+      "id": "H2",
+      "statement": "A game with a first-time or fill-in starting quarterback (Miami with McCord, Las Vegas with Mendoza, Minnesota with Cousins) has a wider first-half-total spread than other 2026 games, so a first-half total priced from a single book's line is more uncertain, not less.",
+      "rule": "After Sunday's games, compare the spread (sample standard deviation) of first-half totals in games with a first-time or fill-in starter against the 2026 base rate and against games with a season-long starter.",
+      "check_now": "Descriptive only, not a test of the quarterback effect (starters per past game are U in these files): across ESPN weeks 1 to 9, first-half totals have mean 22.3 and sample standard deviation 8.8 over 136 games (E). Indianapolis and Miami games: mean 22.5, standard deviation 9.4, n = 17. Jacksonville and Tennessee games: mean 20.8, standard deviation 7.4, n = 16. The Indianapolis-Miami spread is 0.7 above the all-games spread; with n = 17 that is not a distinguishable difference.",
+      "falsifier": "The first-time-starter games' first-half totals show a spread equal to or narrower than the base rate once enough games exist (several games, not Sunday's two or three).",
+      "control": "Games with a season-long starter on both sides (for example Jacksonville and Tennessee so far, standard deviation 7.4, n = 16).",
+      "status": "prospective; cannot be scored from this slate alone (n of Sunday's first-time-starter games is 2 to 3)",
+      "implication": "If true, a one-point-off peer line is worth less than a typical single-book line. Until then it is a caution, not a finding."
+    }
+  ],
+  "unknowns": [
+    "Final inactives for every game (estimated about 90 minutes before kickoff, E: about 16:30Z for the 18:00Z games, about 19:35Z for Seattle at Las Vegas, about 23:50Z for Pittsburgh at Cincinnati).",
+    "Roof status for Lucas Oil Stadium and Mercedes-Benz Stadium (ESPN indoor field is null for every venue).",
+    "Whether ESPN's saved injury lists (five entries per team) are complete.",
+    "BetRivers book_updated_utc is null on the two single-book first-half rows, so staleness is unknown.",
+    "First-half lines of past 2026 games, so hit rates against each game's own prior line cannot be computed.",
+    "Time zones of the Minnesota, Miami and Las Vegas club articles and the AccuWeather forecast hour.",
+    "Pre-news prices for Kansas City, Indianapolis and Minnesota (no counterfactual, so no marginal effect of any absence).",
+    "KC_SNAPSHOT says the 07:14:50Z ESPN table still showed Walker questionable; the saved summary file in inputs/espn-summary.20261115T071450Z lists him Out (record 2026-11-14T16:33Z). Owner to reconcile; this file follows the saved copy.",
+    "BetMGM first-half totals ladder entries at 9.5, 13.5 and 30.5 (prices about -750 to -1100) are off-market ladder lines: a feed data-quality note, not used here."
+  ],
+  "label_key": "K = known and sourced; E = estimated, arithmetic shown; U = unknown or not verified.",
+  "cross_reference": {
+    "watchlist_review": "redteam/WATCHLIST_REVIEW.md covers Warren (engine rank 831, selected), Bowers over 58.5 receiving yards, Detroit first-half team total under 13.5 and Indianapolis team total under 20.5 with gaps of -3.49, -2.84, -1.22 and +0.02 points; Kansas City moneyline is both here (rank 3) and there (-1.25).",
+    "prop_review": "PROP_REVIEW.md carries the Warren dissent; it is not this file."
+  }
+}

@@ -1,0 +1,1 @@
+UNTOUCHED PERIOD REFUSED: the untouched period was already used on 2026-11-14T22:17:06Z by EMAX-1.0.0-14251ac3; it cannot be used again

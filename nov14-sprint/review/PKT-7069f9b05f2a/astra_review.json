@@ -1,0 +1,25 @@
+{
+ "label": "RECORDED",
+ "packet_id": "PKT-7069f9b05f2a",
+ "reviewer": "astra",
+ "model": "gpt-6-astra",
+ "model_said": "GPT-6",
+ "captured_utc": "2026-11-14T22:15:53Z",
+ "reviewed_utc_said": "2026-11-14T21:58:10.344938Z",
+ "packet_sha256": "2ac7c956b111b97b4bef8654e614fcf444d4d68c274783fffc096db27863a6fa",
+ "bars_sha256": "571b15b1f507fed467b43f7bc37426d318e7cfb0434329aa826b1ea218e2099e",
+ "answer_file": "astra_answer.txt",
+ "answer_sha256": "afdfe4a28c702eddc3987ed3a40ca6b3168d293cc1eec79904fb8dffd8abb24d",
+ "verdict": "agree",
+ "rule_followed": true,
+ "concerns": [
+  "ENTER_LONG follows the written signal rule on closed bar 73. Both EMA updates match to six decimal places, the fast EMA crossed above the slow EMA, and position_qty was zero. The separate three-bar cooldown cannot be verified."
+ ],
+ "missing_information": [
+  "The packet omits cooldown state and the bar sequence of any prior exit.",
+  "The EMA seed and bars before sequence 49 are unavailable for independently reproducing the supplied prior EMAs.",
+  "The exact serving model identifier is unavailable. The requested runtime was gpt-6-astra."
+ ],
+ "arithmetic_all_match": true,
+ "note": "Run by Codex 21:58:10Z to 21:58:48Z (codex/packet-review/Astra_Invocation.json, requested_model gpt-6-astra). Copied from Codex's file; Claude did not run it."
+}

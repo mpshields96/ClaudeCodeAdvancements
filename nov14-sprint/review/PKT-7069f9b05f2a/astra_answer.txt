@@ -1,0 +1,61 @@
+{
+  "arithmetic": [
+    {
+      "item": "ema_fast = (2 / (fast_len + 1)) * close + (1 - 2 / (fast_len + 1)) * prev_ema_fast",
+      "match": true,
+      "packet_value": 98.802128,
+      "recomputed_value": 98.802127555556
+    },
+    {
+      "item": "ema_slow = (2 / (slow_len + 1)) * close + (1 - 2 / (slow_len + 1)) * prev_ema_slow",
+      "match": true,
+      "packet_value": 98.783259,
+      "recomputed_value": 98.783259090909
+    },
+    {
+      "item": "cross_up: ema_fast > ema_slow and prev_ema_fast <= prev_ema_slow",
+      "match": true,
+      "packet_value": "cross_up",
+      "recomputed_value": "true (98.802128 > 98.783259 and 98.574164 <= 98.701585)"
+    },
+    {
+      "item": "bars_since_reset >= warmup_bars",
+      "match": true,
+      "packet_value": "73 >= 63",
+      "recomputed_value": "true"
+    },
+    {
+      "item": "qty = floor(order_notional_setting / close)",
+      "match": true,
+      "packet_value": 50,
+      "recomputed_value": 50
+    },
+    {
+      "item": "qty * close <= max_position_notional and qty <= max_qty",
+      "match": true,
+      "packet_value": "4980 <= 6000 and 50 <= 100",
+      "recomputed_value": "true (50 * 99.6 = 4980 and 50 <= 100)"
+    },
+    {
+      "item": "decision_ready_ts = available_ts + latency_seconds",
+      "match": true,
+      "packet_value": "2026-06-15T17:30:07Z",
+      "recomputed_value": "2026-06-15T17:30:07Z"
+    }
+  ],
+  "authority": "advisory only; cannot authorize a fill",
+  "concerns": [
+    "ENTER_LONG follows the written signal rule on closed bar 73. Both EMA updates match to six decimal places, the fast EMA crossed above the slow EMA, and position_qty was zero. The separate three-bar cooldown cannot be verified."
+  ],
+  "live_or_recorded": "live",
+  "missing_information": [
+    "The packet omits cooldown state and the bar sequence of any prior exit.",
+    "The EMA seed and bars before sequence 49 are unavailable for independently reproducing the supplied prior EMAs.",
+    "The exact serving model identifier is unavailable. The requested runtime was gpt-6-astra."
+  ],
+  "packet_id": "PKT-7069f9b05f2a",
+  "reviewed_utc": "2026-11-14T21:58:10.344938Z",
+  "reviewer_model": "GPT-6",
+  "rule_followed": true,
+  "verdict": "agree"
+}

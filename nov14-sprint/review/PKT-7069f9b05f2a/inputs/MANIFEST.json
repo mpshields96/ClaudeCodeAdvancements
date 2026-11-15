@@ -1,0 +1,10 @@
+{
+ "packet_id": "PKT-7069f9b05f2a",
+ "prepared_utc": "2026-11-14T22:15:52Z",
+ "packet_file": "PKT-7069f9b05f2a.json",
+ "packet_sha256": "2ac7c956b111b97b4bef8654e614fcf444d4d68c274783fffc096db27863a6fa",
+ "bars_file": "bars_through_signal_bar.jsonl",
+ "bars_sha256": "571b15b1f507fed467b43f7bc37426d318e7cfb0434329aa826b1ea218e2099e",
+ "source_packet": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/codex/packet-review/PKT-7069f9b05f2a.json",
+ "how_to_review": "Give a fresh reviewer PROMPT.txt and only these two files, by a local run or by pasting into a chat you already pay for. Then store the reply with: review_kit.py attach PKT-7069f9b05f2a ..."
+}

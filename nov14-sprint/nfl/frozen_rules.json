@@ -1,0 +1,40 @@
+{
+  "frozen_at_utc": "2026-11-14T21:24:22Z",
+  "ruleset_version": "v1",
+  "data_sha256": "44f6ba50a76303869229be8fdad82d124e77f24f50c90c319fbc245dd34120a0",
+  "train_seasons": [
+    2006,
+    2022
+  ],
+  "holdout_seasons": [
+    2023,
+    2025
+  ],
+  "selection": "highest training ROI at -110 per family, min 150 training bets",
+  "rules": [
+    {
+      "version_id": "HOME_DOG-v1.T7",
+      "family": "HOME_DOG",
+      "value": 7.0,
+      "train_roi_at_minus110": 0.031107535532314178
+    },
+    {
+      "version_id": "BIG_DOG-v1.T10",
+      "family": "BIG_DOG",
+      "value": 10.0,
+      "train_roi_at_minus110": 0.023513553991313253
+    },
+    {
+      "version_id": "REST_EDGE-v1.D6",
+      "family": "REST_EDGE",
+      "value": 6,
+      "train_roi_at_minus110": -0.012202562538133207
+    },
+    {
+      "version_id": "HIGH_TOTAL_UNDER-v1.T47",
+      "family": "HIGH_TOTAL_UNDER",
+      "value": 47.0,
+      "train_roi_at_minus110": -0.0016731734523146116
+    }
+  ]
+}

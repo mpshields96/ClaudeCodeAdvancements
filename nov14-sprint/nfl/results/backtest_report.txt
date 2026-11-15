@@ -1,0 +1,80 @@
+NFL rule backtest (paper research only). Run 2026-11-14T22:00:58Z
+Data: https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv
+  retrieved 2026-11-14T21:16:58Z, 2190038 bytes, sha256 44f6ba50a76303869229be8fdad82d124e77f24f50c90c319fbc245dd34120a0
+Line: nflverse spread_line / total_line (one number per game; book and capture time not stated by the source).
+Price: flat -110 both sides. Win +0.9091u, loss -1u, push 0. Break-even 52.38%.
+Training seasons 2006-2022: 4383 regular-season games. Held-out 2023-2025: 816 games.
+
+STEP 1. All 10 pre-registered variants, TRAINING seasons only
+variant                      bets W-L-P              win%      ROI  passes  shadow W-L-P of passes
+HOME_DOG-v1.T1               1558 766-754-38       50.39%   -3.70%    2825  1307-1443-75 (47.53%)
+HOME_DOG-v1.T3               1146 571-545-30       51.16%   -2.26%    3237  1502-1652-83 (47.62%)
+HOME_DOG-v1.T7                339 181-154-4        54.03%    3.11%    4044  1892-2043-109 (48.08%)
+BIG_DOG-v1.T7                1367 677-656-34       50.79%   -2.97%    3016  1531-1402-79 (52.20%)
+BIG_DOG-v1.T10                607 316-273-18       53.65%    2.35%    3776  1892-1785-95 (51.45%)
+BIG_DOG-v1.T14                147 75-66-6          53.19%    1.48%    4236  2133-1992-107 (51.71%)
+REST_EDGE-v1.D3               903 451-429-23       51.25%   -2.10%    3480  265-266-14 (49.91%)
+REST_EDGE-v1.D6               447 225-210-12       51.72%   -1.22%    3936  491-485-25 (50.31%)
+HIGH_TOTAL_UNDER-v1.T47      1304 673-614-17       52.29%   -0.17%    3079  1500-1527-52 (49.55%)
+HIGH_TOTAL_UNDER-v1.T50       519 261-249-9        51.18%   -2.26%    3864  1912-1892-60 (50.26%)
+
+STEP 2. Chosen on training and frozen: HOME_DOG-v1.T7, BIG_DOG-v1.T10, REST_EDGE-v1.D6, HIGH_TOTAL_UNDER-v1.T47
+  frozen_rules.json already existed (frozen 2026-11-14T21:24:22Z); this run's training choice matches it.
+
+STEP 3. Frozen variants on HELD-OUT seasons 2023-2025 (the other 6 variants are never scored here)
+
+HOME_DOG-v1.T7   -> NO DEMONSTRATED EDGE
+  training ROI 3.11% (above zero)
+  takes: 63 bets, record 38-23-2, win rate 62.30% (break-even 52.38%)
+  win-rate 95% interval 49.75% to 73.39%; Bonferroni 98.75% interval 46.35% to 75.96%
+  ROI after vig at -110: 18.33% (+11.55 units); 95% bootstrap interval -4.47% to 39.83%
+  one-sided p-value against break-even: 0.077
+  ROI at the file's recorded odds: 18.43% (0 bets had no recorded price and used -110)
+  passes: 753 games; shadow record of passes 362-374-17 (49.18%); 0 passes had no side
+  by season: 2023 9-8-2 (19 bets, ROI 0.96%); 2024 11-6-0 (17 bets, ROI 23.53%); 2025 18-9-0 (27 bets, ROI 27.27%)
+
+BIG_DOG-v1.T10   -> NO DEMONSTRATED EDGE
+  training ROI 2.35% (above zero)
+  takes: 79 bets, record 33-45-1, win rate 42.31% (break-even 52.38%)
+  win-rate 95% interval 31.96% to 53.38%; Bonferroni 98.75% interval 29.42% to 56.33%
+  ROI after vig at -110: -18.99% (-15.00 units); 95% bootstrap interval -39.47% to 1.50%
+  one-sided p-value against break-even: 0.971
+  ROI at the file's recorded odds: -18.87% (0 bets had no recorded price and used -110)
+  passes: 737 games; shadow record of passes 353-366-18 (49.10%); 0 passes had no side
+  by season: 2023 13-13-1 (27 bets, ROI -4.38%); 2024 7-11-0 (18 bets, ROI -25.76%); 2025 13-21-0 (34 bets, ROI -27.01%)
+
+REST_EDGE-v1.D6   -> NO DEMONSTRATED EDGE
+  training ROI -1.22% (NOT above zero)
+  takes: 69 bets, record 33-35-1, win rate 48.53% (break-even 52.38%)
+  win-rate 95% interval 37.05% to 60.17%; Bonferroni 98.75% interval 34.16% to 63.14%
+  ROI after vig at -110: -7.25% (-5.00 units); 95% bootstrap interval -29.38% to 14.89%
+  one-sided p-value against break-even: 0.776
+  ROI at the file's recorded odds: -7.52% (0 bets had no recorded price and used -110)
+  passes: 747 games; shadow record of passes 116-116-3 (50.00%); 512 passes had no side
+  by season: 2023 11-9-1 (21 bets, ROI 4.76%); 2024 9-17-0 (26 bets, ROI -33.92%); 2025 13-9-0 (22 bets, ROI 12.81%)
+
+HIGH_TOTAL_UNDER-v1.T47   -> NO DEMONSTRATED EDGE
+  training ROI -0.17% (NOT above zero)
+  takes: 218 bets, record 108-108-2, win rate 50.00% (break-even 52.38%)
+  win-rate 95% interval 43.39% to 56.61%; Bonferroni 98.75% interval 41.62% to 58.38%
+  ROI after vig at -110: -4.50% (-9.82 units); 95% bootstrap interval -17.18% to 8.22%
+  one-sided p-value against break-even: 0.779
+  ROI at the file's recorded odds: -4.07% (0 bets had no recorded price and used -110)
+  passes: 598 games; shadow record of passes 292-303-3 (49.08%); 0 passes had no side
+  by season: 2023 31-25-0 (56 bets, ROI 5.68%); 2024 37-37-2 (76 bets, ROI -4.43%); 2025 40-46-0 (86 bets, ROI -11.21%)
+
+CONTEXT ONLY (never used for selection): baselines at -110
+  BASELINE_ALWAYS_HOME   train     4383 bets, 2073-2197-113, win 48.55%, ROI -7.13%
+  BASELINE_ALWAYS_HOME   holdout    816 bets, 400-397-19, win 50.19%, ROI -4.09%
+  BASELINE_ALWAYS_DOG    train     4379 bets, 2208-2058-113, win 51.76%, ROI -1.16%
+  BASELINE_ALWAYS_DOG    holdout    816 bets, 386-411-19, win 48.43%, ROI -7.36%
+  BASELINE_ALWAYS_UNDER  train     4383 bets, 2173-2141-69, win 50.37%, ROI -3.78%
+  BASELINE_ALWAYS_UNDER  holdout    816 bets, 400-411-5, win 49.32%, ROI -5.80%
+
+RESULT
+  No demonstrated edge. None of the 4 frozen rules met the pre-registered test
+  (training ROI above zero AND held-out 95% win-rate interval entirely above 52.38%).
+  The samples are small: this fails to show an edge, it does not prove there is none.
+  The p-values above are one-sided and not adjusted for testing 4 rules (multiply by 4).
+  Variants tried in total: 10 candidates on training, 4 frozen on held-out, 3 context baselines.
+Replay check: held-out numbers MATCH the first evaluation of 2026-11-14T21:24:22Z.

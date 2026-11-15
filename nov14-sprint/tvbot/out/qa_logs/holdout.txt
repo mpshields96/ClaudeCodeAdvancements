@@ -1,0 +1,28 @@
+Untouched period claimed for EMAX-1.0.0-14251ac3 at 2026-11-14T22:17:06Z. Variants tried before this use: 1. It cannot be used again.
+
+EMAX paper runner. Synthetic bars only. No orders, accounts or network.
+rule            EMAX-1.0.0-14251ac3   (rule variants tried so far: 1)
+feed            nov14-sprint/tvbot/fixtures/holdout_bars.jsonl   sha256 a7367c3f7a5b9f4c
+clock (as of)   2026-11-14T00:00:00Z
+bars            210 accepted this run, 0 rejected 
+decisions       210 on file  {"ENTER_LONG": 1, "EXIT_LONG": 1, "HOLD": 53, "STAND_ASIDE": 155}
+ledger          2 orders, 2 fills, 0 cancels, pending order: none
+
+fills: signal bar close, then when that bar was delivered, then when the decision
+was ready, then the fill at the open of a later bar
+  side  qty  signal_ts            delivered            decision_ready       fill_ts               bar  raw_open fill_price   comm  reason
+  buy    50  2026-10-21T18:30:00Z 2026-10-21T18:30:02Z 2026-10-21T18:30:07Z 2026-10-21T19:30:00Z   90     99.78    99.8099   1.00  cross_up
+  sell   50  2026-11-02T15:30:00Z 2026-11-02T15:30:02Z 2026-11-02T15:30:07Z 2026-11-02T16:30:00Z  143    101.42   101.3896   1.00  cross_down
+timing check    every fill used a bar that opened at or after its decision was ready: yes
+
+round trips
+  in 2026-10-21T19:30:00Z  out 2026-11-02T16:30:00Z  qty 50  99.78 -> 101.42  cross_down       net +76.98
+
+start cash      10000.00
+end equity      10076.98
+net P&L         +76.98   (before costs +82.00, spread and slippage -3.02, commission -2.00)
+round trips     1 (1 won, 0 lost); largest fall from a peak 72.02; open position 0
+buy and hold    -70.00   (same order size bought once at the first bar's open with the same costs, never sold, marked at the last close)
+fill rule       a decision is ready when its bar was delivered plus 5 seconds of processing; it fills at the open of the first bar that opens at or after that moment, plus costs. On a continuous hourly feed that is one full bar after the signal bar closes.
+note            synthetic bars; this is a mechanics check, not evidence of an edge
+state folder    nov14-sprint/tvbot/out/holdout

@@ -1,0 +1,13 @@
+{
+  "schema": "tvbot-real-source-1",
+  "source_name": "twelvedata-basic",
+  "terms_url": "https://twelvedata.com/terms",
+  "terms_quote": "",
+  "approved_by": "",
+  "approved_utc": "",
+  "csv_path": "spy_1h_twelvedata.csv",
+  "symbol": "SPY",
+  "timeframe_minutes": 60,
+  "naive_ts_is_utc": true,
+  "note": "Template. Fill in terms_quote, approved_by and approved_utc yourself. Left blank, the bot refuses the file."
+}

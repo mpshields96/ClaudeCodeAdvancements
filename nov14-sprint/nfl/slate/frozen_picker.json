@@ -1,0 +1,54 @@
+{
+ "code_sha256": {
+  "picker.py": "5771a47f31a13731efd64cbbda31c47a35c23d26560680dafb1a40a0d015df11",
+  "selection_decisions.py": "6898d72cca26951dab4b86d36587618eb93b8b528dba7c12d74750b39535d608",
+  "selection_markets.py": "91bbfbab0af9460ef03c739c5e22305b6f56873efcd7ec6b5328bd41a9a73bb7"
+ },
+ "expected_sunday_games": 12,
+ "frozen_utc": "2026-11-15T07:29:44Z",
+ "hypothesis": "Pregame football review plus exact-line shopping may improve prospective one-unit net return over a frozen highest-probability in-band moneyline control per window. Track hit rate, pushes, price and one-unit return separately. Record every pass and retain the same controls even if the reviewer abstains. Grade reviewed picks, the provisional screen and controls as separate groups. Where independent probabilities exist, score their Brier loss against the same-contract market. One Sunday is insufficient to establish an edge.",
+ "note": "Pre-kickoff source labels and club updates; original football calls unchanged.",
+ "params": {
+  "blend_grid": [
+   0.0,
+   0.25,
+   0.5,
+   0.75,
+   0.9,
+   1.0
+  ],
+  "edge_points_threshold": 3.0,
+  "elo_hfa": 48.0,
+  "elo_k": 20.0,
+  "elo_mean": 1505.0,
+  "elo_points_per_point": 25.0,
+  "elo_season_regress": 0.3333333333333333,
+  "margin_mix_elo": 0.5,
+  "mu_alpha": 0.01,
+  "mu_start": 21.5,
+  "pts_alpha": 0.05,
+  "pts_hfa": 2.0,
+  "pts_season_regress": 0.4,
+  "test_a_seasons": [
+   2023,
+   2025
+  ],
+  "test_b_seasons": [
+   2026,
+   2026
+  ],
+  "test_b_weeks": [
+   1,
+   9
+  ],
+  "tune_seasons": [
+   2010,
+   2022
+  ]
+ },
+ "picker_sha256": "5771a47f31a13731efd64cbbda31c47a35c23d26560680dafb1a40a0d015df11",
+ "rules_sha256": "383162ccd3b98da0bcb3eaf45f5cd7b67f419e3f71bf39ccda5f9b3297be9de5",
+ "selection_rule": "At the best available in-band price (-200 to +200), calculate the median, margin-removed probability at other books quoting both sides of the exact contract. The provisional screen chooses at most one per Chicago window, highest market probability first, when at least two other books support the comparison and the independent full-game football estimate and the market both favor the same side above 50%. Tie-break by stable contract ID. A pregame release reviewer can select zero to two per window from distinct games across all supported markets with a sourced football rationale, price floor and contrary case. An estimated return or closing-line movement is contextual, never a selection requirement.",
+ "slate_date": "2026-11-15",
+ "timezone": "America/Chicago"
+}

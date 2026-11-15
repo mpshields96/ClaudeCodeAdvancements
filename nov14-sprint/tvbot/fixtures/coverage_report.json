@@ -1,0 +1,151 @@
+{
+  "adverse_and_timing": {
+    "a00_baseline.jsonl": "PASS accepted=True, buy fills=1, bars accepted=88",
+    "a01_source_field.jsonl": "PASS accepted=False, code=tradingview_origin, bars read=0, fills=0",
+    "a02_alert_payload.jsonl": "PASS accepted=False, code=tradingview_origin, bars read=0, fills=0",
+    "a03_chart_export.csv": "PASS accepted=False, code=tradingview_origin, bars read=0, fills=0",
+    "a04_exchange_symbol.jsonl": "PASS accepted=False, code=tradingview_origin, bars read=0, fills=0",
+    "a05_transport_header.jsonl": "PASS accepted=False, code=tradingview_origin, bars read=0, fills=0",
+    "a06_tv_export.jsonl": "PASS accepted=False, code=tradingview_origin, bars read=0, fills=0",
+    "a07_no_manifest.jsonl": "PASS accepted=False, code=schema_rejected, bars read=0, fills=0",
+    "a08_unlisted_source.jsonl": "PASS accepted=False, code=source_not_permitted, bars read=0, fills=0",
+    "a09_agent_text_field.jsonl": "PASS accepted=False, code=schema_rejected, bars read=0, fills=0",
+    "b01_stale_signal_bar.jsonl": "PASS feed accepted=True, bar 73 rejected stale_input x1, fills=0, other rejections=['missing_input/gap']",
+    "b02_future_bar.jsonl": "PASS feed accepted=True, bar 73 rejected future_dated x1, fills=0, other rejections=['missing_input/gap']",
+    "b03_missing_field.jsonl": "PASS feed accepted=True, bar 73 rejected missing_input x1, fills=0, other rejections=['missing_input/gap']",
+    "b04_dropped_bar.jsonl": "PASS feed accepted=True, gap rejections missing_input=1, fills=0",
+    "c01_duplicate_bar.jsonl": "PASS feed accepted=True, duplicate_bar x1, total rejections=1, ledger identical to baseline=True",
+    "c02_conflicting_duplicate.jsonl": "PASS feed accepted=True, conflicting_duplicate x1, total rejections=1, ledger identical to baseline=True",
+    "cfg_over_limit.json": "PASS baseline feed: BLOCKED over_limit_notional at bar 73 x1, fills=0",
+    "cfg_raise_ceiling.json": "PASS ConfigRefused: max_position_notional=60000 is looser than the hard ceiling 6000.0; a config may only tigh",
+    "t01_late_delivery.jsonl": "PASS ENTER_LONG at bar 64 ready 2026-11-03T16:00:35Z; buy fill at bar 66 2026-11-03T17:00:00Z; rejections=0",
+    "t02_on_time_control.jsonl": "PASS ENTER_LONG at bar 64 ready 2026-11-03T16:00:07Z; buy fill at bar 66 2026-11-03T17:00:00Z; rejections=0",
+    "t03_session_break_control.jsonl": "PASS ENTER_LONG at bar 64 ready 2026-11-03T16:00:07Z; buy fill at bar 65 2026-11-04T14:00:00Z; rejections=0"
+  },
+  "adverse_and_timing_all_pass": true,
+  "all_required_present": true,
+  "bars": 630,
+  "cancels": 0,
+  "daily_loss_exit_decisions": [
+    {
+      "bar_seq": 127,
+      "day_pnl": -175.68,
+      "position_qty": 48
+    }
+  ],
+  "decisions_by_action": {
+    "BLOCKED": 2,
+    "ENTER_LONG": 9,
+    "EXIT_LONG": 8,
+    "HOLD": 201,
+    "STAND_ASIDE": 410
+  },
+  "decisions_by_action_and_reason": {
+    "BLOCKED/cooldown": 1,
+    "BLOCKED/daily_loss_halt": 1,
+    "ENTER_LONG/cross_up": 9,
+    "EXIT_LONG/cross_down": 5,
+    "EXIT_LONG/daily_loss_limit": 1,
+    "EXIT_LONG/stop": 2,
+    "HOLD/in_position": 187,
+    "HOLD/order_pending": 14,
+    "STAND_ASIDE/no_signal": 348,
+    "STAND_ASIDE/warmup": 62
+  },
+  "end_equity": 10227.883352,
+  "exit_fill_reasons": [
+    "cross_down",
+    "daily_loss_limit",
+    "stop"
+  ],
+  "feed": "normal_bars.jsonl",
+  "feed_sha256": "f7b0ea310ab96099a687fc9efdcf0c6a6e2227a35ab4ac647336298036f6f169",
+  "fills": 17,
+  "first_enter_long_seq_S": 73,
+  "holdout": {
+    "bars": 210,
+    "engine_run": false,
+    "feed": "holdout_bars.jsonl",
+    "feed_sha256": "a7367c3f7a5b9f4c4944e54cb2b9b94fca10c8c5da52671896d17636b08e44e3",
+    "provenance_ok": true,
+    "seed": 20261005
+  },
+  "losses": 2,
+  "net_pnl": 227.883352,
+  "open_position_qty": 50,
+  "orders": 17,
+  "provenance_ok_normal": true,
+  "rejections_this_run": {},
+  "required_events": {
+    "a_enter_long_cross_up_filled": true,
+    "b_exit_long_stop": true,
+    "c_exit_long_cross_down": true,
+    "d_exit_long_daily_loss_limit": true,
+    "e_blocked_cooldown": true,
+    "f_one_losing_round_trip": true,
+    "f_one_winning_round_trip": true,
+    "g_all_bars_accepted": true,
+    "g_zero_rejections": true
+  },
+  "round_trip_count": 8,
+  "round_trips": [
+    {
+      "entry_fill_seq": 75,
+      "exit_fill_seq": 104,
+      "exit_reason": "cross_down",
+      "net_pnl": 96.46655,
+      "qty": 50
+    },
+    {
+      "entry_fill_seq": 125,
+      "exit_fill_seq": 129,
+      "exit_reason": "daily_loss_limit",
+      "net_pnl": -154.203056,
+      "qty": 48
+    },
+    {
+      "entry_fill_seq": 155,
+      "exit_fill_seq": 160,
+      "exit_reason": "stop",
+      "net_pnl": -115.854492,
+      "qty": 47
+    },
+    {
+      "entry_fill_seq": 266,
+      "exit_fill_seq": 267,
+      "exit_reason": "stop",
+      "net_pnl": 29.012,
+      "qty": 50
+    },
+    {
+      "entry_fill_seq": 336,
+      "exit_fill_seq": 369,
+      "exit_reason": "cross_down",
+      "net_pnl": 69.48995,
+      "qty": 50
+    },
+    {
+      "entry_fill_seq": 402,
+      "exit_fill_seq": 435,
+      "exit_reason": "cross_down",
+      "net_pnl": 57.9916,
+      "qty": 50
+    },
+    {
+      "entry_fill_seq": 468,
+      "exit_fill_seq": 501,
+      "exit_reason": "cross_down",
+      "net_pnl": 67.9898,
+      "qty": 50
+    },
+    {
+      "entry_fill_seq": 533,
+      "exit_fill_seq": 566,
+      "exit_reason": "cross_down",
+      "net_pnl": 83.48545,
+      "qty": 50
+    }
+  ],
+  "seed": 20260601,
+  "wins": 6
+}

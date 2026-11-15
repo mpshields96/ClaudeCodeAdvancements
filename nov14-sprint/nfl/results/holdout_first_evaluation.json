@@ -1,0 +1,10 @@
+{
+  "run_ts_utc": "2026-11-14T21:24:22Z",
+  "core_sha256": "59a72364cb1c27eeddc05645e49b7287b4d08f6731fe5c3e83d1fdb9b2fabdc9",
+  "frozen": [
+    "HOME_DOG-v1.T7",
+    "BIG_DOG-v1.T10",
+    "REST_EDGE-v1.D6",
+    "HIGH_TOTAL_UNDER-v1.T47"
+  ]
+}

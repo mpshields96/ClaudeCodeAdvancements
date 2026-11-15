@@ -1,0 +1,26 @@
+{
+  "about": "Every rule variant ever run is listed here, including ones that did badly. The count is the number of tries.",
+  "frozen_rule_id": "EMAX-1.0.0-14251ac3",
+  "frozen_utc": "2026-11-14T22:17:06Z",
+  "holdout": {
+    "feed_sha256": "a7367c3f7a5b9f4c4944e54cb2b9b94fca10c8c5da52671896d17636b08e44e3",
+    "rule_id": "EMAX-1.0.0-14251ac3",
+    "used": true,
+    "used_utc": "2026-11-14T22:17:06Z",
+    "variants_tried_before_use": 1
+  },
+  "schema": 1,
+  "variants": [
+    {
+      "first_run_utc": "2026-11-14T21:59:55Z",
+      "note": "replay",
+      "params": {
+        "fast_len": 8,
+        "slow_len": 21,
+        "stop_pct": 1.5,
+        "warmup_bars": 63
+      },
+      "rule_id": "EMAX-1.0.0-14251ac3"
+    }
+  ]
+}

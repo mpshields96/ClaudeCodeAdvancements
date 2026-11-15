@@ -1,0 +1,61 @@
+{
+  "as_of": "2026-11-14T00:00:00Z",
+  "bars_accepted": 210,
+  "buy_and_hold": {
+    "bought_at": 99.899961,
+    "marked_at": 98.52,
+    "net_pnl": -69.99805,
+    "note": "same order size bought once at the first bar's open with the same costs, never sold, marked at the last close",
+    "shares": 50
+  },
+  "cancels": 0,
+  "commission_cost": 2.0,
+  "data_note": "synthetic bars; this is a mechanics check, not evidence of an edge",
+  "decisions": 210,
+  "decisions_by_action": {
+    "ENTER_LONG": 1,
+    "EXIT_LONG": 1,
+    "HOLD": 53,
+    "STAND_ASIDE": 155
+  },
+  "end_equity": 10076.982,
+  "feed": "holdout_bars.jsonl",
+  "feed_sha256": "a7367c3f7a5b9f4c4944e54cb2b9b94fca10c8c5da52671896d17636b08e44e3",
+  "fill_assumption": "a decision is ready when its bar was delivered plus 5 seconds of processing; it fills at the open of the first bar that opens at or after that moment, plus costs. On a continuous hourly feed that is one full bar after the signal bar closes.",
+  "fills": 2,
+  "gross_pnl_at_raw_opens": 82.0,
+  "holdout_claim": {
+    "feed_sha256": "a7367c3f7a5b9f4c4944e54cb2b9b94fca10c8c5da52671896d17636b08e44e3",
+    "rule_id": "EMAX-1.0.0-14251ac3",
+    "used": true,
+    "used_utc": "2026-11-14T22:17:06Z",
+    "variants_tried_before_use": 1
+  },
+  "losses": 0,
+  "max_drawdown": 72.0213,
+  "net_pnl": 76.982,
+  "open_position_qty": 0,
+  "orders": 2,
+  "pending_order": null,
+  "rejections_this_run": {},
+  "round_trip_count": 1,
+  "round_trips": [
+    {
+      "entry_fill_seq": 90,
+      "entry_fill_ts": "2026-10-21T19:30:00Z",
+      "entry_raw_open": 99.78,
+      "exit_fill_seq": 143,
+      "exit_fill_ts": "2026-11-02T16:30:00Z",
+      "exit_raw_open": 101.42,
+      "exit_reason": "cross_down",
+      "gross_pnl": 82.0,
+      "net_pnl": 76.982,
+      "qty": 50
+    }
+  ],
+  "rule_id": "EMAX-1.0.0-14251ac3",
+  "spread_and_slippage_cost": 3.018,
+  "start_cash": 10000.0,
+  "symbol": "SYNTH-FUND-60M",
+  "wins": 1
+}

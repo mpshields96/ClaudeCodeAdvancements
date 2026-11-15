@@ -1,0 +1,187 @@
+{
+  "as_of": "2026-11-15T09:42:44Z",
+  "bar_results_this_run": {
+    "accepted": 630
+  },
+  "bars_accepted": 630,
+  "buy_and_hold": {
+    "bought_at": 100.040003,
+    "marked_at": 101.55,
+    "net_pnl": 72.989853,
+    "note": "same order size bought once at the first bar's open with the same costs, never sold, marked at the last close",
+    "shares": 49
+  },
+  "cancels": 0,
+  "commission_cost": 17.0,
+  "config": {
+    "commission_min": 1.0,
+    "commission_per_share": 0.005,
+    "delay_bars": 0,
+    "half_spread_bps": 1.0,
+    "latency_seconds": 5,
+    "limits": {
+      "cooldown_bars": 3,
+      "max_daily_loss": 100.0,
+      "max_position_notional": 6000.0,
+      "max_positions_per_symbol": 1,
+      "max_qty": 100
+    },
+    "max_lag_seconds": 120,
+    "order_notional": 5000.0,
+    "slippage_bps": 2.0,
+    "start_cash": 10000.0
+  },
+  "config_hash": "fd1ec9cb6f5d",
+  "cost_sweep": [
+    {
+      "mult": 0,
+      "net": 270.3
+    },
+    {
+      "mult": 1,
+      "net": 227.883352
+    },
+    {
+      "mult": 2,
+      "net": 185.466704
+    },
+    {
+      "mult": 4,
+      "net": 100.633408
+    },
+    {
+      "mult": 8,
+      "net": -69.033184
+    }
+  ],
+  "data_note": "TEST ONLY: synthetic bars made by a script; this is a mechanics check, not evidence of an edge",
+  "decisions": 630,
+  "decisions_by_action": {
+    "BLOCKED": 2,
+    "ENTER_LONG": 9,
+    "EXIT_LONG": 8,
+    "HOLD": 201,
+    "STAND_ASIDE": 410
+  },
+  "end_equity": 10227.883352,
+  "feed": "normal_bars.jsonl",
+  "feed_accepted": true,
+  "feed_code": null,
+  "feed_reasons": [],
+  "feed_sha256": "f7b0ea310ab96099a687fc9efdcf0c6a6e2227a35ab4ac647336298036f6f169",
+  "fill_assumption": "a decision is ready when its bar was delivered plus 5 seconds of processing; it fills at the open of the first bar that opens at or after that moment, plus costs. On a continuous hourly feed that is one full bar after the signal bar closes.",
+  "fills": 17,
+  "gross_pnl_at_raw_opens": 270.3,
+  "losses": 2,
+  "max_drawdown": 469.578398,
+  "net_pnl": 227.883352,
+  "open_position_qty": 50,
+  "orders": 17,
+  "pending_order": null,
+  "rejections_this_run": {},
+  "round_trip_count": 8,
+  "round_trips": [
+    {
+      "entry_fill_seq": 75,
+      "entry_fill_ts": "2026-06-15T18:30:00Z",
+      "entry_raw_open": 100.1,
+      "exit_fill_seq": 104,
+      "exit_fill_ts": "2026-06-19T19:30:00Z",
+      "exit_raw_open": 102.13,
+      "exit_reason": "cross_down",
+      "gross_pnl": 101.5,
+      "net_pnl": 96.46655,
+      "qty": 50
+    },
+    {
+      "entry_fill_seq": 125,
+      "entry_fill_ts": "2026-06-24T19:30:00Z",
+      "entry_raw_open": 103.05,
+      "exit_fill_seq": 129,
+      "exit_fill_ts": "2026-06-25T16:30:00Z",
+      "exit_raw_open": 99.94,
+      "exit_reason": "daily_loss_limit",
+      "gross_pnl": -149.28,
+      "net_pnl": -154.203056,
+      "qty": 48
+    },
+    {
+      "entry_fill_seq": 155,
+      "entry_fill_ts": "2026-07-01T14:30:00Z",
+      "entry_raw_open": 105.24,
+      "exit_fill_seq": 160,
+      "exit_fill_ts": "2026-07-01T19:30:00Z",
+      "exit_raw_open": 102.88,
+      "exit_reason": "stop",
+      "gross_pnl": -110.92,
+      "net_pnl": -115.854492,
+      "qty": 47
+    },
+    {
+      "entry_fill_seq": 266,
+      "entry_fill_ts": "2026-07-22T20:30:00Z",
+      "entry_raw_open": 99.26,
+      "exit_fill_seq": 267,
+      "exit_fill_ts": "2026-07-23T14:30:00Z",
+      "exit_raw_open": 99.94,
+      "exit_reason": "stop",
+      "gross_pnl": 34.0,
+      "net_pnl": 29.012,
+      "qty": 50
+    },
+    {
+      "entry_fill_seq": 336,
+      "entry_fill_ts": "2026-08-05T20:30:00Z",
+      "entry_raw_open": 99.59,
+      "exit_fill_seq": 369,
+      "exit_fill_ts": "2026-08-12T18:30:00Z",
+      "exit_raw_open": 101.08,
+      "exit_reason": "cross_down",
+      "gross_pnl": 74.5,
+      "net_pnl": 69.48995,
+      "qty": 50
+    },
+    {
+      "entry_fill_seq": 402,
+      "entry_fill_ts": "2026-08-19T16:30:00Z",
+      "entry_raw_open": 99.65,
+      "exit_fill_seq": 435,
+      "exit_fill_ts": "2026-08-26T14:30:00Z",
+      "exit_raw_open": 100.91,
+      "exit_reason": "cross_down",
+      "gross_pnl": 63.0,
+      "net_pnl": 57.9916,
+      "qty": 50
+    },
+    {
+      "entry_fill_seq": 468,
+      "entry_fill_ts": "2026-09-01T19:30:00Z",
+      "entry_raw_open": 99.61,
+      "exit_fill_seq": 501,
+      "exit_fill_ts": "2026-09-08T17:30:00Z",
+      "exit_raw_open": 101.07,
+      "exit_reason": "cross_down",
+      "gross_pnl": 73.0,
+      "net_pnl": 67.9898,
+      "qty": 50
+    },
+    {
+      "entry_fill_seq": 533,
+      "entry_fill_ts": "2026-09-15T14:30:00Z",
+      "entry_raw_open": 99.6,
+      "exit_fill_seq": 566,
+      "exit_fill_ts": "2026-09-21T19:30:00Z",
+      "exit_raw_open": 101.37,
+      "exit_reason": "cross_down",
+      "gross_pnl": 88.5,
+      "net_pnl": 83.48545,
+      "qty": 50
+    }
+  ],
+  "rule_id": "EMAX-1.0.0-14251ac3",
+  "rule_variants_tried": 1,
+  "spread_and_slippage_cost": 25.416648,
+  "start_cash": 10000.0,
+  "symbol": "SYNTH-FUND-60M",
+  "wins": 6
+}

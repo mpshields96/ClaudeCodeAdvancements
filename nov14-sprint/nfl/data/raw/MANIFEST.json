@@ -1,0 +1,23 @@
+{
+  "files": [
+    {
+      "path": "data/raw/games.csv",
+      "url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv",
+      "retrieved_at_utc": "2026-11-14T21:16:58Z",
+      "http_status": 200,
+      "bytes": 2190038,
+      "sha256": "44f6ba50a76303869229be8fdad82d124e77f24f50c90c319fbc245dd34120a0",
+      "kind": "data only (CSV); nflverse/nfldata public schedule, scores and betting lines",
+      "note": "Lines in this file carry no per-row timestamp. The only verified line time is retrieved_at_utc."
+    },
+    {
+      "path": "data/raw/DATASETS.md",
+      "url": "https://raw.githubusercontent.com/nflverse/nfldata/master/DATASETS.md",
+      "retrieved_at_utc": "2026-11-14T21:20:16Z",
+      "http_status": 200,
+      "bytes": 17642,
+      "sha256": "8835ca9c15784a2cdc04c2c599c54b373629f8fbe91117acd5b7d0c615e03bf4",
+      "kind": "documentation text only (column definitions); never executed"
+    }
+  ]
+}

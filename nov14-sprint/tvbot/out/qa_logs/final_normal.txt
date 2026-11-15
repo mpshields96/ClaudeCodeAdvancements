@@ -1,0 +1,49 @@
+EMAX paper runner. Synthetic bars only. No orders, accounts or network.
+rule            EMAX-1.0.0-14251ac3   (rule variants tried so far: 1)
+feed            nov14-sprint/tvbot/fixtures/normal_bars.jsonl   sha256 f7b0ea310ab96099
+clock (as of)   2026-11-14T00:00:00Z
+bars            630 accepted this run, 0 rejected 
+decisions       630 on file  {"BLOCKED": 2, "ENTER_LONG": 9, "EXIT_LONG": 8, "HOLD": 201, "STAND_ASIDE": 410}
+ledger          17 orders, 17 fills, 0 cancels, pending order: none
+
+fills: signal bar close, then when that bar was delivered, then when the decision
+was ready, then the fill at the open of a later bar
+  side  qty  signal_ts            delivered            decision_ready       fill_ts               bar  raw_open fill_price   comm  reason
+  buy    50  2026-06-15T17:30:00Z 2026-06-15T17:30:02Z 2026-06-15T17:30:07Z 2026-06-15T18:30:00Z   75    100.10   100.1300   1.00  cross_up
+  sell   50  2026-06-19T18:30:00Z 2026-06-19T18:30:02Z 2026-06-19T18:30:07Z 2026-06-19T19:30:00Z  104    102.13   102.0994   1.00  cross_down
+  buy    48  2026-06-24T18:30:00Z 2026-06-24T18:30:02Z 2026-06-24T18:30:07Z 2026-06-24T19:30:00Z  125    103.05   103.0809   1.00  cross_up
+  sell   48  2026-06-25T15:30:00Z 2026-06-25T15:30:02Z 2026-06-25T15:30:07Z 2026-06-25T16:30:00Z  129     99.94    99.9100   1.00  daily_loss_limit
+  buy    47  2026-06-30T21:30:00Z 2026-06-30T21:30:02Z 2026-06-30T21:30:07Z 2026-07-01T14:30:00Z  155    105.24   105.2716   1.00  cross_up
+  sell   47  2026-07-01T18:30:00Z 2026-07-01T18:30:02Z 2026-07-01T18:30:07Z 2026-07-01T19:30:00Z  160    102.88   102.8491   1.00  stop
+  buy    50  2026-07-22T19:30:00Z 2026-07-22T19:30:02Z 2026-07-22T19:30:07Z 2026-07-22T20:30:00Z  266     99.26    99.2898   1.00  cross_up
+  sell   50  2026-07-22T21:30:00Z 2026-07-22T21:30:02Z 2026-07-22T21:30:07Z 2026-07-23T14:30:00Z  267     99.94    99.9100   1.00  stop
+  buy    50  2026-08-05T19:30:00Z 2026-08-05T19:30:02Z 2026-08-05T19:30:07Z 2026-08-05T20:30:00Z  336     99.59    99.6199   1.00  cross_up
+  sell   50  2026-08-12T17:30:00Z 2026-08-12T17:30:02Z 2026-08-12T17:30:07Z 2026-08-12T18:30:00Z  369    101.08   101.0497   1.00  cross_down
+  buy    50  2026-08-19T15:30:00Z 2026-08-19T15:30:02Z 2026-08-19T15:30:07Z 2026-08-19T16:30:00Z  402     99.65    99.6799   1.00  cross_up
+  sell   50  2026-08-25T20:30:00Z 2026-08-25T20:30:02Z 2026-08-25T20:30:07Z 2026-08-26T14:30:00Z  435    100.91   100.8797   1.00  cross_down
+  buy    50  2026-09-01T18:30:00Z 2026-09-01T18:30:02Z 2026-09-01T18:30:07Z 2026-09-01T19:30:00Z  468     99.61    99.6399   1.00  cross_up
+  sell   50  2026-09-08T16:30:00Z 2026-09-08T16:30:02Z 2026-09-08T16:30:07Z 2026-09-08T17:30:00Z  501    101.07   101.0397   1.00  cross_down
+  buy    50  2026-09-14T21:30:00Z 2026-09-14T21:30:02Z 2026-09-14T21:30:07Z 2026-09-15T14:30:00Z  533     99.60    99.6299   1.00  cross_up
+  sell   50  2026-09-21T18:30:00Z 2026-09-21T18:30:02Z 2026-09-21T18:30:07Z 2026-09-21T19:30:00Z  566    101.37   101.3396   1.00  cross_down
+  buy    50  2026-09-28T17:30:00Z 2026-09-28T17:30:02Z 2026-09-28T17:30:07Z 2026-09-28T18:30:00Z  600     99.63    99.6599   1.00  cross_up
+timing check    every fill used a bar that opened at or after its decision was ready: yes
+
+round trips
+  in 2026-06-15T18:30:00Z  out 2026-06-19T19:30:00Z  qty 50  100.10 -> 102.13  cross_down       net +96.47
+  in 2026-06-24T19:30:00Z  out 2026-06-25T16:30:00Z  qty 48  103.05 -> 99.94  daily_loss_limit net -154.20
+  in 2026-07-01T14:30:00Z  out 2026-07-01T19:30:00Z  qty 47  105.24 -> 102.88  stop             net -115.85
+  in 2026-07-22T20:30:00Z  out 2026-07-23T14:30:00Z  qty 50  99.26 -> 99.94  stop             net +29.01
+  in 2026-08-05T20:30:00Z  out 2026-08-12T18:30:00Z  qty 50  99.59 -> 101.08  cross_down       net +69.49
+  in 2026-08-19T16:30:00Z  out 2026-08-26T14:30:00Z  qty 50  99.65 -> 100.91  cross_down       net +57.99
+  in 2026-09-01T19:30:00Z  out 2026-09-08T17:30:00Z  qty 50  99.61 -> 101.07  cross_down       net +67.99
+  in 2026-09-15T14:30:00Z  out 2026-09-21T19:30:00Z  qty 50  99.60 -> 101.37  cross_down       net +83.49
+
+start cash      10000.00
+end equity      10227.88
+net P&L         +227.88   (before costs +270.30, spread and slippage -25.42, commission -17.00)
+round trips     8 (6 won, 2 lost); largest fall from a peak 469.58; open position 50
+buy and hold    +72.99   (same order size bought once at the first bar's open with the same costs, never sold, marked at the last close)
+fill rule       a decision is ready when its bar was delivered plus 5 seconds of processing; it fills at the open of the first bar that opens at or after that moment, plus costs. On a continuous hourly feed that is one full bar after the signal bar closes.
+note            synthetic bars; this is a mechanics check, not evidence of an edge
+state folder    nov14-sprint/tvbot/out/normal
+expected ledger MATCH   34 rows equal nov14-sprint/tvbot/fixtures/expected_normal_ledger.jsonl (sha256 cc1b365708da1aba)

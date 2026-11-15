@@ -1,0 +1,6 @@
+frozen: EMAX-1.0.0-14251ac3
+registry        nov14-sprint/tvbot/bot/rule_registry.json
+variants tried  1
+  EMAX-1.0.0-14251ac3  {"fast_len": 8, "slow_len": 21, "stop_pct": 1.5, "warmup_bars": 63}  first run 2026-11-14T21:59:55Z
+frozen rule     EMAX-1.0.0-14251ac3
+untouched period {"used": false}

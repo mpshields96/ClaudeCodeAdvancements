@@ -1,0 +1,26 @@
+{
+  "about": "The format for a reviewer's reply to a decision packet in packets/. A reply is advisory text. It cannot authorize, change or trigger a fill, and the runner never reads it.",
+  "reply_format": {
+    "arithmetic": [
+      {
+        "item": "string, one of arithmetic_to_check",
+        "match": "true or false",
+        "packet_value": "number or string",
+        "recomputed_value": "number or string"
+      }
+    ],
+    "authority": "must be the exact text: advisory only; cannot authorize a fill",
+    "concerns": [
+      "string"
+    ],
+    "live_or_recorded": "one of: live, recorded",
+    "missing_information": [
+      "string"
+    ],
+    "packet_id": "string, copied from the packet",
+    "reviewed_utc": "string, UTC time of the review",
+    "reviewer_model": "string, the exact model name that produced this review",
+    "rule_followed": "true or false: does the action follow from the rule as written and the inputs",
+    "verdict": "one of: agree, challenge, cannot_tell"
+  }
+}

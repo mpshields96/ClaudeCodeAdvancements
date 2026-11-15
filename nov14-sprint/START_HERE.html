@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper Desk Start</title>
+<style>
+:root{
+  --paper:#fcfaf6; --ink:#1b222b; --ink2:#49515b; --muted:#636a72; --faint:#9a9fa5;
+  --rule:#e5e3dd; --cool:#0e5e8a; --cool-soft:#e6eff4; --warm:#c56c21; --warm-soft:#f7ebdf;
+  --serif: Charter, "Iowan Old Style", Georgia, serif;
+  --sans: "Avenir Next", Avenir, Seravek, "Gill Sans", sans-serif;
+  --mono: "SF Mono", Menlo, Consolas, monospace;
+}
+*{ box-sizing:border-box }
+html,body{ background:var(--paper); }
+body{ margin:0; color:var(--ink); font:17px/1.5 var(--serif); font-variant-numeric:lining-nums tabular-nums; }
+main{ max-width:760px; margin:0 auto; padding:40px 16px 64px; }
+a{ color:var(--cool); text-decoration:none; border-bottom:1px solid #9cbbd0; }
+b,strong{ font-weight:700 }
+section{ margin-top:34px; padding-top:22px; border-top:1px solid var(--rule); }
+section.first{ margin-top:0; padding-top:0; border-top:0 }
+.kicker{ font:600 12px/1.2 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--cool); margin:0 0 12px; }
+h1{ font:700 46px/1.02 var(--serif); letter-spacing:-.015em; margin:0 0 12px; }
+h2{ font:700 27px/1.15 var(--serif); letter-spacing:-.01em; margin:0 0 10px; text-wrap:balance; }
+h3{ font:600 16px/1.3 var(--sans); margin:22px 0 6px; }
+p{ margin:0 0 10px; }
+.deck{ font:400 20px/1.4 var(--serif); color:var(--ink2); margin:0 0 22px; text-wrap:pretty; }
+.lede{ font-size:18px; }
+.note{ font:400 13px/1.45 var(--sans); color:var(--muted); }
+.small{ font-size:15px; }
+.answer{ border-left:4px solid var(--cool); background:var(--cool-soft); padding:16px 18px 8px; margin:0 0 24px; border-radius:0 8px 8px 0; }
+.answer .label,.callout .label{ font:700 11.5px/1 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--cool); margin-bottom:8px; }
+.tiles{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:0 0 24px; }
+.tile{ border-top:2.5px solid var(--ink); padding:10px 0 0; }
+.tile .num{ font:700 34px/1 var(--serif); letter-spacing:-.01em; }
+.tile .num.warm{ color:var(--warm) } .tile .num.cool{ color:var(--cool) }
+.tile .cap{ font:400 13px/1.4 var(--sans); color:var(--ink2); margin-top:6px; }
+.ballots{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:0 0 12px; }
+.ballot{ border:1px solid var(--rule); border-radius:8px; padding:12px 14px; background:#fff; }
+.ballot .who{ font:700 11.5px/1 var(--sans); letter-spacing:.13em; text-transform:uppercase; margin-bottom:8px; }
+.ballot.claude .who{ color:var(--warm) } .ballot.codex .who{ color:var(--cool) }
+.ballot p{ font-size:15px; line-height:1.42; margin:0 0 6px }
+ol.steps{ list-style:none; padding:0; margin:0 0 18px; counter-reset:s; }
+ol.steps li{ position:relative; padding:0 0 14px 40px; counter-increment:s; }
+ol.steps li::before{ content:counter(s); position:absolute; left:0; top:0; width:26px; height:26px; border-radius:50%; background:var(--ink); color:var(--paper); font:700 13px/26px var(--sans); text-align:center; }
+ol.steps li b{ display:block; font:600 16px/1.3 var(--sans); margin-bottom:3px }
+code,pre{ font:13px/1.45 var(--mono); }
+pre{ background:#151b22; color:#e9edf1; border-radius:8px; padding:10px 12px; margin:6px 0 4px; overflow-x:auto; white-space:pre-wrap; word-break:break-all; }
+table{ width:100%; border-collapse:collapse; font:400 14px/1.4 var(--sans); margin:8px 0 16px; }
+th{ text-align:left; font:700 11px/1.2 var(--sans); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:6px 7px; border-bottom:1.5px solid var(--ink); vertical-align:bottom; }
+td{ padding:7px; border-bottom:1px solid var(--rule); vertical-align:top; }
+td.opt{ font-weight:600; width:26%; }
+.callout{ background:var(--warm-soft); border-radius:8px; padding:14px 16px 6px; margin:14px 0 18px; }
+.callout .label{ color:#9a4d12 }
+.cool-box{ background:var(--cool-soft); } .cool-box .label{ color:var(--cool) }
+.two{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.do{ border-top:3px solid var(--cool); padding-top:8px } .avoid{ border-top:3px solid var(--warm); padding-top:8px }
+.do h3,.avoid h3{ margin-top:0 }
+ul.tight{ margin:0 0 12px; padding-left:20px } ul.tight li{ margin:0 0 6px }
+.status{ font:700 11.5px/1 var(--sans); letter-spacing:.08em; text-transform:uppercase; }
+.done{ color:#1d6b3a } .open{ color:#9a4d12 } .fail{ color:#a3261b }
+.src{ font:400 13px/1.4 var(--sans); color:var(--ink2); }
+@media (max-width:640px){
+  h1{ font-size:36px } h2{ font-size:23px } .deck{ font-size:18px }
+  .tiles,.ballots,.two{ grid-template-columns:1fr }
+}
+</style>
+</head>
+<body>
+<main>
+
+<section class="first">
+  <div class="kicker">Paper desk · 14 November 2026 · For Matthew</div>
+  <h1>Start here</h1>
+  <p class="deck">What this afternoon's sprint built: a paper trading bot with a desk to judge its calls, an NFL paper ledger, a price helper, and a stack of research leads. Nothing here places a bet or an order.</p>
+  <div class="answer">
+    <div class="label">The answer</div>
+    <p><b>Everything runs, and nothing here proves an edge yet.</b> The trading bot works end to end on synthetic bars and finished ahead of buy-and-hold in its one sample, but eight times the costs wipes that out. No NFL rule beat the vig on games it hadn't seen. The useful part tonight is practice: judge the bot's calls blind, and check whether a price is worth it at your own confidence.</p>
+    <p class="note">Every number on this page comes from a check the coordinator ran itself on a scratch copy, 14 November 2026, 21:24–22:30 UTC. Paper only.</p>
+  </div>
+</section>
+
+<section id="tv">
+  <div class="kicker">Trading bot · paper replay · synthetic bars</div>
+  <h2>The bot finished ahead in one sample. That is not an edge.</h2>
+  <p class="lede">The bot follows one frozen rule: buy when a fast moving average crosses above a slow one, with a 1.5% stop and a $100 daily loss limit. It replays 60-minute synthetic bars, fills at the next bar's open, and pays spread, slippage and commission on every trade.</p>
+  <div class="tiles">
+    <div class="tile"><div class="num cool">+$227.88</div><div class="cap">net after costs over the replay, 8 round trips (6 won, 2 lost). Buy-and-hold made +$72.99 on the same bars.</div></div>
+    <div class="tile"><div class="num warm">−$69.03</div><div class="cap">the same replay at eight times the costs. The net falls at every step as costs rise. The worst fall from a peak was $469.58.</div></div>
+  </div>
+  <table>
+    <thead><tr><th>Check the coordinator ran</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td class="opt">Replay from scratch</td><td>+$270.30 before costs; spread and slippage −$25.42; commission −$17.00; 50 shares still open at the end</td></tr>
+      <tr><td class="opt">Rerun the same bars</td><td>Adds nothing: all 630 bars refused as already recorded</td></tr>
+      <tr><td class="opt">Bad-input check</td><td>28 of 28 refused, including TradingView-origin, stale, future, duplicate and over-limit inputs</td></tr>
+      <tr><td class="opt">Cost sweep</td><td>×0 +$270.30 · ×1 +$227.88 · ×2 +$185.47 · ×4 +$100.63 · ×8 −$69.03</td></tr>
+    </tbody>
+  </table>
+  <p class="src">Rule, replay and journal: <a href="tvbot/out/normal/decision_packet.md">decision packet</a>, <a href="tvbot/out/normal/decisions.jsonl">decision journal</a>, <a href="tvbot/RECONCILE.md">tvbot/RECONCILE.md</a>. The chart indicator for your own TradingView chart: <a href="tvbot/pine/README.md">tvbot/pine/README.md</a>. It runs inside TradingView only; no TradingView value is sent to a model or written to a paper ledger.</p>
+
+  <h3>Two reviewers judged one call blind, and disagreed</h3>
+  <p>One buy signal was frozen into a packet with only the bars up to that moment. Two fresh reviewers checked it without seeing what happened next.</p>
+  <div class="ballots">
+    <div class="ballot claude"><div class="who">Claude · challenge</div><p>The rule and arithmetic check out, but the packet's fill time contradicts its own fill rule. Read one way, the fill uses a price from 7 seconds before the decision existed. Read the other way, the packet misstates a one-bar delay.</p></div>
+    <div class="ballot codex"><div class="who">Astra · agree</div><p>The buy follows the written rule; both moving averages match to six decimals. It could not verify the three-bar cooldown.</p></div>
+  </div>
+  <p class="src">Both answers, stored as recorded with their time and model: <a href="review/PKT-7069f9b05f2a/">review/PKT-7069f9b05f2a/</a>. Codex's resolution: <a href="codex/packet-review/Independent_Resolution.md">Independent_Resolution.md</a>. Reviews are advisory and cannot place anything.</p>
+
+  <h3>Practise on calls nobody has judged</h3>
+  <p>The desk's <b>Practice</b> tab shows the bot's eight other buy signals one at a time, with only what the bot knew at that moment. You choose follow or pass and write one line on why. Only then does it show the chart and what the trade did. Each call is saved once and never changed. The <b>Trading bot</b> tab does the same for the reviewed packet, with both reviews side by side.</p>
+</section>
+
+<section id="price">
+  <div class="kicker">Your −170 to +150 question · price helper</div>
+  <h2>Is a price worth it at your confidence?</h2>
+  <p class="lede">Open <a href="odds/price_helper.html">odds/price_helper.html</a> in any browser. Type a price and how often you honestly think the pick wins. It shows the win rate the price needs, the paper value per $100 if you're right, and roughly how many bets it would take to prove it.</p>
+  <div class="tiles">
+    <div class="tile"><div class="num">52.4%</div><div class="cap">what −110 needs to break even. At 55% you'd expect +$5.00 per $100, and it would take about 1,387 bets to show it.</div></div>
+    <div class="tile"><div class="num">63.0% / 40.0%</div><div class="cap">what −170 and +150 need. It also strips the book's cut from a two-sided price to show the book's own fair estimate.</div></div>
+  </div>
+</section>
+
+<section id="nfl">
+  <div class="kicker">NFL · paper ledger</div>
+  <h2>No betting rule beat the vig on games it hadn't seen.</h2>
+  <p class="lede">Ten simple rules were written down before any results were looked at. One per family was picked using 2006–2022 only. Then each was scored once on 2023–2025, priced at −110, where a bettor needs to win 52.38% just to break even.</p>
+  <div class="tiles">
+    <div class="tile"><div class="num warm">0 of 4</div><div class="cap">frozen rules passed the held-out test (a 95% lower bound above 52.38%)</div></div>
+    <div class="tile"><div class="num">+18.3%</div><div class="cap">best held-out return: home underdog of 7+, 63 bets. The 95% range still reaches below break-even (49.8%).</div></div>
+  </div>
+  <table>
+    <thead><tr><th>Rule (frozen)</th><th>Held-out bets</th><th>Win rate</th><th>Return</th></tr></thead>
+    <tbody>
+      <tr><td class="opt">Home dog, 7+</td><td>63</td><td>62.3%</td><td>+18.3%</td></tr>
+      <tr><td class="opt">Big dog, 10+</td><td>79</td><td>42.3%</td><td>−19.0%</td></tr>
+      <tr><td class="opt">Rest edge, 6+ days</td><td>69</td><td>48.5%</td><td>−7.3%</td></tr>
+      <tr><td class="opt">Under, total 47+</td><td>218</td><td>50.0%</td><td>−4.5%</td></tr>
+      <tr><td class="opt">Always bet home (baseline)</td><td>—</td><td>—</td><td>−4.1%</td></tr>
+    </tbody>
+  </table>
+  <p class="src">Source: <a href="nfl/results/backtest_report.txt">nfl/results/backtest_report.txt</a> (run 21:24Z). Codex reproduced all four held-out results on its own. Rules: <a href="nfl/RULES.md">nfl/RULES.md</a>.</p>
+
+  <h3>The ledger is for your own reads, and it refuses bad input</h3>
+  <p>The paper ledger logs your own picks and passes alongside the rule picks. Each entry has a price and a reason, so passes get scored too. The coordinator ran it on a scratch copy, and it refused all of these: a duplicate pick, a quote over 12 hours old, a future-dated quote, a stake over 1 unit, a game that had already kicked off, a missing reason, a malformed time, and a closing price for 60.5 attached to a 54.5 ticket. A player relisted at 60.5 is logged as a separate pick from 54.5. Running the rules twice adds nothing the second time.</p>
+  <div class="callout">
+    <div class="label">Know the limits</div>
+    <ul class="tight">
+      <li>Lines come from a free nflverse archive. The time a sportsbook posted each line is unknown, so a line is a paper observation, not a price you could have taken.</li>
+      <li>Team markets only. You type in player props yourself, and their prices aren't checked.</li>
+      <li>A price outside your −170 to +150 range is recorded and flagged, not refused.</li>
+      <li>Kalshi-style event contracts are treated as unavailable in Louisiana. See <a href="nfl/LEGAL_CHANNELS.md">nfl/LEGAL_CHANNELS.md</a>.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="leads">
+  <div class="kicker">Research · community leads</div>
+  <h2>What other builders learned the hard way</h2>
+  <p class="lede"><span id="lead-count">92 Reddit leads from 25 communities</span>, plus 21 primary sources checked directly. Reddit blocks this Mac, so the leads came through Gemini's public search. Codex opened three of them at source and they matched. Ten links (T4, T5, T10, T13, T16, T26 to T29, T34) were written by Gemini without a lookup and may open the wrong thread; <code>reddit/LEADS.md</code> names them at the top.</p>
+  <ol class="steps">
+    <li><b>Signal only on a closed bar.</b> TradingView's own docs say that waiting for the bar to confirm avoids repainting. The Pine indicator and the paper runner both do this.</li>
+    <li><b>Count every variant you try.</b> The more rules you test, the more likely a lucky winner looks real. The NFL lane listed its ten up front and scored the held-out years once.</li>
+    <li><b>Fill at the next bar, with costs.</b> Never fill at the signal bar's close. Keep signal time and fill time separate, and show the result again at double the cost.</li>
+    <li><b>Code does the numbers; the model only explains.</b> A model can remember how past markets moved, so the model is never asked to judge past dates.</li>
+    <li><b>One decision per opportunity.</b> A rogue-agent post-mortem came down to two copies of the same task trading the same thing. Each decision is keyed and locked.</li>
+  </ol>
+  <p class="src">All leads, with the status of each and the pages inspected: <a href="reddit/LEADS.md">reddit/LEADS.md</a>. Codex's check at source: <a href="codex/Reddit_Source_Check.md">codex/Reddit_Source_Check.md</a>. Codex's review of ten trading videos: <a href="Video_Review/video-review.html">Video_Review/video-review.html</a>, and its field guide <a href="Paper_Desk_Field_Guide.pdf">Paper_Desk_Field_Guide.pdf</a> (both added at this folder's top level in Codex's release copy). Performance figures in posts are the authors' own claims.</p>
+</section>
+
+<section id="run">
+  <div class="kicker">How to use it · no typing</div>
+  <h2>Double-click Paper Desk</h2>
+  <p class="lede">Everything above runs from one page on this Mac. It needs nothing installed beyond the Python that comes with macOS.</p>
+  <ol class="steps">
+    <li><b>Open the desk.</b> In this folder, double-click <code>Paper Desk.command</code>. A Terminal window opens and the desk opens in your browser. If you copied the folder from a download and macOS blocks it, right-click the file and choose Open.</li>
+    <li><b>Judge the bot.</b> The <i>Trading bot</i> tab shows the reviewed call with both reviews; the <i>Practice</i> tab gives you its other calls blind. Choose follow or pass, write one line on why, and press the button. The chart and the result appear only after your call is saved.</li>
+    <li><b>Load Sunday's slate.</b> Press <i>Load the slate</i>. Games that have already kicked off are left out.</li>
+    <li><b>Log a take or a pass.</b> Pick the game, the market and the side. Type the line for the side you picked (home −2.5), the price you saw, when and where you saw it, and one line on why. Press <i>Log decision</i>. If the ledger refuses an entry, the page shows the reason, for example a quote more than 12 hours old.</li>
+    <li><b>After the games.</b> Press <i>Settle finished games</i>, then <i>Show my ledger</i> for the record, including how your passes would have done.</li>
+    <li><b>Stop it.</b> Close the Terminal window. Your ledger stays in <code>nfl/ledger/</code>, and opening the desk again picks up where you left off.</li>
+  </ol>
+  <div class="two">
+    <div class="do">
+      <h3>What it does</h3>
+      <ul class="tight">
+        <li>Runs the same ledger tool the coordinator tested, with the same refusals.</li>
+        <li>Records your price as your own report, marked unverified.</li>
+        <li>Works from this folder wherever you move it.</li>
+      </ul>
+    </div>
+    <div class="avoid">
+      <h3>What it never does</h3>
+      <ul class="tight">
+        <li>Place a bet or an order, or sign in anywhere.</li>
+        <li>Send TradingView data, or any data, off this Mac.</li>
+        <li>Answer anyone but this Mac (it listens on 127.0.0.1 only).</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,55 @@
+{
+  "applied_to_ledger": {
+    "ledger_dir": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/ledger",
+    "price_observations": {
+      "already_recorded": 44,
+      "line_differs_not_recorded": 0,
+      "recorded": 0,
+      "refused": 0
+    },
+    "refusals": [],
+    "settle": "settle not run; 1 final(s) held back from settle, no real price on the identical ledger contract: 2026_10_WAS_NYG"
+  },
+  "counts": {
+    "finals": 1,
+    "games": 14,
+    "games_with_real_price": 13,
+    "ledger_agreement": {
+      "yes": 52
+    },
+    "price_rows": 78,
+    "rule_rows": 56,
+    "rule_rows_by_status": {
+      "no price, not scored": 4,
+      "real price recorded, awaiting final": 44,
+      "rule has no side here, nothing to price": 8
+    }
+  },
+  "generated_at_utc": "2026-11-15T05:14:24Z",
+  "inputs": {
+    "public_lines": {
+      "bytes": 25597,
+      "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/codex/real-intake/nfl-public-lines.json",
+      "price_note": "Public ESPN display. Actual book update time and Louisiana availability unknown. Prices may move. No closing line, wager or pick inferred.",
+      "sha256": "206d164be40574fa78cb9a1fca8f0db3b3c8d8ef0a5b56431f3f975682d60e9e"
+    },
+    "schedule": {
+      "retrieved_at_utc": "2026-11-14T21:16:58Z",
+      "sha256": "44f6ba50a76303869229be8fdad82d124e77f24f50c90c319fbc245dd34120a0",
+      "url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
+    },
+    "scoreboard": {
+      "bytes": 5812,
+      "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/codex/real-intake/nfl-scoreboard.json",
+      "retrieved_at_raw": "2026-11-14T22:51:42.4764177Z",
+      "retrieved_at_utc": "2026-11-14T22:51:42Z",
+      "sha256": "f6fa22769799e21af1e76155a3583f99c6c77a6e56916c874e0151815958ad19",
+      "source": "DraftKings Sports Scores, search_games_v1",
+      "source_url": "https://www.nfl.com/schedules/2026/by-week/week-10"
+    }
+  },
+  "notes": [],
+  "paper_only": true,
+  "season": 2026,
+  "week": 10
+}

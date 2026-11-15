@@ -1,0 +1,233 @@
+{
+  "files_sha256": {
+    "stats_player_week_2022.csv": "ad426c3fe5bf1cc30c3f137fdfe96d054e19d400879ee4413129da49fa7b54be",
+    "stats_player_week_2023.csv": "f19cb71a5de0dce7fd09376026237c9ee9d5a93fe13815a2ea3ec2d37204cb17",
+    "stats_player_week_2024.csv": "3ddc45a84f759aa348ce465ae001752c530575455717657cdfe1f8abfcdb4759",
+    "stats_player_week_2025.csv": "e5e0615b3d96a3eaebfaee91e55afb4a4e7fe0caf057454177bcd7d6ad4bcfc2",
+    "stats_player_week_2026.csv": "19789406c2bc142b17890632d745ad3a8228077f0a01fda18a76b6e99fd97c2d"
+  },
+  "listed_2026_wk1_10_ex_warren": {
+    "A": {
+      "cases": [],
+      "instances": 0,
+      "player_seasons": 0,
+      "rate": null,
+      "rec_yards_over_22_5": 0,
+      "targets_4plus": 0,
+      "wilson95": null,
+      "yards_rate": null,
+      "yards_wilson95": null
+    },
+    "B": {
+      "cases": [
+        "Kyren Williams 2026 wk9: prior 3/2/7/13/8/6/2, dip 1, next 4 tgt 16 yds",
+        "Bijan Robinson 2026 wk9: prior 10/4/2/2/7/2/5, dip 1, next 7 tgt 47 yds"
+      ],
+      "instances": 2,
+      "player_seasons": 2,
+      "rate": 1.0,
+      "rec_yards_over_22_5": 1,
+      "targets_4plus": 2,
+      "wilson95": [
+        0.3424,
+        1.0
+      ],
+      "yards_rate": 0.5,
+      "yards_wilson95": [
+        0.0945,
+        0.9055
+      ]
+    },
+    "C": {
+      "cases": [],
+      "instances": 0,
+      "player_seasons": 0,
+      "rate": null,
+      "rec_yards_over_22_5": 0,
+      "targets_4plus": 0,
+      "wilson95": null,
+      "yards_rate": null,
+      "yards_wilson95": null
+    },
+    "D": {
+      "cases": [],
+      "instances": 3,
+      "player_seasons": 3,
+      "rate": 1.0,
+      "rec_yards_over_22_5": 1,
+      "targets_4plus": 3,
+      "wilson95": [
+        0.4385,
+        1.0
+      ],
+      "yards_rate": 0.3333,
+      "yards_wilson95": [
+        0.0615,
+        0.7923
+      ]
+    }
+  },
+  "main_2022_2025": {
+    "A": {
+      "cases": [
+        "Austin Ekeler 2022 wk12: prior 8/7/4/16/12/8/12, dip 2, next 15 tgt 60 yds",
+        "Josh Jacobs 2023 wk10: prior 6/5/11/5/5/4/4, dip 0, next 2 tgt 11 yds",
+        "Bijan Robinson 2024 wk15: prior 4/5/7/7/4/4/6, dip 2, next 2 tgt 10 yds",
+        "De'Von Achane 2024 wk18: prior 5/4/4/9/7/7/7, dip 2, next 0 tgt 0 yds",
+        "Christian McCaffrey 2025 wk16: prior 8/6/6/10/6/7/4, dip 1, next 8 tgt 29 yds",
+        "De'Von Achane 2025 wk14: prior 7/6/5/7/10/6/5, dip 1, next 1 tgt 13 yds",
+        "Ashton Jeanty 2025 wk17: prior 5/5/8/8/8/4/6, dip 2, next 2 tgt 13 yds"
+      ],
+      "instances": 7,
+      "player_seasons": 7,
+      "rate": 0.2857,
+      "rec_yards_over_22_5": 2,
+      "targets_4plus": 2,
+      "wilson95": [
+        0.0822,
+        0.6411
+      ],
+      "yards_rate": 0.2857,
+      "yards_wilson95": [
+        0.0822,
+        0.6411
+      ]
+    },
+    "B": {
+      "cases": [
+        "Rex Burkhead 2022 wk10: prior 8/3/5/5/3/6/1, dip 2, next 2 tgt 28 yds",
+        "Jerick McKinnon 2022 wk14: prior 3/3/3/8/8/1/6, dip 2, next 9 tgt 112 yds",
+        "Christian McCaffrey 2022 wk17: prior 9/6/7/6/10/3/8, dip 2, next 9 tgt 72 yds",
+        "Aaron Jones 2022 wk10: prior 3/4/4/3/4/10/5, dip 2, next 2 tgt 18 yds",
+        "Aaron Jones 2022 wk11: prior 4/4/3/4/10/5/2, dip 2, next 7 tgt 20 yds",
+        "Aaron Jones 2022 wk17: prior 5/2/2/7/4/5/5, dip 2, next 3 tgt 2 yds",
+        "Samaje Perine 2022 wk16: prior 2/3/2/4/7/7/5, dip 1, next 4 tgt 19 yds",
+        "Austin Ekeler 2022 wk12: prior 8/7/4/16/12/8/12, dip 2, next 15 tgt 60 yds",
+        "Leonard Fournette 2022 wk13: prior 6/7/11/6/3/3/7, dip 1, next 7 tgt 32 yds",
+        "Joe Mixon 2022 wk15: prior 4/3/6/3/9/5/3, dip 2, next 6 tgt 33 yds",
+        "Alvin Kamara 2022 wk16: prior 9/10/4/4/5/7/3, dip 2, next 4 tgt 34 yds",
+        "Alvin Kamara 2022 wk18: prior 4/4/5/7/3/2/4, dip 1, next 2 tgt 3 yds",
+        "Nyheim Hines 2022 wk10: prior 6/5/6/2/2/5/2, dip 1, next 1 tgt 9 yds",
+        "Saquon Barkley 2022 wk11: prior 4/4/2/6/3/4/5, dip 1, next 5 tgt 13 yds",
+        "Saquon Barkley 2022 wk15: prior 3/4/5/1/5/6/5, dip 2, next 8 tgt 33 yds",
+        "Devin Singletary 2022 wk11: prior 3/11/5/2/5/2/5, dip 2, next 2 tgt 11 yds",
+        "Devin Singletary 2022 wk12: prior 11/5/2/5/2/5/2, dip 2, next 1 tgt 8 yds",
+        "Josh Jacobs 2022 wk14: prior 5/4/4/3/8/4/7, dip 2, next 2 tgt 15 yds",
+        "Josh Jacobs 2022 wk15: prior 4/4/3/8/4/7/2, dip 2, next 3 tgt 17 yds",
+        "Josh Jacobs 2022 wk17: prior 3/8/4/7/2/2/3, dip 1, next 5 tgt 26 yds",
+        "Eno Benjamin 2022 wk10: prior 4/4/1/4/3/5/7, dip 1, next 0 tgt 0 yds",
+        "Rachaad White 2022 wk16: prior 2/3/3/0/9/8/5, dip 2, next 4 tgt 17 yds",
+        "Ezekiel Elliott 2023 wk18: prior 5/2/2/5/8/6/11, dip 2, next 7 tgt 27 yds",
+        "Christian McCaffrey 2023 wk15: prior 3/3/7/10/5/6/4, dip 1, next 5 tgt 72 yds",
+        "Aaron Jones 2023 wk18: prior 5/5/6/6/2/4/3, dip 1, next 5 tgt 30 yds",
+        "Austin Ekeler 2023 wk18: prior 7/3/6/3/7/6/4, dip 2, next 8 tgt 38 yds",
+        "Saquon Barkley 2023 wk16: prior 4/5/4/3/5/3/4, dip 2, next 6 tgt 4 yds",
+        "Alexander Mattison 2023 wk9: prior 4/6/7/1/3/7/3, dip 1, next 2 tgt 49 yds",
+        "Alexander Mattison 2023 wk10: prior 6/7/1/3/7/3/1, dip 2, next 2 tgt 6 yds",
+        "Miles Sanders 2023 wk11: prior 6/5/9/3/1/0/5, dip 2, next 1 tgt 2 yds",
+        "Tony Pollard 2023 wk11: prior 8/3/3/5/7/1/5, dip 0, next 5 tgt 19 yds",
+        "Tony Pollard 2023 wk17: prior 5/0/5/6/4/8/3, dip 1, next 3 tgt 0 yds",
+        "Josh Jacobs 2023 wk10: prior 6/5/11/5/5/4/4, dip 0, next 2 tgt 11 yds",
+        "Josh Jacobs 2023 wk11: prior 5/11/5/5/4/4/0, dip 2, next 1 tgt 12 yds",
+        "Josh Jacobs 2023 wk12: prior 11/5/5/4/4/0/2, dip 1, next 6 tgt 15 yds",
+        "D'Andre Swift 2023 wk11: prior 3/2/4/6/10/3/3, dip 2, next 3 tgt 31 yds",
+        "D'Andre Swift 2023 wk13: prior 4/6/10/3/3/2/3, dip 1, next 6 tgt 7 yds",
+        "D'Andre Swift 2023 wk15: prior 10/3/3/2/3/1/6, dip 0, next 3 tgt 1 yds",
+        "Antonio Gibson 2023 wk17: prior 2/5/5/6/4/5/5, dip 2, next 4 tgt 17 yds",
+        "Travis Etienne 2023 wk18: prior 4/3/6/4/4/6/3, dip 2, next 6 tgt 30 yds",
+        "Rachaad White 2023 wk13: prior 3/4/6/7/4/3/7, dip 2, next 5 tgt 22 yds",
+        "Rachaad White 2023 wk15: prior 6/7/4/3/7/2/5, dip 2, next 2 tgt 50 yds",
+        "Rachaad White 2023 wk16: prior 7/4/3/7/2/5/2, dip 2, next 7 tgt 38 yds",
+        "Jerome Ford 2023 wk11: prior 4/3/6/2/4/2/7, dip 1, next 5 tgt 8 yds",
+        "Jerome Ford 2023 wk17: prior 7/1/5/7/3/6/5, dip 2, next 3 tgt 57 yds",
+        "Breece Hall 2023 wk16: prior 9/4/3/6/9/8/9, dip 2, next 16 tgt 96 yds",
+        "Bijan Robinson 2023 wk12: prior 6/5/2/8/0/5/4, dip 2, next 6 tgt 32 yds",
+        "Tyjae Spears 2023 wk12: prior 4/4/5/1/4/6/5, dip 2, next 3 tgt 1 yds",
+        "Tyjae Spears 2023 wk16: prior 4/6/5/2/3/6/8, dip 1, next 6 tgt 27 yds",
+        "Jahmyr Gibbs 2023 wk14: prior 2/5/10/5/5/6/8, dip 2, next 4 tgt 16 yds",
+        "Jahmyr Gibbs 2023 wk16: prior 10/5/5/6/8/2/4, dip 2, next 7 tgt 20 yds",
+        "Joe Mixon 2024 wk17: prior 6/0/4/4/6/6/6, dip 2, next 3 tgt 13 yds",
+        "Tony Pollard 2024 wk15: prior 6/4/3/4/4/5/6, dip 2, next 0 tgt 0 yds",
+        "Tony Pollard 2024 wk16: prior 4/3/4/4/5/6/2, dip 0, next 4 tgt 5 yds",
+        "Rico Dowdle 2024 wk15: prior 2/6/6/3/5/3/3, dip 2, next 0 tgt 0 yds",
+        "Rico Dowdle 2024 wk16: prior 6/6/3/5/3/3/2, dip 0, next 3 tgt 28 yds",
+        "D'Andre Swift 2024 wk11: prior 5/4/7/2/4/0/6, dip 1, next 2 tgt 13 yds",
+        "Javonte Williams 2024 wk11: prior 4/3/6/6/3/5/3, dip 2, next 5 tgt 28 yds",
+        "Javonte Williams 2024 wk15: prior 6/3/5/3/2/5/4, dip 2, next 3 tgt 8 yds",
+        "Javonte Williams 2024 wk18: prior 3/2/5/4/2/3/11, dip 2, next 4 tgt 50 yds",
+        "Rachaad White 2024 wk13: prior 6/3/3/6/6/3/7, dip 1, next 1 tgt 2 yds",
+        "Rachaad White 2024 wk14: prior 3/3/6/6/3/7/1, dip 1, next 3 tgt 19 yds",
+        "Breece Hall 2024 wk15: prior 4/6/9/3/4/4/7, dip 1, next 2 tgt 21 yds",
+        "Breece Hall 2024 wk16: prior 6/9/3/4/4/7/1, dip 2, next 6 tgt 38 yds",
+        "Kenneth Walker III 2024 wk12: prior 3/5/8/8/2/5/3, dip 2, next 6 tgt 52 yds",
+        "Bijan Robinson 2024 wk15: prior 4/5/7/7/4/4/6, dip 2, next 2 tgt 10 yds",
+        "Bijan Robinson 2024 wk16: prior 5/7/7/4/4/6/2, dip 2, next 2 tgt 9 yds",
+        "Bijan Robinson 2024 wk17: prior 7/7/4/4/6/2/2, dip 2, next 5 tgt 8 yds",
+        "De'Von Achane 2024 wk18: prior 5/4/4/9/7/7/7, dip 2, next 0 tgt 0 yds",
+        "Christian McCaffrey 2025 wk16: prior 8/6/6/10/6/7/4, dip 1, next 8 tgt 29 yds",
+        "Alvin Kamara 2025 wk9: prior 2/6/2/5/6/5/3, dip 2, next 3 tgt 3 yds",
+        "Josh Jacobs 2025 wk13: prior 9/4/5/1/3/5/6, dip 1, next 1 tgt 8 yds",
+        "Javonte Williams 2025 wk9: prior 3/7/5/3/2/8/4, dip 2, next 1 tgt 0 yds",
+        "Javonte Williams 2025 wk11: prior 7/5/3/2/8/4/2, dip 1, next 1 tgt 0 yds",
+        "Rachaad White 2025 wk13: prior 5/4/3/6/2/5/3, dip 1, next 3 tgt 22 yds",
+        "Bijan Robinson 2025 wk11: prior 5/6/5/8/8/3/10, dip 2, next 5 tgt 39 yds",
+        "Bijan Robinson 2025 wk13: prior 5/8/8/3/10/2/5, dip 2, next 7 tgt 51 yds",
+        "Bijan Robinson 2025 wk15: prior 8/3/10/2/5/2/7, dip 2, next 11 tgt 82 yds",
+        "De'Von Achane 2025 wk14: prior 7/6/5/7/10/6/5, dip 1, next 1 tgt 13 yds",
+        "De'Von Achane 2025 wk15: prior 6/5/7/10/6/5/1, dip 1, next 6 tgt 67 yds",
+        "Ashton Jeanty 2025 wk17: prior 5/5/8/8/8/4/6, dip 2, next 2 tgt 13 yds",
+        "Ashton Jeanty 2025 wk18: prior 5/8/8/8/4/6/2, dip 2, next 5 tgt 7 yds",
+        "Tyjae Spears 2025 wk16: prior 4/3/3/5/5/6/4, dip 2, next 5 tgt 53 yds",
+        "Tyjae Spears 2025 wk18: prior 3/5/5/6/4/2/5, dip 2, next 7 tgt 9 yds"
+      ],
+      "instances": 84,
+      "player_seasons": 52,
+      "rate": 0.5238,
+      "rec_yards_over_22_5": 33,
+      "targets_4plus": 44,
+      "wilson95": [
+        0.4183,
+        0.6272
+      ],
+      "yards_rate": 0.3929,
+      "yards_wilson95": [
+        0.2953,
+        0.4998
+      ]
+    },
+    "C": {
+      "cases": [],
+      "instances": 31,
+      "player_seasons": 14,
+      "rate": 0.6129,
+      "rec_yards_over_22_5": 14,
+      "targets_4plus": 19,
+      "wilson95": [
+        0.4382,
+        0.7627
+      ],
+      "yards_rate": 0.4516,
+      "yards_wilson95": [
+        0.2916,
+        0.6223
+      ]
+    },
+    "D": {
+      "cases": [],
+      "instances": 342,
+      "player_seasons": 72,
+      "rate": 0.5848,
+      "rec_yards_over_22_5": 165,
+      "targets_4plus": 200,
+      "wilson95": [
+        0.5319,
+        0.6358
+      ],
+      "yards_rate": 0.4825,
+      "yards_wilson95": [
+        0.43,
+        0.5353
+      ]
+    }
+  }
+}

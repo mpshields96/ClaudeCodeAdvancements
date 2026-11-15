@@ -1,0 +1,291 @@
+{
+ "cli": "/usr/bin/env -i PATH=/usr/bin:/bin /usr/bin/python3 -I -B postgame/postgame.py --data <tmp>/data ../../real/inputs/nfl-public-lines.20261114T225342Z.json ../../../../../../../../tmp/postgame-demo-mn8mzngy/inputs/manual_ind_pit_from_games_csv.json ../tools/official_player_logs_20261115.json",
+ "first_run": {
+  "exit_code": 2,
+  "summary": {
+   "already_recorded": 0,
+   "exit_code": 2,
+   "inputs": [
+    {
+     "captured_utc": "2026-11-14T22:53:42Z",
+     "games": 14,
+     "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/real/inputs/nfl-public-lines.20261114T225342Z.json",
+     "player_rows": 0,
+     "sha256": "206d164be40574fa78cb9a1fca8f0db3b3c8d8ef0a5b56431f3f975682d60e9e",
+     "shape": "espn_public_lines"
+    },
+    {
+     "captured_utc": "2026-11-15T08:01:55Z",
+     "games": 1,
+     "path": "/tmp/postgame-demo-mn8mzngy/inputs/manual_ind_pit_from_games_csv.json",
+     "player_rows": 0,
+     "sha256": "537a4ec5db76f29430595b2c40811987ad704d3bae159dd69dd1f5667c90b8b2",
+     "shape": "manual"
+    },
+    {
+     "captured_utc": "2026-11-15T07:37:36Z",
+     "games": 0,
+     "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/tools/official_player_logs_20261115.json",
+     "player_rows": 1536,
+     "sha256": "217b65f973a1b35e053fe786c96ba168544a56540e52593fac9b11a1d01e1119",
+     "shape": "nflcom_game_logs"
+    }
+   ],
+   "journal_dir": "/tmp/postgame-demo-mn8mzngy/data",
+   "notes": [],
+   "now_utc": "2026-11-15T08:01:55Z",
+   "pending": [
+    {
+     "event_id": "401872985",
+     "game": "Indianapolis Colts at Pittsburgh Steelers",
+     "item": "first-half score",
+     "reason": "halftime not in manual_ind_pit_from_games_csv.json"
+    },
+    {
+     "event_id": "401873052",
+     "game": "Washington Commanders at New York Giants",
+     "item": "first-half score",
+     "reason": "halftime not in nfl-public-lines.20261114T225342Z.json"
+    }
+   ],
+   "recorded_finals": [
+    {
+     "away_score": 24,
+     "event_id": "401873052",
+     "game": "Washington Commanders at New York Giants",
+     "h1": null,
+     "home_score": 21,
+     "source": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=20261112 (ESPN public lines capture, file nfl-public-lines.20261114T225342Z.json, sha256 206d164be405)"
+    },
+    {
+     "away_score": 22,
+     "event_id": "401872985",
+     "game": "Indianapolis Colts at Pittsburgh Steelers",
+     "h1": null,
+     "home_score": 34,
+     "source": "nflverse games.csv row 2026_05_IND_PIT, espn 401872985 (games.csv sha256 44f6ba50a763) (manual intake, file manual_ind_pit_from_games_csv.json, sha256 537a4ec5db76)"
+    }
+   ],
+   "recorded_players": [
+    {
+     "event_id": "401872985",
+     "game": "Indianapolis Colts at Pittsburgh Steelers",
+     "market": "player_reception_yds",
+     "player": "Jaylen Warren",
+     "source": "https://www.nfl.com/players/jaylen-warren/stats/logs/2026/ (NFL.com game log retrieved 2026-11-15T07:09:24Z, page sha256 af1314dfd3eb; file official_player_logs_20261115.json, sha256 217b65f973a1)",
+     "team": "Pittsburgh Steelers",
+     "value": 87.0
+    },
+    {
+     "event_id": "401872985",
+     "game": "Indianapolis Colts at Pittsburgh Steelers",
+     "market": "player_receptions",
+     "player": "Jaylen Warren",
+     "source": "https://www.nfl.com/players/jaylen-warren/stats/logs/2026/ (NFL.com game log retrieved 2026-11-15T07:09:24Z, page sha256 af1314dfd3eb; file official_player_logs_20261115.json, sha256 217b65f973a1)",
+     "team": "Pittsburgh Steelers",
+     "value": 6.0
+    },
+    {
+     "event_id": "401872985",
+     "game": "Indianapolis Colts at Pittsburgh Steelers",
+     "market": "player_rush_yds",
+     "player": "Jaylen Warren",
+     "source": "https://www.nfl.com/players/jaylen-warren/stats/logs/2026/ (NFL.com game log retrieved 2026-11-15T07:09:24Z, page sha256 af1314dfd3eb; file official_player_logs_20261115.json, sha256 217b65f973a1)",
+     "team": "Pittsburgh Steelers",
+     "value": 101.0
+    },
+    {
+     "event_id": "401872985",
+     "game": "Indianapolis Colts at Pittsburgh Steelers",
+     "market": "player_reception_yds",
+     "player": "Tyler Warren",
+     "source": "https://www.nfl.com/players/tyler-warren/stats/logs/2026/ (NFL.com game log retrieved 2026-11-15T07:09:11Z, page sha256 08c594e83a8d; file official_player_logs_20261115.json, sha256 217b65f973a1)",
+     "team": "Indianapolis Colts",
+     "value": 83.0
+    },
+    {
+     "event_id": "401872985",
+     "game": "Indianapolis Colts at Pittsburgh Steelers",
+     "market": "player_rush_yds",
+     "player": "Tyler Warren",
+     "source": "https://www.nfl.com/players/tyler-warren/stats/logs/2026/ (NFL.com game log retrieved 2026-11-15T07:09:11Z, page sha256 08c594e83a8d; file official_player_logs_20261115.json, sha256 217b65f973a1)",
+     "team": "Indianapolis Colts",
+     "value": 1.0
+    }
+   ],
+   "refused": []
+  }
+ },
+ "fixture_warning": "the pregame lines and -110 prices are invented for wiring only (DEMO FIXTURE)",
+ "games_csv_row": {
+  "away": "IND",
+  "away_score": "22",
+  "espn": "401872985",
+  "game_id": "2026_05_IND_PIT",
+  "gameday": "2026-10-11",
+  "games_csv_sha256": "44f6ba50a76303869229be8fdad82d124e77f24f50c90c319fbc245dd34120a0",
+  "gametime": "13:00",
+  "home": "PIT",
+  "home_score": "34"
+ },
+ "grades_of_fixture_bets": [
+  {
+   "bet": "Indianapolis Colts to win",
+   "detail": "Indianapolis Colts 22, Pittsburgh Steelers 34",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "loss"
+  },
+  {
+   "bet": "Pittsburgh Steelers to win",
+   "detail": "Indianapolis Colts 22, Pittsburgh Steelers 34",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "win"
+  },
+  {
+   "bet": "Over 44.5 total points",
+   "detail": "Indianapolis Colts 22, Pittsburgh Steelers 34",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "win"
+  },
+  {
+   "bet": "Under 44.5 total points",
+   "detail": "Indianapolis Colts 22, Pittsburgh Steelers 34",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "loss"
+  },
+  {
+   "bet": "First half: Over 21.5 total points",
+   "detail": "no first-half score recorded",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "unknown"
+  },
+  {
+   "bet": "First half: Under 21.5 total points",
+   "detail": "no first-half score recorded",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "unknown"
+  },
+  {
+   "bet": "Jaylen Warren over 20.5 receiving yards",
+   "detail": "Jaylen Warren had 87",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "win"
+  },
+  {
+   "bet": "Jaylen Warren under 20.5 receiving yards",
+   "detail": "Jaylen Warren had 87",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "loss"
+  },
+  {
+   "bet": "Tyler Warren over 45.5 receiving yards",
+   "detail": "Tyler Warren had 83",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "win"
+  },
+  {
+   "bet": "Tyler Warren under 45.5 receiving yards",
+   "detail": "Tyler Warren had 83",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "loss"
+  },
+  {
+   "bet": "Jaylen Warren over 3.5 receptions",
+   "detail": "Jaylen Warren had 6",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "win"
+  },
+  {
+   "bet": "Jaylen Warren under 3.5 receptions",
+   "detail": "Jaylen Warren had 6",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "loss"
+  },
+  {
+   "bet": "Jaylen Warren over 70.5 rushing yards",
+   "detail": "Jaylen Warren had 101",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "win"
+  },
+  {
+   "bet": "Jaylen Warren under 70.5 rushing yards",
+   "detail": "Jaylen Warren had 101",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "loss"
+  },
+  {
+   "bet": "Tyler Warren over 0.5 rushing yards",
+   "detail": "Tyler Warren had 1",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "win"
+  },
+  {
+   "bet": "Tyler Warren under 0.5 rushing yards",
+   "detail": "Tyler Warren had 1",
+   "game": "Indianapolis Colts at Pittsburgh Steelers",
+   "result": "loss"
+  },
+  {
+   "bet": "New York Giants to win",
+   "detail": "Washington Commanders 24, New York Giants 21",
+   "game": "Washington Commanders at New York Giants",
+   "result": "loss"
+  },
+  {
+   "bet": "Washington Commanders to win",
+   "detail": "Washington Commanders 24, New York Giants 21",
+   "game": "Washington Commanders at New York Giants",
+   "result": "win"
+  },
+  {
+   "bet": "Over 45.5 total points",
+   "detail": "Washington Commanders 24, New York Giants 21",
+   "game": "Washington Commanders at New York Giants",
+   "result": "loss"
+  },
+  {
+   "bet": "Under 45.5 total points",
+   "detail": "Washington Commanders 24, New York Giants 21",
+   "game": "Washington Commanders at New York Giants",
+   "result": "win"
+  },
+  {
+   "bet": "First half: Over 22.5 total points",
+   "detail": "no first-half score recorded",
+   "game": "Washington Commanders at New York Giants",
+   "result": "unknown"
+  },
+  {
+   "bet": "First half: Under 22.5 total points",
+   "detail": "no first-half score recorded",
+   "game": "Washington Commanders at New York Giants",
+   "result": "unknown"
+  }
+ ],
+ "inputs_unchanged": true,
+ "journal_verify_problems": [],
+ "real_inputs": [
+  {
+   "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/real/inputs/nfl-public-lines.20261114T225342Z.json",
+   "sha256": "206d164be40574fa78cb9a1fca8f0db3b3c8d8ef0a5b56431f3f975682d60e9e"
+  },
+  {
+   "path": "/tmp/postgame-demo-mn8mzngy/inputs/manual_ind_pit_from_games_csv.json",
+   "sha256": "537a4ec5db76f29430595b2c40811987ad704d3bae159dd69dd1f5667c90b8b2"
+  },
+  {
+   "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/tools/official_player_logs_20261115.json",
+   "sha256": "217b65f973a1b35e053fe786c96ba168544a56540e52593fac9b11a1d01e1119"
+  }
+ ],
+ "scratch_dir_kept": null,
+ "second_run": {
+  "already_recorded": 7,
+  "exit_code": 2,
+  "pending": 2,
+  "recorded_finals": 0,
+  "recorded_players": 0,
+  "refused": 0
+ },
+ "what": "postgame intake demo on saved real pre-Sunday results; scratch journal in a temp dir"
+}

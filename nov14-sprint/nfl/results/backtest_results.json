@@ -1,0 +1,550 @@
+{
+  "run_ts_utc": "2026-11-14T22:00:58Z",
+  "data": {
+    "path": "data/raw/games.csv",
+    "url": "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv",
+    "retrieved_at_utc": "2026-11-14T21:16:58Z",
+    "http_status": 200,
+    "bytes": 2190038,
+    "sha256": "44f6ba50a76303869229be8fdad82d124e77f24f50c90c319fbc245dd34120a0",
+    "kind": "data only (CSV); nflverse/nfldata public schedule, scores and betting lines",
+    "note": "Lines in this file carry no per-row timestamp. The only verified line time is retrieved_at_utc."
+  },
+  "train_seasons": [
+    2006,
+    2022
+  ],
+  "holdout_seasons": [
+    2023,
+    2025
+  ],
+  "breakeven": 0.5238095238095238,
+  "price": "flat -110",
+  "games_train": 4383,
+  "games_holdout": 816,
+  "training": {
+    "HOME_DOG-v1.T1": {
+      "bets": 1558,
+      "wins": 766,
+      "losses": 754,
+      "pushes": 38,
+      "win_rate": 0.5039473684210526,
+      "roi_at_minus110": -0.03699381491422638,
+      "units_at_minus110": -57.636363636364706,
+      "passes": 2825,
+      "shadow_record_of_passes": [
+        1307,
+        1443,
+        75
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.4752727272727273
+    },
+    "HOME_DOG-v1.T3": {
+      "bets": 1146,
+      "wins": 571,
+      "losses": 545,
+      "pushes": 30,
+      "win_rate": 0.5116487455197133,
+      "roi_at_minus110": -0.02260828177058567,
+      "units_at_minus110": -25.909090909091177,
+      "passes": 3237,
+      "shadow_record_of_passes": [
+        1502,
+        1652,
+        83
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.47622067216233355
+    },
+    "HOME_DOG-v1.T7": {
+      "bets": 339,
+      "wins": 181,
+      "losses": 154,
+      "pushes": 4,
+      "win_rate": 0.5402985074626866,
+      "roi_at_minus110": 0.031107535532314178,
+      "units_at_minus110": 10.545454545454506,
+      "passes": 4044,
+      "shadow_record_of_passes": [
+        1892,
+        2043,
+        109
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.48081321473951716
+    },
+    "BIG_DOG-v1.T7": {
+      "bets": 1367,
+      "wins": 677,
+      "losses": 656,
+      "pushes": 34,
+      "win_rate": 0.5078769692423106,
+      "roi_at_minus110": -0.0296601715767777,
+      "units_at_minus110": -40.545454545455115,
+      "passes": 3016,
+      "shadow_record_of_passes": [
+        1531,
+        1402,
+        79
+      ],
+      "passes_no_side": 4,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.5219911353562905
+    },
+    "BIG_DOG-v1.T10": {
+      "bets": 607,
+      "wins": 316,
+      "losses": 273,
+      "pushes": 18,
+      "win_rate": 0.5365025466893039,
+      "roi_at_minus110": 0.023513553991313253,
+      "units_at_minus110": 14.272727272727144,
+      "passes": 3776,
+      "shadow_record_of_passes": [
+        1892,
+        1785,
+        95
+      ],
+      "passes_no_side": 4,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.5145499048137068
+    },
+    "BIG_DOG-v1.T14": {
+      "bets": 147,
+      "wins": 75,
+      "losses": 66,
+      "pushes": 6,
+      "win_rate": 0.5319148936170213,
+      "roi_at_minus110": 0.014842300556586282,
+      "units_at_minus110": 2.1818181818181834,
+      "passes": 4236,
+      "shadow_record_of_passes": [
+        2133,
+        1992,
+        107
+      ],
+      "passes_no_side": 4,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.517090909090909
+    },
+    "REST_EDGE-v1.D3": {
+      "bets": 903,
+      "wins": 451,
+      "losses": 429,
+      "pushes": 23,
+      "win_rate": 0.5125,
+      "roi_at_minus110": -0.021040974529346657,
+      "units_at_minus110": -19.000000000000032,
+      "passes": 3480,
+      "shadow_record_of_passes": [
+        265,
+        266,
+        14
+      ],
+      "passes_no_side": 2935,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.4990583804143126
+    },
+    "REST_EDGE-v1.D6": {
+      "bets": 447,
+      "wins": 225,
+      "losses": 210,
+      "pushes": 12,
+      "win_rate": 0.5172413793103449,
+      "roi_at_minus110": -0.012202562538133207,
+      "units_at_minus110": -5.454545454545543,
+      "passes": 3936,
+      "shadow_record_of_passes": [
+        491,
+        485,
+        25
+      ],
+      "passes_no_side": 2935,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.5030737704918032
+    },
+    "HIGH_TOTAL_UNDER-v1.T47": {
+      "bets": 1304,
+      "wins": 673,
+      "losses": 614,
+      "pushes": 17,
+      "win_rate": 0.5229215229215229,
+      "roi_at_minus110": -0.0016731734523146116,
+      "units_at_minus110": -2.1818181818182536,
+      "passes": 3079,
+      "shadow_record_of_passes": [
+        1500,
+        1527,
+        52
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.49554013875123887
+    },
+    "HIGH_TOTAL_UNDER-v1.T50": {
+      "bets": 519,
+      "wins": 261,
+      "losses": 249,
+      "pushes": 9,
+      "win_rate": 0.5117647058823529,
+      "roi_at_minus110": -0.022595901208618017,
+      "units_at_minus110": -11.727272727272751,
+      "passes": 3864,
+      "shadow_record_of_passes": [
+        1912,
+        1892,
+        60
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.5026288117770767
+    }
+  },
+  "frozen": [
+    {
+      "version_id": "HOME_DOG-v1.T7",
+      "family": "HOME_DOG",
+      "value": 7.0,
+      "train_roi_at_minus110": 0.031107535532314178
+    },
+    {
+      "version_id": "BIG_DOG-v1.T10",
+      "family": "BIG_DOG",
+      "value": 10.0,
+      "train_roi_at_minus110": 0.023513553991313253
+    },
+    {
+      "version_id": "REST_EDGE-v1.D6",
+      "family": "REST_EDGE",
+      "value": 6,
+      "train_roi_at_minus110": -0.012202562538133207
+    },
+    {
+      "version_id": "HIGH_TOTAL_UNDER-v1.T47",
+      "family": "HIGH_TOTAL_UNDER",
+      "value": 47.0,
+      "train_roi_at_minus110": -0.0016731734523146116
+    }
+  ],
+  "holdout": {
+    "HOME_DOG-v1.T7": {
+      "bets": 63,
+      "wins": 38,
+      "losses": 23,
+      "pushes": 2,
+      "win_rate": 0.6229508196721312,
+      "roi_at_minus110": 0.18326118326118318,
+      "units_at_minus110": 11.54545454545454,
+      "passes": 753,
+      "shadow_record_of_passes": [
+        362,
+        374,
+        17
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.49184782608695654,
+      "win_rate_ci95": [
+        0.49747857841819165,
+        0.7338548966888299
+      ],
+      "win_rate_ci98_75_bonferroni": [
+        0.4634787302903236,
+        0.7596076371799563
+      ],
+      "roi_ci95_bootstrap": [
+        -0.04473304473304471,
+        0.39826839826839855
+      ],
+      "p_value_one_sided_vs_breakeven": 0.07688682276004273,
+      "roi_at_recorded_odds": 0.18426029854976275,
+      "recorded_price_missing": 0,
+      "by_season": {
+        "2023": {
+          "bets": 19,
+          "record": "9-8-2",
+          "roi_at_minus110": 0.009569377990430613
+        },
+        "2024": {
+          "bets": 17,
+          "record": "11-6-0",
+          "roi_at_minus110": 0.23529411764705882
+        },
+        "2025": {
+          "bets": 27,
+          "record": "18-9-0",
+          "roi_at_minus110": 0.27272727272727276
+        }
+      },
+      "verdict": "NO DEMONSTRATED EDGE"
+    },
+    "BIG_DOG-v1.T10": {
+      "bets": 79,
+      "wins": 33,
+      "losses": 45,
+      "pushes": 1,
+      "win_rate": 0.4230769230769231,
+      "roi_at_minus110": -0.18987341772151903,
+      "units_at_minus110": -15.000000000000004,
+      "passes": 737,
+      "shadow_record_of_passes": [
+        353,
+        366,
+        18
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.4909596662030598,
+      "win_rate_ci95": [
+        0.31959060348175483,
+        0.533784444166275
+      ],
+      "win_rate_ci98_75_bonferroni": [
+        0.2942050188317643,
+        0.5633423573586166
+      ],
+      "roi_ci95_bootstrap": [
+        -0.3947065592635212,
+        0.01495972382048335
+      ],
+      "p_value_one_sided_vs_breakeven": 0.9709697288583383,
+      "roi_at_recorded_odds": -0.1887064593853418,
+      "recorded_price_missing": 0,
+      "by_season": {
+        "2023": {
+          "bets": 27,
+          "record": "13-13-1",
+          "roi_at_minus110": -0.043771043771043745
+        },
+        "2024": {
+          "bets": 18,
+          "record": "7-11-0",
+          "roi_at_minus110": -0.25757575757575757
+        },
+        "2025": {
+          "bets": 34,
+          "record": "13-21-0",
+          "roi_at_minus110": -0.27005347593582885
+        }
+      },
+      "verdict": "NO DEMONSTRATED EDGE"
+    },
+    "REST_EDGE-v1.D6": {
+      "bets": 69,
+      "wins": 33,
+      "losses": 35,
+      "pushes": 1,
+      "win_rate": 0.4852941176470588,
+      "roi_at_minus110": -0.072463768115942,
+      "units_at_minus110": -4.999999999999998,
+      "passes": 747,
+      "shadow_record_of_passes": [
+        116,
+        116,
+        3
+      ],
+      "passes_no_side": 512,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.5,
+      "win_rate_ci95": [
+        0.3705084547256065,
+        0.6016524669367487
+      ],
+      "win_rate_ci98_75_bonferroni": [
+        0.3416445763492595,
+        0.631415236002074
+      ],
+      "roi_ci95_bootstrap": [
+        -0.29380764163372863,
+        0.14888010540184435
+      ],
+      "p_value_one_sided_vs_breakeven": 0.7757024079428991,
+      "roi_at_recorded_odds": -0.07519189059167347,
+      "recorded_price_missing": 0,
+      "by_season": {
+        "2023": {
+          "bets": 21,
+          "record": "11-9-1",
+          "roi_at_minus110": 0.04761904761904764
+        },
+        "2024": {
+          "bets": 26,
+          "record": "9-17-0",
+          "roi_at_minus110": -0.3391608391608392
+        },
+        "2025": {
+          "bets": 22,
+          "record": "13-9-0",
+          "roi_at_minus110": 0.12809917355371903
+        }
+      },
+      "verdict": "NO DEMONSTRATED EDGE"
+    },
+    "HIGH_TOTAL_UNDER-v1.T47": {
+      "bets": 218,
+      "wins": 108,
+      "losses": 108,
+      "pushes": 2,
+      "win_rate": 0.5,
+      "roi_at_minus110": -0.045037531276063386,
+      "units_at_minus110": -9.818181818181818,
+      "passes": 598,
+      "shadow_record_of_passes": [
+        292,
+        303,
+        3
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": 0.4907563025210084,
+      "win_rate_ci95": [
+        0.4339058081512371,
+        0.566094191848763
+      ],
+      "win_rate_ci98_75_bonferroni": [
+        0.41622748583520147,
+        0.5837725141647985
+      ],
+      "roi_ci95_bootstrap": [
+        -0.17180984153461243,
+        0.08215179316096745
+      ],
+      "p_value_one_sided_vs_breakeven": 0.7790798259633391,
+      "roi_at_recorded_odds": -0.040664971325621996,
+      "recorded_price_missing": 0,
+      "by_season": {
+        "2023": {
+          "bets": 56,
+          "record": "31-25-0",
+          "roi_at_minus110": 0.056818181818181844
+        },
+        "2024": {
+          "bets": 76,
+          "record": "37-37-2",
+          "roi_at_minus110": -0.04425837320574161
+        },
+        "2025": {
+          "bets": 86,
+          "record": "40-46-0",
+          "roi_at_minus110": -0.11205073995771672
+        }
+      },
+      "verdict": "NO DEMONSTRATED EDGE"
+    }
+  },
+  "baselines": {
+    "BASELINE_ALWAYS_HOME|train": {
+      "bets": 4383,
+      "wins": 2073,
+      "losses": 2197,
+      "pushes": 113,
+      "win_rate": 0.485480093676815,
+      "roi_at_minus110": -0.0712878269346426,
+      "units_at_minus110": -312.4545454545385,
+      "passes": 0,
+      "shadow_record_of_passes": [
+        0,
+        0,
+        0
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": null
+    },
+    "BASELINE_ALWAYS_HOME|holdout": {
+      "bets": 816,
+      "wins": 400,
+      "losses": 397,
+      "pushes": 19,
+      "win_rate": 0.5018820577164367,
+      "roi_at_minus110": -0.04088680926916206,
+      "units_at_minus110": -33.36363636363624,
+      "passes": 0,
+      "shadow_record_of_passes": [
+        0,
+        0,
+        0
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": null
+    },
+    "BASELINE_ALWAYS_DOG|train": {
+      "bets": 4379,
+      "wins": 2208,
+      "losses": 2058,
+      "pushes": 113,
+      "win_rate": 0.5175808720112518,
+      "roi_at_minus110": -0.011584213913513563,
+      "units_at_minus110": -50.72727272727589,
+      "passes": 4,
+      "shadow_record_of_passes": [
+        0,
+        0,
+        0
+      ],
+      "passes_no_side": 4,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": null
+    },
+    "BASELINE_ALWAYS_DOG|holdout": {
+      "bets": 816,
+      "wins": 386,
+      "losses": 411,
+      "pushes": 19,
+      "win_rate": 0.48431618569636137,
+      "roi_at_minus110": -0.07364081996434997,
+      "units_at_minus110": -60.09090909090958,
+      "passes": 0,
+      "shadow_record_of_passes": [
+        0,
+        0,
+        0
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": null
+    },
+    "BASELINE_ALWAYS_UNDER|train": {
+      "bets": 4383,
+      "wins": 2173,
+      "losses": 2141,
+      "pushes": 69,
+      "win_rate": 0.5037088548910524,
+      "roi_at_minus110": -0.03776989608611901,
+      "units_at_minus110": -165.54545454545962,
+      "passes": 0,
+      "shadow_record_of_passes": [
+        0,
+        0,
+        0
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": null
+    },
+    "BASELINE_ALWAYS_UNDER|holdout": {
+      "bets": 816,
+      "wins": 400,
+      "losses": 411,
+      "pushes": 5,
+      "win_rate": 0.4932182490752158,
+      "roi_at_minus110": -0.05804367201426044,
+      "units_at_minus110": -47.363636363636516,
+      "passes": 0,
+      "shadow_record_of_passes": [
+        0,
+        0,
+        0
+      ],
+      "passes_no_side": 0,
+      "skipped_missing_input": 0,
+      "shadow_win_rate_of_passes": null
+    }
+  },
+  "edges": []
+}

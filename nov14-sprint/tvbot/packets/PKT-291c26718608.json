@@ -1,0 +1,378 @@
+{
+  "authority": "A review is advisory text. It cannot authorize, change or trigger a fill. The runner never reads reviews.",
+  "expected_challenge_schema": {
+    "arithmetic": [
+      {
+        "item": "string, one of arithmetic_to_check",
+        "match": "true or false",
+        "packet_value": "number or string",
+        "recomputed_value": "number or string"
+      }
+    ],
+    "authority": "must be the exact text: advisory only; cannot authorize a fill",
+    "concerns": [
+      "string"
+    ],
+    "live_or_recorded": "one of: live, recorded",
+    "missing_information": [
+      "string"
+    ],
+    "packet_id": "string, copied from the packet",
+    "reviewed_utc": "string, UTC time of the review",
+    "reviewer_model": "string, the exact model name that produced this review",
+    "rule_followed": "true or false: does the action follow from the rule as written and the inputs",
+    "verdict": "one of: agree, challenge, cannot_tell"
+  },
+  "frozen": {
+    "all_bars_file": "test_only_bars_through_signal_bar.jsonl",
+    "all_bars_sha256": "f50f09e1667f20825006369b948a83572ce8c1facde5d4444315c7d10f82fb37",
+    "arithmetic_to_check": [
+      "ema_fast = (2 / (fast_len + 1)) * close + (1 - 2 / (fast_len + 1)) * prev_ema_fast",
+      "ema_slow = (2 / (slow_len + 1)) * close + (1 - 2 / (slow_len + 1)) * prev_ema_slow",
+      "cross_up: ema_fast > ema_slow and prev_ema_fast <= prev_ema_slow",
+      "bars_since_reset >= warmup_bars",
+      "qty = floor(order_notional_setting / close)",
+      "qty * close <= max_position_notional and qty <= max_qty",
+      "decision_ready_ts = available_ts + latency_seconds"
+    ],
+    "data_source": "synthetic",
+    "decision": {
+      "action": "ENTER_LONG",
+      "available_ts": "2026-06-15T17:30:02Z",
+      "bar_seq": 73,
+      "bar_ts_open": "2026-06-15T16:30:00Z",
+      "decision_id": "2d855e22d815f570",
+      "decision_ready_ts": "2026-06-15T17:30:07Z",
+      "reason_code": "cross_up",
+      "signal_ts": "2026-06-15T17:30:00Z"
+    },
+    "forward_plan": {
+      "costs": {
+        "commission_min": 1.0,
+        "commission_per_share": 0.005,
+        "half_spread_bps": 1.0,
+        "slippage_bps": 2.0
+      },
+      "earliest_fill_open_expected": "2026-06-15T18:30:00Z",
+      "earliest_fill_seq": 75,
+      "earliest_fill_seq_meaning": "the first bar expected to open at or after earliest_fill_ts, going by the bar open times seen so far. It is a plan, not a value from a later bar. A null expected open means the next bar belongs to a later session whose open time is not known yet.",
+      "earliest_fill_ts": "2026-06-15T17:30:07Z",
+      "earliest_fill_ts_meaning": "the decision-ready time, not a bar open; the fill bar must open at or after it",
+      "exit_priority": [
+        "data_gap",
+        "daily_loss_limit",
+        "stop",
+        "cross_down"
+      ],
+      "fill_rule": "the open of the first bar that opens at or after earliest_fill_ts",
+      "min_fill_seq": 74,
+      "risk_limits": {
+        "cooldown_bars": 3,
+        "max_daily_loss": 100.0,
+        "max_position_notional": 6000.0,
+        "max_positions_per_symbol": 1,
+        "max_qty": 100
+      },
+      "stop_rule": "sell after a bar closes at or below (raw open of the fill bar) x (1 - stop_pct / 100); the fill bar's open is not known yet"
+    },
+    "inputs_at_decision": {
+      "bars_since_reset": 73,
+      "close": 99.6,
+      "day_pnl": 0.0,
+      "ema_fast": 98.802128,
+      "ema_slow": 98.783259,
+      "entry_ref": null,
+      "limit_daily_loss": 100.0,
+      "limit_position_notional": 6000.0,
+      "position_qty": 0,
+      "prev_ema_fast": 98.574164,
+      "prev_ema_slow": 98.701585,
+      "stop_level": null,
+      "warmup_bars": 63
+    },
+    "portfolio_at_decision": {
+      "cash": 10000.0,
+      "latency_seconds": 5,
+      "order_notional_setting": 5000.0,
+      "position_qty": 0
+    },
+    "proposed_paper_order": {
+      "notional_at_signal_close": 4980.0,
+      "qty": 50,
+      "side": "buy"
+    },
+    "recent_closed_bars": [
+      {
+        "close": 99.37,
+        "delivered_ts": "2026-06-09T21:30:02Z",
+        "high": 99.64,
+        "low": 99.27,
+        "open": 99.5,
+        "seq": 49,
+        "ts_close": "2026-06-09T21:30:00Z",
+        "ts_open": "2026-06-09T20:30:00Z"
+      },
+      {
+        "close": 99.32,
+        "delivered_ts": "2026-06-10T15:30:02Z",
+        "high": 99.4,
+        "low": 99.18,
+        "open": 99.33,
+        "seq": 50,
+        "ts_close": "2026-06-10T15:30:00Z",
+        "ts_open": "2026-06-10T14:30:00Z"
+      },
+      {
+        "close": 99.21,
+        "delivered_ts": "2026-06-10T16:30:02Z",
+        "high": 99.39,
+        "low": 99.19,
+        "open": 99.32,
+        "seq": 51,
+        "ts_close": "2026-06-10T16:30:00Z",
+        "ts_open": "2026-06-10T15:30:00Z"
+      },
+      {
+        "close": 99.14,
+        "delivered_ts": "2026-06-10T17:30:02Z",
+        "high": 99.35,
+        "low": 99.1,
+        "open": 99.21,
+        "seq": 52,
+        "ts_close": "2026-06-10T17:30:00Z",
+        "ts_open": "2026-06-10T16:30:00Z"
+      },
+      {
+        "close": 99.03,
+        "delivered_ts": "2026-06-10T18:30:02Z",
+        "high": 99.19,
+        "low": 98.96,
+        "open": 99.14,
+        "seq": 53,
+        "ts_close": "2026-06-10T18:30:00Z",
+        "ts_open": "2026-06-10T17:30:00Z"
+      },
+      {
+        "close": 99.0,
+        "delivered_ts": "2026-06-10T19:30:02Z",
+        "high": 99.07,
+        "low": 98.93,
+        "open": 99.03,
+        "seq": 54,
+        "ts_close": "2026-06-10T19:30:00Z",
+        "ts_open": "2026-06-10T18:30:00Z"
+      },
+      {
+        "close": 98.93,
+        "delivered_ts": "2026-06-10T20:30:02Z",
+        "high": 99.07,
+        "low": 98.83,
+        "open": 99.0,
+        "seq": 55,
+        "ts_close": "2026-06-10T20:30:00Z",
+        "ts_open": "2026-06-10T19:30:00Z"
+      },
+      {
+        "close": 98.84,
+        "delivered_ts": "2026-06-10T21:30:02Z",
+        "high": 99.1,
+        "low": 98.8,
+        "open": 98.93,
+        "seq": 56,
+        "ts_close": "2026-06-10T21:30:00Z",
+        "ts_open": "2026-06-10T20:30:00Z"
+      },
+      {
+        "close": 98.72,
+        "delivered_ts": "2026-06-11T15:30:02Z",
+        "high": 98.86,
+        "low": 98.56,
+        "open": 98.74,
+        "seq": 57,
+        "ts_close": "2026-06-11T15:30:00Z",
+        "ts_open": "2026-06-11T14:30:00Z"
+      },
+      {
+        "close": 98.69,
+        "delivered_ts": "2026-06-11T16:30:02Z",
+        "high": 98.87,
+        "low": 98.55,
+        "open": 98.72,
+        "seq": 58,
+        "ts_close": "2026-06-11T16:30:00Z",
+        "ts_open": "2026-06-11T15:30:00Z"
+      },
+      {
+        "close": 98.6,
+        "delivered_ts": "2026-06-11T17:30:02Z",
+        "high": 98.75,
+        "low": 98.57,
+        "open": 98.69,
+        "seq": 59,
+        "ts_close": "2026-06-11T17:30:00Z",
+        "ts_open": "2026-06-11T16:30:00Z"
+      },
+      {
+        "close": 98.47,
+        "delivered_ts": "2026-06-11T18:30:02Z",
+        "high": 98.78,
+        "low": 98.3,
+        "open": 98.6,
+        "seq": 60,
+        "ts_close": "2026-06-11T18:30:00Z",
+        "ts_open": "2026-06-11T17:30:00Z"
+      },
+      {
+        "close": 98.39,
+        "delivered_ts": "2026-06-11T19:30:02Z",
+        "high": 98.65,
+        "low": 98.33,
+        "open": 98.47,
+        "seq": 61,
+        "ts_close": "2026-06-11T19:30:00Z",
+        "ts_open": "2026-06-11T18:30:00Z"
+      },
+      {
+        "close": 98.31,
+        "delivered_ts": "2026-06-11T20:30:02Z",
+        "high": 98.43,
+        "low": 98.19,
+        "open": 98.39,
+        "seq": 62,
+        "ts_close": "2026-06-11T20:30:00Z",
+        "ts_open": "2026-06-11T19:30:00Z"
+      },
+      {
+        "close": 98.28,
+        "delivered_ts": "2026-06-11T21:30:02Z",
+        "high": 98.46,
+        "low": 98.23,
+        "open": 98.31,
+        "seq": 63,
+        "ts_close": "2026-06-11T21:30:00Z",
+        "ts_open": "2026-06-11T20:30:00Z"
+      },
+      {
+        "close": 98.27,
+        "delivered_ts": "2026-06-12T15:30:02Z",
+        "high": 98.4,
+        "low": 98.14,
+        "open": 98.27,
+        "seq": 64,
+        "ts_close": "2026-06-12T15:30:00Z",
+        "ts_open": "2026-06-12T14:30:00Z"
+      },
+      {
+        "close": 98.28,
+        "delivered_ts": "2026-06-12T16:30:02Z",
+        "high": 98.35,
+        "low": 98.2,
+        "open": 98.27,
+        "seq": 65,
+        "ts_close": "2026-06-12T16:30:00Z",
+        "ts_open": "2026-06-12T15:30:00Z"
+      },
+      {
+        "close": 98.26,
+        "delivered_ts": "2026-06-12T17:30:02Z",
+        "high": 98.36,
+        "low": 98.21,
+        "open": 98.28,
+        "seq": 66,
+        "ts_close": "2026-06-12T17:30:00Z",
+        "ts_open": "2026-06-12T16:30:00Z"
+      },
+      {
+        "close": 98.25,
+        "delivered_ts": "2026-06-12T18:30:02Z",
+        "high": 98.31,
+        "low": 98.12,
+        "open": 98.26,
+        "seq": 67,
+        "ts_close": "2026-06-12T18:30:00Z",
+        "ts_open": "2026-06-12T17:30:00Z"
+      },
+      {
+        "close": 98.23,
+        "delivered_ts": "2026-06-12T19:30:02Z",
+        "high": 98.31,
+        "low": 98.13,
+        "open": 98.25,
+        "seq": 68,
+        "ts_close": "2026-06-12T19:30:00Z",
+        "ts_open": "2026-06-12T18:30:00Z"
+      },
+      {
+        "close": 98.29,
+        "delivered_ts": "2026-06-12T20:30:02Z",
+        "high": 98.4,
+        "low": 98.1,
+        "open": 98.23,
+        "seq": 69,
+        "ts_close": "2026-06-12T20:30:00Z",
+        "ts_open": "2026-06-12T19:30:00Z"
+      },
+      {
+        "close": 98.22,
+        "delivered_ts": "2026-06-12T21:30:02Z",
+        "high": 98.47,
+        "low": 98.11,
+        "open": 98.29,
+        "seq": 70,
+        "ts_close": "2026-06-12T21:30:00Z",
+        "ts_open": "2026-06-12T20:30:00Z"
+      },
+      {
+        "close": 98.74,
+        "delivered_ts": "2026-06-15T15:30:02Z",
+        "high": 98.82,
+        "low": 98.52,
+        "open": 98.66,
+        "seq": 71,
+        "ts_close": "2026-06-15T15:30:00Z",
+        "ts_open": "2026-06-15T14:30:00Z"
+      },
+      {
+        "close": 99.19,
+        "delivered_ts": "2026-06-15T16:30:02Z",
+        "high": 99.3,
+        "low": 98.67,
+        "open": 98.74,
+        "seq": 72,
+        "ts_close": "2026-06-15T16:30:00Z",
+        "ts_open": "2026-06-15T15:30:00Z"
+      },
+      {
+        "close": 99.6,
+        "delivered_ts": "2026-06-15T17:30:02Z",
+        "high": 99.7,
+        "low": 99.07,
+        "open": 99.19,
+        "seq": 73,
+        "ts_close": "2026-06-15T17:30:00Z",
+        "ts_open": "2026-06-15T16:30:00Z"
+      }
+    ],
+    "rule": {
+      "in_words": "On closed bars only: when the fast exponential average crosses above the slow one and no position is open, buy. Sell after a bar closes at or below the stop, or after the fast average crosses back below the slow one. Long only, one position.",
+      "name": "EMAX",
+      "params": {
+        "fast_len": 8,
+        "slow_len": 21,
+        "stop_pct": 1.5,
+        "warmup_bars": 63
+      },
+      "rule_id": "EMAX-1.0.0-14251ac3",
+      "version": "1.0.0"
+    },
+    "rule_variants_tried_so_far": 1,
+    "schema": "tvbot-decision-packet-1",
+    "symbol": "SYNTH-FUND-60M",
+    "timeframe_minutes": 60,
+    "what_this_is": "TEST ONLY. One paper decision, frozen at the moment it was made, for an outside review. Synthetic bars made by a script. Not market data. Nothing here came from TradingView.",
+    "withheld": "Every bar after seq 73, the fill and any profit or loss. The engine that produced this packet was never given a later bar."
+  },
+  "packet_id": "PKT-291c26718608",
+  "published_utc": "2026-11-15T05:12:21Z",
+  "review_status": "pending. No saved model review of this packet was found."
+}

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Price and Confidence</title>
+<style>
+:root{
+  --paper:#fcfaf6; --ink:#1b222b; --ink2:#49515b; --muted:#636a72; --rule:#e5e3dd;
+  --cool:#0e5e8a; --cool-soft:#e6eff4; --warm:#c56c21; --warm-soft:#f7ebdf; --good:#1d6b3a;
+  --serif: Charter, "Iowan Old Style", Georgia, serif;
+  --sans: "Avenir Next", Avenir, Seravek, "Gill Sans", sans-serif;
+}
+*{ box-sizing:border-box }
+html,body{ background:var(--paper); }
+body{ margin:0; color:var(--ink); font:17px/1.5 var(--serif); font-variant-numeric:lining-nums tabular-nums; }
+main{ max-width:760px; margin:0 auto; padding:40px 16px 64px; }
+a{ color:var(--cool); text-decoration:none; border-bottom:1px solid #9cbbd0; }
+section{ margin-top:30px; padding-top:20px; border-top:1px solid var(--rule); }
+section.first{ margin-top:0; padding-top:0; border-top:0 }
+.kicker{ font:600 12px/1.2 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--cool); margin:0 0 12px; }
+h1{ font:700 42px/1.04 var(--serif); letter-spacing:-.015em; margin:0 0 12px; }
+h2{ font:700 25px/1.15 var(--serif); margin:0 0 10px; }
+p{ margin:0 0 10px; }
+.deck{ font:400 19px/1.4 var(--serif); color:var(--ink2); margin:0 0 20px; }
+.note{ font:400 13px/1.45 var(--sans); color:var(--muted); }
+.form{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:0 0 18px; }
+label{ display:block; font:600 12px/1.2 var(--sans); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+input{ width:100%; font:600 22px/1.2 var(--serif); padding:8px 10px; border:1px solid #cfccc4; border-radius:6px; background:#fff; color:var(--ink); }
+.tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin:0 0 14px; }
+.tile{ border-top:2.5px solid var(--ink); padding:9px 0 0; }
+.tile .num{ font:700 28px/1 var(--serif); }
+.tile .cap{ font:400 12.5px/1.4 var(--sans); color:var(--ink2); margin-top:6px; }
+.good{ color:var(--good) } .bad{ color:var(--warm) } .cool{ color:var(--cool) }
+.verdict{ border-left:4px solid var(--cool); background:var(--cool-soft); padding:12px 16px; border-radius:0 8px 8px 0; margin:0 0 10px; }
+.verdict.bad{ border-color:var(--warm); background:var(--warm-soft); color:var(--ink) }
+table{ width:100%; border-collapse:collapse; font:400 14px/1.4 var(--sans); margin:8px 0 12px; }
+th{ text-align:right; font:700 11px/1.2 var(--sans); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:6px 7px; border-bottom:1.5px solid var(--ink); vertical-align:bottom; }
+th:first-child,td:first-child{ text-align:left }
+td{ padding:6px 7px; border-bottom:1px solid var(--rule); text-align:right; }
+tr.here td{ background:var(--cool-soft); font-weight:600 }
+.callout{ background:var(--warm-soft); border-radius:8px; padding:12px 16px 4px; margin:14px 0; }
+.callout .label{ font:700 11.5px/1 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:#9a4d12; margin-bottom:8px; }
+ul{ margin:0 0 10px; padding-left:20px } li{ margin:0 0 5px }
+@media (max-width:640px){ h1{ font-size:34px } .form,.tiles{ grid-template-columns:1fr 1fr } table{ font-size:13px } }
+</style>
+</head>
+<body>
+<main>
+
+<section class="first">
+  <div class="kicker">Paper only · price helper · no data leaves this page</div>
+  <h1>Is this price worth it at my confidence?</h1>
+  <p class="deck">Type a price you saw and how often you honestly think the pick wins. The page shows the win rate the price needs, what you'd expect to make per $100 if your number is right, and how many bets it would take to prove it.</p>
+  <div class="form">
+    <div><label for="odds">Price (American odds)</label><input id="odds" value="-110" inputmode="text"></div>
+    <div><label for="conf">Your confidence it wins (%)</label><input id="conf" value="55" inputmode="decimal"></div>
+  </div>
+  <div class="tiles" id="tiles"></div>
+  <div class="verdict" id="verdict"></div>
+  <p class="note" id="range"></p>
+</section>
+
+<section>
+  <div class="kicker">Your range · −170 to +150</div>
+  <h2>What each price asks of you</h2>
+  <p>Each row is a price inside your range. "Needs" is the break-even win rate. The last two columns use the confidence you typed above.</p>
+  <table>
+    <thead><tr><th>Price</th><th>Win on $100</th><th>Needs</th><th>Your edge</th><th>Paper EV per $100</th></tr></thead>
+    <tbody id="grid"></tbody>
+  </table>
+</section>
+
+<section>
+  <div class="kicker">Both sides · take out the vig</div>
+  <h2>What the book itself thinks</h2>
+  <p>Type both sides of the same market. Their implied chances add to more than 100%; the extra is the book's cut. Scaling them back to 100% gives the book's own fair estimate, which your confidence has to beat.</p>
+  <div class="form">
+    <div><label for="sa">Side A price</label><input id="sa" value="-170"></div>
+    <div><label for="sb">Side B price</label><input id="sb" value="+150"></div>
+  </div>
+  <div class="tiles" id="vig"></div>
+</section>
+
+<section>
+  <div class="callout">
+    <div class="label">Read this before trusting a number</div>
+    <ul>
+      <li><b>Your confidence is the weak link.</b> The arithmetic is exact; the input is a guess. In this sprint's NFL test, none of the four frozen rules cleared a 95% lower bound above the 52.38% that −110 needs on games it hadn't seen. The best one won 62.3% of 63 bets and still could not rule out break-even.</li>
+      <li><b>"Bets to prove it"</b> is roughly how many bets you'd need, if you really win at your stated rate, before a 95% lower bound clears the price's break-even. It is a rough normal approximation, not a guarantee.</li>
+      <li>Paper only. Nothing here places a bet. Kalshi-style event contracts are treated as unavailable in Louisiana.</li>
+    </ul>
+  </div>
+  <p class="note">Formulas: a negative price −P needs P/(P+100); a positive price +P needs 100/(P+100). EV per $100 = confidence × win − (1 − confidence) × 100. Bets to prove it ≈ 1.96² × c(1−c) / (c − needs)².</p>
+</section>
+
+</main>
+<script>
+const $ = id => document.getElementById(id);
+function parse(s){ const v = Number(String(s).replace(/[^\d.+-]/g,"")); if (!isFinite(v) || Math.abs(v) < 100) return null; return v; }
+const needs = a => a < 0 ? -a / (-a + 100) : 100 / (a + 100);
+const win100 = a => a < 0 ? 100 * 100 / -a : a;
+const pct = x => (100 * x).toFixed(1) + "%";
+const usd = x => (x < 0 ? "−$" : "+$") + Math.abs(x).toFixed(2);
+const fmt = a => (a > 0 ? "+" : "−") + Math.abs(a);
+function prove(c, b){ if (c <= b) return null; return Math.ceil(1.96 * 1.96 * c * (1 - c) / Math.pow(c - b, 2)); }
+function tile(num, cap, cls){ return '<div class="tile"><div class="num '+(cls||"")+'">'+num+'</div><div class="cap">'+cap+'</div></div>'; }
+function draw(){
+  const a = parse($("odds").value), c = Number($("conf").value) / 100;
+  const okc = isFinite(c) && c > 0 && c < 1;
+  if (a === null || !okc){
+    $("tiles").innerHTML = ""; $("verdict").className = "verdict bad";
+    $("verdict").textContent = a === null ? "Type an American price such as -110 or +130 (at least 100 either way)." : "Type a confidence between 1 and 99.";
+  } else {
+    const b = needs(a), w = win100(a), ev = c * w - (1 - c) * 100, n = prove(c, b);
+    $("tiles").innerHTML = tile(pct(b), "win rate this price needs to break even", "cool")
+      + tile(usd(w).replace("+",""), "profit if a $100 bet wins")
+      + tile(usd(ev), "paper EV per $100 if your confidence is right", ev >= 0 ? "good" : "bad")
+      + tile(n === null ? "never" : n.toLocaleString(), "bets to prove the edge (rough)", n === null ? "bad" : "");
+    const gap = (c - b) * 100;
+    $("verdict").className = "verdict" + (gap > 0 ? "" : " bad");
+    $("verdict").innerHTML = gap > 0
+      ? "At " + fmt(a) + " you need " + pct(b) + ". You said " + pct(c) + ", an edge of " + gap.toFixed(1) + " points. That is worth it only if your " + pct(c) + " is honest; it would take about " + n.toLocaleString() + " bets at that rate to show it."
+      : "At " + fmt(a) + " you need " + pct(b) + ", and you said " + pct(c) + ". On your own number this price loses " + usd(ev).replace("−","") + " per $100. Pass, or find a better price.";
+    $("range").textContent = (a < -170 || a > 150) ? "This price is outside your −170 to +150 range." : "This price is inside your −170 to +150 range.";
+  }
+  const rows = [150,140,130,120,110,100,-110,-120,-130,-140,-150,-160,-170];
+  $("grid").innerHTML = rows.map(r => {
+    const b = needs(r), w = win100(r), ev = okc ? c * w - (1 - c) * 100 : null;
+    const edge = okc ? (c - b) * 100 : null;
+    return '<tr' + (a === r ? ' class="here"' : '') + '><td>' + fmt(r) + '</td><td>$' + w.toFixed(2) + '</td><td>' + pct(b) + '</td><td class="' + (edge > 0 ? "good" : "bad") + '">' + (edge === null ? "—" : (edge > 0 ? "+" : "−") + Math.abs(edge).toFixed(1) + " pts") + '</td><td class="' + (ev >= 0 ? "good" : "bad") + '">' + (ev === null ? "—" : usd(ev)) + '</td></tr>';
+  }).join("");
+  const sa = parse($("sa").value), sb = parse($("sb").value);
+  if (sa === null || sb === null){ $("vig").innerHTML = '<p class="note">Type two American prices.</p>'; return; }
+  const pa = needs(sa), pb = needs(sb), over = pa + pb;
+  $("vig").innerHTML = tile(pct(pa) + " / " + pct(pb), "implied chance of each side, as priced")
+    + tile(pct(over - 1), "the book's cut (overround)", over > 1 ? "bad" : "good")
+    + tile(pct(pa / over), "side A fair chance, vig removed", "cool")
+    + tile(pct(pb / over), "side B fair chance, vig removed", "cool");
+}
+["odds","conf","sa","sb"].forEach(id => $(id).addEventListener("input", draw));
+draw();
+</script>
+</body>
+</html>

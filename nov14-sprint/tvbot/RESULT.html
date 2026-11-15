@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TV paper bot: what it did</title>
+<style>
+:root{
+  --paper:#fcfaf6; --ink:#1b222b; --ink2:#49515b; --muted:#636a72; --rule:#e5e3dd;
+  --cool:#0e5e8a; --cool-soft:#e6eff4; --warm:#c56c21; --warm-soft:#f7ebdf; --good:#1d6b3a;
+  --serif: Charter, "Iowan Old Style", Georgia, serif;
+  --sans: "Avenir Next", Avenir, Seravek, "Gill Sans", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+*{ box-sizing:border-box }
+html,body{ background:var(--paper); }
+body{ margin:0; color:var(--ink); font:17px/1.5 var(--serif); font-variant-numeric:lining-nums tabular-nums; overflow-wrap:break-word; }
+main{ max-width:760px; margin:0 auto; padding:40px 16px 64px; }
+section{ margin-top:30px; padding-top:20px; border-top:1px solid var(--rule); }
+section.first{ margin-top:0; padding-top:0; border-top:0 }
+.kicker{ font:600 12px/1.2 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:var(--cool); margin:0 0 12px; }
+h1{ font:700 42px/1.04 var(--serif); letter-spacing:-.015em; margin:0 0 12px; }
+h2{ font:700 25px/1.15 var(--serif); margin:0 0 10px; }
+h3{ font:700 19px/1.2 var(--serif); margin:18px 0 8px; }
+p{ margin:0 0 10px; }
+.deck{ font:400 19px/1.4 var(--serif); color:var(--ink2); margin:0 0 14px; }
+.note{ font:400 13px/1.45 var(--sans); color:var(--muted); }
+code{ font:500 13px/1.4 var(--mono); background:var(--cool-soft); padding:1px 5px; border-radius:4px; overflow-wrap:anywhere; }
+pre{ font:500 13.5px/1.45 var(--mono); background:var(--cool-soft); border-left:4px solid var(--cool); border-radius:0 8px 8px 0; padding:12px 16px; margin:0 0 12px; overflow-x:auto; max-width:100%; }
+.good{ color:var(--good) } .bad{ color:var(--warm) } .cool{ color:var(--cool) }
+.caveat{ border-left:6px solid var(--warm); background:var(--warm-soft); border-radius:0 8px 8px 0; padding:16px 18px 8px; margin:18px 0 0; }
+.caveat .label{ font:700 11.5px/1 var(--sans); letter-spacing:.14em; text-transform:uppercase; color:#9a4d12; margin-bottom:10px; }
+.caveat .big{ font:700 22px/1.25 var(--serif); margin:0 0 10px; }
+.verdict{ border-left:4px solid var(--cool); background:var(--cool-soft); padding:12px 16px; border-radius:0 8px 8px 0; margin:0 0 12px; }
+.verdict.bad{ border-color:var(--warm); background:var(--warm-soft); color:var(--ink) }
+.verdict.ok{ border-color:var(--good); background:#e8f2ea; color:var(--ink) }
+.pill{ display:inline-block; font:700 14px/1.2 var(--sans); padding:5px 10px; border-radius:999px; background:var(--cool-soft); color:var(--cool); margin:0 0 10px; }
+.pill.ok{ background:#e8f2ea; color:var(--good) } .pill.warn{ background:var(--warm-soft); color:#9a4d12 }
+.badge{ display:inline-block; font:700 11.5px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase; padding:5px 9px; border-radius:4px; margin:0 8px 8px 0; }
+.badge.test{ background:var(--warm-soft); color:#9a4d12; border:1px solid #e3c4a3 }
+.badge.real{ background:var(--cool-soft); color:var(--cool); border:1px solid #a9c6d8 }
+.tiles{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:6px 0 14px; }
+.tile{ border-top:2.5px solid var(--ink); padding:9px 0 0; }
+.tile .num{ font:700 28px/1 var(--serif); }
+.tile .cap{ font:400 12.5px/1.4 var(--sans); color:var(--ink2); margin-top:6px; }
+.scroll{ overflow-x:auto; max-width:100%; margin:8px 0 12px; }
+table{ width:100%; border-collapse:collapse; font:400 14px/1.4 var(--sans); margin:0; }
+caption{ text-align:left; font:700 11px/1.3 var(--sans); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:0 0 6px; }
+th{ text-align:right; font:700 11px/1.2 var(--sans); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); padding:6px 7px; border-bottom:1.5px solid var(--ink); vertical-align:bottom; }
+th:first-child,td:first-child{ text-align:left }
+td{ padding:6px 7px; border-bottom:1px solid var(--rule); text-align:right; vertical-align:top; }
+th.l,td.l{ text-align:left }
+td.l{ overflow-wrap:anywhere }
+td .gloss{ display:block; font:400 12.5px/1.4 var(--sans); color:var(--muted); margin-top:2px; }
+tr.strong td{ font-weight:700; background:var(--cool-soft) }
+table.wide{ min-width:480px }
+.meter-row{ display:flex; align-items:center; gap:12px; margin:4px 0 12px; }
+.meter{ flex:1 1 auto; height:14px; background:#ebe8e0; border-radius:7px; overflow:hidden; min-width:120px; }
+.meter-fill{ height:100%; background:var(--warm); }
+.meter-num{ font:700 16px/1.2 var(--sans); white-space:nowrap; }
+ul{ margin:0 0 10px; padding-left:20px } li{ margin:0 0 5px }
+@media (max-width:640px){
+  main{ padding-top:28px }
+  h1{ font-size:34px }
+  .tiles{ grid-template-columns:1fr 1fr }
+  table{ font-size:13px }
+  .caveat .big{ font-size:20px }
+}
+</style>
+</head>
+<body>
+<main>
+<section class="first">
+<div class="kicker">Paper only · test runner · no orders</div>
+<h1>TV paper bot: what it did</h1>
+<p class="deck">Paper only. Nothing on this page can place an order.</p>
+<p class="note">Generated (UTC): 2026-11-15T09:42:44Z. All money is paper money, in dollars. + is a gain and - is a loss.</p>
+<div class="caveat"><div class="label">Read this first</div><p class="big">+227.88 on one synthetic sample is not evidence of an edge.</p><p>The bars were made by a script for testing the machinery. They were not taken from any market.</p><p>A real result needs real bars from a source whose terms allow it, and many more than one sample.</p></div>
+</section>
+<section>
+<div class="kicker">Saved test run</div>
+<h2>What the bot did (TEST ONLY: synthetic sample)</h2>
+<p><span class="badge test">TEST ONLY: synthetic</span> <span class="note">symbol SYNTH-FUND-60M, feed file normal_bars.jsonl</span></p>
+<div class="tiles"><div class="tile"><div class="num good">+227.88</div><div class="cap">net result after all costs (TEST ONLY: synthetic)</div></div><div class="tile"><div class="num good">+72.99</div><div class="cap">buy-and-hold comparison (TEST ONLY: synthetic)</div></div><div class="tile"><div class="num bad">-469.58</div><div class="cap">largest drop from a peak (TEST ONLY: synthetic)</div></div></div>
+<div class="scroll"><table><caption>Counts and money, in dollars (TEST ONLY: synthetic)</caption><tbody><tr><td>Bars read<span class="gloss">A bar is one block of price history: open, high, low and close.</span></td><td class="">630</td></tr><tr><td>Decisions<span class="gloss">The bot picks one action for each bar. The next table breaks them down.</span></td><td class="">630</td></tr><tr><td>Orders<span class="gloss">Orders the bot would have sent. Paper only.</span></td><td class="">17</td></tr><tr><td>Fills<span class="gloss">Orders that would have been filled.</span></td><td class="">17</td></tr><tr><td>Round trips<span class="gloss">One round trip is one buy followed by one sell.</span></td><td class="">8</td></tr><tr><td>Result before costs<span class="gloss">Gain or loss with every trade at the raw open price, before any cost.</span></td><td class="good">+270.30</td></tr><tr><td>Spread and slippage cost<span class="gloss">Spread is the gap between the buy and sell price. Slippage is a slightly worse price than expected. Both come from the settings; they are not measured.</span></td><td class="bad">-25.42</td></tr><tr><td>Commission<span class="gloss">Broker fees, charged per order.</span></td><td class="bad">-17.00</td></tr><tr class="strong"><td>Net result<span class="gloss">The result before costs, minus all costs.</span></td><td class="good">+227.88</td></tr><tr><td>Largest drop from a peak<span class="gloss">The biggest fall in account value from its highest point so far.</span></td><td class="bad">-469.58</td></tr><tr><td>Buy-and-hold comparison<span class="gloss">same order size bought once at the first bar&#x27;s open with the same costs, never sold, marked at the last close</span></td><td class="good">+72.99</td></tr><tr><td>Position still open<span class="gloss">Shares still held at the end, not yet sold. Their gain or loss so far is already inside the net result.</span></td><td class="">50 shares</td></tr></tbody></table></div>
+<div class="scroll"><table><caption>Decisions by action (TEST ONLY: synthetic)</caption><thead><tr><th class="l">Action</th><th>Count</th><th class="l">What it means</th></tr></thead><tbody><tr><td class="l">ENTER_LONG</td><td>9</td><td class="l">Decided to buy.</td></tr><tr><td class="l">EXIT_LONG</td><td>8</td><td class="l">Decided to sell.</td></tr><tr><td class="l">HOLD</td><td>201</td><td class="l">Kept the position, or waited on an order.</td></tr><tr><td class="l">STAND_ASIDE</td><td>410</td><td class="l">No trade.</td></tr><tr><td class="l">BLOCKED</td><td>2</td><td class="l">A buy the risk limits refused.</td></tr></tbody></table></div>
+<div class="scroll"><table class="wide"><caption>Round trips (TEST ONLY: synthetic)</caption><thead><tr><th>Entry time (UTC)</th><th>Exit time (UTC)</th><th>Exit reason</th><th>Net result</th></tr></thead><tbody><tr><td>2026-06-15T18:30:00Z</td><td>2026-06-19T19:30:00Z</td><td>cross_down</td><td class="good">+96.47</td></tr><tr><td>2026-06-24T19:30:00Z</td><td>2026-06-25T16:30:00Z</td><td>daily_loss_limit</td><td class="bad">-154.20</td></tr><tr><td>2026-07-01T14:30:00Z</td><td>2026-07-01T19:30:00Z</td><td>stop</td><td class="bad">-115.85</td></tr><tr><td>2026-07-22T20:30:00Z</td><td>2026-07-23T14:30:00Z</td><td>stop</td><td class="good">+29.01</td></tr><tr><td>2026-08-05T20:30:00Z</td><td>2026-08-12T18:30:00Z</td><td>cross_down</td><td class="good">+69.49</td></tr><tr><td>2026-08-19T16:30:00Z</td><td>2026-08-26T14:30:00Z</td><td>cross_down</td><td class="good">+57.99</td></tr><tr><td>2026-09-01T19:30:00Z</td><td>2026-09-08T17:30:00Z</td><td>cross_down</td><td class="good">+67.99</td></tr><tr><td>2026-09-15T14:30:00Z</td><td>2026-09-21T19:30:00Z</td><td>cross_down</td><td class="good">+83.49</td></tr></tbody></table></div>
+<p class="note">Exit reasons: cross_down = the fast average crossed back below the slow one; daily_loss_limit = the daily loss limit was hit; stop = a bar closed at or below the stop level.</p>
+<p class="note">The closed trades above add up to +134.38. The rest of the net result, +93.51, comes from the position still open at the end.</p>
+<div class="scroll"><table><caption>Same trades, every cost multiplied (TEST ONLY: synthetic)</caption><thead><tr><th class="l">If costs were</th><th>Net result</th></tr></thead><tbody><tr><td class="l">No costs at all</td><td class="good">+270.30</td></tr><tr class="strong"><td class="l">Costs as in the settings (the net result above)</td><td class="good">+227.88</td></tr><tr><td class="l">Costs 2 times the settings</td><td class="good">+185.47</td></tr><tr><td class="l">Costs 4 times the settings</td><td class="good">+100.63</td></tr><tr><td class="l">Costs 8 times the settings</td><td class="bad">-69.03</td></tr></tbody></table></div>
+<p class="note">At 8 times the costs in the settings, the same trades end at a loss of 69.03. The costs are set in the settings, not measured from a market. Real costs can be higher than the settings.</p>
+<p><strong>Fill rule.</strong> a decision is ready when its bar was delivered plus 5 seconds of processing; it fills at the open of the first bar that opens at or after that moment, plus costs. On a continuous hourly feed that is one full bar after the signal bar closes.</p>
+<p class="note">Rule id: <code>EMAX-1.0.0-14251ac3</code> Config hash: <code>fd1ec9cb6f5d</code></p>
+<p class="note">Data note: TEST ONLY: synthetic bars made by a script; this is a mechanics check, not evidence of an edge</p>
+</section>
+<section>
+<div class="kicker">Risk</div>
+<h2>Risk on one trade</h2>
+<div class="scroll"><table><caption>One stopped trade, estimated from the test settings</caption><tbody><tr><td>Order size<span class="gloss">dollars of stock bought in one trade</span></td><td class="">5,000.00</td></tr><tr><td>Stop level<span class="gloss">the trade is sold after a bar closes this far under the entry price</span></td><td class="">1.5%</td></tr><tr><td>Estimate for one stopped trade<span class="gloss">price loss -75.00 plus costs -4.98, both sides</span></td><td class="bad">-79.98</td></tr><tr><td>Daily loss limit<span class="gloss">the most the bot may lose in one day before it must stop</span></td><td class="">100.00</td></tr></tbody></table></div>
+<p><strong>Share of the daily limit used by one stopped trade</strong></p>
+<div class="meter-row"><div class="meter"><div class="meter-fill" style="width:80.0%"></div></div><div class="meter-num">80.0%</div></div>
+<p>On these settings one stopped trade is estimated to use most of a day's loss limit.</p>
+<p>The limit has room for about 1 full stopped trade before it is used up.</p>
+<p>In plain terms: one losing trade can use most or all of a day's loss limit.</p>
+<p class="note">The stop is checked on bar closes and the sale fills at a later open, so one losing trade can cost more than this estimate and more than the daily limit.</p>
+<h3>The worst closed trade in the test (TEST ONLY: synthetic)</h3>
+<div class="verdict bad"><p><strong class="bad">-154.20</strong> on a trade that exited by <code>daily_loss_limit</code>. This loss was larger than the daily loss limit of 100.00.</p></div>
+<h3>A smaller order size is ready</h3>
+<p>At an order size of 2,000.00, one stopped trade is estimated at <strong>-33.19</strong>, which is <strong>33.2%</strong> of the daily loss limit. The limit then has room for about 3 full stopped trades.</p>
+<p>To use it, add this to the end of both the gate command and the paper command:</p>
+<pre>--config nov14-sprint/tvbot/config/smaller_size.json</pre>
+<p>The saved test at that size (TEST ONLY: synthetic) ended +81.10, with a worst closed trade of -62.25. A smaller size shrinks gains and losses alike, and it is still one synthetic sample: not evidence of an edge.</p>
+</section>
+<section>
+<div class="kicker">Gate</div>
+<h2>Your gate: approve or pass</h2>
+<div class="pill">Not decided yet</div>
+<p>No valid decision has been recorded. Nothing is cleared to run.</p>
+<p class="note">Paper mode only. This approves the runner reading a real-bar file that Matthew supplied and writing paper rows on this Mac. It approves no real order, account, key, purchase or money movement, and nothing here can place one.</p>
+<h3>How to decide</h3>
+<p>In Terminal, from the project folder, run:</p>
+<pre>/usr/bin/python3 -I nov14-sprint/tvbot/bot/run.py gate</pre>
+<p>Then type APPROVE PAPER ONLY or PASS. Only a person typing in Terminal can decide; no chat message or file can.</p>
+<p>An approval is tied to one rule and one set of settings. To approve the smaller order size instead, add <code>--config nov14-sprint/tvbot/config/smaller_size.json</code> to the end of the command.</p>
+<p>Approval covers paper mode only and never a real order.</p>
+</section>
+<section>
+<div class="kicker">Real bars</div>
+<h2>Real data</h2>
+<p>No real data source is connected. The bot reads real bars only from a CSV file Matthew supplies, with columns ts, open, high, low, close, volume in UTC, from a source whose terms allow it. Until then it makes no signals on real data. Steps are in START_TONIGHT.md.</p>
+</section>
+<section>
+<div class="kicker">Sources</div>
+<h2>Files this page was built from</h2>
+<p class="note">Paths are relative to the tvbot folder.</p>
+<ul><li><code>out/normal/summary.json</code> <span class="note">found</span></li><li><code>out/normal/ledger.jsonl</code> <span class="note">found</span></li><li><code>out/paper/summary.json</code> <span class="note">not found</span></li><li><code>out/paper/ledger.jsonl</code> <span class="note">not found</span></li><li><code>gate/paper_gate.json</code> <span class="note">not found</span></li><li><code>real/last_source.json</code> <span class="note">not found</span></li><li><code>bot/riskinfo.py</code> <span class="note">found</span></li><li><code>bot/rules.py</code> <span class="note">found</span></li></ul>
+<p>No TradingView data is used anywhere in this runner.</p>
+</section>
+</main>
+</body>
+</html>

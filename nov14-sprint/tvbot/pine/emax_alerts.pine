@@ -1,0 +1,140 @@
+//@version=6
+// ---------------------------------------------------------------------------
+// EMAX-1.0.0  human-visible alerts (paper research)
+//
+// Purpose:   Draw one simple rule on the chart and raise alerts that a person
+//            reads. It is the human-visible half of a paper-only project. A
+//            separate offline Python paper runner re-implements the same rule
+//            on synthetic data.
+// Rule id:   EMAX-1.0.0
+// Chart:     AMEX:SPY, 60-minute bars (the code does not force this; it is the
+//            intended chart).
+// Status:    SOURCE ONLY. NOT YET COMPILED IN TRADINGVIEW. Nobody has loaded or
+//            run this script. Syntax is unverified until a chart-side test.
+//
+// BINDING NOTE: These alerts and values are for a human to read. They must
+//            never be sent to a webhook, a bot, a model or a ledger. When you
+//            create an alert from this script, leave "Webhook URL" unticked.
+//
+// This is paper research, not advice. It is an indicator, not a strategy: it
+// places no orders and simulates no fills. The "hypothetical position" below is
+// only a drawing aid that shows what the rule would be doing.
+//
+// Rule in words (long only, no pyramiding, no shorts):
+//   - Fast and slow EMAs of the close. Each EMA uses alpha = 2 / (len + 1) and
+//     is seeded with the first loaded bar's close (not ta.ema).
+//   - Signals count only on CLOSED bars and only once at least warmupBars bars
+//     have been seen (bar_index >= warmupBars - 1).
+//   - Flat + fast crosses above slow on a closed bar  -> LONG SETUP. The
+//     hypothetical position starts at the OPEN of the next bar.
+//   - In position, on a closed bar: close <= entry * (1 - stopPct/100) ->
+//     STOP EXIT; otherwise fast crosses below slow -> TREND EXIT. The position
+//     ends at the OPEN of the next bar.
+//   - A cross up while already in position is ignored.
+//   Keep fastLen below slowLen; the script does not enforce it.
+// ---------------------------------------------------------------------------
+indicator("EMAX-1.0.0 human-visible alerts (paper research)", shorttitle="EMAX alerts", overlay=true)
+
+// ---- Inputs ---------------------------------------------------------------
+fastLen    = input.int(8, "Fast EMA length", minval=1)
+slowLen    = input.int(21, "Slow EMA length", minval=2)
+stopPct    = input.float(1.5, "Stop, percent below entry", minval=0.1, maxval=50.0, step=0.1)
+warmupBars = input.int(63, "Warmup bars", minval=2)
+
+// ---- Colors (restrained) --------------------------------------------------
+color cNavy  = #3B5B92
+color cTeal  = #2A8C82
+color cAmber = #D08A1E
+
+// ---- Constant text pieces -------------------------------------------------
+string RULE_ID   = "EMAX-1.0.0"
+string CHART_URL = "https://www.tradingview.com/chart/?symbol=AMEX%3ASPY&interval=60"
+
+// ---- Seeded EMA (not ta.ema) ----------------------------------------------
+emaSeeded(float src, int len) =>
+    float alpha = 2.0 / (len + 1)
+    float emaVal = 0.0
+    emaVal := na(emaVal[1]) ? src : alpha * src + (1.0 - alpha) * emaVal[1]
+    emaVal
+
+fast = emaSeeded(close, fastLen)
+slow = emaSeeded(close, slowLen)
+
+crossUp   = fast > slow and fast[1] <= slow[1]
+crossDown = fast < slow and fast[1] >= slow[1]
+
+// ---- Hypothetical long-only state machine ---------------------------------
+var bool  inPos        = false
+var float entryRef     = na
+var bool  pendingEntry = false
+var bool  pendingExit  = false
+
+// Apply transitions decided on the previous closed bar. They happen at this bar's open.
+if pendingEntry
+    inPos        := true
+    entryRef     := open
+    pendingEntry := false
+if pendingExit
+    inPos       := false
+    entryRef    := na
+    pendingExit := false
+
+bool armed     = barstate.isconfirmed and bar_index >= warmupBars - 1
+float stopLvl  = entryRef * (1.0 - stopPct / 100.0)
+bool stopHit   = inPos and close <= stopLvl
+
+bool longSetup = armed and not inPos and not pendingEntry and crossUp
+bool stopExit  = armed and stopHit
+bool trendExit = armed and inPos and not stopHit and crossDown
+
+if longSetup
+    pendingEntry := true
+if stopExit or trendExit
+    pendingExit := true
+
+// ---- Visuals --------------------------------------------------------------
+plot(fast, "Fast EMA", color=cNavy, linewidth=2)
+plot(slow, "Slow EMA", color=cTeal, linewidth=2)
+plot(inPos ? stopLvl : na, "Stop level", color=cAmber, linewidth=1, style=plot.style_linebr)
+bgcolor(inPos ? color.new(cTeal, 93) : na, title="Hypothetical position")
+
+plotshape(longSetup, title="LONG SETUP", style=shape.triangleup, location=location.belowbar, color=cTeal, size=size.small, text="LONG SETUP", textcolor=cTeal)
+plotshape(stopExit, title="STOP EXIT", style=shape.triangledown, location=location.abovebar, color=cAmber, size=size.small, text="STOP EXIT", textcolor=cAmber)
+plotshape(trendExit, title="TREND EXIT", style=shape.triangledown, location=location.abovebar, color=cNavy, size=size.small, text="TREND EXIT", textcolor=cNavy)
+
+// ---- Alerts, kind 1: alertcondition (constant message strings) -------------
+// Pick ONE kind when you create an alert, not both, or you will get duplicates.
+alertcondition(longSetup, title="EMAX long setup", message="EMAX-1.0.0 LONG SETUP on {{ticker}}, interval {{interval}}. The fast EMA crossed above the slow EMA on a closed bar while no hypothetical position was open. Bar close {{close}}, time {{time}}. A hypothetical paper position would start at the next bar's open. For Matthew to read. Not an order. Do not send to a webhook or bot. Chart: https://www.tradingview.com/chart/?symbol=AMEX%3ASPY&interval=60")
+alertcondition(stopExit, title="EMAX stop exit", message="EMAX-1.0.0 STOP EXIT on {{ticker}}, interval {{interval}}. The bar closed at or below the stop level (entry price minus the stop percent) while a hypothetical position was open. Bar close {{close}}, time {{time}}. The hypothetical paper position would end at the next bar's open. For Matthew to read. Not an order. Do not send to a webhook or bot. Chart: https://www.tradingview.com/chart/?symbol=AMEX%3ASPY&interval=60")
+alertcondition(trendExit, title="EMAX trend exit", message="EMAX-1.0.0 TREND EXIT on {{ticker}}, interval {{interval}}. The fast EMA crossed below the slow EMA on a closed bar while a hypothetical position was open and the stop was not hit. Bar close {{close}}, time {{time}}. The hypothetical paper position would end at the next bar's open. For Matthew to read. Not an order. Do not send to a webhook or bot. Chart: https://www.tradingview.com/chart/?symbol=AMEX%3ASPY&interval=60")
+
+// ---- Alerts, kind 2: alert() with a dynamically built message --------------
+string ctxTxt = "Symbol " + syminfo.tickerid + ", interval " + timeframe.period + "."
+ctxTxt += " The bar that opened at " + str.format_time(time, "yyyy-MM-dd HH:mm", syminfo.timezone)
+ctxTxt += " closed at " + str.tostring(close, format.mintick) + "."
+
+string tailTxt = " For Matthew to read. Not an order. Do not send to a webhook or bot."
+tailTxt += " Chart: " + CHART_URL
+
+if longSetup
+    string m = RULE_ID + " LONG SETUP. " + ctxTxt
+    m += " The fast EMA crossed above the slow EMA on a closed bar while no hypothetical position was open."
+    m += " A hypothetical paper position would start at the next bar's open."
+    m += tailTxt
+    alert(m, alert.freq_once_per_bar_close)
+
+if stopExit
+    string m = RULE_ID + " STOP EXIT. " + ctxTxt
+    m += " The close was at or below the stop level of " + str.tostring(stopLvl, format.mintick)
+    m += " (hypothetical entry " + str.tostring(entryRef, format.mintick)
+    m += " minus " + str.tostring(stopPct) + " percent)."
+    m += " The hypothetical paper position would end at the next bar's open."
+    m += tailTxt
+    alert(m, alert.freq_once_per_bar_close)
+
+if trendExit
+    string m = RULE_ID + " TREND EXIT. " + ctxTxt
+    m += " The fast EMA crossed below the slow EMA on a closed bar while a hypothetical position was open, and the stop was not hit."
+    m += " The hypothetical paper position would end at the next bar's open."
+    m += tailTxt
+    alert(m, alert.freq_once_per_bar_close)

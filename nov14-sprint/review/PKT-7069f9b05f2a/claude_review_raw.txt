@@ -1,0 +1,80 @@
+```json
+{
+  "packet_id": "PKT-7069f9b05f2a",
+  "live_or_recorded": "live",
+  "reviewed_utc": "2026-11-14T22:02:12Z",
+  "authority": "advisory only; cannot authorize a fill",
+  "reviewer_model": "claude-opus-5-5",
+  "verdict": "challenge",
+  "rule_followed": "true",
+  "arithmetic": [
+    {
+      "item": "ema_fast = (2 / (fast_len + 1)) * close + (1 - 2 / (fast_len + 1)) * prev_ema_fast",
+      "match": "true",
+      "packet_value": 98.802128,
+      "recomputed_value": 98.802128
+    },
+    {
+      "item": "ema_slow = (2 / (slow_len + 1)) * close + (1 - 2 / (slow_len + 1)) * prev_ema_slow",
+      "match": "true",
+      "packet_value": 98.783259,
+      "recomputed_value": 98.783259
+    },
+    {
+      "item": "cross_up: ema_fast > ema_slow and prev_ema_fast <= prev_ema_slow",
+      "match": "true",
+      "packet_value": "true (reason_code cross_up)",
+      "recomputed_value": "true: 98.802128 > 98.783259 and 98.574164 <= 98.701585"
+    },
+    {
+      "item": "bars_since_reset >= warmup_bars",
+      "match": "true",
+      "packet_value": "73 >= 63",
+      "recomputed_value": "73 >= 63 is true (73 contiguous bars, seq 1-73, no reset seen)"
+    },
+    {
+      "item": "qty = floor(order_notional_setting / close)",
+      "match": "true",
+      "packet_value": 50,
+      "recomputed_value": 50
+    },
+    {
+      "item": "qty * close <= max_position_notional and qty <= max_qty",
+      "match": "true",
+      "packet_value": "4980.0 <= 6000.0 and 50 <= 100",
+      "recomputed_value": "4980.0 <= 6000.0 true; 50 <= 100 true"
+    },
+    {
+      "item": "decision_ready_ts = available_ts + latency_seconds",
+      "match": "true",
+      "packet_value": "2026-06-15T17:30:07Z",
+      "recomputed_value": "2026-06-15T17:30:07Z (17:30:02Z + 5 s)"
+    }
+  ],
+  "concerns": [
+    "The fill fields contradict the fill rule. The rule fills at 'the open of the first bar that opens at or after decision_ready_ts' (17:30:07Z). Bars are contiguous 60-minute bars with no gaps inside a session, so seq 74 should open at 2026-06-15T17:30:00Z. That is 7 seconds before decision_ready_ts, so seq 74 does not qualify. Under the rule as written, the earliest fill is the open of seq 75 at 2026-06-15T18:30:00Z. The packet instead says earliest_fill_seq 74 and earliest_fill_ts 17:30:07Z.",
+    "earliest_fill_ts 17:30:07Z is not a bar-open time. A fill at 'the open' of a bar can only carry that bar's ts_open, so the field mixes the decision-ready time with the fill time.",
+    "If the runner really fills at seq 74's open, it fills at a price printed 7 seconds before the decision existed. That is a small but real look-ahead advantage over the stated latency model. The other reading is a one-bar fill delay that the packet misstates.",
+    "The EMA seed method is not stated. The packet values match a series seeded with the first close (seq 1). With an SMA seed, slow EMA would be 98.782952 and prev slow 98.701247. The cross_up result does not change, but the stated values would.",
+    "The cross is marginal: fast minus slow is only +0.018869 at seq 73, after -0.12742 at seq 72. The rule allows this, but a cross this thin is prone to a quick cross_down whipsaw.",
+    "Risk headroom is tight. The stop is 1.5% below the unknown fill-bar open, about 98.11 if the open were 99.60. That is roughly 1.49 per share, or about 74.70 on 50 shares, before about 3 bps of entry and exit costs per side and a 1.00 minimum commission per side. The stop is checked on closes only, and the position can be held through overnight or weekend gaps, so the realized loss can exceed the 100.0 max_daily_loss. Nothing in the order sizing caps the loss at that limit.",
+    "The notional cap is checked at the signal close (99.60), not at the fill price after costs. There is ample headroom (6000 vs 4980), so this is not a breach, only an unverified step.",
+    "Checks that pass: the bars file sha256 matches all_bars_sha256. The recent_closed_bars in the packet match the file exactly. signal_ts equals seq 73's ts_close. available_ts equals seq 73's delivered_ts. position_qty is 0 and day_pnl is 0.0. Cash of 10000 covers the order. No cross happened after warmup and before seq 73, so no earlier trade or cooldown conflict can be inferred."
+  ],
+  "missing_information": [
+    "How the runner actually treats a bar that opens before decision_ready_ts (seq 74 vs seq 75), and the confirmed ts_open of the fill bar.",
+    "The EMA initialization method (seeded with the first close vs an SMA seed vs something else).",
+    "What counts as a 'reset' for bars_since_reset (series start, session, or data gap).",
+    "The definition of 'data_gap' in exit_priority, and whether overnight and weekend session breaks count as gaps.",
+    "How costs apply to the fill price: the base and sign of half_spread_bps and slippage_bps, and whether commission is charged per side.",
+    "Whether max_daily_loss is enforced intrabar, at bar close, or only before entry, and whether it counts unrealized P&L.",
+    "Trade and exit history inside the engine, to confirm cooldown_bars and max_positions_per_symbol (the bars alone imply no prior trade).",
+    "Whether max_position_notional is rechecked at the fill price including costs.",
+    "The session calendar for 2026-06-15, to confirm that seq 74 and seq 75 exist at 17:30Z and 18:30Z."
+  ]
+}
+```
+Files opened: /private/tmp/claude-501/-Users-matthewshields-Projects-ClaudeCodeAdvancements/c9f73180-d807-4913-a273-3d087df6f461/scratchpad/blind_PKT-7069f9b05f2a/PKT-7069f9b05f2a.json
+Files opened: /private/tmp/claude-501/-Users-matthewshields-Projects-ClaudeCodeAdvancements/c9f73180-d807-4913-a273-3d087df6f461/scratchpad/blind_PKT-7069f9b05f2a/bars_through_signal_bar.jsonl
+Command: date -u +%Y-%m-%dT%H:%M:%SZ
+Command: cd /private/tmp/claude-501/-Users-matthewshields-Projects-ClaudeCodeAdvancements/c9f73180-d807-4913-a273-3d087df6f461/scratchpad && /usr/bin/python3 -I - (inline script on stdin; it read only the two files above. It checked the sha256, matched recent_closed_bars against the file, recomputed both EMAs with first-close and SMA seeds, scanned for crosses, computed qty and notional, the timing and the stop estimate, and wrote no files.)

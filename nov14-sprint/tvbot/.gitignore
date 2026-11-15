@@ -1,0 +1,6 @@
+# Real bars stay on this Mac. A vendor's terms may forbid sharing them.
+real/
+# Runtime lock files. The runner makes this folder when it needs it.
+locks/
+# A stray written by an old project hook. It is not part of the bot.
+self-learning/

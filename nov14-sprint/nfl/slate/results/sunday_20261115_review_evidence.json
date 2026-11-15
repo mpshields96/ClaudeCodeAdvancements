@@ -1,0 +1,231 @@
+{
+  "schema_version": 1,
+  "slate_date": "2026-11-15",
+  "verified_utc": "2026-11-15T07:43:33Z",
+  "capture_sha256": "2a50d6951366342f8656ee01e113c44cceff0acdfa027ea933f9286c0c73d56f",
+  "issued_utc": "2026-11-15T07:08:57Z",
+  "rules_freeze_utc": "2026-11-15T07:29:44Z",
+  "purpose": "Supplemental pregame evidence for the already-issued card. No selection or price is changed.",
+  "by_call": {
+    "48e497c230e6c9afcb3b600091d28e17:full_game:player_reception_yds:Jaylen%20Warren:Over:22.5": {
+      "status": "known",
+      "display": "Pat Freiermuth (illness) and Derrick Harmon (foot) were questionable. Final availability remains unknown. A Freiermuth absence could redistribute short targets.",
+      "players": [
+        {
+          "player": "Derrick Harmon",
+          "position": "DT",
+          "status": "Questionable",
+          "cause": "Foot",
+          "reported_utc": "2026-11-14T20:05:00Z",
+          "retrieved_utc": "2026-11-15T07:14:57Z",
+          "source_url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401873064",
+          "saved_file": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/inputs/espn-summary.20261115T071450Z/event_401873064.json"
+        },
+        {
+          "player": "Pat Freiermuth",
+          "position": "TE",
+          "status": "Questionable",
+          "cause": "Illness",
+          "reported_utc": "2026-11-14T17:39:00Z",
+          "retrieved_utc": "2026-11-15T07:14:57Z",
+          "source_url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401873064",
+          "saved_file": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/inputs/espn-summary.20261115T071450Z/event_401873064.json"
+        }
+      ],
+      "team_input": {
+        "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/slate_20261115.json",
+        "sha256": "c90a28feeb23e96ddecabb20e0da634db27646676e62d1dd500e4463c1716593",
+        "built_utc": "2026-11-15T07:34:55Z"
+      },
+      "appearance_display": "The saved NFL game log records Warren catching one pass for zero yards in Week 8. That appearance counts: 4/5 and 7/8 above today’s 22.5 in consecutive 2026 appearances.",
+      "appearance_source": {
+        "source_url": "https://www.nfl.com/players/jaylen-warren/stats/logs/2026/",
+        "retrieved_utc": "2026-11-15T07:09:24Z",
+        "http_status": 200,
+        "final_url": "https://www.nfl.com/players/jaylen-warren/stats/logs/2026/",
+        "sha256": "af1314dfd3eb0b5e8e3c4845ca2ed2efbc0b19b9e553b93eec166eef2ce840ef",
+        "saved_file": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/tools/official_player_logs_20261115.json",
+        "saved_file_sha256": "217b65f973a1b35e053fe786c96ba168544a56540e52593fac9b11a1d01e1119",
+        "saved_representation": "NFL.com response parsed to table headers and all game rows; saved source SHA is the fetched HTML digest."
+      },
+      "week_8": {
+        "date": "2026-11-01",
+        "week": 8,
+        "opponent": "Browns",
+        "result": "W 27 - 6",
+        "game_id": "2026_08_CLE_PIT",
+        "game_team": "PIT",
+        "opponent_team": "CLE",
+        "team_starting_qb": "Aaron Rodgers",
+        "yards": 0,
+        "player_rush_yds": 143,
+        "rush_attempts": 17,
+        "player_reception_yds": 0,
+        "receptions": 1,
+        "participation": "played",
+        "participation_basis": "NFL.com reported individual game statistics",
+        "participation_source_url": "https://www.nfl.com/players/jaylen-warren/stats/logs/2026/"
+      },
+      "recent_at_22_5": {
+        "last_5": {
+          "requested_rows": 5,
+          "available_rows": 5,
+          "reported_yardage_rows": 5,
+          "season": 2026,
+          "basis": "Consecutive current-season appearances, newest first.",
+          "weeks": [
+            8,
+            7,
+            6,
+            5,
+            4
+          ],
+          "yards": [
+            0,
+            36,
+            28,
+            87,
+            33
+          ],
+          "included_derived_zeros": 0,
+          "unreported": 0,
+          "over": 4,
+          "under": 1,
+          "push": 0
+        },
+        "last_10": {
+          "requested_rows": 10,
+          "available_rows": 8,
+          "reported_yardage_rows": 8,
+          "season": 2026,
+          "basis": "Consecutive current-season appearances, newest first.",
+          "weeks": [
+            8,
+            7,
+            6,
+            5,
+            4,
+            3,
+            2,
+            1
+          ],
+          "yards": [
+            0,
+            36,
+            28,
+            87,
+            33,
+            49,
+            34,
+            27
+          ],
+          "included_derived_zeros": 0,
+          "unreported": 0,
+          "over": 7,
+          "under": 1,
+          "push": 0
+        }
+      },
+      "prior_line_result": "6/8 above the third-party archive’s individual historical lines. Historical books and quote times unknown."
+    }
+  },
+  "by_window": {
+    "late": {
+      "status": "known",
+      "display": "Arizona scored under 6.5 first-half team points in 4/9 games. The Rams allowed opponents under 6.5 first-half team points in 3/9.",
+      "period": "first_half",
+      "market": "team_totals_h1",
+      "threshold": 6.5,
+      "arizona_points_scored": [
+        {
+          "game_id": "2026_01_ARI_LAC",
+          "points": 13
+        },
+        {
+          "game_id": "2026_02_SEA_ARI",
+          "points": 7
+        },
+        {
+          "game_id": "2026_03_ARI_SF",
+          "points": 6
+        },
+        {
+          "game_id": "2026_04_ARI_NYG",
+          "points": 17
+        },
+        {
+          "game_id": "2026_05_DET_ARI",
+          "points": 7
+        },
+        {
+          "game_id": "2026_06_ARI_LA",
+          "points": 9
+        },
+        {
+          "game_id": "2026_07_DEN_ARI",
+          "points": 6
+        },
+        {
+          "game_id": "2026_08_ARI_DAL",
+          "points": 3
+        },
+        {
+          "game_id": "2026_09_ARI_SEA",
+          "points": 3
+        }
+      ],
+      "rams_opponent_points": [
+        {
+          "game_id": "2026_01_SF_LA",
+          "points": 10
+        },
+        {
+          "game_id": "2026_02_NYG_LA",
+          "points": 3
+        },
+        {
+          "game_id": "2026_03_LA_DEN",
+          "points": 0
+        },
+        {
+          "game_id": "2026_04_LA_PHI",
+          "points": 20
+        },
+        {
+          "game_id": "2026_05_BUF_LA",
+          "points": 13
+        },
+        {
+          "game_id": "2026_06_ARI_LA",
+          "points": 9
+        },
+        {
+          "game_id": "2026_07_LA_LV",
+          "points": 6
+        },
+        {
+          "game_id": "2026_08_LAC_LA",
+          "points": 9
+        },
+        {
+          "game_id": "2026_09_LA_WAS",
+          "points": 10
+        }
+      ],
+      "method": "Use total scores on the highest play_id in quarter 2 of each completed regular-season game in Weeks 1–9; take Arizona points and the Rams opponent points.",
+      "source": "nflverse play-by-play 2026",
+      "source_url": "https://github.com/nflverse/nflverse-data/releases/tag/pbp",
+      "saved_file": "/Users/matthewshields/Documents/Codex/2026-11-14/paper-desk-final-closeout/work/nfl-matchup/play_by_play_2026.csv.gz",
+      "sha256": "b29cf0cc8bc90fdd6932d03b98c0b880d02d9829864a66cfe2f819f0bed96978",
+      "retrieved_utc": null,
+      "local_file_modified_utc": "2026-11-15T06:55:54+00:00",
+      "source_note": "The local file timestamp is known. A network-retrieval timestamp was not attached to this saved archive."
+    }
+  },
+  "props_input": {
+    "path": "/Users/matthewshields/Projects/ClaudeCodeAdvancements/nov14-sprint/nfl/slate/props_20261115.json",
+    "sha256": "7f202c76572738e0329e8c9721fbaacee06333008748a019d05880c380b50980",
+    "version": 2,
+    "built_utc": "2026-11-15T07:38:37Z"
+  }
+}

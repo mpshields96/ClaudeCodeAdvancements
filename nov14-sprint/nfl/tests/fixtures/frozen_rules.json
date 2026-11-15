@@ -1,0 +1,5 @@
+{"frozen_at_utc":"2026-11-14T21:00:00Z","ruleset_version":"v1","rules":[
+ {"version_id":"HOME_DOG-v1.T3","family":"HOME_DOG","value":3.0},
+ {"version_id":"BIG_DOG-v1.T7","family":"BIG_DOG","value":7.0},
+ {"version_id":"REST_EDGE-v1.D3","family":"REST_EDGE","value":3},
+ {"version_id":"HIGH_TOTAL_UNDER-v1.T47","family":"HIGH_TOTAL_UNDER","value":47.0}]}

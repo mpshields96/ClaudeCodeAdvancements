@@ -1,0 +1,17 @@
+{
+  "note": "Each button runs the TV lane's own runner, tvbot/bot/run.py, with a fixed argument list. The desk serves one request at a time, so two buttons never run at once.",
+  "actions": [
+    {"name": "replay-fresh", "label": "Run the replay from scratch",
+     "note": "Clears tvbot/out/normal and replays the sample bars. Fills at the next bar, after costs.",
+     "argv": ["{python}", "bot/run.py", "replay", "--fresh"], "cwd": "tvbot", "timeout": 180},
+    {"name": "replay-again", "label": "Rerun (should add nothing)",
+     "note": "Replays the same bars into the same folder. Every bar should be refused as already recorded.",
+     "argv": ["{python}", "bot/run.py", "replay"], "cwd": "tvbot", "timeout": 180},
+    {"name": "adverse", "label": "Bad-input check",
+     "note": "Feeds TradingView-origin, stale, future, duplicate and over-limit inputs on a work copy. Each must be refused.",
+     "argv": ["{python}", "bot/run.py", "adverse"], "cwd": "tvbot", "timeout": 300},
+    {"name": "sweep", "label": "Cost sweep",
+     "note": "Reruns with costs raised step by step. The net result should fall each time.",
+     "argv": ["{python}", "bot/run.py", "sweep"], "cwd": "tvbot", "timeout": 300}
+  ]
+}

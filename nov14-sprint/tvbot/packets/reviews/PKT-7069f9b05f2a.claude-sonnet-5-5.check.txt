@@ -1,0 +1,77 @@
+RECORDED REPLY. This is a saved reply being replayed, not a live model call.
+packet  nov14-sprint/tvbot/packets/PKT-7069f9b05f2a.json
+reply   nov14-sprint/tvbot/packets/reviews/PKT-7069f9b05f2a.claude-sonnet-5-5.reply.txt (sha256 52e22c330acb99a8)
+reviewer says: model claude-sonnet-5-5, reviewed 2026-11-14T22:17:03Z, verdict challenge
+
+Checks made in code
+ok   packet id: PKT-7069f9b05f2a
+ok   authority line: 'advisory only; cannot authorize a fill'
+ok   verdict is one of the allowed words: 'challenge'
+ok   bars file is the one the packet names: sha256 571b15b1f507fed4
+ok   row 'ema_fast = (2 / (fast_len + 1)) * close + (1': reply says match=True, code finds True; packet 98.802128, reply recomputed 98.802128, code recomputed 98.802128
+ok   row 'ema_fast = (2 / (fast_len + 1)) * close + (1': reply says match=True, code finds True; packet 98.574164, reply recomputed 98.574164, code recomputed 98.574164
+ok   row 'ema_slow = (2 / (slow_len + 1)) * close + (1': reply says match=True, code finds True; packet 98.783259, reply recomputed 98.783259, code recomputed 98.783259
+ok   row 'ema_slow = (2 / (slow_len + 1)) * close + (1': reply says match=True, code finds True; packet 98.701585, reply recomputed 98.701585, code recomputed 98.701585
+ok   row 'cross_up: ema_fast > ema_slow and prev_ema_f': reply says match=True, code finds True
+ok   row 'bars_since_reset >= warmup_bars': reply says match=True, code finds True
+ok   row 'qty = floor(order_notional_setting / close)': reply says match=True, code finds True
+ok   row 'qty * close <= max_position_notional and qty': reply says match=True, code finds True
+ok   row 'decision_ready_ts = available_ts + latency_s': reply says match=True, code finds True
+ok   row 'forward_plan.earliest_fill_seq / earliest_fi': reply says match=False, code finds False
+ok   forward-plan mismatch reported by the reviewer: packet earliest_fill_ts 2026-06-15T17:30:07Z equals the ready time 2026-06-15T17:30:07Z and is not a bar open; bar 73 closes at 2026-06-15T17:30:00Z, before the ready time, so a bar opening then cannot be the fill bar
+note the reply's own live_or_recorded field says 'recorded'. The reviewer wrote that itself during a live call; the label on this replay comes from this script.
+
+Where each number in the reply comes from
+(small whole numbers can match a source by chance; the checks above are the test)
+  2                      packet arithmetic_to_check[0]
+  1                      packet arithmetic_to_check[0]
+  98.802128              packet inputs_at_decision.ema_fast
+  98.574164              packet inputs_at_decision.prev_ema_fast
+  98.783259              packet inputs_at_decision.ema_slow
+  98.701585              packet inputs_at_decision.prev_ema_slow
+  -0.12742               fast minus slow one bar earlier, recomputed here (rounded)
+  72                     packet recent_closed_bars[23].seq
+  +0.018869              fast minus slow at the signal bar, recomputed here (rounded)
+  73                     packet decision.bar_seq
+  37                     a bar where the recomputed fast average crossed below the slow one
+  63                     packet inputs_at_decision.warmup_bars
+  50                     packet proposed_paper_order.qty
+  5000                   packet portfolio_at_decision.order_notional_setting
+  99.6                   packet inputs_at_decision.close
+  50.2008                order size setting divided by the close, recomputed here (rounded)
+  4980.0                 packet proposed_paper_order.notional_at_signal_close
+  6000.0                 packet forward_plan.risk_limits.max_position_notional
+  100                    packet forward_plan.risk_limits.max_daily_loss
+  2026-06-15T17:30:07Z   time in the packet or bars file
+  2026-06-15T17:30:02Z   time in the packet or bars file
+  5                      packet portfolio_at_decision.latency_seconds
+  74                     packet forward_plan.earliest_fill_seq
+  2026-06-15T17:30:00Z   time in the packet or bars file
+  17:30:00Z              time of day in the packet, bars file or one bar later
+  17:30:07Z              time of day in the packet, bars file or one bar later
+  18:30:00Z              time of day in the packet, bars file or one bar later
+  75                     one past the packet's earliest_fill_seq (the reviewer's inference about a withheld bar)
+  98.22                  packet recent_closed_bars[21].close
+  70                     packet recent_closed_bars[21].seq
+  1.38                   close of bar 73 minus close of bar 70
+  1.405                  percent change in close from bar 70 to bar 73 (rounded)
+  0.44                   open of bar 71 minus close of bar 70 (a session gap)
+  71                     packet recent_closed_bars[22].seq
+  17:30:02Z              time of day in the packet, bars file or one bar later
+  16:30:00Z              time of day in the packet, bars file or one bar later
+  25                     number of recent bars listed in the packet
+  49                     packet recent_closed_bars[0].seq
+  6000                   packet forward_plan.risk_limits.max_position_notional
+  20                     bars file, seq of bar 20
+  1.5                    packet rule.params.stop_pct
+  0.005                  packet forward_plan.costs.commission_per_share
+  1.0                    packet arithmetic_to_check[0]
+  0.0                    packet inputs_at_decision.day_pnl
+  0                      packet inputs_at_decision.day_pnl
+  3                      packet forward_plan.risk_limits.cooldown_bars
+  2026-06-15             date in the bars file
+  14:30                  time of day in the packet, bars file or one bar later
+  20:30                  time of day in the packet, bars file or one bar later
+
+numbers and times in the reply: 49 distinct; 49 traced (28 packet, 9 recomputed, 1 bars file, 11 times); 0 not traced
+RESULT: PASS. 15 of 15 code checks passed. This review is advice only. It cannot approve, change or trigger any order.
