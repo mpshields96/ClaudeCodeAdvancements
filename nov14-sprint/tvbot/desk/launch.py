@@ -14,6 +14,7 @@ operator opens in their own browser; the desk never reads it.
 Limits are TEST VALUES. Matthew sets real sizing and limits himself.
 """
 import argparse
+import fcntl
 import json
 import os
 import re
@@ -287,6 +288,54 @@ def self_check(strategy, keep_dir=None, qty=DEFAULT_QTY):
     return ok, report
 
 
+LOCK_SUFFIX = ".launch.lock"
+
+
+def hold_scenario_lock(state_dir):
+    """Hold a stable sibling lock (<state_dir>.launch.lock) for this launcher's lifetime.
+
+    It sits beside the state dir, so --fresh/--demo rotation cannot move it. A second launcher on the
+    same scenario (with or without --fresh) is refused before it renames or opens anything.
+    Returns the open file (keep it referenced) or None when another launcher holds it.
+    """
+    path = state_dir.rstrip(os.sep) + LOCK_SUFFIX
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    if os.path.islink(path):
+        raise RuntimeError("refusing symlinked lock file: %s" % path)
+    fh = open(path, "a")
+    try:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        fh.close()
+        return None
+    return fh
+
+
+def _take_inner_lock(state_dir):
+    """Try the OrderManager lock inside an existing state dir. Returns (held_by_other, fh)."""
+    path = os.path.join(state_dir, ".orders.lock")
+    if not os.path.exists(path):
+        return False, None
+    if os.path.islink(path):
+        return True, None
+    fh = open(path, "a")
+    try:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        fh.close()
+        return True, None
+    return False, fh
+
+
+def _refuse_in_use(state_dir, why):
+    print("[desk] REFUSED: state dir %s is in use (%s). Nothing was renamed, created or changed. "
+          "Stop that launcher first, or start this one with a unique new --state-dir; old and new "
+          "limits are never mixed." % (state_dir, why))
+    return 2
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Offline paper desk launcher (SIMULATED, paper only)")
     ap.add_argument("--state-dir", default=S.DEFAULT_STATE_DIR,
@@ -315,15 +364,30 @@ def main(argv=None):
     state_dir = os.path.abspath(a.state_dir)
     if a.demo and a.state_dir == S.DEFAULT_STATE_DIR:
         state_dir = os.path.abspath(os.path.join(DESK, "state-demo"))
-    if (a.fresh or a.demo) and os.path.exists(state_dir):
-        aside = "%s.prev-%s" % (state_dir, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
-        os.rename(state_dir, aside)
-        print("[desk] previous state moved to %s" % aside)
+    scenario_lock = hold_scenario_lock(state_dir)   # held until this process exits
+    if scenario_lock is None:
+        return _refuse_in_use(state_dir, "another launcher holds %s" % (state_dir.rstrip(os.sep) + LOCK_SUFFIX))
+    held, inner = _take_inner_lock(state_dir)
+    if held:
+        scenario_lock.close()
+        return _refuse_in_use(state_dir, "its order manager lock is held by another process")
+    try:
+        if (a.fresh or a.demo) and os.path.exists(state_dir):
+            aside = "%s.prev-%s" % (state_dir, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
+            os.rename(state_dir, aside)
+            print("[desk] previous state moved to %s" % aside)
+    finally:
+        if inner is not None:
+            inner.close()
     try:
         runner = S.SessionController(state_dir, strategy=a.strategy, strategy_cfg=strategy_cfg_for(a.qty))
     except S.SessionConfigChanged as exc:
         print("[desk] %s" % exc)
+        scenario_lock.close()
         return 2
+    except RuntimeError as exc:
+        scenario_lock.close()
+        return _refuse_in_use(state_dir, str(exc))
     if a.demo:
         runner.set_schedule(True)
         runner.run_to_end()
@@ -365,6 +429,7 @@ def main(argv=None):
         httpd.shutdown()
         httpd.server_close()
         runner.close()
+        scenario_lock.close()
         print("[desk] stopped; state kept in %s" % state_dir)
     return 0
 

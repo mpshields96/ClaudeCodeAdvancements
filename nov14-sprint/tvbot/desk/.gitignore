@@ -11,3 +11,5 @@ __pycache__/
 self-learning/
 # Licensed third-party data outputs (private, local only)
 out/research_private/
+# Launcher scenario locks (sibling of each state dir)
+*.launch.lock

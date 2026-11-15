@@ -58,6 +58,8 @@ SENT, NOT FILLED"). That is the limit working, not a bug.
 
 ## Session config lock
 
+Scenario lock: each launcher holds `<state-dir>.launch.lock` (a sibling file, so `--fresh`/`--demo` rotation cannot move it) for its whole lifetime, and checks the order manager lock inside the dir before any rename. A second launcher on the same scenario, with or without `--fresh`, `--demo` or a new `--qty`, prints `REFUSED: ... is in use`, renames and writes nothing, and exits 2. Use a unique new `--state-dir` instead.
+
 At creation each state dir records `session_config.json` (strategy, strategy
 settings including `fixed_qty`, limits and fill costs). Reopening the same dir with
 a different `--qty`, `--strategy` or limits is refused: launch.py prints the recorded

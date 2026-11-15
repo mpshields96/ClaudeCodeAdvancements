@@ -242,5 +242,32 @@ class SessionConfigLockTest(_Tmp):
         self.assertFalse(os.path.exists(os.path.join(d, "broker_state.json")))
 
 
+class LauncherScenarioLockTest(_Tmp):
+    """Reviewer 18:17Z: --fresh/--demo must not rotate a scenario another launcher is running."""
+
+    def test_rotation_refused_while_scenario_is_live(self):
+        import glob
+        import launch as L
+        d = os.path.join(self.base, "live")
+        r = S.SessionController(d, strategy="ema", strategy_cfg={"fixed_qty": 1})
+        hold = L.hold_scenario_lock(d)                       # stands in for a running launcher
+        self.assertIsNotNone(hold)
+        self.assertIsNone(L.hold_scenario_lock(d))
+        for args in (["--fresh", "--qty", "4"], ["--qty", "4"], ["--demo"]):
+            with self.subTest(args=args):
+                self.assertEqual(L.main(["--state-dir", d, "--no-browser"] + args), 2)
+        hold.close()
+        # No launcher lock, but a live order manager inside the dir: still refused, nothing renamed.
+        self.assertEqual(L.main(["--state-dir", d, "--no-browser", "--fresh", "--qty", "4"]), 2)
+        self.assertEqual(glob.glob(d + ".prev-*"), [])
+        import json
+        with open(os.path.join(d, "session_config.json")) as fh:
+            self.assertEqual(json.load(fh)["strategy_cfg"], {"fixed_qty": 1})   # limits never mixed
+        r.close()
+        free = L.hold_scenario_lock(d)
+        self.assertIsNotNone(free)
+        free.close()
+
+
 if __name__ == "__main__":
     unittest.main()
