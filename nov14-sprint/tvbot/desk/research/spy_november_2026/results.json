@@ -1,0 +1,154 @@
+{
+  "source": "FirstRate Data free SPY sample",
+  "source_url": "https://firstratedata.com/free-intraday-data",
+  "license_url": "https://firstratedata.com/about/license",
+  "archive_sha256": "eb450195f7fd679c320233a042b51efd09f23a09e2a39bf067fc06d9fea5d0b8",
+  "quality": {
+    "start": "2026-11-02",
+    "end": "2026-11-13",
+    "sessions": 10,
+    "vendor_rows": 9304,
+    "regular_minutes": 3900,
+    "outside_regular": 5404,
+    "bars": 70,
+    "closing_30m_slots": 10,
+    "missing_expected_minutes": 0,
+    "sha256": "eb450195f7fd679c320233a042b51efd09f23a09e2a39bf067fc06d9fea5d0b8",
+    "holdout_start": "2026-11-10",
+    "holdout_end": "2026-11-13"
+  },
+  "coarser_bar_checks": {
+    "5": {
+      "joined": 780,
+      "missing": 0,
+      "unequal_by_field": {}
+    },
+    "30": {
+      "joined": 130,
+      "missing": 0,
+      "unequal_by_field": {}
+    }
+  },
+  "holdout": "Final four sessions, November 10\u201313, 2026; initial six supplied history. No fitting.",
+  "method": "Fixed shares per entry signal; next same-session slot, one-minute delayed entry, exit at its close.",
+  "cost": "1 bps half spread + 2 bps slippage + $1 commission EACH side; doubled includes all three terms.",
+  "fee_note": "Stress assumption for comparability; not a verified account fee.",
+  "one_share": {
+    "ema": {
+      "slots": 24,
+      "entered": 0,
+      "abstained": 24,
+      "wins": 0,
+      "gross": 0,
+      "modeled_cost": 0,
+      "net": 0,
+      "double_cost_net": 0,
+      "max_drawdown": 0.0,
+      "cumulative_by_day": {
+        "2026-11-10": 0.0,
+        "2026-11-11": 0.0,
+        "2026-11-12": 0.0,
+        "2026-11-13": 0.0
+      },
+      "count_by_reason": {
+        "WARMUP": 15,
+        "NEAR_CLOSE": 4,
+        "NO_SIGNAL": 5
+      }
+    },
+    "cash": {
+      "slots": 24,
+      "entered": 0,
+      "abstained": 24,
+      "wins": 0,
+      "gross": 0,
+      "modeled_cost": 0,
+      "net": 0,
+      "double_cost_net": 0,
+      "max_drawdown": 0.0,
+      "cumulative_by_day": {
+        "2026-11-10": 0.0,
+        "2026-11-11": 0.0,
+        "2026-11-12": 0.0,
+        "2026-11-13": 0.0
+      },
+      "count_by_reason": {
+        "CASH_ALWAYS_PASSES": 24
+      }
+    },
+    "challenger": {
+      "slots": 24,
+      "entered": 0,
+      "abstained": 24,
+      "wins": 0,
+      "gross": 0,
+      "modeled_cost": 0,
+      "net": 0,
+      "double_cost_net": 0,
+      "max_drawdown": 0.0,
+      "cumulative_by_day": {
+        "2026-11-10": 0.0,
+        "2026-11-11": 0.0,
+        "2026-11-12": 0.0,
+        "2026-11-13": 0.0
+      },
+      "count_by_reason": {
+        "NO_TREND": 6,
+        "COST_HURDLE": 18
+      }
+    },
+    "unconditional_long": {
+      "slots": 24,
+      "entered": 24,
+      "abstained": 0,
+      "wins": 2,
+      "gross": 9.8769,
+      "modeled_cost": 58.8711,
+      "net": -48.9942,
+      "double_cost_net": -107.8654,
+      "max_drawdown": 48.9942,
+      "cumulative_by_day": {
+        "2026-11-10": -14.7081,
+        "2026-11-11": -26.488,
+        "2026-11-12": -39.8615,
+        "2026-11-13": -48.9942
+      },
+      "count_by_reason": {
+        "ALL_WINDOWS": 24
+      }
+    }
+  },
+  "two_share_shadow_retrospective": {
+    "slots": 24,
+    "entered": 3,
+    "abstained": 21,
+    "wins": 0,
+    "gross": -1.7902,
+    "modeled_cost": 8.7396,
+    "net": -10.5298,
+    "double_cost_net": -19.2695,
+    "max_drawdown": 10.5298,
+    "cumulative_by_day": {
+      "2026-11-10": 0.0,
+      "2026-11-11": -10.5298,
+      "2026-11-12": -10.5298,
+      "2026-11-13": -10.5298
+    },
+    "count_by_reason": {
+      "NO_TREND": 6,
+      "COST_HURDLE": 15,
+      "TREND_LONG": 3
+    }
+  },
+  "pre_evaluation_shadow_sha256": "cda5dd821923b134360b36569e206db167bdf4e29723519e39f39d24d5df5556",
+  "evaluated_code_hashes": {
+    "ema_engine": "b1dd8924c21df059c4b4a3a692ae2123594efe3af31b1244bb5f9320b48033d4",
+    "registry": "d3daae4dc45c723c86c053f59c3dcf480e5e6331d257914f53f5a494cf0f80ec",
+    "challenger": "cda5dd821923b134360b36569e206db167bdf4e29723519e39f39d24d5df5556"
+  },
+  "limitations": [
+    "Historical vendor trade bars, single-venue IEX quotes and paper fills are different sources.",
+    "One-horizon signal study. Neither forward profitability nor broker execution was measured.",
+    "The secondary two-share comparison was motivated by a sizing audit; it is retrospective."
+  ]
+}

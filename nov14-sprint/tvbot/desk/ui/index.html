@@ -24,6 +24,18 @@ a{color:#7fb6ff}
 .banner{padding:8px 14px;font-weight:700;letter-spacing:.02em}
 .banner.disc{background:repeating-linear-gradient(45deg,#5a0f12,#5a0f12 12px,#3b0a0c 12px,#3b0a0c 24px);color:#fff;border-bottom:2px solid var(--bad);font-size:15px}
 .banner.stale{background:#2e240c;color:#ffd98a;border-bottom:1px solid #6d5420;font-weight:600}
+.banner.bb{background:#10233a;color:#d6e8ff;border-bottom:1px solid #2a5d93;font-weight:600;display:flex;flex-wrap:wrap;gap:6px 16px}
+.banner.bb.draft{background:#33280f;color:#ffe2a8;border-color:#6d5420}
+.banner.bb.paper{background:#1d1438;color:#e6dcff;border-bottom:2px solid #8a6cff}
+.banner.bb b{font-weight:800}
+.flag{display:inline-block;font-size:11px;font-weight:800;padding:0 6px;border-radius:3px;margin-left:4px;letter-spacing:.03em}
+.flag.part{background:#33280f;color:#ffe2a8;border:1px solid #6d5420}
+.flag.unc{background:#3a1416;color:#ffd7d7;border:1px solid #7a2a2e}
+.flag.alarm{background:#5a0f12;color:#fff;border:1px solid var(--bad)}
+.flag.ev{background:#10233a;color:#d6e8ff;border:1px solid #2a5d93;font-weight:600}
+.lt{width:100%;border-collapse:collapse;font-size:12px}
+.lt td,.lt th{border-bottom:1px solid var(--line);padding:3px 4px;text-align:left;vertical-align:top}
+.lt input{width:110px}
 header{background:var(--panel);border-bottom:1px solid var(--line);padding:6px 12px;display:flex;flex-direction:column;gap:6px}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .spacer{flex:1}
@@ -126,10 +138,11 @@ code{font-size:11.5px;color:#b8c7d6}
 <body>
 <div id="disc" class="banner disc" hidden></div>
 <div id="stale" class="banner stale" hidden></div>
+<div id="brokerBanner" class="banner bb" hidden></div>
 <header>
   <div class="row">
-    <span class="big sim">SIMULATED</span>
-    <span class="big mock">MOCK FILLS</span>
+    <span class="big sim" id="badgeSim">SIMULATED</span>
+    <span class="big mock" id="badgeMock">MOCK FILLS</span>
     <span class="mode" id="mode">REPLAY (OFFLINE, SIMULATED)</span>
     <span class="tag syn" id="datalabel">SYNTHETIC BARS</span>
     <span class="tag" id="symstrat">-</span>
@@ -159,7 +172,9 @@ code{font-size:11.5px;color:#b8c7d6}
       <button data-view="chart" class="on">Chart</button>
       <button data-view="decision">Decision</button>
       <button data-view="review">Session review</button>
+      <button data-view="setup" title="Your paper limits: draft, check effects, approve. Agents never fill these.">Setup (limits)</button>
     </div>
+    <a id="labLink" href="/lab" target="_blank" rel="noopener" hidden title="Opens the decision lab in a new tab">Decision lab &#8599;</a>
     <span class="risk" id="risk">Max loss per trade $10.00 (TEST VALUE) &middot; Notional cap $2,000 (TEST VALUE) &middot; Daily loss $30.00 (TEST VALUE)</span>
     <span class="spacer"></span>
     <span class="tvbar">
@@ -223,10 +238,16 @@ code{font-size:11.5px;color:#b8c7d6}
           <button id="btnPause2" class="warnb">Pause</button>
           <button id="btnStop2" class="danger">Stop &amp; Close</button>
         </div>
+        <div class="row" id="alpacaRow" style="margin-top:8px" hidden>
+          <button id="btnEnable" class="pri" title="Turns the Alpaca paper adapter on after you confirm. It always starts disabled.">Enable</button>
+          <button id="btnDisable" class="warnb" title="Turns the adapter off. Asks for a reason.">Disable</button>
+          <button id="btnReconcile" title="Asks the broker for orders and position now and compares them with the desk. Works while disabled.">Reconcile now</button>
+        </div>
+        <div class="small" id="alpacaInfo" style="margin-top:6px" hidden></div>
         <div class="small" id="livePath" style="margin-top:8px"></div>
         <div class="small muted" id="undecided" style="margin-top:4px"></div>
       </div>
-      <div class="card">
+      <div class="card" id="schedCard">
         <h3>Offline schedule (simulated clock)</h3>
         <label><input type="checkbox" id="schedTgl"> Offline schedule (simulated clock)</label>
         <div class="kv small" id="schedInfo" style="margin-top:6px"></div>
@@ -244,6 +265,10 @@ code{font-size:11.5px;color:#b8c7d6}
 
     <div id="viewReview" hidden>
       <div id="reviewBody" class="hint">Loading review.</div>
+    </div>
+
+    <div id="viewSetup" hidden>
+      <div id="setupBody" class="hint">Loading limits worksheet.</div>
     </div>
   </aside>
 </main>
@@ -275,6 +300,38 @@ code{font-size:11.5px;color:#b8c7d6}
     <button id="clrYes" class="warnb">Yes, clear the Stop</button>
   </div>
 </dialog>
+<dialog id="dlgEnable">
+  <h3 style="margin-top:0;color:#d6e8ff">Enable the Alpaca adapter?</h3>
+  <p id="enMode">Mode: -</p>
+  <p>The desk may then send orders for SPY within your loaded limits, only when you press <b>Check for new closed bar</b> or a control. Nothing runs in the background. <b>Disable</b> or <b>Stop</b> turns it off again at any time.</p>
+  <p class="small muted" id="enLimits"></p>
+  <div class="row" style="justify-content:flex-end">
+    <button id="enNo">Cancel</button>
+    <button id="enYes" class="pri">Yes, enable</button>
+  </div>
+</dialog>
+<dialog id="dlgDisable">
+  <h3 style="margin-top:0;color:#ffe2a8">Disable the Alpaca adapter?</h3>
+  <p>New orders stop. Stop, reconcile and protective reduction still work while disabled.</p>
+  <label>Reason (required) <input id="disReason" maxlength="200" style="width:100%"></label>
+  <div class="row" style="justify-content:flex-end;margin-top:8px">
+    <button id="disNo">Cancel</button>
+    <button id="disYes" class="warnb">Disable</button>
+  </div>
+</dialog>
+<dialog id="dlgApprove">
+  <h3 style="margin-top:0;color:#e6dcff">Approve your paper limits?</h3>
+  <p class="small">Changes from your last approved limits (old &rarr; new):</p>
+  <div id="apDiff" class="small"></div>
+  <p class="small">Type <b id="apPhraseShow">APPROVE PAPER LIMITS</b> exactly, and give a short reason.</p>
+  <label>Phrase <input id="apPhrase" autocomplete="off" spellcheck="false" style="width:100%"></label>
+  <label>Reason <input id="apReason" maxlength="200" style="width:100%"></label>
+  <p class="small muted">A running session keeps the limits it loaded at start. Restart the desk to use newly approved limits.</p>
+  <div class="row" style="justify-content:flex-end;margin-top:8px">
+    <button id="apNo">Cancel</button>
+    <button id="apYes" class="pri">Approve</button>
+  </div>
+</dialog>
 <div id="toast"></div>
 
 <script>
@@ -286,7 +343,9 @@ const S = {session:null, bars:[], manifest:null, decisions:[], ledger:[], audit:
 const V = {start:0, count:120, follow:true, hover:-1, drag:null, markers:[], geo:null};
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function num(v){ if (v === null || v === undefined || v === '' || typeof v === 'boolean') return null; const n = Number(v); return isFinite(n) ? n : null; }
+function num(v){ if (v && typeof v === 'object' && 'price' in v) v = v.price; if (v === null || v === undefined || v === '' || typeof v === 'boolean' || typeof v === 'object') return null; const n = Number(v); return isFinite(n) ? n : null; }
+function lineText(v){ return (v && typeof v === 'object' && v.text != null) ? String(v.text) : ''; }
+function costNum(v){ if (v && typeof v === 'object' && 'usd' in v) v = v.usd; return num(v); }
 function fmt(v, d){ const n = num(v); if (n === null) return '-'; return n.toFixed(d == null ? 2 : d); }
 function money(v){ const n = num(v); if (n === null) return '<span class="muted">-</span>';
   const c = n > 0 ? 'pos' : n < 0 ? 'neg' : 'zero'; return '<span class="'+c+'">'+(n>0?'+':'')+n.toFixed(2)+'</span>'; }
@@ -301,7 +360,7 @@ async function getJ(url){ const r = await fetch(url, {cache:'no-store'}); if (!r
 function reviewUrl(extra){ const q = []; if (S.week) q.push('week=' + encodeURIComponent(S.week)); if (extra) q.push(extra); return '/api/review' + (q.length ? '?' + q.join('&') : ''); }
 // ---------------- data loading ----------------
 async function loadAll(){
-  if (S.routes === null) { try { const h = await getJ('/api/health'); S.routes = Array.isArray(h.routes) ? new Set(h.routes) : undefined; } catch (e) { S.routes = undefined; } }
+  if (S.routes === null) { try { const h = await getJ('/api/health'); S.health = h; S.routes = Array.isArray(h.routes) ? new Set(h.routes) : undefined; } catch (e) { S.routes = undefined; S.health = {}; } }
   const [b, d, l, a, rv] = await Promise.all([getJ('/api/bars'), getJ('/api/decisions'), getJ('/api/ledger'), getJ('/api/audit'), getJ(reviewUrl())]);
   const oldN = S.bars.length;
   S.bars = (b.items || []).map(x => Object.assign({}, x, {t: Date.parse(x.ts_close), to: Date.parse(x.ts_open)}));
@@ -370,7 +429,7 @@ function draw(){
   const cs = getComputedStyle(document.documentElement); const col = n => cs.getPropertyValue(n).trim();
   const bars = S.bars, n = bars.length; V.markers = [];
   g.font = '11px -apple-system,system-ui,sans-serif';
-  if (!n) { g.fillStyle = col('--muted'); g.font = '14px system-ui'; g.fillText('No replay bars yet: state_dir/bars.jsonl is missing or empty.', 20, 40); return; }
+  if (!n) { g.fillStyle = col('--muted'); g.font = '14px system-ui'; g.fillText(isAlpaca(S.session || {}) ? 'No bars yet: press Check for new closed bar (state_dir/alpaca_bars.jsonl is empty).' : 'No replay bars yet: state_dir/bars.jsonl is missing or empty.', 20, 40); return; }
   clampView();
   const padL = 6, padR = 74, padT = 8, padB = 22;
   const volH = Math.max(28, Math.round((H - padT - padB) * 0.15));
@@ -479,7 +538,7 @@ function draw(){
     const t = Date.parse(f.ts); if (!isFinite(t)) continue; const i = idxOpenAtOrBefore(t);
     if (i < i0 || i > i1 || i > cut) continue; const p = num(f.price); if (p === null) continue;
     const x = X(i), y = Y(p); g.strokeStyle = '#ffb347'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - Math.max(5, bw * .6), y); g.lineTo(x + Math.max(5, bw * .6), y); g.stroke(); g.lineWidth = 1;
-    if (bw > 16) { g.fillStyle = '#ffb347'; g.textAlign = 'left'; g.font = '700 9px system-ui'; g.fillText('MOCK FILL', x + Math.max(6, bw * .6) + 2, y + 3); g.font = '11px -apple-system,system-ui,sans-serif'; }
+    if (bw > 16) { g.fillStyle = '#ffb347'; g.textAlign = 'left'; g.font = '700 9px system-ui'; g.fillText(f.mock === false ? 'PAPER FILL' : 'MOCK FILL', x + Math.max(6, bw * .6) + 2, y + 3); g.font = '11px -apple-system,system-ui,sans-serif'; }
   }
 
   // markers
@@ -549,14 +608,74 @@ function setView(v){
   if (S.view !== v) { const a = document.querySelector('aside'); if (a) a.scrollTop = 0; }
   S.view = v;
   for (const b of document.querySelectorAll('.tabs button')) b.classList.toggle('on', b.dataset.view === v);
-  $('#viewChart').hidden = v !== 'chart'; $('#viewDecision').hidden = v !== 'decision'; $('#viewReview').hidden = v !== 'review';
+  $('#viewChart').hidden = v !== 'chart'; $('#viewDecision').hidden = v !== 'decision'; $('#viewReview').hidden = v !== 'review'; $('#viewSetup').hidden = v !== 'setup';
+  if (v === 'setup') loadLimits();  // fetched on entering the tab and after each save; no timer
   renderAll();
+}
+// ---------------- Alpaca paper mode (fields come from session.json; absent = offline desk, unchanged) ----------------
+function isAlpaca(s){ return /^alpaca/.test(String((s || {}).broker_mode || '')); }
+function isPaper(s){ return String((s || {}).broker_mode || '') === 'alpaca-paper'; }
+function adapterOf(s){ const a = (s && typeof s.adapter === 'object' && s.adapter) ? s.adapter : ((s && s._adapter_file) || null); return a || {enabled: false, disabled_reason: 'no adapter state written yet (starts disabled)'}; }
+function limitsSrc(s){ const ls = (s && s.limits_source) || null; if (!ls) return {label: '-', draft: false};
+  const label = String(ls.label || ls.provenance || '-'); return {label: label, draft: /DRAFT/i.test(label) || ls.provenance === 'draft', prov: ls.provenance, hash: ls.hash, ts: ls.approved_utc || ls.saved_utc, error: ls.error}; }
+function recoveryOf(s){ return (s && (s.alpaca_recovery || s.recovery)) || null; }
+function renderBrokerBanner(s){
+  const bb = $('#brokerBanner');
+  if (!isAlpaca(s)) { bb.hidden = true; return; }
+  const a = adapterOf(s); const ls = limitsSrc(s); const rec = recoveryOf(s) || {};
+  bb.hidden = false;
+  bb.className = 'banner bb' + (ls.draft ? ' draft' : isPaper(s) ? ' paper' : '');
+  const unc = Array.isArray(rec.uncertain_client_ids) ? rec.uncertain_client_ids : [];
+  setH(bb, '<span>Mode: <b>' + esc(s.broker_mode) + '</b></span>' +
+    '<span>Evidence: <b>' + esc(s.evidence_label || '-') + '</b></span>' +
+    '<span>Data: <b>' + esc(s.data_label || '-') + '</b></span>' +
+    '<span>Adapter: <b class="' + (a.enabled ? 'pos' : 'neg') + '">' + (a.enabled ? 'ENABLED' : 'DISABLED') + '</b>' +
+      (!a.enabled && a.disabled_reason ? ' (' + esc(a.disabled_reason) + ')' : '') + (a.changed_utc ? ' <span class="small">since ' + esc(tsFull(a.changed_utc)) + '</span>' : '') + '</span>' +
+    '<span>Limits: <b>' + esc(ls.label) + '</b>' + (ls.error ? ' <span class="neg">' + esc(ls.error) + '</span>' : '') + '</span>' +
+    (unc.length ? '<span class="flag unc">UNCERTAIN ORDERS: ' + unc.length + '</span>' : '') +
+    (rec.reconcile_blocking ? '<span class="flag alarm">RECONCILE BLOCKING ENTRIES</span>' : '') +
+    (rec.ambiguous ? '<span class="flag alarm">RECOVERY AMBIGUOUS: ' + esc(rec.reason || 'see panel') + ' (Enable refused until Reconcile clears it)</span>' : '') +
+    '<span class="small">Nothing runs in the background: bars advance only when you press Check for new closed bar.</span>');
+}
+function renderAlpacaPanel(s){
+  const row = $('#alpacaRow'); const info = $('#alpacaInfo');
+  if (!isAlpaca(s)) { row.hidden = true; info.hidden = true; return; }
+  const a = adapterOf(s); const off = S.conn === false;
+  row.hidden = false; info.hidden = false;
+  const ph = phaseOf(s); const closed = ph === 'CLOSED' || ph === 'NONE';
+  $('#btnEnable').disabled = off || closed || !!a.enabled || !routeOk('/api/alpaca/enable');
+  $('#btnDisable').disabled = off || !a.enabled || !routeOk('/api/alpaca/disable');
+  $('#btnReconcile').disabled = off || !routeOk('/api/alpaca/reconcile');
+  for (const [id, r] of [['#btnEnable', '/api/alpaca/enable'], ['#btnDisable', '/api/alpaca/disable'], ['#btnReconcile', '/api/alpaca/reconcile']]) {
+    const b = $(id); const na = !routeOk(r); b.classList.toggle('na', na);
+    if (na && !b.dataset.t0) { b.dataset.t0 = b.title; b.title = b.title + ' (not available: this desk has no ' + r + ' route yet)'; } }
+  const rec = recoveryOf(s); const al = Array.isArray(s.alarms) ? s.alarms : [];
+  let h = '';
+  if (rec) {
+    const unc = Array.isArray(rec.uncertain_client_ids) ? rec.uncertain_client_ids : [];
+    if (rec.ambiguous) h += '<div><span class="flag alarm">RECOVERY AMBIGUOUS</span> ' + esc(rec.reason || '') + '. Enable is refused until Reconcile now clears it.</div>';
+    h += '<div><b>Recovery:</b> ' + esc(rec.evidence || s.evidence_label || '') +
+      (rec.block_reason ? ' &middot; <span class="neg">entries blocked: ' + esc(rec.block_reason) + '</span>' : ' &middot; no entry block') + '</div>';
+    if (unc.length) h += '<div><span class="flag unc">UNCERTAIN</span> orders the desk could not confirm: ' + unc.map(esc).join(', ') + '. Reconcile now asks the broker for them; no new entry until they resolve.</div>';
+    if (rec.listing_incomplete) h += '<div><span class="flag alarm">LISTING INCOMPLETE</span> the broker\'s order list came back partial; the desk treats unknown orders as possibly working.</div>';
+    if (rec.last_poll_error) h += '<div><span class="flag unc">LAST POLL ERROR</span> ' + esc(rec.last_poll_error) + '</div>';
+    const ig = Array.isArray(rec.integrity) ? rec.integrity : [];
+    if (ig.length) h += '<div><b>Integrity faults (adapter disabled on each):</b><br>' + ig.slice(-5).map(x => '<span class="flag alarm">' + esc(x.code || x.kind || 'FAULT') + '</span> ' + esc(x.detail || x.reason || (typeof x === 'object' ? JSON.stringify(x) : x))).join('<br>') + '</div>';
+  }
+  const lc = s.last_check;
+  if (lc && typeof lc === 'object') h += '<div><b>Last check for bars:</b> ' + esc(tsFull(lc.utc)) + ' &middot; ' + (lc.ok ? esc(lc.bars) + ' new closed bar(s)' + (lc.source ? ' from ' + esc(lc.source) : '') + ((lc.empty_slots || []).length ? ' &middot; ' + lc.empty_slots.length + ' empty minute(s)' : '') + ((lc.partial_slots || []).length ? ' &middot; ' + lc.partial_slots.length + ' partial minute(s)' : '') : '<span class="neg">failed: ' + esc(lc.error || '') + (lc.detail ? ' (' + esc(lc.detail) + ')' : '') + '</span>') + '</div>';
+  else h += '<div class="muted">No check for bars yet. Press Check for new closed bar when you want one.</div>';
+  if (s.warmup && s.warmup.text) h += '<div><b>Warm-up:</b> ' + esc(s.warmup.text) + '</div>';
+  if (al.length) h += '<div><b>Alarms:</b><br>' + al.slice(-8).map(x => '<span class="flag alarm">' + esc((x && (x.code || x.kind)) || 'ALARM') + '</span> ' + esc((x && (x.detail || x.reason || x.message)) || (typeof x === 'object' ? JSON.stringify(x) : x))).join('<br>') + '</div>';
+  if (!h) h = '<span class="muted">No reconcile alarms, uncertain orders or integrity faults reported.</span>';
+  setH(info, h);
 }
 for (const b of document.querySelectorAll('.tabs button')) b.onclick = () => setView(b.dataset.view);
 
 function renderHeader(){
   const s = S.session || {}; const m = s._meta || {};
-  $('#mode').textContent = s.mode || (m.missing ? 'NO SESSION YET (runner has not written session.json)' : 'REPLAY (OFFLINE, SIMULATED)');
+  $('#mode').textContent = isAlpaca(s) ? (isPaper(s) ? 'ALPACA PAPER (manual checks; simulated account, no real money)' : 'ALPACA MOCK (manual checks; in-process fake, synthetic ids and bars)')
+    : (s.mode || (m.missing ? 'NO SESSION YET (runner has not written session.json)' : 'REPLAY (OFFLINE, SIMULATED)'));
   $('#datalabel').textContent = s.data_label || (S.manifest || {}).label || 'SYNTHETIC BARS';
   $('#symstrat').textContent = (s.symbol || '-') + ' · ' + (s.strategy || '-');
   if (!S.tvPicked && TV_REFS.indexOf(s.tradingview_symbol) >= 0 && S.tvRef !== s.tradingview_symbol) { S.tvRef = s.tradingview_symbol; $('#tvRef').value = S.tvRef; }
@@ -575,13 +694,26 @@ function renderHeader(){
   // badges: the session's own badge strings first, derived only as a fallback
   const c = s.controls || {}; const ph = phaseOf(s);
   const bc = $('#brokerChip');
-  bc.className = 'chip ok'; bc.textContent = (s.external_broker_badge || 'EXTERNAL BROKER: NONE (offline in-process fake broker)') + (S.conn === false ? ' (last known)' : '');
+  const alp = isAlpaca(s);
+  bc.className = 'chip ' + (alp ? (adapterOf(s).enabled ? 'warn' : 'unk') : 'ok');
+  bc.textContent = (alp ? 'BROKER: ' + String(s.broker_mode).toUpperCase() + ' (' + (s.evidence_label || 'evidence not labeled') + ')' : (s.external_broker_badge || 'EXTERNAL BROKER: NONE (offline in-process fake broker)')) + (S.conn === false ? ' (last known)' : '');
+  // the SIMULATED / MOCK FILLS badges stay for offline and mock; real paper shows its own evidence label
+  const bs = $('#badgeSim'), bm = $('#badgeMock');
+  if (isPaper(s)) { bs.textContent = 'PAPER (no real money)'; bm.textContent = String(s.evidence_label || 'ALPACA PAPER'); }
+  else { bs.textContent = 'SIMULATED'; bm.textContent = alp ? 'MOCK LOCAL FILLS' : 'MOCK FILLS'; }
+  renderBrokerBanner(s);
   const ac = $('#armChip');
   ac.textContent = (s.badge || ('SIMULATION: ' + (ph === 'STOPPED' ? 'STOPPED' : ph === 'PAUSED' ? 'PAUSED' : ph === 'ARMED' ? 'ARMED' : 'DISARMED'))) + (S.conn === false ? ' (last known)' : '');
   ac.className = 'chip ' + (ph === 'STOPPED' ? 'bad' : ph === 'PAUSED' ? 'warn' : ph === 'ARMED' ? 'ok' : 'unk');
   // risk line (TEST VALUES; Matthew sets real size and limits)
   const L = s.limits || {}; const usd = (v, d) => { const n = num(v); return n === null ? '-' : '$' + n.toLocaleString('en-US', {minimumFractionDigits: d, maximumFractionDigits: d}); };
+  if (alp) {  // alpaca modes: show only what the session loaded, with its provenance label; never a test fallback
+    const lab = esc(limitsSrc(s).label);
+    const sh = num(L.fixed_shares) !== null ? L.fixed_shares : (s.sizing || {}).fixed_qty;
+    setH($('#risk'), 'Shares ' + (num(sh) === null ? '-' : esc(sh)) + ' &middot; Max loss per trade ' + usd(L.max_loss_per_trade, 2) + ' &middot; Notional cap ' + usd(L.per_trade_notional, 0) + ' &middot; Daily loss ' + usd(L.daily_loss, 2) + ' &middot; Gross ' + usd(L.gross_exposure, 0) + ' (' + lab + ')');
+  } else
   setH($('#risk'), 'Max loss per trade ' + usd(L.max_loss_per_trade != null ? L.max_loss_per_trade : 10, 2) + ' (TEST VALUE) &middot; Notional cap ' + usd(L.per_trade_notional != null ? L.per_trade_notional : 2000, 0) + ' (TEST VALUE) &middot; Daily loss ' + usd(L.daily_loss != null ? L.daily_loss : 30, 2) + ' (TEST VALUE)');
+  const ll = $('#labLink'); ll.hidden = !((S.health || {}).lab_page);
   // flow bar: buttons enable by phase
   const expired = isFinite(ex) && ex < clockNow(s);
   renderFlow(s, ph, expired);
@@ -619,6 +751,17 @@ function renderFlow(s, ph, expired){
     b.classList.toggle('na', na); if (na && !b.dataset.t0) { b.dataset.t0 = b.title; b.title = b.title + ' (not available: this server has no ' + FLOW_ROUTE[f] + ' route)'; } }
   $('#btnPause2').disabled = off || !en.pause || !routeOk('/api/pause'); $('#btnStop2').disabled = off || !en.stop || !routeOk('/api/stop_close');
   $('#schedTgl').disabled = off || !routeOk('/api/schedule');
+  // alpaca modes: wall clock. Advance becomes "check for new closed bar"; no step-10, run-to-end, play or schedule.
+  const alp = isAlpaca(s);
+  for (const f of ['step10', 'runend', 'play', 'stopplay']) { const b = document.querySelector('#flow button[data-f="' + f + '"]'); if (b) b.hidden = alp; }
+  const s1 = document.querySelector('#flow button[data-f="step1"]');
+  if (s1) { if (s1.dataset.txt0 === undefined) { s1.dataset.txt0 = s1.textContent; s1.dataset.tt0 = s1.dataset.t0 || s1.title; }
+    if (alp) { s1.textContent = 'Check for new closed bar'; s1.disabled = off || ph === 'NONE' || ph === 'CLOSED' || !routeOk('/api/advance');
+      s1.title = 'Asks the feed once for the latest closed SPY bar and acts on it. Nothing happens between your clicks.'; }
+    else { s1.textContent = s1.dataset.txt0; if (!s1.classList.contains('na')) s1.title = s1.dataset.tt0; } }
+  const sc = $('#schedCard'); if (sc) sc.hidden = alp;
+  // Stop works on demand in alpaca modes, even while the adapter is disabled
+  if (alp) { const st = $('#btnStop'); st.disabled = S.conn === false || ph === 'NONE' || ph === 'CLOSED' || !routeOk('/api/stop_close'); $('#btnStop2').disabled = st.disabled; }
 }
 function openPre(){
   const s = S.session || {}; const pf = Array.isArray(s.preflight) ? s.preflight : []; const ok = preflightOk(s);
@@ -630,13 +773,16 @@ function openPre(){
 
 function renderChartView(){
   const s = S.session || {}; const p = s.pnl || {}; const ex = s.exposure || {}; const c = s.controls || {};
+  $('#srcTag').textContent = !isAlpaca(s) ? 'source: desk replay bars (synthetic), not TradingView, not a real market'
+    : isPaper(s) ? 'source: Alpaca free IEX bars (alpaca_bars.jsonl), paper account; not TradingView'
+    : 'source: mock Alpaca bars (synthetic, alpaca_bars.jsonl), not TradingView, not a real market';
   $('#pRe').innerHTML = money(p.realized); $('#pUn').innerHTML = money(p.unrealized);
   $('#pFe').innerHTML = p.fees == null ? '-' : '<span class="neg">' + fmt(-Math.abs(num(p.fees) || 0)) + '</span>'; $('#pAc').innerHTML = money(p.after_cost);
   const q = num(ex.position_qty);
   $('#expo').innerHTML = '<b>Position</b><span>' + (q === null ? '-' : (q === 0 ? 'FLAT' : (q > 0 ? 'LONG ' : 'SHORT ') + Math.abs(q))) + (q ? ' @ ' + fmt(ex.avg_price, 4) : '') + '</span>' +
     '<b>Gross incl. working</b><span>' + fmt(ex.gross_including_working) + '</span>' +
-    '<b class="wide">Limits <span class="muted small">(TEST VALUES)</span></b><span class="wide small" title="' + esc(limitsText(s.limits)) + '">' + esc(limitsCompact(s.limits)) + '</span>' + execRows(s);
-  $('#expConf').textContent = S.conn === false ? 'last known, unconfirmed' : 'per in-process fake broker (simulated)';
+    '<b class="wide">Limits <span class="muted small">(' + esc(isAlpaca(s) ? limitsSrc(s).label : 'TEST VALUES') + ')</span></b><span class="wide small" title="' + esc(limitsText(s.limits)) + '">' + esc(limitsCompact(s.limits)) + '</span>' + execRows(s);
+  $('#expConf').textContent = S.conn === false ? 'last known, unconfirmed' : isAlpaca(s) ? 'per ' + (s.evidence_label || s.broker_mode) + ' (as of the last reconcile)' : 'per in-process fake broker (simulated)';
   const prot = s.protective_orders || [];
   $('#protect').innerHTML = '<b>Protective orders:</b> ' + (prot.length ? prot.map(o => orderText(o)).join('<br>') : (q ? '<span class="neg">NONE while a position is open</span>' : 'none (flat)'));
   const wk = (ex.working_orders || []).filter(o => !o.protective);
@@ -664,7 +810,11 @@ function renderChartView(){
     '<b>Next open</b><span>' + esc(tsFull(sc.next_open_utc)) + '</span><b>Next close</b><span>' + esc(tsFull(sc.next_close_utc)) + '</span>' +
     (sc.calendar ? '<b>Calendar</b><span>' + esc(typeof sc.calendar === 'object' ? JSON.stringify(sc.calendar) : sc.calendar) + '</span>' : '') +
     (sc.note ? '<b>Note</b><span>' + esc(sc.note) + '</span>' : ''));
-  $('#livePath').innerHTML = '<b>Live path: </b><span class="neg">DISABLED</span> ' + esc(lp.reason || 'No venue selected, no personal limits, no explicit enable.');
+  if (isAlpaca(s)) { const a = adapterOf(s);
+    $('#livePath').innerHTML = '<b>Alpaca adapter (' + esc(s.broker_mode) + '): </b>' + (a.enabled ? '<span class="pos">ENABLED</span>' : '<span class="neg">DISABLED</span>' + (a.disabled_reason ? ' ' + esc(a.disabled_reason) : '')) +
+      ' <span class="muted">&middot; real-money live trading: not built, not possible from this desk.</span>'; }
+  else $('#livePath').innerHTML = '<b>Live path: </b><span class="neg">DISABLED</span> ' + esc(lp.reason || 'No venue selected, no personal limits, no explicit enable.');
+  renderAlpacaPanel(s);
   const und = s.undecided || [];
   $('#undecided').textContent = und.length ? 'Undecided (yours to set): ' + und.join('; ') : '';
   // current decision
@@ -683,7 +833,19 @@ function limitsCompact(l){ if (!l) return '-'; const parts = [];
   for (const k of Object.keys(l)) { const n = num(l[k]); if (k !== 'label' && n !== null) parts.push(k.replace(/_/g, ' ').replace(/^max /, '') + ' $' + n.toLocaleString('en-US')); }
   return parts.join(' · ') || '-'; }
 function limitsText(l){ if (!l) return '-'; const parts = []; for (const k of Object.keys(l)) if (k !== 'label') parts.push(k.replace(/_/g, ' ') + ' ' + l[k]); return parts.join(', ') + (l.label ? ' (' + l.label + ')' : ''); }
-function orderText(o){ return esc([o.side, o.qty, o.type, o.stop != null ? 'stop ' + o.stop : '', o.limit != null ? 'limit ' + o.limit : '', o.status || '', o.order_id || o.client_id || ''].filter(Boolean).join(' ')) + (o.simulated ? ' <span class="muted">(sim)</span>' : ''); }
+function orderFlags(o){
+  const st = String(o.status || '').toLowerCase(), as = String(o.alpaca_status || '').toLowerCase(), bk = String(o.state || '').toLowerCase();
+  const fq = num(o.filled_qty), q = num(o.qty); let h = '';
+  if ((fq !== null && q !== null && fq > 0 && fq < q) || st === 'partially_filled' || as === 'partially_filled') h += '<span class="flag part">PARTIAL FILL ' + (fq === null ? '?' : esc(fq)) + ' of ' + (q === null ? '?' : esc(q)) + '</span>';
+  if (bk === 'uncertain' || bk === 'sending' || st === 'uncertain') h += '<span class="flag unc">UNCERTAIN: not confirmed by the broker</span>';
+  if (bk === 'not_found') h += '<span class="flag alarm">NOT FOUND at the broker</span>';
+  if (o.reduce_only) h += '<span class="flag ev">reduce-only</span>';
+  if (o.alpaca_status && as !== st) h += '<span class="flag ev">alpaca: ' + esc(o.alpaca_status) + '</span>';
+  if (o.evidence) h += '<span class="flag ev">' + esc(o.evidence) + '</span>';
+  return h;
+}
+function orderText(o){ return esc([o.side, o.qty, o.type, o.stop != null ? 'stop ' + o.stop : '', o.limit != null ? 'limit ' + o.limit : '', o.status || '', o.order_id || o.client_id || ''].filter(Boolean).join(' ')) + (o.simulated ? ' <span class="muted">(sim)</span>' : '') + orderFlags(o); }
+function fillTag(f){ return (f && f.mock === false) ? '<span class="pill">' + esc(f.price_basis || f.evidence || 'PAPER FILL') + '</span>' : '<span class="pill mock">MOCK FILL</span>'; }
 function decLine(d, big){ return '<span data-id="' + esc(d.decision_id) + '" style="cursor:pointer">' + pill(d.action) + ' <b>' + esc(d.reason_code || '') + '</b> ' + (big ? '<div>' + esc(d.reason_text || '') + '</div>' : '<span class="muted">' + esc(tsShort(d.ts_knowable)) + '</span>') + '</span>'; }
 
 function summarize(e){
@@ -704,13 +866,13 @@ function renderDecisionView(){
     '<span class="spacer"></span><span class="pill" style="background:#12304f;color:#a9d4ff">KNOWABLE AT ' + esc(tsShort(d.ts_knowable)) + '</span></div>';
   h += '<h2 style="margin:8px 0 2px;font-size:17px">' + pill(d.action) + ' ' + esc(d.reason_code || '') + ' <span class="muted small">' + esc(d.symbol || '') + ' · ' + esc(d.strategy || '') + ' · qty ' + esc(d.qty == null ? '-' : d.qty) + '</span></h2>';
   h += '<div class="small muted">' + esc(d.decision_id) + (d.action === 'pass' ? ' · a pass places no order' : '') + '</div>';
-  h += '<div class="sec s1"><h4>1. Setup on the chart</h4><table>' + lines.map(([k2, c, lab]) => '<tr><td><span class="sw" style="border-color:var(' + c + ')"></span>' + lab + '</td><td>' + fmt(d[k2], 4) + '</td></tr>').join('') + '</table>' +
+  h += '<div class="sec s1"><h4>1. Setup on the chart</h4><table>' + lines.map(([k2, c, lab]) => '<tr><td><span class="sw" style="border-color:var(' + c + ')"></span>' + lab + '</td><td>' + fmt(d[k2], 4) + (lineText(d[k2]) ? ' <span class="small muted">' + esc(lineText(d[k2])) + '</span>' : '') + '</td></tr>').join('') + '</table>' +
     '<div class="hint">Lines start at the decision bar. Bars after ' + esc(tsShort(d.ts_knowable)) + ' are ' + (rev ? 'shown (outcome revealed).' : 'hidden on the chart.') + '</div></div>';
   h += '<div class="sec s2"><h4>2. Case for and against</h4><div class="kv"><b>Reason</b><span>' + esc(d.reason_text || '-') + '</span><b>For</b><span>' + esc(d.case_for || '-') + '</span><b>Against</b><span>' + esc(d.case_against || '-') + '</span>' +
-    '<b>Est. cost</b><span>' + (num(d.est_cost) === null ? '-' : fmt(d.est_cost) + ' (round trip, simulated)') + '</span><b>Pass condition</b><span>' + esc(d.pass_condition || '-') + '</span></div>' +
+    '<b>Est. cost</b><span>' + (costNum(d.est_cost) === null ? '-' : fmt(costNum(d.est_cost)) + ' (round trip, simulated)') + '</span><b>Pass condition</b><span>' + esc(d.pass_condition || '-') + '</span></div>' +
     '<div style="margin-top:6px"><b class="small">Refusal checks</b> <span class="small muted">(what the desk checked before acting; a failed check is a reason to refuse)</span>' + chkTable(d.refusal_checks) + '</div></div>';
   h += '<div class="sec s3"><h4>3. Trail: knew &rarr; requested &rarr; acknowledged &rarr; filled</h4>';
-  h += trail.length ? '<table class="trail">' + trail.map(e => '<tr><td>' + esc(tsFull(e.ts)) + '</td><td>' + pill(e.kind || '?') + (e.kind === 'filled' || e.mock ? ' <span class="pill mock">MOCK FILL</span>' : '') + '<div class="small">' + summarize(e) + '</div></td></tr>').join('') + '</table>' : '<div class="hint">No audit entries reference this decision' + (d.action === 'pass' ? ' beyond the decision itself: a pass sends nothing.' : '.') + '</div>';
+  h += trail.length ? '<table class="trail">' + trail.map(e => '<tr><td>' + esc(tsFull(e.ts)) + '</td><td>' + pill(e.kind || '?') + (e.mock === false ? ' ' + fillTag(e) : (e.kind === 'filled' || e.mock ? ' <span class="pill mock">MOCK FILL</span>' : '')) + '<div class="small">' + summarize(e) + '</div></td></tr>').join('') + '</table>' : '<div class="hint">No audit entries reference this decision' + (d.action === 'pass' ? ' beyond the decision itself: a pass sends nothing.' : '.') + '</div>';
   if (laterN) h += '<div class="hint" style="margin-top:4px">' + laterN + ' later trail entr' + (laterN === 1 ? 'y' : 'ies') + ' (requested, acknowledged, filled) and the ledger stay hidden until Reveal outcome.</div>';
   if (trades.length) h += '<div class="small" style="margin-top:6px">Ledger: ' + trades.map(r => '<b>' + esc(r.trade_id) + '</b> ' + esc(r.side || '') + ' ' + esc(r.qty == null ? '' : r.qty) + ', ' + (r.fills || []).length + ' mock fill(s), fees ' + fmt(r.fees) + ', intent <code>' + esc(r.intent_id || '-') + '</code>, order <code>' + esc(r.order_id || '-') + '</code>').join('<br>') + '</div>';
   h += '</div>';
@@ -767,7 +929,7 @@ function metricsTable(m){
 function fillList(fills){
   fills = Array.isArray(fills) ? fills : [];
   if (!fills.length) return '-';
-  return fills.map(f => esc(f.kind || f.side || 'fill') + ' <code>' + esc(f.intent_id || f.fill_id || '-') + '</code> ' + esc(tsFull(f.ts)) + ' @ ' + fmt(f.price, 4) + ' fee ' + fmt(f.fee) + ' <span class="pill mock">MOCK FILL</span>').join('<br>');
+  return fills.map(f => esc(f.kind || f.side || 'fill') + ' <code>' + esc(f.intent_id || f.fill_id || '-') + '</code> ' + esc(tsFull(f.ts)) + ' @ ' + fmt(f.price, 4) + ' fee ' + fmt(f.fee) + ' ' + fillTag(f)).join('<br>');
 }
 
 function tradeCard(title, r, note){
@@ -855,6 +1017,7 @@ function renderAll(){
   renderHeader();
   if (S.view === 'chart') renderChartView();
   else if (S.view === 'decision') renderDecisionView();
+  else if (S.view === 'setup') renderSetup();
   else renderReview();
   draw();
 }
@@ -869,7 +1032,7 @@ async function control(route, body){
     if (j && j.session && typeof j.session === 'object') { S.session = Object.assign({}, S.session || {}, j.session); }
     if (!r.ok || !j.ok) { toast('<b class="neg">Not applied</b>: ' + esc(j.error || j.manager_error || r.status) + (j.request_id ? '<br><span class="muted">request ' + esc(j.request_id) + ' logged</span>' : '')); renderAll(); setTimeout(tick, 400); return false; }
     const called = j.controller_called || j.manager_called;
-    toast('<b>' + esc(j.request) + '</b> recorded as <code>' + esc(j.request_id) + '</code>.<br>' + (called ? 'Session controller called.' : esc(j.note || 'Controller not attached: recorded for the runner.')) + '<br><span class="muted">SIMULATED</span>');
+    toast('<b>' + esc(j.request) + '</b> recorded as <code>' + esc(j.request_id) + '</code>.<br>' + (called ? 'Session controller called.' : esc(j.note || 'Controller not attached: recorded for the runner.')) + '<br><span class="muted">' + esc(isPaper(S.session) ? (S.session.evidence_label || 'ALPACA PAPER') : 'SIMULATED') + '</span>');
     renderAll(); setTimeout(tick, 400); return j;
   } catch (e) { toast('<b class="neg">Not sent</b>: the desk server is unreachable. Nothing was changed.'); return false; }
 }
@@ -897,6 +1060,113 @@ $('#preClose').onclick = () => $('#dlgPre').close();
 $('#preArm').onclick = () => { $('#dlgPre').close(); control('/api/arm', {}); };
 $('#btnArm').onclick = () => control('/api/arm', {});
 $('#schedTgl').onchange = e => control('/api/schedule', {enabled: !!e.target.checked});
+// Alpaca adapter: Enable asks to confirm, Disable asks for a reason, Reconcile acts on demand (works while disabled)
+$('#btnEnable').onclick = () => { const s = S.session || {}; const ls = limitsSrc(s);
+  $('#enMode').innerHTML = 'Mode: <b>' + esc(s.broker_mode || '-') + '</b> &middot; ' + esc(s.evidence_label || '') + (isPaper(s) ? ' &middot; <b>sends real requests to Alpaca\'s paper host</b>' : ' &middot; local mock only, no network');
+  $('#enLimits').textContent = 'Limits this session loaded: ' + ls.label + '. Real-money live trading is not built and cannot be enabled here.';
+  const d = $('#dlgEnable'); if (d.showModal) d.showModal(); else if (confirm('Enable the Alpaca adapter (' + (s.broker_mode || '') + ')?')) control('/api/alpaca/enable', {confirm: true}); };
+$('#enNo').onclick = () => $('#dlgEnable').close();
+$('#enYes').onclick = () => { $('#dlgEnable').close(); control('/api/alpaca/enable', {confirm: true}); };
+$('#btnDisable').onclick = () => { $('#disReason').value = ''; const d = $('#dlgDisable'); if (d.showModal) d.showModal(); else { const r = prompt('Reason for disabling the adapter?'); if (r) control('/api/alpaca/disable', {reason: r}); } };
+$('#disNo').onclick = () => $('#dlgDisable').close();
+$('#disYes').onclick = () => { const r = $('#disReason').value.trim(); if (!r) { $('#disReason').focus(); return; } $('#dlgDisable').close(); control('/api/alpaca/disable', {reason: r}); };
+$('#btnReconcile').onclick = () => control('/api/alpaca/reconcile', {});
+
+// ---------------- Setup (limits): draft, check effects, explicit approval ----------------
+// Agents never pick or fill these numbers. Test examples and suggestions change the draft only on a click
+// and never approve. The worksheet is fetched on entering the tab and after each save: no timer.
+S.lim = null; S.limErr = ''; S.limV = 0; S.eff = null; S.limMsg = ''; S.effIn = {};
+const EFF_IN = [['ref_price', 'Reference SPY price ($)'], ['stop_distance', 'Stop distance ($ per share)'], ['fee_per_share', 'Fee per share ($, ASSUMED)'],
+  ['slippage_per_share', 'Slippage per share ($, ASSUMED)'], ['open_exposure', 'Open exposure now ($)'], ['realized_loss_today', 'Realized loss today ($)'], ['working_notional', 'Working orders ($)']];
+async function loadLimits(){
+  try { S.lim = await getJ('/api/limits'); S.limErr = ''; } catch (e) { S.lim = null; S.limErr = 'This desk server has no limits worksheet (' + e.message + ').'; }
+  S.limV++; if (S.view === 'setup') renderSetup();
+}
+async function postLimits(route, body){
+  try { const r = await fetch(route, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body || {})});
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.ok) { S.limMsg = '<span class="neg">Not applied: ' + esc(j.error || r.status) + '</span>'; renderSetup(); return null; }
+    if (j.worksheet) { keepEffIn(); S.lim = j.worksheet; S.limV++; }
+    return j;
+  } catch (e) { S.limMsg = '<span class="neg">Not sent: the desk server is unreachable. Nothing changed.</span>'; renderSetup(); return null; }
+}
+function keepEffIn(){ for (const [k] of EFF_IN) { const el = $('#eff_' + k); if (el) S.effIn[k] = el.value; } }
+function limCell(v){ return v === null || v === undefined ? '<span class="muted">blank</span>' : esc(v); }
+function readDraftInputs(){ const out = {}; for (const f of (S.lim || {}).fields || []) { const el = $('#lim_' + f); const t = el ? el.value.trim() : ''; out[f] = t === '' ? null : Number(t); } return out; }
+function sameVals(a, b){ a = a || {}; b = b || {}; for (const f of (S.lim || {}).fields || []) { const x = a[f] == null ? null : Number(a[f]), y = b[f] == null ? null : Number(b[f]); if (x !== y) return false; } return true; }
+function effHtml(){
+  const e = S.eff; if (!e) return '<div class="hint">Type a reference price and a stop distance, then press Check effects. Checking never saves or approves anything.</div>';
+  const usd = v => num(v) === null ? '-' : '$' + num(v).toFixed(2);
+  const a = e.assumptions || {}; const rc = e.remaining_capacity || {};
+  let h = '<div class="kv small">' +
+    '<b>Shares</b><span>' + (e.shares == null ? '<span class="neg">fixed_shares is blank</span>' : esc(e.shares)) + '</span>' +
+    '<b>Order value</b><span>' + usd(e.notional) + '</span>' +
+    '<b>P&amp;L per $1 SPY move</b><span>' + usd(e.payoff_per_1usd_move) + '</span>' +
+    '<b>Estimated loss at the stop</b><span>' + usd(e.est_loss_at_stop) + ' <span class="muted">(includes ' + usd(e.est_costs) + ' costs, ' + esc(a.label || 'ASSUMED') + ': fee ' + usd(a.fee_per_share) + ' + slippage ' + usd(a.slippage_per_share) + ' per share, ' + esc(a.note || '') + ')</span></span>' +
+    '<b>Worst case if every working order fills</b><span>' + usd(e.worst_case_if_all_working_fill) + '</span>' +
+    Object.keys(rc).map(k => '<b>' + esc(k.replace(/_/g, ' ')) + '</b><span>' + usd(rc[k]) + '</span>').join('') + '</div>';
+  const ck = Array.isArray(e.checks) ? e.checks : [];
+  h += ck.length ? '<table class="chk" style="margin-top:6px">' + ck.map(c => '<tr' + (c.ok ? '' : ' class="failrow"') + '><td class="' + (c.ok ? 'p' : 'f') + '">' + (c.ok ? '&#10003; PASS' : '&#10007; FAIL') + '</td><td><b>' + esc(c.cap) + '</b></td><td>' + esc(c.reason) + '</td></tr>').join('') + '</table>' +
+    '<div class="small" style="margin-top:4px">' + (e.all_pass ? '<span class="pos">Every cap you set passes at these inputs.</span>' : '<span class="neg">At least one cap fails, or a cap is blank.</span>') + '</div>' : '<div class="hint">No caps to check yet: your draft has no numbers.</div>';
+  const sg = Array.isArray(e.suggestions) ? e.suggestions : [];
+  if (sg.length) h += '<div class="small" style="margin-top:6px"><b>Alternatives (' + esc(sg[0].label || 'read-only suggestion') + ')</b><br>' +
+    sg.map((x, i) => 'At most <b>' + esc(x.shares) + '</b> ' + esc(x.text) + ' <button class="sgCopy" data-n="' + esc(x.shares) + '" title="Puts this number in your draft\'s fixed_shares box. Not saved or approved until you choose to.">Copy into draft</button>').join('<br>') + '</div>';
+  return h;
+}
+function renderSetup(){
+  const body = $('#setupBody');
+  if (!S.lim) { body._v = -1; setH(body, '<div class="hint">' + esc(S.limErr || 'Loading limits worksheet.') + '</div>'); return; }
+  const w = S.lim; const L = w.labels || {}; const dv = (w.draft || {}).values || {}; const av = (w.approved || {}).values || {};
+  if (body._v !== S.limV) { body._v = S.limV; body._h = null; body.className = '';
+    const act = w.active || {}; const ap = w.approved;
+    const h = '<div class="card"><h3>Your paper limits</h3>' +
+      '<div class="small" style="margin-bottom:6px">Five numbers, all yours. No agent picks, suggests or fills them, and there are no defaults. A session uses limits only after you approve them; a running session keeps the limits it loaded at start (the banner says which).</div>' +
+      '<div class="kv small">' +
+      '<b>A session starting now loads</b><span>' + (act.error ? '<span class="neg">nothing usable: ' + esc(act.error) + '</span>' : esc(act.label || act.provenance || '-') + (act.hash ? ' <span class="muted">fingerprint ' + esc(String(act.hash).slice(0, 12)) + '</span>' : '')) + '</span>' +
+      '<b>Approved</b><span>' + (ap ? (w.approved_ok === true ? '<span class="pos">' + esc(L.approved || 'approved') + '</span> ' + esc(tsFull(ap.approved_utc)) + (ap.reason ? ' &middot; reason: ' + esc(ap.reason) : '') : '<span class="neg">REFUSED: ' + esc(w.approved_ok) + '</span>') : 'none yet') + '</span>' +
+      '<b>Draft</b><span>' + (w.draft ? '<span style="color:var(--warn)">' + esc(L.draft || 'DRAFT') + '</span> saved ' + esc(tsFull(w.draft.saved_utc)) + (w.draft.complete ? '' : ' &middot; incomplete') + (w.draft.copied_from ? ' &middot; copied from ' + esc(w.draft.copied_from) : '') : 'none yet') + '</span></div>' +
+      '<table class="lt" style="margin-top:8px"><tr><th>Field</th><th>Approved</th><th>Your draft</th><th>What it means</th></tr>' +
+      (w.fields || []).map(f => '<tr><td><b>' + esc(f) + '</b></td><td>' + limCell(av[f]) + '</td><td><input id="lim_' + esc(f) + '" inputmode="decimal" autocomplete="off" value="' + esc(dv[f] == null ? '' : dv[f]) + '" placeholder="blank"></td><td class="muted">' + esc((w.help || {})[f] || '') + '</td></tr>').join('') + '</table>' +
+      '<div class="row" style="margin-top:8px"><button id="limSave" class="pri">Save draft</button><button id="limApprove">Review and approve</button></div>' +
+      '<div class="small" id="limMsg" style="margin-top:6px"></div></div>' +
+      '<div class="card"><h3>Check effects <span class="r small">uses the numbers typed above, saved or not</span></h3>' +
+      '<div class="kv small">' + EFF_IN.map(([k, t]) => '<b>' + esc(t) + '</b><span><input id="eff_' + k + '" inputmode="decimal" autocomplete="off" value="' + esc(S.effIn[k] || '') + '"' + (/fee|slip|open|realized|working/.test(k) ? ' placeholder="0"' : '') + '></span>').join('') + '</div>' +
+      '<div class="row" style="margin-top:6px"><button id="limEffBtn">Check effects</button></div><div id="limEff" style="margin-top:6px"></div></div>' +
+      (w.test_examples || []).map((x, i) => '<div class="card"><h3>' + esc(x.label || L.test || 'TEST EXAMPLE') + '</h3>' +
+        '<div class="small muted">' + esc(x.name || '') + '. Shown only for comparison. Copying it fills your draft; it never approves anything.</div>' +
+        '<table class="lt" style="margin-top:4px">' + Object.keys(x.values || {}).map(k => '<tr><td>' + esc(k) + '</td><td>' + esc(x.values[k]) + '</td></tr>').join('') + '</table>' +
+        '<div class="row" style="margin-top:6px"><button class="limCopy" data-i="' + i + '">Copy into draft</button></div></div>').join('');
+    setH(body, h);
+    $('#limSave').onclick = async () => { const j = await postLimits('/api/limits/draft', {values: readDraftInputs()}); if (j) { S.limMsg = 'Draft saved. It is <b>not approved</b>; press Review and approve when you are ready.'; renderSetup(); } };
+    $('#limApprove').onclick = openApprove;
+    $('#limEffBtn').onclick = async () => { const b = {values: readDraftInputs()};
+      for (const [k] of EFF_IN) { const t = $('#eff_' + k).value.trim(); S.effIn[k] = t; if (t !== '') b[k] = Number(t); }
+      const j = await postLimits('/api/limits/effects', b); if (j) { S.eff = j.effects; renderSetup(); } };
+    for (const b of document.querySelectorAll('.limCopy')) b.onclick = async () => { const x = (w.test_examples || [])[Number(b.dataset.i)]; if (!x) return;
+      const j = await postLimits('/api/limits/draft', {values: x.values, copied_from: x.name || 'test example'});
+      if (j) { S.limMsg = 'Copied the test example into your draft. These are <b>not your limits</b> and are <b>not approved</b> unless you choose to approve them.'; renderSetup(); } };
+  }
+  setH($('#limMsg'), S.limMsg || '');
+  setH($('#limEff'), effHtml());
+  for (const b of document.querySelectorAll('.sgCopy')) b.onclick = () => { const el = $('#lim_fixed_shares'); if (el) el.value = b.dataset.n;
+    S.limMsg = 'Put ' + esc(b.dataset.n) + ' in your draft\'s fixed_shares box. Not saved: press Save draft to keep it.'; setH($('#limMsg'), S.limMsg); };
+}
+function openApprove(){
+  const w = S.lim || {}; const dv = (w.draft || {}).values || {};
+  if (!w.draft) { S.limMsg = '<span class="neg">Save a draft first. Approval approves the saved draft.</span>'; renderSetup(); return; }
+  if (!sameVals(readDraftInputs(), dv)) { S.limMsg = '<span class="neg">You have unsaved changes. Press Save draft first; approval approves the saved draft, not the boxes.</span>'; renderSetup(); return; }
+  const pd = Array.isArray(w.pending_diff) ? w.pending_diff : [];
+  $('#apDiff').innerHTML = pd.length ? '<table class="lt"><tr><th>Field</th><th>Old (approved)</th><th>New (draft)</th></tr>' + pd.map(d => '<tr><td><b>' + esc(d.field) + '</b></td><td>' + limCell(d.old) + '</td><td>' + limCell(d.new) + '</td></tr>').join('') + '</table>' : '<span class="muted">No changes from your approved limits.</span>';
+  $('#apPhraseShow').textContent = w.confirm_phrase || 'APPROVE PAPER LIMITS';
+  $('#apPhrase').value = ''; $('#apReason').value = '';
+  const d = $('#dlgApprove'); if (d.showModal) d.showModal();
+}
+$('#apNo').onclick = () => $('#dlgApprove').close();
+$('#apYes').onclick = async () => { const ph = $('#apPhrase').value, rs = $('#apReason').value.trim();
+  if (!ph || !rs) { (ph ? $('#apReason') : $('#apPhrase')).focus(); return; }
+  $('#dlgApprove').close();
+  const j = await postLimits('/api/limits/approve', {confirm: ph, reason: rs});
+  if (j) { S.limMsg = '<span class="pos">Approved.</span> ' + esc(j.note || ''); renderSetup(); } };
 
 // ---------------- TradingView (operator view only; the desk never reads it) ----------------
 // Off by default. The official embed script is only requested after the operator ticks the box.

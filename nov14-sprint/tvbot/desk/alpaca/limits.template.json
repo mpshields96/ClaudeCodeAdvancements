@@ -1,0 +1,18 @@
+{
+  "provenance": "template",
+  "note": "Blank template. Only Matthew fills in these values; no agent picks, suggests or fills them. Copy this file, type your own numbers in place of each null, then approve it (SETUP.md step 5). The desk refuses this file as it is, and refuses any copy until you approve it.",
+  "help": {
+    "fixed_shares": "Whole shares per entry. Required. There is no default and no formula.",
+    "max_loss_per_trade": "Dollars you accept losing on one trade if the stop is hit.",
+    "daily_loss": "Dollars of realized loss in one day after which new entries stop.",
+    "per_trade_notional": "Largest dollar value of a single order (shares x price).",
+    "gross_exposure": "Largest dollar value of everything open plus everything working, together."
+  },
+  "values": {
+    "fixed_shares": null,
+    "max_loss_per_trade": null,
+    "daily_loss": null,
+    "per_trade_notional": null,
+    "gross_exposure": null
+  }
+}

@@ -368,6 +368,38 @@ def comparison_table(bw, allw):
             "<th class='r'>All weeks</th></tr>%s</table>" % "".join(rows))
 
 
+def lab_section(state_dir):
+    """Decision lab totals (CONTRACT section 7). Empty when the session wrote no lab files.
+    SHADOW and HYPOTHETICAL: never routed, never counted in P&L, never a promotion."""
+    if not os.path.exists(os.path.join(state_dir, "lab_forecasts.jsonl")):
+        return ""
+    head = "<section><div class='kicker'>Decision lab (shadow)</div><h2>Challenger against EMA and cash, hypothetical</h2>"
+    try:
+        desk = os.path.dirname(os.path.abspath(__file__))
+        if desk not in sys.path:
+            sys.path.insert(0, desk)
+        from lab import record as _lab_record
+        v = _lab_record.view(state_dir, limit=1)
+    except Exception as exc:
+        return head + "<p class='note'>Lab files are present but could not be read (%s). Open /lab to check.</p></section>" % (
+            e(exc.__class__.__name__))
+    fr = v.get("frozen") or {}
+    rows = "".join(
+        "<tr><td>%s</td><td class='r'>%s</td><td class='r'>%s</td><td class='r'>%s</td><td class='r'>%s</td><td class='r'>%s</td></tr>" % (
+            e(name), e(t.get("forecasts")), e(t.get("scored")), e(t.get("trades")),
+            e("%.2f" % t["sum_net_bps"]) if isinstance(t.get("sum_net_bps"), (int, float)) else "n/a",
+            e("%.2f" % t["sum_net_bps_2x"]) if isinstance(t.get("sum_net_bps_2x"), (int, float)) else "n/a")
+        for name, t in sorted((v.get("totals") or {}).items()))
+    return (head +
+            "<table class='tight'><tr><th>Strategy</th><th class='r'>Forecasts</th><th class='r'>Scored</th>"
+            "<th class='r'>With exposure</th><th class='r'>Sum net bps</th><th class='r'>Sum net bps, 2x friction</th></tr>"
+            "%s</table>" % rows +
+            "<p class='note'>%s. %s. Data: %s. Challenger %s, frozen %s. Costs are ASSUMED; scores use later bars only. "
+            "Every lab row is in this session's state directory; open /lab to verify any forecast.</p></section>" % (
+                e(v.get("label")), e(v.get("forecast_label")), e(v.get("data_label")),
+                e(fr.get("rule_id")), e(fr.get("frozen_at"))))
+
+
 def audit_table(bw, ledger_week, dec_week):
     oa = bw.get("operating_audit") or []
     fi = audit(oa, "fills vs intents")
@@ -528,6 +560,7 @@ def build_html(state_dir, week=None):
         "<section><div class='kicker'>Operating audit</div><h2>What the desk did</h2>",
         audit_table(bw, ledger_week, dec_week),
         "</section>",
+        lab_section(state_dir),
         "<section><div class='kicker'>Labels and method</div>",
         "<ul class='tight small'>",
         "<li><b>Cost model (simulated):</b> %s.</li>" % e(cost_model(session, bw)),

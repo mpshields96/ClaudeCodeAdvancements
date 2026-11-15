@@ -482,7 +482,7 @@ class OrderManager(object):
         late = it["status"] == "canceled"
         self._audit("filled", intent_id=iid, client_id=it["client_id"], exec_id=exec_id, qty=rec["qty"],
                     price=rec["price"], fee=rec["fee"], how=how, late_after_cancel=late,
-                    position_qty=self.pos_qty, mock=True)
+                    position_qty=self.pos_qty, mock=rec["mock"])
         if it["filled_qty"] > it["qty"]:
             self._alarm("OVERFILL", "%s filled %d of %d" % (iid, it["filled_qty"], it["qty"]))
         elif it["filled_qty"] == it["qty"] and it["status"] != "filled":
@@ -752,8 +752,11 @@ class OrderManager(object):
     def _resolve_uncertain(self, iid, allow_retry):
         """Query before any retry. Returns True when the intent is no longer uncertain."""
         it = self.intents[iid]
+        unseen = False
         try:
             order = self._call("query", it["client_id"])
+        except BrokerUncertain:
+            order, unseen = None, True      # not visible yet: never proof that it was not placed
         except BrokerError:
             return False
         if order is not None:
@@ -766,6 +769,8 @@ class OrderManager(object):
                         note="query found no order; resending with the same client id")
             self._dispatch(iid)
             return self.intents[iid]["status"] != "uncertain"
+        if unseen:
+            return False                    # stays uncertain; reconcile keeps asking by client id
         self._set_status(iid, "not_placed", reason="broker has no order for this client id")
         self._audit("rejected", intent_id=iid, reason="NOT_PLACED", by="reconcile")
         return True
@@ -915,7 +920,15 @@ class OrderManager(object):
                     continue
                 o = by_client.get(it["client_id"])
                 if o is None:
-                    o = self._call("query", it["client_id"])
+                    try:
+                        o = self._call("query", it["client_id"])
+                    except BrokerUncertain:
+                        # A 404 or empty listing is not proof of "not placed": keep it unresolved.
+                        if it["status"] == "pending":
+                            self._set_status(iid, "uncertain")
+                        flag("SUBMIT_UNRESOLVED", "%s was sent but is not visible at the broker yet; "
+                             "new exposure waits until it is found" % iid)
+                        continue
                 if o is None:
                     if it["status"] in ("pending", "uncertain"):
                         self._set_status(iid, "not_placed", reason="absent at reconcile")
@@ -1220,7 +1233,7 @@ class OrderManager(object):
         for f in self.fills:
             fills_by.setdefault(f["intent_id"], []).append({
                 "exec_id": f["exec_id"], "qty": f["qty"], "price": f["price"], "fee": f["fee"],
-                "ts": f.get("fill_ts"), "mock": True, "simulated": True})
+                "ts": f.get("fill_ts"), "mock": bool(f.get("mock", True)), "simulated": True})
         for it in self.intents.values():
             rows.append({"trade_id": it["intent_id"], "decision_id": it["decision_id"], "intent_id": it["intent_id"],
                          "order_id": it.get("order_id"), "signal_ts": it.get("signal_ts"),

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decision Lab</title>
+<style>
+:root {
+  --bg: #f7f7f5; --panel: #ffffff; --ink: #1d1f22; --muted: #5d636b; --line: #d9dcdf;
+  --warn-bg: #fff4d6; --warn-ink: #6b4a00; --ok: #1f7a3d; --bad: #b3261e; --pend: #7a6300;
+  --sel: #e8f0fe; --code: #f1f2f4; --long: #1f7a3d; --short: #b3261e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15171a; --panel: #1e2125; --ink: #e8eaed; --muted: #a0a6ad; --line: #33373c;
+    --warn-bg: #3a2f10; --warn-ink: #f3d27a; --ok: #6fd08f; --bad: #f28b82; --pend: #e6c95c;
+    --sel: #253247; --code: #26292e; --long: #6fd08f; --short: #f28b82;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15171a; --panel: #1e2125; --ink: #e8eaed; --muted: #a0a6ad; --line: #33373c;
+  --warn-bg: #3a2f10; --warn-ink: #f3d27a; --ok: #6fd08f; --bad: #f28b82; --pend: #e6c95c;
+  --sel: #253247; --code: #26292e; --long: #6fd08f; --short: #f28b82;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1200px; margin: 0 auto; padding: 12px 16px 40px; }
+h1 { font-size: 20px; margin: 4px 0 8px; }
+h2 { font-size: 15px; margin: 0 0 8px; }
+.banner { background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--line);
+  border-radius: 8px; padding: 10px 12px; font-weight: 600; margin-bottom: 12px; }
+.banner small { display: block; font-weight: 400; margin-top: 2px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.muted { color: var(--muted); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.sel { background: var(--sel); }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 12px; }
+.scroll { overflow-x: auto; }
+.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.long { color: var(--long); font-weight: 600; }
+.short { color: var(--short); font-weight: 600; }
+.pass-t { color: var(--muted); }
+.cell button { display: block; width: 100%; text-align: left; }
+.cell .r { font-size: 12px; color: var(--muted); }
+.chk { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 6px; padding: 4px 0;
+  border-bottom: 1px solid var(--line); }
+.chk b { font-size: 12px; }
+.ok { color: var(--ok); } .bad { color: var(--bad); } .pend { color: var(--pend); }
+pre { background: var(--code); border-radius: 6px; padding: 8px; overflow: auto; max-height: 320px;
+  font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 4px 0 0; white-space: pre-wrap;
+  word-break: break-word; }
+details { margin-top: 8px; }
+summary { cursor: pointer; font-weight: 600; }
+.verdict { font-weight: 700; font-size: 15px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Decision lab</h1>
+  <div class="banner" id="banner">SHADOW / HYPOTHETICAL
+    <small>Shadow forecasts only: never routed, never sized, never promoted. Scores are hypothetical, never realized P&amp;L.</small>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="justify-content: space-between;">
+      <h2 id="frozen-title">Frozen challenger</h2>
+      <button id="refresh" type="button">Refresh</button>
+    </div>
+    <div id="frozen" class="muted">Loading /api/lab ...</div>
+  </div>
+
+  <div class="panel" id="hist-slot">
+    <div class="row" style="justify-content: space-between;">
+      <h2>Historical SPY study</h2>
+      <button id="hist-link" type="button" disabled aria-disabled="true" title="No link supplied yet">Open study</button>
+    </div>
+    <p class="muted" style="margin:0">Not supplied yet. This slot stays disabled until a link is supplied; the page fetches nothing for it.</p>
+  </div>
+
+  <div class="panel scroll">
+    <h2>Totals (hypothetical, basis points)</h2>
+    <table id="totals"><thead><tr><th>Strategy</th><th>Forecasts</th><th>Scored</th><th>With exposure</th>
+      <th>Sum net bps</th><th>Sum net bps, 2x friction</th></tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="grid">
+    <div class="panel scroll">
+      <h2>Opportunities, newest first</h2>
+      <p class="muted" style="margin:0 0 6px">One row per closed bar. All three strategies decided on the identical input bars. Click a cell to verify that forecast.</p>
+      <table id="groups"><thead><tr><th>Bar closed (UTC)</th><th>Challenger</th><th>EMA baseline</th><th>Cash</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="panel" id="detail">
+      <h2>Verify</h2>
+      <p class="muted">Pick a forecast. Verify recomputes the input hash, the hash chains, the decision (re-running the strategy on the stored bars), and the score from later bars only.</p>
+    </div>
+  </div>
+</main>
+<script>
+(function () {
+  "use strict";
+  var NAMES = ["challenger", "ema", "cash"];
+  var LABEL = {challenger: "Challenger (frozen)", ema: "EMA baseline", cash: "Cash"};
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      if (k === "class") n.className = attrs[k]; else if (k === "text") n.textContent = attrs[k];
+      else n.setAttribute(k, attrs[k]);
+    });
+    (kids || []).forEach(function (c) { if (c != null) n.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+    return n;
+  }
+  function fmt(x) { return (x === null || x === undefined) ? "n/a" : (typeof x === "number" ? x.toFixed(2) : String(x)); }
+  function cnt(x) { return (typeof x === "number") ? String(Math.round(x)) : "n/a"; }
+  function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+  function getJSON(url) {
+    return fetch(url, {cache: "no-store"}).then(function (r) {
+      return r.json().catch(function () { return {ok: false, error: "HTTP " + r.status}; });
+    });
+  }
+
+  function renderFrozen(v) {
+    var f = v.frozen || {}, box = document.getElementById("frozen");
+    clear(box);
+    box.className = "";
+    box.appendChild(el("div", null, [el("b", {text: f.rule_id || "?"}), " frozen " + (f.frozen_at || "?") +
+      ", cfg hash " + (f.cfg_hash || "?")]));
+    box.appendChild(el("div", {class: "muted", text: "Params: " + JSON.stringify(f.params || {})}));
+    box.appendChild(el("div", {class: "muted", text: f.cost_label || ""}));
+    box.appendChild(el("div", {class: "muted", text: "Data: " + (v.data_label || "?") + ". Rows: " +
+      JSON.stringify(v.counts || {})}));
+    var b = document.getElementById("banner");
+    b.firstChild.nodeValue = "SHADOW / HYPOTHETICAL / " + (v.synthetic ? "MOCK synthetic bars" : (v.data_label || "")) + " ";
+  }
+
+  function renderTotals(v) {
+    var tb = document.querySelector("#totals tbody");
+    clear(tb);
+    NAMES.forEach(function (n) {
+      var t = (v.totals || {})[n] || {};
+      tb.appendChild(el("tr", null, [el("td", {text: LABEL[n]}), el("td", {class: "num", text: cnt(t.forecasts)}),
+        el("td", {class: "num", text: cnt(t.scored)}), el("td", {class: "num", text: cnt(t.trades)}),
+        el("td", {class: "num", text: fmt(t.sum_net_bps)}), el("td", {class: "num", text: fmt(t.sum_net_bps_2x)})]));
+    });
+  }
+
+  function cell(r) {
+    if (!r) return el("td", {class: "muted", text: "-"});
+    var cls = r.action === "enter_long" ? "long" : (r.action === "enter_short" ? "short" : "pass-t");
+    var net = r.scored ? ("net " + fmt(r.net_bps) + " bps, 2x " + fmt(r.net_bps_2x)) : "awaiting next bar";
+    var btn = el("button", {type: "button", "data-id": r.forecast_id, title: r.reason_text || ""},
+      [el("span", {class: cls, text: r.action + (r.qty ? " " + r.qty : "")}),
+       el("div", {class: "r", text: (r.reason_code || "") + " - " + net})]);
+    btn.addEventListener("click", function () { select(btn, r.forecast_id); });
+    return el("td", {class: "cell"}, [btn]);
+  }
+
+  function renderGroups(v) {
+    var tb = document.querySelector("#groups tbody");
+    clear(tb);
+    (v.groups || []).forEach(function (g) {
+      tb.appendChild(el("tr", null, [el("td", {class: "num", text: (g.bar_ts_close || "").replace("T", " ").replace("Z", "")}),
+        cell(g.rows.challenger), cell(g.rows.ema), cell(g.rows.cash)]));
+    });
+    if (!(v.groups || []).length) tb.appendChild(el("tr", null, [el("td", {colspan: "4", class: "muted",
+      text: "No forecasts yet. The lab records one per closed bar during a manual session."})]));
+  }
+
+  function select(btn, id) {
+    Array.prototype.forEach.call(document.querySelectorAll("#groups button.sel"), function (b) { b.classList.remove("sel"); });
+    btn.classList.add("sel");
+    var d = document.getElementById("detail");
+    clear(d);
+    d.appendChild(el("h2", {text: "Verify " + id}));
+    d.appendChild(el("p", {class: "muted", text: "Recomputing ..."}));
+    getJSON("/api/lab/verify?id=" + encodeURIComponent(id)).then(function (res) { renderVerify(id, res); },
+      function (e) { renderVerify(id, {ok: false, error: String(e)}); });
+  }
+
+  function renderVerify(id, res) {
+    var d = document.getElementById("detail");
+    clear(d);
+    d.appendChild(el("h2", {text: "Verify " + id}));
+    var checks = res.checks || [];
+    var pending = checks.some(function (c) { return c.passed === null; });
+    d.appendChild(el("div", {class: "verdict " + (res.ok ? (pending ? "pend" : "ok") : "bad"),
+      text: res.ok ? (pending ? "No check failed; score pending" : "All checks pass") :
+        ("FAILED" + (res.error || res.reason ? ": " + (res.error || res.reason) : ""))}));
+    if (res.label) d.appendChild(el("div", {class: "muted", text: res.label}));
+    checks.forEach(function (c) {
+      var s = c.passed === true ? ["PASS", "ok"] : (c.passed === false ? ["FAIL", "bad"] : ["PENDING", "pend"]);
+      d.appendChild(el("div", {class: "chk"}, [el("b", {class: s[1], text: s[0]}),
+        el("div", null, [el("b", {text: c.id + " "}), el("span", {class: "muted", text: c.detail || ""})])]));
+    });
+    var a = res.after;
+    if (a) d.appendChild(el("p", null, ["After: ", el("b", {text: a.kind || ""}), " gross " + fmt(a.gross_bps) +
+      " bps, net " + fmt(a.net_bps) + " bps, 2x friction " + fmt(a.net_bps_2x) + " bps" +
+      (a.vs_ema_net_bps !== undefined ? ", vs EMA " + fmt(a.vs_ema_net_bps) : "") +
+      (a.entry_attainable === false ? " (entry lag " + fmt(a.entry_lag_s) + " s: next-open entry not attainable)" : "")]));
+    [["Before: forecast record (written before the later bars existed)", res.before, true],
+     ["After: score record (later bars only)", res.after, false],
+     ["Inputs", res.inputs, false]].forEach(function (p) {
+      var det = el("details", p[2] ? {open: ""} : null, [el("summary", {text: p[0]}),
+        el("pre", {text: p[1] ? JSON.stringify(p[1], null, 2) : "none yet"})]);
+      d.appendChild(det);
+    });
+  }
+
+  function load() {
+    getJSON("/api/lab").then(function (v) {
+      if (!v || v.ok === false) {
+        var f = document.getElementById("frozen");
+        f.textContent = "Lab not available: " + ((v && (v.error || v.reason)) || "no response");
+        return;
+      }
+      renderFrozen(v); renderTotals(v); renderGroups(v);
+    }, function (e) { document.getElementById("frozen").textContent = "Could not load /api/lab: " + e; });
+  }
+  document.getElementById("refresh").addEventListener("click", load);
+  load();
+})();
+</script>
+</body>
+</html>

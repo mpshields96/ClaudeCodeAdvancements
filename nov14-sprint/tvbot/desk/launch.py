@@ -118,7 +118,9 @@ class DeskControls(object):
         return self.r.preflight()
 
     def weekly_report(self, week=None):
-        """Write the weekly review, then the <=3-page weekly PDF (HTML if no headless browser)."""
+        """Write the weekly review, then the <=3-page weekly PDF (HTML if no headless browser).
+
+        In Alpaca mode the review covers this desk's own paper session only."""
         if week is not None and not re.match(r"^\d{4}-W\d{2}$", str(week)):
             return {"ok": False, "error": "week must look like 2026-W40"}
         with self.r.lock:
@@ -136,6 +138,157 @@ class DeskControls(object):
         self.r._desk_audit("weekly_report", week=wk, file=name, pages=pages)
         return {"ok": True, "simulated": True, "week": wk, "file": name, "url": "/reports/" + name,
                 "pages": pages, "label": "SIMULATED weekly report (mock fills, TEST VALUES)"}
+
+
+class AlpacaDeskControls(DeskControls):
+    """Controls for the opt-in Alpaca PAPER session (desk/alpaca_session.py).
+
+    Manual only: each step is one "Check for new bars" click. There is no Play, no schedule and
+    no background job. Enable needs the UI's explicit confirm; Disable needs a reason; Stop also
+    disables the adapter persistently; Reconcile is read-only and works while disabled or stopped."""
+
+    def advance(self):
+        return self.r.check_new_bars()
+
+    def advance10(self):
+        return self.r.check_new_bars()     # one manual check, never a loop
+
+    def check_new_bars(self):
+        return self.r.check_new_bars()
+
+    def play(self):
+        return self.r.play()
+
+    def run_to_end(self):
+        return self.r.run_to_end()
+
+    def alpaca_enable(self, confirm=False):
+        return self.r.alpaca_enable(confirm=confirm is True)
+
+    def alpaca_disable(self, reason="OPERATOR"):
+        return self.r.alpaca_disable(reason=reason)
+
+    def reconcile_now(self):
+        return self.r.reconcile_now()
+
+    def lab_view(self):
+        return self.r.lab_view()
+
+    def lab_verify(self, forecast_id):
+        return self.r.lab_verify(forecast_id)
+
+
+def _alpaca():
+    import alpaca_session as AS  # noqa: WPS433  (imported only for --broker alpaca-paper)
+    return AS
+
+
+def alpaca_state_dir(transport):
+    return os.path.join(DESK, "state-alpaca-%s" % ("paper" if transport == "https" else "mock"))
+
+
+def build_alpaca_runner(state_dir, strategy, transport, limits_path, provider="keychain"):
+    """Mock: in-process fake Alpaca, synthetic ids and bars, no socket, no credential.
+
+    https: approved limits are validated FIRST; only then is Matthew's credential provider
+    constructed (constructing it reads nothing; the Keychain is read only when the first
+    request is sent). Agents never start this mode."""
+    AS = _alpaca()
+    if transport == "https":
+        AS.resolve_limits(AS.MODE_HTTPS, state_dir, limits_path)   # raises without approved limits
+        from alpaca.setup import make_provider                      # noqa: WPS433
+        from alpaca.transport import HttpsTransport                 # noqa: WPS433
+        tr = HttpsTransport(make_provider(provider), timeout_s=10)
+        return AS.AlpacaSessionController(state_dir, strategy=strategy, mode=AS.MODE_HTTPS,
+                                          transport=tr, limits_path=limits_path)
+    return AS.AlpacaSessionController(state_dir, strategy=strategy, mode=AS.MODE_MOCK,
+                                      limits_path=limits_path)
+
+
+def alpaca_self_check(strategy, keep_dir=None):
+    """Mock Alpaca walkthrough in a temp dir (no socket, no credential, synthetic ids).
+
+    Enable needs confirm; warm start reaches warm-up without routing history; the operator arms
+    each day and clicks Check for new bars; every entry POST is a bounded SPY limit buy within the
+    TEST notional cap; Stop disables the adapter persistently and a restart keeps it disabled;
+    read-only reconcile still works after Stop."""
+    AS = _alpaca()
+    import alpaca as A  # noqa: WPS433
+    base = keep_dir or tempfile.mkdtemp(prefix="desk-alpaca-check-")
+    report, ok = {"state_dir": base, "steps": [], "evidence": A.LABEL_MOCK_LOCAL,
+                  "data": A.DATA_LABEL_MOCK}, True
+
+    def step(name, cond, **info):
+        nonlocal ok
+        ok = ok and bool(cond)
+        report["steps"].append(dict(name=name, ok=bool(cond), **info))
+
+    def posts(c):
+        return [b for (m, p, q, b) in c.transport.trading.calls if m == "POST" and p == "/v2/orders"]
+
+    c = c2 = None
+    try:
+        d = os.path.join(base, "run")
+        c = AS.AlpacaSessionController(d, strategy=strategy, mode=AS.MODE_MOCK)
+        st = c.session_state()
+        step("labels_mock", st["simulated"] and st["evidence_label"] == A.LABEL_MOCK_LOCAL
+             and st["data_label"] == A.DATA_LABEL_MOCK, broker_mode=st["broker_mode"])
+        step("limits_are_test_values", "TEST VALUE" in str(c.limits_source.get("label")),
+             label=c.limits_source.get("label"))
+        step("adapter_off_until_enabled", not st["adapter"]["enabled"])
+        step("enable_needs_confirm", c.alpaca_enable().get("reason") == "CONFIRM_REQUIRED")
+        step("no_play_or_schedule", c.play().get("reason") == "NO_PLAY_IN_ALPACA_MODE"
+             and c.set_schedule(True).get("reason") == "NO_SCHEDULE_IN_ALPACA_MODE")
+        step("enable_confirmed", c.alpaca_enable(confirm=True).get("ok") is True)
+        r = c.check_new_bars()
+        wv = c.warmup_view()
+        step("warm_start_ready", r.get("ok") and wv.get("ready"), bars=wv.get("bars"))
+        step("history_never_routed", posts(c) == [])
+        day = None
+        for _ in range(14):
+            if c.clock.now().date() != day:
+                day = c.clock.now().date()
+                c.arm()
+            c.check_new_bars()
+        buys = [b for b in posts(c) if b.get("side") == "buy"]
+        cap = float(c.limits.get("per_trade_notional") or 0)
+        step("bounded_limit_buys", bool(buys) and all(
+            b.get("symbol") == "SPY" and b.get("type") == "limit" and "notional" not in b
+            and int(b["qty"]) * float(b["limit_price"]) <= cap + 1e-9 for b in buys),
+             buys=len(buys), cap=cap, limits=sorted(float(b["limit_price"]) for b in buys)[:5])
+        step("bars_labeled_mock", all(b.get("source") == A.DATA_LABEL_MOCK for b in c.bars))
+        c.stop_and_close(reason="CHECK")
+        step("stop_disables_adapter", not c.adapter_state.enabled
+             and c.alpaca_enable(confirm=True).get("reason") == "STOPPED")
+        step("reconcile_after_stop", c.reconcile_now().get("ok") is True)
+        c.close()
+        c = None
+        c2 = AS.AlpacaSessionController(d, strategy=strategy, mode=AS.MODE_MOCK)
+        step("restart_keeps_disabled", not c2.adapter_state.enabled)
+        try:
+            AS.AlpacaSessionController(os.path.join(base, "h"), strategy=strategy, mode=AS.MODE_HTTPS)
+            step("https_needs_approved_limits", False)
+        except Exception as exc:
+            step("https_needs_approved_limits", "limits" in str(exc).lower(), refused=exc.__class__.__name__)
+    except Exception as exc:
+        ok = False
+        report["error"] = "%s: %s" % (exc.__class__.__name__, exc)
+    finally:
+        for x in (c, c2):
+            if x is not None:
+                try:
+                    x.close()
+                except Exception:
+                    pass
+        if keep_dir is None:
+            shutil.rmtree(base, ignore_errors=True)
+            report["state_dir"] += " (removed)"
+    report["ok"] = ok
+    return ok, report
+
+
+READINESS_CMD = ("/usr/bin/python3 -IB desk/alpaca/readiness.py --state-dir <your paper state dir> "
+                 "--limits <your approved limits file>")
 
 
 def _write_report(state_dir, week):
@@ -353,14 +506,47 @@ def main(argv=None):
     ap.add_argument("--check", action="store_true", help="offline self-check in a temp dir, then exit")
     ap.add_argument("--demo", action="store_true",
                     help="fresh scratch state, run the whole replay, write the weekly review, then serve the UI")
+    ap.add_argument("--broker", choices=("offline", "alpaca-paper"), default="offline",
+                    help="offline (default): in-process FakeBroker replay. alpaca-paper: opt-in SPY paper "
+                         "session, manual checks only")
+    ap.add_argument("--transport", choices=("mock", "https"), default="mock",
+                    help="alpaca-paper only. mock (default): in-process fake Alpaca, synthetic ids, no "
+                         "network. https: Alpaca's fixed paper host; needs --limits (operator-approved)")
+    ap.add_argument("--limits", help="alpaca-paper: operator-approved limits snapshot from the Setup worksheet")
+    ap.add_argument("--provider", choices=("keychain", "env"), default="keychain",
+                    help="alpaca-paper https: where the paper keys are read from at the first request")
     a = ap.parse_args(argv)
+    alpaca = a.broker == "alpaca-paper"
+
+    if alpaca and (a.demo or a.autoplay):
+        print("[desk] REFUSED: --demo and --autoplay are replay-only; the Alpaca paper session is manual "
+              "(arm each day, then click Check for new bars). Nothing was started.")
+        return 2
+    if not alpaca and (a.transport != "mock" or a.limits):
+        print("[desk] REFUSED: --transport and --limits apply only with --broker alpaca-paper.")
+        return 2
 
     if a.check:
+        if alpaca:
+            if a.transport != "mock":
+                print("[desk] REFUSED: --check runs the mock walkthrough only; it never contacts a broker.")
+                return 2
+            ok, rep = alpaca_self_check(a.strategy)
+            print(json.dumps(rep, indent=2, default=str))
+            print("ALPACA MOCK CHECK %s (MOCK LOCAL fake Alpaca, synthetic ids and bars, TEST limits, "
+                  "no network)" % ("PASS" if ok else "FAIL"))
+            print("[desk] First real paper connection (operator only, after approving limits): %s" % READINESS_CMD)
+            return 0 if ok else 1
         ok, rep = self_check(a.strategy, qty=a.qty)
         print(json.dumps(rep, indent=2, default=str))
         print("CHECK %s (SIMULATED, mock fills, TEST limits)" % ("PASS" if ok else "FAIL"))
         return 0 if ok else 1
 
+    if alpaca and a.state_dir == S.DEFAULT_STATE_DIR:
+        a.state_dir = alpaca_state_dir(a.transport)
+    if alpaca and a.qty != DEFAULT_QTY:
+        print("[desk] note: --qty is ignored with --broker alpaca-paper; the fixed share quantity comes "
+              "from the limits (mock: TEST VALUE; https: your approved snapshot).")
     state_dir = os.path.abspath(a.state_dir)
     if a.demo and a.state_dir == S.DEFAULT_STATE_DIR:
         state_dir = os.path.abspath(os.path.join(DESK, "state-demo"))
@@ -380,7 +566,10 @@ def main(argv=None):
         if inner is not None:
             inner.close()
     try:
-        runner = S.SessionController(state_dir, strategy=a.strategy, strategy_cfg=strategy_cfg_for(a.qty))
+        if alpaca:
+            runner = build_alpaca_runner(state_dir, a.strategy, a.transport, a.limits, a.provider)
+        else:
+            runner = S.SessionController(state_dir, strategy=a.strategy, strategy_cfg=strategy_cfg_for(a.qty))
     except S.SessionConfigChanged as exc:
         print("[desk] %s" % exc)
         scenario_lock.close()
@@ -388,6 +577,13 @@ def main(argv=None):
     except RuntimeError as exc:
         scenario_lock.close()
         return _refuse_in_use(state_dir, str(exc))
+    except Exception as exc:
+        if not alpaca:
+            raise
+        # Limits missing/unapproved (sizing.LimitsError), adapter module missing, bad snapshot.
+        print("[desk] REFUSED: %s: %s. Nothing was sent to any broker." % (exc.__class__.__name__, exc))
+        scenario_lock.close()
+        return 2
     if a.demo:
         runner.set_schedule(True)
         runner.run_to_end()
@@ -399,7 +595,7 @@ def main(argv=None):
         rp = _write_report(state_dir, rv["default_week"])
         if rp:
             print("[desk] weekly report %s" % rp)
-    controls = DeskControls(runner, play_rate=a.play_rate)
+    controls = (AlpacaDeskControls if alpaca else DeskControls)(runner, play_rate=a.play_rate)
     added = install_routes()
     host = "127.0.0.1"
     port = free_port(host, a.port)
@@ -407,13 +603,29 @@ def main(argv=None):
     url = "http://%s:%d/" % (host, port)
     t = threading.Thread(target=httpd.serve_forever, name="desk-ui", daemon=True)
     t.start()
-    print("[desk] SIMULATED paper desk. Mock fills only. No broker account, no credentials, no real orders.")
-    print("[desk] UI        %s" % url)
-    print("[desk] state     %s" % state_dir)
-    print("[desk] strategy  %s   limits: %s" % (a.strategy, runner.limits.get("label")))
-    print("[desk] sizing    %s" % runner.sizing()["label"])
-    print("[desk] controls  arm / pause / resume / stop_close / clear_stop / play / advance / schedule (%d routes "
-          "added by launcher)" % len(added))
+    if alpaca:
+        st = runner.session_state()
+        print("[desk] %s" % st.get("badge"))
+        print("[desk] evidence  %s" % runner.evidence_label)
+        print("[desk] data      %s" % runner.data_label)
+        print("[desk] UI        %s" % url)
+        print("[desk] state     %s" % state_dir)
+        print("[desk] strategy  %s   limits: %s" % (a.strategy, runner.limits_source.get("label")))
+        print("[desk] sizing    %s" % runner.sizing()["label"])
+        print("[desk] adapter   %s (Enable in the UI needs your confirm; Stop disables it again)"
+              % ("ENABLED" if runner.adapter_state.enabled else "DISABLED"))
+        print("[desk] manual    arm each trading day, then click Check for new bars. No Play, no schedule, "
+              "no background job: nothing happens while you are not clicking.")
+        if a.transport == "https":
+            print("[desk] first connection check (read-only, no orders): %s" % READINESS_CMD)
+    else:
+        print("[desk] SIMULATED paper desk. Mock fills only. No broker account, no credentials, no real orders.")
+        print("[desk] UI        %s" % url)
+        print("[desk] state     %s" % state_dir)
+        print("[desk] strategy  %s   limits: %s" % (a.strategy, runner.limits.get("label")))
+        print("[desk] sizing    %s" % runner.sizing()["label"])
+        print("[desk] controls  arm / pause / resume / stop_close / clear_stop / play / advance / schedule (%d routes "
+              "added by launcher)" % len(added))
     print("[desk] Ctrl-C to quit. State is saved after every bar; relaunching resumes it.")
     if a.autoplay:
         runner.set_schedule(True)

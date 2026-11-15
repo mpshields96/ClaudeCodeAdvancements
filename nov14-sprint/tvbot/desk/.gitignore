@@ -13,3 +13,5 @@ self-learning/
 out/research_private/
 # Launcher scenario locks (sibling of each state dir)
 *.launch.lock
+# Alpaca paper session state (mock and paper)
+state-alpaca-*/

@@ -26,6 +26,17 @@ from urllib.parse import parse_qs, urlparse
 
 UI_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_PATH = os.path.join(UI_DIR, "index.html")
+LAB_PATH = os.path.join(UI_DIR, "lab.html")      # W2's standalone decision-lab page
+DESK_DIR = os.path.dirname(UI_DIR)
+
+
+def _sizing():
+    """alpaca.sizing, imported on first use. `python3 -I ui/server.py` does not put desk/ on
+    sys.path, so add it here. The module reads only the state dir's limits files."""
+    if DESK_DIR not in sys.path:
+        sys.path.insert(0, DESK_DIR)
+    from alpaca import sizing  # noqa: WPS433
+    return sizing
 
 LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
 
@@ -52,12 +63,25 @@ CONTROL_ROUTES = {
     "/api/clear_stop": ("clear_stop", "clear_stop"),
     "/api/schedule": ("schedule", "set_schedule"),
     "/api/close_session": ("close_session", "close_session"),
+    # Alpaca paper adapter (alpaca/CONTRACT.md sections 5-6). Served only when the attached
+    # controller has the method; otherwise 501 and nothing is queued for later.
+    "/api/alpaca/enable": ("alpaca_enable", "alpaca_enable"),
+    "/api/alpaca/disable": ("alpaca_disable", "alpaca_disable"),
+    "/api/alpaca/reconcile": ("alpaca_reconcile", "reconcile_now"),
 }
-CONFIRM_REQUIRED = ("stop_close", "clear_stop")
+ALPACA_REQUESTS = ("alpaca_enable", "alpaca_disable", "alpaca_reconcile")
+CONFIRM_REQUIRED = ("stop_close", "clear_stop", "alpaca_enable")
+CONFIRM_LABELS = {"stop_close": "Stop & Close", "clear_stop": "Clear Stop", "alpaca_enable": "Enable"}
+# Setup panel worksheet (alpaca/sizing.py). Draft and approve write only this desk's
+# limits_draft.json / limits_approved.json; effects is arithmetic and writes nothing.
+LIMITS_ROUTES = ("/api/limits/draft", "/api/limits/effects", "/api/limits/approve")
+EFFECT_KEYS = ("ref_price", "stop_distance", "fee_per_share", "slippage_per_share",
+               "open_exposure", "realized_loss_today", "working_notional")
+LAB_ID_RE = re.compile(r"[A-Za-z0-9_.:-]{1,200}")
 TV_SCRIPT_ORIGIN = "https://s3.tradingview.com"
 TV_FRAME_ORIGINS = ("https://s.tradingview.com", "https://www.tradingview-widget.com",
                     "https://www.tradingview.com")
-BODY_KEYS = ("n", "bars_per_sec", "enabled", "confirm", "note", "week")
+BODY_KEYS = ("n", "bars_per_sec", "enabled", "confirm", "note", "week", "reason")
 WEEK_RE = re.compile(r"[0-9]{4}-W[0-9]{2}")
 MAX_ADVANCE = 500
 MAX_PLAY_RATE = 50.0
@@ -81,8 +105,13 @@ def _plan_call(request, method_name, body):
         if rate != rate or rate <= 0:  # NaN or 0 means stop playing (CONTRACT v2)
             return "stop_play", {}, (("pause_play", {}),)
         return method_name, {"bars_per_sec": min(rate, MAX_PLAY_RATE)}, ()
-    if request == "clear_stop":
+    if request in ("clear_stop", "alpaca_enable"):
         return method_name, {"confirm": True}, ()
+    if request == "alpaca_disable":
+        reason = body.get("reason")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("give a short reason for disabling the adapter")
+        return method_name, {"reason": reason.strip()[:200]}, ()
     if request == "weekly_report":
         week = body.get("week")
         if week is None or week == "":
@@ -191,16 +220,68 @@ def read_jsonl(path):
 
 
 def _num(value):
+    """A float or None. Strategy decision lines are {"price": float, "text": str}
+    objects (strategies/base.py line()); the price is unwrapped first so those
+    lines are never shown blank."""
+    if isinstance(value, dict):
+        value = value.get("price")
     try:
         if value is None or isinstance(value, bool):
             return None
-        return float(value)
+        out = float(value)
     except (TypeError, ValueError):
         return None
+    return out if out == out and out not in (float("inf"), float("-inf")) else None
+
+
+LINE_FIELDS = ("trigger", "intended_entry", "intended_exit", "invalidation")
+
+
+def decision_lines(decision):
+    """{field: {"price": float|None, "text": str|None}} for the four decision
+    lines, whichever shape the decision row used (plain number or object)."""
+    out = {}
+    for key in LINE_FIELDS:
+        raw = decision.get(key) if isinstance(decision, dict) else None
+        text = raw.get("text") if isinstance(raw, dict) else None
+        out[key] = {"price": _num(raw), "text": None if text is None else str(text)}
+    return out
+
+
+def _cost_usd(est):
+    """est_cost is {"usd": ...} from strategies/base.py est_cost(), or a number."""
+    if isinstance(est, dict):
+        est = est.get("usd")
+    return _num(est)
+
+
+def _with_lines(decision):
+    out = dict(decision)
+    out["lines"] = decision_lines(decision)
+    out["est_cost_usd"] = _cost_usd(decision.get("est_cost"))
+    return out
+
+
+BARS_SOURCE_REPLAY = "desk replay bars (state_dir/bars.jsonl), never TradingView"
+BARS_SOURCE_ALPACA = ("alpaca session bars (state_dir/alpaca_bars.jsonl; synthetic in mock mode, "
+                      "Alpaca free IEX in paper mode), never TradingView")
+
+
+def _bars_file(state_dir):
+    """Replay sessions write bars.jsonl; the Alpaca session writes alpaca_bars.jsonl."""
+    replay = os.path.join(state_dir, "bars.jsonl")
+    alpaca = os.path.join(state_dir, "alpaca_bars.jsonl")
+    sess, _ = read_json(os.path.join(state_dir, "session.json"))
+    mode = str(sess.get("broker_mode") or "") if isinstance(sess, dict) else ""
+    if mode.startswith("alpaca") or (not os.path.exists(replay) and os.path.exists(alpaca)):
+        return alpaca, BARS_SOURCE_ALPACA
+    return replay, BARS_SOURCE_REPLAY
 
 
 def _bars(state_dir):
-    rows, meta = read_jsonl(os.path.join(state_dir, "bars.jsonl"))
+    path, source = _bars_file(state_dir)
+    rows, meta = read_jsonl(path)
+    meta["bars_source"] = source
     manifest = None
     bars = []
     for row in rows:
@@ -734,8 +815,12 @@ class DeskHandler(BaseHTTPRequestHandler):
                                         "state_dir": self.state_dir,
                                         "controller_attached": attached,
                                         "manager_attached": attached,
-                                        "routes": sorted(CONTROL_ROUTES),
-                                        "simulated": True})
+                                        "routes": self.server.available_routes(),
+                                        "limits_routes": list(LIMITS_ROUTES),
+                                        "lab_api": self.server.has_method("lab_view"),
+                                        "lab_page": os.path.isfile(LAB_PATH),
+                                        "broker_mode": self.server.broker_mode(),
+                                        "simulated": self.server.simulated()})
             if route == "/api/session":
                 obj, meta = read_json(os.path.join(self.state_dir, "session.json"))
                 body = dict(obj) if isinstance(obj, dict) else {}
@@ -745,7 +830,26 @@ class DeskHandler(BaseHTTPRequestHandler):
                 body["_controls_file"] = controls if isinstance(controls, dict) else None
                 body["_controller_attached"] = self.server.controller is not None
                 body["_manager_attached"] = body["_controller_attached"]
+                # The adapter's own on/off file (alpaca/state.py), so a restart shows the
+                # persisted state even before the session writes its `adapter` field.
+                adapter, _ = read_json(os.path.join(self.state_dir, "alpaca_paper.json"))
+                body["_adapter_file"] = adapter if isinstance(adapter, dict) else None
                 return self._send(200, body)
+            if route == "/api/limits":
+                return self._send(200, _sizing().worksheet(self.state_dir))
+            if route == "/api/lab":
+                return self._send(*self.server.call_read("lab_view", {}))
+            if route == "/api/lab/verify":
+                lab_id = (query.get("id") or [""])[0]
+                if not LAB_ID_RE.fullmatch(lab_id):
+                    return self._send(400, {"ok": False, "error": "id must be 1-200 letters, digits, . _ : -"})
+                return self._send(*self.server.call_read("lab_verify", {"id": lab_id}, positional=True))
+            if route in ("/lab", "/lab.html"):
+                if not os.path.isfile(LAB_PATH):
+                    return self._send(404, "The decision lab page (ui/lab.html) is not in this build yet.",
+                                      "text/plain; charset=utf-8")
+                with open(LAB_PATH, "rb") as fh:
+                    return self._send(200, fh.read(), "text/html; charset=utf-8")
             if route == "/api/bars":
                 bars, manifest, meta = _bars(self.state_dir)
                 sess, _ = read_json(os.path.join(self.state_dir, "session.json"))
@@ -756,7 +860,7 @@ class DeskHandler(BaseHTTPRequestHandler):
                 meta["replay_clock_utc"] = clock
                 meta["bars_in_file"] = total
                 return self._send(200, {"items": bars, "count": len(bars), "manifest": manifest,
-                                        "source": "desk replay bars (state_dir/bars.jsonl), never TradingView",
+                                        "source": meta.get("bars_source") or BARS_SOURCE_REPLAY,
                                         "_meta": meta})
             if route == "/api/decisions":
                 rows, meta = read_jsonl(os.path.join(self.state_dir, "decisions.jsonl"))
@@ -765,7 +869,7 @@ class DeskHandler(BaseHTTPRequestHandler):
                     match = [r for r in rows if str(r.get("decision_id")) == reveal]
                     if not match:
                         return self._send(404, {"ok": False, "error": "unknown decision_id"})
-                    item = dict(match[-1])
+                    item = _with_lines(match[-1])
                     if item.get("outcome") is None:  # join the closed round trip (mock fills)
                         fr, _ = read_json(os.path.join(self.state_dir, "review.json"))
                         trips = [t for t in _all_round_trips(fr if isinstance(fr, dict) else {})
@@ -774,7 +878,7 @@ class DeskHandler(BaseHTTPRequestHandler):
                         if trips:
                             item["outcome"] = outcome_from_round_trip(trips[-1])
                     return self._send(200, {"item": item, "revealed": True, "_meta": meta})
-                items = [_strip_outcome(r) for r in rows]
+                items = [_with_lines(_strip_outcome(r)) for r in rows]
                 markers = sum(1 for r in rows if r.get("action") in MARKER_ACTIONS)
                 return self._send(200, {"items": items, "count": len(items), "marker_count": markers,
                                         "outcomes_hidden": True, "_meta": meta})
@@ -811,7 +915,7 @@ class DeskHandler(BaseHTTPRequestHandler):
             return self._send(403, {"ok": False, "error": "loopback host only"})
         url = urlparse(self.path)
         route = url.path.rstrip("/")
-        if route not in CONTROL_ROUTES:
+        if route not in CONTROL_ROUTES and route not in LIMITS_ROUTES:
             return self._send(404, {"ok": False, "error": "no such route"})
         origin = self.headers.get("Origin")
         if origin and urlparse(origin).hostname not in LOOPBACK_HOSTS:
@@ -841,11 +945,18 @@ class DeskHandler(BaseHTTPRequestHandler):
                 return self._send(400, {"ok": False, "error": "bad JSON"})
             if not isinstance(body, dict):
                 body = {}
+        if route in LIMITS_ROUTES:
+            return self._send(*self.server.limits_post(route, body))
         request, method_name = CONTROL_ROUTES[route][:2]
         query = parse_qs(url.query)
         confirmed = body.get("confirm") is True or (query.get("confirm") or [""])[0] in ("1", "true")
+        if request in ALPACA_REQUESTS and not self.server.has_method(method_name):
+            # Not queued for later: a recorded "pending enable" would imply a background job.
+            return self._send(501, {"ok": False, "request": request, "recorded": False,
+                                    "error": "the Alpaca paper adapter is not running in this desk "
+                                             "(start it with --broker alpaca-paper); nothing was recorded"})
         if request in CONFIRM_REQUIRED and not confirmed:
-            label = "Stop & Close" if request == "stop_close" else "Clear Stop"
+            label = CONFIRM_LABELS.get(request, request)
             return self._send(400, {"ok": False, "error": "%s needs confirm=true" % label,
                                     "request": request, "action": request})
         try:
@@ -891,6 +1002,98 @@ class DeskServer(ThreadingHTTPServer):
         obj, _ = read_json(os.path.join(self.state_dir, "session.json"))
         return obj if isinstance(obj, dict) else None
 
+    # -- capability checks (the coordinator's controller may not have every method yet) --
+
+    def has_method(self, name):
+        return self.controller is not None and callable(getattr(self.controller, name, None))
+
+    def available_routes(self):
+        """Control routes the page may offer. Alpaca routes appear only when the attached
+        controller really has the method, so offline desks never show an Enable button."""
+        out = []
+        for route, spec in CONTROL_ROUTES.items():
+            if spec[0] in ALPACA_REQUESTS and not self.has_method(spec[1]):
+                continue
+            out.append(route)
+        return sorted(out)
+
+    def broker_mode(self):
+        sess = self._session() or {}
+        mode = sess.get("broker_mode")
+        return mode if isinstance(mode, str) and mode else "offline-fake"
+
+    def simulated(self):
+        """True unless orders go to Alpaca's paper host. Paper is still not real money."""
+        return self.broker_mode() != "alpaca-paper"
+
+    def call_read(self, name, kwargs, positional=False):
+        """Call a read-only controller view (lab_view, lab_verify). Returns (code, body)."""
+        if not self.has_method(name):
+            return 501, {"ok": False, "error": "the decision lab is not available in this desk build",
+                         "method": name}
+        fn = getattr(self.controller, name)
+        try:
+            with self._control_lock:
+                out = fn(*kwargs.values()) if positional else fn(**kwargs)
+        except Exception as exc:
+            return 500, {"ok": False, "error": "%s: %s" % (exc.__class__.__name__, str(exc)[:300])}
+        return 200, _jsonable(out)
+
+    # -- operator limits worksheet (alpaca/sizing.py); values are Matthew's, never filled here --
+
+    def limits_post(self, route, body):
+        """POST /api/limits/{draft,effects,approve}. Returns (code, body).
+
+        Draft and approve write only <state_dir>/limits_draft.json / limits_approved.json and
+        append an audit row with the action and hash, never the values."""
+        sizing = _sizing()
+        action = route.rsplit("/", 1)[-1]
+        try:
+            with self._control_lock:
+                if action == "draft":
+                    values = body.get("values")
+                    if not isinstance(values, dict):
+                        raise sizing.LimitsError("send the draft as {\"values\": {...}}")
+                    copied = body.get("copied_from")
+                    row = sizing.save_draft(self.state_dir, values,
+                                            copied_from=copied if isinstance(copied, str) else None)
+                    self._append({"ts": utc_now_iso(), "action": "limits_draft", "source": "ui",
+                                  "status": "saved", "complete": row.get("complete"),
+                                  "copied_from": row.get("copied_from")})
+                    return 200, {"ok": True, "action": "limits_draft", "draft": row,
+                                 "worksheet": sizing.worksheet(self.state_dir)}
+                if action == "effects":
+                    values = body.get("values")
+                    if not isinstance(values, dict):
+                        values = (sizing.read_draft(self.state_dir) or {}).get("values") or {}
+                    kw = {}
+                    for key in EFFECT_KEYS:
+                        if body.get(key) not in (None, ""):
+                            kw[key] = body.get(key)
+                    if "ref_price" not in kw or "stop_distance" not in kw:
+                        raise sizing.LimitsError("give a reference price and a stop distance")
+                    return 200, {"ok": True, "action": "limits_effects",
+                                 "effects": sizing.effects(values, **kw)}
+                confirm = body.get("confirm")
+                reason = body.get("reason")
+                snap = sizing.approve(self.state_dir,
+                                      confirm if isinstance(confirm, str) else "",
+                                      reason if isinstance(reason, str) else "")
+                self._append({"ts": utc_now_iso(), "action": "limits_approve", "source": "ui",
+                              "status": "approved", "hash": snap.get("hash"),
+                              "previous_hash": snap.get("previous_hash"),
+                              "changed_fields": [d.get("field") for d in snap.get("diff") or []
+                                                 if isinstance(d, dict)]})
+                return 200, {"ok": True, "action": "limits_approve", "approved": snap,
+                             "note": "A running session keeps the limits it loaded at start; the "
+                                     "banner's limits source says which. Restart the desk to use these.",
+                             "worksheet": sizing.worksheet(self.state_dir)}
+        except sizing.LimitsError as exc:
+            return 400, {"ok": False, "action": "limits_" + action, "error": str(exc)}
+        except (TypeError, ValueError) as exc:
+            return 400, {"ok": False, "action": "limits_" + action,
+                         "error": "bad limits input (%s)" % exc.__class__.__name__}
+
     def record_control(self, request, method_name, body, kwargs=None, fallbacks=()):
         """Append {ts, action, body} durably first (fsync), then call the
         controller method if one is attached, then record the result under the
@@ -899,14 +1102,15 @@ class DeskServer(ThreadingHTTPServer):
         with self._control_lock:
             req_id = "ui-%s-%s" % (request, uuid.uuid4().hex[:10])
             attached = self.controller is not None
+            simulated = self.simulated()
             row = {"ts": utc_now_iso(), "action": request, "body": _clean_body(body),
                    "request_id": req_id, "request": request, "method": method_name,
                    "source": "ui", "status": "requested", "controller_attached": attached,
-                   "simulated": True}
+                   "simulated": simulated, "broker_mode": self.broker_mode()}
             path = self._append(row)
             result = {"ok": True, "action": request, "request": request, "request_id": req_id,
                       "written_to": path, "controller_attached": attached,
-                      "controller_called": False, "simulated": True}
+                      "controller_called": False, "simulated": simulated}
             if attached:
                 target, call_kwargs = None, kwargs
                 for name, kw in ((method_name, kwargs),) + tuple(fallbacks):
@@ -941,7 +1145,7 @@ class DeskServer(ThreadingHTTPServer):
                               "request": request, "method": method_name, "source": "ui",
                               "status": status, "ok": result["ok"],
                               "controller_result": result.get("controller_result"),
-                              "error": result.get("error"), "simulated": True})
+                              "error": result.get("error"), "simulated": simulated})
             else:
                 result["note"] = ("No controller attached; the request is recorded in "
                                   "control_requests.jsonl for the session runner to apply.")

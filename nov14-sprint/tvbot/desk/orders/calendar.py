@@ -26,8 +26,18 @@ fixture_profile(): the synthetic tvbot fixtures put seven hourly bars at
 14:30Z..20:30Z on every weekday with no holidays and no DST shift. Use that
 profile when replaying tvbot/fixtures/normal_bars.jsonl, or the default
 Chicago calendar will flag those bars as out of session.
+
+nyse_2026_2027(): the same Central-time regular session with NYSE's full
+published 2026 and 2027 holiday and early-close table, covered
+2026-01-01..2027-12-31 (NYSE_COVERED). Source: https://www.nyse.com/markets/hours-calendars,
+read 2026-11-15 (cited in alpaca/RESEARCH.md section 5). It agrees with the
+default profile on 2026-10-01..2026-12-31; the default keeps its narrower range.
+as_alpaca_rows() renders a profile as Alpaca GET /v2/calendar rows (ET HH:MM)
+and cross_check(calendar, rows) reports where Alpaca's rows and the local table
+disagree, without guessing for uncovered dates.
 """
 import datetime as _dt
+import re as _re
 from zoneinfo import ZoneInfo
 
 UTC = _dt.timezone.utc
@@ -39,6 +49,18 @@ DEFAULT_EARLY_CLOSES = {"2026-11-27": "12:00", "2026-12-24": "12:00"}
 DEFAULT_COVERED = ("2026-10-01", "2026-12-31")
 WEEKDAYS = (0, 1, 2, 3, 4)
 _DEFAULT = object()
+
+# NYSE published schedule (https://www.nyse.com/markets/hours-calendars, read 2026-11-15).
+NYSE_CLOSED_DAYS = (
+    "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25",
+    "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-12-25",
+    "2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26", "2027-05-31",
+    "2027-06-18", "2027-07-05", "2027-09-06", "2027-11-25", "2027-12-24",
+)
+# 1:00 p.m. ET early closes, written in Central time like the default profile.
+NYSE_EARLY_CLOSES = {"2026-11-27": "12:00", "2026-12-24": "12:00", "2027-11-26": "12:00"}
+NYSE_COVERED = ("2026-01-01", "2027-12-31")
+ALPACA_CALENDAR_TZ = "America/New_York"   # zone of /v2/calendar open/close [UNVERIFIED, see RESEARCH.md]
 
 
 class CalendarNotCovered(ValueError):
@@ -132,6 +154,27 @@ class SessionCalendar(object):
         """Calendar matching tvbot/fixtures: 14:30Z-21:30Z weekdays, no holidays."""
         return cls(tz="UTC", sessions=(("14:30", "21:30"),), closed_days=(),
                    early_closes={}, name="fixture-utc-1430-2130")
+
+    @classmethod
+    def nyse_2026_2027(cls):
+        """US equity regular hours (08:30-15:00 CT) with NYSE's 2026-2027 table."""
+        return cls(tz=DEFAULT_TZ, sessions=DEFAULT_SESSIONS, closed_days=NYSE_CLOSED_DAYS,
+                   early_closes=NYSE_EARLY_CLOSES, covered=NYSE_COVERED,
+                   name="NYSE regular hours 2026-2027 (CT)")
+
+    def as_alpaca_rows(self, start, end):
+        """Trading days start..end as Alpaca /v2/calendar rows: {date, open, close} in ET HH:MM."""
+        et = ZoneInfo(ALPACA_CALENDAR_TZ)
+        d, last = _date(start), _date(end)
+        out = []
+        while d <= last:
+            w = self.windows(d)
+            if w:
+                out.append({"date": d.isoformat(),
+                            "open": w[0][0].astimezone(et).strftime("%H:%M"),
+                            "close": w[-1][1].astimezone(et).strftime("%H:%M")})
+            d += _dt.timedelta(days=1)
+        return out
 
     def describe(self):
         return {
@@ -244,3 +287,72 @@ class SessionCalendar(object):
                 if end > u:
                     return max(start, u) if start <= u else start
         return None
+
+
+_HHMM = _re.compile(r"^\d{2}:\d{2}$")
+
+
+def _alpaca_rows(rows):
+    """Validate Alpaca /v2/calendar rows; return {date: (open, close)} and duplicate dates."""
+    if not isinstance(rows, list):
+        raise ValueError("calendar rows must be a list")
+    seen, dups = {}, []
+    for r in rows:
+        if not isinstance(r, dict):
+            raise ValueError("calendar row is not an object: %r" % (r,))
+        try:
+            d = _dt.date.fromisoformat(str(r["date"]))
+            op, cl = str(r["open"]), str(r["close"])
+        except (KeyError, ValueError) as exc:
+            raise ValueError("bad calendar row %r: %s" % (r, exc))
+        if not (_HHMM.match(op) and _HHMM.match(cl)):
+            raise ValueError("calendar row times must be HH:MM: %r" % (r,))
+        _hm(op), _hm(cl)
+        if d in seen:
+            dups.append(d)
+        seen[d] = (op, cl)
+    return seen, dups
+
+
+def cross_check(calendar, rows, start=None, end=None):
+    """Compare Alpaca GET /v2/calendar rows with a local SessionCalendar.
+
+    Returns a list of differences (empty when they agree), each
+    {"date", "kind", "local", "alpaca"} where kind is one of
+    not_covered, missing_at_alpaca, closed_locally, open_differs, close_differs,
+    duplicate_row. Alpaca times are read as US Eastern. Dates the local table does
+    not cover are reported as not_covered, never guessed. The range defaults to
+    the first..last row date. Raises ValueError on malformed rows.
+    """
+    by_date, dups = _alpaca_rows(rows)
+    if start is None and end is None and not by_date:
+        return []
+    first = _date(start) if start is not None else min(by_date)
+    last = _date(end) if end is not None else max(by_date)
+    et = ZoneInfo(ALPACA_CALENDAR_TZ)
+    out = [{"date": d.isoformat(), "kind": "duplicate_row", "local": None, "alpaca": by_date[d]}
+           for d in sorted(set(dups))]
+    d = first
+    while d <= last:
+        row = by_date.get(d)
+        if not calendar.covers(d):
+            if row is not None or d.weekday() < 5:
+                out.append({"date": d.isoformat(), "kind": "not_covered", "local": None,
+                            "alpaca": list(row) if row else None})
+            d += _dt.timedelta(days=1)
+            continue
+        w = calendar.windows(d)
+        local = None
+        if w:
+            local = [w[0][0].astimezone(et).strftime("%H:%M"), w[-1][1].astimezone(et).strftime("%H:%M")]
+        if local and row is None:
+            out.append({"date": d.isoformat(), "kind": "missing_at_alpaca", "local": local, "alpaca": None})
+        elif row is not None and not local:
+            out.append({"date": d.isoformat(), "kind": "closed_locally", "local": None, "alpaca": list(row)})
+        elif row is not None:
+            if row[0] != local[0]:
+                out.append({"date": d.isoformat(), "kind": "open_differs", "local": local, "alpaca": list(row)})
+            if row[1] != local[1]:
+                out.append({"date": d.isoformat(), "kind": "close_differs", "local": local, "alpaca": list(row)})
+        d += _dt.timedelta(days=1)
+    return out

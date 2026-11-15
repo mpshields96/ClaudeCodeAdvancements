@@ -40,7 +40,7 @@ from orders import manager as _mgr_mod  # noqa: E402
 from orders.manager import OrderManager  # noqa: E402
 from orders.fake_broker import FakeBroker  # noqa: E402
 from orders.calendar import SessionCalendar, parse_ts, iso  # noqa: E402
-from orders.intake import check_bar  # noqa: E402
+from orders.intake import check_bar, DEFAULT_MAX_AGE_S  # noqa: E402
 
 try:
     from strategies.base import DEFAULT_COSTS as _COSTS  # noqa: E402
@@ -330,8 +330,22 @@ def strategy_names():
         return list(engine.EMA_KINDS) + list(engine.GOLD_KINDS) + ["cash"]
 
 
+def _shadow_names():
+    """Shadow (lab-only) strategies. They are never loadable as the active strategy."""
+    names = {"challenger"}
+    try:
+        import lab  # noqa: F401
+        names |= set(getattr(lab, "SHADOW", {}) or {})
+    except Exception:
+        pass
+    return names
+
+
 def load_strategy(name, cfg):
     """Return (source, decide). decide(bars_so_far, position, cfg) -> Decision."""
+    if name in _shadow_names():
+        raise ValueError("strategy %r is a shadow challenger for the decision lab only; it can never be "
+                         "the active strategy (no auto-promotion)" % (name,))
     try:
         from strategies.registry import STRATEGIES
         if name in STRATEGIES:
@@ -385,22 +399,16 @@ class SessionController(object):
         self.state_dir = os.path.abspath(state_dir)
         os.makedirs(self.state_dir, exist_ok=True)
         self.lock = threading.RLock()
-        self.manifest, self.bars = load_bars(bars_path)
+        self.manifest, self.bars = self._load_bars(bars_path)
         self.symbol = (self.manifest or {}).get("symbol") or (self.bars[0]["symbol"] if self.bars else "SYNTH")
         self.minutes = int((self.manifest or {}).get("timeframe_minutes") or 60)
-        self.calendar = SessionCalendar.fixture_profile()
+        self.calendar = self._make_calendar()
         self.strategy = strategy
         self.strategy_cfg = dict(DEMO_STRATEGY_CFG if strategy_cfg is None else strategy_cfg)
         self.strategy_source, self.decide = load_strategy(strategy, self.strategy_cfg)
         self.limits = dict(limits or TEST_LIMITS)
         self.session_config = self._bind_session_config()
-        broker_path = os.path.join(self.state_dir, "broker_state.json")
-        self.broker = DeskFakeBroker(broker_seed, persist_path=broker_path, faults=faults, symbol=self.symbol)
-        self.broker_restored = False
-        if os.path.exists(broker_path):
-            with open(broker_path) as fh:
-                self.broker.restore(json.load(fh))
-            self.broker_restored = True
+        self.broker, self.broker_restored = self._make_broker(broker_seed, faults)
         self.broker.exec_caps = {k: self.limits.get(k) for k in ("per_trade_notional", "gross_exposure")}
         if not isinstance(getattr(self.broker, "exec_refusals", None), list):
             self.broker.exec_refusals = []
@@ -412,7 +420,7 @@ class SessionController(object):
             mgr_limits["max_loss_per_trade"] = self.limits["max_loss_per_trade"]
         self.engine_checks_max_loss = "max_loss_per_trade" in _mgr_mod.LIMIT_KEYS
         self.mgr = OrderManager(self.state_dir, self.broker, mgr_limits, symbol=self.symbol,
-                                calendar=self.calendar, strategy=strategy, data_label=DATA_LABEL)
+                                calendar=self.calendar, strategy=strategy, data_label=self.data_label)
         self.paths = {k: os.path.join(self.state_dir, v) for k, v in {
             "session": "session.json", "bars": "bars.jsonl", "decisions": "decisions.jsonl",
             "ledger": "ledger.jsonl", "review": "review.json", "progress": "progress.json",
@@ -452,10 +460,83 @@ class SessionController(object):
             self.mgr.reconcile(reason="restart")
         self._write_state()
 
+    # ------------------------------------------------------ subclass hooks
+    # The offline replay desk uses these defaults unchanged; desk/alpaca_session.py
+    # overrides them for the opt-in Alpaca paper adapter.
+    data_label = DATA_LABEL
+    bar_max_age_s = DEFAULT_MAX_AGE_S
+    fixed_qty_label = FIXED_QTY_LABEL
+
+    def _load_bars(self, bars_path):
+        return load_bars(bars_path)
+
+    def _make_calendar(self):
+        return SessionCalendar.fixture_profile()
+
+    def _make_broker(self, broker_seed, faults):
+        broker_path = os.path.join(self.state_dir, "broker_state.json")
+        broker = DeskFakeBroker(broker_seed, persist_path=broker_path, faults=faults, symbol=self.symbol)
+        restored = False
+        if os.path.exists(broker_path):
+            with open(broker_path) as fh:
+                broker.restore(json.load(fh))
+            restored = True
+        return broker, restored
+
+    def _row_flags(self):
+        """Evidence flags written on every bars.jsonl / decisions.jsonl row."""
+        return {"simulated": True}
+
+    def _lab_observe(self, bar, d):
+        """Called after the decision is recorded and before it is routed (no-op offline)."""
+        return None
+
+    def _entry_bounds(self, d, bar, st, qty, side, entry, inval):
+        """Return (limit_price_or_None, refusal_or_None). Offline: unpriced, no refusal."""
+        return None, None
+
+    def _intake_max_age(self, bar):
+        return self.bar_max_age_s
+
+    def _warmup_only(self, bar):
+        """True for a valid closed bar that may warm strategy features but must never be routed."""
+        return False
+
+    def _ledger_flags(self):
+        return {"mock_fills": True}
+
+    def _warmup_step(self, bar):
+        """A valid but late (catch-up) bar warms the strategy's history only. It never reaches the
+        broker, the strategy is not asked to trade on it, and working entries are cancelled.
+        Calendar-driven exits (EOD flatten, session end) still run: they only reduce exposure."""
+        cancelled = self.mgr._cancel_kinds(["entry"])
+        self.i += 1
+        self.seen.append(bar)
+        _append_jsonl(self.paths["bars"], dict(bar, trusted=True, warmup_only=True, **self._row_flags()))
+        try:
+            late_s = int((parse_ts(bar["delivered_ts"]) - parse_ts(bar["ts_close"])).total_seconds())
+        except (KeyError, TypeError, ValueError):
+            late_s = None
+        d = {"decision_id": "dec-warmup-%d" % self.i, "action": "pass", "qty": 0,
+             "reason_code": "WARMUP_ONLY_LATE_BAR",
+             "reason_text": "valid closed bar fetched %ss after its close (trading limit %ds): it warms "
+                            "strategy history only; never routed, no order" % (late_s, int(self.bar_max_age_s)),
+             "refusal_checks": [{"id": "FRESH_FOR_TRADING", "passed": False,
+                                 "detail": "received %s, closed %s" % (bar.get("delivered_ts"), bar.get("ts_close"))}],
+             "ts_knowable": bar.get("delivered_ts"), "bar_seq": bar.get("seq"), "bar_ts_close": bar.get("ts_close"),
+             "warmup": {"history_bars": len(self.hist)},
+             "routing": {"status": "no_order", "why": "WARMUP_ONLY",
+                         "entries_cancelled": len((cancelled or ([],))[0])}}
+        d.update(self._row_flags())
+        _append_jsonl(self.paths["decisions"], d)
+        self.decisions.append(d)
+        self._desk_audit("warmup_bar", bar_seq=bar.get("seq"), late_s=late_s, history_bars=len(self.hist))
+        self._session_roles(bar)
+
     def _intake(self, bar):
         """Run the intake guard on a delivered bar. Returns (ok, code, detail).
         A failed bar never reaches the fake broker or the strategy."""
-        ok, code, detail = check_bar(bar, self._intake_prev, self.calendar)
+        ok, code, detail = check_bar(bar, self._intake_prev, self.calendar, max_age_s=self._intake_max_age(bar))
         if ok:
             # A completed bar's high/low/close are not knowable before ts_close. Refuse a bar
             # whose receipt time is earlier than its close (reviewer case: fresh exchange_ts and
@@ -578,7 +659,7 @@ class SessionController(object):
             checks.append({"check": "data", "ok": False, "detail": "replay finished: no bars left"})
         else:
             checks.append({"check": "data", "ok": True,
-                           "detail": "next replay bar %s (%s)" % (nxt["ts_open"], DATA_LABEL)})
+                           "detail": "next replay bar %s (%s)" % (nxt["ts_open"], self.data_label)})
         checks.append({"check": "broker reconciled", "ok": not any(a.get("blocking", True) for a in st["alarms"]),
                        "detail": "%s; alarms: %d" % (BROKER_LABEL, len(st["alarms"]))})
         checks.append({"check": "limits loaded", "ok": True,
@@ -749,7 +830,7 @@ class SessionController(object):
             self.mgr.on_bar(bar)                 # order engine records its own BAR_ alarm
             self.i += 1
             self.seen.append(bar)
-            _append_jsonl(self.paths["bars"], dict(bar, simulated=True, trusted=False, intake=code))
+            _append_jsonl(self.paths["bars"], dict(bar, trusted=False, intake=code, **self._row_flags()))
             ts_k = bar.get("delivered_ts") or bar.get("ts_close")
             d = {"decision_id": "dec-rejected-%s-%d" % (code, self.i), "action": "pass", "qty": 0,
                  "reason_code": "DATA_REJECTED_" + str(code),
@@ -758,14 +839,17 @@ class SessionController(object):
                  "refusal_checks": [{"id": "DATA_" + str(code), "passed": False,
                                      "detail": (detail or {}).get("msg") if isinstance(detail, dict) else detail}],
                  "ts_knowable": ts_k, "bar_seq": bar.get("seq"), "bar_ts_close": bar.get("ts_close"),
-                 "simulated": True,
                  "routing": {"status": "no_order", "why": "DATA_REJECTED",
                              "entries_cancelled": len((cancelled or ([],))[0])}}
+            d.update(self._row_flags())
             _append_jsonl(self.paths["decisions"], d)
             self.decisions.append(d)
             self._desk_audit("data_rejected", code=code, bar_seq=bar.get("seq"),
                              entries_cancelled=d["routing"]["entries_cancelled"])
             self._session_roles(bar)
+            return
+        if self._warmup_only(bar):
+            self._warmup_step(bar)
             return
         n_ref = len(self.broker.exec_refusals)
         self.broker.step(bar)
@@ -775,7 +859,7 @@ class SessionController(object):
         self.mgr.on_bar(bar)
         self.i += 1
         self.seen.append(bar)
-        _append_jsonl(self.paths["bars"], dict(bar, simulated=True, trusted=True))
+        _append_jsonl(self.paths["bars"], dict(bar, trusted=True, **self._row_flags()))
         self._ensure_protective(bar)
         st = self.mgr.state()
         pos = st["exposure"]["position_qty"]
@@ -795,8 +879,9 @@ class SessionController(object):
             # HYPOTHETICAL fixed-quantity demo preset (TEST). Exits stay capped at the real position.
             d["engine_qty"] = d.get("qty")
             d["qty"] = int(fq)
-            d["qty_basis"] = FIXED_QTY_LABEL % int(fq)
-        d["simulated"] = True
+            d["qty_basis"] = self.fixed_qty_label % int(fq)
+        d.update(self._row_flags())
+        self._lab_observe(bar, d)
         d["routing"] = self._route(d, bar, st)
         _append_jsonl(self.paths["decisions"], d)
         self.decisions.append(d)
@@ -855,10 +940,18 @@ class SessionController(object):
                                      % (qty, entry, float(inval), _cost_usd(d), risk,
                                         self.limits["max_loss_per_trade"], self.limits["label"]))
         side = "buy" if action == "enter_long" else "sell"
-        iid = self.mgr.submit_intent({"decision_id": d["decision_id"], "kind": "entry", "side": side,
-                                      "qty": int(qty), "ref_price": ref, "signal_ts": d.get("ts_knowable"),
-                                      "invalidation": float(inval), "max_loss_usd": round(risk, 4)})
+        limit, refusal = self._entry_bounds(d, bar, st, int(qty), side, entry, float(inval))
+        if refusal:
+            return self._desk_reject(d, refusal[0], refusal[1])
+        intent = {"decision_id": d["decision_id"], "kind": "entry", "side": side,
+                  "qty": int(qty), "ref_price": ref, "signal_ts": d.get("ts_knowable"),
+                  "invalidation": float(inval), "max_loss_usd": round(risk, 4)}
+        if limit is not None:
+            intent["limit"] = float(limit)
+        iid = self.mgr.submit_intent(intent)
         res = self._intent_result(iid)
+        if limit is not None:
+            res["limit"] = float(limit)
         res["risk_usd"] = round(risk, 4)
         res["invalidation"] = float(inval)
         return res
@@ -966,7 +1059,7 @@ class SessionController(object):
     def sizing(self):
         fq = self.strategy_cfg.get("fixed_qty")
         if fq:
-            return {"mode": "fixed", "fixed_qty": int(fq), "label": FIXED_QTY_LABEL % int(fq),
+            return {"mode": "fixed", "fixed_qty": int(fq), "label": self.fixed_qty_label % int(fq),
                     "note": "Entries use this quantity; exits are capped at the open mock position."}
         return {"mode": "strategy", "fixed_qty": None,
                 "label": "strategy's own sizing (TEST order notional), checked against TEST limits"}
@@ -1123,7 +1216,7 @@ class SessionController(object):
             "tradingview_symbol": TRADINGVIEW_REFERENCE_SYMBOL,
             "tradingview_label": TRADINGVIEW_REFERENCE_LABEL,
             "strategies_available": strategy_names(),
-            "data_label": DATA_LABEL,
+            "data_label": self.data_label,
             "preflight": self.preflight(),
             "schedule": {"enabled": ctl["schedule_enabled"], "clock": "SIMULATED",
                          "next_open_utc": iso(nopen) if nopen else None,
@@ -1161,8 +1254,9 @@ class SessionController(object):
             sess = self.session_state()
             _atomic_json(self.paths["session"], sess)
             rows = self.mgr.ledger_rows()
+            flags = self._ledger_flags()
             for r in rows:
-                r["mock_fills"] = True
+                r.update(flags)
             _atomic_jsonl(self.paths["ledger"], rows)
             _atomic_json(self.paths["review"], self.review())
             _atomic_json(self.paths["progress"], {"bars_done": self.i, "phase": self.phase,

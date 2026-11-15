@@ -1,9 +1,9 @@
+import os
 """Tests for orders.fake_broker (in-process, simulated, no network).
 
 Run: /usr/bin/python3 -I -m unittest discover -s <desk>/tests -p 'test_orders*'
 """
 import json
-import os
 import sys
 import unittest
 

@@ -111,3 +111,65 @@ including weeks with no fills, so a prior week can be picked.
 `desk_audit.jsonl`, `controls.json`, `control_requests.jsonl`, `broker_state.json`
 (the fake broker's book, kept apart from the order engine's journal), `review.json`,
 and `reports/` (the weekly PDF and HTML).
+
+## Alpaca paper (opt-in, SPY only, free IEX only)
+
+The default desk above is unchanged and offline. The Alpaca paper mode is a separate,
+explicit opt-in. Its fixed hosts are `https://paper-api.alpaca.markets` and
+`https://data.alpaca.markets`. Redirects and foreign origins are refused. It never uses a paid route.
+Every Alpaca state dir is ignored by git (`state-alpaca-*/`).
+
+```bash
+/usr/bin/python3 -IB nov14-sprint/tvbot/desk/launch.py --broker alpaca-paper --check
+```
+Mock walkthrough in a temporary dir: an in-process fake venue, synthetic ids and synthetic SPY minutes.
+No socket and no credential are involved. Prints `ALPACA MOCK CHECK PASS`. It checks:
+- the adapter stays off until a confirmed Enable;
+- there is no Play or schedule;
+- the warm start never routes stale history;
+- each armed entry is a bounded LIMIT buy within the TEST notional cap;
+- Stop disables the adapter, and that survives a restart;
+- `https` refuses to start without approved limits.
+
+```bash
+/usr/bin/python3 -IB nov14-sprint/tvbot/desk/launch.py --broker alpaca-paper
+```
+Mock desk in `desk/state-alpaca-mock`. Finder: `desk/Open Alpaca Paper Desk.command` runs the check, shows the
+read-only first-test command, then starts this mock desk.
+
+```bash
+/usr/bin/python3 -IB nov14-sprint/tvbot/desk/alpaca/readiness.py --state-dir <your paper state dir> --limits <your approved limits file>
+```
+Matthew's own first connection check. It needs approved limits before it touches any credential, then makes four GET requests:
+- account status (redacted);
+- the SPY asset;
+- the venue clock;
+- the free IEX quote and its age.
+
+It never submits an order. Agents never run it, and they never run `--transport https`.
+
+```bash
+/usr/bin/python3 -IB nov14-sprint/tvbot/desk/launch.py --broker alpaca-paper --transport https --limits <your approved limits file>
+```
+Matthew's own supervised paper session, after the readiness check. Manual only.
+
+Refusals (exit 2, nothing sent):
+- `--demo` or `--autoplay` with Alpaca;
+- `--transport` or `--limits` without Alpaca;
+- `--check` with `https`.
+
+`--qty` is ignored in Alpaca mode. Sizing comes only from the approved limits snapshot, or the labeled
+TEST VALUES in mock mode.
+
+Controls in Alpaca mode:
+- The step buttons (`/api/advance`, `/api/advance10`) each do one "Check for new bars".
+- Play, Run to end and the schedule are refused. Auto-arm is refused. Arm is per day, by the operator.
+- Enable (`/api/alpaca/enable`, needs `{"confirm": true}`) and Disable (`/api/alpaca/disable`, needs a reason) persist
+  across restarts. Stop also disables the adapter.
+- Reconcile (`/api/alpaca/reconcile`) is read-only and still works while disabled or stopped. A failed or ambiguous
+  reconcile blocks new exposure until a clean reconcile.
+- Labels: `ALPACA MOCK` / mock fills / `MOCK` data in mock mode, and `ALPACA PAPER` / free IEX in https mode.
+  The historical study at `/spy-study` is labeled hindsight research and is not live data.
+
+Details: `alpaca/SETUP.md` (operator setup), `alpaca/CONTRACT.md` (adapter contract),
+`research/spy_november_2026/README.md` (the dated historical study and its data license).

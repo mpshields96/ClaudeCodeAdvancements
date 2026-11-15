@@ -2,7 +2,7 @@
 
 **Written 2026-11-15 by the orders worker. Paper desk only.**
 
-**Source.** The BTC order code at `Documents/Codex/2026-11-06/btc-private-review-closeout-coordinator/work/public-integration/order-live-r8b/`. I only read it; I didn't change any BTC file.
+**Source.** The private BTC order code, revision r8b, in a local agent workspace that is not published. I only read it; I didn't change any BTC file.
 
 **Status of that source.** Its own `NOT_REVIEWED.txt` says r8b is "FROZEN ... NOT REVIEWED. NOT FOR USE" and "G1 is NOT MET". That is why nothing below is copied code. These are design patterns, reimplemented in stdlib Python 3.9 for an in-process fake broker. Using one here says nothing about whether the BTC code is ready.
 

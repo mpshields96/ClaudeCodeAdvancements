@@ -664,5 +664,376 @@ class TestWeeklyReportAndPolish(unittest.TestCase):
         self.assertNotIn("s.tradingview_symbol || s.symbol", html)
 
 
+# --------------------------------------------------------------------------
+# Decision-price lines: strategies write {"price": float, "text": str} objects
+# --------------------------------------------------------------------------
+
+def _page():
+    with open(os.path.join(DESK_DIR, "ui", "index.html")) as fh:
+        return fh.read()
+
+
+STRATEGY_DECISION = {
+    "decision_id": "ema-x-1", "ts_knowable": "2026-06-01T15:30:02Z", "symbol": "SPY",
+    "strategy": "ema", "action": "enter_long", "qty": 4, "reason_code": "EMA_CROSS_UP",
+    "reason_text": "fast EMA crossed above slow", "case_for": "", "case_against": "",
+    "est_cost": {"usd": 0.37, "per_side_usd": 0.185, "basis": "bps model", "simulated": True},
+    "pass_condition": "", "refusal_checks": [], "simulated": True,
+    "trigger": {"price": 401.25, "text": "close above the slow EMA"},
+    "intended_entry": {"price": 401.3, "text": "next bar open"},
+    "intended_exit": {"price": None, "text": "exit on the cross back"},
+    "invalidation": {"price": 399.8, "text": "below the swing low"},
+}
+
+
+class TestDecisionPriceLines(unittest.TestCase):
+    def test_num_unwraps_price_objects(self):
+        self.assertEqual(server._num({"price": 401.25, "text": "x"}), 401.25)
+        self.assertEqual(server._num({"price": "399.5", "text": "x"}), 399.5)
+        self.assertIsNone(server._num({"price": None, "text": "none"}))
+        self.assertIsNone(server._num({"text": "no price key"}))
+        self.assertIsNone(server._num({"price": True}))
+        self.assertEqual(server._num(12), 12.0)
+        self.assertIsNone(server._num(None))
+        self.assertIsNone(server._num(False))
+
+    def test_decision_lines_flattens_both_shapes(self):
+        lines = server.decision_lines(STRATEGY_DECISION)
+        self.assertEqual(lines["trigger"], {"price": 401.25, "text": "close above the slow EMA"})
+        self.assertEqual(lines["intended_exit"], {"price": None, "text": "exit on the cross back"})
+        self.assertEqual(lines["invalidation"]["price"], 399.8)
+        plain = server.decision_lines({"trigger": 100.5, "intended_entry": None})
+        self.assertEqual(plain["trigger"], {"price": 100.5, "text": None})
+        self.assertEqual(plain["intended_entry"], {"price": None, "text": None})
+        self.assertEqual(set(plain), {"trigger", "intended_entry", "intended_exit", "invalidation"})
+
+    def test_api_decisions_carries_numeric_lines(self):
+        tmp = tempfile.mkdtemp(prefix="ui_lines_")
+        try:
+            with open(os.path.join(tmp, "decisions.jsonl"), "w") as f:
+                f.write(json.dumps(STRATEGY_DECISION) + "\n")
+            srv = server.make_server(tmp, host="127.0.0.1", port=0)
+            th = threading.Thread(target=srv.serve_forever, daemon=True)
+            th.start()
+            try:
+                port = srv.server_address[1]
+                for path in ("/api/decisions", "/api/decisions?reveal=ema-x-1"):
+                    conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+                    conn.request("GET", path)
+                    body = json.loads(conn.getresponse().read().decode("utf-8"))
+                    conn.close()
+                    item = body["items"][0] if "items" in body else body["item"]
+                    self.assertEqual(item["lines"]["trigger"]["price"], 401.25, path)
+                    self.assertEqual(item["lines"]["invalidation"]["text"], "below the swing low")
+                    self.assertEqual(item["est_cost_usd"], 0.37)
+                    # the original objects are kept as written
+                    self.assertEqual(item["trigger"], STRATEGY_DECISION["trigger"])
+            finally:
+                srv.shutdown()
+                srv.server_close()
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_page_num_unwraps_price_and_shows_line_text(self):
+        html = _page()
+        # num() unwraps {price, text} before the numeric test (chart lines + decision panel)
+        self.assertIn("typeof v === 'object' && 'price' in v", html)
+        self.assertIn("lineText(", html)
+        self.assertIn("costNum(d.est_cost)", html)
+
+
+# --------------------------------------------------------------------------
+# Alpaca paper (CONTRACT section 5): limits worksheet, adapter controls, lab
+# --------------------------------------------------------------------------
+
+# Synthetic fixture numbers for the worksheet mechanics only. They are not anyone's limits.
+SYNTH_LIMITS = {"fixed_shares": 3, "max_loss_per_trade": 111.0, "daily_loss": 222.0,
+                "per_trade_notional": 3333.0, "gross_exposure": 4444.0}
+
+
+class _PostMixin(object):
+    def post(self, path, body=None, headers=None):
+        st, _, raw = self.req("POST", path, body if body is not None else {}, headers=headers)
+        return st, json.loads(raw.decode("utf-8"))
+
+
+class TestLimitsRoutes(_PostMixin, _Base):
+    def _approved(self):
+        return os.path.join(self.state, "limits_approved.json")
+
+    def test_worksheet_draft_effects_approve(self):
+        ws = self.get_json("/api/limits")
+        self.assertEqual(ws["confirm_phrase"], "APPROVE PAPER LIMITS")
+        self.assertIn("fixed_shares", ws["fields"])
+        self.assertTrue(ws["test_examples"])
+        # an incomplete draft saves, but cannot be approved
+        st, j = self.post("/api/limits/draft", {"values": {"fixed_shares": 3}})
+        self.assertEqual(st, 200, j)
+        self.assertFalse(j["draft"]["complete"])
+        st, j = self.post("/api/limits/approve", {"confirm": "APPROVE PAPER LIMITS", "reason": "t"})
+        self.assertEqual(st, 400)
+        self.assertIn("not complete", j["error"])
+        self.assertFalse(os.path.exists(self._approved()))
+        # complete draft, effects, wrong phrase, then the real approval
+        st, j = self.post("/api/limits/draft", {"values": SYNTH_LIMITS})
+        self.assertEqual(st, 200, j)
+        self.assertTrue(j["draft"]["complete"])
+        st, j = self.post("/api/limits/effects", {"ref_price": 400, "stop_distance": 2,
+                                                  "fee_per_share": 0.01})
+        self.assertEqual(st, 200, j)
+        self.assertEqual(j["effects"]["notional"], 1200.0)
+        self.assertTrue(j["effects"]["all_pass"])
+        self.assertEqual(j["effects"]["assumptions"]["label"], "ASSUMED (not measured)")
+        st, j = self.post("/api/limits/effects", {"stop_distance": 2})
+        self.assertEqual(st, 400)
+        st, j = self.post("/api/limits/approve", {"confirm": "approve", "reason": "t"})
+        self.assertEqual(st, 400)
+        self.assertIn("APPROVE PAPER LIMITS", j["error"])
+        st, j = self.post("/api/limits/approve", {"confirm": True, "reason": "t"})
+        self.assertEqual(st, 400)
+        st, j = self.post("/api/limits/approve", {"confirm": "APPROVE PAPER LIMITS", "reason": " "})
+        self.assertEqual(st, 400)
+        self.assertFalse(os.path.exists(self._approved()))
+        st, j = self.post("/api/limits/approve", {"confirm": "APPROVE PAPER LIMITS",
+                                                  "reason": "synthetic fixture"})
+        self.assertEqual(st, 200, j)
+        self.assertEqual(j["approved"]["provenance"], "operator-approved")
+        self.assertIn("keeps the limits it loaded at start", j["note"])
+        self.assertTrue(os.path.exists(self._approved()))
+        self.assertIs(self.get_json("/api/limits")["approved_ok"], True)
+        # the audit trail names the action and hash, never the numbers
+        rows = [r for r in self.control_lines() if str(r.get("action", "")).startswith("limits_")]
+        self.assertEqual([r["action"] for r in rows][-1], "limits_approve")
+        for r in rows:
+            self.assertNotIn("values", r)
+            self.assertNotIn("3333", json.dumps(r))
+        self.assertEqual(rows[-1]["hash"], j["approved"]["hash"])
+
+    def test_bad_draft_refused(self):
+        for body in ({"values": {"fixed_shares": -1}}, {"values": {"fixed_shares": 1.5}},
+                     {"values": "x"}, {}):
+            st, j = self.post("/api/limits/draft", body)
+            self.assertEqual(st, 400, (body, j))
+            self.assertFalse(j["ok"])
+
+    def test_limits_routes_keep_the_post_guards(self):
+        st, j = self.post("/api/limits/draft", {"values": {}}, headers={"Origin": "http://evil.example"})
+        self.assertEqual(st, 403)
+        st, _, _ = self.req("POST", "/api/limits/approve", None, headers={"Content-Type": "text/plain"})
+        self.assertEqual(st, 415)
+
+
+class TestAlpacaRoutesAbsent(_PostMixin, _Base):
+    """Offline desk (v2 controller without adapter methods): no Enable, nothing recorded."""
+    manager = FakeController()
+
+    def test_alpaca_routes_501_and_record_nothing(self):
+        before = len(self.control_lines())
+        for path, body in (("/api/alpaca/enable", {"confirm": True}),
+                           ("/api/alpaca/disable", {"reason": "x"}),
+                           ("/api/alpaca/reconcile", {})):
+            st, j = self.post(path, body)
+            self.assertEqual(st, 501, (path, j))
+            self.assertIs(j["recorded"], False)
+            self.assertIn("--broker alpaca-paper", j["error"])
+        self.assertEqual(len(self.control_lines()), before)
+
+    def test_health_hides_alpaca_routes_and_reports_offline(self):
+        h = self.get_json("/api/health")
+        self.assertFalse([r for r in h["routes"] if r.startswith("/api/alpaca/")])
+        self.assertIn("/api/advance", h["routes"])
+        self.assertEqual(h["broker_mode"], "offline-fake")
+        self.assertIs(h["simulated"], True)
+        self.assertIs(h["lab_api"], False)
+        self.assertEqual(h["limits_routes"], list(server.LIMITS_ROUTES))
+
+    def test_lab_routes_degrade(self):
+        st, _, raw = self.req("GET", "/api/lab")
+        self.assertEqual(st, 501)
+        st, _, raw = self.req("GET", "/api/lab/verify?id=dec-1")
+        self.assertEqual(st, 501)
+        st, _, raw = self.req("GET", "/api/lab/verify?id=a%20b")
+        self.assertEqual(st, 400)
+        st, h, raw = self.req("GET", "/lab")
+        if os.path.isfile(server.LAB_PATH):
+            self.assertEqual(st, 200)
+            self.assertIn("text/html", h["content-type"])
+        else:
+            self.assertEqual(st, 404)
+            self.assertIn(b"not in this build", raw)
+
+    def test_no_controller_alpaca_501(self):
+        srv = server.make_server(self.state, host="127.0.0.1", port=0)
+        self.assertFalse(srv.has_method("alpaca_enable"))
+        self.assertFalse([r for r in srv.available_routes() if "alpaca" in r])
+        srv.server_close()
+
+
+class AlpacaControls(FakeController):
+    """FakeController plus the section 5/7 methods the coordinator adds to DeskControls."""
+
+    def alpaca_enable(self, confirm=False):
+        if confirm is not True:
+            return {"ok": False, "reason": "CONFIRM_REQUIRED"}
+        return self._rec("alpaca_enable", confirm=confirm)
+
+    def alpaca_disable(self, reason):
+        return self._rec("alpaca_disable", reason=reason)
+
+    def reconcile_now(self):
+        return self._rec("reconcile_now")
+
+    def lab_view(self):
+        self.calls.append(("lab_view", {}, None))
+        return {"ok": True, "items": [{"id": "dec-1"}], "simulated": True}
+
+    def lab_verify(self, lab_id):
+        self.calls.append(("lab_verify", {"id": lab_id}, None))
+        return {"ok": True, "id": lab_id, "verified": True}
+
+
+class TestAlpacaRoutesPresent(_PostMixin, _Base):
+    manager = AlpacaControls()
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestAlpacaRoutesPresent, cls).setUpClass()
+        cls.manager.state_dir = cls.state
+
+    def _names(self):
+        return [c[0] for c in self.manager.calls]
+
+    def test_enable_needs_confirm_then_calls(self):
+        self.manager.calls[:] = []
+        st, j = self.post("/api/alpaca/enable", {})
+        self.assertEqual(st, 400)
+        self.assertIn("Enable needs confirm=true", j["error"])
+        self.assertEqual(self._names(), [])
+        st, j = self.post("/api/alpaca/enable", {"confirm": True})
+        self.assertEqual(st, 200, j)
+        self.assertTrue(j["controller_called"])
+        self.assertEqual(self.manager.calls[-1][:2], ("alpaca_enable", {"confirm": True}))
+        # the requested row was on disk before the controller ran
+        self.assertGreaterEqual(self.manager.calls[-1][2], 1)
+
+    def test_disable_needs_reason(self):
+        self.manager.calls[:] = []
+        st, j = self.post("/api/alpaca/disable", {})
+        self.assertEqual(st, 400)
+        st, j = self.post("/api/alpaca/disable", {"reason": "   "})
+        self.assertEqual(st, 400)
+        self.assertEqual(self._names(), [])
+        st, j = self.post("/api/alpaca/disable", {"reason": "done for today"})
+        self.assertEqual(st, 200, j)
+        self.assertEqual(self.manager.calls[-1][:2], ("alpaca_disable", {"reason": "done for today"}))
+
+    def test_reconcile_calls(self):
+        st, j = self.post("/api/alpaca/reconcile", {})
+        self.assertEqual(st, 200, j)
+        self.assertEqual(self._names()[-1], "reconcile_now")
+
+    def test_health_lists_alpaca_routes_and_lab(self):
+        h = self.get_json("/api/health")
+        for r in ("/api/alpaca/enable", "/api/alpaca/disable", "/api/alpaca/reconcile"):
+            self.assertIn(r, h["routes"])
+        self.assertIs(h["lab_api"], True)
+
+    def test_lab_view_and_verify(self):
+        self.assertEqual(self.get_json("/api/lab")["items"][0]["id"], "dec-1")
+        j = self.get_json("/api/lab/verify?id=dec-1")
+        self.assertEqual(j["id"], "dec-1")
+        self.assertEqual(self.manager.calls[-1], ("lab_verify", {"id": "dec-1"}, None))
+        st, _, _ = self.req("GET", "/api/lab/verify")
+        self.assertEqual(st, 400)
+
+    def test_broker_mode_drives_simulated_flag(self):
+        path = os.path.join(self.state, "session.json")
+        with open(path) as f:
+            original = f.read()
+        try:
+            for mode, simulated in (("alpaca-mock", True), ("alpaca-paper", False)):
+                sess = json.loads(original)
+                sess["broker_mode"] = mode
+                with open(path, "w") as f:
+                    json.dump(sess, f)
+                h = self.get_json("/api/health")
+                self.assertEqual((h["broker_mode"], h["simulated"]), (mode, simulated))
+                st, j = self.post("/api/alpaca/reconcile", {})
+                self.assertIs(j["simulated"], simulated)
+                self.assertEqual(self.control_lines()[-1]["simulated"], simulated)
+                self.assertEqual(self.control_lines()[-2]["broker_mode"], mode)
+        finally:
+            with open(path, "w") as f:
+                f.write(original)
+
+    def test_session_carries_adapter_file(self):
+        p = os.path.join(self.state, "alpaca_paper.json")
+        with open(p, "w") as f:
+            json.dump({"enabled": False, "disabled_reason": "start", "changed_utc": "x"}, f)
+        try:
+            self.assertEqual(self.get_json("/api/session")["_adapter_file"]["enabled"], False)
+        finally:
+            os.remove(p)
+        self.assertIsNone(self.get_json("/api/session")["_adapter_file"])
+
+
+class TestAlpacaPage(unittest.TestCase):
+    """Static checks on the operator page's Alpaca and Setup wiring (CONTRACT section 5)."""
+
+    def setUp(self):
+        self.html = _page()
+
+    def test_banner_controls_and_setup_present(self):
+        for s in ("brokerBanner", "viewSetup", "Check for new closed bar", "Reconcile now",
+                  "/api/alpaca/enable", "/api/alpaca/disable", "/api/alpaca/reconcile",
+                  "/api/limits/draft", "/api/limits/effects", "/api/limits/approve",
+                  "Save draft", "Review and approve", "Check effects", "Copy into draft",
+                  "APPROVE PAPER LIMITS", "PARTIAL FILL", "UNCERTAIN", "RECONCILE BLOCKING",
+                  "Nothing runs in the background"):
+            self.assertIn(s, self.html, s)
+
+    def test_no_new_timers_or_external_loads(self):
+        # only the two pre-existing timers (2s local file refresh, 1s clock); Alpaca and Setup add none
+        self.assertEqual(self.html.count("setInterval("), 2)
+        self.assertIn("setInterval(tick, 2000)", self.html)
+        self.assertIn("setInterval(renderHeader, 1000)", self.html)
+        self.assertNotIn("<iframe", self.html.lower())
+        self.assertNotIn('src="http', self.html)
+        self.assertNotIn("<link", self.html)
+
+    def test_setup_never_auto_approves(self):
+        # the only approve call is the dialog's Yes handler, which sends the typed phrase and reason
+        self.assertEqual(self.html.count("postLimits('/api/limits/approve'"), 1)
+        self.assertIn("{confirm: ph, reason: rs}", self.html)
+        self.assertIn("approval approves the saved draft", self.html)
+
+
+class TestAlpacaBarsFile(unittest.TestCase):
+    """The Alpaca session writes alpaca_bars.jsonl; the chart route must read it, labeled."""
+
+    def _write(self, d, name, rows):
+        with open(os.path.join(d, name), "w") as fh:
+            for r in rows:
+                fh.write(json.dumps(r) + "\n")
+
+    def test_alpaca_mode_reads_alpaca_bars(self):
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, "session.json"), "w") as fh:
+                json.dump({"broker_mode": "alpaca-mock"}, fh)
+            self._write(d, "alpaca_bars.jsonl", [{"ts_close": "2026-11-16T14:35:00Z", "seq": 1, "close": 1.0}])
+            bars, _, meta = server._bars(d)
+            self.assertEqual(len(bars), 1)
+            self.assertIn("alpaca_bars.jsonl", meta["bars_source"])
+            self.assertIn("never TradingView", meta["bars_source"])
+
+    def test_replay_mode_keeps_replay_bars(self):
+        with tempfile.TemporaryDirectory() as d:
+            self._write(d, "bars.jsonl", [{"ts_close": "2026-11-16T14:35:00Z", "seq": 1}])
+            self._write(d, "alpaca_bars.jsonl", [{"ts_close": "x", "seq": 1}, {"ts_close": "y", "seq": 2}])
+            bars, _, meta = server._bars(d)
+            self.assertEqual(len(bars), 1)
+            self.assertEqual(meta["bars_source"], server.BARS_SOURCE_REPLAY)
+
+
 if __name__ == "__main__":
     unittest.main()
