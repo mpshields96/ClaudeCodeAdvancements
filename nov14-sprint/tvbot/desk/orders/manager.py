@@ -1253,10 +1253,17 @@ class OrderManager(object):
         if owned == 0:
             return self._stop_external_only(rep)
         if self.calendar is not None and not self.calendar.is_open(self.now()):
+            # Outside regular hours nothing is sent: no protective cancel and no close order. The
+            # working stop stays, and the text says what actually covers the position.
             nxt = self.calendar.next_open(self.now())
-            why = "market closed; protective exits kept; close at next open %s" % (iso(nxt) if nxt else "unknown")
+            pside = "sell" if owned > 0 else "buy"
+            prot = sum(self._remaining(it) for it in self._live(["protective"]) if it["side"] == pside)
+            held = ("held, protected by its working stop (%g of %g shares)" % (min(prot, abs(owned)), abs(owned))
+                    if prot > 0 else "held with NO working protective stop (%g shares)" % abs(owned))
+            why = ("market closed: position %s; nothing sent (no protective cancel, no close order); the "
+                   "operator closes at the next regular session (opens %s)" % (held, iso(nxt) if nxt else "unknown"))
             self._save_controls(close_pending=why)
-            return {"state": "pending", "why": why}
+            return {"state": "pending", "why": why, "market_closed": True, "protected_shares": min(prot, abs(owned))}
         side = "sell" if owned > 0 else "buy"
         unprotected = False
         if getattr(self.broker, "exits_hold_position", False):
