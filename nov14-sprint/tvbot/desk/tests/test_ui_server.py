@@ -1087,6 +1087,94 @@ class TestAlpacaPage(unittest.TestCase):
         self.assertTrue(repr(HttpsTransport(StaticTestProvider("SYNTHETIC-ID", "SYNTHETIC-SECRET"), opener=object())).startswith("HttpsTransport("))
 
 
+class TestLivePayload(unittest.TestCase):
+    """A fake live /api/session payload (W-D controller strings) must render the red LIVE badge, never Paper."""
+
+    LIVE = {"broker_mode": "alpaca-live",
+            "broker": {"transport": "HttpsTransport(SYNTHETIC-TEST)"},
+            "adapter": {"enabled": False, "disabled_reason": "test", "changed_utc": None,
+                        "path_name": "alpaca_live.json", "mode": "live"}}
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="ui_live_")
+        self.state = os.path.join(self.tmp, "state")
+        shutil.copytree(SAMPLE, self.state)
+        p = os.path.join(self.state, "session.json")
+        with open(p, encoding="utf-8") as fh:
+            sess = json.load(fh)
+        sess.update(self.LIVE)
+        with open(p, "w", encoding="utf-8") as fh:
+            json.dump(sess, fh)
+        self.srv = server.make_server(self.state, host="127.0.0.1", port=0)
+        self.th = threading.Thread(target=self.srv.serve_forever, daemon=True)
+        self.th.start()
+
+    def tearDown(self):
+        self.srv.shutdown()
+        self.srv.server_close()
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _session(self):
+        conn = http.client.HTTPConnection("127.0.0.1", self.srv.server_address[1], timeout=5)
+        conn.request("GET", "/api/session", headers={"Host": "127.0.0.1:%d" % self.srv.server_address[1]})
+        r = conn.getresponse()
+        body = json.loads(r.read().decode("utf-8"))
+        conn.close()
+        self.assertEqual(r.status, 200)
+        return body
+
+    def test_live_strings_reach_the_page_and_are_keyed(self):
+        s = self._session()
+        self.assertEqual(s["broker_mode"], "alpaca-live")
+        self.assertEqual(s["adapter"]["path_name"], "alpaca_live.json")
+        self.assertEqual(s["adapter"]["mode"], "live")
+        page = _page()
+        for key in ("=== 'alpaca-live'", "=== 'alpaca_live.json'", "=== 'live'"):
+            self.assertIn(key, page)
+        with open(os.path.join(DESK_DIR, "ui", "lab.html")) as fh:
+            lab = fh.read()
+        for key in ('m === "alpaca-live"', '=== "alpaca_live.json"', '=== "live"', "LIVE: REAL MONEY"):
+            self.assertIn(key, lab)
+
+    def test_used_up_mock_flow_and_marker_clamp_are_wired(self):
+        page = _page()
+        self.assertIn("ph === 'PRE_SESSION' && mockUsedUp(s) ? 'close'", page)
+        self.assertIn("armB.classList.toggle('pri', !(ph === 'PRE_SESSION' && mockUsedUp(s)))", page)
+        self.assertIn("if (mockUsedUp(s)) return {tone: 'warn', title: 'Mock bars used up'", page)
+        self.assertIn("y = Math.max(padT + r + 1, Math.min(padT + ph - r - 1, y));", page)
+
+    @unittest.skipUnless(shutil.which("node"), "node not installed; static checks above still run")
+    def test_live_payload_renders_red_live_badge_and_no_paper(self):
+        import subprocess
+        page = _page()
+        a = page.index("function isAlpaca(s)")
+        b = page.index("function adapterOf(s)")
+        helpers = page[a:b]
+        s = self._session()
+        cases = {"full": s,
+                 "mode_only": {"broker_mode": "alpaca-live", "broker": s["broker"]},
+                 "path_only": {"broker_mode": "alpaca-paper", "broker": s["broker"], "adapter": {"path_name": "alpaca_live.json"}},
+                 "adapter_mode_only": {"broker_mode": "alpaca-paper", "broker": s["broker"], "adapter": {"mode": "live"}},
+                 "paper": {"broker_mode": "alpaca-paper", "broker": s["broker"], "adapter": {"path_name": "alpaca_paper.json"}}}
+        js = helpers + "\nconst C = " + json.dumps(cases) + ";\nconst out = {};\n" \
+            "for (const k in C) { const m = modeBadge(C[k]); const w = brokerWords(C[k]); out[k] = {badge: m, words: w, paper: isPaper(C[k])}; }\n" \
+            "process.stdout.write(JSON.stringify(out));"
+        r = subprocess.run(["node", "-e", js], capture_output=True, text=True, timeout=20)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        out = json.loads(r.stdout)
+        for k in ("full", "mode_only", "path_only", "adapter_mode_only"):
+            o = out[k]
+            self.assertEqual(o["badge"]["t"], "LIVE: REAL MONEY", k)
+            self.assertEqual(o["badge"]["c"], "live", k)
+            self.assertFalse(o["paper"], k)
+            shown = json.dumps([o["badge"], o["words"]])
+            self.assertNotIn("Paper", shown, k)
+            self.assertNotIn("PAPER", shown, k)
+        self.assertEqual(out["full"]["words"]["kind"], "live")
+        self.assertEqual(out["paper"]["badge"]["t"], "Paper (no real money)")
+        self.assertNotIn("LIVE", json.dumps(out["paper"]["badge"]))
+
+
 class TestAlpacaBarsFile(unittest.TestCase):
     """The Alpaca session writes alpaca_bars.jsonl; the chart route must read it, labeled."""
 

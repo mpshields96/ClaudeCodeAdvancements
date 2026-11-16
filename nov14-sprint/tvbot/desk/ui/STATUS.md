@@ -147,3 +147,11 @@ Chart position (#chartPane top / canvas top, px):
 No horizontal scroll at any of these sizes.
 
 Verified: 67 UI tests OK (03:19Z). `node --check` passes on both pages' scripts. index.html has 2 `setInterval` and lab.html none. Neither page has an `<iframe` or `<link`. A JS probe with no network confirmed badge and broker words for live, paper, mock and unknown modes. Screenshots 10-15 are in `night-dashboard/`.
+
+### Third pass (W-A, 03:25Z)
+
+1. **Used-up mock bars.** When an alpaca-mock run has checked every bar, the session flow no longer points at "2 Arm". It highlights "Close & review", the step the banner's "Mock bars used up" card sends you to. Arm also loses its filled primary style in that state only. Both read the same `mockUsedUp(s)` helper as the banner.
+2. **Markers at 390px.** Stacked entry, exit and pass markers are clamped inside the price plot. Their meaning is unchanged: long and pass sit below the bar, short and exit above.
+3. **Live badge.** The page shows the red "LIVE: REAL MONEY" badge if any one of the controller's live strings appears: `broker_mode` "alpaca-live", adapter `path_name` "alpaca_live.json", or adapter `mode` "live". A conflicting paper label never hides a live signal. lab.html uses the same three checks.
+
+Verified: 70 UI tests OK (03:25Z). They include a fake live `/api/session` test. It serves a live payload over loopback and runs the page's own mode helpers in node. It asserts the red LIVE badge and no "Paper" wording, for the full payload and for each live string alone. `node --check` passes on both pages. index.html has 2 `setInterval` and lab.html none. Neither page has an `<iframe` or `<link`. Screenshots 16 (used-up flow) and 17 (markers at 390px) are in `night-dashboard/`. The live badge has been checked only by test and probe. No live session was used.
