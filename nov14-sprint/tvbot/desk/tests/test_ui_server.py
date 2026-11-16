@@ -1617,7 +1617,7 @@ class TestLiveSessionFixture(unittest.TestCase):
         a = page.index("function isAlpaca(s)")
         ns = page.index("function nextStep(s)")
         b = page.index("\nfunction ", ns + 10)
-        js = "".join(fn(n) + "\n" for n in ("num", "clockNow", "phaseOf", "preflightOk"))
+        js = "".join(fn(n) + "\n" for n in ("num", "clockNow", "phaseOf", "preflightOk", "esc"))
         js += "const S = {conn: true, session: {}, bars: new Array(5).fill({})};\n"
         js += "function routeOk(r){ return !(S.routes instanceof Set) || S.routes.has(r); }\n"
         js += "const document = {querySelector: () => ({disabled: false, hidden: false}), querySelectorAll: () => []};\n"
@@ -1626,7 +1626,7 @@ class TestLiveSessionFixture(unittest.TestCase):
         js += ("for (const k in C) { const s = C[k]; S.session = s; const n = nextStep(s); const bw = brokerWords(s);"
                " out[k] = {title: n.title, detail: n.detail, btn: n.btn || null, sel: n.sel || null, view: n.view || null,"
                " tk: transportKind(s), kind: bw.kind, chip: bw.chip, arm: bw.arm, limits: limitsSrc(s).label,"
-               " pill: pnlPill(s).t, legend: fillLegend(s)}; }\n")
+               " pill: pnlPill(s).t, legend: fillLegend(s), word: limitsWord(s)}; }\n")
         js += "process.stdout.write(JSON.stringify(out));"
         r = subprocess.run(["node", "-e", js], capture_output=True, text=True, timeout=30)
         self.assertEqual(r.returncode, 0, r.stderr[-2000:])
@@ -1644,7 +1644,8 @@ class TestLiveSessionFixture(unittest.TestCase):
         live = self._live()
         out = self._eval({"armed": live, "pre": self._live(phase="PRE_SESSION")})
         for k, o in out.items():
-            words = " ".join(str(o[f] or "") for f in ("title", "detail", "chip", "arm", "limits", "pill", "legend"))
+            words = " ".join(str(o[f] or "") for f in ("title", "detail", "chip", "arm", "limits", "pill", "legend", "word"))
+            self.assertIsNone(re.search(r"\bpaper\b", o["word"], re.I), (k, o["word"]))  # status strip "Limits: ..." (Chromium 04:07Z)
             self.assertEqual(o["tk"], "https", k)
             self.assertEqual(o["kind"], "live", k)
             self.assertNotIn("not reported", words.lower(), (k, words))
