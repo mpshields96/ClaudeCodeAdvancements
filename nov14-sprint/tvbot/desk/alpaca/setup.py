@@ -32,6 +32,12 @@ ENV_SECRET_VAR = "APCA_API_SECRET_KEY"
 
 LIVE_KEY_PREFIXES = ("AK",)     # a hint only (see above); the paper host is the real boundary
 
+# Names reserved for LIVE-money keys (alpaca/live.py). A paper provider refuses them, so a paper session
+# can never be pointed at the live Keychain items or live environment variables.
+LIVE_KEYCHAIN_SERVICE = "alpaca-live"
+LIVE_ENV_KEY_VAR = "ALPACA_LIVE_API_KEY_ID"
+LIVE_ENV_SECRET_VAR = "ALPACA_LIVE_API_SECRET_KEY"
+
 
 class CredentialsError(Exception):
     """Why paper credentials are unavailable. Never includes key material."""
@@ -72,8 +78,13 @@ class KeychainProvider(object):
     service "alpaca-paper", accounts "key-id" and "secret-key". Read with
     `/usr/bin/security find-generic-password -s alpaca-paper -a <account> -w`, only inside get()."""
 
+    mode = "paper"
+
     def __init__(self, service=KEYCHAIN_SERVICE, key_account=KEYCHAIN_KEY_ACCOUNT,
                  secret_account=KEYCHAIN_SECRET_ACCOUNT, runner=None):
+        if str(service).strip().lower() == LIVE_KEYCHAIN_SERVICE:
+            raise CredentialsError("the %r Keychain service holds LIVE keys; a paper session cannot use it"
+                                   % LIVE_KEYCHAIN_SERVICE)
         self.service = str(service)
         self.key_account = str(key_account)
         self.secret_account = str(secret_account)
@@ -110,7 +121,12 @@ class EnvProvider(object):
 
     environ: a mapping to read instead of os.environ (tests pass a fake dict)."""
 
+    mode = "paper"
+
     def __init__(self, environ=None, key_var=ENV_KEY_VAR, secret_var=ENV_SECRET_VAR):
+        if str(key_var) in (LIVE_ENV_KEY_VAR, LIVE_ENV_SECRET_VAR) or \
+                str(secret_var) in (LIVE_ENV_KEY_VAR, LIVE_ENV_SECRET_VAR):
+            raise CredentialsError("the ALPACA_LIVE_* variables hold LIVE keys; a paper session cannot use them")
         self._environ = environ
         self.key_var = str(key_var)
         self.secret_var = str(secret_var)

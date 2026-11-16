@@ -18,8 +18,10 @@ def _now():
 
 
 class AdapterState(object):
+    FILE = STATE_FILE        # the live subclass (alpaca/live.py LiveAdapterState) uses its own file
+
     def __init__(self, state_dir):
-        self.path = os.path.join(os.path.abspath(state_dir), STATE_FILE)
+        self.path = os.path.join(os.path.abspath(state_dir), self.FILE)
         self.data = self._load()
 
     def _load(self):
@@ -65,4 +67,4 @@ class AdapterState(object):
 
     def view(self):
         return {"enabled": self.enabled, "disabled_reason": self.data.get("disabled_reason"),
-                "changed_utc": self.data.get("changed_utc"), "path_name": STATE_FILE}
+                "changed_utc": self.data.get("changed_utc"), "path_name": self.FILE}

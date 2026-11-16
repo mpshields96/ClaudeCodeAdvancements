@@ -10,7 +10,11 @@ Fail-safe rules:
   listing, or a blocking last reconcile (note_reconcile). Reads, cancels and a protective reduce_only
   order capped to a position read fresh in the same call still work.
 - Alpaca has no reduce-only flag for equities, so reduce_only is enforced here: the quantity is capped
-  to the fresh position in the reducing direction, minus same-side desk orders still working.
+  to the shares this desk owns in the reducing direction (the fresh venue position, never more than the
+  desk's own booked fills), minus same-side desk orders still working. Shares the desk did not trade are
+  never closed (REDUCE_ONLY_NOT_DESK_OWNED).
+- The gate is checked again after the fresh position read and before any order record is written, so a
+  read that disables the adapter (for example a position mismatch) stops that same call's new exposure.
 - Integrity faults (foreign SPY order, position mismatch that survives a re-poll, overfill, fill
   regression, fractional quantity, refused transport) disable the adapter; it stays off until the
   operator enables it again.
@@ -27,6 +31,8 @@ from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
 
 from alpaca import (LABEL_ALPACA_PAPER, LABEL_INJECTED, LABEL_MOCK_LOCAL, ORDER_TYPES, SYMBOL,
                     TIME_IN_FORCE)
+from alpaca import live as _live
+from alpaca.live import LABEL_ALPACA_LIVE
 from alpaca.state import AdapterState
 from alpaca.transport import TransportRefused
 from orders.fake_broker import BrokerOutage, BrokerUncertain
@@ -45,7 +51,7 @@ TERMINAL = ("filled", "canceled", "rejected")
 # never proves "not placed"; only a refusal before sending does.
 UNRESOLVED = ("sending", "uncertain", "not_found")
 PRICE_BASIS = {LABEL_ALPACA_PAPER: "Alpaca paper fill", LABEL_MOCK_LOCAL: "MOCK LOCAL fill",
-               LABEL_INJECTED: "INJECTED TRANSPORT fill"}
+               LABEL_INJECTED: "INJECTED TRANSPORT fill", LABEL_ALPACA_LIVE: "Alpaca LIVE fill (real money)"}
 
 
 def _now():
@@ -99,19 +105,29 @@ class AlpacaPaperBroker(object):
     symbol = SYMBOL
     exits_hold_position = True    # a working sell holds its shares (no reduce-only flag for equities)
 
+    _ALLOW_LIVE_TRANSPORT = False     # True only on AlpacaLiveBroker (and offline rehearsal tests)
+    _REAL_LABEL = LABEL_ALPACA_PAPER  # the one label that needs the real (non-injected) transport
+    SIMULATED = True                  # every record this class writes says simulated
+
     def __init__(self, transport, state_dir, evidence_label, adapter_state):
-        if evidence_label not in PRICE_BASIS:
+        if evidence_label not in PRICE_BASIS \
+                or (evidence_label == LABEL_ALPACA_LIVE) != (self._REAL_LABEL == LABEL_ALPACA_LIVE):
             raise ValueError("unknown evidence label")
+        if getattr(transport, "MODE", "paper") != "paper" and not self._ALLOW_LIVE_TRANSPORT:
+            raise ValueError("this is the PAPER broker: it labels every record simulated and cannot carry a "
+                             "live-money transport (live is not wired in this build; see LIVE_READINESS.md)")
         injected = bool(getattr(transport, "injected", False))
-        if (evidence_label == LABEL_ALPACA_PAPER) == injected:
+        if (evidence_label == self._REAL_LABEL) == injected:
             raise ValueError("evidence label does not match the transport (paper label needs the real "
                              "transport; mock/injected labels need an injected transport)")
         if not isinstance(adapter_state, AdapterState):
             raise ValueError("adapter_state must be an AdapterState")
+        if isinstance(adapter_state, _live.LiveAdapterState) != (self._REAL_LABEL == LABEL_ALPACA_LIVE):
+            raise ValueError("paper and live keep separate adapter state (alpaca_paper.json / alpaca_live.json)")
         self.transport = transport
         self.adapter_state = adapter_state
         self.NAME = self.label = evidence_label
-        self.mock = evidence_label != LABEL_ALPACA_PAPER
+        self.mock = evidence_label != self._REAL_LABEL
         self.price_basis = PRICE_BASIS[evidence_label]
         self.state_dir = os.path.abspath(state_dir)
         self.path = os.path.join(self.state_dir, BOOK_FILE)
@@ -180,7 +196,7 @@ class AlpacaPaperBroker(object):
     def _fresh_enabled(self):
         if not self.adapter_state.enabled:
             return False
-        fresh = AdapterState(os.path.dirname(self.adapter_state.path))
+        fresh = type(self.adapter_state)(os.path.dirname(self.adapter_state.path))
         if not fresh.enabled:
             self.adapter_state.data = fresh.data      # another writer disabled it; adopt that
             return False
@@ -239,7 +255,7 @@ class AlpacaPaperBroker(object):
                 "status": rec.get("status"), "alpaca_status": rec.get("alpaca_status"),
                 "filled_qty": int(rec.get("cum_qty") or 0), "avg_fill_price": rec.get("avg"),
                 "fills": [dict(f) for f in rec.get("fills", [])], "evidence": self.label,
-                "mock": self.mock, "simulated": True}
+                "mock": self.mock, "simulated": self.SIMULATED}
 
     def _public_foreign(self, row):
         q = _num(row.get("qty"))
@@ -247,17 +263,17 @@ class AlpacaPaperBroker(object):
                 "side": row.get("side"), "qty": int(q) if q is not None else None,
                 "status": map_status(row.get("status")), "alpaca_status": row.get("status"),
                 "filled_qty": int(_num(row.get("filled_qty")) or 0), "fills": [], "external": True,
-                "evidence": self.label, "mock": self.mock, "simulated": True}
+                "evidence": self.label, "mock": self.mock, "simulated": self.SIMULATED}
 
     def _emit(self, ev):
         ev = dict(ev)
         ev["evidence"] = self.label
-        ev["simulated"] = True
+        ev["simulated"] = self.SIMULATED
         self._events.append(ev)
 
     def _reject(self, client_id, reason, **extra):
         out = {"status": "rejected", "client_id": client_id, "reason": reason, "evidence": self.label,
-               "simulated": True}
+               "simulated": self.SIMULATED}
         out.update(extra)
         self._emit({"type": "rejected", "client_id": client_id, "reason": reason})
         return out
@@ -295,7 +311,7 @@ class AlpacaPaperBroker(object):
                         "order_id": rec["order_id"], "side": rec["side"], "qty": cum1 - cum0, "price": price,
                         "fee": 0.0, "ts": ts, "event_ts": ts, "report_ts": _now(), "base_price": price,
                         "half_spread_bps": 0.0, "slip_bps": 0.0, "price_basis": self.price_basis,
-                        "mock": self.mock, "simulated": True, "evidence": self.label, "cum_qty": cum1,
+                        "mock": self.mock, "simulated": self.SIMULATED, "evidence": self.label, "cum_qty": cum1,
                         "alpaca_status": alp}
                 rec.setdefault("fills", []).append(fill)
                 rec["cum_qty"] = cum1
@@ -341,7 +357,7 @@ class AlpacaPaperBroker(object):
         st, rows = self._get("/v2/positions")
         if st != 200 or not isinstance(rows, list):
             raise BrokerOutage("GET /v2/positions answered HTTP %s" % st)
-        out = {SYMBOL: {"qty": 0, "avg_price": 0.0, "evidence": self.label, "simulated": True}}
+        out = {SYMBOL: {"qty": 0, "avg_price": 0.0, "evidence": self.label, "simulated": self.SIMULATED}}
         for row in rows:
             if not isinstance(row, dict) or not row.get("symbol"):
                 raise BrokerOutage("positions listing has a malformed row")
@@ -357,7 +373,7 @@ class AlpacaPaperBroker(object):
             out[row["symbol"]] = {"qty": qi, "qty_exact": ("-" if sign < 0 else "") + exact,
                                   "fractional": fractional,
                                   "avg_price": _num(row.get("avg_entry_price")) or 0.0,
-                                  "evidence": self.label, "simulated": True}
+                                  "evidence": self.label, "simulated": self.SIMULATED}
         return out
 
     def positions(self):
@@ -418,6 +434,13 @@ class AlpacaPaperBroker(object):
                                     detail="positions could not be read (%s); nothing was sent" % exc)
             raise
         pos = positions[SYMBOL]["qty"]
+        if not reduce_only:
+            # The fresh read above may itself have disabled the adapter (a position mismatch, a
+            # fractional row). Re-check before writing any record, so this same call sends nothing.
+            blocked = self.block_reason(exclude=client_id)
+            if blocked:
+                return self._reject(client_id, blocked,
+                                    detail="the position read in this call stopped new exposure; nothing was sent")
         working_same = sum(self._reserved(r) for c, r in self.book["orders"].items()
                            if c != client_id and r.get("side") == side)
         if positions[SYMBOL].get("fractional"):
@@ -426,8 +449,19 @@ class AlpacaPaperBroker(object):
                                 detail="SPY position %s is fractional; the desk does not trade it" %
                                 positions[SYMBOL].get("qty_exact"))
         if reduce_only:
-            room = (pos if side == "sell" else -pos) - working_same
+            owned = self._book_net()
+            if side == "sell":
+                venue_room = pos if pos > 0 else 0
+                reducible = min(pos, owned) if pos > 0 and owned > 0 else 0
+            else:
+                venue_room = -pos if pos < 0 else 0
+                reducible = min(-pos, -owned) if pos < 0 and owned < 0 else 0
+            room = reducible - working_same
             if room <= 0:
+                if venue_room > reducible:
+                    return self._reject(client_id, "REDUCE_ONLY_NOT_DESK_OWNED", venue=pos, desk_booked=owned,
+                                        detail="Alpaca shows %d SPY, the desk booked %d; shares it did not "
+                                        "trade are not closed; nothing was sent" % (pos, owned))
                 return self._reject(client_id, "REDUCE_ONLY_NO_POSITION")
             requested, qty = qty, min(qty, room)
         else:
@@ -483,9 +517,9 @@ class AlpacaPaperBroker(object):
             self._absorb(client_id, rec, payload)
             if rec["status"] == "rejected":
                 return {"status": "rejected", "client_id": client_id, "reason": "ALPACA_REJECTED",
-                        "order_id": rec["order_id"], "evidence": self.label, "simulated": True}
+                        "order_id": rec["order_id"], "evidence": self.label, "simulated": self.SIMULATED}
             return {"status": "accepted", "client_id": client_id, "order_id": rec["order_id"],
-                    "evidence": self.label, "simulated": True}
+                    "evidence": self.label, "simulated": self.SIMULATED}
         if 200 <= st < 300:                               # success without a usable order: unknown
             rec["state"] = "uncertain"
             self._save()
@@ -545,7 +579,7 @@ class AlpacaPaperBroker(object):
         rec = {"client_id": client_id, "order_id": None, "side": side, "qty": opening, "exec_price": px,
                "per_trade_cap": per, "gross_cap": gross_cap, "bar_ts_close": self._last_bar_ts,
                "notional": round(notional, 6), "gross_after": round(gross_after, 6), "reason": "EXEC_CAP",
-               "cap": cap_name, "simulated": True, "evidence": self.label,
+               "cap": cap_name, "simulated": self.SIMULATED, "evidence": self.label,
                "note": "refused before sending, at the order's own limit price; nothing was sent"}
         self.exec_refusals.append(rec)
         self.exec_refusals = self.exec_refusals[-200:]
@@ -615,7 +649,7 @@ class AlpacaPaperBroker(object):
 
     def _cancel_result(self, client_id, order_id, status, reason, **extra):
         out = {"status": status, "client_id": client_id, "order_id": order_id, "evidence": self.label,
-               "simulated": True}
+               "simulated": self.SIMULATED}
         if reason:
             out["reason"] = reason
         out.update(extra)
@@ -652,7 +686,7 @@ class AlpacaPaperBroker(object):
         self.book["listing_incomplete"] = not complete
         self._save()
         return {"orders": out, "complete": complete, "total": len(out) if complete else "unknown",
-                "evidence": self.label, "simulated": True}
+                "evidence": self.label, "simulated": self.SIMULATED}
 
     # ------------------------------------------------------------------ polling
     def _poll_open(self):
@@ -719,4 +753,34 @@ class AlpacaPaperBroker(object):
                 "uncertain_client_ids": self.uncertain_client_ids(),
                 "listing_incomplete": bool(self.book.get("listing_incomplete")),
                 "reconcile_blocking": self._reconcile_blocking, "last_poll_error": self.last_poll_error,
-                "integrity": list(self.book.get("integrity", [])[-20:]), "simulated": True}
+                "integrity": list(self.book.get("integrity", [])[-20:]), "simulated": self.SIMULATED}
+
+
+class AlpacaLiveBroker(AlpacaPaperBroker):
+    """REAL MONEY. The paper broker's order logic (one POST per intent, query-not-resend on a lost
+    acknowledgment, restart reconcile, caps before send, Stop & Close) over LiveHttpsTransport only.
+    Every record says simulated False and carries the live label. It is built only around a transport
+    holding this session's LiveAuthorization (alpaca/live_launch.py start); launch.py never builds it."""
+
+    _ALLOW_LIVE_TRANSPORT = True
+    _REAL_LABEL = LABEL_ALPACA_LIVE
+    SIMULATED = False
+
+    def __init__(self, transport, state_dir, evidence_label, adapter_state):
+        if not isinstance(transport, _live.LiveHttpsTransport) or getattr(transport, "injected", True):
+            raise ValueError("the LIVE broker runs only over the real LiveHttpsTransport")
+        auth = transport.authorization
+        if not auth.valid(transport._monotonic()):
+            raise ValueError("the live authorization has expired; run alpaca/live_launch.py start again")
+        if evidence_label != LABEL_ALPACA_LIVE:
+            raise ValueError("live records must carry the live label")
+        try:
+            _live.check_live_state_dir(state_dir)
+        except _live.LiveGateRefused as exc:
+            raise ValueError(str(exc)) from None
+        if os.path.realpath(state_dir) != os.path.realpath(auth.state_dir):
+            raise ValueError("the live broker must use the state folder the live gate authorized")
+        if not isinstance(adapter_state, _live.LiveAdapterState) \
+                or os.path.realpath(os.path.dirname(adapter_state.path)) != os.path.realpath(state_dir):
+            raise ValueError("the live broker needs the live adapter state (alpaca_live.json) in its own folder")
+        AlpacaPaperBroker.__init__(self, transport, state_dir, evidence_label, adapter_state)

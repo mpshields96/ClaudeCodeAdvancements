@@ -151,11 +151,14 @@ def _parse(raw):
 
 
 class StaticTestProvider(object):
-    """Synthetic credentials for tests only. Never a real key."""
+    """Synthetic credentials for tests only. Never a real key.
 
-    def __init__(self, key_id, secret):
+    mode: "paper" (default) or "live". A transport refuses a provider whose mode is not its own."""
+
+    def __init__(self, key_id, secret, mode="paper"):
         self._key_id = key_id
         self._secret = secret
+        self.mode = mode
 
     def get(self):
         return self._key_id, self._secret
@@ -167,8 +170,23 @@ class StaticTestProvider(object):
         return "StaticTestProvider(<synthetic, hidden>)"
 
 
+def provider_mode(provider):
+    """A provider's declared account mode. One that declares nothing is treated as paper."""
+    return getattr(provider, "mode", "paper")
+
+
 class HttpsTransport(object):
+    """The PAPER transport. Live trading has its own class (alpaca/live.py) with its own origins, its
+    own credentials and a per-session authorization; nothing on this class can be switched to live."""
+
+    MODE = "paper"
+    USER_AGENT = USER_AGENT
+    REFUSED_KEY_PREFIXES = ("AK",)          # live-looking key ids never go out on the paper host
+
     def __init__(self, credentials_provider, timeout_s=10, opener=None):
+        if provider_mode(credentials_provider) != self.MODE:
+            raise TransportRefused("credentials provider is for %r, this transport is %r"
+                                   % (str(provider_mode(credentials_provider))[:10], self.MODE))
         self._provider = credentials_provider
         self.timeout_s = float(timeout_s)
         self._opener = opener if opener is not None else default_opener()
@@ -179,10 +197,17 @@ class HttpsTransport(object):
             desc = str(self._provider.describe())
         except Exception:
             desc = "credentials provider"
-        return "HttpsTransport(trading=%s, data=%s, credentials=%s)" % (
-            _FIXED_ORIGINS.get("trading"), _FIXED_ORIGINS.get("data"), desc)
+        origins = self._origins()
+        return "%s(trading=%s, data=%s, credentials=%s)" % (
+            type(self).__name__, origins.get("trading"), origins.get("data"), desc)
 
     __str__ = __repr__
+
+    def _origins(self):
+        return _FIXED_ORIGINS
+
+    def _resolve(self, origin_key):
+        return resolve_origin(origin_key)
 
     def _headers(self, has_body):
         try:
@@ -192,8 +217,11 @@ class HttpsTransport(object):
         for v in (key_id, secret):
             if not isinstance(v, str) or not v or any(ord(c) < 0x21 or ord(c) >= 0x7f for c in v):
                 raise TransportRefused("credentials from provider are not usable header values")
+        if key_id.upper().startswith(self.REFUSED_KEY_PREFIXES):
+            raise TransportRefused("key id prefix belongs to the other account mode; refused for %s"
+                                   % self.MODE)
         h = {HEADER_KEY_ID: key_id, HEADER_SECRET: secret, "Accept": "application/json",
-             "User-Agent": USER_AGENT}
+             "User-Agent": self.USER_AGENT}
         if has_body:
             h["Content-Type"] = "application/json"
         return h
@@ -201,7 +229,9 @@ class HttpsTransport(object):
     def request(self, method, origin_key, path, query=None, body=None):
         if method not in METHODS:
             raise TransportRefused("method refused")
-        origin, host = resolve_origin(origin_key)
+        if provider_mode(self._provider) != self.MODE:
+            raise TransportRefused("credentials provider mode changed; refused")
+        origin, host = self._resolve(origin_key)
         validate_path(path)
         qs = encode_query(origin_key, query)
         if body is not None and method != "POST":
