@@ -31,6 +31,10 @@ h2 { font-size: 15px; margin: 0 0 8px; }
 .banner { background: var(--warn-bg); color: var(--warn-ink); border: 1px solid var(--line);
   border-radius: 8px; padding: 10px 12px; font-weight: 600; margin-bottom: 12px; }
 .banner small { display: block; font-weight: 400; margin-top: 2px; }
+.modebadge { display: inline-block; vertical-align: middle; margin-left: 10px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.modebadge.live { background: var(--bad); color: #fff; border-color: var(--bad); }
+.modebadge.paper { border-color: var(--pend); color: var(--pend); }
+.modebadge.unk { background: var(--warn-bg); color: var(--warn-ink); }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
 .grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; }
 @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
@@ -65,7 +69,7 @@ summary { cursor: pointer; font-weight: 600; }
 </head>
 <body>
 <main>
-  <h1>Decision lab</h1>
+  <h1>Decision lab <span class="modebadge" id="modeBadge" title="Desk mode, from the session the desk is running">Mode loading</span></h1>
   <div class="banner" id="banner">SHADOW / HYPOTHETICAL
     <small>Shadow forecasts only: never routed, never sized, never promoted. Scores are hypothetical, never realized P&amp;L.</small>
   </div>
@@ -235,8 +239,22 @@ summary { cursor: pointer; font-weight: 600; }
       renderFrozen(v); renderTotals(v); renderGroups(v);
     }, function (e) { document.getElementById("frozen").textContent = "Could not load /api/lab: " + e; });
   }
-  document.getElementById("refresh").addEventListener("click", load);
-  load();
+  // One mode badge, from the controller's own broker label. Live is never inferred from paper or mock.
+  function loadMode() {
+    var el = document.getElementById("modeBadge");
+    getJSON("/api/session").then(function (s) {
+      var m = String((s && s.broker_mode) || "");
+      var t = "Local rehearsal (offline replay)", c = "", ti = "Offline replay of synthetic bars with mock fills. No broker, no real money.";
+      if (m === "alpaca-live") { t = "LIVE: REAL MONEY"; c = "live"; ti = "Alpaca LIVE account: real money and real orders."; }
+      else if (m === "alpaca-paper") { t = "Paper (no real money)"; c = "paper"; ti = "Alpaca PAPER account: simulated money."; }
+      else if (m === "alpaca-mock") { t = "Local rehearsal (mock)"; ti = "In-process mock Alpaca, synthetic bars and fills. No network, no real money."; }
+      else if (/^alpaca/.test(m)) { t = "Mode not reported"; c = "unk"; ti = "Unknown Alpaca mode (" + m + "); treat as unconfirmed."; }
+      else if (s && s._meta && s._meta.missing) { t = "No session yet"; ti = "The desk has not written a session yet."; }
+      el.textContent = t; el.className = "modebadge" + (c ? " " + c : ""); el.title = ti;
+    }, function () { el.textContent = "Mode unknown (desk not reachable)"; el.className = "modebadge unk"; });
+  }
+  document.getElementById("refresh").addEventListener("click", function () { load(); loadMode(); });
+  load(); loadMode();
 })();
 </script>
 </body>

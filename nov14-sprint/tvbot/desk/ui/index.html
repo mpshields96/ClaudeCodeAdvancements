@@ -159,6 +159,7 @@ main.wideaside{grid-template-columns:minmax(0,1fr) minmax(420px,46%)}
 main.withtv{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(320px,28%)}
 #tvPane{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
 #tvPane[hidden]{display:none}
+[hidden]{display:none !important}  /* hidden always wins over a display rule (the broker banner set display:flex) */
 #tvHost{flex:1;min-height:300px;position:relative;background:var(--tvbg)}
 #tvHost .tradingview-widget-container{position:absolute;inset:0}
 #tvHost .tradingview-widget-container__widget{height:calc(100% - 22px)}
@@ -235,8 +236,36 @@ dialog h3{margin-top:0}
 #dlgStop{border-color:var(--bad-bd)}
 .stale-vals .live{opacity:.55;text-decoration:line-through dotted var(--bad)}
 code{font-size:11.5px;color:var(--code)}
+/* second pass (W-A 2026-11-16): one mode badge, one status line, details on demand */
+.big.paper{background:var(--vio-bg);color:var(--vio-fg);border:1px solid var(--vio-bd)}
+.big.live{background:var(--alarm-bg);color:var(--alarm-fg);border:1px solid var(--bad)}
+.big.unk{background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-bd)}
+header{position:relative}
+details.pop.anch{position:static}
+details.pop.anch>.popbody{right:12px}
+.alink{font-size:12px;white-space:nowrap}
+.menu{display:flex;flex-direction:column;gap:8px;font-size:12px}
+.menu .hlinks{flex-direction:column;align-items:flex-start;font-size:12.5px}
+.menu hr{border:0;border-top:1px solid var(--line);margin:2px 0;width:100%}
+#hero{position:relative;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:6px 12px}
+.next{padding:5px 12px}
+.nx-t{font-size:15px}
+.sbox{display:flex;align-items:center;gap:8px;min-width:0;justify-content:flex-end;flex-wrap:wrap}
+.sline{font-weight:700;font-size:13px;white-space:nowrap}
+.sline .sep{color:var(--muted);font-weight:400;margin:0 5px}
+.sline .s-live{color:var(--bad-fg)} .sline .s-warn{color:var(--warn-fg)} .sline .s-ok{color:var(--ok-fg)}
+#modeDet{position:static}
+#modeDet>.popbody{right:12px;width:min(640px,calc(100vw - 24px));padding:0;max-height:70vh;overflow:auto}
+#modeDet .strip{grid-template-columns:1fr;border:0;border-radius:8px 8px 0 0}
+#modeDet .strip .cell,#modeDet .strip .cell:nth-child(even),#modeDet .strip .cell.wide{border-left:0;border-top:1px solid var(--line);grid-column:auto}
+#modeDet .strip .cell:first-child{border-top:0}
+#bbDetail{display:flex;flex-direction:column;gap:3px;font-size:12px;padding:8px 10px;border-top:1px solid var(--line)}
+#bbDetail:empty{display:none}
+#ctrlCard>summary .small{text-transform:none;letter-spacing:0}
 @media (max-width:1100px){
   body{height:auto;overflow:auto}
+  .sbox{justify-content:flex-start}
+  .sline{white-space:normal}
   #hero{grid-template-columns:1fr}
   .strip{grid-template-columns:repeat(2,minmax(0,1fr))}
   .strip .cell{border-left:0;border-top:1px solid var(--line)}
@@ -263,8 +292,8 @@ code{font-size:11.5px;color:var(--code)}
 <div id="brokerBanner" class="banner bb" hidden></div>
 <header>
   <div class="row">
-    <span class="big sim" id="badgeSim">SIMULATED</span>
-    <span class="big mock" id="badgeMock">MOCK FILLS</span>
+    <span class="big sim" id="badgeSim" title="Desk mode. Local rehearsal = synthetic data and mock fills on this computer; no broker, no real money.">Local rehearsal</span>
+    <span class="big mock" id="badgeMock" hidden>MOCK FILLS</span>
     <span class="brand">SPY Paper Desk</span>
     <span class="spacer"></span>
     <div class="tabs" role="tablist">
@@ -273,21 +302,23 @@ code{font-size:11.5px;color:var(--code)}
       <button data-view="review">Session review</button>
       <button data-view="setup" title="Your paper limits: draft, check effects, approve. Agents never fill these.">Setup (limits)</button>
     </div>
-    <span class="hlinks">
-      <a id="labLink" href="/lab" target="_blank" rel="noopener" hidden title="Opens the decision lab in a new tab">Decision lab &#8599;</a>
+    <details class="pop anch" id="resPop">
+      <summary title="Research links and the TradingView reference chart. Nothing here feeds the desk.">Research &#9662;</summary>
+      <div class="popbody menu">
+        <span class="hlinks"><a id="labLink" href="/lab" target="_blank" rel="noopener" hidden title="Opens the decision lab in a new tab">Decision lab &#8599;</a>
       <a id="spyLink" href="/spy-study" target="_blank" rel="noopener" title="Opens the historical SPY November study in a new tab. It is hindsight analysis of past bars, not a live signal.">SPY November study (historical, hindsight) &#8599;</a>
-      <a id="tvlink" href="https://www.tradingview.com/chart/?symbol=AMEX%3ASPY" target="_blank" rel="noopener noreferrer" title="Opens TradingView (AMEX:SPY) in your own browser. REFERENCE ONLY: the desk never reads it.">Open my TradingView chart &#8599;</a>
-    </span>
-    <details class="pop" id="tvPop">
-      <summary title="TradingView reference chart options">TradingView &#9662;</summary>
-      <div class="popbody tvbar">
+      <a id="tvlink" href="https://www.tradingview.com/chart/?symbol=AMEX%3ASPY" target="_blank" rel="noopener noreferrer" title="Opens TradingView (AMEX:SPY) in your own browser. REFERENCE ONLY: the desk never reads it.">Open my TradingView chart &#8599;</a></span>
+        <hr>
+        <div class="tvbar" id="tvPop">
         <label title="Loads TradingView's official Advanced Chart widget of a REAL reference symbol beside the synthetic desk chart. Off by default."><input type="checkbox" id="tvToggle"> Show TradingView chart</label>
         <label title="Real-market reference symbol for an independent comparison. The desk's own symbol is synthetic and is never sent to TradingView.">Reference <select id="tvRef"><option value="AMEX:SPY" selected>AMEX:SPY</option><option value="NASDAQ:QQQ">NASDAQ:QQQ</option><option value="AMEX:IWM">AMEX:IWM</option><option value="AMEX:DIA">AMEX:DIA</option></select></label>
         <span class="muted" title="macOS: hold the mouse on the green window button, then choose Tile Window to Left of Screen for TradingView and Tile Window to Right of Screen for this desk.">macOS tip: hold the green button &rarr; Tile left / right</span>
         <span class="tag" title="Independent comparison of a real market. Display only: no alerts, no webhooks, nothing read back.">TradingView chart: operator view only, not used by the desk. REFERENCE ONLY, real market, not the desk's data, nothing flows into the bot</span>
         <span class="tag" id="tvLabel" hidden></span>
+        </div>
       </div>
     </details>
+    <a id="alpacaLink" class="alink" href="https://app.alpaca.markets/" target="_blank" rel="noopener noreferrer" title="Opens Alpaca's own dashboard in your browser. The desk never reads it; it is not part of Setup.">Alpaca dashboard &#8599;</a>
     <label class="themesel" title="Colour theme. Auto follows your system setting."><select id="themeSel" aria-label="Theme"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
   </div>
 </header>
@@ -300,6 +331,11 @@ code{font-size:11.5px;color:var(--code)}
     </div>
     <button id="nextBtn" class="pri" hidden>-</button>
   </div>
+  <div class="sbox">
+    <span class="sline" id="statusLine" aria-live="polite">Loading</span>
+    <details class="pop" id="modeDet">
+      <summary title="Mode, venue, evidence and your dollar limits in full">Details &#9662;</summary>
+      <div class="popbody">
   <div class="strip" id="strip">
     <div class="cell"><small>Mode</small><span class="mode" id="mode">REPLAY (OFFLINE, SIMULATED)</span>
       <div class="tags"><span class="tag syn" id="datalabel">SYNTHETIC BARS</span><span class="tag" id="symstrat">-</span><span class="tag" id="expiry">expiry -</span></div></div>
@@ -307,6 +343,10 @@ code{font-size:11.5px;color:var(--code)}
     <div class="cell"><small>Session</small><span class="chip unk" id="armChip">SIMULATION: DISARMED</span></div>
     <div class="cell"><small>Position</small><span id="stPos">-</span></div>
     <div class="cell wide"><small>Your limits</small><span class="risk" id="risk">Max loss per trade $10.00 (TEST VALUE) &middot; Notional cap $2,000 (TEST VALUE) &middot; Daily loss $30.00 (TEST VALUE)</span></div>
+  </div>
+        <div id="bbDetail"></div>
+      </div>
+    </details>
   </div>
 </section>
 <main id="main">
@@ -317,7 +357,7 @@ code{font-size:11.5px;color:var(--code)}
   </section>
   <section id="chartPane">
     <div class="ctool">
-      <b>Desk replay chart</b> <span class="pill simpill">SYNTHETIC</span><span class="tag syn" id="srcTag">source: desk replay bars (synthetic), not TradingView, not a real market</span>
+      <b>Desk replay chart</b> <span class="pill simpill">SYNTHETIC</span><span class="tag syn" id="srcTag" title="Desk replay bars (synthetic). Not TradingView, not a real market.">replay bars (synthetic)</span>
       <span class="spacer"></span>
       <span id="ohlc"></span>
       <button id="zIn" title="Zoom in">+</button><button id="zOut" title="Zoom out">&minus;</button>
@@ -363,8 +403,9 @@ code{font-size:11.5px;color:var(--code)}
           <div><small>Fees</small><span id="pFe">-</span></div>
         </div>
       </div>
-      <div class="card">
-        <h3>Session controls</h3>
+      <details class="card" id="ctrlCard">
+        <summary><h3>More controls and broker detail</h3> <span class="small muted">Arm, Pause, Stop, adapter, protection</span></summary>
+        <div class="dbody">
         <div class="row">
           <button id="btnArm" class="pri" title="Arms this offline replay session. No broker connection.">Arm this replay session (offline)</button>
           <button id="btnPause2" class="warnb">Pause</button>
@@ -382,7 +423,8 @@ code{font-size:11.5px;color:var(--code)}
           <div class="small" id="livePath" style="margin-top:8px"></div>
           <div class="small muted" id="undecided" style="margin-top:4px"></div>
         </details>
-      </div>
+        </div>
+      </details>
       <details class="card" id="expCard">
         <summary><h3>Exposure and protective orders</h3> <span class="small muted" id="expConf"></span></summary>
         <div class="dbody">
@@ -578,7 +620,11 @@ function draw(){
   const cs = getComputedStyle(document.documentElement); const col = n => cs.getPropertyValue(n).trim();
   const bars = S.bars, n = bars.length; V.markers = [];
   g.font = '11px -apple-system,system-ui,sans-serif';
-  if (!n) { g.fillStyle = col('--muted'); g.font = '14px system-ui'; g.fillText(isAlpaca(S.session || {}) ? 'No bars yet: press Check for new bars (state_dir/alpaca_bars.jsonl is empty).' : 'No replay bars yet: state_dir/bars.jsonl is missing or empty.', 20, 40); return; }
+  if (!n) { g.fillStyle = col('--muted'); g.font = '14px system-ui'; const nt = (document.getElementById('nextTitle') || {}).textContent || ''; const alpE = isAlpaca(S.session || {});
+    g.fillText(alpE ? 'No bars yet.' : 'No replay bars to show yet.', 20, 40);
+    g.font = '13px system-ui'; g.fillText(nt && nt !== 'Loading desk state' ? 'Next step: ' + nt + '.' : (alpE ? 'Bars appear after you press Check for new bars.' : 'The session has not produced bars yet.'), 20, 62);
+    if (alpE) { g.fillText('Bars appear only when you press Check for new bars.', 20, 82); g.fillText('Nothing runs in the background.', 20, 100); }
+    return; }
   clampView();
   const padL = 6, padR = 74, padT = 8, padB = 22;
   const volH = Math.max(28, Math.round((H - padT - padB) * 0.15));
@@ -765,6 +811,9 @@ function setView(v){
 // ---------------- Alpaca paper mode (fields come from session.json; absent = offline desk, unchanged) ----------------
 function isAlpaca(s){ return /^alpaca/.test(String((s || {}).broker_mode || '')); }
 function isPaper(s){ return String((s || {}).broker_mode || '') === 'alpaca-paper'; }
+// Live is only ever the controller's own label; never inferred from paper, mock or the transport.
+function isLive(s){ return String((s || {}).broker_mode || '') === 'alpaca-live'; }
+function isMockMode(s){ return String((s || {}).broker_mode || '') === 'alpaca-mock'; }
 // Broker wording comes from the transport the controller actually built (session.broker.transport), not the mode name alone.
 function transportKind(s){
   if (!isAlpaca(s)) return 'offline';
@@ -777,22 +826,33 @@ function brokerWords(s){
     title: 'Arms this offline replay session. No broker connection.'};
   if (k === 'mock') return {kind: k, chip: 'BROKER: ALPACA MOCK, in-process transport (synthetic ids, no network)', arm: 'Arm this Alpaca MOCK session',
     title: 'Arms this session after preflight passes. Broker: in-process mock transport (synthetic ids and fills, no network). Bars advance only when you press Check.'};
+  if (k === 'https' && isLive(s)) return {kind: 'live', chip: 'BROKER: ALPACA LIVE over HTTPS: REAL MONEY', arm: 'Arm this Alpaca LIVE session (real money)',
+    title: 'Arms this session after preflight passes. Broker: Alpaca LIVE account over HTTPS. REAL MONEY, real orders, within your approved limits. Bars advance only when you press Check.'};
+  if (k === 'https' && !isPaper(s)) return {kind: 'unknown', chip: 'BROKER: ' + String((s || {}).broker_mode || 'alpaca').toUpperCase() + ' over HTTPS (mode not reported; unconfirmed)', arm: 'Arm this Alpaca session (mode unconfirmed)',
+    title: 'The session did not report a known broker mode. Do not arm until the header names mock, paper or live.'};
   if (k === 'https') return {kind: k, chip: 'BROKER: ALPACA PAPER over HTTPS to the fixed paper host (simulated money)', arm: 'Arm this Alpaca PAPER session',
     title: 'Arms this session after preflight passes. Broker: Alpaca PAPER account over HTTPS to the fixed paper host (simulated money, no real orders), SPY only, within your approved limits. Bars advance only when you press Check.'};
   return {kind: k, chip: 'BROKER: ' + String((s || {}).broker_mode || 'alpaca').toUpperCase() + ' (transport not reported; unconfirmed)', arm: 'Arm this Alpaca session (transport unconfirmed)',
     title: 'The session did not report which transport it built. Do not arm until the header names mock or paper HTTPS.'};
 }
+function modeBadge(s){
+  if (isLive(s)) return {t: 'LIVE: REAL MONEY', c: 'live', title: 'Alpaca LIVE account: real money and real orders. Reported by the controller as alpaca-live.'};
+  if (isPaper(s)) return {t: 'Paper (no real money)', c: 'paper', title: 'Alpaca PAPER account: simulated money. ' + String(s.evidence_label || '')};
+  if (isAlpaca(s) && !isMockMode(s)) return {t: 'Mode not reported', c: 'unk', title: 'The session named an Alpaca mode the desk does not know (' + String(s.broker_mode) + '). Treat it as unconfirmed.'};
+  return {t: 'Local rehearsal', c: 'sim', title: isAlpaca(s) ? 'SIMULATED: in-process mock Alpaca, synthetic bars, MOCK LOCAL FILLS. No network, no real money.' : 'SIMULATED: offline replay of synthetic bars with MOCK FILLS. No broker, no real money.'};
+}
 function adapterOf(s){ const a = (s && typeof s.adapter === 'object' && s.adapter) ? s.adapter : ((s && s._adapter_file) || null); return a || {enabled: false, disabled_reason: 'no adapter state written yet (starts disabled)'}; }
 function limitsSrc(s){ const ls = (s && s.limits_source) || null; if (!ls) return {label: '-', draft: false};
-  const label = String(ls.label || ls.provenance || '-'); return {label: label, draft: /DRAFT/i.test(label) || ls.provenance === 'draft', prov: ls.provenance, hash: ls.hash, ts: ls.approved_utc || ls.saved_utc, error: ls.error}; }
+  const label = String(ls.label || ls.provenance || '-'); return {label: label, draft: ls.provenance === 'draft' || (/DRAFT/i.test(label) && !/no approved or draft/i.test(label)), prov: ls.provenance, hash: ls.hash, ts: ls.approved_utc || ls.saved_utc, error: ls.error}; }
 function recoveryOf(s){ return (s && (s.alpaca_recovery || s.recovery)) || null; }
 function renderBrokerBanner(s){
   const bb = $('#brokerBanner');
-  if (!isAlpaca(s)) { bb.hidden = true; return; }
+  if (!isAlpaca(s)) { bb.hidden = true; const d0 = $('#bbDetail'); if (d0) setH(d0, ''); return; }
   const a = adapterOf(s); const ls = limitsSrc(s); const rec = recoveryOf(s) || {};
-  bb.hidden = false;
-  bb.className = 'banner bb' + (ls.draft ? ' draft' : isPaper(s) ? ' paper' : '');
   const unc = Array.isArray(rec.uncertain_client_ids) ? rec.uncertain_client_ids : [];
+  const needsAction = unc.length > 0 || !!rec.reconcile_blocking || !!rec.ambiguous;
+  bb.hidden = !needsAction;
+  bb.className = 'banner bb' + (ls.draft ? ' draft' : isPaper(s) ? ' paper' : '');
   setH(bb, '<span>Mode: <b>' + esc(s.broker_mode) + '</b></span>' +
     '<span>Evidence: <b>' + esc(s.evidence_label || '-') + '</b></span>' +
     '<span>Data: <b>' + esc(s.data_label || '-') + '</b></span>' +
@@ -803,6 +863,7 @@ function renderBrokerBanner(s){
     (rec.reconcile_blocking ? '<span class="flag alarm">RECONCILE BLOCKING ENTRIES</span>' : '') +
     (rec.ambiguous ? '<span class="flag alarm">RECOVERY AMBIGUOUS: ' + esc(rec.reason || 'see panel') + ' (Enable refused until Reconcile clears it)</span>' : '') +
     '<span class="small">Nothing runs in the background: bars advance only when you press Check for new bars.</span>');
+  const det = $('#bbDetail'); if (det) setH(det, bb.innerHTML);
 }
 // Operator exposure view from session.protection, session.protective_orders and last_check.
 // Pending broker confirmation is shown apart from confirmed working stops. A stop is never a guaranteed loss cap.
@@ -843,7 +904,7 @@ function quoteHtml(s){
   const bid = Number(q.bid), ask = Number(q.ask);
   const sp = q.spread_usd != null && isFinite(q.spread_usd) ? Number(q.spread_usd) : ask - bid;
   const bps = q.spread_bps != null && isFinite(q.spread_bps) ? Number(q.spread_bps) : sp / ((bid + ask) / 2) * 10000;
-  return '<div><b>Latest IEX bid/ask (observed, not live):</b> bid $' + bid.toFixed(2) + ' / ask $' + ask.toFixed(2) +
+  return '<div><b>Latest IEX bid/ask (indicative, not a tradable price):</b> bid $' + bid.toFixed(2) + ' / ask $' + ask.toFixed(2) +
     ' &middot; spread $' + sp.toFixed(2) + ' (' + bps.toFixed(1) + ' bps)' +
     ' &middot; quote time ' + esc(tsFull(q.quote_utc)) + (q.age_s != null && isFinite(q.age_s) ? ', ' + esc(String(Math.round(q.age_s * 10) / 10)) + ' s old when read' : '') +
     (q.fresh === false ? ' <span class="flag unc">STALE</span>' : '') + ' &middot; free IEX feed only, not the full market</div>';
@@ -886,7 +947,7 @@ for (const b of document.querySelectorAll('.tabs button')) b.onclick = () => set
 
 function renderHeader(){
   const s = S.session || {}; const m = s._meta || {};
-  $('#mode').textContent = isAlpaca(s) ? (isPaper(s) ? 'ALPACA PAPER (manual checks; simulated account, no real money)' : 'ALPACA MOCK (manual checks; in-process fake, synthetic ids and bars)')
+  $('#mode').textContent = isAlpaca(s) ? (isLive(s) ? 'ALPACA LIVE (manual checks; REAL MONEY, real orders)' : isPaper(s) ? 'ALPACA PAPER (manual checks; simulated account, no real money)' : isMockMode(s) ? 'ALPACA MOCK (manual checks; in-process fake, synthetic ids and bars)' : 'ALPACA, mode not reported (' + String(s.broker_mode) + ')')
     : (s.mode || (m.missing ? 'NO SESSION YET (runner has not written session.json)' : 'REPLAY (OFFLINE, SIMULATED)'));
   $('#datalabel').textContent = s.data_label || (S.manifest || {}).label || 'SYNTHETIC BARS';
   $('#symstrat').textContent = (s.symbol || '-') + ' · ' + (s.strategy || '-');
@@ -911,8 +972,8 @@ function renderHeader(){
   bc.textContent = (alp ? brokerWords(s).chip + ' [' + (s.evidence_label || 'evidence not labeled') + ']' : (s.external_broker_badge || 'EXTERNAL BROKER: NONE (offline in-process fake broker)')) + (S.conn === false ? ' (last known)' : '');
   // the SIMULATED / MOCK FILLS badges stay for offline and mock; real paper shows its own evidence label
   const bs = $('#badgeSim'), bm = $('#badgeMock');
-  if (isPaper(s)) { bs.textContent = 'PAPER (no real money)'; bm.textContent = String(s.evidence_label || 'ALPACA PAPER'); }
-  else { bs.textContent = 'SIMULATED'; bm.textContent = alp ? 'MOCK LOCAL FILLS' : 'MOCK FILLS'; }
+  // one plain mode badge; the evidence label and fill source sit in Details (second pass, Codex 02:53Z)
+  const bdg = modeBadge(s); bs.textContent = bdg.t; bs.className = 'big ' + bdg.c; bs.title = bdg.title; bm.hidden = true;
   renderBrokerBanner(s);
   const ac = $('#armChip');
   ac.textContent = (s.badge || ('SIMULATION: ' + (ph === 'STOPPED' ? 'STOPPED' : ph === 'PAUSED' ? 'PAUSED' : ph === 'ARMED' ? 'ARMED' : 'DISARMED'))) + (S.conn === false ? ' (last known)' : '');
@@ -942,6 +1003,7 @@ function renderHeader(){
   st.classList.toggle('done', done && !m.missing);
   if (S.conn && done && !m.missing) { st.hidden = false; st.textContent = 'Session complete (' + ph + '). The replay has finished and these figures are final. SIMULATED, mock fills, TEST VALUES.'; }
   else if (S.conn && m.missing) { st.hidden = false; st.textContent = 'No session.json in the state directory yet. The session runner has not started; the chart shows whatever bars exist.'; }
+  else if (S.conn && alp) st.hidden = true;  // manual checks: nothing runs between Checks, so an old state file is expected, not a runner fault
   else if (S.conn && num(m.age_s) !== null && m.age_s > 30 && !c.stopped && !expired) { st.hidden = false; st.textContent = 'Connected to the desk server, but the session runner has not written state for ' + ago(m.age_s) + '. Figures are as of ' + tsFull(m.mtime_utc) + '.'; }
   else st.hidden = true;
 }
@@ -953,9 +1015,40 @@ function themeNow(){ const t = document.documentElement.dataset.theme; if (t ===
 function renderStrip(s){
   const q = num((s.exposure || {}).position_qty); const pv = s.protection;
   let h = q === null ? '<span class="muted">not reported</span>' : q === 0 ? 'FLAT' : (q > 0 ? 'LONG ' : 'SHORT ') + esc(Math.abs(q)) + ' sh';
-  if (q && pv && typeof pv === 'object' && pv.available === false) h += ' <span class="flag unc">PROTECTION UNAVAILABLE</span>';
-  else if (q && pv && typeof pv === 'object' && num(pv.uncovered_qty) > 0) h += ' <span class="flag unc">' + esc(pv.uncovered_qty) + ' UNCOVERED</span>';
+  const pr = protWords(q, pv);
+  if (pr) h += ' <span class="flag unc">' + esc(pr) + '</span>';
   setH($('#stPos'), h);
+  renderStatusLine(s, q, pr);
+}
+// "k of n sh protected" when part of a position has no working stop or exit; never "covered" for a partial
+function protWords(q, pv){
+  if (!q || !pv || typeof pv !== 'object') return '';
+  if (pv.available === false) return 'PROTECTION UNAVAILABLE';
+  const n = Math.abs(q), unc = num(pv.uncovered_qty) || 0;
+  if (unc <= 0) return '';
+  if (unc >= n) return 'UNPROTECTED: 0 of ' + n + ' sh protected';
+  return 'PARTIALLY PROTECTED: ' + (n - unc) + ' of ' + n + ' sh protected, ' + unc + ' UNCOVERED';
+}
+function renderStatusLine(s, q, pr){
+  const ph = phaseOf(s); const parts = [];
+  if (isLive(s)) parts.push('<span class="s-live">LIVE</span>');
+  const arm = ph === 'ARMED' ? ['Armed', 's-ok'] : ph === 'PAUSED' ? ['Paused', 's-warn'] : ph === 'STOPPED' ? ['Stopped', 's-live'] : /^(CLOSED|COMPLETE|COMPLETED|DONE)$/.test(ph) ? ['Session closed', ''] : ph === 'NONE' ? ['No session', ''] : ['Disarmed', ''];
+  parts.push('<span class="' + arm[1] + '">' + arm[0] + '</span>');
+  parts.push(q === null ? 'Position not reported' : q === 0 ? 'Flat' : (q > 0 ? 'Long ' : 'Short ') + esc(Math.abs(q)) + ' sh' + (pr ? ' <span class="s-live">(' + esc(pr.split(':')[0].toLowerCase()) + ')</span>' : ''));
+  parts.push('Limits: ' + limitsWord(s));
+  if (S.conn === false) parts.push('<span class="s-warn">last known</span>');
+  setH($('#statusLine'), parts.join('<span class="sep">&middot;</span>'));
+}
+function limitsWord(s){
+  if (!isAlpaca(s)) return 'test values';
+  const ls = s.limits_source; const L = s.limits || {};
+  if (!ls && ['max_loss_per_trade', 'per_trade_notional', 'daily_loss', 'gross_exposure'].every(k => num(L[k]) === null)) return '<span class="s-warn">not set</span>';
+  const lab = String((ls && (ls.label || ls.provenance)) || '');
+  if (ls && ls.error) return '<span class="s-live">error</span>';
+  if (/WALKTHROUGH|TEST VALUE|MOCK/i.test(lab)) return 'demo';
+  if (ls && ls.provenance === 'approved') return 'approved';
+  if (limitsSrc(s).draft) return '<span class="s-warn">draft</span>';
+  return esc(lab.slice(0, 24) || 'loaded');
 }
 function nextStep(s){
   const ph = phaseOf(s); const alp = isAlpaca(s);
@@ -1059,7 +1152,8 @@ function renderChartView(){
   $('#expo').innerHTML = '<b>Position</b><span>' + (q === null ? '-' : (q === 0 ? 'FLAT' : (q > 0 ? 'LONG ' : 'SHORT ') + Math.abs(q))) + (q ? ' @ ' + fmt(ex.avg_price, 4) : '') + '</span>' +
     '<b>Gross incl. working</b><span>' + fmt(ex.gross_including_working) + '</span>' +
     '<b class="wide">Limits <span class="muted small">(' + esc(isAlpaca(s) ? limitsSrc(s).label : 'TEST VALUES') + ')</span></b><span class="wide small" title="' + esc(limitsText(s.limits)) + '">' + esc(limitsCompact(s.limits)) + '</span>' + execRows(s);
-  $('#expConf').textContent = S.conn === false ? 'last known, unconfirmed' : isAlpaca(s) ? 'per ' + (s.evidence_label || s.broker_mode) + ' (as of the last reconcile)' : 'per in-process fake broker (simulated)';
+  $('#expConf').textContent = S.conn === false ? 'last known' : isAlpaca(s) ? 'as of last reconcile' : 'simulated';
+  $('#expConf').title = S.conn === false ? 'Last known, unconfirmed' : isAlpaca(s) ? 'Per ' + (s.evidence_label || s.broker_mode) + ', as of the last reconcile' : 'Per the in-process fake broker (simulated)';
   const prot = s.protective_orders || [];
   $('#protect').innerHTML = '<b>Protective orders:</b> ' + (prot.length ? prot.map(o => orderText(o)).join('<br>') : (q ? '<span class="neg">NONE while a position is open</span>' : 'none (flat)'));
   const wk = (ex.working_orders || []).filter(o => !o.protective);
@@ -1182,7 +1276,7 @@ function execRows(s){
   const pv = s.protection;
   if (pv && typeof pv === 'object' && pv.available && pv.position_qty) {
     const bad = (pv.uncovered_qty || 0) > 0;
-    h += '<b class="wide">Protection</b><span class="wide small">' + (bad ? '<b class="neg">' + esc(String(pv.uncovered_qty)) + ' of ' + esc(String(Math.abs(pv.position_qty))) + ' shares UNCOVERED</b>' : 'all ' + esc(String(Math.abs(pv.position_qty))) + ' shares covered') + ' (stop ' + esc(String(pv.protective_qty || 0)) + ', exit ' + esc(String(pv.exit_working_qty || 0)) + ')' + (pv.last_refusal ? '; last protective refusal: ' + esc(metricVal(pv.last_refusal)) : '') + '</span>';
+    h += '<b class="wide">Protection</b><span class="wide small">' + (bad ? '<b class="neg">' + esc(protWords(num(pv.position_qty), pv) || (String(pv.uncovered_qty) + ' of ' + String(Math.abs(pv.position_qty)) + ' shares UNCOVERED')) + '</b>' : 'all ' + esc(String(Math.abs(pv.position_qty))) + ' shares covered') + ' (stop ' + esc(String(pv.protective_qty || 0)) + ', exit ' + esc(String(pv.exit_working_qty || 0)) + ')' + (pv.last_refusal ? '; last protective refusal: ' + esc(metricVal(pv.last_refusal)) : '') + '</span>';
   }
   const lq = s.latest_quote;
   if (lq && typeof lq === 'object') h += '<b class="wide">SPY quote (IEX, at last entry check)</b><span class="wide small">' + (lq.valid && lq.fresh ? 'bid ' + esc(String(lq.bid)) + ' / ask ' + esc(String(lq.ask)) + ', spread ' + esc(String(lq.spread_usd)) + ' ($), age ' + esc(String(lq.age_s)) + 's' : '<b class="neg">entry held: ' + esc(String(lq.reason || 'unavailable')) + '</b>') + (lq.quote_utc ? ' at ' + esc(String(lq.quote_utc)) : '') + '</span>';
@@ -1298,24 +1392,24 @@ function renderReview(){
 }
 
 function modeShort(s){
-  return isAlpaca(s) ? (isPaper(s) ? 'ALPACA PAPER (manual checks; simulated account)' : 'ALPACA MOCK (manual checks; synthetic)') : (s.mode || '-');
+  return isAlpaca(s) ? (isLive(s) ? 'ALPACA LIVE (manual checks; REAL MONEY)' : isPaper(s) ? 'ALPACA PAPER (manual checks; simulated account)' : isMockMode(s) ? 'ALPACA MOCK (manual checks; synthetic)' : 'ALPACA (mode not reported)') : (s.mode || '-');
 }
 // Mode-dependent labels live outside the per-view renderers so they are right on every tab (QA 2026-11-15).
 function renderModeLabels(){
   const s = S.session || {}; const alp = isAlpaca(s); const bw = brokerWords(s); const paper = bw.kind === 'https';
-  $('#srcTag').textContent = !alp ? 'source: desk replay bars (synthetic), not TradingView, not a real market'
-    : paper ? 'source: Alpaca free IEX bars (alpaca_bars.jsonl), paper account; not TradingView'
-    : 'source: mock Alpaca bars (synthetic, alpaca_bars.jsonl), not TradingView, not a real market';
+  const stg = $('#srcTag');
+  stg.textContent = !alp ? 'replay bars (synthetic)' : bw.kind === 'live' ? 'Alpaca IEX bars, LIVE account' : paper ? 'Alpaca IEX bars, paper account' : bw.kind === 'mock' ? 'mock bars (synthetic)' : 'bars (source unconfirmed)';
+  stg.title = !alp ? 'Desk replay bars (synthetic). Not TradingView, not a real market.' : (paper || bw.kind === 'live') ? 'Alpaca free IEX bars (not the full market). Not TradingView.' : 'Mock Alpaca bars (synthetic). Not TradingView, not a real market.';
   const armText = bw.arm, armTitle = bw.title;
   ['#btnArm', '#preArm'].forEach(id => { const b = $(id); if (b) { b.textContent = armText; b.title = armTitle; } });
   const fa = document.querySelector('button[data-f="arm"]'); if (fa) fa.title = armTitle;
   const sn = $('#stopNote');
   if (sn) sn.textContent = !alp ? 'Offline replay: the broker is the in-process FakeBroker. SIMULATED.'
-    : (paper ? 'Alpaca PAPER account over HTTPS (simulated money, no real orders). ' : bw.kind === 'mock' ? 'Alpaca MOCK: in-process transport, synthetic ids and fills, no network. ' : 'Transport not reported; unconfirmed. ')
+    : (bw.kind === 'live' ? 'Alpaca LIVE account over HTTPS: REAL MONEY, real orders. ' : paper ? 'Alpaca PAPER account over HTTPS (simulated money, no real orders). ' : bw.kind === 'mock' ? 'Alpaca MOCK: in-process transport, synthetic ids and fills, no network. ' : 'Transport not reported; unconfirmed. ')
       + 'Stop also turns the adapter off; it stays off after a restart until you press Enable again.';
   const pn = $('#preNote');
   if (pn) pn.textContent = !alp ? 'From session.json preflight. Offline replay, in-process fake broker, TEST VALUE limits. SIMULATED.'
-    : 'From session.json preflight. ' + (paper ? 'Alpaca PAPER account over HTTPS (simulated money).' : bw.kind === 'mock' ? 'Alpaca MOCK (in-process transport, synthetic, no network).' : 'Transport not reported; unconfirmed.') + ' Limits: ' + limitsSrc(s).label + '.';
+    : 'From session.json preflight. ' + (bw.kind === 'live' ? 'Alpaca LIVE account over HTTPS: REAL MONEY.' : paper ? 'Alpaca PAPER account over HTTPS (simulated money).' : bw.kind === 'mock' ? 'Alpaca MOCK (in-process transport, synthetic, no network).' : 'Transport not reported; unconfirmed.') + ' Limits: ' + limitsSrc(s).label + '.';
 }
 
 function renderAll(){

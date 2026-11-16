@@ -1048,9 +1048,26 @@ class TestAlpacaPage(unittest.TestCase):
                   "h += protectionHtml(s) + quoteHtml(s);", "protective stop confirmed working",
                   "pending broker confirmation", "PENDING CONFIRMATION", "working exits", "UNCOVERED",
                   "Not a loss cap:", "Between manual Checks nothing runs.", "since_previous_check_s",
-                  "q.valid === true", "q0.available !== false", "Latest IEX bid/ask (observed, not live)",
+                  "q.valid === true", "q0.available !== false", "Latest IEX bid/ask (indicative, not a tradable price)",
                   "UNAVAILABLE"):
             self.assertIn(s, self.html)
+
+    def test_second_pass_mode_and_first_viewport(self):
+        # coordinator 2026-11-16 (Codex 02:53Z review): one mode badge, live only from the controller's
+        # alpaca-live label, one status line, details behind a disclosure, plain Alpaca dashboard link
+        for s in ("function isLive(s)", "=== 'alpaca-live'", "LIVE: REAL MONEY", "Local rehearsal",
+                  "Paper (no real money)", "Mode not reported", 'id="statusLine"', 'id="modeDet"',
+                  'id="bbDetail"', 'id="resPop"', 'href="https://app.alpaca.markets/"',
+                  "PARTIALLY PROTECTED: ", "bb.hidden = !needsAction", 'data-f="stop"'):
+            self.assertIn(s, self.html)
+        # no internal filenames on the chart's empty state or source tag
+        for s in ("state_dir/alpaca_bars.jsonl is empty", "state_dir/bars.jsonl is missing",
+                  "(alpaca_bars.jsonl), paper account"):
+            self.assertNotIn(s, self.html)
+        with open(os.path.join(DESK_DIR, "ui", "lab.html"), encoding="utf-8") as fh:
+            lab = fh.read()
+        for s in ('id="modeBadge"', '"/api/session"', 'm === "alpaca-live"', "LIVE: REAL MONEY"):
+            self.assertIn(s, lab)
 
     def test_broker_labels_follow_actual_transport(self):
         # Codex QA 22:45Z: arm tooltip and broker chip name mock vs paper HTTPS from the transport the
