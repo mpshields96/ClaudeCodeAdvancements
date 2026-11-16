@@ -5,7 +5,9 @@ the only socket opened is the loopback port probe on an OS-chosen port. The UI s
 are replaced, and the live transport's opener is a FakeOpener over MockTrading, so no request can leave the
 process. Every key is synthetic.
 """
+import http.client
 import io
+import json
 import os
 import shutil
 import socket
@@ -28,6 +30,9 @@ from alpaca.mock import MockTrading  # noqa: E402
 from alpaca.transport import StaticTestProvider  # noqa: E402
 from test_alpaca_broker import SYNTH_SECRET, FakeOpener  # noqa: E402
 from test_alpaca_live import LIVE_SYNTH_KEY, _lines, approve_live_dir  # noqa: E402
+
+
+_REAL_CREATE_CONNECTION = socket.create_connection
 
 
 class _Boom(AssertionError):
@@ -149,10 +154,10 @@ class LiveWiringTests(unittest.TestCase):
         self.assertEqual(code, 0, err)
         self.assertEqual(len(FakeController.built), 1)
         kw = FakeController.built[0]
-        self.assertEqual(sorted(kw), ["authorization", "mode", "state_dir", "strategy", "transport"])
+        self.assertEqual(sorted(kw), ["live_authorization", "mode", "state_dir", "strategy", "transport"])
         self.assertEqual(kw["mode"], "live")
         self.assertEqual(kw["state_dir"], os.path.abspath(self.live_dir))
-        auth = kw["authorization"]
+        auth = kw["live_authorization"]
         self.assertIsInstance(auth, L.LiveAuthorization)
         self.assertEqual(os.path.abspath(auth.state_dir), os.path.abspath(self.live_dir))
         self.assertEqual(auth.shares, 1)
@@ -203,7 +208,7 @@ class LiveWiringTests(unittest.TestCase):
     def test_the_production_transport_factory_builds_only_the_live_transport(self):
         code, _, err = self.run_start()        # mint a real authorization through the gate
         self.assertEqual(code, 0, err)
-        auth = FakeController.built[0]["authorization"]
+        auth = FakeController.built[0]["live_authorization"]
         provider = StaticTestProvider(LIVE_SYNTH_KEY, SYNTH_SECRET, mode="live")
         with mock.patch.object(L, "make_live_provider", return_value=provider) as made, \
                 mock.patch.object(subprocess, "run", _boom), mock.patch.object(socket, "create_connection", _boom):
@@ -230,13 +235,26 @@ class LiveWiringTests(unittest.TestCase):
         self.assertIn("LIVE GATE PASSED", out)
         self.assertEqual((FakeController.built, self.transports, self.servers), ([], [], []))
 
-    def test_a_constructor_that_does_not_match_keeps_exit_3(self):
-        FakeController.raise_type_error = True
+    def test_a_controller_start_up_failure_exits_2_names_the_stage_and_says_what_may_have_been_read(self):
+        FakeController.raise_type_error = True           # stands in for any construction error
         code, out, err = self.run_start()
-        self.assertEqual(code, 3, err)
-        self.assertIn("did not match", out)
+        self.assertEqual(code, 2, err)
+        self.assertIn("session controller start-up failed: TypeError", err)
+        self.assertIn("may have read the live key", err)
+        self.assertNotIn("no key was read", err)
+        self.assertNotIn("LIVE GATE PASSED", out)
         self.assertEqual(self.servers, [])
         self.assert_nothing_sent()
+        self.assert_lock_released()
+
+    def test_a_failure_before_the_controller_names_its_stage_and_nothing_was_read(self):
+        def broken(kind, auth):
+            raise RuntimeError("provider missing")
+        code, _, err = self.run_start(transport=broken)
+        self.assertEqual(code, 2)
+        self.assertIn("live transport failed: RuntimeError: provider missing", err)
+        self.assertIn("no key was read", err)
+        self.assertEqual((FakeController.built, self.servers), ([], []))
         self.assert_lock_released()
 
 
@@ -294,7 +312,7 @@ class RealControllerStartTests(LiveWiringTests.__bases__[0]):
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
 
-    def test_real_live_controller_starts_disabled_and_sends_no_order(self):
+    def start_real(self, server=None, wait=None):
         AS = live_launch._session_module()
         if AS is None:
             self.skipTest("this build's alpaca_session has no live mode")
@@ -315,7 +333,7 @@ class RealControllerStartTests(LiveWiringTests.__bases__[0]):
             self.transports.append(t)
             return t
 
-        def server(state_dir, host, port, manager):
+        def fake_server(state_dir, host, port, manager):
             srv = FakeServer(state_dir, host, port, manager)
             self.servers.append(srv)
             return srv
@@ -327,13 +345,13 @@ class RealControllerStartTests(LiveWiringTests.__bases__[0]):
                 mock.patch.object(socket, "create_connection", _boom), \
                 mock.patch.object(live_launch, "_session_module", return_value=AS2), \
                 mock.patch.object(live_launch, "_make_transport", transport), \
-                mock.patch.object(live_launch, "_make_server", server), \
-                mock.patch.object(live_launch, "_wait_until_interrupted", side_effect=KeyboardInterrupt):
+                mock.patch.object(live_launch, "_make_server", server or fake_server), \
+                mock.patch.object(live_launch, "_wait_until_interrupted", side_effect=wait or KeyboardInterrupt):
             code = live_launch.main(argv, out=out, err=err, isatty=lambda: True,
                                     read_line=_lines(L.confirm_phrase(1, L.session_date())))
-        self.assertEqual(code, 0, err.getvalue())
-        self.assertEqual(len(self.runners), 1)
-        self.assertIs(self.runners[0].adapter_state.enabled, False)
+        return code, out.getvalue(), err.getvalue()
+
+    def assert_start_sent_no_order(self):
         methods = [c[0] for c in self.opener.trading.calls]
         self.assertNotIn("POST", methods, "an order was sent at start")
         self.assertNotIn("DELETE", methods, "a cancel was sent at start")
@@ -342,10 +360,55 @@ class RealControllerStartTests(LiveWiringTests.__bases__[0]):
             self.assertEqual(req.get_method(), "GET")
             self.assertIn("api.alpaca.markets", req.full_url)
             self.assertNotIn("paper-api", req.full_url)
+
+    def test_real_live_controller_starts_disabled_and_sends_no_order(self):
+        code, _, err = self.start_real()
+        self.assertEqual(code, 0, err)
+        self.assertEqual(len(self.runners), 1)
+        self.assertIs(self.runners[0].adapter_state.enabled, False)
+        self.assert_start_sent_no_order()
         self.assertFalse(os.path.exists(os.path.join(self.live_dir, "alpaca_paper.json")))
         print("\n[live wiring] real controller start: %d fake-opener request(s): %s"
               % (len(self.opener.requests), [r.get_method() + " " + r.full_url.split("?")[0]
                                               for r in self.opener.requests]), file=sys.stderr)
+
+
+    def test_the_real_desk_server_reports_a_live_desk_with_the_adapter_disabled(self):
+        """The real ui server on a free loopback port (no FakeServer). W-A owns its `simulated` value,
+        so that field is not asserted here."""
+        replies = {}
+
+        def loopback_only(address, *a, **k):
+            if address[0] != "127.0.0.1":
+                raise _Boom("a non-loopback connection was attempted")
+            return _REAL_CREATE_CONNECTION(address, *a, **k)
+
+        def read_then_quit():
+            with mock.patch.object(socket, "create_connection", loopback_only):
+                for route in ("/api/health", "/api/session"):
+                    conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+                    try:
+                        conn.request("GET", route)
+                        reply = conn.getresponse()
+                        replies[route] = (reply.status, json.loads(reply.read()))
+                    finally:
+                        conn.close()
+            raise KeyboardInterrupt
+
+        code, out, err = self.start_real(server=live_launch._make_server, wait=read_then_quit)
+        self.assertEqual(code, 0, err)
+        status, health = replies["/api/health"]
+        self.assertEqual(status, 200)
+        self.assertEqual(health["broker_mode"], "alpaca-live")
+        self.assertIs(health["controller_attached"], True)
+        self.assertEqual(os.path.realpath(health["state_dir"]), os.path.realpath(self.live_dir))
+        status, session = replies["/api/session"]
+        self.assertEqual(status, 200)
+        self.assertIs(session["_controller_attached"], True)
+        self.assertIs(session["adapter"]["enabled"], False)
+        self.assertIs(L.LiveAdapterState(self.live_dir).enabled, False)
+        self.assertIn("adapter   DISABLED", out)
+        self.assert_start_sent_no_order()
 
 
 if __name__ == "__main__":

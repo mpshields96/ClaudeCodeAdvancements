@@ -14,11 +14,13 @@ authorization the gate minted, the session controller in mode "live" for the liv
 desk UI on the checked live port, bound exactly (a taken port is refused, never moved). The live adapter
 always starts DISABLED; you enable it yourself in the UI. Starting sends no order.
 
-If this build's alpaca_session.py has no live mode, or its live constructor does not match, `start`
-stops after the gate with exit 3, as before. See LIVE_READINESS.md.
+If this build's alpaca_session.py has no live mode, `start` stops after the gate with exit 3. Any
+failure after the gate names the stage that failed and gives the real error; once the controller's
+start-up has begun it says the key may have been read and read-only requests made. See LIVE_READINESS.md.
 
-Exit codes: 0 limits saved, or the live session ran and you stopped it; 2 refused (nothing sent);
-3 gate passed, but this build's session controller has no live mode (nothing sent).
+Exit codes: 0 limits saved, or the live session ran and you stopped it; 2 refused (the message says what
+may have been read; no order is ever sent); 3 gate passed, but this build's session controller has no live
+mode (nothing sent).
 """
 import argparse
 import os
@@ -97,10 +99,10 @@ def _refuse(err, msg):
 
 
 def _refuse_after_build(err, msg):
-    """A refusal once the live controller exists: its start-up reconcile may already have read the key and
-    made read-only requests, so the plain "nothing was sent" line would be untrue."""
-    err.write("REFUSED (live): %s\nNo order was sent. The session controller had started, so it may have read "
-              "the live key and made %s.\n" % (msg, START_READS))
+    """A refusal once the live controller's start-up has begun: its reconcile may already have read the key
+    and made read-only requests, so the plain "nothing was sent" line would be untrue."""
+    err.write("REFUSED (live): %s\nNo order was sent. The session controller's start-up had begun, so it may "
+              "have read the live key and made %s.\n" % (msg, START_READS))
     return 2
 
 
@@ -127,11 +129,6 @@ def _start(args, out, err, isatty, read_line):
     return _serve_live(args, auth, state_dir, AS, out, err)
 
 
-def _not_wired(out, auth, why):
-    out.write(NOT_WIRED % (auth.session_date, auth.shares) + "\n(%s)\n" % why)
-    return 3
-
-
 def _serve_live(args, auth, state_dir, AS, out, err):
     """Runs only after the gate passed. Order: locks, exact port check, adapter forced off, transport,
     controller, server. Every refusal before the server starts sends nothing."""
@@ -139,29 +136,33 @@ def _serve_live(args, auth, state_dir, AS, out, err):
     scenario_lock = launch.hold_scenario_lock(state_dir)
     if scenario_lock is None:
         return _refuse(err, "another launcher holds this live state folder (%s)" % state_dir)
-    runner = None
+    runner, started, stage = None, False, "state folder lock"
     try:
         held, inner = launch._take_inner_lock(state_dir)
         if inner is not None:
             inner.close()
         if held:
             raise L.LiveGateRefused("this live state folder's order manager lock is held by another process")
+        stage = "exact live port check"
         probe = L.bind_live_port_exactly(args.port)      # taken: refused here, never moved
         probe.close()
+        stage = "live adapter reset"
         live_state = L.LiveAdapterState(state_dir)
         if live_state.enabled:                           # a new session never inherits "enabled"
             live_state.disable(START_DISABLED_REASON, by="live_launch start")
+        stage = "live transport"
+        if not auth.state_dir or os.path.realpath(auth.state_dir) != os.path.realpath(state_dir):
+            raise L.LiveGateRefused("the live authorization is for a different state folder")
         transport = _make_transport(args.provider, auth)
         if getattr(transport, "MODE", None) != "live":
             raise L.LiveGateRefused("the live session accepts only the live transport")
-        try:
-            runner = AS.AlpacaSessionController(state_dir=state_dir, strategy=LIVE_STRATEGY, mode=AS.MODE_LIVE,
-                                                transport=transport, authorization=auth)
-        except TypeError as e:                           # the controller's live contract does not match
-            scenario_lock.close()
-            return _not_wired(out, auth, "the session controller's live constructor did not match: %s" % e)
+        stage, started = "session controller start-up", True    # its reconcile may send read-only GETs
+        runner = AS.AlpacaSessionController(state_dir=state_dir, strategy=LIVE_STRATEGY, mode=AS.MODE_LIVE,
+                                            transport=transport, live_authorization=auth)
+        stage = "live adapter check"
         if getattr(runner.adapter_state, "enabled", True) is not False:
             raise L.LiveGateRefused("the live adapter did not start disabled")
+        stage = "desk server"
         controls = launch.AlpacaDeskControls(runner)
         launch.install_routes()
         try:
@@ -174,7 +175,8 @@ def _serve_live(args, auth, state_dir, AS, out, err):
             runner.close()
         scenario_lock.close()
         msg = str(e) if isinstance(e, L.LiveGateRefused) else "%s: %s" % (e.__class__.__name__, e)
-        return (_refuse_after_build if runner is not None else _refuse)(err, msg)
+        msg = "%s failed: %s" % (stage, msg)
+        return (_refuse_after_build if started else _refuse)(err, msg)
     url = "http://%s:%d/" % (LIVE_HOST, args.port)
     threading.Thread(target=httpd.serve_forever, name="desk-ui-live", daemon=True).start()
     out.write("[live] %s\n[live] UI        %s\n[live] state     %s\n[live] shares    %d (approved %s)\n"

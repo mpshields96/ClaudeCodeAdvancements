@@ -38,8 +38,9 @@ The first two commands are Codex's; `Start Live Desk.command` is W-B's.
 10. The desk opens on `http://127.0.0.1:8795/`. You enable the adapter yourself; Stop disables it again.
 
 Exit codes for `live_launch.py`: 0 limits saved, or the live desk ran and you quit it; 2 refused, no order
-sent; 3 the desk code has no live session, a guard that sends nothing. A refusal after step 9 says the
-start-up reads may already have happened.
+sent; 3 the desk code has no live session, a guard that sends nothing. A refusal after the gate names the
+stage that failed and gives the error; once step 9 has begun it says the start-up reads may already have
+happened.
 
 ## 2. How live is kept apart from paper
 
