@@ -16,6 +16,7 @@ if __name__ == "__main__" and not __package__:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from alpaca import FEED, SYMBOL
+from alpaca.feed import parse_rfc3339
 from alpaca.transport import TransportRefused
 
 # Execution freshness policy for each manually requested quote, in seconds.
@@ -27,7 +28,12 @@ def _timestamp(value):
     if isinstance(value, datetime):
         dt = value
     elif isinstance(value, str):
-        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        # Alpaca sends RFC 3339 with up to nine fraction digits; Python 3.9's
+        # fromisoformat rejects those, so the feed's parser goes first.
+        try:
+            dt = parse_rfc3339(value)
+        except ValueError:
+            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
     else:
         raise ValueError("missing timestamp")
     if dt.tzinfo is None or dt.utcoffset() is None:

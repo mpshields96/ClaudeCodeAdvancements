@@ -2,7 +2,9 @@
 # User-launched, authenticated paper-only session. Credentials and limits stay local.
 set -eu
 desk_dir="${0:A:h:h}"
-approved="$desk_dir/state-alpaca-mock/limits_approved.json"
+approved="$desk_dir/state-alpaca-paper/limits_approved.json"
+# Legacy installations may still use their operator-approved rehearsal worksheet.
+if [[ ! -e "$approved" ]]; then approved="$desk_dir/state-alpaca-mock/limits_approved.json"; fi
 if [[ ! -f "$approved" ]]; then
   print 'Open the SPY paper desk, choose Setup (limits), and approve your own values first.'
   exit 2

@@ -67,6 +67,9 @@ class CalendarNotCovered(ValueError):
     """The holiday table makes no claim about this date."""
 
 
+_FRAC = _re.compile(r"^(.*T\d{2}:\d{2}:\d{2}\.)(\d+)(.*)$")
+
+
 def parse_ts(ts):
     """Return an aware UTC datetime from an ISO string, epoch seconds or aware datetime.
 
@@ -85,6 +88,11 @@ def parse_ts(ts):
         s = ts.strip()
         if s.endswith("Z") or s.endswith("z"):
             s = s[:-1] + "+00:00"
+        # Alpaca sends RFC 3339 with 0-9 fraction digits; Python 3.9's fromisoformat takes exactly
+        # 3 or 6. Use six: truncate extra digits (never rounds into the next second or day), pad short.
+        m = _FRAC.match(s)
+        if m:
+            s = m.group(1) + m.group(2)[:6].ljust(6, "0") + m.group(3)
         d = _dt.datetime.fromisoformat(s)
         if d.tzinfo is None:
             raise ValueError("timestamp without a zone refused: %r" % (ts,))

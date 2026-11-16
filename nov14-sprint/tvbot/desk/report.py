@@ -107,14 +107,40 @@ def _tz():
 TZ = _tz()
 
 
+_RFC3339 = []
+
+
+def _parse_iso(s):
+    """ISO 8601 / RFC 3339 text -> datetime; raises ValueError.
+
+    Alpaca sends up to nine fraction digits, which Python 3.9's fromisoformat rejects,
+    so the desk's own parser (alpaca/feed.parse_rfc3339, stdlib only) goes first.
+    The fromisoformat fallback keeps earlier inputs working, naive ones included."""
+    if not _RFC3339:
+        try:
+            desk = os.path.dirname(os.path.abspath(__file__))
+            if desk not in sys.path:
+                sys.path.insert(0, desk)
+            from alpaca.feed import parse_rfc3339
+            _RFC3339.append(parse_rfc3339)
+        except Exception:
+            _RFC3339.append(None)
+    if _RFC3339[0] is not None:
+        try:
+            return _RFC3339[0](s)
+        except ValueError:
+            pass
+    return datetime.fromisoformat(s[:-1] + "+00:00" if s.endswith("Z") else s)
+
+
 def iso_week(ts):
     if not ts or not isinstance(ts, str):
         return None
     try:
-        dt = datetime.strptime(ts.replace("Z", "+00:00")[:25], "%Y-%m-%dT%H:%M:%S%z")
+        dt = _parse_iso(ts)
     except ValueError:
         try:
-            dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            dt = datetime.strptime(ts.replace("Z", "+00:00")[:25], "%Y-%m-%dT%H:%M:%S%z")
         except ValueError:
             return None
     if dt.tzinfo is None:
@@ -129,7 +155,7 @@ def short_ts(ts):
         return ""
     s = str(ts).strip()
     try:
-        dt = datetime.fromisoformat(s[:-1] + "+00:00" if s.endswith("Z") else s)
+        dt = _parse_iso(s)
     except ValueError:
         return s
     if dt.tzinfo is None:                     # naive: show it without claiming UTC

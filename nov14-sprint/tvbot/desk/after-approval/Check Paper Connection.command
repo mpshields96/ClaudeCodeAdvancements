@@ -2,7 +2,8 @@
 # A Finder action for the first authenticated paper test after local limits approval.
 set -eu
 desk_dir="${0:A:h:h}"
-worksheet_dir="$desk_dir/state-alpaca-mock"
+worksheet_dir="$desk_dir/state-alpaca-paper"
+if [[ ! -e "$worksheet_dir/limits_approved.json" ]]; then worksheet_dir="$desk_dir/state-alpaca-mock"; fi
 approved="$worksheet_dir/limits_approved.json"
 if [[ ! -f "$approved" ]]; then
   print 'Open the SPY paper desk, choose Setup (limits), and approve your own values first.'
