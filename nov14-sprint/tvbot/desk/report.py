@@ -464,9 +464,8 @@ def build_html(state_dir, week=None):
     session = read_json(os.path.join(state_dir, "session.json"), {}) or {}
     week, weeks = pick_week(review, week)
     bw = week_view(review, week)
-    if session.get("broker_mode") in ("alpaca-paper", "alpaca-mock"):
-        # Alpaca paper/mock week: rendered by the weekly owner's module from this desk's own
-        # paper ledger and session snapshot, not by the offline synthetic-bar report below.
+    if session.get("broker_mode") in ("alpaca-paper", "alpaca-mock", "alpaca-live"):
+        # Use the fill ledger and session snapshot from the selected Alpaca desk.
         desk = os.path.dirname(os.path.abspath(__file__))
         if desk not in sys.path:
             sys.path.insert(0, desk)

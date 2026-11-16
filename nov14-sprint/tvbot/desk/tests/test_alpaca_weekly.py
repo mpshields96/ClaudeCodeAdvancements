@@ -1,5 +1,7 @@
 from pathlib import Path
+import json
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -31,6 +33,20 @@ class WeeklyPaperReview(unittest.TestCase):
         self.assertIn("synthetic SPY bars", html)
         self.assertIn("venue confirmed flat.", html)
         self.assertIn("No recorded week", html)
+
+    def test_live_session_uses_the_live_report(self):
+        from report import build_html
+
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "session.json").write_text(json.dumps({"broker_mode": "alpaca-live"}))
+            (root / "review.json").write_text(json.dumps({"by_week": {"2026-W47": {"round_trips": []}}}))
+            selected, html = build_html(folder, "2026-W47")
+        self.assertEqual(selected, "2026-W47")
+        self.assertIn("SPY live week", html)
+        self.assertIn("Results use recorded live fill prices.", html)
+        self.assertIn("Account fees are unverified", html)
+        self.assertNotIn("simulated execution", html)
 
 
 if __name__ == "__main__":

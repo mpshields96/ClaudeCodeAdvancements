@@ -64,6 +64,8 @@ EXTRA_ROUTES = {
 def _weekly_label(runner):
     """Say which source the weekly report came from; never call a paper week offline mock fills."""
     mode = getattr(runner, "broker_mode", None)
+    if mode == "alpaca-live":
+        return "ALPACA LIVE weekly report. Reconciled desk fills, account fees unverified."
     if mode == "alpaca-mock":
         return ("ALPACA MOCK weekly report: local fake venue, synthetic ids and fills; "
                 "fees and limits as recorded, not account-verified")
@@ -132,7 +134,7 @@ class DeskControls(object):
     def weekly_report(self, week=None):
         """Write the weekly review, then the <=3-page weekly PDF (HTML if no headless browser).
 
-        In Alpaca mode the review covers this desk's own paper session only."""
+        In Alpaca mode the review covers this desk's own session."""
         if week is not None and not re.match(r"^\d{4}-W\d{2}$", str(week)):
             return {"ok": False, "error": "week must look like 2026-W40"}
         with self.r.lock:
@@ -148,7 +150,8 @@ class DeskControls(object):
             pages = None
         name = os.path.basename(path)
         self.r._desk_audit("weekly_report", week=wk, file=name, pages=pages)
-        return {"ok": True, "simulated": True, "week": wk, "file": name, "url": "/reports/" + name,
+        return {"ok": True, "simulated": getattr(self.r, "broker_mode", None) != "alpaca-live",
+                "week": wk, "file": name, "url": "/reports/" + name,
                 "pages": pages, "label": _weekly_label(self.r)}
 
 

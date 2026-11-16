@@ -1,4 +1,4 @@
-"""Render the selected SPY paper week from its closed fill ledger and session snapshot."""
+"""Render the selected SPY week from its closed fill ledger and session snapshot."""
 from html import escape
 from math import isfinite
 from pathlib import Path
@@ -87,12 +87,16 @@ def shadow_activity(state_dir):
 def render_week(state_dir, session, bw, week):
     """A complete print view. Session status is explicitly current, economics weekly."""
     mode = session.get("broker_mode")
-    if mode not in ("alpaca-paper", "alpaca-mock"):
-        raise ValueError("expected an Alpaca paper or local rehearsal session")
-    connected = mode == "alpaca-paper"
-    title = "SPY paper week" if connected else "SPY rehearsal week"
-    source = ("Alpaca paper simulator fills · free IEX market data" if connected
-              else "Local rehearsal · synthetic SPY bars and fills")
+    modes = {
+        "alpaca-paper": ("SPY paper week", "Alpaca paper simulator fills · free IEX market data"),
+        "alpaca-mock": ("SPY rehearsal week", "Local rehearsal · synthetic SPY bars and fills"),
+        "alpaca-live": ("SPY live week", "Alpaca live account · this desk's reconciled fills · free IEX market data"),
+    }
+    if mode not in modes:
+        raise ValueError("expected an Alpaca session")
+    title, source = modes[mode]
+    execution = ("Results use recorded live fill prices." if mode == "alpaca-live"
+                 else "Filled prices include simulated execution.")
     trades = bw.get("round_trips") or []
     gross, stress = fill_economics(trades)
     comparison = {r.get("metric"): r.get("value") for r in bw.get("comparison", [])}
@@ -103,7 +107,9 @@ def render_week(state_dir, session, bw, week):
             len(trades), "" if len(trades) == 1 else "s", dollars(gross))
     else:
         decision = "No round trip closed during the selected period."
-    decision += " The desk recorded {} passes across {} decisions.".format(passes, decisions)
+    decision += " The desk recorded {} {} across {} {}.".format(
+        passes, "pass" if passes == 1 else "passes",
+        decisions, "decision" if decisions == 1 else "decisions")
     best = bw.get("best_trade")
     worst = bw.get("worst_trade")
     if len(trades) > 1 and best and best == worst:
@@ -148,12 +154,12 @@ def render_week(state_dir, session, bw, week):
     @media screen {{body {{padding:2.7vw 20px}}}} @media(max-width:520px) {{.chartrow {{grid-template-columns:103px 1fr 70px}} .facts {{grid-template-columns:86px 1fr}}}}
     </style><header><span>Trading desk / weekly review</span><span>{week}</span></header>
     <h1>{title}</h1><p class="sub">{source}</p><div class="decision"><b class="over">Week in brief</b><p>{decision}</p></div>
-    <h2>Closed trades against cash</h2>{chart}<p><small>Filled prices include simulated execution. The $1 sensitivity is charged once per filled order, including orders filled in parts. Account fees are unverified. Open positions are excluded.</small></p>
+    <h2>Closed trades against cash</h2>{chart}<p><small>{execution} The $1 sensitivity is charged once per filled order, including orders filled in parts. Account fees are unverified. Open positions are excluded.</small></p>
     <h2>Trade and pass replay</h2><div class="facts"><b>Best trade</b><div>{best}</div><b>Worst trade</b><div>{worst} {same}</div><b>Selected pass</b><div>{best_pass}</div></div>
     <h2>Limits and Stop</h2><div class="facts"><b>Weekly refusals</b><div>{refusal} decisions refused by the desk risk check.</div><b>Latest state</b><div>{stop} {alarm}</div>
     <b>Loaded sizing</b><div>{size} {unit} · {provenance} {snapshot}</div><b>Dollar limits</b><div>{caps}</div><b>Session shadow lab</b><div>{shadow}</div></div>
     <footer>Latest session snapshot {asof}. The selected week groups closed trips by entry week. Detailed fill and refusal records are available in the desk ledger.</footer></html>""".format(
-        title=title, week=text(week or "No recorded week"), source=source, decision=text(decision),
+        title=title, execution=execution, week=text(week or "No recorded week"), source=source, decision=text(decision),
         chart=chart(gross, stress), best=trip_line(best), worst=trip_line(worst), same=same,
         best_pass=best_pass, refusal=refusal, stop=stop, alarm=alarm, size=text(size if size is not None else "Unavailable"),
         unit="share" if size == 1 else "shares", provenance=text(provenance), snapshot=text(snapshot_id), caps=text(cap_text), shadow=text(shadow_activity(state_dir)), asof=compact(session.get("updated_utc") or "unavailable", 38))
