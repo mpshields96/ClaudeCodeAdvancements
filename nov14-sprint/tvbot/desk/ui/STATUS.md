@@ -181,3 +181,20 @@ Verified: 78 UI tests OK. New probes run the page's own `nextStep` and `barsUsed
   `simulated` False and reads alpaca_live.json; paper still reads alpaca_paper.json with
   `simulated` False; mock, rehearsal and unknown modes stay True. The new tests fail on the
   previous server.py (5 failures) and pass on the fix.
+
+### Fresh kit: load the rehearsal chart before setup (W-A, 03:47Z)
+- A freshly extracted kit is an empty, disarmed local rehearsal (`alpaca-mock`, the
+  in-process mock transport, no bars). Its next step is now **Load the rehearsal chart**
+  with a **Check for bars** button, ahead of "Approve your limits". The detail says the
+  desk is not armed, so a Check places no orders and changes no limits, and that setup
+  comes after. The strip highlights "Check for new bars" as the current step to match.
+- It applies only while the mode is `alpaca-mock`, the transport is the mock, the chart has
+  no bars and the Check button is enabled. Paper, live, a chart with bars, or a disabled
+  button all fall through to the earlier steps.
+- In the Alpaca modes the empty chart now reads "No bars yet. Check for new bars loads the
+  chart." The desk replay keeps "Waiting for the first SPY bar".
+- Tests: a static check and a node run of the page's own `nextStep` (fresh mock gives the
+  new step; paper, a mock with 3 bars, and a mock with no button give "Approve your
+  limits"). 83 UI tests OK. Checked in the browser at 1280 and 390 wide on a fresh mock
+  state: the step, its enabled button, the highlighted strip step, the empty-chart text,
+  no console errors and no horizontal scroll.

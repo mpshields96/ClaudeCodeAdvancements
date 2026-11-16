@@ -1229,7 +1229,7 @@ class TestBannerTruth(unittest.TestCase):
 
     PF = [{"check": "limits", "ok": True}]
 
-    def _run(self, cases):
+    def _run(self, cases, button=False, bars=0):
         import subprocess
         page = _page()
 
@@ -1240,8 +1240,9 @@ class TestBannerTruth(unittest.TestCase):
         ns = page.index("function nextStep(s)")
         b = page.index("\nfunction ", ns + 10)
         js = "".join(fn(n) + "\n" for n in ("num", "clockNow", "phaseOf", "preflightOk"))
-        js += "const S = {conn: true, session: {}};\n"
-        js += "const document = {querySelector: () => null, querySelectorAll: () => []};\n"
+        js += "const S = {conn: true, session: {}, bars: new Array(%d).fill({})};\n" % bars
+        js += "const document = {querySelector: () => %s, querySelectorAll: () => []};\n" % (
+            "({disabled: false, hidden: false})" if button else "null")
         js += page[a:b]
         js += "\nconst C = " + json.dumps(cases) + ";\nconst out = {};\n"
         js += "for (const k in C) { const n = nextStep(C[k]); out[k] = {title: n.title, btn: n.btn || null, detail: n.detail, used: barsUsedUp(C[k])}; }\n"
@@ -1273,6 +1274,19 @@ class TestBannerTruth(unittest.TestCase):
         self.assertEqual(out["paper64"]["btn"], "Arm this Alpaca PAPER session")
         self.assertEqual(out["armed64"]["btn"], "Check for new bars")
         self.assertEqual(out["armed65"]["btn"], "Check for new bars")
+
+    @unittest.skipUnless(shutil.which("node"), "node not installed")
+    def test_fresh_mock_kit_next_step_is_check_for_bars(self):
+        fresh = {"phase": "PRE_SESSION", "broker_mode": "alpaca-mock", "broker": {"transport": "MockAlpacaTransport()"},
+                 "preflight": [{"check": "limits", "ok": False}], "adapter": {"enabled": False}}
+        paper = dict(fresh, broker_mode="alpaca-paper", broker={"transport": "HttpsTransport(paper)"})
+        out = self._run({"fresh": fresh, "paper": paper}, button=True)
+        self.assertEqual(out["fresh"]["title"], "Load the rehearsal chart")
+        self.assertEqual(out["fresh"]["btn"], "Check for bars")
+        self.assertIn("places no orders", out["fresh"]["detail"])
+        self.assertEqual(out["paper"]["title"], "Approve your limits")   # only the local rehearsal
+        self.assertEqual(self._run({"fresh": fresh}, button=True, bars=3)["fresh"]["title"], "Approve your limits")
+        self.assertEqual(self._run({"fresh": fresh})["fresh"]["title"], "Approve your limits")   # no usable Check
 
     @unittest.skipUnless(shutil.which("node"), "node not installed")
     def test_finished_offline_replay_is_used_up(self):
@@ -1345,6 +1359,19 @@ class TestFirstScreen(unittest.TestCase):
         self.assertIn("'Waiting for the first SPY bar'", page)
         self.assertNotIn("No replay bars to show yet", page)
         self.assertNotIn("Bars appear only when you press Check", page)
+        self.assertIn("'No bars yet. Check for new bars loads the chart.'", page)
+
+    def test_fresh_mock_kit_offers_check_for_bars_before_setup(self):
+        page = _page()
+        load = page.index("title: 'Load the rehearsal chart'")
+        limits = page.index("title: 'Approve your limits'")
+        self.assertLess(load, limits, "a fresh rehearsal kit shows the chart before initial setup")
+        guard = page[page.rindex("\n", 0, load - 200):load]
+        for cond in ("tk === 'mock'", "isMockMode(s)", "!(S.bars || []).length", "!chk.disabled"):
+            self.assertIn(cond, guard, cond)
+        self.assertIn("btn: 'Check for bars', sel: fb('step1')", page[load:load + 400])
+        self.assertIn("places no orders and changes no limits", page[load:load + 400])
+        self.assertIn("const cur = freshMock ? 'step1'", page)   # the strip highlights the same step
 
 
 class TestAlpacaBarsFile(unittest.TestCase):
