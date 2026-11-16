@@ -810,6 +810,74 @@ class ExpiryWithoutBars(_Base):
         self.assertIn("data_outage_cleared", c.last_check)
 
 
+class ExpiryHoldingPosition(_Base):
+    """Codex P1 (expiry_holding): a filled position with its protective stop, then a data outage
+    and expiry after the close. The manager must decide on the desk clock, not the last bar's."""
+
+    def holding(self):
+        c = self.armed_live()
+        AS.read_quote = _fresh_quote(c)
+        c._fetch = lambda after, now: ([], [])
+        px = float(c.bars[-1]["close"])
+        did = "night-holding-0001"
+        c.decisions.append({"decision_id": did, "invalidation": px - 2.0})
+        c.mgr.submit_intent({"decision_id": did, "kind": "entry", "side": "buy", "qty": 1,
+                             "limit": round(px + 0.5, 2), "ref_price": px, "intended_entry": px,
+                             "invalidation": px - 2.0})
+        c.transport.trading.advance(px)
+        _venue(c)
+        c.check_new_bars()
+        prot = [it for it in c.mgr._live(["protective"]) if it["side"] == "sell"]
+        self.assertTrue(prot, "setup: the fill must have a working protective stop")
+        return c, prot
+
+    def calls_after(self, c, n):
+        return [(m, p, b) for (m, p, q, b) in c.transport.trading.calls[n:] if m in ("POST", "DELETE")]
+
+    def test_expiry_after_close_sends_nothing_and_keeps_stop(self):
+        c, prot = self.holding()
+        day = c.clock.now().date()
+        bounds = c.calendar.session_bounds(day.isoformat())
+        exp = AS.parse_ts(c.mgr.state()["expires_utc"])
+        t = max(exp, bounds[1]) + _dt.timedelta(minutes=5)
+        stale = c.mgr.now()
+        self.assertLess(stale, t)
+
+        def outage(after, now):
+            raise RuntimeError("HTTP 503 from bar feed (synthetic)")
+        c._fetch = outage
+        c.clock = FixedClock(t)
+        _venue(c, is_open=False)
+        n = len(c.transport.trading.calls)
+        check = c.check_new_bars()
+        self.assertFalse(check["ok"])
+        self.assertIsNotNone(check["expiry"])
+        self.assertTrue(c._controls()["stopped"])
+        self.assertFalse(c.mgr.state()["armed"])
+        self.assertEqual(c.mgr.now(), t)                        # fed from the desk clock
+        self.assertEqual(self.calls_after(c, n), [])            # no protective cancel, no market order
+        still = [it["intent_id"] for it in c.mgr._live(["protective"])]
+        self.assertEqual(still, [it["intent_id"] for it in prot])
+        why = c._controls().get("close_pending") or ""
+        self.assertIn("market closed", why)
+        self.assertIn("held, protected by its working stop", why)
+        self.assertIn("next regular session", why)
+
+    def test_regular_hours_stop_and_close_still_closes(self):
+        c, prot = self.holding()
+        t = c.mgr.now() + _dt.timedelta(minutes=10)
+        bounds = c.calendar.session_bounds(t.date().isoformat())
+        self.assertTrue(bounds[0] <= t < bounds[1], "setup: still in regular hours")
+        c.clock = FixedClock(t)
+        _venue(c, is_open=True)
+        n = len(c.transport.trading.calls)
+        r = c.stop_and_close()
+        self.assertTrue(r["stopped"])
+        posts = [b for (m, p, b) in self.calls_after(c, n) if m == "POST"]
+        self.assertTrue(any((b or {}).get("side") == "sell" and (b or {}).get("type") == "market"
+                            for b in posts), (r, self.calls_after(c, n)))
+
+
 class MockStillStarts(_Base):
     def test_mock_mode_starts_and_reports_mock(self):
         c = AS.AlpacaSessionController(os.path.join(self.tmp, "mock"), strategy="ema")

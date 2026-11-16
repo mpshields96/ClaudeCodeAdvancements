@@ -706,6 +706,7 @@ class AlpacaSessionController(S.SessionController):
             before = self._protection_view()
             prev = (self.last_check or {}).get("utc") if getattr(self, "last_check", None) else None
             now = self.clock.on_check(self.calendar, self.minutes)
+            self._feed_manager_clock(now)
             since = None
             if prev:
                 try:
@@ -770,6 +771,19 @@ class AlpacaSessionController(S.SessionController):
             self._desk_audit("check_bars", **self.last_check)
             self._write_state()
             return dict(self.last_check, bars_done=self.i, simulated=self.mock)
+
+    def _feed_manager_clock(self, now=None):
+        """Connected modes: the manager decides Stop, expiry, close retries and protective cancels on
+        its own clock, which otherwise moves only with a successful bar. Feed it the desk clock first,
+        so a data outage cannot leave it in regular hours after the close (it would cancel the stop
+        and send a market order). Forward only. Mock keeps the bar-time clock."""
+        if self.mock or getattr(self.mgr, "_clock", None) is not None:
+            return None
+        now = now if now is not None else self.clock.now()
+        cur = getattr(self.mgr, "_sim_now", None)
+        if cur is None or now > cur:
+            self.mgr._sim_now = now
+        return now
 
     def _expire_on_clock(self, now):
         """Connected modes: end an armed session whose expiry has passed on the desk clock (wall
@@ -1018,6 +1032,7 @@ class AlpacaSessionController(S.SessionController):
 
     def stop_and_close(self, reason="OPERATOR"):
         try:
+            self._feed_manager_clock()
             return S.SessionController.stop_and_close(self, reason=reason)
         finally:
             self.adapter_state.disable("STOP: %s" % reason, by="desk Stop")
