@@ -438,6 +438,7 @@ details.pop.anch>.popbody{right:12px}
           <button id="btnEnable" class="pri" title="Turns the Alpaca paper adapter on after you confirm. It always starts disabled.">Enable</button>
           <button id="btnDisable" class="warnb" title="Turns the adapter off. Asks for a reason.">Disable</button>
           <button id="btnReconcile" title="Asks the broker for orders and position now and compares them with the desk. Works while disabled.">Reconcile now</button>
+          <button id="btnConnCheck" class="pri" hidden title="Asks the running desk to run its live connection check now: read-only GET requests, no orders, nothing armed. Arm stays blocked until it passes.">Check live connection</button>
         </div>
         <div class="small" id="alpacaInfo" style="margin-top:6px" hidden></div>
         <details class="sub">
@@ -834,6 +835,9 @@ function setView(v){
 }
 // ---------------- Alpaca paper mode (fields come from session.json; absent = offline desk, unchanged) ----------------
 function isAlpaca(s){ return /^alpaca/.test(String((s || {}).broker_mode || '')); }
+// Live only: the preflight entry named "live connection check". Paper and simulated sessions have none.
+function liveConnEntry(s){ const pf = Array.isArray((s || {}).preflight) ? s.preflight : [];
+  return pf.find(x => x && /live connection/i.test(String(x.check || x.name || x.id || ''))) || null; }
 function isPaper(s){ return String((s || {}).broker_mode || '') === 'alpaca-paper' && !liveSignal(s); }
 // Live comes only from the controller's own live signals, never from paper, mock or the transport.
 // Live if ANY live signal is present (W-D controller: broker_mode "alpaca-live", adapter view path_name
@@ -946,7 +950,9 @@ function renderAlpacaPanel(s){
   $('#btnEnable').disabled = off || closed || !!a.enabled || !routeOk('/api/alpaca/enable');
   $('#btnDisable').disabled = off || !a.enabled || !routeOk('/api/alpaca/disable');
   $('#btnReconcile').disabled = off || !routeOk('/api/alpaca/reconcile');
-  for (const [id, r] of [['#btnEnable', '/api/alpaca/enable'], ['#btnDisable', '/api/alpaca/disable'], ['#btnReconcile', '/api/alpaca/reconcile']]) {
+  const cc = liveConnEntry(s); const ccb = $('#btnConnCheck'); ccb.hidden = !cc;
+  ccb.disabled = off || !cc || !!S.connBusy || !routeOk('/api/alpaca/connection_check');
+  for (const [id, r] of [['#btnEnable', '/api/alpaca/enable'], ['#btnDisable', '/api/alpaca/disable'], ['#btnReconcile', '/api/alpaca/reconcile'], ['#btnConnCheck', '/api/alpaca/connection_check']]) {
     const b = $(id); const na = !routeOk(r); b.classList.toggle('na', na);
     if (na && !b.dataset.t0) { b.dataset.t0 = b.title; b.title = b.title + ' (not available: this desk has no ' + r + ' route yet)'; } }
   const rec = recoveryOf(s); const al = Array.isArray(s.alarms) ? s.alarms : [];
@@ -1123,6 +1129,10 @@ function nextStep(s){
     if (alp && (limBad || !s.limits_source || draftLim)) return {tone: 'warn', title: 'Approve your limits', detail: draftLim ? 'This session loaded DRAFT limits. Check the worksheet and approve them in Setup (limits).' : 'No approved limits are loaded. Fill in and approve your own numbers in Setup (limits); agents never pick them.', btn: 'Open Setup (limits)', view: 'setup'};
     if (tk === 'unknown') return {tone: 'bad', title: 'Transport not reported: do not arm', detail: 'The session did not say whether it built the mock or the paper HTTPS transport. Restart it before arming.'};
     if (bad.length || !pf.length) {
+      const conn = bad.find(x => /live connection/i.test(nm(x)));
+      if (conn) { const last = S.connFail ? ' Last check failed: ' + S.connFail + '.' : '';
+        const na = !routeOk('/api/alpaca/connection_check') ? ' This desk has no connection-check route, so restart it with a launcher that provides one.' : '';
+        return {tone: 'warn', title: 'Check live connection', detail: 'Arm stays blocked until the live connection check passes' + (conn.detail ? ' (' + String(conn.detail) + ')' : '') + '.' + last + ' Check live connection asks the running desk to run it now: read-only GET requests, no orders, nothing armed.' + na, btn: 'Check live connection', sel: '#btnConnCheck', cls: 'pri'}; }
       if (alp && bad.length === 1 && /adapter/i.test(nm(bad[0]))) return {tone: 'info', title: 'Enable the Alpaca adapter', detail: 'Last pre-session check left: adapter enabled. Enable asks you to confirm first' + (tk === 'mock' ? '; the transport is the in-process mock, with no network.' : tk === 'https' ? '; requests then go to the fixed paper host (simulated money).' : '.'), btn: 'Enable adapter...', sel: '#btnEnable'};
       return tk === 'https'
         ? {tone: 'warn', title: 'Run first connection check', detail: 'Preflight has not passed yet' + (names ? ' (failing: ' + names + ')' : '') + '. The read-only readiness check (alpaca/readiness.py) uses GET requests only and places no orders. Then review the pre-session check here.', btn: 'Review pre-session check', sel: fb('review')}
@@ -1522,6 +1532,21 @@ $('#btnDisable').onclick = () => { $('#disReason').value = ''; const d = $('#dlg
 $('#disNo').onclick = () => $('#dlgDisable').close();
 $('#disYes').onclick = () => { const r = $('#disReason').value.trim(); if (!r) { $('#disReason').focus(); return; } $('#dlgDisable').close(); control('/api/alpaca/disable', {reason: r}); };
 $('#btnReconcile').onclick = () => control('/api/alpaca/reconcile', {});
+// One click = one check. No auto-polling. On failure the returned detail stays in the next step; Arm stays blocked.
+$('#btnConnCheck').onclick = async () => {
+  if (S.connBusy) return; S.connBusy = true; renderAll();
+  let j = false;
+  try {
+    const r = await fetch('/api/alpaca/connection_check', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'});
+    j = await r.json().catch(() => ({}));
+    const cr = (j && j.controller_result) || {};
+    if (!r.ok || !j.ok) { S.connFail = String(cr.detail || cr.reason || j.error || ('HTTP ' + r.status));
+      toast('<b class="neg">Live connection check failed</b>: ' + esc(S.connFail) + '<br>Arm stays blocked.'); }
+    else { S.connFail = ''; toast('<b>Live connection check ran</b>' + (cr.detail ? ': ' + esc(String(cr.detail)) : '') + '.<br>Refreshing the pre-session check.'); }
+  } catch (e) { S.connFail = 'the desk server is unreachable'; toast('<b class="neg">Not sent</b>: the desk server is unreachable. Nothing was changed.'); }
+  S.connBusy = false;
+  await tick(); // refreshes the session and its preflight; Arm enables only if preflight now passes
+};
 
 // ---------------- Setup (limits): draft, check effects, explicit approval ----------------
 // Agents never pick or fill these numbers. Test examples and suggestions change the draft only on a click

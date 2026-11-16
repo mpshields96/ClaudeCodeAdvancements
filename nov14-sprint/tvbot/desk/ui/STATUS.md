@@ -209,3 +209,24 @@ Verified: 78 UI tests OK. New probes run the page's own `nextStep` and `barsUsed
 - Test: test_chart_toolbar_says_synthetic_once. 84 UI tests OK. Final screenshots 20
   (390x844) and 21 (1280x720) of a populated replay are kept outside the repo: the next
   step, the one-pill header, the chart and Stop & Close show with no horizontal scroll.
+
+### Check live connection next step (W-A, 03:56Z)
+- Live preflight carries a "live connection check" entry. It fails when no check has run,
+  the check failed, or the last one is older than 300 s, and Arm stays blocked. The page
+  had no way to run it. New route POST /api/alpaca/connection_check calls the running
+  controller's connection_check() (read-only GET requests on the controller side). It
+  needs no confirm, takes no arguments and is never auto-polled. When the attached
+  controller lacks the method, the route is left out of /api/health and a POST gets 501,
+  with nothing recorded.
+- When that preflight entry is failing, the next step is "Check live connection", with
+  the entry's detail text, and one primary button. A click POSTs the route once, then
+  refreshes the session and its preflight. Arm enables only once preflight passes. A
+  failed check keeps its returned detail in the next step and a toast, and Arm stays
+  blocked. Paper and simulated sessions have no such entry, so the button stays hidden.
+  The controller's own connection_check() belongs to launch.py, which W-B is adding; this
+  page only calls it.
+- Tests: TestLiveConnectionCheck (fake controllers over the real handler: check, then
+  preflight passes, then Arm is accepted; a controller without the method gets 501; a
+  failing check keeps Arm refused) and TestLiveConnectionNextStep (node nextStep: live
+  failing shows the step; live passing, paper and mock do not). 89 UI tests OK. Checked
+  by tests and node only, not in a browser.
