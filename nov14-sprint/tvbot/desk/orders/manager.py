@@ -48,8 +48,9 @@ Controls (state_dir/controls.json, atomic write, also mirrored into intents.json
   Stop survives restart and session expiry. Session expiry runs stop_and_close.
   arm() is refused while stopped; clear_stop() needs flat_confirmed first.
 
-Every audit row, state field and fill carries "simulated": true. Fills keep the
-broker's "mock": true.
+Every audit row, state field and fill carries "simulated": <self.simulated>, which is True
+unless the constructor gets simulated=False (or the broker sets rows_simulated = False, as the
+live Alpaca controller does). Fills keep the broker's "mock": true.
 """
 import datetime as _dt
 import fcntl
@@ -215,7 +216,14 @@ class OrderManager(object):
 
     def __init__(self, state_dir, broker, limits, symbol=None, calendar=None, clock=None,
                  strategy=None, data_label=None, multiplier=1.0, reconcile_on_start=True,
-                 flatten_lead_s=DEFAULT_FLATTEN_LEAD_S, bar_max_age_s=DEFAULT_MAX_AGE_S):
+                 flatten_lead_s=DEFAULT_FLATTEN_LEAD_S, bar_max_age_s=DEFAULT_MAX_AGE_S, simulated=None):
+        # The value every row, state field and fill records as "simulated". Paper and mock keep
+        # True; only a caller (or broker) that says False explicitly gets False.
+        if simulated is None:
+            simulated = getattr(broker, "rows_simulated", True)
+        if not isinstance(simulated, bool):
+            raise ValueError("simulated must be True or False")
+        self.simulated = simulated
         self.limits = self._check_limits(limits)
         # Bar freshness for routing. Offline keeps intake's 5 s default; the Alpaca session binds its
         # advertised window (900 s) so an ordinary manual Check inside that window can still route.
@@ -250,6 +258,7 @@ class OrderManager(object):
         self._reset_book()
         self.controls = dict(DEFAULT_CONTROLS)
         self._load()
+        self.controls["simulated"] = self.simulated
         self._audit("control", action="startup", controls=self._controls_view())
         if reconcile_on_start:
             self.reconcile(reason="startup")
@@ -361,20 +370,20 @@ class OrderManager(object):
             raise ValueError("audit kind %r" % (_audit_kind,))
         if "kind" in fields:   # an order's kind never overwrites the audit kind
             fields["order_kind"] = fields.pop("kind")
-        rec = {"ts": iso(self.now()), "kind": _audit_kind, "simulated": True}
+        rec = {"ts": iso(self.now()), "kind": _audit_kind, "simulated": self.simulated}
         rec.update(fields)
         return self.audit_log.append(rec)
 
     def _log(self, rec):
         rec = dict(rec)
         rec["ts"] = iso(self.now())
-        rec["simulated"] = True
+        rec["simulated"] = self.simulated
         return self.intent_log.append(rec)
 
     def _save_controls(self, **changes):
         self.controls.update(changes)
         self.controls["updated_utc"] = iso(self.now())
-        self.controls["simulated"] = True
+        self.controls["simulated"] = self.simulated
         atomic_write_json(self.controls_path, self.controls)
         self._log({"rec": "control", "controls": self._controls_snapshot()})
 
@@ -390,7 +399,7 @@ class OrderManager(object):
     # ------------------------------------------------------------------ alarms
     def _add_alarm(self, code, detail, source="events", blocking=True, persist=False):
         alarm = {"code": code, "detail": detail, "blocking": bool(blocking), "source": source,
-                 "ts": iso(self.now()), "simulated": True}
+                 "ts": iso(self.now()), "simulated": self.simulated}
         alarms = [a for a in self.controls.get("alarms", []) if not (a["code"] == code and a["detail"] == detail)]
         alarms.append(alarm)
         self.controls["alarms"] = alarms
@@ -818,7 +827,7 @@ class OrderManager(object):
     def poll(self):
         """Drain broker events, book fills, then advance Pause / Stop & Close."""
         self._resync()
-        summary = {"events": 0, "fills_booked": 0, "duplicates": 0, "connected": True, "simulated": True}
+        summary = {"events": 0, "fills_booked": 0, "duplicates": 0, "connected": True, "simulated": self.simulated}
         try:
             events = self._call("events")
         except BrokerOutage:
@@ -900,11 +909,11 @@ class OrderManager(object):
         """Compare broker orders, fills and position with the book. Returns a report."""
         alarms = []
         report = {"ts": iso(self.now()), "reason": reason, "adopted": [], "not_placed": [],
-                  "fills_recovered": 0, "status_updates": [], "alarms": alarms, "simulated": True}
+                  "fills_recovered": 0, "status_updates": [], "alarms": alarms, "simulated": self.simulated}
 
         def flag(code, detail, blocking=True):
             alarms.append({"code": code, "detail": detail, "blocking": blocking, "source": "reconcile",
-                           "ts": report["ts"], "simulated": True})
+                           "ts": report["ts"], "simulated": self.simulated})
 
         try:
             listing = self._call("list_orders")
@@ -1001,7 +1010,7 @@ class OrderManager(object):
         report["desk_working_orders"] = [c for c in report["working_orders"] if c in self.by_client]
         report["external_orders"] = [
             {"client_id": c, "status": by_client[c].get("status"), "side": by_client[c].get("side"),
-             "qty": by_client[c].get("qty"), "class": "external", "simulated": True}
+             "qty": by_client[c].get("qty"), "class": "external", "simulated": self.simulated}
             for c in report["working_orders"] if c not in self.by_client]
         report["complete"] = complete
         return self._finish_reconcile(report, alarms, connected=True)
@@ -1075,23 +1084,23 @@ class OrderManager(object):
         self._audit("control", action="pause", reason=reason)
         done, failed, refused = self._cancel_kinds([ENTRY])
         return {"paused": True, "entries_canceled": done, "cancel_failed": failed, "cancel_refused": refused,
-                "protective_kept": [it["intent_id"] for it in self._live(["protective"])], "simulated": True}
+                "protective_kept": [it["intent_id"] for it in self._live(["protective"])], "simulated": self.simulated}
 
     def resume(self):
         if self.controls.get("stopped"):
-            return {"ok": False, "reason": "STOPPED", "simulated": True}
+            return {"ok": False, "reason": "STOPPED", "simulated": self.simulated}
         self._save_controls(paused=False)
         self._audit("control", action="resume")
-        return {"ok": True, "simulated": True}
+        return {"ok": True, "simulated": self.simulated}
 
     def arm(self, session_id=None, expires_utc=None):
         if self.controls.get("stopped"):
             self._audit("control", action="arm_refused", reason="STOPPED")
-            return {"ok": False, "reason": "STOPPED", "simulated": True}
+            return {"ok": False, "reason": "STOPPED", "simulated": self.simulated}
         report = self.reconcile(reason="arm")
         if not report["ok"]:
             self._audit("control", action="arm_refused", reason="RECONCILE_NOT_CLEAN")
-            return {"ok": False, "reason": "RECONCILE_NOT_CLEAN", "report": report, "simulated": True}
+            return {"ok": False, "reason": "RECONCILE_NOT_CLEAN", "report": report, "simulated": self.simulated}
         if expires_utc is not None:
             expires_utc = iso(parse_ts(expires_utc))
         else:
@@ -1099,7 +1108,7 @@ class OrderManager(object):
         self._save_controls(armed=True, session_id=session_id or self.controls.get("session_id"),
                             expires_utc=expires_utc, flat_confirmed=False)
         self._audit("control", action="arm", session_id=self.controls["session_id"], expires_utc=expires_utc)
-        return {"ok": True, "simulated": True}
+        return {"ok": True, "simulated": self.simulated}
 
     def _default_expiry(self):
         """Finish each armed session flat: expire flatten_lead_s before the session ends."""
@@ -1116,15 +1125,15 @@ class OrderManager(object):
     def disarm(self, reason="OPERATOR"):
         self._save_controls(armed=False)
         self._audit("control", action="disarm", reason=reason)
-        return {"ok": True, "simulated": True}
+        return {"ok": True, "simulated": self.simulated}
 
     def enable_schedule(self, enabled):
         """Scheduled unattended mode is off unless this is called with True."""
         if enabled and self.controls.get("stopped"):
-            return {"ok": False, "reason": "STOPPED", "simulated": True}
+            return {"ok": False, "reason": "STOPPED", "simulated": self.simulated}
         self._save_controls(schedule_enabled=bool(enabled))
         self._audit("control", action="schedule", enabled=bool(enabled))
-        return {"ok": True, "simulated": True}
+        return {"ok": True, "simulated": self.simulated}
 
     def stop_and_close(self, reason="OPERATOR"):
         first = not self.controls.get("stopped")
@@ -1135,7 +1144,7 @@ class OrderManager(object):
         self._audit("control", action="stop_and_close", reason=reason)
         done, failed, refused = self._cancel_kinds([ENTRY])
         report = {"stopped": True, "entries_canceled": done, "cancel_failed": failed,
-                  "cancel_refused": refused, "simulated": True}
+                  "cancel_refused": refused, "simulated": self.simulated}
         report["close"] = self._progress_stop()
         report["flat_confirmed"] = bool(self.controls.get("flat_confirmed"))
         report["external_orders"] = report["close"].get("external_orders", [])
@@ -1147,7 +1156,7 @@ class OrderManager(object):
         """The only way to lift a Stop. Needs confirm=True and a fresh, complete flat check."""
         if confirm is not True:
             self._audit("control", action="clear_stop_refused", reason="CONFIRM_REQUIRED")
-            return {"ok": False, "reason": "CONFIRM_REQUIRED", "simulated": True}
+            return {"ok": False, "reason": "CONFIRM_REQUIRED", "simulated": self.simulated}
         rep = self.reconcile(reason="clear-stop")
         blockers = self._flat_blockers(rep)
         if blockers or not self.controls.get("flat_confirmed"):
@@ -1156,10 +1165,10 @@ class OrderManager(object):
                                     close_pending="%s (%s)" % (NOT_FLAT_TEXT, "; ".join(blockers)))
             self._audit("control", action="clear_stop_refused", reason="NOT_FLAT_CONFIRMED", blockers=blockers)
             return {"ok": False, "reason": "NOT_FLAT_CONFIRMED", "blockers": blockers,
-                    "status_text": NOT_FLAT_TEXT, "simulated": True}
+                    "status_text": NOT_FLAT_TEXT, "simulated": self.simulated}
         self._save_controls(stopped=False, stop_reason=None, stop_utc=None, close_pending=None, close_attempts=0)
         self._audit("control", action="clear_stop", confirm=True)
-        return {"ok": True, "simulated": True}
+        return {"ok": True, "simulated": self.simulated}
 
     def _flat_blockers(self, rep):
         """Everything that stops a reconcile from proving flat. Empty list = proven flat."""
@@ -1317,7 +1326,7 @@ class OrderManager(object):
         return {"intent_id": it["intent_id"], "client_id": it["client_id"], "order_id": it.get("order_id"),
                 "kind": it["kind"], "side": it["side"], "qty": it["qty"], "filled_qty": it.get("filled_qty", 0),
                 "remaining": self._remaining(it), "limit": it.get("limit"), "stop": it.get("stop"),
-                "status": it["status"], "simulated": True}
+                "status": it["status"], "simulated": self.simulated}
 
     def ledger_rows(self):
         """Per-intent rows with mock fills, for the desk ledger writer."""
@@ -1326,13 +1335,13 @@ class OrderManager(object):
         for f in self.fills:
             fills_by.setdefault(f["intent_id"], []).append({
                 "exec_id": f["exec_id"], "qty": f["qty"], "price": f["price"], "fee": f["fee"],
-                "ts": f.get("fill_ts"), "mock": bool(f.get("mock", True)), "simulated": True})
+                "ts": f.get("fill_ts"), "mock": bool(f.get("mock", True)), "simulated": self.simulated})
         for it in self.intents.values():
             rows.append({"trade_id": it["intent_id"], "decision_id": it["decision_id"], "intent_id": it["intent_id"],
                          "order_id": it.get("order_id"), "signal_ts": it.get("signal_ts"),
                          "quote": it.get("ref_price"), "kind": it["kind"], "side": it["side"],
                          "status": it["status"], "fills": fills_by.get(it["intent_id"], []),
-                         "fees": round(it.get("fees", 0.0), 6), "simulated": True})
+                         "fees": round(it.get("fees", 0.0), 6), "simulated": self.simulated})
         return rows
 
     def state(self):
@@ -1369,5 +1378,5 @@ class OrderManager(object):
             "alarms": list(c.get("alarms", [])),
             "entry_block_reason": self.entry_block_reason(),
             "updated_utc": iso(self.now()),
-            "simulated": True,
+            "simulated": self.simulated,
         }

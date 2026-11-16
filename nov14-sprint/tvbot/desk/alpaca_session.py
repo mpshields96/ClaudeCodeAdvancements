@@ -29,6 +29,7 @@ import importlib
 import json
 import math
 import os
+import re
 import time
 
 import session as S
@@ -42,9 +43,11 @@ MODE_MOCK = "mock"
 MODE_HTTPS = "https"
 MODE_LIVE = "live"
 TRANSPORT_MODE_LIVE = "live"          # alpaca/live.py LiveHttpsTransport.MODE
-try:                                  # W-B's live module, when present, owns these names
+try:                                  # alpaca/live.py owns the live classes, label and file name
+    from alpaca import live as L
     from alpaca.live import LABEL_ALPACA_LIVE, LIVE_STATE_FILE
-except Exception:                     # pragma: no cover - fallback keeps the same wording
+except Exception:                     # pragma: no cover - without it live mode is refused outright
+    L = None
     LABEL_ALPACA_LIVE = "ALPACA LIVE (REAL MONEY in your Alpaca live brokerage account)"
     LIVE_STATE_FILE = "alpaca_live.json"
 PAPER_STATE_FILE = A.STATE_FILE
@@ -86,20 +89,6 @@ def _need(modname, attr):
 
 class LiveModeRefused(ValueError):
     """Live mode was given the wrong inputs; nothing was built and nothing was sent."""
-
-
-class _LiveAdapterState(AdapterState):
-    """The live adapter's on/off file. Same rules as paper, its own file name, never shared."""
-
-    def __init__(self, state_dir):
-        self.path = os.path.join(os.path.abspath(state_dir), LIVE_STATE_FILE)
-        self.data = self._load()
-
-    def view(self):
-        v = AdapterState.view(self)
-        v["path_name"] = LIVE_STATE_FILE
-        v["mode"] = MODE_LIVE
-        return v
 
 
 def floor_tick(x):
@@ -153,42 +142,43 @@ def _session_limits(loaded):
     return session_lim, fixed, source
 
 
-def _live_inputs(state_dir, transport, limits_path, snapshot, limits_hash, authorization):
-    """Validate live mode's only inputs. Returns (snapshot, limits_hash) or raises LiveModeRefused.
-    No file is read here except existence checks on the state folder."""
+def _live_inputs(state_dir, transport, limits_path, auth):
+    """Validate live mode's only inputs: this session's LiveAuthorization from the live gate and the
+    real LiveHttpsTransport that carries it. Returns the approved limits snapshot the operator saw
+    (auth.limits), or raises LiveModeRefused. Reads no limits file."""
+    if L is None:
+        raise LiveModeRefused("live mode needs alpaca/live.py, which is not available in this build")
     sizing = importlib.import_module("alpaca.sizing")
-    if transport is None or getattr(transport, "MODE", None) != TRANSPORT_MODE_LIVE:
-        raise LiveModeRefused("live mode needs the injected live transport (MODE 'live'); this module "
-                              "never builds one and never accepts a paper transport")
+    if not isinstance(auth, L.LiveAuthorization):
+        raise LiveModeRefused("live mode needs this session's live authorization from the live gate "
+                              "(alpaca/live_launch.py start)")
+    if not isinstance(transport, L.LiveHttpsTransport) or getattr(transport, "injected", True):
+        raise LiveModeRefused("live mode runs only over the real LiveHttpsTransport; paper, mock and "
+                              "injected transports are refused")
+    if transport.authorization is not auth:
+        raise LiveModeRefused("the live transport carries a different authorization than this session's")
+    if not auth.valid(transport._monotonic()):
+        raise LiveModeRefused("the live authorization has expired; run the live gate again")
     if limits_path:
         raise LiveModeRefused("live mode takes the approved limits snapshot from the live authorization, "
                               "never a limits file path")
-    if authorization is not None:
-        if snapshot is not None or limits_hash is not None:
-            raise LiveModeRefused("pass the live authorization or the snapshot and its hash, not both")
-        valid = getattr(authorization, "valid", None)
-        if valid is not None and not valid(time.monotonic()):
-            raise LiveModeRefused("the live authorization has expired; authorize again")
-        adir = getattr(authorization, "state_dir", None)
-        if adir and os.path.abspath(adir) != state_dir:
-            raise LiveModeRefused("the live authorization is for a different state folder")
-        snapshot = getattr(authorization, "limits", None)
-        limits_hash = getattr(authorization, "limits_hash", None)
-    if not isinstance(snapshot, dict) or not limits_hash:
-        raise LiveModeRefused("live mode needs the operator-approved limits snapshot and its approval hash")
+    try:
+        L.check_live_state_dir(state_dir)
+    except L.LiveGateRefused as exc:
+        raise LiveModeRefused(str(exc)) from None
+    if not auth.state_dir or os.path.realpath(state_dir) != os.path.realpath(auth.state_dir):
+        raise LiveModeRefused("the live authorization is for a different state folder")
+    snapshot = auth.limits
+    if not isinstance(snapshot, dict) or not auth.limits_hash:
+        raise LiveModeRefused("the live authorization carries no approved limits snapshot")
     if snapshot.get("provenance") != sizing.PROV_APPROVED:
         raise LiveModeRefused("live mode accepts operator-approved limits only (got %r)"
                               % (snapshot.get("provenance"),))
-    if snapshot.get("hash") != limits_hash:
-        raise LiveModeRefused("the limits snapshot does not match the approval hash")
+    if snapshot.get("hash") != auth.limits_hash:
+        raise LiveModeRefused("the limits snapshot does not match the authorized approval hash")
     if sizing.content_hash(snapshot.get("values")) != snapshot.get("values_hash"):
         raise LiveModeRefused("the limits snapshot values do not match their recorded hash")
-    if authorization is not None and getattr(authorization, "shares", None) is not None:
-        if int(authorization.shares) != int((snapshot.get("values") or {}).get("fixed_shares")):
-            raise LiveModeRefused("the authorized share count does not match the approved snapshot")
-    if os.path.exists(os.path.join(state_dir, PAPER_STATE_FILE)):
-        raise LiveModeRefused("this state folder holds the paper adapter file; live needs its own folder")
-    return snapshot, limits_hash
+    return snapshot
 
 
 # ------------------------------------------------------------------ clocks
@@ -247,24 +237,95 @@ class MockClock(object):
 
 
 # ------------------------------------------------------------------ controller
+def parse_venue_ts(text):
+    """Alpaca's clock carries nanoseconds (…:00.123456789-05:00); datetime takes six digits."""
+    t = str(text)
+    t = re.sub(r"(\.\d{6})\d+", r"\1", t)
+    return parse_ts(t)
+
+
+CONNECTION_CHECK_MAX_AGE_S = 300.0      # live Arm needs a passing GET-only check this recent
+_monotonic = time.monotonic             # module seam so tests can age a check without sleeping
+
+
+def _eligibility(name, b, live=True):
+    """Live eligibility, explicit: a missing or None field fails. Returns a reason or None.
+    trade_suspended_by_user (GET /v2/account) must be explicitly false in live; paper and mock
+    fail only when it is true, since the local mock account does not carry the field."""
+    if name == "account":
+        bad = []
+        if b.get("status") != "ACTIVE":
+            bad.append("status %r (needs ACTIVE)" % (b.get("status"),))
+        for k in ("trading_blocked", "account_blocked"):
+            if b.get(k) is not False:
+                bad.append("%s %r (needs false)" % (k, b.get(k)))
+        k = "trade_suspended_by_user"
+        if (b.get(k) is not False) if live else (b.get(k) is True):
+            bad.append("%s %r (needs false)" % (k, b.get(k)))
+        return "; ".join(bad) or None
+    if name == "clock":
+        try:
+            parse_venue_ts(b.get("timestamp"))
+        except Exception:
+            return "timestamp %r does not parse" % (b.get("timestamp"),)
+        if not isinstance(b.get("is_open"), bool):
+            return "is_open %r (needs true or false)" % (b.get("is_open"),)
+        return None
+    bad = []
+    if b.get("symbol") != A.SYMBOL:
+        bad.append("symbol %r (needs %s)" % (b.get("symbol"), A.SYMBOL))
+    if b.get("tradable") is not True:
+        bad.append("tradable %r (needs true)" % (b.get("tradable"),))
+    if b.get("status") != "active":
+        bad.append("status %r (needs active)" % (b.get("status"),))
+    return "; ".join(bad) or None
+
+
+class _LiveRows(object):
+    """Live mode only. orders/manager.py (W-B) stamps simulated True on every audit and intent row;
+    this wrapper writes simulated False on each new row before the log chains and hashes it."""
+
+    def __init__(self, inner):
+        self._inner = inner
+
+    def append(self, rec):
+        rec = dict(rec)
+        rec["simulated"] = False
+        return self._inner.append(rec)
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
+
+
+class _LiveControls(dict):
+    """Live mode only: controls.json never records simulated True (the manager sets it on save)."""
+
+    def __setitem__(self, k, v):
+        dict.__setitem__(self, k, False if k == "simulated" else v)
+
+    def update(self, *a, **kw):
+        for k, v in dict(*a, **kw).items():
+            self[k] = v
+
+
 class AlpacaSessionController(S.SessionController):
     bar_max_age_s = BAR_MAX_AGE_S
 
     def __init__(self, state_dir=S.DEFAULT_STATE_DIR, strategy=S.DEFAULT_STRATEGY, mode=MODE_MOCK,
                  transport=None, limits_path=None, feed=None, broker_factory=None, clock=None,
-                 lab=None, strategy_cfg=None, mock_days=None, limits_snapshot=None, limits_hash=None,
-                 authorization=None):
+                 lab=None, strategy_cfg=None, mock_days=None, live_authorization=None):
         if mode not in (MODE_MOCK, MODE_HTTPS, MODE_LIVE):
             raise ValueError("mode must be mock, https or live")
         state_dir = os.path.abspath(state_dir)
+        limits_snapshot = None
         if mode == MODE_LIVE:
-            limits_snapshot, limits_hash = _live_inputs(state_dir, transport, limits_path, limits_snapshot,
-                                                        limits_hash, authorization)
+            limits_snapshot = _live_inputs(state_dir, transport, limits_path, live_authorization)
         else:
-            if transport is not None and getattr(transport, "MODE", None) == TRANSPORT_MODE_LIVE:
+            if transport is not None and (getattr(transport, "MODE", None) == TRANSPORT_MODE_LIVE
+                                          or (L is not None and isinstance(transport, L.LiveHttpsTransport))):
                 raise LiveModeRefused("a live transport is accepted only in live mode")
-            if authorization is not None or limits_snapshot is not None or limits_hash is not None:
-                raise LiveModeRefused("a live authorization or limits snapshot is accepted only in live mode")
+            if live_authorization is not None:
+                raise LiveModeRefused("a live authorization is accepted only in live mode")
             if mode == MODE_HTTPS and os.path.exists(os.path.join(state_dir, LIVE_STATE_FILE)):
                 raise LiveModeRefused("this state folder holds the live adapter file; paper needs its own folder")
         os.makedirs(state_dir, exist_ok=True)
@@ -275,7 +336,7 @@ class AlpacaSessionController(S.SessionController):
             self.evidence_label = LABEL_ALPACA_LIVE
             self.data_label = A.DATA_LABEL_IEX
             self.broker_mode = "alpaca-live"
-            self.adapter_state = _LiveAdapterState(state_dir)
+            self.adapter_state = L.LiveAdapterState(state_dir)
         else:
             self.evidence_label = A.LABEL_MOCK_LOCAL if self.mock else A.LABEL_ALPACA_PAPER
             self.data_label = A.DATA_LABEL_MOCK if self.mock else A.DATA_LABEL_IEX
@@ -283,11 +344,14 @@ class AlpacaSessionController(S.SessionController):
             self.adapter_state = AdapterState(state_dir)
         self._bars_file = os.path.join(state_dir, "alpaca_bars.jsonl")
         self._limits_snapshot, self._limits_hash, self._limits_frozen = None, None, None
+        self.live_authorization = live_authorization if self.live else None
         if self.live:
             # The one snapshot object for this process. Never re-read from disk; preflight
             # re-verifies its hashes and that the derived caps are unchanged.
             limits, fixed, self.limits_source = _session_limits(limits_snapshot)
-            self._limits_snapshot, self._limits_hash = limits_snapshot, limits_hash
+            if int(fixed) != int(live_authorization.shares):
+                raise LiveModeRefused("the authorized share count does not match the approved snapshot")
+            self._limits_snapshot, self._limits_hash = limits_snapshot, live_authorization.limits_hash
             self._limits_frozen = json.dumps({"limits": limits, "fixed": fixed}, sort_keys=True)
         else:
             limits, fixed, self.limits_source = resolve_limits(mode, state_dir, limits_path)
@@ -330,6 +394,8 @@ class AlpacaSessionController(S.SessionController):
         self.last_check = None
         self.snapshot_error = None
         self.last_connection_check = None    # live: the last non-executing GET-only check
+        self._instance = os.urandom(8).hex()  # a check belongs to this controller process only
+        self._cc_mono = None
         self.data_outage = None              # bar fetch failing since ... (cleared by a good fetch)
         self.last_entry_refusal = None       # the last BUY entry held before any order
         self.last_expiry = None              # session expired on the desk clock (not a bar time)
@@ -338,6 +404,8 @@ class AlpacaSessionController(S.SessionController):
         self.config_revision = None
         S.SessionController.__init__(self, state_dir=state_dir, strategy=strategy, limits=limits,
                                      strategy_cfg=cfg)
+        if self.live:
+            self._live_rows()
         if self.config_revision is not None:
             # A changed sizing snapshot never inherits an armed state: the operator re-arms.
             self.mgr.disarm(reason="SESSION_CONFIG_REVISED")
@@ -431,11 +499,15 @@ class AlpacaSessionController(S.SessionController):
         if factory is None and self.live:
             # The live broker is W-B's (alpaca/live.py). Until it exists live mode refuses plainly;
             # it never falls back to the paper broker.
-            factory = _need("alpaca.live", "AlpacaLiveBroker")
+            factory = _need("alpaca.broker", "AlpacaLiveBroker")   # refuses anything but the real live transport
         if factory is None:
             factory = _need("alpaca.broker", "AlpacaPaperBroker")
         restored = os.path.exists(os.path.join(self.state_dir, "alpaca_broker.json"))
         broker = factory(self.transport, self.state_dir, self.evidence_label, self.adapter_state)
+        if self.live:
+            # session.py hands this broker to OrderManager, which then writes every row, state
+            # field and fill with simulated False from its first row. Paper and mock keep True.
+            broker.rows_simulated = False
         restored = restored or bool(getattr(broker, "restored", False))
         snap = os.path.join(self.state_dir, SNAPSHOT_FILE)
         if os.path.exists(snap) and hasattr(broker, "restore"):
@@ -447,10 +519,46 @@ class AlpacaSessionController(S.SessionController):
         return broker, restored
 
     def _row_flags(self):
-        return {"simulated": self.mock, "evidence": self.evidence_label, "data_source": self.data_label}
+        # Live rows are never simulated; mock rows always are (paper rows keep their existing flag).
+        return {"simulated": bool(self.mock) and not self.live, "evidence": self.evidence_label,
+                "data_source": self.data_label}
 
     def _ledger_flags(self):
-        return {"mock_fills": self.mock, "evidence": self.evidence_label, "data_source": self.data_label}
+        f = {"mock_fills": self.mock, "evidence": self.evidence_label, "data_source": self.data_label}
+        if self.live:
+            f["simulated"] = False
+        return f
+
+    def _live_rows(self):
+        """Live: every manager row and controls.json say simulated False from here on."""
+        from orders.manager import atomic_write_json
+        m = self.mgr
+        if getattr(m, "simulated", None) is not False:
+            try:
+                m.close()
+            finally:
+                raise LiveModeRefused("the order manager would record simulated rows in live mode")
+        if not isinstance(m.audit_log, _LiveRows):
+            m.audit_log = _LiveRows(m.audit_log)
+        if not isinstance(m.intent_log, _LiveRows):
+            m.intent_log = _LiveRows(m.intent_log)
+        if not isinstance(m.controls, _LiveControls):
+            m.controls = _LiveControls(m.controls)
+            m.controls["simulated"] = False
+            for a in m.controls.get("alarms") or []:
+                if isinstance(a, dict):
+                    a["simulated"] = False
+            if os.path.exists(m.controls_path):
+                atomic_write_json(m.controls_path, m.controls)
+
+    def _desk_audit(self, kind, **fields):
+        if not getattr(self, "live", False):
+            return S.SessionController._desk_audit(self, kind, **fields)
+        rec = {"ts_wall_utc": iso(_dt.datetime.utcnow().replace(tzinfo=_dt.timezone.utc)),
+               "ts_sim_utc": self.replay_clock(), "kind": kind}
+        rec.update(fields)
+        rec["simulated"] = False
+        S._append_jsonl(self.paths["desk_audit"], rec)
 
     def _late_s(self, bar):
         try:
@@ -541,6 +649,13 @@ class AlpacaSessionController(S.SessionController):
             held = self._venue_recheck(d)
             if held:
                 return None, held
+        if self.live:
+            cc = self._connection_check_now()
+            d["live_eligibility"] = {"ok": cc["ok"], "utc": cc["utc"]}
+            if not cc["ok"]:
+                bad = ["%s: %s" % (c["check"], c.get("detail", "failed")) for c in cc["checks"] if not c["ok"]]
+                return None, ("LIVE_ELIGIBILITY", "new entry held: live connection check failed (%s); no order"
+                              % "; ".join(bad))
         if not self.mock:
             # HTTPS entries only: one free-IEX latest-quote read per BUY candidate. Protective
             # stops, residual cover and Stop & Close never pass through here, so they are never held.
@@ -950,7 +1065,7 @@ class AlpacaSessionController(S.SessionController):
         except Exception as exc:
             return {"check": "venue clock", "ok": False,
                     "detail": "venue clock unavailable (%s); no new exposure" % exc.__class__.__name__}
-        skew = abs((parse_ts(c["timestamp"]) - now).total_seconds())
+        skew = abs((parse_venue_ts(c["timestamp"]) - now).total_seconds())
         ok = bool(c["is_open"]) and skew <= VENUE_CLOCK_SKEW_S
         return {"check": "venue clock", "ok": ok,
                 "detail": "%s clock %s, market %s, skew %.0fs (limit %.0fs)" % (
@@ -1012,12 +1127,8 @@ class AlpacaSessionController(S.SessionController):
             self._sync_mock_venue_clock(now)
         checks.append(self._venue_clock_check(now))
         if self.live:
-            cc = self.last_connection_check
-            checks.append({"check": "live connection check", "ok": bool(cc and cc.get("ok")),
-                           "detail": ("GET account, clock and asset passed at %s (no order sent)" % cc["utc"])
-                           if cc and cc.get("ok") else
-                           ("last connection check failed at %s" % cc["utc"]) if cc else
-                           "run the non-executing connection check (GET account, clock, asset) first"})
+            ok, detail = self._connection_check_current()
+            checks.append({"check": "live connection check", "ok": ok, "detail": detail})
         wv = self.warmup_view()
         checks.append({"check": "strategy warm-up", "ok": True, "detail": wv["text"]})
         checks.append({"check": "stop", "ok": not st["controls"]["stopped"],
@@ -1041,6 +1152,8 @@ class AlpacaSessionController(S.SessionController):
             sid = session_id or "%s-%s-%d" % (self.broker_mode, day.isoformat(), self.session_seq)
             exp = expires_utc or iso(end + _dt.timedelta(seconds=S.SESSION_GRACE_S))
             res = self.mgr.arm(session_id=sid, expires_utc=exp)
+            if self.live:
+                res = dict(res, simulated=False)
             if res.get("ok"):
                 if self.mgr.state()["controls"]["paused"]:
                     self.mgr.resume()
@@ -1138,34 +1251,61 @@ class AlpacaSessionController(S.SessionController):
 
     def connection_check(self):
         """Non-executing connection check: GET account, clock and asset. Never POSTs an order, never
-        changes Enable or Arm. Records only status fields (no balances, no credentials)."""
+        changes Enable or Arm. Records only status fields (no balances, no credentials). Live
+        eligibility is explicit: account ACTIVE with trading_blocked, account_blocked and (live)
+        trade_suspended_by_user false, the
+        clock parses, and the asset is SPY, tradable and active; anything missing fails."""
         with self.lock:
-            now = self.clock.now()
-            checks = []
-            for name, path, keep, okf in (
-                    ("account", "/v2/account", ("status", "trading_blocked", "account_blocked"),
-                     lambda b: b.get("status") == "ACTIVE" and not b.get("trading_blocked")
-                     and not b.get("account_blocked")),
-                    ("clock", "/v2/clock", ("is_open", "timestamp"), lambda b: "timestamp" in b),
-                    ("asset", "/v2/assets/" + A.SYMBOL, ("symbol", "tradable", "status"),
-                     lambda b: b.get("tradable") is True)):
-                try:
-                    r = self.transport.request("GET", "trading", path)
-                    status, body = (r[0], r[1]) if isinstance(r, tuple) else (getattr(r, "status", None),
-                                                                              getattr(r, "body", None))
-                    if isinstance(body, (bytes, str)):
-                        body = json.loads(body)
-                    body = body if isinstance(body, dict) else {}
-                    if status != 200:
-                        checks.append({"check": name, "ok": False, "detail": "HTTP %s" % status})
-                        continue
-                    seen = {k: body.get(k) for k in keep}
-                    checks.append({"check": name, "ok": bool(okf(body)), "seen": seen})
-                except Exception as exc:
-                    checks.append({"check": name, "ok": False, "detail": exc.__class__.__name__})
-            res = {"ok": all(c["ok"] for c in checks), "mode": self.mode, "utc": iso(now), "checks": checks,
-                   "method": "GET only", "orders_sent": 0}
-            self.last_connection_check = res
-            self._desk_audit("connection_check", **res)
+            res = self._connection_check_now()
             self._write_state()
             return res
+
+    def _connection_check_now(self):
+        now = self.clock.now()
+        checks = []
+        for name, path, keep in (
+                ("account", "/v2/account", ("status", "trading_blocked", "account_blocked",
+                                              "trade_suspended_by_user")),
+                ("clock", "/v2/clock", ("is_open", "timestamp")),
+                ("asset", "/v2/assets/" + A.SYMBOL, ("symbol", "tradable", "status"))):
+            try:
+                r = self.transport.request("GET", "trading", path)
+                status, body = (r[0], r[1]) if isinstance(r, tuple) else (getattr(r, "status", None),
+                                                                          getattr(r, "body", None))
+                if isinstance(body, (bytes, str)):
+                    body = json.loads(body)
+                body = body if isinstance(body, dict) else {}
+                if status != 200:
+                    checks.append({"check": name, "ok": False, "detail": "HTTP %s" % status})
+                    continue
+                why = _eligibility(name, body, live=self.live)
+                row = {"check": name, "ok": why is None, "seen": {k: body.get(k) for k in keep}}
+                if why:
+                    row["detail"] = why
+                checks.append(row)
+            except Exception as exc:
+                checks.append({"check": name, "ok": False, "detail": exc.__class__.__name__})
+        res = {"ok": all(c["ok"] for c in checks), "mode": self.mode, "utc": iso(now), "checks": checks,
+               "method": "GET only", "orders_sent": 0, "instance": self._instance,
+               "session_seq": self.session_seq}
+        self._cc_mono = _monotonic()
+        self.last_connection_check = res
+        self._desk_audit("connection_check", **res)
+        return res
+
+    def _connection_check_current(self):
+        """Live Arm: the latest check passed, in this controller process, since the last Arm, and
+        within CONNECTION_CHECK_MAX_AGE_S. Returns (ok, detail)."""
+        cc = self.last_connection_check
+        if not cc:
+            return False, "run the non-executing connection check (GET account, clock, asset) first"
+        if not cc.get("ok"):
+            bad = ["%s: %s" % (c["check"], c.get("detail", "failed")) for c in cc["checks"] if not c["ok"]]
+            return False, "last connection check failed at %s (%s); nothing is sent" % (cc["utc"], "; ".join(bad))
+        if cc.get("instance") != self._instance or cc.get("session_seq") != self.session_seq:
+            return False, "the last connection check belongs to an earlier session; run it again"
+        age = _monotonic() - (self._cc_mono if self._cc_mono is not None else float("-inf"))
+        if not (0 <= age <= CONNECTION_CHECK_MAX_AGE_S):
+            return False, "the last connection check is %.0fs old (limit %.0fs); run it again" % (
+                age, CONNECTION_CHECK_MAX_AGE_S)
+        return True, "GET account, clock and asset passed at %s (no order sent)" % cc["utc"]
