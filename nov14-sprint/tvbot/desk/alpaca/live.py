@@ -327,3 +327,12 @@ def live_gate_authorize(limits_path, state_dir, port, typed, stdin_is_tty, now_u
         raise LiveGateRefused("confirmation did not match; type exactly: %s" % want)
     return LiveAuthorization(_MINT, today, shares, loaded["hash"], state_dir,
                              (monotonic or time.monotonic)(), limits=loaded)
+
+
+def __getattr__(name):
+    """alpaca_session.py looks the live broker up as alpaca.live.AlpacaLiveBroker. It lives in alpaca/broker.py
+    (which imports this module), so it is resolved lazily here to avoid a circular import."""
+    if name == "AlpacaLiveBroker":
+        from alpaca.broker import AlpacaLiveBroker
+        return AlpacaLiveBroker
+    raise AttributeError("module %r has no attribute %r" % (__name__, name))

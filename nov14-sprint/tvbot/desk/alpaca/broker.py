@@ -122,7 +122,12 @@ class AlpacaPaperBroker(object):
                              "transport; mock/injected labels need an injected transport)")
         if not isinstance(adapter_state, AdapterState):
             raise ValueError("adapter_state must be an AdapterState")
-        if isinstance(adapter_state, _live.LiveAdapterState) != (self._REAL_LABEL == LABEL_ALPACA_LIVE):
+        # Paper never takes LiveAdapterState. The live broker may hold alpaca_session.py's own on/off class
+        # over alpaca_live.json, so for the live label the file name decides.
+        live_file = os.path.basename(str(getattr(adapter_state, "path", ""))) == _live.LiveAdapterState.FILE
+        is_live = self._REAL_LABEL == LABEL_ALPACA_LIVE
+        if (not is_live and isinstance(adapter_state, _live.LiveAdapterState)) or \
+                (is_live and not (isinstance(adapter_state, _live.LiveAdapterState) or live_file)):
             raise ValueError("paper and live keep separate adapter state (alpaca_paper.json / alpaca_live.json)")
         self.transport = transport
         self.adapter_state = adapter_state
@@ -780,7 +785,11 @@ class AlpacaLiveBroker(AlpacaPaperBroker):
             raise ValueError(str(exc)) from None
         if os.path.realpath(state_dir) != os.path.realpath(auth.state_dir):
             raise ValueError("the live broker must use the state folder the live gate authorized")
-        if not isinstance(adapter_state, _live.LiveAdapterState) \
-                or os.path.realpath(os.path.dirname(adapter_state.path)) != os.path.realpath(state_dir):
+        # Judged by its file, not its class: alpaca_session.py keeps its own on/off class over the same
+        # alpaca_live.json. A paper file (alpaca_paper.json) or one in another folder is refused.
+        path = getattr(adapter_state, "path", None)
+        if not isinstance(adapter_state, AdapterState) or not isinstance(path, str) \
+                or os.path.basename(path) != _live.LiveAdapterState.FILE \
+                or os.path.realpath(os.path.dirname(path)) != os.path.realpath(state_dir):
             raise ValueError("the live broker needs the live adapter state (alpaca_live.json) in its own folder")
         AlpacaPaperBroker.__init__(self, transport, state_dir, evidence_label, adapter_state)

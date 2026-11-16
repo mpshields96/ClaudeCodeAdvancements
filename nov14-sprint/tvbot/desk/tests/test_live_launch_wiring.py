@@ -1,0 +1,352 @@
+"""alpaca/live_launch.py start: what happens after the live gate passes.
+
+Fakes only. The Keychain reader (subprocess.run) and outbound connections (socket.create_connection) raise;
+the only socket opened is the loopback port probe on an OS-chosen port. The UI server, browser and Ctrl-C wait
+are replaced, and the live transport's opener is a FakeOpener over MockTrading, so no request can leave the
+process. Every key is synthetic.
+"""
+import io
+import os
+import shutil
+import socket
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest import mock
+
+DESK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TESTS = os.path.dirname(os.path.abspath(__file__))
+for _p in (DESK, TESTS):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+import launch  # noqa: E402
+from alpaca import live as L  # noqa: E402
+from alpaca import live_launch  # noqa: E402
+from alpaca.mock import MockTrading  # noqa: E402
+from alpaca.transport import StaticTestProvider  # noqa: E402
+from test_alpaca_broker import SYNTH_SECRET, FakeOpener  # noqa: E402
+from test_alpaca_live import LIVE_SYNTH_KEY, _lines, approve_live_dir  # noqa: E402
+
+
+class _Boom(AssertionError):
+    pass
+
+
+def _boom(*a, **k):
+    raise _Boom("a key read or outbound connection was attempted")
+
+
+def _free_live_capable_port():
+    """An OS-chosen loopback port outside every paper and rehearsal range (stands in for 8795)."""
+    for _ in range(50):
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            port = s.getsockname()[1]
+        if not any(a <= port <= b for a, b, _ in L.non_live_port_ranges()):
+            return port
+    raise unittest.SkipTest("no free loopback port outside the paper ranges")
+
+
+class FakeServer(object):
+    def __init__(self, state_dir, host, port, manager):
+        self.state_dir, self.host, self.port, self.manager = state_dir, host, port, manager
+        self.served = self.shut = self.closed = False
+
+    def serve_forever(self):
+        self.served = True
+
+    def shutdown(self):
+        self.shut = True
+
+    def server_close(self):
+        self.closed = True
+
+
+class FakeController(object):
+    """Records the constructor kwargs; keeps live on/off state in the real alpaca_live.json."""
+    built = []
+    raise_type_error = False
+
+    def __init__(self, **kw):
+        if FakeController.raise_type_error:
+            raise TypeError("unexpected keyword argument 'authorization'")
+        FakeController.built.append(kw)
+        self.kw = kw
+        self.adapter_state = L.LiveAdapterState(kw["state_dir"])
+        self.evidence_label = L.LABEL_ALPACA_LIVE
+        self.closed = False
+
+    def close(self):
+        self.closed = True
+
+
+class FakeAS(object):
+    MODE_LIVE = "live"
+    AlpacaSessionController = FakeController
+
+
+class LiveWiringTests(unittest.TestCase):
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="live-wiring-")
+        self.live_dir, self.limits = approve_live_dir(self.root)
+        self.port = _free_live_capable_port()
+        FakeController.built = []
+        FakeController.raise_type_error = False
+        self.servers, self.browsers, self.transports = [], [], []
+        self.opener = FakeOpener(MockTrading())
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def fake_transport(self, provider_kind, auth):
+        t = L.LiveHttpsTransport(StaticTestProvider(LIVE_SYNTH_KEY, SYNTH_SECRET, mode="live"), auth)
+        t._opener = self.opener          # TEST ONLY: the real live class, but no socket
+        self.transports.append(t)
+        return t
+
+    def fake_server(self, state_dir, host, port, manager):
+        srv = FakeServer(state_dir, host, port, manager)
+        self.servers.append(srv)
+        return srv
+
+    def run_start(self, typed=None, AS=FakeAS, transport=None, extra=()):
+        typed = typed if typed is not None else L.confirm_phrase(1, L.session_date())
+        out, err = io.StringIO(), io.StringIO()
+        argv = ["start", "--state-dir", self.live_dir, "--limits", self.limits, "--port", str(self.port)]
+        with mock.patch.object(subprocess, "run", _boom), \
+                mock.patch.object(socket, "create_connection", _boom), \
+                mock.patch.object(live_launch, "_session_module", return_value=AS), \
+                mock.patch.object(live_launch, "_make_transport", transport or self.fake_transport), \
+                mock.patch.object(live_launch, "_make_server", self.fake_server), \
+                mock.patch.object(live_launch, "_open_browser", self.browsers.append), \
+                mock.patch.object(live_launch, "_wait_until_interrupted", side_effect=KeyboardInterrupt):
+            code = live_launch.main(argv + list(extra), out=out, err=err, isatty=lambda: True,
+                                    read_line=_lines(typed))
+        return code, out.getvalue(), err.getvalue()
+
+    def assert_nothing_sent(self):
+        self.assertEqual(self.opener.requests, [])
+        self.assertEqual(self.opener.trading.calls, [])
+
+    def assert_lock_released(self):
+        lock = launch.hold_scenario_lock(self.live_dir)
+        self.assertIsNotNone(lock, "the live scenario lock was not released")
+        lock.close()
+
+    # -- the gate refused: nothing is built
+    def test_gate_refused_builds_no_transport_controller_or_server(self):
+        code, _, err = self.run_start(typed="LIVE SPY 1 SHARES")
+        self.assertEqual(code, 2)
+        self.assertIn("REFUSED (live)", err)
+        self.assertEqual((FakeController.built, self.transports, self.servers), ([], [], []))
+        self.assert_nothing_sent()
+
+    # -- the gate passed: a live controller with the gate's authorization, served on the exact port
+    def test_gate_passed_builds_the_live_controller_with_the_gate_authorization(self):
+        code, out, err = self.run_start()
+        self.assertEqual(code, 0, err)
+        self.assertEqual(len(FakeController.built), 1)
+        kw = FakeController.built[0]
+        self.assertEqual(sorted(kw), ["authorization", "mode", "state_dir", "strategy", "transport"])
+        self.assertEqual(kw["mode"], "live")
+        self.assertEqual(kw["state_dir"], os.path.abspath(self.live_dir))
+        auth = kw["authorization"]
+        self.assertIsInstance(auth, L.LiveAuthorization)
+        self.assertEqual(os.path.abspath(auth.state_dir), os.path.abspath(self.live_dir))
+        self.assertEqual(auth.shares, 1)
+        self.assertIs(kw["transport"], self.transports[0])
+        self.assertIs(kw["transport"].authorization, auth)
+        self.assertEqual(len(self.servers), 1)
+        srv = self.servers[0]
+        self.assertEqual((srv.host, srv.port), ("127.0.0.1", self.port))
+        self.assertIsInstance(srv.manager, launch.AlpacaDeskControls)
+        self.assertTrue(srv.served and srv.shut and srv.closed)
+        self.assertTrue(FakeController.built and self.browsers == ["http://127.0.0.1:%d/" % self.port])
+        self.assertIn("adapter   DISABLED", out)
+        self.assertIn("sent      no order", out)
+        self.assertIn(L.LABEL_ALPACA_LIVE, out)
+        self.assert_nothing_sent()
+        self.assert_lock_released()
+
+    def test_no_browser_flag(self):
+        code, _, err = self.run_start(extra=["--no-browser"])
+        self.assertEqual(code, 0, err)
+        self.assertEqual(self.browsers, [])
+
+    # -- the port is taken: exit 2, refused before any controller or server is built
+    def test_a_taken_port_exits_2_and_nothing_is_built_or_moved(self):
+        holder = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            holder.bind(("127.0.0.1", self.port))
+            holder.listen(1)
+            code, _, err = self.run_start()
+        finally:
+            holder.close()
+        self.assertEqual(code, 2)
+        self.assertIn("does not move to another port", err)
+        self.assertEqual((FakeController.built, self.transports, self.servers), ([], [], []))
+        self.assert_nothing_sent()
+        self.assert_lock_released()
+
+    # -- a paper (non-live) transport is never passed to the controller
+    def test_a_paper_transport_is_refused_before_the_controller(self):
+        class PaperLike(object):
+            MODE = "paper"
+        code, _, err = self.run_start(transport=lambda kind, auth: PaperLike())
+        self.assertEqual(code, 2)
+        self.assertIn("only the live transport", err)
+        self.assertEqual((FakeController.built, self.servers), ([], []))
+        self.assert_lock_released()
+
+    def test_the_production_transport_factory_builds_only_the_live_transport(self):
+        code, _, err = self.run_start()        # mint a real authorization through the gate
+        self.assertEqual(code, 0, err)
+        auth = FakeController.built[0]["authorization"]
+        provider = StaticTestProvider(LIVE_SYNTH_KEY, SYNTH_SECRET, mode="live")
+        with mock.patch.object(L, "make_live_provider", return_value=provider) as made, \
+                mock.patch.object(subprocess, "run", _boom), mock.patch.object(socket, "create_connection", _boom):
+            t = live_launch._make_transport("keychain", auth)
+        made.assert_called_once_with("keychain")
+        self.assertIs(type(t), L.LiveHttpsTransport)
+        self.assertEqual(t.MODE, "live")
+
+    # -- the adapter always starts disabled, even if the live file said enabled
+    def test_a_previously_enabled_live_adapter_starts_disabled(self):
+        L.LiveAdapterState(self.live_dir).enable(by="test")
+        self.assertTrue(L.LiveAdapterState(self.live_dir).enabled)
+        code, out, err = self.run_start()
+        self.assertEqual(code, 0, err)
+        self.assertIs(L.LiveAdapterState(self.live_dir).enabled, False)
+        self.assertIn("adapter   DISABLED", out)
+        self.assertFalse(os.path.exists(os.path.join(self.live_dir, "alpaca_paper.json")))
+        self.assert_nothing_sent()
+
+    # -- exit 3 stays the fallback
+    def test_no_live_mode_in_the_session_module_keeps_exit_3(self):
+        code, out, err = self.run_start(AS=None)
+        self.assertEqual(code, 3, err)
+        self.assertIn("LIVE GATE PASSED", out)
+        self.assertEqual((FakeController.built, self.transports, self.servers), ([], [], []))
+
+    def test_a_constructor_that_does_not_match_keeps_exit_3(self):
+        FakeController.raise_type_error = True
+        code, out, err = self.run_start()
+        self.assertEqual(code, 3, err)
+        self.assertIn("did not match", out)
+        self.assertEqual(self.servers, [])
+        self.assert_nothing_sent()
+        self.assert_lock_released()
+
+
+    # -- a refusal after the controller exists says what may have been read, and closes it
+    def test_a_server_bind_failure_after_the_controller_is_refused_truthfully(self):
+        def no_server(*a):
+            raise OSError(48, "Address already in use")
+        self.fake_server = no_server                    # run_start installs this as _make_server
+        code, _, err = self.run_start()
+        self.assertEqual(code, 2)
+        self.assertIn("does not move to another port", err)
+        self.assertIn("No order was sent", err)
+        self.assertNotIn("no key was read", err)
+        self.assertTrue(FakeController.built)
+        self.assert_lock_released()
+
+
+class LiveContractTests(unittest.TestCase):
+    """The names and state the controller's live mode (alpaca_session.py) relies on."""
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="live-contract-")
+        self.live_dir = os.path.join(self.root, L.LIVE_STATE_DIRNAME)
+        os.makedirs(self.live_dir)
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def test_the_live_broker_is_found_as_alpaca_live_AlpacaLiveBroker(self):
+        from alpaca.broker import AlpacaLiveBroker
+        self.assertIs(L.AlpacaLiveBroker, AlpacaLiveBroker)
+        with self.assertRaises(AttributeError):
+            L.NoSuchThing  # noqa: B018
+
+    def test_the_live_broker_judges_live_state_by_its_file_not_its_class(self):
+        # alpaca_session.py keeps its own on/off class over alpaca_live.json; the real-controller start
+        # below shows it is accepted. A paper file or another folder is still refused (test_alpaca_live).
+        import inspect
+        from alpaca import broker
+        src = inspect.getsource(broker.AlpacaLiveBroker.__init__)
+        self.assertIn("LiveAdapterState.FILE", src)
+        self.assertIn("realpath", src)
+
+
+class RealControllerStartTests(LiveWiringTests.__bases__[0]):
+    """The real alpaca_session live mode, over the real LiveHttpsTransport with a FakeOpener."""
+
+    def setUp(self):
+        self.root = tempfile.mkdtemp(prefix="live-wiring-real-")
+        self.live_dir, self.limits = approve_live_dir(self.root)
+        self.port = _free_live_capable_port()
+        self.opener = FakeOpener(MockTrading())
+        self.servers, self.transports, self.runners = [], [], []
+
+    def tearDown(self):
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def test_real_live_controller_starts_disabled_and_sends_no_order(self):
+        AS = live_launch._session_module()
+        if AS is None:
+            self.skipTest("this build's alpaca_session has no live mode")
+        real_cls = AS.AlpacaSessionController
+
+        class Recording(real_cls):
+            def __init__(inner, **kw):
+                real_cls.__init__(inner, **kw)
+                self.runners.append(inner)
+
+        class AS2(object):
+            MODE_LIVE = AS.MODE_LIVE
+            AlpacaSessionController = Recording
+
+        def transport(kind, auth):
+            t = L.LiveHttpsTransport(StaticTestProvider(LIVE_SYNTH_KEY, SYNTH_SECRET, mode="live"), auth)
+            t._opener = self.opener
+            self.transports.append(t)
+            return t
+
+        def server(state_dir, host, port, manager):
+            srv = FakeServer(state_dir, host, port, manager)
+            self.servers.append(srv)
+            return srv
+
+        out, err = io.StringIO(), io.StringIO()
+        argv = ["start", "--state-dir", self.live_dir, "--limits", self.limits, "--port", str(self.port),
+                "--no-browser"]
+        with mock.patch.object(subprocess, "run", _boom), \
+                mock.patch.object(socket, "create_connection", _boom), \
+                mock.patch.object(live_launch, "_session_module", return_value=AS2), \
+                mock.patch.object(live_launch, "_make_transport", transport), \
+                mock.patch.object(live_launch, "_make_server", server), \
+                mock.patch.object(live_launch, "_wait_until_interrupted", side_effect=KeyboardInterrupt):
+            code = live_launch.main(argv, out=out, err=err, isatty=lambda: True,
+                                    read_line=_lines(L.confirm_phrase(1, L.session_date())))
+        self.assertEqual(code, 0, err.getvalue())
+        self.assertEqual(len(self.runners), 1)
+        self.assertIs(self.runners[0].adapter_state.enabled, False)
+        methods = [c[0] for c in self.opener.trading.calls]
+        self.assertNotIn("POST", methods, "an order was sent at start")
+        self.assertNotIn("DELETE", methods, "a cancel was sent at start")
+        self.assertNotIn("PATCH", methods)
+        for req in self.opener.requests:
+            self.assertEqual(req.get_method(), "GET")
+            self.assertIn("api.alpaca.markets", req.full_url)
+            self.assertNotIn("paper-api", req.full_url)
+        self.assertFalse(os.path.exists(os.path.join(self.live_dir, "alpaca_paper.json")))
+        print("\n[live wiring] real controller start: %d fake-opener request(s): %s"
+              % (len(self.opener.requests), [r.get_method() + " " + r.full_url.split("?")[0]
+                                              for r in self.opener.requests]), file=sys.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()
