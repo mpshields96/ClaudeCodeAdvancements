@@ -7,11 +7,13 @@ variable and no Keychain item is touched. Limits are the desk's TEST VALUES, nev
 
 Run: /usr/bin/python3 -IB -m unittest discover -s <desk>/tests -p 'test_alpaca_integration*'
 """
+import calendar
 import json
 import os
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 
 DESK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -343,7 +345,12 @@ class DecimalCapsAndMockEventTime(unittest.TestCase):
             fill_ts = tr._event_tick()
             self.assertEqual(fill_ts[:13], bar["ts_close"][:13])   # mock time, not today's wall clock
             tr.event_ts = None
-            self.assertNotEqual(tr._event_tick()[:10], bar["ts_close"][:10])  # order times stay on _tick()
+            no_event = tr._event_tick()
+            self.assertNotEqual(no_event, fill_ts)
+            # order times stay on _tick() (wall clock); comparing dates alone failed whenever the
+            # wall-clock UTC date matched the mock bar's date
+            wall = calendar.timegm(time.strptime(no_event[:19], "%Y-%m-%dT%H:%M:%S"))
+            self.assertLess(abs(wall - time.time()), 120)
         finally:
             c.close()
 
