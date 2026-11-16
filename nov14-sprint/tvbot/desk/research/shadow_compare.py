@@ -13,7 +13,7 @@ Provenance guard (runner 1.1.0; the rule and its parameters are unchanged from 1
   itself), every input and outcome bar is genuine IEX data (not mock or synthetic), the
   signal bar closed after the freeze, and the scorer marks the window eligible.
 - Evidence classes: WITNESSED_FORWARD means a REVERT-1 forecast stored by an EARLIER run of
-  this runner (--witness-dir) before the outcome bar closed and before it was stored.
+  this runner (--witness-dir) before the modeled entry price was observable and before the outcome bar was stored.
   RECONSTRUCTED_OUT_OF_SAMPLE means a post-freeze window decided afterwards under the frozen
   rule. Baseline lab forecasts get their own witnessed flag from the lab's recorded time.
 - Every run writes to a new or empty directory (--out) or a new run-<UTC>-<pid> directory
@@ -221,20 +221,22 @@ def _genuine_iex(R, bar, row):
             and "MOCK" not in src and "SYNTHETIC" not in src and row.get("synthetic") is False)
 
 
-def _stored_before_outcome(B, st, rec_ts, signal_close, later, shas):
+def _stored_before_outcome(B, st, rec_ts, signal_close, entry_ts, later, shas):
     """(ok, reason): a forecast recorded at rec_ts was stored before its outcome existed."""
     if not rec_ts:
         return False, "no recorded timestamp"
     t = B.parse_ts(rec_ts)
     if t < B.parse_ts(signal_close):
         return False, "recorded before its own signal bar closed (clock or replay inconsistent)"
+    if not entry_ts or t >= B.parse_ts(entry_ts):
+        return False, "forecast was not stored before its modeled entry price was observable"
     if t >= B.parse_ts(later[-1]["ts_close"]):
         return False, "recorded at or after the outcome bar closed"
     for s in shas:
         row = st.bar_row(s)
         if row is None or not row.get("ts_added") or B.parse_ts(row["ts_added"]) < t:
             return False, "an outcome bar was stored before the forecast"
-    return True, "stored before the outcome bar closed and before it was stored"
+    return True, "stored before its modeled entry and outcome"
 
 
 def _load_witnesses(dirs):
@@ -252,6 +254,9 @@ def _load_witnesses(dirs):
             want = (sm.get("outputs") or {}).get(OUT_FILES[0])
             if not want or not os.path.exists(fp) or sha256_file(fp) != want:
                 info["status"] = "unverifiable: forecasts file hash missing from its summary or mismatched"
+            elif (not sm.get("hash_chains") or not all(v and v[0] is True for v in sm["hash_chains"].values())
+                  or sm.get("evidence", {}).get("integrity_failures") or sm.get("windows", {}).get("inputs_unverifiable")):
+                info["status"] = "earlier snapshot integrity was not established"
             elif sm.get("rule_id") != RULE_ID or sm.get("params") != PARAMS or sm.get("prereg_ts") != PREREG_TS or sm.get("runner_sha256") != sha256_file(os.path.abspath(__file__)):
                 info["status"] = "different rule, parameters, freeze or runner: not a matching witness"
             else:
@@ -380,7 +385,7 @@ def main(argv=None):
             for name in BASES:
                 if name in g:
                     ok, why = _stored_before_outcome(B, st, g[name].get("ts_recorded"), ref["bar_ts_close"],
-                                                     later, shas)
+                                                     cores[name]["entry"].get("ts"), later, shas)
                     base_witness[name] = {"stored_before_outcome": ok, "reason": why}
             wv, wv_why = False, "no earlier run stored this REVERT-1 forecast"
             prior = witnesses.get(vf["forecast_id"])
@@ -389,7 +394,7 @@ def main(argv=None):
                     wv_why = "an earlier stored forecast differs from this decision"
                 else:
                     wv, wv_why = _stored_before_outcome(B, st, prior.get("ts_recorded"), ref["bar_ts_close"],
-                                                        later, shas)
+                                                        cores[VARIANT]["entry"].get("ts"), later, shas)
             windows.append({
                 "group_id": gid, "status": "scored", "forecast_id": vf["forecast_id"],
                 "ts_knowable": ref["ts_knowable"], "bar_ts_close": ref["bar_ts_close"], "later_bar_shas": shas,
