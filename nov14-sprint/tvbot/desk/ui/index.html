@@ -176,6 +176,7 @@ main.withtv{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(320px,28%)}
 .ctool{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;font-size:12px}
 .ctool button{padding:2px 8px}
 .simpill{background:var(--sim);color:var(--on-sim)}
+.livepill{background:var(--alarm-bg);color:var(--alarm-fg)} .paperpill{background:var(--vio-bg);color:var(--vio-fg)} .unkpill{background:var(--warn-bg);color:var(--warn-fg)}
 #ohlc{color:var(--muted);font-variant-numeric:tabular-nums}
 #cvwrap{flex:1;position:relative;min-height:240px;overflow:hidden;background:var(--bg)}
 #cv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
@@ -407,7 +408,7 @@ details.pop.anch>.popbody{right:12px}
     <div class="legend">
       <span><i style="color:var(--up)">&#9650;</i> long entry</span><span><i style="color:var(--down)">&#9660;</i> short entry</span>
       <span><i style="color:var(--entry)">&#9670;</i> exit</span><span><i style="color:var(--pass)">&#9675;</i> pass</span>
-      <span><i style="color:var(--c-fill)">&#9472;</i> mock fill</span>
+      <span id="legFill"><i style="color:var(--c-fill)">&#9472;</i> mock fill</span>
       <span>Click a marker for its replay. Wheel = zoom, drag = pan.</span>
     </div>
   </section>
@@ -418,7 +419,7 @@ details.pop.anch>.popbody{right:12px}
         <div id="nowDec" class="hint">Waiting for decisions.</div>
       </div>
       <div class="card">
-        <h3>P&amp;L after costs <span class="r"><span class="pill simpill">SIMULATED</span></span></h3>
+        <h3>P&amp;L after costs <span class="r"><span class="pill simpill" id="pnlPill">SIMULATED</span></span></h3>
         <div class="pnl live">
           <div class="main"><small>After cost (net)</small><span id="pAc">-</span></div>
           <div><small>Realized</small><span id="pRe">-</span></div>
@@ -755,7 +756,7 @@ function draw(){
     const t = Date.parse(f.ts); if (!isFinite(t)) continue; const i = idxOpenAtOrBefore(t);
     if (i < i0 || i > i1 || i > cut) continue; const p = num(f.price); if (p === null) continue;
     const x = X(i), y = Y(p); g.strokeStyle = col('--c-fill'); g.lineWidth = 2; g.beginPath(); g.moveTo(x - Math.max(5, bw * .6), y); g.lineTo(x + Math.max(5, bw * .6), y); g.stroke(); g.lineWidth = 1;
-    if (bw > 16) { g.fillStyle = col('--c-fill'); g.textAlign = 'left'; g.font = '700 9px system-ui'; g.fillText(f.mock === false ? 'PAPER FILL' : 'MOCK FILL', x + Math.max(6, bw * .6) + 2, y + 3); g.font = '11px -apple-system,system-ui,sans-serif'; }
+    if (bw > 16) { g.fillStyle = col('--c-fill'); g.textAlign = 'left'; g.font = '700 9px system-ui'; g.fillText(isLive(S.session) ? 'LIVE FILL' : (f.mock === false || isPaper(S.session)) ? 'PAPER FILL' : simDesk(S.session) ? 'MOCK FILL' : 'BROKER FILL', x + Math.max(6, bw * .6) + 2, y + 3); g.font = '11px -apple-system,system-ui,sans-serif'; }
   }
 
   // markers
@@ -850,6 +851,8 @@ function isMockMode(s){ return String((s || {}).broker_mode || '') === 'alpaca-m
 function transportKind(s){
   if (!isAlpaca(s)) return 'offline';
   const t = String(((s || {}).broker || {}).transport || '');
+  // the live controller builds LiveHttpsTransport(...); it counts only on a live desk, and a paper desk naming it stays unconfirmed
+  if (/^LiveHttpsTransport\b/.test(t)) return isLive(s) ? 'https' : 'unknown';
   return /^MockAlpacaTransport\b/.test(t) ? 'mock' : /^HttpsTransport\b/.test(t) ? 'https' : 'unknown';
 }
 function brokerWords(s){
@@ -873,9 +876,22 @@ function modeBadge(s){
   if (isAlpaca(s) && !isMockMode(s)) return {t: 'Mode not reported', c: 'unk', title: 'The session named an Alpaca mode the desk does not know (' + String(s.broker_mode) + '). Treat it as unconfirmed.'};
   return {t: 'Local rehearsal', c: 'sim', title: isAlpaca(s) ? 'SIMULATED: in-process mock Alpaca, synthetic bars, MOCK LOCAL FILLS. No network, no real money.' : 'SIMULATED: offline replay of synthetic bars with MOCK FILLS. No broker, no real money.'};
 }
+// SIMULATED and "mock fill" only for offline replay and the in-process mock; paper and live are broker fills (Codex 03:58Z)
+function simDesk(s){ return !isAlpaca(s) || isMockMode(s); }
+function pnlPill(s){
+  if (isLive(s)) return {t: 'LIVE \u00b7 costs estimated', c: 'livepill', title: 'Alpaca LIVE account: real money. Fees and slippage here are the desk\'s estimate.'};
+  if (isPaper(s)) return {t: 'PAPER', c: 'paperpill', title: 'Alpaca PAPER account: simulated money, broker fills.'};
+  if (simDesk(s)) return {t: 'SIMULATED', c: 'simpill', title: 'Offline replay or in-process mock: mock fills, no real money.'};
+  return {t: 'MODE NOT REPORTED', c: 'unkpill', title: 'The session named an Alpaca mode the desk does not know. Treat these figures as unconfirmed.'};
+}
+function fillLegend(s){ return simDesk(s) ? 'mock fill' : 'broker fill'; }
 function adapterOf(s){ const a = (s && typeof s.adapter === 'object' && s.adapter) ? s.adapter : ((s && s._adapter_file) || null); return a || {enabled: false, disabled_reason: 'no adapter state written yet (starts disabled)'}; }
 function limitsSrc(s){ const ls = (s && s.limits_source) || null; if (!ls) return {label: '-', draft: false};
-  const label = String(ls.label || ls.provenance || '-'); return {label: label, draft: ls.provenance === 'draft' || (/DRAFT/i.test(label) && !/no approved or draft/i.test(label)), prov: ls.provenance, hash: ls.hash, ts: ls.approved_utc || ls.saved_utc, error: ls.error}; }
+  let label = String(ls.label || ls.provenance || '-'); const draft = ls.provenance === 'draft' || (/DRAFT/i.test(label) && !/no approved or draft/i.test(label));
+  // a live desk never shows the word PAPER, even when the live snapshot still carries a paper label (Codex 03:58Z)
+  if (isLive(s) && ls.provenance === 'operator-approved') { const h = String(ls.hash || ls.values_hash || ''); label = 'Operator-approved limits (live snapshot' + (h ? ' ' + h.slice(0, 12) : '') + ')'; }
+  else if (isLive(s)) label = label.replace(/\s*\bPAPER\b\s*/gi, ' ').trim() || '-';
+  return {label: label, draft: draft, prov: ls.provenance, hash: ls.hash, ts: ls.approved_utc || ls.saved_utc, error: ls.error}; }
 function recoveryOf(s){ return (s && (s.alpaca_recovery || s.recovery)) || null; }
 function renderBrokerBanner(s){
   const bb = $('#brokerBanner');
@@ -1009,6 +1025,8 @@ function renderHeader(){
   // one plain mode badge; the evidence label and fill source sit in Details (second pass, Codex 02:53Z)
   const bdg = modeBadge(s); bs.textContent = bdg.t; bs.className = 'big ' + bdg.c; bs.title = bdg.title; bm.hidden = true;
   document.title = bdg.t + ' \u00b7 SPY Desk'; // same helper as the badge, so a live header never sits under a SIMULATED tab title
+  const pp = $('#pnlPill'); if (pp) { const pw = pnlPill(s); pp.textContent = pw.t; pp.className = 'pill ' + pw.c; pp.title = pw.title; }
+  const lf = $('#legFill'); if (lf && lf.lastChild) lf.lastChild.nodeValue = ' ' + fillLegend(s);
   renderBrokerBanner(s);
   const ac = $('#armChip');
   ac.textContent = (s.badge || ('SIMULATION: ' + (ph === 'STOPPED' ? 'STOPPED' : ph === 'PAUSED' ? 'PAUSED' : ph === 'ARMED' ? 'ARMED' : 'DISARMED'))) + (S.conn === false ? ' (last known)' : '');
@@ -1133,7 +1151,7 @@ function nextStep(s){
       if (conn) { const last = S.connFail ? ' Last check failed: ' + S.connFail + '.' : '';
         const na = !routeOk('/api/alpaca/connection_check') ? ' This desk has no connection-check route, so restart it with a launcher that provides one.' : '';
         return {tone: 'warn', title: 'Check live connection', detail: 'Arm stays blocked until the live connection check passes' + (conn.detail ? ' (' + String(conn.detail) + ')' : '') + '.' + last + ' Check live connection asks the running desk to run it now: read-only GET requests, no orders, nothing armed.' + na, btn: 'Check live connection', sel: '#btnConnCheck', cls: 'pri'}; }
-      if (alp && bad.length === 1 && /adapter/i.test(nm(bad[0]))) return {tone: 'info', title: 'Enable the Alpaca adapter', detail: 'Last pre-session check left: adapter enabled. Enable asks you to confirm first' + (tk === 'mock' ? '; the transport is the in-process mock, with no network.' : tk === 'https' ? '; requests then go to the fixed paper host (simulated money).' : '.'), btn: 'Enable adapter...', sel: '#btnEnable'};
+      if (alp && bad.length === 1 && /adapter/i.test(nm(bad[0]))) return {tone: 'info', title: 'Enable the Alpaca adapter', detail: 'Last pre-session check left: adapter enabled. Enable asks you to confirm first' + (tk === 'mock' ? '; the transport is the in-process mock, with no network.' : tk === 'https' ? (isLive(s) ? '; requests then go to your Alpaca LIVE account (REAL MONEY).' : '; requests then go to the fixed paper host (simulated money).') : '.'), btn: 'Enable adapter...', sel: '#btnEnable'};
       return tk === 'https'
         ? {tone: 'warn', title: 'Run first connection check', detail: 'Preflight has not passed yet' + (names ? ' (failing: ' + names + ')' : '') + '. The read-only readiness check (alpaca/readiness.py) uses GET requests only and places no orders. Then review the pre-session check here.', btn: 'Review pre-session check', sel: fb('review')}
         : {tone: 'warn', title: 'Review the pre-session check', detail: 'Arm stays off until every preflight check passes.' + (names ? ' Failing: ' + names + '.' : ' No checks reported yet.'), btn: 'Review pre-session check', sel: fb('review')};
@@ -1303,7 +1321,7 @@ function renderDecisionView(){
   h += '<div class="sec s3"><h4>3. Trail: knew &rarr; requested &rarr; acknowledged &rarr; filled</h4>';
   h += trail.length ? '<table class="trail">' + trail.map(e => '<tr><td>' + esc(tsFull(e.ts)) + '</td><td>' + pill(e.kind || '?') + (e.mock === false ? ' ' + fillTag(e) : (e.kind === 'filled' || e.mock ? ' <span class="pill mock">MOCK FILL</span>' : '')) + '<div class="small">' + summarize(e) + '</div></td></tr>').join('') + '</table>' : '<div class="hint">No audit entries reference this decision' + (d.action === 'pass' ? ' beyond the decision itself: a pass sends nothing.' : '.') + '</div>';
   if (laterN) h += '<div class="hint" style="margin-top:4px">' + laterN + ' later trail entr' + (laterN === 1 ? 'y' : 'ies') + ' (requested, acknowledged, filled) and the ledger stay hidden until Reveal outcome.</div>';
-  if (trades.length) h += '<div class="small" style="margin-top:6px">Ledger: ' + trades.map(r => '<b>' + esc(r.trade_id) + '</b> ' + esc(r.side || '') + ' ' + esc(r.qty == null ? '' : r.qty) + ', ' + (r.fills || []).length + ' mock fill(s), fees ' + fmt(r.fees) + ', intent <code>' + esc(r.intent_id || '-') + '</code>, order <code>' + esc(r.order_id || '-') + '</code>').join('<br>') + '</div>';
+  if (trades.length) h += '<div class="small" style="margin-top:6px">Ledger: ' + trades.map(r => '<b>' + esc(r.trade_id) + '</b> ' + esc(r.side || '') + ' ' + esc(r.qty == null ? '' : r.qty) + ', ' + (r.fills || []).length + (simDesk(S.session) ? ' mock' : ' broker') + ' fill(s), fees ' + fmt(r.fees) + ', intent <code>' + esc(r.intent_id || '-') + '</code>, order <code>' + esc(r.order_id || '-') + '</code>').join('<br>') + '</div>';
   h += '</div>';
   h += '<div class="sec s4"><h4>Outcome</h4>';
   if (!rev) h += '<div class="hint">Hidden. Judge the decision on what was knowable first.</div><button id="dReveal" class="pri" style="margin-top:6px">Reveal outcome</button>';
@@ -1523,7 +1541,7 @@ $('#btnArm').onclick = () => control('/api/arm', {});
 $('#schedTgl').onchange = e => control('/api/schedule', {enabled: !!e.target.checked});
 // Alpaca adapter: Enable asks to confirm, Disable asks for a reason, Reconcile acts on demand (works while disabled)
 $('#btnEnable').onclick = () => { const s = S.session || {}; const ls = limitsSrc(s);
-  $('#enMode').innerHTML = 'Mode: <b>' + esc(s.broker_mode || '-') + '</b> &middot; ' + esc(s.evidence_label || '') + ({https: ' &middot; <b>sends real requests over HTTPS to Alpaca\'s fixed paper host</b>', mock: ' &middot; in-process mock transport only, no network'}[transportKind(s)] || ' &middot; <b>transport not reported; do not enable until the header names it</b>');
+  $('#enMode').innerHTML = 'Mode: <b>' + esc(s.broker_mode || '-') + '</b> &middot; ' + esc(s.evidence_label || '') + ({https: isLive(s) ? ' &middot; <b>sends real requests over HTTPS to your Alpaca LIVE account: REAL MONEY</b>' : ' &middot; <b>sends real requests over HTTPS to Alpaca\'s fixed paper host</b>', mock: ' &middot; in-process mock transport only, no network'}[transportKind(s)] || ' &middot; <b>transport not reported; do not enable until the header names it</b>');
   $('#enLimits').textContent = 'Limits this session loaded: ' + ls.label + '. Real-money live trading is not built and cannot be enabled here.';
   const d = $('#dlgEnable'); if (d.showModal) d.showModal(); else if (confirm('Enable the Alpaca adapter (' + (s.broker_mode || '') + ')?')) control('/api/alpaca/enable', {confirm: true}); };
 $('#enNo').onclick = () => $('#dlgEnable').close();

@@ -1,0 +1,464 @@
+{
+  "adapter": {
+    "changed_utc": "2026-11-16T03:59:04Z",
+    "disabled_reason": null,
+    "enabled": true,
+    "path_name": "alpaca_live.json"
+  },
+  "alarms": [],
+  "armed": true,
+  "badge": "ALPACA LIVE: ARMED",
+  "bar_max_age_s": 900.0,
+  "bars_done": 71,
+  "bars_total": 71,
+  "broker": {
+    "book_file": "alpaca_broker.json (adapter journal)",
+    "book_restored_from_file": false,
+    "connected": true,
+    "external": true,
+    "last_call_ok_utc": "2026-11-16T15:31:01Z",
+    "last_reconcile_utc": "2026-11-16T14:31:01Z",
+    "name": "ALPACA LIVE (REAL MONEY in your Alpaca live brokerage account)",
+    "transport": "LiveHttpsTransport(trading=https://api.alpaca.markets, data=https://data.alpaca.markets, credentials=environment variables ALPACA_LIVE_API_KEY_ID and ALPACA_LIVE_API_SECRET_KEY (LIVE keys))"
+  },
+  "broker_mode": "alpaca-live",
+  "clock_utc": "2026-11-16T15:31:01Z",
+  "connection_check": {
+    "checks": [
+      {
+        "check": "account",
+        "ok": true,
+        "seen": {
+          "account_blocked": false,
+          "status": "ACTIVE",
+          "trade_suspended_by_user": false,
+          "trading_blocked": false
+        }
+      },
+      {
+        "check": "clock",
+        "ok": true,
+        "seen": {
+          "is_open": true,
+          "timestamp": "2026-11-16T15:31:01Z"
+        }
+      },
+      {
+        "check": "asset",
+        "ok": true,
+        "seen": {
+          "status": "active",
+          "symbol": "SPY",
+          "tradable": true
+        }
+      }
+    ],
+    "instance": "5cb2e3dc6a951595",
+    "method": "GET only",
+    "mode": "live",
+    "ok": true,
+    "orders_sent": 0,
+    "session_seq": 1,
+    "utc": "2026-11-16T15:31:01Z"
+  },
+  "controls": {
+    "close_pending": null,
+    "flat_confirmed": false,
+    "paused": false,
+    "schedule_enabled": false,
+    "stop_reason": null,
+    "stopped": false
+  },
+  "data_label": "ALPACA IEX (free feed; IEX-only volume, not consolidated)",
+  "data_outage": null,
+  "entry_block_reason": null,
+  "entry_gates": {
+    "detail": "a new entry needs a complete signal hour or at least 50 of its expected 1-minute bars; connected modes re-read the NYSE session and the venue clock before every entry and hold it unless the regular session is open",
+    "min_signal_minutes": 50
+  },
+  "entry_pricing": "buy entries are LIMIT orders bounded by the decision price and every cap (rounded down to $0.01); opening a short is blocked",
+  "evidence_label": "ALPACA LIVE (REAL MONEY in your Alpaca live brokerage account)",
+  "exec_refusals": [],
+  "expires_utc": "2026-11-16T21:05:00Z",
+  "exposure": {
+    "avg_price": 103.06,
+    "broker_confirmed_utc": "2026-11-16T14:31:01Z",
+    "broker_position_qty": 0,
+    "gross_including_working": 412.96,
+    "position_qty": 4,
+    "working_orders": []
+  },
+  "external_broker_badge": "EXTERNAL BROKER: ALPACA LIVE (REAL MONEY in your Alpaca live brokerage account)",
+  "fill_costs": {
+    "commission_min": 1.0,
+    "commission_per_share": 0.005,
+    "half_spread_bps": 1.0,
+    "kind": "bps",
+    "slippage_bps": 2.0
+  },
+  "fill_model": "Alpaca live brokerage fills (REAL MONEY; not a strategy-edge claim)",
+  "intake": {
+    "last": {
+      "code": "OK",
+      "ok": true,
+      "seq": 71,
+      "ts_open": "2026-11-16T14:30:00Z"
+    },
+    "rejected_recent": [],
+    "rule": "a bar that fails intake is not given to the fake broker or the strategy; working entries are cancelled; protective stops stay working"
+  },
+  "last_check": {
+    "bars": 0,
+    "clock": "Independent simulated clock",
+    "empty_slots": [],
+    "expiry": null,
+    "exposure_before_check": {
+      "available": true,
+      "covered_qty": 1,
+      "exit_working_qty": 0,
+      "position_qty": 1,
+      "protective_qty": 1,
+      "simulated": false,
+      "stopped": false,
+      "uncovered_qty": 0
+    },
+    "fill_timing_note": "Manual desk: a broker fill that happens between your Checks is booked, and any uncovered shares get a protective stop, only at your next Check for new bars. Until then those shares may be unprotected. Reconcile is read-only and never sends an order.",
+    "ok": true,
+    "orders": {
+      "latest_quote": {
+        "age_s": 0.0,
+        "ask": 103.11,
+        "bid": 103.09,
+        "feed": "iex",
+        "fresh": true,
+        "quote_utc": "2026-11-16T15:31:01+00:00",
+        "reason": "FRESH",
+        "spread_bps": 1.9398642095053347,
+        "spread_usd": 0.02,
+        "symbol": "SPY",
+        "valid": true
+      },
+      "poll": {
+        "connected": true,
+        "duplicates": 0,
+        "events": 2,
+        "fills_booked": 1
+      },
+      "protection": {
+        "available": true,
+        "covered_qty": 4,
+        "exit_working_qty": 0,
+        "position_qty": 4,
+        "protective_qty": 4,
+        "simulated": false,
+        "stopped": false,
+        "uncovered_qty": 0
+      }
+    },
+    "partial_slots": [],
+    "since_previous_check_s": 0.0,
+    "source": "ALPACA IEX (free feed; IEX-only volume, not consolidated)",
+    "utc": "2026-11-16T15:31:01Z",
+    "warm_start": false,
+    "warmup": {
+      "bars": 71,
+      "needed": 63,
+      "ready": true,
+      "text": "strategy warm-up ready (71/63 closed bars)"
+    }
+  },
+  "last_entry_refusal": null,
+  "last_expiry": null,
+  "latest_quote": {
+    "age_s": 0.0,
+    "ask": 103.11,
+    "bid": 103.09,
+    "feed": "iex",
+    "fresh": true,
+    "quote_utc": "2026-11-16T15:31:01+00:00",
+    "reason": "FRESH",
+    "spread_bps": 1.9398642095053347,
+    "spread_usd": 0.02,
+    "symbol": "SPY",
+    "valid": true
+  },
+  "limits": {
+    "daily_loss": 70.0,
+    "gross_exposure": 900.0,
+    "label": "OPERATOR-APPROVED PAPER LIMITS",
+    "limits_hash": "cb370ea63bb8948f3e6452aa4fe5baf80e62178d22d952372139ac5ca6b431bd",
+    "max_loss_checked_by": "order engine",
+    "max_loss_per_trade": 30.0,
+    "per_trade_notional": 525.0
+  },
+  "limits_snapshot": {
+    "hash": "cb370ea63bb8948f3e6452aa4fe5baf80e62178d22d952372139ac5ca6b431bd",
+    "intact": true,
+    "source": "launch-time approved snapshot; never re-read from disk"
+  },
+  "limits_source": {
+    "approved_utc": "2026-11-16T03:59:03Z",
+    "hash": "cb370ea63bb8948f3e6452aa4fe5baf80e62178d22d952372139ac5ca6b431bd",
+    "label": "OPERATOR-APPROVED PAPER LIMITS",
+    "provenance": "operator-approved",
+    "values_hash": "7896bbb5866fa59f34fd8c94417bdbbd78b272a9f855364152c5edaf314a71e0"
+  },
+  "live": true,
+  "mode": "live",
+  "ownership": {
+    "account": "your Alpaca live brokerage account (operator-owned; the desk reads it, never funds it)",
+    "exposure": "desk-submitted orders and their fills only; positions opened outside the desk are not managed, sized against or closed by it",
+    "fills": "only fills on orders with this desk's client order ids are booked here"
+  },
+  "phase": "ARMED",
+  "play_rate_bars_per_sec": null,
+  "pnl": {
+    "after_cost": 0.720001,
+    "day_after_cost": 0.720001,
+    "fees": 0.0,
+    "realized": 0.0,
+    "unrealized": 0.720001
+  },
+  "preflight": [
+    {
+      "check": "adapter enabled",
+      "detail": "ALPACA LIVE (REAL MONEY in your Alpaca live brokerage account); enabled",
+      "ok": true
+    },
+    {
+      "check": "recovery unambiguous",
+      "detail": "no unresolved submit",
+      "ok": true
+    },
+    {
+      "check": "broker reconciled",
+      "detail": "alarms: 0",
+      "ok": true
+    },
+    {
+      "check": "limits loaded",
+      "detail": "fixed 4 share(s); max loss/trade $30.00, notional $525, daily loss $70.00, gross $900 (OPERATOR-APPROVED PAPER LIMITS)",
+      "ok": true
+    },
+    {
+      "check": "calendar",
+      "detail": "2026-11-16 session open (NYSE regular hours, America/New_York; clock Independent simulated clock)",
+      "ok": true
+    },
+    {
+      "check": "venue clock",
+      "detail": "Alpaca live clock 2026-11-16T15:31:01Z, market open, skew 0s (limit 120s)",
+      "ok": true
+    },
+    {
+      "check": "live connection check",
+      "detail": "GET account, clock and asset passed at 2026-11-16T15:31:01Z (no order sent)",
+      "ok": true
+    },
+    {
+      "check": "live authorization date",
+      "detail": "approved for 2026-11-16; today (America/Chicago) is 2026-11-16",
+      "ok": true
+    },
+    {
+      "check": "strategy warm-up",
+      "detail": "strategy warm-up ready (71/63 closed bars)",
+      "ok": true
+    },
+    {
+      "check": "stop",
+      "detail": "no Stop active",
+      "ok": true
+    }
+  ],
+  "protection": {
+    "available": true,
+    "covered_qty": 4,
+    "exit_working_qty": 0,
+    "fill_timing_note": "Manual desk: a broker fill that happens between your Checks is booked, and any uncovered shares get a protective stop, only at your next Check for new bars. Until then those shares may be unprotected. Reconcile is read-only and never sends an order.",
+    "position_qty": 4,
+    "protective_qty": 4,
+    "simulated": false,
+    "stopped": false,
+    "uncovered_qty": 0
+  },
+  "protective_orders": [
+    {
+      "client_id": "I-3a047d59c160514016fe",
+      "filled_qty": 0,
+      "intent_id": "I-3a047d59c160514016fe",
+      "kind": "protective",
+      "limit": null,
+      "order_id": "ab150000-0000-4000-8000-000000000002",
+      "qty": 1,
+      "remaining": 1,
+      "side": "sell",
+      "simulated": false,
+      "status": "acked",
+      "stop": 101.6914
+    },
+    {
+      "client_id": "I-d0a0da2f796d8cb122c8",
+      "filled_qty": 0,
+      "intent_id": "I-d0a0da2f796d8cb122c8",
+      "kind": "protective",
+      "limit": null,
+      "order_id": "ab150000-0000-4000-8000-000000000003",
+      "qty": 3,
+      "remaining": 3,
+      "side": "sell",
+      "simulated": false,
+      "status": "acked",
+      "stop": 101.6914
+    }
+  ],
+  "quote": {
+    "age_s": 0.0,
+    "ask": 103.11,
+    "available": true,
+    "bid": 103.09,
+    "feed": "iex",
+    "fresh": true,
+    "observed_at": "last HTTPS BUY entry check",
+    "quote_utc": "2026-11-16T15:31:01+00:00",
+    "reason": "FRESH",
+    "spread_bps": 1.9398642095053347,
+    "spread_usd": 0.02,
+    "symbol": "SPY",
+    "valid": true
+  },
+  "recovery": {
+    "adapter": {
+      "changed_utc": "2026-11-16T03:59:04Z",
+      "disabled_reason": null,
+      "enabled": true,
+      "path_name": "alpaca_live.json"
+    },
+    "ambiguous": false,
+    "block_reason": null,
+    "evidence": "ALPACA LIVE (REAL MONEY in your Alpaca live brokerage account)",
+    "integrity": [],
+    "last_poll_error": null,
+    "listing_incomplete": false,
+    "reason": null,
+    "reconcile_blocking": false,
+    "simulated": false,
+    "uncertain_client_ids": []
+  },
+  "replay_clock_utc": "2026-11-16T15:31:01Z",
+  "restarts": 0,
+  "schedule": {
+    "calendar": "NYSE 2026-2027 (America/New_York; holidays and early closes)",
+    "clock": "Independent simulated clock",
+    "enabled": false,
+    "note": "Manual live session (REAL MONEY): bars arrive only when you click Check for new bars. No launchd, cron or background job; no auto-arm."
+  },
+  "session_config": {
+    "created_utc": "2026-11-16T03:59:03Z",
+    "fill_costs": {
+      "commission_min": 1.0,
+      "commission_per_share": 0.005,
+      "half_spread_bps": 1.0,
+      "kind": "bps",
+      "slippage_bps": 2.0
+    },
+    "format": "desk-session-config-1",
+    "label": "TEST VALUES, SIMULATED. Sizing and limits are fixed for this state dir. Matthew alone sets real sizing and limits.",
+    "limits": {
+      "daily_loss": 70.0,
+      "gross_exposure": 900.0,
+      "label": "OPERATOR-APPROVED PAPER LIMITS",
+      "limits_hash": "cb370ea63bb8948f3e6452aa4fe5baf80e62178d22d952372139ac5ca6b431bd",
+      "max_loss_per_trade": 30.0,
+      "per_trade_notional": 525.0
+    },
+    "strategy": "ema",
+    "strategy_cfg": {
+      "fixed_qty": 4,
+      "limits": {
+        "daily_loss": 70.0,
+        "gross_exposure": 900.0,
+        "max_loss_per_trade": 30.0,
+        "per_trade_notional": 525.0
+      },
+      "test_size": {
+        "label": "SESSION LIMITS (operator-approved)",
+        "order_notional": 525.0,
+        "source": "alpaca session limits"
+      }
+    }
+  },
+  "session_id": "alpaca-live-2026-11-16-1",
+  "simulated": false,
+  "sizing": {
+    "fixed_qty": 4,
+    "label": "OPERATOR-APPROVED fixed 4 share(s) (limits snapshot cb370ea63bb8)",
+    "mode": "fixed",
+    "note": "Entries use this quantity; exits are capped at the open mock position."
+  },
+  "snapshot_error": null,
+  "strategies_available": [
+    "bounded_fixed",
+    "cash",
+    "ema",
+    "fixed_risk_single",
+    "gold_basket"
+  ],
+  "strategy": "ema",
+  "strategy_source": "strategies.registry",
+  "symbol": "SPY",
+  "tradingview_label": "AMEX:SPY REFERENCE ONLY. Real-market chart for context beside a SYNTHETIC replay; the desk never reads TradingView data and its prices are not the replay's.",
+  "tradingview_symbol": "AMEX:SPY",
+  "updated_utc": "2026-11-16T15:31:01Z",
+  "warmup": {
+    "bars": 71,
+    "needed": 63,
+    "ready": true,
+    "text": "strategy warm-up ready (71/63 closed bars)"
+  },
+  "_meta": {
+    "file": "session.json",
+    "exists": true,
+    "server_utc": "2026-11-16T03:59:04Z",
+    "mtime_utc": "2026-11-16T03:59:04Z",
+    "age_s": 0.0,
+    "missing": false
+  },
+  "_controls_file": {
+    "alarms": [],
+    "armed": true,
+    "broker_confirmed_utc": "2026-11-16T14:31:01Z",
+    "close_attempts": 0,
+    "close_pending": null,
+    "day_stop": null,
+    "expires_utc": "2026-11-16T21:05:00Z",
+    "flat_confirmed": false,
+    "last_reconcile_utc": "2026-11-16T14:31:01Z",
+    "paused": false,
+    "pending_cancels": [],
+    "schedule_enabled": false,
+    "session_id": "alpaca-live-2026-11-16-1",
+    "simulated": false,
+    "stop_reason": null,
+    "stop_utc": null,
+    "stopped": false,
+    "updated_utc": "2026-11-16T14:31:01Z"
+  },
+  "_controller_attached": true,
+  "_manager_attached": true,
+  "_adapter_file": {
+    "changed_utc": "2026-11-16T03:59:04Z",
+    "disabled_reason": null,
+    "enabled": true,
+    "history": [
+      {
+        "by": "operator (local desk)",
+        "enabled": true,
+        "utc": "2026-11-16T03:59:04Z"
+      }
+    ]
+  },
+  "_adapter_file_name": "alpaca_live.json",
+  "_broker_mode": "alpaca-live",
+  "_simulated": false
+}

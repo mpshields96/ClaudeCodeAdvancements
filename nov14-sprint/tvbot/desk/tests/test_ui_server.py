@@ -6,6 +6,7 @@ Run:
 import http.client
 import json
 import os
+import re
 import shutil
 import socket
 import sys
@@ -1590,6 +1591,101 @@ class TestAlpacaBarsFile(unittest.TestCase):
             self.assertEqual(len(bars), 1)
             self.assertEqual(meta["bars_source"], server.BARS_SOURCE_REPLAY)
 
+
+
+class TestLiveSessionFixture(unittest.TestCase):
+    """Codex 03:58Z Chromium probe on a real live controller: the first screen must use live wording.
+
+    The fixture is /api/session from the actual live controller on integration f5e45ed (local TLS fake;
+    it names credential env vars only, no key values). Paper, mock and offline stay as they were."""
+
+    FIXTURE = os.path.join(DESK_DIR, "tests", "fixtures", "live_session_f5e45ed.json")
+
+    def _live(self, **kw):
+        with open(self.FIXTURE, encoding="utf-8") as f:
+            s = json.load(f)
+        s.update(kw)
+        return s
+
+    def _eval(self, cases):
+        import subprocess
+        page = _page()
+
+        def fn(name):
+            i = page.index("function %s(" % name)
+            return page[i:page.index("\nfunction ", i + 5)]
+        a = page.index("function isAlpaca(s)")
+        ns = page.index("function nextStep(s)")
+        b = page.index("\nfunction ", ns + 10)
+        js = "".join(fn(n) + "\n" for n in ("num", "clockNow", "phaseOf", "preflightOk"))
+        js += "const S = {conn: true, session: {}, bars: new Array(5).fill({})};\n"
+        js += "function routeOk(r){ return !(S.routes instanceof Set) || S.routes.has(r); }\n"
+        js += "const document = {querySelector: () => ({disabled: false, hidden: false}), querySelectorAll: () => []};\n"
+        js += page[a:b]
+        js += "\nconst C = " + json.dumps(cases) + ";\nconst out = {};\n"
+        js += ("for (const k in C) { const s = C[k]; S.session = s; const n = nextStep(s); const bw = brokerWords(s);"
+               " out[k] = {title: n.title, detail: n.detail, btn: n.btn || null, sel: n.sel || null, view: n.view || null,"
+               " tk: transportKind(s), kind: bw.kind, chip: bw.chip, arm: bw.arm, limits: limitsSrc(s).label,"
+               " pill: pnlPill(s).t, legend: fillLegend(s)}; }\n")
+        js += "process.stdout.write(JSON.stringify(out));"
+        r = subprocess.run(["node", "-e", js], capture_output=True, text=True, timeout=30)
+        self.assertEqual(r.returncode, 0, r.stderr[-2000:])
+        return json.loads(r.stdout)
+
+    def test_fixture_is_the_real_live_controller_payload(self):
+        s = self._live()
+        self.assertEqual(s["broker_mode"], "alpaca-live")
+        self.assertTrue(s["broker"]["transport"].startswith("LiveHttpsTransport("))
+        self.assertEqual(s["limits_source"]["provenance"], "operator-approved")
+        self.assertIn("PAPER", s["limits_source"]["label"])  # the controller's own label, which the page must not echo
+
+    @unittest.skipUnless(shutil.which("node"), "node not installed")
+    def test_live_first_screen_uses_live_wording(self):
+        live = self._live()
+        out = self._eval({"armed": live, "pre": self._live(phase="PRE_SESSION")})
+        for k, o in out.items():
+            words = " ".join(str(o[f] or "") for f in ("title", "detail", "chip", "arm", "limits", "pill", "legend"))
+            self.assertEqual(o["tk"], "https", k)
+            self.assertEqual(o["kind"], "live", k)
+            self.assertNotIn("not reported", words.lower(), (k, words))
+            self.assertIsNone(re.search(r"\bpaper\b", o["limits"], re.I), (k, o["limits"]))
+            self.assertEqual(o["limits"], "Operator-approved limits (live snapshot %s)" % live["limits_source"]["hash"][:12])
+            self.assertNotIn("SIMULATED", o["pill"], k)
+            self.assertIn("LIVE", o["pill"])
+            self.assertIn("costs estimated", o["pill"])
+            self.assertNotIn("mock fill", o["legend"])
+            self.assertEqual(o["legend"], "broker fill")
+            # the next step stays reachable by mouse: it names a button or a view to open
+            self.assertTrue(o["btn"] and (o["sel"] or o["view"]), (k, o))
+        self.assertNotEqual(out["pre"]["title"], "Transport not reported: do not arm")
+
+    @unittest.skipUnless(shutil.which("node"), "node not installed")
+    def test_paper_mock_and_offline_keep_their_words(self):
+        paper = self._live(broker_mode="alpaca-paper", adapter={"enabled": True, "path_name": "alpaca_paper.json"},
+                           broker={"transport": "HttpsTransport(paper)"})
+        paper_live_tx = dict(paper, broker={"transport": self._live()["broker"]["transport"]})
+        mock = {"phase": "PRE_SESSION", "broker_mode": "alpaca-mock", "broker": {"transport": "MockAlpacaTransport()"}}
+        offline = {"phase": "PRE_SESSION", "mode": "replay"}
+        out = self._eval({"paper": paper, "paper_live_tx": paper_live_tx, "mock": mock, "offline": offline})
+        self.assertEqual((out["paper"]["tk"], out["paper"]["kind"]), ("https", "https"))
+        self.assertIn("PAPER", out["paper"]["chip"])
+        self.assertEqual(out["paper"]["limits"], "OPERATOR-APPROVED PAPER LIMITS")
+        self.assertEqual(out["paper"]["pill"], "PAPER")
+        self.assertEqual(out["paper"]["legend"], "broker fill")
+        # a paper desk that names the live transport stays unconfirmed (never flips to live wording)
+        self.assertEqual(out["paper_live_tx"]["tk"], "unknown")
+        self.assertNotEqual(out["paper_live_tx"]["kind"], "live")
+        for k in ("mock", "offline"):
+            self.assertEqual(out[k]["pill"], "SIMULATED", k)
+            self.assertEqual(out[k]["legend"], "mock fill", k)
+        self.assertEqual(out["mock"]["tk"], "mock")
+
+    def test_page_ids_for_pill_and_legend(self):
+        page = _page()
+        self.assertIn('id="pnlPill"', page)
+        self.assertIn('<span id="legFill"><i style="color:var(--c-fill)">&#9472;</i> mock fill</span>', page)
+        self.assertIn("pp.textContent = pw.t", page)
+        self.assertIn("lf.lastChild.nodeValue = ' ' + fillLegend(s)", page)
 
 if __name__ == "__main__":
     unittest.main()
