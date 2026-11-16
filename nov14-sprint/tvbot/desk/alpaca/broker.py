@@ -10,7 +10,11 @@ Fail-safe rules:
   listing, or a blocking last reconcile (note_reconcile). Reads, cancels and a protective reduce_only
   order capped to a position read fresh in the same call still work.
 - Alpaca has no reduce-only flag for equities, so reduce_only is enforced here: the quantity is capped
-  to the fresh position in the reducing direction, minus same-side desk orders still working.
+  to the shares this desk owns in the reducing direction (the fresh venue position, never more than the
+  desk's own booked fills), minus same-side desk orders still working. Shares the desk did not trade are
+  never closed (REDUCE_ONLY_NOT_DESK_OWNED).
+- The gate is checked again after the fresh position read and before any order record is written, so a
+  read that disables the adapter (for example a position mismatch) stops that same call's new exposure.
 - Integrity faults (foreign SPY order, position mismatch that survives a re-poll, overfill, fill
   regression, fractional quantity, refused transport) disable the adapter; it stays off until the
   operator enables it again.
@@ -430,6 +434,13 @@ class AlpacaPaperBroker(object):
                                     detail="positions could not be read (%s); nothing was sent" % exc)
             raise
         pos = positions[SYMBOL]["qty"]
+        if not reduce_only:
+            # The fresh read above may itself have disabled the adapter (a position mismatch, a
+            # fractional row). Re-check before writing any record, so this same call sends nothing.
+            blocked = self.block_reason(exclude=client_id)
+            if blocked:
+                return self._reject(client_id, blocked,
+                                    detail="the position read in this call stopped new exposure; nothing was sent")
         working_same = sum(self._reserved(r) for c, r in self.book["orders"].items()
                            if c != client_id and r.get("side") == side)
         if positions[SYMBOL].get("fractional"):
@@ -438,8 +449,19 @@ class AlpacaPaperBroker(object):
                                 detail="SPY position %s is fractional; the desk does not trade it" %
                                 positions[SYMBOL].get("qty_exact"))
         if reduce_only:
-            room = (pos if side == "sell" else -pos) - working_same
+            owned = self._book_net()
+            if side == "sell":
+                venue_room = pos if pos > 0 else 0
+                reducible = min(pos, owned) if pos > 0 and owned > 0 else 0
+            else:
+                venue_room = -pos if pos < 0 else 0
+                reducible = min(-pos, -owned) if pos < 0 and owned < 0 else 0
+            room = reducible - working_same
             if room <= 0:
+                if venue_room > reducible:
+                    return self._reject(client_id, "REDUCE_ONLY_NOT_DESK_OWNED", venue=pos, desk_booked=owned,
+                                        detail="Alpaca shows %d SPY, the desk booked %d; shares it did not "
+                                        "trade are not closed; nothing was sent" % (pos, owned))
                 return self._reject(client_id, "REDUCE_ONLY_NO_POSITION")
             requested, qty = qty, min(qty, room)
         else:

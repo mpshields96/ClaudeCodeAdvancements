@@ -1191,6 +1191,29 @@ class OrderManager(object):
             why.append("unresolved broker records: %s" % ", ".join(odd))
         return why
 
+    @staticmethod
+    def _desk_owned(broker_qty, booked_qty):
+        """The signed shares Stop & Close may act on: the part of the broker position this desk booked.
+        Shares held outside the desk (another app, a manual trade) are never closed or covered here."""
+        if broker_qty > 0 and booked_qty > 0:
+            return min(broker_qty, booked_qty)
+        if broker_qty < 0 and booked_qty < 0:
+            return max(broker_qty, booked_qty)
+        return 0
+
+    def _stop_external_only(self, rep):
+        """The broker shows SPY the desk did not book. Send no close for it. The desk's own protective,
+        exit and close orders can only trade those shares now, so they are canceled (desk orders only)."""
+        bqty, booked = rep["positions"]["broker"], rep["positions"]["booked"]
+        if self._live(["protective", "exit", "close"]):
+            self._cancel_kinds(["protective", "exit", "close"])
+        why = ("broker position %d SPY is not this desk's (desk booked %d); not closed or covered. "
+               "Resolve it in your Alpaca account." % (bqty, booked))
+        self._save_controls(flat_confirmed=False, close_pending=why)
+        self._audit("control", action="stop_external_position", broker=bqty, booked=booked)
+        return {"state": "pending", "why": why, "external_position": bqty, "desk_booked": booked,
+                "external_orders": rep.get("external_orders") or []}
+
     def _progress_stop(self):
         """One step toward a confirmed-flat stop. Safe to call repeatedly.
 
@@ -1217,12 +1240,15 @@ class OrderManager(object):
             why = "%s (%s)" % (NOT_FLAT_TEXT, "; ".join(blockers))
             self._save_controls(flat_confirmed=False, close_pending=why)
             return {"state": "pending", "why": why, "external_orders": rep2.get("external_orders") or []}
+        owned = self._desk_owned(bqty, rep["positions"]["booked"])
+        if owned == 0:
+            return self._stop_external_only(rep)
         if self.calendar is not None and not self.calendar.is_open(self.now()):
             nxt = self.calendar.next_open(self.now())
             why = "market closed; protective exits kept; close at next open %s" % (iso(nxt) if nxt else "unknown")
             self._save_controls(close_pending=why)
             return {"state": "pending", "why": why}
-        side = "sell" if bqty > 0 else "buy"
+        side = "sell" if owned > 0 else "buy"
         unprotected = False
         if getattr(self.broker, "exits_hold_position", False):
             # This venue holds the shares of a working exit, so a close next to the protective is
@@ -1244,21 +1270,22 @@ class OrderManager(object):
                     return {"state": "pending", "why": why, "unconfirmed_cancels": still}
                 self._audit("control", action="stop_protection_canceled", intent_ids=[it["intent_id"] for it in held])
                 bqty = rep["positions"]["broker"]
-                if bqty == 0:
+                owned = self._desk_owned(bqty, rep["positions"]["booked"])
+                if bqty == 0 or owned == 0:
                     return self._progress_stop()           # the protective traded during the cancel
-                side = "sell" if bqty > 0 else "buy"
+                side = "sell" if owned > 0 else "buy"
             unprotected = not any(it["side"] == side for it in self._live(["protective"]))
         closes = self._live(["close"])
         wrong = [c["intent_id"] for c in closes if c["side"] != side]
         for iid in wrong:
             self._cancel(iid)
         covered = sum(self._remaining(c) for c in closes if c["side"] == side)
-        if covered >= abs(bqty):
+        if covered >= abs(owned):
             why = ("close order working; protective canceled first" if unprotected
                    else "close order working; protective exits kept until flat")
             self._save_controls(close_pending=why)
             return {"state": "pending", "why": why, "close": [c["intent_id"] for c in closes]}
-        qty = abs(bqty) - covered
+        qty = abs(owned) - covered
         attempt = int(self.controls.get("close_attempts", 0)) + 1
         self._save_controls(close_attempts=attempt)
         decision_id = "close|%s|%s|%d" % (self.controls.get("session_id"), self.controls.get("stop_utc"), attempt)
@@ -1274,7 +1301,7 @@ class OrderManager(object):
             self._save_controls(close_pending=why)
             return {"state": "closing", "intent_id": iid, "qty": qty, "why": why}
         if unprotected:
-            why = "position %d SPY UNPROTECTED: protective canceled, close pending" % abs(bqty)
+            why = "position %d SPY UNPROTECTED: protective canceled, close pending" % abs(owned)
             self._save_controls(close_pending=why)
             return {"state": "closing_unprotected", "why": why, "intent_id": iid, "qty": qty,
                     "close_status": st, "close_reason": it.get("reason")}
