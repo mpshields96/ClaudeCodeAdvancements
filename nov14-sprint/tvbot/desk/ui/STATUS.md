@@ -198,3 +198,14 @@ Verified: 78 UI tests OK. New probes run the page's own `nextStep` and `barsUsed
   limits"). 83 UI tests OK. Checked in the browser at 1280 and 390 wide on a fresh mock
   state: the step, its enabled button, the highlighted strip step, the empty-chart text,
   no console errors and no horizontal scroll.
+
+### Chart toolbar says synthetic once (W-A, 03:51Z)
+- The chart header showed the SYNTHETIC pill and then a tag reading "replay bars
+  (synthetic)" or "mock bars (synthetic)". The tag now names only the source ("replay
+  bars", "mock bars"); the pill still says SYNTHETIC, and its hover title keeps the full
+  wording. Paper and live keep their own tags ("Alpaca IEX bars, paper account" or "LIVE
+  account") with the pill hidden, as before. The zoom buttons (+, -, All, Latest) are
+  unchanged.
+- Test: test_chart_toolbar_says_synthetic_once. 84 UI tests OK. Final screenshots 20
+  (390x844) and 21 (1280x720) of a populated replay are kept outside the repo: the next
+  step, the one-pill header, the chart and Stop & Close show with no horizontal scroll.

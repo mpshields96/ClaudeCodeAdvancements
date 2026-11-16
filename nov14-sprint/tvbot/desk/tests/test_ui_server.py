@@ -1373,6 +1373,17 @@ class TestFirstScreen(unittest.TestCase):
         self.assertIn("places no orders and changes no limits", page[load:load + 400])
         self.assertIn("const cur = freshMock ? 'step1'", page)   # the strip highlights the same step
 
+    def test_chart_toolbar_says_synthetic_once(self):
+        page = _page()
+        # the SYNTHETIC pill carries the word; the source tag beside it names only the source
+        self.assertNotIn("bars (synthetic)'", page)
+        self.assertNotIn(">replay bars (synthetic)<", page)
+        self.assertIn("!alp ? 'replay bars'", page)
+        self.assertIn("bw.kind === 'mock' ? 'mock bars'", page)
+        # the pill hides only for real feeds (paper, live), so every synthetic source still says SYNTHETIC
+        self.assertIn("$('#srcPill').hidden = paper || bw.kind === 'live'", page)
+        self.assertIn('id="srcPill">SYNTHETIC<', page)
+
 
 class TestAlpacaBarsFile(unittest.TestCase):
     """The Alpaca session writes alpaca_bars.jsonl; the chart route must read it, labeled."""
