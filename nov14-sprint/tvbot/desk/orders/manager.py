@@ -1255,7 +1255,7 @@ class OrderManager(object):
         owned = self._desk_owned(bqty, rep["positions"]["booked"])
         if owned == 0:
             return self._stop_external_only(rep)
-        closed = self.calendar is not None and not self.calendar.is_open(self.now())
+        closed = cal_closed = self.calendar is not None and not self.calendar.is_open(self.now())
         if not closed and callable(self.venue_open):
             try:
                 closed = self.venue_open() is False
@@ -1269,8 +1269,12 @@ class OrderManager(object):
             prot = sum(self._remaining(it) for it in self._live(["protective"]) if it["side"] == pside)
             held = ("held, protected by its working stop (%g of %g shares)" % (min(prot, abs(owned)), abs(owned))
                     if prot > 0 else "held with NO working protective stop (%g shares)" % abs(owned))
-            why = ("market closed: position %s; nothing sent (no protective cancel, no close order); the "
-                   "operator closes at the next regular session (opens %s)" % (held, iso(nxt) if nxt else "unknown"))
+            if cal_closed:
+                why = ("market closed: position %s; nothing sent (no protective cancel, no close order); the "
+                       "operator closes at the next regular session (opens %s)" % (held, iso(nxt) if nxt else "unknown"))
+            else:
+                why = ("venue clock says market closed: position %s; nothing sent (no protective cancel, no "
+                       "close order); the operator closes once the venue reports open" % held)
             self._save_controls(close_pending=why)
             return {"state": "pending", "why": why, "market_closed": True, "protected_shares": min(prot, abs(owned))}
         side = "sell" if owned > 0 else "buy"
