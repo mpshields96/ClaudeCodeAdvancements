@@ -1241,6 +1241,7 @@ class TestBannerTruth(unittest.TestCase):
         b = page.index("\nfunction ", ns + 10)
         js = "".join(fn(n) + "\n" for n in ("num", "clockNow", "phaseOf", "preflightOk"))
         js += "const S = {conn: true, session: {}, bars: new Array(%d).fill({})};\n" % bars
+        js += "function routeOk(r){ return !(S.routes instanceof Set) || S.routes.has(r); }\n"
         js += "const document = {querySelector: () => %s, querySelectorAll: () => []};\n" % (
             "({disabled: false, hidden: false})" if button else "null")
         js += page[a:b]
@@ -1383,6 +1384,184 @@ class TestFirstScreen(unittest.TestCase):
         # the pill hides only for real feeds (paper, live), so every synthetic source still says SYNTHETIC
         self.assertIn("$('#srcPill').hidden = paper || bw.kind === 'live'", page)
         self.assertIn('id="srcPill">SYNTHETIC<', page)
+
+
+class _LiveConnBase(object):
+    """Fake live controllers over the real DeskServer handler. The preflight lives in session.json,
+    the way the session writes it; arm() refuses unless every preflight check passes."""
+
+    def __init__(self, state_dir):
+        self.state_dir = state_dir
+        self.calls = []
+
+    def _sess_path(self):
+        return os.path.join(self.state_dir, "session.json")
+
+    def _load(self):
+        with open(self._sess_path(), encoding="utf-8") as fh:
+            return json.load(fh)
+
+    def _save(self, sess):
+        with open(self._sess_path(), "w", encoding="utf-8") as fh:
+            json.dump(sess, fh)
+
+    def arm(self):
+        self.calls.append("arm")
+        bad = [x["check"] for x in self._load().get("preflight", []) if x.get("ok") is not True]
+        if bad:
+            return {"ok": False, "reason": "preflight not passed: " + ", ".join(bad)}
+        return {"ok": True}
+
+    def reconcile_now(self):
+        self.calls.append("reconcile_now")
+        return {"ok": True}
+
+
+class _LiveConnOk(_LiveConnBase):
+    def connection_check(self):
+        self.calls.append("connection_check")
+        sess = self._load()
+        for x in sess["preflight"]:
+            if x["check"] == "live connection check":
+                x.update(ok=True, detail="checked just now (GET only)")
+        self._save(sess)
+        return {"ok": True, "detail": "account and clock read (GET only)"}
+
+
+class _LiveConnFails(_LiveConnBase):
+    def connection_check(self):
+        self.calls.append("connection_check")
+        return {"ok": False, "detail": "connection check failed: HTTP 401 (keys rejected)"}
+
+
+class TestLiveConnectionCheck(unittest.TestCase):
+    """Coordinator P1: live preflight has "live connection check"; the UI runs the controller's check."""
+
+    def _start(self, cls):
+        self.tmp = tempfile.mkdtemp(prefix="ui_conn_")
+        self.state = os.path.join(self.tmp, "state")
+        shutil.copytree(SAMPLE, self.state)
+        p = os.path.join(self.state, "session.json")
+        with open(p, encoding="utf-8") as fh:
+            sess = json.load(fh)
+        sess.update(TestLivePayload.LIVE)
+        sess["phase"] = "PRE_SESSION"
+        sess["preflight"] = [{"check": "limits approved", "ok": True, "detail": "approved"},
+                             {"check": "live connection check", "ok": False,
+                              "detail": "no connection check yet (or older than 300 s)"}]
+        with open(p, "w", encoding="utf-8") as fh:
+            json.dump(sess, fh)
+        self.ctl = cls(self.state)
+        self.srv = server.make_server(self.state, host="127.0.0.1", port=0, manager=self.ctl)
+        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+        self.addCleanup(self._stop)
+
+    def _stop(self):
+        self.srv.shutdown()
+        self.srv.server_close()
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def _call(self, method, path, body=None):
+        port = self.srv.server_address[1]
+        conn = http.client.HTTPConnection("127.0.0.1", port, timeout=5)
+        h = {"Host": "127.0.0.1:%d" % port}
+        data = None
+        if method == "POST":
+            data = json.dumps(body or {}).encode("utf-8")
+            h["Content-Type"] = "application/json"
+        conn.request(method, path, body=data, headers=h)
+        r = conn.getresponse()
+        out = json.loads(r.read().decode("utf-8"))
+        conn.close()
+        return r.status, out
+
+    def _preflight_ok(self):
+        st, s = self._call("GET", "/api/session")
+        self.assertEqual(st, 200)
+        return all(x.get("ok") is True for x in s["preflight"])
+
+    def test_check_passes_then_arm_is_accepted(self):
+        self._start(_LiveConnOk)
+        st, h = self._call("GET", "/api/health")
+        self.assertIn("/api/alpaca/connection_check", h["routes"])
+        self.assertFalse(self._preflight_ok())
+        st, j = self._call("POST", "/api/arm")
+        self.assertFalse(j["ok"], j)
+        self.assertIn("live connection check", j["error"])
+        st, j = self._call("POST", "/api/alpaca/connection_check")
+        self.assertEqual(st, 200, j)
+        self.assertTrue(j["ok"], j)
+        self.assertTrue(j["controller_called"])
+        self.assertEqual(j["method"], "connection_check")
+        self.assertTrue(self._preflight_ok())
+        st, j = self._call("POST", "/api/arm")
+        self.assertEqual(st, 200, j)
+        self.assertTrue(j["ok"], j)
+        self.assertEqual(self.ctl.calls, ["arm", "connection_check", "arm"])
+
+    def test_controller_without_check_gets_501(self):
+        self._start(_LiveConnBase)
+        st, h = self._call("GET", "/api/health")
+        self.assertNotIn("/api/alpaca/connection_check", h["routes"])
+        self.assertIn("/api/alpaca/reconcile", h["routes"])
+        st, j = self._call("POST", "/api/alpaca/connection_check")
+        self.assertEqual(st, 501, j)
+        self.assertFalse(j["ok"])
+        self.assertFalse(j["recorded"])
+        self.assertIn("connection_check", j["error"])
+        self.assertNotIn("connection_check", self.ctl.calls)
+        st, j = self._call("POST", "/api/arm")
+        self.assertFalse(j["ok"], j)
+
+    def test_failed_check_shows_detail_and_arm_stays_refused(self):
+        self._start(_LiveConnFails)
+        st, j = self._call("POST", "/api/alpaca/connection_check")
+        self.assertFalse(j["ok"], j)
+        self.assertIn("HTTP 401", j["error"])
+        self.assertIn("HTTP 401", j["controller_result"]["detail"])
+        self.assertFalse(self._preflight_ok())
+        st, j = self._call("POST", "/api/arm")
+        self.assertFalse(j["ok"], j)
+        self.assertIn("live connection check", j["error"])
+
+    def test_no_confirm_needed_and_not_auto_polled(self):
+        self.assertNotIn("alpaca_connection_check", server.CONFIRM_REQUIRED)
+        self.assertEqual(server.CONTROL_ROUTES["/api/alpaca/connection_check"][:2],
+                         ("alpaca_connection_check", "connection_check"))
+        self.assertIn("alpaca_connection_check", server.ALPACA_REQUESTS)
+        page = _page()
+        # the route is POSTed only from the button's click handler
+        self.assertEqual(page.count("'/api/alpaca/connection_check'"), 4)
+        self.assertEqual(page.count("fetch('/api/alpaca/connection_check'"), 1)
+        self.assertIn('id="btnConnCheck" class="pri" hidden', page)
+        self.assertIn("/live connection/i", page)
+
+
+class TestLiveConnectionNextStep(unittest.TestCase):
+    """nextStep shows Check live connection only when live preflight has that entry failing."""
+
+    PF = TestBannerTruth.PF
+    _run = TestBannerTruth._run  # borrowed, so TestBannerTruth's own tests do not run twice
+    _paper = TestBannerTruth._paper
+
+    def _live(self, ok):
+        return self._paper(broker_mode="alpaca-live", broker={"transport": "HttpsTransport(live)"},
+                           preflight=[{"check": "limits", "ok": True},
+                                      {"check": "live connection check", "ok": ok,
+                                       "detail": "older than 300 s" if not ok else "fresh"}])
+
+    @unittest.skipUnless(shutil.which("node"), "node not installed")
+    def test_check_live_connection_next_step(self):
+        out = self._run({"live_bad": self._live(False), "live_ok": self._live(True),
+                         "paper": self._paper(), "mock": self._paper(broker_mode="alpaca-mock",
+                                                                     broker={"transport": "MockAlpacaTransport()"})},
+                        button=True)
+        self.assertEqual(out["live_bad"]["title"], "Check live connection")
+        self.assertEqual(out["live_bad"]["btn"], "Check live connection")
+        self.assertIn("older than 300 s", out["live_bad"]["detail"])
+        self.assertIn("Arm stays blocked", out["live_bad"]["detail"])
+        for k in ("live_ok", "paper", "mock"):
+            self.assertNotEqual(out[k]["title"], "Check live connection", k)
 
 
 class TestAlpacaBarsFile(unittest.TestCase):

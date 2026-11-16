@@ -69,8 +69,10 @@ CONTROL_ROUTES = {
     "/api/alpaca/enable": ("alpaca_enable", "alpaca_enable"),
     "/api/alpaca/disable": ("alpaca_disable", "alpaca_disable"),
     "/api/alpaca/reconcile": ("alpaca_reconcile", "reconcile_now"),
+    # read-only live connection check (GET requests only on the controller side); no confirm, no args
+    "/api/alpaca/connection_check": ("alpaca_connection_check", "connection_check"),
 }
-ALPACA_REQUESTS = ("alpaca_enable", "alpaca_disable", "alpaca_reconcile")
+ALPACA_REQUESTS = ("alpaca_enable", "alpaca_disable", "alpaca_reconcile", "alpaca_connection_check")
 CONFIRM_REQUIRED = ("stop_close", "clear_stop", "alpaca_enable")
 CONFIRM_LABELS = {"stop_close": "Stop & Close", "clear_stop": "Clear Stop", "alpaca_enable": "Enable"}
 # Setup panel worksheet (alpaca/sizing.py). Draft and approve write only this desk's
@@ -965,9 +967,13 @@ class DeskHandler(BaseHTTPRequestHandler):
         confirmed = body.get("confirm") is True or (query.get("confirm") or [""])[0] in ("1", "true")
         if request in ALPACA_REQUESTS and not self.server.has_method(method_name):
             # Not queued for later: a recorded "pending enable" would imply a background job.
-            return self._send(501, {"ok": False, "request": request, "recorded": False,
-                                    "error": "the Alpaca paper adapter is not running in this desk "
-                                             "(start it with --broker alpaca-paper); nothing was recorded"})
+            if request == "alpaca_connection_check":
+                msg = ("the running desk has no live connection check (connection_check); "
+                       "nothing was recorded and Arm stays blocked")
+            else:
+                msg = ("the Alpaca paper adapter is not running in this desk "
+                       "(start it with --broker alpaca-paper); nothing was recorded")
+            return self._send(501, {"ok": False, "request": request, "recorded": False, "error": msg})
         if request in CONFIRM_REQUIRED and not confirmed:
             label = CONFIRM_LABELS.get(request, request)
             return self._send(400, {"ok": False, "error": "%s needs confirm=true" % label,
@@ -1165,7 +1171,7 @@ class DeskServer(ThreadingHTTPServer):
                             result["arguments_not_accepted"] = dropped
                         if isinstance(out, dict) and out.get("ok") is False:
                             result["ok"] = False
-                            result["error"] = str(out.get("reason") or out.get("error") or "refused")
+                            result["error"] = str(out.get("reason") or out.get("error") or out.get("detail") or "refused")
                             status = "controller_refused"
                         else:
                             status = "controller_ok"
