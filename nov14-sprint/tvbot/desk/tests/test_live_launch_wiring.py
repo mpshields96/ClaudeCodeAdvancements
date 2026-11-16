@@ -411,5 +411,105 @@ class RealControllerStartTests(LiveWiringTests.__bases__[0]):
         self.assert_start_sent_no_order()
 
 
+
+class _AccountOpener(FakeOpener):
+    """FakeOpener that also serves GET /v2/account and /v2/assets/SPY with live-shaped status fields."""
+
+    def __init__(self, trading, suspended=False):
+        FakeOpener.__init__(self, trading)
+        self.account = {"status": "ACTIVE", "trading_blocked": False, "account_blocked": False,
+                        "trade_suspended_by_user": suspended}
+
+    def open(self, req, timeout=None):
+        import urllib.parse
+        from test_alpaca_broker import FakeResp
+        path = urllib.parse.urlsplit(req.full_url).path
+        if req.get_method() == "GET" and path == "/v2/account":
+            self.requests.append(req)
+            self.trading.calls.append(("GET", path, {}, None))
+            return FakeResp(200, dict(self.account), req.full_url)
+        if req.get_method() == "GET" and path == "/v2/assets/SPY":
+            self.requests.append(req)
+            self.trading.calls.append(("GET", path, {}, None))
+            return FakeResp(200, {"symbol": "SPY", "tradable": True, "status": "active"}, req.full_url)
+        return FakeOpener.open(self, req, timeout)
+
+
+class LiveArmConnectionCheckTests(RealControllerStartTests):
+    """Enable on a live desk runs the GET-only connection check that live Arm needs; Reconcile refreshes
+    it. A failing account keeps the check failed and Arm refused. No order is sent either way."""
+
+    test_real_live_controller_starts_disabled_and_sends_no_order = None          # run once, in the base
+    test_the_real_desk_server_reports_a_live_desk_with_the_adapter_disabled = None
+
+    def drive(self, suspended):
+        self.opener = _AccountOpener(MockTrading(), suspended=suspended)
+        seen = {}
+
+        def operator():
+            runner = self.runners[-1]
+            controls = launch.AlpacaDeskControls(runner)
+            seen["enable"] = controls.alpaca_enable(confirm=True)
+            seen["preflight"] = {c["check"]: c for c in runner.preflight()}
+            seen["arm"] = runner.arm()
+            seen["reconcile"] = controls.reconcile_now()
+            seen["enabled_after"] = runner.adapter_state.enabled
+            raise KeyboardInterrupt
+
+        code, out, err = self.start_real(wait=operator)
+        self.assertEqual(code, 0, err)
+        return seen
+
+    def test_enable_runs_the_connection_check_so_it_no_longer_blocks_arm(self):
+        seen = self.drive(suspended=False)
+        cc = seen["enable"]["connection_check"]
+        self.assertTrue(seen["enable"]["ok"])
+        self.assertTrue(cc["ok"], cc)
+        self.assertEqual((cc["method"], cc["orders_sent"]), ("GET only", 0))
+        self.assertTrue(seen["preflight"]["live connection check"]["ok"], seen["preflight"]["live connection check"])
+        failed = [f["check"] for f in seen["arm"].get("failed", [])]
+        self.assertNotIn("live connection check", failed)
+        # Arm may still refuse on the calendar or venue clock (it is not a session day here); the full
+        # Enable -> Preflight -> Arm path on a session-day clock is Codex's probe_live_command.py.
+        self.assertTrue(seen["reconcile"]["ok"])
+        self.assertTrue(seen["reconcile"]["connection_check"]["ok"])
+        self.assertTrue(seen["enabled_after"])
+        self.assert_start_sent_no_order()
+
+    def test_a_suspended_account_keeps_the_check_failed_and_arm_refused(self):
+        seen = self.drive(suspended=True)
+        cc = seen["enable"]["connection_check"]
+        self.assertTrue(seen["enable"]["ok"])                 # Enable is not undone by a failed check
+        self.assertFalse(cc["ok"])
+        self.assertIn("trade_suspended_by_user", json.dumps(cc))
+        self.assertFalse(seen["preflight"]["live connection check"]["ok"])
+        self.assertFalse(seen["arm"]["ok"])
+        self.assertIn("live connection check", [f["check"] for f in seen["arm"]["failed"]])
+        self.assertFalse(seen["reconcile"]["connection_check"]["ok"])
+        self.assertTrue(seen["enabled_after"])
+        self.assert_start_sent_no_order()
+
+    def test_paper_and_mock_controls_do_not_run_a_connection_check(self):
+        class Runner(object):
+            live = False
+            calls = []
+
+            def alpaca_enable(self, confirm=False):
+                return {"ok": True, "simulated": True}
+
+            def reconcile_now(self):
+                return {"ok": True, "result": {}}
+
+            def connection_check(self):
+                self.calls.append("cc")
+                raise AssertionError("no connection check outside live mode")
+
+        r = Runner()
+        c = launch.AlpacaDeskControls(r)
+        self.assertNotIn("connection_check", c.alpaca_enable(confirm=True))
+        self.assertNotIn("connection_check", c.reconcile_now())
+        self.assertEqual(r.calls, [])
+
+
 if __name__ == "__main__":
     unittest.main()
