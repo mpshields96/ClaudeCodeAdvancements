@@ -875,6 +875,23 @@ class ExpiryHoldingPosition(_Base):
         self.assertEqual([it["intent_id"] for it in c.mgr._live(["protective"])],
                          [it["intent_id"] for it in prot])
         self.assertIn("held, protected by its working stop", r.get("status_text") or "")
+        self.assertIn("venue clock says market closed", r.get("status_text") or "")
+        self.assertIn("protective stop kept", r.get("status_text") or "")
+
+    def test_unverified_venue_clock_stop_and_close_sends_nothing_and_keeps_stop(self):
+        c, prot = self.holding()
+        t = c.mgr.now() + _dt.timedelta(minutes=10)              # calendar: regular hours
+        c.clock = FixedClock(t)
+        c.transport.trading.clock = {"timestamp": AS.iso(t)}     # venue clock: no is_open, unverifiable
+        n = len(c.transport.trading.calls)
+        r = c.stop_and_close()
+        self.assertTrue(r["stopped"])
+        self.assertEqual(self.calls_after(c, n), [])             # 0 DELETE of the stop, 0 market POST
+        self.assertEqual([it["intent_id"] for it in c.mgr._live(["protective"])],
+                         [it["intent_id"] for it in prot])
+        txt = r.get("status_text") or ""
+        self.assertIn("clock unverified", txt)
+        self.assertIn("protective stop kept", txt)
 
     def test_regular_hours_stop_and_close_still_closes(self):
         c, prot = self.holding()

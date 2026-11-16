@@ -1256,11 +1256,16 @@ class OrderManager(object):
         if owned == 0:
             return self._stop_external_only(rep)
         closed = cal_closed = self.calendar is not None and not self.calendar.is_open(self.now())
+        unverified = False
         if not closed and callable(self.venue_open):
+            # Connected modes: the only protective stop is cancelled only on a fresh venue clock that
+            # says open. Closed, unreadable or not a bool all keep the protection.
             try:
-                closed = self.venue_open() is False
+                v = self.venue_open()
             except Exception:
-                closed = False
+                v = None
+            closed = v is not True
+            unverified = v is None
         if closed:
             # Outside regular hours, or while the venue says closed, nothing is sent: no protective
             # cancel and no close order. The working stop stays, and the text says what covers it.
@@ -1273,8 +1278,9 @@ class OrderManager(object):
                 why = ("market closed: position %s; nothing sent (no protective cancel, no close order); the "
                        "operator closes at the next regular session (opens %s)" % (held, iso(nxt) if nxt else "unknown"))
             else:
-                why = ("venue clock says market closed: position %s; nothing sent (no protective cancel, no "
-                       "close order); the operator closes once the venue reports open" % held)
+                why = ("close pending (%s): position %s; protective stop kept; nothing sent (no protective "
+                       "cancel, no close order); closes once a fresh venue clock says open"
+                       % ("clock unverified" if unverified else "venue clock says market closed", held))
             self._save_controls(close_pending=why)
             return {"state": "pending", "why": why, "market_closed": True, "protected_shares": min(prot, abs(owned))}
         side = "sell" if owned > 0 else "buy"
