@@ -248,8 +248,10 @@ CONNECTION_CHECK_MAX_AGE_S = 300.0      # live Arm needs a passing GET-only chec
 _monotonic = time.monotonic             # module seam so tests can age a check without sleeping
 
 
-def _eligibility(name, b):
-    """Live eligibility, explicit: a missing or None field fails. Returns a reason or None."""
+def _eligibility(name, b, live=True):
+    """Live eligibility, explicit: a missing or None field fails. Returns a reason or None.
+    trade_suspended_by_user (GET /v2/account) must be explicitly false in live; paper and mock
+    fail only when it is true, since the local mock account does not carry the field."""
     if name == "account":
         bad = []
         if b.get("status") != "ACTIVE":
@@ -257,6 +259,9 @@ def _eligibility(name, b):
         for k in ("trading_blocked", "account_blocked"):
             if b.get(k) is not False:
                 bad.append("%s %r (needs false)" % (k, b.get(k)))
+        k = "trade_suspended_by_user"
+        if (b.get(k) is not False) if live else (b.get(k) is True):
+            bad.append("%s %r (needs false)" % (k, b.get(k)))
         return "; ".join(bad) or None
     if name == "clock":
         try:
@@ -499,6 +504,10 @@ class AlpacaSessionController(S.SessionController):
             factory = _need("alpaca.broker", "AlpacaPaperBroker")
         restored = os.path.exists(os.path.join(self.state_dir, "alpaca_broker.json"))
         broker = factory(self.transport, self.state_dir, self.evidence_label, self.adapter_state)
+        if self.live:
+            # session.py hands this broker to OrderManager, which then writes every row, state
+            # field and fill with simulated False from its first row. Paper and mock keep True.
+            broker.rows_simulated = False
         restored = restored or bool(getattr(broker, "restored", False))
         snap = os.path.join(self.state_dir, SNAPSHOT_FILE)
         if os.path.exists(snap) and hasattr(broker, "restore"):
@@ -524,6 +533,11 @@ class AlpacaSessionController(S.SessionController):
         """Live: every manager row and controls.json say simulated False from here on."""
         from orders.manager import atomic_write_json
         m = self.mgr
+        if getattr(m, "simulated", None) is not False:
+            try:
+                m.close()
+            finally:
+                raise LiveModeRefused("the order manager would record simulated rows in live mode")
         if not isinstance(m.audit_log, _LiveRows):
             m.audit_log = _LiveRows(m.audit_log)
         if not isinstance(m.intent_log, _LiveRows):
@@ -1238,7 +1252,8 @@ class AlpacaSessionController(S.SessionController):
     def connection_check(self):
         """Non-executing connection check: GET account, clock and asset. Never POSTs an order, never
         changes Enable or Arm. Records only status fields (no balances, no credentials). Live
-        eligibility is explicit: account ACTIVE with trading_blocked and account_blocked false, the
+        eligibility is explicit: account ACTIVE with trading_blocked, account_blocked and (live)
+        trade_suspended_by_user false, the
         clock parses, and the asset is SPY, tradable and active; anything missing fails."""
         with self.lock:
             res = self._connection_check_now()
@@ -1249,7 +1264,8 @@ class AlpacaSessionController(S.SessionController):
         now = self.clock.now()
         checks = []
         for name, path, keep in (
-                ("account", "/v2/account", ("status", "trading_blocked", "account_blocked")),
+                ("account", "/v2/account", ("status", "trading_blocked", "account_blocked",
+                                              "trade_suspended_by_user")),
                 ("clock", "/v2/clock", ("is_open", "timestamp")),
                 ("asset", "/v2/assets/" + A.SYMBOL, ("symbol", "tradable", "status"))):
             try:
@@ -1262,7 +1278,7 @@ class AlpacaSessionController(S.SessionController):
                 if status != 200:
                     checks.append({"check": name, "ok": False, "detail": "HTTP %s" % status})
                     continue
-                why = _eligibility(name, body)
+                why = _eligibility(name, body, live=self.live)
                 row = {"check": name, "ok": why is None, "seen": {k: body.get(k) for k in keep}}
                 if why:
                     row["detail"] = why
