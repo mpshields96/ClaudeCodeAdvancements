@@ -192,6 +192,13 @@ class AlpacaDeskControls(DeskControls):
             res = dict(res, connection_check=cc) if isinstance(res, dict) else {"result": res, "connection_check": cc}
         return res
 
+    def connection_check(self):
+        """UI route /api/alpaca/connection_check. Live: the controller's GET-only check (account, clock,
+        asset); it never arms, never changes Enable and never POSTs. Paper and mock: no network call."""
+        if self._live():
+            return self._connection_check()
+        return {"ok": True, "required": False, "detail": "not required outside live"}
+
     def _live(self):
         return getattr(self.r, "live", False) is True
 
