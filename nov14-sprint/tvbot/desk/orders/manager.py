@@ -232,6 +232,9 @@ class OrderManager(object):
         self.broker = broker
         self.symbol = symbol or getattr(broker, "symbol", "SYNTH")
         self.calendar = calendar
+        # Optional callable -> True/False/None: the venue's own market-open flag. False holds Stop &
+        # Close exactly as a closed calendar does; None (unreadable) leaves the calendar to decide.
+        self.venue_open = None
         self._clock = clock
         self.strategy = strategy
         self.data_label = data_label
@@ -1252,10 +1255,16 @@ class OrderManager(object):
         owned = self._desk_owned(bqty, rep["positions"]["booked"])
         if owned == 0:
             return self._stop_external_only(rep)
-        if self.calendar is not None and not self.calendar.is_open(self.now()):
-            # Outside regular hours nothing is sent: no protective cancel and no close order. The
-            # working stop stays, and the text says what actually covers the position.
-            nxt = self.calendar.next_open(self.now())
+        closed = self.calendar is not None and not self.calendar.is_open(self.now())
+        if not closed and callable(self.venue_open):
+            try:
+                closed = self.venue_open() is False
+            except Exception:
+                closed = False
+        if closed:
+            # Outside regular hours, or while the venue says closed, nothing is sent: no protective
+            # cancel and no close order. The working stop stays, and the text says what covers it.
+            nxt = self.calendar.next_open(self.now()) if self.calendar is not None else None
             pside = "sell" if owned > 0 else "buy"
             prot = sum(self._remaining(it) for it in self._live(["protective"]) if it["side"] == pside)
             held = ("held, protected by its working stop (%g of %g shares)" % (min(prot, abs(owned)), abs(owned))

@@ -863,6 +863,19 @@ class ExpiryHoldingPosition(_Base):
         self.assertIn("held, protected by its working stop", why)
         self.assertIn("next regular session", why)
 
+    def test_venue_closed_stop_and_close_sends_nothing_and_keeps_stop(self):
+        c, prot = self.holding()
+        t = c.mgr.now() + _dt.timedelta(minutes=10)              # calendar: regular hours
+        c.clock = FixedClock(t)
+        _venue(c, is_open=False)                                 # venue clock: closed
+        n = len(c.transport.trading.calls)
+        r = c.stop_and_close()
+        self.assertTrue(r["stopped"])
+        self.assertEqual(self.calls_after(c, n), [])
+        self.assertEqual([it["intent_id"] for it in c.mgr._live(["protective"])],
+                         [it["intent_id"] for it in prot])
+        self.assertIn("held, protected by its working stop", r.get("status_text") or "")
+
     def test_regular_hours_stop_and_close_still_closes(self):
         c, prot = self.holding()
         t = c.mgr.now() + _dt.timedelta(minutes=10)

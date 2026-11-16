@@ -404,6 +404,8 @@ class AlpacaSessionController(S.SessionController):
         self.config_revision = None
         S.SessionController.__init__(self, state_dir=state_dir, strategy=strategy, limits=limits,
                                      strategy_cfg=cfg, simulated=not self.live)
+        if not self.mock:
+            self.mgr.venue_open = self._venue_open_now
         if self.live:
             self._live_rows()
         if self.config_revision is not None:
@@ -1073,6 +1075,16 @@ class AlpacaSessionController(S.SessionController):
                              "next_close": iso(nxt_close)}
         except Exception:
             pass
+
+    def _venue_open_now(self):
+        """Connected modes, for the manager's Stop & Close and close retries: the venue's /v2/clock
+        is_open (GET only). None when unreadable, so the desk calendar decides."""
+        try:
+            c = self.feed.clock()
+        except Exception:
+            return None
+        v = c.get("is_open") if isinstance(c, dict) else None
+        return v if isinstance(v, bool) else None
 
     def _venue_clock_check(self, now):
         try:
