@@ -1688,5 +1688,20 @@ class TestLiveSessionFixture(unittest.TestCase):
         self.assertIn("pp.textContent = pw.t", page)
         self.assertIn("lf.lastChild.nodeValue = ' ' + fillLegend(s)", page)
 
+
+class TestLiveNoContraryText(unittest.TestCase):
+    """Chromium 04:07Z: no live-desk text may say live trading is not built or not possible."""
+
+    def test_not_built_strings_are_paper_only_branches(self):
+        with open(os.path.join(DESK_DIR, "ui", "index.html")) as fh:
+            page = fh.read()
+        hits = [ln for ln in page.splitlines() if re.search(r"live trading[^'\n]*not (built|possible)", ln, re.I)]
+        self.assertEqual(len(hits), 2, hits)
+        for ln in hits:
+            self.assertIn("isLive(s) ?", ln)
+            live_branch = ln.split("isLive(s) ?", 1)[1].split(" : ", 1)[0]
+            self.assertIn("REAL MONEY", live_branch)
+            self.assertNotRegex(live_branch, r"(?i)not built|not possible")
+
 if __name__ == "__main__":
     unittest.main()

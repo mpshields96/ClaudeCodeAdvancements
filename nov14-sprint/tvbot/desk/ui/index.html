@@ -1259,7 +1259,7 @@ function renderChartView(){
     (sc.note ? '<b>Note</b><span>' + esc(sc.note) + '</span>' : ''));
   if (isAlpaca(s)) { const a = adapterOf(s);
     $('#livePath').innerHTML = '<b>Alpaca adapter (' + esc(s.broker_mode) + '): </b>' + (a.enabled ? '<span class="pos">ENABLED</span>' : '<span class="neg">DISABLED</span>' + (a.disabled_reason ? ' ' + esc(a.disabled_reason) : '')) +
-      ' <span class="muted">&middot; real-money live trading: not built, not possible from this desk.</span>'; }
+      (isLive(s) ? ' <span class="neg">&middot; LIVE account: REAL MONEY. Orders go to Alpaca only after Enable, a passing connection check and Arm, within your approved limits.</span>' : ' <span class="muted">&middot; real-money live trading: not built, not possible from this desk.</span>'); }
   else $('#livePath').innerHTML = '<b>Live path: </b><span class="neg">DISABLED</span> ' + esc(lp.reason || 'No venue selected, no personal limits, no explicit enable.');
   renderAlpacaPanel(s);
   const und = s.undecided || [];
