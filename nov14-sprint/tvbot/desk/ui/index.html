@@ -1096,7 +1096,7 @@ function limitsWord(s){
   if (!isAlpaca(s)) return 'test values';
   const ls = s.limits_source; const L = s.limits || {};
   if (!ls && ['max_loss_per_trade', 'per_trade_notional', 'daily_loss', 'gross_exposure'].every(k => num(L[k]) === null)) return '<span class="s-warn">not set</span>';
-  const lab = String((ls && (ls.label || ls.provenance)) || '');
+  const lab = isLive(s) ? limitsSrc(s).label : String((ls && (ls.label || ls.provenance)) || ''); // live: never the word PAPER
   if (ls && ls.error) return '<span class="s-live">error</span>';
   if (/WALKTHROUGH|TEST VALUE|MOCK/i.test(lab)) return 'demo';
   if (ls && ls.provenance === 'approved') return 'approved';
@@ -1542,7 +1542,7 @@ $('#schedTgl').onchange = e => control('/api/schedule', {enabled: !!e.target.che
 // Alpaca adapter: Enable asks to confirm, Disable asks for a reason, Reconcile acts on demand (works while disabled)
 $('#btnEnable').onclick = () => { const s = S.session || {}; const ls = limitsSrc(s);
   $('#enMode').innerHTML = 'Mode: <b>' + esc(s.broker_mode || '-') + '</b> &middot; ' + esc(s.evidence_label || '') + ({https: isLive(s) ? ' &middot; <b>sends real requests over HTTPS to your Alpaca LIVE account: REAL MONEY</b>' : ' &middot; <b>sends real requests over HTTPS to Alpaca\'s fixed paper host</b>', mock: ' &middot; in-process mock transport only, no network'}[transportKind(s)] || ' &middot; <b>transport not reported; do not enable until the header names it</b>');
-  $('#enLimits').textContent = 'Limits this session loaded: ' + ls.label + '. Real-money live trading is not built and cannot be enabled here.';
+  $('#enLimits').textContent = 'Limits this session loaded: ' + ls.label + '.' + (isLive(s) ? ' This is your Alpaca LIVE account: REAL MONEY.' : ' Real-money live trading is not built and cannot be enabled here.');
   const d = $('#dlgEnable'); if (d.showModal) d.showModal(); else if (confirm('Enable the Alpaca adapter (' + (s.broker_mode || '') + ')?')) control('/api/alpaca/enable', {confirm: true}); };
 $('#enNo').onclick = () => $('#dlgEnable').close();
 $('#enYes').onclick = () => { $('#dlgEnable').close(); control('/api/alpaca/enable', {confirm: true}); };
