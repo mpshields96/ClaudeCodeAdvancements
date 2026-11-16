@@ -32,7 +32,7 @@ from alpaca import LABEL_INJECTED, LABEL_MOCK_LOCAL  # noqa: E402
 from alpaca import live as L  # noqa: E402
 from alpaca import live_launch, sessions, sizing  # noqa: E402
 from alpaca import setup as SETUP  # noqa: E402
-from alpaca.broker import AlpacaPaperBroker  # noqa: E402
+from alpaca.broker import AlpacaLiveBroker, AlpacaPaperBroker  # noqa: E402
 from alpaca.mock import MockAlpacaTransport, MockTrading  # noqa: E402
 from alpaca.setup import CredentialsError  # noqa: E402
 from alpaca.state import AdapterState  # noqa: E402
@@ -654,6 +654,128 @@ class LiveRehearsalTests(Case):
         self.assertTrue(rows)
         self.assertTrue(all(r.get("simulated") is True for r in rows), rows)
         self.assertTrue(all(r.get("evidence") == LABEL_INJECTED for r in rows))
+
+
+# ---------------------------------------------------------------- 6. the live broker class (not used by any launcher)
+
+class LiveBrokerTests(Case):
+    """AlpacaLiveBroker over the REAL LiveHttpsTransport (injected False). TEST ONLY: its opener is swapped
+    for a FakeOpener after construction, so no socket opens; NoNetworkNoKeys guards every test."""
+
+    def setUp(self):
+        self.guard = NoNetworkNoKeys().__enter__()
+        self.root = tempfile.mkdtemp(prefix="alpaca-live-broker-")
+        self.clock = [1000.0]
+        self.auth = mint_auth(self.root, monotonic=lambda: self.clock[0])
+        self.dir = self.auth.state_dir
+        self.cal = SessionCalendar.fixture_profile()
+        self.trading = MockTrading()
+        self.opener = FakeOpener(self.trading)
+        self.transport = self.real_transport()
+        L.LiveAdapterState(self.dir).enable(by="test")
+        self.mgrs = []
+        self.b = self.new_broker()
+        self.i = 0
+
+    def tearDown(self):
+        Case.tearDown(self)
+        self.guard.__exit__(None, None, None)
+        shutil.rmtree(self.root, ignore_errors=True)
+
+    def real_transport(self, auth=None):
+        t = L.LiveHttpsTransport(StaticTestProvider(LIVE_SYNTH_KEY, SYNTH_SECRET, mode="live"), auth or self.auth,
+                                 monotonic=lambda: self.clock[0])
+        self.assertFalse(t.injected)
+        t._opener = self.opener          # TEST ONLY: the real class, but no socket
+        return t
+
+    def new_broker(self):
+        self.b = AlpacaLiveBroker(self.transport, self.dir, L.LABEL_ALPACA_LIVE, L.LiveAdapterState(self.dir))
+        return self.b
+
+    def refused(self, *args):
+        with self.assertRaises(ValueError) as cm:
+            AlpacaLiveBroker(*args)
+        return str(cm.exception)
+
+    def test_refuses_a_paper_or_injected_transport(self):
+        live_state = L.LiveAdapterState(self.dir)
+        self.assertIn("real LiveHttpsTransport",
+                      self.refused(MockAlpacaTransport(self.trading), self.dir, L.LABEL_ALPACA_LIVE, live_state))
+        self.assertIn("real LiveHttpsTransport",
+                      self.refused(HttpsTransport(StaticTestProvider(SYNTH_KEY, SYNTH_SECRET), opener=self.opener),
+                                   self.dir, L.LABEL_ALPACA_LIVE, live_state))
+        injected = L.LiveHttpsTransport(StaticTestProvider(LIVE_SYNTH_KEY, SYNTH_SECRET, mode="live"), self.auth,
+                                        opener=self.opener, monotonic=lambda: self.clock[0])
+        self.assertIn("real LiveHttpsTransport", self.refused(injected, self.dir, L.LABEL_ALPACA_LIVE, live_state))
+
+    def test_refuses_other_labels_other_folders_paper_state_and_expired_auth(self):
+        live_state = L.LiveAdapterState(self.dir)
+        for label in (LABEL_INJECTED, LABEL_MOCK_LOCAL, alpaca.LABEL_ALPACA_PAPER):
+            self.assertIn("live label", self.refused(self.transport, self.dir, label, live_state))
+        other = os.path.join(self.root, "elsewhere", L.LIVE_STATE_DIRNAME)
+        os.makedirs(other)
+        self.assertIn("folder the live gate authorized",
+                      self.refused(self.transport, other, L.LABEL_ALPACA_LIVE, L.LiveAdapterState(other)))
+        paper_dir = os.path.join(self.root, "state-alpaca-paper")
+        self.assertIn("must be named", self.refused(self.transport, paper_dir, L.LABEL_ALPACA_LIVE, live_state))
+        self.assertIn("live adapter state",
+                      self.refused(self.transport, self.dir, L.LABEL_ALPACA_LIVE, AdapterState(self.dir)))
+        self.assertIn("live adapter state",
+                      self.refused(self.transport, self.dir, L.LABEL_ALPACA_LIVE, L.LiveAdapterState(other)))
+        self.clock[0] += L.AUTH_MAX_AGE_S + 1
+        self.assertIn("expired", self.refused(self.transport, self.dir, L.LABEL_ALPACA_LIVE, live_state))
+
+    def test_paper_broker_refuses_the_live_label_and_live_state(self):
+        mock = MockAlpacaTransport(self.trading)
+        paper_dir = tempfile.mkdtemp(prefix="alpaca-paper-", dir=self.root)
+        with self.assertRaises(ValueError):
+            AlpacaPaperBroker(mock, paper_dir, L.LABEL_ALPACA_LIVE, AdapterState(paper_dir))
+        with self.assertRaises(ValueError):
+            AlpacaPaperBroker(mock, paper_dir, LABEL_MOCK_LOCAL, L.LiveAdapterState(paper_dir))
+        with self.assertRaises(ValueError):
+            _LiveRehearsalBroker(self.transport, paper_dir, L.LABEL_ALPACA_LIVE, AdapterState(paper_dir))
+
+    def test_live_records_say_real_money_and_go_only_to_the_live_host(self):
+        self.start()
+        iid = self.buy("e1", 1)
+        self.bar()
+        self.assertEqual(self.fill_count(iid), 1)
+        rows = list(self.b.positions().values()) + [dict(e) for e in self.b.events() if isinstance(e, dict)]
+        self.assertTrue(rows)
+        self.assertTrue(all(r.get("simulated") is False for r in rows), rows)
+        self.assertTrue(all(r.get("evidence") == L.LABEL_ALPACA_LIVE for r in rows))
+        self.assertEqual({r.full_url.split("/")[2] for r in self.opener.requests}, {"api.alpaca.markets"})
+
+    def test_one_post_per_intent_and_restart_resends_nothing(self):
+        self.start()
+        iid = self.buy("e1", 2)
+        self.assertEqual(self.buy("e1", 2), iid)
+        self.assertEqual(len(posts(self.trading)), 1)
+        self.bar()
+        self.restart()
+        self.bar()
+        self.assertEqual(len(posts(self.trading)), 1)
+        self.assertEqual((self.trading.pos_qty, self.m.pos_qty), (2, 2))
+
+    def test_live_state_never_writes_the_paper_file_so_the_next_gate_still_passes(self):
+        self.start()
+        self.buy("e1", 1)
+        self.bar()
+        self.assertTrue(os.path.exists(os.path.join(self.dir, L.LIVE_STATE_FILE)))
+        self.assertFalse(os.path.exists(os.path.join(self.dir, alpaca.STATE_FILE)))
+        limits = sizing.approved_path(self.dir)
+        again = L.live_gate_authorize(limits, self.dir, L.LIVE_PORT, L.confirm_phrase(1, L.session_date(NOW)), True,
+                                      now_utc=NOW, shown_hash=shown_hash(limits))
+        self.assertEqual(again.limits_hash, self.auth.limits_hash)
+
+    def test_a_disable_by_another_writer_is_adopted_from_the_live_file(self):
+        self.start()
+        L.LiveAdapterState(self.dir).disable("operator stop", by="test")
+        before = len(posts(self.trading))
+        self.buy("e2", 1)
+        self.assertEqual(len(posts(self.trading)), before)
+        self.assertFalse(self.b.adapter_state.enabled)
 
 
 if __name__ == "__main__":

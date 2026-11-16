@@ -28,6 +28,7 @@ from alpaca import DATA_ORIGIN
 from alpaca.setup import (CredentialsError, LIVE_ENV_KEY_VAR, LIVE_ENV_SECRET_VAR, LIVE_KEYCHAIN_SERVICE,
                           ENV_KEY_VAR, ENV_SECRET_VAR, KEYCHAIN_SERVICE, SECURITY_BIN,
                           KEYCHAIN_KEY_ACCOUNT, KEYCHAIN_SECRET_ACCOUNT)
+from alpaca.state import AdapterState
 from alpaca.transport import HttpsTransport, TransportRefused
 
 LIVE_TRADING_ORIGIN = "https://api.alpaca.markets"
@@ -45,6 +46,12 @@ LIVE_APPROVER = "operator via live_launch approve-limits"
 LIVE_CONFIRM_LIMITS = "APPROVE LIVE LIMITS"
 LABEL_ALPACA_LIVE = "ALPACA LIVE (REAL MONEY in your Alpaca live brokerage account)"
 AUTH_MAX_AGE_S = 16 * 3600                        # one session; a new day needs a new typed phrase
+
+
+class LiveAdapterState(AdapterState):
+    """The live adapter's on/off state, in <state-alpaca-live>/alpaca_live.json. It never writes
+    alpaca_paper.json, which the live gate refuses to find in a live folder."""
+    FILE = LIVE_STATE_FILE
 
 
 def check_live_key_id(key_id):

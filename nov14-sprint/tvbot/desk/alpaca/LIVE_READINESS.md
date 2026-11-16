@@ -7,7 +7,8 @@ request, read any key or placed any order. Every check below ran against an in-p
 **Bottom line:** real-money trading is **off and cannot be switched on by any flag, URL or argument
 on the paper path**. A separate live command exists. It checks your limits and your typed
 confirmation and then **stops (exit 3)** without sending anything, because the live session controller
-is not wired yet. Nothing here shows the strategy has an edge.
+is not wired yet. The live broker class (`AlpacaLiveBroker`) exists and is tested offline, but no launcher
+builds it. Nothing here shows the strategy has an edge.
 
 ## 1. What you can run now
 
@@ -34,13 +35,14 @@ session not wired.
 | Port | 8765 | 8795; 8765 is refused |
 | Limits | paper approval | separate approval by the live command, stored inside the live folder; a paper-approved or edited file is refused |
 | Confirmation | none | typed every session at a real terminal (piped input refused); yesterday's phrase or a different share count is refused; the authorization lapses after 16 hours |
-| Broker object | `AlpacaPaperBroker` refuses any live transport (ValueError) | not built yet (see section 4) |
+| Broker object | `AlpacaPaperBroker` refuses any live transport, the live label and live adapter state (ValueError) | `AlpacaLiveBroker`: only the real (non-injected) `LiveHttpsTransport` with an unexpired authorization, only the live label, only the folder the gate authorized. Records say `simulated: false`. No launcher builds it yet (section 4) |
+| On/off state | `alpaca_paper.json` | `alpaca_live.json` (`LiveAdapterState`), so a live folder never gains the paper file the gate refuses |
 
 The `AK`/`PK` prefix is only a hint. The host check and the separate providers are the real boundary.
 
 ## 3. Verified offline only
 
-All tests are in `tests/test_alpaca_live.py` (47 tests). They use a fake opener, so they show the
+All tests are in `tests/test_alpaca_live.py` (54 tests). They use a fake opener, so they show the
 code's behaviour, not Alpaca's.
 
 | Protection | Evidence on the live request path |
@@ -57,6 +59,15 @@ code's behaviour, not Alpaca's.
 | Every gate refusal happens with sockets and the Keychain reader disabled | `LiveGateTests` (uses `NoNetworkNoKeys`) and a real subprocess run |
 | Limits swapped or re-approved while the confirmation prompt is open are refused; the authorization carries the exact snapshot you were shown, so a controller never re-reads the file (Codex 02:40Z finding) | `test_start_refuses_limits_swapped_during_the_prompt`, `test_limits_reapproved_after_they_were_shown_are_refused`, `test_authorization_carries_the_shown_snapshot_not_a_later_file` |
 
+| `AlpacaLiveBroker` refuses a paper, mock or injected transport, any non-live label, another folder, paper adapter state and an expired authorization | `test_refuses_a_paper_or_injected_transport`, `test_refuses_other_labels_other_folders_paper_state_and_expired_auth`, `test_paper_broker_refuses_the_live_label_and_live_state` |
+| Live records say `simulated: false` with the live label; requests go to `api.alpaca.markets` only | `test_live_records_say_real_money_and_go_only_to_the_live_host` |
+| On the live broker: one request per decision, and a restart re-sends nothing | `test_one_post_per_intent_and_restart_resends_nothing` |
+| Live on/off state stays in `alpaca_live.json`; the next session's gate still passes; a stop by another writer is adopted before any send | `test_live_state_never_writes_the_paper_file_so_the_next_gate_still_passes`, `test_a_disable_by_another_writer_is_adopted_from_the_live_file` |
+
+The `AlpacaLiveBroker` tests build the real live transport class and then swap its opener for the fake
+one, with sockets and the Keychain reader disabled. Four mutation checks (records marked simulated, the
+paper file re-read, the paper file written, an injected transport accepted) each made a test fail.
+
 The rehearsal uses a test-only subclass that lets the paper broker's order logic run over the live
 transport. Production code never sets that flag.
 
@@ -64,8 +75,10 @@ transport. Production code never sets that flag.
 
 1. **Store your live keys** in Keychain under service `alpaca-live`. Agents never handle keys.
 2. **Wire the live session.** `alpaca_session.py` (coordinator-owned) labels every Alpaca session as
-   paper and keeps paper state, so the gate stops at exit 3. The suggested change is in the
-   coordinator's shared notes (`W-B_LIVE_WIRING_PATCH_NOTE.md`). It needs review before anyone uses it.
+   paper and keeps paper state, so the gate stops at exit 3. The broker side is ready
+   (`AlpacaLiveBroker`, `LiveAdapterState`). The suggested controller change is in the coordinator's
+   shared notes (`W-B_LIVE_WIRING_PATCH_NOTE.md`). It needs review before anyone uses it.
+   The live adapter starts disabled, as paper does; you enable it yourself.
 3. **Set every limit yourself.** The values in the tests are TEST VALUES, not advice.
 4. **Your first live order**, at a size you choose, while you watch. Check fills, the protective stop
    and Stop & Close against your Alpaca dashboard.
