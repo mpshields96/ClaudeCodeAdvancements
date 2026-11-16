@@ -408,6 +408,69 @@ class LiveGateTests(unittest.TestCase):
                                     "--port", str(L.PAPER_PORT)])
         self.assertEqual(code, 2)
 
+    # Codex finding on 198dda2: only 8765 was refused; the installed desks' ports, port 0 and 65536 passed.
+    def test_installed_desk_ports_zero_and_out_of_range_are_refused(self):
+        for port in (18855, 18858, 0, 65536, -1, 70000, L.PAPER_PORT):
+            with self.subTest(port=port):
+                with self.assertRaises(L.LiveGateRefused):
+                    L.check_live_port(port)
+                code, out, err = self.run_main(["start", "--state-dir", self.live_dir, "--limits", self.limits,
+                                                "--port", str(port)], typed=[L.confirm_phrase(1, L.session_date())])
+                self.assertEqual(code, 2, out)
+                self.assertIn("REFUSED (live)", err)
+                self.assertIn("Nothing was sent", err)
+                self.assertNotIn("LIVE GATE PASSED", out)
+                self.assertEqual(out, "")                       # refused before the limits or prompt are shown
+
+    def test_every_paper_and_rehearsal_fallback_port_is_refused(self):
+        import launch
+        tries = launch.free_port.__defaults__[0]
+        self.assertEqual(tries, L.FREE_PORT_TRIES)              # live's ranges track launch.free_port
+        for preferred in (launch.DEFAULT_PORT, 18855, 18858):
+            for port in range(preferred, preferred + tries):
+                with self.subTest(port=port):
+                    with self.assertRaises(L.LiveGateRefused):
+                        L.check_live_port(port)
+                    with self.assertRaises(L.LiveGateRefused):
+                        self.gate(port=port)
+        self.assertEqual(L.check_live_port(launch.DEFAULT_PORT + tries), launch.DEFAULT_PORT + tries)
+
+    def test_only_whole_number_ports(self):
+        for bad in (True, False, "8795", 8795.0, None):
+            with self.subTest(bad=bad):
+                with self.assertRaises(L.LiveGateRefused):
+                    L.check_live_port(bad)
+
+    def test_live_port_passes_and_the_normal_live_entry_still_runs_offline(self):
+        self.assertEqual(L.check_live_port(L.LIVE_PORT), L.LIVE_PORT)
+        for first, last, _ in L.non_live_port_ranges():
+            self.assertFalse(first <= L.LIVE_PORT <= last)
+        code, out, err = self.run_main(["start", "--state-dir", self.live_dir, "--limits", self.limits,
+                                        "--port", str(L.LIVE_PORT)], typed=[L.confirm_phrase(1, L.session_date())])
+        self.assertEqual(code, 3, err)
+        self.assertIn(L.LABEL_ALPACA_LIVE, out)
+        self.assertIn("LIVE GATE PASSED", out)
+
+    def test_a_taken_live_port_is_refused_never_moved(self):
+        holder = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            holder.bind(("127.0.0.1", 0))                      # an OS-chosen loopback port stands in for 8795
+            taken = holder.getsockname()[1]
+            if any(a <= taken <= b for a, b, _ in L.non_live_port_ranges()):
+                self.skipTest("OS picked a paper-range port")
+            orig = L.check_live_port
+            L.check_live_port = lambda p: p                      # only the bind step is under test here
+            try:
+                with self.assertRaises(L.LiveGateRefused) as ctx:
+                    L.bind_live_port_exactly(taken)
+            finally:
+                L.check_live_port = orig
+            self.assertIn("does not move to another port", str(ctx.exception))
+            with self.assertRaises(L.LiveGateRefused):
+                L.bind_live_port_exactly(18858)                  # checked before any socket is made
+        finally:
+            holder.close()
+
     def test_approve_limits_refusals(self):
         draft = os.path.join(self.root, "draft.json")
         self.assertEqual(self.run_main(["approve-limits", "--state-dir", os.path.join(self.root, "state"),

@@ -32,7 +32,7 @@ session not wired.
 | Key shape | A key id starting `AK` (live style) is refused before sending | A key id starting `PK` (paper style) is refused before sending |
 | Provider | Paper providers refuse the live names | Live providers never read the paper names |
 | State folder | `state/`, `state-alpaca-paper/`, `state-alpaca-mock/` | must be named `state-alpaca-live/` and must not hold paper adapter state |
-| Port | 8765 | 8795; 8765 is refused |
+| Port | 8765 (or the next free one up to 8784); the installed desks use 18855 (rehearsal) and 18858 (paper), each with the same 19 fallback ports | 8795 only. Refused: 8765-8784, 18855-18874, 18858-18877, port 0 and anything outside 1-65535. Live binds 8795 exactly and never moves to another port |
 | Limits | paper approval | separate approval by the live command, stored inside the live folder; a paper-approved or edited file is refused |
 | Confirmation | none | typed every session at a real terminal (piped input refused); yesterday's phrase or a different share count is refused; the authorization lapses after 16 hours |
 | Broker object | `AlpacaPaperBroker` refuses any live transport, the live label and live adapter state (ValueError) | `AlpacaLiveBroker`: only the real (non-injected) `LiveHttpsTransport` with an unexpired authorization, only the live label, only the folder the gate authorized. Records say `simulated: false`. No launcher builds it yet (section 4) |
@@ -42,8 +42,9 @@ The `AK`/`PK` prefix is only a hint. The host check and the separate providers a
 
 ## 3. Verified offline only
 
-All tests are in `tests/test_alpaca_live.py` (54 tests). They use a fake opener, so they show the
-code's behaviour, not Alpaca's.
+Tests are in `tests/test_alpaca_live.py` (59 tests), `tests/test_alpaca_broker.py` (the shares the
+desk did not trade) and `tests/test_open_existing.py`. They use a fake opener or loopback fakes, so they
+show the code's behaviour, not Alpaca's.
 
 | Protection | Evidence on the live request path |
 |---|---|
@@ -58,7 +59,9 @@ code's behaviour, not Alpaca's.
 | Records made in rehearsal still say `simulated`, so they cannot pass for live evidence | `test_records_still_say_simulated_so_this_cannot_pass_for_live_evidence` |
 | Every gate refusal happens with sockets and the Keychain reader disabled | `LiveGateTests` (uses `NoNetworkNoKeys`) and a real subprocess run |
 | Limits swapped or re-approved while the confirmation prompt is open are refused; the authorization carries the exact snapshot you were shown, so a controller never re-reads the file (Codex 02:40Z finding) | `test_start_refuses_limits_swapped_during_the_prompt`, `test_limits_reapproved_after_they_were_shown_are_refused`, `test_authorization_carries_the_shown_snapshot_not_a_later_file` |
-
+| The live command refuses every paper and rehearsal port and its fallback ports, port 0 and anything outside 1-65535, before the limits or prompt are shown; a taken live port is refused, never moved (Codex finding on 198dda2) | `test_installed_desk_ports_zero_and_out_of_range_are_refused`, `test_every_paper_and_rehearsal_fallback_port_is_refused`, `test_only_whole_number_ports`, `test_a_taken_live_port_is_refused_never_moved`, `test_live_port_passes_and_the_normal_live_entry_still_runs_offline` |
+| Stop & Close closes only the shares this desk booked. Shares it did not trade are left alone with a plain message, and nothing is sent for a wholly outside position. A reduce-only order is capped to the desk's own booked shares (`REDUCE_ONLY_NOT_DESK_OWNED`). A position read that disables the adapter stops that same call's new order (Codex finding 1) | `ExternalSharesTests` in `test_alpaca_broker.py` (7 tests) |
+| The Finder reopen finds this exact desk on its preferred port or any of the 19 fallback ports, and never opens a desk with another state folder or broker mode | `test_open_existing.py` |
 | `AlpacaLiveBroker` refuses a paper, mock or injected transport, any non-live label, another folder, paper adapter state and an expired authorization | `test_refuses_a_paper_or_injected_transport`, `test_refuses_other_labels_other_folders_paper_state_and_expired_auth`, `test_paper_broker_refuses_the_live_label_and_live_state` |
 | Live records say `simulated: false` with the live label; requests go to `api.alpaca.markets` only | `test_live_records_say_real_money_and_go_only_to_the_live_host` |
 | On the live broker: one request per decision, and a restart re-sends nothing | `test_one_post_per_intent_and_restart_resends_nothing` |
@@ -108,6 +111,13 @@ The UI can show `session_window` (from `alpaca/sessions.py: status_field`).
 - The calendar covers 2026-2027. Outside it, the desk fails closed (market treated as closed).
 - Holiday changes to the overnight session are not modeled; overnight is refused anyway.
 - The free IEX feed shows a fraction of market volume, so its prices can differ from the full market.
-  Whether the free feed covers extended or overnight hours, and whether paper accounts support overnight,
-  came from a Gemini summary and are **unverified**. The desk does not rely on either.
+- **Overnight is a pending limitation, not a supported session.** Alpaca's Trading API documentation
+  (https://docs.alpaca.markets/us/docs/245-trading-for-trading-api, sections "Overnight market data" and
+  "order requirements") describes a free `feed=overnight` with latest bars, indicative real-time quotes
+  and 15-minute-delayed latest trades. Those quotes are indicative, not firm. The desk's data transport
+  (`alpaca/transport.py`) accepts only `feed=iex` and refuses every other feed, `overnight` included, so
+  the desk sees no overnight data and sends no overnight orders. Before anyone claims overnight support,
+  these must each be checked: limit-order-only rules, `extended_hours`, time in force, protective exits
+  and restart reconciliation. Nobody has checked that SPY or your account is eligible. Nothing was
+  changed tonight to enable it.
 - The confirmation date is Chicago time. If you type it across midnight, the gate refuses, so retype.

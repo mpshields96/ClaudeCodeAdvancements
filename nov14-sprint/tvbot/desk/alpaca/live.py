@@ -10,7 +10,9 @@ What is separate from paper, and how:
   names (alpaca/setup.py); live providers refuse the paper ones. Each provider declares a mode, and each
   transport refuses a provider of the other mode. Key-id prefixes (paper PK, live AK) are refused across
   modes too, but Alpaca calls the prefix a hint; the host is the real boundary.
-- State and port: state-alpaca-live/ and port 8795, never the paper state dirs or port 8765.
+- State and port: state-alpaca-live/ and port 8795 only, never the paper state dirs. Every paper and
+  rehearsal port is refused, including each one's fallback ports (8765-8784, 18855-18874, 18858-18877),
+  as are port 0 and anything outside 1-65535. Live binds its one port exactly and never moves to another.
 - Activation: only through the distinct command alpaca/live_launch.py, every session: an operator-approved
   limits snapshot stored inside the live state dir and approved there, a real terminal, and a typed phrase
   that names today's date and the share count. LiveHttpsTransport cannot be built without the
@@ -41,6 +43,11 @@ LIVE_STATE_DIRNAME = "state-alpaca-live"
 LIVE_STATE_FILE = "alpaca_live.json"
 LIVE_PORT = 8795
 PAPER_PORT = 8765                                 # launch.DEFAULT_PORT; a live session never uses it
+INSTALLED_MOCK_PORT = 18855                       # the installed rehearsal (mock) desk's URL
+INSTALLED_PAPER_PORT = 18858                      # after-approval/Open Connected Paper Desk.command
+FREE_PORT_TRIES = 20                              # launch.free_port(tries=20): preferred port + 19 more
+NON_LIVE_PREFERRED_PORTS = ((PAPER_PORT, "paper desk"), (INSTALLED_MOCK_PORT, "installed rehearsal desk"),
+                            (INSTALLED_PAPER_PORT, "installed paper desk"))
 PAPER_STATE_DIRNAMES = ("state", "state-alpaca-paper", "state-alpaca-mock")
 LIVE_APPROVER = "operator via live_launch approve-limits"
 LIVE_CONFIRM_LIMITS = "APPROVE LIVE LIMITS"
@@ -236,10 +243,40 @@ def check_live_state_dir(state_dir):
     return path
 
 
+def non_live_port_ranges():
+    """(first, last, name) for every port a paper or rehearsal desk can serve on: each preferred port
+    plus launch.free_port's fallback attempts. Live refuses all of them."""
+    return tuple((p, p + FREE_PORT_TRIES - 1, name) for p, name in NON_LIVE_PREFERRED_PORTS)
+
+
 def check_live_port(port):
-    if int(port) == PAPER_PORT:
-        raise LiveGateRefused("port %d is the paper desk's port; live uses its own (%d)" % (PAPER_PORT, LIVE_PORT))
-    return int(port)
+    """The live desk serves only on its own port. Refused: anything that is not a whole number in
+    1-65535 (port 0 would let the system pick one), and every paper or rehearsal port including the
+    fallback ports a paper launcher may move to. Live never falls back to another port."""
+    if isinstance(port, bool) or not isinstance(port, int):
+        raise LiveGateRefused("the live port must be a whole number, got %r" % (port,))
+    if not 1 <= port <= 65535:
+        raise LiveGateRefused("port %d is outside 1-65535; live uses its own fixed port (%d)" % (port, LIVE_PORT))
+    for first, last, name in non_live_port_ranges():
+        if first <= port <= last:
+            raise LiveGateRefused("port %d is in the %s range (%d-%d, including its fallback ports); "
+                                  "live uses its own (%d)" % (port, name, first, last, LIVE_PORT))
+    return port
+
+
+def bind_live_port_exactly(port, host="127.0.0.1"):
+    """Bind the checked live port or refuse. Never tries another port (unlike launch.free_port).
+    Returns the bound socket; the caller owns it."""
+    import socket
+    port = check_live_port(port)
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind((host, port))
+    except OSError as e:
+        s.close()
+        raise LiveGateRefused("live port %d is in use (%s); live does not move to another port. "
+                              "Stop whatever holds it first" % (port, e.strerror or e))
+    return s
 
 
 def check_live_limits(limits_path, state_dir):
