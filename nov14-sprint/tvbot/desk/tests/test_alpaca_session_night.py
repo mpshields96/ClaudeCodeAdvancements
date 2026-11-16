@@ -497,6 +497,32 @@ class LiveEligibility(_Base):
             AS._monotonic = real
         self.assertEqual(_posts(c), [])
 
+    def _date_check(self, c):
+        pf = c.preflight()
+        checks = pf["checks"] if isinstance(pf, dict) else pf
+        return [x for x in checks if x["check"] == "live authorization date"]
+
+    def test_live_authorization_date_same_day_passes(self):
+        c = self.armed_live()
+        rows = self._date_check(c)
+        self.assertEqual(len(rows), 1)
+        self.assertTrue(rows[0]["ok"], rows[0])
+        self.assertIn(c.live_authorization.session_date, rows[0]["detail"])
+
+    def test_live_authorization_next_chicago_day_refuses_arm(self):
+        c = self.live()
+        self.assertTrue(c.alpaca_enable(confirm=True)["ok"])
+        c.check_new_bars()
+        c.clock = FixedClock(c.clock.now() + _dt.timedelta(days=1))
+        _venue(c)
+        c.connection_check()
+        rows = self._date_check(c)
+        self.assertFalse(rows[0]["ok"])
+        self.assertIn("run the live gate again", rows[0]["detail"])
+        r = c.arm()
+        self.assertFalse(r.get("ok"), r)
+        self.assertEqual(_posts(c), [])
+
     def test_every_live_entry_rechecks_eligibility(self):
         c = self.armed_live()
         c.transport._opener.asset = {"symbol": "QQQ", "tradable": True, "status": "inactive"}
@@ -892,6 +918,35 @@ class ExpiryHoldingPosition(_Base):
         txt = r.get("status_text") or ""
         self.assertIn("clock unverified", txt)
         self.assertIn("protective stop kept", txt)
+
+    def test_crossing_chicago_date_holds_entries_but_exits_and_reconcile_work(self):
+        c, prot = self.holding()
+        t = c.mgr.now() + _dt.timedelta(minutes=10)
+        while True:                                              # next trading day, same time of day
+            t += _dt.timedelta(days=1)
+            if c.calendar.is_trading_day(t.date()):
+                break
+        bounds = c.calendar.session_bounds(t.date().isoformat())
+        self.assertTrue(bounds[0] <= t < bounds[1], "setup: regular hours on the next day")
+        c.clock = FixedClock(t)
+        _venue(c, is_open=True)
+        n = len(c.transport.trading.calls)
+        c._sparse_hour = lambda bar: None
+        c._venue_recheck = lambda d: None
+        d = {"decision_id": "date-1"}
+        px = float(c.bars[-1]["close"])
+        out, held = c._entry_bounds_checked(d, c.bars[-1], c.mgr.state(), 1, "buy", px, px - 2.0)
+        self.assertIsNone(out)
+        self.assertEqual(held[0], "LIVE_AUTH_DATE")
+        self.assertFalse(d["live_authorization_date"]["ok"])
+        self.assertEqual(self.calls_after(c, n), [])             # entry held: 0 new orders
+        self.assertEqual([it["intent_id"] for it in c.mgr._live(["protective"])],
+                         [it["intent_id"] for it in prot])        # the stop is still working
+        self.assertTrue(c.mgr.reconcile(reason="after-midnight")["connected"])
+        r = c.stop_and_close()                                   # the exit still goes out
+        self.assertTrue(r["stopped"])
+        sent = [b for (m, p, q, b) in c.transport.trading.calls[n:] if m == "POST" and p == "/v2/orders"]
+        self.assertTrue(any((b or {}).get("type") == "market" and (b or {}).get("side") == "sell" for b in sent), sent)
 
     def test_regular_hours_stop_and_close_still_closes(self):
         c, prot = self.holding()

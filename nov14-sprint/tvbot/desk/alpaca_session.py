@@ -652,6 +652,10 @@ class AlpacaSessionController(S.SessionController):
             if held:
                 return None, held
         if self.live:
+            dc = self._live_date_check()
+            d["live_authorization_date"] = {"ok": dc["ok"], "detail": dc["detail"]}
+            if not dc["ok"]:
+                return None, ("LIVE_AUTH_DATE", "new entry held: %s; no order" % dc["detail"])
             cc = self._connection_check_now()
             d["live_eligibility"] = {"ok": cc["ok"], "utc": cc["utc"]}
             if not cc["ok"]:
@@ -1119,6 +1123,25 @@ class AlpacaSessionController(S.SessionController):
         day = self.calendar.local_date(iso(now)) if hasattr(self.calendar, "local_date") else now.date()
         return now, day if isinstance(day, _dt.date) else _dt.date.fromisoformat(str(day)[:10])
 
+    def _live_date_check(self, now=None):
+        """Live Arm and new entries only: the authorization's dated phrase must be today's on the
+        desk clock (America/Chicago, L.session_date). Stops, exits, Stop & Close and reconcile
+        don't pass through here, so they keep working across midnight."""
+        now = now if now is not None else self.clock.now()
+        approved = getattr(self.live_authorization, "session_date", None)
+        try:
+            now = now.replace(tzinfo=_dt.timezone.utc) if now.tzinfo is None else now.astimezone(_dt.timezone.utc)
+            today = L.session_date(now)
+        except Exception as exc:
+            return {"check": "live authorization date", "ok": False,
+                    "detail": "approved for %s; today's America/Chicago date unreadable (%s)"
+                              % (approved, exc.__class__.__name__)}
+        ok = approved is not None and approved == today
+        detail = "approved for %s; today (America/Chicago) is %s" % (approved, today)
+        if not ok:
+            detail += "; quit and run the live gate again for today's phrase"
+        return {"check": "live authorization date", "ok": ok, "detail": detail}
+
     def preflight(self):
         st = self.mgr.state()
         now, day = self._today()
@@ -1156,6 +1179,7 @@ class AlpacaSessionController(S.SessionController):
         if self.live:
             ok, detail = self._connection_check_current()
             checks.append({"check": "live connection check", "ok": ok, "detail": detail})
+            checks.append(self._live_date_check())
         wv = self.warmup_view()
         checks.append({"check": "strategy warm-up", "ok": True, "detail": wv["text"]})
         checks.append({"check": "stop", "ok": not st["controls"]["stopped"],
