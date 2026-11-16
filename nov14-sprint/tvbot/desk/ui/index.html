@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Paper Desk (SIMULATED)</title>
+<title>SPY Desk</title>
 <script>
 "use strict";
 // Apply a saved Light/Dark choice before first paint. Auto follows the system setting.
@@ -151,6 +151,14 @@ details.pop[open]>summary{border-color:var(--accent)}
 .flow button.cur{box-shadow:0 0 0 2px var(--accent);font-weight:700}
 .flow button.na{text-decoration:line-through;opacity:.45}
 .flow .ar{color:var(--line2)}
+/* wide: the disclosure is always open and its summary hidden, so the strip reads as one row */
+.fmore>summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--fg);padding:3px 9px;border:1px solid var(--line2);border-radius:6px;list-style:none}
+.fmore>summary::-webkit-details-marker{display:none}
+.fmore>summary::after{content:" \25BE"}
+.fmore[open]>summary::after{content:" \25B4"}
+.fmbody{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.fmnone{display:none;font-size:12px}
+@media (min-width:561px){ .fmore>summary{display:none} }
 .chk td.f{color:var(--bad-fg);font-weight:700} .chk td.p{color:var(--ok-fg)}
 .chk tr.failrow td{background:var(--failrow)}
 /* main grid: chart first, decision and P&L beside it */
@@ -283,6 +291,15 @@ details.pop.anch>.popbody{right:12px}
   #nextBtn{max-width:none;width:100%}
   .tabs button{padding:4px 7px}
   .legend span:last-child{display:none}
+  /* narrow: the next step is the big button above; here only Stop & Close (when it applies) and one disclosure */
+  .flow{gap:6px;width:100%}
+  #btnStop{order:-1}
+  #btnStop:disabled{display:none}
+  .fmore{flex:1}
+  .fmore[open] .fmbody{margin-top:6px}
+  .fmbody .ar,.fmbody button:disabled{display:none}
+  .fmore.none .fmnone{display:inline}
+  .flow button{padding:6px 12px;font-size:13px}
 }
 </style>
 </head>
@@ -294,7 +311,7 @@ details.pop.anch>.popbody{right:12px}
   <div class="row">
     <span class="big sim" id="badgeSim" title="Desk mode. Local rehearsal = synthetic data and mock fills on this computer; no broker, no real money.">Local rehearsal</span>
     <span class="big mock" id="badgeMock" hidden>MOCK FILLS</span>
-    <span class="brand">SPY Paper Desk</span>
+    <span class="brand">SPY Desk</span>
     <span class="spacer"></span>
     <div class="tabs" role="tablist">
       <button data-view="chart" class="on">Chart</button>
@@ -357,7 +374,7 @@ details.pop.anch>.popbody{right:12px}
   </section>
   <section id="chartPane">
     <div class="ctool">
-      <b>Desk replay chart</b> <span class="pill simpill">SYNTHETIC</span><span class="tag syn" id="srcTag" title="Desk replay bars (synthetic). Not TradingView, not a real market.">replay bars (synthetic)</span>
+      <b id="chartTitle">Desk replay chart</b> <span class="pill simpill" id="srcPill">SYNTHETIC</span><span class="tag syn" id="srcTag" title="Desk replay bars (synthetic). Not TradingView, not a real market.">replay bars (synthetic)</span>
       <span class="spacer"></span>
       <span id="ohlc"></span>
       <button id="zIn" title="Zoom in">+</button><button id="zOut" title="Zoom out">&minus;</button>
@@ -367,6 +384,9 @@ details.pop.anch>.popbody{right:12px}
     <div class="flowbar">
       <span class="fl-k">Session</span>
       <div class="flow" id="flow" aria-label="Session flow">
+        <details id="flowMore" class="fmore" open>
+        <summary id="flowMoreSum">More session actions</summary>
+        <div class="fmbody">
         <button data-f="review" title="Pre-session check from session.json preflight">1 Review</button><span class="ar">&rarr;</span>
         <button data-f="arm" class="pri" title="Arms this offline replay session. No broker connection.">2 Arm</button><span class="ar">&rarr;</span>
         <button data-f="step1" title="Advance the replay clock by 1 bar">Step 1</button>
@@ -376,9 +396,12 @@ details.pop.anch>.popbody{right:12px}
         <button data-f="stopplay" title="Stop playing; the session stays armed">Stop playing</button><span class="ar">&rarr;</span>
         <button data-f="pause" id="btnPause" class="warnb" title="Blocks new entries and cancels entry remainders. Protective exits stay.">Pause</button>
         <button data-f="resume" title="Lift the pause">Resume</button>
-        <button data-f="stop" id="btnStop" class="danger" title="Disables entries and schedule, cancels entries, closes the reconciled position.">Stop &amp; Close</button>
         <button data-f="clear" title="Only this button clears a Stop. The schedule never does.">Clear Stop</button><span class="ar">&rarr;</span>
         <button data-f="close" title="Close the session (must be flat), then open the review">Close &amp; review</button>
+        <span class="fmnone">Nothing else is available in this phase.</span>
+        </div>
+        </details>
+        <button data-f="stop" id="btnStop" class="danger" title="Disables entries and schedule, cancels entries, closes the reconciled position.">Stop &amp; Close</button>
       </div>
     </div>
     <div class="legend">
@@ -620,10 +643,8 @@ function draw(){
   const cs = getComputedStyle(document.documentElement); const col = n => cs.getPropertyValue(n).trim();
   const bars = S.bars, n = bars.length; V.markers = [];
   g.font = '11px -apple-system,system-ui,sans-serif';
-  if (!n) { g.fillStyle = col('--muted'); g.font = '14px system-ui'; const nt = (document.getElementById('nextTitle') || {}).textContent || ''; const alpE = isAlpaca(S.session || {});
-    g.fillText(alpE ? 'No bars yet.' : 'No replay bars to show yet.', 20, 40);
-    g.font = '13px system-ui'; g.fillText(nt && nt !== 'Loading desk state' ? 'Next step: ' + nt + '.' : (alpE ? 'Bars appear after you press Check for new bars.' : 'The session has not produced bars yet.'), 20, 62);
-    if (alpE) { g.fillText('Bars appear only when you press Check for new bars.', 20, 82); g.fillText('Nothing runs in the background.', 20, 100); }
+  if (!n) { g.fillStyle = col('--muted'); g.font = '14px system-ui'; g.textAlign = 'center';
+    g.fillText('Waiting for the first SPY bar', W / 2, H / 2); g.textAlign = 'left'; // its source is the chip in the chart header
     return; }
   clampView();
   const padL = 6, padR = 74, padT = 8, padB = 22;
@@ -981,6 +1002,7 @@ function renderHeader(){
   const bs = $('#badgeSim'), bm = $('#badgeMock');
   // one plain mode badge; the evidence label and fill source sit in Details (second pass, Codex 02:53Z)
   const bdg = modeBadge(s); bs.textContent = bdg.t; bs.className = 'big ' + bdg.c; bs.title = bdg.title; bm.hidden = true;
+  document.title = bdg.t + ' \u00b7 SPY Desk'; // same helper as the badge, so a live header never sits under a SIMULATED tab title
   renderBrokerBanner(s);
   const ac = $('#armChip');
   ac.textContent = (s.badge || ('SIMULATION: ' + (ph === 'STOPPED' ? 'STOPPED' : ph === 'PAUSED' ? 'PAUSED' : ph === 'ARMED' ? 'ARMED' : 'DISARMED'))) + (S.conn === false ? ' (last known)' : '');
@@ -1057,8 +1079,10 @@ function limitsWord(s){
   if (limitsSrc(s).draft) return '<span class="s-warn">draft</span>';
   return esc(lab.slice(0, 24) || 'loaded');
 }
-function mockUsedUp(s){ const more = num(s.bars_total) === null || num(s.bars_done) === null || num(s.bars_done) < num(s.bars_total);
-  return isAlpaca(s) && transportKind(s) === 'mock' && !more && num(s.bars_done) > 0; }
+// "Used up" only for a finite offline replay whose end is known (bars_total = the replay length).
+// Alpaca modes (mock, paper, live) report bars fetched so far, not the feed's end, so they never count as used up.
+function barsUsedUp(s){ s = s || {}; if (isAlpaca(s)) return false; const t = num(s.bars_total), d = num(s.bars_done);
+  return t !== null && d !== null && d > 0 && d >= t; }
 function nextStep(s){
   const ph = phaseOf(s); const alp = isAlpaca(s);
   const ex = s.expires_utc ? Date.parse(s.expires_utc) : NaN; const expired = isFinite(ex) && ex < clockNow(s);
@@ -1069,7 +1093,11 @@ function nextStep(s){
   if (S.conn === false) return {tone: 'bad', title: 'Desk server not answering', detail: 'Figures below are last known. Start the desk again with launch.py; nothing runs in the background.'};
   if (ph === 'NONE') return {tone: 'info', title: 'Start the session runner', detail: 'No session.json in this state directory yet. Run launch.py for it; this page fills in once the runner writes state.'};
   if (/^(CLOSED|COMPLETE|COMPLETED|DONE)$/.test(ph)) return {tone: 'ok', title: 'Session complete', detail: 'These figures are final. Review the trades, the passes and the reasons.', btn: 'Open session review', view: 'review'};
-  if (ph === 'STOPPED' && flat) return {tone: 'warn', title: 'Stopped and flat', detail: 'Stop & Close finished: entries are off and the position is flat. Close the session to open its review.', btn: 'Close & review', sel: fb('close')};
+  const ctl = s.controls || {};
+  const closeDone = flat && ctl.flat_confirmed === true && !ctl.close_pending && !rec.ambiguous && !rec.reconcile_blocking;
+  if (ph === 'STOPPED' && closeDone) return {tone: 'warn', title: 'Stopped and flat', detail: 'Stop & Close finished: entries are off and the broker confirms the position is flat. Close the session to open its review.', btn: 'Close & review', sel: fb('close')};
+  if (ph === 'STOPPED' && flat) { const why = [ctl.flat_confirmed === true ? '' : 'the broker has not confirmed flat', ctl.close_pending ? 'a close is still pending (' + String(ctl.close_pending) + ')' : '', rec.ambiguous ? 'recovery is ambiguous' + (rec.reason ? ' (' + String(rec.reason) + ')' : '') : '', rec.reconcile_blocking ? 'reconcile is blocking' : ''].filter(Boolean).join('; ');
+    return {tone: 'bad', title: 'Stop & Close not confirmed', detail: 'Entries are off and this desk shows no position, but ' + why + '. ' + (ctl.close_pending ? 'The desk keeps retrying the close. ' : '') + (alp ? 'Reconcile now asks the broker again; if it stays unconfirmed, check the position in the broker.' : 'Wait for the desk to confirm flat.'), btn: alp ? 'Reconcile now' : null, sel: alp ? '#btnReconcile' : null, cls: ''}; }
   if (ph === 'STOPPED') { const chk = alp ? document.querySelector(fb('step1')) : null;
     if (chk && !chk.disabled && !chk.hidden) return {tone: 'bad', title: 'Stop & Close in progress', detail: 'Entries are off and the close order is working. The desk books the closing fill at your next Check for new bars; Reconcile now (in Session controls) only re-reads the broker.', btn: 'Check for new bars', sel: fb('step1'), cls: ''};
     return {tone: 'bad', title: 'Stop & Close in progress', detail: 'Entries are off and the desk is closing the position. Wait until flat is confirmed' + (alp ? '; Reconcile now asks the broker again.' : '.'), btn: alp ? 'Reconcile now' : null, sel: alp ? '#btnReconcile' : null, cls: ''}; }
@@ -1080,6 +1108,7 @@ function nextStep(s){
       return {tone: 'info', title: 'Armed, adapter disabled', detail: 'The Alpaca adapter is disabled' + (a.disabled_reason ? ' (' + a.disabled_reason + ')' : '') + '. Enable asks you to confirm before anything changes; Check for new bars stays available.', btn: 'Enable adapter...', sel: '#btnEnable'}; }
     if (alp) return {tone: 'ok', title: 'Armed: check for new bars', detail: 'Nothing runs between your clicks. Each Check asks the feed once for the latest closed SPY bar and acts on it.', btn: 'Check for new bars', sel: fb('step1')};
     if (more) return {tone: 'ok', title: 'Armed: play the replay', detail: 'Play advances 4 bars a second; Step 1 and Step 10 advance by hand. Pause or Stop & Close at any time.', btn: 'Play', sel: fb('play')};
+    if (!flat) return {tone: 'warn', title: 'Replay finished, position still open', detail: 'Every bar has been replayed but the desk still holds a position. Stop & Close closes it; then close the session to open its review.', btn: 'Stop & Close', sel: fb('stop')};
     return {tone: 'ok', title: 'Replay finished', detail: 'Every bar has been replayed. Close the session (it must be flat) to open its review.', btn: 'Close & review', sel: fb('close')};
   }
   if (ph === 'PRE_SESSION') {
@@ -1097,7 +1126,7 @@ function nextStep(s){
         : {tone: 'warn', title: 'Review the pre-session check', detail: 'Arm stays off until every preflight check passes.' + (names ? ' Failing: ' + names + '.' : ' No checks reported yet.'), btn: 'Review pre-session check', sel: fb('review')};
     }
     if (expired) return {tone: 'bad', title: 'Session expired', detail: 'This session is past its expiry and cannot be armed. Start a fresh session.'};
-    if (mockUsedUp(s)) return {tone: 'warn', title: 'Mock bars used up', detail: 'The in-process mock has checked all ' + num(s.bars_done) + ' of its synthetic bars, so Check for new bars has nothing left to act on. Review this run, or restart the desk with launch.py --fresh for a new walkthrough.', btn: 'Open session review', view: 'review'};
+    if (barsUsedUp(s)) return {tone: 'warn', title: 'Replay bars used up', detail: 'This offline replay has run all ' + num(s.bars_done) + ' of its bars, so there is nothing left to step. Review this run, or restart the desk with launch.py --fresh for a new walkthrough.', btn: 'Open session review', view: 'review'};
     const bw = brokerWords(s); return {tone: 'info', title: 'Arm session', detail: bw.title, btn: bw.arm, sel: fb('arm')};
   }
   return {tone: 'unk', title: 'Phase ' + ph, detail: 'Phase not recognized by this page; see Session details.'};
@@ -1127,11 +1156,11 @@ function renderFlow(s, ph, expired){
   const run = ph === 'ARMED' || ph === 'PAUSED';
   const en = {arm: ph === 'PRE_SESSION' && preflightOk(s) && !expired, step1: run && more, step10: run && more, runend: run && more, play: run && more, stopplay: run,
     pause: ph === 'ARMED', resume: ph === 'PAUSED', stop: run || ph === 'PRE_SESSION', clear: ph === 'STOPPED', close: ph === 'CLOSED' || ((run || ph === 'STOPPED') && flat)};
-  const cur = ph === 'PRE_SESSION' && mockUsedUp(s) ? 'close' : ph === 'PRE_SESSION' ? (preflightOk(s) ? 'arm' : 'review') : ph === 'ARMED' ? 'play' : ph === 'PAUSED' ? 'resume' : ph === 'STOPPED' || ph === 'CLOSED' ? 'close' : 'review';
+  const cur = ph === 'PRE_SESSION' && barsUsedUp(s) ? 'close' : ph === 'PRE_SESSION' ? (preflightOk(s) ? 'arm' : 'review') : ph === 'ARMED' ? 'play' : ph === 'PAUSED' ? 'resume' : ph === 'STOPPED' || ph === 'CLOSED' ? 'close' : 'review';
   for (const b of document.querySelectorAll('#flow button')) { const f = b.dataset.f; const na = !routeOk(FLOW_ROUTE[f]);
     b.disabled = f === 'review' ? false : (off || na || !en[f]); b.classList.toggle('cur', f === cur);
     b.classList.toggle('na', na); if (na && !b.dataset.t0) { b.dataset.t0 = b.title; b.title = b.title + ' (not available: this server has no ' + FLOW_ROUTE[f] + ' route)'; } }
-  const armB = document.querySelector('#flow button[data-f="arm"]'); if (armB) armB.classList.toggle('pri', !(ph === 'PRE_SESSION' && mockUsedUp(s))); // used-up mock: Arm is not the next step
+  const armB = document.querySelector('#flow button[data-f="arm"]'); if (armB) armB.classList.toggle('pri', !(ph === 'PRE_SESSION' && barsUsedUp(s))); // used-up replay: Arm is not the next step
   $('#btnPause2').disabled = off || !en.pause || !routeOk('/api/pause'); $('#btnStop2').disabled = off || !en.stop || !routeOk('/api/stop_close');
   $('#schedTgl').disabled = off || !routeOk('/api/schedule');
   // alpaca modes: wall clock. Advance becomes "check for new closed bar"; no step-10, run-to-end, play or schedule.
@@ -1145,7 +1174,12 @@ function renderFlow(s, ph, expired){
   const sc = $('#schedCard'); if (sc) sc.hidden = alp;
   // Stop works on demand in alpaca modes, even while the adapter is disabled
   if (alp) { const st = $('#btnStop'); st.disabled = S.conn === false || ph === 'NONE' || ph === 'CLOSED' || !routeOk('/api/stop_close'); $('#btnStop2').disabled = st.disabled; }
+  const fm = $('#flowMore'); const avail = [...fm.querySelectorAll('button')].filter(b => !b.disabled && !b.hidden).length;
+  fm.classList.toggle('none', avail === 0); $('#flowMoreSum').textContent = avail ? 'More session actions (' + avail + ')' : 'More session actions (none now)';
 }
+// narrow screens start with the disclosure closed; wide screens always show the full strip
+(function(){ if (!window.matchMedia) return; const mq = matchMedia('(max-width:560px)'); const fm = document.getElementById('flowMore');
+  const f = () => { fm.open = !mq.matches; }; f(); if (mq.addEventListener) mq.addEventListener('change', f); else if (mq.addListener) mq.addListener(f); })();
 function openPre(){
   const s = S.session || {}; const pf = Array.isArray(s.preflight) ? s.preflight : []; const ok = preflightOk(s);
   $('#preBody').innerHTML = (pf.length ? '<table class="chk">' + pf.map(x => '<tr' + (x.ok ? '' : ' class="failrow"') + '><td class="' + (x.ok ? 'p' : 'f') + '">' + (x.ok ? '&#10003; OK' : '&#10007; FAIL') + '</td><td><b>' + esc(x.check) + '</b></td><td>' + esc(x.detail || '') + '</td></tr>').join('') + '</table>' : '<div class="hint">No preflight checks reported yet.</div>') +
@@ -1410,6 +1444,7 @@ function renderModeLabels(){
   const stg = $('#srcTag');
   stg.textContent = !alp ? 'replay bars (synthetic)' : bw.kind === 'live' ? 'Alpaca IEX bars, LIVE account' : paper ? 'Alpaca IEX bars, paper account' : bw.kind === 'mock' ? 'mock bars (synthetic)' : 'bars (source unconfirmed)';
   stg.title = !alp ? 'Desk replay bars (synthetic). Not TradingView, not a real market.' : (paper || bw.kind === 'live') ? 'Alpaca free IEX bars (not the full market). Not TradingView.' : 'Mock Alpaca bars (synthetic). Not TradingView, not a real market.';
+  $('#chartTitle').textContent = alp ? 'SPY bars' : 'Desk replay chart'; $('#srcPill').hidden = paper || bw.kind === 'live'; // real feeds are not synthetic
   const armText = bw.arm, armTitle = bw.title;
   ['#btnArm', '#preArm'].forEach(id => { const b = $(id); if (b) { b.textContent = armText; b.title = armTitle; } });
   const fa = document.querySelector('button[data-f="arm"]'); if (fa) fa.title = armTitle;

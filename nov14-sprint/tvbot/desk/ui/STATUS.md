@@ -98,7 +98,7 @@ Every POST appends `{ts, action, body, request_id, ...}` to `state_dir/control_r
 
 ## Night redesign (W-A, 2026-11-16)
 
-Worker W-A, session 806907e3, branch `claude/night-dashboard-09ac67` on base f40e154. Only `ui/index.html` and this file changed; `server.py`, the tests and every W-B path are untouched.
+Worker W-A, branch `claude/night-dashboard-09ac67` on base f40e154. Only `ui/index.html` and this file changed; `server.py`, the tests and every W-B path are untouched.
 
 What changed on the main page:
 - **Chart first.** The desk replay chart leads the page, with the current decision and after-cost net P&L beside it (stacked under it at narrow widths).
@@ -155,3 +155,16 @@ Verified: 67 UI tests OK (03:19Z). `node --check` passes on both pages' scripts.
 3. **Live badge.** The page shows the red "LIVE: REAL MONEY" badge if any one of the controller's live strings appears: `broker_mode` "alpaca-live", adapter `path_name` "alpaca_live.json", or adapter `mode` "live". A conflicting paper label never hides a live signal. lab.html uses the same three checks.
 
 Verified: 70 UI tests OK (03:25Z). They include a fake live `/api/session` test. It serves a live payload over loopback and runs the page's own mode helpers in node. It asserts the red LIVE badge and no "Paper" wording, for the full payload and for each live string alone. `node --check` passes on both pages. index.html has 2 `setInterval` and lab.html none. Neither page has an `<iframe` or `<link`. Screenshots 16 (used-up flow) and 17 (markers at 390px) are kept in the private acceptance folder (night-dashboard). The live badge has been checked only by test and probe. No live session was used.
+
+### Fourth pass (W-A, 03:37Z): truthful banners, one disclosure
+
+Codex's Chromium probe against ba4b3d6 reproduced two false banners. Both are fixed, along with the tab title and the first screen.
+
+1. **No false "used up".** In the Alpaca modes, `bars_total` counts the bars fetched so far, not what the feed can still produce. `barsUsedUp(s)` (it replaces `mockUsedUp`) is therefore false for every Alpaca payload: mock, paper and live. It is true only for an offline replay whose end is known (`bars_done >= bars_total > 0`). The banner and the session flow both read it, so a paper session with 64 of 64 bars keeps Arm or Check as its next step, and the next Check still advances to bar 65. A finished replay that still holds a position now points at Stop & Close, not at a disabled Close & review.
+2. **No false "Stop & Close finished".** "Stopped and flat / Stop & Close finished" now requires all four: local position 0, `controls.flat_confirmed` true, no `close_pending`, and recovery neither ambiguous nor blocking. Otherwise the banner reads **Stop & Close not confirmed** and says why: the broker has not confirmed flat, recovery is ambiguous, or a close is still pending, in which case "The desk keeps retrying the close". In the Alpaca modes it offers Reconcile now.
+3. **Tab title and brand.** `document.title` follows the same mode helper as the badge, e.g. "Local rehearsal · SPY Desk". The static title is "SPY Desk", and the header brand is "SPY Desk" (no longer "SPY Paper Desk"), so a live page never says Paper.
+4. **One next step plus Stop & Close.** Pause, Resume, Clear Stop, Close & review and the rehearsal steps sit in one `<details id="flowMore">` disclosure, "More session actions (n)". Its summary is keyboard-focusable and opens with Enter or Space. Below 561px the disclosure starts closed, shows only the enabled actions (never a row of disabled buttons), and says "none now" when nothing applies. Stop & Close sits outside the disclosure, first in the row, and hides only while it is disabled. At 561px and wider the summary is hidden and the full strip shows inline as before.
+5. **Empty chart.** It says only "Waiting for the first SPY bar". Its source is the chip in the chart header ("Desk replay chart" with SYNTHETIC, or "SPY bars" with the feed's source tag in the Alpaca modes).
+6. Rehearsal labeling, early Stop, the accessibility labels and every earlier test are kept.
+
+Verified: 78 UI tests OK. New probes run the page's own `nextStep` and `barsUsedUp` in node against these payloads: paper, mock and live at 64 of 64 bars; armed at bar 65; a finished and a midway replay; a finished replay holding a position; and Stop & Close unconfirmed, confirmed-but-ambiguous and clean. Static tests cover the disclosure, the title and the empty chart. `node --check` passes on both pages. index.html has 2 `setInterval` and lab.html none. Neither page has an `<iframe` or `<link`. At 390x844 a populated replay shows the next step, the chart, Stop & Close and "More session actions (3)", with no horizontal scroll. Screenshots 18 (390px) and 19 (1280x720) are kept outside the repo.

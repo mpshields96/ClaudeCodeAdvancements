@@ -1136,11 +1136,13 @@ class TestLivePayload(unittest.TestCase):
         for key in ('m === "alpaca-live"', '=== "alpaca_live.json"', '=== "live"', "LIVE: REAL MONEY"):
             self.assertIn(key, lab)
 
-    def test_used_up_mock_flow_and_marker_clamp_are_wired(self):
+    def test_used_up_flow_and_marker_clamp_are_wired(self):
         page = _page()
-        self.assertIn("ph === 'PRE_SESSION' && mockUsedUp(s) ? 'close'", page)
-        self.assertIn("armB.classList.toggle('pri', !(ph === 'PRE_SESSION' && mockUsedUp(s)))", page)
-        self.assertIn("if (mockUsedUp(s)) return {tone: 'warn', title: 'Mock bars used up'", page)
+        self.assertNotIn("mockUsedUp", page)
+        self.assertIn("ph === 'PRE_SESSION' && barsUsedUp(s) ? 'close'", page)
+        self.assertIn("armB.classList.toggle('pri', !(ph === 'PRE_SESSION' && barsUsedUp(s)))", page)
+        self.assertIn("if (barsUsedUp(s)) return {tone: 'warn', title: 'Replay bars used up'", page)
+        self.assertIn("if (isAlpaca(s)) return false;", page)
         self.assertIn("y = Math.max(padT + r + 1, Math.min(padT + ph - r - 1, y));", page)
 
     @unittest.skipUnless(shutil.which("node"), "node not installed; static checks above still run")
@@ -1173,6 +1175,129 @@ class TestLivePayload(unittest.TestCase):
         self.assertEqual(out["full"]["words"]["kind"], "live")
         self.assertEqual(out["paper"]["badge"]["t"], "Paper (no real money)")
         self.assertNotIn("LIVE", json.dumps(out["paper"]["badge"]))
+
+
+class TestBannerTruth(unittest.TestCase):
+    """Pass-4 regressions from Codex's Chromium probe: no false "used up", no false "Stop & Close finished"."""
+
+    PF = [{"check": "limits", "ok": True}]
+
+    def _run(self, cases):
+        import subprocess
+        page = _page()
+
+        def fn(name):
+            i = page.index("function %s(" % name)
+            return page[i:page.index("\nfunction ", i + 5)]
+        a = page.index("function isAlpaca(s)")
+        ns = page.index("function nextStep(s)")
+        b = page.index("\nfunction ", ns + 10)
+        js = "".join(fn(n) + "\n" for n in ("num", "clockNow", "phaseOf", "preflightOk"))
+        js += "const S = {conn: true, session: {}};\n"
+        js += "const document = {querySelector: () => null, querySelectorAll: () => []};\n"
+        js += page[a:b]
+        js += "\nconst C = " + json.dumps(cases) + ";\nconst out = {};\n"
+        js += "for (const k in C) { const n = nextStep(C[k]); out[k] = {title: n.title, btn: n.btn || null, detail: n.detail, used: barsUsedUp(C[k])}; }\n"
+        js += "process.stdout.write(JSON.stringify(out));"
+        r = subprocess.run(["node", "-e", js], capture_output=True, text=True, timeout=30)
+        self.assertEqual(r.returncode, 0, r.stderr[-2000:])
+        return json.loads(r.stdout)
+
+    def _paper(self, **kw):
+        s = {"phase": "PRE_SESSION", "broker_mode": "alpaca-paper", "broker": {"transport": "HttpsTransport(paper)"},
+             "bars_done": 64, "bars_total": 64, "preflight": self.PF, "adapter": {"enabled": True},
+             "limits_source": {"label": "approved", "prov": "approved"}}
+        s.update(kw)
+        return s
+
+    @unittest.skipUnless(shutil.which("node"), "node not installed")
+    def test_alpaca_feeds_are_never_used_up(self):
+        mock = self._paper(broker_mode="alpaca-mock", broker={"transport": "MockAlpacaTransport()"})
+        out = self._run({
+            "paper64": self._paper(),
+            "armed64": self._paper(phase="ARMED"),
+            "armed65": self._paper(phase="ARMED", bars_done=65, bars_total=65),
+            "mock64": mock,
+            "live64": self._paper(broker_mode="alpaca-live"),
+        })
+        for k, v in out.items():
+            self.assertFalse(v["used"], k)
+            self.assertNotIn("used up", (v["title"] + " " + v["detail"]).lower(), k)
+        self.assertEqual(out["paper64"]["btn"], "Arm this Alpaca PAPER session")
+        self.assertEqual(out["armed64"]["btn"], "Check for new bars")
+        self.assertEqual(out["armed65"]["btn"], "Check for new bars")
+
+    @unittest.skipUnless(shutil.which("node"), "node not installed")
+    def test_finished_offline_replay_is_used_up(self):
+        out = self._run({"replay": {"phase": "PRE_SESSION", "bars_done": 70, "bars_total": 70, "preflight": self.PF},
+                         "midway": {"phase": "PRE_SESSION", "bars_done": 12, "bars_total": 70, "preflight": self.PF}})
+        self.assertTrue(out["replay"]["used"])
+        self.assertEqual(out["replay"]["title"], "Replay bars used up")
+        self.assertFalse(out["midway"]["used"])
+
+    @unittest.skipUnless(shutil.which("node"), "node not installed")
+    def test_stop_close_finished_only_when_broker_confirms_flat(self):
+        base = {"phase": "STOPPED", "broker_mode": "alpaca-paper", "broker": {"transport": "HttpsTransport(paper)"},
+                "exposure": {"position_qty": 0}}
+        unconf = dict(base, controls={"stopped": True, "flat_confirmed": False, "close_pending": "broker unreachable; retrying"},
+                      recovery={"ambiguous": True, "reason": "broker response unavailable"})
+        conf_but_ambiguous = dict(unconf, controls={"stopped": True, "flat_confirmed": True})
+        clean = dict(base, controls={"stopped": True, "flat_confirmed": True}, recovery={})
+        out = self._run({"unconf": unconf, "conf_amb": conf_but_ambiguous, "clean": clean})
+        for k in ("unconf", "conf_amb"):
+            self.assertEqual(out[k]["title"], "Stop & Close not confirmed", k)
+            self.assertNotIn("finished", out[k]["detail"], k)
+            self.assertEqual(out[k]["btn"], "Reconcile now", k)
+        self.assertIn("broker has not confirmed flat", out["unconf"]["detail"])
+        self.assertIn("keeps retrying the close", out["unconf"]["detail"])
+        self.assertIn("recovery is ambiguous", out["conf_amb"]["detail"])
+        self.assertEqual(out["clean"]["title"], "Stopped and flat")
+        self.assertIn("Stop & Close finished", out["clean"]["detail"])
+
+    @unittest.skipUnless(shutil.which("node"), "node not installed")
+    def test_finished_replay_holding_a_position_points_at_stop(self):
+        rp = {"phase": "ARMED", "bars_done": 70, "bars_total": 70, "preflight": self.PF}
+        out = self._run({"open": dict(rp, exposure={"position_qty": -20}), "flat": dict(rp, exposure={"position_qty": 0})})
+        self.assertEqual(out["open"]["title"], "Replay finished, position still open")
+        self.assertEqual(out["open"]["btn"], "Stop & Close")
+        self.assertEqual(out["flat"]["title"], "Replay finished")
+        self.assertEqual(out["flat"]["btn"], "Close & review")
+
+    def test_tab_title_follows_the_mode_badge(self):
+        page = _page()
+        self.assertIn("<title>SPY Desk</title>", page)
+        self.assertNotIn("<title>Paper Desk (SIMULATED)</title>", page)
+        self.assertIn("document.title = bdg.t + ' \\u00b7 SPY Desk';", page)
+        # The header brand sits beside the mode badge, so it must not claim "Paper" on a live page.
+        self.assertIn('<span class="brand">SPY Desk</span>', page)
+        self.assertNotIn("SPY Paper Desk", page)
+
+
+class TestFirstScreen(unittest.TestCase):
+    """Pass-4 first screen: one next step plus Stop & Close; other actions in one disclosure; short empty chart."""
+
+    def test_session_actions_sit_in_one_disclosure_with_stop_outside(self):
+        page = _page()
+        d0 = page.index('<details id="flowMore" class="fmore" open>')
+        d1 = page.index("</details>", d0)
+        self.assertIn('<summary id="flowMoreSum">More session actions</summary>', page[d0:d1])
+        for f in ("review", "arm", "pause", "resume", "clear", "close"):
+            self.assertIn('data-f="%s"' % f, page[d0:d1], f)
+        stop = page.index('id="btnStop"')
+        self.assertGreater(stop, d1, "Stop & Close must stay outside the disclosure")
+
+    def test_narrow_screen_hides_disabled_actions_and_starts_closed(self):
+        page = _page()
+        self.assertIn(".fmbody .ar,.fmbody button:disabled{display:none}", page)
+        self.assertIn("#btnStop{order:-1}", page)
+        self.assertIn("fm.open = !mq.matches;", page)
+        self.assertIn("'More session actions (' + avail + ')'", page)
+
+    def test_empty_chart_says_only_waiting_for_first_bar(self):
+        page = _page()
+        self.assertIn("'Waiting for the first SPY bar'", page)
+        self.assertNotIn("No replay bars to show yet", page)
+        self.assertNotIn("Bars appear only when you press Check", page)
 
 
 class TestAlpacaBarsFile(unittest.TestCase):
