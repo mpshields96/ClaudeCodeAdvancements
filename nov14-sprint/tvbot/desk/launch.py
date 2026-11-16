@@ -175,13 +175,32 @@ class AlpacaDeskControls(DeskControls):
         return self.r.run_to_end()
 
     def alpaca_enable(self, confirm=False):
-        return self.r.alpaca_enable(confirm=confirm is True)
+        res = self.r.alpaca_enable(confirm=confirm is True)
+        if self._live() and isinstance(res, dict) and res.get("ok") is True:
+            # Live Arm needs a current connection check and nothing else in the desk runs one.
+            # It is GET-only, runs once, never arms and never changes Enable; a failure stays a block.
+            res = dict(res, connection_check=self._connection_check())
+        return res
 
     def alpaca_disable(self, reason="OPERATOR"):
         return self.r.alpaca_disable(reason=reason)
 
     def reconcile_now(self):
-        return self.r.reconcile_now()
+        res = self.r.reconcile_now()
+        if self._live():
+            cc = self._connection_check()        # refreshes a stale check for Arm; GET-only
+            res = dict(res, connection_check=cc) if isinstance(res, dict) else {"result": res, "connection_check": cc}
+        return res
+
+    def _live(self):
+        return getattr(self.r, "live", False) is True
+
+    def _connection_check(self):
+        try:
+            return self.r.connection_check()
+        except Exception as exc:                 # shown as a failed check; Arm stays refused
+            return {"ok": False, "method": "GET only", "orders_sent": 0,
+                    "checks": [{"check": "connection", "ok": False, "detail": exc.__class__.__name__}]}
 
     def lab_view(self):
         return self.r.lab_view()
