@@ -27,6 +27,7 @@ import subprocess
 import urllib.parse
 
 from alpaca import DATA_ORIGIN
+from orders import qty as Q
 from alpaca.setup import (CredentialsError, LIVE_ENV_KEY_VAR, LIVE_ENV_SECRET_VAR, LIVE_KEYCHAIN_SERVICE,
                           ENV_KEY_VAR, ENV_SECRET_VAR, KEYCHAIN_SERVICE, SECURITY_BIN,
                           KEYCHAIN_KEY_ACCOUNT, KEYCHAIN_SECRET_ACCOUNT)
@@ -188,7 +189,7 @@ class LiveAuthorization(object):
         return 0 <= now_monotonic - self.issued_monotonic <= AUTH_MAX_AGE_S
 
     def __repr__(self):
-        return "LiveAuthorization(%s, %d shares)" % (self.session_date, self.shares)
+        return "LiveAuthorization(%s, %s shares)" % (self.session_date, Q.text(self.shares))
 
 
 class LiveHttpsTransport(HttpsTransport):
@@ -230,7 +231,8 @@ def session_date(now_utc=None):
 
 
 def confirm_phrase(shares, date_str):
-    return "LIVE SPY %d SHARES %s" % (int(shares), date_str)
+    # Exact text: "3" for whole shares (byte-identical to the old %d form), "0.25" for a fraction.
+    return "LIVE SPY %s SHARES %s" % (Q.text(Q.parse(shares)), date_str)
 
 
 def check_live_state_dir(state_dir):
@@ -320,7 +322,7 @@ def live_gate_authorize(limits_path, state_dir, port, typed, stdin_is_tty, now_u
                               "Run start again and check the limits it shows")
     if not stdin_is_tty:
         raise LiveGateRefused("the live confirmation must be typed at a terminal (piped input refused)")
-    shares = int(loaded["values"]["fixed_shares"])
+    shares = Q.parse(loaded["values"]["fixed_shares"])
     today = session_date(now_utc)
     want = confirm_phrase(shares, today)
     if (typed or "").strip() != want:

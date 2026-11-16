@@ -1038,7 +1038,7 @@ function renderHeader(){
     const sh = num(L.fixed_shares) !== null ? L.fixed_shares : (s.sizing || {}).fixed_qty;
     const none = !s.limits_source && ['max_loss_per_trade', 'per_trade_notional', 'daily_loss', 'gross_exposure'].every(k => num(L[k]) === null);
     if (none) setH($('#risk'), 'Limits <b>not set</b>: approve your own in Setup (limits)'); else
-    setH($('#risk'), 'Shares ' + (num(sh) === null ? '-' : esc(sh)) + ' &middot; Max loss per trade ' + usd(L.max_loss_per_trade, 2) + ' &middot; Notional cap ' + usd(L.per_trade_notional, 0) + ' &middot; Daily loss ' + usd(L.daily_loss, 2) + ' &middot; Gross ' + usd(L.gross_exposure, 0) + ' (' + lab + ')');
+    setH($('#risk'), 'Shares ' + (num(sh) === null ? '-' : esc(sh)) + ' &middot; Max loss per trade ' + usd(L.max_loss_per_trade, 2) + ' &middot; Notional cap ' + usd(L.per_trade_notional, 2) + ' &middot; Daily loss ' + usd(L.daily_loss, 2) + ' &middot; Gross ' + usd(L.gross_exposure, 2) + (L.max_daily_entries == null ? '' : ' &middot; Entry attempts/day ' + esc(L.max_daily_entries)) + ' (' + lab + ')');
   } else
   setH($('#risk'), 'Max loss per trade ' + usd(L.max_loss_per_trade != null ? L.max_loss_per_trade : 10, 2) + ' (TEST VALUE) &middot; Notional cap ' + usd(L.per_trade_notional != null ? L.per_trade_notional : 2000, 0) + ' (TEST VALUE) &middot; Daily loss ' + usd(L.daily_loss != null ? L.daily_loss : 30, 2) + ' (TEST VALUE)');
   const ll = $('#labLink'); ll.hidden = !((S.health || {}).lab_page);

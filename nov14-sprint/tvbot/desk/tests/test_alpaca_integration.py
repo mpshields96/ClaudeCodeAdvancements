@@ -620,7 +620,9 @@ class HttpsEntryQuoteGate(unittest.TestCase):
         c.mock, c.transport = False, self._Q(quote)
         try:
             d = {"decision_id": "qg-0001"}
-            res = c._entry_bounds(d, None, c.mgr.state(), 1, "buy", 400.0, 395.0)
+            bar = {"ts_open": "2026-11-16T14:30:00Z", "ts_close": "2026-11-16T15:30:00Z",
+                   "bar_count_1min": 60, "minutes_expected": 60}
+            res = c._entry_bounds(d, bar, c.mgr.state(), 1, "buy", 400.0, 395.0)
             return d, res
         finally:
             c.mock, c.transport = True, real

@@ -38,6 +38,7 @@ if DESK not in sys.path:
 
 from orders import manager as _mgr_mod  # noqa: E402
 from orders.manager import OrderManager  # noqa: E402
+from orders import qty as Q  # noqa: E402
 from orders.fake_broker import FakeBroker  # noqa: E402
 from orders.calendar import SessionCalendar, parse_ts, iso  # noqa: E402
 from orders.intake import check_bar, DEFAULT_MAX_AGE_S  # noqa: E402
@@ -59,7 +60,7 @@ FILL_MODEL = ("MOCK FILLS, SIMULATED. Market orders fill at the CLOSE of the fir
 # the fake broker. All but ZERO_VOLUME / OUT_OF_SESSION also restart the strategy's
 # history (indicators re-warm) because the series is no longer continuous.
 NO_RESET_CODES = ("ZERO_VOLUME", "OUT_OF_SESSION")
-FIXED_QTY_LABEL = "HYPOTHETICAL FIXED %d-SHARE DEMO PRESET (TEST VALUE, not Matthew's sizing)"
+FIXED_QTY_LABEL = "HYPOTHETICAL FIXED %s-SHARE DEMO PRESET (TEST VALUE, not Matthew's sizing)"
 # Used when the caller passes no strategy_cfg. Pass strategy_cfg={} for the strategy's own sizing
 # (ema then sizes ~20 shares and the $10 TEST max loss refuses every entry, by design).
 DEMO_STRATEGY_CFG = {"fixed_qty": 1}
@@ -95,7 +96,7 @@ PASS_RULE = ("Best reasoned pass = the pass decision with the most failed refusa
 def _atomic_json(path, obj):
     tmp = path + ".tmp"
     with open(tmp, "w") as fh:
-        json.dump(obj, fh, indent=1, sort_keys=True, default=str)
+        json.dump(obj, fh, indent=1, sort_keys=True, default=Q.json_default_str)
         fh.flush()
         os.fsync(fh.fileno())
     os.replace(tmp, path)
@@ -105,7 +106,7 @@ def _atomic_jsonl(path, rows):
     tmp = path + ".tmp"
     with open(tmp, "w") as fh:
         for r in rows:
-            fh.write(json.dumps(r, sort_keys=True, default=str) + "\n")
+            fh.write(json.dumps(r, sort_keys=True, default=Q.json_default_str) + "\n")
         fh.flush()
         os.fsync(fh.fileno())
     os.replace(tmp, path)
@@ -113,7 +114,7 @@ def _atomic_jsonl(path, rows):
 
 def _append_jsonl(path, row):
     with open(path, "a") as fh:
-        fh.write(json.dumps(row, sort_keys=True, default=str) + "\n")
+        fh.write(json.dumps(row, sort_keys=True, default=Q.json_default_str) + "\n")
         fh.flush()
         os.fsync(fh.fileno())
 
@@ -147,6 +148,14 @@ def load_bars(path=FIXTURE):
             elif rec.get("type") == "bar":
                 bars.append(rec)
     return manifest, bars
+
+
+def _qty_positive(v):
+    """True for a positive exact quantity (whole or fractional); False for zero, negative or junk."""
+    try:
+        return Q.dec(Q.parse(v or 0, allow_zero=True)) > 0
+    except Q.QtyError:
+        return False
 
 
 def _price(line_obj):
@@ -285,7 +294,7 @@ class DeskFakeBroker(FakeBroker):
             d[k] = v
         st = self.rng.getstate()
         d["rng_state"] = [st[0], list(st[1]), st[2]]
-        return json.loads(json.dumps(d, default=str))
+        return json.loads(json.dumps(d, default=Q.json_default_str))
 
     def restore(self, d):
         d = dict(d)
@@ -376,7 +385,7 @@ class SessionConfigChanged(RuntimeError):
 
 
 def _norm(obj):
-    return json.loads(json.dumps(obj, sort_keys=True, default=str))
+    return json.loads(json.dumps(obj, sort_keys=True, default=Q.json_default_str))
 
 
 def session_config_for(strategy, strategy_cfg, limits):
@@ -421,6 +430,8 @@ class SessionController(object):
         for k in _mgr_mod.LIMIT_KEYS:
             mgr_limits.setdefault(k, self.limits.get(k))
         mgr_limits["label"] = self.limits.get("label", LIMITS_LABEL)
+        if self.limits.get("max_daily_entries") is not None:     # optional DAILY_ENTRY_LIMIT
+            mgr_limits["max_daily_entries"] = self.limits["max_daily_entries"]
         if "max_loss_per_trade" in _mgr_mod.LIMIT_KEYS:
             mgr_limits["max_loss_per_trade"] = self.limits["max_loss_per_trade"]
         self.engine_checks_max_loss = "max_loss_per_trade" in _mgr_mod.LIMIT_KEYS
@@ -739,7 +750,7 @@ class SessionController(object):
         with self.lock:
             if confirm is not True:
                 return {"ok": False, "reason": "CONFIRM_REQUIRED", "simulated": self.simulated}
-            res = self.mgr.clear_stop()
+            res = self.mgr.clear_stop(confirm=True)
             if res.get("ok"):
                 self.phase = "PRE_SESSION"
             self._desk_audit("clear_stop", result=res)
@@ -881,11 +892,12 @@ class SessionController(object):
         d.setdefault("bar_seq", bar.get("seq"))
         d.setdefault("bar_ts_close", bar.get("ts_close"))
         fq = self.strategy_cfg.get("fixed_qty")
-        if fq and str(d.get("action", "")).startswith(("enter", "add")) and int(d.get("qty") or 0) > 0:
+        if fq and str(d.get("action", "")).startswith(("enter", "add")) and _qty_positive(d.get("qty")):
             # HYPOTHETICAL fixed-quantity demo preset (TEST). Exits stay capped at the real position.
+            # Exact: an int stays an int, a fraction stays that fraction (never rounded to a share).
             d["engine_qty"] = d.get("qty")
-            d["qty"] = int(fq)
-            d["qty_basis"] = self.fixed_qty_label % int(fq)
+            d["qty"] = Q.to_json(Q.parse(fq))
+            d["qty_basis"] = self.fixed_qty_label % Q.text(Q.parse(fq))
         d.update(self._row_flags())
         self._lab_observe(bar, d)
         d["routing"] = self._route(d, bar, st)
@@ -936,21 +948,28 @@ class SessionController(object):
             return self._intent_result(iid)
         if ctl["paused"]:
             return {"status": "not_routed", "why": "PAUSED"}
+        qv = Q.parse(qty)
+        if Q.is_fractional(qv) and not getattr(self.broker, "fractional", False):
+            # Fractional orders need a connected Alpaca desk whose broker was built for them. The
+            # offline desk and a whole-share broker refuse; the size is never rounded to a share.
+            return self._desk_reject(d, "FRACTIONAL_NOT_ENABLED",
+                                     "a %s-share entry needs a connected Alpaca desk built for fractional "
+                                     "DAY simple orders; this desk's broker is not" % Q.text(qv))
         entry = _price(d.get("intended_entry")) or ref
         inval = _price(d.get("invalidation"))
         if inval is None:
             return self._desk_reject(d, "NO_STOP", "entry has no invalidation price")
         risk = qty * abs(entry - float(inval)) + _cost_usd(d)
         if not self.engine_checks_max_loss and risk > self.limits["max_loss_per_trade"]:
-            return self._desk_reject(d, "MAX_LOSS", "qty %d x |%.4f - %.4f| + cost $%.2f = $%.2f > max loss $%.2f (%s)"
-                                     % (qty, entry, float(inval), _cost_usd(d), risk,
+            return self._desk_reject(d, "MAX_LOSS", "qty %s x |%.4f - %.4f| + cost $%.2f = $%.2f > max loss $%.2f (%s)"
+                                     % (Q.text(qv), entry, float(inval), _cost_usd(d), risk,
                                         self.limits["max_loss_per_trade"], self.limits["label"]))
         side = "buy" if action == "enter_long" else "sell"
-        limit, refusal = self._entry_bounds(d, bar, st, int(qty), side, entry, float(inval))
+        limit, refusal = self._entry_bounds(d, bar, st, Q.to_json(qv), side, entry, float(inval))
         if refusal:
             return self._desk_reject(d, refusal[0], refusal[1])
         intent = {"decision_id": d["decision_id"], "kind": "entry", "side": side,
-                  "qty": int(qty), "ref_price": ref, "signal_ts": d.get("ts_knowable"),
+                  "qty": Q.to_json(qv), "ref_price": ref, "signal_ts": d.get("ts_knowable"),
                   "invalidation": float(inval), "max_loss_usd": round(risk, 4)}
         if limit is not None:
             intent["limit"] = float(limit)
@@ -1029,14 +1048,15 @@ class SessionController(object):
         trips, cur = [], None
         pos = 0
         for ts, it, f in fills:
-            signed = f["qty"] if it["side"] == "buy" else -f["qty"]
+            qty = Q.parse(f["qty"])  # journal may contain pre-restart JSON numbers
+            signed = qty if it["side"] == "buy" else -qty
             if cur is None:
                 cur = {"entry_decision_id": it["decision_id"], "entry_ts": ts, "side": it["side"],
                        "fills": [], "cash": 0.0, "fees": 0.0, "simulated": self.simulated}
             cur["fills"].append({"intent_id": it["intent_id"], "kind": it["kind"], "side": it["side"],
                                  "qty": f["qty"], "price": f["price"], "fee": f.get("fee", 0.0),
-                                 "ts": ts, "mock": True})
-            cur["cash"] += -signed * float(f["price"])
+                                 "ts": ts, "mock": getattr(self, "mock", True), **self._row_flags()})
+            cur["cash"] += -float(signed) * float(f["price"])
             cur["fees"] += float(f.get("fee", 0.0))
             pos += signed
             if pos == 0:
@@ -1065,7 +1085,7 @@ class SessionController(object):
     def sizing(self):
         fq = self.strategy_cfg.get("fixed_qty")
         if fq:
-            return {"mode": "fixed", "fixed_qty": int(fq), "label": self.fixed_qty_label % int(fq),
+            return {"mode": "fixed", "fixed_qty": Q.to_json(Q.parse(fq)), "label": self.fixed_qty_label % Q.text(Q.parse(fq)),
                     "note": "Entries use this quantity; exits are capped at the open mock position."}
         return {"mode": "strategy", "fixed_qty": None,
                 "label": "strategy's own sizing (TEST order notional), checked against TEST limits"}

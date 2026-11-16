@@ -755,6 +755,7 @@ class ManagerSimulatedFlag(unittest.TestCase):
 
 class EntryGates(_Base):
     def _bounds(self, c, bar):
+        bar = dict({"ts_open":"2026-11-16T14:30:00Z", "ts_close":"2026-11-16T15:30:00Z"}, **(bar or {}))
         d = {"decision_id": "night-gate-0001"}
         return d, c._entry_bounds(d, bar, c.mgr.state(), 1, "buy", 400.0, 395.0)
 

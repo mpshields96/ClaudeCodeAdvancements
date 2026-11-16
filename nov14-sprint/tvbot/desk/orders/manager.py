@@ -60,6 +60,7 @@ import math
 import os
 from decimal import Decimal
 
+from orders import qty as Q
 from orders.calendar import parse_ts, iso
 from orders.fake_broker import BrokerError, BrokerOutage, BrokerUncertain
 from orders.intake import check_bar, DEFAULT_MAX_AGE_S
@@ -72,6 +73,7 @@ UNTRUSTED_BAR_CODES = ("BAD_BAR", "OUT_OF_ORDER", "STALE_EXCHANGE_TS", "FUTURE_E
 DEFAULT_FLATTEN_LEAD_S = 3900
 
 MODE = "REPLAY (OFFLINE, SIMULATED)"
+MIN_FRACTIONAL_BUY = Decimal("1.00")   # venue minimum for a new fractional buy; never applied to reductions
 LIMIT_KEYS = ("per_trade_notional", "max_loss_per_trade", "daily_loss", "gross_exposure")
 LIMITS_LABEL = "TEST VALUES"
 ENTRY = "entry"
@@ -118,7 +120,7 @@ def atomic_write_json(path, obj):
     _refuse_link(path)
     d = os.path.dirname(path)
     tmp = os.path.join(d, ".%s.tmp-%d" % (os.path.basename(path), os.getpid()))
-    data = (json.dumps(obj, sort_keys=True, indent=2) + "\n").encode("utf-8")
+    data = (json.dumps(obj, sort_keys=True, indent=2, default=Q.json_default) + "\n").encode("utf-8")
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     try:
         view = memoryview(data)
@@ -135,7 +137,7 @@ def atomic_write_json(path, obj):
 def _record_hash(rec):
     body = dict(rec)
     body.pop("sha", None)
-    return hashlib.sha256(json.dumps(body, sort_keys=True).encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(json.dumps(body, sort_keys=True, default=Q.json_default).encode("utf-8")).hexdigest()[:16]
 
 
 
@@ -157,7 +159,7 @@ class JsonlLog(object):
         rec = dict(rec)
         rec["seq"] = self.seq
         rec["sha"] = _record_hash(rec)
-        line = json.dumps(rec, sort_keys=True) + "\n"
+        line = json.dumps(rec, sort_keys=True, default=Q.json_default) + "\n"
         with open(self.path, "a") as fh:
             fh.write(line)
             fh.flush()
@@ -224,6 +226,9 @@ class OrderManager(object):
         if not isinstance(simulated, bool):
             raise ValueError("simulated must be True or False")
         self.simulated = simulated
+        # Fractional mode: only a connected broker that says so (the Alpaca broker built with
+        # fractional=True). The offline fake broker stays whole-share only.
+        self.fractional = getattr(broker, "fractional", False) is True
         self.limits = self._check_limits(limits)
         # Bar freshness for routing. Offline keeps intake's 5 s default; the Alpaca session binds its
         # advertised window (900 s) so an ordinary manual Check inside that window can still route.
@@ -277,6 +282,13 @@ class OrderManager(object):
             if not isinstance(v, (int, float)) or isinstance(v, bool) or not math.isfinite(v) or v <= 0:
                 raise ValueError("limit %s must be a positive number (TEST VALUES), got %r" % (k, v))
             out[k] = float(v)
+        # Optional: at most this many new entry attempts per trading day. Absent = no daily count
+        # (whole-share behaviour unchanged). Never defaulted.
+        mx = limits.get("max_daily_entries")
+        if mx is not None:
+            if not isinstance(mx, int) or isinstance(mx, bool) or mx <= 0:
+                raise ValueError("limit max_daily_entries must be a positive whole number, got %r" % (mx,))
+            out["max_daily_entries"] = mx
         return out
 
     def _take_lock(self):
@@ -317,6 +329,10 @@ class OrderManager(object):
             kind = rec.get("rec")
             if kind == "intent":
                 it = dict(rec)
+                try:
+                    it["qty"] = Q.parse(it.get("qty"))
+                except Q.QtyError:
+                    pass
                 it.setdefault("filled_qty", 0)
                 it["fill_ids"] = []
                 it["fees"] = 0.0
@@ -455,8 +471,8 @@ class OrderManager(object):
         if exec_id in self.booked:
             return False
         self.booked.add(exec_id)
-        qty, price, fee = int(rec["qty"]), float(rec["price"]), float(rec.get("fee") or 0.0)
-        it["filled_qty"] = int(it.get("filled_qty", 0)) + qty
+        qty, price, fee = Q.parse(rec["qty"]), float(rec["price"]), float(rec.get("fee") or 0.0)
+        it["filled_qty"] = Q.norm(Q.dec(it.get("filled_qty", 0)) + Q.dec(qty))
         it["fill_ids"].append(exec_id)
         it["fees"] = it.get("fees", 0.0) + fee
         self.fills.append(dict(rec))
@@ -464,13 +480,13 @@ class OrderManager(object):
         q0, a0 = self.pos_qty, self.pos_avg
         realized = 0.0
         if q0 == 0 or (q0 > 0) == (signed > 0):
-            q1 = q0 + signed
-            self.pos_avg = (a0 * abs(q0) + price * abs(signed)) / float(abs(q1))
+            q1 = Q.norm(Q.dec(q0) + Q.dec(signed))
+            self.pos_avg = (a0 * float(abs(q0)) + price * float(abs(signed))) / float(abs(q1))
             self.pos_qty = q1
         else:
-            closing = min(abs(q0), abs(signed))
+            closing = float(min(abs(Q.dec(q0)), abs(Q.dec(signed))))
             realized = (price - a0) * closing * (1 if q0 > 0 else -1) * self.multiplier
-            q1 = q0 + signed
+            q1 = Q.norm(Q.dec(q0) + Q.dec(signed))
             if q1 == 0:
                 self.pos_avg = 0.0
             elif (q1 > 0) != (q0 > 0):
@@ -500,7 +516,7 @@ class OrderManager(object):
             self._audit("acked", intent_id=iid, client_id=it["client_id"], order_id=fill.get("order_id"),
                         how="implied by fill")
         rec = {"rec": "fill", "intent_id": iid, "client_id": it["client_id"], "exec_id": exec_id,
-               "order_id": fill.get("order_id"), "qty": int(fill["qty"]), "price": float(fill["price"]),
+               "order_id": fill.get("order_id"), "qty": self._fill_qty(fill["qty"]), "price": float(fill["price"]),
                "fee": float(fill.get("fee") or 0.0), "fill_ts": fill.get("ts"), "mock": bool(fill.get("mock", True))}
         rec = self._log(rec)
         self._apply_fill_rec(rec)
@@ -509,7 +525,7 @@ class OrderManager(object):
                     price=rec["price"], fee=rec["fee"], how=how, late_after_cancel=late,
                     position_qty=self.pos_qty, mock=rec["mock"])
         if it["filled_qty"] > it["qty"]:
-            self._alarm("OVERFILL", "%s filled %d of %d" % (iid, it["filled_qty"], it["qty"]))
+            self._alarm("OVERFILL", "%s filled %s of %s" % (iid, Q.text(it["filled_qty"]), Q.text(it["qty"])))
         elif it["filled_qty"] == it["qty"] and it["status"] != "filled":
             self._set_status(iid, "filled")
         if self.controls.get("flat_confirmed") and self.pos_qty != 0:
@@ -535,7 +551,17 @@ class OrderManager(object):
         return self.mark
 
     def _remaining(self, it):
-        return max(0, int(it["qty"]) - int(it.get("filled_qty", 0)))
+        return Q.norm(max(Decimal(0), Q.dec(it["qty"]) - Q.dec(it.get("filled_qty", 0))))
+
+    def _fill_qty(self, v):
+        """A fill quantity: int() exactly as always on a whole-share desk, exact on a fractional one."""
+        return Q.parse(v) if self.fractional else int(v)
+
+    def _bq(self, v):
+        """A broker-reported quantity (order filled_qty, position qty), same rule as _fill_qty."""
+        if not self.fractional:
+            return int(v or 0)
+        return Q.parse_signed(v if v not in (None, "") else 0)
 
     def _live(self, kinds=None):
         out = []
@@ -553,16 +579,16 @@ class OrderManager(object):
         """gross_exposure in lexical Decimal, so a cap check accepts exact equality."""
         mark = self.mark if self.mark is not None else (self.pos_avg or 0.0)
         mult = _dec(self.multiplier)
-        gross = Decimal(abs(int(self.pos_qty))) * _dec(mark) * mult
+        gross = abs(Q.dec(self.pos_qty)) * _dec(mark) * mult
         for it in self._live([ENTRY]):
             price = self._price_of(it) or 0.0
-            gross += Decimal(int(self._remaining(it))) * _dec(price) * mult
+            gross += Q.dec(self._remaining(it)) * _dec(price) * mult
         return gross
 
     def unrealized(self):
         if self.pos_qty == 0 or self.mark is None:
             return 0.0
-        return (self.mark - self.pos_avg) * self.pos_qty * self.multiplier
+        return (self.mark - self.pos_avg) * float(self.pos_qty) * self.multiplier
 
     def day_pnl(self):
         day = self.by_day.get(self._day_key(None), {"realized": 0.0, "fees": 0.0})
@@ -594,14 +620,14 @@ class OrderManager(object):
         if ie is None or inv is None:
             return None
         q = self._remaining(it) if qty is None else qty
-        return q * abs(ie - inv) * self.multiplier + float(it.get("est_cost") or 0.0)
+        return float(q) * abs(ie - inv) * self.multiplier + float(it.get("est_cost") or 0.0)
 
     def _stop_risk(self):
         """Worst-case loss to the stops of the position and of working/reserved entries."""
         risk = 0.0
         for it in self._live(["protective"]):
             if it.get("stop") is not None and self.mark is not None:
-                risk += self._remaining(it) * max(0.0, abs(self.mark - float(it["stop"]))) * self.multiplier
+                risk += float(self._remaining(it)) * max(0.0, abs(self.mark - float(it["stop"]))) * self.multiplier
         for it in self._live([ENTRY]):
             r = self._entry_max_loss(it)
             if r is not None:
@@ -655,7 +681,7 @@ class OrderManager(object):
         if cost is not None and (not isinstance(cost, (int, float)) or isinstance(cost, bool)
                                  or not math.isfinite(cost) or cost < 0):
             return "BAD_COST"
-        notional_d = Decimal(int(it["qty"])) * _dec(price) * _dec(self.multiplier)
+        notional_d = Q.dec(it["qty"]) * _dec(price) * _dec(self.multiplier)
         if notional_d > _dec(self.limits["per_trade_notional"]):
             return "NOTIONAL"     # lexical Decimal: exactly at the cap passes, any true excess is refused
         new_risk = self._entry_max_loss(it, qty=it["qty"])
@@ -671,6 +697,100 @@ class OrderManager(object):
             return "DAILY_LOSS_STOP"
         if loss + self._stop_risk() + new_risk > self.limits["daily_loss"]:
             return "RISK_DAILY_LOSS_WORST_CASE"
+        return None
+
+    def _today_start_utc(self):
+        """Start of the current trading day (local midnight of the calendar's zone) in UTC."""
+        now = self.now()
+        if self.calendar is not None:
+            day = self.calendar.local_date(now)
+            return _dt.datetime(day.year, day.month, day.day, tzinfo=self.calendar.tz).astimezone(_dt.timezone.utc)
+        return _dt.datetime(now.year, now.month, now.day, tzinfo=_dt.timezone.utc)
+
+    def _entries_today(self):
+        """Client ids of this book's entry attempts persisted with today's entry_attempt_day."""
+        today = self._day_key(None)
+        return set(it["client_id"] for it in self.intents.values()
+                   if it.get("kind") == ENTRY and it.get("entry_attempt_day") == today)
+
+    def _check_daily_entries(self):
+        """DAILY_ENTRY_LIMIT when today's entry attempts reach max_daily_entries.
+
+        Counts the union of this book's persisted attempts and, on a connected broker, every buy of
+        this symbol the account shows since local midnight in any status. A second kit copy or a
+        fresh state directory on the same day therefore still sees the day's entry. If the broker
+        count cannot be read completely, the entry is held (ENTRY_COUNT_UNVERIFIED). Only the entry
+        branch calls this: protectives, exits and Stop & Close never read the counter."""
+        mx = self.limits.get("max_daily_entries")
+        if mx is None:
+            return None
+        used = self._entries_today()
+        fn = getattr(self.broker, "entry_buys_since", None)
+        if fn is None:
+            if self.fractional:
+                return "ENTRY_COUNT_UNVERIFIED"
+        else:
+            start = self._today_start_utc()
+            try:
+                res = fn(iso(start))
+                if not isinstance(res, dict) or res.get("complete") is not True \
+                        or not isinstance(res.get("orders"), list):
+                    raise ValueError("incomplete")
+                if res.get("foreign_working_buy"):
+                    return "EXTERNAL_WORKING_BUY"
+                for o in res["orders"]:
+                    if not isinstance(o, dict) or o.get("side") != "buy":
+                        continue
+                    if o.get("symbol") not in (None, self.symbol):
+                        continue
+                    ts = o.get("submitted_at")
+                    try:
+                        if ts is not None and parse_ts(ts) < start:
+                            continue
+                    except (ValueError, TypeError):
+                        pass                         # unreadable time: counted (conservative)
+                    used.add(o.get("client_id") or ("broker:%d" % len(used)))
+            except Exception as exc:
+                self._audit("control", action="entry_count_unverified", error=type(exc).__name__)
+                return "ENTRY_COUNT_UNVERIFIED"
+        self._counted_entry_ids = used
+        if len(used) >= mx:
+            return "DAILY_ENTRY_LIMIT"
+        return None
+
+    def _check_frac_entry(self, it):
+        """Fractional mode only: the $1.00 minimum for a new buy and actual non-margin cash.
+
+        Never upsizes. Runs before entry_attempt_day is written, so these skips do not use the day's
+        entry. Values are not logged."""
+        if it["side"] != "buy":
+            return "FRACTIONAL_LONG_ONLY"
+        price = self._price_of(it)
+        if price is None:
+            return "NO_PRICE"
+        notional = Q.dec(it["qty"]) * _dec(price) * _dec(self.multiplier)
+        if notional < MIN_FRACTIONAL_BUY:
+            return "BELOW_MIN_NOTIONAL"
+        fn = getattr(self.broker, "funding", None)
+        if fn is None:
+            return "CASH_UNAVAILABLE"
+        try:
+            f = fn()
+            vals = []
+            for k in (("cash", "non_marginable_buying_power", "buying_power") if "buying_power" in f else ("cash", "non_marginable_buying_power")):
+                v = Decimal(str(f[k]).strip())
+                if not v.is_finite() or v < 0:
+                    raise ValueError(k)
+                vals.append(v)
+        except Exception:
+            return "CASH_UNAVAILABLE"
+        available = min(vals)
+        working = Decimal(0)
+        for w in self._live([ENTRY]):
+            if w["side"] == "buy":
+                working += Q.dec(self._remaining(w)) * _dec(self._price_of(w) or 0.0) * _dec(self.multiplier)
+        if notional + working > available:
+            return "INSUFFICIENT_CASH"
         return None
 
     def _check_exit(self, it):
@@ -700,9 +820,17 @@ class OrderManager(object):
         kind = intent.get("kind", ENTRY)
         side = intent.get("side")
         qty = intent.get("qty")
-        if kind not in KINDS or side not in ("buy", "sell") or not isinstance(qty, int) \
+        if self.fractional and kind in KINDS and side in ("buy", "sell"):
+            try:
+                qty = Q.parse(qty)
+            except Q.QtyError as exc:
+                raise ValueError("bad intent: kind %r side %r qty %r (%s)" % (kind, side, qty, exc))
+        elif kind not in KINDS or side not in ("buy", "sell") or not isinstance(qty, int) \
                 or isinstance(qty, bool) or qty <= 0:
-            raise ValueError("bad intent: kind %r side %r qty %r" % (kind, side, qty))
+            frac = (isinstance(qty, (float, Decimal)) and not isinstance(qty, bool) and qty > 0
+                    and qty != int(qty))
+            raise ValueError("bad intent: kind %r side %r qty %r%s" % (
+                kind, side, qty, " (FRACTIONAL_NOT_ENABLED on this desk)" if frac else ""))
         return self._submit(iid, intent, kind, side, qty, internal=False)
 
     def _submit(self, iid, intent, kind, side, qty, internal):
@@ -730,6 +858,22 @@ class OrderManager(object):
                 reason = "WRONG_SYMBOL"
             elif kind == ENTRY:
                 reason = self.entry_block_reason() or self._check_entry_risk(it)
+                if reason is None:
+                    reason = self._check_daily_entries()
+                if reason is None and self.fractional:
+                    reason = self._check_frac_entry(it)
+                if reason is None and self.fractional and self.limits.get("max_daily_entries") is not None:
+                    reserve = getattr(self.broker, "reserve_entry_attempt", None)
+                    if reserve is not None:
+                        try:
+                            reason = reserve(self._day_key(None), it["client_id"],
+                                             self.limits["max_daily_entries"], self._counted_entry_ids)
+                        except Exception:
+                            reason = "ENTRY_COUNT_UNVERIFIED"
+                if reason is None:
+                    # Persisted with the intent below, before the first possible send: from here the
+                    # attempt counts whatever the broker answers (rejected, uncertain, working, filled).
+                    it["entry_attempt_day"] = self._day_key(None)
             else:
                 reason = self._check_exit(it)
         if reason:
@@ -980,11 +1124,12 @@ class OrderManager(object):
                 bstatus = o.get("status")
                 if bstatus not in BROKER_STATUSES:
                     flag("UNKNOWN_STATUS", "%s has broker status %r" % (iid, bstatus))
-                bfilled = int(o.get("filled_qty") or 0)
-                if bfilled != int(it.get("filled_qty", 0)):
-                    flag("FILL_TOTAL_MISMATCH", "%s broker filled %d, booked %d" % (iid, bfilled, it["filled_qty"]))
-                if bfilled > int(it["qty"]):
-                    flag("OVERFILL", "%s broker filled %d of %d" % (iid, bfilled, it["qty"]))
+                bfilled = self._bq(o.get("filled_qty"))
+                if bfilled != Q.dec(it.get("filled_qty", 0)):
+                    flag("FILL_TOTAL_MISMATCH", "%s broker filled %s, booked %s" % (
+                        iid, Q.text(bfilled), Q.text(it.get("filled_qty", 0))))
+                if bfilled > Q.dec(it["qty"]):
+                    flag("OVERFILL", "%s broker filled %s of %s" % (iid, Q.text(bfilled), Q.text(it["qty"])))
                 if bstatus in ("filled", "canceled", "rejected") and it["status"] == "acked":
                     self._set_status(iid, bstatus)
                     report["status_updates"].append([iid, bstatus])
@@ -992,16 +1137,25 @@ class OrderManager(object):
             flag("BROKER_UNREACHABLE", "query failed during reconcile")
             return self._finish_reconcile(report, alarms, connected=False)
         mine = positions.get(self.symbol) if isinstance(positions, dict) else None
-        bqty = int((mine or {}).get("qty") or 0)
+        if self.fractional and isinstance(mine, dict) and mine.get("qty_exact") is not None:
+            bqty = self._bq(mine.get("qty_exact"))
+        else:
+            bqty = self._bq((mine or {}).get("qty"))
         for sym, p in (positions or {}).items():
-            if sym != self.symbol and int((p or {}).get("qty") or 0) != 0:
+            if sym == self.symbol:
+                continue
+            try:
+                foreign = self._bq((p or {}).get("qty")) != 0
+            except (ValueError, TypeError):
+                foreign = True
+            if foreign:
                 flag("FOREIGN_POSITION", "position in %s" % sym)
         if bqty != self.pos_qty:
             excess = abs(bqty) > abs(self.pos_qty) or (bqty > 0) != (self.pos_qty > 0)
             flag("POSITION_EXCESS" if excess else "POSITION_MISMATCH",
-                 "broker position %d, booked %d" % (bqty, self.pos_qty))
-        report["positions"] = {"broker": bqty, "booked": self.pos_qty}
-        if isinstance(mine, dict) and mine.get("fractional"):
+                 "broker position %s, booked %s" % (Q.text(bqty), Q.text(self.pos_qty)))
+        report["positions"] = {"broker": Q.to_json(bqty), "booked": Q.to_json(self.pos_qty)}
+        if isinstance(mine, dict) and mine.get("fractional") and not self.fractional:
             exact = str(mine.get("qty_exact"))
             report["positions"]["broker_exact"] = exact
             report["positions"]["fractional"] = True
@@ -1207,6 +1361,7 @@ class OrderManager(object):
     def _desk_owned(broker_qty, booked_qty):
         """The signed shares Stop & Close may act on: the part of the broker position this desk booked.
         Shares held outside the desk (another app, a manual trade) are never closed or covered here."""
+        broker_qty, booked_qty = Q.parse_signed(broker_qty), Q.parse_signed(booked_qty)
         if broker_qty > 0 and booked_qty > 0:
             return min(broker_qty, booked_qty)
         if broker_qty < 0 and booked_qty < 0:
@@ -1219,8 +1374,8 @@ class OrderManager(object):
         bqty, booked = rep["positions"]["broker"], rep["positions"]["booked"]
         if self._live(["protective", "exit", "close"]):
             self._cancel_kinds(["protective", "exit", "close"])
-        why = ("broker position %d SPY is not this desk's (desk booked %d); not closed or covered. "
-               "Resolve it in your Alpaca account." % (bqty, booked))
+        why = ("broker position %s SPY is not this desk's (desk booked %s); not closed or covered. "
+               "Resolve it in your Alpaca account." % (Q.text(Q.parse_signed(bqty)), Q.text(Q.parse_signed(booked))))
         self._save_controls(flat_confirmed=False, close_pending=why)
         self._audit("control", action="stop_external_position", broker=bqty, booked=booked)
         return {"state": "pending", "why": why, "external_position": bqty, "desk_booked": booked,
@@ -1320,7 +1475,7 @@ class OrderManager(object):
                    else "close order working; protective exits kept until flat")
             self._save_controls(close_pending=why)
             return {"state": "pending", "why": why, "close": [c["intent_id"] for c in closes]}
-        qty = abs(owned) - covered
+        qty = Q.norm(Q.dec(abs(owned)) - Q.dec(covered))
         attempt = int(self.controls.get("close_attempts", 0)) + 1
         self._save_controls(close_attempts=attempt)
         decision_id = "close|%s|%s|%d" % (self.controls.get("session_id"), self.controls.get("stop_utc"), attempt)
@@ -1330,28 +1485,29 @@ class OrderManager(object):
         st = it.get("status")
         if st == "acked":
             if unprotected:
-                why = "closing %d at market (reduce-only); protective canceled first" % qty
+                why = "closing %s at market (reduce-only); protective canceled first" % Q.text(qty)
             else:
-                why = "closing %d at market (reduce-only); protective exits kept until flat" % qty
+                why = "closing %s at market (reduce-only); protective exits kept until flat" % Q.text(qty)
             self._save_controls(close_pending=why)
-            return {"state": "closing", "intent_id": iid, "qty": qty, "why": why}
+            return {"state": "closing", "intent_id": iid, "qty": Q.to_json(qty), "why": why}
         if unprotected:
-            why = "position %d SPY UNPROTECTED: protective canceled, close pending" % abs(owned)
+            why = "position %s SPY UNPROTECTED: protective canceled, close pending" % Q.text(abs(owned))
             self._save_controls(close_pending=why)
-            return {"state": "closing_unprotected", "why": why, "intent_id": iid, "qty": qty,
+            return {"state": "closing_unprotected", "why": why, "intent_id": iid, "qty": Q.to_json(qty),
                     "close_status": st, "close_reason": it.get("reason")}
         if st in ("rejected", "not_placed"):
             why = "close rejected (%s); protective exits kept; retry next poll" % it.get("reason")
         else:
             why = "close sent, broker answer unknown (%s); protective exits kept" % st
         self._save_controls(close_pending=why)
-        return {"state": "pending", "why": why, "intent_id": iid, "qty": qty}
+        return {"state": "pending", "why": why, "intent_id": iid, "qty": Q.to_json(qty)}
 
     # ------------------------------------------------------------------ views
     def _order_view(self, it):
         return {"intent_id": it["intent_id"], "client_id": it["client_id"], "order_id": it.get("order_id"),
-                "kind": it["kind"], "side": it["side"], "qty": it["qty"], "filled_qty": it.get("filled_qty", 0),
-                "remaining": self._remaining(it), "limit": it.get("limit"), "stop": it.get("stop"),
+                "kind": it["kind"], "side": it["side"], "qty": Q.to_json(it["qty"]),
+                "filled_qty": Q.to_json(it.get("filled_qty", 0)),
+                "remaining": Q.to_json(self._remaining(it)), "limit": it.get("limit"), "stop": it.get("stop"),
                 "status": it["status"], "simulated": self.simulated}
 
     def ledger_rows(self):
@@ -1360,7 +1516,7 @@ class OrderManager(object):
         fills_by = {}
         for f in self.fills:
             fills_by.setdefault(f["intent_id"], []).append({
-                "exec_id": f["exec_id"], "qty": f["qty"], "price": f["price"], "fee": f["fee"],
+                "exec_id": f["exec_id"], "qty": Q.to_json(f["qty"]), "price": f["price"], "fee": f["fee"],
                 "ts": f.get("fill_ts"), "mock": bool(f.get("mock", True)), "simulated": self.simulated})
         for it in self.intents.values():
             rows.append({"trade_id": it["intent_id"], "decision_id": it["decision_id"], "intent_id": it["intent_id"],
@@ -1387,7 +1543,9 @@ class OrderManager(object):
                          "flat_confirmed": bool(c.get("flat_confirmed")),
                          "schedule_enabled": bool(c.get("schedule_enabled")),
                          "stop_reason": c.get("stop_reason"), "close_pending": c.get("close_pending")},
-            "exposure": {"position_qty": self.pos_qty, "avg_price": round(self.pos_avg, 6),
+            "daily_entries": {"used": len(self._entries_today()), "max": self.limits.get("max_daily_entries"),
+                              "day": self._day_key(None), "counts_broker_buys": self.fractional},
+            "exposure": {"position_qty": Q.to_json(self.pos_qty), "avg_price": round(self.pos_avg, 6),
                          "working_orders": working,
                          "gross_including_working": round(self.gross_exposure(), 6),
                          "broker_position_qty": getattr(self, "_broker_position", None),

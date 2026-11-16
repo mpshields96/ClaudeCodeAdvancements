@@ -10,7 +10,11 @@ Flow: draft -> inspect the calculated effects -> explicit local operator approva
 - Whether a config is genuine is decided by provenance plus that explicit confirmation, never by
   comparing numbers. Matthew may choose the same dollar amounts as a test example.
 - The real paper path refuses: no approved snapshot; provenance draft/template/test-example; a hash
-  mismatch (edited after approval); a null or non-positive value; a missing or fractional fixed_shares.
+  mismatch (edited after approval); a null or non-positive value; a missing fixed_shares; more than 9
+  decimal places; a fractional fixed_shares without max_daily_entries.
+- fixed_shares may be fractional (an exact decimal, at most 9 places). Only a connected Alpaca desk
+  trades it (DAY, simple, long-only orders); the offline desk refuses it. A fractional size also
+  needs max_daily_entries, the most new entry attempts per regular trading day.
 - Suggestions and TEST EXAMPLE presets are read-only. They never change the draft or approve anything.
 
 Stdlib only (Python 3.9). No network, no credentials.
@@ -24,10 +28,26 @@ import tempfile
 import time
 from decimal import Decimal, InvalidOperation, ROUND_CEILING, ROUND_FLOOR
 
+try:
+    from orders import qty as Q
+except ImportError:   # run as a script from alpaca/
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    from orders import qty as Q
+
 FIELDS = ("fixed_shares", "max_loss_per_trade", "daily_loss", "per_trade_notional", "gross_exposure")
 CAP_FIELDS = ("per_trade_notional", "max_loss_per_trade", "daily_loss", "gross_exposure")
+# Optional fields join the content hash only when set, so approvals made before they existed keep
+# their hash. max_daily_entries is required when fixed_shares is fractional.
+OPTIONAL_FIELDS = ("max_daily_entries",)
+ALL_FIELDS = FIELDS + OPTIONAL_FIELDS
+MIN_FRACTIONAL_BUY = Decimal("1.00")   # venue rule (Alpaca fractional: "as little as $1"); new buys only
 FIELD_HELP = {
-    "fixed_shares": "Whole shares per entry. Required. There is no default and no formula.",
+    "fixed_shares": ("Shares per entry: a whole number, or a fraction with at most 9 decimal places "
+                     "(fractions trade only on a connected Alpaca desk, as DAY simple long-only orders). "
+                     "Required. There is no default and no formula."),
+    "max_daily_entries": ("Most new entry attempts per regular trading day, counting rejected, uncertain, "
+                          "working and filled attempts. Required for fractional shares, optional for whole "
+                          "shares. Exits and protective stops are never limited by it."),
     "max_loss_per_trade": "Dollars you accept losing on one trade if the stop is hit.",
     "daily_loss": "Dollars of realized loss in one day after which new entries stop.",
     "per_trade_notional": "Largest dollar value of a single order (shares x price).",
@@ -90,8 +110,12 @@ def _read_json(path):
 
 
 def content_hash(values):
-    """Hash of the five values only. Identifies the draft the operator reviewed."""
+    """Hash of the five values, plus each optional field that is set. Identifies the draft the
+    operator reviewed. A record without the optional fields hashes exactly as it did before."""
     canon = {k: (values or {}).get(k) for k in FIELDS}
+    for k in OPTIONAL_FIELDS:
+        if (values or {}).get(k) is not None:
+            canon[k] = values[k]
     blob = json.dumps(canon, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
@@ -129,6 +153,27 @@ def _check(field, value, allow_null):
     """(clean value, problem or None)."""
     if value is None:
         return None, (None if allow_null else "%s is empty; only you can set it" % field)
+    if field == "fixed_shares":
+        try:
+            q = Q.parse(value)
+        except Q.QtyError as exc:
+            msg = str(exc)
+            if "greater than zero" in msg:
+                return None, "fixed_shares must be more than zero"
+            if "finite" in msg:
+                return None, "fixed_shares must be a finite number"
+            if "decimal places" in msg or "significant digits" in msg:
+                return None, "fixed_shares " + msg.split("quantity ", 1)[-1]
+            return None, "fixed_shares must be a number"
+        return Q.to_json(q), None
+    if field == "max_daily_entries":
+        try:
+            n = Q.parse(value)
+        except Q.QtyError:
+            return None, "max_daily_entries must be a whole number of at least 1"
+        if not isinstance(n, int):
+            return None, "max_daily_entries must be a whole number of at least 1"
+        return n, None
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         if isinstance(value, str):
             try:
@@ -139,14 +184,6 @@ def _check(field, value, allow_null):
             return None, "%s must be a number" % field
     if not math.isfinite(float(value)):
         return None, "%s must be a finite number" % field
-    if field == "fixed_shares":
-        d = _dec(value)
-        if d != d.to_integral_value():
-            return None, "fixed_shares must be whole shares (no fractions)"
-        value = int(d)
-        if value <= 0:
-            return None, "fixed_shares must be at least 1"
-        return value, None
     value = float(value)
     if value <= 0:
         return None, "%s must be more than zero" % field
@@ -167,7 +204,25 @@ def validate(values, allow_null=False):
         clean[field] = v
         if p:
             problems.append(p)
+    for field in OPTIONAL_FIELDS:   # present in clean only when set: older records keep their shape
+        v, p = _check(field, values.get(field), True)
+        if p:
+            problems.append(p)
+        elif v is not None:
+            clean[field] = v
+    if is_fractional_size(clean) and clean.get("max_daily_entries") is None and not allow_null:
+        problems.append("max_daily_entries is required for fractional shares; only you can set it")
     return clean, problems
+
+def is_fractional_size(values):
+    """True when fixed_shares is set and not a whole number."""
+    v = (values or {}).get("fixed_shares")
+    if v is None or isinstance(v, bool):
+        return False
+    try:
+        return Q.is_fractional(Q.parse(v))
+    except Q.QtyError:
+        return False
 
 
 def is_complete(values):
@@ -177,7 +232,7 @@ def is_complete(values):
 def diff(old_values, new_values):
     old_values = old_values or {}
     return [{"field": k, "old": old_values.get(k), "new": (new_values or {}).get(k)}
-            for k in FIELDS if old_values.get(k) != (new_values or {}).get(k)]
+            for k in ALL_FIELDS if old_values.get(k) != (new_values or {}).get(k)]
 
 
 def draft_path(state_dir):
@@ -315,6 +370,8 @@ def as_session_limits(loaded):
     out = {k: v[k] for k in CAP_FIELDS}
     out["label"] = loaded.get("label") or ""
     out["fixed_shares"] = v["fixed_shares"]
+    if v.get("max_daily_entries") is not None:   # absent for older records: session config unchanged
+        out["max_daily_entries"] = v["max_daily_entries"]
     out["provenance"] = loaded.get("provenance")
     out["hash"] = loaded.get("hash")
     return out
@@ -374,7 +431,7 @@ def effects(values, ref_price, stop_distance, fee_per_share=0.0, slippage_per_sh
         caps[k] = _dec(v[k]) if v.get(k) is not None else None
     exact = {}
     if shares is not None:
-        q = Decimal(shares)
+        q = Q.dec(Q.parse(shares))
         exact["notional"] = q * price
         exact["costs"] = q * per_share_cost
         exact["loss"] = q * stop + exact["costs"]
@@ -394,6 +451,13 @@ def effects(values, ref_price, stop_distance, fee_per_share=0.0, slippage_per_sh
 
     if shares is None:
         add("fixed_shares", False, "fixed_shares is not set, so no trade can be sized")
+    elif is_fractional_size(v):
+        ok = not exact["notional"] < MIN_FRACTIONAL_BUY
+        add("min_fractional_buy", ok, "order value $%.2f %s the venue's $%.2f minimum for a new fractional buy%s"
+            % (_money(exact["notional"], ROUND_FLOOR), "meets" if ok else "is BELOW", float(MIN_FRACTIONAL_BUY),
+               "" if ok else "; the desk skips such an entry and never rounds it up"))
+        if v.get("max_daily_entries") is None:
+            add("max_daily_entries", False, "max_daily_entries is not set; fractional shares require it")
     for cap in CAP_FIELDS:
         limit = caps[cap]
         if limit is None:
@@ -453,7 +517,8 @@ def worksheet(state_dir):
         except LimitsError as exc:
             approved_ok = str(exc)
     pending = diff((approved or {}).get("values"), (draft or {}).get("values")) if draft else []
-    return {"fields": list(FIELDS), "help": FIELD_HELP, "draft": draft, "approved": approved,
+    return {"fields": list(ALL_FIELDS), "required_fields": list(FIELDS),
+            "optional_fields": list(OPTIONAL_FIELDS), "help": FIELD_HELP, "draft": draft, "approved": approved,
             "draft_hash": content_hash(draft.get("values")) if draft else None,
             "approved_hash": (approved or {}).get("hash") or None,
             "approved_ok": approved_ok, "active": active, "pending_diff": pending,

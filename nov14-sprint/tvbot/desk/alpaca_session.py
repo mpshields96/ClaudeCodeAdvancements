@@ -38,6 +38,7 @@ from alpaca.state import AdapterState
 from alpaca.broker import cent_price
 from alpaca.readiness import read_quote
 from orders.calendar import SessionCalendar, parse_ts, iso
+from orders import qty as Q
 
 MODE_MOCK = "mock"
 MODE_HTTPS = "https"
@@ -66,10 +67,10 @@ FILL_TIMING_NOTE = ("Manual desk: a broker fill that happens between your Checks
 VENUE_CLOCK_SKEW_S = 120.0
 SNAPSHOT_FILE = "alpaca_broker_snapshot.json"
 MOCK_START_DAY = "2026-11-16"     # synthetic walkthrough day (a Monday on the NYSE calendar)
-MOCK_TEST_LABEL = ("MOCK WALKTHROUGH TEST VALUE: fixed %d share(s); not Matthew's sizing "
+MOCK_TEST_LABEL = ("MOCK WALKTHROUGH TEST VALUE: fixed %s share(s); not Matthew's sizing "
                    "(no approved or draft limits in this state dir)")
-MOCK_DRAFT_LABEL = "MOCK REHEARSAL ON DRAFT LIMITS: fixed %d share(s) (draft, not approved)"
-APPROVED_QTY_LABEL = "OPERATOR-APPROVED fixed %%d share(s) (limits snapshot %s)"
+MOCK_DRAFT_LABEL = "MOCK REHEARSAL ON DRAFT LIMITS: fixed %s share(s) (draft, not approved)"
+APPROVED_QTY_LABEL = "OPERATOR-APPROVED fixed %%s share(s) (limits snapshot %s)"
 SHORT_OPEN_DETAIL = ("opening a short is blocked in the first SPY paper path (no borrow/locate or "
                      "short-sale semantics verified); exits and Stop still work")
 
@@ -134,11 +135,13 @@ def _session_limits(loaded):
     reads no file and does not modify the snapshot."""
     sizing = importlib.import_module("alpaca.sizing")
     lim = dict(sizing.as_session_limits(loaded))
-    fixed = int(lim.pop("fixed_shares"))
+    fixed = Q.parse(lim.pop("fixed_shares"))   # int, or an exact Decimal fraction
     source = {k: v for k, v in loaded.items() if k != "values"}
     session_lim = {k: float(lim[k]) for k in sizing.CAP_FIELDS}
     session_lim["label"] = lim.get("label") or ""
     session_lim["limits_hash"] = lim.get("hash")
+    if lim.get("max_daily_entries") is not None:     # optional; required by sizing for a fraction
+        session_lim["max_daily_entries"] = int(lim["max_daily_entries"])
     return session_lim, fixed, source
 
 
@@ -248,7 +251,7 @@ CONNECTION_CHECK_MAX_AGE_S = 300.0      # live Arm needs a passing GET-only chec
 _monotonic = time.monotonic             # module seam so tests can age a check without sleeping
 
 
-def _eligibility(name, b, live=True):
+def _eligibility(name, b, live=True, fractional=False):
     """Live eligibility, explicit: a missing or None field fails. Returns a reason or None.
     trade_suspended_by_user (GET /v2/account) must be explicitly false in live; paper and mock
     fail only when it is true, since the local mock account does not carry the field."""
@@ -278,7 +281,24 @@ def _eligibility(name, b, live=True):
         bad.append("tradable %r (needs true)" % (b.get("tradable"),))
     if b.get("status") != "active":
         bad.append("status %r (needs active)" % (b.get("status"),))
+    if fractional and b.get("fractionable") is not True:
+        bad.append("FRACTIONABLE_UNVERIFIED: fractionable %r (needs true)" % (b.get("fractionable"),))
     return "; ".join(bad) or None
+
+
+def _cash_readable(b):
+    """Fractional mode: cash and non_marginable_buying_power both parse as amounts. Returns only
+    True or False; the amounts themselves are never stored, logged or shown."""
+    for k in ("cash", "non_marginable_buying_power"):
+        v = b.get(k)
+        if v is None or isinstance(v, bool):
+            return False
+        try:
+            if not Q._to_dec(v).is_finite():
+                return False
+        except Exception:
+            return False
+    return True
 
 
 class _LiveRows(object):
@@ -353,10 +373,10 @@ class AlpacaSessionController(S.SessionController):
             # describe it truthfully with a copy; hash, values_hash, approved_utc, provenance and the
             # signed snapshot object itself are unchanged.
             self.limits_source = dict(self.limits_source, label="OPERATOR-APPROVED LIVE LIMITS")
-            if int(fixed) != int(live_authorization.shares):
+            if Q.dec(Q.parse(fixed)) != Q.dec(Q.parse(live_authorization.shares)):   # exact, never int()
                 raise LiveModeRefused("the authorized share count does not match the approved snapshot")
             self._limits_snapshot, self._limits_hash = limits_snapshot, live_authorization.limits_hash
-            self._limits_frozen = json.dumps({"limits": limits, "fixed": fixed}, sort_keys=True)
+            self._limits_frozen = json.dumps({"limits": limits, "fixed": Q.to_json(fixed)}, sort_keys=True)
         else:
             limits, fixed, self.limits_source = resolve_limits(mode, state_dir, limits_path)
         if self.mock and self.limits_source.get("provenance") == "draft":
@@ -378,7 +398,13 @@ class AlpacaSessionController(S.SessionController):
         self._broker_factory = broker_factory
         self.lab = lab
         cfg = dict(S.DEMO_STRATEGY_CFG if strategy_cfg is None else strategy_cfg)
-        cfg["fixed_qty"] = int(fixed)
+        cfg["fixed_qty"] = Q.to_json(Q.parse(fixed, allow_zero=True))   # JSON-safe; re-parsed exactly where used
+        self._fractional_qty = Q.is_fractional(Q.parse(fixed, allow_zero=True))
+        if self._fractional_qty and not self.mock:
+            # Connected fractional desk only (W-A defines the profile in strategies/base.py).
+            # Whole-share and offline desks never set these keys.
+            cfg["cost_profile"] = "alpaca_equity"
+            cfg["fractional"] = True
         # Strategy sizing basis = this session's chosen limits, never the offline $2,000 TEST
         # cap (Codex 22:5xZ: base_qty(500) returned 0 for 10 shares under a $6,000 per-order
         # cap). The offline DeskSession keeps its old contract: it never sets these keys.
@@ -509,7 +535,19 @@ class AlpacaSessionController(S.SessionController):
         if factory is None:
             factory = _need("alpaca.broker", "AlpacaPaperBroker")
         restored = os.path.exists(os.path.join(self.state_dir, "alpaca_broker.json"))
-        broker = factory(self.transport, self.state_dir, self.evidence_label, self.adapter_state)
+        if getattr(self, "_fractional_qty", False):
+            # A fractional size needs a broker built for fractional DAY simple orders. A factory that
+            # cannot take the flag builds a whole-share broker, and every fractional entry then
+            # refuses FRACTIONAL_NOT_ENABLED (session._route). Nothing is rounded to a whole share.
+            try:
+                broker = factory(self.transport, self.state_dir, self.evidence_label, self.adapter_state,
+                                 fractional=True)
+            except TypeError as exc:
+                if "fractional" not in str(exc):
+                    raise
+                broker = factory(self.transport, self.state_dir, self.evidence_label, self.adapter_state)
+        else:
+            broker = factory(self.transport, self.state_dir, self.evidence_label, self.adapter_state)
         if self.live:
             # session.py hands this broker to OrderManager, which then writes every row, state
             # field and fill with simulated False from its first row. Paper and mock keep True.
@@ -675,6 +713,14 @@ class AlpacaSessionController(S.SessionController):
             if not (q.get("valid") and q.get("fresh")):
                 return None, ("QUOTE_GATE", "new entry held: SPY IEX quote %s; no order"
                               % (q.get("reason") or "unavailable"))
+            if self._fractional_qty and Q.dec(qty) * Q.dec(q["ask"]) < Q.dec(1):
+                return None, ("BELOW_MIN_NOTIONAL", "fixed size at the fresh ask is below the minimum; no order")
+            try:
+                phase = self._bar_role(bar)
+            except (KeyError, TypeError, ValueError, OverflowError):
+                phase = None
+            if phase != "open":
+                return None, ("REGULAR_SESSION_NEAR_CLOSE", "the exchange calendar leaves no eligible next entry window")
         lim = self.limits
         cost = S._cost_usd(d)
         gross_used = float(st["exposure"].get("gross_including_working") or 0.0)
@@ -895,18 +941,22 @@ class AlpacaSessionController(S.SessionController):
             st = self.mgr.state()
         except Exception as exc:
             return {"available": False, "error": exc.__class__.__name__, "simulated": self.mock}
-        pos = int(st["exposure"]["position_qty"] or 0)
+        # Exact quantities (int or Decimal); fractional shares are never truncated to whole ones.
+        pos = Q.parse_signed(st["exposure"]["position_qty"] or 0)
         side = "sell" if pos > 0 else "buy"
-        prot = sum(int(o.get("remaining") or 0) for o in st["protective_orders"] if o.get("side") == side)
-        exits = sum(int(o.get("remaining") or 0) for o in st["exposure"]["working_orders"]
-                    if o.get("kind") in ("exit", "close") and o.get("side") == side)
-        covered = min(abs(pos), prot + exits) if pos else 0
-        out = {"available": True, "position_qty": pos, "protective_qty": prot, "exit_working_qty": exits,
-               "covered_qty": covered, "uncovered_qty": abs(pos) - covered,
+        prot = Q.norm(sum((Q.dec(Q.parse(o.get("remaining") or 0, allow_zero=True))
+                           for o in st["protective_orders"] if o.get("side") == side), Q.dec(0)))
+        exits = Q.norm(sum((Q.dec(Q.parse(o.get("remaining") or 0, allow_zero=True))
+                            for o in st["exposure"]["working_orders"]
+                            if o.get("kind") in ("exit", "close") and o.get("side") == side), Q.dec(0)))
+        covered = Q.norm(min(abs(pos), prot + exits)) if pos else 0
+        out = {"available": True, "position_qty": Q.to_json(pos), "protective_qty": Q.to_json(prot),
+               "exit_working_qty": Q.to_json(exits), "covered_qty": Q.to_json(covered),
+               "uncovered_qty": Q.to_json(abs(pos) - covered),
                "stopped": bool(st["controls"]["stopped"]), "simulated": self.mock}
         if out["uncovered_qty"] > 0:
-            out["warning"] = ("%d of %d booked SPY shares have no working protective stop or exit order"
-                              % (out["uncovered_qty"], abs(pos)))
+            out["warning"] = ("%s of %s booked SPY shares have no working protective stop or exit order"
+                              % (Q.text(Q.parse(out["uncovered_qty"])), Q.text(abs(pos))))
             ref = [x for x in self.mgr.intents.values()
                    if x.get("kind") == "protective" and x.get("status") == "rejected"]
             if ref:
@@ -921,7 +971,7 @@ class AlpacaSessionController(S.SessionController):
         (an open attempt counts as covering); a refused attempt is retried on a later Check at most
         three times, then the uncovered count stays on screen."""
         st = self.mgr.state()
-        pos = int(st["exposure"]["position_qty"] or 0)
+        pos = Q.parse_signed(st["exposure"]["position_qty"] or 0)
         if pos == 0:
             return
         if st["controls"]["stopped"] or st["controls"].get("close_pending"):
@@ -939,17 +989,17 @@ class AlpacaSessionController(S.SessionController):
         # Initial (nothing covered) and residual share one path: the first attempt keeps the
         # base id, a refused attempt is retried under a NEW id (|tryN), never the rejected one.
         if pv["covered_qty"] == 0:
-            base = "protect|%s|%d" % (it["decision_id"], abs(pos))
+            base = "protect|%s|%s" % (it["decision_id"], Q.text(abs(pos)))
         else:
-            base = "protect|%s|%d|res%d" % (it["decision_id"], abs(pos), pv["covered_qty"])
+            base = "protect|%s|%s|res%s" % (it["decision_id"], Q.text(abs(pos)), Q.text(Q.parse(pv["covered_qty"])))
         tries = [x for x in self.mgr.intents.values()
                  if x.get("decision_id") == base or str(x.get("decision_id", "")).startswith(base + "|try")]
         if any(x.get("status") in ("pending", "uncertain", "acked") for x in tries):
             return
         if len(tries) >= 3:
             self._desk_audit("alarm", code="PROTECTIVE_RESIDUAL_REFUSED", uncovered_qty=pv["uncovered_qty"],
-                             detail="protective refused %d times; %d shares stay uncovered"
-                                    % (len(tries), pv["uncovered_qty"]))
+                             detail="protective refused %d times; %s shares stay uncovered"
+                                    % (len(tries), Q.text(Q.parse(pv["uncovered_qty"]))))
             return
         side = "sell" if pos > 0 else "buy"
         # Recheck the crossing on the price the venue will actually see (cent tick, safe side):
@@ -963,16 +1013,16 @@ class AlpacaSessionController(S.SessionController):
                 self._desk_audit("alarm", code="PROTECTIVE_STOP_CROSSED", uncovered_qty=pv["uncovered_qty"],
                                  stop_level=float(inval), stop_on_tick=str(cent), last_close=float(last),
                                  detail="%s stop %s is already through the last close %.2f; not sent, "
-                                        "%d shares uncovered; use Stop & Close to exit"
-                                        % (side, cent, float(last), pv["uncovered_qty"]))
+                                        "%s shares uncovered; use Stop & Close to exit"
+                                        % (side, cent, float(last), Q.text(Q.parse(pv["uncovered_qty"]))))
                 return
         did = base if not tries else "%s|try%d" % (base, len(tries) + 1)
         self._desk_audit("protective_residual" if pv["covered_qty"] else "protective_initial",
-                         position_qty=pos, covered_qty=pv["covered_qty"], residual_qty=pv["uncovered_qty"],
+                         position_qty=Q.to_json(pos), covered_qty=pv["covered_qty"], residual_qty=pv["uncovered_qty"],
                          decision_id=did, stop_level=float(inval),
                          stop_on_tick=str(cent) if cent is not None else None)
         self.mgr.submit_intent({"decision_id": did, "kind": "protective", "side": side,
-                                "qty": int(pv["uncovered_qty"]), "stop": float(inval),
+                                "qty": Q.to_json(Q.parse(pv["uncovered_qty"])), "stop": float(inval),
                                 "ref_price": float(bar["close"]),
                                 "signal_ts": bar.get("delivered_ts") or bar.get("ts_close")})
 
@@ -1159,12 +1209,26 @@ class AlpacaSessionController(S.SessionController):
                        "detail": "alarms: %d" % len(st["alarms"])})
         lim_ok, lim_why = self._limits_intact()
         checks.append({"check": "limits loaded", "ok": lim_ok,
-                       "detail": ((lim_why + "; ") if not lim_ok else "") + "fixed %d share(s); max loss/trade $%.2f, notional $%.0f, daily loss $%.2f, "
-                                 "gross $%.0f (%s)" % (int(self.strategy_cfg.get("fixed_qty") or 0),
+                       "detail": ((lim_why + "; ") if not lim_ok else "") + "fixed %s share(s); max loss/trade $%.2f, notional $%.2f, daily loss $%.2f, "
+                                 "gross $%.2f (%s)" % (Q.text(Q.parse(self.strategy_cfg.get("fixed_qty") or 0, allow_zero=True)),
                                                        self.limits["max_loss_per_trade"],
                                                        self.limits["per_trade_notional"], self.limits["daily_loss"],
                                                        self.limits["gross_exposure"],
                                                        self.limits_source.get("label") or self.limits["label"])})
+        fq = Q.parse(self.strategy_cfg.get("fixed_qty") or 0, allow_zero=True)
+        if Q.is_fractional(fq):
+            frac_ok = bool(getattr(self.broker, "fractional", False))
+            checks.append({"check": "sizing", "ok": frac_ok,
+                           "detail": "fractional %s shares (DAY, simple orders)%s" % (
+                               Q.text(fq), "" if frac_ok else "; FRACTIONAL_NOT_ENABLED: this desk's broker was "
+                               "not built for fractional orders, so new entries are refused")})
+        else:
+            checks.append({"check": "sizing", "ok": True, "detail": "whole %s shares" % Q.text(fq)})
+        if self._fractional_mode():
+            checks.extend(self._fractional_rows())
+        de_row = self._daily_entries_row(st)
+        if de_row is not None:
+            checks.append(de_row)
         try:
             is_day = self.calendar.is_trading_day(day)
             bounds = self.calendar.session_bounds(day) if is_day else None
@@ -1190,6 +1254,62 @@ class AlpacaSessionController(S.SessionController):
                        "detail": "Stop active (%s): only Clear Stop clears it" % st["controls"]["stop_reason"]
                        if st["controls"]["stopped"] else "no Stop active"})
         return checks
+
+    def _fractional_mode(self):
+        """A fractional approved size on a connected Alpaca desk (paper or live). The mock desk
+        and the offline desk stay whole-only and refuse fractional entries."""
+        return bool(getattr(self, "_fractional_qty", False)) and not self.mock
+
+    def _cc_row(self, name):
+        cc = self.last_connection_check
+        for c in (cc or {}).get("checks", ()):
+            if c.get("check") == name:
+                return cc, c
+        return cc, None
+
+    def _fractional_rows(self):
+        """Preflight rows for fractional mode, read from the latest non-executing connection
+        check. Missing evidence fails closed. No amount is ever shown."""
+        rows = []
+        cc, asset = self._cc_row("asset")
+        seen = (asset or {}).get("seen") or {}
+        if cc is None:
+            rows.append({"check": "SPY fractionable", "ok": False,
+                         "detail": "FRACTIONABLE_UNVERIFIED: run the connection check (GET /v2/assets/SPY) first"})
+        elif seen.get("fractionable") is True:
+            rows.append({"check": "SPY fractionable", "ok": True,
+                         "detail": "GET /v2/assets/SPY fractionable true at %s" % cc.get("utc")})
+        else:
+            rows.append({"check": "SPY fractionable", "ok": False,
+                         "detail": "FRACTIONABLE_UNVERIFIED: fractionable %r (needs true) at %s" % (
+                             seen.get("fractionable"), cc.get("utc"))})
+        cc, cash = self._cc_row("non-margin cash")
+        if cash is None:
+            rows.append({"check": "non-margin cash", "ok": False,
+                         "detail": "CASH_UNAVAILABLE: run the connection check (GET /v2/account) first"})
+        else:
+            rows.append({"check": "non-margin cash", "ok": bool(cash.get("ok")),
+                         "detail": ("checked at %s (amounts are never logged)" % cc.get("utc")) if cash.get("ok")
+                         else cash.get("detail") or "CASH_UNAVAILABLE"})
+        return rows
+
+    def _daily_entries_row(self, st):
+        """"<used> of <max> today" from the manager's daily_entries state. No max set and no
+        manager count: no row (whole-share desks unchanged). A max the manager does not count
+        fails closed."""
+        de = st.get("daily_entries") if isinstance(st, dict) else None
+        mx = self.limits.get("max_daily_entries")
+        if isinstance(de, dict) and de.get("max") is not None:
+            used, top = de.get("used") or 0, de.get("max")
+            full = used >= top
+            return {"check": "daily entries", "ok": True,
+                    "detail": "%s of %s today%s" % (used, top, "; at the max: new entries are blocked, "
+                                                    "exits stay available" if full else "")}
+        if mx is None and not self._fractional_mode():
+            return None
+        return {"check": "daily entries", "ok": False,
+                "detail": "DAILY_ENTRY_LIMIT not counted by this order manager (max %s); Arm is blocked" % (
+                    mx if mx is not None else "not set")}
 
     def arm(self, session_id=None, expires_utc=None, auto=False):
         with self.lock:
@@ -1293,7 +1413,7 @@ class AlpacaSessionController(S.SessionController):
             if sizing.content_hash(snap.get("values")) != snap.get("values_hash"):
                 return False, "limits snapshot values changed after approval"
             lim, _src, _h = _session_limits(snap)
-            now = json.dumps({"limits": lim, "fixed": int(self.strategy_cfg.get("fixed_qty") or 0)},
+            now = json.dumps({"limits": lim, "fixed": Q.to_json(Q.parse(self.strategy_cfg.get("fixed_qty") or 0, allow_zero=True))},
                              sort_keys=True)
             if now != self._limits_frozen:
                 return False, "limits in force differ from the approved launch snapshot"
@@ -1322,7 +1442,7 @@ class AlpacaSessionController(S.SessionController):
                 ("account", "/v2/account", ("status", "trading_blocked", "account_blocked",
                                               "trade_suspended_by_user")),
                 ("clock", "/v2/clock", ("is_open", "timestamp")),
-                ("asset", "/v2/assets/" + A.SYMBOL, ("symbol", "tradable", "status"))):
+                ("asset", "/v2/assets/" + A.SYMBOL, ("symbol", "tradable", "status", "fractionable"))):
             try:
                 r = self.transport.request("GET", "trading", path)
                 status, body = (r[0], r[1]) if isinstance(r, tuple) else (getattr(r, "status", None),
@@ -1333,11 +1453,19 @@ class AlpacaSessionController(S.SessionController):
                 if status != 200:
                     checks.append({"check": name, "ok": False, "detail": "HTTP %s" % status})
                     continue
-                why = _eligibility(name, body, live=self.live)
+                why = _eligibility(name, body, live=self.live, fractional=self._fractional_mode())
                 row = {"check": name, "ok": why is None, "seen": {k: body.get(k) for k in keep}}
                 if why:
                     row["detail"] = why
                 checks.append(row)
+                if name == "account" and self._fractional_mode():
+                    readable = _cash_readable(body)     # amounts never leave this function
+                    cash = {"check": "non-margin cash", "ok": readable,
+                            "seen": {"cash": "checked" if readable else "unreadable"}}
+                    if not readable:
+                        cash["detail"] = ("CASH_UNAVAILABLE: cash or non_marginable_buying_power "
+                                          "unreadable (amounts are never logged)")
+                    checks.append(cash)
             except Exception as exc:
                 checks.append({"check": name, "ok": False, "detail": exc.__class__.__name__})
         res = {"ok": all(c["ok"] for c in checks), "mode": self.mode, "utc": iso(now), "checks": checks,

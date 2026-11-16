@@ -47,7 +47,7 @@ class TestDraft(Base):
         self.assertEqual(sizing.read_draft(self.dir)["values"]["fixed_shares"], 2)
 
     def test_bad_values_refused(self):
-        for bad in ({"fixed_shares": 1.5}, {"fixed_shares": 0}, {"daily_loss": -1},
+        for bad in ({"fixed_shares": 1.0000000001}, {"fixed_shares": 0}, {"fixed_shares": -0.5}, {"daily_loss": -1},
                     {"daily_loss": 0}, {"gross_exposure": "lots"}, {"max_loss_per_trade": True},
                     {"per_trade_notional": float("inf")}):
             with self.assertRaises(sizing.LimitsError):

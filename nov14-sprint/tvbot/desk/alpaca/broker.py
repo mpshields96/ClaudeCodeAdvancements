@@ -35,6 +35,7 @@ from alpaca import live as _live
 from alpaca.live import LABEL_ALPACA_LIVE
 from alpaca.state import AdapterState
 from alpaca.transport import TransportRefused
+from orders import qty as _qty
 from orders.fake_broker import BrokerOutage, BrokerUncertain
 
 BOOK_FILE = "alpaca_broker.json"
@@ -101,6 +102,33 @@ class _Fault(Exception):
     pass
 
 
+ONE_DOLLAR = Decimal("1.00")       # Alpaca's minimum notional for a fractional buy; never on a reduction
+ENTRY_LISTING_LIMIT = 500
+QTY_KEYS = ("qty", "requested_qty", "cum_qty")
+
+
+def _xq(v):
+    """Exact book quantity (int or Decimal) from a stored or venue value; None or '' is 0."""
+    if v is None or v == "":
+        return 0
+    return _qty.parse(v, allow_zero=True)
+
+
+def _jsonable(v):
+    return _qty.to_json(v) if isinstance(v, Decimal) else v
+
+
+def _money(v):
+    """Exact Decimal from a venue money string, or None when missing or unparseable."""
+    if v is None or isinstance(v, bool):
+        return None
+    try:
+        d = Decimal(str(v).strip())
+    except Exception:
+        return None
+    return d if d.is_finite() else None
+
+
 class AlpacaPaperBroker(object):
     symbol = SYMBOL
     exits_hold_position = True    # a working sell holds its shares (no reduce-only flag for equities)
@@ -109,7 +137,9 @@ class AlpacaPaperBroker(object):
     _REAL_LABEL = LABEL_ALPACA_PAPER  # the one label that needs the real (non-injected) transport
     SIMULATED = True                  # every record this class writes says simulated
 
-    def __init__(self, transport, state_dir, evidence_label, adapter_state):
+    def __init__(self, transport, state_dir, evidence_label, adapter_state, fractional=False):
+        if fractional not in (True, False):
+            raise ValueError("fractional must be True or False")
         if evidence_label not in PRICE_BASIS \
                 or (evidence_label == LABEL_ALPACA_LIVE) != (self._REAL_LABEL == LABEL_ALPACA_LIVE):
             raise ValueError("unknown evidence label")
@@ -136,6 +166,9 @@ class AlpacaPaperBroker(object):
         self.price_basis = PRICE_BASIS[evidence_label]
         self.state_dir = os.path.abspath(state_dir)
         self.path = os.path.join(self.state_dir, BOOK_FILE)
+        # Fractional mode: the approved size is fractional and this is a connected Alpaca desk. Whole
+        # mode (the default) keeps every whole-share check and fault exactly as before.
+        self.fractional = fractional
         self.exec_caps = {}
         self.exec_refusals = []
         self.list_limit = LIST_LIMIT
@@ -159,6 +192,14 @@ class AlpacaPaperBroker(object):
             if not isinstance(book, dict) or book.get("format") != BOOK_FORMAT or \
                     not isinstance(book.get("orders"), dict):
                 raise ValueError("bad format")
+            for rec in book["orders"].values():          # quantities re-parsed exactly (int or Decimal)
+                for k in QTY_KEYS:
+                    if rec.get(k) is not None:
+                        rec[k] = _xq(rec[k])
+                for f in rec.get("fills") or []:
+                    for k in ("qty", "cum_qty"):
+                        if f.get(k) is not None:
+                            f[k] = _xq(f[k])
         except (OSError, ValueError):
             self.adapter_state.disable("BOOK_UNREADABLE: %s is unreadable or malformed" % BOOK_FILE)
             raise ValueError("%s is unreadable or malformed; the adapter is disabled" % BOOK_FILE)
@@ -173,7 +214,7 @@ class AlpacaPaperBroker(object):
         os.makedirs(self.state_dir, exist_ok=True)
         fd, tmp = tempfile.mkstemp(prefix=".alpaca_broker.", dir=self.state_dir)
         with os.fdopen(fd, "w") as fh:
-            json.dump(book, fh, indent=1, sort_keys=True)
+            json.dump(book, fh, indent=1, sort_keys=True, default=_qty.json_default)
             fh.flush()
             os.fsync(fh.fileno())
         os.replace(tmp, self.path)
@@ -232,10 +273,8 @@ class AlpacaPaperBroker(object):
 
     def _reserved(self, rec):
         """Shares a desk order may still trade: working remainder, or the full qty while unresolved."""
-        if rec.get("state") in UNRESOLVED:
-            return int(rec["qty"]) - int(rec.get("cum_qty") or 0)
-        if rec.get("status") == "working":
-            return int(rec["qty"]) - int(rec.get("cum_qty") or 0)
+        if rec.get("state") in UNRESOLVED or rec.get("status") == "working":
+            return _qty.norm(_qty.dec(_xq(rec["qty"])) - _qty.dec(_xq(rec.get("cum_qty"))))
         return 0
 
     def note_reconcile(self, report):
@@ -258,16 +297,27 @@ class AlpacaPaperBroker(object):
                 "limit": rec.get("limit"), "stop": rec.get("stop"), "tag": rec.get("tag"),
                 "reduce_only": bool(rec.get("reduce_only")), "submit_ts": rec.get("submit_ts"),
                 "status": rec.get("status"), "alpaca_status": rec.get("alpaca_status"),
-                "filled_qty": int(rec.get("cum_qty") or 0), "avg_fill_price": rec.get("avg"),
+                "filled_qty": _xq(rec.get("cum_qty")), "avg_fill_price": rec.get("avg"),
                 "fills": [dict(f) for f in rec.get("fills", [])], "evidence": self.label,
                 "mock": self.mock, "simulated": self.SIMULATED}
 
+    def _row_qty(self, v, missing):
+        """A venue row quantity: whole mode truncates as before; fractional mode keeps it exact."""
+        q = _num(v)
+        if q is None:
+            return missing
+        if self.fractional:
+            try:
+                return _xq(v)
+            except _qty.QtyError:
+                pass
+        return int(q)
+
     def _public_foreign(self, row):
-        q = _num(row.get("qty"))
         return {"client_id": row.get("client_order_id"), "order_id": row.get("id"), "symbol": row.get("symbol"),
-                "side": row.get("side"), "qty": int(q) if q is not None else None,
+                "side": row.get("side"), "qty": self._row_qty(row.get("qty"), None),
                 "status": map_status(row.get("status")), "alpaca_status": row.get("status"),
-                "filled_qty": int(_num(row.get("filled_qty")) or 0), "fills": [], "external": True,
+                "filled_qty": self._row_qty(row.get("filled_qty"), 0), "fills": [], "external": True,
                 "evidence": self.label, "mock": self.mock, "simulated": self.SIMULATED}
 
     def _emit(self, ev):
@@ -279,7 +329,7 @@ class AlpacaPaperBroker(object):
     def _reject(self, client_id, reason, **extra):
         out = {"status": "rejected", "client_id": client_id, "reason": reason, "evidence": self.label,
                "simulated": self.SIMULATED}
-        out.update(extra)
+        out.update({k: _jsonable(v) for k, v in extra.items()})
         self._emit({"type": "rejected", "client_id": client_id, "reason": reason})
         return out
 
@@ -292,28 +342,35 @@ class AlpacaPaperBroker(object):
             rec["order_id"] = row["id"]
         rec["state"] = "acked"
         new = []
-        cum0 = int(rec.get("cum_qty") or 0)
+        cum0 = _xq(rec.get("cum_qty"))
         raw_cum = _num(row.get("filled_qty"))
         avg1 = _num(row.get("filled_avg_price"))
         cum1 = cum0
         if raw_cum is None or raw_cum < 0:
             self._integrity("BAD_RECORD", "order %s has no usable filled_qty" % rec.get("order_id"))
-        elif raw_cum != int(raw_cum):
+        elif raw_cum != int(raw_cum) and not self.fractional:
             self._integrity("FRACTIONAL_QTY", "order %s filled %s shares" % (rec.get("order_id"), raw_cum))
-        else:
+        elif not self.fractional:
             cum1 = int(raw_cum)
+        else:
+            try:
+                cum1 = _xq(row.get("filled_qty"))      # exact from the venue's own text
+            except _qty.QtyError as exc:
+                self._integrity("BAD_RECORD", "order %s filled_qty %s: %s" % (
+                    rec.get("order_id"), row.get("filled_qty"), exc))
         if cum1 < cum0:
-            self._integrity("FILL_REGRESSION", "order %s filled_qty fell from %d to %d" % (
-                rec.get("order_id"), cum0, cum1))
+            self._integrity("FILL_REGRESSION", "order %s filled_qty fell from %s to %s" % (
+                rec.get("order_id"), _qty.text(cum0), _qty.text(cum1)))
         elif cum1 > cum0:
             if avg1 is None or avg1 <= 0:
                 self._integrity("BAD_RECORD", "order %s filled without a usable average price" % rec.get("order_id"))
             else:
                 avg0 = rec.get("avg") or 0.0
-                price = round((avg1 * cum1 - avg0 * cum0) / (cum1 - cum0), 6)
+                price = round((avg1 * float(cum1) - avg0 * float(cum0)) / float(cum1 - cum0), 6)
                 ts = row.get("updated_at") or row.get("filled_at") or _now()
-                fill = {"type": "fill", "exec_id": "%s:%d" % (rec["order_id"], cum1), "client_id": cid,
-                        "order_id": rec["order_id"], "side": rec["side"], "qty": cum1 - cum0, "price": price,
+                fill = {"type": "fill", "exec_id": "%s:%s" % (rec["order_id"], _qty.text(cum1)), "client_id": cid,
+                        "order_id": rec["order_id"], "side": rec["side"],
+                        "qty": _qty.norm(_qty.dec(cum1) - _qty.dec(cum0)), "price": price,
                         "fee": 0.0, "ts": ts, "event_ts": ts, "report_ts": _now(), "base_price": price,
                         "half_spread_bps": 0.0, "slip_bps": 0.0, "price_basis": self.price_basis,
                         "mock": self.mock, "simulated": self.SIMULATED, "evidence": self.label, "cum_qty": cum1,
@@ -322,8 +379,9 @@ class AlpacaPaperBroker(object):
                 rec["cum_qty"] = cum1
                 rec["avg"] = avg1
                 new.append(fill)
-                if cum1 > int(rec["qty"]):
-                    self._integrity("OVERFILL", "order %s filled %d of %d" % (rec["order_id"], cum1, rec["qty"]))
+                if cum1 > _xq(rec["qty"]):
+                    self._integrity("OVERFILL", "order %s filled %s of %s" % (
+                        rec["order_id"], _qty.text(cum1), _qty.text(_xq(rec["qty"]))))
         rec["status"] = map_status(alp)
         self._save()                                     # persisted before any event is queued
         for f in new:
@@ -333,7 +391,7 @@ class AlpacaPaperBroker(object):
             self._save()
             if rec["status"] == "canceled":
                 self._emit({"type": "canceled", "client_id": cid, "order_id": rec.get("order_id"),
-                            "filled_qty": int(rec.get("cum_qty") or 0)})
+                            "filled_qty": _xq(rec.get("cum_qty"))})
             else:
                 self._emit({"type": "rejected", "client_id": cid, "order_id": rec.get("order_id"),
                             "reason": "ALPACA_REJECTED"})
@@ -341,9 +399,8 @@ class AlpacaPaperBroker(object):
 
     def _adopt_row(self, row):
         cid = row.get("client_order_id")
-        q = _num(row.get("qty"))
         rec = {"state": "acked", "order_id": row.get("id"), "side": row.get("side"),
-               "qty": int(q) if q is not None else 0, "limit": _num(row.get("limit_price")),
+               "qty": self._row_qty(row.get("qty"), 0), "limit": _num(row.get("limit_price")),
                "stop": _num(row.get("stop_price")), "tag": None, "reduce_only": False,
                "submit_ts": row.get("submitted_at"), "cum_qty": 0, "avg": None, "fills": [],
                "adopted": True}
@@ -352,11 +409,11 @@ class AlpacaPaperBroker(object):
 
     # ------------------------------------------------------------------ positions
     def _book_net(self):
-        net = 0
+        net = Decimal(0)
         for rec in self.book["orders"].values():
-            q = int(rec.get("cum_qty") or 0)
+            q = _qty.dec(_xq(rec.get("cum_qty")))
             net += q if rec.get("side") == "buy" else -q
-        return net
+        return _qty.norm(net)
 
     def _read_positions(self):
         st, rows = self._get("/v2/positions")
@@ -370,13 +427,23 @@ class AlpacaPaperBroker(object):
             if q is None:
                 raise BrokerOutage("position %s has no usable qty" % row.get("symbol"))
             fractional = q != int(q)
-            if fractional:
+            if fractional and not self.fractional:
                 self._integrity("FRACTIONAL_QTY", "position %s is %s shares" % (row["symbol"], row.get("qty")))
             sign = -1 if (row.get("side") == "short" or q < 0) else 1
             exact = str(row.get("qty")).lstrip("-")
-            qi = sign * int(abs(q))
+            if self.fractional:
+                try:
+                    mag = _xq(exact)
+                except _qty.QtyError as exc:
+                    raise BrokerOutage("position %s qty %s is not usable: %s" % (row.get("symbol"), exact, exc))
+                qi = _qty.norm(-_qty.dec(mag)) if sign < 0 else mag
+            else:
+                qi = sign * int(abs(q))
+            # "fractional" means a fractional row this desk will not trade. In fractional mode a
+            # fractional row is supported, so it is False there; qty_is_fractional says what it is.
             out[row["symbol"]] = {"qty": qi, "qty_exact": ("-" if sign < 0 else "") + exact,
-                                  "fractional": fractional,
+                                  "fractional": fractional and not self.fractional,
+                                  "qty_is_fractional": fractional,
                                   "avg_price": _num(row.get("avg_entry_price")) or 0.0,
                                   "evidence": self.label, "simulated": self.SIMULATED}
         return out
@@ -387,16 +454,32 @@ class AlpacaPaperBroker(object):
             self._poll_open()                      # a fill may simply not have been seen yet
             out = self._read_positions()
             if out[SYMBOL]["qty"] != self._book_net():
-                self._integrity("POSITION_MISMATCH", "Alpaca SPY position %d, desk fills net %d" % (
-                    out[SYMBOL]["qty"], self._book_net()))
+                self._integrity("POSITION_MISMATCH", "Alpaca SPY position %s, desk fills net %s" % (
+                    _qty.text(abs(_qty.dec(out[SYMBOL]["qty"]))) if out[SYMBOL]["qty"] >= 0 else
+                    "-" + _qty.text(abs(_qty.dec(out[SYMBOL]["qty"]))),
+                    _qty.text(abs(_qty.dec(self._book_net()))) if self._book_net() >= 0 else
+                    "-" + _qty.text(abs(_qty.dec(self._book_net())))))
         return out
 
     # ------------------------------------------------------------------ submit
     def submit(self, client_id, side, qty, limit=None, stop=None, tag=None, reduce_only=False):
         if side not in ("buy", "sell"):
             raise ValueError("side must be buy or sell")
-        if isinstance(qty, bool) or not isinstance(qty, int) or qty <= 0:
-            raise ValueError("qty must be a positive whole number of shares")
+        if self.fractional:
+            try:
+                qty = _qty.parse(qty)
+            except _qty.QtyError as exc:
+                if "decimal places" in str(exc) or "significant digits" in str(exc):
+                    return self._reject(client_id, "QTY_PRECISION", detail="%s; nothing was sent" % exc)
+                raise ValueError("qty must be a positive number of shares: %s" % exc)
+        else:
+            # An exact fractional quantity (the manager's Decimal) is refused as a reason, not raised;
+            # a float stays a caller error exactly as before.
+            if isinstance(qty, Decimal) and qty.is_finite() and qty > 0 and qty != qty.to_integral_value():
+                return self._reject(client_id, "FRACTIONAL_NOT_ENABLED",
+                                    detail="this broker is in whole-share mode; nothing was sent")
+            if isinstance(qty, bool) or not isinstance(qty, int) or qty <= 0:
+                raise ValueError("qty must be a positive whole number of shares")
         if not isinstance(client_id, str) or not CLIENT_ID_RE.match(client_id):
             return self._reject(client_id, "BAD_CLIENT_ID")
         if limit is not None and stop is not None:
@@ -421,6 +504,19 @@ class AlpacaPaperBroker(object):
         otype = "limit" if limit is not None else ("stop" if stop is not None else "market")
         if otype not in ORDER_TYPES:
             return self._reject(client_id, "UNSUPPORTED_ORDER_TYPE")
+        if self.fractional:
+            # Entry: buy limit. Protective: reduce-only sell stop. Exit / Stop & Close: reduce-only
+            # sell market. Every other shape is refused here, before any record or POST.
+            ok = (side == "buy" and not reduce_only and otype == "limit") or \
+                 (side == "sell" and reduce_only and otype in ("stop", "market"))
+            if not ok:
+                return self._reject(client_id, "FRACTIONAL_ORDER_SHAPE",
+                                    detail="fractional mode sends only a buy limit entry or a reduce-only "
+                                    "sell stop/market; nothing was sent")
+            if side == "buy" and limit_d * _qty.dec(qty) < ONE_DOLLAR:
+                return self._reject(client_id, "BELOW_MIN_NOTIONAL",
+                                    notional=str(limit_d * _qty.dec(qty)),
+                                    detail="limit x qty is below $1.00; the size is never raised; nothing was sent")
         prior = self.book["orders"].get(client_id)
         if prior is not None and prior.get("state") in ("acked", "rejected"):
             return self._reject(client_id, "DUPLICATE_CLIENT_ORDER_ID", order_id=prior.get("order_id"))
@@ -448,7 +544,7 @@ class AlpacaPaperBroker(object):
                                     detail="the position read in this call stopped new exposure; nothing was sent")
         working_same = sum(self._reserved(r) for c, r in self.book["orders"].items()
                            if c != client_id and r.get("side") == side)
-        if positions[SYMBOL].get("fractional"):
+        if positions[SYMBOL].get("fractional") and not self.fractional:
             return self._reject(client_id, "POSITION_UNSUPPORTED_FRACTIONAL",
                                 qty_exact=positions[SYMBOL].get("qty_exact"),
                                 detail="SPY position %s is fractional; the desk does not trade it" %
@@ -465,7 +561,7 @@ class AlpacaPaperBroker(object):
             if room <= 0:
                 if venue_room > reducible:
                     return self._reject(client_id, "REDUCE_ONLY_NOT_DESK_OWNED", venue=pos, desk_booked=owned,
-                                        detail="Alpaca shows %d SPY, the desk booked %d; shares it did not "
+                                        detail="Alpaca shows %s SPY, the desk booked %s; shares it did not "
                                         "trade are not closed; nothing was sent" % (pos, owned))
                 return self._reject(client_id, "REDUCE_ONLY_NO_POSITION")
             requested, qty = qty, min(qty, room)
@@ -473,13 +569,17 @@ class AlpacaPaperBroker(object):
             requested = qty
             if side == "sell" and qty > pos - working_same:
                 return self._reject(client_id, "SHORT_OPEN_BLOCKED",
-                                    detail="selling %d against position %d (%d already working) would open a short"
+                                    detail="selling %s against position %s (%s already working) would open a short"
                                     % (qty, pos, working_same))
             why = self._exec_cap_refusal(client_id, side, qty, pos, limit, stop)
             if why:
                 return self._reject(client_id, why["reason"], cap=why["cap"], notional=why["notional"],
                                     limit=why["exec_price"])
-        rec = {"state": "sending", "order_id": None, "side": side, "qty": int(qty), "requested_qty": requested,
+            if self.fractional:
+                why = self._cash_refusal(client_id, qty, limit_d)
+                if why:
+                    return self._reject(client_id, why.pop("reason"), **why)
+        rec = {"state": "sending", "order_id": None, "side": side, "qty": qty, "requested_qty": requested,
                "limit": limit, "stop": stop, "tag": tag, "reduce_only": bool(reduce_only),
                "submit_ts": _now(), "status": None, "alpaca_status": None, "cum_qty": 0, "avg": None,
                "fills": []}
@@ -488,7 +588,7 @@ class AlpacaPaperBroker(object):
             rec["price_rule"] = "rounded to the $0.01 tick: sell up, buy down"
         self.book["orders"][client_id] = rec
         self._save()
-        body = {"symbol": SYMBOL, "qty": str(int(qty)), "side": side, "type": otype,
+        body = {"symbol": SYMBOL, "qty": _qty.text(qty), "side": side, "type": otype,
                 "time_in_force": TIME_IN_FORCE, "client_order_id": client_id}
         if limit_d is not None:
             body["limit_price"] = str(limit_d)
@@ -547,6 +647,10 @@ class AlpacaPaperBroker(object):
             reason = "RATE_LIMITED"
         else:
             reason = "ALPACA_HTTP_%d" % st
+        if self.fractional:
+            venue = (payload or {}).get("message") if isinstance(payload, dict) else None
+            return self._reject(client_id, reason, http_status=st, venue_message=venue,
+                                detail="Alpaca refused this order; it is not retried with a changed size")
         return self._reject(client_id, reason)
 
     def _opening_qty(self, side, qty, pos):
@@ -565,15 +669,16 @@ class AlpacaPaperBroker(object):
         if opening <= 0:
             return None
         px = float(limit if limit is not None else stop)
+        opening_f = float(opening)
         others = 0.0
         for c, r in self.book["orders"].items():
             if c == client_id or r.get("side") != side or r.get("reduce_only"):
                 continue
             left = self._reserved(r)
             if left > 0:
-                others += left * float(r.get("limit") or r.get("stop") or px)
-        notional = opening * px
-        gross_after = abs(pos) * px + others + notional
+                others += float(left) * float(r.get("limit") or r.get("stop") or px)
+        notional = opening_f * px
+        gross_after = abs(float(pos)) * px + others + notional
         cap_name = None
         if per is not None and notional > float(per) + 1e-9:
             cap_name = "per_trade_notional"
@@ -581,7 +686,7 @@ class AlpacaPaperBroker(object):
             cap_name = "gross_exposure"
         if cap_name is None:
             return None
-        rec = {"client_id": client_id, "order_id": None, "side": side, "qty": opening, "exec_price": px,
+        rec = {"client_id": client_id, "order_id": None, "side": side, "qty": _jsonable(opening), "exec_price": px,
                "per_trade_cap": per, "gross_cap": gross_cap, "bar_ts_close": self._last_bar_ts,
                "notional": round(notional, 6), "gross_after": round(gross_after, 6), "reason": "EXEC_CAP",
                "cap": cap_name, "simulated": self.SIMULATED, "evidence": self.label,
@@ -589,6 +694,103 @@ class AlpacaPaperBroker(object):
         self.exec_refusals.append(rec)
         self.exec_refusals = self.exec_refusals[-200:]
         return rec
+
+    def _cash_refusal(self, client_id, qty, limit_d):
+        """Fresh GET /v2/account just before the POST. Available = min(cash, non_marginable_buying_power),
+        exact Decimals. The new notional plus working buys' remaining notional must fit. Fails closed."""
+        try:
+            st, acct = self._get("/v2/account")
+        except (BrokerOutage, BrokerUncertain) as exc:
+            return {"reason": "CASH_UNAVAILABLE", "detail": "account read failed (%s); nothing was sent" % exc}
+        if st != 200 or not isinstance(acct, dict):
+            return {"reason": "CASH_UNAVAILABLE", "detail": "GET /v2/account answered HTTP %s; nothing was sent" % st}
+        cash = _money(acct.get("cash"))
+        nmbp = _money(acct.get("non_marginable_buying_power"))
+        if cash is None or nmbp is None:
+            return {"reason": "CASH_UNAVAILABLE",
+                    "detail": "cash or non_marginable_buying_power is missing or unreadable; nothing was sent"}
+        effective = _money(acct.get("buying_power")) if "buying_power" in acct else nmbp
+        if effective is None:
+            return {"reason": "CASH_UNAVAILABLE", "detail": "unreadable effective buying power"}
+        available = min(cash, nmbp, effective)
+        working = Decimal(0)
+        for c, r in self.book["orders"].items():
+            if c == client_id or r.get("side") != "buy" or r.get("reduce_only"):
+                continue
+            left = self._reserved(r)
+            if left > 0:
+                px = r.get("limit") or r.get("stop") or limit_d
+                working += _qty.dec(left) * Decimal(str(px))
+        notional = limit_d * _qty.dec(qty)
+        if notional + working > available:
+            return {"reason": "INSUFFICIENT_CASH", "notional": str(notional), "working_buys": str(working),
+                    "detail": "this buy plus working buys exceed available cash; the size is never "
+                              "changed; nothing was sent"}
+        return None
+
+    # ------------------------------------------------------------------ manager reads (fractional contract)
+    def funding(self):
+        """GET /v2/account -> {"cash": str|None, "non_marginable_buying_power": str|None}: Alpaca's raw
+        strings, None when a field is missing. The manager checks risk and funding before reserving a daily attempt; the broker also rechecks before a wire POST. This method only
+        reads. Any failure raises BrokerOutage. The values are never logged, audited or put in a message."""
+        try:
+            st, acct = self._get("/v2/account")
+        except BrokerUncertain:
+            raise BrokerOutage("GET /v2/account did not answer")
+        if st != 200 or not isinstance(acct, dict):
+            raise BrokerOutage("GET /v2/account answered HTTP %s" % st)
+
+        def raw(key):
+            v = acct.get(key)
+            return None if v is None else str(v)
+        self._last_account_id = acct.get("id")
+        vals = {"cash": raw("cash"), "non_marginable_buying_power": raw("non_marginable_buying_power")}
+        if "buying_power" in acct:
+            vals["buying_power"] = raw("buying_power")
+        return vals
+
+    def entry_buys_since(self, after_iso):
+        """Every SPY BUY order Alpaca has after after_iso, any status, newest first. Not filtered by this
+        book's created_utc: an order from an earlier book still counts. complete is False when the venue
+        page is full (500 rows), so the caller must not treat the list as exhaustive. A non-200 answer,
+        bad JSON or a non-list body raises BrokerOutage; there is never an empty fallback."""
+        if not isinstance(after_iso, str) or not after_iso:
+            raise ValueError("after_iso must be an ISO-8601 timestamp string")
+        query = {"status": "all", "after": after_iso, "symbols": SYMBOL, "direction": "desc",
+                 "nested": "false", "limit": ENTRY_LISTING_LIMIT}
+        try:
+            st, rows = self._get("/v2/orders", query)
+        except BrokerUncertain:
+            raise BrokerOutage("GET /v2/orders did not answer")
+        if st != 200 or not isinstance(rows, list):
+            raise BrokerOutage("GET /v2/orders answered HTTP %s without an order list" % st)
+        out = []
+        for o in rows:
+            if not isinstance(o, dict):
+                raise BrokerOutage("GET /v2/orders returned a row that is not an order")
+            if o.get("side") != "buy":
+                continue
+            out.append({"client_id": o.get("client_order_id"), "side": o.get("side"),
+                        "symbol": o.get("symbol"), "status": o.get("status"),
+                        "submitted_at": o.get("submitted_at")})
+        st_open, opened = self._get("/v2/orders", {"status": "open", "symbols": SYMBOL, "nested": "false",
+                                                     "limit": ENTRY_LISTING_LIMIT})
+        if st_open != 200 or not isinstance(opened, list):
+            raise BrokerOutage("open-order reservations are unverifiable")
+        foreign = False
+        for o in opened:
+            if not isinstance(o, dict) or o.get("side") not in ("buy", "sell"):
+                raise BrokerOutage("open-order reservation is malformed")
+            if o["side"] == "buy" and o.get("symbol") == SYMBOL and (o.get("client_order_id") not in self.book["orders"] or self.book["orders"][o["client_order_id"]].get("external") is True):
+                foreign = True
+        return {"orders": out, "foreign_working_buy": foreign,
+                "complete": len(rows) < ENTRY_LISTING_LIMIT and len(opened) < ENTRY_LISTING_LIMIT}
+
+    def reserve_entry_attempt(self, day, client, maximum, seen):
+        if self._REAL_LABEL != LABEL_ALPACA_LIVE:
+            return None
+        from .attempts import reserve
+        return reserve(getattr(self, "_last_account_id", None), SYMBOL, day, client, maximum, seen)
 
     # ------------------------------------------------------------------ query / cancel / listing
     def query(self, client_id):
@@ -640,7 +842,7 @@ class AlpacaPaperBroker(object):
         if st in (200, 204):
             if rec.get("status") == "filled":
                 return self._cancel_result(client_id, oid, "rejected", "ALREADY_FILLED")
-            return self._cancel_result(client_id, oid, "canceled", None, filled_qty=int(rec.get("cum_qty") or 0),
+            return self._cancel_result(client_id, oid, "canceled", None, filled_qty=_xq(rec.get("cum_qty")),
                                        alpaca_status=alp)
         if st == 422:
             if rec.get("status") == "filled":
@@ -649,7 +851,7 @@ class AlpacaPaperBroker(object):
                 return self._cancel_result(client_id, oid, "rejected", "ALREADY_DONE")
             if alp == "pending_cancel":
                 return self._cancel_result(client_id, oid, "canceled", None,
-                                           filled_qty=int(rec.get("cum_qty") or 0), alpaca_status=alp)
+                                           filled_qty=_xq(rec.get("cum_qty")), alpaca_status=alp)
         return self._cancel_result(client_id, oid, "rejected", "CANCEL_REFUSED", http_status=st)
 
     def _cancel_result(self, client_id, order_id, status, reason, **extra):
@@ -771,7 +973,7 @@ class AlpacaLiveBroker(AlpacaPaperBroker):
     _REAL_LABEL = LABEL_ALPACA_LIVE
     SIMULATED = False
 
-    def __init__(self, transport, state_dir, evidence_label, adapter_state):
+    def __init__(self, transport, state_dir, evidence_label, adapter_state, fractional=False):
         if not isinstance(transport, _live.LiveHttpsTransport) or getattr(transport, "injected", True):
             raise ValueError("the LIVE broker runs only over the real LiveHttpsTransport")
         auth = transport.authorization
@@ -792,4 +994,5 @@ class AlpacaLiveBroker(AlpacaPaperBroker):
                 or os.path.basename(path) != _live.LiveAdapterState.FILE \
                 or os.path.realpath(os.path.dirname(path)) != os.path.realpath(state_dir):
             raise ValueError("the live broker needs the live adapter state (alpaca_live.json) in its own folder")
-        AlpacaPaperBroker.__init__(self, transport, state_dir, evidence_label, adapter_state)
+        AlpacaPaperBroker.__init__(self, transport, state_dir, evidence_label, adapter_state,
+                                   fractional=fractional)

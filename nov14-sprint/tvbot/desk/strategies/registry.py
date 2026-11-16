@@ -80,7 +80,7 @@ def _reconcile(d, position):
             d["refusal_checks"] = list(d.get("refusal_checks") or []) + [
                 {"id": "NOTHING_TO_EXIT", "passed": False, "detail": "real position is 0"}]
         elif d["qty"] > abs(real):
-            d["qty"] = int(abs(real))
+            d["qty"] = abs(real)  # cap a fractional reduction without rounding down
     return d
 
 

@@ -11,7 +11,9 @@ Decision fields (fixed by desk/CONTRACT.md):
 
 Shapes used by this worker (the UI draws the four price lines):
   action          one of enter_long | enter_short | exit | pass | hold
-  qty             whole units (shares, ounces or contracts), 0 for pass/hold
+  qty             whole units (shares, ounces or contracts), 0 for pass/hold;
+                  an exact fraction (JSON float via orders/qty.to_json, plus
+                  qty_text) only on the opt-in fractional EMA path
   est_cost        {"usd": round-trip estimate for this action's quantity,
                    "per_side_usd", "basis", "simulated": True}
   trigger, intended_entry, intended_exit, invalidation
@@ -26,7 +28,8 @@ import hashlib
 import json
 import math
 import os
-from decimal import Decimal
+import re
+from decimal import ROUND_CEILING, ROUND_DOWN, Decimal
 from datetime import datetime, timedelta, timezone
 
 try:
@@ -36,6 +39,12 @@ except ImportError:  # pragma: no cover - 3.9 ships zoneinfo
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DESK = os.path.dirname(HERE)
+try:
+    from orders import qty as Q
+except ImportError:  # strategies imported without desk/ on sys.path
+    import sys as _sys
+    _sys.path.insert(0, DESK)
+    from orders import qty as Q
 TVBOT = os.path.dirname(DESK)
 SIZE_PATH = os.path.join(TVBOT, "config", "smaller_size.json")
 
@@ -59,6 +68,45 @@ DEFAULT_COSTS = {
     "commission_min": 1.0,
 }
 
+# Named profile for Alpaca US equities, selected ONLY by cfg["cost_profile"] ==
+# "alpaca_equity" (W-D sets it in fractional connected mode). DEFAULT_COSTS above
+# stays the offline/whole-share stress. Spread and slippage are the same modeled
+# bps. Commission is 0 because Alpaca's fee schedule says it "does not charge
+# commissions" outside index options, Elite routing and non-retail flow. The
+# pass-through regulatory fees are added per order (sources and fetch time in
+# alpaca-acceptance/WINDOW90_W-A_RESULT.md):
+#   SEC Section 31: $0.0000206 x trade value, sells only (Alpaca schedule).
+#   FINRA TAF: Alpaca's Oct 12, 2026 schedule lists retail TAF "$0 per share".
+#     We keep a conservative RESERVE at FINRA's 2026 member rate, $0.000195 per
+#     share sold, max $9.79 per trade (FINRA notice SR-FINRA-2024-019, year table;
+#     $0.000166 / $8.30 was the 2025 rate). It is a sensitivity reserve in dollars,
+#     not a quoted Alpaca charge or an actual account fee.
+#   CAT: $0.000003 per executed equivalent share, buys and sells (Alpaca schedule).
+#   Rounding: Alpaca's regulatory-fees doc says fees are aggregated and rounded
+#     daily per account. We reserve each fee type rounded UP to $0.01 per order
+#     instead, which is never lower. That penny per fee type is a reserve, not a
+#     guaranteed per-order charge.
+# These are estimates and reserves, never broker quotes or account fees.
+ALPACA_EQUITY_COSTS = {
+    "kind": "bps",
+    "profile": "alpaca_equity",
+    "half_spread_bps": 1.0,
+    "slippage_bps": 2.0,
+    "commission_per_share": 0.0,
+    "commission_min": 0.0,
+    "sec_rate": 0.0000206,
+    "taf_per_share": 0.000195,   # reserve: FINRA 2026 member rate; Alpaca lists retail TAF $0
+    "taf_max": 9.79,
+    "cat_per_share": 0.000003,
+    "fee_round": "per_order_penny_up_reserve",
+}
+ALPACA_FEE_SOURCES = (
+    "https://files.alpaca.markets/disclosures/library/BrokFeeSched.pdf",
+    "https://docs.alpaca.markets/us/docs/regulatory-fees",
+    "https://www.finra.org/sites/default/files/2024-11/NOF-IMM-EFF-FINRA-2024-019.pdf",
+)
+_CENT = Decimal("0.01")
+
 
 def load_test_size(path=None):
     """Matthew's TEST VALUE for the per-order notional. Read only."""
@@ -71,12 +119,21 @@ def load_test_size(path=None):
     return {"order_notional": float(val), "label": "TEST VALUES", "source": p}
 
 
+_FRAC = re.compile(r"^(.*T\d{2}:\d{2}:\d{2}\.)(\d+)(.*)$")
+
+
 def parse_ts(s):
     if isinstance(s, datetime):
         return s if s.tzinfo else s.replace(tzinfo=timezone.utc)
     t = str(s).strip()
-    if t.endswith("Z"):
+    if t.endswith("Z") or t.endswith("z"):
         t = t[:-1] + "+00:00"
+    # Same rule as orders/calendar.parse_ts: RFC 3339 allows any fraction length but
+    # Python 3.9's fromisoformat takes exactly 3 or 6 digits. Keep six: truncate extra
+    # digits (never rounds into the next second or day), right-pad short ones with zeros.
+    m = _FRAC.match(t)
+    if m:
+        t = m.group(1) + m.group(2)[:6].ljust(6, "0") + m.group(3)
     d = datetime.fromisoformat(t)
     if d.tzinfo is None:
         d = d.replace(tzinfo=timezone.utc)
@@ -117,7 +174,8 @@ def timeframe(bar):
 
 
 def cost_cfg(cfg):
-    c = dict(DEFAULT_COSTS)
+    prof = (cfg or {}).get("cost_profile")
+    c = dict(ALPACA_EQUITY_COSTS if prof == "alpaca_equity" else DEFAULT_COSTS)
     c.update((cfg or {}).get("costs") or {})
     mult = float((cfg or {}).get("cost_mult", 1.0))
     c["mult"] = mult
@@ -158,12 +216,75 @@ def liq_linear(qty, costs):
     return (1.0 - bps, 0.0) if qty > 0 else (1.0 + bps, 0.0)
 
 
+def _dq(x):
+    """Exact Decimal of a quantity or price (int, Decimal, or float via repr)."""
+    if isinstance(x, Decimal):
+        return x
+    if isinstance(x, int) and not isinstance(x, bool):
+        return Decimal(x)
+    return Decimal(repr(float(x)))
+
+
+def _cent_up(d):
+    if d <= 0:
+        return Decimal(0)
+    return (d / _CENT).to_integral_value(rounding=ROUND_CEILING) * _CENT
+
+
+def reg_fees(qty, price, side, costs):
+    """Pass-through regulatory fees for ONE order (side +1 buy, -1 sell) under
+    a profile that defines them; all zero otherwise (DEFAULT_COSTS has none).
+    Fees use the exact quantity; each fee type is rounded UP to $0.01 for this
+    order, then the cost_mult stress applies."""
+    out = {"sec": 0.0, "taf": 0.0, "cat": 0.0, "total": 0.0}
+    if costs.get("profile") != "alpaca_equity" or not qty or price is None:
+        return out
+    q = abs(_dq(qty))
+    m = _dq(costs.get("mult", 1.0))
+    cat = q * _dq(costs["cat_per_share"])
+    sec = taf = Decimal(0)
+    if side < 0:
+        sec = q * _dq(price) * _dq(costs["sec_rate"])
+        taf = min(q * _dq(costs["taf_per_share"]), _dq(costs["taf_max"]))
+    for k, v in (("sec", sec), ("taf", taf), ("cat", cat)):
+        out[k] = float(_cent_up(v) * m)
+    out["total"] = round(out["sec"] + out["taf"] + out["cat"], 4)
+    return out
+
+
+def _alpaca_est(qty, price, costs, sides, note):
+    q = abs(float(qty))
+    spread = abs(side_price(price, 1, costs) - price) * q
+    buy = reg_fees(qty, price, 1, costs)
+    sell = reg_fees(qty, price, -1, costs)
+    # Round trip: one buy and one sell. One side: the dearer side (a sell for a long).
+    fees = buy["total"] + sell["total"] if sides >= 2 else max(buy["total"], sell["total"])
+    usd = spread * sides + fees
+    basis = ("ESTIMATE, Alpaca equity profile: modeled half spread %.1f bps + slippage %.1f bps per side; "
+             "commission $0 (Alpaca fee schedule: no commissions on retail equity orders); regulatory "
+             "pass-through fees: SEC $0.0000206 x sell value, CAT $0.000003/share each side, plus a FINRA "
+             "TAF reserve of $0.000195/share sold (max $9.79, FINRA 2026 member rate; Alpaca's schedule "
+             "lists retail TAF $0, so this is a conservative reserve, not a quoted charge); each fee type "
+             "reserved rounded UP to $0.01 per order (a reserve, not a guaranteed per-order fee; Alpaca "
+             "aggregates and rounds daily); fee reserve this order: buy $%.2f, sell $%.2f; x%.1f stress; "
+             "sources: %s"
+             % (costs["half_spread_bps"], costs["slippage_bps"], buy["total"], sell["total"],
+                costs.get("mult", 1.0), " and ".join(ALPACA_FEE_SOURCES)))
+    return {"usd": round(usd, 4), "per_side_usd": round(usd / sides, 4) if sides else 0.0,
+            "basis": (note + "; " if note else "") + basis, "simulated": True,
+            "fees": {"buy": buy, "sell": sell, "rounding": costs.get("fee_round"), "estimate": True}}
+
+
 def est_cost(qty, price, costs, sides=2, note=""):
     """Estimated execution cost in dollars for `qty` units at `price`,
     relative to filling at the raw price, for `sides` sides."""
     if not qty or price is None:
         return {"usd": 0.0, "per_side_usd": 0.0, "basis": note or "no order",
                 "simulated": True}
+    if costs.get("profile") == "alpaca_equity":
+        return _alpaca_est(qty, price, costs, sides, note)
+    if isinstance(qty, Decimal):
+        qty = float(qty)
     per_side = abs(side_price(price, 1, costs) - price) * abs(qty)
     if costs["kind"] == "per_unit_bid":
         # Buy pays spread+slip, sell pays slip: average the two sides.
@@ -185,20 +306,52 @@ def line(price, text):
     return {"price": None if price is None else round(float(price), 6), "text": text}
 
 
-def _fixed_qty(cfg):
+def _fixed_qty(cfg, allow_fraction=False):
     fq = cfg.get("fixed_qty")
+    if allow_fraction and cfg.get("fractional") is True and not isinstance(fq, (bool, int)) and fq is not None:
+        try:
+            q = Q.parse(fq)
+        except Q.QtyError:
+            return None
+        return q
     if isinstance(fq, bool) or not isinstance(fq, int) or fq <= 0:
         return None
     return fq
 
 
-def base_qty(price, cfg):
+def _frac_floor(cap, price):
+    """Largest quantity at Q.MAX_DP decimals with qty * price <= cap (never rounded up)."""
+    q = (_dq(cap) / _dq(price)).quantize(Decimal(1).scaleb(-Q.MAX_DP), rounding=ROUND_DOWN)
+    while q > 0 and q * _dq(price) > _dq(cap):
+        q -= Decimal(1).scaleb(-Q.MAX_DP)
+    if q <= 0:
+        return 0
+    try:
+        return Q.parse(q)
+    except Q.QtyError:
+        # More than MAX_DIGITS significant digits: drop decimals, still rounding down.
+        for dp in range(Q.MAX_DP - 1, -1, -1):
+            r = q.quantize(Decimal(1).scaleb(-dp), rounding=ROUND_DOWN)
+            try:
+                return Q.parse(r) if r > 0 else 0
+            except Q.QtyError:
+                continue
+        return 0
+
+
+def base_qty(price, cfg, allow_fraction=False):
     """Whole units for one base leg: floor(TEST order_notional / price).
 
     HYPOTHETICAL fixed-quantity demo preset (TEST VALUE): a positive integer
     cfg["fixed_qty"] is used as is, but only while fixed_qty * price stays
     within the TEST per-trade notional cap. Otherwise it is 0, and the
     ZERO_SIZE refusal shows. It never exceeds the cap and is never resized.
+
+    Fractional (opt-in): only when the caller passes allow_fraction=True (the
+    EMA path) AND cfg["fractional"] is True, an exact fractional fixed_qty is
+    accepted via orders/qty.parse, and the notional path returns the exact
+    floor(cap / price) at 9 decimals as an int-or-Decimal, never rounded up.
+    Every other caller and config keeps the int-only behavior.
     """
     c = cfg or {}
     size = c.get("test_size") or load_test_size()
@@ -208,17 +361,41 @@ def base_qty(price, cfg):
     lims = c.get("limits")
     if isinstance(lims, dict) and lims.get("per_trade_notional") is not None:
         cap = min(cap, float(lims["per_trade_notional"]))
-    fq = _fixed_qty(c)
+    frac = bool(allow_fraction) and c.get("fractional") is True
+    fq = _fixed_qty(c, allow_fraction=frac)
     if fq is not None:
+        if isinstance(fq, Decimal):
+            return fq if fq * _dq(price) <= _dq(cap) else 0
         # Lexical Decimal: 3 x $501.04 is exactly $1503.12, not 1503.1200000000001 > cap.
         # A true excess (3 x $501.05 against $1503.12) is still refused.
         return int(fq) if Decimal(fq) * Decimal(repr(float(price))) <= Decimal(repr(cap)) else 0
+    if frac:
+        return _frac_floor(cap, price)
     return int(math.floor(cap / float(price)))
+
+
+def qty_json(qty):
+    """Decision qty: int for whole units (unchanged), an exact JSON float for a fraction."""
+    if isinstance(qty, float) and not qty.is_integer():
+        qty = Q.parse(qty)
+    if Q.is_fractional(qty):
+        return Q.to_json(qty)
+    return int(qty)
+
+
+def qty_str(qty):
+    """'%d'-style text for whole units, exact text for a fraction."""
+    if isinstance(qty, float) and not qty.is_integer():
+        qty = Q.parse(abs(qty))
+    if Q.is_fractional(qty):
+        return Q.text(qty)
+    return "%d" % qty
 
 
 def decision_id(strategy, rule_id, bar, action, qty):
     blob = json.dumps([strategy, rule_id, bar.get("symbol"), bar.get("ts_close"),
-                       bar.get("seq"), action, int(qty)], separators=(",", ":"))
+                       bar.get("seq"), action,
+                       qty_str(qty) if not float(qty).is_integer() else int(qty)], separators=(",", ":"))
     return "dec-%s-%s" % (strategy, hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16])
 
 
@@ -248,7 +425,7 @@ def make_decision(strategy, rule_id, bar, action, qty, reason_code, reason_text,
         "symbol": bar.get("symbol", "UNKNOWN"),
         "strategy": strategy,
         "action": action,
-        "qty": int(qty),
+        "qty": qty_json(qty),
         "reason_code": reason_code,
         "reason_text": reason_text,
         "case_for": case_for,
@@ -265,6 +442,8 @@ def make_decision(strategy, rule_id, bar, action, qty, reason_code, reason_text,
         "bar_seq": bar.get("seq"),
         "bar_ts_close": bar.get("ts_close"),
     }
+    if isinstance(d["qty"], float):
+        d["qty_text"] = qty_str(qty)
     if extra:
         for k, v in extra.items():
             if k not in d:

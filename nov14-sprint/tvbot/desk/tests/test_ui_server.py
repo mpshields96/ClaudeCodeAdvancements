@@ -831,11 +831,29 @@ class TestLimitsRoutes(_PostMixin, _Base):
         self.assertEqual(rows[-1]["hash"], j["approved"]["hash"])
 
     def test_bad_draft_refused(self):
-        for body in ({"values": {"fixed_shares": -1}}, {"values": {"fixed_shares": 1.5}},
+        for body in ({"values": {"fixed_shares": -1}}, {"values": {"fixed_shares": 0.1234567891}},
                      {"values": "x"}, {}):
             st, j = self.post("/api/limits/draft", body)
             self.assertEqual(st, 400, (body, j))
             self.assertFalse(j["ok"])
+
+    def test_fractional_draft_and_daily_entries_round_trip(self):
+        # TEST VALUES. A fraction without max_daily_entries saves as an incomplete draft; with it,
+        # both values come back exactly and the worksheet offers the field with its help text.
+        st, j = self.post("/api/limits/draft", {"values": {"fixed_shares": 0.37}})
+        self.assertEqual(st, 200, j)
+        self.assertEqual(j["draft"]["values"]["fixed_shares"], 0.37)
+        self.assertFalse(j["draft"]["complete"])
+        st, j = self.post("/api/limits/draft", {"values": {"fixed_shares": 0.37, "max_daily_entries": 2}})
+        self.assertEqual(st, 200, j)
+        self.assertEqual(j["draft"]["values"]["fixed_shares"], 0.37)
+        self.assertEqual(j["draft"]["values"]["max_daily_entries"], 2)
+        self.assertIn("max_daily_entries", j["worksheet"]["fields"])
+        self.assertTrue(j["worksheet"]["help"].get("max_daily_entries"))
+        self.assertEqual(self.get_json("/api/limits")["draft"]["values"]["max_daily_entries"], 2)
+        ui = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ui", "index.html")
+        with open(ui) as fh:   # the worksheet renders one #lim_<field> input per worksheet field
+            self.assertIn("<input id=\"lim_' + esc(f)", fh.read())
 
     def test_limits_routes_keep_the_post_guards(self):
         st, j = self.post("/api/limits/draft", {"values": {}}, headers={"Origin": "http://evil.example"})

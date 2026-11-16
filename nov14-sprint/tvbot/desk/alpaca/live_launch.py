@@ -36,7 +36,7 @@ from alpaca import live as L  # noqa: E402
 from alpaca import sizing  # noqa: E402
 
 DEFAULT_LIVE_STATE = os.path.join(DESK, L.LIVE_STATE_DIRNAME)
-NOT_WIRED = ("LIVE GATE PASSED for %s, %d shares. Nothing was sent: the live session controller is not "
+NOT_WIRED = ("LIVE GATE PASSED for %s, %s shares. Nothing was sent: the live session controller is not "
              "wired in this build (alpaca_session.py has no matching live mode). No key was "
              "read and no connection was opened.")
 LIVE_HOST = "127.0.0.1"
@@ -124,7 +124,7 @@ def _start(args, out, err, isatty, read_line):
         return _refuse(err, str(e))
     AS = _session_module()
     if AS is None:
-        out.write(NOT_WIRED % (auth.session_date, auth.shares) + "\n")
+        out.write(NOT_WIRED % (auth.session_date, L.Q.text(L.Q.parse(auth.shares))) + "\n")
         return 3
     return _serve_live(args, auth, state_dir, AS, out, err)
 
@@ -160,6 +160,11 @@ def _serve_live(args, auth, state_dir, AS, out, err):
         runner = AS.AlpacaSessionController(state_dir=state_dir, strategy=LIVE_STRATEGY, mode=AS.MODE_LIVE,
                                             transport=transport, live_authorization=auth)
         stage = "live adapter check"
+        if runner.mgr.state()["armed"]:
+            runner.mgr.disarm(reason="NEW_LIVE_SESSION")
+            if runner.phase in ("ARMED", "PAUSED"):
+                runner.phase = "PRE_SESSION"
+            runner._write_state()  # publish the disarmed state before the local UI can be served
         if getattr(runner.adapter_state, "enabled", True) is not False:
             raise L.LiveGateRefused("the live adapter did not start disabled")
         stage = "desk server"
@@ -179,10 +184,10 @@ def _serve_live(args, auth, state_dir, AS, out, err):
         return (_refuse_after_build if started else _refuse)(err, msg)
     url = "http://%s:%d/" % (LIVE_HOST, args.port)
     threading.Thread(target=httpd.serve_forever, name="desk-ui-live", daemon=True).start()
-    out.write("[live] %s\n[live] UI        %s\n[live] state     %s\n[live] shares    %d (approved %s)\n"
+    out.write("[live] %s\n[live] UI        %s\n[live] state     %s\n[live] shares    %s (approved %s)\n"
               "[live] adapter   DISABLED. Enable it yourself in the UI; Stop disables it again.\n"
               "[live] sent      no order (%s)\n[live] Ctrl-C to quit.\n"
-              % (getattr(runner, "evidence_label", L.LABEL_ALPACA_LIVE), url, state_dir, auth.shares,
+              % (getattr(runner, "evidence_label", L.LABEL_ALPACA_LIVE), url, state_dir, L.Q.text(L.Q.parse(auth.shares)),
                  auth.session_date, START_READS))
     out.flush()
     if not getattr(args, "no_browser", False):

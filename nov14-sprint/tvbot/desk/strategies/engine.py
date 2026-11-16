@@ -89,7 +89,8 @@ class Book(object):
 
 def apply_fill(book, side, qty, raw, costs):
     px = B.side_price(raw, side, costs)
-    com = B.commission(qty, costs)
+    # reg_fees is 0 unless the alpaca_equity profile is selected.
+    com = B.commission(qty, costs) + B.reg_fees(qty, raw, side, costs)["total"]
     book.cash -= side * qty * px + com
     book.fees += com + abs(px - raw) * qty
     q = book.qty
@@ -110,7 +111,8 @@ def liq_value(qty, price, costs):
     if qty == 0:
         return 0.0
     a, c = B.liq_linear(qty, costs)
-    return qty * (a * price + c) - B.commission(abs(qty), costs)
+    return (qty * (a * price + c) - B.commission(abs(qty), costs)
+            - B.reg_fees(abs(qty), price, -1 if qty > 0 else 1, costs)["total"])
 
 
 def equity(book, price, costs):
@@ -317,14 +319,14 @@ class Replayer(object):
         lim = lims.get("max_loss_per_trade") if isinstance(lims, dict) else None
         if lim is None:
             lim = self.cfg.get("max_loss_per_trade")
-        risk = qty * abs(float(entry_price) - float(stop_price)) + float(est.get("usd") or 0.0)
+        risk = float(qty) * abs(float(entry_price) - float(stop_price)) + float(est.get("usd") or 0.0)
         if lim is None:
             return {"id": "MAX_LOSS_WOULD_BREACH", "passed": True,
                     "detail": "risk $%.2f; no max_loss_per_trade in cfg, so the order manager enforces its cap" % risk}
         lim = float(lim)
         return {"id": "MAX_LOSS_WOULD_BREACH", "passed": risk <= lim,
-                "detail": "qty %d x |%.4f - %.4f| + cost $%.2f = $%.2f vs cap $%.2f (TEST VALUE)"
-                          % (qty, float(entry_price), float(stop_price), float(est.get("usd") or 0.0), risk, lim)}
+                "detail": "qty %s x |%.4f - %.4f| + cost $%.2f = $%.2f vs cap $%.2f (%s)"
+                          % (B.qty_str(qty), float(entry_price), float(stop_price), float(est.get("usd") or 0.0), risk, lim, "session risk limit" if self.cfg.get("fractional") else "TEST VALUE")}
 
     def _decide_cash(self, bar):
         return self._mk(
@@ -586,10 +588,14 @@ class Replayer(object):
                             "Passes until the fast EMA crosses above the slow EMA.", trig_wait, none, none, none,
                             checks + [{"id": "NO_SIGNAL", "passed": False, "detail": "no cross-up"}])
         checks.append({"id": "NO_SIGNAL", "passed": True, "detail": "cross-up"})
-        bq = B.base_qty(close, self.cfg)
+        frac = self.cfg.get("fractional") is True
+        # Exact fractional leg only when cfg["fractional"] is True; never rounded up.
+        bq = B.base_qty(close, self.cfg, allow_fraction=True)
         if bq <= 0:
-            return self._mk(bar, "pass", 0, "ZERO_SIZE", "TEST notional buys less than one unit.",
-                            "No fractional sizing.", "Misses the signal.", B.est_cost(0, None, self.costs),
+            return self._mk(bar, "pass", 0, "ZERO_SIZE",
+                            "TEST notional buys less than %s." % ("the smallest share fraction" if frac else "one unit"),
+                            "Fractional sizing is on, but the notional is still too small." if frac else "No fractional sizing.",
+                            "Misses the signal.", B.est_cost(0, None, self.costs),
                             "Passes while one unit costs more than the TEST notional.", trig_wait, none, none, none,
                             checks + [{"id": "ZERO_SIZE", "passed": False, "detail": "qty 0"}])
         est = B.est_cost(bq, close, self.costs, sides=2, note="round trip")
@@ -597,7 +603,7 @@ class Replayer(object):
         mlc = self._max_loss_check(bq, close, stop_est, est)
         if not mlc["passed"]:
             return self._mk(bar, "pass", 0, mlc["id"],
-                            "Cross-up entry refused: %s. Size is TEST VALUES and is never cut to fit." % mlc["detail"],
+                            "Cross-up entry refused: %s. The configured size is never cut to fit." % mlc["detail"],
                             "Keeps one trade's worst planned loss inside the desk's cap.", "Misses the signal.",
                             est, "Passes while the planned loss to the %.1f%% stop is above the cap." % self.ep["stop_pct"],
                             B.line(close, "Cross-up confirmed at this close (%s)" % state), none, none, none,
@@ -608,7 +614,7 @@ class Replayer(object):
                         "EMAX's own holdout was already used on 2026-11-14 with no evidence of an edge; crossovers whipsaw.",
                         est, "Would pass with no cross-up, during warm-up or near the session end.",
                         B.line(close, "Cross-up confirmed at this close (%s)" % state),
-                        B.line(close, "Long %d at the next bar's close plus simulated costs; this close is the estimate" % bq),
+                        B.line(close, "Long %s at the next bar's close plus simulated costs; this close is the estimate" % B.qty_str(bq)),
                         hold_ext, B.line(stop_est, "Stop %.1f%% under the entry open (estimated from this close)" % self.ep["stop_pct"]),
                         checks, order_kind="entry", side=1, leg=False)
 

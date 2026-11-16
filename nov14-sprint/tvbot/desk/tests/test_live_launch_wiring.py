@@ -79,6 +79,8 @@ class FakeController(object):
             raise TypeError("unexpected keyword argument 'authorization'")
         FakeController.built.append(kw)
         self.kw = kw
+        self.mgr = mock.Mock()
+        self.mgr.state.return_value = {"armed": False}
         self.adapter_state = L.LiveAdapterState(kw["state_dir"])
         self.evidence_label = L.LABEL_ALPACA_LIVE
         self.closed = False
