@@ -489,6 +489,88 @@ class LiveArmConnectionCheckTests(RealControllerStartTests):
         self.assertTrue(seen["enabled_after"])
         self.assert_start_sent_no_order()
 
+    def test_the_ui_route_runs_the_check_so_preflight_passes_and_arm_is_accepted(self):
+        """POST /api/alpaca/connection_check through the real ui server attached to AlpacaDeskControls.
+        A fixed Monday 09:31 New York clock (controller and mock venue) makes calendar and venue clock
+        pass, so Arm is decided by the connection check. Loopback only, GET-only broker reads."""
+        import datetime as dt
+        from ui import server as ui_server
+        AS = live_launch._session_module()
+        monday = dt.datetime(2026, 11, 16, 14, 31, 1, tzinfo=dt.timezone.utc)
+        real_session_date = L.session_date
+
+        class FixedClock(object):
+            name = "FIXED TEST CLOCK"
+
+            def now(self):
+                return monday
+
+            def on_check(self, calendar, minutes):
+                return monday
+
+        self.opener = _AccountOpener(MockTrading(), suspended=False)
+        self.opener.trading.clock = {"is_open": True, "timestamp": "2026-11-16T14:31:01Z",
+                                     "next_open": "2026-11-17T14:30:00Z", "next_close": "2026-11-16T21:00:00Z"}
+        route = "/api/alpaca/connection_check"
+        spec = ui_server.CONTROL_ROUTES.get(route) or ("alpaca_connection_check", "connection_check")
+        replies = {}
+
+        def loopback_only(address, *a, **k):
+            if address[0] != "127.0.0.1":
+                raise _Boom("a non-loopback connection was attempted")
+            return _REAL_CREATE_CONNECTION(address, *a, **k)
+
+        def post(path, body):
+            conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+            try:
+                conn.request("POST", path, json.dumps(body), {"Content-Type": "application/json"})
+                reply = conn.getresponse()
+                return reply.status, json.loads(reply.read())
+            finally:
+                conn.close()
+
+        def operator():
+            with mock.patch.object(socket, "create_connection", loopback_only):
+                replies["enable"] = post("/api/alpaca/enable", {"confirm": True})
+                replies["check"] = post(route, {})
+                replies["preflight"] = post("/api/preflight", {})
+                replies["arm"] = post("/api/arm", {})
+            raise KeyboardInterrupt
+
+        with mock.patch.dict(ui_server.CONTROL_ROUTES, {route: spec}), \
+                mock.patch.object(AS, "WallClock", FixedClock), \
+                mock.patch.object(L, "session_date", lambda instant=None: real_session_date(instant or monday)):
+            shutil.rmtree(self.root, ignore_errors=True)
+            self.root = tempfile.mkdtemp(prefix="live-wiring-route-")
+            self.live_dir, self.limits = approve_live_dir(self.root)
+            code, out, err = self.start_real(server=live_launch._make_server, wait=operator)
+        self.assertEqual(code, 0, err)
+        result = {k: (v[0], v[1].get("controller_result")) for k, v in replies.items()}
+        self.assertEqual(result["enable"][0], 200, replies["enable"])
+        status, cc = result["check"]
+        self.assertEqual(status, 200, replies["check"])
+        self.assertIs(cc["ok"], True, cc)
+        self.assertEqual((cc["mode"], cc["method"], cc["orders_sent"]), ("live", "GET only", 0))
+        self.assertEqual([c["check"] for c in cc["checks"] if c["ok"]], ["account", "clock", "asset"])
+        status, checks = result["preflight"]
+        self.assertEqual(status, 200, replies["preflight"])
+        self.assertEqual([c["check"] for c in checks if not c["ok"]], [], checks)
+        self.assertIn("live connection check", [c["check"] for c in checks])
+        status, arm = result["arm"]
+        self.assertEqual(status, 200, replies["arm"])
+        self.assertIs(arm["ok"], True, arm)
+        self.assert_start_sent_no_order()
+
+    def test_the_route_method_outside_live_is_a_plain_not_required_reply(self):
+        class PaperRunner(object):
+            live = False
+
+            def connection_check(self):
+                raise AssertionError("no connection check outside live")
+        for runner in (PaperRunner(), type("Bare", (), {})()):
+            self.assertEqual(launch.AlpacaDeskControls(runner).connection_check(),
+                             {"ok": True, "required": False, "detail": "not required outside live"})
+
     def test_paper_and_mock_controls_do_not_run_a_connection_check(self):
         class Runner(object):
             live = False
