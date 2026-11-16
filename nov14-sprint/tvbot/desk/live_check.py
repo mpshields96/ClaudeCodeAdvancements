@@ -90,7 +90,7 @@ def main(argv=None):
         return 1
     now = datetime.now(timezone.utc)
     result = readiness.check_connection(transport, now=now)
-    session = classify(now, SessionCalendar())
+    session = classify(now, SessionCalendar.nyse_2026_2027())
     print(format_result(result, session))
     return 0 if result["connection_verified"] else 1
 

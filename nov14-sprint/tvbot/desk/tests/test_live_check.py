@@ -72,14 +72,22 @@ class LiveCheckTests(unittest.TestCase):
                     patch.object(live_check, "datetime") as clock, contextlib.redirect_stdout(out):
                 clock.now.return_value = sunday
                 self.assertEqual(live_check.main(["--state-dir", state]), 0)
+                sunday_output = out.getvalue()
+                january = datetime(2027, 1, 4, 16, 30, tzinfo=timezone.utc)
+                clock.now.return_value = january
+                fixtures["/v2/clock"] = {"is_open": True, "timestamp": january.isoformat()}
+                fixtures[live_check.QUOTE_PATH]["quote"]["t"] = january.isoformat()
+                with contextlib.redirect_stdout(io.StringIO()) as january_output:
+                    self.assertEqual(live_check.main(["--state-dir", state]), 0)
+                self.assertIn("Local session: regular", january_output.getvalue())
         urls = [(c.args[0].get_method(), c.args[0].full_url) for c in opener.open.call_args_list]
-        self.assertEqual(urls, [
+        self.assertEqual(urls, 2 * [
             ("GET", "https://api.alpaca.markets/v2/account"),
             ("GET", "https://api.alpaca.markets/v2/assets/SPY"),
             ("GET", "https://api.alpaca.markets/v2/clock"),
             ("GET", "https://data.alpaca.markets/v2/stocks/SPY/quotes/latest?feed=iex"),
         ])
         for text in ("Live account connection verified", "clock: closed", "STALE_QUOTE", "OUTSIDE_REGULAR_SESSION"):
-            self.assertIn(text, out.getvalue())
+            self.assertIn(text, sunday_output)
         for private in ("identifier-that-must-stay-local", "99999.99", "synthetic-secret", "AK-SYNTHETIC"):
-            self.assertNotIn(private, out.getvalue())
+            self.assertNotIn(private, sunday_output + january_output.getvalue())
