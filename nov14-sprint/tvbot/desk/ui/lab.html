@@ -244,8 +244,10 @@ summary { cursor: pointer; font-weight: 600; }
     var el = document.getElementById("modeBadge");
     getJSON("/api/session").then(function (s) {
       var m = String((s && s.broker_mode) || "");
+      var ad = (s && ((typeof s.adapter === "object" && s.adapter) || s._adapter_file)) || {};
+      var live = m === "alpaca-live" || String(ad.path_name || "") === "alpaca_live.json" || String(ad.mode || "") === "live";
       var t = "Local rehearsal (offline replay)", c = "", ti = "Offline replay of synthetic bars with mock fills. No broker, no real money.";
-      if (m === "alpaca-live") { t = "LIVE: REAL MONEY"; c = "live"; ti = "Alpaca LIVE account: real money and real orders."; }
+      if (live) { t = "LIVE: REAL MONEY"; c = "live"; ti = "Alpaca LIVE account: real money and real orders."; }
       else if (m === "alpaca-paper") { t = "Paper (no real money)"; c = "paper"; ti = "Alpaca PAPER account: simulated money."; }
       else if (m === "alpaca-mock") { t = "Local rehearsal (mock)"; ti = "In-process mock Alpaca, synthetic bars and fills. No network, no real money."; }
       else if (/^alpaca/.test(m)) { t = "Mode not reported"; c = "unk"; ti = "Unknown Alpaca mode (" + m + "); treat as unconfirmed."; }

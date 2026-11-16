@@ -742,10 +742,13 @@ function draw(){
     if (!MARK[d.action]) continue; const i = idxAtOrBefore(d.t); if (i < i0 || i > i1) continue; if (masked && i > cut) continue;
     const b = bars[i]; const x = X(i); const k = stack[i] = (stack[i] || 0) + 1; const r = Math.max(5, Math.min(8, bw * 0.45)); let y;
     g.lineWidth = 1.5;
-    if (d.action === 'enter_long') { y = Y(b.low) + 10 + r + (k - 1) * (2 * r + 3); g.fillStyle = col('--up'); g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y + r); g.lineTo(x - r, y + r); g.closePath(); g.fill(); }
-    else if (d.action === 'enter_short') { y = Y(b.high) - 10 - r - (k - 1) * (2 * r + 3); g.fillStyle = col('--down'); g.beginPath(); g.moveTo(x, y + r); g.lineTo(x + r, y - r); g.lineTo(x - r, y - r); g.closePath(); g.fill(); }
-    else if (d.action === 'exit') { y = Y(b.high) - 10 - r - (k - 1) * (2 * r + 3); g.fillStyle = col('--entry'); g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y); g.lineTo(x, y + r); g.lineTo(x - r, y); g.closePath(); g.fill(); }
-    else { y = Y(b.low) + 10 + r + (k - 1) * (2 * r + 3); g.strokeStyle = col('--pass'); g.beginPath(); g.arc(x, y, r - 1, 0, Math.PI * 2); g.stroke(); }
+    const above = d.action === 'enter_short' || d.action === 'exit';
+    y = above ? Y(b.high) - 10 - r - (k - 1) * (2 * r + 3) : Y(b.low) + 10 + r + (k - 1) * (2 * r + 3);
+    y = Math.max(padT + r + 1, Math.min(padT + ph - r - 1, y)); // stacked markers stay inside the price plot
+    if (d.action === 'enter_long') { g.fillStyle = col('--up'); g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y + r); g.lineTo(x - r, y + r); g.closePath(); g.fill(); }
+    else if (d.action === 'enter_short') { g.fillStyle = col('--down'); g.beginPath(); g.moveTo(x, y + r); g.lineTo(x + r, y - r); g.lineTo(x - r, y - r); g.closePath(); g.fill(); }
+    else if (d.action === 'exit') { g.fillStyle = col('--entry'); g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y); g.lineTo(x, y + r); g.lineTo(x - r, y); g.closePath(); g.fill(); }
+    else { g.strokeStyle = col('--pass'); g.beginPath(); g.arc(x, y, r - 1, 0, Math.PI * 2); g.stroke(); }
     if (S.sel === d.decision_id) { g.strokeStyle = col('--c-selring'); g.lineWidth = 2; g.beginPath(); g.arc(x, y, r + 4, 0, Math.PI * 2); g.stroke(); }
     g.lineWidth = 1;
     V.markers.push({x, y, r: r + 5, id: d.decision_id});
@@ -810,9 +813,13 @@ function setView(v){
 }
 // ---------------- Alpaca paper mode (fields come from session.json; absent = offline desk, unchanged) ----------------
 function isAlpaca(s){ return /^alpaca/.test(String((s || {}).broker_mode || '')); }
-function isPaper(s){ return String((s || {}).broker_mode || '') === 'alpaca-paper'; }
-// Live is only ever the controller's own label; never inferred from paper, mock or the transport.
-function isLive(s){ return String((s || {}).broker_mode || '') === 'alpaca-live'; }
+function isPaper(s){ return String((s || {}).broker_mode || '') === 'alpaca-paper' && !liveSignal(s); }
+// Live comes only from the controller's own live signals, never from paper, mock or the transport.
+// Live if ANY live signal is present (W-D controller: broker_mode "alpaca-live", adapter view path_name
+// "alpaca_live.json", adapter mode "live"). A conflicting paper label never hides a live signal.
+function liveSignal(s){ s = s || {}; const a = (typeof s.adapter === 'object' && s.adapter) || s._adapter_file || {};
+  return String(s.broker_mode || '') === 'alpaca-live' || String(a.path_name || '') === 'alpaca_live.json' || String(a.mode || '') === 'live'; }
+function isLive(s){ return liveSignal(s); }
 function isMockMode(s){ return String((s || {}).broker_mode || '') === 'alpaca-mock'; }
 // Broker wording comes from the transport the controller actually built (session.broker.transport), not the mode name alone.
 function transportKind(s){
@@ -1050,6 +1057,8 @@ function limitsWord(s){
   if (limitsSrc(s).draft) return '<span class="s-warn">draft</span>';
   return esc(lab.slice(0, 24) || 'loaded');
 }
+function mockUsedUp(s){ const more = num(s.bars_total) === null || num(s.bars_done) === null || num(s.bars_done) < num(s.bars_total);
+  return isAlpaca(s) && transportKind(s) === 'mock' && !more && num(s.bars_done) > 0; }
 function nextStep(s){
   const ph = phaseOf(s); const alp = isAlpaca(s);
   const ex = s.expires_utc ? Date.parse(s.expires_utc) : NaN; const expired = isFinite(ex) && ex < clockNow(s);
@@ -1088,7 +1097,7 @@ function nextStep(s){
         : {tone: 'warn', title: 'Review the pre-session check', detail: 'Arm stays off until every preflight check passes.' + (names ? ' Failing: ' + names + '.' : ' No checks reported yet.'), btn: 'Review pre-session check', sel: fb('review')};
     }
     if (expired) return {tone: 'bad', title: 'Session expired', detail: 'This session is past its expiry and cannot be armed. Start a fresh session.'};
-    if (alp && tk === 'mock' && !more && num(s.bars_done) > 0) return {tone: 'warn', title: 'Mock bars used up', detail: 'The in-process mock has checked all ' + num(s.bars_done) + ' of its synthetic bars, so Check for new bars has nothing left to act on. Review this run, or restart the desk with launch.py --fresh for a new walkthrough.', btn: 'Open session review', view: 'review'};
+    if (mockUsedUp(s)) return {tone: 'warn', title: 'Mock bars used up', detail: 'The in-process mock has checked all ' + num(s.bars_done) + ' of its synthetic bars, so Check for new bars has nothing left to act on. Review this run, or restart the desk with launch.py --fresh for a new walkthrough.', btn: 'Open session review', view: 'review'};
     const bw = brokerWords(s); return {tone: 'info', title: 'Arm session', detail: bw.title, btn: bw.arm, sel: fb('arm')};
   }
   return {tone: 'unk', title: 'Phase ' + ph, detail: 'Phase not recognized by this page; see Session details.'};
@@ -1118,10 +1127,11 @@ function renderFlow(s, ph, expired){
   const run = ph === 'ARMED' || ph === 'PAUSED';
   const en = {arm: ph === 'PRE_SESSION' && preflightOk(s) && !expired, step1: run && more, step10: run && more, runend: run && more, play: run && more, stopplay: run,
     pause: ph === 'ARMED', resume: ph === 'PAUSED', stop: run || ph === 'PRE_SESSION', clear: ph === 'STOPPED', close: ph === 'CLOSED' || ((run || ph === 'STOPPED') && flat)};
-  const cur = ph === 'PRE_SESSION' ? (preflightOk(s) ? 'arm' : 'review') : ph === 'ARMED' ? 'play' : ph === 'PAUSED' ? 'resume' : ph === 'STOPPED' || ph === 'CLOSED' ? 'close' : 'review';
+  const cur = ph === 'PRE_SESSION' && mockUsedUp(s) ? 'close' : ph === 'PRE_SESSION' ? (preflightOk(s) ? 'arm' : 'review') : ph === 'ARMED' ? 'play' : ph === 'PAUSED' ? 'resume' : ph === 'STOPPED' || ph === 'CLOSED' ? 'close' : 'review';
   for (const b of document.querySelectorAll('#flow button')) { const f = b.dataset.f; const na = !routeOk(FLOW_ROUTE[f]);
     b.disabled = f === 'review' ? false : (off || na || !en[f]); b.classList.toggle('cur', f === cur);
     b.classList.toggle('na', na); if (na && !b.dataset.t0) { b.dataset.t0 = b.title; b.title = b.title + ' (not available: this server has no ' + FLOW_ROUTE[f] + ' route)'; } }
+  const armB = document.querySelector('#flow button[data-f="arm"]'); if (armB) armB.classList.toggle('pri', !(ph === 'PRE_SESSION' && mockUsedUp(s))); // used-up mock: Arm is not the next step
   $('#btnPause2').disabled = off || !en.pause || !routeOk('/api/pause'); $('#btnStop2').disabled = off || !en.stop || !routeOk('/api/stop_close');
   $('#schedTgl').disabled = off || !routeOk('/api/schedule');
   // alpaca modes: wall clock. Advance becomes "check for new closed bar"; no step-10, run-to-end, play or schedule.
