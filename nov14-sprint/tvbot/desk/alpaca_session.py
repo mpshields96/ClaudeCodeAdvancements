@@ -349,6 +349,10 @@ class AlpacaSessionController(S.SessionController):
             # The one snapshot object for this process. Never re-read from disk; preflight
             # re-verifies its hashes and that the derived caps are unchanged.
             limits, fixed, self.limits_source = _session_limits(limits_snapshot)
+            # alpaca/sizing.py stamps its paper APPROVED_LABEL on every snapshot it loads. In live,
+            # describe it truthfully with a copy; hash, values_hash, approved_utc, provenance and the
+            # signed snapshot object itself are unchanged.
+            self.limits_source = dict(self.limits_source, label="OPERATOR-APPROVED LIVE LIMITS")
             if int(fixed) != int(live_authorization.shares):
                 raise LiveModeRefused("the authorized share count does not match the approved snapshot")
             self._limits_snapshot, self._limits_hash = limits_snapshot, live_authorization.limits_hash

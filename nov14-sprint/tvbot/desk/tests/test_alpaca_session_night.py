@@ -502,6 +502,25 @@ class LiveEligibility(_Base):
         checks = pf["checks"] if isinstance(pf, dict) else pf
         return [x for x in checks if x["check"] == "live authorization date"]
 
+    def test_live_limits_source_label_says_live(self):
+        c = self.live()
+        lab = c.limits_source.get("label") or ""
+        self.assertIn("LIVE", lab)
+        self.assertNotIn("PAPER", lab)
+        self.assertEqual(c.limits_source.get("hash"), c._limits_hash)
+        self.assertEqual(c.limits_source.get("hash"), c.live_authorization.limits_hash)
+        # Preflight still passes with the relabelled descriptor, and the arm that relies on it succeeds.
+        self.assertTrue(c.alpaca_enable(confirm=True)["ok"])
+        c.check_new_bars()
+        _venue(c)
+        self.assertTrue(c.connection_check()["ok"])
+        pf = c.preflight()
+        checks = pf["checks"] if isinstance(pf, dict) else pf
+        self.assertTrue(all(x["ok"] for x in checks), [x for x in checks if not x["ok"]])
+        r = c.arm()
+        self.assertTrue(r.get("ok"), r)
+        self.assertEqual(c.limits_source.get("hash"), c._limits_hash)
+
     def test_live_authorization_date_same_day_passes(self):
         c = self.armed_live()
         rows = self._date_check(c)
