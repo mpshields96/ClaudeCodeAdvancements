@@ -403,7 +403,7 @@ class AlpacaSessionController(S.SessionController):
             self.lab = self._default_lab(state_dir)
         self.config_revision = None
         S.SessionController.__init__(self, state_dir=state_dir, strategy=strategy, limits=limits,
-                                     strategy_cfg=cfg)
+                                     strategy_cfg=cfg, simulated=not self.live)
         if self.live:
             self._live_rows()
         if self.config_revision is not None:

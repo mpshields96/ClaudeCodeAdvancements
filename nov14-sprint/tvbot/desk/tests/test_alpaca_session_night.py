@@ -26,6 +26,7 @@ for _p in (DESK, TESTS):
 
 import alpaca as A  # noqa: E402
 import alpaca_session as AS  # noqa: E402
+import session as S  # noqa: E402
 from alpaca import live as L  # noqa: E402
 from alpaca import sizing  # noqa: E402
 from alpaca.broker import AlpacaLiveBroker, AlpacaPaperBroker  # noqa: E402
@@ -545,19 +546,13 @@ class LiveEligibility(_Base):
                                                     "is_open": True}))
 
     def test_live_persisted_rows_say_simulated_false(self):
-        """controls.json, intents.jsonl, audit.jsonl and ledger.jsonl: every row from the manager's
-        first (construction) row on, nested fills included, says simulated False, and Arm does.
-        desk_audit.jsonl: every row written once the controller is built (its first row comes from
-        session.py, W-B's file; listed in NIGHT_WD_STATUS.md)."""
+        """controls.json, intents.jsonl, audit.jsonl, ledger.jsonl, desk_audit.jsonl, session.json
+        and progress.json: every row from the first one on, nested values included, says simulated
+        False, and Arm does. review.json says False at the top level. Lab and decision rows (and
+        decision copies nested in review.json) are a known limitation in NIGHT_WD_STATUS.md."""
         c = self.live()
         self.assertIs(c.mgr.simulated, False)
-        base = {}
-        for n in ("desk_audit.jsonl",):
-            path = os.path.join(c.state_dir, n)
-            base[n] = 0
-            if os.path.exists(path):
-                with open(path) as fh:
-                    base[n] = sum(1 for _ in fh)
+        self.assertIs(c.simulated, False)
         self.assertTrue(c.alpaca_enable(confirm=True)["ok"])
         c.check_new_bars()
         _venue(c)
@@ -584,11 +579,17 @@ class LiveEligibility(_Base):
             bad += [where for where, vals in found.items() if any(v is not False for v in vals)]
         ledger = rows
         self.assertTrue([r for r in ledger if r.get("fills")] or [r for r in ledger if r.get("evidence")], ledger)
+        for n in ("desk_audit.jsonl", "session.json", "progress.json"):
+            rows, found = _sim_values(os.path.join(c.state_dir, n))
+            self.assertTrue(found, n)
+            bad += [where for where, vals in found.items() if any(v is not False for v in vals)]
         with open(os.path.join(c.state_dir, "desk_audit.jsonl")) as fh:
-            rows = [json.loads(x) for x in fh if x.strip()]
-        new_rows = rows[base["desk_audit.jsonl"]:]
-        self.assertTrue(new_rows)
-        bad += ["desk_audit.jsonl#%d" % i for i, r in enumerate(new_rows) if r.get("simulated") is not False]
+            first = json.loads(fh.readline())
+        self.assertEqual((first["kind"], first["simulated"]), ("session_config_bound", False))
+        c.review()
+        with open(os.path.join(c.state_dir, "review.json")) as fh:
+            self.assertIs(json.load(fh)["simulated"], False)
+        self.assertIs(c.session_state()["simulated"], False)
         self.assertEqual(bad, [])
         self.assertTrue([r for r in ledger if r.get("evidence") == L.LABEL_ALPACA_LIVE])
 
@@ -605,6 +606,9 @@ class LiveEligibility(_Base):
         with open(os.path.join(sd, "controls.json")) as fh:
             self.assertIs(json.load(fh)["simulated"], True)
         self._all_true(sd)
+        self.assertIs(p.simulated, True)
+        with open(os.path.join(sd, "desk_audit.jsonl")) as fh:
+            self.assertIs(json.loads(fh.readline())["simulated"], True)
 
     def _all_true(self, sd):
         seen = 0
@@ -628,6 +632,14 @@ class LiveEligibility(_Base):
         self.assertTrue(c.arm().get("ok"))
         c._write_state()
         self._all_true(sd)
+
+
+class SessionSimulatedFlag(unittest.TestCase):
+    def test_keyword_must_be_bool(self):
+        d = tempfile.mkdtemp(prefix="night-sess-sim-")
+        self.addCleanup(shutil.rmtree, d, True)
+        with self.assertRaises(ValueError):
+            S.SessionController(state_dir=d, simulated="no")
 
 
 class ManagerSimulatedFlag(unittest.TestCase):

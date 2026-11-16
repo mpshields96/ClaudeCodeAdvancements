@@ -395,7 +395,12 @@ def _config_diff(old, new):
 # ------------------------------------------------------------------ controller
 class SessionController(object):
     def __init__(self, state_dir=DEFAULT_STATE_DIR, strategy=DEFAULT_STRATEGY, bars_path=FIXTURE,
-                 broker_seed=20261115, faults=None, limits=None, strategy_cfg=None):
+                 broker_seed=20261115, faults=None, limits=None, strategy_cfg=None, simulated=True):
+        # The value desk rows, session.json, progress.json and the review/status views record as
+        # "simulated". The replay desk and paper keep True; only live passes False.
+        if not isinstance(simulated, bool):
+            raise ValueError("simulated must be True or False")
+        self.simulated = simulated
         self.state_dir = os.path.abspath(state_dir)
         os.makedirs(self.state_dir, exist_ok=True)
         self.lock = threading.RLock()
@@ -486,7 +491,7 @@ class SessionController(object):
 
     def _row_flags(self):
         """Evidence flags written on every bars.jsonl / decisions.jsonl row."""
-        return {"simulated": True}
+        return {"simulated": self.simulated}
 
     def _lab_observe(self, bar, d):
         """Called after the decision is recorded and before it is routed (no-op offline)."""
@@ -564,7 +569,7 @@ class SessionController(object):
 
     # ------------------------------------------------------------ bookkeeping
     def _exec_alarms(self):
-        return [{"code": r["reason"], "severity": "warn", "blocking": False, "simulated": True,
+        return [{"code": r["reason"], "severity": "warn", "blocking": False, "simulated": self.simulated,
                  "detail": "%s %d at simulated %.4f = $%.2f; caps per-trade $%s, gross $%s; refused, nothing filled"
                            % (r["side"], r["qty"], r["exec_price"], r["notional"], r["per_trade_cap"], r["gross_cap"]),
                  "client_id": r["client_id"], "bar_ts_close": r["bar_ts_close"]}
@@ -588,7 +593,7 @@ class SessionController(object):
             diff = _config_diff(have, want)
             if diff:
                 _append_jsonl(audit, {"ts_wall_utc": now, "kind": "session_config_change_refused",
-                                      "simulated": True, "diff": diff})
+                                      "simulated": self.simulated, "diff": diff})
                 raise SessionConfigChanged(
                     "REFUSED: %s is bound to its recorded session config; this start asked to change %s. "
                     "Recorded vs requested: %s. Sizing, limits, strategy and costs never change inside a "
@@ -598,7 +603,7 @@ class SessionController(object):
         used = [m for m in _STATE_MARKERS if os.path.exists(os.path.join(self.state_dir, m))]
         if used:
             _append_jsonl(audit, {"ts_wall_utc": now, "kind": "session_config_missing_refused",
-                                  "simulated": True, "existing": used})
+                                  "simulated": self.simulated, "existing": used})
             raise SessionConfigChanged(
                 "REFUSED: %s already holds session state (%s) but no %s, so its sizing and limits "
                 "can't be shown to match this start. %s" % (self.state_dir, ", ".join(used),
@@ -608,14 +613,14 @@ class SessionController(object):
         with open(tmp, "w") as fh:
             json.dump(rec, fh, indent=2, sort_keys=True)
         os.replace(tmp, path)
-        _append_jsonl(audit, {"ts_wall_utc": now, "kind": "session_config_bound", "simulated": True,
+        _append_jsonl(audit, {"ts_wall_utc": now, "kind": "session_config_bound", "simulated": self.simulated,
                               "strategy": self.strategy, "strategy_cfg": want["strategy_cfg"],
                               "limits": want["limits"], "fill_costs": want["fill_costs"]})
         return rec
 
     def _desk_audit(self, kind, **fields):
         rec = {"ts_wall_utc": iso(_dt.datetime.utcnow().replace(tzinfo=_dt.timezone.utc)),
-               "ts_sim_utc": self.replay_clock(), "kind": kind, "simulated": True}
+               "ts_sim_utc": self.replay_clock(), "kind": kind, "simulated": self.simulated}
         rec.update(fields)
         _append_jsonl(self.paths["desk_audit"], rec)
 
@@ -689,7 +694,7 @@ class SessionController(object):
             if failed:
                 self._desk_audit("arm_refused", failed=failed, auto=auto)
                 self._write_state()
-                return {"ok": False, "reason": "PREFLIGHT", "failed": failed, "simulated": True}
+                return {"ok": False, "reason": "PREFLIGHT", "failed": failed, "simulated": self.simulated}
             nxt = self.bars[self.i]
             end = self._session_end(nxt)
             self.session_seq += 1
@@ -733,7 +738,7 @@ class SessionController(object):
     def clear_stop(self, confirm=False):
         with self.lock:
             if confirm is not True:
-                return {"ok": False, "reason": "CONFIRM_REQUIRED", "simulated": True}
+                return {"ok": False, "reason": "CONFIRM_REQUIRED", "simulated": self.simulated}
             res = self.mgr.clear_stop()
             if res.get("ok"):
                 self.phase = "PRE_SESSION"
@@ -752,13 +757,13 @@ class SessionController(object):
         with self.lock:
             st = self.mgr.state()
             if st["exposure"]["position_qty"] != 0 or st["exposure"]["working_orders"]:
-                return {"ok": False, "reason": "NOT_FLAT", "simulated": True}
+                return {"ok": False, "reason": "NOT_FLAT", "simulated": self.simulated}
             self.stop_play()
             self.mgr.disarm(reason="CLOSE_SESSION")
             self.phase = "CLOSED"
             self._desk_audit("close_session")
             self._write_state()
-            return {"ok": True, "simulated": True}
+            return {"ok": True, "simulated": self.simulated}
 
     # ---------------------------------------------------------------- replay
     def advance(self, n=1):
@@ -770,7 +775,7 @@ class SessionController(object):
                 self._step_one()
                 done += 1
             self._write_state()
-            return {"ok": True, "bars_advanced": done, "bars_done": self.i, "simulated": True}
+            return {"ok": True, "bars_advanced": done, "bars_done": self.i, "simulated": self.simulated}
 
     def play(self, bars_per_sec=4.0):
         rate = max(0.1, min(float(bars_per_sec or 4.0), MAX_PLAY_RATE))
@@ -792,7 +797,7 @@ class SessionController(object):
                     self._write_state()
             self._play_thread = threading.Thread(target=run, name="desk-play", daemon=True)
             self._play_thread.start()
-            return {"ok": True, "bars_per_sec": rate, "simulated": True}
+            return {"ok": True, "bars_per_sec": rate, "simulated": self.simulated}
 
     def stop_play(self):
         t = self._play_thread
@@ -1027,7 +1032,7 @@ class SessionController(object):
             signed = f["qty"] if it["side"] == "buy" else -f["qty"]
             if cur is None:
                 cur = {"entry_decision_id": it["decision_id"], "entry_ts": ts, "side": it["side"],
-                       "fills": [], "cash": 0.0, "fees": 0.0, "simulated": True}
+                       "fills": [], "cash": 0.0, "fees": 0.0, "simulated": self.simulated}
             cur["fills"].append({"intent_id": it["intent_id"], "kind": it["kind"], "side": it["side"],
                                  "qty": f["qty"], "price": f["price"], "fee": f.get("fee", 0.0),
                                  "ts": ts, "mock": True})
@@ -1143,7 +1148,7 @@ class SessionController(object):
             if a.get("kind") == "rejected":
                 rejects[a.get("reason", "?")] = rejects.get(a.get("reason", "?"), 0) + 1
         return {
-            "simulated": True,
+            "simulated": self.simulated,
             "label": "SIMULATED REPLAY REVIEW (mock fills, synthetic bars)",
             "strategy": self.strategy,
             "pass_rule": PASS_RULE,
@@ -1246,7 +1251,7 @@ class SessionController(object):
             "entry_block_reason": st["entry_block_reason"],
             "restarts": self.restarts,
             "updated_utc": st["updated_utc"],
-            "simulated": True,
+            "simulated": self.simulated,
         }
         return sim
 
@@ -1262,7 +1267,7 @@ class SessionController(object):
             _atomic_json(self.paths["review"], self.review())
             _atomic_json(self.paths["progress"], {"bars_done": self.i, "phase": self.phase,
                                                   "session_seq": self.session_seq, "strategy": self.strategy,
-                                                  "restarts": self.restarts, "simulated": True})
+                                                  "restarts": self.restarts, "simulated": self.simulated})
 
     def close(self):
         self.stop_play()
