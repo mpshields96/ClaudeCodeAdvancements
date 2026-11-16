@@ -63,6 +63,9 @@ class LiveVenueOpener(object):
             st, payload = self.data.handle(method, parts.path, query)
         else:
             st, payload = self.trading.handle(method, parts.path, query, body)
+            if method == "GET" and parts.path == "/v2/account" and st == 200:
+                # Alpaca documents this field on GET /v2/account; the local mock omits it.
+                payload = dict(payload, trade_suspended_by_user=False)
         if st >= 400:
             raise urllib.error.HTTPError(url, st, "err", {}, io.BytesIO(json.dumps(payload or {}).encode()))
         return FakeResp(st, payload, url)
@@ -439,7 +442,14 @@ class LiveEligibility(_Base):
         for acct, field in (({"status": "ACTIVE", "trading_blocked": None, "account_blocked": None}, "trading_blocked"),
                             ({"status": "ACTIVE"}, "account_blocked"),
                             ({"status": "ACCOUNT_CLOSED", "trading_blocked": False, "account_blocked": False}, "ACTIVE"),
-                            ({"status": "ACTIVE", "trading_blocked": True, "account_blocked": False}, "trading_blocked")):
+                            ({"status": "ACTIVE", "trading_blocked": True, "account_blocked": False}, "trading_blocked"),
+                            # Codex 6b97d48 retest: ACTIVE, both block flags false, suspended by the user.
+                            ({"status": "ACTIVE", "trading_blocked": False, "account_blocked": False,
+                              "trade_suspended_by_user": True}, "trade_suspended_by_user"),
+                            ({"status": "ACTIVE", "trading_blocked": False, "account_blocked": False},
+                             "trade_suspended_by_user"),
+                            ({"status": "ACTIVE", "trading_blocked": False, "account_blocked": False,
+                              "trade_suspended_by_user": None}, "trade_suspended_by_user")):
             c = self.live(root="acct-%d" % len(self.ctrls))
             c.transport._opener.account = acct
             self._check_refused(c, field)
@@ -499,6 +509,33 @@ class LiveEligibility(_Base):
         self.assertEqual(held[0], "LIVE_ELIGIBILITY")
         self.assertIn("QQQ", held[1])
         self.assertFalse(d["live_eligibility"]["ok"])
+        self.assertEqual(_posts(c), [])
+
+    def test_user_suspended_account_rule(self):
+        ok = {"status": "ACTIVE", "trading_blocked": False, "account_blocked": False}
+        self.assertIsNone(AS._eligibility("account", dict(ok, trade_suspended_by_user=False)))
+        for v in (True, None):
+            self.assertIn("trade_suspended_by_user",
+                          AS._eligibility("account", dict(ok, trade_suspended_by_user=v)))
+        self.assertIn("trade_suspended_by_user", AS._eligibility("account", ok))
+        # paper and mock: the local mock omits the field, so only an explicit true fails there
+        self.assertIsNone(AS._eligibility("account", ok, live=False))
+        self.assertIn("trade_suspended_by_user",
+                      AS._eligibility("account", dict(ok, trade_suspended_by_user=True), live=False))
+
+    def test_user_suspended_entry_recheck_holds(self):
+        c = self.armed_live()
+        c.transport._opener.account = {"status": "ACTIVE", "trading_blocked": False,
+                                       "account_blocked": False, "trade_suspended_by_user": True}
+        c._sparse_hour = lambda bar: None
+        c._venue_recheck = lambda d: None
+        AS.read_quote = _fresh_quote(c)
+        d = {"decision_id": "susp-1"}
+        px = float(c.bars[-1]["close"])
+        out, held = c._entry_bounds_checked(d, c.bars[-1], c.mgr.state(), 4, "buy", px, px - 2.0)
+        self.assertIsNone(out)
+        self.assertEqual(held[0], "LIVE_ELIGIBILITY")
+        self.assertIn("trade_suspended_by_user", held[1])
         self.assertEqual(_posts(c), [])
 
     def test_nanosecond_venue_clock_parses(self):
