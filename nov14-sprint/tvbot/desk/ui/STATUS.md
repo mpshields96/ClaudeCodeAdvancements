@@ -122,3 +122,28 @@ Follow-ups (not fixed here):
 3. When the mock bars are used up, the session-flow strip still highlights "2 Arm" while the banner says "Mock bars used up".
 4. W-B scope: `test_alpaca_integration.test_mock_fill_time_follows_bar_clock` fails in the full suite. The in-process mock's bar supply also depends on the wall clock: around 03:00Z a fresh run had 67 of 68 bars already done.
 5. The launcher fell back to port 18872 when 18871 had just been released. Wait until the port is bindable before restarting.
+
+### Second pass (W-A, 03:19Z) — first viewport, truthful mode, lab badge
+
+Changed `ui/index.html`, `ui/lab.html`, the UI tests in `tests/test_ui_server.py`, and this file. `server.py`, `alpaca/`, `orders/`, `strategies/`, `session.py` and `launch.py` are untouched.
+
+- **One mode badge.** The header shows one badge, which reads `Local rehearsal`, `Paper (no real money)`, `LIVE: REAL MONEY` (red) or `Mode not reported`. `alpaca-live` renders as live and nothing else does. A paper or mock session never shows live. A broker mode the desk doesn't know shows `Mode not reported`, and its Arm label says the mode is unconfirmed.
+- **One status line** (`#statusLine`), e.g. "Disarmed · Flat · Limits: demo" or "Armed · Short 20 sh · Limits: test values". The full strip (mode, venue, limits, evidence) and the broker detail (`#bbDetail`) sit behind **Details ▾** (`#modeDet`). The broker banner shows only when recovery needs action (uncertain client ids, reconcile blocking or ambiguous).
+- **Overflow menus.** Historical study, the lab, /spy-study and the TradingView controls live in **Research ▾** (`#resPop`). A plain `Alpaca dashboard ↗` link goes to https://app.alpaca.markets/, separate from Setup. The Arm/Pause/adapter controls card is collapsed under "More controls and broker detail". Stop & Close stays in the session flowbar.
+- **Empty chart** reads "No bars yet." plus the next step, with no filenames.
+- **Wording.** Partial protection reads "PARTIALLY PROTECTED: k of n sh protected, u UNCOVERED". The quote reads "Latest IEX bid/ask (indicative, not a tradable price)". The stale-runner alarm no longer shows for a connected Alpaca session, where no background runner is expected.
+- **lab.html** shows the same mode badge, read from `/api/session` with the same mapping.
+- **Fix.** A global `[hidden]{display:none !important}`, because `.banner.bb{display:flex}` was overriding `hidden`. The limits `draft` class no longer matches "no approved or draft limits" (follow-up 1 above).
+
+Chart position (#chartPane top / canvas top, px):
+
+| Viewport | Before | After |
+|---|---|---|
+| 1280x720 | 427 (Codex, 02:53Z) | 124 / 159 |
+| 1440x900 | — | 124 / 159 |
+| 390x844, empty | — | 309 / 369 |
+| 390x844, populated with stale banner | — | 364 / 423 |
+
+No horizontal scroll at any of these sizes.
+
+Verified: 67 UI tests OK (03:19Z). `node --check` passes on both pages' scripts. index.html has 2 `setInterval` and lab.html none. Neither page has an `<iframe` or `<link`. A JS probe with no network confirmed badge and broker words for live, paper, mock and unknown modes. Screenshots 10-15 are in `night-dashboard/`.
