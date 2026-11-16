@@ -63,7 +63,8 @@ def _start(args, out, err, isatty, read_line):
                   % (L.LABEL_ALPACA_LIVE, loaded["values"], want))
         out.flush()
         typed = read_line()
-        auth = L.live_gate_authorize(args.limits, state_dir, args.port, typed, isatty())
+        auth = L.live_gate_authorize(args.limits, state_dir, args.port, typed, isatty(),
+                                     shown_hash=loaded["hash"])
     except L.LiveGateRefused as e:
         return _refuse(err, str(e))
     out.write(NOT_WIRED % (auth.session_date, auth.shares) + "\n")

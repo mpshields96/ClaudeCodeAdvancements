@@ -18,6 +18,7 @@ What is separate from paper, and how:
 
 Nothing here reads a key or opens a socket at import or construction time. Tests inject openers.
 """
+import copy
 import datetime as _dt
 import os
 import subprocess
@@ -157,12 +158,15 @@ _MINT = object()        # only live_gate_authorize() holds this; LiveAuthorizati
 class LiveAuthorization(object):
     """Proof that this session passed the live gate. Minted only by live_gate_authorize()."""
 
-    def __init__(self, mint, session_date, shares, limits_hash, state_dir, issued_monotonic):
+    def __init__(self, mint, session_date, shares, limits_hash, state_dir, issued_monotonic, limits=None):
         if mint is not _MINT:
             raise TransportRefused("a live authorization can only come from the live gate")
         self.session_date = session_date
         self.shares = shares
         self.limits_hash = limits_hash
+        # The exact approved snapshot the operator saw and confirmed. A controller must use these
+        # values, not re-read the file (the 02:40Z binding finding).
+        self.limits = copy.deepcopy(limits) if limits is not None else None
         self.state_dir = state_dir
         self.issued_monotonic = issued_monotonic
 
@@ -253,13 +257,23 @@ def check_live_limits(limits_path, state_dir):
     return loaded
 
 
-def live_gate_authorize(limits_path, state_dir, port, typed, stdin_is_tty, now_utc=None, monotonic=None):
+def live_gate_authorize(limits_path, state_dir, port, typed, stdin_is_tty, now_utc=None, monotonic=None,
+                        shown_hash=None):
     """Every check, in order, before anything else happens. Returns a LiveAuthorization or raises
-    LiveGateRefused. Reads only the limits file; never a key, never the network."""
+    LiveGateRefused. Reads only the limits file; never a key, never the network.
+
+    shown_hash is the full approval-record hash of the limits the operator was shown before typing.
+    It is required: if the file now holds any other approval (swapped or re-approved while the prompt
+    was open), nothing is authorized. The authorization carries that exact snapshot."""
     import time
     state_dir = check_live_state_dir(state_dir)
     check_live_port(port)
+    if not shown_hash:
+        raise LiveGateRefused("the limits shown to you before confirming are required (shown_hash)")
     loaded = check_live_limits(limits_path, state_dir)
+    if loaded.get("hash") != shown_hash:
+        raise LiveGateRefused("the limits file changed while you were confirming; nothing was authorized. "
+                              "Run start again and check the limits it shows")
     if not stdin_is_tty:
         raise LiveGateRefused("the live confirmation must be typed at a terminal (piped input refused)")
     shares = int(loaded["values"]["fixed_shares"])
@@ -268,4 +282,4 @@ def live_gate_authorize(limits_path, state_dir, port, typed, stdin_is_tty, now_u
     if (typed or "").strip() != want:
         raise LiveGateRefused("confirmation did not match; type exactly: %s" % want)
     return LiveAuthorization(_MINT, today, shares, loaded["hash"], state_dir,
-                             (monotonic or time.monotonic)())
+                             (monotonic or time.monotonic)(), limits=loaded)

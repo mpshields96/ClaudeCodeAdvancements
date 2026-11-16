@@ -90,10 +90,19 @@ def approve_live_dir(root, values=None):
     return live_dir, sizing.approved_path(live_dir)
 
 
+def shown_hash(limits_path):
+    """The full approval-record hash of the limits an operator would be shown before typing."""
+    return sizing.load_limits(path=limits_path, allow_draft=False)["hash"]
+
+
+SWAPPED_LIVE_VALUES = dict(TEST_LIVE_VALUES, max_loss_per_trade=100.0, daily_loss=300.0)   # TEST VALUES
+
+
 def mint_auth(root, monotonic=None):
     live_dir, limits = approve_live_dir(root)
     phrase = L.confirm_phrase(1, L.session_date(NOW))
-    return L.live_gate_authorize(limits, live_dir, L.LIVE_PORT, phrase, True, now_utc=NOW, monotonic=monotonic)
+    return L.live_gate_authorize(limits, live_dir, L.LIVE_PORT, phrase, True, now_utc=NOW, monotonic=monotonic,
+                                 shown_hash=shown_hash(limits))
 
 
 class _LiveRehearsalBroker(AlpacaPaperBroker):
@@ -195,7 +204,8 @@ class SeparationTests(unittest.TestCase):
         auth = L.live_gate_authorize(sizing.approved_path(os.path.join(self.root, L.LIVE_STATE_DIRNAME)),
                                      os.path.join(self.root, L.LIVE_STATE_DIRNAME), L.LIVE_PORT,
                                      L.confirm_phrase(1, L.session_date(NOW)), True, now_utc=NOW,
-                                     monotonic=lambda: clock[0])
+                                     monotonic=lambda: clock[0], shown_hash=shown_hash(
+                                         sizing.approved_path(os.path.join(self.root, L.LIVE_STATE_DIRNAME))))
         t = L.LiveHttpsTransport(StaticTestProvider(LIVE_SYNTH_KEY, SYNTH_SECRET, mode="live"), auth,
                                  opener=self.opener, monotonic=lambda: clock[0])
         t.request("GET", "trading", "/v2/account")
@@ -253,13 +263,14 @@ class LiveGateTests(unittest.TestCase):
         self.root = tempfile.mkdtemp(prefix="alpaca-live-gate-")
         self.live_dir, self.limits = approve_live_dir(self.root)
         self.phrase = L.confirm_phrase(1, L.session_date(NOW))
+        self.shown = shown_hash(self.limits)
 
     def tearDown(self):
         shutil.rmtree(self.root, ignore_errors=True)
 
     def gate(self, **kw):
         args = dict(limits_path=self.limits, state_dir=self.live_dir, port=L.LIVE_PORT, typed=self.phrase,
-                    stdin_is_tty=True, now_utc=NOW)
+                    stdin_is_tty=True, now_utc=NOW, shown_hash=self.shown)
         args.update(kw)
         with NoNetworkNoKeys():
             return L.live_gate_authorize(**args)
@@ -354,6 +365,43 @@ class LiveGateTests(unittest.TestCase):
         self.assertIn("LIVE GATE PASSED", out)
         self.assertIn("Nothing was sent", out)
         self.assertIn(L.LABEL_ALPACA_LIVE, out)
+
+    # The 02:40Z binding finding: limits swapped while the confirmation prompt is open.
+    def test_missing_shown_hash_refused(self):
+        with self.assertRaises(L.LiveGateRefused):
+            self.gate(shown_hash=None)
+
+    def test_limits_reapproved_after_they_were_shown_are_refused(self):
+        approve_live_dir(self.root, SWAPPED_LIVE_VALUES)       # same share count, larger loss limits
+        with self.assertRaises(L.LiveGateRefused) as cm:
+            self.gate()
+        self.assertIn("changed while you were confirming", str(cm.exception))
+
+    def test_authorization_carries_the_shown_snapshot_not_a_later_file(self):
+        auth = self.gate()
+        self.assertEqual(auth.limits["hash"], self.shown)
+        self.assertEqual(auth.limits_hash, self.shown)
+        self.assertEqual(float(auth.limits["values"]["max_loss_per_trade"]), 10.0)
+        approve_live_dir(self.root, SWAPPED_LIVE_VALUES)
+        self.assertEqual(float(auth.limits["values"]["max_loss_per_trade"]), 10.0)
+        self.assertEqual(float(auth.limits["values"]["daily_loss"]), 30.0)
+
+    def test_start_refuses_limits_swapped_during_the_prompt(self):
+        typed = L.confirm_phrase(1, L.session_date())
+        root = self.root
+
+        def swap_then_type():
+            approve_live_dir(root, SWAPPED_LIVE_VALUES)
+            return typed
+
+        out, err = io.StringIO(), io.StringIO()
+        with NoNetworkNoKeys():
+            code = live_launch.main(["start", "--state-dir", self.live_dir, "--limits", self.limits],
+                                    out=out, err=err, isatty=lambda: True, read_line=swap_then_type)
+        self.assertEqual(code, 2, out.getvalue())
+        self.assertIn("changed while you were confirming", err.getvalue())
+        self.assertNotIn("LIVE GATE PASSED", out.getvalue())
+        self.assertIn("'max_loss_per_trade': 10", out.getvalue())     # what was shown: the original
 
     def test_start_on_paper_port_exits_2(self):
         code, _, _ = self.run_main(["start", "--state-dir", self.live_dir, "--limits", self.limits,

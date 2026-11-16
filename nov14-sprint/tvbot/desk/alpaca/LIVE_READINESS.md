@@ -40,7 +40,7 @@ The `AK`/`PK` prefix is only a hint. The host check and the separate providers a
 
 ## 3. Verified offline only
 
-All tests are in `tests/test_alpaca_live.py` (43 tests). They use a fake opener, so they show the
+All tests are in `tests/test_alpaca_live.py` (47 tests). They use a fake opener, so they show the
 code's behaviour, not Alpaca's.
 
 | Protection | Evidence on the live request path |
@@ -55,6 +55,7 @@ code's behaviour, not Alpaca's.
 | Every request goes to `api.alpaca.markets` only | `assert_live_host_only` in each rehearsal test |
 | Records made in rehearsal still say `simulated`, so they cannot pass for live evidence | `test_records_still_say_simulated_so_this_cannot_pass_for_live_evidence` |
 | Every gate refusal happens with sockets and the Keychain reader disabled | `LiveGateTests` (uses `NoNetworkNoKeys`) and a real subprocess run |
+| Limits swapped or re-approved while the confirmation prompt is open are refused; the authorization carries the exact snapshot you were shown, so a controller never re-reads the file (Codex 02:40Z finding) | `test_start_refuses_limits_swapped_during_the_prompt`, `test_limits_reapproved_after_they_were_shown_are_refused`, `test_authorization_carries_the_shown_snapshot_not_a_later_file` |
 
 The rehearsal uses a test-only subclass that lets the paper broker's order logic run over the live
 transport. Production code never sets that flag.
