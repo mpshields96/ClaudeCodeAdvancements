@@ -99,9 +99,14 @@ class AlpacaPaperBroker(object):
     symbol = SYMBOL
     exits_hold_position = True    # a working sell holds its shares (no reduce-only flag for equities)
 
+    _ALLOW_LIVE_TRANSPORT = False     # offline rehearsal tests only (tests/test_alpaca_live.py)
+
     def __init__(self, transport, state_dir, evidence_label, adapter_state):
         if evidence_label not in PRICE_BASIS:
             raise ValueError("unknown evidence label")
+        if getattr(transport, "MODE", "paper") != "paper" and not self._ALLOW_LIVE_TRANSPORT:
+            raise ValueError("this is the PAPER broker: it labels every record simulated and cannot carry a "
+                             "live-money transport (live is not wired in this build; see LIVE_READINESS.md)")
         injected = bool(getattr(transport, "injected", False))
         if (evidence_label == LABEL_ALPACA_PAPER) == injected:
             raise ValueError("evidence label does not match the transport (paper label needs the real "
