@@ -393,6 +393,101 @@ class ProtectedStopTests(Case):
         self.assertFalse(r["flat_confirmed"])
 
 
+
+class ExternalSharesTests(Case):
+    """Codex finding 1 (night 2026-11-16): SPY held outside the desk is never closed or covered by
+    Stop & Close, and a position read that disables the adapter stops that same call's new order."""
+
+    def long_protected(self, qty=1, stop=90.0):              # TEST VALUES
+        self.start()
+        self.buy("e1", qty)
+        self.bar()
+        self.assertEqual(self.m.pos_qty, qty)
+        pid = self.m.submit_intent({"decision_id": "prot", "kind": "protective", "side": "sell", "qty": qty,
+                                    "stop": stop})
+        self.assertEqual(self.m.intents[pid]["status"], "acked")
+        return pid
+
+    def market_posts(self, side):
+        return [c for c in posts(self.trading) if c[3]["side"] == side and c[3]["type"] == "market"]
+
+    def test_stop_sends_nothing_for_a_wholly_external_long(self):
+        self.start()
+        self.trading.set_position(3, 100.0)                  # 3 shares bought outside the desk
+        n = len(posts(self.trading))
+        r = self.m.stop_and_close()
+        self.assertEqual(len(posts(self.trading)), n, "no order may be sent for shares the desk did not trade")
+        self.assertEqual(r["close"]["state"], "pending", r)
+        self.assertEqual(r["close"]["external_position"], 3)
+        self.assertIn("not this desk's", r["close"]["why"])
+        self.assertFalse(r["flat_confirmed"])
+        self.assertEqual(self.trading.pos_qty, 3)
+
+    def test_stop_closes_only_the_desks_share_and_leaves_external_shares(self):
+        pid = self.long_protected(1)
+        self.trading.set_position(4, 100.0)                  # 1 booked by the desk + 3 bought elsewhere
+        r = self.m.stop_and_close()
+        self.assertEqual(self.m.intents[pid]["status"], "canceled")
+        self.assertEqual(r["close"]["state"], "closing", r)
+        cp = self.market_posts("sell")
+        self.assertEqual(len(cp), 1)
+        self.assertEqual(int(cp[0][3]["qty"]), 1, "Stop must sell the desk's 1 share, not 4")
+        self.bar()
+        self.assertEqual(self.trading.pos_qty, 3)
+        self.assertEqual(self.m.pos_qty, 0)
+        r2 = self.m.stop_and_close()
+        self.assertEqual(len(self.market_posts("sell")), 1, "nothing more is sold for the external 3")
+        self.assertEqual(r2["close"]["state"], "pending", r2)
+        self.assertEqual(r2["close"]["external_position"], 3)
+        self.assertFalse(r2["flat_confirmed"])
+
+    def test_stop_sends_no_buy_for_a_wholly_external_short(self):
+        self.start()
+        self.trading.set_position(-3, 100.0)                 # a short opened outside the desk
+        r = self.m.stop_and_close()
+        self.assertEqual([c for c in posts(self.trading) if c[3]["side"] == "buy"], [])
+        self.assertEqual(r["close"]["state"], "pending", r)
+        self.assertEqual(r["close"]["external_position"], -3)
+        self.assertEqual(self.trading.pos_qty, -3)
+
+    def test_position_read_that_disables_stops_the_same_buy(self):
+        self.b.step({"close": 100.0, "ts_close": "t1"})
+        self.trading.set_position(3, 100.0)                  # appears after a clean start, before the buy
+        n = len(posts(self.trading))
+        r = self.b.submit("d1", "buy", 1, limit=LX)
+        self.assertEqual(r["reason"], "ADAPTER_DISABLED", r)
+        self.assertEqual(len(posts(self.trading)), n, "the in-flight buy must not be sent")
+        self.assertNotIn("d1", self.b.book["orders"])
+        self.assertFalse(AdapterState(self.dir).enabled)
+
+    def test_manager_buy_after_external_shares_appear_sends_nothing(self):
+        self.start()
+        self.trading.set_position(3, 100.0)
+        n = len(posts(self.trading))
+        iid = self.buy("e1", 1)
+        it = self.m.intents.get(iid) or {}
+        self.assertNotEqual(it.get("status"), "acked", it)
+        self.assertEqual(len(posts(self.trading)), n)
+
+    def test_reduce_only_refuses_shares_the_desk_did_not_book(self):
+        self.trading.set_position(3, 100.0)
+        r = self.b.submit("r1", "sell", 3, stop=95.00, reduce_only=True)
+        self.assertEqual(r["reason"], "REDUCE_ONLY_NOT_DESK_OWNED", r)
+        self.trading.set_position(-3, 100.0)
+        r2 = self.b.submit("r2", "buy", 3, reduce_only=True)
+        self.assertEqual(r2["reason"], "REDUCE_ONLY_NOT_DESK_OWNED", r2)
+        self.assertEqual(posts(self.trading), [])
+
+    def test_reduce_only_is_capped_to_the_desks_booked_shares(self):
+        self.b.submit("r0", "buy", 1, limit=LX)
+        self.trading.advance(100.0)
+        self.b.step({"close": 100.0})
+        self.assertEqual(self.trading.pos_qty, 1)
+        self.trading.set_position(4, 100.0)                  # 3 more appear from outside
+        r = self.b.submit("r1", "sell", 4, stop=95.00, reduce_only=True)
+        self.assertEqual(r["status"], "accepted", r)
+        self.assertEqual(self.trading.orders[r["order_id"]]["qty"], 1)
+
 class FractionalPositionTests(Case):
     """Release blocker 2: an external 0.4 SPY position is reported exactly and never traded."""
 
