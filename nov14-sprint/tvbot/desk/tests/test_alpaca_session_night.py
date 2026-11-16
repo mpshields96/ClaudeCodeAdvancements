@@ -376,6 +376,32 @@ def _flags_true(obj, where, out):
             _flags_true(v, where, out)
 
 
+def _sim_values(path):
+    """Every "simulated" value anywhere in every row of one desk file, as {row_label: [values]}."""
+    with open(path) as fh:
+        text = fh.read()
+    rows = [json.loads(x) for x in text.splitlines() if x.strip()] if path.endswith(".jsonl") \
+        else [json.loads(text)]
+    found = {}
+
+    def walk(obj, label):
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if k == "simulated":
+                    found.setdefault(label, []).append(v)
+                walk(v, label)
+        elif isinstance(obj, list):
+            for v in obj:
+                walk(v, label)
+    for i, r in enumerate(rows):
+        walk(r, "%s#%d:%s" % (os.path.basename(path), i,
+                              (r.get("kind") or r.get("rec") or "") if isinstance(r, dict) else ""))
+    return rows, found
+
+
+MANAGER_FILES = ("controls.json", "intents.jsonl", "audit.jsonl", "ledger.jsonl")
+
+
 def _persisted_simulated(state_dir):
     """Every file the desk wrote, every row: where simulated is anything but False."""
     out = []
@@ -482,12 +508,14 @@ class LiveEligibility(_Base):
                                                     "is_open": True}))
 
     def test_live_persisted_rows_say_simulated_false(self):
-        """controls.json, intents.jsonl, audit.jsonl, ledger.jsonl and desk_audit.jsonl: every row
-        written once the controller is built says simulated False at the top level, and Arm does.
-        Rows the base classes write inside their own constructors are listed in NIGHT_WD_STATUS.md."""
+        """controls.json, intents.jsonl, audit.jsonl and ledger.jsonl: every row from the manager's
+        first (construction) row on, nested fills included, says simulated False, and Arm does.
+        desk_audit.jsonl: every row written once the controller is built (its first row comes from
+        session.py, W-B's file; listed in NIGHT_WD_STATUS.md)."""
         c = self.live()
+        self.assertIs(c.mgr.simulated, False)
         base = {}
-        for n in ("intents.jsonl", "audit.jsonl", "desk_audit.jsonl"):
+        for n in ("desk_audit.jsonl",):
             path = os.path.join(c.state_dir, n)
             base[n] = 0
             if os.path.exists(path):
@@ -512,17 +540,20 @@ class LiveEligibility(_Base):
         c.check_new_bars()
         c._write_state()
         bad = []
-        with open(os.path.join(c.state_dir, "controls.json")) as fh:
-            if json.load(fh).get("simulated") is not False:
-                bad.append("controls.json")
-        for n in ("intents.jsonl", "audit.jsonl", "desk_audit.jsonl", "ledger.jsonl"):
-            with open(os.path.join(c.state_dir, n)) as fh:
-                rows = [json.loads(x) for x in fh if x.strip()]
-            new_rows = rows[base.get(n, 0):]
-            self.assertTrue(new_rows, n)
-            bad += ["%s#%d" % (n, i) for i, r in enumerate(new_rows) if r.get("simulated") is not False]
+        for n in MANAGER_FILES:
+            rows, found = _sim_values(os.path.join(c.state_dir, n))
+            self.assertTrue(rows, n)
+            self.assertEqual(len(found), len(rows), "%s: a row without a simulated flag" % n)
+            bad += [where for where, vals in found.items() if any(v is not False for v in vals)]
+        ledger = rows
+        self.assertTrue([r for r in ledger if r.get("fills")] or [r for r in ledger if r.get("evidence")], ledger)
+        with open(os.path.join(c.state_dir, "desk_audit.jsonl")) as fh:
+            rows = [json.loads(x) for x in fh if x.strip()]
+        new_rows = rows[base["desk_audit.jsonl"]:]
+        self.assertTrue(new_rows)
+        bad += ["desk_audit.jsonl#%d" % i for i, r in enumerate(new_rows) if r.get("simulated") is not False]
         self.assertEqual(bad, [])
-        self.assertTrue([r for r in rows if r.get("evidence") == L.LABEL_ALPACA_LIVE])
+        self.assertTrue([r for r in ledger if r.get("evidence") == L.LABEL_ALPACA_LIVE])
 
     def test_paper_rows_unchanged(self):
         lim_dir, _snap = self.snapshot("paper-rows")
@@ -532,8 +563,100 @@ class LiveEligibility(_Base):
                                        clock=AS.MockClock(sd, AS.SessionCalendar.nyse_2026_2027()))
         self.ctrls.append(p)
         p._write_state()
+        self.assertIs(p.mgr.simulated, True)
+        self.assertFalse(hasattr(p.broker, "rows_simulated"))
         with open(os.path.join(sd, "controls.json")) as fh:
             self.assertIs(json.load(fh)["simulated"], True)
+        self._all_true(sd)
+
+    def _all_true(self, sd):
+        seen = 0
+        for n in MANAGER_FILES:
+            path = os.path.join(sd, n)
+            if not os.path.exists(path):
+                continue
+            rows, found = _sim_values(path)
+            for where, vals in found.items():
+                seen += len(vals)
+                self.assertTrue(all(v is True for v in vals), (where, vals))
+        self.assertTrue(seen)
+
+    def test_mock_rows_unchanged(self):
+        sd = os.path.join(self.tmp, "mock-rows")
+        c = AS.AlpacaSessionController(sd, strategy="ema")
+        self.ctrls.append(c)
+        self.assertIs(c.mgr.simulated, True)
+        c.alpaca_enable(confirm=True)
+        c.check_new_bars()
+        self.assertTrue(c.arm().get("ok"))
+        c._write_state()
+        self._all_true(sd)
+
+
+class ManagerSimulatedFlag(unittest.TestCase):
+    """orders.manager.OrderManager: the simulated keyword (fakes only, no network)."""
+
+    def setUp(self):
+        from orders.calendar import SessionCalendar
+        from orders.fake_broker import FakeBroker
+        self.cal = SessionCalendar.fixture_profile()
+        self.FakeBroker = FakeBroker
+        self.dir = tempfile.mkdtemp(prefix="night-mgr-sim-")
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        self.limits = {"per_trade_notional": 2000, "max_loss_per_trade": 10.0, "daily_loss": 30.0,
+                       "gross_exposure": 2000, "label": "TEST VALUES"}
+
+    def _mgr(self, sub, broker=None, **kw):
+        from orders.manager import OrderManager
+        m = OrderManager(os.path.join(self.dir, sub), broker or self.FakeBroker(seed=7), self.limits,
+                         calendar=self.cal, **kw)
+        self.addCleanup(m.close)
+        return m
+
+    def _values(self, m):
+        out = []
+        for n in ("controls.json", "intents.jsonl", "audit.jsonl"):
+            path = os.path.join(m.state_dir, n)
+            if os.path.exists(path):
+                out += [v for vals in _sim_values(path)[1].values() for v in vals]
+        return out
+
+    def test_default_is_true_everywhere(self):
+        m = self._mgr("default")
+        m.arm()
+        self.assertIs(m.simulated, True)
+        self.assertIs(m.controls["simulated"], True)
+        vals = self._values(m)
+        self.assertTrue(vals)
+        self.assertTrue(all(v is True for v in vals), vals)
+
+    def test_false_from_the_first_row(self):
+        m = self._mgr("false", simulated=False)
+        res = m.arm()
+        self.assertIs(res["simulated"], False)
+        self.assertIs(m.controls["simulated"], False)
+        alarm = m._add_alarm("TEST", "night", persist=True)
+        self.assertIs(alarm["simulated"], False)
+        vals = self._values(m)
+        self.assertTrue(vals)
+        self.assertTrue(all(v is False for v in vals), vals)
+
+    def test_broker_rows_simulated_false(self):
+        b = self.FakeBroker(seed=7)
+        b.rows_simulated = False
+        m = self._mgr("broker", broker=b)
+        self.assertIs(m.simulated, False)
+        self.assertTrue(all(v is False for v in self._values(m)))
+
+    def test_explicit_keyword_wins_and_must_be_bool(self):
+        b = self.FakeBroker(seed=7)
+        b.rows_simulated = False
+        self.assertIs(self._mgr("kw", broker=b, simulated=True).simulated, True)
+        from orders.manager import OrderManager
+        for bad in ("false", 0, None.__class__):
+            with self.assertRaises(ValueError):
+                OrderManager(os.path.join(self.dir, "bad"), self.FakeBroker(seed=7), self.limits,
+                             calendar=self.cal, simulated=bad)
 
 
 class EntryGates(_Base):

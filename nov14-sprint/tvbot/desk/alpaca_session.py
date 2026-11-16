@@ -499,6 +499,10 @@ class AlpacaSessionController(S.SessionController):
             factory = _need("alpaca.broker", "AlpacaPaperBroker")
         restored = os.path.exists(os.path.join(self.state_dir, "alpaca_broker.json"))
         broker = factory(self.transport, self.state_dir, self.evidence_label, self.adapter_state)
+        if self.live:
+            # session.py hands this broker to OrderManager, which then writes every row, state
+            # field and fill with simulated False from its first row. Paper and mock keep True.
+            broker.rows_simulated = False
         restored = restored or bool(getattr(broker, "restored", False))
         snap = os.path.join(self.state_dir, SNAPSHOT_FILE)
         if os.path.exists(snap) and hasattr(broker, "restore"):
@@ -524,6 +528,11 @@ class AlpacaSessionController(S.SessionController):
         """Live: every manager row and controls.json say simulated False from here on."""
         from orders.manager import atomic_write_json
         m = self.mgr
+        if getattr(m, "simulated", None) is not False:
+            try:
+                m.close()
+            finally:
+                raise LiveModeRefused("the order manager would record simulated rows in live mode")
         if not isinstance(m.audit_log, _LiveRows):
             m.audit_log = _LiveRows(m.audit_log)
         if not isinstance(m.intent_log, _LiveRows):
