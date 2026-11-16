@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 DESK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TESTS = os.path.dirname(os.path.abspath(__file__))
@@ -358,9 +359,12 @@ class LiveGateTests(unittest.TestCase):
         self.assertEqual(code, 2)
 
     def test_start_correct_phrase_stops_at_not_wired(self):
+        # The exit-3 fallback: a session controller without a live mode (the wiring is in
+        # test_live_launch_wiring.py).
         typed = L.confirm_phrase(1, L.session_date())
-        code, out, err = self.run_main(["start", "--state-dir", self.live_dir, "--limits", self.limits],
-                                       typed=[typed])
+        with mock.patch.object(live_launch, "_session_module", return_value=None):
+            code, out, err = self.run_main(["start", "--state-dir", self.live_dir, "--limits", self.limits],
+                                           typed=[typed])
         self.assertEqual(code, 3, err)
         self.assertIn("LIVE GATE PASSED", out)
         self.assertIn("Nothing was sent", out)
@@ -445,8 +449,10 @@ class LiveGateTests(unittest.TestCase):
         self.assertEqual(L.check_live_port(L.LIVE_PORT), L.LIVE_PORT)
         for first, last, _ in L.non_live_port_ranges():
             self.assertFalse(first <= L.LIVE_PORT <= last)
-        code, out, err = self.run_main(["start", "--state-dir", self.live_dir, "--limits", self.limits,
-                                        "--port", str(L.LIVE_PORT)], typed=[L.confirm_phrase(1, L.session_date())])
+        with mock.patch.object(live_launch, "_session_module", return_value=None):   # stop at the gate
+            code, out, err = self.run_main(["start", "--state-dir", self.live_dir, "--limits", self.limits,
+                                            "--port", str(L.LIVE_PORT)],
+                                           typed=[L.confirm_phrase(1, L.session_date())])
         self.assertEqual(code, 3, err)
         self.assertIn(L.LABEL_ALPACA_LIVE, out)
         self.assertIn("LIVE GATE PASSED", out)

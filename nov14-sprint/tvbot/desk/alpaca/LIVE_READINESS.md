@@ -6,9 +6,11 @@ request, read any key or placed any order. Every check below ran against an in-p
 
 **Bottom line:** real-money trading is **off and cannot be switched on by any flag, URL or argument
 on the paper path**. A separate live command exists. It checks your limits and your typed
-confirmation and then **stops (exit 3)** without sending anything, because the live session controller
-is not wired yet. The live broker class (`AlpacaLiveBroker`) exists and is tested offline, but no launcher
-builds it. Nothing here shows the strategy has an edge.
+confirmation. Only then does it build the live session on port 8795 with the live adapter **disabled**.
+It sends **no order** at start. The session controller makes read-only start-up reads (open orders,
+positions, market clock) on `api.alpaca.markets`, so a real start reads your live key. You enable the
+adapter yourself in the UI. If the controller has no live mode, the command still stops at exit 3.
+Everything was tested offline with fakes only. Nothing here shows the strategy has an edge.
 
 ## 1. What you can run now
 
@@ -16,11 +18,12 @@ builds it. Nothing here shows the strategy has an edge.
 |---|---|---|
 | `/usr/bin/python3 -I launch.py --check` | The paper desk's offline self-check (unchanged) | No |
 | `/usr/bin/python3 -I alpaca/live_launch.py approve-limits --draft-from MY_LIVE_LIMITS.json` | Saves **your** live limits (`fixed_shares`, `max_loss_per_trade`, `daily_loss`, `per_trade_notional`, `gross_exposure`) into `state-alpaca-live/`. You must type `APPROVE LIVE LIMITS` and a one-line reason at a real terminal | No |
-| `/usr/bin/python3 -I alpaca/live_launch.py start --limits state-alpaca-live/limits_approved.json` | Runs the whole live gate, asks you to type `LIVE SPY <shares> SHARES <today's Chicago date>`, then prints `LIVE GATE PASSED ... Nothing was sent` and exits 3 | No (no key read, no socket) |
+| `/usr/bin/python3 -I alpaca/live_launch.py start --limits state-alpaca-live/limits_approved.json` | Runs the whole live gate and asks you to type `LIVE SPY <shares> SHARES <today's Chicago date>`. It then binds 8795 exactly (a taken port is refused, exit 2), builds the live session with the adapter DISABLED and opens the desk. Ctrl-C quits (exit 0). Add `--no-browser` to skip opening it | Yes, read-only: it reads your live key and makes the start-up reads (open orders, positions, clock). No order is sent until you enable the adapter |
 | `/usr/bin/python3 -I alpaca/live_launch.py start` | No limits, so it is refused: exit 2, `REFUSED (live): ... Nothing was sent; no key was read; no connection was opened.` | No |
 
-Exit codes for `live_launch.py`: 0 limits saved, 2 refused (nothing sent), 3 gate passed but live
-session not wired.
+Exit codes for `live_launch.py`: 0 limits saved, or the live session ran and you stopped it; 2 refused
+(no order sent); 3 gate passed but the session controller has no live mode (nothing sent). A refusal after
+the controller was built says so, because it may already have made the read-only start-up reads.
 
 ## 2. How live is kept apart from paper
 
@@ -35,14 +38,14 @@ session not wired.
 | Port | 8765 (or the next free one up to 8784); the installed desks use 18855 (rehearsal) and 18858 (paper), each with the same 19 fallback ports | 8795 only. Refused: 8765-8784, 18855-18874, 18858-18877, port 0 and anything outside 1-65535. Live binds 8795 exactly and never moves to another port |
 | Limits | paper approval | separate approval by the live command, stored inside the live folder; a paper-approved or edited file is refused |
 | Confirmation | none | typed every session at a real terminal (piped input refused); yesterday's phrase or a different share count is refused; the authorization lapses after 16 hours |
-| Broker object | `AlpacaPaperBroker` refuses any live transport, the live label and live adapter state (ValueError) | `AlpacaLiveBroker`: only the real (non-injected) `LiveHttpsTransport` with an unexpired authorization, only the live label, only the folder the gate authorized. Records say `simulated: false`. No launcher builds it yet (section 4) |
+| Broker object | `AlpacaPaperBroker` refuses any live transport, the live label and live adapter state (ValueError) | `AlpacaLiveBroker`: only the real (non-injected) `LiveHttpsTransport` with an unexpired authorization, only the live label, only the folder the gate authorized. Records say `simulated: false`. Built only by the live session after the gate passes; the live state is judged by its file (`alpaca_live.json` in the authorized folder), since the session keeps its own on/off class over that file |
 | On/off state | `alpaca_paper.json` | `alpaca_live.json` (`LiveAdapterState`), so a live folder never gains the paper file the gate refuses |
 
 The `AK`/`PK` prefix is only a hint. The host check and the separate providers are the real boundary.
 
 ## 3. Verified offline only
 
-Tests are in `tests/test_alpaca_live.py` (59 tests), `tests/test_alpaca_broker.py` (the shares the
+Tests are in `tests/test_alpaca_live.py` (59 tests), `tests/test_live_launch_wiring.py` (13 tests), `tests/test_alpaca_broker.py` (the shares the
 desk did not trade) and `tests/test_open_existing.py`. They use a fake opener or loopback fakes, so they
 show the code's behaviour, not Alpaca's.
 
@@ -66,6 +69,7 @@ show the code's behaviour, not Alpaca's.
 | Live records say `simulated: false` with the live label; requests go to `api.alpaca.markets` only | `test_live_records_say_real_money_and_go_only_to_the_live_host` |
 | On the live broker: one request per decision, and a restart re-sends nothing | `test_one_post_per_intent_and_restart_resends_nothing` |
 | Live on/off state stays in `alpaca_live.json`; the next session's gate still passes; a stop by another writer is adopted before any send | `test_live_state_never_writes_the_paper_file_so_the_next_gate_still_passes`, `test_a_disable_by_another_writer_is_adopted_from_the_live_file` |
+| Live start builds nothing when the gate refuses; after it passes, the live controller gets mode `live`, the live folder and the minted authorization, the adapter starts disabled even if it was left enabled, a paper-like transport is refused, a taken port is refused (exit 2) and no order is sent. The real controller over the real live transport class with a fake opener made GET requests only | `tests/test_live_launch_wiring.py` (13 tests) |
 
 The `AlpacaLiveBroker` tests build the real live transport class and then swap its opener for the fake
 one, with sockets and the Keychain reader disabled. Four mutation checks (records marked simulated, the
@@ -77,11 +81,11 @@ transport. Production code never sets that flag.
 ## 4. Needs your own first broker test (agents will not do these)
 
 1. **Store your live keys** in Keychain under service `alpaca-live`. Agents never handle keys.
-2. **Wire the live session.** `alpaca_session.py` (coordinator-owned) labels every Alpaca session as
-   paper and keeps paper state, so the gate stops at exit 3. The broker side is ready
-   (`AlpacaLiveBroker`, `LiveAdapterState`). The suggested controller change is in the coordinator's
-   shared notes (`W-B_LIVE_WIRING_PATCH_NOTE.md`). It needs review before anyone uses it.
-   The live adapter starts disabled, as paper does; you enable it yourself.
+2. **Review the live session wiring before using it.** `live_launch.py start` now builds the live
+   session (`alpaca_session.py` live mode) after the gate. It was tested only with fakes: the real
+   controller over the real live transport class with a fake opener, which saw GET requests only. The
+   live adapter starts disabled, as paper does; you enable it yourself. A start reads your live key and
+   makes read-only start-up reads. The first real start is yours to watch.
 3. **Set every limit yourself.** The values in the tests are TEST VALUES, not advice.
 4. **Your first live order**, at a size you choose, while you watch. Check fills, the protective stop
    and Stop & Close against your Alpaca dashboard.
@@ -107,7 +111,7 @@ The UI can show `session_window` (from `alpaca/sessions.py: status_field`).
 ## 6. Known limits
 
 - **No edge has been shown.** Paper or rehearsal results say nothing about live profit.
-- The live session is not wired (section 4, item 2).
+- The live session is wired but has only been run against fakes (section 4, item 2).
 - The calendar covers 2026-2027. Outside it, the desk fails closed (market treated as closed).
 - Holiday changes to the overnight session are not modeled; overnight is refused anyway.
 - The free IEX feed shows a fraction of market volume, so its prices can differ from the full market.

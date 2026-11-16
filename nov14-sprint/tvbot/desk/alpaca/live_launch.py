@@ -9,15 +9,22 @@
 that dir and approved with `approve-limits`, a real terminal, and the typed phrase
 "LIVE SPY <shares> SHARES <today's CT date>". It reads no key and opens no socket while checking.
 
-THIS BUILD STOPS AFTER THE GATE (exit 3). The session controller (alpaca_session.py, coordinator-owned)
-labels every Alpaca session as paper and keeps paper state, so a live session cannot be shown honestly
-yet. Wiring it is a separate, reviewed change; see LIVE_READINESS.md.
+Only after the gate passes does `start` build the live session: the live transport from the
+authorization the gate minted, the session controller in mode "live" for the live state folder, and the
+desk UI on the checked live port, bound exactly (a taken port is refused, never moved). The live adapter
+always starts DISABLED; you enable it yourself in the UI. Starting sends no order.
 
-Exit codes: 0 approve-limits saved; 2 refused (nothing sent); 3 gate passed, live session not wired.
+If this build's alpaca_session.py has no live mode, or its live constructor does not match, `start`
+stops after the gate with exit 3, as before. See LIVE_READINESS.md.
+
+Exit codes: 0 limits saved, or the live session ran and you stopped it; 2 refused (nothing sent);
+3 gate passed, but this build's session controller has no live mode (nothing sent).
 """
 import argparse
 import os
 import sys
+import threading
+import time
 
 DESK = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if DESK not in sys.path:
@@ -28,8 +35,42 @@ from alpaca import sizing  # noqa: E402
 
 DEFAULT_LIVE_STATE = os.path.join(DESK, L.LIVE_STATE_DIRNAME)
 NOT_WIRED = ("LIVE GATE PASSED for %s, %d shares. Nothing was sent: the live session controller is not "
-             "wired in this build (alpaca_session.py labels every Alpaca session as paper). No key was "
+             "wired in this build (alpaca_session.py has no matching live mode). No key was "
              "read and no connection was opened.")
+LIVE_HOST = "127.0.0.1"
+LIVE_STRATEGY = "ema"          # the paper launcher's default (launch.LAUNCH_STRATEGY)
+START_DISABLED_REASON = "NEW_LIVE_SESSION (live_launch start; enable it yourself in the UI)"
+
+
+def _session_module():
+    """alpaca_session with a live mode, or None (then `start` stops at exit 3 as before)."""
+    try:
+        import alpaca_session as AS  # noqa: WPS433
+    except ImportError:
+        return None
+    if getattr(AS, "MODE_LIVE", None) != "live" or not hasattr(AS, "AlpacaSessionController"):
+        return None
+    return AS
+
+
+def _make_transport(provider_kind, auth):
+    """The live transport. Building it reads no key; the key is read only when a request is sent."""
+    return L.LiveHttpsTransport(L.make_live_provider(provider_kind), auth)
+
+
+def _make_server(state_dir, host, port, manager):
+    from ui import server as ui_server  # noqa: WPS433
+    return ui_server.make_server(state_dir, host, port, manager=manager)
+
+
+def _open_browser(url):
+    import webbrowser  # noqa: WPS433
+    webbrowser.open(url)
+
+
+def _wait_until_interrupted():
+    while True:
+        time.sleep(0.5)
 
 
 def _parser():
@@ -40,14 +81,26 @@ def _parser():
     s.add_argument("--state-dir", default=DEFAULT_LIVE_STATE)
     s.add_argument("--port", type=int, default=L.LIVE_PORT)
     s.add_argument("--provider", choices=sorted(L.LIVE_PROVIDERS), default="keychain")
+    s.add_argument("--no-browser", action="store_true", help="do not open the desk in the browser")
     a = sub.add_parser("approve-limits", help="approve LIVE limits you wrote yourself")
     a.add_argument("--state-dir", default=DEFAULT_LIVE_STATE)
     a.add_argument("--draft-from", default=None, help="a JSON file with your five values")
     return p
 
 
+START_READS = "read-only start-up reads only: open orders, positions, market clock"
+
+
 def _refuse(err, msg):
     err.write("REFUSED (live): %s\nNothing was sent; no key was read; no connection was opened.\n" % msg)
+    return 2
+
+
+def _refuse_after_build(err, msg):
+    """A refusal once the live controller exists: its start-up reconcile may already have read the key and
+    made read-only requests, so the plain "nothing was sent" line would be untrue."""
+    err.write("REFUSED (live): %s\nNo order was sent. The session controller had started, so it may have read "
+              "the live key and made %s.\n" % (msg, START_READS))
     return 2
 
 
@@ -67,8 +120,83 @@ def _start(args, out, err, isatty, read_line):
                                      shown_hash=loaded["hash"])
     except L.LiveGateRefused as e:
         return _refuse(err, str(e))
-    out.write(NOT_WIRED % (auth.session_date, auth.shares) + "\n")
+    AS = _session_module()
+    if AS is None:
+        out.write(NOT_WIRED % (auth.session_date, auth.shares) + "\n")
+        return 3
+    return _serve_live(args, auth, state_dir, AS, out, err)
+
+
+def _not_wired(out, auth, why):
+    out.write(NOT_WIRED % (auth.session_date, auth.shares) + "\n(%s)\n" % why)
     return 3
+
+
+def _serve_live(args, auth, state_dir, AS, out, err):
+    """Runs only after the gate passed. Order: locks, exact port check, adapter forced off, transport,
+    controller, server. Every refusal before the server starts sends nothing."""
+    import launch  # noqa: WPS433  (the paper launcher's locks and controls)
+    scenario_lock = launch.hold_scenario_lock(state_dir)
+    if scenario_lock is None:
+        return _refuse(err, "another launcher holds this live state folder (%s)" % state_dir)
+    runner = None
+    try:
+        held, inner = launch._take_inner_lock(state_dir)
+        if inner is not None:
+            inner.close()
+        if held:
+            raise L.LiveGateRefused("this live state folder's order manager lock is held by another process")
+        probe = L.bind_live_port_exactly(args.port)      # taken: refused here, never moved
+        probe.close()
+        live_state = L.LiveAdapterState(state_dir)
+        if live_state.enabled:                           # a new session never inherits "enabled"
+            live_state.disable(START_DISABLED_REASON, by="live_launch start")
+        transport = _make_transport(args.provider, auth)
+        if getattr(transport, "MODE", None) != "live":
+            raise L.LiveGateRefused("the live session accepts only the live transport")
+        try:
+            runner = AS.AlpacaSessionController(state_dir=state_dir, strategy=LIVE_STRATEGY, mode=AS.MODE_LIVE,
+                                                transport=transport, authorization=auth)
+        except TypeError as e:                           # the controller's live contract does not match
+            scenario_lock.close()
+            return _not_wired(out, auth, "the session controller's live constructor did not match: %s" % e)
+        if getattr(runner.adapter_state, "enabled", True) is not False:
+            raise L.LiveGateRefused("the live adapter did not start disabled")
+        controls = launch.AlpacaDeskControls(runner)
+        launch.install_routes()
+        try:
+            httpd = _make_server(state_dir, LIVE_HOST, args.port, controls)
+        except OSError as e:
+            raise L.LiveGateRefused("live port %d could not be bound (%s); live does not move to another port"
+                                    % (args.port, e.strerror or e))
+    except Exception as e:      # LiveGateRefused, LiveModeRefused, LimitsError, RuntimeError ...
+        if runner is not None and hasattr(runner, "close"):
+            runner.close()
+        scenario_lock.close()
+        msg = str(e) if isinstance(e, L.LiveGateRefused) else "%s: %s" % (e.__class__.__name__, e)
+        return (_refuse_after_build if runner is not None else _refuse)(err, msg)
+    url = "http://%s:%d/" % (LIVE_HOST, args.port)
+    threading.Thread(target=httpd.serve_forever, name="desk-ui-live", daemon=True).start()
+    out.write("[live] %s\n[live] UI        %s\n[live] state     %s\n[live] shares    %d (approved %s)\n"
+              "[live] adapter   DISABLED. Enable it yourself in the UI; Stop disables it again.\n"
+              "[live] sent      no order (%s)\n[live] Ctrl-C to quit.\n"
+              % (getattr(runner, "evidence_label", L.LABEL_ALPACA_LIVE), url, state_dir, auth.shares,
+                 auth.session_date, START_READS))
+    out.flush()
+    if not getattr(args, "no_browser", False):
+        _open_browser(url)
+    try:
+        _wait_until_interrupted()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+        if hasattr(runner, "close"):
+            runner.close()
+        scenario_lock.close()
+        out.write("[live] stopped; state kept in %s\n" % state_dir)
+    return 0
 
 
 def _approve(args, out, err, isatty, read_line):
