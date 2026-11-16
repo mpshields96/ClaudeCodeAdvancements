@@ -168,3 +168,16 @@ Codex's Chromium probe against ba4b3d6 reproduced two false banners. Both are fi
 6. Rehearsal labeling, early Stop, the accessibility labels and every earlier test are kept.
 
 Verified: 78 UI tests OK. New probes run the page's own `nextStep` and `barsUsedUp` in node against these payloads: paper, mock and live at 64 of 64 bars; armed at bar 65; a finished and a midway replay; a finished replay holding a position; and Stop & Close unconfirmed, confirmed-but-ambiguous and clean. Static tests cover the disclosure, the title and the empty chart. `node --check` passes on both pages. index.html has 2 `setInterval` and lab.html none. Neither page has an `<iframe` or `<link`. At 390x844 a populated replay shows the next step, the chart, Stop & Close and "More session actions (3)", with no horizontal scroll. Screenshots 18 (390px) and 19 (1280x720) are kept outside the repo.
+
+### P1 fix (W-A, 03:45Z): live is not simulated; adapter file follows the mode
+- `simulated()` is now False for `alpaca-paper` and `alpaca-live`, and True for mock,
+  rehearsal and any unknown mode. Before this, a live desk reported `simulated: true` in
+  /api/health and in every control row.
+- /api/session reads the adapter's on/off file for the mode: `alpaca_live.json` on a live
+  desk (mode `alpaca-live`, or the adapter reports `path_name: alpaca_live.json` or
+  `mode: live`), `alpaca_paper.json` otherwise. A live desk never falls back to the paper
+  file. The payload now also carries `_adapter_file_name`, `_broker_mode` and `_simulated`.
+- Tests (tests/test_ui_server.py): a fake live state folder gives health and session
+  `simulated` False and reads alpaca_live.json; paper still reads alpaca_paper.json with
+  `simulated` False; mock, rehearsal and unknown modes stay True. The new tests fail on the
+  previous server.py (5 failures) and pass on the fix.

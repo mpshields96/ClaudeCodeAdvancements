@@ -834,8 +834,13 @@ class DeskHandler(BaseHTTPRequestHandler):
                 body["_manager_attached"] = body["_controller_attached"]
                 # The adapter's own on/off file (alpaca/state.py), so a restart shows the
                 # persisted state even before the session writes its `adapter` field.
-                adapter, _ = read_json(os.path.join(self.state_dir, "alpaca_paper.json"))
+                # Live desks keep it in alpaca_live.json, paper desks in alpaca_paper.json.
+                adapter_name = self.server.adapter_file_name()
+                adapter, _ = read_json(os.path.join(self.state_dir, adapter_name))
                 body["_adapter_file"] = adapter if isinstance(adapter, dict) else None
+                body["_adapter_file_name"] = adapter_name
+                body["_broker_mode"] = self.server.broker_mode()
+                body["_simulated"] = self.server.simulated()
                 return self._send(200, body)
             if route == "/api/limits":
                 return self._send(200, _sizing().worksheet(self.state_dir))
@@ -1030,9 +1035,23 @@ class DeskServer(ThreadingHTTPServer):
         mode = sess.get("broker_mode")
         return mode if isinstance(mode, str) and mode else "offline-fake"
 
+    # Modes whose orders reach a real Alpaca host: paper (simulated money) and live (REAL MONEY).
+    BROKER_MODES_NOT_SIMULATED = ("alpaca-paper", "alpaca-live")
+
     def simulated(self):
-        """True unless orders go to Alpaca's paper host. Paper is still not real money."""
-        return self.broker_mode() != "alpaca-paper"
+        """False when orders go to an Alpaca host (paper or live); True for mock, rehearsal and
+        unknown modes. Paper is still not real money; live is."""
+        return self.broker_mode() not in self.BROKER_MODES_NOT_SIMULATED
+
+    def adapter_file_name(self):
+        """The adapter's own on/off file for this mode: alpaca_live.json on a live desk,
+        alpaca_paper.json otherwise. Only these two names are ever read."""
+        sess = self._session() or {}
+        adapter = sess.get("adapter") if isinstance(sess.get("adapter"), dict) else {}
+        if (self.broker_mode() == "alpaca-live" or adapter.get("path_name") == "alpaca_live.json"
+                or adapter.get("mode") == "live"):
+            return "alpaca_live.json"
+        return "alpaca_paper.json"
 
     def call_read(self, name, kwargs, positional=False):
         """Call a read-only controller view (lab_view, lab_verify). Returns (code, body)."""

@@ -983,7 +983,9 @@ class TestAlpacaRoutesPresent(_PostMixin, _Base):
         with open(path) as f:
             original = f.read()
         try:
-            for mode, simulated in (("alpaca-mock", True), ("alpaca-paper", False)):
+            for mode, simulated in (("alpaca-mock", True), ("alpaca-paper", False),
+                                    ("alpaca-live", False), ("rehearsal", True),
+                                    ("something-new", True)):
                 sess = json.loads(original)
                 sess["broker_mode"] = mode
                 with open(path, "w") as f:
@@ -1003,7 +1005,10 @@ class TestAlpacaRoutesPresent(_PostMixin, _Base):
         with open(p, "w") as f:
             json.dump({"enabled": False, "disabled_reason": "start", "changed_utc": "x"}, f)
         try:
-            self.assertEqual(self.get_json("/api/session")["_adapter_file"]["enabled"], False)
+            sess = self.get_json("/api/session")
+            self.assertEqual(sess["_adapter_file"]["enabled"], False)
+            self.assertEqual(sess["_adapter_file_name"], "alpaca_paper.json")
+            self.assertIs(sess["_simulated"], True)   # sample session: offline fake broker
         finally:
             os.remove(p)
         self.assertIsNone(self.get_json("/api/session")["_adapter_file"])
@@ -1114,14 +1119,56 @@ class TestLivePayload(unittest.TestCase):
         self.srv.server_close()
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def _session(self):
+    def _get(self, path):
         conn = http.client.HTTPConnection("127.0.0.1", self.srv.server_address[1], timeout=5)
-        conn.request("GET", "/api/session", headers={"Host": "127.0.0.1:%d" % self.srv.server_address[1]})
+        conn.request("GET", path, headers={"Host": "127.0.0.1:%d" % self.srv.server_address[1]})
         r = conn.getresponse()
         body = json.loads(r.read().decode("utf-8"))
         conn.close()
         self.assertEqual(r.status, 200)
         return body
+
+    def _session(self):
+        return self._get("/api/session")
+
+    def _write(self, name, obj):
+        with open(os.path.join(self.state, name), "w", encoding="utf-8") as fh:
+            json.dump(obj, fh)
+
+    def test_live_is_not_simulated(self):
+        h = self._get("/api/health")
+        self.assertEqual(h["broker_mode"], "alpaca-live")
+        self.assertIs(h["simulated"], False)
+        s = self._session()
+        self.assertIs(s["_simulated"], False)
+        self.assertEqual(s["_broker_mode"], "alpaca-live")
+
+    def test_live_adapter_comes_from_alpaca_live_json(self):
+        self._write("alpaca_live.json", {"enabled": False, "marker": "live-file"})
+        self._write("alpaca_paper.json", {"enabled": True, "marker": "paper-file"})
+        s = self._session()
+        self.assertEqual(s["_adapter_file_name"], "alpaca_live.json")
+        self.assertEqual(s["_adapter_file"]["marker"], "live-file")
+        os.remove(os.path.join(self.state, "alpaca_live.json"))
+        s = self._session()   # never falls back to the paper file on a live desk
+        self.assertEqual(s["_adapter_file_name"], "alpaca_live.json")
+        self.assertIsNone(s["_adapter_file"])
+
+    def test_paper_and_mock_modes_keep_their_flags(self):
+        self._write("alpaca_live.json", {"marker": "live-file"})
+        self._write("alpaca_paper.json", {"marker": "paper-file"})
+        p = os.path.join(self.state, "session.json")
+        with open(p, encoding="utf-8") as fh:
+            base = json.load(fh)
+        for mode, simulated in (("alpaca-paper", False), ("alpaca-mock", True)):
+            sess = dict(base, broker_mode=mode,
+                        adapter={"enabled": False, "path_name": "alpaca_paper.json", "mode": mode.split("-")[1]})
+            self._write("session.json", sess)
+            self.assertIs(self._get("/api/health")["simulated"], simulated)
+            s = self._session()
+            self.assertIs(s["_simulated"], simulated)
+            self.assertEqual(s["_adapter_file_name"], "alpaca_paper.json")
+            self.assertEqual(s["_adapter_file"]["marker"], "paper-file")
 
     def test_live_strings_reach_the_page_and_are_keyed(self):
         s = self._session()
