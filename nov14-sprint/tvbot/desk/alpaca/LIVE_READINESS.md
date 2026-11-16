@@ -1,29 +1,45 @@
 # Live readiness (Alpaca, real money)
 
-Written 2026-11-16 by night worker W-B. It covers software only. No agent has sent any paper or live
-request, read any key or placed any order. Every check below ran against an in-process fake
-(FakeOpener / MockTrading) with synthetic keys.
+Written 2026-11-16 by night worker W-B. It covers software only. **All evidence is offline:** in-process
+fakes (FakeOpener / MockTrading) and loopback fake servers with synthetic keys. No agent has sent any
+paper or live request, read any key or placed any order. **Nothing has been run against a real account.**
 
 **Bottom line:** real-money trading is **off and cannot be switched on by any flag, URL or argument
-on the paper path**. A separate live command exists. It checks your limits and your typed
-confirmation. Only then does it build the live session on port 8795 with the live adapter **disabled**.
-It sends **no order** at start. The session controller makes read-only start-up reads (open orders,
-positions, market clock) on `api.alpaca.markets`, so a real start reads your live key. You enable the
-adapter yourself in the UI. If the controller has no live mode, the command still stops at exit 3.
-Everything was tested offline with fakes only. Nothing here shows the strategy has an edge.
+on the paper path**. Live has its own three Finder commands. The start command checks your limits and
+your typed confirmation. Only then does it open the live desk on port 8795 with the live adapter
+**disabled**. It sends **no order** at start. Opening the desk reads your live key and makes read-only
+reads (open orders, positions, market clock) on `api.alpaca.markets`. Orders can be sent only after you
+enable the adapter yourself in the desk. Regular session only. Nothing here shows the strategy has an edge.
 
-## 1. What you can run now
+## 1. The live commands
 
-| Command (from `desk/`) | What it does | Touches the broker? |
-|---|---|---|
-| `/usr/bin/python3 -I launch.py --check` | The paper desk's offline self-check (unchanged) | No |
-| `/usr/bin/python3 -I alpaca/live_launch.py approve-limits --draft-from MY_LIVE_LIMITS.json` | Saves **your** live limits (`fixed_shares`, `max_loss_per_trade`, `daily_loss`, `per_trade_notional`, `gross_exposure`) into `state-alpaca-live/`. You must type `APPROVE LIVE LIMITS` and a one-line reason at a real terminal | No |
-| `/usr/bin/python3 -I alpaca/live_launch.py start --limits state-alpaca-live/limits_approved.json` | Runs the whole live gate and asks you to type `LIVE SPY <shares> SHARES <today's Chicago date>`. It then binds 8795 exactly (a taken port is refused, exit 2), builds the live session with the adapter DISABLED and opens the desk. Ctrl-C quits (exit 0). Add `--no-browser` to skip opening it | Yes, read-only: it reads your live key and makes the start-up reads (open orders, positions, clock). No order is sent until you enable the adapter |
-| `/usr/bin/python3 -I alpaca/live_launch.py start` | No limits, so it is refused: exit 2, `REFUSED (live): ... Nothing was sent; no key was read; no connection was opened.` | No |
+Double-click these in `after-approval/`, in this order. Each runs in Terminal. You never edit code or
+files by hand.
 
-Exit codes for `live_launch.py`: 0 limits saved, or the live session ran and you stopped it; 2 refused
-(no order sent); 3 gate passed but the session controller has no live mode (nothing sent). A refusal after
-the controller was built says so, because it may already have made the read-only start-up reads.
+| Finder command | Same thing from `desk/` | What it does | Touches the broker? |
+|---|---|---|---|
+| `Review Live Limits.command` | `/usr/bin/python3 -IB alpaca/live_launch.py approve-limits` | Shows your five live limits (`fixed_shares`, `max_loss_per_trade`, `daily_loss`, `per_trade_notional`, `gross_exposure`). It can start from your approved rehearsal worksheet or an existing live draft, but it saves nothing until you type `APPROVE LIVE LIMITS` and a one-line reason. It then saves a separate live snapshot in `state-alpaca-live/` | No |
+| `Check Live Connection.command` | `/usr/bin/python3 -IB live_check.py` | Read-only connection check: account, the SPY asset, the market clock and the latest free IEX SPY quote. Any other request is refused inside the process | Yes, four GET reads; no order |
+| `Start Live Desk.command` | `/usr/bin/python3 -IB alpaca/live_launch.py start --state-dir state-alpaca-live --limits state-alpaca-live/limits_approved.json` | Runs the live gate (below), asks you to type `LIVE SPY <shares> SHARES <today's Chicago date>`, then opens the live desk with the adapter DISABLED. Ctrl-C in Terminal quits. Without approved live limits it says "Use Review Live Limits first" and stops | Yes, read-only at start (open orders, positions, clock); no order until you enable the adapter |
+
+The first two commands are Codex's; `Start Live Desk.command` is W-B's.
+
+**The start gate, in order.** Any refusal stops it with exit 2, and nothing past that step runs.
+
+1. The state folder must be `state-alpaca-live/` and hold no paper adapter state.
+2. The port must be the live port. Every paper and rehearsal port, its fallback ports, port 0 and anything outside 1-65535 is refused.
+3. Your live limits must be approved by the live review and unchanged since. A paper-approved or edited file is refused.
+4. The confirmation must be typed at a real terminal. Piped input is refused.
+5. You are shown the limits and the phrase, and you type it. Yesterday's date or another share count is refused. Limits swapped or re-approved while the prompt is open are refused.
+6. An authorization is made for this session only. It carries the exact limits you were shown and lapses after 16 hours.
+7. Port 8795 is bound exactly. A taken port is refused, never moved.
+8. The live adapter is set to disabled, even if it was left on.
+9. The live connection and session are built. This is where the key is read and the read-only start-up reads happen.
+10. The desk opens on `http://127.0.0.1:8795/`. You enable the adapter yourself; Stop disables it again.
+
+Exit codes for `live_launch.py`: 0 limits saved, or the live desk ran and you quit it; 2 refused, no order
+sent; 3 the desk code has no live session, a guard that sends nothing. A refusal after step 9 says the
+start-up reads may already have happened.
 
 ## 2. How live is kept apart from paper
 
@@ -78,19 +94,18 @@ paper file re-read, the paper file written, an injected transport accepted) each
 The rehearsal uses a test-only subclass that lets the paper broker's order logic run over the live
 transport. Production code never sets that flag.
 
-## 4. Needs your own first broker test (agents will not do these)
+## 4. Your own first broker test (agents will not do these)
 
 1. **Store your live keys** in Keychain under service `alpaca-live`. Agents never handle keys.
-2. **Review the live session wiring before using it.** `live_launch.py start` now builds the live
-   session (`alpaca_session.py` live mode) after the gate. It was tested only with fakes: the real
-   controller over the real live transport class with a fake opener, which saw GET requests only. The
-   live adapter starts disabled, as paper does; you enable it yourself. A start reads your live key and
-   makes read-only start-up reads. The first real start is yours to watch.
-3. **Set every limit yourself.** The values in the tests are TEST VALUES, not advice.
-4. **Your first live order**, at a size you choose, while you watch. Check fills, the protective stop
+2. **Approve your own live limits** with `Review Live Limits.command`. The values in the tests are TEST
+   VALUES, not advice.
+3. **Run `Check Live Connection.command`** and read what it reports.
+4. **Start with `Start Live Desk.command`** during the regular session, type the phrase it shows, and
+   enable the adapter in the desk only when you are ready.
+5. **Your first live order**, at a size you choose, while you watch. Check fills, the protective stop
    and Stop & Close against your Alpaca dashboard.
-5. **Account checks only you can do:** live trading enabled, buying power, and day-trading rules such as
-   FINRA's pattern-day-trader rule for margin accounts under $25,000 (not checked tonight).
+6. **Account rules and limits** (live trading enabled, buying power, any day-trading rules for your
+   account) are as Alpaca's own current account display shows them. The desk does not check them.
 
 ## 5. Sessions
 
@@ -98,7 +113,7 @@ From Alpaca's documentation (24/5 Trading, Orders at Alpaca):
 
 | Session (Eastern) | What the desk does |
 |---|---|
-| Regular 09:30-16:00, NYSE calendar with holidays and early closes | Supported |
+| Regular 09:30-16:00, NYSE calendar with holidays and early closes | Supported (the only supported session) |
 | Pre-market 04:00-09:30 | Labeled NOT supported; bars refused (`OUT_OF_SESSION`) |
 | After-hours 16:00-20:00 | Labeled NOT supported; bars refused |
 | Overnight 20:00 Sun to 04:00 Fri (limit orders only, Blue Ocean ATS) | Labeled NOT supported, never traded silently |
@@ -111,7 +126,7 @@ The UI can show `session_window` (from `alpaca/sessions.py: status_field`).
 ## 6. Known limits
 
 - **No edge has been shown.** Paper or rehearsal results say nothing about live profit.
-- The live session is wired but has only been run against fakes (section 4, item 2).
+- The live desk has only been run against fakes. Your first start (section 4) is its first real run.
 - The calendar covers 2026-2027. Outside it, the desk fails closed (market treated as closed).
 - Holiday changes to the overnight session are not modeled; overnight is refused anyway.
 - The free IEX feed shows a fraction of market volume, so its prices can differ from the full market.
