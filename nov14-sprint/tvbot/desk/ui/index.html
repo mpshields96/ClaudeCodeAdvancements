@@ -4,134 +4,256 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Paper Desk (SIMULATED)</title>
+<script>
+"use strict";
+// Apply a saved Light/Dark choice before first paint. Auto follows the system setting.
+(function(){ try { const t = localStorage.getItem('desk.theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {} })();
+</script>
 <style>
+/* Colour tokens. Dark is the default; light applies from the system setting or the Theme picker. */
 :root{
-  --bg:#0f1216; --panel:#161b21; --panel2:#1c232b; --line:#2a333d; --fg:#e6ebf0; --muted:#8c98a5;
+  color-scheme:dark;
+  --bg:#0f1216; --panel:#161b21; --panel2:#1c232b; --line:#2a333d; --line2:#4a5663; --fg:#e6ebf0; --muted:#8c98a5;
   --up:#26a69a; --down:#ef5350; --trig:#e0b341; --entry:#4f9dff; --exitc:#3ccf7a; --inval:#ff5b5b;
-  --pass:#9aa6b2; --pos:#c792ea; --warn:#f0a020; --bad:#e5484d; --ok:#30a46c; --sim:#ffcc00;
-  --grid:#1f262e; --hatch:#2a313a;
+  --pass:#9aa6b2; --pos:#c792ea; --warn:#f0a020; --bad:#e5484d; --ok:#30a46c; --sim:#ffcc00; --on-sim:#111;
+  --grid:#1f262e; --hatch:#2a313a; --mockc:#ff8a00; --link:#7fb6ff; --accent:#7fb6ff;
+  --ok-bg:#0f2a1d; --ok-bd:#2a6d48; --ok-fg:#8ff0b8;
+  --warn-bg:#2e240c; --warn-bd:#6d5420; --warn-fg:#ffe2a8;
+  --bad-bg:#3a1416; --bad-bd:#7a2a2e; --bad-fg:#ffc9c9;
+  --info-bg:#10233a; --info-bd:#2a5d93; --info-fg:#d6e8ff;
+  --unk-bg:#20252b; --unk-bd:#3b444e; --unk-fg:#aab4bf;
+  --vio-bg:#1d1438; --vio-bd:#8a6cff; --vio-fg:#e6dcff; --vio-soft:#cbb8ff;
+  --alarm-bg:#5a0f12; --alarm-bg2:#3b0a0c; --alarm-fg:#fff;
+  --teal-bg:#0f3d33; --teal-fg:#7ff0d4; --gold-bg:#4a3410; --gold-fg:#ffd38a;
+  --neu-bg:#2a3038; --neu-fg:#c7d0da; --hold-bg:#1d2228; --hold-fg:#7d8894;
+  --sel:#1a2a3d; --code:#b8c7d6; --toast:#111820; --tvbg:#0b0e11; --failrow:#241214; --shadow:rgba(0,0,0,.4); --backdrop:rgba(0,0,0,.6);
+  --c-wm:rgba(255,255,255,0.045); --c-mask:rgba(20,24,30,0.85); --c-masktext:#cbd5df; --c-know:#7fb6ff;
+  --c-tagbg:#3b4652; --c-tagfg:#fff; --c-fill:#ffb347; --c-selring:#fff; --c-cross:rgba(200,210,220,0.25);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme:light;
+    --bg:#f3f5f8; --panel:#ffffff; --panel2:#eef1f5; --line:#d5dbe2; --line2:#9aa5b1; --fg:#17202a; --muted:#56616d;
+    --up:#0b8276; --down:#cf2f36; --trig:#9a6f00; --entry:#1f6fd6; --exitc:#178a4a; --inval:#d12b2b;
+    --pass:#6b7682; --pos:#8a4fc4; --warn:#a86200; --bad:#c42228; --ok:#1d8a52; --sim:#ffcc00; --on-sim:#111;
+    --grid:#e6eaef; --hatch:#dfe4ea; --mockc:#ff8a00; --link:#1a5bb8; --accent:#1f6fd6;
+    --ok-bg:#e2f4e9; --ok-bd:#8fcfa8; --ok-fg:#11603a;
+    --warn-bg:#fff2d4; --warn-bd:#e0b558; --warn-fg:#6e4700;
+    --bad-bg:#fde5e5; --bad-bd:#e9a1a3; --bad-fg:#951a20;
+    --info-bg:#e4effd; --info-bd:#9cc0ec; --info-fg:#14427a;
+    --unk-bg:#eef1f5; --unk-bd:#c3cbd4; --unk-fg:#45505c;
+    --vio-bg:#efe9ff; --vio-bd:#a58cf0; --vio-fg:#45288f; --vio-soft:#6a4fc4;
+    --alarm-bg:#c42228; --alarm-bg2:#a11c22; --alarm-fg:#fff;
+    --teal-bg:#d9f2ec; --teal-fg:#0a5c52; --gold-bg:#fbeed2; --gold-fg:#6e4a00;
+    --neu-bg:#e6eaef; --neu-fg:#36404b; --hold-bg:#f0f2f5; --hold-fg:#66717d;
+    --sel:#dce8f8; --code:#2f3d4b; --toast:#ffffff; --tvbg:#ffffff; --failrow:#fdeeee; --shadow:rgba(0,0,0,.14); --backdrop:rgba(0,0,0,.35);
+    --c-wm:rgba(0,0,0,0.05); --c-mask:rgba(243,245,248,0.9); --c-masktext:#2f3a46; --c-know:#1f6fd6;
+    --c-tagbg:#3b4652; --c-tagfg:#fff; --c-fill:#d9822b; --c-selring:#111; --c-cross:rgba(40,50,60,0.25);
+  }
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f3f5f8; --panel:#ffffff; --panel2:#eef1f5; --line:#d5dbe2; --line2:#9aa5b1; --fg:#17202a; --muted:#56616d;
+  --up:#0b8276; --down:#cf2f36; --trig:#9a6f00; --entry:#1f6fd6; --exitc:#178a4a; --inval:#d12b2b;
+  --pass:#6b7682; --pos:#8a4fc4; --warn:#a86200; --bad:#c42228; --ok:#1d8a52; --sim:#ffcc00; --on-sim:#111;
+  --grid:#e6eaef; --hatch:#dfe4ea; --mockc:#ff8a00; --link:#1a5bb8; --accent:#1f6fd6;
+  --ok-bg:#e2f4e9; --ok-bd:#8fcfa8; --ok-fg:#11603a;
+  --warn-bg:#fff2d4; --warn-bd:#e0b558; --warn-fg:#6e4700;
+  --bad-bg:#fde5e5; --bad-bd:#e9a1a3; --bad-fg:#951a20;
+  --info-bg:#e4effd; --info-bd:#9cc0ec; --info-fg:#14427a;
+  --unk-bg:#eef1f5; --unk-bd:#c3cbd4; --unk-fg:#45505c;
+  --vio-bg:#efe9ff; --vio-bd:#a58cf0; --vio-fg:#45288f; --vio-soft:#6a4fc4;
+  --alarm-bg:#c42228; --alarm-bg2:#a11c22; --alarm-fg:#fff;
+  --teal-bg:#d9f2ec; --teal-fg:#0a5c52; --gold-bg:#fbeed2; --gold-fg:#6e4a00;
+  --neu-bg:#e6eaef; --neu-fg:#36404b; --hold-bg:#f0f2f5; --hold-fg:#66717d;
+  --sel:#dce8f8; --code:#2f3d4b; --toast:#ffffff; --tvbg:#ffffff; --failrow:#fdeeee; --shadow:rgba(0,0,0,.14); --backdrop:rgba(0,0,0,.35);
+  --c-wm:rgba(0,0,0,0.05); --c-mask:rgba(243,245,248,0.9); --c-masktext:#2f3a46; --c-know:#1f6fd6;
+  --c-tagbg:#3b4652; --c-tagfg:#fff; --c-fill:#d9822b; --c-selring:#111; --c-cross:rgba(40,50,60,0.25);
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--fg)}
 body{font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 button{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
-button:hover{border-color:#4a5663}
+button:hover{border-color:var(--line2)}
+button:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 button:disabled{opacity:.45;cursor:not-allowed}
-button.danger{background:#3a1416;border-color:#7a2a2e;color:#ffd7d7;font-weight:700}
-button.warnb{background:#33280f;border-color:#6d5420;color:#ffe2a8;font-weight:700}
-button.pri{background:#12304f;border-color:#2a5d93}
-a{color:#7fb6ff}
-.banner{padding:8px 14px;font-weight:700;letter-spacing:.02em}
-.banner.disc{background:repeating-linear-gradient(45deg,#5a0f12,#5a0f12 12px,#3b0a0c 12px,#3b0a0c 24px);color:#fff;border-bottom:2px solid var(--bad);font-size:15px}
-.banner.stale{background:#2e240c;color:#ffd98a;border-bottom:1px solid #6d5420;font-weight:600}
-.banner.bb{background:#10233a;color:#d6e8ff;border-bottom:1px solid #2a5d93;font-weight:600;display:flex;flex-wrap:wrap;gap:6px 16px}
-.banner.bb.draft{background:#33280f;color:#ffe2a8;border-color:#6d5420}
-.banner.bb.paper{background:#1d1438;color:#e6dcff;border-bottom:2px solid #8a6cff}
+button.danger{background:var(--bad-bg);border-color:var(--bad-bd);color:var(--bad-fg);font-weight:700}
+button.warnb{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn-fg);font-weight:700}
+button.pri{background:var(--info-bg);border-color:var(--info-bd);color:var(--info-fg);font-weight:600}
+select,input{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:2px 4px}
+input[type=checkbox]{padding:0}
+a{color:var(--link)}
+.banner{padding:7px 14px;font-weight:700;letter-spacing:.02em}
+.banner.disc{background:repeating-linear-gradient(45deg,var(--alarm-bg),var(--alarm-bg) 12px,var(--alarm-bg2) 12px,var(--alarm-bg2) 24px);color:var(--alarm-fg);border-bottom:2px solid var(--bad);font-size:15px}
+.banner.stale{background:var(--warn-bg);color:var(--warn-fg);border-bottom:1px solid var(--warn-bd);font-weight:600}
+.banner.stale.done{background:var(--ok-bg);color:var(--ok-fg);border-color:var(--ok-bd)}
+.banner.bb{background:var(--info-bg);color:var(--info-fg);border-bottom:1px solid var(--info-bd);font-weight:600;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;padding:5px 14px}
+.banner.bb.draft{background:var(--warn-bg);color:var(--warn-fg);border-color:var(--warn-bd)}
+.banner.bb.paper{background:var(--vio-bg);color:var(--vio-fg);border-bottom:2px solid var(--vio-bd)}
 .banner.bb b{font-weight:800}
 .flag{display:inline-block;font-size:11px;font-weight:800;padding:0 6px;border-radius:3px;margin-left:4px;letter-spacing:.03em}
-.flag.part{background:#33280f;color:#ffe2a8;border:1px solid #6d5420}
-.flag.unc{background:#3a1416;color:#ffd7d7;border:1px solid #7a2a2e}
-.flag.alarm{background:#5a0f12;color:#fff;border:1px solid var(--bad)}
-.flag.ev{background:#10233a;color:#d6e8ff;border:1px solid #2a5d93;font-weight:600}
+.flag.part{background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-bd)}
+.flag.unc{background:var(--bad-bg);color:var(--bad-fg);border:1px solid var(--bad-bd)}
+.flag.alarm{background:var(--alarm-bg);color:var(--alarm-fg);border:1px solid var(--bad)}
+.flag.ev{background:var(--info-bg);color:var(--info-fg);border:1px solid var(--info-bd);font-weight:600}
 .lt{width:100%;border-collapse:collapse;font-size:12px}
 .lt td,.lt th{border-bottom:1px solid var(--line);padding:3px 4px;text-align:left;vertical-align:top}
 .lt input{width:110px}
-header{background:var(--panel);border-bottom:1px solid var(--line);padding:6px 12px;display:flex;flex-direction:column;gap:6px}
+/* header: identity, views, links */
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:6px 12px}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .spacer{flex:1}
-.big{font-weight:900;letter-spacing:.08em;padding:3px 10px;border-radius:4px;font-size:15px}
-.sim{background:var(--sim);color:#111}
-.mock{background:#ff8a00;color:#111}
+.big{font-weight:900;letter-spacing:.06em;padding:2px 7px;border-radius:4px;font-size:13px}
+.sim{background:var(--sim);color:var(--on-sim)}
+.mock{background:var(--mockc);color:var(--on-sim)}
+.brand{font-weight:800;font-size:14px;letter-spacing:.01em}
 .mode{font-weight:700}
-.tag{border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--muted);font-size:12px}
-.tag.syn{color:#ffd27a;border-color:#6d5420}
-.chip{border-radius:12px;padding:2px 9px;font-size:12px;font-weight:700;border:1px solid}
-.chip.ok{background:#0f2a1d;border-color:#2a6d48;color:#8ff0b8}
-.chip.warn{background:#2e240c;border-color:#6d5420;color:#ffd98a}
-.chip.bad{background:#3a1416;border-color:#7a2a2e;color:#ffb3b3}
-.chip.unk{background:#20252b;border-color:#3b444e;color:#aab4bf}
-.tabs{display:flex;gap:4px}
-.tabs button{border-radius:6px 6px 0 0;border-bottom:none;background:transparent}
-.tabs button.on{background:var(--panel2);border-color:var(--line);font-weight:700}
+.tag{border:1px solid var(--line);border-radius:4px;padding:0 6px;color:var(--muted);font-size:11.5px}
+.tag.syn{color:var(--warn-fg);border-color:var(--warn-bd)}
+.chip{display:inline-block;border-radius:12px;padding:1px 9px;font-size:12px;font-weight:700;border:1px solid;line-height:1.5}
+.chip.ok{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok-fg)}
+.chip.warn{background:var(--warn-bg);border-color:var(--warn-bd);color:var(--warn-fg)}
+.chip.bad{background:var(--bad-bg);border-color:var(--bad-bd);color:var(--bad-fg)}
+.chip.unk{background:var(--unk-bg);border-color:var(--unk-bd);color:var(--unk-fg)}
+.tabs{display:flex;gap:2px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:2px}
+.tabs button{border:0;background:transparent;border-radius:6px;padding:4px 6px;color:var(--muted)}
+.tabs button.on{background:var(--panel);color:var(--fg);font-weight:700;box-shadow:0 0 0 1px var(--line)}
+.hlinks{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11.5px}
+details.pop{position:relative}
+details.pop>summary{list-style:none;cursor:pointer;font-size:12px;border:1px solid var(--line);border-radius:6px;padding:3px 9px;background:var(--panel2)}
+details.pop>summary::-webkit-details-marker{display:none}
+details.pop[open]>summary{border-color:var(--accent)}
+.popbody{position:absolute;right:0;top:calc(100% + 6px);z-index:20;width:min(420px,calc(100vw - 24px));background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;box-shadow:0 8px 24px var(--shadow)}
+.tvbar{font-size:12px;display:flex;gap:8px;align-items:flex-start;flex-direction:column}
+.themesel{font-size:12px;color:var(--muted)}
+/* hero: one next step plus the status strip */
+#hero{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg)}
+.next{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-left:5px solid var(--unk-bd);border-radius:8px;padding:8px 12px;background:var(--panel);min-width:0}
+.next .nx-text{flex:1;min-width:0}
+.nx-k{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.nx-t{font-size:16px;font-weight:800;line-height:1.25}
+.nx-d{font-size:12px;color:var(--muted);margin-top:2px}
+#nextBtn{flex:none;font-size:13px;padding:7px 14px;font-weight:800;max-width:48%}
+.next.tone-ok{border-left-color:var(--ok)} .next.tone-warn{border-left-color:var(--warn)} .next.tone-bad{border-left-color:var(--bad)} .next.tone-info{border-left-color:var(--accent)}
+.strip{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1.2fr) minmax(0,.9fr) minmax(0,.8fr) minmax(0,1.5fr);border:1px solid var(--line);border-radius:8px;background:var(--panel);min-width:0}
+.strip .cell{padding:6px 10px;border-left:1px solid var(--line);min-width:0;overflow-wrap:anywhere}
+.strip .cell:first-child{border-left:0}
+.strip small{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;margin-bottom:2px}
+.strip .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px}
+.strip .chip{font-size:11.5px}
+#stPos{font-weight:800;font-variant-numeric:tabular-nums}
+.risk{font-size:12px;color:var(--fg)}
+/* session flow: compact control bar under the chart */
+.flowbar{display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--panel);border-top:1px solid var(--line);flex-wrap:wrap}
+.flowbar .fl-k{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
 .flow{display:flex;gap:4px;font-size:12px;color:var(--muted);flex-wrap:wrap;align-items:center}
-.flow button{padding:3px 8px;font-size:12px}
-.flow button.cur{box-shadow:0 0 0 2px #7fb6ff;font-weight:700}
+.flow button{padding:3px 9px;font-size:12px}
+.flow button.cur{box-shadow:0 0 0 2px var(--accent);font-weight:700}
 .flow button.na{text-decoration:line-through;opacity:.45}
-.flow .ar{color:#4a5663}
-.risk{font-size:12px;color:#ffe2a8}
-.tvbar{font-size:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.chk td.f{color:#ffb3b3;font-weight:700} .chk td.p{color:#8ff0b8}
-.chk tr.failrow td{background:#241214}
-main{flex:1;display:grid;grid-template-columns:minmax(0,62fr) minmax(330px,38fr);min-height:0}
-main.withtv{grid-template-columns:minmax(0,36fr) minmax(0,36fr) minmax(320px,28fr)}
+.flow .ar{color:var(--line2)}
+.chk td.f{color:var(--bad-fg);font-weight:700} .chk td.p{color:var(--ok-fg)}
+.chk tr.failrow td{background:var(--failrow)}
+/* main grid: chart first, decision and P&L beside it */
+main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) clamp(340px,30vw,440px);min-height:0}
+main.wideaside{grid-template-columns:minmax(0,1fr) minmax(420px,46%)}
+main.withtv{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(320px,28%)}
 #tvPane{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
 #tvPane[hidden]{display:none}
-#tvHost{flex:1;min-height:300px;position:relative;background:#0b0e11}
+#tvHost{flex:1;min-height:300px;position:relative;background:var(--tvbg)}
 #tvHost .tradingview-widget-container{position:absolute;inset:0}
 #tvHost .tradingview-widget-container__widget{height:calc(100% - 22px)}
 #tvHost .tradingview-widget-copyright{font-size:11px;padding:3px 8px}
 #chartPane{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
 .ctool{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;font-size:12px}
 .ctool button{padding:2px 8px}
+.simpill{background:var(--sim);color:var(--on-sim)}
 #ohlc{color:var(--muted);font-variant-numeric:tabular-nums}
-#cvwrap{flex:1;position:relative;min-height:240px;overflow:hidden}
+#cvwrap{flex:1;position:relative;min-height:240px;overflow:hidden;background:var(--bg)}
 #cv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
 .legend{display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:11.5px;padding:4px 8px;border-top:1px solid var(--line);background:var(--panel)}
 .legend i{font-style:normal;font-weight:700}
 aside{overflow:auto;padding:10px;min-height:0}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:10px}
-.card h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.card h3{margin:0 0 6px;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .card h3 .r{float:right;text-transform:none;letter-spacing:0}
+details.card{padding:0}
+details.card>summary{list-style:none;cursor:pointer;padding:9px 12px}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary h3{display:inline;margin:0}
+details.card>summary::before{content:"\25B8";display:inline-block;width:14px;color:var(--muted);transition:transform .12s}
+details.card[open]>summary::before{transform:rotate(90deg)}
+details.card>.dbody{padding:0 12px 10px}
+details.sub{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
+details.sub>summary{cursor:pointer;font-size:12px;color:var(--muted)}
+.card.dec{border-color:var(--info-bd)}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-variant-numeric:tabular-nums}
 .kv .wide{grid-column:1/-1;min-width:0;overflow-wrap:anywhere}
-.banner.stale.done{background:#17331f;color:#cfe9d4;border-color:#2e6b40}
 .kv b{font-weight:600;color:var(--muted)}
-.pnl{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.pnl div{background:var(--panel2);border-radius:6px;padding:6px 8px}
+.pnl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.pnl div{background:var(--panel2);border-radius:6px;padding:6px 8px;min-width:0}
 .pnl small{display:block;color:var(--muted);font-size:11px}
-.pnl span{font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
-.pnl .main span{font-size:19px}
+.pnl span{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.pnl .main{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:8px 10px}
+.pnl .main small{font-size:12px;font-weight:700;color:var(--fg)}
+.pnl .main span{font-size:26px;font-weight:800}
 .pos{color:var(--up)} .neg{color:var(--down)} .zero{color:var(--fg)}
 .pill{display:inline-block;border-radius:4px;padding:0 6px;font-size:11px;font-weight:800;letter-spacing:.03em;vertical-align:1px}
-.p-enter_long{background:#0f3d33;color:#7ff0d4}.p-enter_short{background:#4a1617;color:#ffb3b3}
-.p-exit{background:#123a5c;color:#a9d4ff}.p-pass{background:#2a3038;color:#c7d0da}.p-hold{background:#1d2228;color:#7d8894}
-.p-knew{background:#24303b;color:#bcd}.p-requested{background:#1d3550;color:#a9d4ff}.p-acked{background:#2b2350;color:#cbb8ff}
-.p-filled{background:#4a3410;color:#ffd38a}.p-rejected,.p-alarm{background:#4a1617;color:#ffb3b3}
-.p-canceled{background:#333;color:#ccc}.p-control{background:#3d3410;color:#ffe9a8}
-.feed{list-style:none;margin:0;padding:0;max-height:320px;overflow:auto}
+.pill.know{background:var(--info-bg);color:var(--info-fg)}
+.p-enter_long{background:var(--teal-bg);color:var(--teal-fg)}.p-enter_short{background:var(--bad-bg);color:var(--bad-fg)}
+.p-exit{background:var(--info-bg);color:var(--info-fg)}.p-pass{background:var(--neu-bg);color:var(--neu-fg)}.p-hold{background:var(--hold-bg);color:var(--hold-fg)}
+.p-knew{background:var(--unk-bg);color:var(--unk-fg)}.p-requested{background:var(--info-bg);color:var(--info-fg)}.p-acked{background:var(--vio-bg);color:var(--vio-fg)}
+.p-filled{background:var(--gold-bg);color:var(--gold-fg)}.p-rejected,.p-alarm{background:var(--bad-bg);color:var(--bad-fg)}
+.p-canceled{background:var(--neu-bg);color:var(--neu-fg)}.p-control{background:var(--warn-bg);color:var(--warn-fg)}
+.feed{list-style:none;margin:6px 0 0;padding:0;max-height:320px;overflow:auto}
 .feed li{padding:5px 4px;border-bottom:1px solid var(--grid);cursor:pointer}
 .feed li:hover{background:var(--panel2)}
-.feed li.sel{background:#1a2a3d}
+.feed li.sel{background:var(--sel)}
 .feed .t{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
 .muted{color:var(--muted)}
 .small{font-size:11.5px}
 .hint{color:var(--muted);font-size:12px}
 .sec{border-left:3px solid var(--line);padding-left:10px;margin:10px 0}
 .sec h4{margin:0 0 6px;font-size:13px}
-.sec.s1{border-color:var(--entry)} .sec.s2{border-color:var(--trig)} .sec.s3{border-color:#cbb8ff} .sec.s4{border-color:var(--bad)}
+.sec.s1{border-color:var(--entry)} .sec.s2{border-color:var(--trig)} .sec.s3{border-color:var(--vio-soft)} .sec.s4{border-color:var(--bad)}
 .sw{display:inline-block;width:18px;height:0;border-top:2px dashed;vertical-align:middle;margin-right:6px}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
 td,th{padding:4px 6px;border-bottom:1px solid var(--grid);text-align:left;vertical-align:top}
 th{color:var(--muted);font-weight:600;font-size:12px}
 .trail td:first-child{white-space:nowrap;color:var(--muted);font-size:11.5px}
 .st{font-weight:800;font-size:11px;padding:1px 6px;border-radius:4px}
-.st-PASS,.st-CONNECTED,.st-EXERCISED,.st-NO.ALARMS{background:#0f2a1d;color:#8ff0b8}
-.st-FAIL,.st-ALARM,.st-OPEN,.st-NOT{background:#3a1416;color:#ffb3b3}
-.st-UNTESTED{background:#2e240c;color:#ffd98a}
-.hypo{background:#3a2f55;color:#dccbff;font-weight:800;padding:1px 6px;border-radius:4px;font-size:11px}
-.outcome{background:#1b1630;border:1px dashed #6b5aa8;border-radius:6px;padding:8px;margin-top:8px}
-.nofill{background:#2e240c;border:1px solid #6d5420;color:#ffe2a8;border-radius:6px;padding:10px;font-weight:600}
-#toast{position:fixed;right:14px;bottom:14px;max-width:420px;background:#111820;border:1px solid var(--line);border-radius:8px;padding:10px 12px;box-shadow:0 6px 20px rgba(0,0,0,.4);display:none;z-index:9}
-dialog{background:var(--panel);color:var(--fg);border:1px solid #7a2a2e;border-radius:10px;max-width:480px}
-dialog::backdrop{background:rgba(0,0,0,.6)}
-.stale-vals .live{opacity:.55;text-decoration:line-through dotted #ff6b6b}
-code{font-size:11.5px;color:#b8c7d6}
+.st-PASS,.st-CONNECTED,.st-EXERCISED,.st-NO.ALARMS{background:var(--ok-bg);color:var(--ok-fg)}
+.st-FAIL,.st-ALARM,.st-OPEN,.st-NOT{background:var(--bad-bg);color:var(--bad-fg)}
+.st-UNTESTED{background:var(--warn-bg);color:var(--warn-fg)}
+.hypo{background:var(--vio-bg);color:var(--vio-fg);font-weight:800;padding:1px 6px;border-radius:4px;font-size:11px}
+.outcome{background:var(--vio-bg);border:1px dashed var(--vio-bd);border-radius:6px;padding:8px;margin-top:8px}
+.nofill{background:var(--warn-bg);border:1px solid var(--warn-bd);color:var(--warn-fg);border-radius:6px;padding:10px;font-weight:600}
+#toast{position:fixed;right:14px;bottom:14px;max-width:min(420px,calc(100vw - 28px));background:var(--toast);border:1px solid var(--line);border-radius:8px;padding:10px 12px;box-shadow:0 6px 20px var(--shadow);display:none;z-index:30}
+dialog{background:var(--panel);color:var(--fg);border:1px solid var(--line2);border-radius:10px;max-width:min(480px,calc(100vw - 24px))}
+dialog::backdrop{background:var(--backdrop)}
+dialog h3{margin-top:0}
+.h-bad{color:var(--bad-fg)} .h-warn{color:var(--warn-fg)} .h-info{color:var(--info-fg)} .h-vio{color:var(--vio-fg)}
+#dlgStop{border-color:var(--bad-bd)}
+.stale-vals .live{opacity:.55;text-decoration:line-through dotted var(--bad)}
+code{font-size:11.5px;color:var(--code)}
 @media (max-width:1100px){
   body{height:auto;overflow:auto}
-  main{grid-template-columns:1fr}
-  main.withtv{grid-template-columns:1fr}
-  #chartPane,#tvPane{height:58vh;min-height:380px;border-right:0;border-bottom:1px solid var(--line)}
+  #hero{grid-template-columns:1fr}
+  .strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .strip .cell{border-left:0;border-top:1px solid var(--line)}
+  .strip .cell:nth-child(-n+2){border-top:0}
+  .strip .cell:nth-child(even){border-left:1px solid var(--line)}
+  .strip .cell.wide{grid-column:1/-1;border-left:0}
+  main,main.wideaside,main.withtv{grid-template-columns:1fr}
+  #chartPane,#tvPane{height:62vh;min-height:360px;border-right:0;border-bottom:1px solid var(--line)}
   aside{overflow:visible}
+}
+@media (max-width:560px){
+  header{padding:6px 10px}
+  #hero{padding:8px 10px}
+  .next{flex-wrap:wrap}
+  #nextBtn{max-width:none;width:100%}
+  .tabs button{padding:4px 7px}
+  .legend span:last-child{display:none}
 }
 </style>
 </head>
@@ -143,51 +265,50 @@ code{font-size:11.5px;color:#b8c7d6}
   <div class="row">
     <span class="big sim" id="badgeSim">SIMULATED</span>
     <span class="big mock" id="badgeMock">MOCK FILLS</span>
-    <span class="mode" id="mode">REPLAY (OFFLINE, SIMULATED)</span>
-    <span class="tag syn" id="datalabel">SYNTHETIC BARS</span>
-    <span class="tag" id="symstrat">-</span>
-    <span class="tag" id="expiry">expiry -</span>
+    <span class="brand">SPY Paper Desk</span>
     <span class="spacer"></span>
-    <span class="chip unk" id="armChip">SIMULATION: DISARMED</span>
-    <span class="chip ok" id="brokerChip">EXTERNAL BROKER: NONE (offline in-process fake broker)</span>
-  </div>
-  <div class="row">
-    <div class="flow" id="flow" aria-label="Session flow">
-      <button data-f="review" title="Pre-session check from session.json preflight">1 Review</button><span class="ar">&rarr;</span>
-      <button data-f="arm" class="pri" title="Arms this offline replay session. No broker connection.">2 Arm</button><span class="ar">&rarr;</span>
-      <button data-f="step1" title="Advance the replay clock by 1 bar">Step 1</button>
-      <button data-f="step10" title="Advance the replay clock by 10 bars">Step 10</button>
-      <button data-f="runend" title="Run the replay to the last bar (launcher route /api/run_to_end)">Run to end</button>
-      <button data-f="play" title="Play the replay at 4 bars per second">Play</button>
-      <button data-f="stopplay" title="Stop playing; the session stays armed">Stop playing</button><span class="ar">&rarr;</span>
-      <button data-f="pause" id="btnPause" class="warnb" title="Blocks new entries and cancels entry remainders. Protective exits stay.">Pause</button>
-      <button data-f="resume" title="Lift the pause">Resume</button>
-      <button data-f="stop" id="btnStop" class="danger" title="Disables entries and schedule, cancels entries, closes the reconciled position.">Stop &amp; Close</button>
-      <button data-f="clear" title="Only this button clears a Stop. The schedule never does.">Clear Stop</button><span class="ar">&rarr;</span>
-      <button data-f="close" title="Close the session (must be flat), then open the review">Close &amp; review</button>
-    </div>
-  </div>
-  <div class="row">
     <div class="tabs" role="tablist">
       <button data-view="chart" class="on">Chart</button>
       <button data-view="decision">Decision</button>
       <button data-view="review">Session review</button>
       <button data-view="setup" title="Your paper limits: draft, check effects, approve. Agents never fill these.">Setup (limits)</button>
     </div>
-    <a id="labLink" href="/lab" target="_blank" rel="noopener" hidden title="Opens the decision lab in a new tab">Decision lab &#8599;</a>
-    <a id="spyLink" href="/spy-study" target="_blank" rel="noopener" title="Opens the historical SPY November study in a new tab. It is hindsight analysis of past bars, not a live signal.">SPY November study (historical, hindsight) &#8599;</a>
-    <span class="risk" id="risk">Max loss per trade $10.00 (TEST VALUE) &middot; Notional cap $2,000 (TEST VALUE) &middot; Daily loss $30.00 (TEST VALUE)</span>
-    <span class="spacer"></span>
-    <span class="tvbar">
-      <label title="Loads TradingView's official Advanced Chart widget of a REAL reference symbol beside the synthetic desk chart. Off by default."><input type="checkbox" id="tvToggle"> Show TradingView chart</label>
-      <label title="Real-market reference symbol for an independent comparison. The desk's own symbol is synthetic and is never sent to TradingView.">Reference <select id="tvRef"><option value="AMEX:SPY" selected>AMEX:SPY</option><option value="NASDAQ:QQQ">NASDAQ:QQQ</option><option value="AMEX:IWM">AMEX:IWM</option><option value="AMEX:DIA">AMEX:DIA</option></select></label>
+    <span class="hlinks">
+      <a id="labLink" href="/lab" target="_blank" rel="noopener" hidden title="Opens the decision lab in a new tab">Decision lab &#8599;</a>
+      <a id="spyLink" href="/spy-study" target="_blank" rel="noopener" title="Opens the historical SPY November study in a new tab. It is hindsight analysis of past bars, not a live signal.">SPY November study (historical, hindsight) &#8599;</a>
       <a id="tvlink" href="https://www.tradingview.com/chart/?symbol=AMEX%3ASPY" target="_blank" rel="noopener noreferrer" title="Opens TradingView (AMEX:SPY) in your own browser. REFERENCE ONLY: the desk never reads it.">Open my TradingView chart &#8599;</a>
-      <span class="muted" title="macOS: hold the mouse on the green window button, then choose Tile Window to Left of Screen for TradingView and Tile Window to Right of Screen for this desk.">macOS tip: hold the green button &rarr; Tile left / right</span>
-      <span class="tag" title="Independent comparison of a real market. Display only: no alerts, no webhooks, nothing read back.">TradingView chart: operator view only, not used by the desk. REFERENCE ONLY, real market, not the desk's data, nothing flows into the bot</span>
-      <span class="tag" id="tvLabel" hidden></span>
     </span>
+    <details class="pop" id="tvPop">
+      <summary title="TradingView reference chart options">TradingView &#9662;</summary>
+      <div class="popbody tvbar">
+        <label title="Loads TradingView's official Advanced Chart widget of a REAL reference symbol beside the synthetic desk chart. Off by default."><input type="checkbox" id="tvToggle"> Show TradingView chart</label>
+        <label title="Real-market reference symbol for an independent comparison. The desk's own symbol is synthetic and is never sent to TradingView.">Reference <select id="tvRef"><option value="AMEX:SPY" selected>AMEX:SPY</option><option value="NASDAQ:QQQ">NASDAQ:QQQ</option><option value="AMEX:IWM">AMEX:IWM</option><option value="AMEX:DIA">AMEX:DIA</option></select></label>
+        <span class="muted" title="macOS: hold the mouse on the green window button, then choose Tile Window to Left of Screen for TradingView and Tile Window to Right of Screen for this desk.">macOS tip: hold the green button &rarr; Tile left / right</span>
+        <span class="tag" title="Independent comparison of a real market. Display only: no alerts, no webhooks, nothing read back.">TradingView chart: operator view only, not used by the desk. REFERENCE ONLY, real market, not the desk's data, nothing flows into the bot</span>
+        <span class="tag" id="tvLabel" hidden></span>
+      </div>
+    </details>
+    <label class="themesel" title="Colour theme. Auto follows your system setting."><select id="themeSel" aria-label="Theme"><option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
   </div>
 </header>
+<section id="hero" aria-label="Next step and desk status">
+  <div id="nextAct" class="next tone-unk" role="status" aria-live="polite">
+    <div class="nx-text">
+      <div class="nx-k">Next step</div>
+      <div class="nx-t" id="nextTitle">Loading desk state</div>
+      <div class="nx-d" id="nextDetail">Reading the session from the local desk server.</div>
+    </div>
+    <button id="nextBtn" class="pri" hidden>-</button>
+  </div>
+  <div class="strip" id="strip">
+    <div class="cell"><small>Mode</small><span class="mode" id="mode">REPLAY (OFFLINE, SIMULATED)</span>
+      <div class="tags"><span class="tag syn" id="datalabel">SYNTHETIC BARS</span><span class="tag" id="symstrat">-</span><span class="tag" id="expiry">expiry -</span></div></div>
+    <div class="cell"><small>Broker / venue</small><span class="chip ok" id="brokerChip">EXTERNAL BROKER: NONE (offline in-process fake broker)</span></div>
+    <div class="cell"><small>Session</small><span class="chip unk" id="armChip">SIMULATION: DISARMED</span></div>
+    <div class="cell"><small>Position</small><span id="stPos">-</span></div>
+    <div class="cell wide"><small>Your limits</small><span class="risk" id="risk">Max loss per trade $10.00 (TEST VALUE) &middot; Notional cap $2,000 (TEST VALUE) &middot; Daily loss $30.00 (TEST VALUE)</span></div>
+  </div>
+</section>
 <main id="main">
   <section id="tvPane" hidden>
     <div class="ctool"><b>TradingView reference: <span id="tvRefName">AMEX:SPY</span></b><span class="tag">REFERENCE ONLY, real market, not the desk's data, nothing flows into the bot</span><span class="spacer"></span><button id="tvHide" title="Remove the TradingView widget">Hide</button></div>
@@ -196,45 +317,55 @@ code{font-size:11.5px;color:#b8c7d6}
   </section>
   <section id="chartPane">
     <div class="ctool">
-      <b>Desk replay chart</b> <span class="pill" style="background:var(--sim);color:#111">SYNTHETIC</span><span class="tag syn" id="srcTag">source: desk replay bars (synthetic), not TradingView, not a real market</span>
+      <b>Desk replay chart</b> <span class="pill simpill">SYNTHETIC</span><span class="tag syn" id="srcTag">source: desk replay bars (synthetic), not TradingView, not a real market</span>
       <span class="spacer"></span>
       <span id="ohlc"></span>
       <button id="zIn" title="Zoom in">+</button><button id="zOut" title="Zoom out">&minus;</button>
       <button id="zFit" title="Show all bars">All</button><button id="zLast" title="Follow the latest bar">Latest</button>
     </div>
     <div id="cvwrap"><canvas id="cv"></canvas></div>
+    <div class="flowbar">
+      <span class="fl-k">Session</span>
+      <div class="flow" id="flow" aria-label="Session flow">
+        <button data-f="review" title="Pre-session check from session.json preflight">1 Review</button><span class="ar">&rarr;</span>
+        <button data-f="arm" class="pri" title="Arms this offline replay session. No broker connection.">2 Arm</button><span class="ar">&rarr;</span>
+        <button data-f="step1" title="Advance the replay clock by 1 bar">Step 1</button>
+        <button data-f="step10" title="Advance the replay clock by 10 bars">Step 10</button>
+        <button data-f="runend" title="Run the replay to the last bar (launcher route /api/run_to_end)">Run to end</button>
+        <button data-f="play" title="Play the replay at 4 bars per second">Play</button>
+        <button data-f="stopplay" title="Stop playing; the session stays armed">Stop playing</button><span class="ar">&rarr;</span>
+        <button data-f="pause" id="btnPause" class="warnb" title="Blocks new entries and cancels entry remainders. Protective exits stay.">Pause</button>
+        <button data-f="resume" title="Lift the pause">Resume</button>
+        <button data-f="stop" id="btnStop" class="danger" title="Disables entries and schedule, cancels entries, closes the reconciled position.">Stop &amp; Close</button>
+        <button data-f="clear" title="Only this button clears a Stop. The schedule never does.">Clear Stop</button><span class="ar">&rarr;</span>
+        <button data-f="close" title="Close the session (must be flat), then open the review">Close &amp; review</button>
+      </div>
+    </div>
     <div class="legend">
       <span><i style="color:var(--up)">&#9650;</i> long entry</span><span><i style="color:var(--down)">&#9660;</i> short entry</span>
       <span><i style="color:var(--entry)">&#9670;</i> exit</span><span><i style="color:var(--pass)">&#9675;</i> pass</span>
-      <span><i style="color:#ffb347">&#9472;</i> mock fill</span>
+      <span><i style="color:var(--c-fill)">&#9472;</i> mock fill</span>
       <span>Click a marker for its replay. Wheel = zoom, drag = pan.</span>
     </div>
   </section>
   <aside>
     <div id="viewChart">
-      <div class="card">
+      <div class="card dec">
         <h3>Current decision <span class="r small" id="nowTs"></span></h3>
         <div id="nowDec" class="hint">Waiting for decisions.</div>
       </div>
       <div class="card">
-        <h3>P&amp;L <span class="r"><span class="pill" style="background:var(--sim);color:#111">SIMULATED</span></span></h3>
+        <h3>P&amp;L after costs <span class="r"><span class="pill simpill">SIMULATED</span></span></h3>
         <div class="pnl live">
+          <div class="main"><small>After cost (net)</small><span id="pAc">-</span></div>
           <div><small>Realized</small><span id="pRe">-</span></div>
           <div><small>Unrealized</small><span id="pUn">-</span></div>
           <div><small>Fees</small><span id="pFe">-</span></div>
-          <div class="main"><small>After cost (net)</small><span id="pAc">-</span></div>
         </div>
       </div>
       <div class="card">
-        <h3>Exposure and protective orders <span class="r small" id="expConf"></span></h3>
-        <div class="kv live" id="expo"></div>
-        <div id="protect" class="small" style="margin-top:6px"></div>
-        <div id="working" class="small" style="margin-top:4px"></div>
-      </div>
-      <div class="card">
-        <h3>Session and controls</h3>
-        <div class="kv" id="ctrlState"></div>
-        <div class="row" style="margin-top:8px">
+        <h3>Session controls</h3>
+        <div class="row">
           <button id="btnArm" class="pri" title="Arms this offline replay session. No broker connection.">Arm this replay session (offline)</button>
           <button id="btnPause2" class="warnb">Pause</button>
           <button id="btnStop2" class="danger">Stop &amp; Close</button>
@@ -245,19 +376,36 @@ code{font-size:11.5px;color:#b8c7d6}
           <button id="btnReconcile" title="Asks the broker for orders and position now and compares them with the desk. Works while disabled.">Reconcile now</button>
         </div>
         <div class="small" id="alpacaInfo" style="margin-top:6px" hidden></div>
-        <div class="small" id="livePath" style="margin-top:8px"></div>
-        <div class="small muted" id="undecided" style="margin-top:4px"></div>
+        <details class="sub">
+          <summary>Session details</summary>
+          <div class="kv" id="ctrlState" style="margin-top:6px"></div>
+          <div class="small" id="livePath" style="margin-top:8px"></div>
+          <div class="small muted" id="undecided" style="margin-top:4px"></div>
+        </details>
       </div>
-      <div class="card" id="schedCard">
-        <h3>Offline schedule (simulated clock)</h3>
-        <label><input type="checkbox" id="schedTgl"> Offline schedule (simulated clock)</label>
-        <div class="kv small" id="schedInfo" style="margin-top:6px"></div>
-        <div class="hint" style="margin-top:4px">Off by default. A schedule never clears a Stop: only Clear Stop does.</div>
-      </div>
-      <div class="card">
-        <h3>Reasons for actions and passes <span class="r small"><label><input type="checkbox" id="showHolds"> show holds</label></span></h3>
-        <ul class="feed" id="feed"></ul>
-      </div>
+      <details class="card" id="expCard">
+        <summary><h3>Exposure and protective orders</h3> <span class="small muted" id="expConf"></span></summary>
+        <div class="dbody">
+          <div class="kv live" id="expo"></div>
+          <div id="protect" class="small" style="margin-top:6px"></div>
+          <div id="working" class="small" style="margin-top:4px"></div>
+        </div>
+      </details>
+      <details class="card" id="schedCard">
+        <summary><h3>Offline schedule (simulated clock)</h3></summary>
+        <div class="dbody">
+          <label><input type="checkbox" id="schedTgl"> Offline schedule (simulated clock)</label>
+          <div class="kv small" id="schedInfo" style="margin-top:6px"></div>
+          <div class="hint" style="margin-top:4px">Off by default. A schedule never clears a Stop: only Clear Stop does.</div>
+        </div>
+      </details>
+      <details class="card" id="feedCard">
+        <summary><h3>Reasons for actions and passes</h3></summary>
+        <div class="dbody">
+          <label class="small"><input type="checkbox" id="showHolds"> show holds</label>
+          <ul class="feed" id="feed"></ul>
+        </div>
+      </details>
     </div>
 
     <div id="viewDecision" hidden>
@@ -275,7 +423,7 @@ code{font-size:11.5px;color:#b8c7d6}
 </main>
 
 <dialog id="dlgStop">
-  <h3 style="margin-top:0;color:#ffb3b3">Stop &amp; Close this session?</h3>
+  <h3 class="h-bad">Stop &amp; Close this session?</h3>
   <p>This disables new entries and the schedule, cancels entry orders, then closes the reconciled position, including late or partial fills. Protective exits stay until the broker confirms flat. The desk will not show FLAT until broker positions say 0.</p>
   <p class="small muted" id="stopNote">Offline replay: the broker is the in-process FakeBroker. SIMULATED.</p>
   <div class="row" style="justify-content:flex-end">
@@ -284,7 +432,7 @@ code{font-size:11.5px;color:#b8c7d6}
   </div>
 </dialog>
 <dialog id="dlgPre">
-  <h3 style="margin-top:0">Pre-session check</h3>
+  <h3>Pre-session check</h3>
   <div id="preBody" class="small"></div>
   <p class="small muted" id="preNote">From session.json preflight. Offline replay, in-process fake broker, TEST VALUE limits. SIMULATED.</p>
   <div class="row" style="justify-content:flex-end">
@@ -293,7 +441,7 @@ code{font-size:11.5px;color:#b8c7d6}
   </div>
 </dialog>
 <dialog id="dlgClear">
-  <h3 style="margin-top:0;color:#ffd98a">Clear the Stop?</h3>
+  <h3 class="h-warn">Clear the Stop?</h3>
   <p>Only this button clears a Stop; the schedule never does. The session goes back to the pre-session state, disarmed. You must Review and Arm again before any new entry.</p>
   <p class="small muted">Offline replay. SIMULATED.</p>
   <div class="row" style="justify-content:flex-end">
@@ -302,7 +450,7 @@ code{font-size:11.5px;color:#b8c7d6}
   </div>
 </dialog>
 <dialog id="dlgEnable">
-  <h3 style="margin-top:0;color:#d6e8ff">Enable the Alpaca adapter?</h3>
+  <h3 class="h-info">Enable the Alpaca adapter?</h3>
   <p id="enMode">Mode: -</p>
   <p>The desk may then send orders for SPY within your loaded limits, only when you press <b>Check for new bars</b> or a control. Nothing runs in the background. <b>Disable</b> or <b>Stop</b> turns it off again at any time.</p>
   <p class="small muted" id="enLimits"></p>
@@ -312,7 +460,7 @@ code{font-size:11.5px;color:#b8c7d6}
   </div>
 </dialog>
 <dialog id="dlgDisable">
-  <h3 style="margin-top:0;color:#ffe2a8">Disable the Alpaca adapter?</h3>
+  <h3 class="h-warn">Disable the Alpaca adapter?</h3>
   <p>New orders stop. Stop, reconcile and protective reduction still work while disabled.</p>
   <label>Reason (required) <input id="disReason" maxlength="200" style="width:100%"></label>
   <div class="row" style="justify-content:flex-end;margin-top:8px">
@@ -321,7 +469,7 @@ code{font-size:11.5px;color:#b8c7d6}
   </div>
 </dialog>
 <dialog id="dlgApprove">
-  <h3 style="margin-top:0;color:#e6dcff">Approve your paper limits?</h3>
+  <h3 class="h-vio">Approve your paper limits?</h3>
   <p class="small">Changes from your last approved limits (old &rarr; new):</p>
   <div id="apDiff" class="small"></div>
   <p class="small">Type <b id="apPhraseShow">APPROVE PAPER LIMITS</b> exactly, and give a short reason.</p>
@@ -460,7 +608,7 @@ function draw(){
   V.geo = {padL, padR, padT, padB, pw, ph, bw, W, H, lo, hi};
 
   // watermark: source of this chart
-  g.save(); g.fillStyle = 'rgba(255,255,255,0.045)'; g.textAlign = 'center';
+  g.save(); g.fillStyle = col('--c-wm'); g.textAlign = 'center';
   g.font = '700 ' + Math.max(14, Math.min(34, pw / 22)) + 'px system-ui';
   const lab = ((S.session || {}).data_label || (S.manifest || {}).label || 'SYNTHETIC BARS');
   g.fillText('DESK REPLAY · ' + lab + ' · NOT TRADINGVIEW', padL + pw / 2, padT + ph / 2);
@@ -501,12 +649,12 @@ function draw(){
   if (masked && decIdx >= i0 - 1) {
     const xs = Math.max(padL, X(decIdx) + bw / 2);
     if (xs < padL + pw) {
-      g.save(); g.fillStyle = 'rgba(20,24,30,0.85)'; g.fillRect(xs, padT, padL + pw - xs, ph + volH + 8);
+      g.save(); g.fillStyle = col('--c-mask'); g.fillRect(xs, padT, padL + pw - xs, ph + volH + 8);
       g.strokeStyle = col('--hatch'); g.lineWidth = 1; g.beginPath();
       for (let k = xs - ph; k < padL + pw; k += 12) { g.moveTo(k, padT + ph + volH + 8); g.lineTo(k + ph + volH, padT); }
       g.save(); g.beginPath(); g.rect(xs, padT, padL + pw - xs, ph + volH + 8); g.clip();
       g.beginPath(); for (let k = xs - ph - volH; k < padL + pw; k += 14) { g.moveTo(k, padT + ph + volH + 8); g.lineTo(k + ph + volH + 8, padT); } g.stroke(); g.restore();
-      g.fillStyle = '#cbd5df'; g.textAlign = 'center'; g.font = '600 12px system-ui';
+      g.fillStyle = col('--c-masktext'); g.textAlign = 'center'; g.font = '600 12px system-ui';
       const mx = xs + (padL + pw - xs) / 2;
       if (padL + pw - xs > 150) { g.fillText('Later bars hidden', mx, padT + ph / 2 - 8); g.font = '11px system-ui';
         g.fillText('Knowable view at ' + tsShort(sd.ts_knowable), mx, padT + ph / 2 + 8); g.fillText('Press "Reveal outcome"', mx, padT + ph / 2 + 22); }
@@ -516,8 +664,8 @@ function draw(){
 
   // decision vertical line
   if (sd && decIdx >= i0 && decIdx <= i1) {
-    const x = Math.round(X(decIdx)) + .5; g.save(); g.setLineDash([3, 3]); g.strokeStyle = '#7fb6ff'; g.beginPath(); g.moveTo(x, padT); g.lineTo(x, padT + ph); g.stroke(); g.restore();
-    g.fillStyle = '#7fb6ff'; g.textAlign = 'left'; g.fillText('decision knowable ' + String(sd.ts_knowable).slice(11, 16) + 'Z', Math.min(x + 4, padL + pw - 150), padT + 12);
+    const x = Math.round(X(decIdx)) + .5; g.save(); g.setLineDash([3, 3]); g.strokeStyle = col('--c-know'); g.beginPath(); g.moveTo(x, padT); g.lineTo(x, padT + ph); g.stroke(); g.restore();
+    g.fillStyle = col('--c-know'); g.textAlign = 'left'; g.fillText('decision knowable ' + String(sd.ts_knowable).slice(11, 16) + 'Z', Math.min(x + 4, padL + pw - 150), padT + 12);
   }
 
   // horizontal lines (setup or position/protection)
@@ -532,14 +680,14 @@ function draw(){
 
   // last price tag
   if (!masked) { const b = bars[n - 1]; const y = Y(b.close); if (y > padT && y < padT + ph && !lines.length) {
-    g.fillStyle = '#3b4652'; g.fillRect(padL + pw + 1, y - 8, padR - 2, 16); g.fillStyle = '#fff'; g.textAlign = 'left'; g.fillText(fmt(b.close, 2), padL + pw + 6, y + 4); } }
+    g.fillStyle = col('--c-tagbg'); g.fillRect(padL + pw + 1, y - 8, padR - 2, 16); g.fillStyle = col('--c-tagfg'); g.textAlign = 'left'; g.fillText(fmt(b.close, 2), padL + pw + 6, y + 4); } }
 
   // mock fills
   for (const r of S.ledger) for (const f of (r.fills || [])) {
     const t = Date.parse(f.ts); if (!isFinite(t)) continue; const i = idxOpenAtOrBefore(t);
     if (i < i0 || i > i1 || i > cut) continue; const p = num(f.price); if (p === null) continue;
-    const x = X(i), y = Y(p); g.strokeStyle = '#ffb347'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - Math.max(5, bw * .6), y); g.lineTo(x + Math.max(5, bw * .6), y); g.stroke(); g.lineWidth = 1;
-    if (bw > 16) { g.fillStyle = '#ffb347'; g.textAlign = 'left'; g.font = '700 9px system-ui'; g.fillText(f.mock === false ? 'PAPER FILL' : 'MOCK FILL', x + Math.max(6, bw * .6) + 2, y + 3); g.font = '11px -apple-system,system-ui,sans-serif'; }
+    const x = X(i), y = Y(p); g.strokeStyle = col('--c-fill'); g.lineWidth = 2; g.beginPath(); g.moveTo(x - Math.max(5, bw * .6), y); g.lineTo(x + Math.max(5, bw * .6), y); g.stroke(); g.lineWidth = 1;
+    if (bw > 16) { g.fillStyle = col('--c-fill'); g.textAlign = 'left'; g.font = '700 9px system-ui'; g.fillText(f.mock === false ? 'PAPER FILL' : 'MOCK FILL', x + Math.max(6, bw * .6) + 2, y + 3); g.font = '11px -apple-system,system-ui,sans-serif'; }
   }
 
   // markers
@@ -552,14 +700,14 @@ function draw(){
     else if (d.action === 'enter_short') { y = Y(b.high) - 10 - r - (k - 1) * (2 * r + 3); g.fillStyle = col('--down'); g.beginPath(); g.moveTo(x, y + r); g.lineTo(x + r, y - r); g.lineTo(x - r, y - r); g.closePath(); g.fill(); }
     else if (d.action === 'exit') { y = Y(b.high) - 10 - r - (k - 1) * (2 * r + 3); g.fillStyle = col('--entry'); g.beginPath(); g.moveTo(x, y - r); g.lineTo(x + r, y); g.lineTo(x, y + r); g.lineTo(x - r, y); g.closePath(); g.fill(); }
     else { y = Y(b.low) + 10 + r + (k - 1) * (2 * r + 3); g.strokeStyle = col('--pass'); g.beginPath(); g.arc(x, y, r - 1, 0, Math.PI * 2); g.stroke(); }
-    if (S.sel === d.decision_id) { g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, r + 4, 0, Math.PI * 2); g.stroke(); }
+    if (S.sel === d.decision_id) { g.strokeStyle = col('--c-selring'); g.lineWidth = 2; g.beginPath(); g.arc(x, y, r + 4, 0, Math.PI * 2); g.stroke(); }
     g.lineWidth = 1;
     V.markers.push({x, y, r: r + 5, id: d.decision_id});
   }
 
   // crosshair
   if (V.hover >= i0 && V.hover <= i1 && !V.drag) {
-    const x = Math.round(X(V.hover)) + .5; g.strokeStyle = 'rgba(200,210,220,0.25)'; g.beginPath(); g.moveTo(x, padT); g.lineTo(x, padT + ph + volH + 8); g.stroke();
+    const x = Math.round(X(V.hover)) + .5; g.strokeStyle = col('--c-cross'); g.beginPath(); g.moveTo(x, padT); g.lineTo(x, padT + ph + volH + 8); g.stroke();
   }
 }
 
@@ -608,6 +756,7 @@ function select(id, toDecision){
 function setView(v){
   if (S.view !== v) { const a = document.querySelector('aside'); if (a) a.scrollTop = 0; }
   S.view = v;
+  $('#main').classList.toggle('wideaside', v !== 'chart');
   for (const b of document.querySelectorAll('.tabs button')) b.classList.toggle('on', b.dataset.view === v);
   $('#viewChart').hidden = v !== 'chart'; $('#viewDecision').hidden = v !== 'decision'; $('#viewReview').hidden = v !== 'review'; $('#viewSetup').hidden = v !== 'setup';
   if (v === 'setup') loadLimits();  // fetched on entering the tab and after each save; no timer
@@ -773,6 +922,8 @@ function renderHeader(){
   if (alp) {  // alpaca modes: show only what the session loaded, with its provenance label; never a test fallback
     const lab = esc(limitsSrc(s).label);
     const sh = num(L.fixed_shares) !== null ? L.fixed_shares : (s.sizing || {}).fixed_qty;
+    const none = !s.limits_source && ['max_loss_per_trade', 'per_trade_notional', 'daily_loss', 'gross_exposure'].every(k => num(L[k]) === null);
+    if (none) setH($('#risk'), 'Limits <b>not set</b>: approve your own in Setup (limits)'); else
     setH($('#risk'), 'Shares ' + (num(sh) === null ? '-' : esc(sh)) + ' &middot; Max loss per trade ' + usd(L.max_loss_per_trade, 2) + ' &middot; Notional cap ' + usd(L.per_trade_notional, 0) + ' &middot; Daily loss ' + usd(L.daily_loss, 2) + ' &middot; Gross ' + usd(L.gross_exposure, 0) + ' (' + lab + ')');
   } else
   setH($('#risk'), 'Max loss per trade ' + usd(L.max_loss_per_trade != null ? L.max_loss_per_trade : 10, 2) + ' (TEST VALUE) &middot; Notional cap ' + usd(L.per_trade_notional != null ? L.per_trade_notional : 2000, 0) + ' (TEST VALUE) &middot; Daily loss ' + usd(L.daily_loss != null ? L.daily_loss : 30, 2) + ' (TEST VALUE)');
@@ -781,6 +932,7 @@ function renderHeader(){
   // flow bar: buttons enable by phase
   const expired = isFinite(ex) && ex < clockNow(s);
   renderFlow(s, ph, expired);
+  renderStrip(s); renderNext();
   // banners
   const disc = $('#disc');
   if (S.conn === false) { disc.hidden = false; document.body.classList.add('stale-vals');
@@ -795,6 +947,70 @@ function renderHeader(){
 }
 
 // phase: the session's own field first; derived from older fields only as a fallback
+// ---------------- Next step, status strip and theme (display only: every button proxies an existing control) ----------------
+function themeNow(){ const t = document.documentElement.dataset.theme; if (t === 'light' || t === 'dark') return t;
+  return (window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark'; }
+function renderStrip(s){
+  const q = num((s.exposure || {}).position_qty); const pv = s.protection;
+  let h = q === null ? '<span class="muted">not reported</span>' : q === 0 ? 'FLAT' : (q > 0 ? 'LONG ' : 'SHORT ') + esc(Math.abs(q)) + ' sh';
+  if (q && pv && typeof pv === 'object' && pv.available === false) h += ' <span class="flag unc">PROTECTION UNAVAILABLE</span>';
+  else if (q && pv && typeof pv === 'object' && num(pv.uncovered_qty) > 0) h += ' <span class="flag unc">' + esc(pv.uncovered_qty) + ' UNCOVERED</span>';
+  setH($('#stPos'), h);
+}
+function nextStep(s){
+  const ph = phaseOf(s); const alp = isAlpaca(s);
+  const ex = s.expires_utc ? Date.parse(s.expires_utc) : NaN; const expired = isFinite(ex) && ex < clockNow(s);
+  const flat = !num((s.exposure || {}).position_qty);
+  const more = num(s.bars_total) === null || num(s.bars_done) === null || num(s.bars_done) < num(s.bars_total);
+  const rec = recoveryOf(s) || {}; const fb = f => '#flow button[data-f="' + f + '"]';
+  if (S.conn === undefined) return {tone: 'unk', title: 'Loading desk state', detail: ''};
+  if (S.conn === false) return {tone: 'bad', title: 'Desk server not answering', detail: 'Figures below are last known. Start the desk again with launch.py; nothing runs in the background.'};
+  if (ph === 'NONE') return {tone: 'info', title: 'Start the session runner', detail: 'No session.json in this state directory yet. Run launch.py for it; this page fills in once the runner writes state.'};
+  if (/^(CLOSED|COMPLETE|COMPLETED|DONE)$/.test(ph)) return {tone: 'ok', title: 'Session complete', detail: 'These figures are final. Review the trades, the passes and the reasons.', btn: 'Open session review', view: 'review'};
+  if (ph === 'STOPPED' && flat) return {tone: 'warn', title: 'Stopped and flat', detail: 'Stop & Close finished: entries are off and the position is flat. Close the session to open its review.', btn: 'Close & review', sel: fb('close')};
+  if (ph === 'STOPPED') { const chk = alp ? document.querySelector(fb('step1')) : null;
+    if (chk && !chk.disabled && !chk.hidden) return {tone: 'bad', title: 'Stop & Close in progress', detail: 'Entries are off and the close order is working. The desk books the closing fill at your next Check for new bars; Reconcile now (in Session controls) only re-reads the broker.', btn: 'Check for new bars', sel: fb('step1'), cls: ''};
+    return {tone: 'bad', title: 'Stop & Close in progress', detail: 'Entries are off and the desk is closing the position. Wait until flat is confirmed' + (alp ? '; Reconcile now asks the broker again.' : '.'), btn: alp ? 'Reconcile now' : null, sel: alp ? '#btnReconcile' : null, cls: ''}; }
+  if (alp && (rec.reconcile_blocking || rec.ambiguous)) return {tone: 'bad', title: 'Reconcile before anything else', detail: (rec.ambiguous ? 'Recovery is ambiguous' : 'Reconcile is blocking new entries') + (rec.reason || rec.block_reason ? ': ' + (rec.reason || rec.block_reason) : '') + '. Reconcile now asks the broker for its orders and position.', btn: 'Reconcile now', sel: '#btnReconcile', cls: ''};
+  if (ph === 'PAUSED') return {tone: 'warn', title: 'Paused', detail: 'New entries are blocked and protective exits stay. Resume when ready, or use Stop & Close.', btn: 'Resume', sel: fb('resume'), cls: 'pri'};
+  if (ph === 'ARMED') {
+    if (alp && !adapterOf(s).enabled) { const a = adapterOf(s);
+      return {tone: 'info', title: 'Armed, adapter disabled', detail: 'The Alpaca adapter is disabled' + (a.disabled_reason ? ' (' + a.disabled_reason + ')' : '') + '. Enable asks you to confirm before anything changes; Check for new bars stays available.', btn: 'Enable adapter...', sel: '#btnEnable'}; }
+    if (alp) return {tone: 'ok', title: 'Armed: check for new bars', detail: 'Nothing runs between your clicks. Each Check asks the feed once for the latest closed SPY bar and acts on it.', btn: 'Check for new bars', sel: fb('step1')};
+    if (more) return {tone: 'ok', title: 'Armed: play the replay', detail: 'Play advances 4 bars a second; Step 1 and Step 10 advance by hand. Pause or Stop & Close at any time.', btn: 'Play', sel: fb('play')};
+    return {tone: 'ok', title: 'Replay finished', detail: 'Every bar has been replayed. Close the session (it must be flat) to open its review.', btn: 'Close & review', sel: fb('close')};
+  }
+  if (ph === 'PRE_SESSION') {
+    const ls = limitsSrc(s); const tk = transportKind(s);
+    const pf = Array.isArray(s.preflight) ? s.preflight : []; const bad = pf.filter(x => !x || x.ok !== true);
+    const nm = x => String((x && (x.check || x.name || x.id)) || '?'); const names = bad.map(nm).join(', ');
+    const limBad = bad.some(x => /limit/i.test(nm(x)));
+    const draftLim = ls.prov === 'draft' || /^\s*DRAFT\b/i.test(ls.label);
+    if (alp && (limBad || !s.limits_source || draftLim)) return {tone: 'warn', title: 'Approve your limits', detail: draftLim ? 'This session loaded DRAFT limits. Check the worksheet and approve them in Setup (limits).' : 'No approved limits are loaded. Fill in and approve your own numbers in Setup (limits); agents never pick them.', btn: 'Open Setup (limits)', view: 'setup'};
+    if (tk === 'unknown') return {tone: 'bad', title: 'Transport not reported: do not arm', detail: 'The session did not say whether it built the mock or the paper HTTPS transport. Restart it before arming.'};
+    if (bad.length || !pf.length) {
+      if (alp && bad.length === 1 && /adapter/i.test(nm(bad[0]))) return {tone: 'info', title: 'Enable the Alpaca adapter', detail: 'Last pre-session check left: adapter enabled. Enable asks you to confirm first' + (tk === 'mock' ? '; the transport is the in-process mock, with no network.' : tk === 'https' ? '; requests then go to the fixed paper host (simulated money).' : '.'), btn: 'Enable adapter...', sel: '#btnEnable'};
+      return tk === 'https'
+        ? {tone: 'warn', title: 'Run first connection check', detail: 'Preflight has not passed yet' + (names ? ' (failing: ' + names + ')' : '') + '. The read-only readiness check (alpaca/readiness.py) uses GET requests only and places no orders. Then review the pre-session check here.', btn: 'Review pre-session check', sel: fb('review')}
+        : {tone: 'warn', title: 'Review the pre-session check', detail: 'Arm stays off until every preflight check passes.' + (names ? ' Failing: ' + names + '.' : ' No checks reported yet.'), btn: 'Review pre-session check', sel: fb('review')};
+    }
+    if (expired) return {tone: 'bad', title: 'Session expired', detail: 'This session is past its expiry and cannot be armed. Start a fresh session.'};
+    if (alp && tk === 'mock' && !more && num(s.bars_done) > 0) return {tone: 'warn', title: 'Mock bars used up', detail: 'The in-process mock has checked all ' + num(s.bars_done) + ' of its synthetic bars, so Check for new bars has nothing left to act on. Review this run, or restart the desk with launch.py --fresh for a new walkthrough.', btn: 'Open session review', view: 'review'};
+    const bw = brokerWords(s); return {tone: 'info', title: 'Arm session', detail: bw.title, btn: bw.arm, sel: fb('arm')};
+  }
+  return {tone: 'unk', title: 'Phase ' + ph, detail: 'Phase not recognized by this page; see Session details.'};
+}
+function renderNext(){
+  const n = nextStep(S.session || {});
+  const box = $('#nextAct'); const cn = 'next tone-' + n.tone; if (box.className !== cn) box.className = cn;
+  $('#nextTitle').textContent = n.title; $('#nextDetail').textContent = n.detail || '';
+  const b = $('#nextBtn'); const tgt = n.sel ? document.querySelector(n.sel) : null;
+  if (n.btn && (tgt || n.view)) {
+    b.hidden = false; b.textContent = n.btn; b.disabled = !!(tgt && (tgt.disabled || tgt.hidden)); b.title = tgt ? (tgt.title || '') : '';
+    b.className = n.cls !== undefined ? n.cls : n.tone === 'bad' ? 'danger' : n.tone === 'warn' ? 'warnb' : 'pri';
+    S.nextGo = () => { if (n.view) setView(n.view); else if (tgt && !tgt.disabled) tgt.click(); };
+  } else { b.hidden = true; S.nextGo = null; }
+}
 function phaseOf(s){
   if (!S.session || (s._meta || {}).missing) return 'NONE';
   if (s.phase) return String(s.phase).toUpperCase();
@@ -924,7 +1140,7 @@ function renderDecisionView(){
   const trail = rev ? allTrail : allTrail.filter(e => isFinite(kn) && Date.parse(e.ts) <= kn);
   const laterN = allTrail.length - trail.length; const trades = rev ? ledgerFor(d.decision_id) : [];
   let h = '<div class="row"><button id="dPrev"' + (k <= 0 ? ' disabled' : '') + '>&larr; prev</button><button id="dNext"' + (k < 0 || k >= marks.length - 1 ? ' disabled' : '') + '>next &rarr;</button>' +
-    '<span class="spacer"></span><span class="pill" style="background:#12304f;color:#a9d4ff">KNOWABLE AT ' + esc(tsShort(d.ts_knowable)) + '</span></div>';
+    '<span class="spacer"></span><span class="pill know">KNOWABLE AT ' + esc(tsShort(d.ts_knowable)) + '</span></div>';
   h += '<h2 style="margin:8px 0 2px;font-size:17px">' + pill(d.action) + ' ' + esc(d.reason_code || '') + ' <span class="muted small">' + esc(d.symbol || '') + ' · ' + esc(d.strategy || '') + ' · qty ' + esc(d.qty == null ? '-' : d.qty) + '</span></h2>';
   h += '<div class="small muted">' + esc(d.decision_id) + (d.action === 'pass' ? ' · a pass places no order' : '') + '</div>';
   h += '<div class="sec s1"><h4>1. Setup on the chart</h4><table>' + lines.map(([k2, c, lab]) => '<tr><td><span class="sw" style="border-color:var(' + c + ')"></span>' + lab + '</td><td>' + fmt(d[k2], 4) + (lineText(d[k2]) ? ' <span class="small muted">' + esc(lineText(d[k2])) + '</span>' : '') + '</td></tr>').join('') + '</table>' +
@@ -1109,6 +1325,7 @@ function renderAll(){
   else if (S.view === 'decision') renderDecisionView();
   else if (S.view === 'setup') renderSetup();
   else renderReview();
+  renderNext();  // after the view render, so mirrored button states are current
   draw();
 }
 
@@ -1275,7 +1492,7 @@ function tvShow(on){
     const a = document.createElement('a'); a.href = 'https://www.tradingview.com/'; a.target = '_blank'; a.rel = 'noopener nofollow';
     a.textContent = 'Track all markets on TradingView'; cp.appendChild(a); box.appendChild(cp);
     const sc = document.createElement('script'); sc.type = 'text/javascript'; sc.async = true; sc.src = TV_SRC;
-    sc.innerHTML = JSON.stringify({autosize: true, symbol: sym, interval: '60', timezone: 'Etc/UTC', theme: 'dark', style: '1', locale: 'en', allow_symbol_change: false, support_host: 'https://www.tradingview.com'});
+    sc.innerHTML = JSON.stringify({autosize: true, symbol: sym, interval: '60', timezone: 'Etc/UTC', theme: themeNow(), style: '1', locale: 'en', allow_symbol_change: false, support_host: 'https://www.tradingview.com'});
     box.appendChild(sc); host.appendChild(box); S.tvSym = sym;
   } else S.tvSym = null;
   pane.hidden = !on; main.classList.toggle('withtv', !!on); $('#tvToggle').checked = !!on;
@@ -1289,6 +1506,15 @@ const TV_REFS = ['AMEX:SPY', 'NASDAQ:QQQ', 'AMEX:IWM', 'AMEX:DIA'];
 $('#tvRef').onchange = e => { S.tvPicked = true; S.tvRef = TV_REFS.indexOf(e.target.value) >= 0 ? e.target.value : 'AMEX:SPY'; renderHeader(); if (!$('#tvPane').hidden) tvShow(true); };
 $('#tvHide').onclick = () => tvShow(false);
 $('#showHolds').onchange = e => { S.showHolds = e.target.checked; renderAll(); };
+$('#nextBtn').onclick = () => { if (S.nextGo) S.nextGo(); };
+// Theme: Auto follows the system; Light/Dark are remembered per browser. The canvas reads tokens on every draw.
+(function(){ const sel = $('#themeSel'); sel.value = document.documentElement.dataset.theme || 'auto';
+  sel.onchange = () => { const v = sel.value;
+    try { if (v === 'auto') localStorage.removeItem('desk.theme'); else localStorage.setItem('desk.theme', v); } catch (x) {}
+    if (v === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = v;
+    draw(); if (!$('#tvPane').hidden) tvShow(true); };
+  if (window.matchMedia) { const mq = matchMedia('(prefers-color-scheme: light)'); const f = () => draw();
+    if (mq.addEventListener) mq.addEventListener('change', f); else if (mq.addListener) mq.addListener(f); } })();
 document.addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return;
   if (S.view === 'decision' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { const b = $(e.key === 'ArrowLeft' ? '#dPrev' : '#dNext'); if (b && !b.disabled) b.click(); }
   if (e.key === 'Escape' && S.sel) { S.sel = null; renderAll(); } });

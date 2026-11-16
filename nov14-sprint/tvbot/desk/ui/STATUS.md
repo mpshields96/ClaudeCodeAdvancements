@@ -95,3 +95,30 @@ Every POST appends `{ts, action, body, request_id, ...}` to `state_dir/control_r
 3. My routes take precedence over launch.py's `advance`, `play`, `clear_stop` and `close_session` (`install_routes` skips existing keys). Tested live with DeskControls.
 4. There is no `playing` flag in session.json, so Play and Stop playing are both enabled while ARMED.
 5. The TradingView embed (official widget, off by default, CSP-allowed) was not exercised, because verification stays offline.
+
+## Night redesign (W-A, 2026-11-16)
+
+Worker W-A, session 806907e3, branch `claude/night-dashboard-09ac67` on base f40e154. Only `ui/index.html` and this file changed; `server.py`, the tests and every W-B path are untouched.
+
+What changed on the main page:
+- **Chart first.** The desk replay chart leads the page, with the current decision and after-cost net P&L beside it (stacked under it at narrow widths).
+- **One next action.** A banner at the top (`#nextAct`: `#nextTitle`, `#nextDetail`, `#nextBtn`) picks a single step from the real state: enable the adapter, arm, check for new bars, resume, finish Stop & Close, or review. The button clicks the existing control, so the IDs and API calls are unchanged. It mirrors that control's disabled or hidden state.
+  - Stop & Close in progress points at **Check for new bars** while that step is enabled. The mock books the closing fill only at the next Check; Reconcile only re-reads the broker.
+  - After the in-process mock has used all its bars, the banner reads **Mock bars used up** and offers the session review, instead of a misleading "Arm session".
+  - Pre-session limits come from the preflight. This fixes a false "Approve your limits" when limits were already set.
+- **Status and limits strip.** It shows mode, broker/venue, armed/disarmed, position, and the limits or "not set", with the limits source in full.
+- **Progressive detail.** Trades, passes, audit and lab sit behind the existing view tabs and expanders. Session controls, worksheet and approval links, /spy-study, the lab, review/replay and the rehearsal flow are all kept.
+- **Theme.** A header selector offers auto/light/dark (stored in localStorage `desk.theme`). The chart redraws when the OS theme changes. No external scripts or fonts; the timer count is unchanged (2 `setInterval`).
+
+Verified:
+- `cd nov14-sprint/tvbot/desk && /usr/bin/python3 -I -m unittest discover -s tests -p 'test_ui*'` gives 66 tests, OK (03:03Z, after the last edit). `node --check` on the extracted page script passes.
+- A MOCK desk on 127.0.0.1:18871 (`launch.py --broker alpaca-paper --transport mock --fresh`, scratch state dir) was clicked through: Enable adapter → Arm → Check for new bars → Pause → Resume → Stop & Close (dialog, confirm) → Reconcile (still LONG) → Check → FLAT, "Stopped and flat". A second fresh run checked Enable → Arm → Check → "Mock bars used up".
+- No horizontal scroll at 1440 or at 390 wide. Dark and light are both readable (body rgb(15,18,22) dark, rgb(243,245,248) light).
+- Screenshots are in `Documents/Codex/2026-11-15/paper-trading-desk-build-orchestrator/work/alpaca-acceptance/night-dashboard/` (01-09).
+
+Follow-ups (not fixed here):
+1. The broker banner can take the `draft` class because `/DRAFT/i` matches the mock limits_source text "no approved or draft limits". This is cosmetic: an amber banner.
+2. Chart pass markers that map to the same bar stack downward and can run below the plot at narrow widths. The marker code is unchanged from f40e154.
+3. When the mock bars are used up, the session-flow strip still highlights "2 Arm" while the banner says "Mock bars used up".
+4. W-B scope: `test_alpaca_integration.test_mock_fill_time_follows_bar_clock` fails in the full suite. The in-process mock's bar supply also depends on the wall clock: around 03:00Z a fresh run had 67 of 68 bars already done.
+5. The launcher fell back to port 18872 when 18871 had just been released. Wait until the port is bindable before restarting.
