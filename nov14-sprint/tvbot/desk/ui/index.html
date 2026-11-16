@@ -644,7 +644,7 @@ function draw(){
   const bars = S.bars, n = bars.length; V.markers = [];
   g.font = '11px -apple-system,system-ui,sans-serif';
   if (!n) { g.fillStyle = col('--muted'); g.font = '14px system-ui'; g.textAlign = 'center';
-    g.fillText('Waiting for the first SPY bar', W / 2, H / 2); g.textAlign = 'left'; // its source is the chip in the chart header
+    g.fillText(isAlpaca(S.session) ? 'No bars yet. Check for new bars loads the chart.' : 'Waiting for the first SPY bar', W / 2, H / 2); g.textAlign = 'left'; // its source is the chip in the chart header
     return; }
   clampView();
   const padL = 6, padR = 74, padT = 8, padB = 22;
@@ -1117,6 +1117,9 @@ function nextStep(s){
     const nm = x => String((x && (x.check || x.name || x.id)) || '?'); const names = bad.map(nm).join(', ');
     const limBad = bad.some(x => /limit/i.test(nm(x)));
     const draftLim = ls.prov === 'draft' || /^\s*DRAFT\b/i.test(ls.label);
+    // a freshly extracted kit: an empty, disarmed local rehearsal. Show the chart before any setup.
+    if (tk === 'mock' && isMockMode(s) && !(S.bars || []).length) { const chk = document.querySelector(fb('step1'));
+      if (chk && !chk.disabled && !chk.hidden) return {tone: 'info', title: 'Load the rehearsal chart', detail: 'Local rehearsal: the in-process mock, synthetic SPY bars, no network. Check for bars fills the chart. The desk is not armed, so a Check places no orders and changes no limits. Setup (limits) comes after.', btn: 'Check for bars', sel: fb('step1')}; }
     if (alp && (limBad || !s.limits_source || draftLim)) return {tone: 'warn', title: 'Approve your limits', detail: draftLim ? 'This session loaded DRAFT limits. Check the worksheet and approve them in Setup (limits).' : 'No approved limits are loaded. Fill in and approve your own numbers in Setup (limits); agents never pick them.', btn: 'Open Setup (limits)', view: 'setup'};
     if (tk === 'unknown') return {tone: 'bad', title: 'Transport not reported: do not arm', detail: 'The session did not say whether it built the mock or the paper HTTPS transport. Restart it before arming.'};
     if (bad.length || !pf.length) {
@@ -1156,7 +1159,8 @@ function renderFlow(s, ph, expired){
   const run = ph === 'ARMED' || ph === 'PAUSED';
   const en = {arm: ph === 'PRE_SESSION' && preflightOk(s) && !expired, step1: run && more, step10: run && more, runend: run && more, play: run && more, stopplay: run,
     pause: ph === 'ARMED', resume: ph === 'PAUSED', stop: run || ph === 'PRE_SESSION', clear: ph === 'STOPPED', close: ph === 'CLOSED' || ((run || ph === 'STOPPED') && flat)};
-  const cur = ph === 'PRE_SESSION' && barsUsedUp(s) ? 'close' : ph === 'PRE_SESSION' ? (preflightOk(s) ? 'arm' : 'review') : ph === 'ARMED' ? 'play' : ph === 'PAUSED' ? 'resume' : ph === 'STOPPED' || ph === 'CLOSED' ? 'close' : 'review';
+  const freshMock = ph === 'PRE_SESSION' && transportKind(s) === 'mock' && isMockMode(s) && !(S.bars || []).length; // matches nextStep's 'Load the rehearsal chart'
+  const cur = freshMock ? 'step1' : ph === 'PRE_SESSION' && barsUsedUp(s) ? 'close' : ph === 'PRE_SESSION' ? (preflightOk(s) ? 'arm' : 'review') : ph === 'ARMED' ? 'play' : ph === 'PAUSED' ? 'resume' : ph === 'STOPPED' || ph === 'CLOSED' ? 'close' : 'review';
   for (const b of document.querySelectorAll('#flow button')) { const f = b.dataset.f; const na = !routeOk(FLOW_ROUTE[f]);
     b.disabled = f === 'review' ? false : (off || na || !en[f]); b.classList.toggle('cur', f === cur);
     b.classList.toggle('na', na); if (na && !b.dataset.t0) { b.dataset.t0 = b.title; b.title = b.title + ' (not available: this server has no ' + FLOW_ROUTE[f] + ' route)'; } }
