@@ -374,7 +374,7 @@ details.pop.anch>.popbody{right:12px}
   </section>
   <section id="chartPane">
     <div class="ctool">
-      <b id="chartTitle">Desk replay chart</b> <span class="pill simpill" id="srcPill">SYNTHETIC</span><span class="tag syn" id="srcTag" title="Desk replay bars (synthetic). Not TradingView, not a real market.">replay bars (synthetic)</span>
+      <b id="chartTitle">Desk replay chart</b> <span class="pill simpill" id="srcPill">SYNTHETIC</span><span class="tag syn" id="srcTag" title="Desk replay bars (synthetic). Not TradingView, not a real market.">replay bars</span>
       <span class="spacer"></span>
       <span id="ohlc"></span>
       <button id="zIn" title="Zoom in">+</button><button id="zOut" title="Zoom out">&minus;</button>
@@ -1446,7 +1446,8 @@ function modeShort(s){
 function renderModeLabels(){
   const s = S.session || {}; const alp = isAlpaca(s); const bw = brokerWords(s); const paper = bw.kind === 'https';
   const stg = $('#srcTag');
-  stg.textContent = !alp ? 'replay bars (synthetic)' : bw.kind === 'live' ? 'Alpaca IEX bars, LIVE account' : paper ? 'Alpaca IEX bars, paper account' : bw.kind === 'mock' ? 'mock bars (synthetic)' : 'bars (source unconfirmed)';
+  // the SYNTHETIC pill beside it already says synthetic, so the tag names only the source (one label, not two)
+  stg.textContent = !alp ? 'replay bars' : bw.kind === 'live' ? 'Alpaca IEX bars, LIVE account' : paper ? 'Alpaca IEX bars, paper account' : bw.kind === 'mock' ? 'mock bars' : 'bars (source unconfirmed)';
   stg.title = !alp ? 'Desk replay bars (synthetic). Not TradingView, not a real market.' : (paper || bw.kind === 'live') ? 'Alpaca free IEX bars (not the full market). Not TradingView.' : 'Mock Alpaca bars (synthetic). Not TradingView, not a real market.';
   $('#chartTitle').textContent = alp ? 'SPY bars' : 'Desk replay chart'; $('#srcPill').hidden = paper || bw.kind === 'live'; // real feeds are not synthetic
   const armText = bw.arm, armTitle = bw.title;
