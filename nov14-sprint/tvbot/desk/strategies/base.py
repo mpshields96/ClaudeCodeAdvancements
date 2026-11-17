@@ -76,17 +76,18 @@ DEFAULT_COSTS = {
 # pass-through regulatory fees are added per order (sources and fetch time in
 # alpaca-acceptance/WINDOW90_W-A_RESULT.md):
 #   SEC Section 31: $0.0000206 x trade value, sells only (Alpaca schedule).
-#   FINRA TAF: Alpaca's Oct 12, 2026 schedule lists retail TAF "$0 per share".
-#     We keep a conservative RESERVE at FINRA's 2026 member rate, $0.000195 per
-#     share sold, max $9.79 per trade (FINRA notice SR-FINRA-2024-019, year table;
-#     $0.000166 / $8.30 was the 2025 rate). It is a sensitivity reserve in dollars,
-#     not a quoted Alpaca charge or an actual account fee.
+#   FINRA TAF: Alpaca's Oct 12, 2026 schedule lists retail TAF "$0 per share",
+#     so the profile charges $0 (W120 correction: the former $0.000195/share
+#     FINRA member-rate reserve is not an Alpaca retail charge).
 #   CAT: $0.000003 per executed equivalent share, buys and sells (Alpaca schedule).
-#   Rounding: Alpaca's regulatory-fees doc says fees are aggregated and rounded
-#     daily per account. We reserve each fee type rounded UP to $0.01 per order
-#     instead, which is never lower. That penny per fee type is a reserve, not a
-#     guaranteed per-order charge.
-# These are estimates and reserves, never broker quotes or account fees.
+#   Rounding: Alpaca's schedule aggregates each fee type daily per account and
+#     rounds it UP to $0.01. A ROUND-TRIP estimate (est_cost sides=2) is therefore
+#     one trading day's total: each fee type summed over the buy and the sell,
+#     then rounded up once (W120 correction). This holds because desk sessions end
+#     flat, so the exit is the same day as the entry; with max_daily_entries 1 the
+#     round trip is the whole day's activity. reg_fees (one order, fill accounting)
+#     still rounds per order, which is never lower.
+# These are estimates, never broker quotes or account fees.
 ALPACA_EQUITY_COSTS = {
     "kind": "bps",
     "profile": "alpaca_equity",
@@ -95,10 +96,10 @@ ALPACA_EQUITY_COSTS = {
     "commission_per_share": 0.0,
     "commission_min": 0.0,
     "sec_rate": 0.0000206,
-    "taf_per_share": 0.000195,   # reserve: FINRA 2026 member rate; Alpaca lists retail TAF $0
+    "taf_per_share": 0.0,        # Alpaca Oct 12, 2026 schedule: retail TAF $0 per share
     "taf_max": 9.79,
     "cat_per_share": 0.000003,
-    "fee_round": "per_order_penny_up_reserve",
+    "fee_round": "daily_per_type_penny_up",
 }
 ALPACA_FEE_SOURCES = (
     "https://files.alpaca.markets/disclosures/library/BrokFeeSched.pdf",
@@ -231,6 +232,17 @@ def _cent_up(d):
     return (d / _CENT).to_integral_value(rounding=ROUND_CEILING) * _CENT
 
 
+def _reg_fees_raw(qty, price, side, costs):
+    """Unrounded (sec, taf, cat) Decimals for ONE order under the alpaca_equity profile."""
+    q = abs(_dq(qty))
+    cat = q * _dq(costs["cat_per_share"])
+    sec = taf = Decimal(0)
+    if side < 0:
+        sec = q * _dq(price) * _dq(costs["sec_rate"])
+        taf = min(q * _dq(costs["taf_per_share"]), _dq(costs["taf_max"]))
+    return sec, taf, cat
+
+
 def reg_fees(qty, price, side, costs):
     """Pass-through regulatory fees for ONE order (side +1 buy, -1 sell) under
     a profile that defines them; all zero otherwise (DEFAULT_COSTS has none).
@@ -239,15 +251,25 @@ def reg_fees(qty, price, side, costs):
     out = {"sec": 0.0, "taf": 0.0, "cat": 0.0, "total": 0.0}
     if costs.get("profile") != "alpaca_equity" or not qty or price is None:
         return out
-    q = abs(_dq(qty))
     m = _dq(costs.get("mult", 1.0))
-    cat = q * _dq(costs["cat_per_share"])
-    sec = taf = Decimal(0)
-    if side < 0:
-        sec = q * _dq(price) * _dq(costs["sec_rate"])
-        taf = min(q * _dq(costs["taf_per_share"]), _dq(costs["taf_max"]))
+    sec, taf, cat = _reg_fees_raw(qty, price, side, costs)
     for k, v in (("sec", sec), ("taf", taf), ("cat", cat)):
         out[k] = float(_cent_up(v) * m)
+    out["total"] = round(out["sec"] + out["taf"] + out["cat"], 4)
+    return out
+
+
+def day_fees(qty, price, costs):
+    """One same-day round trip (a buy and a sell of qty) as Alpaca bills it: each fee
+    type summed over both orders, rounded UP to $0.01 once for the day, then the
+    cost_mult stress. All zero outside the alpaca_equity profile."""
+    out = {"sec": 0.0, "taf": 0.0, "cat": 0.0, "total": 0.0}
+    if costs.get("profile") != "alpaca_equity" or not qty or price is None:
+        return out
+    m = _dq(costs.get("mult", 1.0))
+    b, s = _reg_fees_raw(qty, price, 1, costs), _reg_fees_raw(qty, price, -1, costs)
+    for i, k in enumerate(("sec", "taf", "cat")):
+        out[k] = float(_cent_up(b[i] + s[i]) * m)
     out["total"] = round(out["sec"] + out["taf"] + out["cat"], 4)
     return out
 
@@ -257,22 +279,24 @@ def _alpaca_est(qty, price, costs, sides, note):
     spread = abs(side_price(price, 1, costs) - price) * q
     buy = reg_fees(qty, price, 1, costs)
     sell = reg_fees(qty, price, -1, costs)
-    # Round trip: one buy and one sell. One side: the dearer side (a sell for a long).
-    fees = buy["total"] + sell["total"] if sides >= 2 else max(buy["total"], sell["total"])
+    # Round trip: one same-day buy and sell, billed per fee type per day (desk sessions end
+    # flat). One side: the dearer single order (a sell for a long), rounded per order.
+    day = day_fees(qty, price, costs)
+    fees = day["total"] if sides >= 2 else max(buy["total"], sell["total"])
     usd = spread * sides + fees
     basis = ("ESTIMATE, Alpaca equity profile: modeled half spread %.1f bps + slippage %.1f bps per side; "
              "commission $0 (Alpaca fee schedule: no commissions on retail equity orders); regulatory "
-             "pass-through fees: SEC $0.0000206 x sell value, CAT $0.000003/share each side, plus a FINRA "
-             "TAF reserve of $0.000195/share sold (max $9.79, FINRA 2026 member rate; Alpaca's schedule "
-             "lists retail TAF $0, so this is a conservative reserve, not a quoted charge); each fee type "
-             "reserved rounded UP to $0.01 per order (a reserve, not a guaranteed per-order fee; Alpaca "
-             "aggregates and rounds daily); fee reserve this order: buy $%.2f, sell $%.2f; x%.1f stress; "
-             "sources: %s"
-             % (costs["half_spread_bps"], costs["slippage_bps"], buy["total"], sell["total"],
-                costs.get("mult", 1.0), " and ".join(ALPACA_FEE_SOURCES)))
+             "pass-through fees: SEC $0.0000206 x sell value, CAT $0.000003/share each side, TAF $0 "
+             "(Alpaca's schedule lists retail TAF $0); each fee type aggregated per day and rounded UP to "
+             "$0.01 (Alpaca's daily rounding; a round trip is one session-flat day); fees this estimate: "
+             "%s $%.2f; x%.1f stress; sources: %s"
+             % (costs["half_spread_bps"], costs["slippage_bps"],
+                "same-day round trip" if sides >= 2 else "one order", fees,
+                costs.get("mult", 1.0), " and ".join(ALPACA_FEE_SOURCES[:2])))
     return {"usd": round(usd, 4), "per_side_usd": round(usd / sides, 4) if sides else 0.0,
             "basis": (note + "; " if note else "") + basis, "simulated": True,
-            "fees": {"buy": buy, "sell": sell, "rounding": costs.get("fee_round"), "estimate": True}}
+            "fees": {"buy": buy, "sell": sell, "day": day, "rounding": costs.get("fee_round"),
+                     "estimate": True}}
 
 
 def est_cost(qty, price, costs, sides=2, note=""):

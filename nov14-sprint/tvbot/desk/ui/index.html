@@ -923,15 +923,19 @@ function protectionHtml(s){
   const pos = Number(pv.position_qty || 0); const side = pos > 0 ? 'sell' : 'buy';
   const po = (Array.isArray(s.protective_orders) ? s.protective_orders : []).filter(o => o && o.side === side);
   const rem = o => Number(o.remaining != null ? o.remaining : (o.qty || 0)) || 0;
-  const pend = Math.min(Number(pv.protective_qty || 0), po.filter(o => PEND_RE.test(String(o.status || ''))).reduce((t, o) => t + rem(o), 0));
-  const conf = Math.max(0, Number(pv.protective_qty || 0) - pend);
+  // Current desks report unconfirmed_qty and count only confirmed stops in protective_qty;
+  // an older session (no unconfirmed_qty) counted pending stops inside protective_qty.
+  const split = pv.unconfirmed_qty != null;
+  const pendStops = po.filter(o => PEND_RE.test(String(o.status || ''))).reduce((t, o) => t + rem(o), 0);
+  const pend = split ? Number(pv.unconfirmed_qty || 0) : Math.min(Number(pv.protective_qty || 0), pendStops);
+  const conf = split ? Number(pv.protective_qty || 0) : Math.max(0, Number(pv.protective_qty || 0) - pend);
   const unc = Number(pv.uncovered_qty || 0);
   let h = '<div><b>Protection (as of the last Check):</b> booked SPY <b>' + esc(String(Math.abs(pos))) + '</b> sh' + (pos ? (pos > 0 ? ' long' : ' short') : ' (flat)') +
     ' &middot; protective stop confirmed working <b>' + esc(String(conf)) + '</b>' +
     ' &middot; <span class="' + (pend ? 'flag unc' : '') + '">pending broker confirmation ' + esc(String(pend)) + '</span>' +
     ' &middot; working exits ' + esc(String(pv.exit_working_qty || 0)) +
     ' &middot; uncovered <b class="' + (unc ? 'neg' : '') + '">' + esc(String(unc)) + '</b></div>';
-  if (pend) h += '<div class="small"><span class="flag unc">PENDING CONFIRMATION</span> ' + esc(String(pend)) + ' share(s) sit on a protective order the broker has not confirmed. It may or may not be live; the desk counts it as covering only so it never double-sells. Reconcile or the next Check settles it.</div>';
+  if (pend) h += '<div class="small"><span class="flag unc">PENDING CONFIRMATION</span> ' + esc(String(pend)) + ' share(s) sit on a reducing order the broker has not confirmed. It may or may not be live, so those shares count as UNCOVERED; the desk never resends it, so nothing sells twice. If a later Check still cannot see it, look up its client id in your Alpaca open orders.</div>';
   if (unc) h += '<div><span class="flag alarm">UNCOVERED</span> ' + esc(pv.warning || (unc + ' booked shares have no working protective stop or exit')) + (pv.last_refusal ? '; last protective refusal: ' + esc(metricVal(pv.last_refusal)) : '') + '</div>';
   if (pos) h += '<div class="small"><b>Not a loss cap:</b> a stop order is not a guaranteed limit on loss. It can fill well below its price in a gap or fast market, or be rejected.</div>';
   h += '<div class="small"><b>Between manual Checks nothing runs.</b> ' + esc(pv.fill_timing_note || 'Fills, rejections and cancels at the broker are seen only at your next Check.') + checkGapText(s) + '</div>';
@@ -1077,10 +1081,11 @@ function renderStrip(s){
 function protWords(q, pv){
   if (!q || !pv || typeof pv !== 'object') return '';
   if (pv.available === false) return 'PROTECTION UNAVAILABLE';
-  const n = Math.abs(q), unc = num(pv.uncovered_qty) || 0;
+  const n = Math.abs(q), unc = num(pv.uncovered_qty) || 0, uc = num(pv.unconfirmed_qty) || 0;
   if (unc <= 0) return '';
-  if (unc >= n) return 'UNPROTECTED: 0 of ' + n + ' sh protected';
-  return 'PARTIALLY PROTECTED: ' + (n - unc) + ' of ' + n + ' sh protected, ' + unc + ' UNCOVERED';
+  const note = uc > 0 ? ' (' + uc + ' sh on an order the broker has not confirmed)' : '';
+  if (unc >= n) return 'UNPROTECTED: 0 of ' + n + ' sh protected' + note;
+  return 'PARTIALLY PROTECTED: ' + (n - unc) + ' of ' + n + ' sh protected, ' + unc + ' UNCOVERED' + note;
 }
 function renderStatusLine(s, q, pr){
   const ph = phaseOf(s); const parts = [];
@@ -1089,8 +1094,18 @@ function renderStatusLine(s, q, pr){
   parts.push('<span class="' + arm[1] + '">' + arm[0] + '</span>');
   parts.push(q === null ? 'Position not reported' : q === 0 ? 'Flat' : (q > 0 ? 'Long ' : 'Short ') + esc(Math.abs(q)) + ' sh' + (pr ? ' <span class="s-live">(' + esc(pr.split(':')[0].toLowerCase()) + ')</span>' : ''));
   parts.push('Limits: ' + limitsWord(s));
+  const pw = profileWord(s); if (pw) parts.push(pw);
   if (S.conn === false) parts.push('<span class="s-warn">last known</span>');
   setH($('#statusLine'), parts.join('<span class="sep">&middot;</span>'));
+}
+// The operative trading profile (alpaca/trading_profile.py): paper shows the caps now in force,
+// recomputed from its own available cash on every entry; live keeps the approved absolutes.
+function profileWord(s){
+  const tp = s && s.trading_profile; if (!tp || !tp.label) return '';
+  const c = tp.operative_caps; let tail = '';
+  if (tp.mode === 'paper') tail = c ? ' (paper caps now: $' + esc(c.per_trade_notional) + ' notional, $' + esc(c.max_loss_per_trade) + ' stop risk, $' + esc(c.daily_loss) + ' daily)' : ' (paper caps set at the first entry)';
+  else if (tp.mode === 'live') tail = ' (approved size and caps)';
+  return '<span id="profileWord" title="' + esc(tp.summary || '') + '">Profile: ' + esc(tp.label) + tail + '</span>';
 }
 function limitsWord(s){
   if (!isAlpaca(s)) return 'test values';

@@ -23,8 +23,26 @@ What it does, in order:
 6. Closes the desk only if this runner opened it, and writes a private run record in the state folder. An
    unexpected error or lost connection anywhere still closes a desk this runner opened and records UNRESOLVED.
 
-It never presses Enable, Arm, Clear Stop, Play or Schedule, and it cannot reach any other desk route.
-Whether an order is placed is still decided by the desk: it routes nothing unless you enabled and armed it.
+Two modes:
+- Monitor-only (the default, no --auto): it never presses Enable, Arm, Clear Stop, Play or Schedule, and it
+  cannot reach any other desk route. Whether an order is placed is still decided by the desk: it routes nothing
+  unless you enabled and armed it yourself.
+- Automated paper (--auto): the same steps 1-6, plus, after this one deliberate start, the runner presses the
+  paper desk's Enable and Arm itself, at most once each per run and only when all of these hold on the same
+  check: the strategy warm-up is complete; the desk's preflight shows the regular session open (calendar and
+  venue clock rows ok, every other row ok except "adapter enabled"); the desk is not already armed; a fresh
+  paper-identity check and a fresh checked reconcile (matching position, no outside order, clean) pass right
+  before the press. Arm asks for an expiry equal to the run end, and the runner reads back the expiry the desk
+  actually set: if it is later than the run end (or unreadable) the runner presses Stop & Close at once and
+  ends the run, so its arm never outlasts the run. Checks default to every 30 seconds. It stops checking and
+  goes to the clean end (step 5), never enabling or arming again, on: a desk Stop (operator Stop & Close, or
+  any other Stop), a risk latch (DAILY_LOSS_STOP), an unresolved or unknown order (UNRESOLVED_SUBMIT, an
+  ambiguous recovery, a blocking alarm such as UNKNOWN_STATUS or ORDER_MISSING), a foreign order or position
+  (FOREIGN_ORDER, FOREIGN_POSITION, a position the desk does not match), a lost connection (a failed check,
+  BROKER_DISCONNECTED, BROKER_UNREACHABLE), the adapter being disabled after it enabled it, or a desk that no
+  longer identifies as this paper desk. If its arm lapses or is removed any other way, the rest of the run is
+  monitor-only and every check line and the run record say so. Auto mode may also reach only Enable and Arm
+  beyond the monitor routes: never Clear Stop, Play, Schedule or Disable, and never a live desk.
 """
 import argparse
 import fcntl
@@ -58,6 +76,22 @@ ALLOWED = frozenset({
     ("GET", "/api/health"), ("GET", "/api/session"), ("GET", "/api/decisions"), ("GET", "/api/ledger"),
     ("POST", "/api/advance"), ("POST", "/api/alpaca/reconcile"), ("POST", "/api/stop_close"),
 })
+# --auto only: the same routes plus the paper desk's Enable and Arm, and its non-executing connection check
+# (GET-only at Alpaca; it fills the fractional preflight rows). Clear Stop, Play, Schedule stay unreachable.
+ENABLE_ROUTE, ARM_ROUTE = "/api/alpaca/enable", "/api/arm"
+CONNECTION_CHECK_ROUTE = "/api/alpaca/connection_check"
+AUTO_ALLOWED = ALLOWED | frozenset({("POST", ENABLE_ROUTE), ("POST", ARM_ROUTE), ("POST", CONNECTION_CHECK_ROUTE)})
+AUTO_EVERY_DEFAULT = 30
+# /api/health must report this true before --auto presses anything: it means /api/arm takes a body expires_utc
+# and can only shorten the arm with it. A desk without it would arm to the session close + grace, past the run end.
+ARM_BOUND_FLAG = "arm_bounded_expiry"
+NO_ARM_BOUND = ("this desk cannot bound Arm to the run end (/api/health has no %s); it pressed neither Enable "
+                "nor Arm" % ARM_BOUND_FLAG)
+FRACTIONAL_ROWS = frozenset({"SPY fractionable", "non-margin cash"})   # filled by one connection check
+PREFLIGHT_WAIT = "desk preflight not ready"
+FOREIGN_ALARMS = frozenset({"FOREIGN_ORDER", "FOREIGN_POSITION", "POSITION_MISMATCH", "POSITION_EXCESS",
+                            "POSITION_UNSUPPORTED_FRACTIONAL"})
+CONNECTION_ALARMS = frozenset({"BROKER_UNREACHABLE", "BROKER_DISCONNECTED"})
 
 ENTRY_OR_EXIT = ("enter_long", "enter_short", "exit")
 PLUMBING = frozenset({
@@ -98,13 +132,14 @@ def parse_ts(text):
 
 
 class DeskClient:
-    """Loopback HTTP to one desk port, limited to ALLOWED."""
+    """Loopback HTTP to one desk port, limited to ALLOWED (AUTO_ALLOWED only when built with auto=True)."""
 
-    def __init__(self, port, timeout=30):
+    def __init__(self, port, timeout=30, auto=False):
         self.port, self.timeout = port, timeout
+        self.allowed = AUTO_ALLOWED if auto is True else ALLOWED
 
     def call(self, method, path, body=None):
-        if (method, path.split("?")[0]) not in ALLOWED:
+        if (method, path.split("?")[0]) not in self.allowed:
             raise Refused(EXIT_SETUP, "runner may not call %s %s" % (method, path))
         conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=self.timeout)
         try:
@@ -222,6 +257,26 @@ def classify(decision):
     return "STRATEGY", text.strip()
 
 
+def iso_z(ts):
+    return datetime.fromtimestamp(int(ts), timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def ny_date(dt):
+    """The desk's trading day key (America/New_York date) for dt, or None when it cannot be computed."""
+    try:
+        from zoneinfo import ZoneInfo
+        return dt.astimezone(ZoneInfo("America/New_York")).date().isoformat()
+    except Exception:
+        return None
+
+
+def pressed_ok(status, reply):
+    """A press counts only when the desk ran it and its controller did not refuse it."""
+    inner = reply.get("controller_result")
+    return (status == 200 and reply.get("ok") is True and reply.get("controller_called") is True
+            and (not isinstance(inner, dict) or inner.get("ok") is not False))
+
+
 def broker_fills(ledger_items):
     """Fills the broker confirmed. A mock fill is not a broker fill and is never counted here."""
     out = []
@@ -236,7 +291,8 @@ def broker_fills(ledger_items):
 class Runner:
     def __init__(self, minutes, every, at_end="close", port=PORT, state_dir=None, no_browser=False,
                  client=None, find_desk=None, launch=None, ps=read_ps, now=utcnow, sleep=time.sleep,
-                 out=print, launcher=LAUNCHER):
+                 out=print, launcher=LAUNCHER, auto=False):
+        self.auto = auto is True
         self.minutes = int(minutes)
         self.every = int(every)
         self.at_end = at_end
@@ -253,6 +309,13 @@ class Runner:
         self.stop_flag = None
         self.record = {"runner": "alpaca/paper_runner.py", "mode": PAPER_MODE, "checks": [],
                        "fills_seen": [], "ended_by": None}
+        if self.auto:
+            # one Enable and one Arm per run at most; once stop or monitor_only is set nothing is pressed again
+            self.record["auto"] = {"mode": "auto", "enable_pressed_utc": None, "arm_pressed_utc": None,
+                                   "arm_requested_expires_utc": None, "armed_expires_utc": None,
+                                   "stop_trigger": None, "monitor_only": None, "connection_check": None}
+            self.auto_state = {"enabled": False, "armed": False, "pressed": False, "stop": None,
+                               "monitor_only": None, "connection_checked": False}
 
     # ---------------------------------------------------------------- setup
     def validate(self):
@@ -330,6 +393,8 @@ class Runner:
         return body if status == 200 and isinstance(body, dict) else None
 
     def post(self, path, body=None):
+        if ("POST", path.split("?")[0]) not in (AUTO_ALLOWED if self.auto else ALLOWED):
+            raise Refused(EXIT_SETUP, "runner may not call POST %s" % path)
         status, reply = self.client.call("POST", path, body or {})
         return status, reply if isinstance(reply, dict) else {}
 
@@ -375,7 +440,7 @@ class Runner:
             self.check_writers()
             port = self.attach_or_open()
             if self.client is None:
-                self.client = DeskClient(port)
+                self.client = DeskClient(port, auto=self.auto)
             health = self.get("/api/health") or {}
             session = self.get("/api/session") or {}
             bad = paper_problems(health, session, self.state_dir)
@@ -389,8 +454,17 @@ class Runner:
             self.out("ALPACA PAPER ACCOUNT (simulated, no real money). " + str(session.get("badge") or ""))
             self.out("Broker check %s: position %s (desk %s), %d working order(s) at Alpaca."
                      % (view["ts"], view["broker"], view["desk"], len(view["broker_working"])))
-            self.out("Regular-hours desk; the runner only presses Check on a timer. Ends %s or on Ctrl-C."
-                     % stamp(datetime.fromtimestamp(started.timestamp() + 60 * self.minutes, timezone.utc)))
+            if self.auto:
+                self.out("AUTOMATED PAPER run: after warm-up, with the regular session open, this runner presses "
+                         "Enable and Arm once (arm expiry no later than %s), checks every %ds, and never re-arms. "
+                         "Ends %s or on Ctrl-C."
+                         % (iso_z(started.timestamp() + 60 * self.minutes), self.every,
+                            stamp(datetime.fromtimestamp(started.timestamp() + 60 * self.minutes, timezone.utc))))
+                if health.get(ARM_BOUND_FLAG) is not True:
+                    self.out(self.monitor_only(NO_ARM_BOUND))
+            else:
+                self.out("Regular-hours desk; the runner only presses Check on a timer. Ends %s or on Ctrl-C."
+                         % stamp(datetime.fromtimestamp(started.timestamp() + 60 * self.minutes, timezone.utc)))
             if view["desk"] != view["broker"]:
                 raise Refused(EXIT_POSITION, "unexplained position, not running: broker position %s does not "
                                              "match the desk's own position %s" % (view["broker"], view["desk"]))
@@ -446,25 +520,229 @@ class Runner:
             except (OSError, http.client.HTTPException) as exc:
                 failures += 1
                 self.out("%s | PAPER | check failed: %s" % (stamp(now), exc.__class__.__name__))
+                if self.auto:
+                    self.auto_stop("lost connection (check failed: %s)" % exc.__class__.__name__)
+                    return
                 if failures >= 3:
                     self.record["ended_by"] = "desk unreachable"
                     return
                 self.wait_until(min(end, now.timestamp() + self.every))
                 continue
-            self.out(self.line(now, session, decisions, ledger, check))
+            auto_text = self.auto_step(end, session, status) if self.auto else None
+            text = self.line(now, session, decisions, ledger, check)
+            self.out(text if auto_text is None else text + " | " + auto_text)
             for f in broker_fills(ledger):
                 if f["exec_id"] not in baseline_fills and f not in self.record["fills_seen"]:
                     self.record["fills_seen"].append(f)
                     self.out("  ALPACA PAPER FILL (broker-confirmed): %s %s @ %s at %s"
                              % (f.get("side"), f.get("qty"), f.get("price"), f.get("ts")))
             last = decisions[-1] if decisions else None
-            self.record["checks"].append({"utc": now.isoformat(), "http": status,
-                                          "decision": classify(last), "bars": check.get("bars"),
-                                          "position": position_view(session)[:2]})
+            row = {"utc": now.isoformat(), "http": status, "decision": classify(last), "bars": check.get("bars"),
+                   "position": position_view(session)[:2]}
+            if self.auto:
+                row["auto"] = auto_text
+            self.record["checks"].append(row)
+            if self.auto and self.auto_state["stop"]:
+                self.record["ended_by"] = "stop trigger: " + self.auto_state["stop"]
+                return
             if failures >= 3:
                 self.record["ended_by"] = "desk refused checks"
                 return
             self.wait_until(min(end, now.timestamp() + self.every))
+
+    # ---------------------------------------------------------------- --auto
+    def auto_stop(self, why):
+        """Latch a stop trigger: no Enable or Arm after this, the loop ends, the clean end runs."""
+        if not self.auto_state["stop"]:
+            self.auto_state["stop"] = why
+            self.record["auto"]["stop_trigger"] = why
+        self.record["ended_by"] = "stop trigger: " + self.auto_state["stop"]
+        return "AUTO: STOP (%s); this runner never enables or arms again" % why
+
+    def monitor_only(self, why):
+        if not self.auto_state["monitor_only"]:
+            self.auto_state["monitor_only"] = why
+            self.record["auto"]["monitor_only"] = why
+        return "AUTO: MONITOR-ONLY for the rest of this run (%s); this runner never re-arms" % why
+
+    def stop_trigger(self, session, status):
+        """The first reason, read from desk state, that the automated run must stop; None when there is none."""
+        if status != 200:
+            return "lost connection (the desk answered the check with HTTP %s)" % status
+        s = session if isinstance(session, dict) else {}
+        if not s:
+            return "lost connection (no session from the desk)"
+        ctl = s.get("controls") if isinstance(s.get("controls"), dict) else {}
+        block = str(s.get("entry_block_reason") or "")
+        if ctl.get("stopped") or block == "STOPPED":
+            reason = str(ctl.get("stop_reason") or "Stop active")
+            if "LOSS" in reason or "RISK" in reason:
+                return "risk latch (Stop %s)" % reason
+            return "operator Stop (%s)" % reason
+        ds = ctl.get("day_stop")
+        today = ny_date(self.now())
+        if block == "DAILY_LOSS_STOP" or (isinstance(ds, dict) and ds and (today is None or ds.get("day") in (None, today))):
+            return "risk latch (DAILY_LOSS_STOP)"
+        if block == "BROKER_DISCONNECTED":
+            return "lost connection (BROKER_DISCONNECTED)"
+        if block == "UNRESOLVED_SUBMIT":
+            return "unresolved order (UNRESOLVED_SUBMIT)"
+        rec = s.get("recovery") if isinstance(s.get("recovery"), dict) else {}
+        if rec.get("ambiguous"):
+            return "unresolved order (recovery ambiguous: %s)" % str(rec.get("reason") or "-")[:80]
+        codes = [str(a.get("code")) for a in s.get("alarms") or [] if isinstance(a, dict) and a.get("blocking")]
+        for code in codes:
+            if code in FOREIGN_ALARMS:
+                return "foreign order or position (%s)" % code
+        for code in codes:
+            if code in CONNECTION_ALARMS:
+                return "lost connection (%s)" % code
+        if codes:
+            return "unresolved or unknown order (blocking alarm %s)" % ", ".join(codes)
+        desk, broker, _ = position_view(s)
+        if finite_qty(desk) and finite_qty(broker) and desk != broker:
+            return "foreign or unmatched position (broker %s, desk %s)" % (broker, desk)
+        if self.auto_state["enabled"] and not (s.get("adapter") or {}).get("enabled"):
+            return "adapter disabled after this runner enabled it (%s)" % str(
+                (s.get("adapter") or {}).get("disabled_reason") or "-")[:80]
+        return None
+
+    def not_ready(self, session, end):
+        """Why Enable/Arm must still wait; None when warm-up is complete and the regular session is open."""
+        wu = session.get("warmup")
+        if not isinstance(wu, dict) or wu.get("ready") is not True:
+            wu = wu if isinstance(wu, dict) else {}
+            return "strategy warm-up %s/%s" % (wu.get("bars", "?"), wu.get("needed", "?"))
+        rows = [r for r in session.get("preflight") or [] if isinstance(r, dict)]
+        named = dict((r.get("check"), r) for r in rows)
+        for need in ("calendar", "venue clock"):
+            if (named.get(need) or {}).get("ok") is not True:
+                return "regular session not open (%s)" % need
+        bad = self.failing_rows(session)
+        if bad:
+            return "%s (%s)" % (PREFLIGHT_WAIT, ", ".join(bad))
+        if end - self.now().timestamp() < self.every:
+            return "too close to the run end to arm"
+        return None
+
+    @staticmethod
+    def failing_rows(session):
+        rows = [r for r in session.get("preflight") or [] if isinstance(r, dict)]
+        return [str(r.get("check")) for r in rows if r.get("ok") is not True and r.get("check") != "adapter enabled"]
+
+    def connection_check_once(self):
+        """Press the desk's non-executing connection check once per run, only when the fractional rows it fills
+        are the only preflight rows still failing. Returns (session after it, line text)."""
+        self.auto_state["connection_checked"] = True
+        health = self.get("/api/health") or {}
+        session = self.get("/api/session") or {}
+        bad = paper_problems(health, session, self.state_dir)
+        if bad:
+            return session, self.auto_stop("not the paper desk before the connection check: " + "; ".join(bad))
+        status, reply = self.post(CONNECTION_CHECK_ROUTE, {})
+        ok = pressed_ok(status, reply)
+        self.record["auto"]["connection_check"] = {"utc": self.now().isoformat(), "http": status, "ok": ok}
+        session = self.get("/api/session") or {}
+        still = [r for r in self.failing_rows(session) if r in FRACTIONAL_ROWS]
+        if still:
+            return session, self.monitor_only("one connection check (GET-only at Alpaca, HTTP %s) left %s failing"
+                                              % (status, ", ".join(still)))
+        return session, "AUTO: pressed the connection check once (GET-only at Alpaca); fractional rows pass"
+
+    def auto_step(self, end, session, status):
+        """One check's worth of auto mode: stop triggers first, then (once) Enable and Arm. Returns its line text."""
+        a = self.auto_state
+        if a["stop"]:
+            return self.auto_stop(a["stop"])
+        why = self.stop_trigger(session, status)
+        if why:
+            return self.auto_stop(why)
+        if a["monitor_only"]:
+            return self.monitor_only(a["monitor_only"])
+        if a["armed"]:
+            if not session.get("armed"):
+                return self.monitor_only("arm lapsed or was removed (%s)" % (session.get("entry_block_reason") or "disarmed"))
+            return "AUTO: armed by this runner until %s" % self.record["auto"]["armed_expires_utc"]
+        if session.get("armed"):
+            return self.monitor_only("the desk was armed outside this runner; it pressed neither Enable nor Arm")
+        if a["pressed"]:
+            return self.monitor_only("Enable/Arm was already attempted once in this run")
+        wait = self.not_ready(session, end)
+        if (wait and wait.startswith(PREFLIGHT_WAIT) and not a["connection_checked"]
+                and set(self.failing_rows(session)) <= FRACTIONAL_ROWS):
+            try:
+                session, text = self.connection_check_once()
+            except (OSError, http.client.HTTPException) as exc:
+                return self.auto_stop("lost connection (during the connection check: %s)" % exc.__class__.__name__)
+            if a["stop"] or a["monitor_only"]:
+                return text
+            why = self.stop_trigger(session, 200)
+            if why:
+                return self.auto_stop(why)
+            wait = self.not_ready(session, end)
+            if wait:
+                return text + "; AUTO: waiting (%s)" % wait
+        if wait:
+            return "AUTO: waiting (%s)" % wait
+        try:
+            return self.press(end)
+        except (OSError, http.client.HTTPException) as exc:
+            return self.auto_stop("lost connection (during Enable/Arm: %s)" % exc.__class__.__name__)
+
+    def press(self, end):
+        """Enable (if the adapter is off) and Arm, once per run, after fresh paper and reconcile checks."""
+        a = self.auto_state
+        a["pressed"] = True                      # whatever happens below, this run never presses again
+        health = self.get("/api/health") or {}
+        session = self.get("/api/session") or {}
+        bad = paper_problems(health, session, self.state_dir)
+        if bad:
+            return self.auto_stop("not the paper desk before Enable: " + "; ".join(bad))
+        if health.get(ARM_BOUND_FLAG) is not True:
+            return self.monitor_only(NO_ARM_BOUND)
+        view, why = self.verified_reconcile()
+        if view is None:
+            return self.auto_stop("unresolved broker position before Enable (%s)" % why)
+        if view["external"] or any(c in FOREIGN_ALARMS for c in view["blocking"]):
+            return self.auto_stop("foreign order at Alpaca before Enable (%d outside order(s))" % len(view["external"]))
+        if view["desk"] != view["broker"]:
+            return self.auto_stop("foreign or unmatched position before Enable (broker %s, desk %s)"
+                                  % (view["broker"], view["desk"]))
+        if not view["clean"]:
+            return self.auto_stop("unresolved or unknown order before Enable (%s)" % ", ".join(view["blocking"]))
+        session = view["session"]
+        why = self.stop_trigger(session, 200)
+        if why:
+            return self.auto_stop(why)
+        if not (session.get("adapter") or {}).get("enabled"):
+            self.record["auto"]["enable_pressed_utc"] = self.now().isoformat()
+            status, reply = self.post(ENABLE_ROUTE, {"confirm": True})
+            if not pressed_ok(status, reply):
+                return self.monitor_only("Enable was refused (HTTP %s: %s)"
+                                         % (status, str(reply.get("error") or "-")[:80]))
+            a["enabled"] = True
+        expires = iso_z(end)
+        self.record["auto"]["arm_requested_expires_utc"] = expires
+        self.record["auto"]["arm_pressed_utc"] = self.now().isoformat()
+        status, reply = self.post(ARM_ROUTE, {"expires_utc": expires})
+        if not pressed_ok(status, reply):
+            return self.monitor_only("Arm was refused (HTTP %s: %s)" % (status, str(reply.get("error") or "-")[:80]))
+        session = self.get("/api/session") or {}
+        got = session.get("expires_utc")
+        exp = parse_ts(got)
+        if session.get("armed") is not True or exp is None or exp.tzinfo is None or exp.timestamp() > end:
+            text = self.auto_stop("the desk set arm expiry %r, later than the run end %s or unreadable" % (got, expires))
+            try:
+                status, reply = self.post("/api/stop_close", {"confirm": True})
+            except (OSError, http.client.HTTPException) as exc:
+                status, reply = "error %s" % exc.__class__.__name__, {}
+            done = status == 200 and reply.get("ok") is True
+            self.record["auto"]["unbounded_arm_action"] = ("Stop & Close pressed at once (HTTP 200)" if done else
+                                                           "Stop & Close did not succeed (HTTP %s)" % status)
+            return text + "; " + self.record["auto"]["unbounded_arm_action"]
+        a["armed"] = True
+        self.record["auto"]["armed_expires_utc"] = got
+        return "AUTO: pressed Enable and Arm; armed by this runner until %s" % got
 
     def wait_until(self, ts):
         while not self.stop_flag and self.now().timestamp() < ts:
@@ -652,13 +930,18 @@ class Runner:
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--minutes", type=int, default=60, help="how long to run (1..%d)" % MAX_MINUTES)
-    ap.add_argument("--every", type=int, default=EVERY_DEFAULT,
-                    help="seconds between checks (%d..%d)" % (EVERY_MIN, EVERY_MAX))
+    ap.add_argument("--every", type=int, default=None,
+                    help="seconds between checks (%d..%d; default %d, or %d with --auto)"
+                         % (EVERY_MIN, EVERY_MAX, EVERY_DEFAULT, AUTO_EVERY_DEFAULT))
     ap.add_argument("--at-end", choices=("close", "leave"), default="close",
                     help="close: press the desk's Stop & Close if it still holds paper exposure; leave: only report")
     ap.add_argument("--no-browser", action="store_true", help="do not open the desk page in the browser")
+    ap.add_argument("--auto", action="store_true",
+                    help="automated PAPER run: press the paper desk's Enable and Arm once, after warm-up with the "
+                         "regular session open; without it the runner is monitor-only")
     a = ap.parse_args(argv)
-    runner = Runner(a.minutes, a.every, at_end=a.at_end, no_browser=a.no_browser)
+    every = a.every if a.every is not None else (AUTO_EVERY_DEFAULT if a.auto else EVERY_DEFAULT)
+    runner = Runner(a.minutes, every, at_end=a.at_end, no_browser=a.no_browser, auto=a.auto)
 
     def on_signal(signum, _frame):
         runner.stop_flag = "operator stop (%s)" % signal.Signals(signum).name

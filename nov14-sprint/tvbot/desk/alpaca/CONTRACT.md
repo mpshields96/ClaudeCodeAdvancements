@@ -126,9 +126,10 @@ so `orders/manager.py` and `session.py` work unchanged:
 
 - An unpriced market entry sized from the last hourly close can fill above a notional cap. On the Alpaca
   path every **buy entry is a limit order**. The session sets `limit = floor_to_tick(min(decision entry
-  price, per_trade_notional/qty, remaining_gross/qty, stop + (max_loss_per_trade - est_cost)/qty))`
-  (tick $0.01; remaining_gross = gross_exposure - |position| x price - working entry notional). If that
-  bound is at or below zero, or under the stop, the entry is refused before submit (`ENTRY_BOUND`).
+  price, per_trade_notional/qty, remaining_gross/qty, stop + max_loss_per_trade/qty))`
+  (tick $0.01; remaining_gross = gross_exposure - |position| x price - working entry notional). The per-trade cap is price risk to the stop only;
+  the estimated fees count against the daily loss cap in the order manager (operator
+  rule). If that bound is at or below zero, or under the stop, the entry is refused before submit (`ENTRY_BOUND`).
 - The broker is a second wall: it refuses an entry with no limit (`UNPRICED_ENTRY`), and one whose
   qty x limit exceeds per-trade or remaining gross caps (`EXEC_CAP`), with no POST.
 - **Short-opening exposure is blocked** on the SPY first-test path (`SHORT_OPEN_BLOCKED`): a sell that is

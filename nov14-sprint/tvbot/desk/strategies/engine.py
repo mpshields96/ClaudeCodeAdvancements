@@ -307,11 +307,14 @@ class Replayer(object):
         """CONTRACT v2 plain-dollar cap, mirrored so a refused entry never
         becomes a phantom position in the strategy's own book.
 
-        risk = qty * |entry - stop| + estimated round-trip cost, the desk's
-        formula. The cap is cfg["limits"]["max_loss_per_trade"] (or
-        cfg["max_loss_per_trade"]), a TEST VALUE the desk passes in. With no
-        cap in cfg the check passes with a note and the order manager
-        enforces its own cap. It refuses; it never resizes.
+        risk = qty * |entry - stop|: price risk to the stop only (operator
+        rule: the per-trade cap is price risk; fees are
+        budgeted separately inside the daily loss cap, which the order manager
+        enforces with the estimated cost). The cap is
+        cfg["limits"]["max_loss_per_trade"] (or cfg["max_loss_per_trade"]), a
+        TEST VALUE the desk passes in. With no cap in cfg the check passes with
+        a note and the order manager enforces its own cap. It refuses; it never
+        resizes.
         """
         if stop_price is None:
             return {"id": "NO_STOP", "passed": False, "detail": "entry has no stop price"}
@@ -319,14 +322,17 @@ class Replayer(object):
         lim = lims.get("max_loss_per_trade") if isinstance(lims, dict) else None
         if lim is None:
             lim = self.cfg.get("max_loss_per_trade")
-        risk = float(qty) * abs(float(entry_price) - float(stop_price)) + float(est.get("usd") or 0.0)
+        risk = float(qty) * abs(float(entry_price) - float(stop_price))
+        cost = float(est.get("usd") or 0.0)
         if lim is None:
             return {"id": "MAX_LOSS_WOULD_BREACH", "passed": True,
-                    "detail": "risk $%.2f; no max_loss_per_trade in cfg, so the order manager enforces its cap" % risk}
+                    "detail": "price risk $%.4f; no max_loss_per_trade in cfg, so the order manager enforces its cap" % risk}
         lim = float(lim)
         return {"id": "MAX_LOSS_WOULD_BREACH", "passed": risk <= lim,
-                "detail": "qty %s x |%.4f - %.4f| + cost $%.2f = $%.2f vs cap $%.2f (%s)"
-                          % (B.qty_str(qty), float(entry_price), float(stop_price), float(est.get("usd") or 0.0), risk, lim, "session risk limit" if self.cfg.get("fractional") else "TEST VALUE")}
+                "detail": "qty %s x |%.4f - %.4f| = price risk $%.4f vs cap $%.2f (%s); est. fees $%.4f count "
+                          "against the daily loss cap, not this one"
+                          % (B.qty_str(qty), float(entry_price), float(stop_price), risk, lim,
+                             "session risk limit" if self.cfg.get("fractional") else "TEST VALUE", cost)}
 
     def _decide_cash(self, bar):
         return self._mk(
@@ -487,7 +493,7 @@ class Replayer(object):
         cagainst = ("Secondhand Reddit idea; Codex's 2023 gold spot replay lost money across all variants; "
                     "round trip $%.2f eats into a $%.2f target." % (est["usd"], tgt))
         pcond = ("Would pass if no break, leg cap reached, session near close, round-trip cost >= basket stop, "
-                 "or qty x |entry - stop| + cost above the desk's max_loss_per_trade.")
+                 "or price risk qty x |entry - stop| above the desk's max_loss_per_trade.")
         if q == 0 or _sign(q) == sig or lq > abs(q):
             mlc = self._max_loss_check(lq, ent["price"], inv["price"], est)
             if not mlc["passed"]:

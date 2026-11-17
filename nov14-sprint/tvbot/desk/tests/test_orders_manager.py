@@ -182,10 +182,22 @@ class GateTests(DeskCase):
         mark = self.m.mark
         iid = self.buy("ml", 10, invalidation=mark - 2.0)            # 10 x 2.00 = 20 > 10
         self.assertEqual((self.status(iid), self.reason(iid)), ("rejected", "MAX_LOSS"))
-        cost = self.buy("mlc", 10, invalidation=mark - 0.9, est_cost=1.5)   # 9 + 1.50 cost > 10
-        self.assertEqual(self.reason(cost), "MAX_LOSS")
-        ok = self.buy("ok", 10, invalidation=mark - 0.9, est_cost=0.5)      # 9.50
+        # Operator rule: the per-trade cap is price risk only, so 9 + 1.50 cost
+        # passes it; the cost counts against the daily cap (test_fees_count_in_daily_not_per_trade).
+        cost = self.buy("mlc", 10, invalidation=mark - 0.9, est_cost=1.5)   # price risk 9 <= 10
+        self.assertEqual(self.status(cost), "acked")
+        self.assertEqual(self.b.list_orders()["total"], 1)
+
+    def test_fees_count_in_daily_not_per_trade(self):
+        self.start()
+        mark = self.m.mark
+        iid = self.buy("fd", 1, limit=mark, invalidation=mark - 9.0, est_cost=21.5)   # 9 <= 10; 9 + 21.5 > 30
+        self.assertEqual((self.status(iid), self.reason(iid)), ("rejected", "RISK_DAILY_LOSS_WORST_CASE"))
+        ok = self.buy("fd2", 1, limit=mark, invalidation=mark - 9.0, est_cost=20.5)   # 29.50 fits
         self.assertEqual(self.status(ok), "acked")
+        nxt = self.buy("fd3", 1, limit=mark, invalidation=mark - 0.4, est_cost=0.2)
+        # the working entry reserves its 9 + 20.50 including fees: 29.5 + 0.6 > 30
+        self.assertEqual(self.reason(nxt), "RISK_DAILY_LOSS_WORST_CASE")
         self.assertEqual(self.b.list_orders()["total"], 1)
 
     def test_entry_needs_an_invalidation_on_the_losing_side(self):

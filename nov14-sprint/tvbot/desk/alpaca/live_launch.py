@@ -14,6 +14,11 @@ authorization the gate minted, the session controller in mode "live" for the liv
 desk UI on the checked live port, bound exactly (a taken port is refused, never moved). The live adapter
 always starts DISABLED; you enable it yourself in the UI. Starting sends no order.
 
+Once you have enabled and armed it yourself, the desk manages the session with no repeated Check clicks
+(alpaca/live_supervisor.py): it runs its own Check every 30 s while armed, enabled and not stopped, and
+the arm ends 15 minutes before the regular close (early closes included) with Stop & Close, then it
+reconciles to flat or an explicit UNRESOLVED handoff. It never enables, arms or re-arms itself.
+
 If this build's alpaca_session.py has no live mode, `start` stops after the gate with exit 3. Any
 failure after the gate names the stage that failed and gives the real error; once the controller's
 start-up has begun it says the key may have been read and read-only requests made. See LIVE_READINESS.md.
@@ -33,6 +38,7 @@ if DESK not in sys.path:
     sys.path.insert(0, DESK)
 
 from alpaca import live as L  # noqa: E402
+from alpaca import live_supervisor  # noqa: E402
 from alpaca import sizing  # noqa: E402
 
 DEFAULT_LIVE_STATE = os.path.join(DESK, L.LIVE_STATE_DIRNAME)
@@ -184,11 +190,16 @@ def _serve_live(args, auth, state_dir, AS, out, err):
         return (_refuse_after_build if started else _refuse)(err, msg)
     url = "http://%s:%d/" % (LIVE_HOST, args.port)
     threading.Thread(target=httpd.serve_forever, name="desk-ui-live", daemon=True).start()
+    supervisor = live_supervisor.LiveSupervisor(runner).start()   # idle until YOU enable and arm
     out.write("[live] %s\n[live] UI        %s\n[live] state     %s\n[live] shares    %s (approved %s)\n"
               "[live] adapter   DISABLED. Enable it yourself in the UI; Stop disables it again.\n"
-              "[live] sent      no order (%s)\n[live] Ctrl-C to quit.\n"
+              "[live] sent      no order (%s)\n"
+              "[live] auto      after YOU enable and arm, the desk runs its own Check every %ds until the arm "
+              "ends (15 min before the close, early closes included, then Stop & Close) or you press Stop; "
+              "it never enables or arms "
+              "itself\n[live] Ctrl-C to quit.\n"
               % (getattr(runner, "evidence_label", L.LABEL_ALPACA_LIVE), url, state_dir, L.Q.text(L.Q.parse(auth.shares)),
-                 auth.session_date, START_READS))
+                 auth.session_date, START_READS, supervisor.every_s))
     out.flush()
     if not getattr(args, "no_browser", False):
         _open_browser(url)
@@ -197,6 +208,7 @@ def _serve_live(args, auth, state_dir, AS, out, err):
     except KeyboardInterrupt:
         pass
     finally:
+        supervisor.stop()
         httpd.shutdown()
         httpd.server_close()
         if hasattr(runner, "close"):

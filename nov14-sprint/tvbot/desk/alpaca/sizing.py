@@ -377,6 +377,110 @@ def as_session_limits(loaded):
     return out
 
 
+# ------------------------------------------------------------------ cash-proportional size
+# Each new buy is sized from this account's own verified, uncommitted cash, re-read before the buy:
+# never an old balance and never margin. The shared profile (alpaca/trading_profile.py) sets the
+# shares per available dollar and paper's own caps. A live desk never goes above its approved size
+# or caps. A size the venue cannot take (zero, or a fraction under $1) is an explicit pass.
+CASH_UNVERIFIED = "CASH_UNVERIFIED"
+CASH_SCALED_TO_ZERO = "CASH_SCALED_TO_ZERO"
+CASH_SCALED_BELOW_MIN = "CASH_SCALED_BELOW_MIN"
+_QTY_STEP = Decimal(1).scaleb(-Q.MAX_DP)
+
+
+def _balance(v):
+    if v is None or isinstance(v, bool):
+        raise ValueError("missing")
+    d = Decimal(str(v).strip())
+    if not d.is_finite() or d < 0:
+        raise ValueError("not a usable amount")
+    return d
+
+
+def available_cash(balances, working_buy_usd):
+    """min(cash, equity, non-margin buying power, and buying power when the venue sends it) minus
+    every working buy commitment. A min can only lower it, so margin never adds to it. None when a
+    required balance is missing, unreadable, negative or not finite."""
+    try:
+        keys = ("cash", "equity", "non_marginable_buying_power")
+        if "buying_power" in balances:
+            keys += ("buying_power",)
+        vals = [_balance(balances[k]) for k in keys]
+        working = _balance(working_buy_usd)
+    except (KeyError, ValueError, InvalidOperation, TypeError, AttributeError):
+        return None
+    return max(Decimal(0), min(vals) - working)
+
+
+def _profile():
+    try:
+        from alpaca import trading_profile as P
+    except ImportError:   # run as a script from alpaca/
+        import trading_profile as P
+    return P
+
+
+def profile_size(balances, working_buy_usd, price, stop=None, approved_qty=None, fractional=True,
+                 gross_used_usd=0):
+    """(qty or None, info, caps) for one new buy under the shared trading profile.
+
+    Paper (approved_qty None): caps = trading_profile.paper_caps(available), and qty is the smallest
+    of SHARES_PER_USD x available, caps notional / price, (caps gross - gross_used) / price,
+    caps price risk / (price - stop) and available / price. The caller enforces these caps.
+    Live (approved_qty set): qty is the smallest of the approved size, SHARES_PER_USD x available
+    and available / price; caps is None, so the approved caps stand unchanged.
+    The size is floored to 9 places on a fractional desk, else to a whole share. None means pass and
+    info["code"] says why. info never carries a balance or the available amount."""
+    P = _profile()
+    approved = None if approved_qty is None else Q.parse(approved_qty)
+    mode = "paper" if approved is None else "live"
+    info = {"profile": P.PROFILE_ID, "profile_version": P.VERSION, "mode": mode,
+            "shares_per_usd": str(P.SHARES_PER_USD),
+            "approved_qty": None if approved is None else Q.to_json(approved),
+            "sized_qty": None, "binding": None, "code": None}
+    try:
+        px = _dec(price)
+        if px <= 0:
+            raise InvalidOperation
+        st = None if stop is None else _dec(stop)
+        gross_used = _dec(gross_used_usd or 0)
+    except (InvalidOperation, TypeError, ValueError):
+        info["code"] = CASH_UNVERIFIED
+        return None, info, None
+    avail = available_cash(balances, working_buy_usd)
+    if avail is None:
+        info["code"] = CASH_UNVERIFIED
+        return None, info, None
+    bounds = {"profile": avail * P.SHARES_PER_USD, "cash": avail / px}
+    caps = None
+    if approved is None:
+        caps = P.paper_caps(avail)
+        bounds["notional"] = _dec(caps["per_trade_notional"]) / px
+        bounds["gross"] = max(Decimal(0), _dec(caps["gross_exposure"]) - gross_used) / px
+        if st is not None and px > st:
+            bounds["stop_risk"] = _dec(caps["max_loss_per_trade"]) / (px - st)
+    else:
+        bounds["approved"] = Q.dec(approved)
+    binding = min(bounds, key=lambda k: bounds[k])
+    raw = bounds[binding]
+    frac = fractional or (approved is not None and Q.is_fractional(approved))
+    if frac:
+        q = raw.quantize(_QTY_STEP, rounding=ROUND_FLOOR)
+    else:
+        q = raw.to_integral_value(rounding=ROUND_FLOOR)
+    q = Q.norm(q)
+    info["sized_qty"] = Q.to_json(q)
+    info["binding"] = binding
+    if Q.dec(q) <= 0:
+        info["code"] = CASH_SCALED_TO_ZERO
+        return None, info, caps
+    if frac and Q.dec(q) * px < MIN_FRACTIONAL_BUY:
+        info["code"] = CASH_SCALED_BELOW_MIN
+        info["notional_usd"] = _money(Q.dec(q) * px, ROUND_FLOOR)
+        return None, info, caps
+    return q, info, caps
+
+
 def _pos(x, name):
     try:
         x = _dec(x)
@@ -434,10 +538,12 @@ def effects(values, ref_price, stop_distance, fee_per_share=0.0, slippage_per_sh
         q = Q.dec(Q.parse(shares))
         exact["notional"] = q * price
         exact["costs"] = q * per_share_cost
-        exact["loss"] = q * stop + exact["costs"]
+        exact["price_risk"] = q * stop               # what max_loss_per_trade caps (price to the stop only)
+        exact["loss"] = exact["price_risk"] + exact["costs"]   # what the daily cap budgets (fees included)
         exact["worst"] = open_exp + working + exact["notional"]
         out.update(notional=_money(exact["notional"]), payoff_per_1usd_move=float(shares),
                    est_loss_at_stop=_money(exact["loss"]), est_costs=_money(exact["costs"]),
+                   stop_price_risk=_money(exact["price_risk"]),
                    worst_case_if_all_working_fill=_money(exact["worst"]))
     rem = {}
     if caps["daily_loss"] is not None:
@@ -471,9 +577,12 @@ def effects(values, ref_price, stop_distance, fee_per_share=0.0, slippage_per_sh
             add(cap, ok, "order value $%.2f %s your per-trade cap $%.2f"
                 % (out["notional"], "is within" if ok else "is OVER", lim))
         elif cap == "max_loss_per_trade":
-            ok = not exact["loss"] > limit
-            add(cap, ok, "estimated loss at the stop $%.2f %s your per-trade loss cap $%.2f"
-                % (out["est_loss_at_stop"], "is within" if ok else "is OVER", lim))
+            # Price risk to the stop only; the estimated costs count against the daily cap below,
+            # matching the strategy and order-manager gates.
+            ok = not exact["price_risk"] > limit
+            add(cap, ok, "price risk to the stop $%.2f %s your per-trade loss cap $%.2f; the estimated costs "
+                "$%.2f count against the daily cap"
+                % (out["stop_price_risk"], "is within" if ok else "is OVER", lim, out["est_costs"]))
         elif cap == "daily_loss":
             after = realized + exact["loss"]
             ok = not after > limit
@@ -489,8 +598,9 @@ def effects(values, ref_price, stop_distance, fee_per_share=0.0, slippage_per_sh
         out["suggestions"].append({"text": text, "shares": max(0, int(n)), "label": SUGGESTION_LABEL})
 
     if caps["max_loss_per_trade"] is not None:
-        suggest("shares that fit your $%.2f risk at a $%.2f stop" % (float(caps["max_loss_per_trade"]), float(stop)),
-                _floor_shares(caps["max_loss_per_trade"], stop + per_share_cost))
+        suggest("shares that fit your $%.2f price risk at a $%.2f stop (costs count against the daily cap)"
+                % (float(caps["max_loss_per_trade"]), float(stop)),
+                _floor_shares(caps["max_loss_per_trade"], stop))
     if caps["per_trade_notional"] is not None:
         suggest("shares that fit your $%.2f per-trade cap at $%.2f" % (float(caps["per_trade_notional"]), float(price)),
                 _floor_shares(caps["per_trade_notional"], price))

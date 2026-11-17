@@ -84,8 +84,10 @@ LAB_ID_RE = re.compile(r"[A-Za-z0-9_.:-]{1,200}")
 TV_SCRIPT_ORIGIN = "https://s3.tradingview.com"
 TV_FRAME_ORIGINS = ("https://s.tradingview.com", "https://www.tradingview-widget.com",
                     "https://www.tradingview.com")
-BODY_KEYS = ("n", "bars_per_sec", "enabled", "confirm", "note", "week", "reason")
+BODY_KEYS = ("n", "bars_per_sec", "enabled", "confirm", "note", "week", "reason", "expires_utc")
 WEEK_RE = re.compile(r"[0-9]{4}-W[0-9]{2}")
+# A bounded Arm (alpaca/paper_runner.py --auto): an ISO-8601 UTC expiry that can only shorten the arm.
+ARM_EXPIRY_RE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?Z")
 MAX_ADVANCE = 500
 MAX_PLAY_RATE = 50.0
 
@@ -108,6 +110,13 @@ def _plan_call(request, method_name, body):
         if rate != rate or rate <= 0:  # NaN or 0 means stop playing (CONTRACT v2)
             return "stop_play", {}, (("pause_play", {}),)
         return method_name, {"bars_per_sec": min(rate, MAX_PLAY_RATE)}, ()
+    if request == "arm":
+        exp = body.get("expires_utc")
+        if exp is None or exp == "":
+            return method_name, {}, ()          # the UI's Arm button: the desk's default end, the wind-down before the close
+        if not isinstance(exp, str) or not ARM_EXPIRY_RE.fullmatch(exp):
+            raise ValueError("expires_utc must be an ISO-8601 UTC time like 2026-11-17T16:00:00Z")
+        return method_name, {"expires_utc": exp}, ()
     if request in ("clear_stop", "alpaca_enable"):
         return method_name, {"confirm": True}, ()
     if request == "alpaca_disable":
@@ -824,6 +833,8 @@ class DeskHandler(BaseHTTPRequestHandler):
                                         "lab_page": os.path.isfile(LAB_PATH),
                                         "spy_study_page": os.path.isfile(SPY_STUDY_PATH),
                                         "broker_mode": self.server.broker_mode(),
+                                        "arm_bounded_expiry": getattr(self.server.controller,
+                                                                      "ARM_BOUNDED_EXPIRY", False) is True,
                                         "simulated": self.server.simulated()})
             if route == "/api/session":
                 obj, meta = read_json(os.path.join(self.state_dir, "session.json"))

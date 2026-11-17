@@ -91,6 +91,8 @@ class MockTrading(object):
         self.account_omit = set()
         self.account_fail = None
         self.orders_fail = None
+        self.activities = []        # test hook: FILL account activities, as Alpaca's strings
+        self.activities_fail = None
         self.fractionable = True
         self.min_buy_notional = 1.0
         self.reject_sell_below = None
@@ -125,6 +127,27 @@ class MockTrading(object):
         row = self._new_row(client_order_id, symbol, side, qty, "market", None, None)
         row["status"] = status
         return row["id"]
+
+    def add_fill_activity(self, order_id, qty, cum_qty, leaves_qty, kind, transaction_time, price="500",
+                          side=None, symbol=None):
+        """Test hook: one FILL activity row (kind "fill" or "partial_fill") for an order id."""
+        row = self.orders.get(order_id) or {}
+        act = {"activity_type": "FILL", "id": "mock-act-%04d" % (len(self.activities) + 1),
+               "order_id": order_id, "symbol": symbol or row.get("symbol", "SPY"),
+               "side": side or row.get("side", "buy"), "qty": str(qty), "cum_qty": str(cum_qty),
+               "leaves_qty": str(leaves_qty), "price": str(price), "type": kind,
+               "transaction_time": transaction_time, "order_status": "filled" if kind == "fill" else "partially_filled"}
+        self.activities.append(act)
+        return act
+
+    def _activities(self, q):
+        size = int(q.get("page_size", 100))
+        if size > 100:
+            return 422, {"code": 42210000, "message": "page_size must be 100 or less"}
+        rows = sorted(self.activities, key=lambda a: a["transaction_time"], reverse=q.get("direction") != "asc")
+        if q.get("after"):
+            rows = [a for a in rows if a["transaction_time"] > q["after"]]
+        return 200, [dict(a) for a in rows[:size]]
 
     def set_position(self, qty, avg):
         self.pos_qty, self.pos_avg = (_q(qty) if self.fractional else int(qty)), float(avg)
@@ -217,6 +240,9 @@ class MockTrading(object):
                 return (200, self._out(row)) if row else (404, {"code": 40410000, "message": "order not found"})
             if method == "DELETE":
                 return self._cancel(row)
+        if method == "GET" and path == "/v2/account/activities/FILL":
+            failed = self._read_fail(self.activities_fail, path, {"not": "a list"})
+            return failed if failed is not None else self._activities(query)
         if method == "GET" and path == "/v2/positions":
             out = []
             if self.pos_qty:
@@ -246,6 +272,8 @@ class MockTrading(object):
                     "non_marginable_buying_power": self.non_marginable_buying_power
                     if isinstance(self.non_marginable_buying_power, str) else _num(self.non_marginable_buying_power),
                     "pattern_day_trader": False, "trading_blocked": False, "account_blocked": False}
+            eq = getattr(self, "equity", None)
+            acct["equity"] = (eq if isinstance(eq, str) else _num(eq)) if eq is not None else acct["cash"]
             for k in self.account_omit:
                 acct.pop(k, None)
             return 200, acct

@@ -68,13 +68,13 @@ class AlpacaFeeMath(unittest.TestCase):
         self.assertEqual(self.c["slippage_bps"], 2.0)
 
     def test_sub_penny_fee_rounds_up_to_a_cent(self):
-        # 0.01 share x $50: CAT 0.00000003, SEC 0.00001, TAF reserve 0.00000195; each -> $0.01 reserve.
+        # 0.01 share x $50: CAT 0.00000003, SEC 0.00001 -> $0.01 each for one order; TAF $0 (retail).
         buy = B.reg_fees(Decimal("0.01"), 50.0, 1, self.c)
         sell = B.reg_fees(Decimal("0.01"), 50.0, -1, self.c)
         self.assertEqual((buy["sec"], buy["taf"], buy["cat"]), (0.0, 0.0, 0.01))
-        self.assertEqual((sell["sec"], sell["taf"], sell["cat"]), (0.01, 0.01, 0.01))
+        self.assertEqual((sell["sec"], sell["taf"], sell["cat"]), (0.01, 0.0, 0.01))
         self.assertAlmostEqual(buy["total"], 0.01)
-        self.assertAlmostEqual(sell["total"], 0.03)
+        self.assertAlmostEqual(sell["total"], 0.02)
 
     def test_side_treatment_sec_and_taf_sell_only(self):
         buy = B.reg_fees(1000, 200.0, 1, self.c)
@@ -83,23 +83,24 @@ class AlpacaFeeMath(unittest.TestCase):
         self.assertGreater(buy["cat"], 0.0)
 
     def test_larger_order_rates(self):
-        # 1000 x $200 = $200,000 sold: SEC 4.12; TAF reserve 0.195 -> 0.20; CAT 0.003 -> 0.01.
+        # 1000 x $200 = $200,000 sold: SEC 4.12; TAF $0 (retail); CAT 0.003 -> 0.01.
         sell = B.reg_fees(1000, 200.0, -1, self.c)
         self.assertAlmostEqual(sell["sec"], 4.12)
-        self.assertAlmostEqual(sell["taf"], 0.20)
+        self.assertAlmostEqual(sell["taf"], 0.0)
         self.assertAlmostEqual(sell["cat"], 0.01)
 
-    def test_taf_cap(self):
-        # 100,000 x 0.000195 = 19.50 uncapped, so the 2026 max of $9.79 applies.
-        sell = B.reg_fees(100000, 1.0, -1, self.c)
+    def test_taf_cap_still_applies_if_a_rate_is_set(self):
+        # The cap logic is kept for a profile that sets a TAF rate (FINRA 2026 member rate shown).
+        c = dict(self.c, taf_per_share=0.000195)
+        sell = B.reg_fees(100000, 1.0, -1, c)
         self.assertAlmostEqual(sell["taf"], 9.79)
 
-    def test_taf_reserve_is_finra_2026_rate(self):
-        # Alpaca's Oct 12, 2026 schedule lists retail TAF $0; the profile keeps a
-        # reserve at FINRA's 2026 member rate, not the 2025 $0.000166 / $8.30.
-        self.assertEqual(self.c["taf_per_share"], 0.000195)
+    def test_taf_is_alpaca_retail_zero(self):
+        # Alpaca's Oct 12, 2026 schedule lists retail TAF $0 per share (W120 correction).
+        self.assertEqual(self.c["taf_per_share"], 0.0)
         self.assertEqual(self.c["taf_max"], 9.79)
-        self.assertEqual(self.c["fee_round"], "per_order_penny_up_reserve")
+        self.assertEqual(self.c["fee_round"], "daily_per_type_penny_up")
+        self.assertEqual(B.reg_fees(100000, 1.0, -1, self.c)["taf"], 0.0)
 
     def test_exact_quantity_used(self):
         # 0.5 share pays the same rounded cent as 1 share at these tiny sizes.
@@ -110,31 +111,36 @@ class AlpacaFeeMath(unittest.TestCase):
         q = Decimal("0.05")
         est = B.est_cost(q, 100.0, self.c, sides=2, note="round trip")
         spread = 100.0 * 3e-4 * 0.05
-        self.assertAlmostEqual(est["usd"], round(spread * 2 + 0.01 + 0.03, 4), places=4)
+        # Same-day round trip, billed per fee type per day: SEC $0.01 + CAT $0.01 (both sides summed).
+        self.assertAlmostEqual(est["usd"], round(spread * 2 + 0.02, 4), places=4)
         self.assertTrue(est["simulated"])
         b = est["basis"]
         for frag in ("ESTIMATE", "commission $0", "SEC $0.0000206", "CAT $0.000003",
-                     "TAF reserve of $0.000195/share sold (max $9.79", "lists retail TAF $0",
-                     "not a quoted charge", "rounded UP to $0.01 per order",
-                     "not a guaranteed per-order fee", "fee reserve this order",
+                     "TAF $0", "lists retail TAF $0", "aggregated per day and rounded UP to $0.01",
+                     "same-day round trip $0.02",
                      "BrokFeeSched.pdf", "docs.alpaca.markets/us/docs/regulatory-fees",
-                     "NOF-IMM-EFF-FINRA-2024-019.pdf", "slippage 2.0 bps"):
+                     "slippage 2.0 bps"):
             self.assertIn(frag, b)
-        self.assertNotIn("0.000166", b)
-        self.assertNotIn("8.30", b)
-        self.assertEqual(est["fees"]["rounding"], "per_order_penny_up_reserve")
-        self.assertAlmostEqual(est["fees"]["sell"]["total"], 0.03)
+        for gone in ("0.000166", "8.30", "0.000195", "TAF reserve", "per order;"):
+            self.assertNotIn(gone, b)
+        self.assertEqual(est["fees"]["rounding"], "daily_per_type_penny_up")
+        self.assertAlmostEqual(est["fees"]["sell"]["total"], 0.02)
+        self.assertAlmostEqual(est["fees"]["day"]["total"], 0.02)
+        self.assertEqual((est["fees"]["day"]["sec"], est["fees"]["day"]["taf"], est["fees"]["day"]["cat"]),
+                         (0.01, 0.0, 0.01))
         one = B.est_cost(q, 100.0, self.c, sides=1, note="one side to close")
-        self.assertAlmostEqual(one["usd"], round(spread + 0.03, 4), places=4)
+        self.assertAlmostEqual(one["usd"], round(spread + 0.02, 4), places=4)
+        self.assertIn("one order $0.02", one["basis"])
         json.dumps(est)
 
     def test_stress_multiplier_applies(self):
         c = B.cost_cfg({"cost_profile": "alpaca_equity", "cost_mult": 2.0})
-        self.assertAlmostEqual(B.reg_fees(Decimal("0.01"), 50.0, -1, c)["total"], 0.06)
+        self.assertAlmostEqual(B.reg_fees(Decimal("0.01"), 50.0, -1, c)["total"], 0.04)
+        self.assertAlmostEqual(B.day_fees(Decimal("0.01"), 50.0, c)["total"], 0.04)
 
     def test_fees_never_zero_for_a_real_order(self):
         est = B.est_cost(Decimal("0.001"), 600.0, self.c)
-        self.assertGreaterEqual(est["usd"], 0.04)
+        self.assertGreaterEqual(est["usd"], 0.02)
 
 
 class FractionalSizing(unittest.TestCase):
@@ -227,21 +233,21 @@ class EmaFractionalEntry(unittest.TestCase):
         self.assertEqual(d["qty_text"], Q.text(want))
         self.assertIn("Long %s " % Q.text(want), d["intended_entry"]["text"])
         self.assertIn("ESTIMATE, Alpaca equity profile", d["est_cost"]["basis"])
-        self.assertGreaterEqual(d["est_cost"]["usd"], 0.04)
+        self.assertGreaterEqual(d["est_cost"]["usd"], 0.02)
         self.assertLessEqual(Q.dec(want) * Decimal(repr(close)), Decimal("5.0"))
 
     def test_fractional_cap_refusal_is_honest(self):
         # Generic cap below the legitimate cost alone: refused, never resized, cost not zeroed.
         cfg = {"test_size": {"order_notional": 5.0}, "fractional": True, "cost_profile": "alpaca_equity",
-               "limits": {"max_loss_per_trade": 0.03}}
+               "limits": {"max_loss_per_trade": 0.02}}
         d, _ = self._first(cfg, "MAX_LOSS_WOULD_BREACH")
         self.assertIsNotNone(d)
         self.assertEqual(d["action"], "pass")
         self.assertEqual(d["qty"], 0)
-        self.assertGreater(d["est_cost"]["usd"], 0.03)
+        self.assertGreater(d["est_cost"]["usd"], 0.02)
         chk = [c for c in d["refusal_checks"] if c["id"] == "MAX_LOSS_WOULD_BREACH"][0]
         self.assertFalse(chk["passed"])
-        self.assertIn("vs cap $0.03", chk["detail"])
+        self.assertIn("vs cap $0.02", chk["detail"])
 
     def test_replay_book_takes_fractional_fill(self):
         cfg = {"test_size": {"order_notional": 5.0}, "fractional": True, "cost_profile": "alpaca_equity"}

@@ -24,7 +24,7 @@ Everything is still paper and offline. Every fill is a MOCK FILL with `"simulate
 | Item | Where | Test |
 |---|---|---|
 | Limits `{per_trade_notional 2000, max_loss_per_trade 10, daily_loss 30, gross_exposure 2000}` TEST VALUES | `manager.py` gates | `GateTests` (all) |
-| MAX_LOSS: `qty x abs(entry - invalidation) + est_cost > max_loss_per_trade` | `MAX_LOSS` | `test_max_loss_per_trade` |
+| MAX_LOSS: `qty x abs(entry - invalidation) > max_loss_per_trade` (price only; est_cost counts in the daily worst case) | `MAX_LOSS` | `test_max_loss_per_trade` |
 | RISK_PER_TRADE renamed | `NOTIONAL` | `GateTests` |
 | Entry without an invalidation | `NO_STOP`; an invalidation on the wrong side is `BAD_STOP` | `test_entry_needs_an_invalidation_on_the_losing_side` |
 | Gross and worst case count working orders | `RISK_GROSS`, `RISK_DAILY_LOSS_WORST_CASE` | `test_worst_case_counts_working_entries`, `test_worst_case_daily_loss_from_stops` |

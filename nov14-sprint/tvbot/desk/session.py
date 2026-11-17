@@ -959,10 +959,14 @@ class SessionController(object):
         inval = _price(d.get("invalidation"))
         if inval is None:
             return self._desk_reject(d, "NO_STOP", "entry has no invalidation price")
-        risk = qty * abs(entry - float(inval)) + _cost_usd(d)
+        # Per-trade cap = price risk to the stop only; the estimated round-trip cost rides on the
+        # intent and the order manager counts it against the daily loss cap (operator
+        # rule). Without est_cost on the intent the daily check would drop fees.
+        cost = _cost_usd(d)
+        risk = qty * abs(entry - float(inval))
         if not self.engine_checks_max_loss and risk > self.limits["max_loss_per_trade"]:
-            return self._desk_reject(d, "MAX_LOSS", "qty %s x |%.4f - %.4f| + cost $%.2f = $%.2f > max loss $%.2f (%s)"
-                                     % (Q.text(qv), entry, float(inval), _cost_usd(d), risk,
+            return self._desk_reject(d, "MAX_LOSS", "qty %s x |%.4f - %.4f| = price risk $%.4f > max loss $%.2f (%s)"
+                                     % (Q.text(qv), entry, float(inval), risk,
                                         self.limits["max_loss_per_trade"], self.limits["label"]))
         side = "buy" if action == "enter_long" else "sell"
         limit, refusal = self._entry_bounds(d, bar, st, Q.to_json(qv), side, entry, float(inval))
@@ -970,7 +974,7 @@ class SessionController(object):
             return self._desk_reject(d, refusal[0], refusal[1])
         intent = {"decision_id": d["decision_id"], "kind": "entry", "side": side,
                   "qty": Q.to_json(qv), "ref_price": ref, "signal_ts": d.get("ts_knowable"),
-                  "invalidation": float(inval), "max_loss_usd": round(risk, 4)}
+                  "invalidation": float(inval), "max_loss_usd": round(risk, 6), "est_cost": cost}
         if limit is not None:
             intent["limit"] = float(limit)
         iid = self.mgr.submit_intent(intent)

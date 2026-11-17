@@ -12,7 +12,9 @@ parts through the hooks session.py exposes:
 
 Entries are priced and bounded (CONTRACT section 3a): a buy entry is a LIMIT at
 floor_to_tick(min(decision price, notional cap / qty, remaining gross / qty,
-stop + (max loss - est cost) / qty)). Opening a short is blocked in this first SPY path.
+stop + max loss / qty)): the per-trade cap is price risk to the stop only, and the
+estimated fees count against the daily loss cap in the order manager. Opening a short is
+blocked in this first SPY path.
 Exits, protective reductions, reconcile and Stop stay available while the adapter is disabled.
 
 Agents never run --transport https. It needs Matthew's own paper keys and his approved limits.
@@ -39,6 +41,8 @@ from alpaca.broker import cent_price
 from alpaca.readiness import read_quote
 from orders.calendar import SessionCalendar, parse_ts, iso
 from orders import qty as Q
+from alpaca import trading_profile as TP
+from strategies import base as B
 
 MODE_MOCK = "mock"
 MODE_HTTPS = "https"
@@ -58,9 +62,12 @@ PAPER_STATE_FILE = A.STATE_FILE
 # never opens a position. Exits, protective stops and Stop & Close are never held by this.
 MIN_SIGNAL_MINUTES = 50
 TICK = 0.01
+# A reducing order in one of these states was sent but the broker has not confirmed it (timeout,
+# lost ACK): it covers no shares on screen and is never resent.
+UNCONFIRMED_STATUSES = ("pending", "uncertain")
 # A manual session cannot react within the streaming desk's 5 s staleness rule. A closed bar
 # received more than this long after its close is rejected (STALE) and never trades.
-BAR_MAX_AGE_S = 900.0
+BAR_MAX_AGE_S = float(TP.BAR_MAX_AGE_S)   # Balanced pace: a bar at most 15 minutes past its close
 WARMUP_MAX_AGE_S = 21 * 86400.0   # catch-up bars older than BAR_MAX_AGE_S warm features only (9 sessions + holidays)
 WARMUP_BARS_DEFAULT = 63          # bot/rules.py DEFAULT_PARAMS["warmup_bars"]
 FILL_TIMING_NOTE = ("Manual desk: a broker fill that happens between your Checks is booked, and any uncovered shares get a protective stop, only at your next Check for new bars. Until then those shares may be unprotected. Reconcile is read-only and never sends an order.")
@@ -400,19 +407,36 @@ class AlpacaSessionController(S.SessionController):
         cfg = dict(S.DEMO_STRATEGY_CFG if strategy_cfg is None else strategy_cfg)
         cfg["fixed_qty"] = Q.to_json(Q.parse(fixed, allow_zero=True))   # JSON-safe; re-parsed exactly where used
         self._fractional_qty = Q.is_fractional(Q.parse(fixed, allow_zero=True))
-        if self._fractional_qty and not self.mock:
+        # Connected paper sizes every new buy from the shared trading profile (alpaca/trading_profile.py):
+        # fractional shares from this account's own available cash, with paper's own caps recomputed
+        # on every entry. The worksheet size only signals an entry; it never caps the profile size.
+        # Live keeps its approved size and caps (the profile can only lower its size).
+        self._profile_paper = not self.mock and not self.live
+        self._operative_caps = None
+        self._fractional_orders = self._fractional_qty or self._profile_paper
+        if self._fractional_orders and not self.mock:
             # Connected fractional desk only (W-A defines the profile in strategies/base.py).
             # Whole-share and offline desks never set these keys.
             cfg["cost_profile"] = "alpaca_equity"
             cfg["fractional"] = True
+        if self._profile_paper:
+            limits = dict(limits)
+            if limits.get("max_daily_entries") is None:
+                limits["max_daily_entries"] = TP.PAPER_MAX_DAILY_ENTRIES
         # Strategy sizing basis = this session's chosen limits, never the offline $2,000 TEST
         # cap (Codex 22:5xZ: base_qty(500) returned 0 for 10 shares under a $6,000 per-order
         # cap). The offline DeskSession keeps its old contract: it never sets these keys.
         cfg["test_size"] = {"order_notional": float(limits["per_trade_notional"]),
                             "label": "SESSION LIMITS (%s)" % (self.limits_source.get("provenance") or "?"),
                             "source": "alpaca session limits"}
-        cfg["limits"] = {k: float(limits[k]) for k in
-                         ("per_trade_notional", "max_loss_per_trade", "daily_loss", "gross_exposure")}
+        if self._profile_paper:
+            # The strategy's own nominal cap check would judge the worksheet size against the worksheet
+            # caps. Paper's caps are the profile's, applied to the profile size by the desk and the
+            # order manager on every entry.
+            cfg.pop("limits", None)
+        else:
+            cfg["limits"] = {k: float(limits[k]) for k in
+                             ("per_trade_notional", "max_loss_per_trade", "daily_loss", "gross_exposure")}
         # Everything session_state()/preflight() read is built BEFORE the base init, which
         # publishes state at its end (Codex 22:24Z: clock was missing at that point).
         self._calendar = SessionCalendar.nyse_2026_2027()
@@ -535,7 +559,7 @@ class AlpacaSessionController(S.SessionController):
         if factory is None:
             factory = _need("alpaca.broker", "AlpacaPaperBroker")
         restored = os.path.exists(os.path.join(self.state_dir, "alpaca_broker.json"))
-        if getattr(self, "_fractional_qty", False):
+        if getattr(self, "_fractional_orders", getattr(self, "_fractional_qty", False)):
             # A fractional size needs a broker built for fractional DAY simple orders. A factory that
             # cannot take the flag builds a whole-share broker, and every fractional entry then
             # refuses FRACTIONAL_NOT_ENABLED (session._route). Nothing is rounded to a whole share.
@@ -642,6 +666,90 @@ class AlpacaSessionController(S.SessionController):
             self._desk_audit("lab_error", error=exc.__class__.__name__, detail=str(exc)[:200])
         return None
 
+    def _route(self, d, bar, st):
+        """Connected modes, every new long entry: size it from this account's actual available cash
+        under the shared trading profile before the desk's risk checks run (sizing.profile_size).
+        Paper: the profile size with paper's own caps recomputed from that cash. Live: never above
+        the approved size, approved caps unchanged. A size the venue cannot take is an explicit pass
+        with no order."""
+        if (not self.mock and d.get("action") == "enter_long" and (d.get("qty") or 0) > 0
+                and st.get("armed") and not (st.get("controls") or {}).get("stopped")
+                and not (st.get("controls") or {}).get("paused")):
+            refusal = self._cash_size(d, bar, st)
+            if refusal is not None:
+                return self._desk_reject(d, refusal[0], refusal[1])
+        return super(AlpacaSessionController, self)._route(d, bar, st)
+
+    def _working_buy_usd(self):
+        """Every buy this desk still has working or unresolved (pending, uncertain or acked), at its
+        limit/stop/reference price: cash that is already committed."""
+        from decimal import Decimal
+        total = Decimal(0)
+        mult = Q.dec(getattr(self.mgr, "multiplier", 1) or 1)
+        for it in self.mgr._live():
+            if it.get("side") == "buy":
+                px = self.mgr._price_of(it) or 0.0
+                total += Q.dec(self.mgr._remaining(it)) * Q._to_dec(px) * mult
+        return total
+
+    def _cash_size(self, d, bar, st=None):
+        """None after setting d["qty"] to the profile size (with d["est_cost"] recalculated on it,
+        d["profile"] and d["cash_sizing"]), or (code, text) for an explicit pass. Paper also sets the
+        caps in force for this entry on the desk, the order manager and the broker."""
+        sizing = importlib.import_module("alpaca.sizing")
+        fn = getattr(self.broker, "funding", None)
+        price = S._price(d.get("intended_entry")) or float((bar or {}).get("close") or 0)
+        stop = S._price(d.get("invalidation"))
+        balances = None
+        if fn is not None:
+            try:
+                balances = fn()
+            except Exception:
+                balances = None
+        gross_used = float(((st or {}).get("exposure") or {}).get("gross_including_working") or 0.0)
+        nominal = d["qty"]
+        q, info, caps = sizing.profile_size(
+            balances or {}, self._working_buy_usd(), price, stop=stop,
+            approved_qty=None if self._profile_paper else nominal,
+            fractional=bool(getattr(self.broker, "fractional", False)), gross_used_usd=gross_used)
+        info = dict(info, signal_qty=nominal)
+        d["cash_sizing"] = info
+        d["profile"] = {"id": TP.PROFILE_ID, "label": TP.LABEL, "version": TP.VERSION,
+                        "mode": "paper" if self._profile_paper else "live"}
+        if q is not None and caps is not None and any(v <= 0 for v in caps.values()):
+            q, info["code"] = None, sizing.CASH_SCALED_TO_ZERO
+        if q is not None:
+            d["qty"] = Q.to_json(q)
+            d["est_cost"] = B.est_cost(Q.to_json(q), price, B.cost_cfg(self.strategy_cfg), sides=2,
+                                       note="round trip for the profile size")
+            if stop is not None:
+                d["price_risk_usd"] = round(float(Q.dec(q)) * abs(price - float(stop)), 6)
+            if caps is not None:
+                self._apply_operative_caps(caps)
+                d["operative_caps"] = dict(caps)
+            return None
+        code = info["code"]
+        sized = info.get("sized_qty")
+        if code == sizing.CASH_UNVERIFIED:
+            return (code, "Pass: cash, equity or non-margin buying power could not be read as amounts, so "
+                          "the entry cannot be sized from this account's actual cash; no order")
+        if code == sizing.CASH_SCALED_BELOW_MIN:
+            return (code, "Pass: the profile size for this account's available cash is %s sh; at $%.2f that is "
+                          "$%.2f, below Alpaca's $1 fractional minimum; no order"
+                    % (Q.text(Q.parse(sized)), price, info["notional_usd"]))
+        return (code, "Pass: the profile size for this account's available cash rounds to zero shares; no order")
+
+    def _apply_operative_caps(self, caps):
+        """Paper only: the four profile caps for this entry, in force on the desk's bound check, the
+        order manager and the broker until the next entry recomputes them. Live never calls this."""
+        if not self._profile_paper:
+            raise RuntimeError("operative caps are paper-only; live caps are the approved snapshot")
+        caps = {k: float(caps[k]) for k in ("per_trade_notional", "gross_exposure", "max_loss_per_trade",
+                                              "daily_loss")}
+        self._operative_caps = caps
+        self.mgr.limits.update(caps)
+        self.broker.exec_caps = {k: caps[k] for k in ("per_trade_notional", "gross_exposure")}
+
     def _entry_bounds(self, d, bar, st, qty, side, entry, inval):
         limit, refusal = self._entry_bounds_checked(d, bar, st, qty, side, entry, inval)
         if refusal is not None:
@@ -713,23 +821,23 @@ class AlpacaSessionController(S.SessionController):
             if not (q.get("valid") and q.get("fresh")):
                 return None, ("QUOTE_GATE", "new entry held: SPY IEX quote %s; no order"
                               % (q.get("reason") or "unavailable"))
-            if self._fractional_qty and Q.dec(qty) * Q.dec(q["ask"]) < Q.dec(1):
-                return None, ("BELOW_MIN_NOTIONAL", "fixed size at the fresh ask is below the minimum; no order")
+            if self._fractional_orders and Q.dec(qty) * Q.dec(q["ask"]) < Q.dec(1):
+                return None, ("BELOW_MIN_NOTIONAL", "sized order at the fresh ask is below the $1 minimum; no order")
             try:
                 phase = self._bar_role(bar)
             except (KeyError, TypeError, ValueError, OverflowError):
                 phase = None
             if phase != "open":
                 return None, ("REGULAR_SESSION_NEAR_CLOSE", "the exchange calendar leaves no eligible next entry window")
-        lim = self.limits
-        cost = S._cost_usd(d)
+        lim = self._operative_caps if (self._profile_paper and self._operative_caps) else self.limits
         gross_used = float(st["exposure"].get("gross_including_working") or 0.0)
         remaining = float(lim["gross_exposure"]) - gross_used
         bounds = {
             "decision": float(entry),
             "notional": float(lim["per_trade_notional"]) / qty,
             "gross": remaining / qty,
-            "risk_stop": float(inval) + (float(lim["max_loss_per_trade"]) - cost) / qty,
+            # price risk to the stop only; fees count against the daily cap in the order manager
+            "risk_stop": float(inval) + float(lim["max_loss_per_trade"]) / qty,
         }
         raw = min(bounds.values())
         limit = round(floor_tick(raw), 2)
@@ -740,7 +848,7 @@ class AlpacaSessionController(S.SessionController):
             return None, ("ENTRY_BOUND", "bounded limit $%.2f (binding: %s) is not above the stop $%.2f; "
                                          "no order" % (limit, binding, float(inval)))
         if qty * limit > float(lim["per_trade_notional"]) + 1e-9 or qty * limit > remaining + 1e-9:
-            return None, ("ENTRY_BOUND", "qty %d x $%.2f exceeds a cap; no order" % (qty, limit))
+            return None, ("ENTRY_BOUND", "qty %s x $%.2f exceeds a cap; no order" % (Q.text(Q.parse(qty)), limit))
         return limit, None
 
     # ---------------------------------------------------------------- manual bar checks
@@ -859,7 +967,8 @@ class AlpacaSessionController(S.SessionController):
         if not due:
             return None
         rec = {"utc": iso(now), "expires_utc": exp, "clock": self.clock.name,
-               "action": "Stop & Close (SESSION_EXPIRED); disarmed",
+               "action": "Stop & Close (SESSION_EXPIRED: the arm's end, at the latest the wind-down "
+                         "before the regular close); disarmed",
                "data_outage": dict(self.data_outage) if self.data_outage else None}
         audit = getattr(self.mgr, "_audit", None)
         if audit is not None:
@@ -878,7 +987,7 @@ class AlpacaSessionController(S.SessionController):
                 "detail": "bars arrive only when you click Check for new bars", "simulated": self.mock}
 
     # ---------------------------------------------------------------- sizing-only revision
-    SIZING_CFG_KEYS = ("fixed_qty", "test_size", "limits")
+    SIZING_CFG_KEYS = ("fixed_qty", "test_size", "limits", "fractional", "cost_profile")
     _REVISION_KEYS = ("label", "created_utc", "revision", "revised_utc", "revisions", "limits_source")
 
     @classmethod
@@ -936,7 +1045,9 @@ class AlpacaSessionController(S.SessionController):
     # ---------------------------------------------------------------- protection on every Check
     def _protection_view(self):
         """Booked position against shares covered by working reducing orders (protective stop,
-        exit or close). Uncertain orders count as covering: they may be live, so never double-sell."""
+        exit or close). Only an order the broker has confirmed covers shares. One whose submit is
+        still unconfirmed (pending or uncertain: a timeout or lost ACK) may or may not be live: its
+        shares show as UNCOVERED and UNCONFIRMED, and it is never resent, so nothing sells twice."""
         try:
             st = self.mgr.state()
         except Exception as exc:
@@ -944,19 +1055,40 @@ class AlpacaSessionController(S.SessionController):
         # Exact quantities (int or Decimal); fractional shares are never truncated to whole ones.
         pos = Q.parse_signed(st["exposure"]["position_qty"] or 0)
         side = "sell" if pos > 0 else "buy"
-        prot = Q.norm(sum((Q.dec(Q.parse(o.get("remaining") or 0, allow_zero=True))
-                           for o in st["protective_orders"] if o.get("side") == side), Q.dec(0)))
-        exits = Q.norm(sum((Q.dec(Q.parse(o.get("remaining") or 0, allow_zero=True))
-                            for o in st["exposure"]["working_orders"]
-                            if o.get("kind") in ("exit", "close") and o.get("side") == side), Q.dec(0)))
+
+        def _sum(rows):
+            return Q.norm(sum((Q.dec(Q.parse(o.get("remaining") or 0, allow_zero=True)) for o in rows),
+                              Q.dec(0)))
+        prots = [o for o in st["protective_orders"] if o.get("side") == side]
+        exitrows = [o for o in st["exposure"]["working_orders"]
+                    if o.get("kind") in ("exit", "close") and o.get("side") == side]
+        unconf_rows = [o for o in prots + exitrows if o.get("status") in UNCONFIRMED_STATUSES]
+        prot = _sum(o for o in prots if o.get("status") not in UNCONFIRMED_STATUSES)
+        exits = _sum(o for o in exitrows if o.get("status") not in UNCONFIRMED_STATUSES)
         covered = Q.norm(min(abs(pos), prot + exits)) if pos else 0
+        uncovered = Q.norm(abs(pos) - covered) if pos else 0
+        held = Q.norm(min(uncovered, _sum(unconf_rows))) if pos else 0
+        bare = Q.norm(uncovered - held) if pos else 0
         out = {"available": True, "position_qty": Q.to_json(pos), "protective_qty": Q.to_json(prot),
                "exit_working_qty": Q.to_json(exits), "covered_qty": Q.to_json(covered),
-               "uncovered_qty": Q.to_json(abs(pos) - covered),
+               "uncovered_qty": Q.to_json(uncovered), "unconfirmed_qty": Q.to_json(held),
+               "bare_qty": Q.to_json(bare),
                "stopped": bool(st["controls"]["stopped"]), "simulated": self.mock}
         if out["uncovered_qty"] > 0:
-            out["warning"] = ("%s of %s booked SPY shares have no working protective stop or exit order"
-                              % (Q.text(Q.parse(out["uncovered_qty"])), Q.text(abs(pos))))
+            parts = []
+            if held:
+                out["unconfirmed_orders"] = [dict((k, o.get(k)) for k in
+                                                  ("client_id", "kind", "side", "remaining", "status"))
+                                             for o in unconf_rows]
+                parts.append("%s of %s booked SPY shares are NOT confirmed protected: %s sent but not "
+                             "confirmed by the broker (it may or may not be live). It is not resent, so "
+                             "nothing sells twice; check open orders in your Alpaca account"
+                             % (Q.text(held), Q.text(abs(pos)),
+                                ", ".join("%s %s" % (o.get("kind"), o.get("client_id")) for o in unconf_rows)))
+            if bare:
+                parts.append("%s of %s booked SPY shares have no working protective stop or exit order"
+                             % (Q.text(bare), Q.text(abs(pos))))
+            out["warning"] = "; ".join(parts)
             ref = [x for x in self.mgr.intents.values()
                    if x.get("kind") == "protective" and x.get("status") == "rejected"]
             if ref:
@@ -981,17 +1113,25 @@ class AlpacaSessionController(S.SessionController):
         pv = self._protection_view()
         if pv.get("uncovered_qty", 0) <= 0:
             return
+        # Shares held by a sent-but-unconfirmed order are uncovered on screen but never get a
+        # second order: only the bare remainder (no order at all) is sent.
+        send = pv.get("bare_qty", pv["uncovered_qty"])
+        if send <= 0:
+            return
         inval, it = self._entry_invalidation()
         if inval is None or it is None:
             self._desk_audit("alarm", code="NO_PROTECTIVE", detail="open position without an invalidation price",
                              uncovered_qty=pv["uncovered_qty"])
             return
+        # Ids follow every share with an order (confirmed or not), as before the split.
+        held = Q.norm(Q.dec(Q.parse(pv["covered_qty"] or 0, allow_zero=True))
+                      + Q.dec(Q.parse(pv.get("unconfirmed_qty") or 0, allow_zero=True)))
         # Initial (nothing covered) and residual share one path: the first attempt keeps the
         # base id, a refused attempt is retried under a NEW id (|tryN), never the rejected one.
-        if pv["covered_qty"] == 0:
+        if held == 0:
             base = "protect|%s|%s" % (it["decision_id"], Q.text(abs(pos)))
         else:
-            base = "protect|%s|%s|res%s" % (it["decision_id"], Q.text(abs(pos)), Q.text(Q.parse(pv["covered_qty"])))
+            base = "protect|%s|%s|res%s" % (it["decision_id"], Q.text(abs(pos)), Q.text(held))
         tries = [x for x in self.mgr.intents.values()
                  if x.get("decision_id") == base or str(x.get("decision_id", "")).startswith(base + "|try")]
         if any(x.get("status") in ("pending", "uncertain", "acked") for x in tries):
@@ -1017,12 +1157,13 @@ class AlpacaSessionController(S.SessionController):
                                         % (side, cent, float(last), Q.text(Q.parse(pv["uncovered_qty"]))))
                 return
         did = base if not tries else "%s|try%d" % (base, len(tries) + 1)
-        self._desk_audit("protective_residual" if pv["covered_qty"] else "protective_initial",
-                         position_qty=Q.to_json(pos), covered_qty=pv["covered_qty"], residual_qty=pv["uncovered_qty"],
+        self._desk_audit("protective_residual" if held else "protective_initial",
+                         position_qty=Q.to_json(pos), covered_qty=pv["covered_qty"], residual_qty=send,
+                         unconfirmed_qty=pv.get("unconfirmed_qty", 0),
                          decision_id=did, stop_level=float(inval),
                          stop_on_tick=str(cent) if cent is not None else None)
         self.mgr.submit_intent({"decision_id": did, "kind": "protective", "side": side,
-                                "qty": Q.to_json(Q.parse(pv["uncovered_qty"])), "stop": float(inval),
+                                "qty": Q.to_json(Q.parse(send)), "stop": float(inval),
                                 "ref_price": float(bar["close"]),
                                 "signal_ts": bar.get("delivered_ts") or bar.get("ts_close")})
 
@@ -1046,6 +1187,34 @@ class AlpacaSessionController(S.SessionController):
         out["protection"] = self._protection_view()
         out["latest_quote"] = getattr(self, "latest_quote", None)
         return out
+
+    def reconcile_check(self):
+        """Funded auto-management after the arm has ended (its expiry or a Stop): reduce-only.
+
+        The same order side as a Check (book fills of known orders, work the Stop & Close and its
+        retries, cover uncovered shares), and the desk-clock expiry first. It fetches no bars, makes
+        no decision and never enters, enables, arms or clears a Stop. Returns where the stop stands."""
+        with self.lock:
+            now = self.clock.now()
+            self._feed_manager_clock(now)
+            self._sync_mock_venue_clock(now)
+            expiry = self._expire_on_clock(now)
+            orders = self._order_pass()
+            st = self.mgr.state()
+            ctl = st.get("controls") or {}
+            exp = st.get("exposure") or {}
+            rec = {"utc": iso(now), "ok": "poll_error" not in orders, "bars": 0, "reconcile_only": True,
+                   "error": orders.get("poll_error"), "expiry": expiry,
+                   "flat_confirmed": bool(ctl.get("flat_confirmed")), "stopped": bool(ctl.get("stopped")),
+                   "armed": bool(st.get("armed")), "position_qty": exp.get("position_qty"),
+                   "close_pending": ctl.get("close_pending"), "stop_reason": ctl.get("stop_reason"),
+                   "working_orders": [dict((k, o.get(k)) for k in ("kind", "side", "qty", "remaining", "status"))
+                                      for o in (exp.get("working_orders") or []) if isinstance(o, dict)],
+                   "protection": orders.get("protection")}
+            self.last_reconcile = rec
+            self._desk_audit("reconcile_check", **rec)
+            self._write_state()
+            return dict(rec, simulated=self.mock)
 
     # ---------------------------------------------------------------- operator controls
     def _recovery(self):
@@ -1157,6 +1326,7 @@ class AlpacaSessionController(S.SessionController):
                     "detail": "venue clock unavailable (%s); no new exposure" % exc.__class__.__name__}
         skew = abs((parse_venue_ts(c["timestamp"]) - now).total_seconds())
         ok = bool(c["is_open"]) and skew <= VENUE_CLOCK_SKEW_S
+        self._venue_clock_seen = dict(c) if isinstance(c, dict) else None   # arm reads next_close (no new GET)
         return {"check": "venue clock", "ok": ok,
                 "detail": "%s clock %s, market %s, skew %.0fs (limit %.0fs)" % (
                     "mock venue" if self.mock else ("Alpaca live" if self.live else "Alpaca paper"), c["timestamp"],
@@ -1221,7 +1391,15 @@ class AlpacaSessionController(S.SessionController):
                                                        self.limits["gross_exposure"],
                                                        self.limits_source.get("label") or self.limits["label"])})
         fq = Q.parse(self.strategy_cfg.get("fixed_qty") or 0, allow_zero=True)
-        if Q.is_fractional(fq):
+        if self._profile_paper:
+            frac_ok = bool(getattr(self.broker, "fractional", False))
+            checks.append({"check": "sizing", "ok": True,
+                           "detail": "%s: each entry sized from available cash, %s shares per available dollar%s; "
+                                     "paper caps recomputed each entry" % (
+                                         TP.LABEL, TP.SHARES_PER_USD,
+                                         " (fractional DAY simple orders)" if frac_ok
+                                         else " (whole shares: this broker was not built for fractions)")})
+        elif Q.is_fractional(fq):
             frac_ok = bool(getattr(self.broker, "fractional", False))
             checks.append({"check": "sizing", "ok": frac_ok,
                            "detail": "fractional %s shares (DAY, simple orders)%s" % (
@@ -1316,6 +1494,8 @@ class AlpacaSessionController(S.SessionController):
                 "detail": "DAILY_ENTRY_LIMIT not counted by this order manager (max %s); Arm is blocked" % (
                     mx if mx is not None else "not set")}
 
+    ARM_BOUNDED_EXPIRY = True      # /api/health: a body expires_utc can only shorten the arm (see arm)
+
     def arm(self, session_id=None, expires_utc=None, auto=False):
         with self.lock:
             if auto:
@@ -1327,10 +1507,34 @@ class AlpacaSessionController(S.SessionController):
                 self._write_state()
                 return {"ok": False, "reason": "PREFLIGHT", "failed": failed, "simulated": self.mock}
             now, day = self._today()
-            end = self.calendar.session_bounds(day)[1]
+            bounds = self._arm_bounds(now, day)
+            cap = bounds["wind_down_utc_dt"]
+            if now >= cap:
+                # Inside the wind-down (or past the close): no new arm, so no new entry, today.
+                self._desk_audit("arm_refused", reason="ARM_WIND_DOWN", regular_close_utc=bounds["regular_close_utc"],
+                                 close_source=bounds["close_source"], wind_down_s=TP.WIND_DOWN_S)
+                self._write_state()
+                return {"ok": False, "reason": "ARM_WIND_DOWN", "simulated": self.mock,
+                        "detail": "the regular session closes at %s (%s); the desk stops arming %d minutes "
+                                  "before the close so a Stop & Close can still flatten today; not armed"
+                                  % (bounds["regular_close_utc"], bounds["close_source"], TP.WIND_DOWN_S // 60)}
+            if expires_utc is None:
+                exp = iso(cap)
+            else:
+                # A requested expiry can only shorten the arm: never past the wind-down start (the
+                # regular close minus WIND_DOWN_S), never in the past, never a guess at an unreadable time.
+                try:
+                    want = parse_ts(expires_utc)
+                except (TypeError, ValueError):
+                    want = None
+                if want is None or want <= now:
+                    self._desk_audit("arm_refused", reason="ARM_EXPIRY_INVALID")
+                    self._write_state()
+                    return {"ok": False, "reason": "ARM_EXPIRY_INVALID", "simulated": self.mock,
+                            "detail": "the requested arm expiry is unreadable or already past; not armed"}
+                exp = iso(min(want, cap))
             self.session_seq += 1
             sid = session_id or "%s-%s-%d" % (self.broker_mode, day.isoformat(), self.session_seq)
-            exp = expires_utc or iso(end + _dt.timedelta(seconds=S.SESSION_GRACE_S))
             res = self.mgr.arm(session_id=sid, expires_utc=exp)
             if self.live:
                 res = dict(res, simulated=False)
@@ -1338,9 +1542,30 @@ class AlpacaSessionController(S.SessionController):
                 if self.mgr.state()["controls"]["paused"]:
                     self.mgr.resume()
                 self.phase = "ARMED"
+            if res.get("ok"):
+                self.arm_bounds = dict((k, v) for k, v in bounds.items() if not k.endswith("_dt"))
+                self.arm_bounds["arm_ends_utc"] = exp
+                self.arm_bounds["operator_end"] = exp != iso(cap)
             self._desk_audit("arm", result=res, session_id=sid, expires_utc=exp)
             self._write_state()
             return res
+
+    def _arm_bounds(self, now, day):
+        """When an arm must end today: WIND_DOWN_S before the regular close. The close is the desk
+        calendar's (published holidays and early closes), or the venue clock's next_close from this
+        arm's own preflight read when that is earlier and still ahead (an unscheduled early close)."""
+        close, src = self.calendar.session_bounds(day)[1], "desk calendar"
+        vc = getattr(self, "_venue_clock_seen", None)
+        if isinstance(vc, dict) and vc.get("is_open") is True:
+            try:
+                vnc = parse_venue_ts(vc["next_close"])
+                if now < vnc < close:
+                    close, src = vnc, "venue clock"
+            except Exception:
+                pass
+        wind = close - _dt.timedelta(seconds=TP.WIND_DOWN_S)
+        return {"regular_close_utc": iso(close), "close_source": src, "wind_down_s": TP.WIND_DOWN_S,
+                "wind_down_utc": iso(wind), "wind_down_utc_dt": wind}
 
     def session_state(self):
         sim = S.SessionController.session_state(self)
@@ -1358,6 +1583,7 @@ class AlpacaSessionController(S.SessionController):
         sim["recovery"] = self._recovery_view()
         sim["last_check"] = self.last_check if hasattr(self, "last_check") else None
         sim["protection"] = dict(self._protection_view(), fill_timing_note=FILL_TIMING_NOTE)
+        sim["arm_bounds"] = dict(getattr(self, "arm_bounds", None) or {}) or None
         sim["latest_quote"] = getattr(self, "latest_quote", None)
         clock = getattr(self, "clock", None)
         sim["clock_utc"] = iso(clock.now()) if clock else None
@@ -1366,6 +1592,16 @@ class AlpacaSessionController(S.SessionController):
                            "note": ("Manual live session (REAL MONEY): " if self.live else "Manual paper session: ")
                                    + "bars arrive only when you click Check for new bars. "
                                    "No launchd, cron or background job; no auto-arm."}
+        am = getattr(self, "auto_manage", None)
+        if isinstance(am, dict):
+            # Funded launcher only (alpaca/live_supervisor.py): after the operator's own Enable and Arm.
+            sim["auto_manage"] = dict(am)
+            sim["schedule"]["note"] = ("Live session (REAL MONEY): after you enable and arm it, the desk runs "
+                                       "its own Check every %ss until the arm ends (%d minutes before the regular "
+                                       "close, or your earlier end, then Stop & Close) or you press Stop, then "
+                                       "keeps checking, reduce-only, until the broker confirms flat or it hands "
+                                       "over an unresolved state. No launchd or cron; it never enables "
+                                       "or arms itself." % (am.get("every_s"), TP.WIND_DOWN_S // 60))
         sim["broker"] = dict(sim["broker"], name=self.evidence_label, external=not self.mock,
                              book_file="alpaca_broker.json (adapter journal)",
                              transport=repr(self.transport))
@@ -1389,6 +1625,7 @@ class AlpacaSessionController(S.SessionController):
         sim["data_outage"] = self.data_outage
         sim["last_entry_refusal"] = self.last_entry_refusal
         sim["last_expiry"] = self.last_expiry
+        sim["last_reconcile"] = getattr(self, "last_reconcile", None)
         sim["entry_gates"] = {"min_signal_minutes": MIN_SIGNAL_MINUTES,
                               "detail": "a new entry needs a complete signal hour or at least %d of its expected "
                                         "1-minute bars; connected modes re-read the NYSE session and the venue "
@@ -1402,6 +1639,12 @@ class AlpacaSessionController(S.SessionController):
                 "exposure": "desk-submitted orders and their fills only; positions opened outside the desk are "
                             "not managed, sized against or closed by it",
                 "fills": "only fills on orders with this desk's client order ids are booked here"}
+        prof = TP.describe("paper" if self._profile_paper else "live")
+        prof["applied"] = not self.mock
+        if self.mock:
+            prof["summary"] = "offline mock desk: approved fixed size, profile not applied"
+        prof["operative_caps"] = dict(self._operative_caps) if self._operative_caps else None
+        sim["trading_profile"] = prof
         sim["simulated"] = self.mock
         return sim
 

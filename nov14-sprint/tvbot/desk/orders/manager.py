@@ -614,13 +614,50 @@ class OrderManager(object):
             inv = self._num(it.get("stop"))
         return ie, inv
 
-    def _entry_max_loss(self, it, qty=None):
-        """Plain dollars lost if the entry fills at intended_entry and exits at invalidation, plus cost."""
+    def _entry_price_risk(self, it, qty=None):
+        """Price risk to the stop only: qty x |intended_entry - invalidation| x multiplier.
+
+        This is what max_loss_per_trade caps (operator rule: the per-trade
+        limit is planned price loss to the stop; fees are budgeted separately)."""
         ie, inv = self._entry_points(it)
         if ie is None or inv is None:
             return None
         q = self._remaining(it) if qty is None else qty
-        return float(q) * abs(ie - inv) * self.multiplier + float(it.get("est_cost") or 0.0)
+        return float(q) * abs(ie - inv) * self.multiplier
+
+    def _entry_max_loss(self, it, qty=None):
+        """Worst-case dollars for the daily cap: price risk to the stop plus the estimated round-trip cost."""
+        r = self._entry_price_risk(it, qty=qty)
+        if r is None:
+            return None
+        return r + float(it.get("est_cost") or 0.0)
+
+    def _open_fee_reserve(self):
+        """Estimated fees still to come on the open position's already-filled entries.
+
+        Walks the fills since the position was last flat. For each entry intent that is no longer
+        working (a working entry's full est_cost is already in _stop_risk), it reserves that entry's
+        est_cost, less the fees already booked since flat on those entries and on the closing side.
+        Fees already booked are in day_pnl, so they are not counted twice."""
+        if self.pos_qty == 0:
+            return 0.0
+        live = set(id(it) for it in self._live([ENTRY]))
+        pos = Decimal(0)
+        est, booked, seen = 0.0, 0.0, set()
+        for f in self.fills:
+            it = self.intents.get(f.get("intent_id"))
+            if it is None:
+                continue
+            q = Q.dec(f["qty"])
+            pos = pos + (q if it["side"] == "buy" else -q)
+            if id(it) not in live:
+                booked += float(f.get("fee") or 0.0)
+                if it.get("kind") == ENTRY and f["intent_id"] not in seen:
+                    seen.add(f["intent_id"])
+                    est += float(it.get("est_cost") or 0.0)
+            if pos == 0:
+                est, booked, seen = 0.0, 0.0, set()
+        return max(0.0, est - booked)
 
     def _stop_risk(self):
         """Worst-case loss to the stops of the position and of working/reserved entries."""
@@ -684,9 +721,9 @@ class OrderManager(object):
         notional_d = Q.dec(it["qty"]) * _dec(price) * _dec(self.multiplier)
         if notional_d > _dec(self.limits["per_trade_notional"]):
             return "NOTIONAL"     # lexical Decimal: exactly at the cap passes, any true excess is refused
+        if self._entry_price_risk(it, qty=it["qty"]) > self.limits["max_loss_per_trade"]:
+            return "MAX_LOSS"     # price risk to the stop only; fees count in the daily check below
         new_risk = self._entry_max_loss(it, qty=it["qty"])
-        if new_risk > self.limits["max_loss_per_trade"]:
-            return "MAX_LOSS"
         if self._gross_dec() + notional_d > _dec(self.limits["gross_exposure"]):
             return "RISK_GROSS"
         loss = max(0.0, -self.day_pnl())
@@ -695,7 +732,9 @@ class OrderManager(object):
                                           "loss": round(loss, 6)})
             self._audit("control", action="day_stop", loss=loss, limit=self.limits["daily_loss"])
             return "DAILY_LOSS_STOP"
-        if loss + self._stop_risk() + new_risk > self.limits["daily_loss"]:
+        # daily worst case = realized/unrealized loss net of booked fees + stop risk of the position and
+        # of working entries (with their est. fees) + fees still to come on the open position + this entry
+        if loss + self._stop_risk() + self._open_fee_reserve() + new_risk > self.limits["daily_loss"]:
             return "RISK_DAILY_LOSS_WORST_CASE"
         return None
 

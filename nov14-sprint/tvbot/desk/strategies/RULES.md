@@ -170,8 +170,10 @@ is at least the $6 basket stop, because the leg would start at its stop.
 
 `MAX_LOSS_WOULD_BREACH` (added 2026-11-15 ~17:42Z for desk CONTRACT v2,
 after the holdout claim, so the rule hash changed) mirrors the desk's
-plain-dollar cap: qty × |intended_entry − invalidation| + estimated
-round-trip cost must be at most `max_loss_per_trade`. The cap is read from
+plain-dollar cap: price risk to the stop, qty × |intended_entry − invalidation|,
+must be at most `max_loss_per_trade`. Under the operator rule the
+estimated round-trip cost is not part of this cap; it is counted
+against the daily loss cap in the order manager. The cap is read from
 `cfg["limits"]["max_loss_per_trade"]` (or `cfg["max_loss_per_trade"]`), a
 TEST VALUE the desk passes in ($10 in CONTRACT.md). The strategy refuses;
 it never shrinks the TEST size to fit. With no cap in cfg the check passes

@@ -20,7 +20,10 @@ from alpaca.feed import parse_rfc3339
 from alpaca.transport import TransportRefused
 
 # Execution freshness policy for each manually requested quote, in seconds.
-MAX_QUOTE_AGE = 30
+try:
+    from alpaca.trading_profile import MAX_QUOTE_AGE_S as MAX_QUOTE_AGE   # Balanced pace
+except ImportError:   # run as a script from alpaca/
+    from trading_profile import MAX_QUOTE_AGE_S as MAX_QUOTE_AGE
 FUTURE_TOLERANCE = 2
 MAX_CLOCK_SKEW = 60
 

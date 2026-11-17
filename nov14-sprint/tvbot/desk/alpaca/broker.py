@@ -34,6 +34,7 @@ from zoneinfo import ZoneInfo
 from alpaca import (LABEL_ALPACA_PAPER, LABEL_INJECTED, LABEL_MOCK_LOCAL, ORDER_TYPES, SYMBOL,
                     TIME_IN_FORCE)
 from alpaca import live as _live
+from alpaca import registration as _registration
 from alpaca.live import LABEL_ALPACA_LIVE
 from alpaca.state import AdapterState
 from alpaca.transport import TransportRefused
@@ -449,6 +450,99 @@ class AlpacaPaperBroker(object):
         self.book["integrity"] = self.book["integrity"][-200:]
         self._save()
 
+    # A private registration (alpaca/registration.py) of desk-placed PAPER orders the book does not
+    # hold. PAPER only; it settles its rows only when the whole registration is authenticated.
+    REGISTRATION_PAGE = 100
+
+    def _registration_note(self, code, detail):
+        """A non-locking integrity note, written once per distinct code and detail."""
+        if self.book.get("registration_note") == [code, detail]:
+            return
+        self.book["registration_note"] = [code, detail]
+        self.book["integrity"].append({"utc": _now(), "code": code, "detail": detail})
+        self.book["integrity"] = self.book["integrity"][-200:]
+        self._save()
+
+    def _registration_settled(self, merged, complete):
+        """{order id: reason} for every row of an authenticated registration, else {} (they lock)."""
+        if self._REAL_LABEL == LABEL_ALPACA_LIVE or self._ALLOW_LIVE_TRANSPORT or \
+                getattr(self.transport, "MODE", "paper") != "paper":
+            return {}
+        try:
+            regs = _registration.load(self.state_dir)
+        except _registration.RegistrationInvalid as exc:
+            self._registration_note("REGISTRATION_UNVERIFIED", "%s; its orders keep locking" % exc)
+            return {}
+        if regs is None:
+            return {}
+        why, reasons, events = self._registration_check(regs, merged, complete)
+        if why is not None:
+            self._registration_note("REGISTRATION_UNVERIFIED", "%s; its orders keep locking" % why)
+            return {}
+        if events is not None:
+            self._registration_note("REGISTRATION_AUTHENTICATED", "%d registered PAPER order(s), %d fill event(s), "
+                                    "flat reconcile" % (len(regs), events))
+        return reasons
+
+    def _registration_check(self, regs, merged, complete):
+        """(why not, None, None), or (None, reasons, events read; None when already authenticated)."""
+        if complete is not True:
+            return "the order listing is incomplete", None, None
+        for reg in regs:
+            if reg["client_order_id"] in self.book["orders"]:
+                return "registered order %s is in the desk's own book" % reg["client_order_id"], None, None
+            why = _registration.match_row(reg, merged.get(reg["id"]))
+            if why is not None:
+                return why, None, None
+        settled = self.book.get("foreign_settled") or {}
+        sticky = {}
+        for reg in regs:
+            row, rec = merged[reg["id"]], settled.get(reg["id"])
+            if isinstance(rec, dict) and str(rec.get("reason", "")).startswith(_registration.REASON_PREFIX) and \
+                    all(rec.get(k) == row.get(v) for k, v in (("client_id", "client_order_id"), ("status", "status"),
+                                                              ("submitted_at", "submitted_at"))) and \
+                    rec.get("filled_qty") == str(row.get("filled_qty")):
+                sticky[reg["id"]] = rec["reason"]
+            elif self._foreign_settled(row, complete) is not None:
+                sticky[reg["id"]] = _registration.reason(reg, 0)
+            else:
+                break
+        else:
+            return None, sticky, None                     # authenticated earlier; terminal rows do not change
+        starts = [_parse_utc(reg["submitted_at"]) for reg in regs]
+        if any(t is None for t in starts):
+            return "a registered submitted_at is not a UTC time", None, None
+        after = (min(starts) - _dt.timedelta(seconds=60)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        try:
+            st, acts = self._get("/v2/account/activities/FILL", {"after": after, "page_size": self.REGISTRATION_PAGE,
+                                                                 "direction": "asc"})
+        except (BrokerOutage, BrokerUncertain) as exc:
+            return "fill activities could not be read (%s)" % exc.__class__.__name__, None, None
+        if st != 200 or not isinstance(acts, list):
+            return "fill activities answered HTTP %s" % st, None, None
+        if len(acts) >= self.REGISTRATION_PAGE:
+            return "fill activities filled a whole page, so the list may be incomplete", None, None
+        if not all(isinstance(a, dict) for a in acts):
+            return "a fill activity is malformed", None, None
+        ids = set(reg["id"] for reg in regs)
+        mine = [a for a in acts if a.get("order_id") in ids]
+        why = _registration.check_fills(regs, mine)
+        if why is not None:
+            return why, None, None
+        try:
+            pos = self._read_positions()
+        except (BrokerOutage, BrokerUncertain) as exc:
+            return "positions could not be read (%s)" % exc.__class__.__name__, None, None
+        try:
+            residual = Decimal(str(pos[SYMBOL].get("qty_exact", "0"))) - _qty.dec(self._book_net())
+        except (InvalidOperation, ValueError, _qty.QtyError):
+            return "the SPY position is not an exact quantity", None, None
+        if residual != 0:
+            return "the SPY position differs from the desk book by %s shares, so it is not flat" % residual, None, None
+        reasons = dict((reg["id"], _registration.reason(reg, sum(1 for a in mine if a.get("order_id") == reg["id"])))
+                       for reg in regs)
+        return None, reasons, len(mine)
+
     def _public_foreign(self, row):
         return {"client_id": row.get("client_order_id"), "order_id": row.get("id"), "symbol": row.get("symbol"),
                 "side": row.get("side"), "qty": self._row_qty(row.get("qty"), None),
@@ -474,7 +568,8 @@ class AlpacaPaperBroker(object):
         """Fold an Alpaca order row into the book. Returns new fill dicts (already persisted and queued)."""
         alp = row.get("status")
         rec["alpaca_status"] = alp
-        if row.get("id") and not rec.get("order_id"):
+        found = bool(row.get("id") and not rec.get("order_id"))
+        if found:                  # a submit sent without its answer (lost ACK) is now seen at the venue
             rec["order_id"] = row["id"]
         rec["state"] = "acked"
         new = []
@@ -520,6 +615,8 @@ class AlpacaPaperBroker(object):
                         rec["order_id"], _qty.text(cum1), _qty.text(_xq(rec["qty"]))))
         rec["status"] = map_status(alp)
         self._save()                                     # persisted before any event is queued
+        if found:                                        # so the manager marks that intent acked
+            self._emit({"type": "ack", "client_id": cid, "order_id": rec["order_id"]})
         for f in new:
             self._events.append(dict(f))
         if rec["status"] in ("canceled", "rejected") and not rec.get("terminal_emitted"):
@@ -866,7 +963,7 @@ class AlpacaPaperBroker(object):
 
     # ------------------------------------------------------------------ manager reads (fractional contract)
     def funding(self):
-        """GET /v2/account -> {"cash": str|None, "non_marginable_buying_power": str|None}: Alpaca's raw
+        """GET /v2/account -> {"cash", "non_marginable_buying_power", ["buying_power"], ["equity"]}: Alpaca's raw
         strings, None when a field is missing. The manager checks risk and funding before reserving a daily attempt; the broker also rechecks before a wire POST. This method only
         reads. Any failure raises BrokerOutage. The values are never logged, audited or put in a message."""
         try:
@@ -883,6 +980,8 @@ class AlpacaPaperBroker(object):
         vals = {"cash": raw("cash"), "non_marginable_buying_power": raw("non_marginable_buying_power")}
         if "buying_power" in acct:
             vals["buying_power"] = raw("buying_power")
+        if "equity" in acct:         # cash-proportional sizing reads it; missing means CASH_UNVERIFIED there
+            vals["equity"] = raw("equity")
         return vals
 
     def entry_buys_since(self, after_iso):
@@ -1015,6 +1114,7 @@ class AlpacaPaperBroker(object):
             if isinstance(row, dict) and row.get("id"):
                 merged[row["id"]] = row
         out = []
+        registered = None                     # read only when a foreign SPY row would otherwise lock
         for row in merged.values():
             cid = row.get("client_order_id")
             rec = self.book["orders"].get(cid)
@@ -1025,6 +1125,10 @@ class AlpacaPaperBroker(object):
             out.append(self._public_foreign(row))
             if row.get("symbol") == SYMBOL:
                 settled = self._foreign_settled(row, complete)
+                if settled is None:
+                    if registered is None:
+                        registered = self._registration_settled(merged, complete)
+                    settled = registered.get(row.get("id"))
                 if settled is not None:
                     self._record_foreign_settled(row, settled)
                 else:
