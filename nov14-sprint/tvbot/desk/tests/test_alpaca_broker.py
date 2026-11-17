@@ -895,5 +895,246 @@ class TransportTests(unittest.TestCase):
         self.assertNotIn("bad secret", blob)
 
 
+
+# ---------------------------------------------------------------------------------------------------
+# Paper-only recovery from settled foreign SPY rows (FOREIGN_ORDER re-lock after operator enable).
+# Real paper incident: an earlier engineering order, canceled with zero shares executed, kept
+# disabling the adapter after every operator enable. Fixed boundary under test:
+#   * terminal (canceled/expired/rejected) with exactly zero shares executed, in a COMPLETE listing,
+#     no longer locks; the provenance is recorded once and kept;
+#   * a foreign row that executed shares locks until its trade date has ended. Fills after 20:00 ET
+#     belong to the NEXT trade date (Alpaca overnight session), and the fill time, not the submit
+#     time, decides;
+#   * open, partial, unknown, malformed, incomplete-listing and live cases still lock;
+#   * nothing ever re-enables the adapter.
+import datetime as _dt  # noqa: E402
+import types as _types  # noqa: E402
+from unittest import mock as _mock  # noqa: E402
+
+import alpaca.broker as _broker_mod  # noqa: E402
+from alpaca.broker import AlpacaLiveBroker  # noqa: E402
+
+MON_LATE = "2026-11-17T01:30:00Z"     # Mon 20:30 ET: overnight session, Tuesday trade date
+TUE_OPEN = "2026-11-17T14:30:00Z"     # Tue 09:30 ET: regular open
+TUE_LATE = "2026-11-18T00:30:00Z"     # Tue 19:30 ET: still Tuesday's trade date
+WED_EARLY = "2026-11-18T06:30:00Z"    # Wed 01:30 ET: Tuesday's trade date has ended
+
+
+def _utc(s):
+    return _dt.datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=_dt.timezone.utc)
+
+
+def _at(now):
+    return _mock.patch.object(_broker_mod, "_utcnow_dt", lambda: _utc(now))
+
+
+class ForeignSettledFlowTests(Case):
+    def setUp(self):
+        super().setUp()
+        self.b.book["created_utc"] = "2026-11-14T00:00:00Z"
+        self.b._save()
+
+    def foreign(self, cid, status, filled_qty, submitted, done=None, side="buy"):
+        oid = self.trading.add_foreign_order(client_order_id=cid, side=side, status=status)
+        row = self.trading.orders[oid]
+        row.update(filled_qty=filled_qty, submitted_at=submitted, created_at=submitted,
+                   updated_at=done or submitted)
+        if status == "filled":
+            row.update(filled_at=done, filled_avg_price=500.0)
+        elif status == "canceled":
+            row["canceled_at"] = done
+        elif status == "expired":
+            row["expired_at"] = done
+        return oid
+
+    def listing(self, now):
+        with _at(now):
+            return self.b.list_orders()
+
+    def enabled(self):
+        return AdapterState(self.dir).enabled
+
+    def codes(self):
+        return [e["code"] for e in self.b.book["integrity"]]
+
+    def test_canceled_zero_fill_foreign_row_does_not_lock_and_is_recorded_once(self):
+        oid = self.foreign("eng-probe-1", "canceled", 0, "2026-11-16T22:00:00Z", "2026-11-16T22:00:05Z")
+        res = self.listing(MON_LATE)
+        self.assertTrue(res["complete"])
+        self.assertTrue(self.enabled())
+        self.assertIn(oid, self.b.book["foreign_settled"])
+        self.assertIn("zero", self.b.book["foreign_settled"][oid]["reason"])
+        self.assertEqual(self.codes().count("FOREIGN_ORDER_SETTLED"), 1)
+        self.listing(TUE_OPEN)
+        self.assertEqual(self.codes().count("FOREIGN_ORDER_SETTLED"), 1)
+        self.assertNotIn("FOREIGN_ORDER", self.codes())
+        ext = [o for o in res["orders"] if o.get("external")]
+        self.assertEqual([o["alpaca_status"] for o in ext], ["canceled"])   # still reported, never hidden
+
+    def test_settled_provenance_survives_restart(self):
+        oid = self.foreign("eng-probe-1", "canceled", 0, "2026-11-16T22:00:00Z", "2026-11-16T22:00:05Z")
+        self.listing(MON_LATE)
+        self.new_broker()
+        self.assertIn(oid, self.b.book["foreign_settled"])
+        self.assertIn("FOREIGN_ORDER_SETTLED", self.codes())
+        self.listing(MON_LATE)
+        self.assertEqual(self.codes().count("FOREIGN_ORDER_SETTLED"), 1)
+        self.assertTrue(self.enabled())
+
+    def test_manager_still_reports_settled_row_but_it_does_not_block(self):
+        self.foreign("eng-probe-1", "canceled", 0, "2026-11-16T22:00:00Z", "2026-11-16T22:00:05Z")
+        self.new_manager()
+        rep = self.m.reconcile()
+        self.assertTrue(self.enabled())
+        foreign = [a for a in rep["alarms"] if a["code"] == "FOREIGN_ORDER"]
+        self.assertEqual(len(foreign), 1)                  # still visible to the operator
+        self.assertFalse(foreign[0]["blocking"])
+        self.assertTrue(rep["ok"], rep["alarms"])
+
+    def test_filled_foreign_row_from_current_trade_date_still_locks(self):
+        self.foreign("ext-postmarket-buy", "filled", 1, "2026-11-17T00:05:00Z", "2026-11-17T00:05:01Z")
+        self.listing(MON_LATE)
+        self.assertFalse(self.enabled())
+        self.assertIn("FOREIGN_ORDER", AdapterState(self.dir).data["disabled_reason"])
+
+    def test_postmarket_fill_settles_once_its_trade_date_has_ended(self):
+        oid = self.foreign("ext-postmarket-buy", "filled", 1, "2026-11-17T00:05:00Z", "2026-11-17T00:05:01Z")
+        self.listing(TUE_OPEN)
+        self.assertTrue(self.enabled())
+        self.assertIn("trade date", self.b.book["foreign_settled"][oid]["reason"])
+
+    def test_overnight_fill_after_8pm_et_belongs_to_the_next_trade_date(self):
+        self.foreign("ext-overnight-buy", "filled", 1, "2026-11-17T01:05:00Z", "2026-11-17T01:10:00Z")
+        for now in (TUE_OPEN, TUE_LATE):
+            AdapterState(self.dir).enable(by="test")
+            self.new_broker()
+            self.listing(now)
+            self.assertFalse(self.enabled(), now)
+        AdapterState(self.dir).enable(by="test")
+        self.new_broker()
+        self.listing(WED_EARLY)
+        self.assertTrue(self.enabled())
+
+    def test_resting_order_is_classified_by_fill_time_not_submit_time(self):
+        self.foreign("resting-1", "filled", 1, "2026-11-16T23:00:00Z", "2026-11-17T01:10:00Z")
+        self.listing(TUE_OPEN)
+        self.assertFalse(self.enabled())
+
+    def test_working_partial_and_unknown_foreign_rows_still_lock(self):
+        for status in ("new", "accepted", "partially_filled", "pending_cancel", "held", "done_for_day",
+                       "replaced", "mystery"):
+            with self.subTest(status=status):
+                AdapterState(self.dir).enable(by="test")
+                self.new_broker()
+                oid = self.foreign("x-" + status, status, 0, "2026-11-15T15:00:00Z", "2026-11-15T15:00:05Z")
+                self.listing(TUE_OPEN)
+                self.assertFalse(self.enabled())
+                del self.trading.orders[oid]
+
+    def test_canceled_row_with_unknown_fill_quantity_still_locks(self):
+        self.foreign("x-unknown", "canceled", None, "2026-11-15T15:00:00Z", "2026-11-15T15:00:05Z")
+        self.listing(TUE_OPEN)
+        self.assertFalse(self.enabled())
+
+    def test_incomplete_listing_never_settles(self):
+        self.b.list_limit = 1
+        self.foreign("eng-probe-1", "canceled", 0, "2026-11-16T22:00:00Z", "2026-11-16T22:00:05Z")
+        self.foreign("eng-probe-2", "canceled", 0, "2026-11-16T22:10:00Z", "2026-11-16T22:10:05Z")
+        res = self.listing(TUE_OPEN)
+        self.assertFalse(res["complete"])
+        self.assertFalse(self.enabled())
+
+    def test_existing_disabled_state_stays_disabled_until_an_operator_enables(self):
+        self.foreign("ext-postmarket-buy", "filled", 1, "2026-11-17T00:05:00Z", "2026-11-17T00:05:01Z")
+        self.listing(MON_LATE)
+        self.assertFalse(self.enabled())
+        self.new_broker()                                  # relaunch on the same state directory
+        self.listing(TUE_OPEN)                             # the row now settles ...
+        self.assertFalse(self.enabled())                   # ... but nothing re-enables the adapter
+        self.assertIn("FOREIGN_ORDER", self.codes())       # the original alarm provenance is kept
+        AdapterState(self.dir).enable(by="operator")
+        self.new_broker()
+        self.listing(TUE_OPEN)
+        self.assertTrue(self.enabled())
+        self.assertIn("FOREIGN_ORDER", self.codes())
+
+
+class ForeignSettledRuleTests(unittest.TestCase):
+    """The rule itself, on Alpaca-shaped rows (quantities as JSON strings, microsecond stamps)."""
+
+    def stub(self, cls=AlpacaPaperBroker, mode="paper"):
+        s = object.__new__(cls)
+        s.transport = _types.SimpleNamespace(MODE=mode)
+        return s
+
+    def row(self, status, filled_qty, **ts):
+        r = {"id": "o1", "client_order_id": "c1", "symbol": "SPY", "side": "buy", "status": status,
+             "filled_qty": filled_qty, "submitted_at": "2026-11-16T22:00:00.123456Z",
+             "updated_at": "2026-11-16T22:00:05.5Z"}
+        r.update(ts)
+        return r
+
+    def settled(self, row, now=TUE_OPEN, complete=True, broker=None):
+        with _at(now):
+            return (broker or self.stub())._foreign_settled(row, complete)
+
+    def test_terminal_zero_fill_statuses_settle(self):
+        for status in ("canceled", "expired", "rejected"):
+            for q in ("0", 0, "0.0"):
+                with self.subTest(status=status, q=q):
+                    self.assertIsNotNone(self.settled(self.row(status, q), now=MON_LATE))
+
+    def test_unknown_or_malformed_fill_quantity_is_not_zero(self):
+        for q in (None, "", "abc", "NaN", "Infinity", "-1", True, False, [], {}):
+            with self.subTest(q=q):
+                self.assertIsNone(self.settled(self.row("canceled", q)))
+
+    def test_non_terminal_or_unknown_status_never_settles(self):
+        for status in ("new", "partially_filled", "done_for_day", "replaced", "pending_cancel", None, "weird"):
+            with self.subTest(status=status):
+                self.assertIsNone(self.settled(self.row(status, "0")))
+
+    def test_prior_trade_date_fill_with_exact_alpaca_stamps_settles(self):
+        r = self.row("filled", "0.0014", submitted_at="2026-11-17T00:05:00.100001Z",
+                     filled_at="2026-11-17T00:05:00.200002Z", updated_at="2026-11-17T00:05:00.300003Z")
+        self.assertIsNotNone(self.settled(r, now=TUE_OPEN))
+        self.assertIsNone(self.settled(r, now=MON_LATE))
+
+    def test_offset_stamps_are_converted_to_utc(self):
+        r = self.row("filled", "1", submitted_at="2026-11-16T19:04:00-05:00",
+                     filled_at="2026-11-16T19:04:01-05:00", updated_at="2026-11-16T19:04:01-05:00")
+        self.assertIsNotNone(self.settled(r, now=TUE_OPEN))
+        r2 = self.row("filled", "1", submitted_at="2026-11-16T20:05:00-05:00",
+                      filled_at="2026-11-16T20:10:00-05:00", updated_at="2026-11-16T20:10:00-05:00")
+        self.assertIsNone(self.settled(r2, now=TUE_OPEN))
+
+    def test_filled_row_needs_parseable_submit_and_fill_stamps(self):
+        self.assertIsNone(self.settled(self.row("filled", "1")))                       # no filled_at
+        self.assertIsNone(self.settled(self.row("filled", "1", filled_at="yesterday")))
+        self.assertIsNone(self.settled(self.row("filled", "1", filled_at="2026-11-16T22:00:01Z",
+                                                updated_at="soon")))
+        r = self.row("filled", "1", filled_at="2026-11-16T22:00:01Z")
+        del r["submitted_at"]
+        self.assertIsNone(self.settled(r))
+
+    def test_partial_fill_then_cancel_waits_for_its_trade_date(self):
+        r = self.row("canceled", "0.0007", canceled_at="2026-11-17T00:10:00Z", updated_at="2026-11-17T00:10:00Z")
+        self.assertIsNone(self.settled(r, now=MON_LATE))
+        self.assertIsNotNone(self.settled(r, now=TUE_OPEN))
+        r2 = dict(r)
+        del r2["canceled_at"]
+        self.assertIsNone(self.settled(r2, now=TUE_OPEN))
+
+    def test_incomplete_listing_never_settles(self):
+        self.assertIsNone(self.settled(self.row("canceled", "0"), complete=False))
+        self.assertIsNone(self.settled(self.row("canceled", "0"), complete="yes"))
+
+    def test_live_broker_and_live_transport_never_settle(self):
+        live = self.stub(AlpacaLiveBroker, mode="live")
+        self.assertIsNone(self.settled(self.row("canceled", "0"), broker=live))
+        self.assertIsNone(self.settled(self.row("canceled", "0"), broker=self.stub(mode="live")))
+        self.assertIsNone(self.settled(self.row("canceled", "0"), broker=self.stub(AlpacaLiveBroker)))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -21,13 +21,15 @@ Fail-safe rules:
 - Fills are derived from cumulative filled_qty. The last seen cumulative quantity per order is
   persisted (fsync + atomic replace) BEFORE a fill event is queued, so a restart never books twice.
 """
+import datetime as _dt
 import json
 import math
 import os
 import re
 import tempfile
 import time
-from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
+from decimal import Decimal, InvalidOperation, ROUND_CEILING, ROUND_FLOOR
+from zoneinfo import ZoneInfo
 
 from alpaca import (LABEL_ALPACA_PAPER, LABEL_INJECTED, LABEL_MOCK_LOCAL, ORDER_TYPES, SYMBOL,
                     TIME_IN_FORCE)
@@ -57,6 +59,82 @@ PRICE_BASIS = {LABEL_ALPACA_PAPER: "Alpaca paper fill", LABEL_MOCK_LOCAL: "MOCK 
 
 def _now():
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+# ---------------------------------------------------------------- settled foreign rows (paper only)
+# A SPY order this desk did not place still disables the adapter (FOREIGN_ORDER), with two narrow
+# paper-only exceptions that stop an already-reconciled history from re-locking after every operator
+# enable. Both need a COMPLETE listing and an exactly parsed filled_qty (unknown is never zero):
+#   (a) canceled / expired / rejected with zero shares executed: nothing happened at the venue;
+#   (b) filled, or canceled / expired after a partial fill, whose every timestamp (submit, fill and
+#       terminal) is before the start of the current trade date. Anything executed on the current
+#       trade date keeps locking, so a foreign fill can never be hidden from that day's controls.
+# The current trade date starts at the EARLIEST of the latest New York midnight, the latest Chicago
+# midnight (the calendar default) and the latest 20:00 New York time: Alpaca assigns executions in
+# its overnight session (after 20:00 ET) to the NEXT trade date. Fri 20:00 ET to Sun 20:00 ET has no
+# session, so a row in that gap is treated like the Friday-evening boundary (it settles later, never
+# earlier). Live brokers and non-paper transports never settle a foreign row. Nothing here enables
+# the adapter: an operator enable is still required after any FOREIGN_ORDER disable.
+FOREIGN_SETTLED_ZERO = ("canceled", "expired", "rejected")
+FOREIGN_SETTLED_FILLED = ("filled", "canceled", "expired")
+FOREIGN_STAMP_KEYS = ("submitted_at", "filled_at", "canceled_at", "expired_at", "failed_at", "updated_at")
+FOREIGN_TERMINAL_STAMP = {"filled": "filled_at", "canceled": "canceled_at", "expired": "expired_at"}
+FOREIGN_SETTLED_CAP = 500
+_NY = ZoneInfo("America/New_York")
+_CHI = ZoneInfo("America/Chicago")
+_STAMP_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:\d{2})$")
+
+
+def _utcnow_dt():
+    return _dt.datetime.now(_dt.timezone.utc)
+
+
+def _parse_utc(v):
+    """An Alpaca RFC 3339 timestamp as an aware UTC datetime, or None when absent or malformed."""
+    if not isinstance(v, str):
+        return None
+    m = _STAMP_RE.match(v.strip())
+    if not m:
+        return None
+    y, mo, d, h, mi, sec, frac, tz = m.groups()
+    try:
+        if tz == "Z":
+            tzinfo = _dt.timezone.utc
+        else:
+            sign = 1 if tz[0] == "+" else -1
+            tzinfo = _dt.timezone(sign * _dt.timedelta(hours=int(tz[1:3]), minutes=int(tz[4:6])))
+        out = _dt.datetime(int(y), int(mo), int(d), int(h), int(mi), int(sec),
+                           int((frac or "0")[:6].ljust(6, "0")), tzinfo=tzinfo)
+    except ValueError:
+        return None
+    return out.astimezone(_dt.timezone.utc)
+
+
+def _foreign_qty(v):
+    """Exact executed quantity, or None when absent, boolean, malformed, non-finite or negative."""
+    if v is None or isinstance(v, bool) or not isinstance(v, (int, float, str, Decimal)):
+        return None
+    try:
+        q = Decimal(str(v).strip())
+    except (InvalidOperation, ValueError):
+        return None
+    if not q.is_finite() or q < 0:
+        return None
+    return q
+
+
+def _latest_local(now, tz, hour):
+    local = now.astimezone(tz)
+    start = _dt.datetime(local.year, local.month, local.day, hour, tzinfo=tz)
+    if start > local:
+        prev = local.date() - _dt.timedelta(days=1)
+        start = _dt.datetime(prev.year, prev.month, prev.day, hour, tzinfo=tz)
+    return start.astimezone(_dt.timezone.utc)
+
+
+def _foreign_day_start(now):
+    """Earliest plausible start (UTC) of the trade date that contains now."""
+    return min(_latest_local(now, _NY, 0), _latest_local(now, _CHI, 0), _latest_local(now, _NY, 20))
 
 
 def map_status(alpaca_status):
@@ -183,7 +261,7 @@ class AlpacaPaperBroker(object):
     def _load_book(self):
         if not os.path.exists(self.path):
             book = {"format": BOOK_FORMAT, "created_utc": _now(), "orders": {}, "integrity": [],
-                    "listing_incomplete": False}
+                    "listing_incomplete": False, "foreign_settled": {}}
             self._write(book)
             return book
         try:
@@ -208,6 +286,8 @@ class AlpacaPaperBroker(object):
                 rec["state"] = "uncertain"
         book.setdefault("integrity", [])
         book.setdefault("listing_incomplete", False)
+        if not isinstance(book.get("foreign_settled"), dict):
+            book["foreign_settled"] = {}
         return book
 
     def _write(self, book):
@@ -312,6 +392,62 @@ class AlpacaPaperBroker(object):
             except _qty.QtyError:
                 pass
         return int(q)
+
+    def _foreign_settled(self, row, complete):
+        """Why a foreign SPY row no longer needs to lock the adapter, or None (it still locks)."""
+        if self._REAL_LABEL == LABEL_ALPACA_LIVE or self._ALLOW_LIVE_TRANSPORT or \
+                getattr(self.transport, "MODE", "paper") != "paper":
+            return None
+        if complete is not True or not isinstance(row, dict):
+            return None
+        status = row.get("status")
+        filled = _foreign_qty(row.get("filled_qty"))
+        if filled is None:
+            return None
+        if filled == 0:
+            if status in FOREIGN_SETTLED_ZERO:
+                return "terminal %s with zero shares executed" % status
+            return None
+        if status not in FOREIGN_SETTLED_FILLED:
+            return None
+        if row.get("submitted_at") is None or row.get(FOREIGN_TERMINAL_STAMP[status]) is None:
+            return None
+        stamps = []
+        for key in FOREIGN_STAMP_KEYS:
+            if row.get(key) is None:
+                continue
+            ts = _parse_utc(row.get(key))
+            if ts is None:
+                return None
+            stamps.append(ts)
+        day_start = _foreign_day_start(_utcnow_dt())
+        if max(stamps) >= day_start:
+            return None
+        return "%s with %s shares executed before the current trade date (started %s)" % (
+            status, filled, day_start.strftime("%Y-%m-%dT%H:%M:%SZ"))
+
+    def _record_foreign_settled(self, row, reason):
+        """Keep provenance for a settled foreign row once (again only if the row changes)."""
+        settled = self.book.setdefault("foreign_settled", {})
+        oid = str(row.get("id"))
+        rec = {"client_id": row.get("client_order_id"), "status": row.get("status"),
+               "filled_qty": str(row.get("filled_qty")), "submitted_at": row.get("submitted_at"),
+               "reason": reason}
+        old = settled.get(oid)
+        if old is not None and all(old.get(k) == rec[k] for k in ("client_id", "status", "filled_qty",
+                                                                   "submitted_at")):
+            return
+        rec["first_seen_utc"] = _now()
+        settled[oid] = rec
+        if len(settled) > FOREIGN_SETTLED_CAP:
+            for k in sorted(settled, key=lambda k: settled[k].get("first_seen_utc") or "")[
+                    :len(settled) - FOREIGN_SETTLED_CAP]:
+                del settled[k]
+        self.book["integrity"].append({"utc": rec["first_seen_utc"], "code": "FOREIGN_ORDER_SETTLED",
+                                       "detail": "SPY order %s (%s, filled %s) was not placed by this desk: %s"
+                                                 % (rec["client_id"], rec["status"], rec["filled_qty"], reason)})
+        self.book["integrity"] = self.book["integrity"][-200:]
+        self._save()
 
     def _public_foreign(self, row):
         return {"client_id": row.get("client_order_id"), "order_id": row.get("id"), "symbol": row.get("symbol"),
@@ -888,8 +1024,12 @@ class AlpacaPaperBroker(object):
                 continue
             out.append(self._public_foreign(row))
             if row.get("symbol") == SYMBOL:
-                self._integrity("FOREIGN_ORDER", "SPY order %s (%s) was not placed by this desk" % (
-                    cid, row.get("status")))
+                settled = self._foreign_settled(row, complete)
+                if settled is not None:
+                    self._record_foreign_settled(row, settled)
+                else:
+                    self._integrity("FOREIGN_ORDER", "SPY order %s (%s) was not placed by this desk" % (
+                        cid, row.get("status")))
         self.book["listing_incomplete"] = not complete
         self._save()
         return {"orders": out, "complete": complete, "total": len(out) if complete else "unknown",
