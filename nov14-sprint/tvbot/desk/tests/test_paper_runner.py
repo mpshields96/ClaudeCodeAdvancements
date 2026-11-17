@@ -4,6 +4,7 @@ import fcntl
 import importlib.util
 import os
 import stat
+import subprocess
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -48,6 +49,27 @@ class FakeDesk:
         self.ledger = []
         self.on_advance = None
         self.on_stop_close = None
+        self.clock = None
+        self.external = []            # working orders at Alpaca that this desk did not place
+        self.reconcile_reply = None   # override: fn(desk) -> (status, body)
+        self.session_reply = None     # override: fn(desk) -> (status, body), for GET /api/session
+        self.stop_close_reply = (200, {"ok": True})
+
+    def reconcile(self):
+        """The desk's real reply shape: server wrapper -> controller result -> manager report; the session
+        file is rewritten so its exposure shows the same reconcile."""
+        if self.reconcile_reply:
+            return self.reconcile_reply(self)
+        ts = self.clock.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+        ex = self.session["exposure"]
+        ex["broker_confirmed_utc"] = ts
+        working = [w.get("id") for w in ex.get("working_orders") or []] + [e["client_id"] for e in self.external]
+        report = {"ts": ts, "reason": "operator", "connected": True, "complete": True, "ok": True,
+                  "positions": {"broker": ex.get("broker_position_qty"), "booked": ex.get("position_qty")},
+                  "working_orders": working, "desk_working_orders": [w.get("id") for w in ex.get("working_orders") or []],
+                  "external_orders": list(self.external)}
+        return 200, {"ok": True, "action": "alpaca_reconcile", "controller_called": True,
+                     "controller_result": {"ok": True, "result": report, "simulated": False}}
 
     def call(self, method, path, body=None):
         self.calls.append((method, path, body))
@@ -56,6 +78,8 @@ class FakeDesk:
         if path == "/api/health":
             return 200, self.health
         if path == "/api/session":
+            if self.session_reply:
+                return self.session_reply(self)
             return 200, self.session
         if path == "/api/decisions":
             return 200, {"items": list(self.decisions)}
@@ -69,11 +93,11 @@ class FakeDesk:
                 self.on_advance(self, n)
             return 200, {"ok": True, "controller_result": {"ok": True, "bars": n, "source": "ALPACA IEX (free)"}}
         if path == "/api/alpaca/reconcile":
-            return 200, {"ok": True}
+            return self.reconcile()
         if path == "/api/stop_close":
             if self.on_stop_close:
                 self.on_stop_close(self)
-            return 200, {"ok": True}
+            return self.stop_close_reply
         raise AssertionError(path)
 
     def routes(self):
@@ -93,6 +117,8 @@ class Base(unittest.TestCase):
         self.tmp.cleanup()
 
     def runner(self, desk, minutes=1, every=30, at_end="close", ps=lambda: [], state=None):
+        if isinstance(desk, FakeDesk):
+            desk.clock = self.clock
         return PR.Runner(minutes, every, at_end=at_end, state_dir=state or self.state, client=desk,
                          find_desk=lambda: 18858, launch=lambda: self.fail("must attach, not launch"), ps=ps,
                          now=self.clock.now, sleep=self.clock.sleep, out=self.lines.append)
@@ -179,9 +205,9 @@ class TimedRunTests(Base):
         self.assertEqual(self.runner(desk, minutes=2, every=30).run(), PR.EXIT_OK)
         routes = desk.routes()
         self.assertEqual(routes.count(("POST", "/api/advance")), 4)       # 0s, 30s, 60s, 90s of a 2-minute run
-        self.assertEqual(routes[-3:], [("GET", "/api/session"), ("GET", "/api/decisions"), ("GET", "/api/ledger")])
         last_reconcile = max(i for i, r in enumerate(routes) if r == ("POST", "/api/alpaca/reconcile"))
         self.assertGreater(last_reconcile, max(i for i, r in enumerate(routes) if r == ("POST", "/api/advance")))
+        self.assertEqual(routes[last_reconcile + 1], ("GET", "/api/session"))
         self.assertNotIn(("POST", "/api/stop_close"), routes)
         self.assertTrue(any(" | PAPER | " in s and "PLUMBING: pass VENUE_CLOSED" in s for s in self.lines))
         self.assertTrue(any(s.startswith("FLAT at end") for s in self.lines))
@@ -189,6 +215,7 @@ class TimedRunTests(Base):
         self.assertEqual(len(recs), 1)
         self.assertEqual(stat.S_IMODE(recs[0].stat().st_mode), 0o600)
         self.assertIn('"ended_by": "deadline"', recs[0].read_text())
+        self.assertIn('"end_status": "flat"', recs[0].read_text())
 
     def test_every_is_clamped_and_minutes_bounded(self):
         desk = FakeDesk(self.state)
@@ -259,6 +286,156 @@ class TimedRunTests(Base):
         self.assertEqual(r.run(), PR.EXIT_EXPOSED)
         self.assertNotIn(("POST", "/api/stop_close"), desk.routes())
         self.assertIn("does not match", r.record["at_end"])
+
+
+class FailClosedTests(Base):
+    """The end of a run is FLAT only after a positive, fresh broker reconcile; anything uncertain is UNRESOLVED,
+    exit 8, and nothing is pressed."""
+
+    def end_with(self, desk, break_it, at_end="close", held=False):
+        def advance(d, n):
+            if held:
+                d.session["exposure"] = {"position_qty": 1, "broker_position_qty": 1, "working_orders": []}
+            break_it(d)
+        desk.on_advance = advance
+        r = self.runner(desk, at_end=at_end)
+        code = r.run()
+        return r, code
+
+    def assert_unresolved(self, r, code, desk):
+        self.assertEqual(code, PR.EXIT_UNRESOLVED)
+        self.assertNotIn(("POST", "/api/stop_close"), desk.routes())
+        self.assertFalse(any(s.startswith("FLAT") for s in self.lines), self.lines)
+        self.assertTrue(any(s.startswith("UNRESOLVED at end") for s in self.lines), self.lines)
+        self.assertEqual(r.record["end_status"], "unresolved")
+        self.assertIn('"end_status": "unresolved"', self.records()[-1].read_text())
+
+    def test_failed_session_read_at_end_is_unresolved_not_flat(self):
+        desk = FakeDesk(self.state)
+
+        def broken(d):
+            d.session_reply = lambda _d: (500, {})
+        r, code = self.end_with(desk, broken, held=True)
+        self.assert_unresolved(r, code, desk)
+
+    def test_malformed_session_at_end_is_unresolved(self):
+        for bad in ({}, {"exposure": {}}, {"exposure": {"position_qty": None, "working_orders": []}},
+                    {"exposure": {"position_qty": 0, "broker_position_qty": 0}}):
+            desk = FakeDesk(self.state)
+            self.lines.clear()
+
+            def broken(d, bad=bad):
+                d.session_reply = lambda _d: (200, dict(bad))
+            r, code = self.end_with(desk, broken)
+            self.assert_unresolved(r, code, desk)
+
+    def test_reconcile_reply_that_is_not_a_positive_broker_answer_is_unresolved(self):
+        def wrap(report, status=200, ok=True, called=True):
+            return lambda d: (status, {"ok": ok, "controller_called": called,
+                                       "controller_result": {"ok": ok, "result": report}})
+        fresh = lambda d: d.clock.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+        good = lambda d, **kw: dict({"ts": fresh(d), "connected": True, "complete": True,
+                                     "positions": {"broker": 0}, "working_orders": [], "external_orders": []}, **kw)
+        cases = {
+            "http 500": lambda d: (500, {"ok": False}),
+            "desk ok false": lambda d: wrap(good(d), ok=False)(d),
+            "controller not called": lambda d: wrap(good(d), called=False)(d),
+            "old reply shape": lambda d: (200, {"ok": True}),
+            "broker unreachable": lambda d: wrap({"ts": fresh(d), "connected": False, "alarms": []})(d),
+            "incomplete order list": lambda d: wrap(good(d, complete=False))(d),
+            "stale report": lambda d: wrap(good(d, ts="2026-11-17T09:00:00Z"))(d),
+            "qty none": lambda d: wrap(good(d, positions={"broker": None}))(d),
+            "qty string": lambda d: wrap(good(d, positions={"broker": "0"}))(d),
+            "qty bool": lambda d: wrap(good(d, positions={"broker": False}))(d),
+            "qty nan": lambda d: wrap(good(d, positions={"broker": float("nan")}))(d),
+            "no working list": lambda d: wrap({k: v for k, v in good(d).items() if k != "working_orders"})(d),
+            "session not updated": lambda d: wrap(good(d))(d),   # session still shows the earlier reconcile
+        }
+        for name, reply in cases.items():
+            desk = FakeDesk(self.state)
+            self.lines.clear()
+
+            def broken(d, reply=reply):
+                d.reconcile_reply = reply
+            r, code = self.end_with(desk, broken, held=True)
+            self.assert_unresolved(r, code, desk)
+
+    def test_network_error_on_the_final_reconcile_is_unresolved(self):
+        desk = FakeDesk(self.state)
+
+        def broken(d):
+            def boom(_d):
+                raise ConnectionRefusedError("desk gone")
+            d.reconcile_reply = boom
+        r, code = self.end_with(desk, broken, held=True)
+        self.assert_unresolved(r, code, desk)
+
+    def test_unverified_start_is_refused_and_presses_nothing(self):
+        desk = FakeDesk(self.state)
+        desk.reconcile_reply = lambda d: (200, {"ok": True})
+        self.assertEqual(self.runner(desk).run(), PR.EXIT_POSITION)
+        self.assertNotIn(("POST", "/api/advance"), desk.routes())
+        self.assertTrue(any("could not confirm the broker position" in s for s in self.lines))
+
+    def test_external_working_order_at_start_is_refused(self):
+        desk = FakeDesk(self.state)
+        desk.external = [{"client_id": "someone-else", "status": "new", "class": "external"}]
+        self.assertEqual(self.runner(desk).run(), PR.EXIT_POSITION)
+        self.assertNotIn(("POST", "/api/advance"), desk.routes())
+
+    def test_failed_stop_and_close_that_stays_exposed_reports_exposed(self):
+        desk = FakeDesk(self.state)
+        desk.stop_close_reply = (409, {"ok": False})
+        r, code = self.end_with(desk, lambda d: None, held=True)
+        self.assertEqual(code, PR.EXIT_EXPOSED)
+        self.assertIn("did not succeed", r.record["at_end"])
+        self.assertEqual(r.record["end_status"], "exposed")
+
+    def test_lost_broker_after_stop_and_close_is_unresolved(self):
+        desk = FakeDesk(self.state)
+
+        def close(d):
+            d.session["exposure"] = {"position_qty": 0, "broker_position_qty": 0, "working_orders": []}
+            d.reconcile_reply = lambda _d: (200, {"ok": True, "controller_called": True,
+                                                  "controller_result": {"ok": True, "result": {"connected": False}}})
+        desk.on_stop_close = close
+        r, code = self.end_with(desk, lambda d: None, held=True)
+        self.assertEqual(code, PR.EXIT_UNRESOLVED)
+        self.assertIn(("POST", "/api/stop_close", {"confirm": True}), desk.calls)
+        self.assertFalse(any(s.startswith("FLAT") for s in self.lines))
+
+    def test_network_error_outside_the_loop_closes_the_runner_desk_and_records_unresolved(self):
+        class DeadDesk(FakeDesk):
+            def call(self, method, path, body=None):
+                if path == "/api/health":
+                    raise ConnectionResetError("reset")
+                return FakeDesk.call(self, method, path, body)
+        desk = DeadDesk(self.state)
+        desk.clock = self.clock
+        holder = {}
+
+        def launch():
+            holder["p"] = subprocess.Popen(["/bin/sleep", "30"], start_new_session=True)
+            return holder["p"]
+        r = PR.Runner(1, 30, state_dir=self.state, client=desk, ps=lambda: [],
+                      find_desk=lambda: 18858 if holder.get("p") and holder["p"].poll() is None else None,
+                      launch=launch, launcher=__file__, now=self.clock.now, sleep=self.clock.sleep,
+                      out=self.lines.append)
+        try:
+            self.assertEqual(r.run(), PR.EXIT_UNRESOLVED)
+            self.assertIsNotNone(holder["p"].poll(), "the desk this runner opened must be stopped")
+            self.assertTrue(r.record["desk_closed"])
+            self.assertEqual(r.record["ended_by"], "error: ConnectionResetError")
+            self.assertIn('"end_status": "unresolved"', self.records()[-1].read_text())
+            self.assertFalse(any(s.startswith("FLAT") for s in self.lines))
+        finally:
+            if holder["p"].poll() is None:
+                holder["p"].kill()
+
+    def test_run_record_is_written_even_without_a_state_subfolder(self):
+        desk = FakeDesk(self.state)
+        self.assertEqual(self.runner(desk).run(), PR.EXIT_OK)
+        self.assertEqual(len(self.records()), 1)
 
 
 class LabelTests(unittest.TestCase):

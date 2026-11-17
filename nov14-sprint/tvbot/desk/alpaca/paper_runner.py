@@ -9,14 +9,19 @@ What it does, in order:
    this desk, no live desk and no paper desk on another state folder is running, and the desk's own health and
    session say broker mode alpaca-paper, a real (not mock) broker, this state folder and the paper adapter file.
 2. Attaches to the paper desk if it is already open; otherwise opens it with the normal paper launcher.
-3. Runs a read-only reconcile. If the broker position does not match the desk's own position it stops there.
+3. Runs a read-only reconcile and accepts it only when it is positive and fresh: the desk ran it, Alpaca answered
+   (connected, complete order list), the report is from this call, the broker position is a number, the working
+   order list is present, and the desk's session shows that same reconcile. Anything else, a broker position that
+   does not match the desk's own, or an order at Alpaca the desk did not place, stops it there.
 4. Every --every seconds it runs one desk check (the same call as the button) and prints one line: UTC time,
    account mode, adapter and arm state, the latest bar and its age, whether the latest decision was a strategy
    call or plumbing (warm-up, closed market, data problem), the position, and any broker-confirmed paper fills.
-5. At the deadline (or Ctrl-C) it stops checking, runs a read-only reconcile, and reports flat or exposed.
-   With --at-end close (the default) and exposure the desk itself owns, it presses the desk's Stop & Close,
+5. At the deadline (or Ctrl-C) it stops checking, runs the same checked reconcile, and reports FLAT or EXPOSED.
+   If the reconcile cannot be confirmed it reports UNRESOLVED (exit 8): never flat, and it presses nothing.
+   With --at-end close (the default) and confirmed exposure the desk itself owns, it presses the desk's Stop & Close,
    which also disables the adapter until you enable it again. With --at-end leave it only reports.
-6. Closes the desk only if this runner opened it, and writes a private run record in the state folder.
+6. Closes the desk only if this runner opened it, and writes a private run record in the state folder. An
+   unexpected error or lost connection anywhere still closes a desk this runner opened and records UNRESOLVED.
 
 It never presses Enable, Arm, Clear Stop, Play or Schedule, and it cannot reach any other desk route.
 Whether an order is placed is still decided by the desk: it routes nothing unless you enabled and armed it.
@@ -25,6 +30,7 @@ import argparse
 import fcntl
 import http.client
 import json
+import math
 import os
 from pathlib import Path
 import signal
@@ -45,6 +51,7 @@ EVERY_DEFAULT, EVERY_MIN, EVERY_MAX = 60, 30, 300
 START_WAIT_S = 45
 STOP_WAIT_S = 15
 CLOSE_WAIT_S = 90
+FRESH_S = 5          # a reconcile report must be stamped within this many seconds of the call
 
 # The only desk routes this runner may call. Enable, Arm, Clear Stop, Play and Schedule are not here.
 ALLOWED = frozenset({
@@ -60,6 +67,7 @@ PLUMBING = frozenset({
 })
 
 EXIT_OK, EXIT_SETUP, EXIT_WRITER, EXIT_NOT_PAPER, EXIT_POSITION, EXIT_NO_DESK, EXIT_EXPOSED = 0, 2, 3, 4, 5, 6, 7
+EXIT_UNRESOLVED = 8   # the broker position could not be confirmed; never reported as flat
 
 
 class Refused(Exception):
@@ -177,6 +185,16 @@ def position_problem(session):
     except (TypeError, ValueError):
         return "position is unreadable"
     return None
+
+
+def finite_qty(value):
+    """True for a real, finite JSON number. None, a string, a bool, NaN and infinity are not a quantity."""
+    return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+
+
+def view_exposed(view):
+    return (view["desk"] != 0 or view["broker"] != 0 or bool(view["broker_working"])
+            or bool(view["desk_working"]))
 
 
 def classify(decision):
@@ -357,14 +375,23 @@ class Runner:
             bad = paper_problems(health, session, self.state_dir)
             if bad:
                 raise Refused(EXIT_NOT_PAPER, "not the paper desk: " + "; ".join(bad))
-            self.post("/api/alpaca/reconcile")
-            session, decisions, ledger = self.snapshot()
+            view, why = self.verified_reconcile()
+            if view is None:
+                raise Refused(EXIT_POSITION, "could not confirm the broker position, not running: " + why)
+            session = view["session"]
+            ledger = (self.get("/api/ledger") or {}).get("items") or []
             self.out("ALPACA PAPER ACCOUNT (simulated, no real money). " + str(session.get("badge") or ""))
+            self.out("Broker check %s: position %s (desk %s), %d working order(s) at Alpaca."
+                     % (view["ts"], view["broker"], view["desk"], len(view["broker_working"])))
             self.out("Regular-hours desk; the runner only presses Check on a timer. Ends %s or on Ctrl-C."
                      % stamp(datetime.fromtimestamp(started.timestamp() + 60 * self.minutes, timezone.utc)))
-            problem = position_problem(session)
-            if problem:
-                raise Refused(EXIT_POSITION, "unexplained position, not running: " + problem)
+            if view["desk"] != view["broker"]:
+                raise Refused(EXIT_POSITION, "unexplained position, not running: broker position %s does not "
+                                             "match the desk's own position %s" % (view["broker"], view["desk"]))
+            if view["external"]:
+                raise Refused(EXIT_POSITION, "unexplained position, not running: %d working order(s) at Alpaca "
+                                             "that this desk did not place" % len(view["external"]))
+            self.record["start_broker_check"] = self.check_summary(view)
             baseline_fills = {f["exec_id"] for f in broker_fills(ledger)}
             self.record["start"] = self.summary(session)
             self.loop(started, baseline_fills)
@@ -376,6 +403,17 @@ class Runner:
             self.stop_desk()
             self.write_record()
             return exc.code
+        except Exception as exc:     # lost connection or anything unexpected: close our desk, record, never flat
+            self.out("UNRESOLVED: the runner stopped on %s (%s). The broker position was not confirmed; "
+                     "check the desk and the Alpaca paper dashboard." % (exc.__class__.__name__, str(exc)[:120]))
+            self.record["ended_by"] = "error: %s" % exc.__class__.__name__
+            self.record["end_status"] = "unresolved"
+            self.record["unresolved"] = "%s: %s" % (exc.__class__.__name__, str(exc)[:200])
+            try:
+                self.stop_desk()
+            finally:
+                self.write_record()
+            return EXIT_UNRESOLVED
         finally:
             if self.lock_fh is not None:
                 self.lock_fh.close()
@@ -423,42 +461,116 @@ class Runner:
         while not self.stop_flag and self.now().timestamp() < ts:
             self.sleep(min(1.0, max(0.0, ts - self.now().timestamp())))
 
+    def verified_reconcile(self):
+        """(view, None) after a positive, fresh broker reconcile that the desk's session reflects; (None, why)
+        otherwise. A failed call, a missing field or an old answer is never read as zero."""
+        asked = self.now()
+        try:
+            status, reply = self.post("/api/alpaca/reconcile")
+        except (OSError, http.client.HTTPException) as exc:
+            return None, "reconcile call failed (%s)" % exc.__class__.__name__
+        if status != 200 or reply.get("ok") is not True or reply.get("controller_called") is not True:
+            return None, "the desk did not run the reconcile (HTTP %s)" % status
+        outer = reply.get("controller_result")
+        res = outer.get("result") if isinstance(outer, dict) else None
+        if not isinstance(res, dict):
+            return None, "the reconcile returned no broker report"
+        if res.get("connected") is not True:
+            return None, "Alpaca was not reachable"
+        if res.get("complete") is not True:
+            return None, "Alpaca's order list was incomplete"
+        ts = parse_ts(res.get("ts"))
+        if ts is None or ts.tzinfo is None or not (
+                asked.timestamp() - FRESH_S <= ts.timestamp() <= self.now().timestamp() + FRESH_S):
+            return None, "the broker report is not from this reconcile (ts %r)" % res.get("ts")
+        positions = res.get("positions")
+        broker = positions.get("broker") if isinstance(positions, dict) else None
+        if not finite_qty(broker):
+            return None, "the broker position is not a number (%r)" % (broker,)
+        working, external = res.get("working_orders"), res.get("external_orders")
+        if not isinstance(working, list) or not isinstance(external, list):
+            return None, "the broker working-order list is missing"
+        try:
+            status, session = self.client.call("GET", "/api/session")
+        except (OSError, http.client.HTTPException) as exc:
+            return None, "the session read failed (%s)" % exc.__class__.__name__
+        if status != 200 or not isinstance(session, dict):
+            return None, "the session read failed (HTTP %s)" % status
+        ex = session.get("exposure")
+        if not isinstance(ex, dict):
+            return None, "the session has no position view"
+        desk, desk_working = ex.get("position_qty"), ex.get("working_orders")
+        if not finite_qty(desk) or not isinstance(desk_working, list):
+            return None, "the desk position or its working-order list is unreadable"
+        if ex.get("broker_confirmed_utc") != res.get("ts") or not finite_qty(ex.get("broker_position_qty")) \
+                or ex.get("broker_position_qty") != broker:
+            return None, "the desk session does not show this reconcile"
+        return {"ts": res.get("ts"), "desk": desk, "broker": broker, "broker_working": list(working),
+                "external": list(external), "desk_working": list(desk_working), "session": session}, None
+
+    def check_summary(self, view):
+        return {"broker_confirmed_utc": view["ts"], "broker_position_qty": view["broker"],
+                "position_qty": view["desk"], "broker_working_orders": len(view["broker_working"]),
+                "external_working_orders": len(view["external"]), "desk_working_orders": len(view["desk_working"])}
+
     def finish(self, baseline_fills):
         self.out("Stopping checks (%s). Read-only reconcile:" % self.record["ended_by"])
-        self.post("/api/alpaca/reconcile")
-        session, _, ledger = self.snapshot()
-        desk, broker, working = position_view(session)
-        exposed = bool(working) or desk not in (0, 0.0, None) or broker not in (0, 0.0, None)
+        view, why = self.verified_reconcile()
         action = "none"
-        if exposed and self.at_end == "close":
-            if position_problem(session):
+        if view is not None and view_exposed(view) and self.at_end == "close":
+            if view["desk"] != view["broker"] or view["external"]:
                 action = "not closed: position does not match the desk, resolve it in the desk or at Alpaca"
             else:
-                status, _ = self.post("/api/stop_close", {"confirm": True})
-                action = "Stop & Close pressed (HTTP %s); adapter is now disabled until you enable it" % status
+                try:
+                    status, reply = self.post("/api/stop_close", {"confirm": True})
+                except (OSError, http.client.HTTPException) as exc:
+                    status, reply = "error %s" % exc.__class__.__name__, {}
+                if status == 200 and reply.get("ok") is True:
+                    action = "Stop & Close pressed (HTTP 200); adapter is now disabled until you enable it"
+                else:
+                    action = "Stop & Close did not succeed (HTTP %s); close it in the desk or at Alpaca" % status
                 deadline = self.now().timestamp() + CLOSE_WAIT_S
-                while self.now().timestamp() < deadline:
+                while True:
                     self.sleep(3)
-                    self.post("/api/alpaca/reconcile")
-                    session, _, ledger = self.snapshot()
-                    desk, broker, working = position_view(session)
-                    if not working and broker in (0, 0.0) and desk in (0, 0.0):
+                    view, why = self.verified_reconcile()
+                    if (view is not None and not view_exposed(view)) or self.now().timestamp() >= deadline:
                         break
-                exposed = bool(working) or desk not in (0, 0.0, None) or broker not in (0, 0.0, None)
-        elif exposed:
+        elif view is not None and view_exposed(view):
             action = "left open (--at-end leave)"
+        elif view is None:
+            action = "nothing pressed: broker position not confirmed"
+        ledger = None
+        try:
+            ledger = (self.get("/api/ledger") or {}).get("items")
+        except (OSError, http.client.HTTPException):
+            pass
         for f in broker_fills(ledger):
             if f["exec_id"] not in baseline_fills and f not in self.record["fills_seen"]:
                 self.record["fills_seen"].append(f)
         self.record["at_end"] = action
-        self.record["end"] = self.summary(session)
-        self.out(("EXPOSED at end: position %s (broker %s), %d working order(s). %s"
-                  % (desk, broker, len(working), action)) if exposed
-                 else "FLAT at end: broker position %s, no working orders." % broker)
+        if view is None:
+            self.record["end_status"] = "unresolved"
+            self.record["unresolved"] = why
+            self.out("UNRESOLVED at end: %s. Not reported as flat; check the desk and the Alpaca paper dashboard. %s"
+                     % (why, action))
+            code = EXIT_UNRESOLVED
+        else:
+            self.record["end"] = self.summary(view["session"])
+            self.record["end_broker_check"] = self.check_summary(view)
+            if view_exposed(view):
+                self.record["end_status"] = "exposed"
+                self.out("EXPOSED at end (broker check %s): position %s (broker %s), %d working order(s) at Alpaca. %s"
+                         % (view["ts"], view["desk"], view["broker"], len(view["broker_working"]), action))
+                code = EXIT_EXPOSED
+            else:
+                self.record["end_status"] = "flat"
+                self.out("FLAT at end (broker check %s): broker position %s, desk position %s, no working orders."
+                         % (view["ts"], view["broker"], view["desk"]))
+                code = EXIT_OK
         self.out("Broker-confirmed paper fills during this run: %d" % len(self.record["fills_seen"]))
         self.stop_desk()
         self.write_record()
-        return EXIT_EXPOSED if exposed else EXIT_OK
+        return code
 
     def summary(self, session):
         adapter = session.get("adapter") or {}
@@ -495,7 +607,7 @@ class Runner:
         self.record["utc_end"] = self.now().isoformat()
         folder = self.state_dir / "runner"
         try:
-            folder.mkdir(mode=0o700, exist_ok=True)
+            folder.mkdir(mode=0o700, parents=True, exist_ok=True)
             path = folder / ("paper-run-%s.json" % self.now().strftime("%Y%m%dT%H%M%SZ"))
             fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
             with os.fdopen(fd, "w") as fh:
