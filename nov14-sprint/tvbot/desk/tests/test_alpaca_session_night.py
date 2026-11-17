@@ -814,6 +814,43 @@ class EntryGates(_Base):
         self.assertEqual(refusal[0], "SPARSE_HOUR")
 
 
+class ReconcileClock(_Base):
+    """Paper desk, 01:12Z smoke: an operator reconcile on a desk with stepped bars was stamped with
+    the last bar's delivery time (an hour old), so the timed runner could never prove it fresh.
+    Paper feeds the desk clock first, as Stop does; mock keeps the bar clock and live is unchanged."""
+
+    WALL = _dt.datetime(2026, 11, 17, 1, 12, 14, tzinfo=_dt.timezone.utc)
+    BAR = _dt.datetime(2026, 11, 17, 0, 1, 7, tzinfo=_dt.timezone.utc)
+
+    def paper(self):
+        sd = os.path.join(self.tmp, "paper-rc")
+        lim_dir, _snap = self.snapshot("paper-rc-lim")
+        c = AS.AlpacaSessionController(sd, strategy="ema", mode="https",
+                                       transport=_mock_transport(), broker_factory=_broker,
+                                       limits_path=sizing.approved_path(lim_dir),
+                                       clock=AS.MockClock(sd, AS.SessionCalendar.nyse_2026_2027()))
+        self.ctrls.append(c)
+        return c
+
+    def stamp(self, c, wall):
+        c.mgr._sim_now = self.BAR                  # the desk's manager clock after the last bar
+        c.clock = FixedClock(wall)
+        r = c.reconcile_now()
+        self.assertTrue(r["ok"])
+        return AS.parse_ts(r["result"]["ts"])
+
+    def test_paper_reconcile_is_stamped_on_the_desk_clock(self):
+        self.assertEqual(self.stamp(self.paper(), self.WALL), self.WALL)
+
+    def test_paper_reconcile_never_moves_the_clock_back(self):
+        self.assertEqual(self.stamp(self.paper(), self.BAR - _dt.timedelta(hours=1)), self.BAR)
+
+    def test_mock_reconcile_keeps_the_bar_clock(self):
+        c = AS.AlpacaSessionController(os.path.join(self.tmp, "mock-rc"), strategy="ema")
+        self.ctrls.append(c)
+        self.assertEqual(self.stamp(c, self.WALL), self.BAR)
+
+
 class ExpiryWithoutBars(_Base):
     def test_expiry_disarms_during_data_outage(self):
         c = self.armed_live()

@@ -1099,8 +1099,13 @@ class AlpacaSessionController(S.SessionController):
             self._write_state()
 
     def reconcile_now(self):
-        """Read-only broker reconciliation. Allowed while disabled, paused or stopped."""
+        """Read-only broker reconciliation. Allowed while disabled, paused or stopped.
+
+        Paper: feed the desk clock first, as Stop does, so the report is stamped now rather than at
+        the last bar's delivery. Mock keeps the bar clock; live is unchanged here."""
         with self.lock:
+            if not self.live:
+                self._feed_manager_clock()            # no-op for mock; forward only
             res = self.mgr.reconcile(reason="operator")
             self._desk_audit("reconcile_now", result=res if isinstance(res, (dict, list, str)) else str(res))
             self._write_state()
