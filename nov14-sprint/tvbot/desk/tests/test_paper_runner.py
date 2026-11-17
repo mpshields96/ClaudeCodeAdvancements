@@ -54,6 +54,7 @@ class FakeDesk:
         self.reconcile_reply = None   # override: fn(desk) -> (status, body)
         self.session_reply = None     # override: fn(desk) -> (status, body), for GET /api/session
         self.stop_close_reply = (200, {"ok": True})
+        self.tamper = None            # override: fn(body) that edits the reconcile reply before it is returned
 
     def reconcile(self):
         """The desk's real reply shape: server wrapper -> controller result -> manager report; the session
@@ -67,9 +68,12 @@ class FakeDesk:
         report = {"ts": ts, "reason": "operator", "connected": True, "complete": True, "ok": True,
                   "positions": {"broker": ex.get("broker_position_qty"), "booked": ex.get("position_qty")},
                   "working_orders": working, "desk_working_orders": [w.get("id") for w in ex.get("working_orders") or []],
-                  "external_orders": list(self.external)}
-        return 200, {"ok": True, "action": "alpaca_reconcile", "controller_called": True,
-                     "controller_result": {"ok": True, "result": report, "simulated": False}}
+                  "external_orders": list(self.external), "alarms": []}
+        body = {"ok": True, "action": "alpaca_reconcile", "controller_called": True,
+                "controller_result": {"ok": True, "result": report, "simulated": False}}
+        if self.tamper:
+            self.tamper(body)
+        return 200, body
 
     def call(self, method, path, body=None):
         self.calls.append((method, path, body))
@@ -309,6 +313,119 @@ class FailClosedTests(Base):
         self.assertTrue(any(s.startswith("UNRESOLVED at end") for s in self.lines), self.lines)
         self.assertEqual(r.record["end_status"], "unresolved")
         self.assertIn('"end_status": "unresolved"', self.records()[-1].read_text())
+
+    # --- a negative status or a blocking alarm is never read as flat (Codex retest of 2229269) ---
+
+    @staticmethod
+    def alarm(code, blocking=True):
+        return {"code": code, "detail": "test", "blocking": blocking, "source": "reconcile",
+                "ts": "2026-11-17T00:00:00Z", "simulated": False}
+
+    def report_with(self, ok, *alarms):
+        def tamper(body):
+            body["controller_result"]["result"].update(ok=ok, alarms=list(alarms))
+        return tamper
+
+    def assert_exposed_not_closed(self, r, code, desk):
+        self.assertEqual(code, PR.EXIT_EXPOSED)
+        self.assertNotIn(("POST", "/api/stop_close"), desk.routes())
+        self.assertFalse(any(s.startswith("FLAT") for s in self.lines), self.lines)
+        self.assertTrue(any(s.startswith("EXPOSED at end") for s in self.lines), self.lines)
+        self.assertEqual(r.record["end_status"], "exposed")
+        self.assertTrue(r.record["at_end"].startswith("not closed"), r.record["at_end"])
+
+    def test_negative_controller_status_is_unresolved_not_flat(self):
+        for held in (False, True):
+            with self.subTest(held=held):
+                self.lines.clear()
+                desk = FakeDesk(self.state)
+
+                def negative(d):
+                    d.tamper = lambda body: body["controller_result"].update(ok=False)
+                r, code = self.end_with(desk, negative, held=held)
+                self.assert_unresolved(r, code, desk)
+                self.assertIn("not ok", r.record["unresolved"])
+
+    def test_blocking_integrity_alarm_is_unresolved_even_with_a_complete_empty_report(self):
+        for held in (False, True):
+            with self.subTest(held=held):
+                self.lines.clear()
+                desk = FakeDesk(self.state)
+                r, code = self.end_with(desk, lambda d: setattr(d, "tamper", self.report_with(
+                    False, self.alarm("BAD_RECORD"))), held=held)
+                self.assert_unresolved(r, code, desk)
+                self.assertIn("BAD_RECORD", r.record["unresolved"])
+
+    def test_integrity_alarm_alongside_an_exposure_alarm_is_still_unresolved(self):
+        desk = FakeDesk(self.state)
+        r, code = self.end_with(desk, lambda d: setattr(d, "tamper", self.report_with(
+            False, self.alarm("POSITION_MISMATCH"), self.alarm("INCOMPLETE_LISTING"))))
+        self.assert_unresolved(r, code, desk)
+
+    def test_ok_report_that_carries_a_blocking_alarm_is_unresolved(self):
+        desk = FakeDesk(self.state)
+        r, code = self.end_with(desk, lambda d: setattr(d, "tamper", self.report_with(
+            True, self.alarm("ORDER_MISSING"))))
+        self.assert_unresolved(r, code, desk)
+
+    def test_not_ok_report_with_no_blocking_alarm_is_unresolved(self):
+        desk = FakeDesk(self.state)
+        r, code = self.end_with(desk, lambda d: setattr(d, "tamper", self.report_with(False)))
+        self.assert_unresolved(r, code, desk)
+
+    def test_missing_alarm_list_is_unresolved(self):
+        desk = FakeDesk(self.state)
+        r, code = self.end_with(desk, lambda d: setattr(d, "tamper", lambda body: body["controller_result"][
+            "result"].pop("alarms")))
+        self.assert_unresolved(r, code, desk)
+
+    def test_position_mismatch_alarm_is_exposed_and_not_closed(self):
+        desk = FakeDesk(self.state)
+
+        def mismatch(d):
+            d.session["exposure"] = {"position_qty": 0, "broker_position_qty": 1, "working_orders": []}
+            d.tamper = self.report_with(False, self.alarm("POSITION_MISMATCH"))
+        r, code = self.end_with(desk, mismatch)
+        self.assert_exposed_not_closed(r, code, desk)
+        self.assertIn("POSITION_MISMATCH", r.record["at_end"])
+        self.assertEqual(r.record["end_broker_check"]["blocking_alarms"], ["POSITION_MISMATCH"])
+
+    def test_exposure_alarm_with_matching_flat_numbers_is_still_exposed(self):
+        desk = FakeDesk(self.state)
+        r, code = self.end_with(desk, lambda d: setattr(d, "tamper", self.report_with(
+            False, self.alarm("FOREIGN_POSITION"))), held=True)
+        self.assert_exposed_not_closed(r, code, desk)
+
+    def test_open_external_order_at_end_is_exposed_and_not_closed(self):
+        for alarms in ((), ("FOREIGN_ORDER",)):
+            with self.subTest(alarms=alarms):
+                self.lines.clear()
+                desk = FakeDesk(self.state)
+
+                def foreign(d):
+                    d.external = [{"client_id": "outside-1", "status": "new"}]
+                    if alarms:
+                        d.tamper = self.report_with(False, *[self.alarm(c) for c in alarms])
+                r, code = self.end_with(desk, foreign)
+                self.assert_exposed_not_closed(r, code, desk)
+                self.assertEqual(r.record["end_broker_check"]["external_working_orders"], 1)
+
+    def test_non_blocking_settled_foreign_alarm_still_ends_flat(self):
+        desk = FakeDesk(self.state)
+        r, code = self.end_with(desk, lambda d: setattr(d, "tamper", self.report_with(
+            True, self.alarm("FOREIGN_ORDER_SETTLED", blocking=False))))
+        self.assertEqual(code, PR.EXIT_OK)
+        self.assertEqual(r.record["end_status"], "flat")
+        self.assertTrue(r.record["end_broker_check"]["clean"])
+
+    def test_blocking_alarm_at_start_is_refused_before_any_check(self):
+        desk = FakeDesk(self.state)
+        desk.tamper = self.report_with(False, self.alarm("BAD_RECORD"))
+        r = self.runner(desk)
+        self.assertEqual(r.run(), PR.EXIT_POSITION)
+        self.assertNotIn(("POST", "/api/advance"), desk.routes())
+        self.assertNotIn(("POST", "/api/stop_close"), desk.routes())
+        self.assertEqual(r.record["ended_by"], "refused")
 
     def test_failed_session_read_at_end_is_unresolved_not_flat(self):
         desk = FakeDesk(self.state)

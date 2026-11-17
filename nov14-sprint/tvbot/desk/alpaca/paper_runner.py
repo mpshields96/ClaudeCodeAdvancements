@@ -68,6 +68,12 @@ PLUMBING = frozenset({
 
 EXIT_OK, EXIT_SETUP, EXIT_WRITER, EXIT_NOT_PAPER, EXIT_POSITION, EXIT_NO_DESK, EXIT_EXPOSED = 0, 2, 3, 4, 5, 6, 7
 EXIT_UNRESOLVED = 8   # the broker position could not be confirmed; never reported as flat
+# Blocking reconcile alarms that state a definite exposure (a position or order at Alpaca the desk does not
+# account for). They end as EXPOSED and the runner never closes them. Any other blocking alarm (a bad record,
+# an incomplete listing, an unresolved submit, a missing order, an unknown status, an overfill...) means the
+# broker answer cannot be trusted, so it is UNRESOLVED.
+EXPOSURE_ALARMS = frozenset({"POSITION_MISMATCH", "POSITION_EXCESS", "FOREIGN_ORDER", "FOREIGN_POSITION",
+                             "POSITION_UNSUPPORTED_FRACTIONAL"})
 
 
 class Refused(Exception):
@@ -194,7 +200,7 @@ def finite_qty(value):
 
 def view_exposed(view):
     return (view["desk"] != 0 or view["broker"] != 0 or bool(view["broker_working"])
-            or bool(view["desk_working"]))
+            or bool(view["desk_working"]) or bool(view["external"]) or not view["clean"])
 
 
 def classify(decision):
@@ -391,6 +397,9 @@ class Runner:
             if view["external"]:
                 raise Refused(EXIT_POSITION, "unexplained position, not running: %d working order(s) at Alpaca "
                                              "that this desk did not place" % len(view["external"]))
+            if not view["clean"]:
+                raise Refused(EXIT_POSITION, "the broker reconcile is not clean, not running: blocking alarm(s) %s"
+                                             % ", ".join(view["blocking"]))
             self.record["start_broker_check"] = self.check_summary(view)
             baseline_fills = {f["exec_id"] for f in broker_fills(ledger)}
             self.record["start"] = self.summary(session)
@@ -472,7 +481,9 @@ class Runner:
         if status != 200 or reply.get("ok") is not True or reply.get("controller_called") is not True:
             return None, "the desk did not run the reconcile (HTTP %s)" % status
         outer = reply.get("controller_result")
-        res = outer.get("result") if isinstance(outer, dict) else None
+        if not isinstance(outer, dict) or outer.get("ok") is not True:
+            return None, "the desk reported the reconcile as not ok"
+        res = outer.get("result")
         if not isinstance(res, dict):
             return None, "the reconcile returned no broker report"
         if res.get("connected") is not True:
@@ -490,6 +501,20 @@ class Runner:
         working, external = res.get("working_orders"), res.get("external_orders")
         if not isinstance(working, list) or not isinstance(external, list):
             return None, "the broker working-order list is missing"
+        alarms = res.get("alarms")
+        if not isinstance(alarms, list) or not all(isinstance(a, dict) for a in alarms):
+            return None, "the broker report has no readable alarm list"
+        # an alarm counts as blocking unless it says it is not
+        blocking = sorted({str(a.get("code")) for a in alarms if a.get("blocking") is not False})
+        if res.get("ok") is True:
+            if blocking:
+                return None, "the broker report says ok but carries blocking alarm(s) %s" % ", ".join(blocking)
+        else:
+            if not blocking:
+                return None, "the broker report is not ok (%r) and names no blocking alarm" % (res.get("ok"),)
+            unexplained = [c for c in blocking if c not in EXPOSURE_ALARMS]
+            if unexplained:
+                return None, "the broker report has blocking alarm(s) %s" % ", ".join(unexplained)
         try:
             status, session = self.client.call("GET", "/api/session")
         except (OSError, http.client.HTTPException) as exc:
@@ -506,20 +531,24 @@ class Runner:
                 or ex.get("broker_position_qty") != broker:
             return None, "the desk session does not show this reconcile"
         return {"ts": res.get("ts"), "desk": desk, "broker": broker, "broker_working": list(working),
-                "external": list(external), "desk_working": list(desk_working), "session": session}, None
+                "external": list(external), "desk_working": list(desk_working), "session": session,
+                "clean": res.get("ok") is True and not blocking, "blocking": blocking}, None
 
     def check_summary(self, view):
         return {"broker_confirmed_utc": view["ts"], "broker_position_qty": view["broker"],
                 "position_qty": view["desk"], "broker_working_orders": len(view["broker_working"]),
-                "external_working_orders": len(view["external"]), "desk_working_orders": len(view["desk_working"])}
+                "external_working_orders": len(view["external"]), "desk_working_orders": len(view["desk_working"]),
+                "clean": view["clean"], "blocking_alarms": list(view["blocking"])}
 
     def finish(self, baseline_fills):
         self.out("Stopping checks (%s). Read-only reconcile:" % self.record["ended_by"])
         view, why = self.verified_reconcile()
         action = "none"
         if view is not None and view_exposed(view) and self.at_end == "close":
-            if view["desk"] != view["broker"] or view["external"]:
+            if view["desk"] != view["broker"] or view["external"] or not view["clean"]:
                 action = "not closed: position does not match the desk, resolve it in the desk or at Alpaca"
+                if view["blocking"]:
+                    action += " (blocking alarm(s) %s)" % ", ".join(view["blocking"])
             else:
                 try:
                     status, reply = self.post("/api/stop_close", {"confirm": True})
@@ -559,8 +588,11 @@ class Runner:
             self.record["end_broker_check"] = self.check_summary(view)
             if view_exposed(view):
                 self.record["end_status"] = "exposed"
-                self.out("EXPOSED at end (broker check %s): position %s (broker %s), %d working order(s) at Alpaca. %s"
-                         % (view["ts"], view["desk"], view["broker"], len(view["broker_working"]), action))
+                self.out("EXPOSED at end (broker check %s): position %s (broker %s), %d working order(s) at Alpaca, "
+                         "%d not placed by this desk%s. %s"
+                         % (view["ts"], view["desk"], view["broker"], len(view["broker_working"]),
+                            len(view["external"]),
+                            ", blocking alarm(s) " + ", ".join(view["blocking"]) if view["blocking"] else "", action))
                 code = EXIT_EXPOSED
             else:
                 self.record["end_status"] = "flat"
