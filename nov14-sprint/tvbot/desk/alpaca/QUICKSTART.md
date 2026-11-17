@@ -7,7 +7,9 @@
 3. When you are ready for the first authenticated test, store your own Alpaca **paper** keys using the setup guide in **desk/alpaca/SETUP.md**. Double-click **After You Approve/Check Paper Connection.command**. This checks account eligibility, SPY, the venue clock and the latest free IEX bid and ask. A working connection can still report a closed market or a stale quote.
 4. **After You Approve/Open Connected Paper Desk.command** opens a separate paper session. The adapter and daily arm are distinct controls. Use **Check for new closed bar** to request data and act on a fresh signal. The first request also loads prior bars for strategy warm-up. Check the source, session, open orders and Stop status in the desk.
 
-In a source checkout, the two after-approval commands are under **desk/after-approval**.
+In a source checkout, the after-approval commands are under **desk/after-approval**.
+
+5. **After You Approve/Run Timed Paper Session.command** is a separate, optional timed run of that same paper desk. You start it, and it stops by itself. It checks for a new closed bar on a timer (default 60 minutes, every 60 seconds; for example `--minutes 30 --every 60 --at-end leave`). Each line shows the account mode, the data time, and whether the result was a strategy call or a data/timing pass. At the end it reconciles with the broker and reports flat or exposed; by default it presses Stop & Close only when the broker position matches the desk. It refuses a live or non-paper desk, a second runner and a second desk process. It never presses Enable or Arm and installs no schedule, so orders still need your own manual controls. It reports a fill only when Alpaca confirms it. A record of each run is saved under the paper state folder in **runner**.
 
 The connected strategy can open long SPY positions with whole-share, day-limit buy orders. The limit price bounds the entry dollars. A stop estimates loss at its trigger, and the market can move past it. This is a manually checked desk. A fill or change at Alpaca can precede its appearance in the desk. Before walking away from exposure, inspect the broker-confirmed position, working exits and Stop result.
 
